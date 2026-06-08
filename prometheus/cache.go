@@ -126,7 +126,7 @@ func (c *promCacheImpl) GetAppRequestRates(namespace, cluster, app, ratesInterva
 	zl := c.zl
 
 	if nsRates, okNs := c.cacheAppRequestRates[namespace]; okNs {
-		if appInterval, okApp := nsRates[app][cluster]; okApp {
+		if appInterval, okApp := nsRates[cluster][app]; okApp {
 			if rtInterval, okRt := appInterval[ratesInterval]; okRt {
 				if !queryTime.Before(rtInterval.queryTime) && queryTime.Sub(rtInterval.queryTime) < c.cacheDuration {
 					zl.Trace().Msgf("GetAppRequestRates [namespace: %s] [app: %s] [ratesInterval: %s] [queryTime: %s]", namespace, app, ratesInterval, queryTime.String())
@@ -148,7 +148,7 @@ func (c *promCacheImpl) SetAppRequestRates(namespace, cluster, app, ratesInterva
 	if _, okCluster := c.cacheAppRequestRates[namespace][cluster]; !okCluster {
 		c.cacheAppRequestRates[namespace][cluster] = make(map[string]map[string]timeInOutResult)
 	}
-	if _, okApp := c.cacheAppRequestRates[namespace][app]; !okApp {
+	if _, okApp := c.cacheAppRequestRates[namespace][cluster][app]; !okApp {
 		c.cacheAppRequestRates[namespace][cluster][app] = make(map[string]timeInOutResult)
 	}
 
@@ -267,10 +267,10 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace, cluster, workload, ra
 	if _, okNs := c.cacheWkRequestRates[namespace]; !okNs {
 		c.cacheWkRequestRates[namespace] = make(map[string]map[string]map[string]timeInOutResult)
 	}
-	if _, clusterNs := c.cacheWkRequestRates[namespace][cluster]; !clusterNs {
+	if _, okCluster := c.cacheWkRequestRates[namespace][cluster]; !okCluster {
 		c.cacheWkRequestRates[namespace][cluster] = make(map[string]map[string]timeInOutResult)
 	}
-	if _, okApp := c.cacheWkRequestRates[namespace][workload]; !okApp {
+	if _, okWk := c.cacheWkRequestRates[namespace][cluster][workload]; !okWk {
 		c.cacheWkRequestRates[namespace][cluster][workload] = make(map[string]timeInOutResult)
 	}
 
@@ -281,7 +281,7 @@ func (c *promCacheImpl) SetWorkloadRequestRates(namespace, cluster, workload, ra
 	}
 	// TODO: eventually want to get this from a context we pass into this function
 	zl := c.zl
-	zl.Trace().Msgf("SetAppRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
+	zl.Trace().Msgf("SetWorkloadRequestRates [namespace: %s] [cluster: %s] [workload: %s] [ratesInterval: %s] [queryTime: %s]", namespace, cluster, workload, ratesInterval, queryTime.String())
 }
 
 // Expiration is done globally, this cache is designed as short term, so in the worst case it would populated the queries

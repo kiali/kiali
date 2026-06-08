@@ -321,10 +321,10 @@ func (in *HealthService) GetNamespaceAppHealth(ctx context.Context, criteria Nam
 		return nil, err
 	}
 
-	return in.getNamespaceAppHealth(appEntities, criteria)
+	return in.getNamespaceAppHealth(ctx, appEntities, criteria)
 }
 
-func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
+func (in *HealthService) getNamespaceAppHealth(ctx context.Context, appEntities namespaceApps, criteria NamespaceHealthCriteria) (models.NamespaceAppHealth, error) {
 	namespace := criteria.Namespace
 	queryTime := criteria.QueryTime
 	rateInterval := criteria.RateInterval
@@ -355,7 +355,7 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 
 	if hasHTTPTraffic && criteria.IncludeMetrics {
 		// Fetch services requests rates
-		rates, err := in.prom.GetAllRequestRates(context.Background(), namespace, cluster, rateInterval, queryTime)
+		rates, err := in.prom.GetAllRequestRates(ctx, namespace, cluster, rateInterval, queryTime)
 		if err != nil {
 			return allHealth, errors.NewServiceUnavailable(err.Error())
 		}
@@ -371,6 +371,50 @@ func (in *HealthService) getNamespaceAppHealth(appEntities namespaceApps, criter
 	}
 
 	return allHealth, nil
+}
+
+// GetNamespaceAppHealthFromWorkloads computes app health from pre-fetched workloads.
+// This avoids the per-namespace full-cluster listing that GetNamespaceAppHealth performs,
+// making it suitable for batch health computation across many namespaces.
+func (in *HealthService) GetNamespaceAppHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceAppHealth, error) {
+	var end observability.EndFunc
+	ctx, end = observability.StartSpan(ctx, "GetNamespaceAppHealthFromWorkloads",
+		observability.Attribute("package", "business"),
+		observability.Attribute(observability.TracingClusterTag, criteria.Cluster),
+		observability.Attribute("namespace", criteria.Namespace),
+	)
+	defer end()
+
+	appEntities := make(namespaceApps)
+	for _, w := range workloads {
+		if w.IsInfra() {
+			continue
+		}
+		appLabelName, found := in.conf.GetAppLabelName(w.Labels)
+		if !found || appLabelName == "" {
+			continue
+		}
+		appName := w.Labels[appLabelName]
+		if appName == "" {
+			continue
+		}
+		if _, ok := appEntities[appName]; !ok {
+			appEntities[appName] = &appDetails{
+				app:     appName,
+				cluster: criteria.Cluster,
+			}
+		}
+		appEntities[appName].Workloads = append(appEntities[appName].Workloads, w)
+	}
+
+	return in.getNamespaceAppHealth(ctx, appEntities, criteria)
+}
+
+// GetNamespaceWorkloadHealthFromWorkloads computes workload health from pre-fetched workloads.
+// This avoids the per-namespace full-cluster listing that GetNamespaceWorkloadHealth performs,
+// making it suitable for batch health computation across many namespaces.
+func (in *HealthService) GetNamespaceWorkloadHealthFromWorkloads(ctx context.Context, criteria NamespaceHealthCriteria, workloads models.Workloads) (models.NamespaceWorkloadHealth, error) {
+	return in.getNamespaceWorkloadHealth(ctx, workloads, criteria)
 }
 
 // GetNamespaceServiceHealth returns a health for all services in given Namespace (thus, it fetches data from K8S and Prometheus)

@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -22,6 +23,7 @@ import (
 // This is an interface for testing purposes.
 type HealthMonitor interface {
 	// Start starts the background health refresh job.
+	// The initial refresh and all subsequent refreshes run in a background goroutine
 	Start(ctx context.Context)
 	// RefreshHealth performs a single refresh of the health cache.
 	RefreshHealth(ctx context.Context) error
@@ -66,30 +68,52 @@ type healthMonitor struct {
 }
 
 // Start starts the background health refresh loop.
+// The initial refresh and all subsequent refreshes run in a background goroutine
+// so that Start returns immediately, allowing the HTTP server to begin accepting
+// requests (and passing startup/liveness probes) without waiting for the first
+// health computation to finish.
 func (m *healthMonitor) Start(ctx context.Context) {
 	interval := m.conf.HealthConfig.Compute.RefreshInterval
 	timeout := m.conf.HealthConfig.Compute.Timeout
 	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", interval, timeout)
 
-	// Prime the cache with an initial refresh (with timeout)
-	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-	if err := m.RefreshHealth(refreshCtx); err != nil {
-		m.logger.Error().Err(err).Msg("Initial health refresh failed")
-	}
-	cancel()
-
 	go func() {
+		// Prime the cache with an initial refresh (non-blocking to caller).
+		// Recover from panics so that a failure here does not crash the entire process.
+		func() {
+			refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+			defer cancel()
+			defer func() {
+				if r := recover(); r != nil {
+					m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during initial health refresh")
+				}
+			}()
+			if err := m.RefreshHealth(refreshCtx); err != nil {
+				m.logger.Error().Err(err).Msg("Initial health refresh failed")
+			}
+		}()
+
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
 				m.logger.Info().Msg("Stopping health monitor")
 				return
-			case <-time.After(interval):
-				refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-				if err := m.RefreshHealth(refreshCtx); err != nil {
-					m.logger.Error().Err(err).Msg("Health refresh failed")
-				}
-				cancel()
+			case <-ticker.C:
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during health refresh")
+						}
+					}()
+					refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+					defer cancel()
+					if err := m.RefreshHealth(refreshCtx); err != nil {
+						m.logger.Error().Err(err).Msg("Health refresh failed")
+					}
+				}()
 			}
 		}
 	}()
@@ -205,6 +229,21 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 		return 0, 1
 	}
 
+	// Pre-fetch ALL workloads for the cluster once to avoid having each namespace's health
+	// computation independently list all cluster-wide resources (pods, deployments,
+	// replicasets, etc.) and filters to its namespace.
+	allWorkloads, err := layer.Workload.GetAllWorkloads(ctx, cluster, "")
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to pre-fetch workloads for cluster")
+		return 0, 1
+	}
+
+	// Create a map and then use it to pass down per-namespace workloads.
+	workloadsByNamespace := make(map[string]models.Workloads, len(namespaces))
+	for _, w := range allWorkloads {
+		workloadsByNamespace[w.Namespace] = append(workloadsByNamespace[w.Namespace], w)
+	}
+
 	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
 	for _, ns := range namespaces {
@@ -214,7 +253,7 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 			return len(namespaces), errorCount
 		}
 
-		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration); err != nil {
+		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration, workloadsByNamespace[ns.Name]); err != nil {
 			log.Warn().Err(err).Str("namespace", ns.Name).Msg("Failed to refresh health for namespace")
 			errorCount++
 			continue
@@ -233,7 +272,8 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 }
 
 // refreshNamespaceHealth computes and caches health for a single namespace.
-func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer, cluster, namespace, duration string) error {
+// workloads contains pre-fetched workloads for this namespace (may be nil if none exist).
+func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer, cluster, namespace, duration string, workloads models.Workloads) error {
 	log := m.logger.With().
 		Str("cluster", cluster).
 		Str("namespace", namespace).
@@ -250,10 +290,11 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 		RateInterval:   duration,
 	}
 
-	// Compute health for apps, services, and workloads
-	appHealth, appErr := layer.Health.GetNamespaceAppHealth(ctx, criteria)
+	// Use pre-fetched workloads for app and workload health.
+	// Service health still fetches per-namespace since services are already listed namespace-scoped.
+	appHealth, appErr := layer.Health.GetNamespaceAppHealthFromWorkloads(ctx, criteria, workloads)
 	serviceHealth, svcErr := layer.Health.GetNamespaceServiceHealth(ctx, criteria)
-	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealth(ctx, criteria)
+	workloadHealth, wkErr := layer.Health.GetNamespaceWorkloadHealthFromWorkloads(ctx, criteria, workloads)
 
 	// If all failed, return error (no cache write or metrics export; refreshClusterHealth will not
 	// mark this namespace visited so dropped-namespace reconciliation can age stale gauges).

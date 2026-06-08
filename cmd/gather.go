@@ -159,7 +159,7 @@ func newGatherCmd(conf *config.Config) *cobra.Command {
 				return fmt.Errorf("failed to write manifest: %v", err)
 			}
 
-			mgr, kubeCaches, err := newManager(ctx, conf, log.Logger(), cf)
+			mgr, kubeCaches, err := newManager(conf, log.Logger(), cf)
 			if err != nil {
 				return fmt.Errorf("unable to setup manager: %s", err)
 			}
