@@ -274,7 +274,7 @@ jobs:
       run: make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
 
     - name: Upload PR base coverage to Codecov
-      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
       with:
         disable_search: true
         fail_ci_if_error: true
@@ -346,7 +346,7 @@ jobs:
     # Select the PR base report from the target branch head (not a stale default-branch upload).
     - name: Select Codecov PR base commit
       if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
         base_sha: ${{ github.event.pull_request.base.sha }}
         run_command: pr-base-picking
@@ -356,7 +356,7 @@ jobs:
     # Upload on PRs and on push to master/release branches (sail-operator pattern: push + pull_request).
     - name: Upload coverage to Codecov (pull request)
       if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
         disable_search: true
         fail_ci_if_error: true
@@ -370,7 +370,7 @@ jobs:
 
     - name: Upload coverage to Codecov (push)
       if: github.event_name == 'push'
-      uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
         disable_search: true
         fail_ci_if_error: true
