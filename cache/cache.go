@@ -149,8 +149,12 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheGatewaysKey
 	gatewayStore store.Store[string, models.Workloads]
 
-	// Cache pre-computed health data per cluster:namespace
-	healthStore store.Store[string, *models.CachedHealthData]
+	// Cache pre-computed health data per cluster:namespace.
+	// Readers get a snapshot pointer via GetHealth; writers use copy-on-write
+	// under healthUpdateMutex so that concurrent readers never observe a
+	// partially-mutated map (which would be a fatal runtime.throw).
+	healthStore       store.Store[string, *models.CachedHealthData]
+	healthUpdateMutex sync.Mutex
 
 	// There's only ever one IstioStatus but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheIstioStatusKey.
@@ -456,8 +460,13 @@ func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType interna
 	return data, found
 }
 
-// SetHealth stores health data in cache
+// SetHealth stores health data in cache.
+// Acquires healthUpdateMutex so that a concurrent Update*Health call cannot
+// read a stale snapshot and then overwrite this fresh data.
 func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.CachedHealthData) {
+	c.healthUpdateMutex.Lock()
+	defer c.healthUpdateMutex.Unlock()
+
 	key := models.HealthCacheKey(cluster, namespace)
 	c.zl.Trace().
 		Str("cluster", cluster).
@@ -469,7 +478,11 @@ func (c *kialiCacheImpl) SetHealth(cluster, namespace string, data *models.Cache
 }
 
 // UpdateAppHealth updates a single app's health in the cached namespace data.
+// Uses copy-on-write: existing readers holding the old pointer are unaffected.
 func (c *kialiCacheImpl) UpdateAppHealth(cluster, namespace, appName string, health *models.AppHealth) {
+	c.healthUpdateMutex.Lock()
+	defer c.healthUpdateMutex.Unlock()
+
 	key := models.HealthCacheKey(cluster, namespace)
 	cached, found := c.healthStore.Get(key)
 	if !found {
@@ -481,13 +494,21 @@ func (c *kialiCacheImpl) UpdateAppHealth(cluster, namespace, appName string, hea
 		return
 	}
 
-	// Update the specific app health entry
-	if cached.AppHealth == nil {
-		cached.AppHealth = models.NamespaceAppHealth{}
+	newMap := make(models.NamespaceAppHealth, len(cached.AppHealth)+1)
+	for k, v := range cached.AppHealth {
+		newMap[k] = v
 	}
-	cached.AppHealth[appName] = health
-	cached.ComputedAt = time.Now()
-	c.healthStore.Set(key, cached)
+	newMap[appName] = health
+
+	c.healthStore.Set(key, &models.CachedHealthData{
+		AppHealth:      newMap,
+		Cluster:        cached.Cluster,
+		ComputedAt:     time.Now(),
+		Duration:       cached.Duration,
+		Namespace:      cached.Namespace,
+		ServiceHealth:  cached.ServiceHealth,
+		WorkloadHealth: cached.WorkloadHealth,
+	})
 
 	c.zl.Debug().
 		Str("cluster", cluster).
@@ -497,7 +518,11 @@ func (c *kialiCacheImpl) UpdateAppHealth(cluster, namespace, appName string, hea
 }
 
 // UpdateServiceHealth updates a single service's health in the cached namespace data.
+// Uses copy-on-write: existing readers holding the old pointer are unaffected.
 func (c *kialiCacheImpl) UpdateServiceHealth(cluster, namespace, serviceName string, health *models.ServiceHealth) {
+	c.healthUpdateMutex.Lock()
+	defer c.healthUpdateMutex.Unlock()
+
 	key := models.HealthCacheKey(cluster, namespace)
 	cached, found := c.healthStore.Get(key)
 	if !found {
@@ -509,13 +534,21 @@ func (c *kialiCacheImpl) UpdateServiceHealth(cluster, namespace, serviceName str
 		return
 	}
 
-	// Update the specific service health entry
-	if cached.ServiceHealth == nil {
-		cached.ServiceHealth = models.NamespaceServiceHealth{}
+	newMap := make(models.NamespaceServiceHealth, len(cached.ServiceHealth)+1)
+	for k, v := range cached.ServiceHealth {
+		newMap[k] = v
 	}
-	cached.ServiceHealth[serviceName] = health
-	cached.ComputedAt = time.Now()
-	c.healthStore.Set(key, cached)
+	newMap[serviceName] = health
+
+	c.healthStore.Set(key, &models.CachedHealthData{
+		AppHealth:      cached.AppHealth,
+		Cluster:        cached.Cluster,
+		ComputedAt:     time.Now(),
+		Duration:       cached.Duration,
+		Namespace:      cached.Namespace,
+		ServiceHealth:  newMap,
+		WorkloadHealth: cached.WorkloadHealth,
+	})
 
 	c.zl.Debug().
 		Str("cluster", cluster).
@@ -525,7 +558,11 @@ func (c *kialiCacheImpl) UpdateServiceHealth(cluster, namespace, serviceName str
 }
 
 // UpdateWorkloadHealth updates a single workload's health in the cached namespace data.
+// Uses copy-on-write: existing readers holding the old pointer are unaffected.
 func (c *kialiCacheImpl) UpdateWorkloadHealth(cluster, namespace, workloadName string, health *models.WorkloadHealth) {
+	c.healthUpdateMutex.Lock()
+	defer c.healthUpdateMutex.Unlock()
+
 	key := models.HealthCacheKey(cluster, namespace)
 	cached, found := c.healthStore.Get(key)
 	if !found {
@@ -537,13 +574,21 @@ func (c *kialiCacheImpl) UpdateWorkloadHealth(cluster, namespace, workloadName s
 		return
 	}
 
-	// Update the specific workload health entry
-	if cached.WorkloadHealth == nil {
-		cached.WorkloadHealth = models.NamespaceWorkloadHealth{}
+	newMap := make(models.NamespaceWorkloadHealth, len(cached.WorkloadHealth)+1)
+	for k, v := range cached.WorkloadHealth {
+		newMap[k] = v
 	}
-	cached.WorkloadHealth[workloadName] = health
-	cached.ComputedAt = time.Now()
-	c.healthStore.Set(key, cached)
+	newMap[workloadName] = health
+
+	c.healthStore.Set(key, &models.CachedHealthData{
+		AppHealth:      cached.AppHealth,
+		Cluster:        cached.Cluster,
+		ComputedAt:     time.Now(),
+		Duration:       cached.Duration,
+		Namespace:      cached.Namespace,
+		ServiceHealth:  cached.ServiceHealth,
+		WorkloadHealth: newMap,
+	})
 
 	c.zl.Debug().
 		Str("cluster", cluster).

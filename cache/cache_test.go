@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
@@ -671,4 +672,144 @@ func TestGatewayAPIClasses(t *testing.T) {
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio-remote", result[1].Name)
 	})
+}
+
+func newHealthTestCache(t *testing.T) cache.KialiCache {
+	t.Helper()
+	conf := config.NewConfig()
+	client := kubetest.NewFakeK8sClient()
+	return cache.NewTestingCache(t, client, *conf)
+}
+
+func seedHealthCache(t *testing.T, c cache.KialiCache, cluster, namespace string) *models.CachedHealthData {
+	t.Helper()
+	data := &models.CachedHealthData{
+		AppHealth:      models.NamespaceAppHealth{"appA": {WorkloadStatuses: []*models.WorkloadStatus{{Name: "w1"}}}},
+		Cluster:        cluster,
+		ComputedAt:     time.Now(),
+		Duration:       "60s",
+		Namespace:      namespace,
+		ServiceHealth:  models.NamespaceServiceHealth{"svcA": {}},
+		WorkloadHealth: models.NamespaceWorkloadHealth{"wlA": {}},
+	}
+	c.SetHealth(cluster, namespace, data)
+	return data
+}
+
+func TestUpdateAppHealthCopyOnWrite(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	cluster, ns := "east", "bookinfo"
+	seedHealthCache(t, c, cluster, ns)
+
+	before, found := c.GetHealth(cluster, ns, "app")
+	require.True(found)
+	require.Contains(before.AppHealth, "appA")
+
+	c.UpdateAppHealth(cluster, ns, "appB", &models.AppHealth{})
+
+	after, found := c.GetHealth(cluster, ns, "app")
+	require.True(found)
+	require.Contains(after.AppHealth, "appA")
+	require.Contains(after.AppHealth, "appB")
+
+	// The old snapshot must still point at the original map (1 entry).
+	require.Len(before.AppHealth, 1, "old pointer must be unchanged after update")
+	require.NotSame(before, after, "update must produce a new CachedHealthData pointer")
+}
+
+func TestUpdateServiceHealthCopyOnWrite(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	cluster, ns := "east", "bookinfo"
+	seedHealthCache(t, c, cluster, ns)
+
+	before, _ := c.GetHealth(cluster, ns, "service")
+
+	c.UpdateServiceHealth(cluster, ns, "svcB", &models.ServiceHealth{})
+
+	after, found := c.GetHealth(cluster, ns, "service")
+	require.True(found)
+	require.Contains(after.ServiceHealth, "svcA")
+	require.Contains(after.ServiceHealth, "svcB")
+
+	require.Len(before.ServiceHealth, 1, "old pointer must be unchanged after update")
+	require.NotSame(before, after, "update must produce a new CachedHealthData pointer")
+}
+
+func TestUpdateWorkloadHealthCopyOnWrite(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	cluster, ns := "east", "bookinfo"
+	seedHealthCache(t, c, cluster, ns)
+
+	before, _ := c.GetHealth(cluster, ns, "workload")
+
+	c.UpdateWorkloadHealth(cluster, ns, "wlB", &models.WorkloadHealth{})
+
+	after, found := c.GetHealth(cluster, ns, "workload")
+	require.True(found)
+	require.Contains(after.WorkloadHealth, "wlA")
+	require.Contains(after.WorkloadHealth, "wlB")
+
+	require.Len(before.WorkloadHealth, 1, "old pointer must be unchanged after update")
+	require.NotSame(before, after, "update must produce a new CachedHealthData pointer")
+}
+
+func TestUpdateHealthNotInCacheIsNoop(t *testing.T) {
+	require := require.New(t)
+	c := newHealthTestCache(t)
+
+	c.UpdateAppHealth("missing", "ns", "app", &models.AppHealth{})
+	c.UpdateServiceHealth("missing", "ns", "svc", &models.ServiceHealth{})
+	c.UpdateWorkloadHealth("missing", "ns", "wl", &models.WorkloadHealth{})
+
+	_, found := c.GetHealth("missing", "ns", "app")
+	require.False(found)
+}
+
+// This test exercises the race detector (-race flag). Concurrent readers iterate
+// health maps while a writer performs copy-on-write updates. Without copy-on-write
+// this would trigger a fatal "concurrent map read and map write" from the Go runtime.
+func TestUpdateHealthIsConcurrentSafe(t *testing.T) {
+	c := newHealthTestCache(t)
+
+	cluster, ns := "east", "bookinfo"
+	seedHealthCache(t, c, cluster, ns)
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 50; j++ {
+				if data, ok := c.GetHealth(cluster, ns, "app"); ok {
+					for range data.AppHealth {
+					}
+					for range data.ServiceHealth {
+					}
+					for range data.WorkloadHealth {
+					}
+				}
+			}
+		}()
+	}
+
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			for j := 0; j < 20; j++ {
+				c.UpdateAppHealth(cluster, ns, "app", &models.AppHealth{})
+				c.UpdateServiceHealth(cluster, ns, "svc", &models.ServiceHealth{})
+				c.UpdateWorkloadHealth(cluster, ns, "wl", &models.WorkloadHealth{})
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }
