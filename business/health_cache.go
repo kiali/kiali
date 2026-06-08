@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	prom "github.com/prometheus/client_golang/prometheus"
@@ -71,12 +72,20 @@ func (m *healthMonitor) Start(ctx context.Context) {
 	timeout := m.conf.HealthConfig.Compute.Timeout
 	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", interval, timeout)
 
-	// Prime the cache with an initial refresh (with timeout)
-	refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-	if err := m.RefreshHealth(refreshCtx); err != nil {
-		m.logger.Error().Err(err).Msg("Initial health refresh failed")
-	}
-	cancel()
+	// Prime the cache with an initial refresh (with timeout).
+	// Recover from panics so that a failure here does not crash the entire process.
+	func() {
+		refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+		defer func() {
+			if r := recover(); r != nil {
+				m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during initial health refresh")
+			}
+		}()
+		if err := m.RefreshHealth(refreshCtx); err != nil {
+			m.logger.Error().Err(err).Msg("Initial health refresh failed")
+		}
+	}()
 
 	go func() {
 		for {
@@ -85,11 +94,18 @@ func (m *healthMonitor) Start(ctx context.Context) {
 				m.logger.Info().Msg("Stopping health monitor")
 				return
 			case <-time.After(interval):
-				refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-				if err := m.RefreshHealth(refreshCtx); err != nil {
-					m.logger.Error().Err(err).Msg("Health refresh failed")
-				}
-				cancel()
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during health refresh")
+						}
+					}()
+					refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+					defer cancel()
+					if err := m.RefreshHealth(refreshCtx); err != nil {
+						m.logger.Error().Err(err).Msg("Health refresh failed")
+					}
+				}()
 			}
 		}
 	}()
