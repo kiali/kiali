@@ -639,10 +639,10 @@ Then("the {string} subtab doesn't exist", (subtab: string) => {
 
 Then('validates Services data', () => {
   cy.get('[data-test="enrolled-data-title"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', 'productpage');
+  cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(1)').should('contain', 'productpage');
   cy.get('[role="grid"]').should('be.visible').find('#pfbadge-S').should('exist');
-  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
-  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', 'namespace');
+  cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(2)').should('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(3)').should('contain', 'namespace');
 });
 
 Then(
@@ -650,10 +650,10 @@ Then(
   (rows: number, workload: string, ns: string, label: string, badge: string) => {
     cy.get('[data-test="enrolled-data-title"]').should('be.visible');
     cy.get('table tbody tr').should('have.length', rows);
-    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', workload);
+    cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(1)').should('contain', workload);
     cy.get('[role="grid"]').should('be.visible').find(`#${badge}`).should('exist');
-    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', ns);
-    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', label);
+    cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(2)').should('contain', ns);
+    cy.get('[role="grid"]').should('be.visible').find('tbody tr td:nth-child(3)').should('contain', label);
   }
 );
 
