@@ -172,15 +172,20 @@ Before({ tags: '@core-caching' }, () => {
     return;
   }
 
-  // Detect both caches enabled. Operator path returns JSON, Helm returns YAML.
+  // Detect both caches and health status metric enabled. Operator path returns JSON, Helm returns YAML.
   const bothCachesEnabled = (text: string, json: boolean): boolean => {
     if (json) {
       return (
         /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
-        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
+        /"health_status"[\s\S]*?"enabled"\s*:\s*true/.test(text)
       );
     }
-    return /graph_cache:[\s\S]*?enabled:\s*true/.test(text) && /health_cache:[\s\S]*?enabled:\s*true/.test(text);
+    return (
+      /graph_cache:[\s\S]*?enabled:\s*true/.test(text) &&
+      /health_cache:[\s\S]*?enabled:\s*true/.test(text) &&
+      /health_status:[\s\S]*?enabled:\s*true/.test(text)
+    );
   };
 
   discoverKialiRuntimeInfo().then(info => {

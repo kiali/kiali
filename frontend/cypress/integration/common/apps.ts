@@ -379,3 +379,68 @@ Then('health cache metrics should show at least {int} hit', (minHits: number) =>
     });
   });
 });
+
+// Health status metric test steps
+interface HealthStatusMetricItem {
+  cluster: string;
+  healthType: string;
+  name: string;
+  namespace: string;
+  value: number;
+}
+
+const healthStatusValueToString = (value: number): string => {
+  switch (value) {
+    case 0:
+      return 'Healthy';
+    case 1:
+      return 'Not Ready';
+    case 2:
+      return 'Degraded';
+    case 3:
+      return 'Failure';
+    default:
+      return 'Unknown';
+  }
+};
+
+const fetchHealthStatusMetrics = (): Cypress.Chainable<HealthStatusMetricItem[]> => {
+  return cy
+    .request({
+      url: '/api/test/metrics/health/status',
+      failOnStatusCode: false
+    })
+    .then(resp => {
+      if (resp.status !== 200) {
+        Cypress.log({ message: `Warning: Failed to fetch health status metrics, status: ${resp.status}` });
+        return [];
+      }
+      const metrics = resp.body.metrics || [];
+      Cypress.log({ message: `Fetched ${metrics.length} health status metrics from API` });
+      return metrics;
+    });
+};
+
+Then(
+  'health status metric for {string} app in {string} namespace should be {string}',
+  (appName: string, namespace: string, healthStatus: string) => {
+    fetchHealthStatusMetrics().then(metrics => {
+      Cypress.log({ message: `Health status metrics: ${JSON.stringify(metrics, null, 2)}` });
+
+      const appMetric = metrics.find(m => m.healthType === 'app' && m.name === appName && m.namespace === namespace);
+
+      assert.isDefined(appMetric, `Metric for app ${appName} in namespace ${namespace} should exist`);
+
+      const actualStatus = healthStatusValueToString(appMetric!.value);
+      Cypress.log({ message: `App ${appName} health status metric value: ${appMetric!.value} (${actualStatus})` });
+      expect(actualStatus).to.eq(healthStatus);
+    });
+  }
+);
+
+Then('health status metrics should not be empty', () => {
+  fetchHealthStatusMetrics().then(metrics => {
+    Cypress.log({ message: `Health status metrics count: ${metrics.length}` });
+    expect(metrics.length).to.be.greaterThan(0);
+  });
+});

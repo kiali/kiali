@@ -144,3 +144,16 @@ Feature: Kiali Apps List page
     And health cache metrics are recorded
     When user visits the apps list page for "bookinfo" namespace
     Then health cache metrics should show at least 1 hit
+
+  @bookinfo-app
+  @core-caching
+  Scenario: Health status metric exports health values for apps
+    When user visits the apps list page for "bookinfo" namespace
+    Then health status metrics should not be empty
+
+  @bookinfo-app
+  @core-caching
+  Scenario: Health status metric shows healthy apps correctly
+    Given a healthy application in the cluster
+    When user visits the apps list page for "bookinfo" namespace
+    Then health status metric for "details" app in "bookinfo" namespace should be "Healthy"

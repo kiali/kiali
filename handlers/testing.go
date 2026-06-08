@@ -125,3 +125,57 @@ func HealthCacheMetricsHandler() http.HandlerFunc {
 		RespondWithJSON(w, http.StatusOK, metrics)
 	}
 }
+
+type HealthStatusMetricItem struct {
+	Cluster    string  `json:"cluster"`
+	Namespace  string  `json:"namespace"`
+	HealthType string  `json:"healthType"`
+	Name       string  `json:"name"`
+	Value      float64 `json:"value"`
+}
+
+type HealthStatusMetrics struct {
+	Metrics []HealthStatusMetricItem `json:"metrics"`
+}
+
+func getGaugeVecValues(gaugeVec *prometheus.GaugeVec) []HealthStatusMetricItem {
+	ch := make(chan prometheus.Metric, 1000)
+	go func() {
+		gaugeVec.Collect(ch)
+		close(ch)
+	}()
+
+	var items []HealthStatusMetricItem
+	for metric := range ch {
+		m := &dto.Metric{}
+		if err := metric.Write(m); err == nil && m.Gauge != nil {
+			// Extract labels
+			labels := make(map[string]string)
+			for _, label := range m.Label {
+				labels[label.GetName()] = label.GetValue()
+			}
+
+			items = append(items, HealthStatusMetricItem{
+				Cluster:    labels["cluster"],
+				Namespace:  labels["namespace"],
+				HealthType: labels["health_type"],
+				Name:       labels["name"],
+				Value:      m.Gauge.GetValue(),
+			})
+		}
+	}
+	return items
+}
+
+// HealthStatusMetricsHandler returns Kiali's health status metrics in JSON format.
+// This endpoint provides a simple way to access the health status gauge values
+// without having to parse the Prometheus text format from the /metrics endpoint.
+func HealthStatusMetricsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		metrics := HealthStatusMetrics{
+			Metrics: getGaugeVecValues(internalmetrics.GetHealthStatusMetric()),
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
