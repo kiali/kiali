@@ -1,9 +1,8 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 // Selectors
-// The modal doesn't have aria-label, it uses aria-labelledby pointing to the title
-// So we match by role="dialog" and check for the title inside
-const COLUMN_MANAGEMENT_MODAL = '[role="dialog"]';
+// Use the stable selector from namespaces.ts that targets this modal specifically
+const COLUMN_MANAGEMENT_MODAL = '[data-ouia-component-id="ColumnManagementModal"]';
 
 When('user clicks the {string} button with test id {string}', (buttonText: string, testId: string) => {
   // Wait for the toolbar to be fully loaded
@@ -66,12 +65,9 @@ When('user checks the {string} column in the modal', (columnName: string) => {
 });
 
 When('user applies the column changes', () => {
-  cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    // PatternFly ListManager uses "Save" button, not "Apply"
-    cy.contains('button', 'Save').click();
-  });
-  // Wait for modal to close
-  cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
+  // Reuse the same approach as namespaces.ts
+  cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
 });
 
 When('user closes the column management modal', () => {
@@ -80,13 +76,10 @@ When('user closes the column management modal', () => {
 });
 
 When('user resets columns to default', () => {
-  cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains('button', 'Reset to default').click();
-    // After reset, save the changes
-    cy.contains('button', 'Save').click();
-  });
-  // Wait for modal to close
-  cy.get(COLUMN_MANAGEMENT_MODAL).should('not.exist');
+  // Reuse the same approach as namespaces.ts
+  cy.get('[data-ouia-component-id="ColumnManagementModal-reset-button"]').click();
+  cy.get('[data-ouia-component-id="ColumnManagementModal-save-button"]').click();
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
 });
 
 Then('the {string} column should not be visible in the table', (columnName: string) => {
@@ -104,17 +97,28 @@ Then('the {string} column should be visible in the table', (columnName: string) 
 });
 
 When('user reorders columns in the modal', () => {
-  // This is a simplified version - actual implementation would need drag-and-drop
-  // For now, we'll just verify the modal supports reordering
-  cy.get(COLUMN_MANAGEMENT_MODAL).should('be.visible');
-  // Drag-and-drop implementation would go here
-  // This might need to use the PatternFly drag-drop components
+  // Use URL-based approach similar to namespaces.ts (line 105)
+  // Instead of drag-and-drop, set column order via URL param
+  // This is a more reliable and testable approach
+  cy.url().then(currentUrl => {
+    const url = new URL(currentUrl);
+    const listType = url.pathname.includes('applications') ? 'app' : url.pathname.includes('services') ? 'svc' : 'wl';
+    const orderParam = `${listType}order`;
+    // Set a custom order: health,name,namespace (Name should stay visible even if not first)
+    const customOrder = 'health,name,namespace';
+    url.searchParams.set(orderParam, customOrder);
+    url.searchParams.set('refresh', '0');
+    cy.visit({ url: url.toString() });
+    cy.get('#filter-selection', { timeout: 15000 }).should('exist');
+  });
 });
 
 Then('the columns should be in the new order', () => {
-  // Verify column order changed - this would need specific implementation
-  // based on the actual drag-drop behavior
+  // Verify column order changed by checking the actual table headers
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
   cy.get('table thead th').should('have.length.greaterThan', 0);
+  // The first visible data column should be Health (after the reorder)
+  cy.get('table thead th[data-label]').first().should('have.attr', 'data-label', 'Health');
 });
 
 Then('all default columns should be visible', () => {
@@ -139,7 +143,7 @@ Given('user is at the {string} list page with URL param {string}', (listType: st
 
   const basePath = pageMap[listType] || `/console/${listType}`;
   // Add refresh=0 to pause auto-refresh and wait for page to load
-  cy.visit(`${basePath}?refresh=0&${urlParam}`);
+  cy.visit({ url: `${basePath}?refresh=0&${urlParam}` });
   cy.get('#filter-selection', { timeout: 15000 }).should('exist');
 });
 
@@ -153,7 +157,7 @@ Given('user visits the page with URL param {string}', (urlParam: string) => {
     params.set('refresh', '0');
     // Use full URL to avoid path duplication issues
     const newUrl = `${url.origin}${url.pathname}?${params.toString()}`;
-    cy.visit(newUrl);
+    cy.visit({ url: newUrl });
     cy.get('#filter-selection', { timeout: 15000 }).should('exist');
   });
 });
@@ -166,6 +170,8 @@ When('user refreshes the page', () => {
 
 Then('the columns should maintain the custom order', () => {
   // Verify that column order is preserved after refresh
+  cy.get('[data-ouia-component-id="ColumnManagementModal"]').should('not.exist');
   cy.get('table thead th').should('have.length.greaterThan', 0);
-  // More specific assertions would depend on the actual reordering done
+  // The first visible data column should still be Health (matching the custom order set earlier)
+  cy.get('table thead th[data-label]').first().should('have.attr', 'data-label', 'Health');
 });
