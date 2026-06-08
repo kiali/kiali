@@ -23,6 +23,7 @@ import (
 // This is an interface for testing purposes.
 type HealthMonitor interface {
 	// Start starts the background health refresh job.
+	// The initial refresh and all subsequent refreshes run in a background goroutine
 	Start(ctx context.Context)
 	// RefreshHealth performs a single refresh of the health cache.
 	RefreshHealth(ctx context.Context) error
@@ -67,33 +68,40 @@ type healthMonitor struct {
 }
 
 // Start starts the background health refresh loop.
+// The initial refresh and all subsequent refreshes run in a background goroutine
+// so that Start returns immediately, allowing the HTTP server to begin accepting
+// requests (and passing startup/liveness probes) without waiting for the first
+// health computation to finish.
 func (m *healthMonitor) Start(ctx context.Context) {
 	interval := m.conf.HealthConfig.Compute.RefreshInterval
 	timeout := m.conf.HealthConfig.Compute.Timeout
 	m.logger.Info().Msgf("Starting health monitor with refresh interval: %s, timeout: %s", interval, timeout)
 
-	// Prime the cache with an initial refresh (with timeout).
-	// Recover from panics so that a failure here does not crash the entire process.
-	func() {
-		refreshCtx, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
-		defer func() {
-			if r := recover(); r != nil {
-				m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during initial health refresh")
+	go func() {
+		// Prime the cache with an initial refresh (non-blocking to caller).
+		// Recover from panics so that a failure here does not crash the entire process.
+		func() {
+			refreshCtx, cancel := context.WithTimeout(ctx, timeout)
+			defer cancel()
+			defer func() {
+				if r := recover(); r != nil {
+					m.logger.Error().Interface("panic", r).Str("stack", string(debug.Stack())).Msg("Panic during initial health refresh")
+				}
+			}()
+			if err := m.RefreshHealth(refreshCtx); err != nil {
+				m.logger.Error().Err(err).Msg("Initial health refresh failed")
 			}
 		}()
-		if err := m.RefreshHealth(refreshCtx); err != nil {
-			m.logger.Error().Err(err).Msg("Initial health refresh failed")
-		}
-	}()
 
-	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
 				m.logger.Info().Msg("Stopping health monitor")
 				return
-			case <-time.After(interval):
+			case <-ticker.C:
 				func() {
 					defer func() {
 						if r := recover(); r != nil {
