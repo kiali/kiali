@@ -33,6 +33,12 @@ Coverage is merged from three artifacts produced elsewhere in the same workflow 
 
 Behavior is configured in `codecov.yml` (paths, ignores, patch/project gates).
 
+== Dependabot pull requests
+
+Workflows triggered by Dependabot do not receive repository *Actions* secrets. Add the same upload token under *Settings → Secrets and variables → Dependabot* with name `CODECOV_TOKEN` (same value as the Actions secret). Workflows still reference `${{ secrets.CODECOV_TOKEN }}`; Dependabot exposes its secrets to jobs it triggers.
+
+See https://docs.github.com/en/code-security/dependabot/working-with-dependabot/configuring-access-to-private-registries-for-dependabot#storing-credentials-for-dependabot-to-use[Storing credentials for Dependabot to use].
+
 == How to verify that is working
 
 . Open a pull request that runs **Kiali CI** to completion.

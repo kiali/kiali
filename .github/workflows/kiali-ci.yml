@@ -284,6 +284,7 @@ jobs:
         override_commit: ${{ github.event.pull_request.base.sha }}
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
 
   codecov_merge_upload:
     if: |
@@ -352,6 +353,7 @@ jobs:
         run_command: pr-base-picking
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
 
     # Upload on PRs and on push to master/release branches (sail-operator pattern: push + pull_request).
     - name: Upload coverage to Codecov (pull request)
@@ -367,6 +369,7 @@ jobs:
         override_pr: ${{ github.event.pull_request.number }}
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
 
     - name: Upload coverage to Codecov (push)
       if: github.event_name == 'push'
@@ -380,3 +383,4 @@ jobs:
         override_commit: ${{ github.sha }}
         slug: kiali/kiali
         token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
