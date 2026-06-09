@@ -5,7 +5,7 @@ import { KialiAppState } from 'store/Store';
 import { ChatEntry, ReferencedDoc } from 'types/Chatbot';
 import { copyToClipboard } from './clipboard';
 import { Alert } from '@patternfly/react-core';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 import { ResponseTools } from './ResponseTools';
 import userAvatar from '../../../assets/img/kiali/ai/img_avatar-light.svg';
 import aiAvatar from '../../../assets/img/kiali/ai/img-ai-lightbkg.svg';

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ActionGroup, Button, Content, Form } from '@patternfly/react-core';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 import { ChatModal } from './ChatModal';
 
 type Props = {
