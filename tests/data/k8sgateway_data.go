@@ -224,6 +224,36 @@ func CreateReferenceGrantByKind(name string, namespace string, fromNamespace str
 	return &rg
 }
 
+func CreateSharedListenerWithMatchExpressions(name string, hostname string, port int, protocol string, key string, values []string) k8s_networking_v1.Listener {
+	hn := k8s_networking_v1.Hostname(hostname)
+	namespaceFromSelector := k8s_networking_v1.NamespacesFromSelector
+	listener := k8s_networking_v1.Listener{
+		Name:     k8s_networking_v1.SectionName(name),
+		Hostname: &hn,
+		Port:     k8s_networking_v1.PortNumber(port),
+		Protocol: k8s_networking_v1.ProtocolType(protocol),
+		AllowedRoutes: &k8s_networking_v1.AllowedRoutes{
+			Namespaces: &k8s_networking_v1.RouteNamespaces{
+				From: &namespaceFromSelector,
+				Selector: &metav1.LabelSelector{
+					MatchExpressions: []metav1.LabelSelectorRequirement{
+						{
+							Key:      key,
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   values,
+						},
+					},
+				},
+			},
+		},
+	}
+	return listener
+}
+
 func CreateSharedNamespace(name string) models.Namespace {
 	return models.Namespace{Name: name, Labels: map[string]string{"shared-gateway-access": "true"}}
+}
+
+func CreateNamespaceWithLabels(name string, labelsMap map[string]string) models.Namespace {
+	return models.Namespace{Name: name, Labels: labelsMap}
 }
