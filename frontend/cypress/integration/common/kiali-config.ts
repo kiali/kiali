@@ -69,6 +69,10 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
       { failOnNonZeroExit: false }
     )
     .then(result => {
+      cy.task(
+        'log',
+        `[DISCOVER_KIALI] label query: code=${result.code}, stdout="${result.stdout.trim()}", stderr="${result.stderr}"`
+      );
       const lines = result.stdout
         .trim()
         .split('\n')
@@ -76,6 +80,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
         .filter(Boolean);
 
       if (!lines.length || lines[0] === '') {
+        cy.task('log', '[DISCOVER_KIALI] Label query returned no results — trying fallback');
         // Fallback: look for a deployment named "kiali" in any namespace.
         return cy
           .exec(
@@ -94,6 +99,8 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
               .filter(l => l.includes('/kiali'))
               .filter(Boolean);
 
+            cy.task('log', `[DISCOVER_KIALI] Fallback matches: ${JSON.stringify(fallbackLines)}`);
+
             const preferredNamespaces = ['istio-system', 'kiali-operator', 'default'];
 
             let fallbackChosen: string | undefined;
@@ -111,6 +118,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
               );
             }
 
+            cy.task('log', `[DISCOVER_KIALI] Fallback chosen: ${fallbackChosen}`);
             const [namespace, deploymentName] = fallbackChosen.split('/');
             return resolveConfigMap(namespace, deploymentName);
           });
@@ -120,6 +128,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
       const parts = lines[0].split(/\s+/);
       const namespace = parts[0];
       const deploymentName = parts[1];
+      cy.task('log', `[DISCOVER_KIALI] Found via label: namespace=${namespace}, deployment=${deploymentName}`);
       return resolveConfigMap(namespace, deploymentName);
     });
 };
@@ -227,9 +236,13 @@ export const enableKialiFeature = (featureConfig: KialiFeatureConfig, value = tr
  * (operator vs Helm) don't have to re-discover deployment info.
  */
 export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
+  cy.task('log', `[ENABLE_CACHING] enableKialiCaching called, existingInfo=${existingInfo ? 'provided' : 'null'}`);
+
   const doPatch = (info: KialiRuntimeInfo): void => {
     const doRestart = (): void => {
+      cy.task('log', `[ENABLE_CACHING] Restarting Kiali: deployment/${info.deploymentName} -n ${info.namespace}`);
       restartKiali(info.deploymentName, info.namespace);
+      cy.task('log', '[ENABLE_CACHING] Kiali restart complete');
     };
 
     cy.exec(
@@ -237,6 +250,7 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
       { failOnNonZeroExit: false }
     ).then(result => {
       const primaryResource = result.stdout.trim();
+      cy.task('log', `[ENABLE_CACHING] primary-resource="${primaryResource}" (code=${result.code})`);
 
       if (primaryResource) {
         const parts = primaryResource.split('/');
@@ -255,12 +269,18 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
             }
           }
         });
-        cy.exec(`kubectl patch kiali ${parts[1]} -n ${parts[0]} --type merge -p '${patchJson}'`).then(() =>
-          doRestart()
-        );
+        cy.task('log', `[ENABLE_CACHING] Operator path: patching kiali ${parts[1]} -n ${parts[0]} with ${patchJson}`);
+        cy.exec(`kubectl patch kiali ${parts[1]} -n ${parts[0]} --type merge -p '${patchJson}'`).then(patchResult => {
+          cy.task(
+            'log',
+            `[ENABLE_CACHING] Patch result: code=${patchResult.code}, stdout="${patchResult.stdout}", stderr="${patchResult.stderr}"`
+          );
+          doRestart();
+        });
         return;
       }
 
+      cy.task('log', `[ENABLE_CACHING] Helm path: updating configmap ${info.configMapName} -n ${info.namespace}`);
       cy.exec(
         `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}" > /tmp/kiali-config.yaml`
       );
@@ -269,7 +289,10 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
       );
       cy.exec(
         `kubectl create configmap ${info.configMapName} -n ${info.namespace} --from-file=config.yaml=/tmp/kiali-config.yaml -o yaml --dry-run=client | kubectl apply -f -`
-      ).then(() => doRestart());
+      ).then(() => {
+        cy.task('log', '[ENABLE_CACHING] ConfigMap updated');
+        doRestart();
+      });
     });
   };
 
