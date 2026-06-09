@@ -32,29 +32,3 @@
       serviceName:
         type: "string"
         description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action."
-  output_schema:
-    type: "object"
-    description: "Wrapped array (kubernetes-mcp-server auto-wraps arrays in {items:[...]})"
-    properties:
-      items:
-        type: "array"
-        items:
-          type: "object"
-          properties:
-            name: {type: "string"}
-            namespace: {type: "string"}
-            group: {type: "string"}
-            version: {type: "string"}
-            kind: {type: "string"}
-            validation:
-              type: "object"
-              properties:
-                valid: {type: "boolean"}
-                checks:
-                  type: "array"
-                  items:
-                    type: "object"
-                    properties:
-                      severity: {type: "string"}
-                      message: {type: "string"}
-          required: ["name", "namespace", "group", "version", "kind", "validation"]
