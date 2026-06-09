@@ -1,5 +1,5 @@
 - name: "manage_istio_config_read"
-  description: "Read-only Istio config: list or get objects. For action 'list', returns an object with 'cluster' and 'items' (each item has name, namespace, group, version, kind, validation). For create, patch, or delete use manage_istio_config."
+  description: "Read-only Istio config: list or get objects. For action 'list', returns Istio config items (each with name, namespace, group, version, kind, validation). For create, patch, or delete use manage_istio_config."
   toolset: [default, mcp]
   input_schema:
     type: "object"
@@ -32,3 +32,49 @@
       serviceName:
         type: "string"
         description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action."
+  output_schema:
+    type: "object"
+    description: "Object containing array of Istio config items. Note: Kiali returns an array, but kubernetes-mcp-server auto-wraps it in {items: [...]} per MCP client requirements."
+    properties:
+      items:
+        type: "array"
+        description: "Array of Istio configuration items matching the query (for 'list' action)"
+        items:
+          type: "object"
+          properties:
+            name:
+              type: "string"
+              description: "Name of the Istio resource"
+            namespace:
+              type: "string"
+              description: "Namespace containing the resource"
+            group:
+              type: "string"
+              description: "API group (e.g., networking.istio.io, security.istio.io)"
+            version:
+              type: "string"
+              description: "API version (e.g., v1, v1beta1)"
+            kind:
+              type: "string"
+              description: "Resource kind (e.g., VirtualService, DestinationRule, Gateway)"
+            validation:
+              type: "object"
+              description: "Validation status of the resource"
+              properties:
+                valid:
+                  type: "boolean"
+                  description: "Whether the resource passes validation"
+                checks:
+                  type: "array"
+                  description: "Validation issues if any"
+                  items:
+                    type: "object"
+                    properties:
+                      severity:
+                        type: "string"
+                        enum: ["error", "warning"]
+                      message:
+                        type: "string"
+              required: ["valid"]
+          required: ["name", "namespace", "group", "version", "kind", "validation"]
+    required: ["items"]
