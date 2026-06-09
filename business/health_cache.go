@@ -179,6 +179,12 @@ func (m *healthMonitor) RefreshHealth(ctx context.Context) error {
 		totalErrors += errCount
 	}
 
+	// If the context was cancelled during the last cluster, propagate
+	// instead of reporting a partial refresh as success.
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+
 	// Remove health cache entries for clusters that are no longer known.
 	for _, key := range m.cache.HealthKeys() {
 		keyCluster, keyNs, ok := models.ParseHealthCacheKey(key)
@@ -261,14 +267,13 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 
 	// Pre-fetch ALL workloads for the cluster once to avoid having each namespace's health
 	// computation independently list all cluster-wide resources (pods, deployments,
-	// replicasets, etc.) and filters to its namespace.
+	// replicasets, etc.) and filter to its namespace.
 	allWorkloads, err := layer.Workload.GetAllWorkloads(ctx, cluster, "")
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to pre-fetch workloads for cluster")
 		return 0, 1
 	}
 
-	// Create a map and then use it to pass down per-namespace workloads.
 	workloadsByNamespace := make(map[string]models.Workloads, len(namespaces))
 	for _, w := range allWorkloads {
 		workloadsByNamespace[w.Namespace] = append(workloadsByNamespace[w.Namespace], w)
@@ -276,11 +281,12 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 
 	visitedNamespaces := make(map[string]bool, len(namespaces))
 	errorCount := 0
+	processedCount := 0
 	for _, ns := range namespaces {
 		if ctx.Err() != nil {
 			// Skip ReconcileDroppedNamespacesForCluster: visitedNamespaces is incomplete and would
 			// incorrectly age metrics for namespaces not yet iterated in this loop.
-			return len(namespaces), errorCount
+			return processedCount, errorCount
 		}
 
 		if err := m.refreshNamespaceHealth(ctx, layer, cluster, ns.Name, duration, workloadsByNamespace[ns.Name]); err != nil {
@@ -292,6 +298,7 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 			// ReconcileDroppedNamespacesForCluster age kiali_health_status series for that namespace.
 			visitedNamespaces[ns.Name] = true
 		}
+		processedCount++
 		// Release this namespace's workloads for GC — they are no longer needed
 		// after health computation. This bounds live memory to roughly one
 		// namespace's workloads rather than all namespaces' simultaneously.
@@ -321,7 +328,7 @@ func (m *healthMonitor) refreshClusterHealth(ctx context.Context, layer *Layer, 
 		}
 	}
 
-	return len(namespaces), errorCount
+	return processedCount, errorCount
 }
 
 // refreshNamespaceHealth computes and caches health for a single namespace.
@@ -355,24 +362,39 @@ func (m *healthMonitor) refreshNamespaceHealth(ctx context.Context, layer *Layer
 		return fmt.Errorf("all health computations failed: app=%v, svc=%v, wk=%v", appErr, svcErr, wkErr)
 	}
 
-	// Log individual errors but continue
-	if appErr != nil {
-		log.Warn().Err(appErr).Msg("App health computation failed")
-	}
-	if svcErr != nil {
-		log.Warn().Err(svcErr).Msg("Service health computation failed")
-	}
-	if wkErr != nil {
-		log.Warn().Err(wkErr).Msg("Workload health computation failed")
+	// For any component that failed, preserve the previously-cached data
+	// instead of overwriting it with nil (which would wipe valid health data
+	// that API consumers may be reading).
+	if appErr != nil || svcErr != nil || wkErr != nil {
+		if appErr != nil {
+			log.Warn().Err(appErr).Msg("App health computation failed")
+		}
+		if svcErr != nil {
+			log.Warn().Err(svcErr).Msg("Service health computation failed")
+		}
+		if wkErr != nil {
+			log.Warn().Err(wkErr).Msg("Workload health computation failed")
+		}
+
+		if prev, found := m.cache.GetHealth(cluster, namespace, ""); found {
+			if appErr != nil {
+				appHealth = prev.AppHealth
+			}
+			if svcErr != nil {
+				serviceHealth = prev.ServiceHealth
+			}
+			if wkErr != nil {
+				workloadHealth = prev.WorkloadHealth
+			}
+		}
 	}
 
-	// Store in cache
 	cachedData := &models.CachedHealthData{
 		AppHealth:      appHealth,
 		Cluster:        cluster,
 		ComputedAt:     queryTime,
-		Namespace:      namespace,
 		Duration:       duration,
+		Namespace:      namespace,
 		ServiceHealth:  serviceHealth,
 		WorkloadHealth: workloadHealth,
 	}
