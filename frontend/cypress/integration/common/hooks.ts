@@ -1,6 +1,6 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 import { discoverKialiRuntimeInfo, enableKialiCaching } from './kiali-config';
-import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
+import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -197,7 +197,6 @@ Before({ tags: '@core-caching' }, () => {
         }
 
         enableKialiCaching(info);
-        waitForKialiApiReady();
         cy.then(() => {
           Cypress.env('CACHING_ENABLED', true);
         });
