@@ -163,3 +163,126 @@ func TestResolveRejectsMaxLessThanMin(t *testing.T) {
 		t.Fatalf("expected error when max_version [TLSv1.2] is lower than min_version [TLSv1.3]")
 	}
 }
+
+func TestParseGroups(t *testing.T) {
+	tests := map[string]struct {
+		names    []string
+		expected []tls.CurveID
+		wantErr  bool
+	}{
+		"all valid names": {
+			names:    []string{"X25519", "secp256r1", "secp384r1", "secp521r1", "X25519MLKEM768"},
+			expected: []tls.CurveID{tls.X25519, tls.CurveP256, tls.CurveP384, tls.CurveP521, tls.X25519MLKEM768},
+		},
+		"nil input": {
+			names:    nil,
+			expected: nil,
+		},
+		"empty input": {
+			names:    []string{},
+			expected: nil,
+		},
+		"mixed valid and invalid skips invalid": {
+			names:    []string{"X25519", "BOGUS_GROUP", "secp256r1"},
+			expected: []tls.CurveID{tls.X25519, tls.CurveP256},
+		},
+		"all invalid returns error": {
+			names:   []string{"FAKE_GROUP", "ANOTHER_FAKE"},
+			wantErr: true,
+		},
+		"whitespace-only returns error": {
+			names:   []string{"  "},
+			wantErr: true,
+		},
+		"matching is case-sensitive": {
+			names:    []string{"x25519", "SECP256R1", "X25519"},
+			expected: []tls.CurveID{tls.X25519},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			groups, err := parseGroups(tc.names)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(groups) != len(tc.expected) {
+				t.Fatalf("expected %d groups, got %d: %v", len(tc.expected), len(groups), groups)
+			}
+			for i, g := range groups {
+				if g != tc.expected[i] {
+					t.Errorf("group[%d]: expected %d, got %d", i, tc.expected[i], g)
+				}
+			}
+		})
+	}
+}
+
+func TestResolveConfigWithGroups(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.TLSConfig.Source = config.TLSConfigSourceConfig
+	conf.Deployment.TLSConfig.Groups = []string{"X25519", "secp256r1"}
+
+	policy, err := Resolve(context.Background(), conf, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(policy.Groups) != 2 {
+		t.Fatalf("expected 2 groups, got %d", len(policy.Groups))
+	}
+}
+
+func TestResolveConfigWithGroupsTLS13(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.TLSConfig.Source = config.TLSConfigSourceConfig
+	conf.Deployment.TLSConfig.MinVersion = "TLSv1.3"
+	conf.Deployment.TLSConfig.Groups = []string{"X25519MLKEM768", "X25519"}
+
+	policy, err := Resolve(context.Background(), conf, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if policy.MinVersion != tls.VersionTLS13 {
+		t.Fatalf("expected TLS 1.3, got %x", policy.MinVersion)
+	}
+	if len(policy.Groups) != 2 {
+		t.Fatalf("expected 2 groups even in TLS1.3 mode, got %d", len(policy.Groups))
+	}
+}
+
+func TestPolicyFromProfileWithGroups(t *testing.T) {
+	profile := &configv1.TLSProfileSpec{
+		MinTLSVersion: configv1.VersionTLS12,
+		Ciphers:       []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+		Groups:        []configv1.TLSGroup{"X25519", "secp256r1", "secp384r1"},
+	}
+
+	policy, err := policyFromProfile(profile, config.TLSConfigSourceAuto)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(policy.Groups) != 3 {
+		t.Fatalf("expected 3 groups, got %d", len(policy.Groups))
+	}
+}
+
+func TestPolicyFromProfileWithNilGroups(t *testing.T) {
+	profile := &configv1.TLSProfileSpec{
+		MinTLSVersion: configv1.VersionTLS12,
+		Ciphers:       []string{"TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+	}
+
+	policy, err := policyFromProfile(profile, config.TLSConfigSourceAuto)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if policy.Groups != nil {
+		t.Fatalf("expected nil groups for profile without groups, got %v", policy.Groups)
+	}
+}
