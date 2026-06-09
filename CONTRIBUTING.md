@@ -43,6 +43,10 @@ See the [Style Guide](./STYLE_GUIDE.adoc) about getting your code in style.
 
 If you use AI tools (such as GitHub Copilot, ChatGPT, Claude, Cursor, or similar) to assist with your contributions, please review the [AI Policy](./AI_POLICY.md) for guidelines on responsible use, disclosure requirements, and quality standards.
 
+### Commit Signing
+
+All repositories in the Kiali organization require commits to be cryptographically signed. Before submitting changes to any Kiali repo, make sure your git environment is configured to sign commits. See [COMMIT-SIGNING-SETUP.md](./COMMIT-SIGNING-SETUP.md) for step-by-step instructions.
+
 ### Submitting changes
 
 Once the issue has been agreed upon and developed, you can send a pull-request.
