@@ -178,14 +178,18 @@ Before({ tags: '@core-caching' }, () => {
   }
 
   // Detect both caches enabled. Operator path returns JSON, Helm returns YAML.
+  // The regex must match "enabled: true" only within the immediate cache block,
+  // not an unrelated "enabled: true" elsewhere in the config.
   const bothCachesEnabled = (text: string, json: boolean): boolean => {
     if (json) {
+      // JSON: "graph_cache": { ... "enabled": true ... } — match within the same braces
       return (
-        /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
-        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+        /"graph_cache"\s*:\s*\{[^}]*"enabled"\s*:\s*true/.test(text) &&
+        /"health_cache"\s*:\s*\{[^}]*"enabled"\s*:\s*true/.test(text)
       );
     }
-    return /graph_cache:[\s\S]*?enabled:\s*true/.test(text) && /health_cache:[\s\S]*?enabled:\s*true/.test(text);
+    // YAML: "enabled: true" must appear on the next indented line after the cache key
+    return /graph_cache:\s*\n\s+enabled:\s*true/.test(text) && /health_cache:\s*\n\s+enabled:\s*true/.test(text);
   };
 
   cy.task('log', '[CACHING_HOOK] Calling discoverKialiRuntimeInfo()...');
