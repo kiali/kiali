@@ -597,7 +597,7 @@ Then('the user sees the waypoint attribute', () => {
 });
 
 Then('the proxy status is {string}', (status: string) => {
-  cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
+  cy.get('[data-test=workload-details-card]').find(`span[class*="icon-${status}"]`).should('be.visible');
 });
 
 Then(
@@ -639,10 +639,10 @@ Then("the {string} subtab doesn't exist", (subtab: string) => {
 
 Then('validates Services data', () => {
   cy.get('[data-test="enrolled-data-title"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', 'productpage');
-  cy.get('[role="grid"]').should('be.visible').get('#pfbadge-S').should('exist');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', 'bookinfo');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', 'namespace');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', 'productpage');
+  cy.get('[role="grid"]').should('be.visible').find('#pfbadge-S').should('exist');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', 'namespace');
 });
 
 Then(
@@ -650,28 +650,28 @@ Then(
   (rows: number, workload: string, ns: string, label: string, badge: string) => {
     cy.get('[data-test="enrolled-data-title"]').should('be.visible');
     cy.get('table tbody tr').should('have.length', rows);
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', workload);
-    cy.get('[role="grid"]').should('be.visible').get(`#${badge}`).should('exist');
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', ns);
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', label);
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', workload);
+    cy.get('[role="grid"]').should('be.visible').find(`#${badge}`).should('exist');
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', ns);
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', label);
   }
 );
 
 Then('validates waypoint Info data for {string}', (type: string) => {
   cy.get('[data-test=waypointfor-title]').should('exist').and('contain', type);
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=RDS]').and('contain', 'IGNORED');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="RDS"]').should('contain', 'IGNORED');
 });
 
 When('the user validates the Ztunnel tab for the {string} namespace', (namespace: string) => {
   openTab('Ztunnel');
   cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Waypoint]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Service VIP"]').should('be.visible');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Waypoint"]');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
   cy.get('#ztunnel-details').should('be.visible').contains('Workloads').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Node]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Pod Name"]').should('be.visible');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Node"]');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
   // Validate filters in the Namespace column
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'Namespace').click();

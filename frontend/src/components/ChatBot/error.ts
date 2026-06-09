@@ -1,5 +1,5 @@
 import { ErrorType } from 'types/Chatbot';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 
 export type FetchError = {
   json?: {
