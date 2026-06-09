@@ -342,14 +342,13 @@ func parseCipherSuites(names []string) ([]uint16, error) {
 // This map must be maintained statically and updated when the Go version adds
 // new key exchange mechanisms.
 var groupMap = map[string]tls.CurveID{
-	"X25519":         tls.X25519,
-	"secp256r1":      tls.CurveP256,
-	"secp384r1":      tls.CurveP384,
-	"secp521r1":      tls.CurveP521,
-	"X25519MLKEM768": tls.X25519MLKEM768,
-	// TODO: Uncomment when Go is upgraded to 1.26+ (see https://github.com/kiali/kiali/issues/9812)
-	// "SecP256r1MLKEM768":  tls.SecP256r1MLKEM768,
-	// "SecP384r1MLKEM1024": tls.SecP384r1MLKEM1024,
+	"X25519":             tls.X25519,
+	"secp256r1":          tls.CurveP256,
+	"secp384r1":          tls.CurveP384,
+	"secp521r1":          tls.CurveP521,
+	"X25519MLKEM768":     tls.X25519MLKEM768,
+	"SecP256r1MLKEM768":  tls.SecP256r1MLKEM768,
+	"SecP384r1MLKEM1024": tls.SecP384r1MLKEM1024,
 }
 
 // parseGroups converts TLS group names to Go's crypto/tls CurveID values.
