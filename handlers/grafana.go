@@ -19,7 +19,7 @@ func GetGrafanaInfo(conf *config.Config, grafanaService *grafana.Service) http.H
 			return
 		}
 
-		info, code, err := grafanaService.Info(r.Context(), grafana.DashboardSupplier)
+		info, code, err := grafanaService.Info(r.Context())
 		if err != nil {
 			log.Error(err)
 			RespondWithError(w, code, err.Error())

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,24 +24,54 @@ import (
 // Service provides discovery and info about Grafana.
 type Service struct {
 	conf                *config.Config
+	dashboardSupplier   DashboardSupplierFunc
 	homeClusterSAClient kubernetes.ClientInterface
-	routeLock           sync.RWMutex
-	routeURL            *string
+	// httpClient is non-nil only when Grafana is enabled and auth type is OAuth2. It holds a
+	// long-lived client whose transport wraps an oauth2RoundTripper, caching the bearer token
+	// across requests. All other auth types use the per-request httputil.HttpGet path instead.
+	httpClient *http.Client
+	routeLock  sync.RWMutex
+	routeURL   *string
 }
 
 // NewService creates a new Grafana service.
-func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) *Service {
+func NewService(conf *config.Config, homeClusterSAClient kubernetes.ClientInterface) (*Service, error) {
 	s := &Service{
 		conf:                conf,
 		homeClusterSAClient: homeClusterSAClient,
 	}
+
+	grafanaCfg := conf.ExternalServices.Grafana
+	if grafanaCfg.Enabled && grafanaCfg.Auth.Type == config.AuthTypeOAuth2 {
+		auth := grafanaCfg.Auth
+		roundTripper := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				KeepAlive: 30 * time.Second,
+				Timeout:   30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout: 10 * time.Second,
+		}
+		transport, err := httputil.CreateTransport(conf, &auth, roundTripper, httputil.DefaultTimeout, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Grafana HTTP transport: %w", err)
+		}
+		s.httpClient = &http.Client{Transport: transport, Timeout: 10 * time.Second}
+	}
+
+	s.dashboardSupplier = s.findDashboard
 
 	routeURL := s.discover(context.TODO())
 	if routeURL != "" {
 		s.routeURL = &routeURL
 	}
 
-	return s
+	return s, nil
+}
+
+// SetDashboardSupplier exists for test injection; production code always uses the supplier set by NewService.
+func (s *Service) SetDashboardSupplier(supplier DashboardSupplierFunc) {
+	s.dashboardSupplier = supplier
 }
 
 func (s *Service) URL(ctx context.Context) string {
@@ -79,8 +111,6 @@ func (s *Service) discover(ctx context.Context) string {
 }
 
 type DashboardSupplierFunc func(string, string, *config.Auth) ([]byte, int, error)
-
-var DashboardSupplier = findDashboard
 
 func ParseUrl(ctx context.Context, internalURL string, homeClusterSAClient kubernetes.ClientInterface) (string, error) {
 	parsedURL, err := url.Parse(internalURL)
@@ -126,7 +156,7 @@ func discoverServiceURL(ctx context.Context, ns, service string, homeClusterSACl
 }
 
 // Info returns the Grafana URL and other info, the HTTP status code (int) and eventually an error
-func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierFunc) (*models.GrafanaInfo, int, error) {
+func (s *Service) Info(ctx context.Context) (*models.GrafanaInfo, int, error) {
 	grafanaConfig := s.conf.ExternalServices.Grafana
 	if !grafanaConfig.Enabled {
 		return nil, http.StatusNoContent, nil
@@ -140,7 +170,7 @@ func (s *Service) Info(ctx context.Context, dashboardSupplier DashboardSupplierF
 	// Call Grafana REST API to get dashboard urls
 	links := []models.ExternalLink{}
 	for _, dashboardConfig := range grafanaConfig.Dashboards {
-		dashboardPath, err := getDashboardPath(ctx, dashboardConfig.Name, conn, dashboardSupplier)
+		dashboardPath, err := getDashboardPath(ctx, dashboardConfig.Name, conn, s.dashboardSupplier)
 		if err != nil {
 			return nil, http.StatusServiceUnavailable, err
 		}
@@ -187,7 +217,7 @@ func (s *Service) Links(ctx context.Context, linksSpec []dashboards.MonitoringDa
 		zl.Trace().Msgf("Skip checking Grafana links as Grafana is not configured")
 		return nil, 0, nil
 	}
-	return getGrafanaLinks(ctx, connectionInfo, linksSpec, DashboardSupplier)
+	return getGrafanaLinks(ctx, connectionInfo, linksSpec, s.dashboardSupplier)
 }
 
 // VersionURL returns the Grafana URL that can be used to obtain the Grafana build information that includes its version.
@@ -329,7 +359,11 @@ func getDashboardPath(ctx context.Context, name string, conn grafanaConnectionIn
 		return "", nil
 	}
 
-	fullPath := dashPath.(string)
+	fullPath, ok := dashPath.(string)
+	if !ok {
+		zl.Warn().Msgf("URL field in Grafana dashboard is not a string for search pattern '%s'", name)
+		return "", nil
+	}
 	if fullPath != "" {
 		// Dashboard path might be an absolute URL (hence starting with cfg.URL) or a relative one, depending on grafana's "GF_SERVER_SERVE_FROM_SUB_PATH"
 		if !strings.HasPrefix(fullPath, conn.baseExternalURL) {
@@ -340,12 +374,27 @@ func getDashboardPath(ctx context.Context, name string, conn grafanaConnectionIn
 	return fullPath + conn.externalURLParams, nil
 }
 
-func findDashboard(url, searchPattern string, auth *config.Auth) ([]byte, int, error) {
-	urlParts := strings.Split(url, "?")
+func (s *Service) findDashboard(apiURL, searchPattern string, auth *config.Auth) ([]byte, int, error) {
+	urlParts := strings.Split(apiURL, "?")
 	query := strings.TrimSuffix(urlParts[0], "/") + "/api/search?query=" + searchPattern
 	if len(urlParts) > 1 {
 		query = query + "&" + urlParts[1]
 	}
+
+	if s.httpClient != nil {
+		req, err := http.NewRequest(http.MethodGet, query, nil)
+		if err != nil {
+			return nil, 0, err
+		}
+		resp, err := s.httpClient.Do(req)
+		if err != nil {
+			return nil, 0, err
+		}
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		return body, resp.StatusCode, err
+	}
+
 	resp, code, _, err := httputil.HttpGet(query, auth, time.Second*10, nil, nil, config.Get())
 	return resp, code, err
 }

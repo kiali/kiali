@@ -228,7 +228,8 @@ V/InYncUvcXt0M4JJSUJi/u6VBKSYYDIHt3mk9Le2qlMQuHkOQ1ZcuEOM2CU/KtO
 	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	layer := business.NewLayerBuilder(t, conf).WithClients(clients).WithCache(cache).WithDiscovery(discovery).Build()
-	persesSvc := perses.NewService(conf, primaryClient)
+	persesSvc, err := perses.NewService(conf, primaryClient)
+	require.NoError(err)
 
 	meshDef, err := discovery.Mesh(context.TODO())
 	require.NoError(err)

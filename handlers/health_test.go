@@ -349,7 +349,8 @@ func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*ht
 	cpm := &business.FakeControlPlaneMonitor{}
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), kialiCache, conf)
 	traceLoader := func() tracing.ClientInterface { return nil }
-	grafanaService := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	grafanaService, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
 
 	handler := ClusterHealth(conf, kialiCache, cf, prom, traceLoader, discovery, cpm, grafanaService)
 	mr := mux.NewRouter()

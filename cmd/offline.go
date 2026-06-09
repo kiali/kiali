@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/frontend"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -171,12 +172,18 @@ This mode allows you to analyze pre-collected data without requiring a live clus
 
 			promClient := prometheus.NewOfflineClient(offlineDataPath, &manifest)
 
+			grafanaSvc, err := grafana.NewService(conf, clientFactory.GetSAHomeClusterClient())
+			if err != nil {
+				return fmt.Errorf("failed to create Grafana service: %w", err)
+			}
+
 			kialiServer, err := server.NewServer(
 				ctx,
 				nil, // controlPlaneMonitor
 				clientFactory,
 				kialiCache,
 				conf,
+				grafanaSvc,
 				promClient,    // prom
 				tracingLoader, // traceClientLoader
 				discovery,
