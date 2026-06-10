@@ -1,6 +1,6 @@
 import { Before, After } from '@badeball/cypress-cucumber-preprocessor';
 import { discoverKialiRuntimeInfo, enableKialiCaching } from './kiali-config';
-import { waitForKialiApiReady, waitForResourceDeletion } from './transition';
+import { waitForResourceDeletion } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
@@ -159,7 +159,10 @@ Before({ tags: '@loggers-app' }, () => {
 // be the LAST tag group in composite cypress:run / cypress:run:junit
 // scripts in package.json to avoid affecting other suites.
 Before({ tags: '@core-caching' }, () => {
+  cy.task('log', '[CACHING_HOOK] Before @core-caching hook ENTERED');
+
   if (Cypress.env('CACHING_ENABLED')) {
+    cy.task('log', '[CACHING_HOOK] CACHING_ENABLED already set — returning early');
     return;
   }
 
@@ -167,59 +170,91 @@ Before({ tags: '@core-caching' }, () => {
   // requested tag filter. Otherwise this scenario was matched by another tag
   // (e.g. @smoke) and caching infrastructure isn't relevant.
   const tags = (Cypress.env('TAGS') ?? '') as string;
+  cy.task('log', `[CACHING_HOOK] TAGS env = "${tags}"`);
   if (!tags.includes('@core-caching')) {
+    cy.task('log', '[CACHING_HOOK] TAGS does not include @core-caching — skipping setup, setting CACHING_ENABLED');
     Cypress.env('CACHING_ENABLED', true);
     return;
   }
 
   // Detect both caches and health status metric enabled. Operator path returns JSON, Helm returns YAML.
+  // The regex must match "enabled: true" only within the immediate cache block,
+  // not an unrelated "enabled: true" elsewhere in the config.
   const bothCachesEnabled = (text: string, json: boolean): boolean => {
     if (json) {
+      // JSON: "graph_cache": { ... "enabled": true ... } — match within the same braces
       return (
-        /"graph_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
-        /"health_cache"[\s\S]*?"enabled"\s*:\s*true/.test(text) &&
-        /"health_status"[\s\S]*?"enabled"\s*:\s*true/.test(text)
+        /"graph_cache"\s*:\s*\{[^}]*"enabled"\s*:\s*true/.test(text) &&
+        /"health_cache"\s*:\s*\{[^}]*"enabled"\s*:\s*true/.test(text) &&
+        /"health_status"\s*:\s*\{[^}]*"enabled"\s*:\s*true/.test(text)
       );
     }
+    // YAML: "enabled: true" must appear on the next indented line after the cache key
     return (
-      /graph_cache:[\s\S]*?enabled:\s*true/.test(text) &&
-      /health_cache:[\s\S]*?enabled:\s*true/.test(text) &&
-      /health_status:[\s\S]*?enabled:\s*true/.test(text)
+      /graph_cache:\s*\n\s+enabled:\s*true/.test(text) &&
+      /health_cache:\s*\n\s+enabled:\s*true/.test(text) &&
+      /health_status:\s*\n\s+enabled:\s*true/.test(text)
     );
   };
 
+  cy.task('log', '[CACHING_HOOK] Calling discoverKialiRuntimeInfo()...');
   discoverKialiRuntimeInfo().then(info => {
+    cy.task(
+      'log',
+      `[CACHING_HOOK] Discovered Kiali: deployment=${info.deploymentName}, namespace=${info.namespace}, configMap=${info.configMapName}`
+    );
     cy.exec(
       `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
       { failOnNonZeroExit: false }
     ).then(result => {
       const primaryResource = result.stdout.trim();
+      cy.task(
+        'log',
+        `[CACHING_HOOK] operator-sdk/primary-resource annotation = "${primaryResource}" (code=${result.code})`
+      );
 
       const checkDone = (configText: string, isJson: boolean): void => {
-        if (bothCachesEnabled(configText, isJson)) {
+        const alreadyEnabled = bothCachesEnabled(configText, isJson);
+        cy.task(
+          'log',
+          `[CACHING_HOOK] bothCachesEnabled(json=${isJson}) = ${alreadyEnabled}, configText length = ${configText.length}`
+        );
+        if (configText.length < 500) {
+          cy.task('log', `[CACHING_HOOK] configText = ${configText}`);
+        } else {
+          cy.task('log', `[CACHING_HOOK] configText (first 500 chars) = ${configText.substring(0, 500)}`);
+        }
+
+        if (alreadyEnabled) {
+          cy.task('log', '[CACHING_HOOK] Caching already enabled — no restart needed');
           Cypress.env('CACHING_ENABLED', true);
           return;
         }
 
+        cy.task('log', '[CACHING_HOOK] Caching NOT enabled — calling enableKialiCaching()...');
         enableKialiCaching(info);
-        waitForKialiApiReady();
         cy.then(() => {
+          cy.task('log', '[CACHING_HOOK] enableKialiCaching() complete — setting CACHING_ENABLED');
           Cypress.env('CACHING_ENABLED', true);
         });
       };
 
       if (primaryResource) {
         const parts = primaryResource.split('/');
+        cy.task('log', `[CACHING_HOOK] Operator path: kubectl get kiali ${parts[1]} -n ${parts[0]}`);
         cy.exec(`kubectl get kiali ${parts[1]} -n ${parts[0]} -o jsonpath="{.spec}"`, {
           failOnNonZeroExit: false
         }).then(crResult => {
+          cy.task('log', `[CACHING_HOOK] Kiali CR spec fetch: code=${crResult.code}, stderr="${crResult.stderr}"`);
           checkDone(crResult.stdout, true);
         });
       } else {
+        cy.task('log', `[CACHING_HOOK] Helm path: kubectl get configmap ${info.configMapName} -n ${info.namespace}`);
         cy.exec(
           `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}"`,
           { failOnNonZeroExit: false }
         ).then(cmResult => {
+          cy.task('log', `[CACHING_HOOK] ConfigMap fetch: code=${cmResult.code}, stderr="${cmResult.stderr}"`);
           checkDone(cmResult.stdout, false);
         });
       }
