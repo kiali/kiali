@@ -70,6 +70,9 @@ fi
 if [ "$_CMD" = "create-ca" ]; then
   echo "Creating CA for keycloak. Files will be stored at '${KEYCLOAK_CERTS_DIR}'"
 
+  # Ensure the output directory exists; openssl does not create parent dirs.
+  mkdir -p "${KEYCLOAK_CERTS_DIR}"
+
   # Generate root CA for keycloak/oidc.
   openssl genrsa -out "${KEYCLOAK_CERTS_DIR}"/root-ca-key.pem 2048
 

@@ -16,6 +16,9 @@ infomsg() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/env.sh "$@"
+source ${SCRIPT_DIR}/../functions.sh
+# Sourced for install_ambient_on_cluster when --ambient true is passed.
+source ${SCRIPT_DIR}/install-ambient-multicluster.sh "$@"
 
 # The names of each cluster
 if [ "${CLUSTER1_NAME}" == "east" ]; then
@@ -215,7 +218,12 @@ source ${SCRIPT_DIR}/setup-ca.sh
 
 echo "==== INSTALL ISTIO ON CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-install_istio --patch-file "${MC_MESH_YAML}" -a "prometheus jaeger"
+if [ "${AMBIENT}" == "true" ]; then
+  ensure_gateway_api_crds "" "--context=${CLUSTER2_CONTEXT}"
+  install_ambient_on_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}" "${CLUSTER2_NAME}" "${NETWORK2_ID}" "${SAIL}"
+else
+  install_istio --patch-file "${MC_MESH_YAML}" -a "prometheus jaeger"
+fi
 
 echo "==== INSTALL ADDONS ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 ADDONS="prometheus grafana jaeger"
@@ -256,5 +264,11 @@ fi
 if [ "${BOOKINFO_ENABLED}" == "true" ]; then
   switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
   echo "Installing bookinfo demo in namespace [${BOOKINFO_NAMESPACE}] on [${CLUSTER2_CONTEXT}]"
-  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}" -tg --mongo
+  # In ambient mode, skip sidecar injection; install-bookinfo-demo.sh will apply
+  # the istio.io/dataplane-mode=ambient label instead.
+  bookinfo_ambient_arg=""
+  if [ "${AMBIENT}" == "true" ]; then
+    bookinfo_ambient_arg="-ai false"
+  fi
+  source ${SCRIPT_DIR}/../install-bookinfo-demo.sh --client-exe "${CLIENT_EXE}" --istio-dir "${ISTIO_DIR}" --istio-namespace "${ISTIO_NAMESPACE}" --namespace "${BOOKINFO_NAMESPACE}" --kube-context "${CLUSTER2_CONTEXT}" ${bookinfo_ambient_arg} -tg --mongo
 fi
