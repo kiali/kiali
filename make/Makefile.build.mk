@@ -132,14 +132,16 @@ test-integration-controller: .ensure-envtest-bin-dir-exists .ensure-yq-exists
 # Lint targets
 #
 
+GOLANGCI_LINT_VERSION ?= v2.12.2
+GOLANGCI_LINT ?= $(shell ${GO} env GOPATH)/bin/golangci-lint
+
 ## lint-install: Installs golangci-lint
 lint-install:
-	curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(${GO} env GOPATH)/bin v2.12.2
+	${GO} install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
 
 ## lint: Runs golangci-lint
-# doc.go is ommited for linting, because it generates lots of warnings.
 lint:
-	golangci-lint run -c ./.github/workflows/config/.golangci.yml
+	${GOLANGCI_LINT} run
 
 # Assuming here that if the bin dir exists then the tools also exist inside of it.
 .ensure-envtest-bin-dir-exists: .ensure-envtest-exists
