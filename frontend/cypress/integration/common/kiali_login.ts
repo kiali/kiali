@@ -37,20 +37,22 @@ function submitLoginForm({ username, password }: { password: string; username: s
 }
 
 Given('all sessions are cleared', () => {
+  // Navigate to a neutral page first so subsequent commands don't
+  // collide with a leftover cross-origin OAuth page.
+  cy.window().then(win => {
+    win.location.href = 'about:blank';
+  });
   Cypress.session.clearAllSavedSessions();
   Cypress.session.clearCurrentSessionData();
 });
 
 Given('user opens base url', () => {
+  cy.clearCookie('openshift-session-token');
   cy.visit({ url: '/' });
   cy.log(auth_strategy);
-  cy.window().then(() => {
-    if (auth_strategy !== 'openshift') {
-      cy.log('Skipping login, Kiali is running with auth disabled');
-    }
-
-    cy.clearCookie('openshift-session-token');
-  });
+  if (auth_strategy !== 'openshift') {
+    cy.log('Skipping login, Kiali is running with auth disabled');
+  }
 });
 
 Given('user clicks my_htpasswd_provider', () => {
@@ -107,9 +109,18 @@ Then('user see console in URL', () => {
 
 Then('user sees the {string} phrase displayed', (phrase: string) => {
   if (auth_strategy === 'openshift') {
-    cy.contains(phrase).should('be.visible');
-
-    cy.url().should('include', 'login');
+    discoverOAuthOrigin().then(origin => {
+      const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
+      if (origin !== baseOrigin) {
+        cy.origin(origin, { args: { phrase } }, ({ phrase }) => {
+          cy.contains(phrase).should('be.visible');
+          cy.url().should('include', 'login');
+        });
+      } else {
+        cy.contains(phrase).should('be.visible');
+        cy.url().should('include', 'login');
+      }
+    });
   }
 });
 
