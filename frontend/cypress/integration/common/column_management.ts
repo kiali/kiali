@@ -9,7 +9,7 @@ When('user clicks the {string} button with test id {string}', (buttonText: strin
   cy.get('#filter-selection', { timeout: 10000 }).should('be.visible');
 
   // Wait for the button to be visible and clickable
-  cy.get(`[data-test-id="${testId}"]`, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
+  cy.getBySel(testId, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
 });
 
 Then('the column management modal should be visible', () => {
@@ -26,41 +26,41 @@ Then('the modal title should be {string}', (expectedTitle: string) => {
 
 Then('the {string} column checkbox should be disabled in the modal', (columnName: string) => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    // Find the checkbox associated with the Name column
-    // The checkbox might be in a list item or table row
-    cy.contains(columnName).closest('li, tr, div[role="row"]').find('input[type="checkbox"]').should('be.disabled');
+    // Convert column name to key format (lowercase) - PatternFly ListManager uses column.key for data-testid
+    const columnKey = columnName.toLowerCase();
+    cy.get(`[data-testid="column-check-${columnKey}"]`).should('be.disabled');
   });
 });
 
 Then('the {string} column should be checked in the modal', (columnName: string) => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains(columnName).closest('li, tr, div[role="row"]').find('input[type="checkbox"]').should('be.checked');
+    // Convert column name to key format (lowercase) - PatternFly ListManager uses column.key for data-testid
+    const columnKey = columnName.toLowerCase();
+    cy.get(`[data-testid="column-check-${columnKey}"]`).should('be.checked');
   });
 });
 
 When('user unchecks the {string} column in the modal', (columnName: string) => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains(columnName)
-      .closest('li, tr, div[role="row"]')
-      .find('input[type="checkbox"]')
-      .then($checkbox => {
-        if ($checkbox.is(':checked') && !$checkbox.is(':disabled')) {
-          cy.wrap($checkbox).click({ force: true });
-        }
-      });
+    // Convert column name to key format (lowercase) - PatternFly ListManager uses column.key for data-testid
+    const columnKey = columnName.toLowerCase();
+    cy.get(`[data-testid="column-check-${columnKey}"]`).then($checkbox => {
+      if ($checkbox.is(':checked') && !$checkbox.is(':disabled')) {
+        cy.wrap($checkbox).click({ force: true });
+      }
+    });
   });
 });
 
 When('user checks the {string} column in the modal', (columnName: string) => {
   cy.get(COLUMN_MANAGEMENT_MODAL).within(() => {
-    cy.contains(columnName)
-      .closest('li, tr, div[role="row"]')
-      .find('input[type="checkbox"]')
-      .then($checkbox => {
-        if (!$checkbox.is(':checked') && !$checkbox.is(':disabled')) {
-          cy.wrap($checkbox).click({ force: true });
-        }
-      });
+    // Convert column name to key format (lowercase) - PatternFly ListManager uses column.key for data-testid
+    const columnKey = columnName.toLowerCase();
+    cy.get(`[data-testid="column-check-${columnKey}"]`).then($checkbox => {
+      if (!$checkbox.is(':checked') && !$checkbox.is(':disabled')) {
+        cy.wrap($checkbox).click({ force: true });
+      }
+    });
   });
 });
 

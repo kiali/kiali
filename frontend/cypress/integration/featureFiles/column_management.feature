@@ -96,6 +96,7 @@ Feature: Column Management in List Pages
     When user refreshes the page
     Then the "Namespace" column should not be visible in the table
 
+  @bookinfo-app
   @core-1
   @offline
   Scenario: Services list - Name column is not hideable
@@ -108,6 +109,7 @@ Feature: Column Management in List Pages
     Then the "Name" column should be visible in the table
     And the "Health" column should not be visible in the table
 
+  @bookinfo-app
   @core-1
   @offline
   Scenario: Workloads list - Name column is not hideable
