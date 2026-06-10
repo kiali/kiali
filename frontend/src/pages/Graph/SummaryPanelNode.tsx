@@ -19,6 +19,7 @@ import {
   ExpandableSection,
   MenuToggle,
   MenuToggleElement,
+  SearchInput,
   Tab
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
@@ -48,10 +49,12 @@ import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
+  searchValue: string;
 };
 
 const defaultState: SummaryPanelNodeState = {
-  isActionOpen: false
+  isActionOpen: false,
+  searchValue: ''
 };
 
 type ReduxProps = {
@@ -108,6 +111,34 @@ const nodeInfoStyle = kialiStyle({
 
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
+const dropdownMenuStyle = kialiStyle({
+  maxHeight: '400px',
+  overflowY: 'auto'
+});
+
+const searchBoxStyle = kialiStyle({
+  padding: '0.5rem',
+  borderBottom: '1px solid var(--pf-v6-global--BorderColor--100)',
+  position: 'sticky',
+  top: 0,
+  backgroundColor: 'var(--pf-v6-global--BackgroundColor--100)',
+  zIndex: 1
+});
+
+const groupLabelStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 700,
+  color: 'var(--pf-v6-global--Color--200)',
+  padding: '0.5rem 1rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px'
+});
+
+const dividerStyle = kialiStyle({
+  margin: '0.5rem 0',
+  borderTop: '1px solid var(--pf-v6-global--BorderColor--100)'
+});
+
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -148,24 +179,43 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       this.props.tracingState.info.integration;
 
     const options = getOptions(nodeData);
-    const items = [
-      <DropdownGroup key="show" label="Show" className={groupMenuStyle}>
-        {options.map((o, i) => {
-          return (
-            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-              {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
-            </DropdownItem>
-          );
-        })}
-      </DropdownGroup>
-    ];
+    const searchLower = this.state.searchValue.toLowerCase();
+
+    // Filter options based on search
+    const filteredOptions = options.filter(o => o.text.toLowerCase().includes(searchLower));
+
+    const items: React.ReactNode[] = [];
+
+    // Only show "Show" group if there are filtered options
+    if (filteredOptions.length > 0) {
+      items.push(
+        <React.Fragment key="show-group">
+          <div className={groupLabelStyle}>Show</div>
+          <DropdownGroup key="show" className={groupMenuStyle}>
+            {filteredOptions.map((o, i) => {
+              return (
+                <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
+                  {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
+                </DropdownItem>
+              );
+            })}
+          </DropdownGroup>
+        </React.Fragment>
+      );
+    }
 
     if (nodeType === NodeType.SERVICE) {
+      // Add divider between Show and Create/Delete sections if Show group exists
+      if (filteredOptions.length > 0) {
+        items.push(<div key="divider" className={dividerStyle} />);
+      }
+
       if (this.props.serviceDetails === undefined) {
-        items.push(<LoadingWizardActionsDropdownGroup />);
+        items.push(<LoadingWizardActionsDropdownGroup key="loading" />);
       } else if (this.props.serviceDetails !== null) {
         items.push(
           <ServiceWizardActionsDropdownGroup
+            key="wizard-actions"
             virtualServices={this.props.serviceDetails.virtualServices ?? []}
             destinationRules={this.props.serviceDetails.destinationRules ?? []}
             k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes ?? []}
@@ -173,6 +223,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
+            searchValue={this.state.searchValue}
           />
         );
       }
@@ -237,7 +288,24 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   onOpenChange={(isOpen: boolean) => this.onToggleActions(isOpen)}
                   popperProps={{ position: 'right', enableFlip: true }}
                 >
-                  <DropdownList>{items}</DropdownList>
+                  <DropdownList className={dropdownMenuStyle}>
+                    <div className={searchBoxStyle}>
+                      <SearchInput
+                        placeholder="Search actions..."
+                        value={this.state.searchValue}
+                        onChange={(_event, value) => this.setState({ searchValue: value })}
+                        onClear={() => this.setState({ searchValue: '' })}
+                        aria-label="Search menu items"
+                      />
+                    </div>
+                    {items.length > 0 ? (
+                      items
+                    ) : (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--pf-v6-global--Color--200)' }}>
+                        No actions found
+                      </div>
+                    )}
+                  </DropdownList>
                 </Dropdown>
               )}
 
@@ -392,7 +460,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
   }
 
   private onToggleActions = (isOpen: boolean): void => {
-    this.setState({ isActionOpen: isOpen });
+    this.setState({
+      isActionOpen: isOpen,
+      // Reset search when closing dropdown
+      searchValue: isOpen ? this.state.searchValue : ''
+    });
 
     if (this.props.onKebabToggled) {
       this.props.onKebabToggled(isOpen);
