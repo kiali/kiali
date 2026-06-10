@@ -19,8 +19,8 @@ import {
   ExpandableSection,
   MenuToggle,
   MenuToggleElement,
-  SearchInput,
-  Tab
+  Tab,
+  TextInput
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
@@ -290,11 +290,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                 >
                   <DropdownList className={dropdownMenuStyle}>
                     <div className={searchBoxStyle}>
-                      <SearchInput
+                      <TextInput
+                        type="search"
                         placeholder="Search actions..."
                         value={this.state.searchValue}
                         onChange={(_event, value) => this.setState({ searchValue: value })}
-                        onClear={() => this.setState({ searchValue: '' })}
                         aria-label="Search menu items"
                       />
                     </div>
