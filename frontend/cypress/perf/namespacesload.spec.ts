@@ -6,17 +6,17 @@ describe('Namespaces performance tests', () => {
   });
 
   describe('Namespaces list page', () => {
-    let namespacesUrl: string;
+    let unhealthyNamespacesUrl: string;
     let namespacesUrlAllNamespaces: string;
 
     before(() => {
       cy.fixture('commonParams.json')
         .then(data => {
-          namespacesUrl = encodeURI(
-            `/console/namespaces?namespaces=${data.namespaces}&duration=${data.duration}&refresh=${data.refresh}`
+          unhealthyNamespacesUrl = encodeURI(
+            `/console/namespaces?duration=${data.duration}&refresh=${data.refresh}&health=Failure&health=Not+Ready&health=Degraded&opLabel=or`
           );
           namespacesUrlAllNamespaces = encodeURI(
-            `/console/namespaces?namespaces=${data.allNamespaces}&duration=${data.duration}&refresh=${data.refresh}`
+            `/console/namespaces?duration=${data.duration}&refresh=${data.refresh}`
           );
         })
         .as('data');
@@ -28,8 +28,12 @@ describe('Namespaces performance tests', () => {
       measureListsLoadTime('All Namespaces', Cypress.env(baselines).namespaceListAll, namespacesUrlAllNamespaces);
     });
 
-    it('Measures Selected Namespaces load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
-      measureListsLoadTime('Selected Namespaces', Cypress.env(baselines).namespaceListSelected, namespacesUrl);
+    it('Measures Unhealthy Namespaces load time', { defaultCommandTimeout: Cypress.env('timeout') }, () => {
+      measureListsLoadTime(
+        'Unhealthy Namespaces',
+        Cypress.env(baselines).namespaceListUnhealthy,
+        unhealthyNamespacesUrl
+      );
     });
   });
 });
