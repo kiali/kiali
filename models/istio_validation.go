@@ -298,6 +298,16 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Deployment exposing same port as Service not found",
 		Severity: WarningSeverity,
 	},
+	"serviceentries.multimatch": {
+		Code:     "KIA1202",
+		Message:  "More than one ServiceEntry for the same host and port",
+		Severity: WarningSeverity,
+	},
+	"serviceentries.port.protocol.conflict": {
+		Code:     "KIA1203",
+		Message:  "ServiceEntries have conflicting protocols for the same host and port",
+		Severity: WarningSeverity,
+	},
 	"serviceentries.workloadentries.addressmatch": {
 		Code:     "KIA1201",
 		Message:  "Missing one or more addresses from matching WorkloadEntries",
