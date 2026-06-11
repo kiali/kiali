@@ -39,7 +39,7 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 			}
 			protocol := strings.ToUpper(port.Protocol)
 			for _, host := range se.Spec.Hosts {
-				key := hostPortKey{Host: host, PortNumber: port.Number}
+				key := hostPortKey{Host: strings.ToLower(host), PortNumber: port.Number}
 				index[key] = append(index[key], sePortEntry{
 					Name:      se.Name,
 					Namespace: se.Namespace,
