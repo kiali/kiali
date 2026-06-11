@@ -79,19 +79,20 @@ func TestIstioList_ReturnsCompactYAML(t *testing.T) {
 	res, status := IstioList(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	out, ok := res.([]IstioListItem)
-	require.True(t, ok, "expected []IstioListItem output, got %T", res)
-	require.Len(t, out, 2)
+	result, ok := res.(IstioListResult)
+	require.True(t, ok, "expected IstioListResult output, got %T", res)
+	require.Equal(t, "east", result.Cluster)
+	require.Len(t, result.Items, 2)
 
 	// Validate items are present and compact
-	assert.Equal(t, "bookinfo", out[0].Namespace)
-	assert.NotEmpty(t, out[0].Name)
-	assert.NotEmpty(t, out[0].Group)
-	assert.NotEmpty(t, out[0].Version)
-	assert.NotEmpty(t, out[0].Kind)
+	assert.Equal(t, "bookinfo", result.Items[0].Namespace)
+	assert.NotEmpty(t, result.Items[0].Name)
+	assert.NotEmpty(t, result.Items[0].Group)
+	assert.NotEmpty(t, result.Items[0].Version)
+	assert.NotEmpty(t, result.Items[0].Kind)
 
 	// Default validation when validations cannot be found (e.g., in unit tests)
-	for _, item := range out {
+	for _, item := range result.Items {
 		assert.True(t, item.Validation.Valid)
 	}
 }
@@ -144,11 +145,11 @@ func TestIstioList_FilterByService(t *testing.T) {
 	res, status := IstioList(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	out, ok := res.([]IstioListItem)
-	require.True(t, ok, "expected []IstioListItem output, got %T", res)
+	result, ok := res.(IstioListResult)
+	require.True(t, ok, "expected IstioListResult output, got %T", res)
 
 	names := map[string]struct{}{}
-	for _, item := range out {
+	for _, item := range result.Items {
 		names[item.Name] = struct{}{}
 	}
 

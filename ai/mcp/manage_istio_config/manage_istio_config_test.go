@@ -567,9 +567,9 @@ func TestExecuteReadOnly_ListSuccess(t *testing.T) {
 	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
 	require.Equal(t, http.StatusOK, status)
 
-	items, ok := res.([]IstioListItem)
-	require.True(t, ok, "expected []IstioListItem, got %T", res)
-	assert.GreaterOrEqual(t, len(items), 2)
+	result, ok := res.(IstioListResult)
+	require.True(t, ok, "expected IstioListResult, got %T", res)
+	assert.GreaterOrEqual(t, len(result.Items), 2)
 }
 
 func TestExecuteReadOnly_GetSuccess(t *testing.T) {
