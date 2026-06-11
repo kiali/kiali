@@ -113,6 +113,52 @@ func TestFoundSharedK8sGateway(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestFoundSharedK8sGatewayWithMatchExpressions(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		IdentityDomain: "svc.cluster.local",
+		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
+			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(
+				data.CreateSharedListenerWithMatchExpressions("test", "host.com", 80, "http", "kubernetes.io/metadata.name", []string{"bookinfo"}),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}, "svc.cluster.local"),
+		Namespaces: models.Namespaces{data.CreateNamespaceWithLabels("bookinfo", map[string]string{"kubernetes.io/metadata.name": "bookinfo"})},
+	}
+
+	vals, valid := checker.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestNotSharedNSK8sGatewayWithMatchExpressionsError(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	checker := NoK8sGatewayChecker{
+		IdentityDomain: "svc.cluster.local",
+		K8sGRPCRoute: data.AddGatewayParentRefToGRPCRoute("sharedgw", "gwns",
+			data.CreateEmptyGRPCRoute("route", "bookinfo", []string{"bookinfo"})),
+		GatewayNames: kubernetes.K8sGatewayNames([]*k8s_networking_v1.Gateway{
+			data.AddListenerToK8sGateway(
+				data.CreateSharedListenerWithMatchExpressions("test", "host.com", 80, "http", "kubernetes.io/metadata.name", []string{"other-ns"}),
+				data.CreateEmptyK8sGateway("sharedgw", "gwns")),
+		}, "svc.cluster.local"),
+		Namespaces: models.Namespaces{data.CreateNamespaceWithLabels("bookinfo", map[string]string{"kubernetes.io/metadata.name": "bookinfo"})},
+	}
+
+	vals, valid := checker.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[0]))
+}
+
 func TestFoundSharedToAllK8sGateway(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()

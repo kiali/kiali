@@ -3,11 +3,13 @@ package k8shttproutes
 import (
 	"fmt"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 )
 
@@ -66,18 +68,31 @@ func CheckGateway(gwName, gwNs, routeNs, cluster string, gatewayNames map[string
 	return false
 }
 
-// If K8sGateway's allowedRoutes selector matches the labels of given namespace
+// IsGatewaySharedWithNS returns true if any listener on the Gateway allows
+// routes from the given namespace via allowedRoutes.namespaces. It supports
+// the full Kubernetes LabelSelector (both matchLabels and matchExpressions).
 func IsGatewaySharedWithNS(namespace string, cluster string, gw k8s_networking_v1.Gateway, nss models.Namespaces) bool {
 	ns := nss.GetNamespace(namespace, cluster)
 	if ns == nil {
 		return false
 	}
 	for _, l := range gw.Spec.Listeners {
-		if *l.AllowedRoutes.Namespaces.From == "All" ||
-			(*l.AllowedRoutes.Namespaces.From == "Selector" &&
-				l.AllowedRoutes.Namespaces.Selector != nil &&
-				labels.SelectorFromSet(labels.Set(l.AllowedRoutes.Namespaces.Selector.MatchLabels)).Matches(labels.Set(ns.Labels))) {
+		if l.AllowedRoutes == nil || l.AllowedRoutes.Namespaces == nil || l.AllowedRoutes.Namespaces.From == nil {
+			continue
+		}
+
+		if *l.AllowedRoutes.Namespaces.From == "All" {
 			return true
+		}
+		if *l.AllowedRoutes.Namespaces.From == "Selector" && l.AllowedRoutes.Namespaces.Selector != nil {
+			selector, err := meta_v1.LabelSelectorAsSelector(l.AllowedRoutes.Namespaces.Selector)
+			if err != nil {
+				log.Errorf("skipping invalid gateway allowedRoutes selector: %v", err)
+				continue
+			}
+			if selector.Matches(labels.Set(ns.Labels)) {
+				return true
+			}
 		}
 	}
 	return false
