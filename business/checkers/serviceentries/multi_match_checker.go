@@ -23,8 +23,8 @@ type hostPortKey struct {
 type sePortEntry struct {
 	Name      string
 	Namespace string
-	Protocol  string
 	PortIndex int
+	Protocol  string
 }
 
 func (m MultiMatchChecker) Check() models.IstioValidations {
