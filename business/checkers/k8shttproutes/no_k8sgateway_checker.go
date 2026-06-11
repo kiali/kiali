@@ -77,7 +77,11 @@ func IsGatewaySharedWithNS(namespace string, cluster string, gw k8s_networking_v
 		return false
 	}
 	for _, l := range gw.Spec.Listeners {
-		if *l.AllowedRoutes.Namespaces.From == "All" {
+    if l.AllowedRoutes == nil || l.AllowedRoutes.Namespaces == nil || l.AllowedRoutes.Namespaces.From == nil {
+        continue
+    }
+
+	if *l.AllowedRoutes.Namespaces.From == "All" {
 			return true
 		}
 		if *l.AllowedRoutes.Namespaces.From == "Selector" && l.AllowedRoutes.Namespaces.Selector != nil {
