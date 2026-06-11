@@ -11,7 +11,7 @@ Given('user clicks on admin', () => {
 Given('user logout successfully', () => {
   if (auth_strategy === 'openshift') {
     cy.intercept('**/api/logout').as('logout');
-    cy.contains('Logout').click();
+    cy.getBySel('user-logout').click();
   }
 });
 

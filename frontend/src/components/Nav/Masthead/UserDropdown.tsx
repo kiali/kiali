@@ -251,7 +251,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
             )}
             {showSessionTokenStats && canLogout && <Divider component="li" />}
             {canLogout && (
-              <DropdownItem key={'user_logout_option'} onClick={this.handleLogout}>
+              <DropdownItem data-test="user-logout" key={'user_logout_option'} onClick={this.handleLogout}>
                 {t('Logout')}
               </DropdownItem>
             )}
