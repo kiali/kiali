@@ -112,7 +112,10 @@ spec:
     global:
       remotePilotAddress: ${DISCOVERY_ADDRESS}
 EOF
-install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
+# The remote cluster has no local istiod (profile: remote). Install the Istio CR without
+# addons first so that Sail can reconcile and create the remote RBAC before create-remote-secret
+# runs (if istioctl creates the RBAC first, Sail loses ownership of those resources).
+install_istio -a "" --patch-file "${MC_WEST_YAML}" --wait "false"
 
 # We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
@@ -126,6 +129,19 @@ if [ "${MANAGE_KIND}" == "true" ]; then
     SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
 fi
 ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+
+# Once the remote secret is created, the primary's istiod connects to the remote cluster and
+# the remote Istio CR transitions to Ready. Only then is the Istio validating webhook on the
+# remote cluster functional. Wait for Ready, then install the prometheus addon directly.
+# Addons like prometheus may include Istio resources (e.g. PeerAuthentication) that would
+# fail if applied before the webhook is operational.
+kubectl --context="${CLUSTER2_CONTEXT}" wait --for=condition=Ready istios/default --timeout=5m
+istio_version=$(kubectl --context="${CLUSTER2_CONTEXT}" get istios default -o jsonpath='{.spec.version}')
+addon_version="${istio_version:1:4}"
+echo "Installing prometheus addon on remote cluster (Istio ${addon_version:-default})"
+curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${addon_version}/samples/addons/prometheus.yaml" | \
+  yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
+  kubectl apply --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" -f -
 
 helm install istio-eastwestgateway gateway \
   --repo https://istio-release.storage.googleapis.com/charts \
