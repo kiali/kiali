@@ -51,6 +51,13 @@ type IstioListItem struct {
 	Validation ValidationSummary `json:"validation"`
 }
 
+// IstioListResult wraps the list output in a JSON object so the MCP
+// structuredContent requirement (must be a JSON object/record) is satisfied.
+type IstioListResult struct {
+	Cluster string          `json:"cluster"`
+	Items   []IstioListItem `json:"items"`
+}
+
 type ValidationSummary struct {
 	Valid  bool                     `json:"valid"`
 	Checks []ValidationCheckSummary `json:"checks,omitempty"`
@@ -487,7 +494,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		return items[i].Name < items[j].Name
 	})
 
-	return items, http.StatusOK
+	return IstioListResult{Cluster: cluster, Items: items}, http.StatusOK
 }
 
 // matchesServiceHost checks if a host specification matches the service name.

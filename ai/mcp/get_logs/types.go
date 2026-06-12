@@ -1,5 +1,11 @@
 package get_logs
 
+// LogsResult wraps log output in a JSON object so the MCP structuredContent
+// requirement (must be a JSON object/record) is satisfied.
+type LogsResult struct {
+	Logs string `json:"logs"`
+}
+
 // GetLogsArgs are the supported input parameters. This is echoed back in the response for transparency.
 type GetLogsArgs struct {
 	ClusterName string `json:"cluster_name,omitempty"`
