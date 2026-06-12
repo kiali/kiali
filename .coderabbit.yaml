@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# Keep CodeRabbit aligned with the repository's shared AI guidance files
+# without duplicating those instructions here.
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+    - "AI_POLICY.md"
+    - "CONTRIBUTING.md"
+    - "STYLE_GUIDE.adoc"
+tone_instructions: "Be concise and pragmatic. Prioritize feedback related to scalability and long-term maintainability."
+reviews:
+  high_level_summary: false
+  review_status: false
+  poem: false
+  auto_review:
+    enabled: false
+  path_instructions:
+  - path: "frontend/public/locales/**/translation.json"
+    instructions: |
+      These files contain localization resources.
+      Do not comment on untranslated strings in this path.
+      Only flag malformed JSON, broken structure, duplicate keys,
+      or clearly invalid translation entries.
