@@ -1994,6 +1994,54 @@ make help
 
 ---
 
+## Creating Pull Requests
+
+> These steps require Kiali organization membership. Skip if you don't
+> have org access.
+
+Every PR must be added to the Kiali GitHub Project with the correct
+status and assignee.
+
+After creating a PR:
+
+1. **Set assignee:**
+
+```bash
+gh pr edit <PR_NUMBER> --repo <REPO> --add-assignee <USER>
+```
+
+2. **Add to project:**
+
+```bash
+gh project list --owner kiali --format json
+gh project item-add <PROJECT_NUMBER> --owner kiali --url <PR_URL> --format json
+```
+
+3. **Set the project status** based on PR state:
+   - **Draft PR**: set status to "In progress"
+   - **Ready for review PR**: set status to "In review"
+
+To set status, retrieve the field metadata and item ID, then update:
+
+```bash
+gh project field-list <PROJECT_NUMBER> --owner kiali --format json
+gh project item-edit \
+  --project-id <PROJECT_ID> \
+  --id <ITEM_ID> \
+  --field-id <STATUS_FIELD_ID> \
+  --single-select-option-id <OPTION_ID>
+```
+
+4. **Ask for reviewer(s):**
+
+Ask the user who should review the PR. Then request the chosen reviewers:
+
+```bash
+gh pr edit <PR_NUMBER> --repo <REPO> --add-reviewer <REVIEWER1> --add-reviewer <REVIEWER2>
+```
+
+---
+
 ## Important Reminders
 
 **Build Order:**
