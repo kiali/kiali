@@ -134,8 +134,10 @@ ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2
 # the remote Istio CR transitions to Ready. Only then is the Istio validating webhook on the
 # remote cluster functional. Wait for Ready before installing addons that may contain Istio
 # resources (e.g. PeerAuthentication in prometheus.yaml).
+# Using the default WAIT=true so that ensure_istiod_validating_webhook_cabundle also runs
+# and fixes any stale caBundle left by a previous installation on the remote cluster.
 kubectl --context="${CLUSTER2_CONTEXT}" wait --for=condition=Ready istios/default --timeout=5m
-install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}" --wait "false"
+install_istio -a "prometheus" --patch-file "${MC_WEST_YAML}"
 
 helm install istio-eastwestgateway gateway \
   --repo https://istio-release.storage.googleapis.com/charts \
