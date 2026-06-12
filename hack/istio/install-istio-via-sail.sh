@@ -431,11 +431,26 @@ if [ "${WAIT}" == "true" ]; then
     kubectl wait validatingwebhookconfiguration istiod-default-validator --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
   fi
 
-  # istiod patches the webhook caBundle early in its startup, before the webhook server is
-  # fully ready to accept connections. Wait for the istiod pod itself to be Ready so that
-  # subsequent kubectl applies that trigger the validating webhook do not get connection refused.
-  echo "Waiting for istiod pods to be ready to serve webhook requests..."
-  kubectl wait pods -n "${ISTIO_NAMESPACE}" -l app=istiod --for=condition=Ready --timeout=120s
+  # istiod patches the webhook caBundle early in its startup, before it is fully
+  # ready to accept connections. On older kubectl versions, `kubectl wait pods --for=condition=Ready`
+  # with a label selector can return 0 immediately when no pods match yet, so we use a
+  # direct endpoint check instead: this guarantees the istiod service has a live backend pod
+  # before any subsequent kubectl apply triggers the validating webhook.
+  echo "Waiting for istiod service endpoint to be available..."
+  for i in $(seq 1 60); do
+    ISTIOD_ENDPOINT=$(kubectl get endpoints/istiod -n "${ISTIO_NAMESPACE}" \
+      -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
+    if [ -n "${ISTIOD_ENDPOINT}" ]; then
+      echo "istiod service endpoint is available (${ISTIOD_ENDPOINT})"
+      break
+    fi
+    if [ "${i}" -eq 60 ]; then
+      echo "ERROR: istiod service endpoint did not become available in time"
+      exit 1
+    fi
+    echo "  Waiting for istiod endpoint (attempt ${i}/60)..."
+    sleep 5
+  done
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
