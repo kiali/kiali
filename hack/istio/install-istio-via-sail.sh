@@ -31,7 +31,76 @@ ensure_command () {
   fi
 }
 
-requirements=("yq" "helm")
+# Ensures the Istio validating webhook has a non-empty caBundle.
+# If the validating webhook's caBundle is empty, copies it from the mutating webhook
+# (istiod patches the mutating webhook first during startup).
+ensure_istiod_validating_webhook_cabundle() {
+  local namespace="${1:-istio-system}"
+  local timeout_seconds="${2:-120}"
+  local sleep_seconds=5
+  local elapsed=0
+  local attempt=1
+  local max_attempts=1
+  local validator_config=""
+  local validator_index=""
+  local validator_len=0
+  local mutating_cabundle=""
+
+  if [[ "${timeout_seconds}" =~ ^[0-9]+$ ]] && [ "${timeout_seconds}" -gt 0 ]; then
+    max_attempts=$(((timeout_seconds + sleep_seconds - 1) / sleep_seconds))
+  fi
+
+  validator_config=$(kubectl get validatingwebhookconfigurations -o json | \
+    jq -r '.items[] | select(any(.webhooks[]?; .name=="validation.istio.io" and .clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'")) | .metadata.name' | head -n1)
+  if [ -z "${validator_config}" ]; then
+    echo "WARNING: No Istio validating webhook configuration found in namespace [${namespace}]"
+    return 0
+  fi
+
+  validator_index=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+    jq -r '.webhooks | to_entries[] | select(.value.name=="validation.istio.io") | .key')
+  if [ -z "${validator_index}" ]; then
+    echo "WARNING: validation.istio.io webhook not found in configuration [${validator_config}]"
+    return 0
+  fi
+
+  while [ "${elapsed}" -lt "${timeout_seconds}" ]; do
+    validator_len=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+      jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle | length')
+    if [ "${validator_len}" -gt 0 ]; then
+      echo "Istio validating webhook caBundle is ready in [${validator_config}]"
+      return 0
+    fi
+
+    mutating_cabundle=$(kubectl get mutatingwebhookconfigurations -o json | \
+      jq -r '.items[] | .webhooks[]? | select(.clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'" and (.clientConfig.caBundle | length) > 0) | .clientConfig.caBundle' | head -n1)
+    if [ -n "${mutating_cabundle}" ] && [ "${mutating_cabundle}" != "null" ]; then
+      echo "Istio validating webhook caBundle is empty in [${validator_config}]; copying CA bundle from mutating webhook"
+      kubectl patch validatingwebhookconfiguration "${validator_config}" --type='json' \
+        -p="[{\"op\":\"replace\",\"path\":\"/webhooks/${validator_index}/clientConfig/caBundle\",\"value\":\"${mutating_cabundle}\"}]"
+
+      validator_len=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+        jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle | length')
+      if [ "${validator_len}" -gt 0 ]; then
+        echo "Istio validating webhook caBundle copied successfully in [${validator_config}]"
+        return 0
+      fi
+
+      echo "ERROR: Istio validating webhook caBundle is still empty after patching in [${validator_config}]"
+      return 1
+    fi
+
+    echo "Waiting for Istio validating webhook caBundle in [${validator_config}] (${attempt}/${max_attempts})"
+    sleep "${sleep_seconds}"
+    elapsed=$((elapsed + sleep_seconds))
+    attempt=$((attempt + 1))
+  done
+
+  echo "ERROR: Could not find a non-empty Istio mutating webhook caBundle in namespace [${namespace}]"
+  return 1
+}
+
+requirements=("jq" "yq" "helm")
 for req in "${requirements[@]}"; do
   ensure_command "$req"
 done
@@ -422,35 +491,7 @@ kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
   echo "Waiting for Istio to be ready..."
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
-  WEBHOOK_NAME="istio-validator-${ISTIO_NAMESPACE}"
-  echo "Waiting for validating webhook ${WEBHOOK_NAME} CA bundle to be patched by istiod..."
-  kubectl wait validatingwebhookconfiguration "${WEBHOOK_NAME}" --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
-
-  if kubectl get validatingwebhookconfiguration istiod-default-validator &>/dev/null; then
-    echo "Waiting for validating webhook istiod-default-validator CA bundle to be patched by istiod..."
-    kubectl wait validatingwebhookconfiguration istiod-default-validator --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
-  fi
-
-  # istiod patches the webhook caBundle early in its startup, before it is fully
-  # ready to accept connections. On older kubectl versions, `kubectl wait pods --for=condition=Ready`
-  # with a label selector can return 0 immediately when no pods match yet, so we use a
-  # direct endpoint check instead: this guarantees the istiod service has a live backend pod
-  # before any subsequent kubectl apply triggers the validating webhook.
-  echo "Waiting for istiod service endpoint to be available..."
-  for i in $(seq 1 60); do
-    ISTIOD_ENDPOINT=$(kubectl get endpoints/istiod -n "${ISTIO_NAMESPACE}" \
-      -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
-    if [ -n "${ISTIOD_ENDPOINT}" ]; then
-      echo "istiod service endpoint is available (${ISTIOD_ENDPOINT})"
-      break
-    fi
-    if [ "${i}" -eq 60 ]; then
-      echo "ERROR: istiod service endpoint did not become available in time"
-      exit 1
-    fi
-    echo "  Waiting for istiod endpoint (attempt ${i}/60)..."
-    sleep 5
-  done
+  ensure_istiod_validating_webhook_cabundle "${ISTIO_NAMESPACE}" 300
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
