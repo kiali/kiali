@@ -420,7 +420,16 @@ fi
 
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
+  echo "Waiting for Istio to be ready..."
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
+  WEBHOOK_NAME="istio-validator-${ISTIO_NAMESPACE}"
+  echo "Waiting for validating webhook ${WEBHOOK_NAME} CA bundle to be patched by istiod..."
+  kubectl wait validatingwebhookconfiguration "${WEBHOOK_NAME}" --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
+
+  if kubectl get validatingwebhookconfiguration istiod-default-validator &>/dev/null; then
+    echo "Waiting for validating webhook istiod-default-validator CA bundle to be patched by istiod..."
+    kubectl wait validatingwebhookconfiguration istiod-default-validator --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
+  fi
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
