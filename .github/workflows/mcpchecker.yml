@@ -91,7 +91,6 @@ jobs:
       TARGET_BRANCH: ${{ github.base_ref || github.event.repository.default_branch || 'master' }}
       BUILD_BRANCH: ${{ needs.check-trigger.outputs.pr-sha }}
       KUBERNETES_MCP_SERVER_REPO: ${{ needs.check-trigger.outputs.kubernetes-mcp-server-repo }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
     steps:
     - name: Checkout code
       uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -135,7 +134,9 @@ jobs:
 
     - name: Run mcpchecker evaluation
       id: mcpchecker
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       with:
         eval-config: tests/evals/gemini/eval.yaml
         mcpchecker-version: latest
@@ -179,7 +180,7 @@ jobs:
     - name: Run mcpchecker diff
       id: mcpchecker-diff
       if: always() && needs.check-trigger.outputs.is-pr == 'true' && steps.baseline.outputs.has-baseline == 'true' && hashFiles('tests/evals/results/mcpchecker-gemini-eval-out.json') != ''
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
       with:
         base-results: ${{ steps.baseline.outputs.baseline-file }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
@@ -282,7 +283,7 @@ jobs:
     - name: Run baseline diff
       id: baseline-diff
       if: steps.previous-baseline.outputs.has-previous == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
       with:
         base-results: ${{ steps.previous-baseline.outputs.path }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
