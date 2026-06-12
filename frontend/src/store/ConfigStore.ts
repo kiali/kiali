@@ -13,6 +13,9 @@ import { INITIAL_NOTIFICATION_CENTER_STATE } from '../reducers/NotificationCente
 import { INITIAL_STATUS_STATE } from '../reducers/HelpDropdownState';
 import { INITIAL_NAMESPACE_STATE } from '../reducers/NamespaceState';
 import { INITIAL_NAMESPACES_LIST_STATE } from '../reducers/NamespacesListState';
+import { INITIAL_SERVICES_LIST_STATE } from '../reducers/ServicesListState';
+import { INITIAL_APPS_LIST_STATE } from '../reducers/AppsListState';
+import { INITIAL_WORKLOADS_LIST_STATE } from '../reducers/WorkloadsListState';
 import { INITIAL_CLUSTER_STATE } from '../reducers/ClusterState';
 import { INITIAL_TRACING_STATE } from '../reducers/TracingState';
 import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
@@ -111,6 +114,9 @@ const initialStore: KialiAppState = {
   metricsStats: INITIAL_METRICS_STATS_STATE,
   namespaces: INITIAL_NAMESPACE_STATE,
   namespacesList: INITIAL_NAMESPACES_LIST_STATE,
+  servicesList: INITIAL_SERVICES_LIST_STATE,
+  appsList: INITIAL_APPS_LIST_STATE,
+  workloadsList: INITIAL_WORKLOADS_LIST_STATE,
   notificationCenter: INITIAL_NOTIFICATION_CENTER_STATE,
   statusState: INITIAL_STATUS_STATE,
   tourState: INITIAL_TOUR_STATE,

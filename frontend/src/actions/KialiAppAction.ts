@@ -6,6 +6,9 @@ import { LoginAction } from './LoginActions';
 import { NotificationCenterAction } from './NotificationCenterActions';
 import { NamespaceAction } from './NamespaceAction';
 import { NamespacesListAction } from './NamespacesListActions';
+import { ServicesListAction } from './ServicesListActions';
+import { AppsListAction } from './AppsListActions';
+import { WorkloadsListAction } from './WorkloadsListActions';
 import { ClusterAction } from './ClusterAction';
 import { UserSettingsAction } from './UserSettingsActions';
 import { TracingAction } from './TracingActions';
@@ -34,5 +37,8 @@ export type KialiAppAction =
   | MetricsStatsAction
   | NamespaceAction
   | NamespacesListAction
+  | ServicesListAction
+  | AppsListAction
+  | WorkloadsListAction
   | TourAction
   | UserSettingsAction;
