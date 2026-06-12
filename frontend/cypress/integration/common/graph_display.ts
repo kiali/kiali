@@ -23,7 +23,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
 });
 
 When('user {string} display menu', (_action: string) => {
-  cy.get('button#display-settings').click();
+  cy.get('button#display-settings').should('not.be.disabled').click();
 });
 
 When('user enables {string} {string} edge labels', (radio: string, edgeLabel: string) => {
