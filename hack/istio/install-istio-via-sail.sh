@@ -493,11 +493,6 @@ if [ "${WAIT}" == "true" ]; then
   echo "Waiting for Istio to be ready..."
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
   ensure_istiod_validating_webhook_cabundle "${ISTIO_NAMESPACE}" 300
-  # The Sail Istio CR can reach Ready before the istiod deployment rollout completes.
-  # Wait for the rollout so the webhook port is accepting connections before addons
-  # (which may contain Istio resources) are applied.
-  echo "Waiting for istiod deployment rollout to complete..."
-  kubectl rollout status deployment/istiod -n "${ISTIO_NAMESPACE}" --timeout=120s
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
