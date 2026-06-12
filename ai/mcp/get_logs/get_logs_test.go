@@ -333,9 +333,9 @@ func TestExecute_ValidTailAliases(t *testing.T) {
 		}
 		res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 		require.Equal(t, http.StatusOK, code, "get_logs with tail alias %q must return 200", key)
-		msg, ok := res.(string)
-		require.True(t, ok)
-		assert.Contains(t, msg, "any-pod")
+		lr, ok := res.(LogsResult)
+		require.True(t, ok, "expected LogsResult, got %T", res)
+		assert.Contains(t, lr.Logs, "any-pod")
 	}
 }
 
@@ -367,9 +367,9 @@ func TestExecute_TailCappedAt200(t *testing.T) {
 	}
 	res, code := Execute(&mcputil.KialiInterface{Request: req, BusinessLayer: businessLayer, ClientFactory: clientFactory, KialiCache: kialiCache, Conf: conf}, args)
 	require.Equal(t, http.StatusOK, code, "tail 9999 should be capped and return 200")
-	msg, ok := res.(string)
-	require.True(t, ok, "response must be a string (log output)")
-	assert.Contains(t, msg, "Starting application", "response must contain log content")
-	assert.Contains(t, msg, "Request received", "response must contain log content")
-	assert.Contains(t, msg, "~~~", "response must wrap logs in codeblock")
+	lr, ok := res.(LogsResult)
+	require.True(t, ok, "response must be a LogsResult, got %T", res)
+	assert.Contains(t, lr.Logs, "Starting application", "response must contain log content")
+	assert.Contains(t, lr.Logs, "Request received", "response must contain log content")
+	assert.Contains(t, lr.Logs, "~~~", "response must wrap logs in codeblock")
 }
