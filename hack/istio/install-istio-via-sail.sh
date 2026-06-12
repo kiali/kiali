@@ -430,6 +430,12 @@ if [ "${WAIT}" == "true" ]; then
     echo "Waiting for validating webhook istiod-default-validator CA bundle to be patched by istiod..."
     kubectl wait validatingwebhookconfiguration istiod-default-validator --for='jsonpath={.webhooks[0].clientConfig.caBundle}' --timeout=300s
   fi
+
+  # istiod patches the webhook caBundle early in its startup, before the webhook server is
+  # fully ready to accept connections. Wait for the istiod pod itself to be Ready so that
+  # subsequent kubectl applies that trigger the validating webhook do not get connection refused.
+  echo "Waiting for istiod pods to be ready to serve webhook requests..."
+  kubectl wait pods -n "${ISTIO_NAMESPACE}" -l app=istiod --for=condition=Ready --timeout=120s
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
