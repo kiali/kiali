@@ -180,7 +180,7 @@ get_remote_cluster_token() {
     #fi
     local token_secret="${KIALI_RESOURCE_NAME}"
 
-    for _ in 1 2 3 4 5 6; do
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
       local encoded_token="$(${CLIENT_EXE_REMOTE_CLUSTER} get secrets -n ${REMOTE_CLUSTER_NAMESPACE} ${token_secret} -o jsonpath='{.data.token}' 2>/dev/null)" \
         && [ "${encoded_token}" != "" ] \
         && break \
