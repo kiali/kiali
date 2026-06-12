@@ -32,6 +32,7 @@ type Props = {
   k8sHTTPRoutes: K8sHTTPRoute[];
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
+  searchValue?: string;
   virtualServices: VirtualService[];
 };
 
@@ -48,9 +49,19 @@ const dividerStyle = kialiStyle({
   paddingTop: '0.5rem'
 });
 
+const groupLabelStyle = kialiStyle({
+  fontSize: '0.875rem',
+  fontWeight: 700,
+  color: 'var(--pf-v6-global--Color--200)',
+  padding: '0.5rem 1rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px'
+});
+
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
   const isViewOnly = serverConfig.deployment.viewOnlyMode;
+  const searchLower = (props.searchValue || '').toLowerCase();
 
   const hasTrafficRouting = (): boolean => {
     return hasServiceDetailsTrafficRouting(
@@ -81,7 +92,11 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     }
   };
 
-  const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
+  const actionItems = SERVICE_WIZARD_ACTIONS.filter(eventKey => {
+    // Filter by search value
+    const wizardTitle = t(WIZARD_TITLES[eventKey].title).toLowerCase();
+    return wizardTitle.includes(searchLower);
+  }).map(eventKey => {
     const isGatewayAPIEnabled =
       eventKey === WIZARD_K8S_REQUEST_ROUTING || eventKey === WIZARD_K8S_GRPC_REQUEST_ROUTING
         ? serverConfig.gatewayAPIEnabled
@@ -138,40 +153,56 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     }
   });
 
-  actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
+  // Only show delete action if it matches search filter
+  const deleteText = t('Delete Traffic Routing').toLowerCase();
+  const shouldShowDelete = deleteText.includes(searchLower);
 
-  const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
+  if (shouldShowDelete) {
+    actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
 
-  let deleteDropdownItem = (
-    <DropdownItem
-      key={DELETE_TRAFFIC_ROUTING}
-      component="button"
-      onClick={() => {
-        if (props.onDelete) {
-          props.onDelete(DELETE_TRAFFIC_ROUTING);
-        }
-      }}
-      isDisabled={deleteDisabled}
-      data-test={DELETE_TRAFFIC_ROUTING}
-    >
-      {t('Delete Traffic Routing')}
-    </DropdownItem>
-  );
+    const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
 
-  if (deleteDisabled) {
-    deleteDropdownItem = (
-      <Tooltip
-        key={`tooltip_${DELETE_TRAFFIC_ROUTING}`}
-        position={TooltipPosition.left}
-        content={<>{getDropdownItemTooltipMessage(false, hasTrafficRouting())}</>}
+    let deleteDropdownItem = (
+      <DropdownItem
+        key={DELETE_TRAFFIC_ROUTING}
+        component="button"
+        onClick={() => {
+          if (props.onDelete) {
+            props.onDelete(DELETE_TRAFFIC_ROUTING);
+          }
+        }}
+        isDisabled={deleteDisabled}
+        data-test={DELETE_TRAFFIC_ROUTING}
       >
-        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
-      </Tooltip>
+        {t('Delete Traffic Routing')}
+      </DropdownItem>
     );
-  }
 
-  actionItems.push(deleteDropdownItem);
+    if (deleteDisabled) {
+      deleteDropdownItem = (
+        <Tooltip
+          key={`tooltip_${DELETE_TRAFFIC_ROUTING}`}
+          position={TooltipPosition.left}
+          content={<>{getDropdownItemTooltipMessage(false, hasTrafficRouting())}</>}
+        >
+          <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
+        </Tooltip>
+      );
+    }
+
+    actionItems.push(deleteDropdownItem);
+  }
   const label = isViewOnly ? t('View') : updateLabel === '' ? t('Create') : t('Update');
 
-  return <DropdownGroup key={`group_${label}`} label={label} className={groupMenuStyle} children={actionItems} />;
+  // Don't render the group if no items match the search
+  if (actionItems.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <div className={groupLabelStyle}>{label}</div>
+      <DropdownGroup key={`group_${label}`} className={groupMenuStyle} children={actionItems} />
+    </>
+  );
 };
