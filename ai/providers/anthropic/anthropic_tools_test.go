@@ -317,7 +317,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetPodPerformance(t *testing.
 	expected := anthropic.ToolUnionParam{
 		OfTool: &anthropic.ToolParam{
 			Name:        "get_pod_performance",
-			Description: param.NewOpt("Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'. IMPORTANT input constraint: provide at least one of podName, workloadName."),
+			Description: param.NewOpt("Returns a human-readable text summary with current Pod CPU/memory usage (from Prometheus) compared to Kubernetes requests/limits (from the Pod spec). Useful to answer questions like 'Is this workload using too much memory?'."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"namespace": map[string]interface{}{
@@ -326,11 +326,11 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetPodPerformance(t *testing.
 					},
 					"podName": map[string]interface{}{
 						"type":        "string",
-						"description": "Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first. At least one of these fields is required together with the others listed in this note.",
+						"description": "Kubernetes Pod name. At least one of podName or workloadName must be provided. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.",
 					},
 					"workloadName": map[string]interface{}{
 						"type":        "string",
-						"description": "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName. At least one of these fields is required together with the others listed in this note.",
+						"description": "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). At least one of podName or workloadName must be provided. Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName.",
 					},
 					"timeRange": map[string]interface{}{
 						"type":        "string",
