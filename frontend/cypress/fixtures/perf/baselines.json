@@ -13,7 +13,7 @@
   "graphSelected": "2",
   "graphWithoutIstio": "3",
   "namespaceListAll": "2",
-  "namespaceListSelected": "2",
+  "namespaceListUnhealthy": "1",
   "overview": "2",
   "serviceDetails": "1",
   "serviceListAll": "2",
