@@ -62,6 +62,7 @@ commands:
 
     cat > "${TMP_HOME}/.gemini/settings.json" <<SETTINGS_EOF
     {
+      "selectedAuthType": "gemini-api-key",
       "mcpServers": {
         "${SERVER_NAME}": {
           "httpUrl": "${MCP_URL}",
@@ -75,7 +76,7 @@ commands:
 
     GEMINI_ARGS=("--approval-mode" "yolo" "--output-format" "stream-json")
 
-    GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-pro}"
+    GEMINI_MODEL="${GEMINI_MODEL:-gemini-3.1-flash-lite}"
     GEMINI_ARGS+=("--model" "${GEMINI_MODEL}")
 
     if [[ -n "${DEBUG_DIR}" ]]; then
@@ -83,5 +84,13 @@ commands:
       echo "Running gemini with args: ${GEMINI_ARGS[*]}" >> "${DEBUG_DIR}/debug.log"
       gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>&1 | tee -a "${DEBUG_DIR}/gemini.log"
     else
-      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>/dev/null
+      GEMINI_STDERR_FILE="$(mktemp)"
+      gemini --prompt "${PROMPT_CONTENT}" "${GEMINI_ARGS[@]}" 2>"${GEMINI_STDERR_FILE}" || {
+        EXIT_CODE=$?
+        echo "gemini exited with code ${EXIT_CODE}. stderr:" >&2
+        cat "${GEMINI_STDERR_FILE}" >&2
+        rm -f "${GEMINI_STDERR_FILE}"
+        exit "${EXIT_CODE}"
+      }
+      rm -f "${GEMINI_STDERR_FILE}"
     fi

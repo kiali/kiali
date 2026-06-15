@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Updates the token consumption section in ai/mcp/README.md from a summary of
-# tests/evals/results/mcpchecker-gemini-eval-out.json (mcpchecker result summary -o json).
+# Updates the token consumption section in ai/mcp/README.md from the raw
+# tests/evals/results/mcpchecker-gemini-eval-out.json results.
 #
 set -euo pipefail
 
@@ -21,71 +21,66 @@ if [[ ! -f "${README_FILE}" ]]; then
   exit 1
 fi
 
-MCPCHECKER="$(command -v mcpchecker 2>/dev/null || true)"
-if [[ -z "${MCPCHECKER}" ]]; then
-  MCPCHECKER="${GOPATH:-$(go env GOPATH)}/bin/mcpchecker"
-fi
-if [[ ! -x "${MCPCHECKER}" ]]; then
-  echo "Error: mcpchecker not found (install: make mcp-install-mcpchecker)" >&2
+TASK_COUNT=$(jq 'if type == "array" then length else 0 end' "${EVAL_OUT}")
+if (( TASK_COUNT <= 0 )); then
+  echo "Error: ${EVAL_OUT} does not contain any task results" >&2
   exit 1
+fi
+
+TASKS_TOTAL="${TASK_COUNT}"
+TASKS_PASSED=$(jq '[.[] | select(.taskPassed == true)] | length' "${EVAL_OUT}")
+ASSERTIONS_TOTAL=$(jq '[.[] | select(.allAssertionsPassed != null)] | length' "${EVAL_OUT}")
+ASSERTIONS_PASSED=$(jq '[.[] | select(.allAssertionsPassed == true)] | length' "${EVAL_OUT}")
+TOTAL_TOKENS=$(jq '[.[] | (.tokenEstimate.totalTokens // 0) | floor] | add // 0' "${EVAL_OUT}")
+MCP_SCHEMA_TOKENS=$(jq '[.[] | (.tokenEstimate.mcpSchemaTokens // 0) | floor] | add // 0' "${EVAL_OUT}")
+
+PASS_PCT=$(awk "BEGIN {printf \"%.0f\", (${TASKS_PASSED} / ${TASKS_TOTAL}) * 100}")
+ASSERT_PCT=0
+if (( ASSERTIONS_TOTAL > 0 )); then
+  ASSERT_PCT=$(awk "BEGIN {printf \"%.0f\", (${ASSERTIONS_PASSED} / ${ASSERTIONS_TOTAL}) * 100}")
 fi
 
 TOKEN_FILE="$(mktemp)"
 trap 'rm -f "${TOKEN_FILE}"' EXIT
 
-"${MCPCHECKER}" result summary "${EVAL_OUT}" -o json > "${TOKEN_FILE}"
+{
+  printf "### Evaluation Summary\n\n"
+  printf "| Metric | Value |\n"
+  printf "|--------|-------|\n"
+  printf "| Tasks Passed | %s/%s (%s%%) |\n" "${TASKS_PASSED}" "${TASKS_TOTAL}" "${PASS_PCT}"
+  printf "| Assertions Pass Rate | %s%% |\n" "${ASSERT_PCT}"
+  printf "| Total Tokens Estimate | %s |\n" "${TOTAL_TOKENS}"
+  printf "| MCP Schema Tokens | %s |\n" "${MCP_SCHEMA_TOKENS}"
+  printf "\n"
+  printf "### Per-Task Breakdown\n\n"
+  printf "| Task | Tokens Estimate | MCP Schema Tokens | Passed |\n"
+  printf "|------|----------------:|------------------:|--------|\n"
 
-TASKS_TOTAL=$(jq -r '.tasksTotal' "${TOKEN_FILE}")
-TASKS_PASSED=$(jq -r '.tasksPassed' "${TOKEN_FILE}")
-TOTAL_TOKENS=$(jq -r '.totalTokensEstimate' "${TOKEN_FILE}")
-MCP_SCHEMA_TOKENS=$(jq -r '.totalMcpSchemaTokens' "${TOKEN_FILE}")
-TASK_PASS_RATE=$(jq -r '.taskPassRate' "${TOKEN_FILE}")
-ASSERTION_PASS_RATE=$(jq -r '.assertionPassRate' "${TOKEN_FILE}")
-
-PASS_PCT=$(awk "BEGIN {printf \"%.0f\", ${TASK_PASS_RATE} * 100}")
-ASSERT_PCT=$(awk "BEGIN {printf \"%.0f\", ${ASSERTION_PASS_RATE} * 100}")
-
-MARKDOWN="### Evaluation Summary\n"
-MARKDOWN+="\n"
-MARKDOWN+="| Metric | Value |\n"
-MARKDOWN+="|--------|-------|\n"
-MARKDOWN+="| Tasks Passed | ${TASKS_PASSED}/${TASKS_TOTAL} (${PASS_PCT}%) |\n"
-MARKDOWN+="| Assertions Pass Rate | ${ASSERT_PCT}% |\n"
-MARKDOWN+="| Total Tokens Estimate | ${TOTAL_TOKENS} |\n"
-MARKDOWN+="| MCP Schema Tokens | ${MCP_SCHEMA_TOKENS} |\n"
-MARKDOWN+="\n"
-MARKDOWN+="### Per-Task Breakdown\n"
-MARKDOWN+="\n"
-MARKDOWN+="| Task | Tokens Estimate | MCP Schema Tokens | Passed |\n"
-MARKDOWN+="|------|----------------:|------------------:|--------|\n"
-
-TASK_COUNT=$(jq '.tasks | length' "${TOKEN_FILE}")
-if (( TASK_COUNT <= 0 )); then
-  echo "Error: mcpchecker result summary returned no tasks" >&2
-  exit 1
-fi
-
-for i in $(seq 0 $((TASK_COUNT - 1))); do
-  NAME=$(jq -r ".tasks[${i}].name" "${TOKEN_FILE}")
-  TOKENS=$(jq -r ".tasks[${i}].tokensEstimated" "${TOKEN_FILE}")
-  SCHEMA=$(jq -r ".tasks[${i}].mcpSchemaTokens" "${TOKEN_FILE}")
-  PASSED=$(jq -r ".tasks[${i}].taskPassed" "${TOKEN_FILE}")
-  if [[ "${PASSED}" == "true" ]]; then
-    STATUS="✅"
-  else
-    STATUS="❌"
-  fi
-  MARKDOWN+="| ${NAME} | ${TOKENS} | ${SCHEMA} | ${STATUS} |\n"
-done
+  while IFS= read -r row; do
+    NAME=$(jq -r '.taskName // "unknown-task"' <<< "${row}" | sed 's/|/\\|/g')
+    TOKENS=$(jq -r '(.tokenEstimate.totalTokens // 0) | floor' <<< "${row}")
+    SCHEMA=$(jq -r '(.tokenEstimate.mcpSchemaTokens // 0) | floor' <<< "${row}")
+    PASSED=$(jq -r '.taskPassed' <<< "${row}")
+    if [[ "${PASSED}" == "true" ]]; then
+      STATUS="✅"
+    else
+      STATUS="❌"
+    fi
+    printf "| %s | %s | %s | %s |\n" "${NAME}" "${TOKENS}" "${SCHEMA}" "${STATUS}"
+  done < <(jq -c '.[]' "${EVAL_OUT}")
+} > "${TOKEN_FILE}"
 
 START_MARKER="<!-- TOKENS-CONSUMPTION-START -->"
 END_MARKER="<!-- TOKENS-CONSUMPTION-END -->"
 
-REPLACEMENT="${START_MARKER}\n\n$(echo -e "${MARKDOWN}")\n${END_MARKER}"
-
-awk -v start="${START_MARKER}" -v end="${END_MARKER}" -v replacement="${REPLACEMENT}" '
-  $0 ~ start { print replacement; skip=1; next }
-  $0 ~ end { skip=0; next }
+awk -v start="${START_MARKER}" -v end="${END_MARKER}" -v token_file="${TOKEN_FILE}" '
+  $0 ~ start {
+    print
+    print ""
+    while ((getline line < token_file) > 0) { print line }
+    skip=1; next
+  }
+  $0 ~ end { print; skip=0; next }
   !skip { print }
 ' "${README_FILE}" > "${README_FILE}.tmp"
 

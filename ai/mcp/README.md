@@ -467,5 +467,5 @@ The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in Gi
 
 ### Token baseline
 
-Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed eval baseline via the **Update Token Baseline** job: it refreshes `tests/evals/results/mcpchecker-gemini-eval-out.json` and the [Token Consumption](#token-consumption) section below (through `hack/mcp/update-token-readme.sh`, which runs `mcpchecker result summary` on that file) and may open an automated PR.
+Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed eval baseline via the **Update Token Baseline** job: it refreshes `tests/evals/results/mcpchecker-gemini-eval-out.json` and the [Token Consumption](#token-consumption) section below (through `hack/mcp/update-token-readme.sh`, which derives the summary directly from that results file) and may open an automated PR.
 
