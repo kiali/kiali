@@ -48,7 +48,7 @@ export const discoverKialiRuntimeInfo = (): Cypress.Chainable<KialiRuntimeInfo> 
               failOnNonZeroExit: false
             })
             .then(cmRes => {
-              if (cmRes.code === 0 && cmRes.stdout.trim() !== '') {
+              if (cmRes.exitCode === 0 && cmRes.stdout.trim() !== '') {
                 return cy.wrap(cmName);
               }
               return findConfigMapWithConfigYaml(idx + 1);
@@ -304,6 +304,24 @@ export const enableKialiCaching = (existingInfo?: KialiRuntimeInfo): void => {
 };
 
 // Pre-defined feature configurations
+export const GRAPH_CACHE_CONFIG: KialiFeatureConfig = {
+  configPath: '.kiali_internal.graph_cache.enabled',
+  crSpecPath: 'kiali_internal.graph_cache.enabled',
+  envKeyPrev: 'GRAPH_CACHE_PREV'
+};
+
+export const HEALTH_CACHE_CONFIG: KialiFeatureConfig = {
+  configPath: '.kiali_internal.health_cache.enabled',
+  crSpecPath: 'kiali_internal.health_cache.enabled',
+  envKeyPrev: 'HEALTH_CACHE_PREV'
+};
+
+export const PROMETHEUS_DISABLED_CONFIG: KialiFeatureConfig = {
+  configPath: '.external_services.prometheus.enabled',
+  crSpecPath: 'external_services.prometheus.enabled',
+  envKeyPrev: 'PROMETHEUS_ENABLED_PREV'
+};
+
 export const USE_WAYPOINT_NAME_CONFIG: KialiFeatureConfig = {
   configPath: '.external_services.tracing.use_waypoint_name',
   crSpecPath: 'external_services.tracing.use_waypoint_name',

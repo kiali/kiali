@@ -6,9 +6,10 @@ import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
   env: {
+    cookie: false,
     rootSelector: '#root',
-    timeout: 10000,
-    threshold: 100000
+    threshold: 100000,
+    timeout: 10000
   },
   e2e: {
     baseUrl: 'http://localhost:3000',
@@ -16,8 +17,6 @@ export default defineConfig({
       on: Cypress.PluginEvents,
       config: Cypress.PluginConfigOptions
     ): Promise<Cypress.PluginConfigOptions> {
-      config.env.cookie = false;
-
       on('file:preprocessor', createBundler());
 
       // This name is non-standard and might change based on your environment hence the separate

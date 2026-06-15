@@ -35,21 +35,21 @@ const install_demoapp = (demoapp: string): void => {
   cy.exec(`../hack/istio/cypress/${demoapp}-status.sh`, { failOnNonZeroExit: false, timeout: 120000 }).then(result => {
     cy.log(result.stdout);
 
-    if (result.code === 0) {
+    if (result.exitCode === 0) {
       cy.log(`${demoapp} demo app is up and running`);
     } else {
       cy.log(`${demoapp} demo app is either broken or not present. Installing now.`);
       cy.log(`Detecting pod architecture.`);
 
       cy.exec('../hack/istio/cypress/get-node-architecture.sh', { failOnNonZeroExit: false }).then(result => {
-        if (result.code === 0) {
+        if (result.exitCode === 0) {
           const arch: string = result.stdout;
           cy.log(`Installing apps on ${arch} architecture.`);
 
           // is the suite running on openshift?
           cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', { failOnNonZeroExit: false }).then(
             result => {
-              if (result.code === 0) {
+              if (result.exitCode === 0) {
                 cy.log('Openshift detected.').log(`Removing old ${demoapp} installations.`);
 
                 cy.exec(`../hack/istio/install-${demoapp}-demo.sh ${deletion} true`).then(() => {
@@ -104,11 +104,11 @@ Before(() => {
 
 Before({ tags: '@gateway-api' }, () => {
   cy.exec('kubectl get crd gateways.gateway.networking.k8s.io', { failOnNonZeroExit: false }).then(result => {
-    if (result.code !== 0) {
+    if (result.exitCode !== 0) {
       cy.log('Gateway API not found. Enabling it now.');
 
       cy.exec('kubectl kustomize "github.com/kubernetes-sigs/gateway-api/config/crd?ref=v1.5.1" | kubectl apply -f -;')
-        .its('code')
+        .its('exitCode')
         .should('eq', 0)
         .then(() => {
           cy.exec(
@@ -121,13 +121,13 @@ Before({ tags: '@gateway-api' }, () => {
 
 Before({ tags: '@gateway-api-ie' }, () => {
   cy.exec('kubectl get crd inference.networking.k8s.io', { failOnNonZeroExit: false }).then(result => {
-    if (result.code !== 0) {
+    if (result.exitCode !== 0) {
       cy.log('Gateway API Inference Extension not found. Enabling it now.');
 
       cy.exec(
         'kubectl kustomize "github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.5.0" | kubectl apply -f -;'
       )
-        .its('code')
+        .its('exitCode')
         .should('eq', 0)
         .then(() => {
           cy.exec(
@@ -267,13 +267,13 @@ Before({ tags: '@remote-istio-crds' }, () => {
     `kubectl get crd --context ${CLUSTER2_CONTEXT} -o=custom-columns=NAME:.metadata.name |  grep -E -i '.(istio|k8s).io$'`,
     { failOnNonZeroExit: false }
   ).then(result => {
-    if (result.code !== 0) {
+    if (result.exitCode !== 0) {
       cy.log('Istio CRDs not found on the remote cluster. Enabling it now.');
 
       cy.exec(
         `kubectl apply -f https://raw.githubusercontent.com/istio/istio/master/manifests/charts/base/crds/crd-all.gen.yaml --context ${CLUSTER2_CONTEXT}`
       )
-        .its('code')
+        .its('exitCode')
         .should('eq', 0)
         .then(() => {
           cy.exec(
@@ -378,7 +378,7 @@ Before(() => {
   if (Cypress.env('STERN') === true) {
     const specName = Cypress.spec && Cypress.spec.name ? Cypress.spec.name : 'unknown-spec';
     cy.exec(`../hack/stern/run-stern.sh --logfile ${specName}.json`, { failOnNonZeroExit: false }).then(result => {
-      if (result.code !== 0) {
+      if (result.exitCode !== 0) {
         cy.log('Failed to start stern. Check if the stern binary is downloaded.');
       }
     });
@@ -388,7 +388,7 @@ Before(() => {
 After(() => {
   if (Cypress.env('STERN') === true) {
     cy.exec(`../hack/stern/run-stern.sh --stop true`, { failOnNonZeroExit: false }).then(result => {
-      if (result.code !== 0) {
+      if (result.exitCode !== 0) {
         cy.log('Failed to stop stern. Check if the stern binary is downloaded.');
       }
     });

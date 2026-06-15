@@ -1,17 +1,17 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-const auth_strategy = Cypress.env('auth_strategy');
+const auth_strategy = Cypress.env('AUTH_STRATEGY');
 
 Given('user clicks on admin', () => {
   if (auth_strategy === 'openshift') {
-    cy.get('#user-dropdown-toggle').click();
+    cy.getBySel('user-dropdown').click();
   }
 });
 
 Given('user logout successfully', () => {
   if (auth_strategy === 'openshift') {
     cy.intercept('**/api/logout').as('logout');
-    cy.get('.pf-v6-c-dropdown__menu-item').click();
+    cy.getBySel('user-logout').click();
   }
 });
 
