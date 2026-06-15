@@ -122,29 +122,28 @@ func TestPodPerformanceSchema_RequiredFields(t *testing.T) {
 	assert.Contains(t, required, "namespace", "namespace should be required")
 }
 
-func TestPodPerformanceSchema_AnyOfConstraint(t *testing.T) {
+func TestPodPerformanceSchema_PodOrWorkloadConstraint(t *testing.T) {
 	err := LoadTools()
 	require.NoError(t, err)
 
 	tool := DefaultToolHandlers["get_pod_performance"]
 	schema := tool.GetDefinition()
 
-	anyOf, ok := schema["anyOf"].([]interface{})
-	require.True(t, ok, "schema should have an 'anyOf' field for podName/workloadName")
-	assert.Len(t, anyOf, 2, "anyOf should have exactly 2 entries (podName, workloadName)")
+	// anyOf was removed from the top level to maintain OpenAI compatibility.
+	// The constraint is now expressed in the field descriptions instead.
+	_, hasAnyOf := schema["anyOf"]
+	assert.False(t, hasAnyOf, "schema must not have top-level 'anyOf' to remain compatible with OpenAI")
 
-	var requiredFields []string
-	for _, entry := range anyOf {
-		m, mOk := entry.(map[string]interface{})
-		require.True(t, mOk)
-		req, rOk := m["required"].([]interface{})
-		require.True(t, rOk)
-		for _, r := range req {
-			requiredFields = append(requiredFields, r.(string))
-		}
+	properties, ok := schema["properties"].(map[string]interface{})
+	require.True(t, ok, "schema should have properties")
+
+	for _, field := range []string{"podName", "workloadName"} {
+		prop, exists := properties[field].(map[string]interface{})
+		require.True(t, exists, "property %q should exist", field)
+		desc, _ := prop["description"].(string)
+		assert.Contains(t, desc, "At least one of podName or workloadName must be provided",
+			"property %q description should document the mutual constraint", field)
 	}
-	assert.Contains(t, requiredFields, "podName")
-	assert.Contains(t, requiredFields, "workloadName")
 }
 
 func TestPodPerformanceSchema_PropertiesIncludeExpectedFields(t *testing.T) {
