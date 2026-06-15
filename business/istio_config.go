@@ -1234,7 +1234,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 		securityPermissions := make(models.IstioConfigPermissions, len(namespaces))
 
 		wg := sync.WaitGroup{}
-		// We will query 2 times per namespace (networking.istio.io and security.istio.io)
+		// 3 goroutines per namespace: networking.istio.io, gateway.networking.k8s.io, security.istio.io
 		wg.Add(len(namespaces) * 3)
 		for _, ns := range namespaces {
 			networkingRP := make(models.ResourcesPermissions, len(newNetworkingConfigTypes))
@@ -1244,12 +1244,11 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			k8sNetworkingPermissions[ns] = &k8sNetworkingRP
 			securityPermissions[ns] = &securityRP
 			/*
-				We can optimize this logic.
-				Instead of query all editable objects of networking.istio.io and security.istio.io we can query
-				only one per API, that will save several queries to the backend.
+				For networking.istio.io and security.istio.io, we check permissions once per API group
+				using a wildcard resource since all resources in those groups share the same verb set.
 
-				Synced with:
-				https://github.com/kiali/kiali-operator/blob/master/roles/default/kiali-deploy/templates/kubernetes/role.yaml#L62
+				For gateway.networking.k8s.io, we check per resource type because different resources
+				have different write permissions (e.g., GatewayClass is read-only, TCPRoute has no create).
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
@@ -1265,12 +1264,14 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, k8sNetworkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.K8sNetworkingGroupVersionV1.Group, allResources, in.conf)
+				isGatewayAPI := in.userClients[cluster].IsGatewayAPI()
 				for _, rs := range newK8sNetworkingConfigTypes {
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
+					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					k8sNetworkingRP[rs.String()] = &models.ResourcePermissions{
-						Create: canCreate && in.userClients[cluster].IsGatewayAPI(),
-						Update: canUpdate && in.userClients[cluster].IsGatewayAPI(),
-						Delete: canDelete && in.userClients[cluster].IsGatewayAPI(),
+						Create: canCreate && isGatewayAPI,
+						Update: canUpdate && isGatewayAPI,
+						Delete: canDelete && isGatewayAPI,
 					}
 				}
 			}(ctx, ns, &wg, &k8sNetworkingRP)
@@ -1311,7 +1312,8 @@ func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster
 	var canCreate, canPatch, canDelete bool
 
 	if _, ok := kubernetes.ResourceTypesToAPI[objectGVK.String()]; ok {
-		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, objectGVK.Kind, conf)
+		resourceType := kubernetes.PluralResourceName(objectGVK.Kind)
+		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, resourceType, conf)
 	}
 	return canCreate, canPatch, canDelete
 }
@@ -1348,7 +1350,7 @@ func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, clus
 			}
 		}
 	} else {
-		log.FromContext(ctx).Error().Msgf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
+		log.FromContext(ctx).Error().Msgf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 	}
 	return canCreate, canPatch, canDelete
 }
