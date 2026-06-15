@@ -164,6 +164,19 @@ var (
 		Version: "v1",
 	}
 
+	// PluralNames maps Kind to the lowercase plural resource name used in RBAC.
+	// Kubernetes SSAR ResourceAttributes.Resource requires the plural form.
+	PluralNames = map[string]string{
+		K8sGatewayType:        "gateways",
+		K8sGatewayClassType:   "gatewayclasses",
+		K8sGRPCRouteType:      "grpcroutes",
+		K8sHTTPRouteType:      "httproutes",
+		K8sInferencePoolsType: "inferencepools",
+		K8sReferenceGrantType: "referencegrants",
+		K8sTCPRouteType:       "tcproutes",
+		K8sTLSRouteType:       "tlsroutes",
+	}
+
 	// Resources
 	ResourceTypesToAPI = map[string]schema.GroupVersionKind{
 		DestinationRules.String(): DestinationRules,
@@ -190,6 +203,16 @@ var (
 		RequestAuthentications.String(): RequestAuthentications,
 	}
 )
+
+// PluralResourceName returns the RBAC plural resource name for a Kind.
+// Uses the PluralNames map for types with explicit RBAC rules; falls back
+// to the Kind itself for types that still use wildcard resources: ["*"].
+func PluralResourceName(kind string) string {
+	if plural, ok := PluralNames[kind]; ok {
+		return plural
+	}
+	return kind
+}
 
 // MTLSDetails is a wrapper to group all Istio objects related to non-local mTLS configurations
 type MTLSDetails struct {

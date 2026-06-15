@@ -1266,11 +1266,7 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 				defer wg.Done()
 				isGatewayAPI := in.userClients[cluster].IsGatewayAPI()
 				for _, rs := range newK8sNetworkingConfigTypes {
-					// RBAC requires plural resource names, not Kind. This simple conversion
-					// works for current types but will break for irregular plurals.
-					// If new types are added to newK8sNetworkingConfigTypes with irregular plural forms,
-					// this conversion will need updating.
-					resourceName := strings.ToLower(rs.Kind) + "s"
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
 					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					k8sNetworkingRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate && isGatewayAPI,
@@ -1316,7 +1312,8 @@ func getPermissions(ctx context.Context, k8s kubernetes.ClientInterface, cluster
 	var canCreate, canPatch, canDelete bool
 
 	if _, ok := kubernetes.ResourceTypesToAPI[objectGVK.String()]; ok {
-		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, objectGVK.Kind, conf)
+		resourceType := kubernetes.PluralResourceName(objectGVK.Kind)
+		return getPermissionsApi(ctx, k8s, cluster, namespace, objectGVK.Group, resourceType, conf)
 	}
 	return canCreate, canPatch, canDelete
 }
