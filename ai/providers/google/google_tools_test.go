@@ -274,11 +274,11 @@ func TestConvertToolToGoogle_FromToolDefinition_GetPodPerformance(t *testing.T) 
 			},
 			"podName": {
 				Type:        genai.TypeString,
-				Description: "Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.",
+				Description: "Kubernetes Pod name. At least one of podName or workloadName must be provided. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.",
 			},
 			"workloadName": {
 				Type:        genai.TypeString,
-				Description: "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName.",
+				Description: "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). At least one of podName or workloadName must be provided. Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName.",
 			},
 			"timeRange": {
 				Type:        genai.TypeString,
