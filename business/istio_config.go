@@ -1350,7 +1350,7 @@ func getPermissionsApi(ctx context.Context, k8s kubernetes.ClientInterface, clus
 			}
 		}
 	} else {
-		log.FromContext(ctx).Error().Msgf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, "*", permErr)
+		log.FromContext(ctx).Error().Msgf("Error getting permissions [namespace: %s, api: %s, resourceType: %s]: %v", namespace, api, resourceType, permErr)
 	}
 	return canCreate, canPatch, canDelete
 }
