@@ -43,3 +43,6 @@ export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   tracingState: TracingStateReducer,
   userSettings: UserSettingsStateReducer
 });
+
+/* eslint-disable import/no-default-export */
+export default rootReducer;
