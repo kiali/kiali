@@ -226,13 +226,13 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	}
 	if in.isGatewayAPI == nil {
 		v1Types := map[string]string{
-			K8sGatewayType:      "gateways",
-			K8sGatewayClassType: "gatewayclasses",
-			K8sHTTPRouteType:    "httproutes",
-			K8sGRPCRouteType:    "grpcroutes",
+			K8sGatewayType:      PluralNames[K8sGatewayType],
+			K8sGatewayClassType: PluralNames[K8sGatewayClassType],
+			K8sHTTPRouteType:    PluralNames[K8sHTTPRouteType],
+			K8sGRPCRouteType:    PluralNames[K8sGRPCRouteType],
 		}
 		v1beta1Types := map[string]string{
-			K8sReferenceGrantType: "referencegrants",
+			K8sReferenceGrantType: PluralNames[K8sReferenceGrantType],
 		}
 		isGatewayAPIV1 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
 		isGatewayAPI := isGatewayAPIV1 && checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
@@ -250,7 +250,7 @@ func (in *K8SClient) HasTLSRouteInV1() bool {
 	}
 	if in.hasTLSRouteInV1 == nil {
 		v1Types := map[string]string{
-			K8sTLSRouteType: "tlsroutes",
+			K8sTLSRouteType: PluralNames[K8sTLSRouteType],
 		}
 		hasTLSRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
 		in.hasTLSRouteInV1 = &hasTLSRoute
@@ -266,7 +266,7 @@ func (in *K8SClient) IsInferenceAPI() bool {
 	}
 	if in.isInferenceAPI == nil {
 		v1alpha2Types := map[string]string{
-			K8sInferencePoolsType: "inferencepools",
+			K8sInferencePoolsType: PluralNames[K8sInferencePoolsType],
 		}
 		isInferenceAPI := checkInferenceAPIs(in, K8sInferenceGroupVersionV1.String(), v1alpha2Types)
 		in.isInferenceAPI = &isInferenceAPI
@@ -311,7 +311,7 @@ func (in *K8SClient) IsExpGatewayAPI() bool {
 	}
 	if in.isExpGatewayAPI == nil {
 		v1alpha2Types := map[string]string{
-			K8sTCPRouteType: "tcproutes",
+			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
 		}
 		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types, true)
 		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2
