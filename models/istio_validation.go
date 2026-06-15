@@ -299,12 +299,12 @@ var checkDescriptors = map[string]IstioCheck{
 		Severity: WarningSeverity,
 	},
 	"serviceentries.multimatch": {
-		Code:     "KIA1202",
+		Code:     "KIA1211",
 		Message:  "More than one ServiceEntry for the same host and port",
 		Severity: WarningSeverity,
 	},
 	"serviceentries.port.protocol.conflict": {
-		Code:     "KIA1203",
+		Code:     "KIA1212",
 		Message:  "ServiceEntries have conflicting protocols for the same host and port",
 		Severity: WarningSeverity,
 	},
