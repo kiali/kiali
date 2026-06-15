@@ -32,6 +32,14 @@ export default defineConfig({
       // This is required for the preprocessor to be able to generate JSON reports after each run, and more,
       await addCucumberPreprocessorPlugin(on, config);
 
+      on('before:browser:launch', (browser, launchOptions) => {
+        if (browser.family === 'chromium' || browser.name === 'electron') {
+          launchOptions.args.push('--disable-dev-shm-usage');
+          launchOptions.args.push('--disable-gpu');
+        }
+        return launchOptions;
+      });
+
       on('task', {
         log(message: string) {
           console.log(message);
