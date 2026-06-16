@@ -4,7 +4,6 @@ import { configure } from '@testing-library/react';
 configure({ testIdAttribute: 'data-test' });
 
 // Stub canvas getContext so components that render <canvas> don't crash in jsdom.
-// Returns a minimal mock 2d context with the properties tests and components access.
 HTMLCanvasElement.prototype.getContext = ((type: string) => {
   if (type === '2d') {
     return {

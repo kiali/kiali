@@ -4,7 +4,7 @@ These are visual tests for kiali that are meant to be run against a live environ
 
 ## Prerequisites
 
-Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field in the `cypress.json` file at the kiali-ui root is pointing to the server you are trying to test, alternatively you can use `CYPRESS_BASE_URL` environment variable or pass via cmd line `yarn cypress --config baseUrl=http://kiali-server:20001`. By default this is `localhost:3000` so if you are running kiali locally you should just need to do `yarn start` before running cypress.
+Installed all dev dependencies from frontend folder. Ensure the `baseUrl` field in the `cypress.json` file at the kiali-ui root is pointing to the server you are trying to test, alternatively you can use `CYPRESS_BASE_URL` environment variable or pass via cmd line `yarn cypress --config baseUrl=http://kiali-server:20001`. By default this is `localhost:3001` so if you are running kiali locally you should just need to do `yarn start` before running cypress.
 
 ## Running tests
 The suite is able to re-install specific demo-app automatically when a faulty deployment of that demo-app is detected. The suite also install K8 Gateway API if not detected. Running the suite against custom demo-app deployments may lead to your environment being altered unexepectedly. If you want to prevent this, comment out the `Before` functions in [this file](integration/common/hooks.ts).
@@ -12,7 +12,7 @@ The suite is able to re-install specific demo-app automatically when a faulty de
 Before you start using Cypress suite, you might need export some environment variables - depending on environment where tests are executed.  If your authentication method defaults to `anonymous` **(i.e. dev env), no actions are needed.**
 
 ```bash
-export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3000
+export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3001
 export CYPRESS_USERNAME=<value>                      # defaults to jenkins, opt. kubeadmin
 export CYPRESS_PASSWD=<value>                        # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>                 # defaults to my_htpasswd_provider

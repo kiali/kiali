@@ -93,7 +93,7 @@ yarn cypress:run:selected
 Environment-specific notes:
 - **Jenkins / Remote OCP**: Requires VPN + `oc login <cluster-url>`, may need `CYPRESS_ALLOW_INSECURE_KIALI_API=true`
 - **kind**: `CYPRESS_USERNAME=admin`, `CYPRESS_ALLOW_INSECURE_KIALI_API=true`
-- **Minikube**: `CYPRESS_BASE_URL=http://localhost:3000`, typically no credentials needed
+- **Minikube**: `CYPRESS_BASE_URL=http://localhost:3001`, typically no credentials needed
 
 ## Execution steps
 
