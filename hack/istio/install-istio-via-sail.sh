@@ -31,7 +31,77 @@ ensure_command () {
   fi
 }
 
-requirements=("yq" "helm")
+# Ensures the Istio validating webhook caBundle matches the current istiod certificate.
+# istiod updates the mutating webhook caBundle first; if the validating webhook has a stale
+# or empty caBundle (e.g. from a previous installation), it is patched to match.
+ensure_istiod_validating_webhook_cabundle() {
+  local namespace="${1:-istio-system}"
+  local timeout_seconds="${2:-120}"
+  local sleep_seconds=5
+  local elapsed=0
+  local attempt=1
+  local max_attempts=1
+  local validator_config=""
+  local validator_index=""
+  local mutating_cabundle=""
+
+  if [[ "${timeout_seconds}" =~ ^[0-9]+$ ]] && [ "${timeout_seconds}" -gt 0 ]; then
+    max_attempts=$(((timeout_seconds + sleep_seconds - 1) / sleep_seconds))
+  fi
+
+  validator_config=$(kubectl get validatingwebhookconfigurations -o json | \
+    jq -r '.items[] | select(any(.webhooks[]?; .name=="validation.istio.io" and .clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'")) | .metadata.name' | head -n1)
+  if [ -z "${validator_config}" ]; then
+    echo "WARNING: No Istio validating webhook configuration found in namespace [${namespace}]"
+    return 0
+  fi
+
+  validator_index=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+    jq -r '.webhooks | to_entries[] | select(.value.name=="validation.istio.io") | .key')
+  if [ -z "${validator_index}" ]; then
+    echo "WARNING: validation.istio.io webhook not found in configuration [${validator_config}]"
+    return 0
+  fi
+
+  while [ "${elapsed}" -lt "${timeout_seconds}" ]; do
+    mutating_cabundle=$(kubectl get mutatingwebhookconfigurations -o json | \
+      jq -r '.items[] | .webhooks[]? | select(.clientConfig.service.name=="istiod" and .clientConfig.service.namespace=="'"${namespace}"'" and (.clientConfig.caBundle | length) > 0) | .clientConfig.caBundle' | head -n1)
+
+    if [ -n "${mutating_cabundle}" ] && [ "${mutating_cabundle}" != "null" ]; then
+      validator_cabundle=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+        jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle // ""')
+
+      if [ "${validator_cabundle}" == "${mutating_cabundle}" ]; then
+        echo "Istio validating webhook caBundle is in sync with mutating webhook in [${validator_config}]"
+        return 0
+      fi
+
+      echo "Istio validating webhook caBundle is stale or empty in [${validator_config}]; syncing from mutating webhook"
+      kubectl patch validatingwebhookconfiguration "${validator_config}" --type='json' \
+        -p="[{\"op\":\"replace\",\"path\":\"/webhooks/${validator_index}/clientConfig/caBundle\",\"value\":\"${mutating_cabundle}\"}]"
+
+      validator_cabundle=$(kubectl get validatingwebhookconfiguration "${validator_config}" -o json | \
+        jq -r '.webhooks['"${validator_index}"'].clientConfig.caBundle // ""')
+      if [ "${validator_cabundle}" == "${mutating_cabundle}" ]; then
+        echo "Istio validating webhook caBundle synced successfully in [${validator_config}]"
+        return 0
+      fi
+
+      echo "ERROR: Istio validating webhook caBundle still does not match after patching in [${validator_config}]"
+      return 1
+    fi
+
+    echo "Waiting for Istio mutating webhook caBundle in namespace [${namespace}] (${attempt}/${max_attempts})"
+    sleep "${sleep_seconds}"
+    elapsed=$((elapsed + sleep_seconds))
+    attempt=$((attempt + 1))
+  done
+
+  echo "ERROR: Could not find a non-empty Istio mutating webhook caBundle in namespace [${namespace}]"
+  return 1
+}
+
+requirements=("jq" "yq" "helm")
 for req in "${requirements[@]}"; do
   ensure_command "$req"
 done
@@ -420,7 +490,9 @@ fi
 
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
+  echo "Waiting for Istio to be ready..."
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
+  ensure_istiod_validating_webhook_cabundle "${ISTIO_NAMESPACE}" 300
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
