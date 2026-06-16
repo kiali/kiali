@@ -363,18 +363,6 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetPodPerformance(t *testing.T) 
 					"required": []interface{}{
 						"namespace",
 					},
-					"anyOf": []interface{}{
-						map[string]interface{}{
-							"required": []interface{}{
-								"podName",
-							},
-						},
-						map[string]interface{}{
-							"required": []interface{}{
-								"workloadName",
-							},
-						},
-					},
 					"properties": map[string]interface{}{
 						"namespace": map[string]interface{}{
 							"type":        "string",
@@ -382,11 +370,11 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetPodPerformance(t *testing.T) 
 						},
 						"podName": map[string]interface{}{
 							"type":        "string",
-							"description": "Kubernetes Pod name. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.",
+							"description": "Kubernetes Pod name. At least one of podName or workloadName must be provided. If workloadName is provided, the tool will attempt to resolve a Pod from that workload first.",
 						},
 						"workloadName": map[string]interface{}{
 							"type":        "string",
-							"description": "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName.",
+							"description": "Kubernetes Workload name (e.g. Deployment/StatefulSet/etc). At least one of podName or workloadName must be provided. Tool will look up the workload and pick one of its Pods. If not found, it will fall back to treating this value as a podName.",
 						},
 						"timeRange": map[string]interface{}{
 							"type":        "string",
