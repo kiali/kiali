@@ -32,6 +32,8 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.True(t, criteria.IncludeServiceEntries)
+	assert.True(t, criteria.IncludeTrafficExtensions)
+	assert.True(t, criteria.IncludeWasmPlugins)
 
 	objects = kubernetes.Gateways.String()
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
@@ -89,6 +91,22 @@ func TestParseListParams(t *testing.T) {
 	assert.True(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
 
+	objects = kubernetes.TrafficExtensions.String()
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
+
+	assert.True(t, criteria.IncludeTrafficExtensions)
+	assert.False(t, criteria.IncludeWasmPlugins)
+	assert.False(t, criteria.IncludeGateways)
+	assert.False(t, criteria.IncludeVirtualServices)
+	assert.False(t, criteria.IncludeDestinationRules)
+
+	objects = kubernetes.WasmPlugins.String()
+	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
+
+	assert.True(t, criteria.IncludeWasmPlugins)
+	assert.False(t, criteria.IncludeTrafficExtensions)
+	assert.False(t, criteria.IncludeGateways)
+
 	objects = "notsupported"
 	criteria = ParseIstioConfigCriteria(objects, labelSelector, "")
 
@@ -96,6 +114,7 @@ func TestParseListParams(t *testing.T) {
 	assert.False(t, criteria.IncludeVirtualServices)
 	assert.False(t, criteria.IncludeDestinationRules)
 	assert.False(t, criteria.IncludeServiceEntries)
+	assert.False(t, criteria.IncludeTrafficExtensions)
 }
 
 func TestGetIstioConfigList(t *testing.T) {

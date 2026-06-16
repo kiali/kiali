@@ -9,16 +9,17 @@ import (
 
 const (
 	// Networking
-	DestinationRuleType = "DestinationRule"
-	GatewayType         = "Gateway"
-	EnvoyFilterType     = "EnvoyFilter"
-	SidecarType         = "Sidecar"
-	ServiceEntryType    = "ServiceEntry"
-	VirtualServiceType  = "VirtualService"
-	WorkloadEntryType   = "WorkloadEntry"
-	WorkloadGroupType   = "WorkloadGroup"
-	WasmPluginType      = "WasmPlugin"
-	TelemetryType       = "Telemetry"
+	DestinationRuleType  = "DestinationRule"
+	GatewayType          = "Gateway"
+	EnvoyFilterType      = "EnvoyFilter"
+	SidecarType          = "Sidecar"
+	ServiceEntryType     = "ServiceEntry"
+	VirtualServiceType   = "VirtualService"
+	WorkloadEntryType    = "WorkloadEntry"
+	WorkloadGroupType    = "WorkloadGroup"
+	TrafficExtensionType = "TrafficExtension"
+	WasmPluginType       = "WasmPlugin"
+	TelemetryType        = "Telemetry"
 
 	// K8s Networking
 	K8sGatewayType        = "Gateway"
@@ -55,16 +56,17 @@ const (
 
 var (
 	// Networking
-	DestinationRules = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
-	Gateways         = NetworkingGroupVersionV1.WithKind(GatewayType)
-	EnvoyFilters     = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
-	Sidecars         = NetworkingGroupVersionV1.WithKind(SidecarType)
-	ServiceEntries   = NetworkingGroupVersionV1.WithKind(ServiceEntryType)
-	VirtualServices  = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
-	WorkloadEntries  = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
-	WorkloadGroups   = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
-	WasmPlugins      = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
-	Telemetries      = TelemetryGroupV1.WithKind(TelemetryType)
+	DestinationRules  = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
+	Gateways          = NetworkingGroupVersionV1.WithKind(GatewayType)
+	EnvoyFilters      = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
+	Sidecars          = NetworkingGroupVersionV1.WithKind(SidecarType)
+	ServiceEntries    = NetworkingGroupVersionV1.WithKind(ServiceEntryType)
+	VirtualServices   = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
+	WorkloadEntries   = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
+	WorkloadGroups    = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
+	TrafficExtensions = ExtensionGroupVersionV1Alpha1.WithKind(TrafficExtensionType)
+	WasmPlugins       = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
+	Telemetries       = TelemetryGroupV1.WithKind(TelemetryType)
 
 	// K8s Networking
 	K8sGateways        = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType)
@@ -179,16 +181,17 @@ var (
 
 	// Resources
 	ResourceTypesToAPI = map[string]schema.GroupVersionKind{
-		DestinationRules.String(): DestinationRules,
-		EnvoyFilters.String():     EnvoyFilters,
-		Gateways.String():         Gateways,
-		ServiceEntries.String():   ServiceEntries,
-		Sidecars.String():         Sidecars,
-		VirtualServices.String():  VirtualServices,
-		WorkloadEntries.String():  WorkloadEntries,
-		WorkloadGroups.String():   WorkloadGroups,
-		WasmPlugins.String():      WasmPlugins,
-		Telemetries.String():      Telemetries,
+		DestinationRules.String():  DestinationRules,
+		EnvoyFilters.String():      EnvoyFilters,
+		Gateways.String():          Gateways,
+		ServiceEntries.String():    ServiceEntries,
+		Sidecars.String():          Sidecars,
+		VirtualServices.String():   VirtualServices,
+		WorkloadEntries.String():   WorkloadEntries,
+		WorkloadGroups.String():    WorkloadGroups,
+		TrafficExtensions.String(): TrafficExtensions,
+		WasmPlugins.String():       WasmPlugins,
+		Telemetries.String():       Telemetries,
 
 		K8sGateways.String():        K8sGateways,
 		K8sGRPCRoutes.String():      K8sGRPCRoutes,

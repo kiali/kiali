@@ -61,6 +61,7 @@ export enum gvkType {
   WorkloadEntry = 'WorkloadEntry',
   WorkloadGroup = 'WorkloadGroup',
 
+  TrafficExtension = 'TrafficExtension',
   WasmPlugin = 'WasmPlugin',
   Telemetry = 'Telemetry',
 
@@ -98,6 +99,7 @@ export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
   [gvkType.WorkloadEntry]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadEntry },
   [gvkType.WorkloadGroup]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadGroup },
 
+  [gvkType.TrafficExtension]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.TrafficExtension },
   [gvkType.WasmPlugin]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.WasmPlugin },
   [gvkType.Telemetry]: { Group: 'telemetry.istio.io', Version: 'v1', Kind: gvkType.Telemetry },
 

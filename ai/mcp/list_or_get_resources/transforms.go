@@ -156,6 +156,8 @@ func shortKind(kind string) string {
 		return "WE"
 	case "WorkloadGroup":
 		return "WG"
+	case "TrafficExtension":
+		return "TX"
 	case "WasmPlugin":
 		return "WP"
 	case "Telemetry":
