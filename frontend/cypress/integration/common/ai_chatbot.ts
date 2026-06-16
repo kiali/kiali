@@ -426,7 +426,7 @@ Then('the Istio config YAML editor should contain {string}', (snippet: string) =
 });
 
 // ============================================================
-// Display mode and Close Chat
+// Display mode and Minimize
 // ============================================================
 
 const CHATBOT_OPTIONS_BUTTON = 'button[aria-label="Chatbot options"]';
@@ -441,8 +441,8 @@ When('the user selects display mode {string}', (modeName: string) => {
   cy.contains(modeName).click();
 });
 
-When('the user selects "Close Chat"', () => {
-  cy.contains('Close Chat').click();
+When('the user selects "Minimize"', () => {
+  cy.contains('Minimize').click();
 });
 
 /**

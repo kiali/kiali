@@ -26,11 +26,11 @@ Feature: Kiali AI Chatbot
     And the user selects display mode "Overlay"
     Then the chatbot should be in "default" display mode
 
-  Scenario: The Close Chat option hides the chatbot
+  Scenario: The Minimize option hides the chatbot
     When user clicks the AI chatbot toggle
     And the AI chatbot window should be open
     When the user opens the chatbot options menu
-    And the user selects "Close Chat"
+    And the user selects "Minimize"
     Then the AI chatbot window should be closed
 
   Scenario: The chatbot toggle icon reflects the active theme
