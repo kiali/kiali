@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	api_networking_v1 "istio.io/api/networking/v1"
+	extentions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	auth_v1 "k8s.io/api/authorization/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -686,6 +688,157 @@ deployment:
 	require.NoError(err)
 
 	assert.Len(istioConfigList.Gateways, 4)
+}
+
+func fakeGetTrafficExtensions() []*extentions_v1alpha1.TrafficExtension {
+	tx1 := &extentions_v1alpha1.TrafficExtension{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "my-wasm-filter",
+			Namespace: "test",
+		},
+	}
+	tx2 := &extentions_v1alpha1.TrafficExtension{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "my-lua-filter",
+			Namespace: "test",
+		},
+	}
+	return []*extentions_v1alpha1.TrafficExtension{tx1, tx2}
+}
+
+func TestGetIstioConfigListIncludesTrafficExtensions(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	}
+	for _, tx := range fakeGetTrafficExtensions() {
+		fakeIstioObjects = append(fakeIstioObjects, tx.DeepCopyObject())
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+
+	// Without IncludeTrafficExtensions, list should be empty.
+	criteria := IstioConfigCriteria{IncludeTrafficExtensions: false}
+	list, err := configService.GetIstioConfigList(context.TODO(), cluster, criteria)
+	assert.Nil(err)
+	assert.Equal(0, len(list.TrafficExtensions))
+
+	// With IncludeTrafficExtensions, both objects should be returned.
+	criteria.IncludeTrafficExtensions = true
+	list, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
+	assert.Nil(err)
+	assert.Equal(2, len(list.TrafficExtensions))
+
+	names := []string{list.TrafficExtensions[0].Name, list.TrafficExtensions[1].Name}
+	assert.Contains(names, "my-wasm-filter")
+	assert.Contains(names, "my-lua-filter")
+}
+
+func TestGetIstioConfigDetailsTrafficExtension(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	txObjects := fakeGetTrafficExtensions()
+	fakeIstioObjects := []runtime.Object{
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+		txObjects[0],
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	k8s.OpenShift = true
+
+	configService := NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s}).Build().IstioConfig
+
+	details, err := configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.TrafficExtensions, "my-wasm-filter")
+	assert.Nil(err)
+	assert.NotNil(details.TrafficExtension)
+	assert.Equal("my-wasm-filter", details.TrafficExtension.Name)
+	assert.Equal("test", details.TrafficExtension.Namespace)
+}
+
+func TestDeleteIstioConfigDetailsTrafficExtension(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	tx := fakeGetTrafficExtensions()[0]
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("test"),
+		tx,
+	)
+
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+
+	err := configService.DeleteIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.TrafficExtensions, "my-wasm-filter")
+	assert.Nil(err)
+}
+
+func TestCreateIstioConfigDetailsTrafficExtension(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("test"))
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+
+	payload, _ := json.Marshal(map[string]any{
+		"apiVersion": "extensions.istio.io/v1alpha1",
+		"kind":       "TrafficExtension",
+		"metadata":   map[string]string{"name": "new-filter", "namespace": "test"},
+	})
+	details, err := configService.CreateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.TrafficExtensions, payload)
+	assert.Nil(err)
+	assert.Equal("test", details.Namespace.Name)
+	assert.Equal(conf.KubernetesConfig.ClusterName, details.Namespace.Cluster)
+	assert.Equal(kubernetes.TrafficExtensions.String(), details.ObjectGVK.String())
+}
+
+func TestUpdateIstioConfigDetailsTrafficExtension(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	tx := fakeGetTrafficExtensions()[0]
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("test"),
+		tx,
+	)
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+
+	updated, err := configService.UpdateIstioConfigDetail(context.Background(), conf.KubernetesConfig.ClusterName, "test", kubernetes.TrafficExtensions, "my-wasm-filter", "{}")
+	require.NoError(err)
+	assert.Equal("test", updated.Namespace.Name)
+	assert.Equal(conf.KubernetesConfig.ClusterName, updated.Namespace.Cluster)
+	assert.Equal(kubernetes.TrafficExtensions.String(), updated.ObjectGVK.String())
+	assert.Equal("my-wasm-filter", updated.TrafficExtension.Name)
+}
+
+func TestGetIstioConfigListTrafficExtensionsMissingCRD(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Build a client without any TrafficExtension objects - the cache will simply return empty.
+	// A missing CRD is handled in GetIstioConfigList via api_meta.IsNoMatchError; here we verify
+	// that when IsIstioAPI() returns true (the default for the fake client) and the list succeeds
+	// with zero items, the result is an empty (non-nil) slice.
+	k8s := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}},
+	)
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+
+	criteria := IstioConfigCriteria{IncludeTrafficExtensions: true}
+	list, err := configService.GetIstioConfigList(context.TODO(), cluster, criteria)
+	assert.Nil(err)
+	assert.NotNil(list.TrafficExtensions)
+	assert.Equal(0, len(list.TrafficExtensions))
 }
 
 func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
