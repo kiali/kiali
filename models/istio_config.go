@@ -27,12 +27,12 @@ type IstioConfigList struct {
 	Gateways          []*networking_v1.Gateway                `json:"-"`
 	ServiceEntries    []*networking_v1.ServiceEntry           `json:"-"`
 	Sidecars          []*networking_v1.Sidecar                `json:"-"`
+	Telemetries       []*telemetry_v1.Telemetry               `json:"-"`
+	TrafficExtensions []*extentions_v1alpha1.TrafficExtension `json:"-"`
 	VirtualServices   []*networking_v1.VirtualService         `json:"-"`
+	WasmPlugins       []*extentions_v1alpha1.WasmPlugin       `json:"-"`
 	WorkloadEntries   []*networking_v1.WorkloadEntry          `json:"-"`
 	WorkloadGroups    []*networking_v1.WorkloadGroup          `json:"-"`
-	TrafficExtensions []*extentions_v1alpha1.TrafficExtension `json:"-"`
-	WasmPlugins       []*extentions_v1alpha1.WasmPlugin       `json:"-"`
-	Telemetries       []*telemetry_v1.Telemetry               `json:"-"`
 
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
@@ -285,12 +285,12 @@ type IstioConfigDetails struct {
 	RequestAuthentication *security_v1.RequestAuthentication    `json:"-"`
 	ServiceEntry          *networking_v1.ServiceEntry           `json:"-"`
 	Sidecar               *networking_v1.Sidecar                `json:"-"`
+	Telemetry             *telemetry_v1.Telemetry               `json:"-"`
+	TrafficExtension      *extentions_v1alpha1.TrafficExtension `json:"-"`
 	VirtualService        *networking_v1.VirtualService         `json:"-"`
+	WasmPlugin            *extentions_v1alpha1.WasmPlugin       `json:"-"`
 	WorkloadEntry         *networking_v1.WorkloadEntry          `json:"-"`
 	WorkloadGroup         *networking_v1.WorkloadGroup          `json:"-"`
-	TrafficExtension      *extentions_v1alpha1.TrafficExtension `json:"-"`
-	WasmPlugin            *extentions_v1alpha1.WasmPlugin       `json:"-"`
-	Telemetry             *telemetry_v1.Telemetry               `json:"-"`
 
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"-"`

@@ -10,16 +10,16 @@ import (
 const (
 	// Networking
 	DestinationRuleType  = "DestinationRule"
-	GatewayType          = "Gateway"
 	EnvoyFilterType      = "EnvoyFilter"
-	SidecarType          = "Sidecar"
+	GatewayType          = "Gateway"
 	ServiceEntryType     = "ServiceEntry"
+	SidecarType          = "Sidecar"
+	TelemetryType        = "Telemetry"
+	TrafficExtensionType = "TrafficExtension"
 	VirtualServiceType   = "VirtualService"
+	WasmPluginType       = "WasmPlugin"
 	WorkloadEntryType    = "WorkloadEntry"
 	WorkloadGroupType    = "WorkloadGroup"
-	TrafficExtensionType = "TrafficExtension"
-	WasmPluginType       = "WasmPlugin"
-	TelemetryType        = "Telemetry"
 
 	// K8s Networking
 	K8sGatewayType        = "Gateway"
@@ -57,16 +57,16 @@ const (
 var (
 	// Networking
 	DestinationRules  = NetworkingGroupVersionV1.WithKind(DestinationRuleType)
-	Gateways          = NetworkingGroupVersionV1.WithKind(GatewayType)
 	EnvoyFilters      = NetworkingGroupVersionV1Alpha3.WithKind(EnvoyFilterType)
-	Sidecars          = NetworkingGroupVersionV1.WithKind(SidecarType)
+	Gateways          = NetworkingGroupVersionV1.WithKind(GatewayType)
 	ServiceEntries    = NetworkingGroupVersionV1.WithKind(ServiceEntryType)
+	Sidecars          = NetworkingGroupVersionV1.WithKind(SidecarType)
+	Telemetries       = TelemetryGroupV1.WithKind(TelemetryType)
+	TrafficExtensions = ExtensionGroupVersionV1Alpha1.WithKind(TrafficExtensionType)
 	VirtualServices   = NetworkingGroupVersionV1.WithKind(VirtualServiceType)
+	WasmPlugins       = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
 	WorkloadEntries   = NetworkingGroupVersionV1.WithKind(WorkloadEntryType)
 	WorkloadGroups    = NetworkingGroupVersionV1.WithKind(WorkloadGroupType)
-	TrafficExtensions = ExtensionGroupVersionV1Alpha1.WithKind(TrafficExtensionType)
-	WasmPlugins       = ExtensionGroupVersionV1Alpha1.WithKind(WasmPluginType)
-	Telemetries       = TelemetryGroupV1.WithKind(TelemetryType)
 
 	// K8s Networking
 	K8sGateways        = K8sNetworkingGroupVersionV1.WithKind(K8sGatewayType)
@@ -186,12 +186,12 @@ var (
 		Gateways.String():          Gateways,
 		ServiceEntries.String():    ServiceEntries,
 		Sidecars.String():          Sidecars,
+		Telemetries.String():       Telemetries,
+		TrafficExtensions.String(): TrafficExtensions,
 		VirtualServices.String():   VirtualServices,
+		WasmPlugins.String():       WasmPlugins,
 		WorkloadEntries.String():   WorkloadEntries,
 		WorkloadGroups.String():    WorkloadGroups,
-		TrafficExtensions.String(): TrafficExtensions,
-		WasmPlugins.String():       WasmPlugins,
-		Telemetries.String():       Telemetries,
 
 		K8sGateways.String():        K8sGateways,
 		K8sGRPCRoutes.String():      K8sGRPCRoutes,

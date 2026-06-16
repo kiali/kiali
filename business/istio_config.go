@@ -45,6 +45,9 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
+	IncludeAuthorizationPolicies  bool
+	IncludeDestinationRules       bool
+	IncludeEnvoyFilters           bool
 	IncludeGateways               bool
 	IncludeK8sGateways            bool
 	IncludeK8sGRPCRoutes          bool
@@ -53,19 +56,16 @@ type IstioConfigCriteria struct {
 	IncludeK8sReferenceGrants     bool
 	IncludeK8sTCPRoutes           bool
 	IncludeK8sTLSRoutes           bool
-	IncludeVirtualServices        bool
-	IncludeDestinationRules       bool
+	IncludePeerAuthentications    bool
+	IncludeRequestAuthentications bool
 	IncludeServiceEntries         bool
 	IncludeSidecars               bool
-	IncludeAuthorizationPolicies  bool
-	IncludePeerAuthentications    bool
+	IncludeTelemetry              bool
+	IncludeTrafficExtensions      bool
+	IncludeVirtualServices        bool
+	IncludeWasmPlugins            bool
 	IncludeWorkloadEntries        bool
 	IncludeWorkloadGroups         bool
-	IncludeRequestAuthentications bool
-	IncludeEnvoyFilters           bool
-	IncludeTrafficExtensions      bool
-	IncludeWasmPlugins            bool
-	IncludeTelemetry              bool
 	LabelSelector                 string
 	WorkloadSelector              string
 }
@@ -74,6 +74,12 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 	// Flag used to skip object that are not used in a query when a WorkloadSelector is present
 	isWorkloadSelector := icc.WorkloadSelector != ""
 	switch resource {
+	case kubernetes.AuthorizationPolicies:
+		return icc.IncludeAuthorizationPolicies
+	case kubernetes.DestinationRules:
+		return icc.IncludeDestinationRules && !isWorkloadSelector
+	case kubernetes.EnvoyFilters:
+		return icc.IncludeEnvoyFilters
 	case kubernetes.Gateways:
 		return icc.IncludeGateways
 	case kubernetes.K8sGateways:
@@ -90,32 +96,26 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 		return icc.IncludeK8sTCPRoutes
 	case kubernetes.K8sTLSRoutes:
 		return icc.IncludeK8sTLSRoutes
-	case kubernetes.VirtualServices:
-		return icc.IncludeVirtualServices && !isWorkloadSelector
-	case kubernetes.DestinationRules:
-		return icc.IncludeDestinationRules && !isWorkloadSelector
+	case kubernetes.PeerAuthentications:
+		return icc.IncludePeerAuthentications
+	case kubernetes.RequestAuthentications:
+		return icc.IncludeRequestAuthentications
 	case kubernetes.ServiceEntries:
 		return icc.IncludeServiceEntries && !isWorkloadSelector
 	case kubernetes.Sidecars:
 		return icc.IncludeSidecars
-	case kubernetes.AuthorizationPolicies:
-		return icc.IncludeAuthorizationPolicies
-	case kubernetes.PeerAuthentications:
-		return icc.IncludePeerAuthentications
+	case kubernetes.Telemetries:
+		return icc.IncludeTelemetry
+	case kubernetes.TrafficExtensions:
+		return icc.IncludeTrafficExtensions
+	case kubernetes.VirtualServices:
+		return icc.IncludeVirtualServices && !isWorkloadSelector
+	case kubernetes.WasmPlugins:
+		return icc.IncludeWasmPlugins
 	case kubernetes.WorkloadEntries:
 		return icc.IncludeWorkloadEntries && !isWorkloadSelector
 	case kubernetes.WorkloadGroups:
 		return icc.IncludeWorkloadGroups
-	case kubernetes.RequestAuthentications:
-		return icc.IncludeRequestAuthentications
-	case kubernetes.EnvoyFilters:
-		return icc.IncludeEnvoyFilters
-	case kubernetes.TrafficExtensions:
-		return icc.IncludeTrafficExtensions
-	case kubernetes.WasmPlugins:
-		return icc.IncludeWasmPlugins
-	case kubernetes.Telemetries:
-		return icc.IncludeTelemetry
 	}
 	return false
 }
