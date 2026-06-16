@@ -14,6 +14,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
@@ -164,4 +165,114 @@ func TestIstioList_FilterByService(t *testing.T) {
 	_, hasRatingsDR := names["ratings-dr"]
 	assert.False(t, hasRatingsVS)
 	assert.False(t, hasRatingsDR)
+}
+
+func TestCriteriaForListFilter(t *testing.T) {
+	tests := []struct {
+		name          string
+		group         string
+		kind          string
+		expectDefault bool
+		checkField    func(business.IstioConfigCriteria) bool
+	}{
+		{
+			name:       "TrafficExtension returns targeted criteria",
+			group:      "extensions.istio.io",
+			kind:       "TrafficExtension",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeTrafficExtensions },
+		},
+		{
+			name:       "WasmPlugin returns targeted criteria",
+			group:      "extensions.istio.io",
+			kind:       "WasmPlugin",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeWasmPlugins },
+		},
+		{
+			name:       "Telemetry returns targeted criteria",
+			group:      "telemetry.istio.io",
+			kind:       "Telemetry",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeTelemetry },
+		},
+		{
+			name:       "VirtualService returns targeted criteria",
+			group:      "networking.istio.io",
+			kind:       "VirtualService",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeVirtualServices },
+		},
+		{
+			name:       "DestinationRule returns targeted criteria",
+			group:      "networking.istio.io",
+			kind:       "DestinationRule",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeDestinationRules },
+		},
+		{
+			name:          "unknown group/kind returns default (include-all) criteria",
+			group:         "unknown.io",
+			kind:          "Unknown",
+			expectDefault: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := criteriaForListFilter(tt.group, tt.kind)
+
+			if tt.expectDefault {
+				assert.True(t, c.IncludeTrafficExtensions)
+				assert.True(t, c.IncludeWasmPlugins)
+				assert.True(t, c.IncludeVirtualServices)
+				assert.True(t, c.IncludeTelemetry)
+				return
+			}
+
+			assert.True(t, tt.checkField(c), "expected criteria field to be true for %s/%s", tt.group, tt.kind)
+
+			allOthersOff := !c.IncludeGateways &&
+				!c.IncludeK8sGateways &&
+				!c.IncludeK8sGRPCRoutes &&
+				!c.IncludeK8sHTTPRoutes
+			assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
+		})
+	}
+}
+
+func TestCriteriaForListFilter_ExtensionsMutualExclusion(t *testing.T) {
+	txCriteria := criteriaForListFilter("extensions.istio.io", "TrafficExtension")
+	assert.True(t, txCriteria.IncludeTrafficExtensions)
+	assert.False(t, txCriteria.IncludeWasmPlugins)
+
+	wpCriteria := criteriaForListFilter("extensions.istio.io", "WasmPlugin")
+	assert.True(t, wpCriteria.IncludeWasmPlugins)
+	assert.False(t, wpCriteria.IncludeTrafficExtensions)
+}
+
+func TestCriteriaForListFilter_UnknownKindInKnownGroup(t *testing.T) {
+	c := criteriaForListFilter("extensions.istio.io", "NonExistent")
+	assert.True(t, c.IncludeTrafficExtensions, "unknown kind in known group should fall through to default")
+	assert.True(t, c.IncludeWasmPlugins)
+	assert.True(t, c.IncludeVirtualServices)
+}
+
+func TestIstioList_IncludesTrafficExtensions(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
+	k8s := kubetest.NewFakeK8sClient(ns)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+
+	args := map[string]interface{}{
+		"namespace": "bookinfo",
+		"group":     kubernetes.TrafficExtensions.Group,
+		"kind":      kubernetes.TrafficExtensions.Kind,
+	}
+
+	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	require.Equal(t, http.StatusOK, status)
+
+	result, ok := res.(IstioListResult)
+	require.True(t, ok)
+	assert.Equal(t, "east", result.Cluster)
+	assert.Empty(t, result.Items)
 }
