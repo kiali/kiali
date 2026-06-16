@@ -14,6 +14,7 @@ import (
 
 	user_v1 "github.com/openshift/api/user/v1"
 	"golang.org/x/oauth2"
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -282,7 +283,12 @@ func (in *OpenshiftOAuthService) Logout(ctx context.Context, token string, clust
 		return fmt.Errorf("could not get ServiceAccount client for cluster [%s]", cluster)
 	}
 
-	return kialiSAClient.DeleteOAuthToken(ctx, oauthTokenName)
+	err := kialiSAClient.DeleteOAuthToken(ctx, oauthTokenName)
+	if k8s_errors.IsNotFound(err) {
+		log.Debugf("OAuth access token [%v] already deleted; treating logout as successful", oauthTokenName)
+		return nil
+	}
+	return err
 }
 
 func (in *OpenshiftOAuthService) OAuthConfig(cluster string) (*OAuthConfig, error) {

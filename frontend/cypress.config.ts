@@ -20,10 +20,8 @@ export default defineConfig({
   responseTimeout: 15000,
   fixturesFolder: 'cypress/fixtures',
   env: {
-    rootSelector: '#root',
     cookie: false,
-    omitFiltered: true,
-    filterSpecs: true
+    rootSelector: '#root'
   },
   e2e: {
     baseUrl: 'http://localhost:3001',
@@ -47,6 +45,21 @@ export default defineConfig({
           plugins: [createEsbuildPlugin(config)]
         })
       );
+
+      // When targeting an HTTPS endpoint with self-signed certificates
+      // (e.g. CRC), the browser itself must also bypass cert validation
+      // — ALLOW_INSECURE_KIALI_API only covers Node.js cy.request() calls.
+      if (config.env.ALLOW_INSECURE_KIALI_API) {
+        on('before:browser:launch', (browser, launchOptions) => {
+          if (browser.family === 'chromium') {
+            launchOptions.args.push('--ignore-certificate-errors');
+          }
+          if (browser.family === 'firefox') {
+            launchOptions.preferences['security.enterprise_roots.enabled'] = true;
+          }
+          return launchOptions;
+        });
+      }
 
       // This name is non-standard and might change based on your environment hence the separate env variable.
       config.env.AUTH_STRATEGY = await getAuthStrategy(config.baseUrl!, config.env.ALLOW_INSECURE_KIALI_API);

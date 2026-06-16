@@ -1,3 +1,4 @@
+import { discoverOAuthOrigin } from './oauth-utils';
 import { buildNodeTree, findComponentsInTree, getReactFiber, isReactRoot, ReactNode, ReactOpts } from './react-utils';
 
 // ***********************************************
@@ -158,6 +159,24 @@ function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): voi
   });
 }
 
+interface LoginForm {
+  authProvider?: string;
+  password: string;
+  username: string;
+}
+
+// Handles the full login flow (IDP selection + credentials) in a single
+// cy.origin() callback. kiali_login.ts has a slimmer submitLoginForm that
+// only fills credentials — there, IDP clicking is a separate Gherkin step.
+function fillLoginForm({ authProvider, username, password }: LoginForm): void {
+  if (authProvider !== '' && authProvider !== undefined) {
+    cy.contains(authProvider).should('be.visible').click();
+  }
+  cy.get('#inputUsername').clear().type(username);
+  cy.get('#inputPassword').type(password);
+  cy.get('button[type="submit"]').click();
+}
+
 Cypress.Commands.add('login', (username: string, password: string) => {
   const auth_strategy = Cypress.env('AUTH_STRATEGY');
   const tags = (Cypress.env('TAGS') ?? '') as string;
@@ -178,15 +197,20 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         cy.intercept('**/api/tracing').as('getTracing');
         cy.intercept('**/api/auth/info').as('getAuthInfo');
 
-        cy.visit({ url: '/' });
         const authProvider = Cypress.env('AUTH_PROVIDER');
-        if (authProvider !== '' && authProvider !== undefined) {
-          cy.contains(authProvider).should('be.visible').click();
-        }
-        cy.get('#inputUsername').clear().type(username);
+        discoverOAuthOrigin().then(oauthOrigin => {
+          const baseOrigin = new URL(Cypress.config('baseUrl')!).origin;
 
-        cy.get('#inputPassword').type(password);
-        cy.get('button[type="submit"]').click();
+          cy.visit({ url: '/' });
+
+          if (oauthOrigin !== baseOrigin) {
+            const oauthHost = new URL(oauthOrigin).host;
+            cy.url().should('include', oauthHost);
+            cy.origin(oauthOrigin, { args: { authProvider, username, password } }, fillLoginForm);
+          } else {
+            fillLoginForm({ authProvider, username, password });
+          }
+        });
 
         // Wait for post login routes to be loaded. Otherwise cypress redirects you back to the home page
         // which causes other tests to fail: https://github.com/cypress-io/cypress/issues/1713.
@@ -303,9 +327,9 @@ Cypress.Commands.overwrite('exec', (originalFn, command, options) => {
   }
 
   return originalFn(command, { ...options, failOnNonZeroExit: false }).then(result => {
-    if (result.code) {
+    if (result.exitCode) {
       throw new Error(`Execution of "${command}" failed
-      Exit code: ${result.code}
+      Exit code: ${result.exitCode}
       Stdout:\n${result.stdout}
       Stderr:\n${result.stderr}`);
     }

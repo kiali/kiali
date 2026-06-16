@@ -105,7 +105,7 @@ Given(
       cy.exec(`kubectl get pods -n ${namespace} -l app=${daemonsetName} -o jsonpath='{.items[0].metadata.name}'`, {
         failOnNonZeroExit: false
       }).then(result => {
-        if (result.code === 0 && result.stdout) {
+        if (result.exitCode === 0 && result.stdout) {
           const podName = result.stdout.trim();
 
           // Use the existing function for workload details
