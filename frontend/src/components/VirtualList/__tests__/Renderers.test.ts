@@ -16,8 +16,13 @@ rstest.mock('config/ServerConfig', () => ({
   serverConfig: { ambientEnabled: false }
 }));
 
+// Break the Renderers ↔ Config circular dependency that causes a TDZ
+// error under ESM. Config.ts eagerly accesses Renderers at module scope,
+// but the test only needs types from Config, not runtime renderer refs.
+rstest.mock('../Config', () => ({}));
+
 import { getKioskParamsForListItem } from '../Renderers';
-import { Resource, TResource } from '../Config';
+import type { Resource, TResource } from '../Config';
 import { WorkloadListItem } from '../../../types/Workload';
 
 const workloadConfig: Resource = { name: 'workloads', columns: [] };
