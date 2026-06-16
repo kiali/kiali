@@ -430,17 +430,36 @@ See existing tools for end-to-end examples.
 
 | Metric | Value |
 |--------|-------|
-| Tasks Passed | 2/2 (100%) |
+| Tasks Passed | 19/21 (90%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 9830 |
-| MCP Schema Tokens | 3356 |
+| Total Tokens Estimate | 70148 |
+| MCP Schema Tokens | 52185 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| get-namespaces | 6996 | 1678 | ✅ |
-| get-service-detail | 2834 | 1678 | ✅ |
+| Create Istio Gateway | 2853 | 2485 | ❌ |
+| Remove Fault Injection | 5213 | 2485 | ✅ |
+| List and Validate VirtualServices | 2772 | 2485 | ✅ |
+| List and Validate DestinationRules | 2764 | 2485 | ✅ |
+| Update Traffic Shifting | 3862 | 2485 | ❌ |
+| Analyze Service Traffic Volume | 2635 | 2485 | ✅ |
+| Analyze Workload Response Times | 2650 | 2485 | ✅ |
+| Identify Degraded Namespaces | 2891 | 2485 | ✅ |
+| List Mesh-Enabled Namespaces | 2854 | 2485 | ✅ |
+| Inspect Service Details | 3088 | 2485 | ✅ |
+| Inspect Workload Details | 2837 | 2485 | ✅ |
+| Inventory Namespace Services | 2895 | 2485 | ✅ |
+| Inventory Workloads with Sidecar Status | 3211 | 2485 | ✅ |
+| Comprehensive Mesh Health Audit | 3617 | 2485 | ✅ |
+| Visualize Namespace Traffic | 3394 | 2485 | ✅ |
+| Audit Control Plane Connectivity | 2891 | 2485 | ✅ |
+| Visualize Cross-Namespace Traffic | 3500 | 2485 | ✅ |
+| Visualize Workload-Level Topology | 3444 | 2485 | ✅ |
+| Debug Service Errors via Logs | 4124 | 2485 | ✅ |
+| Analyze Latency with Distributed Tracing | 5608 | 2485 | ✅ |
+| Retrieve Recent Workload Logs | 3045 | 2485 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
 ## MCP evaluation (CI)
