@@ -355,6 +355,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
         hasAttachButton={false}
         hasStopButton={isStreaming}
         innerRef={textareaRef}
+        isCompact
         isSendButtonDisabled={!query || query.trim().length === 0}
         onChange={e => onChange(e, e.target.value)}
         onSendMessage={onSubmit}

@@ -9,7 +9,13 @@ import {
   ChatbotHeaderNewChatButton,
   ChatbotHeaderSelectorDropdown
 } from '@patternfly/chatbot';
-import { ExpandIcon, OpenDrawerRightIcon, OutlinedWindowRestoreIcon, TimesIcon } from '@patternfly/react-icons';
+import {
+  EllipsisVIcon,
+  ExpandIcon,
+  OpenDrawerRightIcon,
+  OutlinedWindowRestoreIcon,
+  WindowMinimizeIcon
+} from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { KialiAppState } from 'store/Store';
@@ -48,10 +54,14 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
   return (
     <ChatbotHeader>
       <ChatbotHeaderMain>
-        <ChatbotHeaderNewChatButton onClick={onNewChat} />
+        <ChatbotHeaderNewChatButton onClick={onNewChat} isCompact />
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
-        <ChatbotHeaderSelectorDropdown value={`${selectedProvider}:${selectedModel}`} onSelect={onSelectProviderModel}>
+        <ChatbotHeaderSelectorDropdown
+          value={`${selectedProvider}:${selectedModel}`}
+          onSelect={onSelectProviderModel}
+          isCompact
+        >
           {providers.map((provider, i) => (
             <>
               <DropdownGroup label={`${provider.name}`} labelHeadingLevel="h3">
@@ -67,7 +77,11 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
             </>
           ))}
         </ChatbotHeaderSelectorDropdown>
-        <ChatbotHeaderOptionsDropdown onSelect={onSelectDisplayMode}>
+        <ChatbotHeaderOptionsDropdown
+          onSelect={onSelectDisplayMode}
+          isCompact
+          toggleProps={{ icon: <EllipsisVIcon /> }}
+        >
           <DropdownGroup label={t('Display Mode')}>
             <DropdownList>
               <DropdownItem
@@ -94,8 +108,8 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
               >
                 <span>{t('Fullscreen')}</span>
               </DropdownItem>
-              <DropdownItem key="scloseChat" icon={<TimesIcon aria-hidden />} onClick={onCloseChat}>
-                <span>{t('Close Chat')}</span>
+              <DropdownItem key="scloseChat" icon={<WindowMinimizeIcon aria-hidden />} onClick={onCloseChat}>
+                <span>{t('Minimize')}</span>
               </DropdownItem>
             </DropdownList>
           </DropdownGroup>

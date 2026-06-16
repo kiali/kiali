@@ -172,7 +172,7 @@ export const ChatBot: React.FC = () => {
       }}
     >
       <ChatbotToggle
-        tooltipLabel={t('Chat with AI')}
+        tooltipLabel={chatbotVisible ? t('Minimize') : t('Chat with AI')}
         isChatbotVisible={chatbotVisible}
         onToggleChatbot={() => setChatbotVisible(prev => !prev)}
         isRound={true}
