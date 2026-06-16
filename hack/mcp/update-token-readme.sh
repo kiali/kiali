@@ -8,8 +8,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOTDIR="${SCRIPT_DIR}/../.."
 
-EVAL_OUT="${ROOTDIR}/tests/evals/results/mcpchecker-gemini-eval-out.json"
-README_FILE="${ROOTDIR}/ai/mcp/README.md"
+EVAL_OUT="${EVAL_OUT:-${ROOTDIR}/tests/evals/results/mcpchecker-gemini-eval-out.json}"
+README_FILE="${README_FILE:-${ROOTDIR}/ai/mcp/README.md}"
 
 if [[ ! -f "${EVAL_OUT}" ]]; then
   echo "Error: ${EVAL_OUT} not found" >&2
@@ -21,27 +21,32 @@ if [[ ! -f "${README_FILE}" ]]; then
   exit 1
 fi
 
-TASK_COUNT=$(jq 'if type == "array" then length else 0 end' "${EVAL_OUT}")
+# Normalize: support both a flat array (legacy format) and the current
+# {results:[...], summary:{...}} object format produced by mcpchecker.
+TASKS_TMP="$(mktemp)"
+TOKEN_FILE="$(mktemp)"
+trap 'rm -f "${TOKEN_FILE}" "${TASKS_TMP}"' EXIT
+
+jq 'if type == "array" then . elif (type == "object" and (.results | type) == "array") then .results else [] end' "${EVAL_OUT}" > "${TASKS_TMP}"
+
+TASK_COUNT=$(jq 'length' "${TASKS_TMP}")
 if (( TASK_COUNT <= 0 )); then
   echo "Error: ${EVAL_OUT} does not contain any task results" >&2
   exit 1
 fi
 
 TASKS_TOTAL="${TASK_COUNT}"
-TASKS_PASSED=$(jq '[.[] | select(.taskPassed == true)] | length' "${EVAL_OUT}")
-ASSERTIONS_TOTAL=$(jq '[.[] | select(.allAssertionsPassed != null)] | length' "${EVAL_OUT}")
-ASSERTIONS_PASSED=$(jq '[.[] | select(.allAssertionsPassed == true)] | length' "${EVAL_OUT}")
-TOTAL_TOKENS=$(jq '[.[] | (.tokenEstimate.totalTokens // 0) | floor] | add // 0' "${EVAL_OUT}")
-MCP_SCHEMA_TOKENS=$(jq '[.[] | (.tokenEstimate.mcpSchemaTokens // 0) | floor] | add // 0' "${EVAL_OUT}")
+TASKS_PASSED=$(jq '[.[] | select(.taskPassed == true)] | length' "${TASKS_TMP}")
+ASSERTIONS_TOTAL=$(jq '[.[] | select(.allAssertionsPassed != null)] | length' "${TASKS_TMP}")
+ASSERTIONS_PASSED=$(jq '[.[] | select(.allAssertionsPassed == true)] | length' "${TASKS_TMP}")
+TOTAL_TOKENS=$(jq '[.[] | (.tokenEstimate.totalTokens // 0) | floor] | add // 0' "${TASKS_TMP}")
+MCP_SCHEMA_TOKENS=$(jq '[.[] | (.tokenEstimate.mcpSchemaTokens // 0) | floor] | add // 0' "${TASKS_TMP}")
 
 PASS_PCT=$(awk "BEGIN {printf \"%.0f\", (${TASKS_PASSED} / ${TASKS_TOTAL}) * 100}")
 ASSERT_PCT=0
 if (( ASSERTIONS_TOTAL > 0 )); then
   ASSERT_PCT=$(awk "BEGIN {printf \"%.0f\", (${ASSERTIONS_PASSED} / ${ASSERTIONS_TOTAL}) * 100}")
 fi
-
-TOKEN_FILE="$(mktemp)"
-trap 'rm -f "${TOKEN_FILE}"' EXIT
 
 {
   printf "### Evaluation Summary\n\n"
@@ -67,7 +72,7 @@ trap 'rm -f "${TOKEN_FILE}"' EXIT
       STATUS="❌"
     fi
     printf "| %s | %s | %s | %s |\n" "${NAME}" "${TOKENS}" "${SCHEMA}" "${STATUS}"
-  done < <(jq -c '.[]' "${EVAL_OUT}")
+  done < <(jq -c '.[]' "${TASKS_TMP}")
 } > "${TOKEN_FILE}"
 
 START_MARKER="<!-- TOKENS-CONSUMPTION-START -->"
