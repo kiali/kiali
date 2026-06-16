@@ -5,7 +5,7 @@ describe('IstioConfigDetailsPageComponent', () => {
   const origViewOnly = serverConfig.deployment.viewOnlyMode;
 
   const props = {
-    dispatch: jest.fn(),
+    dispatch: rstest.fn(),
     istioConfigId: {
       namespace: 'bookinfo',
       objectGroup: 'networking.istio.io',

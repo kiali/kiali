@@ -1,54 +1,53 @@
-import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { serverConfig } from 'config';
 import { ServiceWizard } from '../ServiceWizard';
 import { ServiceWizardProps, WIZARD_FAULT_INJECTION } from '../WizardActions';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key
 }));
 
-jest.mock('../FaultInjection', () => ({
+rstest.mock('../FaultInjection', () => ({
   FaultInjection: () => <div>Fault Injection Content</div>
 }));
 
-jest.mock('../RequestRouting', () => ({
+rstest.mock('../RequestRouting', () => ({
   RequestRouting: () => <div>Request Routing Content</div>
 }));
 
-jest.mock('../K8sRequestRouting', () => ({
+rstest.mock('../K8sRequestRouting', () => ({
   K8sRequestRouting: () => <div>K8s Request Routing Content</div>
 }));
 
-jest.mock('../TrafficShifting', () => ({
+rstest.mock('../TrafficShifting', () => ({
   TrafficShifting: () => <div>Traffic Shifting Content</div>
 }));
 
-jest.mock('../RequestTimeouts', () => ({
+rstest.mock('../RequestTimeouts', () => ({
   RequestTimeouts: () => <div>Request Timeouts Content</div>
 }));
 
-jest.mock('../GatewaySelector', () => ({
+rstest.mock('../GatewaySelector', () => ({
   GatewaySelector: () => <div>Gateway Selector Content</div>
 }));
 
-jest.mock('../K8sGatewaySelector', () => ({
+rstest.mock('../K8sGatewaySelector', () => ({
   K8sGatewaySelector: () => <div>K8s Gateway Selector Content</div>
 }));
 
-jest.mock('../VirtualServiceHosts', () => ({
+rstest.mock('../VirtualServiceHosts', () => ({
   VirtualServiceHosts: () => <div>Virtual Service Hosts Content</div>
 }));
 
-jest.mock('../K8sRouteHosts', () => ({
+rstest.mock('../K8sRouteHosts', () => ({
   K8sRouteHosts: () => <div>K8s Route Hosts Content</div>
 }));
 
-jest.mock('../K8sGRPCRouteHosts', () => ({
+rstest.mock('../K8sGRPCRouteHosts', () => ({
   K8sGRPCRouteHosts: () => <div>K8s GRPC Route Hosts Content</div>
 }));
 
-jest.mock('../TrafficPolicy', () => ({
+rstest.mock('../TrafficPolicy', () => ({
   TrafficPolicy: () => <div>Traffic Policy Content</div>,
   ConsistentHashType: {
     HTTP_HEADER_NAME: 'HTTP_HEADER_NAME'
@@ -57,11 +56,11 @@ jest.mock('../TrafficPolicy', () => ({
   UNSET: 'UNSET'
 }));
 
-jest.mock('../CircuitBreaker', () => ({
+rstest.mock('../CircuitBreaker', () => ({
   CircuitBreaker: () => <div>Circuit Breaker Content</div>
 }));
 
-jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
+rstest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
   IstioConfigPreview: ({ isOpen, onClose, readOnly, title }: any) =>
     isOpen ? (
       <div>
@@ -72,7 +71,7 @@ jest.mock('components/IstioConfigPreview/IstioConfigPreview', () => ({
     ) : null
 }));
 
-const onClose = jest.fn();
+const onClose = rstest.fn();
 
 const baseProps: ServiceWizardProps = {
   cluster: 'test-cluster',

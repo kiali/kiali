@@ -249,7 +249,7 @@ describe('ChartWithLegend', () => {
 
   it('calls onClick when data click handler receives a valid datum', () => {
     const data = makeSeries(['Series A']);
-    const onClickSpy = jest.fn();
+    const onClickSpy = rstest.fn();
     render(
       <ChartWithLegend
         data={data}
@@ -273,7 +273,7 @@ describe('ChartWithLegend', () => {
 
   it('does not call onClick when data click handler receives undefined datum', () => {
     const data = makeSeries(['Series A']);
-    const onClickSpy = jest.fn();
+    const onClickSpy = rstest.fn();
     render(
       <ChartWithLegend
         data={data}

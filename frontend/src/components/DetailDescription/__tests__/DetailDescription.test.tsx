@@ -1,22 +1,21 @@
 /* eslint-disable import/first */
-import * as React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
 let mockKioskValue = '';
 
-jest.mock('store/ConfigStore', () => ({
+rstest.mock('store/ConfigStore', () => ({
   store: {
     getState: () => ({ globalState: { kiosk: mockKioskValue } }),
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-    replaceReducer: jest.fn()
+    dispatch: rstest.fn(),
+    subscribe: rstest.fn(),
+    replaceReducer: rstest.fn()
   },
-  persistor: { persist: jest.fn() }
+  persistor: { persist: rstest.fn() }
 }));
 
-jest.mock('config/ServerConfig', () => ({
+rstest.mock('config/ServerConfig', () => ({
   isMultiCluster: false,
   serverConfig: { ambientEnabled: false }
 }));
@@ -25,10 +24,10 @@ import { store } from '../../../store/ConfigStore';
 import { DetailDescription } from '../DetailDescription';
 import { AppWorkload } from '../../../types/App';
 
-let postMessageSpy: jest.SpyInstance;
+let postMessageSpy: ReturnType<typeof rstest.spyOn>;
 
 beforeEach(() => {
-  postMessageSpy = jest.spyOn(window, 'postMessage').mockImplementation(() => {});
+  postMessageSpy = rstest.spyOn(window, 'postMessage').mockImplementation(() => {});
 });
 
 afterEach(() => {

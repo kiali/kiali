@@ -8,13 +8,13 @@ import { Provider } from 'react-redux';
 import { serverConfig } from 'config';
 import { renderNodeHeader, shouldRefreshData, renderHealthStatus, TargetPanelCommonProps } from '../TargetPanelCommon';
 
-jest.mock('@patternfly/react-topology', () => ({
-  Controller: jest.fn(),
-  Node: jest.fn()
+rstest.mock('@patternfly/react-topology', () => ({
+  Controller: rstest.fn(),
+  Node: rstest.fn()
 }));
 
-jest.mock('store/ConfigStore', () => {
-  const { createStore: cs } = (jest as any).requireActual('redux');
+rstest.mock('store/ConfigStore', () => {
+  const { createStore: cs } = (rstest as any).requireActual('redux');
   const s = cs(() => ({}));
   return { store: s };
 });

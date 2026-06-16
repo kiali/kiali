@@ -1,17 +1,17 @@
 /* eslint-disable import/first */
 import { InstanceType } from '../../../types/Common';
 
-jest.mock('store/ConfigStore', () => ({
+rstest.mock('store/ConfigStore', () => ({
   store: {
     getState: () => ({ globalState: { kiosk: '' } }),
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-    replaceReducer: jest.fn()
+    dispatch: rstest.fn(),
+    subscribe: rstest.fn(),
+    replaceReducer: rstest.fn()
   },
-  persistor: { persist: jest.fn() }
+  persistor: { persist: rstest.fn() }
 }));
 
-jest.mock('config/ServerConfig', () => ({
+rstest.mock('config/ServerConfig', () => ({
   isMultiCluster: false,
   serverConfig: { ambientEnabled: false }
 }));

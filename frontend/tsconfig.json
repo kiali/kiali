@@ -20,6 +20,6 @@
     "strict": true,
     "target": "es2022"
   },
-  "exclude": ["node_modules", "build", "coverage", "src/setupTests.ts", "src/mocks/**/*"],
+  "exclude": ["src/mocks/**/*", "src/setupTests.ts"],
   "include": ["src"]
 }

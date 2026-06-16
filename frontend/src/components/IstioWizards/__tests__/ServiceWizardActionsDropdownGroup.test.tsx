@@ -1,10 +1,9 @@
-import * as React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { serverConfig } from 'config';
 import { ServiceWizardActionsDropdownGroup } from '../ServiceWizardActionsDropdownGroup';
 import { KIALI_WIZARD_LABEL, WIZARD_REQUEST_ROUTING } from '../WizardActions';
 
-jest.mock('utils/I18nUtils', () => ({
+rstest.mock('utils/I18nUtils', () => ({
   t: (key: string) => key
 }));
 
@@ -21,8 +20,8 @@ describe('ServiceWizardActionsDropdownGroup', () => {
     },
     k8sGRPCRoutes: [],
     k8sHTTPRoutes: [],
-    onAction: jest.fn(),
-    onDelete: jest.fn(),
+    onAction: rstest.fn(),
+    onDelete: rstest.fn(),
     virtualServices: []
   };
 

@@ -1,20 +1,20 @@
 /* eslint-disable import/first */
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Tab } from '@patternfly/react-core';
 import { Provider } from 'react-redux';
+import type { Mock } from '@rstest/core';
 
-jest.mock('store/ConfigStore', () => ({
+rstest.mock('store/ConfigStore', () => ({
   store: {
     getState: () => ({ globalState: { kiosk: '' } }),
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-    replaceReducer: jest.fn()
+    dispatch: rstest.fn(),
+    subscribe: rstest.fn(),
+    replaceReducer: rstest.fn()
   },
-  persistor: { persist: jest.fn() }
+  persistor: { persist: rstest.fn() }
 }));
 
-jest.mock('config/ServerConfig', () => ({
+rstest.mock('config/ServerConfig', () => ({
   isMultiCluster: false,
   serverConfig: { ambientEnabled: false }
 }));
@@ -26,7 +26,7 @@ const defaultProps = {
   activeTab: 'info',
   defaultTab: 'info',
   id: 'test-tabs',
-  onSelect: jest.fn(),
+  onSelect: rstest.fn(),
   tabMap: { info: 0, traffic: 1 }
 };
 
@@ -55,12 +55,12 @@ describe('ParameterizedTabs actionsToolbar rendering', () => {
   });
 
   it('hides actionsToolbar in kiosk mode', () => {
-    (store.getState as jest.Mock) = jest.fn(() => ({ globalState: { kiosk: 'https://parent.example.com' } }));
+    (store.getState as Mock) = rstest.fn(() => ({ globalState: { kiosk: 'https://parent.example.com' } }));
 
     const { queryByTestId } = renderTabs(<span data-testid="toolbar-action">Action</span>);
 
     expect(queryByTestId('toolbar-action')).toBeNull();
 
-    (store.getState as jest.Mock) = jest.fn(() => ({ globalState: { kiosk: '' } }));
+    (store.getState as Mock) = rstest.fn(() => ({ globalState: { kiosk: '' } }));
   });
 });
