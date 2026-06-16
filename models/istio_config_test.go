@@ -127,3 +127,77 @@ func TestMarshalUnmarshalJSON_TrafficExtensionList(t *testing.T) {
 	assert.Contains(t, names, "filter-a")
 	assert.Contains(t, names, "filter-b")
 }
+
+func TestFilterIstioConfigs_TrafficExtensions(t *testing.T) {
+	configList := models.IstioConfigList{
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-a", Namespace: "bookinfo"}},
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-b", Namespace: "bookinfo"}},
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-c", Namespace: "other"}},
+		},
+	}
+
+	filtered := configList.FilterIstioConfigs([]string{"bookinfo"})
+	require.NotNil(t, filtered)
+
+	bookinfoConfigs := (*filtered)["bookinfo"]
+	require.NotNil(t, bookinfoConfigs)
+	require.Len(t, bookinfoConfigs.TrafficExtensions, 2)
+
+	names := []string{bookinfoConfigs.TrafficExtensions[0].Name, bookinfoConfigs.TrafficExtensions[1].Name}
+	assert.Contains(t, names, "filter-a")
+	assert.Contains(t, names, "filter-b")
+
+	_, hasOther := (*filtered)["other"]
+	assert.False(t, hasOther)
+}
+
+func TestFilterIstioConfigs_TrafficExtensionsEmptyNamespace(t *testing.T) {
+	configList := models.IstioConfigList{
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-a", Namespace: "bookinfo"}},
+		},
+	}
+
+	filtered := configList.FilterIstioConfigs([]string{"empty-ns"})
+	require.NotNil(t, filtered)
+
+	emptyConfigs := (*filtered)["empty-ns"]
+	require.NotNil(t, emptyConfigs)
+	assert.Empty(t, emptyConfigs.TrafficExtensions)
+}
+
+func TestMergeConfigs_TrafficExtensions(t *testing.T) {
+	list1 := models.IstioConfigList{
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-a", Namespace: "ns1"}},
+		},
+	}
+	list2 := models.IstioConfigList{
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-b", Namespace: "ns2"}},
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-c", Namespace: "ns2"}},
+		},
+	}
+
+	merged := list1.MergeConfigs(list2)
+	require.Len(t, merged.TrafficExtensions, 3)
+
+	names := []string{merged.TrafficExtensions[0].Name, merged.TrafficExtensions[1].Name, merged.TrafficExtensions[2].Name}
+	assert.Contains(t, names, "filter-a")
+	assert.Contains(t, names, "filter-b")
+	assert.Contains(t, names, "filter-c")
+}
+
+func TestMergeConfigs_TrafficExtensionsWithEmpty(t *testing.T) {
+	list1 := models.IstioConfigList{
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "filter-a", Namespace: "ns1"}},
+		},
+	}
+	list2 := models.IstioConfigList{}
+
+	merged := list1.MergeConfigs(list2)
+	require.Len(t, merged.TrafficExtensions, 1)
+	assert.Equal(t, "filter-a", merged.TrafficExtensions[0].Name)
+}
