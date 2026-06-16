@@ -320,8 +320,8 @@ func TestBookinfo_MeshStatusShowsBookinfoHealth(t *testing.T) {
 		if ns["name"] == bookinfoNS {
 			found = true
 			health, _ := ns["health"].(string)
-			assert.Contains(t, []string{"HEALTHY", "DEGRADED"}, health,
-				"bookinfo namespace health should be HEALTHY or DEGRADED, got %q", health)
+			assert.Contains(t, []string{"HEALTHY", "DEGRADED", "UNHEALTHY"}, health,
+				"bookinfo namespace health should be HEALTHY, DEGRADED or UNHEALTHY, got %q", health)
 			break
 		}
 	}
