@@ -2869,12 +2869,12 @@ __metadata:
     "@patternfly/react-icons": "npm:^6.4.0"
     "@patternfly/react-table": "npm:^6.4.0"
     "@patternfly/react-topology": "npm:^6.4.0"
-    "@rsbuild/core": "npm:^2.0.3"
-    "@rsbuild/plugin-react": "npm:^2.0.0"
+    "@rsbuild/core": "npm:^2.0.12"
+    "@rsbuild/plugin-react": "npm:^2.0.1"
     "@rsbuild/plugin-sass": "npm:^1.5.2"
     "@rsbuild/plugin-svgr": "npm:^2.0.2"
-    "@rstest/adapter-rsbuild": "npm:^0.2.6"
-    "@rstest/core": "npm:^0.9.10"
+    "@rstest/adapter-rsbuild": "npm:^0.10.1"
+    "@rstest/core": "npm:^0.10.3"
     "@testing-library/jest-dom": "npm:^6.9.1"
     "@testing-library/react": "npm:^14.3.1"
     "@testing-library/user-event": "npm:^14.6.1"
@@ -3796,7 +3796,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsbuild/core@npm:^2.0.3":
+"@rsbuild/core@npm:^2.0.12, @rsbuild/core@npm:~2.0.15":
   version: 2.0.15
   resolution: "@rsbuild/core@npm:2.0.15"
   dependencies:
@@ -3813,7 +3813,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsbuild/plugin-react@npm:^2.0.0":
+"@rsbuild/plugin-react@npm:^2.0.0, @rsbuild/plugin-react@npm:^2.0.1":
   version: 2.1.0
   resolution: "@rsbuild/plugin-react@npm:2.1.0"
   dependencies:
@@ -4008,23 +4008,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rstest/adapter-rsbuild@npm:^0.2.6":
-  version: 0.2.6
-  resolution: "@rstest/adapter-rsbuild@npm:0.2.6"
+"@rstest/adapter-rsbuild@npm:^0.10.1":
+  version: 0.10.6
+  resolution: "@rstest/adapter-rsbuild@npm:0.10.6"
   peerDependencies:
     "@rsbuild/core": "*"
-    "@rstest/core": ">=0.7.7"
-  checksum: 10c0/2ec115c2f42b12e5ca41e159d1c1d2b08755c7660c193bb26793f19f4e2e55e0b8ba56c6cd3e63977bfbb4247d0c8ffec118786dc1eb1ffe9f2f581e18632c3e
+    "@rstest/core": ^0.10.6
+  checksum: 10c0/867072f75a5ae7308a5480c3f789e5b2d9aa9121b8a88c6d2ce04d8fa4ebaa2549f151cba5b933c532897f7dd5f9fd58c069913050c182571fc7915e6b09a856
   languageName: node
   linkType: hard
 
-"@rstest/core@npm:^0.9.10":
-  version: 0.9.10
-  resolution: "@rstest/core@npm:0.9.10"
+"@rstest/core@npm:^0.10.3":
+  version: 0.10.6
+  resolution: "@rstest/core@npm:0.10.6"
   dependencies:
-    "@rsbuild/core": "npm:^2.0.3"
+    "@rsbuild/core": "npm:~2.0.15"
     "@types/chai": "npm:^5.2.3"
-    tinypool: "npm:^2.1.0"
   peerDependencies:
     happy-dom: ^20.8.3
     jsdom: "*"
@@ -4034,8 +4033,8 @@ __metadata:
     jsdom:
       optional: true
   bin:
-    rstest: bin/rstest.js
-  checksum: 10c0/b2bf7d396aa82a70dda45277f09f683f8bdef90fdb9e3e2198d117675f45e9023be7a8a5f1d8bd6b06dffe8e1879168cf8af3d6a3c0789b7642618d4728c15be
+    rstest: ./bin/rstest.js
+  checksum: 10c0/cdbf7c5a178ca15e2ae296d6fde51f0f0a85efeb2bd63b1a5d37408483297364341e3e9298a1ff3826b262cc88e439c2c8bded16939c264aed4d39270f86ee4a
   languageName: node
   linkType: hard
 
@@ -15795,13 +15794,6 @@ __metadata:
     fdir: "npm:^6.5.0"
     picomatch: "npm:^4.0.3"
   checksum: 10c0/869c31490d0d88eedb8305d178d4c75e7463e820df5a9b9d388291daf93e8b1eb5de1dad1c1e139767e4269fe75f3b10d5009b2cc14db96ff98986920a186844
-  languageName: node
-  linkType: hard
-
-"tinypool@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "tinypool@npm:2.1.0"
-  checksum: 10c0/9fb1c760558c6264e0f4cfde96a63b12450b43f1730fbe6274aa24ddbdf488745c08924d0dea7a1303b47d555416a6415f2113898c69b6ecf731e75ac95238a5
   languageName: node
   linkType: hard
 
