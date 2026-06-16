@@ -5,6 +5,7 @@ go 1.25.8
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-jose/go-jose/v4 v4.1.4
 	github.com/go-logr/zerologr v1.2.3
@@ -37,7 +38,8 @@ require (
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/exp v0.0.0-20250811191247-51f88131bc50
 	golang.org/x/oauth2 v0.34.0
-	golang.org/x/sync v0.19.0
+	golang.org/x/sync v0.21.0
+	golang.org/x/text v0.38.0
 	google.golang.org/genai v1.43.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217
 	google.golang.org/grpc v1.79.3
@@ -52,6 +54,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/gateway-api v1.4.0
 	sigs.k8s.io/gateway-api-inference-extension v1.3.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -65,7 +68,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
-	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -113,14 +115,13 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/mod v0.30.0 // indirect
-	golang.org/x/net v0.48.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/term v0.38.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/mod v0.36.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/time v0.13.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
+	golang.org/x/tools v0.45.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
@@ -132,7 +133,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.1 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 replace gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.1
