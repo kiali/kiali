@@ -126,97 +126,94 @@ jobs:
       id: setup
       run: hack/run-integration-tests.sh --test-suite backend --mcp-tools true --setup-only true
 
-    - name: Install MCP evaluation tools
-      run: make mcp-install-tools
+    - name: Install MCP evaluation dependencies
+      run: make mcp-install-kubernetes-mcp-server mcp-install-gemini-cli
 
     - name: Start kubernetes-mcp-server
       run: make mcp-start-server
 
     - name: Run mcpchecker evaluation
       id: mcpchecker
-      run: |
-        MCPCHECKER="$(go env GOPATH)/bin/mcpchecker"
-        MCP_EVAL_ARGS="${{ github.event.inputs.verbose == 'true' && '-v' || '' }}"
-        make mcp-run-eval MCP_EVAL_ARGS="${MCP_EVAL_ARGS}"
-
-        RESULTS_JSON="tests/evals/results/mcpchecker-gemini-eval-out.json"
-        if [ -f "${RESULTS_JSON}" ]; then
-          SUMMARY_OUTPUT="$(mktemp)"
-          trap 'rm -f "${SUMMARY_OUTPUT}"' EXIT
-          "${MCPCHECKER}" result summary "${RESULTS_JSON}" -o json > "${SUMMARY_OUTPUT}"
-          TASKS_TOTAL="$(jq -r '.tasksTotal' "${SUMMARY_OUTPUT}")"
-          TASKS_PASSED="$(jq -r '.tasksPassed' "${SUMMARY_OUTPUT}")"
-          ASSERTIONS_TOTAL="$(jq -r '.assertionsTotal' "${SUMMARY_OUTPUT}")"
-          ASSERTIONS_PASSED="$(jq -r '.assertionsPassed' "${SUMMARY_OUTPUT}")"
-          TASK_PASS_RATE="$(jq -r '.taskPassRate // 0' "${SUMMARY_OUTPUT}")"
-
-          PASSED="false"
-          if awk "BEGIN {exit !($TASK_PASS_RATE >= 0.8)}"; then
-            PASSED="true"
-          fi
-
-          echo "tasks-passed=${TASKS_PASSED}" >> "$GITHUB_OUTPUT"
-          echo "tasks-total=${TASKS_TOTAL}" >> "$GITHUB_OUTPUT"
-          echo "task-pass-rate=${TASK_PASS_RATE}" >> "$GITHUB_OUTPUT"
-          echo "assertions-passed=${ASSERTIONS_PASSED}" >> "$GITHUB_OUTPUT"
-          echo "assertions-total=${ASSERTIONS_TOTAL}" >> "$GITHUB_OUTPUT"
-          echo "passed=$PASSED" >> $GITHUB_OUTPUT
-        fi
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      with:
+        eval-config: tests/evals/gemini/eval.yaml
+        mcpchecker-version: latest
+        output-format: json
+        verbose: ${{ github.event.inputs.verbose || 'false' }}
+        upload-artifacts: 'true'
+        artifact-name: mcpchecker-results
+        fail-on-error: 'false'
+        task-pass-threshold: '0.8'
+        assertion-pass-threshold: '0.0'
+        working-directory: .
 
-    - name: Generate token summary
-      if: always() && hashFiles('tests/evals/results/mcpchecker-gemini-eval-out.json') != ''
+    - name: Normalize results path
+      if: always() && steps.mcpchecker.outputs.results-file != ''
       run: |
-        make mcp-eval-summary-json >> $GITHUB_STEP_SUMMARY
-        make mcp-eval-summary >> $GITHUB_STEP_SUMMARY
+        mkdir -p tests/evals/results
+        cp "${{ steps.mcpchecker.outputs.results-file }}" tests/evals/results/mcpchecker-gemini-eval-out.json
+
+    - name: Fail if evaluation produced no results
+      if: always() && steps.mcpchecker.outputs.results-file == ''
+      run: |
+        echo "::error::mcpchecker did not produce a results file"
+        exit 1
+
+    - name: Fetch baseline results
+      id: baseline
+      if: always() && needs.check-trigger.outputs.is-pr == 'true' && hashFiles('tests/evals/results/mcpchecker-gemini-eval-out.json') != ''
+      run: |
+        set -euo pipefail
+        git fetch origin "${DEFAULT_BRANCH}"
+        BASE_TMP="$(mktemp)"
+        if git show "origin/${DEFAULT_BRANCH}:tests/evals/results/mcpchecker-gemini-eval-out.json" > "${BASE_TMP}" 2>/dev/null; then
+          echo "has-baseline=true" >> "$GITHUB_OUTPUT"
+          echo "baseline-file=${BASE_TMP}" >> "$GITHUB_OUTPUT"
+        else
+          rm -f "${BASE_TMP}"
+          echo "::warning::No MCP eval baseline on origin/${DEFAULT_BRANCH} (tests/evals/results/mcpchecker-gemini-eval-out.json)"
+          echo "has-baseline=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Run mcpchecker diff
+      id: mcpchecker-diff
+      if: always() && needs.check-trigger.outputs.is-pr == 'true' && steps.baseline.outputs.has-baseline == 'true' && hashFiles('tests/evals/results/mcpchecker-gemini-eval-out.json') != ''
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      with:
+        base-results: ${{ steps.baseline.outputs.baseline-file }}
+        current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
+        mcpchecker-version: latest
+        working-directory: .
 
     - name: Post PR evaluation comment
       if: always() && needs.check-trigger.outputs.is-pr == 'true' && hashFiles('tests/evals/results/mcpchecker-gemini-eval-out.json') != ''
       env:
+        DIFF_OUTPUT: ${{ steps.mcpchecker-diff.outputs.diff-output }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
         PR_NUMBER="${{ needs.check-trigger.outputs.pr-number }}"
         PR_SHA="${{ needs.check-trigger.outputs.pr-sha }}"
         RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        MCPCHECKER="$(go env GOPATH)/bin/mcpchecker"
-        PR_RAW="tests/evals/results/mcpchecker-gemini-eval-out.json"
-
-        git fetch origin "${DEFAULT_BRANCH}"
-        BASE_TMP="$(mktemp)"
-        if ! git show "origin/${DEFAULT_BRANCH}:tests/evals/results/mcpchecker-gemini-eval-out.json" > "${BASE_TMP}" 2>/dev/null; then
-          echo "::warning::No MCP eval baseline on origin/${DEFAULT_BRANCH} (tests/evals/results/mcpchecker-gemini-eval-out.json)"
-          rm -f "${BASE_TMP}"
-          BASE_TMP=""
-        fi
 
         COMMENT_FILE="$(mktemp)"
-        trap 'rm -f "${BASE_TMP}" "${COMMENT_FILE}"' EXIT
+        trap 'rm -f "${COMMENT_FILE}"' EXIT
 
         {
           echo "## mcpchecker MCP Evaluation"
           echo ""
           echo "**Commit:** \`${PR_SHA:0:7}\` — [View full workflow run](${RUN_URL})"
           echo ""
-          if [[ -n "${BASE_TMP}" && -s "${BASE_TMP}" && -f "${PR_RAW}" ]]; then
-            "${MCPCHECKER}" result diff --base "${BASE_TMP}" --current "${PR_RAW}" --output markdown || \
-               echo "⚠ Diff comparison not available. See [workflow run](${RUN_URL}) for evaluation results."
+          if [[ "${{ steps.baseline.outputs.has-baseline }}" == "true" && -n "${DIFF_OUTPUT}" ]]; then
+            printf '%s\n' "${DIFF_OUTPUT}"
           else
-            echo "⚠️ Could not compare runs: baseline on ${DEFAULT_BRANCH} or PR results is missing."
+            echo "⚠ Diff comparison not available. See [workflow run](${RUN_URL}) for evaluation results."
           fi
         } > "${COMMENT_FILE}"
 
         gh pr comment "${PR_NUMBER}" --repo "${{ github.repository }}" --body-file "${COMMENT_FILE}"
-
-    - name: Upload mcpchecker results
-      if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-        name: mcpchecker-results
-        # Upload the directory so artifact layout matches download expectations (single-file uploads can flatten paths).
-        path: tests/evals/results/
-        if-no-files-found: warn
 
     - name: Cleanup
       if: always()
@@ -239,15 +236,17 @@ jobs:
       with:
         ref: ${{ env.DEFAULT_BRANCH }}
 
-    - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
-      with:
-        go-version-file: go.mod
-        cache: true
-        cache-dependency-path: go.sum
-
-    - name: Install mcpchecker
-      run: make mcp-install-mcpchecker
+    - name: Save previous baseline
+      id: previous-baseline
+      run: |
+        PREVIOUS="${RUNNER_TEMP}/mcpchecker-previous-baseline.json"
+        if [[ -f tests/evals/results/mcpchecker-gemini-eval-out.json ]]; then
+          cp tests/evals/results/mcpchecker-gemini-eval-out.json "${PREVIOUS}"
+          echo "has-previous=true" >> "$GITHUB_OUTPUT"
+          echo "path=${PREVIOUS}" >> "$GITHUB_OUTPUT"
+        else
+          echo "has-previous=false" >> "$GITHUB_OUTPUT"
+        fi
 
     - name: Download mcpchecker results
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -255,22 +254,17 @@ jobs:
         name: mcpchecker-results
         path: mcpchecker-results/
 
-    - name: Update eval results baseline and README
+    - name: Update eval results baseline
       run: |
         mkdir -p tests/evals/results
-        MCPCHECKER="$(go env GOPATH)/bin/mcpchecker"
-        PREVIOUS="$(mktemp)"
-        trap 'rm -f "${PREVIOUS}"' EXIT
-        PREVIOUS_EXISTS=0
-        if [[ -f tests/evals/results/mcpchecker-gemini-eval-out.json ]]; then
-          cp tests/evals/results/mcpchecker-gemini-eval-out.json "${PREVIOUS}"
-          PREVIOUS_EXISTS=1
-        fi
 
-        ARTIFACT_JSON=""
+        ARTIFACT_JSON="$(ls -t mcpchecker-results/mcpchecker-*-out.json 2>/dev/null | head -1 || true)"
         for candidate in \
           mcpchecker-results/tests/evals/results/mcpchecker-gemini-eval-out.json \
           mcpchecker-results/mcpchecker-gemini-eval-out.json; do
+          if [[ -n "${ARTIFACT_JSON}" ]]; then
+            break
+          fi
           if [[ -f "${candidate}" ]]; then
             ARTIFACT_JSON="${candidate}"
             break
@@ -286,17 +280,29 @@ jobs:
         fi
         cp "${ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-eval-out.json
 
-        if [[ "${PREVIOUS_EXISTS}" -eq 1 ]]; then
-          "${MCPCHECKER}" result diff --base "${PREVIOUS}" --current tests/evals/results/mcpchecker-gemini-eval-out.json --output markdown > baseline-pr-diff.md
+    - name: Run baseline diff
+      id: baseline-diff
+      if: steps.previous-baseline.outputs.has-previous == 'true'
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      with:
+        base-results: ${{ steps.previous-baseline.outputs.path }}
+        current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
+        mcpchecker-version: latest
+        working-directory: .
+
+    - name: Write baseline diff markdown
+      env:
+        DIFF_OUTPUT: ${{ steps.baseline-diff.outputs.diff-output }}
+      run: |
+        if [[ "${{ steps.previous-baseline.outputs.has-previous }}" == "true" && -n "${DIFF_OUTPUT}" ]]; then
+          printf '%s\n' "${DIFF_OUTPUT}" > baseline-pr-diff.md
         else
           echo "_No previous committed baseline on \`${DEFAULT_BRANCH}\` at this path — first update or new file._" > baseline-pr-diff.md
         fi
 
+    - name: Update README from baseline results
+      run: |
         make mcp-update-token-readme
-        echo "Updated baseline summary:"
-        "${MCPCHECKER}" result summary tests/evals/results/mcpchecker-gemini-eval-out.json -o json \
-          | head -c 2000
-        echo
 
     - name: Create PR with updated baseline
       env:
