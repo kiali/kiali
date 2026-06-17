@@ -106,6 +106,11 @@ create_resources_in_remote_cluster() {
     local helm_version_arg="--version ${KIALI_VERSION}"
   fi
 
+  local helm_repo_arg="--repo https://kiali.org/helm-charts"
+  if [ -f "${KIALI_SERVER_HELM_CHARTS}" ]; then
+    helm_repo_arg=""
+  fi
+
   local helm_template_output="$(${HELM} template            \
       ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
@@ -115,7 +120,7 @@ create_resources_in_remote_cluster() {
       --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
       --set auth.strategy=anonymous                         \
-      --repo https://kiali.org/helm-charts                  \
+      ${helm_repo_arg}                                      \
       kiali-server                                          \
       ${KIALI_SERVER_HELM_CHARTS})"
 

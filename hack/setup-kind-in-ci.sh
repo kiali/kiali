@@ -27,8 +27,7 @@ infomsg() {
 }
 
 determine_tracing_use_waypoint_name() {
-  # For ambient tests, Istio < 1.28 requires using the waypoint name for tracing lookups.
-  # For Istio >= 1.28, the default behavior (false) is expected.
+  # use_waypoint_name is needed for Istio < 1.28 and Istio >= 1.30 (not for 1.28.x / 1.29.x)
   if [ -z "${AMBIENT:-}" ]; then
     echo "false"
     return 0
@@ -48,7 +47,7 @@ determine_tracing_use_waypoint_name() {
     }
   fi
 
-  if kiali_istio_version_lt "${effective_version}" "1.28.0"; then
+  if kiali_istio_version_lt "${effective_version}" "1.28.0" || ! kiali_istio_version_lt "${effective_version}" "1.30.0"; then
     echo "true"
   else
     echo "false"
@@ -851,20 +850,25 @@ setup_kind_multicluster() {
     return
   fi
 
-  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh \
-    --cluster1-context ${cluster1_context} \
-    --cluster2-context ${cluster2_context} \
-    --cluster1-name ${cluster1_name} \
-    --cluster2-name ${cluster2_name} \
-    --ignore-home-cluster ${ignore_home_cluster} \
-    --manage-kind true \
-    "${auth_flags[@]}" \
-    -dorp docker \
-    -kas "${AUTH_STRATEGY}" \
-    -kudi true \
-    -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz \
-    --tempo ${TEMPO} \
+  local deploy_kiali_args=(
+    --cluster1-context "${cluster1_context}"
+    --cluster2-context "${cluster2_context}"
+    --cluster1-name "${cluster1_name}"
+    --cluster2-name "${cluster2_name}"
+    --ignore-home-cluster "${ignore_home_cluster}"
+    --manage-kind true
+    "${auth_flags[@]}"
+    -dorp docker
+    -kas "${AUTH_STRATEGY}"
+    -kudi true
+    -kshc "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
+    --tempo "${TEMPO}"
     -ci true
+  )
+  if [ -n "${AMBIENT:-}" ]; then
+    deploy_kiali_args+=(--ambient true)
+  fi
+  "${SCRIPT_DIR}"/istio/multicluster/deploy-kiali.sh "${deploy_kiali_args[@]}"
 }
 
 if [ -n "${MULTICLUSTER}" ]; then
