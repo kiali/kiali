@@ -44,7 +44,6 @@ const optionDisabledStyle = kialiStyle({
   }
 });
 
-
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
   const isViewOnly = serverConfig.deployment.viewOnlyMode;
@@ -135,40 +134,37 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     }
   });
 
-  if (hasTrafficRouting()) {
+  const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
 
-    const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
+  let deleteDropdownItem = (
+    <DropdownItem
+      key={DELETE_TRAFFIC_ROUTING}
+      component="button"
+      onClick={() => {
+        if (props.onDelete) {
+          props.onDelete(DELETE_TRAFFIC_ROUTING);
+        }
+      }}
+      isDisabled={deleteDisabled}
+      data-test={DELETE_TRAFFIC_ROUTING}
+    >
+      {t('Delete Traffic Routing')}
+    </DropdownItem>
+  );
 
-    let deleteDropdownItem = (
-      <DropdownItem
-        key={DELETE_TRAFFIC_ROUTING}
-        component="button"
-        onClick={() => {
-          if (props.onDelete) {
-            props.onDelete(DELETE_TRAFFIC_ROUTING);
-          }
-        }}
-        isDisabled={deleteDisabled}
-        data-test={DELETE_TRAFFIC_ROUTING}
+  if (deleteDisabled) {
+    deleteDropdownItem = (
+      <Tooltip
+        key={`tooltip_${DELETE_TRAFFIC_ROUTING}`}
+        position={TooltipPosition.left}
+        content={<>{getDropdownItemTooltipMessage(false, hasTrafficRouting())}</>}
       >
-        {t('Delete Traffic Routing')}
-      </DropdownItem>
+        <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
+      </Tooltip>
     );
-
-    if (deleteDisabled) {
-      deleteDropdownItem = (
-        <Tooltip
-          key={`tooltip_${DELETE_TRAFFIC_ROUTING}`}
-          position={TooltipPosition.left}
-          content={<>{getDropdownItemTooltipMessage(false, hasTrafficRouting())}</>}
-        >
-          <div style={{ display: 'inline-block', cursor: 'not-allowed' }}>{deleteDropdownItem}</div>
-        </Tooltip>
-      );
-    }
-
-    actionItems.push(deleteDropdownItem);
   }
+
+  actionItems.push(deleteDropdownItem);
 
   const label = isViewOnly ? t('View') : updateLabel === '' ? t('Create') : t('Update');
 

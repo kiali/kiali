@@ -113,7 +113,6 @@ const dropdownMenuStyle = kialiStyle({
   overflowY: 'auto'
 });
 
-
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
