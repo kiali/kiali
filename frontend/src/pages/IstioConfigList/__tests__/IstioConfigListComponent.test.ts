@@ -79,6 +79,7 @@ describe('IstioConfigList#filterByName', () => {
     expect(filtered.resources[getGVKTypeString(gvkType.VirtualService)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.DestinationRule)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.ServiceEntry)].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString(gvkType.TrafficExtension)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.WasmPlugin)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.Telemetry)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sGateway)].length).toBe(0);

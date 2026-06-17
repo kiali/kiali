@@ -406,6 +406,7 @@ const createPermissionsForNamespace = (): Record<string, { create: boolean; dele
   'networking.istio.io/v1, Kind=WorkloadGroup': { create: true, delete: true, update: true },
   'networking.istio.io/v1alpha3, Kind=EnvoyFilter': { create: true, delete: true, update: true },
   'telemetry.istio.io/v1, Kind=Telemetry': { create: true, delete: true, update: true },
+  'extensions.istio.io/v1alpha1, Kind=TrafficExtension': { create: true, delete: true, update: true },
   'extensions.istio.io/v1alpha1, Kind=WasmPlugin': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1, Kind=Gateway': { create: true, delete: true, update: true },
   'gateway.networking.k8s.io/v1, Kind=HTTPRoute': { create: true, delete: true, update: true },

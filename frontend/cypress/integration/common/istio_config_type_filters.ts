@@ -44,6 +44,7 @@ Then('user can see the filter options', () => {
     'ServiceEntry',
     'Sidecar',
     'Telemetry',
+    'TrafficExtension',
     'VirtualService',
     'WasmPlugin',
     'WorkloadEntry',

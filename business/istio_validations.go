@@ -479,6 +479,9 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 	for _, c := range config.VirtualServices {
 		change = vInfo.update("VS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
+	for _, c := range config.TrafficExtensions {
+		change = vInfo.update("TX", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
 	for _, c := range config.WasmPlugins {
 		change = vInfo.update("WP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
@@ -507,6 +510,7 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 		len(config.VirtualServices) +
 		len(config.WorkloadEntries) +
 		len(config.WorkloadGroups) +
+		len(config.TrafficExtensions) +
 		len(config.WasmPlugins)
 	change = vInfo.update("validation-num-config", cluster, "", "", strconv.Itoa(numConfig)) || change
 
@@ -554,6 +558,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.NewSidecarChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
 		checkers.TelemetryChecker{Namespaces: namespaces, Telemetries: istioConfigList.Telemetries},
 		checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices},
+		checkers.TrafficExtensionChecker{Namespaces: namespaces, TrafficExtensions: istioConfigList.TrafficExtensions},
 		checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
 		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, vInfo.clusterInfo.rootNamespaces, namespaces, workloadsPerNamespace),
 		checkers.WorkloadGroupsChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, ServiceAccounts: vInfo.saMap, WorkloadGroups: istioConfigList.WorkloadGroups},
@@ -752,6 +757,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker}
 	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
+	case kubernetes.TrafficExtensions:
+		// Validation on TrafficExtensions is not expected
 	case kubernetes.WasmPlugins:
 		// Validation on WasmPlugins is not expected
 	case kubernetes.Telemetries:
@@ -1130,6 +1137,7 @@ func filterIstioConfigByManagedNamespaces(config *models.IstioConfigList, mesh *
 	config.Sidecars = kubernetes.FilterByNamespaceNames(config.Sidecars, allowedNames)
 	config.Telemetries = kubernetes.FilterByNamespaceNames(config.Telemetries, allowedNames)
 	config.VirtualServices = kubernetes.FilterByNamespaceNames(config.VirtualServices, allowedNames)
+	config.TrafficExtensions = kubernetes.FilterByNamespaceNames(config.TrafficExtensions, allowedNames)
 	config.WasmPlugins = kubernetes.FilterByNamespaceNames(config.WasmPlugins, allowedNames)
 	config.WorkloadEntries = kubernetes.FilterByNamespaceNames(config.WorkloadEntries, allowedNames)
 	config.WorkloadGroups = kubernetes.FilterByNamespaceNames(config.WorkloadGroups, allowedNames)
