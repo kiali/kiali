@@ -19,8 +19,7 @@ import {
   ExpandableSection,
   MenuToggle,
   MenuToggleElement,
-  Tab,
-  TextInput
+  Tab
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
@@ -36,7 +35,7 @@ import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/Servi
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
-import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, kebabToggleStyle, titleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
@@ -49,12 +48,10 @@ import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
-  searchValue: string;
 };
 
 const defaultState: SummaryPanelNodeState = {
-  isActionOpen: false,
-  searchValue: ''
+  isActionOpen: false
 };
 
 type ReduxProps = {
@@ -116,28 +113,6 @@ const dropdownMenuStyle = kialiStyle({
   overflowY: 'auto'
 });
 
-const searchBoxStyle = kialiStyle({
-  padding: '0.5rem',
-  borderBottom: '1px solid var(--pf-v6-global--BorderColor--100)',
-  position: 'sticky',
-  top: 0,
-  backgroundColor: 'var(--pf-v6-global--BackgroundColor--100)',
-  zIndex: 1
-});
-
-const groupLabelStyle = kialiStyle({
-  fontSize: '0.875rem',
-  fontWeight: 700,
-  color: 'var(--pf-v6-global--Color--200)',
-  padding: '0.5rem 1rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px'
-});
-
-const dividerStyle = kialiStyle({
-  margin: '0.5rem 0',
-  borderTop: '1px solid var(--pf-v6-global--BorderColor--100)'
-});
 
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
@@ -179,20 +154,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       this.props.tracingState.info.integration;
 
     const options = getOptions(nodeData);
-    const searchLower = this.state.searchValue.toLowerCase();
-
-    // Filter options based on search
-    const filteredOptions = options.filter(o => o.text.toLowerCase().includes(searchLower));
-
     const items: React.ReactNode[] = [];
 
-    // Only show "Show" group if there are filtered options
-    if (filteredOptions.length > 0) {
+    if (options.length > 0) {
       items.push(
         <React.Fragment key="show-group">
-          <div className={groupLabelStyle}>Show</div>
+          <div className={titleStyle}>Show</div>
           <DropdownGroup key="show" className={groupMenuStyle}>
-            {filteredOptions.map((o, i) => {
+            {options.map((o, i) => {
               return (
                 <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
                   {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
@@ -205,11 +174,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     }
 
     if (nodeType === NodeType.SERVICE) {
-      // Add divider between Show and Create/Delete sections if Show group exists
-      if (filteredOptions.length > 0) {
-        items.push(<div key="divider" className={dividerStyle} />);
-      }
-
       if (this.props.serviceDetails === undefined) {
         items.push(<LoadingWizardActionsDropdownGroup key="loading" />);
       } else if (this.props.serviceDetails !== null) {
@@ -223,7 +187,6 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
             istioPermissions={this.props.serviceDetails.istioPermissions}
             onAction={this.handleLaunchWizard}
             onDelete={this.handleDeleteTrafficRouting}
-            searchValue={this.state.searchValue}
           />
         );
       }
@@ -288,24 +251,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   onOpenChange={(isOpen: boolean) => this.onToggleActions(isOpen)}
                   popperProps={{ position: 'right', enableFlip: true }}
                 >
-                  <DropdownList className={dropdownMenuStyle}>
-                    <div className={searchBoxStyle}>
-                      <TextInput
-                        type="search"
-                        placeholder="Search actions..."
-                        value={this.state.searchValue}
-                        onChange={(_event, value) => this.setState({ searchValue: value })}
-                        aria-label="Search menu items"
-                      />
-                    </div>
-                    {items.length > 0 ? (
-                      items
-                    ) : (
-                      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--pf-v6-global--Color--200)' }}>
-                        No actions found
-                      </div>
-                    )}
-                  </DropdownList>
+                  <DropdownList className={dropdownMenuStyle}>{items}</DropdownList>
                 </Dropdown>
               )}
 
@@ -461,9 +407,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
 
   private onToggleActions = (isOpen: boolean): void => {
     this.setState({
-      isActionOpen: isOpen,
-      // Reset search when closing dropdown
-      searchValue: isOpen ? this.state.searchValue : ''
+      isActionOpen: isOpen
     });
 
     if (this.props.onKebabToggled) {

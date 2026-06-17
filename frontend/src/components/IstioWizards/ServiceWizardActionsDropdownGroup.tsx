@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Divider, DropdownGroup, DropdownItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { DropdownGroup, DropdownItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, K8sGRPCRoute, VirtualService } from 'types/IstioObjects';
 import { canDelete, ResourcePermissions } from 'types/Permissions';
@@ -17,7 +17,7 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING
 } from './WizardActions';
 import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
-import { groupMenuStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, titleStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -32,7 +32,6 @@ type Props = {
   k8sHTTPRoutes: K8sHTTPRoute[];
   onAction?: (key: WizardAction, mode: WizardMode) => void;
   onDelete?: (key: string) => void;
-  searchValue?: string;
   virtualServices: VirtualService[];
 };
 
@@ -45,23 +44,10 @@ const optionDisabledStyle = kialiStyle({
   }
 });
 
-const dividerStyle = kialiStyle({
-  paddingTop: '0.5rem'
-});
-
-const groupLabelStyle = kialiStyle({
-  fontSize: '0.875rem',
-  fontWeight: 700,
-  color: 'var(--pf-v6-global--Color--200)',
-  padding: '0.5rem 1rem',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px'
-});
 
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
   const isViewOnly = serverConfig.deployment.viewOnlyMode;
-  const searchLower = (props.searchValue || '').toLowerCase();
 
   const hasTrafficRouting = (): boolean => {
     return hasServiceDetailsTrafficRouting(
@@ -92,11 +78,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     }
   };
 
-  const actionItems = SERVICE_WIZARD_ACTIONS.filter(eventKey => {
-    // Filter by search value
-    const wizardTitle = t(WIZARD_TITLES[eventKey].title).toLowerCase();
-    return wizardTitle.includes(searchLower);
-  }).map(eventKey => {
+  const actionItems = SERVICE_WIZARD_ACTIONS.map(eventKey => {
     const isGatewayAPIEnabled =
       eventKey === WIZARD_K8S_REQUEST_ROUTING || eventKey === WIZARD_K8S_GRPC_REQUEST_ROUTING
         ? serverConfig.gatewayAPIEnabled
@@ -153,12 +135,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     }
   });
 
-  // Only show delete action if it matches search filter
-  const deleteText = t('Delete Traffic Routing').toLowerCase();
-  const shouldShowDelete = deleteText.includes(searchLower);
-
-  if (shouldShowDelete) {
-    actionItems.push(<Divider className={dividerStyle} key="actions_separator" />);
+  if (hasTrafficRouting()) {
 
     const deleteDisabled = !canDelete(props.istioPermissions) || !hasTrafficRouting() || props.isDisabled;
 
@@ -192,16 +169,12 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
 
     actionItems.push(deleteDropdownItem);
   }
-  const label = isViewOnly ? t('View') : updateLabel === '' ? t('Create') : t('Update');
 
-  // Don't render the group if no items match the search
-  if (actionItems.length === 0) {
-    return null;
-  }
+  const label = isViewOnly ? t('View') : updateLabel === '' ? t('Create') : t('Update');
 
   return (
     <>
-      <div className={groupLabelStyle}>{label}</div>
+      <div className={titleStyle}>{label}</div>
       <DropdownGroup key={`group_${label}`} className={groupMenuStyle} children={actionItems} />
     </>
   );
