@@ -166,6 +166,10 @@ export const istioTypeFilter: FilterType = {
       title: 'Telemetry'
     },
     {
+      id: 'TrafficExtension',
+      title: 'TrafficExtension'
+    },
+    {
       id: 'VirtualService',
       title: 'VirtualService'
     },

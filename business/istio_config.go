@@ -13,6 +13,7 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
 	api_errors "k8s.io/apimachinery/pkg/api/errors"
+	api_meta "k8s.io/apimachinery/pkg/api/meta"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,6 +45,9 @@ type IstioConfigService struct {
 }
 
 type IstioConfigCriteria struct {
+	IncludeAuthorizationPolicies  bool
+	IncludeDestinationRules       bool
+	IncludeEnvoyFilters           bool
 	IncludeGateways               bool
 	IncludeK8sGateways            bool
 	IncludeK8sGRPCRoutes          bool
@@ -52,18 +56,16 @@ type IstioConfigCriteria struct {
 	IncludeK8sReferenceGrants     bool
 	IncludeK8sTCPRoutes           bool
 	IncludeK8sTLSRoutes           bool
-	IncludeVirtualServices        bool
-	IncludeDestinationRules       bool
+	IncludePeerAuthentications    bool
+	IncludeRequestAuthentications bool
 	IncludeServiceEntries         bool
 	IncludeSidecars               bool
-	IncludeAuthorizationPolicies  bool
-	IncludePeerAuthentications    bool
+	IncludeTelemetry              bool
+	IncludeTrafficExtensions      bool
+	IncludeVirtualServices        bool
+	IncludeWasmPlugins            bool
 	IncludeWorkloadEntries        bool
 	IncludeWorkloadGroups         bool
-	IncludeRequestAuthentications bool
-	IncludeEnvoyFilters           bool
-	IncludeWasmPlugins            bool
-	IncludeTelemetry              bool
 	LabelSelector                 string
 	WorkloadSelector              string
 }
@@ -72,6 +74,12 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 	// Flag used to skip object that are not used in a query when a WorkloadSelector is present
 	isWorkloadSelector := icc.WorkloadSelector != ""
 	switch resource {
+	case kubernetes.AuthorizationPolicies:
+		return icc.IncludeAuthorizationPolicies
+	case kubernetes.DestinationRules:
+		return icc.IncludeDestinationRules && !isWorkloadSelector
+	case kubernetes.EnvoyFilters:
+		return icc.IncludeEnvoyFilters
 	case kubernetes.Gateways:
 		return icc.IncludeGateways
 	case kubernetes.K8sGateways:
@@ -88,30 +96,26 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 		return icc.IncludeK8sTCPRoutes
 	case kubernetes.K8sTLSRoutes:
 		return icc.IncludeK8sTLSRoutes
-	case kubernetes.VirtualServices:
-		return icc.IncludeVirtualServices && !isWorkloadSelector
-	case kubernetes.DestinationRules:
-		return icc.IncludeDestinationRules && !isWorkloadSelector
+	case kubernetes.PeerAuthentications:
+		return icc.IncludePeerAuthentications
+	case kubernetes.RequestAuthentications:
+		return icc.IncludeRequestAuthentications
 	case kubernetes.ServiceEntries:
 		return icc.IncludeServiceEntries && !isWorkloadSelector
 	case kubernetes.Sidecars:
 		return icc.IncludeSidecars
-	case kubernetes.AuthorizationPolicies:
-		return icc.IncludeAuthorizationPolicies
-	case kubernetes.PeerAuthentications:
-		return icc.IncludePeerAuthentications
+	case kubernetes.Telemetries:
+		return icc.IncludeTelemetry
+	case kubernetes.TrafficExtensions:
+		return icc.IncludeTrafficExtensions
+	case kubernetes.VirtualServices:
+		return icc.IncludeVirtualServices && !isWorkloadSelector
+	case kubernetes.WasmPlugins:
+		return icc.IncludeWasmPlugins
 	case kubernetes.WorkloadEntries:
 		return icc.IncludeWorkloadEntries && !isWorkloadSelector
 	case kubernetes.WorkloadGroups:
 		return icc.IncludeWorkloadGroups
-	case kubernetes.RequestAuthentications:
-		return icc.IncludeRequestAuthentications
-	case kubernetes.EnvoyFilters:
-		return icc.IncludeEnvoyFilters
-	case kubernetes.WasmPlugins:
-		return icc.IncludeWasmPlugins
-	case kubernetes.Telemetries:
-		return icc.IncludeTelemetry
 	}
 	return false
 }
@@ -204,16 +208,17 @@ func ToPtrs[T any](s []T) []*T {
 
 func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster string, namespace string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	istioConfigList := &models.IstioConfigList{
-		DestinationRules: []*networking_v1.DestinationRule{},
-		EnvoyFilters:     []*networking_v1alpha3.EnvoyFilter{},
-		Gateways:         []*networking_v1.Gateway{},
-		VirtualServices:  []*networking_v1.VirtualService{},
-		ServiceEntries:   []*networking_v1.ServiceEntry{},
-		Sidecars:         []*networking_v1.Sidecar{},
-		WorkloadEntries:  []*networking_v1.WorkloadEntry{},
-		WorkloadGroups:   []*networking_v1.WorkloadGroup{},
-		WasmPlugins:      []*extentions_v1alpha1.WasmPlugin{},
-		Telemetries:      []*telemetry_v1.Telemetry{},
+		DestinationRules:  []*networking_v1.DestinationRule{},
+		EnvoyFilters:      []*networking_v1alpha3.EnvoyFilter{},
+		Gateways:          []*networking_v1.Gateway{},
+		VirtualServices:   []*networking_v1.VirtualService{},
+		ServiceEntries:    []*networking_v1.ServiceEntry{},
+		Sidecars:          []*networking_v1.Sidecar{},
+		WorkloadEntries:   []*networking_v1.WorkloadEntry{},
+		WorkloadGroups:    []*networking_v1.WorkloadGroup{},
+		TrafficExtensions: []*extentions_v1alpha1.TrafficExtension{},
+		WasmPlugins:       []*extentions_v1alpha1.WasmPlugin{},
+		Telemetries:       []*telemetry_v1.Telemetry{},
 
 		K8sGateways:        []*k8s_networking_v1.Gateway{},
 		K8sGRPCRoutes:      []*k8s_networking_v1.GRPCRoute{},
@@ -457,6 +462,24 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
+	// TrafficExtension is only available on Istio >= 1.30 extended channel.
+	// If the CRD is not present in the cluster the cache List returns a "no match for kind"
+	// error; skip it gracefully so older Istio versions keep working.
+	if userClient.IsIstioAPI() && criteria.Include(kubernetes.TrafficExtensions) {
+		list := &extentions_v1alpha1.TrafficExtensionList{}
+		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			if !api_meta.IsNoMatchError(err) {
+				return nil, err
+			}
+			log.FromContext(ctx).Debug().Msgf("TrafficExtension CRD not available in cluster [%s], skipping", cluster)
+		} else {
+			if err := kubernetes.EnsureTypeMeta(list); err != nil {
+				return nil, err
+			}
+			istioConfigList.TrafficExtensions = list.Items
+		}
+	}
+
 	if criteria.Include(kubernetes.WasmPlugins) {
 		list := &extentions_v1alpha1.WasmPluginList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
@@ -567,6 +590,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 		ServiceEntries:         kubernetes.FilterByNamespaceNames(istioConfigs.ServiceEntries, namespaceNames),
 		Sidecars:               kubernetes.FilterByNamespaceNames(istioConfigs.Sidecars, namespaceNames),
 		Telemetries:            kubernetes.FilterByNamespaceNames(istioConfigs.Telemetries, namespaceNames),
+		TrafficExtensions:      kubernetes.FilterByNamespaceNames(istioConfigs.TrafficExtensions, namespaceNames),
 		VirtualServices:        kubernetes.FilterByNamespaceNames(istioConfigs.VirtualServices, namespaceNames),
 		WasmPlugins:            kubernetes.FilterByNamespaceNames(istioConfigs.WasmPlugins, namespaceNames),
 		WorkloadEntries:        kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadEntries, namespaceNames),
@@ -726,6 +750,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.WorkloadGroup.APIVersion = kubernetes.WorkloadGroups.GroupVersion().String()
 			istioConfigDetail.Object = istioConfigDetail.WorkloadGroup
 		}
+	case kubernetes.TrafficExtensions:
+		istioConfigDetail.TrafficExtension, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().TrafficExtensions(namespace).Get(ctx, object, getOpts)
+		if err == nil {
+			istioConfigDetail.TrafficExtension.Kind = kubernetes.TrafficExtensions.Kind
+			istioConfigDetail.TrafficExtension.APIVersion = kubernetes.TrafficExtensions.GroupVersion().String()
+			istioConfigDetail.Object = istioConfigDetail.TrafficExtension
+		}
 	case kubernetes.WasmPlugins:
 		istioConfigDetail.WasmPlugin, err = in.userClients[cluster].Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Get(ctx, object, getOpts)
 		if err == nil {
@@ -834,6 +865,8 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 		err = userClient.Istio().SecurityV1().PeerAuthentications(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.RequestAuthentications:
 		err = userClient.Istio().SecurityV1().RequestAuthentications(namespace).Delete(ctx, name, delOpts)
+	case kubernetes.TrafficExtensions:
+		err = userClient.Istio().ExtensionsV1alpha1().TrafficExtensions(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.WasmPlugins:
 		err = userClient.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Telemetries:
@@ -988,6 +1021,10 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.RequestAuthentication = &security_v1.RequestAuthentication{}
 		istioConfigDetail.RequestAuthentication, err = userClient.Istio().SecurityV1().RequestAuthentications(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.RequestAuthentication
+	case kubernetes.TrafficExtensions.String():
+		istioConfigDetail.TrafficExtension = &extentions_v1alpha1.TrafficExtension{}
+		istioConfigDetail.TrafficExtension, err = userClient.Istio().ExtensionsV1alpha1().TrafficExtensions(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.Object = istioConfigDetail.TrafficExtension
 	case kubernetes.WasmPlugins.String():
 		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
 		istioConfigDetail.WasmPlugin, err = userClient.Istio().ExtensionsV1alpha1().WasmPlugins(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
@@ -1149,6 +1186,15 @@ func (in *IstioConfigService) CreateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.WorkloadGroup, err = userClient.Istio().NetworkingV1().WorkloadGroups(namespace).Create(ctx, istioConfigDetail.WorkloadGroup, createOpts)
 		istioConfigDetail.Object = istioConfigDetail.WorkloadGroup
 		name = istioConfigDetail.WorkloadGroup.Name
+	case kubernetes.TrafficExtensions.String():
+		istioConfigDetail.TrafficExtension = &extentions_v1alpha1.TrafficExtension{}
+		err = json.Unmarshal(body, istioConfigDetail.TrafficExtension)
+		if err != nil {
+			return istioConfigDetail, api_errors.NewBadRequest(err.Error())
+		}
+		istioConfigDetail.TrafficExtension, err = userClient.Istio().ExtensionsV1alpha1().TrafficExtensions(namespace).Create(ctx, istioConfigDetail.TrafficExtension, createOpts)
+		istioConfigDetail.Object = istioConfigDetail.TrafficExtension
+		name = istioConfigDetail.TrafficExtension.Name
 	case kubernetes.WasmPlugins.String():
 		istioConfigDetail.WasmPlugin = &extentions_v1alpha1.WasmPlugin{}
 		err = json.Unmarshal(body, istioConfigDetail.WasmPlugin)
@@ -1385,6 +1431,7 @@ func ParseIstioConfigCriteria(objects, labelSelector, workloadSelector string) I
 	criteria.IncludeWorkloadGroups = defaultInclude
 	criteria.IncludeRequestAuthentications = defaultInclude
 	criteria.IncludeEnvoyFilters = defaultInclude
+	criteria.IncludeTrafficExtensions = defaultInclude
 	criteria.IncludeWasmPlugins = defaultInclude
 	criteria.IncludeTelemetry = defaultInclude
 	criteria.LabelSelector = labelSelector
@@ -1442,6 +1489,9 @@ func ParseIstioConfigCriteria(objects, labelSelector, workloadSelector string) I
 	}
 	if checkType(types, kubernetes.WorkloadGroups.String()) {
 		criteria.IncludeWorkloadGroups = true
+	}
+	if checkType(types, kubernetes.TrafficExtensions.String()) {
+		criteria.IncludeTrafficExtensions = true
 	}
 	if checkType(types, kubernetes.WasmPlugins.String()) {
 		criteria.IncludeWasmPlugins = true

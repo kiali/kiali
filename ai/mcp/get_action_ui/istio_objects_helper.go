@@ -35,8 +35,9 @@ const (
 	WorkloadGroup   = "WorkloadGroup"
 
 	// Istio Extensions / Telemetry
-	WasmPlugin = "WasmPlugin"
-	Telemetry  = "Telemetry"
+	TrafficExtension = "TrafficExtension"
+	WasmPlugin       = "WasmPlugin"
+	Telemetry        = "Telemetry"
 
 	// K8s Gateway API
 	K8sGateway        = "K8sGateway"
@@ -78,8 +79,9 @@ var DicTypeToGVK = map[string]GroupVersionKind{
 	WorkloadGroup:   {Group: "networking.istio.io", Version: "v1", Kind: WorkloadGroup},
 
 	// Istio Extensions / Telemetry
-	WasmPlugin: {Group: "extensions.istio.io", Version: "v1alpha1", Kind: WasmPlugin},
-	Telemetry:  {Group: "telemetry.istio.io", Version: "v1", Kind: Telemetry},
+	TrafficExtension: {Group: "extensions.istio.io", Version: "v1alpha1", Kind: TrafficExtension},
+	WasmPlugin:       {Group: "extensions.istio.io", Version: "v1alpha1", Kind: WasmPlugin},
+	Telemetry:        {Group: "telemetry.istio.io", Version: "v1", Kind: Telemetry},
 
 	// K8s Gateway API
 	// Note: The 'Kind' here is hardcoded string (e.g. "Gateway") rather than the key constant (K8sGateway)
@@ -152,6 +154,7 @@ func filterIstioObjectsByName(istioObjectsList *models.IstioConfigList, name str
 	result = appendFiltered(result, istioObjectsList.ServiceEntries, name)
 	result = appendFiltered(result, istioObjectsList.Sidecars, name)
 	result = appendFiltered(result, istioObjectsList.Telemetries, name)
+	result = appendFiltered(result, istioObjectsList.TrafficExtensions, name)
 	result = appendFiltered(result, istioObjectsList.VirtualServices, name)
 	result = appendFiltered(result, istioObjectsList.WasmPlugins, name)
 	result = appendFiltered(result, istioObjectsList.WorkloadEntries, name)

@@ -1138,6 +1138,41 @@ export interface ServiceEntry extends IstioObject {
   spec: ServiceEntrySpec;
 }
 
+export interface TrafficExtension extends IstioObject {
+  spec: TrafficExtensionSpec;
+}
+
+export interface TrafficExtensionSpec {
+  lua?: TrafficExtensionLuaConfig;
+  match?: TrafficExtensionSelector[];
+  phase?: string;
+  priority?: number;
+  selector?: WorkloadSelector;
+  targetRefs?: Array<{ group?: string; kind: string; name: string; namespace?: string }>;
+  wasm?: TrafficExtensionWasmConfig;
+}
+
+export interface TrafficExtensionWasmConfig {
+  failStrategy?: string;
+  imagePullPolicy?: string;
+  imagePullSecret?: string;
+  pluginConfig?: { [key: string]: any };
+  pluginName?: string;
+  sha256?: string;
+  type?: string;
+  url: string;
+  vmConfig?: { [key: string]: any };
+}
+
+export interface TrafficExtensionLuaConfig {
+  inlineCode: string;
+}
+
+export interface TrafficExtensionSelector {
+  mode?: string;
+  ports?: Array<{ number: number }>;
+}
+
 export interface WasmPlugin extends IstioObject {
   spec: WasmPluginSpec;
 }

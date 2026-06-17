@@ -38,6 +38,7 @@ var istioConfigCriteria = business.IstioConfigCriteria{
 	IncludeWorkloadEntries:        true,
 	IncludeWorkloadGroups:         true,
 	IncludeEnvoyFilters:           true,
+	IncludeTrafficExtensions:      true,
 	IncludeWasmPlugins:            true,
 	IncludeTelemetry:              true,
 }
@@ -106,6 +107,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	envoyFilters := istioConfig.EnvoyFilters
 	workloadEntries := istioConfig.WorkloadEntries
 	workloadGroups := istioConfig.WorkloadGroups
+	trafficExtensions := istioConfig.TrafficExtensions
 	wasmPlugins := istioConfig.WasmPlugins
 	telemetries := istioConfig.Telemetries
 	authorizationPolicies := istioConfig.AuthorizationPolicies
@@ -324,6 +326,19 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			Version:    kubernetes.WorkloadGroups.Version,
 			Kind:       kubernetes.WorkloadGroups.Kind,
 			Validation: validationSummaryForRuntimeObject(wg, kubernetes.WorkloadGroups, istioValidations, cluster),
+		})
+	}
+	for _, te := range trafficExtensions {
+		if te == nil {
+			continue
+		}
+		items = append(items, IstioListItem{
+			Name:       te.Name,
+			Namespace:  te.Namespace,
+			Group:      kubernetes.TrafficExtensions.Group,
+			Version:    kubernetes.TrafficExtensions.Version,
+			Kind:       kubernetes.TrafficExtensions.Kind,
+			Validation: validationSummaryForRuntimeObject(te, kubernetes.TrafficExtensions, istioValidations, cluster),
 		})
 	}
 	for _, wp := range wasmPlugins {
@@ -726,6 +741,21 @@ func criteriaForListFilter(group, kind string) business.IstioConfigCriteria {
 		switch kind {
 		case "InferencePool":
 			c.IncludeK8sInferencePools = true
+			return c
+		}
+	case "extensions.istio.io":
+		switch kind {
+		case "TrafficExtension":
+			c.IncludeTrafficExtensions = true
+			return c
+		case "WasmPlugin":
+			c.IncludeWasmPlugins = true
+			return c
+		}
+	case "telemetry.istio.io":
+		switch kind {
+		case "Telemetry":
+			c.IncludeTelemetry = true
 			return c
 		}
 	}

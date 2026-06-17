@@ -287,6 +287,7 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 			&networkingv1.VirtualService{},
 			&networkingv1.WorkloadEntry{},
 			&networkingv1.WorkloadGroup{},
+			&extentionsv1alpha1.TrafficExtension{},
 			&extentionsv1alpha1.WasmPlugin{},
 			&networkingv1alpha3.EnvoyFilter{},
 			&securityv1.AuthorizationPolicy{},
