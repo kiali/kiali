@@ -271,8 +271,7 @@ func TestIstioList_IncludesTrafficExtensions(t *testing.T) {
 	res, status := IstioList(context.Background(), args, businessLayer, conf)
 	require.Equal(t, http.StatusOK, status)
 
-	result, ok := res.(IstioListResult)
+	result, ok := res.([]IstioListItem)
 	require.True(t, ok)
-	assert.Equal(t, "east", result.Cluster)
-	assert.Empty(t, result.Items)
+	assert.Empty(t, result)
 }
