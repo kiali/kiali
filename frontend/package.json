@@ -186,6 +186,7 @@
     "typescript": "^5.9.0"
   },
   "resolutions": {
+    "js-cookie": "^3.0.8",
     "lodash": "^4.18.0",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
