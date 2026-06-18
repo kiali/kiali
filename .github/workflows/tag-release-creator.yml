@@ -93,3 +93,4 @@ jobs:
     uses: ./.github/workflows/bump-release-version.yml
     with:
       tag_branches: ${{ inputs.tag_branches }}
+    secrets: inherit

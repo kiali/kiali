@@ -324,6 +324,7 @@ jobs:
       uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        token: ${{ secrets.KIALI_BOT_TOKEN }}
 
     - name: Set version to release
       run: |
