@@ -35,7 +35,7 @@ import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/Servi
 import { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
-import { groupMenuStyle, kebabToggleStyle } from 'styles/DropdownStyles';
+import { groupMenuStyle, kebabToggleStyle, titleStyle } from 'styles/DropdownStyles';
 import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
@@ -108,6 +108,11 @@ const nodeInfoStyle = kialiStyle({
 
 const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
+const dropdownMenuStyle = kialiStyle({
+  maxHeight: '400px',
+  overflowY: 'auto'
+});
+
 export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeComponentProps, SummaryPanelNodeState> {
   private readonly mainDivRef: React.RefObject<HTMLDivElement>;
 
@@ -148,24 +153,32 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       this.props.tracingState.info.integration;
 
     const options = getOptions(nodeData);
-    const items = [
-      <DropdownGroup key="show" label="Show" className={groupMenuStyle}>
-        {options.map((o, i) => {
-          return (
-            <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-              {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
-            </DropdownItem>
-          );
-        })}
-      </DropdownGroup>
-    ];
+    const items: React.ReactNode[] = [];
+
+    if (options.length > 0) {
+      items.push(
+        <React.Fragment key="show-group">
+          <div className={titleStyle}>Show</div>
+          <DropdownGroup key="show" className={groupMenuStyle}>
+            {options.map((o, i) => {
+              return (
+                <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
+                  {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
+                </DropdownItem>
+              );
+            })}
+          </DropdownGroup>
+        </React.Fragment>
+      );
+    }
 
     if (nodeType === NodeType.SERVICE) {
       if (this.props.serviceDetails === undefined) {
-        items.push(<LoadingWizardActionsDropdownGroup />);
+        items.push(<LoadingWizardActionsDropdownGroup key="loading" />);
       } else if (this.props.serviceDetails !== null) {
         items.push(
           <ServiceWizardActionsDropdownGroup
+            key="wizard-actions"
             virtualServices={this.props.serviceDetails.virtualServices ?? []}
             destinationRules={this.props.serviceDetails.destinationRules ?? []}
             k8sHTTPRoutes={this.props.serviceDetails.k8sHTTPRoutes ?? []}
@@ -237,7 +250,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                   onOpenChange={(isOpen: boolean) => this.onToggleActions(isOpen)}
                   popperProps={{ position: 'right', enableFlip: true }}
                 >
-                  <DropdownList>{items}</DropdownList>
+                  <DropdownList className={dropdownMenuStyle}>{items}</DropdownList>
                 </Dropdown>
               )}
 
@@ -392,7 +405,9 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
   }
 
   private onToggleActions = (isOpen: boolean): void => {
-    this.setState({ isActionOpen: isOpen });
+    this.setState({
+      isActionOpen: isOpen
+    });
 
     if (this.props.onKebabToggled) {
       this.props.onKebabToggled(isOpen);
