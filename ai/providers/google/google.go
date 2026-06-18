@@ -47,6 +47,17 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 	usage := types.TokenUsage{}
 
+	// Extract system instruction from conversation (first message if role=system)
+	var systemInstruction *genai.Content
+	conversationWithoutSystem := ptr.Conversation
+	if len(ptr.Conversation) > 0 && ptr.Conversation[0].Role == "system" {
+		systemInstruction = &genai.Content{
+			Parts: []*genai.Part{{Text: ptr.Conversation[0].Content}},
+			Role:  genai.RoleModel, // System instructions use model role in Gemini
+		}
+		conversationWithoutSystem = ptr.Conversation[1:]
+	}
+
 	// Google Configuration
 	config := &genai.GenerateContentConfig{
 		Tools: p.GetToolDefinitions().([]*genai.Tool),
@@ -55,12 +66,13 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				Mode: genai.FunctionCallingConfigModeAuto,
 			},
 		},
-		Temperature: genai.Ptr[float32](0),
+		Temperature:       genai.Ptr[float32](0),
+		SystemInstruction: systemInstruction,
 	}
 
 	// If the query is in conversationWithContext
 	// it must be removed to avoid duplication.
-	contentsForChat := p.ConversationToProvider(ptr.Conversation).([]*genai.Content)
+	contentsForChat := p.ConversationToProvider(conversationWithoutSystem).([]*genai.Content)
 	if len(contentsForChat) > 0 {
 		last := contentsForChat[len(contentsForChat)-1]
 		if last != nil && last.Role == genai.RoleUser && len(last.Parts) == 1 && last.Parts[0] != nil && last.Parts[0].Text == req.Query {
