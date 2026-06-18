@@ -7,17 +7,18 @@ import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
+  alwaysNavigate: false,
+  chatHistory: ImmutableList(),
   conversationID: '',
-  providers: [],
+  defaultProvider: '',
   displayMode: ChatbotDisplayMode.default,
   enabled: false,
-  defaultProvider: '',
-  selectedProvider: '',
-  selectedModel: '',
-  query: '',
-  chatHistory: ImmutableList(),
+  interactionMode: 'ask',
   openTool: ImmutableMap({ chatEntryIndex: null, id: null }),
-  alwaysNavigate: false
+  providers: [],
+  query: '',
+  selectedModel: '',
+  selectedProvider: ''
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
@@ -80,6 +81,9 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setDisplayMode): {
       return updateState(state, { displayMode: action.payload.displayMode });
+    }
+    case getType(ChatAIActions.setInteractionMode): {
+      return updateState(state, { interactionMode: action.payload.interactionMode });
     }
     default:
       return state;

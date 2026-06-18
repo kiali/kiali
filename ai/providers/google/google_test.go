@@ -74,13 +74,13 @@ func TestGoogle_GetName(t *testing.T) {
 func TestGoogle_InitializeConversation_NilPointer(t *testing.T) {
 	p := &GoogleAIProvider{}
 	// Must not panic
-	p.InitializeConversation(nil, "query")
+	p.InitializeConversation(nil, types.AIRequest{Query: "query"})
 }
 
 func TestGoogle_InitializeConversation_NewConversation(t *testing.T) {
 	p := &GoogleAIProvider{}
 	ptr := &types.Conversation{}
-	p.InitializeConversation(ptr, "hello")
+	p.InitializeConversation(ptr, types.AIRequest{Query: "hello"})
 
 	require.Len(t, ptr.Conversation, 2)
 	assert.Equal(t, "system", ptr.Conversation[0].Role)
@@ -89,19 +89,49 @@ func TestGoogle_InitializeConversation_NewConversation(t *testing.T) {
 	assert.Equal(t, "hello", ptr.Conversation[1].Content)
 }
 
+func TestGoogle_InitializeConversation_NewConversation_TroubleshootMode(t *testing.T) {
+	p := &GoogleAIProvider{}
+	ptr := &types.Conversation{}
+	p.InitializeConversation(ptr, types.AIRequest{Query: "diagnose my mesh", InteractionMode: types.ChatInteractionModeTroubleshoot})
+
+	require.Len(t, ptr.Conversation, 2)
+	assert.Equal(t, "system", ptr.Conversation[0].Role)
+	assert.Equal(t, types.TroubleshootSystemInstruction, ptr.Conversation[0].Content)
+	assert.Equal(t, "user", ptr.Conversation[1].Role)
+	assert.Equal(t, "diagnose my mesh", ptr.Conversation[1].Content)
+}
+
 func TestGoogle_InitializeConversation_ExistingConversation(t *testing.T) {
 	p := &GoogleAIProvider{}
 	ptr := &types.Conversation{
 		Conversation: []types.ConversationMessage{
-			{Role: "system", Content: "existing system"},
+			{Role: "system", Content: types.SystemInstruction},
 			{Role: "user", Content: "previous question"},
 		},
 	}
-	p.InitializeConversation(ptr, "follow-up")
+	p.InitializeConversation(ptr, types.AIRequest{Query: "follow-up"})
 
 	require.Len(t, ptr.Conversation, 3)
+	assert.Equal(t, types.SystemInstruction, ptr.Conversation[0].Content)
 	assert.Equal(t, "follow-up", ptr.Conversation[2].Content)
 	assert.Equal(t, "user", ptr.Conversation[2].Role)
+}
+
+func TestGoogle_InitializeConversation_ModeSwitchUpdatesSystemMessage(t *testing.T) {
+	p := &GoogleAIProvider{}
+	ptr := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "system", Content: types.SystemInstruction},
+			{Role: "user", Content: "first question"},
+			{Role: "assistant", Content: "first answer"},
+		},
+	}
+	p.InitializeConversation(ptr, types.AIRequest{Query: "diagnose now", InteractionMode: types.ChatInteractionModeTroubleshoot})
+
+	require.Len(t, ptr.Conversation, 4)
+	assert.Equal(t, types.TroubleshootSystemInstruction, ptr.Conversation[0].Content, "system message must be updated to troubleshoot")
+	assert.Equal(t, "first question", ptr.Conversation[1].Content, "history preserved")
+	assert.Equal(t, "diagnose now", ptr.Conversation[3].Content)
 }
 
 // --- ConversationToProvider ---

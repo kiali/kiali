@@ -1,6 +1,8 @@
 import { MessageProps } from '@patternfly/chatbot';
 import { Map as ImmutableMap } from 'immutable';
 
+export type ChatInteractionMode = 'ask' | 'troubleshoot';
+
 export type ErrorType = {
   message?: string;
   moreInfo?: string;
@@ -9,6 +11,7 @@ export type ErrorType = {
 
 type LLMRequest = {
   conversation_id?: string | null;
+  interaction_mode?: ChatInteractionMode;
   media_type?: 'text/plain' | 'application/json';
   query: string;
 };

@@ -138,7 +138,7 @@ func TestHandleErrorCodeAuthorized_UnknownCode_ReturnsGeneric(t *testing.T) {
 func TestInitializeConversation_IsNoop(t *testing.T) {
 	p := &LightSpeedProvider{}
 	assert.NotPanics(t, func() {
-		p.InitializeConversation(&types.Conversation{}, "conv-1")
+		p.InitializeConversation(&types.Conversation{}, types.AIRequest{Query: "conv-1"})
 	})
 }
 

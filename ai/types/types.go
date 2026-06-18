@@ -13,11 +13,21 @@ type AIContext struct {
 	PageURL         string          `json:"page_url"`
 }
 
+// ChatInteractionMode represents the interaction mode for the chat.
+// "ask" is for standard Q&A; "troubleshoot" activates a troubleshooting-focused persona.
+type ChatInteractionMode string
+
+const (
+	ChatInteractionModeAsk          ChatInteractionMode = "ask"
+	ChatInteractionModeTroubleshoot ChatInteractionMode = "troubleshoot"
+)
+
 // AIRequest holds the user query and optional context.
 type AIRequest struct {
-	ConversationID string    `json:"conversation_id,omitempty"`
-	Query          string    `json:"query"`
-	Context        AIContext `json:"context,omitempty"`
+	Context         AIContext           `json:"context,omitempty"`
+	ConversationID  string              `json:"conversation_id,omitempty"`
+	InteractionMode ChatInteractionMode `json:"interaction_mode,omitempty"`
+	Query           string              `json:"query"`
 }
 
 // ConversationMessage represents a stored message in a conversation.

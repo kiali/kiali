@@ -34,7 +34,6 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({
 
   const handleAlwaysNavigateChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean): void => {
     dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: checked }));
-    return;
   };
 
   return (

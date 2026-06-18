@@ -12,7 +12,7 @@ import (
 // AIProvider exposes a minimal interface to send chat requests.
 type AIProvider interface {
 	GetName() string
-	InitializeConversation(ptr *types.Conversation, query string)
+	InitializeConversation(ptr *types.Conversation, req types.AIRequest)
 	ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int)
 	GetToolDefinitions() interface{}
 	LookupToolHandler(toolName string) (mcp.ToolDef, bool)

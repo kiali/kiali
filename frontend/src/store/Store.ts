@@ -31,7 +31,7 @@ import { TracingState } from 'reducers/TracingState';
 import { MetricsStatsState } from 'reducers/MetricsStatsState';
 import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
-import { ProviderAI } from 'types/Chatbot';
+import { ChatInteractionMode, ProviderAI } from 'types/Chatbot';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 // Store is the Redux Data store
@@ -204,6 +204,7 @@ export interface ChatAIState {
   defaultProvider: string;
   displayMode: ChatbotDisplayMode;
   enabled: boolean;
+  interactionMode: ChatInteractionMode;
   openTool: ImmutableMap<string, any>;
   providers: ProviderAI[];
   query: string;
@@ -217,6 +218,7 @@ export interface KialiAppState {
   // could also be session state
   /** Chatbot Settings */
   aiChat: ChatAIState;
+  appsList: AppsListState;
   /** Page Settings */
   authentication: LoginState;
   clusters: ClusterState;
@@ -229,13 +231,12 @@ export interface KialiAppState {
   metricsStats: MetricsStatsState;
   namespaces: NamespaceState;
   namespacesList: NamespacesListState;
-  servicesList: ServicesListState;
-  appsList: AppsListState;
-  workloadsList: WorkloadsListState;
   notificationCenter: NotificationCenterState;
+  servicesList: ServicesListState;
   statusState: StatusState;
   tourState: TourState;
   tracingState: TracingState;
   /** User Settings */
   userSettings: UserSettings;
+  workloadsList: WorkloadsListState;
 }

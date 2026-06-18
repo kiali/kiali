@@ -192,24 +192,26 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 	return usage
 }
 
-func (p *OpenAIProvider) InitializeConversation(ptr *types.Conversation, query string) {
+func (p *OpenAIProvider) InitializeConversation(ptr *types.Conversation, req types.AIRequest) {
 	if ptr == nil {
 		return
 	}
-	isNewConversation := len(ptr.Conversation) == 0
-	if isNewConversation {
-		// Initialize base system instruction when empty.
+	systemInstruction := types.GetSystemInstruction(req.InteractionMode)
+	if len(ptr.Conversation) == 0 {
 		ptr.Conversation = []types.ConversationMessage{{
-			Content: types.SystemInstruction,
+			Content: systemInstruction,
 			Name:    "",
-			Param:   openai.SystemMessage(types.SystemInstruction).GetContent().AsAny(),
+			Param:   openai.SystemMessage(systemInstruction).GetContent().AsAny(),
 			Role:    "system",
-		},
-		}
+		}}
+	} else if ptr.Conversation[0].Role == "system" {
+		// Keep system message in sync with the current interaction mode so that
+		// mid-conversation mode switches take effect without losing history.
+		ptr.Conversation[0].Content = systemInstruction
+		ptr.Conversation[0].Param = openai.SystemMessage(systemInstruction).GetContent().AsAny()
 	}
-	// Adding user query to the conversation. This is the user message that is sent to the AI.
 	ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
-		Content: query,
+		Content: req.Query,
 		Name:    "",
 		Param:   nil,
 		Role:    "user",

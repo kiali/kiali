@@ -185,7 +185,7 @@ func GetStoreConversation(
 	r *http.Request,
 	req *types.AIRequest,
 	aiStore types.AIStore,
-	initializeConversation func(*types.Conversation, string),
+	initializeConversation func(*types.Conversation, types.AIRequest),
 ) (*types.Conversation, string) {
 	ptr := &types.Conversation{}
 	sessionID := authentication.GetSessionIDContext(r.Context())
@@ -207,7 +207,7 @@ func GetStoreConversation(
 		}
 	}
 	if initializeConversation != nil {
-		initializeConversation(ptr, req.Query)
+		initializeConversation(ptr, *req)
 	}
 
 	return ptr, sessionID

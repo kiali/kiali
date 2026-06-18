@@ -56,11 +56,15 @@ func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Reques
 		usage.Add(chunkUsage)
 		onChunk(sanitizedChunk)
 	}
+	mode := string(req.InteractionMode)
+	if mode == "" {
+		mode = "ask"
+	}
 	request := &client.LLMRequest{
-		Query:          req.Query,
-		MediaType:      "application/json",
-		Mode:           "ask",
 		ConversationID: req.ConversationID,
+		MediaType:      "application/json",
+		Mode:           mode,
+		Query:          req.Query,
 	}
 	code, err = p.client.StreamingQuery(r.Context(), request, authorizedResponse.UserID, sanitizedOnChunk)
 	if err != nil {
@@ -135,7 +139,7 @@ func handleErrorCodeAuthorized(code int) string {
 // LightSpeed does not use Kiali's conversation store — it is stateless from
 // Kiali's perspective (the OLS server maintains its own session state).
 
-func (p *LightSpeedProvider) InitializeConversation(_ *types.Conversation, _ string) {}
+func (p *LightSpeedProvider) InitializeConversation(_ *types.Conversation, _ types.AIRequest) {}
 
 func (p *LightSpeedProvider) ReduceConversation(_ context.Context, _ *types.Conversation, _ int) {
 }

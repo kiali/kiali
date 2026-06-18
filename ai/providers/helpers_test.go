@@ -76,7 +76,7 @@ type fakeProvider struct {
 	reduceCalled bool
 }
 
-func (f *fakeProvider) InitializeConversation(_ *types.Conversation, _ string) {}
+func (f *fakeProvider) InitializeConversation(_ *types.Conversation, _ types.AIRequest) {}
 
 func (f *fakeProvider) ReduceConversation(_ context.Context, ptr *types.Conversation, reduceThreshold int) {
 	f.reduceCalled = true
