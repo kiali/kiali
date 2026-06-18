@@ -46,6 +46,10 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"clusterName": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+						},
 						"namespaces": map[string]interface{}{
 							"type":        "string",
 							"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",

@@ -41,6 +41,10 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 	expected := &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
+			"clusterName": {
+				Type:        genai.TypeString,
+				Description: "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+			},
 			"namespaces": {
 				Type:        genai.TypeString,
 				Description: "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",

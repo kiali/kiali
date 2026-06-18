@@ -45,6 +45,10 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetActionUI(t *testing.T) {
 			Description: param.NewOpt("Call this tool WHENEVER the user asks to navigate, view, show, open, or get a visual representation of resources (like graphs, lists, or details). This tool automatically redirects the user's Kiali UI. You do NOT need to analyze the output of this tool; simply call it and acknowledge to the user that you are taking them to the requested view."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+					},
 					"namespaces": map[string]interface{}{
 						"type":        "string",
 						"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
