@@ -191,22 +191,24 @@ func FilterByName[T runtime.Object](objects []T, name string) []T {
 
 // GetActionsForIstioObjects gets the actions for the Istio objects
 // It returns a list of actions that can be used to navigate to the Istio object details page.
-func GetActionsForIstioObjects(istioObjectsFiltered []runtime.Object) []Action {
+func GetActionsForIstioObjects(istioObjectsFiltered []runtime.Object, clusterName string) []Action {
 	actions := []Action{}
 	for _, istioObject := range istioObjectsFiltered {
 		o, err := meta.Accessor(istioObject)
-		// This shouldn't happen since we are using runtime.Object for T
-		// and all the API objects should implement meta.Object.
 		if err != nil {
 			continue
 		}
 		gvk := istioObject.GetObjectKind().GroupVersionKind()
 		kind := gvk.Kind
 		apiVersion := gvk.GroupVersion().String()
+		payload := "/namespaces/" + o.GetNamespace() + "/istio/" + apiVersion + "/" + kind + "/" + o.GetName()
+		if clusterName != "" {
+			payload += "?clusterName=" + clusterName
+		}
 		actions = append(actions, Action{
 			Title:   "View Istio " + o.GetName() + " Details",
 			Kind:    ActionKindNavigation,
-			Payload: "/namespaces/" + o.GetNamespace() + "/istio/" + apiVersion + "/" + kind + "/" + o.GetName(),
+			Payload: payload,
 		})
 	}
 
