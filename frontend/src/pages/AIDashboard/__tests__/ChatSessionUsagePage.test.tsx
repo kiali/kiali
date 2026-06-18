@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
 
-import { ChatSessionUsageContent } from '../ChatSessionUsagePage';
+import { ChatSessionUsage as ChatSessionUsageContent } from '../ChatSessionUsage';
 import * as API from 'services/Api';
 
 rstest.mock('services/Api', () => ({

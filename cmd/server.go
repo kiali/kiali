@@ -9,6 +9,7 @@ import (
 	"maps"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/go-logr/zerologr"
 	"github.com/rs/zerolog"
@@ -99,6 +100,44 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		prom = prometheus.NewNoopClient()
 	} else {
 		prom = prometheus.NewLazyClient(ctx, *conf, kialiToken)
+	}
+
+	// Seed AI token statistics from Prometheus historical data so that the in-memory
+	// usage charts and summary APIs survive a Kiali pod restart. The LazyClient
+	// connects in the background, so we poll DisabledReason() and call the seeding
+	// function only once the connection is confirmed. This mirrors the pattern used
+	// for other kiali_* metrics that are stored in and read back from the same
+	// external_services.prometheus instance.
+	if conf.ExternalServices.Prometheus.Enabled && conf.ChatAI.Metrics.Enabled {
+		go func() {
+			const (
+				connectTimeout = 5 * time.Minute
+				pollInterval   = 15 * time.Second
+			)
+			if lc, ok := prom.(*prometheus.LazyClient); ok {
+				deadline := time.Now().Add(connectTimeout)
+				for time.Now().Before(deadline) {
+					if lc.DisabledReason() == "" {
+						break
+					}
+					select {
+					case <-ctx.Done():
+						internalmetrics.MarkAITokensSeedingComplete()
+						return
+					case <-time.After(pollInterval):
+					}
+				}
+				if lc.DisabledReason() != "" {
+					log.Warning("Timed out waiting for Prometheus; AI token statistics will not be seeded from historical data")
+					internalmetrics.MarkAITokensSeedingComplete()
+					return
+				}
+			}
+			internalmetrics.InitAITokensFromPrometheus(ctx, prom.API())
+		}()
+	} else {
+		// No seeding will happen; mark immediately so the API reports dataReady: true.
+		internalmetrics.MarkAITokensSeedingComplete()
 	}
 
 	// Create shared tracing client shared by all tracing requests in the business layer.
