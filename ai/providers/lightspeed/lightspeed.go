@@ -60,6 +60,11 @@ func (p *LightSpeedProvider) SendChat(onChunk func(chunk string), r *http.Reques
 	if mode == "" {
 		mode = "ask"
 	}
+	// Validate mode is supported, default to "ask" if invalid
+	if mode != "ask" && mode != "troubleshoot" {
+		providers.Log(p, providers.LogLevelWarn, "Validation", "Invalid interaction mode %q, defaulting to 'ask'", mode)
+		mode = "ask"
+	}
 	request := &client.LLMRequest{
 		ConversationID: req.ConversationID,
 		MediaType:      "application/json",
