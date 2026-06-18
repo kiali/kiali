@@ -7,6 +7,8 @@ import (
 	// cause a compilation failure.
 	"context"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
@@ -31,15 +33,19 @@ const (
 	labelRoute            = "route"
 	labelService          = "service"
 	labelType             = "type"
+	labelUsername         = "username"
 	labelWithServiceNodes = "with_service_nodes"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
 type MetricsType struct {
+	AICompletionTokensTotal        *prometheus.CounterVec
+	AIPromptTokensTotal            *prometheus.CounterVec
 	AIRequestDurationSeconds       *prometheus.HistogramVec
 	AIRequestsTotal                *prometheus.CounterVec
 	AIStoreConversationsTotal      prometheus.Gauge
 	AIStoreEvictionsTotal          prometheus.Counter
+	AITotalTokensTotal             *prometheus.CounterVec
 	APIFailures                    *prometheus.CounterVec
 	APIProcessingTime              *prometheus.HistogramVec
 	CacheHitsTotal                 *prometheus.CounterVec
@@ -67,6 +73,27 @@ type MetricsType struct {
 // These metrics can be accessed directly to update their values, or
 // you can use available utility functions defined below.
 var Metrics = MetricsType{
+	AICompletionTokensTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_ai_completion_tokens_total",
+			Help: "Cumulative completion tokens received from AI providers, labelled by username, provider and model.",
+		},
+		[]string{labelUsername, labelProvider, labelModel},
+	),
+	AIPromptTokensTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_ai_prompt_tokens_total",
+			Help: "Cumulative prompt tokens sent to AI providers, labelled by username, provider and model.",
+		},
+		[]string{labelUsername, labelProvider, labelModel},
+	),
+	AITotalTokensTotal: prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "kiali_ai_total_tokens_total",
+			Help: "Cumulative total tokens (prompt + completion) used with AI providers, labelled by username, provider and model.",
+		},
+		[]string{labelUsername, labelProvider, labelModel},
+	),
 	AIStoreConversationsTotal: prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "kiali_ai_store_conversations_total",
@@ -322,9 +349,72 @@ func (sof *SuccessOrFailureMetricType) ObserveNow(err *error) {
 	}
 }
 
+// AITokenEntry holds cumulative token totals for a single (username, provider, model) triple.
+// It is maintained in memory alongside the Prometheus counters to enable fast aggregation
+// for the usage summary API without requiring a Prometheus HTTP query.
+type AITokenEntry struct {
+	CompletionTokens int64
+	Model            string
+	PromptTokens     int64
+	Provider         string
+	TotalTokens      int64
+	Username         string
+}
+
+// AITokenEvent is a single token-usage observation recorded at a point in time.
+// Events are kept in a bounded in-memory log and used to produce time-series charts.
+type AITokenEvent struct {
+	CompletionTokens int64
+	Model            string
+	PromptTokens     int64
+	Provider         string
+	Timestamp        time.Time
+	TotalTokens      int64
+	Username         string
+}
+
+var (
+	aiTokenEventsMu  sync.RWMutex
+	aiTokenEventsLog []AITokenEvent
+	aiTokenTotals    = map[string]*AITokenEntry{}
+	aiTokenTotalsMu  sync.RWMutex
+	// maxAITokenEvents is the upper bound for the in-memory event log.
+	// When the cap is hit the oldest 25 % of entries are dropped.
+	maxAITokenEvents = 10_000
+)
+
+// GetAITokenEvents returns all token events recorded since the given time.
+// The returned slice is a copy and safe to read after the call returns.
+func GetAITokenEvents(since time.Time) []AITokenEvent {
+	aiTokenEventsMu.RLock()
+	defer aiTokenEventsMu.RUnlock()
+	var out []AITokenEvent
+	for _, ev := range aiTokenEventsLog {
+		if !ev.Timestamp.Before(since) {
+			out = append(out, ev)
+		}
+	}
+	return out
+}
+
+// GetAITokenTotals returns a snapshot of cumulative token totals per (username, provider, model).
+// The returned slice is a copy and safe to read after the call returns.
+func GetAITokenTotals() []AITokenEntry {
+	aiTokenTotalsMu.RLock()
+	defer aiTokenTotalsMu.RUnlock()
+	out := make([]AITokenEntry, 0, len(aiTokenTotals))
+	for _, e := range aiTokenTotals {
+		out = append(out, *e)
+	}
+	return out
+}
+
 // RegisterInternalMetrics must be called at startup to prepare the Prometheus scrape endpoint.
 func RegisterInternalMetrics() {
 	prometheus.MustRegister(
+		Metrics.AICompletionTokensTotal,
+		Metrics.AIPromptTokensTotal,
+		Metrics.AITotalTokensTotal,
 		Metrics.APIFailures,
 		Metrics.APIProcessingTime,
 		Metrics.AIRequestDurationSeconds,
@@ -690,4 +780,55 @@ func DeleteHealthStatusForItem(cluster, namespace string, healthType HealthType,
 // GetHealthStatusMetric returns the health status gauge vec.
 func GetHealthStatusMetric() *prometheus.GaugeVec {
 	return Metrics.HealthStatus
+}
+
+// RecordAITokens increments the three token counters for a single AI response.
+// All three counters share the same {username, ai_provider, ai_model} label set so
+// that charts can be sliced and aggregated by any combination of those dimensions.
+// Counters with a zero value are skipped to avoid creating unused label sets.
+// The call also updates the in-memory totals map and event log used by the usage summary API.
+func RecordAITokens(username, provider, model string, promptTokens, completionTokens, totalTokens int64) {
+	labels := prometheus.Labels{
+		labelUsername: username,
+		labelProvider: provider,
+		labelModel:    model,
+	}
+	if promptTokens > 0 {
+		Metrics.AIPromptTokensTotal.With(labels).Add(float64(promptTokens))
+	}
+	if completionTokens > 0 {
+		Metrics.AICompletionTokensTotal.With(labels).Add(float64(completionTokens))
+	}
+	if totalTokens > 0 {
+		Metrics.AITotalTokensTotal.With(labels).Add(float64(totalTokens))
+	}
+
+	// Update cumulative totals used by the usage summary API.
+	key := username + "\x00" + provider + "\x00" + model
+	aiTokenTotalsMu.Lock()
+	entry, ok := aiTokenTotals[key]
+	if !ok {
+		entry = &AITokenEntry{Model: model, Provider: provider, Username: username}
+		aiTokenTotals[key] = entry
+	}
+	entry.CompletionTokens += completionTokens
+	entry.PromptTokens += promptTokens
+	entry.TotalTokens += totalTokens
+	aiTokenTotalsMu.Unlock()
+
+	// Append to the time-series event log.
+	aiTokenEventsMu.Lock()
+	aiTokenEventsLog = append(aiTokenEventsLog, AITokenEvent{
+		CompletionTokens: completionTokens,
+		Model:            model,
+		PromptTokens:     promptTokens,
+		Provider:         provider,
+		Timestamp:        time.Now(),
+		TotalTokens:      totalTokens,
+		Username:         username,
+	})
+	if len(aiTokenEventsLog) > maxAITokenEvents {
+		aiTokenEventsLog = aiTokenEventsLog[maxAITokenEvents/4:]
+	}
+	aiTokenEventsMu.Unlock()
 }

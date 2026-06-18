@@ -1,13 +1,19 @@
 import * as React from 'react';
 import {
   Bullseye,
+  Button,
+  ButtonVariant,
   Card,
   CardBody,
   CardTitle,
+  Divider,
   EmptyState,
   EmptyStateBody,
-  Gallery,
-  Spinner
+  ExpandableSection,
+  Grid,
+  GridItem,
+  Spinner,
+  Title
 } from '@patternfly/react-core';
 import { IRow, TableVariant } from '@patternfly/react-table';
 import { LocalTime } from 'components/Time/LocalTime';
@@ -16,6 +22,7 @@ import * as API from 'services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ChatSessionUsageMetric } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
+import { KialiIcon } from 'config/KialiIcon';
 
 const contentStyle = kialiStyle({
   overflow: 'auto'
@@ -63,40 +70,28 @@ const SummaryCard: React.FC<{ label: string; value: React.ReactNode }> = ({ labe
   </Card>
 );
 
-export const ChatSessionUsageContent: React.FC = () => {
+export const ChatSessionUsage: React.FC = () => {
   const [metrics, setMetrics] = React.useState<ChatSessionUsageMetric[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = React.useState(false);
   const [error, setError] = React.useState<string>('');
 
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const loadMetrics = async (): Promise<void> => {
-      try {
-        const response = await API.getChatSessionUsage();
-        if (!isMounted) {
-          return;
-        }
-        setMetrics(response.data);
-        setError('');
-      } catch (err) {
-        if (!isMounted) {
-          return;
-        }
-        setError(API.getErrorString(err as any));
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void loadMetrics();
-
-    return () => {
-      isMounted = false;
-    };
+  const loadMetrics = React.useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await API.getChatSessionUsage();
+      setMetrics(response.data);
+      setError('');
+    } catch (err) {
+      setError(API.getErrorString(err as any));
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    void loadMetrics();
+  }, [loadMetrics]);
 
   const totals = React.useMemo(
     () =>
@@ -160,23 +155,44 @@ export const ChatSessionUsageContent: React.FC = () => {
 
   return (
     <div className={contentStyle}>
+      <Title headingLevel="h1">Session Usage</Title>
+      <div className={noteStyle}>
+        These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when the server restarts or the session expires.
+      </div>
+      <Divider component="div" />
       {loading ? (
         <Bullseye data-test="session-token-stats-loading">
           <Spinner size="xl" />
         </Bullseye>
       ) : error ? (
         errorState
-      ) : (
-        <>
-          <Gallery hasGutter className={galleryStyle}>
-            <SummaryCard label={t('Requests')} value={totals.requestCount.toLocaleString()} />
-            <SummaryCard label={t('Prompt Tokens')} value={totals.promptTokens.toLocaleString()} />
-            <SummaryCard label={t('Completion Tokens')} value={totals.completionTokens.toLocaleString()} />
-            <SummaryCard label={t('Total Tokens')} value={totals.totalTokens.toLocaleString()} />
-            <SummaryCard label={t('Since')} value={since ? <LocalTime time={since} /> : '-'} />
-          </Gallery>
+      ) : metrics.length === 0 ? emptyState : (
+        <>        
+          <Grid hasGutter className={galleryStyle}>
+            <GridItem span={3}>
+               <SummaryCard label={t('Requests')} value={totals.requestCount.toLocaleString()} />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard label={t('Prompt Tokens')} value={totals.promptTokens.toLocaleString()} />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard label={t('Completion Tokens')} value={totals.completionTokens.toLocaleString()} />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard label={t('Total Tokens')} value={totals.totalTokens.toLocaleString()} />
+            </GridItem>
+          </Grid>
+          <div style={{ textAlign: 'center' }}>
+            Data calculated {t('Since')} {since ? <LocalTime time={since} /> : '-'} 
+            <Button
+            icon={<KialiIcon.Sync />}
+            id="refresh-metrics"
+            variant={ButtonVariant.link}
+            onClick={loadMetrics}/>
+          </div>
 
           <div className={sectionStyle}>
+            <ExpandableSection toggleText={isExpanded ? t('Hide Details') : t('Show Details by Provider/Model')} onToggle={() => setIsExpanded(!isExpanded)}>
             <Card>
               <CardTitle>{t('Usage by Provider and Model')}</CardTitle>
               <CardBody>
@@ -189,17 +205,7 @@ export const ChatSessionUsageContent: React.FC = () => {
                 />
               </CardBody>
             </Card>
-          </div>
-
-          <div className={sectionStyle}>
-            <Card>
-              <CardTitle>{t('About these stats')}</CardTitle>
-              <CardBody className={noteStyle}>
-                {t(
-                  'These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when the server restarts or the session expires.'
-                )}
-              </CardBody>
-            </Card>
+            </ExpandableSection>
           </div>
         </>
       )}

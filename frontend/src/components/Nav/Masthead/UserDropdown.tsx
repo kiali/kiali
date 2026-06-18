@@ -12,7 +12,6 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { namespacesPerClusterSelector } from 'store/Selectors';
-import { ChatSessionUsageModal } from 'components/ChatSessionUsage/ChatSessionUsageModal';
 import {
   Divider,
   Dropdown,
@@ -151,7 +150,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   render(): React.ReactNode {
-    const { isDropdownOpen, isSessionTokenStatsOpen } = this.state;
+    const { isDropdownOpen } = this.state;
     const showSessionTokenStats = serverConfig.chatAI.enabled && serverConfig.chatAI.store.enabled;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
@@ -256,8 +255,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
             )}
           </Dropdown>
         )}
-
-        <ChatSessionUsageModal isOpen={isSessionTokenStatsOpen} onClose={this.closeSessionTokenStats} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">
