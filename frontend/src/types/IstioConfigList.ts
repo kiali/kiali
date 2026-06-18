@@ -53,16 +53,17 @@ export enum gvkType {
   RequestAuthentication = 'RequestAuthentication',
 
   DestinationRule = 'DestinationRule',
-  Gateway = 'Gateway',
   EnvoyFilter = 'EnvoyFilter',
-  Sidecar = 'Sidecar',
+  Gateway = 'Gateway',
   ServiceEntry = 'ServiceEntry',
+  Sidecar = 'Sidecar',
   VirtualService = 'VirtualService',
   WorkloadEntry = 'WorkloadEntry',
   WorkloadGroup = 'WorkloadGroup',
 
-  WasmPlugin = 'WasmPlugin',
   Telemetry = 'Telemetry',
+  TrafficExtension = 'TrafficExtension',
+  WasmPlugin = 'WasmPlugin',
 
   K8sGateway = 'K8sGateway',
   K8sGatewayClass = 'K8sGatewayClass',
@@ -90,16 +91,17 @@ export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
   [gvkType.RequestAuthentication]: { Group: 'security.istio.io', Version: 'v1', Kind: gvkType.RequestAuthentication },
 
   [gvkType.DestinationRule]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.DestinationRule },
-  [gvkType.Gateway]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Gateway },
   [gvkType.EnvoyFilter]: { Group: 'networking.istio.io', Version: 'v1alpha3', Kind: gvkType.EnvoyFilter },
-  [gvkType.Sidecar]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Sidecar },
+  [gvkType.Gateway]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Gateway },
   [gvkType.ServiceEntry]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.ServiceEntry },
+  [gvkType.Sidecar]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.Sidecar },
   [gvkType.VirtualService]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.VirtualService },
   [gvkType.WorkloadEntry]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadEntry },
   [gvkType.WorkloadGroup]: { Group: 'networking.istio.io', Version: 'v1', Kind: gvkType.WorkloadGroup },
 
-  [gvkType.WasmPlugin]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.WasmPlugin },
   [gvkType.Telemetry]: { Group: 'telemetry.istio.io', Version: 'v1', Kind: gvkType.Telemetry },
+  [gvkType.TrafficExtension]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.TrafficExtension },
+  [gvkType.WasmPlugin]: { Group: 'extensions.istio.io', Version: 'v1alpha1', Kind: gvkType.WasmPlugin },
 
   [gvkType.K8sGateway]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'Gateway' },
   [gvkType.K8sGatewayClass]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'GatewayClass' },

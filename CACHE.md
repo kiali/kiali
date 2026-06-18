@@ -42,6 +42,7 @@ Kiali maintains an internal cache for commonly used Kubernetes resources such as
   - Sidecars
   - ServiceEntries
   - Telemetries
+  - TrafficExtensions
   - VirtualServices
   - WasmPlugins
   - WorkloadEntries

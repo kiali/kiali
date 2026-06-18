@@ -22,16 +22,17 @@ import (
 // This type is used for returning a response of IstioConfigList
 // swagger:model IstioConfigList
 type IstioConfigList struct {
-	DestinationRules []*networking_v1.DestinationRule   `json:"-"`
-	EnvoyFilters     []*networking_v1alpha3.EnvoyFilter `json:"-"`
-	Gateways         []*networking_v1.Gateway           `json:"-"`
-	ServiceEntries   []*networking_v1.ServiceEntry      `json:"-"`
-	Sidecars         []*networking_v1.Sidecar           `json:"-"`
-	VirtualServices  []*networking_v1.VirtualService    `json:"-"`
-	WorkloadEntries  []*networking_v1.WorkloadEntry     `json:"-"`
-	WorkloadGroups   []*networking_v1.WorkloadGroup     `json:"-"`
-	WasmPlugins      []*extentions_v1alpha1.WasmPlugin  `json:"-"`
-	Telemetries      []*telemetry_v1.Telemetry          `json:"-"`
+	DestinationRules  []*networking_v1.DestinationRule        `json:"-"`
+	EnvoyFilters      []*networking_v1alpha3.EnvoyFilter      `json:"-"`
+	Gateways          []*networking_v1.Gateway                `json:"-"`
+	ServiceEntries    []*networking_v1.ServiceEntry           `json:"-"`
+	Sidecars          []*networking_v1.Sidecar                `json:"-"`
+	Telemetries       []*telemetry_v1.Telemetry               `json:"-"`
+	TrafficExtensions []*extentions_v1alpha1.TrafficExtension `json:"-"`
+	VirtualServices   []*networking_v1.VirtualService         `json:"-"`
+	WasmPlugins       []*extentions_v1alpha1.WasmPlugin       `json:"-"`
+	WorkloadEntries   []*networking_v1.WorkloadEntry          `json:"-"`
+	WorkloadGroups    []*networking_v1.WorkloadGroup          `json:"-"`
 
 	K8sGateways        []*k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoutes      []*k8s_networking_v1.GRPCRoute           `json:"-"`
@@ -61,6 +62,7 @@ func (i IstioConfigList) MarshalJSON() ([]byte, error) {
 	resources[kubernetes.VirtualServices.String()] = i.VirtualServices
 	resources[kubernetes.WorkloadEntries.String()] = i.WorkloadEntries
 	resources[kubernetes.WorkloadGroups.String()] = i.WorkloadGroups
+	resources[kubernetes.TrafficExtensions.String()] = i.TrafficExtensions
 	resources[kubernetes.WasmPlugins.String()] = i.WasmPlugins
 	resources[kubernetes.Telemetries.String()] = i.Telemetries
 	resources[kubernetes.K8sGateways.String()] = i.K8sGateways
@@ -130,6 +132,10 @@ func (i *IstioConfigList) UnmarshalJSON(data []byte) error {
 			}
 		case kubernetes.WorkloadGroups.String():
 			if err := json.Unmarshal(rawMessage, &i.WorkloadGroups); err != nil {
+				return err
+			}
+		case kubernetes.TrafficExtensions.String():
+			if err := json.Unmarshal(rawMessage, &i.TrafficExtensions); err != nil {
 				return err
 			}
 		case kubernetes.WasmPlugins.String():
@@ -219,6 +225,9 @@ func (i *IstioConfigList) ConvertToResponse() {
 	if i.WorkloadGroups == nil {
 		i.WorkloadGroups = []*networking_v1.WorkloadGroup{}
 	}
+	if i.TrafficExtensions == nil {
+		i.TrafficExtensions = []*extentions_v1alpha1.TrafficExtension{}
+	}
 	if i.WasmPlugins == nil {
 		i.WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
 	}
@@ -268,19 +277,20 @@ type IstioConfigDetails struct {
 
 	Object client.Object `json:"-"`
 
-	AuthorizationPolicy   *security_v1.AuthorizationPolicy   `json:"-"`
-	DestinationRule       *networking_v1.DestinationRule     `json:"-"`
-	EnvoyFilter           *networking_v1alpha3.EnvoyFilter   `json:"-"`
-	Gateway               *networking_v1.Gateway             `json:"-"`
-	PeerAuthentication    *security_v1.PeerAuthentication    `json:"-"`
-	RequestAuthentication *security_v1.RequestAuthentication `json:"-"`
-	ServiceEntry          *networking_v1.ServiceEntry        `json:"-"`
-	Sidecar               *networking_v1.Sidecar             `json:"-"`
-	VirtualService        *networking_v1.VirtualService      `json:"-"`
-	WorkloadEntry         *networking_v1.WorkloadEntry       `json:"-"`
-	WorkloadGroup         *networking_v1.WorkloadGroup       `json:"-"`
-	WasmPlugin            *extentions_v1alpha1.WasmPlugin    `json:"-"`
-	Telemetry             *telemetry_v1.Telemetry            `json:"-"`
+	AuthorizationPolicy   *security_v1.AuthorizationPolicy      `json:"-"`
+	DestinationRule       *networking_v1.DestinationRule        `json:"-"`
+	EnvoyFilter           *networking_v1alpha3.EnvoyFilter      `json:"-"`
+	Gateway               *networking_v1.Gateway                `json:"-"`
+	PeerAuthentication    *security_v1.PeerAuthentication       `json:"-"`
+	RequestAuthentication *security_v1.RequestAuthentication    `json:"-"`
+	ServiceEntry          *networking_v1.ServiceEntry           `json:"-"`
+	Sidecar               *networking_v1.Sidecar                `json:"-"`
+	Telemetry             *telemetry_v1.Telemetry               `json:"-"`
+	TrafficExtension      *extentions_v1alpha1.TrafficExtension `json:"-"`
+	VirtualService        *networking_v1.VirtualService         `json:"-"`
+	WasmPlugin            *extentions_v1alpha1.WasmPlugin       `json:"-"`
+	WorkloadEntry         *networking_v1.WorkloadEntry          `json:"-"`
+	WorkloadGroup         *networking_v1.WorkloadGroup          `json:"-"`
 
 	K8sGateway        *k8s_networking_v1.Gateway             `json:"-"`
 	K8sGRPCRoute      *k8s_networking_v1.GRPCRoute           `json:"-"`
@@ -325,6 +335,8 @@ func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
 		resource = i.WorkloadEntry
 	} else if i.WorkloadGroup != nil {
 		resource = i.WorkloadGroup
+	} else if i.TrafficExtension != nil {
+		resource = i.TrafficExtension
 	} else if i.WasmPlugin != nil {
 		resource = i.WasmPlugin
 	} else if i.Telemetry != nil {
@@ -461,6 +473,13 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		icd.WorkloadGroup = &wg
+
+	case kubernetes.TrafficExtensions:
+		var te extentions_v1alpha1.TrafficExtension
+		if err := json.Unmarshal(temp.Resource, &te); err != nil {
+			return err
+		}
+		icd.TrafficExtension = &te
 
 	case kubernetes.WasmPlugins:
 		var wp extentions_v1alpha1.WasmPlugin
@@ -631,6 +650,15 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 		{ObjectField: "spec.template", Message: "Template to be used for the generation of WorkloadEntry resources that belong to this WorkloadGroup."},
 		{ObjectField: "spec.probe", Message: "ReadinessProbe describes the configuration the user must provide for healthchecking on their workload."},
 	},
+	kubernetes.TrafficExtensions.String(): {
+		{ObjectField: "spec.selector", Message: "Criteria used to select the specific set of pods/VMs on which this TrafficExtension should be applied. At most one of selector or targetRefs can be set."},
+		{ObjectField: "spec.targetRefs", Message: "List of resources the policy should be applied to (e.g. Gateway, Service). At most one of selector or targetRefs can be set. Required for waypoint proxies."},
+		{ObjectField: "spec.phase", Message: "Determines where in the filter chain this TrafficExtension is to be injected (UNSPECIFIED, AUTHN, AUTHZ, STATS)."},
+		{ObjectField: "spec.priority", Message: "Determines ordering of TrafficExtensions in the same phase. Higher values are applied first. Defaults to 0."},
+		{ObjectField: "spec.match", Message: "Specifies the criteria to determine which traffic is passed to the TrafficExtension."},
+		{ObjectField: "spec.wasm", Message: "WebAssembly filter configuration. Exactly one of wasm or lua must be set."},
+		{ObjectField: "spec.lua", Message: "Lua filter configuration. Exactly one of wasm or lua must be set."},
+	},
 	kubernetes.WasmPlugins.String(): { // TODO
 		{},
 	},
@@ -711,6 +739,7 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].AuthorizationPolicies = []*security_v1.AuthorizationPolicy{}
 			filtered[ns].PeerAuthentications = []*security_v1.PeerAuthentication{}
 			filtered[ns].RequestAuthentications = []*security_v1.RequestAuthentication{}
+			filtered[ns].TrafficExtensions = []*extentions_v1alpha1.TrafficExtension{}
 			filtered[ns].WasmPlugins = []*extentions_v1alpha1.WasmPlugin{}
 			filtered[ns].Telemetries = []*telemetry_v1.Telemetry{}
 		}
@@ -804,6 +833,12 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			}
 		}
 
+		for _, te := range configList.TrafficExtensions {
+			if te.Namespace == ns {
+				filtered[ns].TrafficExtensions = append(filtered[ns].TrafficExtensions, te)
+			}
+		}
+
 		for _, wp := range configList.WasmPlugins {
 			if wp.Namespace == ns {
 				filtered[ns].WasmPlugins = append(filtered[ns].WasmPlugins, wp)
@@ -860,6 +895,7 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.ServiceEntries = append(configList.ServiceEntries, ns.ServiceEntries...)
 	configList.Sidecars = append(configList.Sidecars, ns.Sidecars...)
 	configList.Telemetries = append(configList.Telemetries, ns.Telemetries...)
+	configList.TrafficExtensions = append(configList.TrafficExtensions, ns.TrafficExtensions...)
 	configList.VirtualServices = append(configList.VirtualServices, ns.VirtualServices...)
 	configList.WasmPlugins = append(configList.WasmPlugins, ns.WasmPlugins...)
 	configList.WorkloadEntries = append(configList.WorkloadEntries, ns.WorkloadEntries...)
