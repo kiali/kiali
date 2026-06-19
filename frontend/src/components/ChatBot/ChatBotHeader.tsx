@@ -20,11 +20,6 @@ import { t } from 'utils/I18nUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { kialiStyle } from 'styles/StyleUtils';
-
-const compactHeaderStyle = kialiStyle({
-  padding: 'var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md) !important'
-});
 
 type ChatBotHeaderProps = {
   onCloseChat: () => void;
@@ -51,17 +46,8 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
   };
 
   return (
-    <ChatbotHeader className={compactHeaderStyle}>
+    <ChatbotHeader>
       <ChatbotHeaderMain>
-        <Tooltip content={t('New chat')}>
-          <Button
-            aria-label={t('New chat')}
-            variant={ButtonVariant.plain}
-            size="sm"
-            icon={<TrashIcon />}
-            onClick={onNewChat}
-          />
-        </Tooltip>
         <ChatbotHeaderSelectorDropdown
           value={`${selectedProvider}:${selectedModel}`}
           onSelect={onSelectProviderModel}
@@ -84,6 +70,15 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
         </ChatbotHeaderSelectorDropdown>
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
+        <Tooltip content={t('New chat')}>
+          <Button
+            aria-label={t('New chat')}
+            variant={ButtonVariant.plain}
+            size="sm"
+            icon={<TrashIcon />}
+            onClick={onNewChat}
+          />
+        </Tooltip>
         {displayMode !== ChatbotDisplayMode.default && (
           <Tooltip content={t('Overlay')}>
             <Button
