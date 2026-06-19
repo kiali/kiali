@@ -89,12 +89,15 @@ When('user {string} {string} option', (action: string, option: string) => {
     if (option === 'rank') {
       cy.get(`input#inboundEdges`).check();
     }
-    if (option === 'filterWaypoints') {
-      cy.wait('@graphNamespaces');
-    }
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
+
+  const clientSideOnlyOptions = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
+  if (!clientSideOnlyOptions.includes(option)) {
+    cy.wait('@graphNamespaces');
+  }
+
   ensureKialiFinishedLoading();
 });
 

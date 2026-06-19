@@ -5,6 +5,7 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
+import { buildNodeTree, findComponentsInTree } from '../../support/react-utils';
 
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
@@ -120,35 +121,56 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
 };
 
 /**
- * Retryable assertion wrapper for the full-page graph. Uses `.should()` instead
- * of `.then()` so Cypress automatically retries the callback when an assertion
- * fails, eliminating race conditions with graph data loading.
+ * Retryable assertion wrapper for the full-page graph.
+ *
+ * Re-traverses the React fiber tree on every `.should()` retry so that
+ * Cypress always sees the latest committed React state. The previous
+ * approach used `cy.getReact()` which returned a static `cy.wrap()`
+ * snapshot — `.should()` retried the assertion against that stale
+ * snapshot, causing false negatives after graph refetches (the
+ * component matched with old `isLoading:false` before the new fetch
+ * cycle started).
  */
 export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
   cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .should(($graph: any) => {
-      const { state } = $graph[0];
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      fn(elems(controller), state);
+  cy.window({ log: false }).should((win: Window) => {
+    const rootFiber = win.__REACT_ROOT_FIBER__;
+    assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+    const tree = buildNodeTree(rootFiber);
+    const results = findComponentsInTree(tree, 'GraphPageComponent', {
+      state: { graphData: { isLoading: false }, isReady: true }
     });
+    assert.equal(results.length, 1, 'GraphPageComponent should be loaded and ready');
+
+    const { state } = results[0];
+    const controller = state.graphRefs.getController() as Visualization;
+    assert.isTrue(controller.hasGraph());
+    fn(elems(controller), state);
+  });
 };
 
 /**
  * Retryable assertion wrapper for the mini graph card.
+ * Same retry-safe approach as assertGraphReady.
  */
 export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
-    .should('have.length', '1')
-    .should(($graph: any) => {
-      const { state } = $graph[0];
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      fn(elems(controller), state);
+  cy.window({ log: false }).should((win: Window) => {
+    const rootFiber = win.__REACT_ROOT_FIBER__;
+    assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+    const tree = buildNodeTree(rootFiber);
+    const results = findComponentsInTree(tree, 'MiniGraphCardComponent', {
+      state: { isReady: true, isLoading: false }
     });
+    assert.equal(results.length, 1, 'MiniGraphCardComponent should be loaded and ready');
+
+    const { state } = results[0];
+    const controller = state.graphRefs.getController() as Visualization;
+    assert.isTrue(controller.hasGraph());
+    fn(elems(controller), state);
+  });
 };
 
 export type SelectOp =
