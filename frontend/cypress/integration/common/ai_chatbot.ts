@@ -470,7 +470,7 @@ Then('the chatbot fullscreen size CSS variables should be set', () => {
 // New Chat modal and provider switching
 // ============================================================
 
-const NEW_CHAT_BUTTON = 'button[aria-label="New chat"]';
+const NEW_CHAT_BUTTON = 'button[aria-label="Clear chat"]';
 const NEW_CHAT_MODAL = '[data-test="new-chat-modal"]';
 const NEW_CHAT_CONFIRM = '[data-test="new-chat-confirm"]';
 const NEW_CHAT_CANCEL = '[data-test="new-chat-cancel"]';

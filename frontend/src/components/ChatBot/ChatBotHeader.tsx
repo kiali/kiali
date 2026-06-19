@@ -70,9 +70,9 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
         </ChatbotHeaderSelectorDropdown>
       </ChatbotHeaderMain>
       <ChatbotHeaderActions>
-        <Tooltip content={t('New chat')}>
+        <Tooltip content={t('Clear chat')}>
           <Button
-            aria-label={t('New chat')}
+            aria-label={t('Clear chat')}
             variant={ButtonVariant.plain}
             size="sm"
             icon={<TrashIcon />}
