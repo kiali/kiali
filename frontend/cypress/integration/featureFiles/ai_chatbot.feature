@@ -363,7 +363,7 @@ Feature: Kiali AI Chatbot
     When user clicks the AI chatbot toggle
     And the AI chatbot window should be open
     When the user opens the interaction mode dropdown
-    Then the AI chatbot should contain the text "Ask"
-    And the AI chatbot should contain the text "Troubleshoot"
-    And the AI chatbot should contain the text "Standard question and answer"
-    And the AI chatbot should contain the text "Focused troubleshooting assistance"
+    Then the interaction mode dropdown should show "ask" option
+    And the interaction mode dropdown should show "troubleshoot" option
+    And the interaction mode dropdown should show "Standard question and answer" description
+    And the interaction mode dropdown should show "Focused troubleshooting assistance" description
