@@ -14,23 +14,19 @@ Feature: Kiali AI Chatbot
   Scenario: Changing display mode updates the chatbot layout class and CSS variables
     When user clicks the AI chatbot toggle
     And the AI chatbot window should be open
-    When the user opens the chatbot options menu
-    And the user selects display mode "Dock to window"
+    And the user clicks the "Dock to window" header button
     Then the chatbot should be in "docked" display mode
     And the chatbot docked height CSS variable should be set
-    When the user opens the chatbot options menu
-    And the user selects display mode "Fullscreen"
+    When the user clicks the "Fullscreen" header button
     Then the chatbot should be in "fullscreen" display mode
     And the chatbot fullscreen size CSS variables should be set
-    When the user opens the chatbot options menu
-    And the user selects display mode "Overlay"
+    When the user clicks the "Overlay" header button
     Then the chatbot should be in "default" display mode
 
-  Scenario: The Minimize option hides the chatbot
+  Scenario: The Minimize button hides the chatbot
     When user clicks the AI chatbot toggle
     And the AI chatbot window should be open
-    When the user opens the chatbot options menu
-    And the user selects "Minimize"
+    And the user clicks the "Minimize" header button
     Then the AI chatbot window should be closed
 
   Scenario: The chatbot toggle icon reflects the active theme

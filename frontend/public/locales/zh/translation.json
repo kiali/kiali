@@ -201,7 +201,6 @@
   "Display": "展示",
   "Display envoy config for the selected pod": "Display envoy config for the selected pod",
   "Display idle nodes": "Display idle nodes",
-  "Display Mode": "显示模式",
   "Display the legend to learn about what the different shapes, colors and backgrounds mean.": "显示图例以了解不同形状、颜色和背景的含义。",
   "Display ztunnel config for the selected pod": "Display ztunnel config for the selected pod",
   "Distributed Tracing": "分布式跟踪",

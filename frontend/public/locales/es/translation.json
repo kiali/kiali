@@ -217,7 +217,6 @@
   "Display": "Mostrar",
   "Display envoy config for the selected pod": "Mostrar configuración de Envoy para el pod seleccionado",
   "Display idle nodes": "Mostrar nodos inactivos",
-  "Display Mode": "Modo de visualización",
   "Display the legend to learn about what the different shapes, colors and backgrounds mean.": "Mostrar la leyenda para aprender sobre lo que significan las diferentes formas, colores y fondos.",
   "Display ztunnel config for the selected pod": "Mostrar configuración de ztunnel para el pod seleccionado",
   "Distributed Tracing": "Trazas distribuidas",
