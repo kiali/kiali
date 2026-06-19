@@ -23,6 +23,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { ChatSessionUsageMetric } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { onAIResponseReceived } from 'utils/aiEvents';
 
 const contentStyle = kialiStyle({
   overflow: 'auto'
@@ -91,6 +92,11 @@ export const ChatSessionUsage: React.FC = () => {
 
   React.useEffect(() => {
     void loadMetrics();
+  }, [loadMetrics]);
+
+  // Refresh whenever the chatbot delivers a new response.
+  React.useEffect(() => {
+    return onAIResponseReceived(() => void loadMetrics());
   }, [loadMetrics]);
 
   const totals = React.useMemo(

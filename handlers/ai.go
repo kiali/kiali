@@ -474,6 +474,7 @@ func ChatUsage(conf *config.Config, _ aiTypes.AIStore) http.HandlerFunc {
 		for _, sk := range sortedKeys {
 			buckets := seriesBuckets[sk]
 			points := make([]aiTimeSeriesPoint, numBuckets)
+			hasData := false
 			for i := range buckets {
 				points[i] = aiTimeSeriesPoint{
 					CompletionTokens: buckets[i].completionTokens,
@@ -481,6 +482,13 @@ func ChatUsage(conf *config.Config, _ aiTypes.AIStore) http.HandlerFunc {
 					Timestamp:        since.Add(time.Duration(i) * step),
 					TotalTokens:      buckets[i].totalTokens,
 				}
+				if buckets[i].totalTokens > 0 {
+					hasData = true
+				}
+			}
+			// Skip series where every bucket is zero — no activity in this window.
+			if !hasData {
+				continue
 			}
 			series = append(series, aiTimeSeriesEntry{
 				Model:    sk.model,

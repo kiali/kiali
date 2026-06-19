@@ -48,14 +48,16 @@ export interface LineChartData {
     xTickValues: string[];
 }
 
-/** Format an ISO timestamp to a short "MM/DD HH:mm" label */
+/** Format an ISO timestamp to a human-readable label, e.g. "Jun 19, 08:00". */
 const formatTimestamp = (iso: string): string => {
     const d = new Date(iso);
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${mm}/${dd} ${hh}:${min}`;
+    return d.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
 };
 
 /**
@@ -90,12 +92,8 @@ export const getLineChartData = (
         }))
     );
 
-    // X-axis ticks: show one label every ~5 points to avoid crowding
-    const numPoints = filtered[0].points.length;
-    const tickEvery = Math.max(1, Math.floor(numPoints / 5));
-    const xTickValues = filtered[0].points
-        .filter((_, i) => i % tickEvery === 0)
-        .map(p => formatTimestamp(p.timestamp));
+    // Every data point gets a tick so labels always align with plotted values.
+    const xTickValues = filtered[0].points.map(p => formatTimestamp(p.timestamp));
 
     return { legend, seriesData, xTickValues };
 };
