@@ -3,6 +3,8 @@ import { ensureKialiFinishedLoading } from './transition';
 import { assertGraphReady, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
+const CLIENT_SIDE_ONLY_OPTIONS = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
+
 When('user graphs {string} namespaces', (namespaces: string) => {
   // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
@@ -23,7 +25,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
 });
 
 When('user {string} display menu', (_action: string) => {
-  cy.get('button#display-settings').click();
+  cy.get('button#display-settings').should('not.be.disabled').click();
 });
 
 When('user enables {string} {string} edge labels', (radio: string, edgeLabel: string) => {
@@ -89,12 +91,14 @@ When('user {string} {string} option', (action: string, option: string) => {
     if (option === 'rank') {
       cy.get(`input#inboundEdges`).check();
     }
-    if (option === 'filterWaypoints') {
-      cy.wait('@graphNamespaces');
-    }
   } else {
     cy.get('div#graph-display-menu').find(`input#${option}`).uncheck();
   }
+
+  if (!CLIENT_SIDE_ONLY_OPTIONS.includes(option)) {
+    cy.wait('@graphNamespaces');
+  }
+
   ensureKialiFinishedLoading();
 });
 
