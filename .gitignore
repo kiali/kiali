@@ -48,18 +48,12 @@ swagger.json
 # Configuration files for the hack scripts
 hack/*.local.sh
 
-# Claude Code — ignore all .claude files except code-reviewer docs (which are intentionally committed)
+# Claude Code — ignore all .claude files
 .claude/*
-!.claude/code-reviewer/
-!.claude/code-reviewer/**
+!.claude/skills
 
-# Claude Code skills for agentic SDLC
-!.claude/skills/
-
-# Cursor — ignore all .cursor files except code-reviewer docs (which are intentionally committed)
-.cursor/*
-!.cursor/code-reviewer/
-!.cursor/code-reviewer/**
+# Cursor — ignore all .cursor files
+.cursor/
 
 # E2E testing files
 tests/integration/junit-rest-report.xml
