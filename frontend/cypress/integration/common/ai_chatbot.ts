@@ -751,3 +751,28 @@ Then('the AI chatbot tool modal should display tool arguments containing {string
   // The modal formats args as key=value pairs in the description text
   cy.get(CHATBOT_TOOL_MODAL).should('contain.text', args);
 });
+
+// ============================================================
+// Interaction mode switching (ask/troubleshoot)
+// ============================================================
+
+const CHATBOT_MODE_TOGGLE = '[data-testid="chatbot-interaction-mode-toggle"]';
+const CHATBOT_MODE_DROPDOWN_ITEM = (mode: string): string => `[data-test*="dropdown-item-${mode}"]`;
+
+When('the user opens the interaction mode dropdown', () => {
+  cy.get(CHATBOT_VISIBLE).find(CHATBOT_MODE_TOGGLE).click();
+});
+
+When('the user selects {string} interaction mode', (mode: string) => {
+  // The dropdown items are rendered by text content
+  cy.contains(mode === 'ask' ? 'Ask' : 'Troubleshoot').click();
+});
+
+Then('the interaction mode should be {string}', (mode: string) => {
+  const expectedText = mode === 'ask' ? 'Ask' : 'Troubleshoot';
+  cy.get(CHATBOT_MODE_TOGGLE).should('contain.text', expectedText);
+});
+
+Then('the message input placeholder should say {string}', (placeholder: string) => {
+  cy.get(CHATBOT_MESSAGE_INPUT).should('have.attr', 'placeholder', placeholder);
+});
