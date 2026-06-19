@@ -757,7 +757,6 @@ Then('the AI chatbot tool modal should display tool arguments containing {string
 // ============================================================
 
 const CHATBOT_MODE_TOGGLE = '[data-testid="chatbot-interaction-mode-toggle"]';
-const CHATBOT_MODE_DROPDOWN_ITEM = (mode: string): string => `[data-test*="dropdown-item-${mode}"]`;
 
 When('the user opens the interaction mode dropdown', () => {
   cy.get(CHATBOT_VISIBLE).find(CHATBOT_MODE_TOGGLE).click();
