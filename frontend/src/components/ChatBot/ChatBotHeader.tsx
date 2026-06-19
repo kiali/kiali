@@ -13,19 +13,18 @@ import {
   ChatbotHeader,
   ChatbotHeaderActions,
   ChatbotHeaderMain,
-  ChatbotHeaderNewChatButton,
   ChatbotHeaderSelectorDropdown
 } from '@patternfly/chatbot';
-import {
-  ExpandIcon,
-  OpenDrawerRightIcon,
-  OutlinedWindowRestoreIcon,
-  WindowMinimizeIcon
-} from '@patternfly/react-icons';
+import { OpenDrawerRightIcon, OutlinedWindowRestoreIcon, TrashIcon, WindowMinimizeIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import { kialiStyle } from 'styles/StyleUtils';
+
+const compactHeaderStyle = kialiStyle({
+  padding: 'var(--pf-t--global--spacer--sm) var(--pf-t--global--spacer--md) !important'
+});
 
 type ChatBotHeaderProps = {
   onCloseChat: () => void;
@@ -52,9 +51,17 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
   };
 
   return (
-    <ChatbotHeader>
+    <ChatbotHeader className={compactHeaderStyle}>
       <ChatbotHeaderMain>
-        <ChatbotHeaderNewChatButton onClick={onNewChat} isCompact />
+        <Tooltip content={t('New chat')}>
+          <Button
+            aria-label={t('New chat')}
+            variant={ButtonVariant.plain}
+            size="sm"
+            icon={<TrashIcon />}
+            onClick={onNewChat}
+          />
+        </Tooltip>
         <ChatbotHeaderSelectorDropdown
           value={`${selectedProvider}:${selectedModel}`}
           onSelect={onSelectProviderModel}
@@ -98,18 +105,6 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
               icon={<OpenDrawerRightIcon />}
               onClick={() => setDisplayMode(ChatbotDisplayMode.docked)}
               data-test="chatbot-display-dock"
-            />
-          </Tooltip>
-        )}
-        {displayMode !== ChatbotDisplayMode.fullscreen && (
-          <Tooltip content={t('Fullscreen')}>
-            <Button
-              aria-label={t('Fullscreen')}
-              variant={ButtonVariant.plain}
-              size="sm"
-              icon={<ExpandIcon />}
-              onClick={() => setDisplayMode(ChatbotDisplayMode.fullscreen)}
-              data-test="chatbot-display-fullscreen"
             />
           </Tooltip>
         )}

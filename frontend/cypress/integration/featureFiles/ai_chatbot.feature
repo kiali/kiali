@@ -17,9 +17,6 @@ Feature: Kiali AI Chatbot
     And the user clicks the "Dock to window" header button
     Then the chatbot should be in "docked" display mode
     And the chatbot docked height CSS variable should be set
-    When the user clicks the "Fullscreen" header button
-    Then the chatbot should be in "fullscreen" display mode
-    And the chatbot fullscreen size CSS variables should be set
     When the user clicks the "Overlay" header button
     Then the chatbot should be in "default" display mode
 
