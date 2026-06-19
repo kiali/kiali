@@ -426,23 +426,11 @@ Then('the Istio config YAML editor should contain {string}', (snippet: string) =
 });
 
 // ============================================================
-// Display mode and Close Chat
+// Display mode and Minimize
 // ============================================================
 
-const CHATBOT_OPTIONS_BUTTON = 'button[aria-label="Chatbot options"]';
-
-When('the user opens the chatbot options menu', () => {
-  // The options toggle lives inside the visible chatbot header
-  cy.get(CHATBOT_VISIBLE).find(CHATBOT_OPTIONS_BUTTON).click();
-});
-
-When('the user selects display mode {string}', (modeName: string) => {
-  // Items are rendered in a PF Dropdown portal — scope by text since text is unique
-  cy.contains(modeName).click();
-});
-
-When('the user selects "Close Chat"', () => {
-  cy.contains('Close Chat').click();
+When('the user clicks the {string} header button', (label: string) => {
+  cy.get(CHATBOT_VISIBLE).find(`button[aria-label="${label}"]`).click();
 });
 
 /**
@@ -482,7 +470,7 @@ Then('the chatbot fullscreen size CSS variables should be set', () => {
 // New Chat modal and provider switching
 // ============================================================
 
-const NEW_CHAT_BUTTON = 'button[aria-label="New chat"]';
+const NEW_CHAT_BUTTON = 'button[aria-label="Clear chat"]';
 const NEW_CHAT_MODAL = '[data-test="new-chat-modal"]';
 const NEW_CHAT_CONFIRM = '[data-test="new-chat-confirm"]';
 const NEW_CHAT_CANCEL = '[data-test="new-chat-cancel"]';

@@ -1,15 +1,21 @@
 import React from 'react';
-import { Divider, DropdownGroup, DropdownItem, DropdownList } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  Divider,
+  DropdownGroup,
+  DropdownItem,
+  DropdownList,
+  Tooltip
+} from '@patternfly/react-core';
 import {
   ChatbotDisplayMode,
   ChatbotHeader,
   ChatbotHeaderActions,
   ChatbotHeaderMain,
-  ChatbotHeaderOptionsDropdown,
-  ChatbotHeaderNewChatButton,
   ChatbotHeaderSelectorDropdown
 } from '@patternfly/chatbot';
-import { ExpandIcon, OpenDrawerRightIcon, OutlinedWindowRestoreIcon, TimesIcon } from '@patternfly/react-icons';
+import { OpenDrawerRightIcon, OutlinedWindowRestoreIcon, TrashIcon, WindowMinimizeIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { KialiAppState } from 'store/Store';
@@ -35,23 +41,18 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
     return null;
   }
 
-  const onSelectDisplayMode = (
-    _event: React.MouseEvent<Element, MouseEvent> | undefined,
-    value: string | number | undefined
-  ): void => {
-    if (typeof value !== 'string') {
-      return;
-    }
-    dispatch(ChatAIActions.setDisplayMode({ displayMode: value as ChatbotDisplayMode }));
+  const setDisplayMode = (mode: ChatbotDisplayMode): void => {
+    dispatch(ChatAIActions.setDisplayMode({ displayMode: mode }));
   };
 
   return (
     <ChatbotHeader>
       <ChatbotHeaderMain>
-        <ChatbotHeaderNewChatButton onClick={onNewChat} />
-      </ChatbotHeaderMain>
-      <ChatbotHeaderActions>
-        <ChatbotHeaderSelectorDropdown value={`${selectedProvider}:${selectedModel}`} onSelect={onSelectProviderModel}>
+        <ChatbotHeaderSelectorDropdown
+          value={`${selectedProvider}:${selectedModel}`}
+          onSelect={onSelectProviderModel}
+          isCompact
+        >
           {providers.map((provider, i) => (
             <>
               <DropdownGroup label={`${provider.name}`} labelHeadingLevel="h3">
@@ -67,39 +68,51 @@ export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSel
             </>
           ))}
         </ChatbotHeaderSelectorDropdown>
-        <ChatbotHeaderOptionsDropdown onSelect={onSelectDisplayMode}>
-          <DropdownGroup label={t('Display Mode')}>
-            <DropdownList>
-              <DropdownItem
-                value={ChatbotDisplayMode.default}
-                key="switchDisplayOverlay"
-                icon={<OutlinedWindowRestoreIcon aria-hidden />}
-                isSelected={displayMode === ChatbotDisplayMode.default}
-              >
-                <span>{t('Overlay')}</span>
-              </DropdownItem>
-              <DropdownItem
-                value={ChatbotDisplayMode.docked}
-                key="switchDisplayDock"
-                icon={<OpenDrawerRightIcon aria-hidden />}
-                isSelected={displayMode === ChatbotDisplayMode.docked}
-              >
-                <span>{t('Dock to window')}</span>
-              </DropdownItem>
-              <DropdownItem
-                value={ChatbotDisplayMode.fullscreen}
-                key="switchDisplayFullscreen"
-                icon={<ExpandIcon aria-hidden />}
-                isSelected={displayMode === ChatbotDisplayMode.fullscreen}
-              >
-                <span>{t('Fullscreen')}</span>
-              </DropdownItem>
-              <DropdownItem key="scloseChat" icon={<TimesIcon aria-hidden />} onClick={onCloseChat}>
-                <span>{t('Close Chat')}</span>
-              </DropdownItem>
-            </DropdownList>
-          </DropdownGroup>
-        </ChatbotHeaderOptionsDropdown>
+      </ChatbotHeaderMain>
+      <ChatbotHeaderActions>
+        <Tooltip content={t('Clear chat')}>
+          <Button
+            aria-label={t('Clear chat')}
+            variant={ButtonVariant.plain}
+            size="sm"
+            icon={<TrashIcon />}
+            onClick={onNewChat}
+          />
+        </Tooltip>
+        {displayMode !== ChatbotDisplayMode.default && (
+          <Tooltip content={t('Overlay')}>
+            <Button
+              aria-label={t('Overlay')}
+              variant={ButtonVariant.plain}
+              size="sm"
+              icon={<OutlinedWindowRestoreIcon />}
+              onClick={() => setDisplayMode(ChatbotDisplayMode.default)}
+              data-test="chatbot-display-overlay"
+            />
+          </Tooltip>
+        )}
+        {displayMode !== ChatbotDisplayMode.docked && (
+          <Tooltip content={t('Dock to window')}>
+            <Button
+              aria-label={t('Dock to window')}
+              variant={ButtonVariant.plain}
+              size="sm"
+              icon={<OpenDrawerRightIcon />}
+              onClick={() => setDisplayMode(ChatbotDisplayMode.docked)}
+              data-test="chatbot-display-dock"
+            />
+          </Tooltip>
+        )}
+        <Tooltip content={t('Minimize')}>
+          <Button
+            aria-label={t('Minimize')}
+            variant={ButtonVariant.plain}
+            size="sm"
+            icon={<WindowMinimizeIcon />}
+            onClick={onCloseChat}
+            data-test="chatbot-minimize"
+          />
+        </Tooltip>
       </ChatbotHeaderActions>
     </ChatbotHeader>
   );
