@@ -3,7 +3,7 @@ sidecar:
 logLevel: "debug"
 config:
   provisioning:
-    interval: 1m
+    interval: 5s
 volumes:
 - name: provisioning
   projected:
