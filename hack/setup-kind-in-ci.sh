@@ -462,6 +462,7 @@ setup_kind_singlecluster() {
         "--set" "external_services.perses.enabled=true"
         "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
         "--set" "external_services.perses.external_url=http://localhost:4000"
+        "--set" "external_services.perses.project=istio"
         "--set" "external_services.perses.dashboards[0].name=Istio Mesh Dashboard"
         "--set" "external_services.perses.dashboards[0].variables.namespace=var-namespace"
         "--set" "external_services.perses.dashboards[0].variables.workload=var-workload"
