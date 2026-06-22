@@ -254,8 +254,7 @@ func TestConvertToolToGoogle_FromToolDefinition_GetMetrics(t *testing.T) {
 			},
 			"reporter": {
 				Type:        genai.TypeString,
-				Description: "Metrics reporter: 'source', 'destination', or 'both'. Optional, defaults to 'source'",
-				Enum:        []string{"source", "destination", "both"},
+				Description: "Metrics reporter(s). Comma-separated list of: 'source', 'destination', 'waypoint', or the special value 'both' (no reporter filter). Optional, defaults to 'source'. Example: 'source,waypoint'",
 			},
 			"requestProtocol": {
 				Type:        genai.TypeString,
