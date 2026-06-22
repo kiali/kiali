@@ -257,7 +257,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         <IstioMetrics
           cluster={this.state.cluster}
           direction={'inbound'}
-          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for service
+          includeWaypoint={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for service
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.serviceId.namespace}
           object={this.props.serviceId.service}
@@ -282,7 +282,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             target={this.props.serviceId.service}
             targetKind={'service'}
             fromWaypoint={fromWaypoint}
-            includeAmbient={fromWaypoint || !!this.state.serviceDetails?.isAmbient}
+            includeWaypoint={fromWaypoint || !!this.state.serviceDetails?.isAmbient}
           />
         </Tab>
       );

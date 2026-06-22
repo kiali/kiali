@@ -24,7 +24,6 @@ type IstioMetricsQuery struct {
 	App             string
 	Cluster         string
 	Direction       string // outbound | inbound
-	IncludeAmbient  bool
 	Filters         []string
 	Namespace       string
 	RequestProtocol string // e.g. http | grpc
@@ -36,9 +35,28 @@ type IstioMetricsQuery struct {
 // FillDefaults fills the struct with default parameters
 func (q *IstioMetricsQuery) FillDefaults() {
 	q.Direction = "outbound"
-	q.IncludeAmbient = false
 	q.RangeQuery.FillDefaults()
 	q.Reporter = "source"
+}
+
+var validReporterValues = map[string]bool{
+	"destination": true,
+	"source":      true,
+	"waypoint":    true,
+}
+
+// ValidateReporter checks that a reporter string is valid.
+// Accepts "both" or a comma-separated list of "source", "destination", "waypoint".
+func ValidateReporter(reporter string) error {
+	if reporter == "both" {
+		return nil
+	}
+	for _, r := range strings.Split(reporter, ",") {
+		if !validReporterValues[r] {
+			return fmt.Errorf("bad request, query parameter 'reporter' contains invalid value %q; valid values are 'source', 'destination', 'waypoint', or 'both'", r)
+		}
+	}
+	return nil
 }
 
 // CustomMetricsQuery holds query parameters for a custom metrics query

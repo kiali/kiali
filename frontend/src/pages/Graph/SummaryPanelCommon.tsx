@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxByType } from '../../types/Graph';
-import { IstioMetricsOptions, Reporter, Direction } from '../../types/MetricsOptions';
+import { IstioMetricsOptions, Direction, withWaypoint } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
 import * as M from '../../types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
@@ -106,8 +106,8 @@ export const getNodeMetrics = (
   props: SummaryPanelPropType,
   filters: Array<string>,
   direction: Direction,
-  reporter: Reporter,
-  includeAmbient?: boolean,
+  reporter: string,
+  includeWaypoint?: boolean,
   requestProtocol?: string,
   quantiles?: Array<string>,
   byLabels?: Array<string>
@@ -117,11 +117,10 @@ export const getNodeMetrics = (
     direction: direction,
     duration: props.duration,
     filters: filters,
-    includeAmbient: !!includeAmbient,
     quantiles: quantiles,
     queryTime: props.queryTime,
     rateInterval: props.rateInterval,
-    reporter: reporter,
+    reporter: withWaypoint(reporter, !!includeWaypoint),
     requestProtocol: requestProtocol,
     step: props.step
   };

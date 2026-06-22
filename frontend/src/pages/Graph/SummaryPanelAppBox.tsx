@@ -25,7 +25,6 @@ import {
   getTitle
 } from './SummaryPanelCommon';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
-import { Reporter } from '../../types/MetricsOptions';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'pages/Graph/ContextMenu/NodeContextMenu';
@@ -380,7 +379,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
       if (filters.length > 0) {
         // use source metrics for outbound, except for:
         // - istio namespace nodes (no source telemetry)
-        const reporter: Reporter = nodeData.isIstio ? 'destination' : 'source';
+        const reporter = nodeData.isIstio ? 'destination' : 'source';
 
         // note: request_protocol is not a valid byLabel for tcp/grpc-message filters but it is ignored by prometheus
         const byLabels = nodeData.isOutside

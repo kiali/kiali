@@ -33,7 +33,7 @@ func (in *MetricsService) GetMetrics(ctx context.Context, q models.IstioMetricsQ
 func createMetricsLabelsBuilder(q *models.IstioMetricsQuery, conf *config.Config) *MetricsLabelsBuilder {
 	lb := NewMetricsLabelsBuilder(q.Direction, conf)
 	if q.Reporter != "both" {
-		lb.Reporter(q.Reporter, q.IncludeAmbient)
+		lb.Reporters(strings.Split(q.Reporter, ","))
 	}
 
 	namespaceSet := false

@@ -36,7 +36,7 @@ interface TracingScatterProps {
   duration: number;
   errorFetchTraces?: TracingError[];
   errorTraces?: boolean;
-  includeAmbient?: boolean;
+  includeWaypoint?: boolean;
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => Promise<any>;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -172,7 +172,7 @@ export class TracingScatterComponent extends React.Component<TracingScatterProps
             onClick={dp => this.props.setTraceId(this.props.cluster, dp.trace.traceID)}
             onTooltipClose={dp => this.onTooltipClose(dp.trace)}
             onTooltipOpen={dp => this.onTooltipOpen(dp.trace)}
-            labelComponent={<TraceTooltip includeAmbient={this.props.includeAmbient} />}
+            labelComponent={<TraceTooltip includeWaypoint={this.props.includeWaypoint} />}
             pointer={true}
           />
         </div>
@@ -200,7 +200,7 @@ export class TracingScatterComponent extends React.Component<TracingScatterProps
       this.seletedTraceMatched = trace.matched;
     }
 
-    const queries = buildQueriesFromSpans(trace.spans, true, !!this.props.includeAmbient);
+    const queries = buildQueriesFromSpans(trace.spans, true, !!this.props.includeWaypoint);
 
     this.props
       .loadMetricsStats(queries, true)

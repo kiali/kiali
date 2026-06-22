@@ -18,7 +18,7 @@ import { DirectionType } from 'types/Common';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
 import * as API from '../../../services/Api';
-import { IstioMetricsOptions } from 'types/MetricsOptions';
+import { IstioMetricsOptions, buildReporter } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
@@ -367,9 +367,8 @@ export class TargetPanelControlPlane extends React.Component<
       direction: direction,
       duration: this.props.duration,
       filters: ['request_count', 'request_error_count'],
-      includeAmbient: serverConfig.ambientEnabled,
       rateInterval: rateParams.rateInterval,
-      reporter: direction === 'inbound' ? 'destination' : 'source',
+      reporter: buildReporter(direction, serverConfig.ambientEnabled),
       step: rateParams.step
     };
 

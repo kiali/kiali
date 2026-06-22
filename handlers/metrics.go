@@ -415,19 +415,10 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 		q.Direction = dir
 	}
 
-	includeAmbientParam := queryParams.Get("includeAmbient")
-	if includeAmbientParam != "" {
-		includeAmbient, err := strconv.ParseBool(includeAmbientParam)
-		if err != nil {
-			return errors.New("bad request, query parameter 'includeAmbient' must be either 'true' or 'false'")
-		}
-		q.IncludeAmbient = includeAmbient
-	}
-
 	reporter := queryParams.Get("reporter")
 	if reporter != "" {
-		if reporter != "both" && reporter != "destination" && reporter != "source" {
-			return errors.New("bad request, query parameter 'reporter' must be one of 'both, 'destination', or 'source'")
+		if err := models.ValidateReporter(reporter); err != nil {
+			return err
 		}
 		q.Reporter = reporter
 	}

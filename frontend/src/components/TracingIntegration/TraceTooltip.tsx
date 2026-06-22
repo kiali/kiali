@@ -53,7 +53,7 @@ const rightStyle = kialiStyle({
 });
 
 type TraceLabelOwnProps = {
-  includeAmbient?: boolean;
+  includeWaypoint?: boolean;
   trace: JaegerTrace;
 };
 
@@ -104,8 +104,8 @@ const mapStateToProps = (
   state: KialiAppState,
   props: TraceLabelOwnProps
 ): { isStatsMatrixComplete: boolean; statsMatrix: StatsMatrix } => {
-  const includeAmbient = !!props.includeAmbient || props.trace.spans.some(span => isWaypointProxySpan(span));
-  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true, includeAmbient);
+  const includeWaypoint = !!props.includeWaypoint || props.trace.spans.some(span => isWaypointProxySpan(span));
+  const { matrix, isComplete } = reduceMetricsStats(props.trace, state.metricsStats.data, true, includeWaypoint);
   return {
     statsMatrix: matrix,
     isStatsMatrixComplete: isComplete
@@ -117,7 +117,7 @@ const TraceLabelContainer = connect(mapStateToProps)(TraceLabel);
 type FlyoutOrientation = 'top' | 'bottom' | 'left' | 'right';
 type FlyoutOrientationProps = Pick<ChartLabelProps, 'x' | 'y' | 'width'>;
 type TooltipProps = HookedTooltipProps<JaegerLineInfo> & {
-  includeAmbient?: boolean;
+  includeWaypoint?: boolean;
 };
 
 export const computeFlyoutOrientation = (props: FlyoutOrientationProps): FlyoutOrientation => {
@@ -156,7 +156,7 @@ export class TraceTooltip extends React.Component<TooltipProps> {
           flyoutHeight={flyoutHeight}
           orientation={this.getOrientation}
           flyoutComponent={<ChartCursorFlyout style={{ stroke: 'none', fillOpacity: 0.6, pointerEvents: 'none' }} />}
-          labelComponent={<TraceLabelContainer trace={trace} includeAmbient={this.props.includeAmbient} />}
+          labelComponent={<TraceLabelContainer trace={trace} includeWaypoint={this.props.includeWaypoint} />}
         />
       );
     }

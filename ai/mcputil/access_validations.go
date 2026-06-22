@@ -31,17 +31,9 @@ func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.Istio
 	}
 	q.Direction = dir
 
-	if includeAmbientParam := GetStringArg(args, "includeAmbient"); includeAmbientParam != "" {
-		includeAmbient, err := strconv.ParseBool(includeAmbientParam)
-		if err != nil {
-			return errors.New("bad request, query parameter 'includeAmbient' must be either 'true' or 'false'")
-		}
-		q.IncludeAmbient = includeAmbient
-	}
-
 	reporter := GetStringOrDefault(args, DefaultReporter, "reporter")
-	if reporter != "both" && reporter != "destination" && reporter != "source" {
-		return errors.New("bad request, query parameter 'reporter' must be one of 'both, 'destination', or 'source'")
+	if err := models.ValidateReporter(reporter); err != nil {
+		return err
 	}
 	q.Reporter = reporter
 

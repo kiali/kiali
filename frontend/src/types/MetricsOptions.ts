@@ -24,14 +24,12 @@ export type Aggregator = 'sum' | 'avg' | 'min' | 'max' | 'stddev' | 'stdvar';
 export interface IstioMetricsOptions extends MetricsQuery {
   direction: Direction;
   filters?: string[];
-  includeAmbient: boolean;
-  reporter: Reporter;
+  reporter: string;
   requestProtocol?: string;
 }
 
-export type Reporter = 'source' | 'destination' | 'both';
 export type Direction = 'inbound' | 'outbound';
-export type StatsReporter = Exclude<Reporter, 'both'> | 'waypoint';
+export type StatsReporter = 'source' | 'destination' | 'waypoint';
 
 export interface Target {
   cluster?: string;
@@ -72,6 +70,14 @@ export const genStatsKey = (
 const genTargetKey = (target: Target): string => {
   return `${target.namespace}:${target.kind}:${target.name}`;
 };
+
+export const buildReporter = (direction: Direction, includeWaypoint: boolean): string => {
+  const base = direction === 'inbound' ? 'destination' : 'source';
+  return includeWaypoint ? `${base},waypoint` : base;
+};
+
+export const withWaypoint = (reporter: string, includeWaypoint: boolean): string =>
+  includeWaypoint && reporter !== 'both' ? `${reporter},waypoint` : reporter;
 
 export const getStatsReporters = (direction: Direction, includeWaypoint = false): StatsReporter[] => {
   const sideReporter: StatsReporter = direction === 'outbound' ? 'source' : 'destination';

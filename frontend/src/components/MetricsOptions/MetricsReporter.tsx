@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
-import { Reporter, Direction } from '../../types/MetricsOptions';
+import { Direction } from '../../types/MetricsOptions';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -11,8 +11,8 @@ import { classes } from 'typestyle';
 
 interface Props {
   direction: Direction;
-  onChanged: (reproter: Reporter) => void;
-  reporter: Reporter;
+  onChanged: (reporter: string) => void;
+  reporter: string;
 }
 
 const metricsReporterInfoStyle = kialiStyle({
@@ -28,11 +28,11 @@ export class MetricsReporter extends React.Component<Props> {
     both: 'Both'
   };
 
-  static initialReporter = (direction: Direction): Reporter => {
+  static initialReporter = (direction: Direction): string => {
     const reporterParam = HistoryManager.getParam(URLParam.REPORTER);
 
     if (reporterParam !== undefined) {
-      return reporterParam as Reporter;
+      return reporterParam;
     }
 
     return direction === 'inbound' ? 'destination' : 'source';
@@ -40,8 +40,7 @@ export class MetricsReporter extends React.Component<Props> {
 
   onReporterChanged = (reporter: string): void => {
     HistoryManager.setParam(URLParam.REPORTER, reporter);
-    const newReporter = reporter as Reporter;
-    this.props.onChanged(newReporter);
+    this.props.onChanged(reporter);
   };
 
   reportTooltip = (

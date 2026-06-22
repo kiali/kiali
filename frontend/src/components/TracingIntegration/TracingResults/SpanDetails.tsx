@@ -15,7 +15,7 @@ interface SpanDetailsProps {
   cluster?: string;
   externalURLProvider?: TracingUrlProvider;
   fromWaypoint: boolean;
-  includeAmbient?: boolean;
+  includeWaypoint?: boolean;
   items: RichSpanData[];
   namespace: string;
   target: string;
@@ -46,7 +46,7 @@ export const SpanDetails: React.FC<SpanDetailsProps> = (props: SpanDetailsProps)
             namespace={props.namespace}
             externalURLProvider={props.externalURLProvider}
             cluster={props.cluster}
-            includeAmbient={props.includeAmbient}
+            includeWaypoint={props.includeWaypoint}
             target={props.waypointServiceFilter ? props.waypointServiceFilter : props.target}
             traceID={props.traceID}
             fromWaypoint={props.fromWaypoint}
