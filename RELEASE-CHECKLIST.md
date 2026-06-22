@@ -7,14 +7,14 @@ Replace `X.Y.Z` and `X.Y` with the actual release version numbers throughout.
 To run these checks automatically (replace X.Y with the release version you are verifying):
 
 ```bash
-./hack/verify-github-release.sh -v X.Y -d 1    # Day 1 (Monday) checks
-./hack/verify-github-release.sh -v X.Y -d 2    # Day 2 (Tuesday) checks
+./hack/verify-github-release.sh -v X.Y -d 1    # Day 1 (Sunday) checks
+./hack/verify-github-release.sh -v X.Y -d 2    # Day 2 (Monday) checks
 ./hack/verify-github-release.sh -v X.Y -d all  # Both days
 ```
 
 The release happens in two phases:
-- **Day 1 (Monday):** kiali, kiali-operator, helm-charts, and kiali.io are released.
-- **Day 2 (Tuesday):** openshift-servicemesh-plugin (OSSMC) is released.
+- **Day 1 (Sunday):** kiali, kiali-operator, helm-charts, and kiali.io are released.
+- **Day 2 (Monday):** openshift-servicemesh-plugin (OSSMC) is released.
 
 > **Note:** GitHub Actions scheduled workflows can be delayed by several hours or skipped entirely
 > due to platform load. If the release workflows have not run by Monday afternoon, trigger them
@@ -22,7 +22,7 @@ The release happens in two phases:
 
 ---
 
-# Day 1 — Main Release (Monday)
+# Day 1 — Main Release (Sunday)
 
 ## Container Images (Quay.io)
 
@@ -117,7 +117,7 @@ The release happens in two phases:
 
 ---
 
-# Day 2 — OSSMC Plugin Release (Tuesday)
+# Day 2 — OSSMC Plugin Release (Monday)
 
 ## Container Images (Quay.io)
 
