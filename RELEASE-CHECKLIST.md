@@ -16,6 +16,10 @@ The release happens in two phases:
 - **Day 1 (Monday):** kiali, kiali-operator, helm-charts, and kiali.io are released.
 - **Day 2 (Tuesday):** openshift-servicemesh-plugin (OSSMC) is released.
 
+> **Note:** GitHub Actions scheduled workflows can be delayed by several hours or skipped entirely
+> due to platform load. If the release workflows have not run by Monday afternoon, trigger them
+> manually (see [Re-Trigger Release Workflows Manually](#step-6-re-trigger-release-workflows-manually)).
+
 ---
 
 # Day 1 — Main Release (Monday)
