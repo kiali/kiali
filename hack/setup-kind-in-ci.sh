@@ -458,7 +458,37 @@ setup_kind_singlecluster() {
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
     ${HELM} install perses perses/perses -n istio-system --wait --timeout 120s -f "${SCRIPT_DIR}"/istio/perses/values.yaml
-    infomsg "Perses installed. Sidecar will provision dashboards from ConfigMaps."
+
+    infomsg "=== Perses Debug: Pod status ==="
+    kubectl get pods -n istio-system -l app.kubernetes.io/name=perses -o wide
+    infomsg "=== Perses Debug: StatefulSet volumes ==="
+    kubectl get sts perses -n istio-system -o jsonpath='{.spec.template.spec.volumes}' 2>&1
+    echo ""
+    infomsg "=== Perses Debug: StatefulSet volumeMounts ==="
+    kubectl get sts perses -n istio-system -o jsonpath='{.spec.template.spec.containers[0].volumeMounts}' 2>&1
+    echo ""
+    infomsg "=== Perses Debug: ConfigMap perses (Perses config) ==="
+    kubectl get configmap perses -n istio-system -o jsonpath='{.data.config\.yaml}' 2>&1
+    echo ""
+    infomsg "=== Perses Debug: Perses logs (last 50 lines) ==="
+    kubectl logs -n istio-system perses-0 -c perses --tail=50 2>&1
+    infomsg "=== Perses Debug: Waiting 90s for provisioning (interval=1m) ==="
+    sleep 90
+    infomsg "=== Perses Debug: Perses logs AFTER wait (last 50 lines) ==="
+    kubectl logs -n istio-system perses-0 -c perses --tail=50 2>&1
+    infomsg "=== Perses Debug: Checking dashboard via port-forward ==="
+    kubectl port-forward -n istio-system svc/perses 14000:8080 &
+    local pf_pid=$!
+    sleep 3
+    infomsg "=== Perses Debug: List projects ==="
+    curl -sv http://localhost:14000/api/v1/projects 2>&1 || true
+    infomsg "=== Perses Debug: List dashboards in project istio ==="
+    curl -sv http://localhost:14000/api/v1/projects/istio/dashboards 2>&1 || true
+    infomsg "=== Perses Debug: Get specific dashboard ==="
+    curl -sv http://localhost:14000/api/v1/projects/istio/dashboards/istio-mesh-dashboard 2>&1 | head -c 500 || true
+    echo ""
+    kill "${pf_pid}" 2>/dev/null || true
+    infomsg "=== Perses Debug: End ==="
 
           PERSES_ARGS=(
         "--set" "external_services.perses.enabled=true"
