@@ -457,21 +457,8 @@ setup_kind_singlecluster() {
     kubectl apply -f "${SCRIPT_DIR}"/istio/perses/dashboard.yaml
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
-    ${HELM} install perses perses/perses -n istio-system --wait -f "${SCRIPT_DIR}"/istio/perses/values.yaml
-
-    infomsg "Waiting for Perses dashboards to be provisioned..."
-    local retries=0
-    while [ "${retries}" -lt 30 ]; do
-      if kubectl exec -n istio-system deploy/perses -- wget -q -O- http://localhost:8080/api/v1/projects/istio/dashboards/istio-mesh-dashboard 2>/dev/null | grep -q "istio-mesh-dashboard"; then
-        infomsg "Perses dashboards are ready."
-        break
-      fi
-      retries=$((retries + 1))
-      sleep 5
-    done
-    if [ "${retries}" -ge 30 ]; then
-      infomsg "WARNING: Perses dashboards may not be fully provisioned after 150s"
-    fi
+    ${HELM} install perses perses/perses -n istio-system --wait --timeout 120s -f "${SCRIPT_DIR}"/istio/perses/values.yaml
+    infomsg "Perses installed. Sidecar will provision dashboards from ConfigMaps."
 
           PERSES_ARGS=(
         "--set" "external_services.perses.enabled=true"

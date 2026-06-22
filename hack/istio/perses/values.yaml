@@ -1,20 +1,6 @@
 sidecar:
-  enabled: false
+  enabled: true
 logLevel: "debug"
 config:
   provisioning:
     interval: 5s
-volumes:
-- name: provisioning
-  projected:
-    sources:
-    - configMap:
-        name: perses-provisioning-py
-    - configMap:
-        name: perses-provisioning-dsh
-    - configMap:
-        name: perses-provisioning
-volumeMounts:
-- name: provisioning
-  mountPath: /etc/perses/provisioning
-  readOnly: true
