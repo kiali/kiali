@@ -1,0 +1,27 @@
+name: Notify OSSMC Frontend Sync
+
+on:
+  push:
+    branches: [v2.27, v2.22, v2.17, v2.11, v2.4]
+    paths:
+    - 'frontend/src/**'
+    - 'frontend/public/locales/**'
+    - 'frontend/cypress/integration/**'
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Dispatch to OSSMC
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        github-token: ${{ secrets.KIALI_BOT_TOKEN }}
+        script: |
+          await github.rest.repos.createDispatchEvent({
+            owner: 'kiali',
+            repo: 'openshift-servicemesh-plugin',
+            event_type: 'kiali-frontend-updated',
+            client_payload: {
+              branch: '${{ github.ref_name }}'
+            }
+          });
