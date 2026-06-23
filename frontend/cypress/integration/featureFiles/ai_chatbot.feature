@@ -311,3 +311,59 @@ Feature: Kiali AI Chatbot
     And the AI chatbot should show YAML apply success for "delete"
     When user views the Istio Config list for namespaces "bookinfo"
     Then user does not see VirtualService "vs-ai-cypress" in the Istio Config list
+
+  Scenario: The AI chatbot defaults to ask mode
+    When user clicks the AI chatbot toggle
+    Then the AI chatbot window should be open
+    And the interaction mode should be "ask"
+    And the message input placeholder should say "Ask a question..."
+
+  Scenario: The user can switch from ask mode to troubleshoot mode
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And the interaction mode should be "ask"
+    When the user opens the interaction mode dropdown
+    And the user selects "troubleshoot" interaction mode
+    Then the interaction mode should be "troubleshoot"
+    And the message input placeholder should say "Describe the issue..."
+
+  Scenario: The user can switch from troubleshoot mode to ask mode
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the interaction mode dropdown
+    And the user selects "troubleshoot" interaction mode
+    And the interaction mode should be "troubleshoot"
+    When the user opens the interaction mode dropdown
+    And the user selects "ask" interaction mode
+    Then the interaction mode should be "ask"
+    And the message input placeholder should say "Ask a question..."
+
+  Scenario: The interaction mode is sent with chat requests
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the interaction mode dropdown
+    And the user selects "troubleshoot" interaction mode
+    And user sends a message "What is wrong with my services?"
+    Then the AI chatbot should display the answer "Of course."
+
+  Scenario: The interaction mode persists after closing and reopening the chatbot
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the interaction mode dropdown
+    And the user selects "troubleshoot" interaction mode
+    And the interaction mode should be "troubleshoot"
+    And user clicks the AI chatbot toggle
+    Then the AI chatbot window should be closed
+    When user clicks the AI chatbot toggle
+    Then the AI chatbot window should be open
+    And the interaction mode should be "troubleshoot"
+    And the message input placeholder should say "Describe the issue..."
+
+  Scenario: The interaction mode dropdown shows both ask and troubleshoot options
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    When the user opens the interaction mode dropdown
+    Then the interaction mode dropdown should show "ask" option
+    And the interaction mode dropdown should show "troubleshoot" option
+    And the interaction mode dropdown should show "Standard question and answer" description
+    And the interaction mode dropdown should show "Focused troubleshooting assistance" description

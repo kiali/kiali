@@ -302,13 +302,13 @@ func TestAnthropic_GetName(t *testing.T) {
 
 func TestAnthropic_InitializeConversation_NilPointer(t *testing.T) {
 	p := &AnthropicProvider{}
-	p.InitializeConversation(nil, "hello") // must not panic
+	p.InitializeConversation(nil, types.AIRequest{Query: "hello"}) // must not panic
 }
 
 func TestAnthropic_InitializeConversation_NewConversation(t *testing.T) {
 	p := &AnthropicProvider{}
 	ptr := &types.Conversation{}
-	p.InitializeConversation(ptr, "hello world")
+	p.InitializeConversation(ptr, types.AIRequest{Query: "hello world"})
 
 	require.Len(t, ptr.Conversation, 2)
 	assert.Equal(t, "system", ptr.Conversation[0].Role)
@@ -317,18 +317,48 @@ func TestAnthropic_InitializeConversation_NewConversation(t *testing.T) {
 	assert.Equal(t, "hello world", ptr.Conversation[1].Content)
 }
 
+func TestAnthropic_InitializeConversation_NewConversation_TroubleshootMode(t *testing.T) {
+	p := &AnthropicProvider{}
+	ptr := &types.Conversation{}
+	p.InitializeConversation(ptr, types.AIRequest{Query: "why is my service down?", InteractionMode: types.ChatInteractionModeTroubleshoot})
+
+	require.Len(t, ptr.Conversation, 2)
+	assert.Equal(t, "system", ptr.Conversation[0].Role)
+	assert.Equal(t, types.TroubleshootSystemInstruction, ptr.Conversation[0].Content)
+	assert.Equal(t, "user", ptr.Conversation[1].Role)
+	assert.Equal(t, "why is my service down?", ptr.Conversation[1].Content)
+}
+
 func TestAnthropic_InitializeConversation_ExistingConversation(t *testing.T) {
 	p := &AnthropicProvider{}
 	ptr := &types.Conversation{
 		Conversation: []types.ConversationMessage{
-			{Role: "system", Content: "existing system"},
+			{Role: "system", Content: types.SystemInstruction},
 			{Role: "user", Content: "previous"},
 		},
 	}
-	p.InitializeConversation(ptr, "follow-up")
+	p.InitializeConversation(ptr, types.AIRequest{Query: "follow-up"})
 
 	require.Len(t, ptr.Conversation, 3)
+	assert.Equal(t, types.SystemInstruction, ptr.Conversation[0].Content)
 	assert.Equal(t, "follow-up", ptr.Conversation[2].Content)
+}
+
+func TestAnthropic_InitializeConversation_ModeSwitchUpdatesSystemMessage(t *testing.T) {
+	p := &AnthropicProvider{}
+	ptr := &types.Conversation{
+		Conversation: []types.ConversationMessage{
+			{Role: "system", Content: types.SystemInstruction},
+			{Role: "user", Content: "first question"},
+			{Role: "assistant", Content: "first answer"},
+		},
+	}
+	p.InitializeConversation(ptr, types.AIRequest{Query: "diagnose now", InteractionMode: types.ChatInteractionModeTroubleshoot})
+
+	require.Len(t, ptr.Conversation, 4)
+	assert.Equal(t, types.TroubleshootSystemInstruction, ptr.Conversation[0].Content, "system message must be updated to troubleshoot")
+	assert.Equal(t, "first question", ptr.Conversation[1].Content, "history preserved")
+	assert.Equal(t, "diagnose now", ptr.Conversation[3].Content)
 }
 
 func TestAnthropic_ConversationToProvider_MapsAllRoles(t *testing.T) {

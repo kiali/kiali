@@ -27,8 +27,8 @@ type dummyProvider struct {
 	providerName string
 }
 
-func (d dummyProvider) GetName() string                                              { return "dummy" }
-func (d dummyProvider) InitializeConversation(ptr *types.Conversation, query string) {}
+func (d dummyProvider) GetName() string                                                     { return "dummy" }
+func (d dummyProvider) InitializeConversation(ptr *types.Conversation, req types.AIRequest) {}
 func (d dummyProvider) ReduceConversation(ctx context.Context, ptr *types.Conversation, reduceThreshold int) {
 }
 func (d dummyProvider) GetToolDefinitions() interface{} { return nil }

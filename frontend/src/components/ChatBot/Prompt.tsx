@@ -6,15 +6,24 @@ import * as API from '../../services/Api';
 import { throttle, uniqueId } from 'lodash-es';
 import { Map as ImmutableMap } from 'immutable';
 import { useDispatch } from 'react-redux';
-import { ChatRequest, Prompt as ChatPrompt } from 'types/Chatbot';
+import { ChatInteractionMode, ChatRequest, Prompt as ChatPrompt } from 'types/Chatbot';
 import { getFetchErrorMessage } from './error';
 import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
 import { buildPageContext } from './PageContext';
 import { router } from 'app/History';
-import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-import { HelpIcon } from '@patternfly/react-icons';
+import {
+  Button,
+  ButtonVariant,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+  Tooltip
+} from '@patternfly/react-core';
+import { CommentDotsIcon, HelpIcon, WrenchIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
@@ -34,6 +43,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const selectedProvider: string = useSelector((s: KialiAppState) => s.aiChat.selectedProvider);
   const selectedModel: string = useSelector((s: KialiAppState) => s.aiChat.selectedModel);
   const alwaysNavigate = useSelector((s: KialiAppState) => s.aiChat.alwaysNavigate);
+  const interactionMode = useSelector((s: KialiAppState) => s.aiChat.interactionMode);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
@@ -131,6 +141,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
     const request: ChatRequest = {
       conversation_id: conversationID,
+      interaction_mode: interactionMode,
       query: pageContext ? `Context: ${pageContext}\n\n${query}` : query
     };
 
@@ -293,7 +304,17 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     // Clear prompt input and return focus to it
     dispatch(ChatAIActions.setQuery(''));
     textareaRef.current?.focus();
-  }, [conversationID, dispatch, query, scrollIntoView, pageContext, selectedProvider, selectedModel, alwaysNavigate]);
+  }, [
+    conversationID,
+    dispatch,
+    interactionMode,
+    query,
+    scrollIntoView,
+    pageContext,
+    selectedProvider,
+    selectedModel,
+    alwaysNavigate
+  ]);
 
   const streamingResponseID: string | undefined = isStreaming ? (chatHistory.last()?.get('id') as string) : undefined;
 
@@ -315,6 +336,23 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     },
     [dispatch, streamController, streamingResponseID]
   );
+
+  const [isModeDropdownOpen, setIsModeDropdownOpen] = React.useState(false);
+
+  const handleModeSelect = React.useCallback(
+    (_event: React.MouseEvent<Element> | undefined, value: string | number | undefined) => {
+      const newMode = value as ChatInteractionMode;
+      if (chatHistory.size > 0 && newMode !== interactionMode) {
+        console.info(`Interaction mode changed to ${newMode}. The assistant will adopt the new approach.`);
+      }
+      dispatch(ChatAIActions.setInteractionMode({ interactionMode: newMode }));
+      setIsModeDropdownOpen(false);
+    },
+    [dispatch, chatHistory.size, interactionMode]
+  );
+
+  const modePlaceholder = interactionMode === 'ask' ? t('Ask a question...') : t('Describe the issue...');
+
   return (
     <div>
       {promptData.length > 0 && query.trim().length === 0 && (
@@ -348,20 +386,79 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           ))}
         </div>
       )}
-      <MessageBar
-        alwayShowSendButton
-        data-testid="chatbot-message-bar-input"
-        handleStopButton={() => onStreamCancel()}
-        hasAttachButton={false}
-        hasStopButton={isStreaming}
-        innerRef={textareaRef}
-        isCompact
-        isSendButtonDisabled={!query || query.trim().length === 0}
-        onChange={e => onChange(e, e.target.value)}
-        onSendMessage={onSubmit}
-        validated={validated}
-        value={query}
-      />
+      <div style={{ position: 'relative' }} className="chatbot-message-bar-wrapper">
+        <style>{`
+          .chatbot-message-bar-wrapper .pf-chatbot__message-textarea {
+            margin-bottom: 2rem !important;
+          }
+        `}</style>
+        <div
+          style={{
+            position: 'absolute',
+            left: '8px',
+            bottom: '8px',
+            zIndex: 2,
+            pointerEvents: 'auto'
+          }}
+        >
+          <Dropdown
+            isOpen={isModeDropdownOpen}
+            onOpenChange={setIsModeDropdownOpen}
+            onSelect={handleModeSelect}
+            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+              <MenuToggle
+                ref={toggleRef}
+                data-testid="chatbot-interaction-mode-toggle"
+                isExpanded={isModeDropdownOpen}
+                onClick={() => setIsModeDropdownOpen(prev => !prev)}
+                variant="plainText"
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}
+                icon={interactionMode === 'ask' ? <CommentDotsIcon /> : <WrenchIcon />}
+              >
+                <span style={{ marginRight: '4px' }}>{interactionMode === 'ask' ? t('Ask') : t('Troubleshoot')}</span>
+              </MenuToggle>
+            )}
+          >
+            <DropdownList>
+              <DropdownItem
+                key="ask"
+                value="ask"
+                icon={<CommentDotsIcon aria-hidden />}
+                description={t('Standard question and answer')}
+                isSelected={interactionMode === 'ask'}
+              >
+                <span>{t('Ask')}</span>
+              </DropdownItem>
+              <DropdownItem
+                key="troubleshoot"
+                value="troubleshoot"
+                icon={<WrenchIcon aria-hidden />}
+                description={t('Focused troubleshooting assistance')}
+                isSelected={interactionMode === 'troubleshoot'}
+              >
+                <span>{t('Troubleshoot')}</span>
+              </DropdownItem>
+            </DropdownList>
+          </Dropdown>
+        </div>
+        <MessageBar
+          alwayShowSendButton
+          data-testid="chatbot-message-bar-input"
+          handleStopButton={() => onStreamCancel()}
+          hasAttachButton={false}
+          hasStopButton={isStreaming}
+          innerRef={textareaRef}
+          isSendButtonDisabled={!query || query.trim().length === 0}
+          onChange={e => onChange(e, e.target.value)}
+          onSendMessage={onSubmit}
+          placeholder={modePlaceholder}
+          validated={validated}
+          value={query}
+        />
+      </div>
       <ToolModal />
     </div>
   );

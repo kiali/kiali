@@ -751,3 +751,38 @@ Then('the AI chatbot tool modal should display tool arguments containing {string
   // The modal formats args as key=value pairs in the description text
   cy.get(CHATBOT_TOOL_MODAL).should('contain.text', args);
 });
+
+// ============================================================
+// Interaction mode switching (ask/troubleshoot)
+// ============================================================
+
+const CHATBOT_MODE_TOGGLE = '[data-testid="chatbot-interaction-mode-toggle"]';
+
+When('the user opens the interaction mode dropdown', () => {
+  cy.get(CHATBOT_VISIBLE).find(CHATBOT_MODE_TOGGLE).click();
+  // Wait for dropdown to be visible
+  cy.get('.pf-v6-c-menu').should('be.visible');
+});
+
+When('the user selects {string} interaction mode', (mode: string) => {
+  // The dropdown items are rendered by text content in a PatternFly menu
+  cy.contains('.pf-v6-c-menu__item', mode === 'ask' ? 'Ask' : 'Troubleshoot').click();
+});
+
+Then('the interaction mode should be {string}', (mode: string) => {
+  const expectedText = mode === 'ask' ? 'Ask' : 'Troubleshoot';
+  cy.get(CHATBOT_MODE_TOGGLE).should('contain.text', expectedText);
+});
+
+Then('the message input placeholder should say {string}', (placeholder: string) => {
+  cy.get(CHATBOT_MESSAGE_INPUT).should('have.attr', 'placeholder', placeholder);
+});
+
+Then('the interaction mode dropdown should show {string} option', (mode: string) => {
+  const text = mode === 'ask' ? 'Ask' : 'Troubleshoot';
+  cy.get('.pf-v6-c-menu').should('be.visible').and('contain.text', text);
+});
+
+Then('the interaction mode dropdown should show {string} description', (description: string) => {
+  cy.get('.pf-v6-c-menu').should('be.visible').and('contain.text', description);
+});
