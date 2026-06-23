@@ -2,8 +2,8 @@ name: Release
 
 on:
   schedule:
-  # Every Monday at 07:14 (UTC), intentionally offset from potential peak of 7:00
-  - cron: "14 7 * * MON"
+  # Every Sunday at 07:14 (UTC), intentionally offset from potential peak of 7:00
+  - cron: "14 7 * * SUN"
   workflow_dispatch:
     inputs:
       release_type:
@@ -76,8 +76,8 @@ jobs:
         cat <<-EOF > minor.py
         import datetime
 
-        # The base date is set so that releases occur every 3 weeks starting from January 26, 2026
-        base = int(datetime.datetime.strptime("26/01/2026", "%d/%m/%Y").timestamp())
+        # The base date is set so that releases occur every 3 weeks starting from January 25, 2026
+        base = int(datetime.datetime.strptime("25/01/2026", "%d/%m/%Y").timestamp())
         now = int(datetime.datetime.now().timestamp())
 
         diff = now - base
