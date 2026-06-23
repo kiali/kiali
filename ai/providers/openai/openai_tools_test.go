@@ -219,6 +219,28 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMeshStatus(t *testing.T) {
 	assert.Equal(t, expected, converted)
 }
 
+func TestConvertToolToOpenAI_FromToolDefinition_ListClusters(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_clusters.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToOpenAI(tool)
+
+	expected := openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        "list_clusters",
+				Description: openai.String("Returns the list of Kubernetes clusters that Kiali can access in the mesh. Each cluster includes its name and whether it is the home cluster (where Kiali is running). Use this tool to discover available cluster names before calling other tools that accept a clusterName parameter."),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+				},
+			},
+		},
+	}
+
+	require.NotNil(t, converted.OfFunction)
+	assert.Equal(t, expected, converted)
+}
+
 func TestConvertToolToOpenAI_FromToolDefinition_GetMeshGraph(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_traffic_graph.yaml"))
 	require.NoError(t, err)
