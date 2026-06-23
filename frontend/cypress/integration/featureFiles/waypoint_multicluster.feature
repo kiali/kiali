@@ -52,7 +52,6 @@ Feature: Kiali Waypoint in Ambient Multi-Primary (multi-cluster)
     Then the user sees the L7 "waypoint" link
     And the waypoint link points to the "west" cluster
 
-  @use-waypoint-name
   Scenario: [Tracing] Verify traces for productpage-v1 in east cluster
     Given the "productpage-v1" tracing data is ready in the "bookinfo-waypoints" namespace for the "east" cluster
     And user is at the details page for the "workload" "bookinfo-waypoints/productpage-v1" located in the "east" cluster

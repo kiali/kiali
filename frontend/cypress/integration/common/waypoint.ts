@@ -1,4 +1,4 @@
-import { Before, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
 import { Pod } from 'types/IstioObjects';
@@ -431,15 +431,6 @@ Then('the graph page has enough data for L7', () => {
 
 Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
-});
-
-Before({ tags: '@use-waypoint-name' }, function () {
-  cy.request({ url: '/api/tracing', failOnStatusCode: false }).then(response => {
-    if (!response.body?.useWaypointName) {
-      cy.log('use_waypoint_name is not enabled, skipping test');
-      this.skip();
-    }
-  });
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
