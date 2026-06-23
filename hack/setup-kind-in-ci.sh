@@ -457,14 +457,12 @@ setup_kind_singlecluster() {
     kubectl apply -f "${SCRIPT_DIR}"/istio/perses/dashboard.yaml
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
-    ${HELM} install perses perses/perses -n istio-system --wait --timeout 120s -f "${SCRIPT_DIR}"/istio/perses/values.yaml
-    infomsg "Perses installed with plugins emptyDir volume for writable plugin extraction."
+    ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
 
           PERSES_ARGS=(
         "--set" "external_services.perses.enabled=true"
         "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
         "--set" "external_services.perses.external_url=http://localhost:4000"
-        "--set" "external_services.perses.project=istio"
         "--set" "external_services.perses.dashboards[0].name=Istio Mesh Dashboard"
         "--set" "external_services.perses.dashboards[0].variables.namespace=var-namespace"
         "--set" "external_services.perses.dashboards[0].variables.workload=var-workload"

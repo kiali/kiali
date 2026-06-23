@@ -3,7 +3,7 @@ sidecar:
 logLevel: "debug"
 config:
   provisioning:
-    interval: 5s
+    interval: 1m
 volumes:
 - name: plugins
   emptyDir: {}
