@@ -8,33 +8,34 @@ import { EntryChat } from '../EntryChat';
 // Mock the heavy PF chatbot Message component so tests focus on EntryChat logic.
 // Spread the real module first (needed for ChatbotDisplayMode used by ChatAIState reducer),
 // then override only Message with a lightweight test stub that exposes the observable DOM.
-jest.mock('@patternfly/chatbot', () => {
-  const actual = jest.requireActual('@patternfly/chatbot');
-  return {
-    ...actual,
-    Message: ({
-      name,
-      content,
-      isLoading,
-      extraContent,
-      'data-test': dataTest
-    }: {
-      content?: string;
-      'data-test'?: string;
-      extraContent?: { afterMainContent?: React.ReactNode; beforeMainContent?: React.ReactNode };
-      isLoading?: boolean;
-      name?: string;
-    }) => (
-      <article data-test={dataTest}>
-        {name && <span className="message-name">{name}</span>}
-        {content && <span className="message-content">{content}</span>}
-        {extraContent?.beforeMainContent}
-        {extraContent?.afterMainContent}
-        {isLoading && <span aria-label="loading" role="progressbar" />}
-      </article>
-    )
-  };
-});
+// Mock @patternfly/chatbot so tests focus on EntryChat logic.
+// ChatbotDisplayMode is used by the ChatAIState reducer initial state, so it must
+// be included in the mock. Hardcoding the enum values avoids the circular-require
+// that occurs when calling require('@patternfly/chatbot') inside its own mock factory.
+jest.mock('@patternfly/chatbot', () => ({
+  ChatbotDisplayMode: { default: 'default', docked: 'docked', embedded: 'embedded', fullscreen: 'fullscreen' },
+  Message: ({
+    name,
+    content,
+    isLoading,
+    extraContent,
+    'data-test': dataTest
+  }: {
+    content?: string;
+    'data-test'?: string;
+    extraContent?: { afterMainContent?: React.ReactNode; beforeMainContent?: React.ReactNode };
+    isLoading?: boolean;
+    name?: string;
+  }) => (
+    <article data-test={dataTest}>
+      {name && <span className="message-name">{name}</span>}
+      {content && <span className="message-content">{content}</span>}
+      {extraContent?.beforeMainContent}
+      {extraContent?.afterMainContent}
+      {isLoading && <span aria-label="loading" role="progressbar" />}
+    </article>
+  )
+}));
 
 const renderEntryChat = (entryIndex: number): ReturnType<typeof render> =>
   render(
