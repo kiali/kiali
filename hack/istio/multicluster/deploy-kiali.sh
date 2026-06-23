@@ -36,7 +36,7 @@ deploy_kiali() {
   #Enable tracing
   helm_args+=(--set external_services.tracing.enabled="true")
 
-  # For ambient tests, Istio < 1.28 requires using the waypoint name for tracing lookups
+  # use_waypoint_name is needed for Istio < 1.28 and Istio >= 1.30 (not for 1.28.x / 1.29.x)
   if [ "${AMBIENT}" == "true" ]; then
     local effective_version=""
     if [ -n "${ISTIO_VERSION:-}" ]; then
@@ -52,7 +52,7 @@ deploy_kiali() {
       }
     fi
 
-    if kiali_istio_version_lt "${effective_version}" "1.28.0"; then
+    if kiali_istio_version_lt "${effective_version}" "1.28.0" || ! kiali_istio_version_lt "${effective_version}" "1.30.0"; then
       echo "Ambient detected. Istio version resolved to [${effective_version}]. Setting external_services.tracing.use_waypoint_name=true"
       helm_args+=(--set external_services.tracing.use_waypoint_name="true")
     fi

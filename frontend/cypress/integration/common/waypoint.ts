@@ -434,9 +434,15 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
-  // Poll the traces endpoint so downstream assertions on tracing UI don't flake.
   waitForWorkloadTracesInApi(namespace, workload);
 });
+
+Then(
+  'the {string} tracing data is ready in the {string} namespace for the {string} cluster',
+  (workload: string, namespace: string, clusterName: string) => {
+    waitForWaypointTracesInApi(namespace, workload, clusterName);
+  }
+);
 
 Then('the tracing data is ready for the {string} {string}', (targetType: string, namespacedName: string) => {
   const [namespace, name] = namespacedName.split('/');
