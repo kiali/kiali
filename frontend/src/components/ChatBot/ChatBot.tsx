@@ -38,6 +38,7 @@ export const ChatBot: React.FC = () => {
   const selectedModel = useSelector((state: KialiAppState) => state.aiChat.selectedModel);
   const providers = useSelector((state: KialiAppState) => state.aiChat.providers);
   const conversationID = useSelector((state: KialiAppState) => state.aiChat.conversationID);
+  const chatHistory = useSelector((state: KialiAppState) => state.aiChat.chatHistory);
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
@@ -103,7 +104,7 @@ export const ChatBot: React.FC = () => {
       return;
     }
     if (provider.name !== selectedProvider || model.name !== selectedModel) {
-      if (conversationID === '') {
+      if (conversationID === '' && chatHistory.size === 0) {
         dispatch(ChatAIActions.setSelectedProvider({ provider: provider.name }));
         dispatch(ChatAIActions.setSelectedModel({ model: model.name }));
       } else {
