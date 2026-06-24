@@ -60,7 +60,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         changeOrigin: true,
-        target: process.env.KIALI_PROXY_URL || 'http://localhost:20001/kiali'
+        target: process.env.KIALI_PROXY_URL || 'http://localhost:20001'
       }
     }
   }

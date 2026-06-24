@@ -77,22 +77,29 @@ We use yarn as the package manager. When adding dependencies to `package.json`, 
 When developing, it is typical to run the frontend outside of the kiali server in the cluster.
 
 It is possible to proxy the API requests without having to push the changes to kiali.
-The dev server proxy is configured in `rsbuild.config.ts` and defaults to `http://localhost:20001/kiali`.
+The dev server proxy is configured in `rsbuild.config.ts` and defaults to `http://localhost:20001`.
 To override it, set the `KIALI_PROXY_URL` environment variable:
 
 [source, shell]
 ----
-KIALI_PROXY_URL=http://localhost:20001/kiali yarn start
+KIALI_PROXY_URL=http://localhost:20001 yarn start
 ----
 
 Or use the make target:
 
 [source, shell]
 ----
-make KIALI_PROXY_URL=http://localhost:20001/kiali run-frontend
+make KIALI_PROXY_URL=http://localhost:20001 run-frontend
 ----
 
-If Kiali is configured with a different web root, adjust the URL accordingly.
+If Kiali is configured with a `web_root` other than `/` (e.g. `/kiali`, which is common in cluster deployments), append it to the URL:
+
+[source, shell]
+----
+KIALI_PROXY_URL=http://localhost:20001/kiali yarn start
+----
+
+TIP: You can check the `web_root` value in your Kiali config YAML under `server.web_root`. The default is `/` (used by `run-kiali.sh` and `make run-backend`). Cluster deployments via the Kiali operator typically set it to `/kiali`.
 
 Run `yarn start` and try it!
 
