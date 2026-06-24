@@ -1,5 +1,5 @@
 - name: "get_logs"
-  description: "Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log."
+  description: "Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log. IMPORTANT: Always include ALL returned log lines in your response. Check the line_count field and ensure every line is present."
   toolset: [default, mcp]
   input_schema:
     type: "object"

@@ -2,8 +2,12 @@ package get_logs
 
 // LogsResult wraps log output in a JSON object so the MCP structuredContent
 // requirement (must be a JSON object/record) is satisfied.
+// LineCount and RequestedLines give the model explicit signals about how many
+// lines are included so it reproduces all of them in the final answer.
 type LogsResult struct {
-	Logs string `json:"logs"`
+	LineCount      int    `json:"line_count"`
+	Logs           string `json:"logs"`
+	RequestedLines int    `json:"requested_lines"`
 }
 
 // GetLogsArgs are the supported input parameters. This is echoed back in the response for transparency.

@@ -336,6 +336,7 @@ func TestExecute_ValidTailAliases(t *testing.T) {
 		lr, ok := res.(LogsResult)
 		require.True(t, ok, "expected LogsResult, got %T", res)
 		assert.Contains(t, lr.Logs, "any-pod")
+		assert.Equal(t, 10, lr.RequestedLines, "RequestedLines must match the tail parameter")
 	}
 }
 
@@ -372,4 +373,6 @@ func TestExecute_TailCappedAt200(t *testing.T) {
 	assert.Contains(t, lr.Logs, "Starting application", "response must contain log content")
 	assert.Contains(t, lr.Logs, "Request received", "response must contain log content")
 	assert.Contains(t, lr.Logs, "~~~", "response must wrap logs in codeblock")
+	assert.Equal(t, maxTailLinesReturn, lr.RequestedLines, "RequestedLines must be capped at maxTailLinesReturn")
+	assert.Greater(t, lr.LineCount, 0, "LineCount must be positive when logs are returned")
 }

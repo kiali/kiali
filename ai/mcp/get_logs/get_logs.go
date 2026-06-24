@@ -190,13 +190,14 @@ func Execute(
 	if len(filtered) == 0 {
 		// If there were logs but they didn't match the severity filter, return a truthful message.
 		if len(parsed.Severities) > 0 && len(unfiltered) > 0 {
-			return LogsResult{Logs: "No log lines matched the requested severities within the fetched tail window."}, http.StatusOK
+			return LogsResult{LineCount: 0, Logs: "No log lines matched the requested severities within the fetched tail window.", RequestedLines: parsed.TailLines}, http.StatusOK
 		}
 		// Keep message aligned with kubernetes-mcp-server core/pods.go behavior.
-		return LogsResult{Logs: fmt.Sprintf("The pod %s in namespace %s has not logged any message yet", parsed.Pod, parsed.Namespace)}, http.StatusOK
+		return LogsResult{LineCount: 0, Logs: fmt.Sprintf("The pod %s in namespace %s has not logged any message yet", parsed.Pod, parsed.Namespace), RequestedLines: parsed.TailLines}, http.StatusOK
 	}
 
-	out := strings.Join(entriesToLines(filtered), "\n")
+	lines := entriesToLines(filtered)
+	out := strings.Join(lines, "\n")
 	if out != "" {
 		out += "\n"
 	}
@@ -206,15 +207,20 @@ func Execute(
 	// Defensive: It's possible to get entries that have neither timestamp nor message (or are whitespace-only),
 	// which would render as an empty code block in chat ("no output").
 	if strings.TrimSpace(out) == "" {
-		return LogsResult{Logs: fmt.Sprintf("No log content was returned for pod %s in namespace %s (empty log entries).", parsed.Pod, parsed.Namespace)}, http.StatusOK
+		return LogsResult{LineCount: 0, Logs: fmt.Sprintf("No log content was returned for pod %s in namespace %s (empty log entries).", parsed.Pod, parsed.Namespace), RequestedLines: parsed.TailLines}, http.StatusOK
 	}
 
+	lineCount := len(lines)
+	result := LogsResult{LineCount: lineCount, RequestedLines: parsed.TailLines}
+
 	if parsed.Format == "plain" {
-		return LogsResult{Logs: out}, http.StatusOK
+		result.Logs = out
+		return result, http.StatusOK
 	}
 	// Default: wrap in code block so chat preserves line breaks.
 	// Use ~~~ per Kiali prompt requirements.
-	return LogsResult{Logs: "~~~\n" + out + "~~~\n"}, http.StatusOK
+	result.Logs = "~~~\n" + out + "~~~\n"
+	return result, http.StatusOK
 }
 
 func parseArgs(args map[string]interface{}, conf *config.Config) (GetLogsArgs, string, int) {
