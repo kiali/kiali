@@ -5,6 +5,9 @@
     type: "object"
     required: ["resourceType"]
     properties:
+      clusterName:
+        type: "string"
+        description: "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig)."
       namespaces:
         type: "string"
         description: "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces."

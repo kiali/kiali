@@ -83,12 +83,13 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     };
   }, [category]);
 
-  const [kind, name, namespace, istio] = useLocationContext();
-  const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio), [
+  const [kind, name, namespace, istio, clusterName] = useLocationContext();
+  const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio, clusterName), [
     kind,
     name,
     namespace,
-    istio
+    istio,
+    clusterName
   ]);
   const onChange = React.useCallback(
     (_e: React.SyntheticEvent, value: string) => {

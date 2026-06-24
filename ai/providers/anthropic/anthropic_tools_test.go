@@ -45,6 +45,10 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetActionUI(t *testing.T) {
 			Description: param.NewOpt("Call this tool WHENEVER the user asks to navigate, view, show, open, or get a visual representation of resources (like graphs, lists, or details). This tool automatically redirects the user's Kiali UI. You do NOT need to analyze the output of this tool; simply call it and acknowledge to the user that you are taking them to the requested view."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
+					"clusterName": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+					},
 					"namespaces": map[string]interface{}{
 						"type":        "string",
 						"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
@@ -189,6 +193,27 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetMeshStatus(t *testing.T) {
 		OfTool: &anthropic.ToolParam{
 			Name:        "get_mesh_status",
 			Description: param.NewOpt("Retrieves the high-level health, topology, and environment details of the Istio service mesh. Returns multi-cluster control plane status (istiod), data plane namespace health (including ambient mesh status), observability stack health (Prometheus, Grafana...), and component connectivity. Use this tool as the first step to diagnose mesh-wide issues, verify Istio/Kiali versions, or check overall health before drilling into specific workloads."),
+			InputSchema: anthropic.ToolInputSchemaParam{
+				ExtraFields: map[string]any{
+					"additionalProperties": false,
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToAnthropic_FromToolDefinition_ListClusters(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_clusters.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToAnthropic(tool)
+
+	expected := anthropic.ToolUnionParam{
+		OfTool: &anthropic.ToolParam{
+			Name:        "list_clusters",
+			Description: param.NewOpt("Returns the list of Kubernetes clusters that Kiali can access in the mesh. Each cluster includes its name and whether it is the home cluster (where Kiali is running). Use this tool to discover available cluster names before calling other tools that accept a clusterName parameter."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				ExtraFields: map[string]any{
 					"additionalProperties": false,

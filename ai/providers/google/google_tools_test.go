@@ -41,6 +41,10 @@ func TestConvertToolToGoogle_FromToolDefinition_GetActionUI(t *testing.T) {
 	expected := &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
+			"clusterName": {
+				Type:        genai.TypeString,
+				Description: "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+			},
 			"namespaces": {
 				Type:        genai.TypeString,
 				Description: "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
@@ -156,6 +160,19 @@ func TestConvertToolToGoogle_FromToolDefinition_GetLogs(t *testing.T) {
 
 func TestConvertToolToGoogle_FromToolDefinition_GetMeshStatus(t *testing.T) {
 	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "get_mesh_status.yaml"))
+	require.NoError(t, err)
+
+	converted := mapToGenAISchema(tool.GetDefinition())
+
+	expected := &genai.Schema{
+		Type: genai.TypeObject,
+	}
+
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToGoogle_FromToolDefinition_ListClusters(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_clusters.yaml"))
 	require.NoError(t, err)
 
 	converted := mapToGenAISchema(tool.GetDefinition())
