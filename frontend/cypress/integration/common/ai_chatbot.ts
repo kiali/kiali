@@ -4,6 +4,7 @@ import {
   cancelledStreamPayload,
   createMockStreamResponse,
   createMockStreamResponseNoEnd,
+  createMockStreamResponseWithError,
   fileCreateYamlPayload,
   fileDeleteYamlPayload,
   filePatchYamlPayload,
@@ -750,6 +751,38 @@ Then('the AI chatbot tool modal should display tool output content', () => {
 Then('the AI chatbot tool modal should display tool arguments containing {string}', (args: string) => {
   // The modal formats args as key=value pairs in the description text
   cy.get(CHATBOT_TOOL_MODAL).should('contain.text', args);
+});
+
+// ============================================================
+// Error handling — HTTP error and SSE error event
+// ============================================================
+
+const CHATBOT_DANGER_ALERT = '.pf-v6-c-alert.pf-m-danger';
+
+When('user sends a message that returns a server error {string}', (message: string) => {
+  lastResponseAlias = 'chatAIServerError';
+  cy.intercept('POST', '**/api/chat/**/ai', {
+    statusCode: 500,
+    body: {}
+  }).as('chatAIServerError');
+  cy.get(CHATBOT_MESSAGE_INPUT).type(message);
+  cy.get(CHATBOT_SEND_BUTTON).click();
+});
+
+When('user sends a message that triggers a stream error {string}', (message: string) => {
+  lastResponseAlias = 'chatAIStreamError';
+  cy.intercept('POST', '**/api/chat/**/ai', {
+    statusCode: 200,
+    headers: { 'Content-Type': 'text/event-stream' },
+    body: createMockStreamResponseWithError('Connection refused by LLM provider')
+  }).as('chatAIStreamError');
+  cy.get(CHATBOT_MESSAGE_INPUT).type(message);
+  cy.get(CHATBOT_SEND_BUTTON).click();
+});
+
+Then('the AI chatbot should show a danger error alert', () => {
+  cy.wait(`@${lastResponseAlias}`, { timeout: 10000 });
+  cy.get(CHATBOT_VISIBLE, { timeout: 10000 }).find(CHATBOT_DANGER_ALERT).should('exist');
 });
 
 // ============================================================

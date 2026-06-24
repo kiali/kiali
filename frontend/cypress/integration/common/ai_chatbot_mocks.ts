@@ -304,6 +304,18 @@ export const toolWithArgsPayload = {
   answer: 'Here are the services running in the bookinfo namespace.'
 };
 
+/**
+ * Produces a minimal SSE stream that contains a single `error` event instead of a
+ * successful `end` event.  Used to test the in-stream error handling path inside
+ * Prompt.tsx (the `json.event === 'error'` branch).
+ */
+export function createMockStreamResponseWithError(errorMessage: string): string {
+  let stream = '';
+  stream += `data: ${JSON.stringify({ event: 'start', data: { conversation_id: 'mock-error-id' } })}\n\n`;
+  stream += `data: ${JSON.stringify({ event: 'error', data: errorMessage })}\n\n`;
+  return stream;
+}
+
 export const fileDeleteYamlPayload = {
   answer: 'Confirm deletion of this VirtualService.',
   actions: [
