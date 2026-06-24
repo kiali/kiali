@@ -1,9 +1,8 @@
-import * as React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ChatMessageMarkdown } from '../ChatMessageMarkdown';
 
 // navigator.clipboard is not available in jsdom; provide a writable stub.
-const writeTextMock = jest.fn();
+const writeTextMock = rstest.fn();
 
 beforeAll(() => {
   Object.defineProperty(navigator, 'clipboard', {
@@ -102,7 +101,7 @@ describe('ChatMessageMarkdown', () => {
     });
 
     it('shows a check icon after clicking copy and reverts after 3 seconds', async () => {
-      jest.useFakeTimers();
+      rstest.useFakeTimers();
 
       const content = '```\necho hello\n```';
       render(<ChatMessageMarkdown content={content} codeBlockProps={{}} />);
@@ -119,10 +118,10 @@ describe('ChatMessageMarkdown', () => {
 
       // Advance timers past the 3-second reset
       act(() => {
-        jest.advanceTimersByTime(3100);
+        rstest.advanceTimersByTime(3100);
       });
 
-      jest.useRealTimers();
+      rstest.useRealTimers();
     });
   });
 

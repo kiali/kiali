@@ -1,14 +1,13 @@
-import * as React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
+import type { Mock } from '@rstest/core';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { Prompt } from '../Prompt';
 import * as API from 'services/Api';
 
-// lodash-es is an ESM package that Jest cannot transform in the CRA test runner;
-// replace with equivalent CJS stubs so the module loads correctly.
-jest.mock('lodash-es', () => ({
+// lodash-es stubs: replace with equivalent inline implementations so the module loads correctly.
+rstest.mock('lodash-es', () => ({
   throttle: (fn: (...args: unknown[]) => unknown) => fn,
   uniqueId: (() => {
     let counter = 0;
@@ -16,33 +15,33 @@ jest.mock('lodash-es', () => ({
   })()
 }));
 
-jest.mock('services/Api', () => ({
-  postChatAI: jest.fn(),
-  getChatPrompts: jest.fn()
+rstest.mock('services/Api', () => ({
+  postChatAI: rstest.fn(),
+  getChatPrompts: rstest.fn()
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
+rstest.mock('react-router-dom-v5-compat', () => ({
   useLocation: () => ({ pathname: '/overview' })
 }));
 
-jest.mock('app/History', () => ({
-  router: { navigate: jest.fn() }
+rstest.mock('app/History', () => ({
+  router: { navigate: rstest.fn() }
 }));
 
-jest.mock('../hooks/useLocationContext', () => ({
+rstest.mock('../hooks/useLocationContext', () => ({
   useLocationContext: () => [undefined, undefined, undefined, undefined]
 }));
 
-jest.mock('../PageContext', () => ({
+rstest.mock('../PageContext', () => ({
   buildPageContext: () => undefined
 }));
 
-jest.mock('../EntryChat/ToolModal', () => ({
+rstest.mock('../EntryChat/ToolModal', () => ({
   ToolModal: () => null
 }));
 
 // Lightweight MessageBar stub: renders a send button that calls onSendMessage on click.
-jest.mock('@patternfly/chatbot', () => {
+rstest.mock('@patternfly/chatbot', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactModule = require('react');
   return {
@@ -69,19 +68,19 @@ jest.mock('@patternfly/chatbot', () => {
 const renderPrompt = (): ReturnType<typeof render> =>
   render(
     <Provider store={store}>
-      <Prompt scrollIntoView={jest.fn()} />
+      <Prompt scrollIntoView={rstest.fn()} />
     </Provider>
   );
 
 describe('Prompt error handling', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
     store.dispatch(ChatAIActions.setChatHistoryClear());
-    (API.getChatPrompts as jest.Mock).mockResolvedValue({ data: [] });
+    (API.getChatPrompts as Mock).mockResolvedValue({ data: [] });
   });
 
   it('dispatches an error entry when the API returns a non-200 status', async () => {
-    (API.postChatAI as jest.Mock).mockResolvedValue({
+    (API.postChatAI as Mock).mockResolvedValue({
       status: 500,
       statusText: 'Internal Server Error',
       body: null
@@ -107,7 +106,7 @@ describe('Prompt error handling', () => {
   it('dispatches an error entry when the stream throws a non-AbortError', async () => {
     const networkError = new Error('Network connection lost');
     networkError.name = 'TypeError';
-    (API.postChatAI as jest.Mock).mockRejectedValue(networkError);
+    (API.postChatAI as Mock).mockRejectedValue(networkError);
 
     store.dispatch(ChatAIActions.setQuery('What is the mesh status?'));
 
@@ -128,7 +127,7 @@ describe('Prompt error handling', () => {
   it('does not dispatch an error entry when the stream is aborted by the user', async () => {
     const abortError = new Error('The user aborted a request');
     abortError.name = 'AbortError';
-    (API.postChatAI as jest.Mock).mockRejectedValue(abortError);
+    (API.postChatAI as Mock).mockRejectedValue(abortError);
 
     store.dispatch(ChatAIActions.setQuery('Cancel me'));
 
