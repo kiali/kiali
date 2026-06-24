@@ -15,7 +15,7 @@ import {
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
-import { Direction, IstioMetricsOptions, withWaypoint } from 'types/MetricsOptions';
+import { Direction, IstioMetricsOptions, withWaypoint, baseReporter } from 'types/MetricsOptions';
 import { addError } from 'utils/AlertUtils';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -431,7 +431,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               <MetricsReporter
                 onChanged={this.onReporterChanged}
                 direction={this.props.direction}
-                reporter={this.options.reporter}
+                reporter={baseReporter(this.options.reporter)}
               />
             </ToolbarItem>
 

@@ -76,8 +76,16 @@ export const buildReporter = (direction: Direction, includeWaypoint: boolean): s
   return includeWaypoint ? `${base},waypoint` : base;
 };
 
-export const withWaypoint = (reporter: string, includeWaypoint: boolean): string =>
-  includeWaypoint && reporter !== 'both' ? `${reporter},waypoint` : reporter;
+export const withWaypoint = (reporter: string, includeWaypoint: boolean): string => {
+  if (!includeWaypoint || reporter === 'both') {
+    return reporter;
+  }
+  const parts = reporter.split(',').filter(r => r !== 'waypoint');
+  parts.push('waypoint');
+  return parts.join(',');
+};
+
+export const baseReporter = (reporter: string): string => (reporter === 'both' ? 'both' : reporter.split(',')[0]);
 
 export const getStatsReporters = (direction: Direction, includeWaypoint = false): StatsReporter[] => {
   const sideReporter: StatsReporter = direction === 'outbound' ? 'source' : 'destination';
