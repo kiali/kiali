@@ -34,13 +34,11 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const [kind, name, namespace, istio] = useLocationContext();
-  const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio), [
-    kind,
-    name,
-    namespace,
-    istio
-  ]);
+  const [kind, name, namespace, istio, clusterName] = useLocationContext();
+  const pageContext = React.useMemo(
+    () => buildPageContext(kind, name, namespace, istio, clusterName),
+    [kind, name, namespace, istio, clusterName]
+  );
   const onChange = React.useCallback(
     (_e: React.SyntheticEvent, value: string) => {
       if (value.trim().length > 0) {

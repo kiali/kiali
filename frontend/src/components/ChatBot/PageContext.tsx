@@ -2,7 +2,8 @@ export const buildPageContext = (
   kind: string | undefined,
   name: string | undefined,
   namespace: string | undefined,
-  istio: string | undefined
+  istio: string | undefined,
+  clusterName?: string | undefined
 ): string | undefined => {
   if (!kind) {
     return undefined;
@@ -51,6 +52,10 @@ export const buildPageContext = (
         context += ` of namespace ${namespace}`;
       }
     }
+  }
+
+  if (clusterName) {
+    context += ` in cluster ${clusterName}`;
   }
 
   return context;

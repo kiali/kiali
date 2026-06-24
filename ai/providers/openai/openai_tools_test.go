@@ -46,6 +46,10 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetActionUI(t *testing.T) {
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"properties": map[string]interface{}{
+						"clusterName": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional cluster name for navigation. Defaults to the cluster name in the Kiali configuration (KubeConfig).",
+						},
 						"namespaces": map[string]interface{}{
 							"type":        "string",
 							"description": "Comma-separated list of namespaces. Use the 'page_namespaces' context if the user doesn't specify one. If empty, uses all accessible namespaces.",
@@ -204,6 +208,28 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMeshStatus(t *testing.T) {
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_mesh_status",
 				Description: openai.String("Retrieves the high-level health, topology, and environment details of the Istio service mesh. Returns multi-cluster control plane status (istiod), data plane namespace health (including ambient mesh status), observability stack health (Prometheus, Grafana...), and component connectivity. Use this tool as the first step to diagnose mesh-wide issues, verify Istio/Kiali versions, or check overall health before drilling into specific workloads."),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+				},
+			},
+		},
+	}
+
+	require.NotNil(t, converted.OfFunction)
+	assert.Equal(t, expected, converted)
+}
+
+func TestConvertToolToOpenAI_FromToolDefinition_ListClusters(t *testing.T) {
+	tool, err := mcp.LoadToolDefinition(filepath.Join("..", "..", "mcp", "tools", "list_clusters.yaml"))
+	require.NoError(t, err)
+
+	converted := convertToolToOpenAI(tool)
+
+	expected := openai.ChatCompletionToolUnionParam{
+		OfFunction: &openai.ChatCompletionFunctionToolParam{
+			Function: openai.FunctionDefinitionParam{
+				Name:        "list_clusters",
+				Description: openai.String("Returns the list of Kubernetes clusters that Kiali can access in the mesh. Each cluster includes its name and whether it is the home cluster (where Kiali is running). Use this tool to discover available cluster names before calling other tools that accept a clusterName parameter."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 				},

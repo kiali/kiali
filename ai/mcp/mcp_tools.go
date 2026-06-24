@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/get_pod_performance"
 	"github.com/kiali/kiali/ai/mcp/get_referenced_docs"
 	"github.com/kiali/kiali/ai/mcp/get_trace_details"
+	"github.com/kiali/kiali/ai/mcp/list_clusters"
 	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/list_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
@@ -178,6 +179,8 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return get_trace_details.Execute(kialiInterface, args)
 	case "get_logs":
 		return get_logs.Execute(kialiInterface, args)
+	case "list_clusters":
+		return list_clusters.Execute(kialiInterface, args)
 	case "get_pod_performance":
 		return get_pod_performance.Execute(kialiInterface, args)
 	case "manage_istio_config":
