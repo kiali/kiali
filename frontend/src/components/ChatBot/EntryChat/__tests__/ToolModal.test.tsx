@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
@@ -9,8 +8,8 @@ import { ToolModal } from '../ToolModal';
 // The Trans component receives i18next interpolation objects like {{ name }} as
 // direct React children, which are plain JS objects and not valid React children.
 // The mock factory must use require() instead of the imported React reference
-// because jest.mock() is hoisted before import statements.
-jest.mock('react-i18next', () => {
+// because rstest.mock() is hoisted before import statements.
+rstest.mock('react-i18next', () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactModule = require('react');
 

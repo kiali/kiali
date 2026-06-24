@@ -403,7 +403,7 @@ First, start the Kiali Server backend, either within a cluster or by using the `
 Next, run the GUI frontend using the following command: `make -e KIALI_PROXY_URL=<kiali-url> yarn-start` where `<kiali-url>` is the Kiali backend URL including its `web_root` path (check `server.web_root` in your Kiali config YAML; the default is `/`). The frontend dev server defaults to port `3001`. Some examples:
 
 * If the Kiali Server is running locally with the default `web_root` (`/`), then run `make -e KIALI_PROXY_URL=http://localhost:20001 yarn-start`.
-* If the Kiali Server is running in minikube with a port-forward exposing it (typically `web_root: /kiali`), then run `make -e KIALI_PROXY_URL=http://localhost:20001/kiali yarn-start`.
+* If the Kiali Server is running in Minikube/KinD with a port-forward exposing it (typically `web_root: /kiali`), then run `make -e KIALI_PROXY_URL=http://localhost:20001/kiali yarn-start`.
 * If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e KIALI_PROXY_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
 
 The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint. Once ready, check the output for the "Local" URL to access it. The output will resemble the following:

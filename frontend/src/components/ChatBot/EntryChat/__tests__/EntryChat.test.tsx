@@ -12,7 +12,7 @@ import { EntryChat } from '../EntryChat';
 // ChatbotDisplayMode is used by the ChatAIState reducer initial state, so it must
 // be included in the mock. Hardcoding the enum values avoids the circular-require
 // that occurs when calling require('@patternfly/chatbot') inside its own mock factory.
-jest.mock('@patternfly/chatbot', () => ({
+rstest.mock('@patternfly/chatbot', () => ({
   ChatbotDisplayMode: { default: 'default', docked: 'docked', embedded: 'embedded', fullscreen: 'fullscreen' },
   Message: ({
     name,
