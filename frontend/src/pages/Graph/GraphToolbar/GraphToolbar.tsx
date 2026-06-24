@@ -69,7 +69,6 @@ type ReduxProps = ReduxStateProps & ReduxDispatchProps;
 type GraphToolbarProps = ReduxProps & {
   controller?: any;
   disabled: boolean;
-  elementsChanged: boolean;
   onToggleHelp: () => void;
 };
 
@@ -220,7 +219,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
             </ToolbarItem>
 
             <ToolbarItem>
-              <GraphFind controller={this.props.controller} elementsChanged={this.props.elementsChanged} />
+              <GraphFind controller={this.props.controller} />
             </ToolbarItem>
 
             <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>

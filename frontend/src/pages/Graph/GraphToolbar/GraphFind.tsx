@@ -36,6 +36,7 @@ import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFie
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash';
 import { graphLayout } from 'pages/Graph/Graph';
+import { TimeInMilliseconds } from 'types/Common';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -47,6 +48,7 @@ type ReduxStateProps = {
   showRank: boolean;
   showSecurity: boolean;
   showVirtualServices: boolean;
+  updateTime: TimeInMilliseconds;
 };
 
 type ReduxDispatchProps = {
@@ -63,7 +65,6 @@ type ReduxDispatchProps = {
 type GraphFindProps = ReduxStateProps &
   ReduxDispatchProps & {
     controller: Controller;
-    elementsChanged: boolean;
   };
 
 type GraphFindState = {
@@ -208,35 +209,34 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     this.state = { findInputValue: findValue, hideInputValue: hideValue, showFindHelp: false };
   }
 
-  // We only update on a change to the find/hide values, or a graph change.  We may use other props
-  // in processing, a change to those settings will generate a graph change, so we wait for the graph
-  // change to force the update.
+  // We only update on a change to the find/hide values, controller, or graph model. Other props used in
+  // processing will update the graph model and therefore updateTime.
   shouldComponentUpdate(nextProps: GraphFindProps, nextState: GraphFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
     const edgeModeChanged = this.props.edgeMode !== nextProps.edgeMode;
-    const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
     const showFindHelpChanged = this.state.showFindHelp !== nextState.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
+    const updateTimeChanged = this.props.updateTime !== nextProps.updateTime;
 
     const shouldUpdate =
       controllerChanged ||
       edgeModeChanged ||
-      elementsChanged ||
       findChanged ||
       hideChanged ||
       showFindHelpChanged ||
       findErrorChanged ||
-      hideErrorChanged;
+      hideErrorChanged ||
+      updateTimeChanged;
 
     return shouldUpdate;
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
-  // the graph loading, we can't perform this graph "post-processing" until we have a valid graph.  But the
-  // find/hide processing will be initiated externally when the graph is ready.
+  // the graph loading, we can't perform this graph "post-processing" until we have a valid graph. Processing
+  // is re-applied when the controller is available, the expression changes, or the graph model is updated.
   componentDidUpdate(prevProps: GraphFindProps): void {
     if (!this.props.controller) {
       this.findElements = undefined;
@@ -246,9 +246,9 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
 
     const controllerChanged = this.props.controller !== prevProps.controller;
     const edgeModeChanged = this.props.edgeMode !== prevProps.edgeMode;
-    const elementsChanged = this.props.elementsChanged && !prevProps.elementsChanged;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
+    const updateTimeChanged = this.props.updateTime !== prevProps.updateTime;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -267,7 +267,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     }
 
     // make sure the value is updated if there was a change
-    if (controllerChanged || findChanged || (elementsChanged && this.props.findValue)) {
+    if (controllerChanged || findChanged || (updateTimeChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -279,7 +279,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     if (
       controllerChanged ||
       hideChanged ||
-      (elementsChanged && this.props.hideValue) ||
+      (updateTimeChanged && this.props.hideValue) ||
       edgeModeChanged ||
       this.props.edgeMode !== EdgeMode.ALL
     ) {
@@ -1232,7 +1232,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showIdleNodes: state.graph.toolbarState.showIdleNodes,
   showRank: state.graph.toolbarState.showRank,
   showSecurity: state.graph.toolbarState.showSecurity,
-  showVirtualServices: state.graph.toolbarState.showVirtualServices
+  showVirtualServices: state.graph.toolbarState.showVirtualServices,
+  updateTime: state.graph.updateTime
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {

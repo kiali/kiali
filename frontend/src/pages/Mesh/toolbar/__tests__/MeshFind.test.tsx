@@ -20,7 +20,7 @@ describe('Parse find value test', () => {
       <MeshFindComponent
         ref={ref}
         controller={undefined}
-        elementsChanged={true}
+        updateTime={0}
         findValue="testFind"
         hideValue="testHide"
         layout={layout}

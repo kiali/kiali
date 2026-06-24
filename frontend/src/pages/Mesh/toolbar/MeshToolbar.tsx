@@ -20,7 +20,6 @@ type ReduxProps = {
 type MeshToolbarProps = ReduxProps & {
   controller?: Controller;
   disabled: boolean;
-  elementsChanged: boolean;
   onToggleHelp: () => void;
 };
 
@@ -38,7 +37,7 @@ export const MeshToolbarComponent: React.FC<MeshToolbarProps> = (props: MeshTool
           </ToolbarItem>
 
           <ToolbarItem>
-            <MeshFind controller={props.controller} elementsChanged={props.elementsChanged} />
+            <MeshFind controller={props.controller} />
           </ToolbarItem>
 
           <ToolbarItem style={{ marginLeft: 'auto', alignSelf: 'center' }}>
