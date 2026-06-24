@@ -1,15 +1,16 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { assertGraphReady } from './graph';
+import { assertGraphFindHideReady } from './graph';
 
 const clearFindAndHide = (): void => {
   cy.get('#graph_hide').clear();
   cy.get('#graph_find').clear();
 };
 
-Then('user finds unhealthy workloads', () => {
+When('user finds unhealthy workloads', () => {
   clearFindAndHide();
 
   cy.get('#graph_find').type('!healthy{enter}');
+  cy.get('#graph_find').should('have.value', '!healthy');
 });
 
 Then('user sees unhealthy workloads highlighted on the graph', () => {
@@ -36,7 +37,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
     }
   ];
 
-  assertGraphReady(({ nodes }) => {
+  assertGraphFindHideReady({ readFindValueFromInput: true }, ({ nodes }) => {
     const unhealthyNodes = nodes
       .filter(n => n.getData().isFind)
       .map(n => ({
@@ -50,7 +51,7 @@ Then('user sees unhealthy workloads highlighted on the graph', () => {
 });
 
 Then('user sees nothing highlighted on the graph', () => {
-  assertGraphReady(({ nodes }) => {
+  assertGraphFindHideReady({ findValue: '' }, ({ nodes }) => {
     const filteredNodes = nodes.filter(n => n.getData().isFind);
     assert.equal(filteredNodes.length, 0, 'Unexpected number of highlighted nodes');
   });
@@ -60,10 +61,11 @@ When('user hides unhealthy workloads', () => {
   clearFindAndHide();
 
   cy.get('#graph_hide').type('!healthy{enter}');
+  cy.get('#graph_hide').should('have.value', '!healthy');
 });
 
 Then('user sees no unhealthy workloads on the graph', () => {
-  assertGraphReady(({ nodes }) => {
+  assertGraphFindHideReady({ hideValue: '!healthy' }, ({ nodes }) => {
     const visibleNodes = nodes.filter(n => n.isVisible());
     const noUnhealthyNodes = visibleNodes.every(
       node => node.getData().healthStatus !== 'Failure' || node.getData().nodeType === 'box'
@@ -80,6 +82,7 @@ Then('user sees preset find options', () => {
 
 When('user selects the preset the find option {string}', (option: string) => {
   cy.get('#graph-find-presets').contains(option).click();
+  cy.get('#graph_find').should('not.have.value', '');
 });
 
 Then('user sees preset hide options', () => {
@@ -89,10 +92,11 @@ Then('user sees preset hide options', () => {
 
 When('user selects the preset hide option {string}', (option: string) => {
   cy.get('#graph-hide-presets').contains(option).click();
+  cy.get('#graph_hide').should('not.have.value', '');
 });
 
 Then('user sees no healthy workloads on the graph', () => {
-  assertGraphReady(({ nodes }) => {
+  assertGraphFindHideReady({ readHideValueFromInput: true }, ({ nodes }) => {
     const visibleNodes = nodes.filter(n => n.isVisible());
     const noHealthyNodes = visibleNodes.every(
       node => node.getData().healthStatus !== 'Healthy' || node.getData().nodeType === 'box'

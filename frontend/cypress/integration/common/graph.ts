@@ -171,6 +171,65 @@ export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }
   assertReady('GraphPageComponent', { graphData: { isLoading: false }, isReady: true }, fn);
 };
 
+type GraphFindHideExpectation = {
+  findValue?: string;
+  hideValue?: string;
+  readFindValueFromInput?: boolean;
+  readHideValueFromInput?: boolean;
+};
+
+/**
+ * Waits for the graph layout to finish and for GraphFind to reflect the expected
+ * find/hide expression. handleFind/handleHide run in GraphFind.componentDidUpdate
+ * after props update, so matching props is a reliable signal that processing has
+ * been requested with the latest model (especially after updateTime-driven refresh).
+ */
+export const assertGraphFindHideReady = (
+  expectation: GraphFindHideExpectation,
+  fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void
+): void => {
+  cy.waitForReact();
+  cy.window({ log: false }).should((win: Window) => {
+    const rootFiber = freshFiber(win);
+    assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+    const tree = buildNodeTree(rootFiber);
+    const graphResults = findComponentsInTree(tree, 'GraphPageComponent', {
+      state: { graphData: { isLoading: false }, isReady: true }
+    });
+    assert.equal(graphResults.length, 1, 'GraphPageComponent should be loaded and ready');
+
+    let findValue = expectation.findValue;
+    let hideValue = expectation.hideValue;
+    if (expectation.readFindValueFromInput) {
+      const findInput = win.document.getElementById('graph_find') as HTMLInputElement | null;
+      findValue = findInput?.value ?? '';
+    }
+    if (expectation.readHideValueFromInput) {
+      const hideInput = win.document.getElementById('graph_hide') as HTMLInputElement | null;
+      hideValue = hideInput?.value ?? '';
+      assert.isAbove(hideValue.length, 0, 'Hide expression should be set');
+    }
+
+    if (findValue !== undefined || hideValue !== undefined) {
+      const findHideProps: Record<string, string> = {};
+      if (findValue !== undefined) {
+        findHideProps.findValue = findValue;
+      }
+      if (hideValue !== undefined) {
+        findHideProps.hideValue = hideValue;
+      }
+      const findResults = findComponentsInTree(tree, 'GraphFindComponent', { props: findHideProps });
+      assert.isAtLeast(findResults.length, 1, 'GraphFind should reflect the expected find/hide expression');
+    }
+
+    const { state } = graphResults[0];
+    const controller = state.graphRefs.getController() as Visualization;
+    assert.isTrue(controller.hasGraph());
+    fn(elems(controller), state);
+  });
+};
+
 export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
   assertReady('MiniGraphCardComponent', { isReady: true, isLoading: false }, fn);
 };
