@@ -10,7 +10,7 @@ There's two cli tools to help with testing large graph topologies without needin
 
 ### proxy server
 
-The proxy server runs an http proxy that intercepts all `/api/namespaces/graph` calls and returns mock graph data. The rest of the api calls are passed through to the kiali api. To test the kiali ui using the proxy server, you should start the proxy server then, in the kiali ui's `package.json`, replace the `proxy` field with the address of the proxy server e.g. `"proxy": "https://localhost:10201"`. Finally run `yarn start` and navigate to local node server endpoint: `http://localhost:3001`. When you navigate to the graph page, you should see graph rendered with the mock data.
+The proxy server runs an http proxy that intercepts all `/api/namespaces/graph` calls and returns mock graph data. The rest of the api calls are passed through to the kiali api. To test the kiali ui using the proxy server, start the proxy server then run `KIALI_PROXY_URL="https://localhost:10201" yarn start` and navigate to the local dev server endpoint: `http://localhost:3001`. When you navigate to the graph page, you should see graph rendered with the mock data.
 
 Running the following command will start the proxy server in https mode.
 
