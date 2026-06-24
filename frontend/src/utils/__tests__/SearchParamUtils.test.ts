@@ -1,16 +1,16 @@
 /* eslint-disable import/first */
 let mockKioskValue = '';
 
-jest.mock('store/ConfigStore', () => ({
+rstest.mock('store/ConfigStore', () => ({
   store: {
     getState: () => ({
       globalState: {
         kiosk: mockKioskValue
       }
     }),
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-    replaceReducer: jest.fn()
+    dispatch: rstest.fn(),
+    subscribe: rstest.fn(),
+    replaceReducer: rstest.fn()
   }
 }));
 

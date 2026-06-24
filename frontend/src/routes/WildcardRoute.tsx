@@ -1,4 +1,3 @@
-import React from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom-v5-compat';
 
 import { addDanger } from '../utils/AlertUtils';

@@ -6,8 +6,8 @@ describe('UserSettingsState reducer', () => {
   const RealDate = Date.now;
   const currentDate = Date.now();
 
-  const mockDate = date => {
-    global.Date.now = jest.fn(() => date) as any;
+  const mockDate = (date: number): number => {
+    global.Date.now = rstest.fn(() => date) as any;
     return date;
   };
 

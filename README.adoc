@@ -400,11 +400,11 @@ To use either, some initial steps are required.
 
 First, start the Kiali Server backend, either within a cluster or by using the `run-kiali.sh` script as previously explained. Before proceeding, determine the Kiali URL. For example, when Kiali is run in Minikube with a port-forward set up to expose it, the URL to note will be`http://localhost:20001/kiali`.
 
-Next, run the GUI frontend using the following command: `make -e KIALI_PROXY_URL=<kiali-url> yarn-start` where `<kiali-url>` is the URL determined in the previous step. Additionally, if needed, pass `-e PORT=3001` to override the default port `3000`, which may conflict with Grafana if the Kiali Server was started using  `run-kiali.sh`. Some examples:
+Next, run the GUI frontend using the following command: `make -e KIALI_PROXY_URL=<kiali-url> yarn-start` where `<kiali-url>` is the Kiali backend URL including its `web_root` path (check `server.web_root` in your Kiali config YAML; the default is `/`). The frontend dev server defaults to port `3001`. Some examples:
 
-* If the Kiali Server is running in minikube with a port-forward exposing it, then run `make -e KIALI_PROXY_URL=http://localhost:20001/kiali yarn-start`.
+* If the Kiali Server is running locally with the default `web_root` (`/`), then run `make -e KIALI_PROXY_URL=http://localhost:20001 yarn-start`.
+* If the Kiali Server is running in minikube with a port-forward exposing it (typically `web_root: /kiali`), then run `make -e KIALI_PROXY_URL=http://localhost:20001/kiali yarn-start`.
 * If the Kiali Server is running in OpenShift with the usual Kiali Route exposing it, then run `make -e KIALI_PROXY_URL=https://<Kiali-OpenShift-Route-IP>/ yarn-start`.
-* If the Kiali Server is running locally via `run-kiali.sh`, then run `make -e KIALI_PROXY_URL=http://localhost:20001/kiali -e PORT=3001 yarn-start`.
 
 The `yarn-start` make command will start the Kiali GUI frontend on a local endpoint. Once ready, check the output for the "Local" URL to access it. The output will resemble the following:
 

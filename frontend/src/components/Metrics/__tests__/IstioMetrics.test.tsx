@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -8,7 +7,6 @@ import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import { MounterMocker } from 'services/__mocks__/MounterMocker';
 import { ChartModel, DashboardModel } from 'types/Dashboards';
-import { KialiDisabledFeatures } from 'types/ServerConfig';
 
 const createMetricChart = (name: string): ChartModel => {
   return {
@@ -78,26 +76,28 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
-    jest.spyOn(API, 'getPersesInfo').mockResolvedValue({ url: '', dashboards: {} });
-    jest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
+    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
+    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
+    rstest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
-    jest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
-      requestSize: false,
-      requestSizeAverage: false,
-      requestSizePercentiles: false,
-      responseSize: false,
-      responseSizeAverage: false,
-      responseSizePercentiles: false,
-      responseTime: false,
-      responseTimeAverage: false,
-      responseTimePercentiles: false
-    } as KialiDisabledFeatures);
+    rstest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
+      data: {
+        requestSize: false,
+        requestSizeAverage: false,
+        requestSizePercentiles: false,
+        responseSize: false,
+        responseSizeAverage: false,
+        responseSizePercentiles: false,
+        responseTime: false,
+        responseTimeAverage: false,
+        responseTimePercentiles: false
+      }
+    } as any);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
   });
 
   it('renders initial layout', () => {
@@ -118,9 +118,9 @@ describe('Metrics for a service', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('mounts and loads empty metrics', done => {
+  it('mounts and loads empty metrics', () => {
     const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [], rows: 2 };
-    new MounterMocker()
+    return new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics
@@ -132,12 +132,12 @@ describe('Metrics for a service', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, container => {
+      .run(container => {
         expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(0);
       });
   }, 10000);
 
-  it('mounts and loads full metrics', done => {
+  it('mounts and loads full metrics', () => {
     const dashboard: DashboardModel = {
       title: 'foo',
       aggregations: [],
@@ -150,7 +150,7 @@ describe('Metrics for a service', () => {
       externalLinks: [],
       rows: 2
     };
-    new MounterMocker()
+    return new MounterMocker()
       .addMock('getServiceDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics
@@ -162,7 +162,7 @@ describe('Metrics for a service', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, container => {
+      .run(container => {
         expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(4);
       });
   }, 10000);
@@ -170,26 +170,28 @@ describe('Metrics for a service', () => {
 
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
-    jest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ externalLinks: [] });
-    jest.spyOn(API, 'getPersesInfo').mockResolvedValue({ url: '', dashboards: {} });
-    jest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
+    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
+    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
+    rstest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
-    jest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
-      requestSize: false,
-      requestSizeAverage: false,
-      requestSizePercentiles: false,
-      responseSize: false,
-      responseSizeAverage: false,
-      responseSizePercentiles: false,
-      responseTime: false,
-      responseTimeAverage: false,
-      responseTimePercentiles: false
-    } as KialiDisabledFeatures);
+    rstest.spyOn(API, 'getDisabledFeatures').mockResolvedValue({
+      data: {
+        requestSize: false,
+        requestSizeAverage: false,
+        requestSizePercentiles: false,
+        responseSize: false,
+        responseSizeAverage: false,
+        responseSizePercentiles: false,
+        responseTime: false,
+        responseTimeAverage: false,
+        responseTimePercentiles: false
+      }
+    } as any);
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
   });
 
   it('renders initial layout', () => {
@@ -210,9 +212,9 @@ describe('Inbound Metrics for a workload', () => {
     expect(container).toMatchSnapshot();
   });
 
-  it('mounts and loads empty metrics', done => {
+  it('mounts and loads empty metrics', () => {
     const dashboard: DashboardModel = { title: 'foo', aggregations: [], charts: [], externalLinks: [], rows: 2 };
-    new MounterMocker()
+    return new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics
@@ -224,12 +226,12 @@ describe('Inbound Metrics for a workload', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, container => {
+      .run(container => {
         expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(0);
       });
   }, 10000);
 
-  it('mounts and loads full metrics', done => {
+  it('mounts and loads full metrics', () => {
     const dashboard: DashboardModel = {
       title: 'foo',
       aggregations: [],
@@ -242,7 +244,7 @@ describe('Inbound Metrics for a workload', () => {
       externalLinks: [],
       rows: 2
     };
-    new MounterMocker()
+    return new MounterMocker()
       .addMock('getWorkloadDashboard', dashboard)
       .mountWithStore(
         <IstioMetrics
@@ -254,7 +256,7 @@ describe('Inbound Metrics for a workload', () => {
           lastRefreshAt={1720526431902}
         />
       )
-      .run(done, container => {
+      .run(container => {
         expect(container.querySelectorAll('[data-test="metrics-chart"]')).toHaveLength(4);
       });
   }, 10000);

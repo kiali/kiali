@@ -1,23 +1,28 @@
 /* eslint-disable import/first */
 import { InstanceType } from '../../../types/Common';
 
-jest.mock('store/ConfigStore', () => ({
+rstest.mock('store/ConfigStore', () => ({
   store: {
     getState: () => ({ globalState: { kiosk: '' } }),
-    dispatch: jest.fn(),
-    subscribe: jest.fn(),
-    replaceReducer: jest.fn()
+    dispatch: rstest.fn(),
+    subscribe: rstest.fn(),
+    replaceReducer: rstest.fn()
   },
-  persistor: { persist: jest.fn() }
+  persistor: { persist: rstest.fn() }
 }));
 
-jest.mock('config/ServerConfig', () => ({
+rstest.mock('config/ServerConfig', () => ({
   isMultiCluster: false,
   serverConfig: { ambientEnabled: false }
 }));
 
+// Break the Renderers ↔ Config circular dependency that causes a TDZ
+// error under ESM. Config.ts eagerly accesses Renderers at module scope,
+// but the test only needs types from Config, not runtime renderer refs.
+rstest.mock('../Config', () => ({}));
+
 import { getKioskParamsForListItem } from '../Renderers';
-import { Resource, TResource } from '../Config';
+import type { Resource, TResource } from '../Config';
 import { WorkloadListItem } from '../../../types/Workload';
 
 const workloadConfig: Resource = { name: 'workloads', columns: [] };

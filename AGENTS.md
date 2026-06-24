@@ -294,7 +294,7 @@ make perf-tests-run
 These variables can be set when running tests outside of the local cluster or to customize test behavior:
 
 ```bash
-export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3000
+export CYPRESS_BASE_URL=<value>                      # defaults to http://localhost:3001
 export CYPRESS_USERNAME=<value>                      # defaults to jenkins, opt. kubeadmin
 export CYPRESS_PASSWD=<value>                        # no defaults
 export CYPRESS_AUTH_PROVIDER=<value>                 # defaults to my_htpasswd_provider
@@ -883,7 +883,7 @@ make run-backend
 **Terminal 2 - Frontend:**
 ```bash
 make run-frontend
-# Opens browser automatically at http://localhost:3000
+# Opens browser automatically at http://localhost:3001
 ```
 
 Both backend and frontend will hot-reload on code changes.
@@ -1782,8 +1782,8 @@ export MOLECULE_DEBUG=true
 # Check backend is running
 curl http://localhost:20001/kiali/api
 
-# Verify proxy setting in package.json
-grep proxy frontend/package.json
+# Verify proxy setting in rsbuild.config.ts
+grep proxy frontend/rsbuild.config.ts
 
 # Restart frontend dev server
 make run-frontend

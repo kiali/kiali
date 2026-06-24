@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import * as API from '../Api';
 import { Provider } from 'react-redux';
@@ -29,7 +28,7 @@ export class MounterMocker {
   addMock = (func: keyof typeof API, obj: any, nestData = true): MounterMocker => {
     this.promises.push(
       new Promise((resolve, reject) => {
-        jest.spyOn(API, func).mockImplementation(() => {
+        rstest.spyOn(API, func).mockImplementation(() => {
           return new Promise(r => {
             nestData ? r({ data: obj }) : r(obj);
             setTimeout(() => {
@@ -61,9 +60,9 @@ export class MounterMocker {
     return this;
   };
 
-  run = (done: jest.DoneCallback, expectFn: (container: HTMLElement) => void): void => {
+  run = (expectFn: (container: HTMLElement) => void): Promise<void> => {
     const utils = render(this.toMount);
-    Promise.all(this.promises)
+    return Promise.all(this.promises)
       .then(async () => {
         this.checkErrors();
         try {
@@ -77,11 +76,10 @@ export class MounterMocker {
           utils.unmount();
           this.unsubscribe?.();
         }
-        done();
       })
       .catch((err: unknown) => {
         this.unsubscribe?.();
-        done(err instanceof Error ? err : new Error(String(err)));
+        throw err instanceof Error ? err : new Error(String(err));
       });
   };
 

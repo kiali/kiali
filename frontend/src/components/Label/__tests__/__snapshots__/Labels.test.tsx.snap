@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`#Labels render correctly with data should render badges with More labels link 1`] = `
+exports[`#Labels render correctly with data > should render badges with More labels link 1`] = `
 <div>
   <div
     class="kiali_f1ldck1g"
@@ -61,7 +61,7 @@ exports[`#Labels render correctly with data should render badges with More label
 </div>
 `;
 
-exports[`#Labels render correctly with data should render badges without More labels link 1`] = `
+exports[`#Labels render correctly with data > should render badges without More labels link 1`] = `
 <div>
   <div
     class="kiali_f1ldck1g"

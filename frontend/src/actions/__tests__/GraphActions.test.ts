@@ -14,7 +14,7 @@ describe('GraphActions', () => {
   });
 
   it('should dispatch "update summary" action on render', () => {
-    const dispatch = jest.fn();
+    const dispatch = rstest.fn();
     GraphThunkActions.graphReady({} as Controller)(dispatch);
 
     expect(dispatch.mock.calls.length).toBe(1);

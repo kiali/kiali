@@ -1,5 +1,7 @@
 import { calculateErrorRate } from '../ErrorRate';
 import { getRateHealthConfig } from '../utils';
+// Imported directly from source modules to avoid TDZ issues with the barrel's
+// re-export aliases (e.g. calculateStatusTEST) under Rspack ESM bundling.
 import { setServerConfig } from '../../../config/ServerConfig';
 import { annotationSample, generateRequestHealth, serverRateConfig } from '../__testData__/ErrorRateConfig';
 import { RateHealth } from '../../HealthAnnotation';

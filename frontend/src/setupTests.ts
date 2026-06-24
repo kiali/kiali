@@ -1,21 +1,28 @@
-import { jest } from '@jest/globals';
-import '@testing-library/jest-dom/jest-globals';
+import '@testing-library/jest-dom';
 import { configure } from '@testing-library/react';
-import jsdom from 'jsdom';
-
-import 'jest-canvas-mock';
 
 configure({ testIdAttribute: 'data-test' });
 
-const JSDOM = jsdom.JSDOM;
+// Stub canvas getContext so components that render <canvas> don't crash in jsdom.
+HTMLCanvasElement.prototype.getContext = ((type: string) => {
+  if (type === '2d') {
+    return {
+      canvas: { width: 0, height: 0 },
+      clearRect: () => {},
+      fillRect: () => {},
+      fillText: () => {},
+      font: '',
+      measureText: (text: string) => ({ width: text.length * 8 }),
+      strokeRect: () => {}
+    };
+  }
+  return null;
+}) as any;
 
-if (!global.window) {
-  global.window = new JSDOM().window;
+window.SVGPathElement = (() => {}) as any;
+if (!window.customElements) {
+  (window as any).customElements = { define: () => {} };
 }
-
-window.SVGPathElement = () => {};
-window.customElements = () => {};
-window.customElements.define = () => {};
 
 // jsdom does not implement ResizeObserver. This stub prevents crashes but
 // never fires callbacks, so any test relying on measured heights (e.g.
@@ -27,10 +34,15 @@ global.ResizeObserver = class {
   disconnect(): void {}
 };
 
-const tFunction = (key: string, parameters: { [key: string]: string }): string => {
-  const params = JSON.stringify(parameters) ?? '{}';
-
-  return params !== '{}' ? `${key} ${params}` : key;
+const tFunction = (key: string, parameters?: { [key: string]: string }): string => {
+  if (!parameters || Object.keys(parameters).length === 0) {
+    return key;
+  }
+  const nonEmpty = Object.fromEntries(Object.entries(parameters).filter(([, v]) => v !== '' && v != null));
+  if (Object.keys(nonEmpty).length === 0) {
+    return key;
+  }
+  return `${key} ${JSON.stringify(nonEmpty)}`;
 };
 
 const i18n = {
@@ -41,11 +53,11 @@ const i18n = {
 };
 
 // Tests must not hit the real i18n backend; stub with a pass-through that returns the key.
-jest.mock('i18n', () => ({
+rstest.mock('i18n', () => ({
   i18n: i18n
 }));
 
-jest.mock('react-i18next', () => ({
+rstest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: tFunction,
     i18n: i18n

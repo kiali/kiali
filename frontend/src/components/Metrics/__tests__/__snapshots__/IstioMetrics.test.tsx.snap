@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`Inbound Metrics for a workload renders initial layout 1`] = `
+exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
 <div>
   <div
     class="kiali_ft2cic2 kiali_fvbgwgh"
@@ -191,7 +191,7 @@ exports[`Inbound Metrics for a workload renders initial layout 1`] = `
 </div>
 `;
 
-exports[`Metrics for a service renders initial layout 1`] = `
+exports[`Metrics for a service > renders initial layout 1`] = `
 <div>
   <div
     class="kiali_ft2cic2 kiali_fvbgwgh"

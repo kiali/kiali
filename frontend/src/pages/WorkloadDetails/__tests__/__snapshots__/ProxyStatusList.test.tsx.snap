@@ -1,8 +1,8 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`ProxyStatusList when status is synced match the snapshot 1`] = `<div />`;
+exports[`ProxyStatusList > when status is synced > match the snapshot 1`] = `<div />`;
 
-exports[`ProxyStatusList when there are components without value match the snapshot 1`] = `
+exports[`ProxyStatusList > when there are components without value > match the snapshot 1`] = `
 <div>
   <div
     class="pf-v6-l-stack kiali_f14kfh0p"
@@ -26,7 +26,7 @@ exports[`ProxyStatusList when there are components without value match the snaps
 </div>
 `;
 
-exports[`ProxyStatusList when there are unsynced components match the snapshot 1`] = `
+exports[`ProxyStatusList > when there are unsynced components > match the snapshot 1`] = `
 <div>
   <div
     class="pf-v6-l-stack kiali_f14kfh0p"

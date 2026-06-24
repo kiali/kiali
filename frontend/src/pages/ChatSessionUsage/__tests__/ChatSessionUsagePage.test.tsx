@@ -1,21 +1,21 @@
-import * as React from 'react';
 import { act, render, screen } from '@testing-library/react';
+import type { Mock } from '@rstest/core';
 
 import { ChatSessionUsageContent } from '../ChatSessionUsagePage';
 import * as API from 'services/Api';
 
-jest.mock('services/Api', () => ({
-  getChatSessionUsage: jest.fn(),
-  getErrorString: jest.fn(() => 'Unable to load')
+rstest.mock('services/Api', () => ({
+  getChatSessionUsage: rstest.fn(),
+  getErrorString: rstest.fn(() => 'Unable to load')
 }));
 
 describe('ChatSessionUsageContent', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    rstest.clearAllMocks();
   });
 
   it('loads session usage once on mount', async () => {
-    (API.getChatSessionUsage as jest.Mock).mockResolvedValue({ data: [] });
+    (API.getChatSessionUsage as Mock).mockResolvedValue({ data: [] });
 
     await act(async () => {
       render(<ChatSessionUsageContent />);

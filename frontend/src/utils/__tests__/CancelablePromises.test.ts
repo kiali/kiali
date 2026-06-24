@@ -7,19 +7,19 @@ describe('Cancelable promises', () => {
     return promises.register('test', initialPromise).then(result => expect(result).toBe(true));
   });
 
-  it('should be canceled before resolving', done => {
+  it('should be canceled before resolving', () => {
     const promises = new PromisesRegistry();
     const initialPromise = new Promise<boolean>(resolve => setTimeout(() => resolve(true), 1));
-    promises
+    const result = promises
       .register('test', initialPromise)
       .then(() => {
         throw new Error('Not expected to come here');
       })
       .catch(err => {
         expect(err.isCanceled).toBe(true);
-        done();
       });
     promises.cancelAll();
+    return result;
   });
 
   it('should cancel the previous one', () => {
@@ -53,41 +53,44 @@ describe('Cancelable promises', () => {
     return promises.registerAll('test', [p1, p2]).then(result => expect(result).toEqual([true, false]));
   });
 
-  it('should be canceled before resolving with registerAll', done => {
+  it('should be canceled before resolving with registerAll', () => {
     const promises = new PromisesRegistry();
     const p1 = new Promise<boolean>(resolve => setTimeout(() => resolve(true), 1));
     const p2 = new Promise<boolean>(resolve => setTimeout(() => resolve(false), 1));
-    promises
+    const result = promises
       .registerAll('test', [p1, p2])
       .then(() => {
         throw new Error('Not expected to come here');
       })
       .catch(err => {
         expect(err.isCanceled).toBe(true);
-        done();
       });
     promises.cancelAll();
+    return result;
   });
 
   it('should resolve chained promises alone', () => {
     const promises = new PromisesRegistry();
-    const promiseGen = x => new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
+    const promiseGen = (x: number): Promise<number> =>
+      new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
     return promises.registerChained('test', 0, promiseGen).then(result => expect(result).toBe(1));
   });
 
   it('should resolve several chained promises', () => {
     const promises = new PromisesRegistry();
-    const promiseGen = x => new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
+    const promiseGen = (x: number): Promise<number> =>
+      new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
     promises.registerChained('test', 0, promiseGen);
     promises.registerChained('test', 0, promiseGen);
     promises.registerChained('test', 0, promiseGen);
     return promises.registerChained('test', 0, promiseGen).then(result => expect(result).toBe(4));
   });
 
-  it('should cancel several chained promises', done => {
+  it('should cancel several chained promises', () => {
     const promises = new PromisesRegistry();
-    const promiseGen = x => new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
-    promises
+    const promiseGen = (x: number): Promise<number> =>
+      new Promise<number>(resolve => setTimeout(() => resolve(x + 1), 1));
+    const r1 = promises
       .registerChained('test', 0, promiseGen)
       .then(() => {
         throw new Error('Not expected to come here');
@@ -95,30 +98,29 @@ describe('Cancelable promises', () => {
       .catch(err => {
         expect(err.isCanceled).toBe(true);
       });
-    promises
+    const r2 = promises
       .registerChained('test', 0, promiseGen)
       .then(() => {
         throw new Error('Not expected to come here');
       })
       .catch(err => {
         expect(err.isCanceled).toBe(true);
-        done();
       });
     promises.cancelAll();
+    return Promise.all([r1, r2]).then(() => {});
   });
 
-  it('should cancel after first chained promises', done => {
+  it('should cancel after first chained promises', () => {
     const promises = new PromisesRegistry();
     const promiseGen = time => x => new Promise<number>(resolve => setTimeout(() => resolve(x + 1), time));
     promises.registerChained('a', 0, promiseGen(5)).then(() => promises.cancelAll());
-    promises
+    return promises
       .registerChained('a', 0, promiseGen(10))
       .then(() => {
         throw new Error('Not expected to come here');
       })
       .catch(err => {
         expect(err.isCanceled).toBe(true);
-        done();
       });
   });
 });

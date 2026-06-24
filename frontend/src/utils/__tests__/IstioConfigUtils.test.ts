@@ -249,7 +249,7 @@ describe('Validate Istio Types array To GVK Strings array', () => {
 });
 
 // Mock serverConfig for isGVKSupported tests.
-jest.mock('../../config/ServerConfig', () => ({
+rstest.mock('../../config/ServerConfig', () => ({
   serverConfig: {
     kialiFeatureFlags: {
       customWorkloadTypes: []

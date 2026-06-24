@@ -1,13 +1,12 @@
-import { Spinner } from '@patternfly/react-core';
-import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
-import * as React from 'react';
+import { DropdownGroup, DropdownItem, Spinner } from '@patternfly/react-core';
 import { groupMenuStyle } from 'styles/DropdownStyles';
+import { t } from 'utils/I18nUtils';
 
-export const LoadingWizardActionsDropdownGroup = () => {
+export const LoadingWizardActionsDropdownGroup = (): JSX.Element => {
   return (
-    <DropdownGroup key="wizards" label="Actions" className={groupMenuStyle}>
+    <DropdownGroup key="wizards" label={t('Actions')} className={groupMenuStyle}>
       <DropdownItem isDisabled={true}>
-        <Spinner size="md" aria-label="Loading actions..." />
+        <Spinner size="md" aria-label={t('Loading actions...')} />
       </DropdownItem>
     </DropdownGroup>
   );

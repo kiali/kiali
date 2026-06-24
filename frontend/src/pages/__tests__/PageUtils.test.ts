@@ -1,13 +1,13 @@
 import { buildMetadataPatch, buildWorkloadMetadataPatch, navigateToFilteredList } from '../PageUtils';
 
-const mockResetFilters = jest.fn();
-const mockNavigate = jest.fn();
+const mockResetFilters = rstest.fn();
+const mockNavigate = rstest.fn();
 
-jest.mock('../../components/Filters/StatefulFilters', () => ({
+rstest.mock('../../components/Filters/StatefulFilters', () => ({
   FilterSelected: { resetFilters: (...args: unknown[]) => mockResetFilters(...args) }
 }));
 
-jest.mock('../../app/History', () => ({
+rstest.mock('../../app/History', () => ({
   URLParam: { NAMESPACES: 'namespaces' },
   router: { navigate: (...args: unknown[]) => mockNavigate(...args) }
 }));

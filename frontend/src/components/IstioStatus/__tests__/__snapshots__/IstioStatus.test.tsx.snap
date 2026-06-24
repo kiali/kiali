@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Rstest Snapshot v1
 
-exports[`When addon component has a problem the Icon shows is displayed in orange 1`] = `
+exports[`When addon component has a problem > the Icon shows is displayed in orange 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -40,7 +40,7 @@ exports[`When addon component has a problem the Icon shows is displayed in orang
 </div>
 `;
 
-exports[`When both core and addon component have problems any component is in not ready the Icon shows is displayed in red 1`] = `
+exports[`When both core and addon component have problems > any component is in not ready > the Icon shows is displayed in red 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -80,7 +80,7 @@ exports[`When both core and addon component have problems any component is in no
 </div>
 `;
 
-exports[`When core component has a problem the Icon shows is displayed in Red 1`] = `
+exports[`When core component has a problem > the Icon shows is displayed in Red 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -120,7 +120,7 @@ exports[`When core component has a problem the Icon shows is displayed in Red 1`
 </div>
 `;
 
-exports[`When there are multiple clusters cluster with failing components shows expand/collapse arrow 1`] = `
+exports[`When there are multiple clusters > cluster with failing components shows expand/collapse arrow 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -160,7 +160,7 @@ exports[`When there are multiple clusters cluster with failing components shows 
 </div>
 `;
 
-exports[`When there are multiple clusters clusters without failing components do not show expand/collapse arrow 1`] = `
+exports[`When there are multiple clusters > clusters without failing components do not show expand/collapse arrow 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -200,7 +200,7 @@ exports[`When there are multiple clusters clusters without failing components do
 </div>
 `;
 
-exports[`When there are not-ready components mixed with other not healthy components in addons the Icon is displayed in orange 1`] = `
+exports[`When there are not-ready components > mixed with other not healthy components > in addons > the Icon is displayed in orange 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -240,7 +240,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 </div>
 `;
 
-exports[`When there are not-ready components mixed with other not healthy components in both the Icon shows is displayed in red 1`] = `
+exports[`When there are not-ready components > mixed with other not healthy components > in both > the Icon shows is displayed in red 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -280,7 +280,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 </div>
 `;
 
-exports[`When there are not-ready components mixed with other not healthy components in core the Icon is displayed in red 1`] = `
+exports[`When there are not-ready components > mixed with other not healthy components > in core > the Icon is displayed in red 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -320,7 +320,7 @@ exports[`When there are not-ready components mixed with other not healthy compon
 </div>
 `;
 
-exports[`When there are not-ready components not mixed with other unhealthy components in addons renders the Icon in blue 1`] = `
+exports[`When there are not-ready components > not mixed with other unhealthy components > in addons > renders the Icon in blue 1`] = `
 <div>
   <div
     style="display: contents;"
@@ -360,7 +360,7 @@ exports[`When there are not-ready components not mixed with other unhealthy comp
 </div>
 `;
 
-exports[`When there are not-ready components not mixed with other unhealthy components in core renders the Icon in blue 1`] = `
+exports[`When there are not-ready components > not mixed with other unhealthy components > in core > renders the Icon in blue 1`] = `
 <div>
   <div
     style="display: contents;"

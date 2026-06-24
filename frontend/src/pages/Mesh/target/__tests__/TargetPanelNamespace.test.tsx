@@ -1,13 +1,13 @@
 import { MeshInfraType, MeshNodeType, ControlPlane, MeshNodeWrapper } from 'types/Mesh';
 import { isRemoteCluster } from '../TargetPanelControlPlane';
 
-jest.mock('@patternfly/react-topology', () => ({
-  Controller: jest.fn(),
-  Node: jest.fn()
+rstest.mock('@patternfly/react-topology', () => ({
+  Controller: rstest.fn(),
+  Node: rstest.fn()
 }));
 
-jest.mock('store/ConfigStore', () => {
-  const { createStore } = (jest as any).requireActual('redux');
+rstest.mock('store/ConfigStore', () => {
+  const { createStore } = (rstest as any).requireActual('redux');
   const s = createStore(() => ({
     globalState: { kiosk: '' },
     statusState: { status: {} }

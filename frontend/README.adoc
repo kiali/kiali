@@ -40,7 +40,7 @@ After enabling corepack, running `yarn` in the frontend directory will automatic
 On some platforms, `yarn start` may fail with an error like `Error: ENOSPC: System limit for number of file watchers reached`. To fix this, you need to increase the limit of file watchers on your system. The command may vary depending on the platform, please refer to link:https://github.com/guard/listen/wiki/Increasing-the-amount-of-inotify-watchers[these instructions].
 
 A new browser window should automatically open.
-But, if it doesn't then use: `http://localhost:3000`
+But, if it doesn't then use: `http://localhost:3001`
 (or whatever address is told by the `yarn start` command).
 
 This launches a development environment that instantly
@@ -77,18 +77,29 @@ We use yarn as the package manager. When adding dependencies to `package.json`, 
 When developing, it is typical to run the frontend outside of the kiali server in the cluster.
 
 It is possible to proxy the API requests without having to push the changes to kiali.
-Add the link:https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#proxying-api-requests-in-development[proxy]
-property to `package.json` with the url of kiali.
-[source, json]
+The dev server proxy is configured in `rsbuild.config.ts` and defaults to `http://localhost:20001`.
+To override it, set the `KIALI_PROXY_URL` environment variable:
+
+[source, shell]
 ----
-{
-  "proxy": "http://localhost:20001",
-  "name": "@kiali/kiali-ui",
-  "version": "1.82.0",
-}
+KIALI_PROXY_URL=http://localhost:20001 yarn start
 ----
 
-If Kiali is configured with a specific web root, make sure to append it to the URL. On many setups with Kubernetes, the web root will be `/kiali` by default.
+Or use the make target:
+
+[source, shell]
+----
+make KIALI_PROXY_URL=http://localhost:20001 run-frontend
+----
+
+If Kiali is configured with a `web_root` other than `/` (e.g. `/kiali`, which is common in cluster deployments), append it to the URL:
+
+[source, shell]
+----
+KIALI_PROXY_URL=http://localhost:20001/kiali yarn start
+----
+
+TIP: You can check the `web_root` value in your Kiali config YAML under `server.web_root`. The default is `/` (used by `run-kiali.sh` and `make run-backend`). Cluster deployments via the Kiali operator typically set it to `/kiali`.
 
 Run `yarn start` and try it!
 
@@ -369,30 +380,22 @@ Integration testing is done with cypress. More information can be found link:./c
 For component conventions, styling rules, and coding patterns, see the link:https://github.com/kiali/kiali/blob/master/STYLE_GUIDE.adoc#frontend-typescript[STYLE CODE GUIDE].
 
 === Testing
-To run the tests, the standard command `yarn test` is valid,
-but since some tests are using link:https://facebook.github.io/jest/docs/en/snapshot-testing.html[snapshots] the preferred command is to update them in the same time:
+To run the tests, use the standard command `yarn test`.
+Since some tests use link:https://rstest.rs/guide/basic/snapshot[snapshots], use the `-u` flag to update them:
 [source,shell]
 ----
 yarn test -u
 ----
 
-Then hit `a` to run all tests.
-
 After running the tests, if any snapshot has been modified (check git status),
 the diff should be reviewed to make sure it's an intentional or trivial change.
 Modified snapshots must be part of the commit so that they're reviewed collectively and won't make CI build fail.
-
-Note: for OS/X users testing requires watchman to be installed
-[source,shell]
-----
-brew install watchman
-----
 
 == Testing Libraries for Vulnerabilities
 We use github Dependabot for vulnerability testing. Dependabot runs regularly on the `kiali/kiali` repository.
 
 == Production Builds
-Use `yarn build` which will bundle the build artifacts using webpack into the `build` directory.
+Use `yarn build` which will bundle the build artifacts using Rsbuild into the `build` directory.
 
 == License and Copyright
 See the link:https://github.com/kiali/kiali/blob/master/LICENSE[LICENSE file].

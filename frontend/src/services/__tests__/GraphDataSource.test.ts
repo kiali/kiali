@@ -62,7 +62,7 @@ describe('GraphDataSource', () => {
     axiosMock.onGet('/api/namespaces/graph').reply(200, GRAPH_EMPTY_RESPONSE);
     const ds = new GraphDataSource();
 
-    const mockLoadStartCallback = jest.fn();
+    const mockLoadStartCallback = rstest.fn();
     ds.on('loadStart', mockLoadStartCallback);
 
     ds.fetchGraphData(FETCH_PARAMS);
@@ -71,43 +71,47 @@ describe('GraphDataSource', () => {
     expect(mockLoadStartCallback).toHaveBeenCalledWith(true, FETCH_PARAMS);
   });
 
-  it('informs data loading succeeded', done => {
+  it('informs data loading succeeded', () => {
     axiosMock.onGet('/api/namespaces/graph').reply(200, GRAPH_EMPTY_RESPONSE);
     const ds = new GraphDataSource();
 
-    ds.on('fetchSuccess', (graphTimestamp, graphDuration, graphData, FETCH_PARAMS) => {
-      expect(ds.isLoading).toBeFalsy();
-      expect(ds.isError).toBeFalsy();
-      expect(ds.errorMessage).toBeFalsy();
-      expect(ds.graphTimestamp).toEqual(GRAPH_EMPTY_RESPONSE.timestamp);
-      expect(ds.graphDuration).toEqual(GRAPH_EMPTY_RESPONSE.duration);
-      expect(ds.graphData).toEqual(GRAPH_EMPTY_RESPONSE.elements);
+    return new Promise<void>(resolve => {
+      ds.on('fetchSuccess', (graphTimestamp, graphDuration, graphData, FETCH_PARAMS) => {
+        expect(ds.isLoading).toBeFalsy();
+        expect(ds.isError).toBeFalsy();
+        expect(ds.errorMessage).toBeFalsy();
+        expect(ds.graphTimestamp).toEqual(GRAPH_EMPTY_RESPONSE.timestamp);
+        expect(ds.graphDuration).toEqual(GRAPH_EMPTY_RESPONSE.duration);
+        expect(ds.graphData).toEqual(GRAPH_EMPTY_RESPONSE.elements);
 
-      expect(ds.graphTimestamp).toEqual(graphTimestamp);
-      expect(ds.graphDuration).toEqual(graphDuration);
-      expect(ds.graphData).toEqual(graphData);
-      expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
+        expect(ds.graphTimestamp).toEqual(graphTimestamp);
+        expect(ds.graphDuration).toEqual(graphDuration);
+        expect(ds.graphData).toEqual(graphData);
+        expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
 
-      done();
+        resolve();
+      });
+
+      ds.fetchGraphData(FETCH_PARAMS);
     });
-
-    ds.fetchGraphData(FETCH_PARAMS);
   });
 
-  it('informs data loading failed', done => {
+  it('informs data loading failed', () => {
     axiosMock.onGet('/api/namespaces/graph').reply(500, { error: 'foo bar', FETCH_PARAMS });
     const ds = new GraphDataSource();
 
-    ds.on('fetchError', errorMsg => {
-      expect(ds.isLoading).toBeFalsy();
-      expect(ds.isError).toBeTruthy();
-      expect(ds.errorMessage).toEqual('foo bar');
-      expect(errorMsg).toEqual('Cannot load the graph: foo bar');
-      expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
+    return new Promise<void>(resolve => {
+      ds.on('fetchError', errorMsg => {
+        expect(ds.isLoading).toBeFalsy();
+        expect(ds.isError).toBeTruthy();
+        expect(ds.errorMessage).toEqual('foo bar');
+        expect(errorMsg).toEqual('Cannot load the graph: foo bar');
+        expect(ds.fetchParameters).toEqual(FETCH_PARAMS);
 
-      done();
+        resolve();
+      });
+
+      ds.fetchGraphData(FETCH_PARAMS);
     });
-
-    ds.fetchGraphData(FETCH_PARAMS);
   });
 });

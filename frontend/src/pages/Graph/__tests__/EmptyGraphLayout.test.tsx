@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { EmptyGraphLayout } from '../EmptyGraphLayout';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
@@ -11,7 +10,7 @@ describe('EmptyGraphLayout', () => {
     namespaces: [{ name: 'default' }],
     refreshInterval: 15000,
     showIdleNodes: false,
-    toggleIdleNodes: jest.fn()
+    toggleIdleNodes: rstest.fn()
   };
 
   afterEach(() => {

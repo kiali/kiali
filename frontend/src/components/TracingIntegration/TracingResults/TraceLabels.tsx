@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Label, pluralize } from '@patternfly/react-core';
 
 import { PFColors } from 'components/Pf/PfColors';
@@ -20,22 +19,22 @@ const whiteLabelStyle = kialiStyle({
 });
 
 type Props = {
-  spans: Span[];
   filteredSpans?: Span[];
   oneline: boolean;
+  spans: Span[];
 };
 
-const countServices = (spans: Span[]) => {
+const countServices = (spans: Span[]): number => {
   const services = new Set();
   spans.forEach(s => services.add(s.process.serviceName));
   return services.size;
 };
 
-const countErrors = (spans: Span[]) => {
+const countErrors = (spans: Span[]): number => {
   return spans.filter(sp => sp.tags.some(isErrorTag)).length;
 };
 
-export const TraceLabels = (p: Props) => {
+export const TraceLabels = (p: Props): JSX.Element => {
   const errors = countErrors(p.spans);
   const filteredErrors = p.filteredSpans ? countErrors(p.filteredSpans) : undefined;
   return (

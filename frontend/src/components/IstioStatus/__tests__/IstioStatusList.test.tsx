@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render } from '@testing-library/react';
 import { ComponentStatus, Status } from '../../../types/IstioStatus';
 import { IstioStatusList } from '../IstioStatusList';
