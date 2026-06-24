@@ -131,7 +131,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetLogs(t *testing.T) {
 	expected := anthropic.ToolUnionParam{
 		OfTool: &anthropic.ToolParam{
 			Name:        "get_logs",
-			Description: param.NewOpt("Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log."),
+			Description: param.NewOpt("Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log. IMPORTANT: Always include ALL returned log lines in your response. Check the line_count field and ensure every line is present."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"namespace": map[string]interface{}{
