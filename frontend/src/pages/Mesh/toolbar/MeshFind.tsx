@@ -43,11 +43,13 @@ import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { layoutMesh } from '../Mesh';
 import { MeshLayoutType, MeshLayout } from '../layouts/LayoutFactory';
+import { TimeInMilliseconds } from 'types/Common';
 
 type ReduxStateProps = {
   findValue: string;
   hideValue: string;
   layout: MeshLayout;
+  updateTime: TimeInMilliseconds;
 };
 
 type ReduxDispatchProps = {
@@ -58,7 +60,6 @@ type ReduxDispatchProps = {
 type MeshFindProps = ReduxStateProps &
   ReduxDispatchProps & {
     controller?: Controller;
-    elementsChanged: boolean;
   };
 
 type MeshFindState = {
@@ -155,33 +156,32 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     this.state = { findInputValue: findValue, hideInputValue: hideValue, showFindHelp: false };
   }
 
-  // We only update on a change to the find/hide values, or a mesh change.  Although we use other props
-  // in processing (layout, etc), a change to those settings will generate a mesh change, so we
-  // wait for the mesh change to do the update.
+  // We only update on a change to the find/hide values, controller, or mesh model. Other props used in
+  // processing will update the mesh model and therefore updateTime.
   shouldComponentUpdate(nextProps: MeshFindProps, nextState: MeshFindState): boolean {
     const controllerChanged = this.props.controller !== nextProps.controller;
-    const elementsChanged = !this.props.elementsChanged && nextProps.elementsChanged;
     const findChanged = this.props.findValue !== nextProps.findValue;
     const hideChanged = this.props.hideValue !== nextProps.hideValue;
     const showFindHelpChanged = this.state.showFindHelp !== nextState.showFindHelp;
     const findErrorChanged = this.state.findError !== nextState.findError;
     const hideErrorChanged = this.state.hideError !== nextState.hideError;
+    const updateTimeChanged = this.props.updateTime !== nextProps.updateTime;
 
     const shouldUpdate =
       controllerChanged ||
-      elementsChanged ||
       findChanged ||
       hideChanged ||
       showFindHelpChanged ||
       findErrorChanged ||
-      hideErrorChanged;
+      hideErrorChanged ||
+      updateTimeChanged;
 
     return shouldUpdate;
   }
 
   // Note that we may have redux hide/find values set at mount-time. But because the toolbar mounts prior to
-  // the mesh loading, we can't perform this mesh "post-processing" until we have a valid controller.  But the
-  // find/hide processing will be initiated externally (processMeshUpdate) when the mesh is ready.
+  // the mesh loading, we can't perform this mesh "post-processing" until we have a valid controller. Processing
+  // is re-applied when the controller is available, the expression changes, or the mesh model is updated.
   componentDidUpdate(prevProps: MeshFindProps): void {
     if (!this.props.controller) {
       this.findElements = undefined;
@@ -190,9 +190,9 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     const controllerChanged = this.props.controller !== prevProps.controller;
-    const elementsChanged = this.props.elementsChanged && !prevProps.elementsChanged;
     const findChanged = this.props.findValue !== prevProps.findValue;
     const hideChanged = this.props.hideValue !== prevProps.hideValue;
+    const updateTimeChanged = this.props.updateTime !== prevProps.updateTime;
 
     // ensure redux state and URL are aligned
     if (findChanged) {
@@ -211,7 +211,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     }
 
     // make sure the value is updated if there was a change
-    if (controllerChanged || findChanged || (elementsChanged && this.props.findValue)) {
+    if (controllerChanged || findChanged || (updateTimeChanged && this.props.findValue)) {
       // ensure findInputValue is aligned if findValue is set externally (e.g. resetSettings)
       if (this.state.findInputValue !== this.props.findValue) {
         this.setFind(this.props.findValue);
@@ -220,7 +220,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       this.handleFind(this.props.controller);
     }
 
-    if (controllerChanged || hideChanged || (elementsChanged && this.props.hideValue)) {
+    if (controllerChanged || hideChanged || (updateTimeChanged && this.props.hideValue)) {
       // ensure hideInputValue is aligned if hideValue is set externally (e.g. resetSettings)
       if (this.state.hideInputValue !== this.props.hideValue) {
         this.setHide(this.props.hideValue);
@@ -887,7 +887,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   findValue: meshFindValueSelector(state),
   hideValue: meshHideValueSelector(state),
-  layout: state.mesh.layout
+  layout: state.mesh.layout,
+  updateTime: state.mesh.updateTime
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {

@@ -229,7 +229,6 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
           <MeshToolbar
             controller={this.state.meshRefs?.getController()}
             disabled={this.state.meshData.isLoading}
-            elementsChanged={this.state.meshData.elementsChanged}
             onToggleHelp={this.toggleHelp}
           />
           <FlexView grow={true} className={`${meshWrapperDivStyle}`}>

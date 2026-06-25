@@ -485,7 +485,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
             <GraphToolbar
               controller={this.state.graphRefs?.getController()}
               disabled={this.state.graphData.isLoading}
-              elementsChanged={this.state.graphData.elementsChanged}
               onToggleHelp={this.toggleHelp}
             />
           </div>
