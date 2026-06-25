@@ -139,7 +139,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetLogs(t *testing.T) {
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "get_logs",
-				Description: openai.String("Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log. IMPORTANT: Always include ALL returned log lines in your response. Check the line_count field and ensure every line is present."),
+				Description: openai.String("Get the logs of a Kubernetes Pod (or workload name that will be resolved to a pod) in a namespace. Output is plain text, matching kubernetes-mcp-server pods_log. The line_count field tells you the total number of log lines returned. Analyze ALL of them, but summarize the results unless the user explicitly asks for the raw output. Do not omit any error or warning lines."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
