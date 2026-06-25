@@ -625,8 +625,8 @@ Then('the user can see the {string} istio config and badge {string}', (config: s
 });
 
 Then('the proxy status is {string} with {string} details', (status: string, detail: string) => {
-  cy.get('[test-data=proxy-status]').get(`.icon-${status}`).should('exist');
-  cy.get('[test-data=proxy-status]').trigger('mouseenter');
+  cy.get('[data-test=proxy-status]').get(`.icon-${status}`).should('exist');
+  cy.get('[data-test=proxy-status]').trigger('mouseenter');
   cy.get('[role="tooltip"]').should('be.visible').and('contain', detail);
   cy.get(`[data-test=pod-info]`).trigger('mouseleave');
 });

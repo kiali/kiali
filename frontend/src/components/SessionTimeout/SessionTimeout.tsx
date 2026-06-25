@@ -42,7 +42,7 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   const defaultAction = props.onDismiss;
 
   const buttons = [
-    <Button autoFocus={true} variant={ButtonVariant.primary} onClick={props.onDismiss}>
+    <Button variant={ButtonVariant.primary} onClick={props.onDismiss}>
       OK
     </Button>,
     <Button

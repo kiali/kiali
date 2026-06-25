@@ -128,3 +128,4 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
   }
   return null;
 });
+EntryChat.displayName = 'EntryChat';

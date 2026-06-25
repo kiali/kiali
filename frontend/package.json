@@ -144,6 +144,7 @@
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
+    "@eslint-react/eslint-plugin": "^5.9.2",
     "@eslint/js": "^10.0.1",
     "@rsbuild/core": "^2.0.12",
     "@rsbuild/plugin-react": "^2.0.1",
@@ -170,6 +171,7 @@
     "esbuild": "^0.27.7",
     "eslint": "^10.5.0",
     "eslint-plugin-import-x": "^4.15.2",
+    "eslint-plugin-jsx-a11y-x": "^0.2.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "gherkin-lint": "^4.2.4",
     "globals": "^16.2.0",

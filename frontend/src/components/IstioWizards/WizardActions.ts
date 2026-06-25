@@ -1653,7 +1653,7 @@ export const getInitTimeoutRetryRoute = (
         trRoute.retries.perTryTimeout = virtualServices[0].spec.http[0].retries.perTryTimeout;
       }
       if (virtualServices[0].spec.http[0].retries.retryOn) {
-        // TODO: handle retryOn
+        trRoute.retries.retryOn = virtualServices[0].spec.http[0].retries.retryOn;
       }
     }
   }

@@ -464,3 +464,4 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     </div>
   );
 });
+Prompt.displayName = 'Prompt';
