@@ -33,7 +33,6 @@ The currently supported Kiali release branches (which receive backports and secu
 | 3.2   | v2.17  | 2.17          |
 | 3.1   | v2.11  | 2.11          |
 | 3.0   | v2.4   | 2.4           |
-| 2.6   | v1.73  | 1.73          |
 
 In addition, `master` is the active development branch for the next release.
 
