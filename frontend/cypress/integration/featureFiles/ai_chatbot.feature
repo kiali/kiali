@@ -312,6 +312,18 @@ Feature: Kiali AI Chatbot
     When user views the Istio Config list for namespaces "bookinfo"
     Then user does not see VirtualService "vs-ai-cypress" in the Istio Config list
 
+  Scenario: The AI chatbot shows a danger error alert when the backend returns a server error
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message that returns a server error "What is the mesh status?"
+    Then the AI chatbot should show a danger error alert
+
+  Scenario: The AI chatbot shows a danger error alert when the stream contains an error event
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message that triggers a stream error "What is the mesh status?"
+    Then the AI chatbot should show a danger error alert
+
   Scenario: The AI chatbot defaults to ask mode
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
