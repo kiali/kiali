@@ -34,6 +34,9 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
 
   onCreateUpdate = (): void => {
     switch (this.props.type) {
+      // TODO: handle workload wizard types
+      default:
+        break;
     }
   };
 

@@ -63,7 +63,7 @@ const columns: ThProps[] = [
   }
 ];
 
-export const addSelectorLabels = (value: string): [boolean, {}] => {
+export const addSelectorLabels = (value: string): [boolean, Record<string, string>] => {
   if (value.length === 0) {
     return [false, {}];
   }

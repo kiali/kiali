@@ -42,9 +42,7 @@ rstest.mock('../TraceTooltip', () => ({
   TraceTooltip: () => null
 }));
 
-// eslint-disable-next-line import/first
 import { TracingScatterComponent } from '../TracingScatter';
-// eslint-disable-next-line import/first
 import { JaegerTrace } from 'types/TracingInfo';
 
 const getChartProps = (): any => capturedChartProps;

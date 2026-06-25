@@ -69,9 +69,7 @@ rstest.mock('regression', () => ({
   default: { linear: () => ({ predict: () => [0, 0] }) }
 }));
 
-// eslint-disable-next-line import/first
 import { KChart } from '../KChart';
-// eslint-disable-next-line import/first
 import { CHART_LEGEND_GAP, LEGEND_HEIGHT } from '../ChartWithLegend';
 
 const makeChart = (overrides: Partial<ChartModel> = {}): ChartModel => ({

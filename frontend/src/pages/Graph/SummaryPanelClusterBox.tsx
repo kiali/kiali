@@ -48,7 +48,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     height: '100%',
     margin: 0,
     minWidth: summaryPanelWidth,
-    overflowY: 'auto' as 'auto',
+    overflowY: 'auto' as const,
     backgroundColor: PFColors.BackgroundColor100,
     width: summaryPanelWidth
   };

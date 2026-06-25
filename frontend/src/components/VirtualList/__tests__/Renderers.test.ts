@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 import { InstanceType } from '../../../types/Common';
 
 rstest.mock('store/ConfigStore', () => ({

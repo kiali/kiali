@@ -20,7 +20,7 @@ const remove = kialiStyle({
 export class K8sMatches extends React.Component<Props> {
   render() {
     const matches: any[] = this.props.matches.map((match, index) => (
-      <span key={match + '-' + index} data-test={match} className={remove}>
+      <span key={`${match}-${index}`} data-test={match} className={remove}>
         <Label onClose={() => this.props.onRemoveMatch(match)} variant={'overflow'}>
           {match}
         </Label>{' '}

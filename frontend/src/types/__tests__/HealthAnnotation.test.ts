@@ -24,7 +24,7 @@ describe('healthAnnotation', () => {
         });
 
         wrongAnnotations.forEach(annotation => {
-          var ratehealth = new H.RateHealth(createHealthAnnotation(annotation));
+          const ratehealth = new H.RateHealth(createHealthAnnotation(annotation));
           expect(ratehealth.isValid).toBeFalsy();
         });
       });
@@ -38,11 +38,11 @@ describe('healthAnnotation', () => {
 
       it('should be not valid if there is a wrong annotation', () => {
         // All wrong
-        var ratehealth = new H.RateHealth(createHealthAnnotation(wrongAnnotations.join(';')));
+        let ratehealth = new H.RateHealth(createHealthAnnotation(wrongAnnotations.join(';')));
         expect(ratehealth.isValid).toBeFalsy();
 
         // One of them wrong
-        var annotations = [...correctAnnotations];
+        const annotations = [...correctAnnotations];
         annotations.push(wrongAnnotations[0]);
         ratehealth = new H.RateHealth(createHealthAnnotation(annotations.join(';')));
         expect(ratehealth.isValid).toBeFalsy();

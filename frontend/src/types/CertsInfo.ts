@@ -1,7 +1,7 @@
 export interface CertsInfo {
   accessible: boolean;
   configMapName: string;
-  dnsNames: String[];
+  dnsNames: string[];
   error: string;
   issuer: string;
   notAfter: string;

@@ -114,7 +114,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
     }
   };
 
-  const propertiesToNumber = (object: Object, keys?: string[]): any => {
+  const propertiesToNumber = (object: object, keys?: string[]): any => {
     const objectWithNumbers = { ...object };
     const targetKeys = keys ? keys : Object.keys(objectWithNumbers);
     for (const key of targetKeys) {

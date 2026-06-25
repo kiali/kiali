@@ -44,5 +44,5 @@ export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
   userSettings: UserSettingsStateReducer
 });
 
-/* eslint-disable import/no-default-export */
+/* eslint-disable import-x/no-default-export */
 export default rootReducer;

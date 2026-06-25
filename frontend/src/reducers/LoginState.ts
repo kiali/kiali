@@ -40,7 +40,7 @@ export const LoginStateReducer = (
       let message = 'Error connecting to Kiali';
 
       const response_data = action.payload.error.response.data;
-      if (response_data && typeof response_data.error == 'string' && response_data.error.length > 0) {
+      if (response_data && typeof response_data.error === 'string' && response_data.error.length > 0) {
         message = `Login unsuccessful: ${response_data.error}`;
       } else if (action.payload.error.response.status === 401) {
         message =

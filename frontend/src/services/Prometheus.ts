@@ -31,6 +31,6 @@ export const computePrometheusRateParams = (
   step = step < minStep ? minStep : step;
   return {
     step: step,
-    rateInterval: step + 's'
+    rateInterval: `${step}s`
   };
 };

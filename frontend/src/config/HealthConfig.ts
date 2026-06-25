@@ -22,7 +22,7 @@ export const parseHealthConfig = (healthConfig: HealthConfig) => {
 /*
   Convert the string to regex, if isCode is true then call to replaceXCode to change the X|x in code expression to \d
 */
-export const getExpr = (value: RegexConfig | undefined, isCode: boolean = false): RegExp => {
+export const getExpr = (value: RegexConfig | undefined, isCode = false): RegExp => {
   if (value) {
     if (typeof value === 'string' && value !== '') {
       const v = value.replace('\\\\', '\\');

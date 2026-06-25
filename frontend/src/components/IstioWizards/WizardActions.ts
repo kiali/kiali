@@ -215,7 +215,7 @@ export type ServiceWizardState = {
   workloads: WorkloadWeight[];
 };
 
-export type WorkloadWizardValid = {};
+export type WorkloadWizardValid = Record<string, never>;
 
 export type WorkloadWizardProps = {
   namespace: string;
@@ -1653,6 +1653,7 @@ export const getInitTimeoutRetryRoute = (
         trRoute.retries.perTryTimeout = virtualServices[0].spec.http[0].retries.perTryTimeout;
       }
       if (virtualServices[0].spec.http[0].retries.retryOn) {
+        // TODO: handle retryOn
       }
     }
   }

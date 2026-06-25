@@ -65,7 +65,7 @@ const renderSparklines = (series: VCLines<RichDataPoint>, yTickFormat?: (val: nu
   );
 };
 
-export class RequestChart extends React.Component<RequestChartProp, {}> {
+export class RequestChart extends React.Component<RequestChartProp> {
   render(): React.ReactNode {
     return (
       <>
@@ -130,7 +130,7 @@ export class RequestChart extends React.Component<RequestChartProp, {}> {
   };
 }
 
-export class StreamChart extends React.Component<StreamChartProp, {}> {
+export class StreamChart extends React.Component<StreamChartProp> {
   render(): React.ReactNode {
     return (
       <>

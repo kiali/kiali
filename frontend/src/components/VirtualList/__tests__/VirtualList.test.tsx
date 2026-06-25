@@ -3,12 +3,9 @@ import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 
 rstest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
-  // eslint-disable-next-line react/display-name
   DefaultSecondaryMasthead: () => <div data-test="DefaultSecondaryMasthead" />
 }));
 
-// VirtualList is a connected component; import after mocks
-// eslint-disable-next-line import/first
 import { VirtualList } from '../VirtualList';
 
 describe('VirtualList', () => {

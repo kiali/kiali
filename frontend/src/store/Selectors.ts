@@ -9,7 +9,7 @@ import { ComponentStatus } from '../types/IstioStatus';
 
 type Selector<T> = (state: KialiAppState) => T;
 
-const createIdentitySelector = <T extends unknown>(selector: Selector<T>): Selector<T> =>
+const createIdentitySelector = <T>(selector: Selector<T>): Selector<T> =>
   createSelector(selector, (x: T): T => x);
 
 // select the proper field from Redux State
