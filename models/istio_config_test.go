@@ -201,3 +201,28 @@ func TestMergeConfigs_TrafficExtensionsWithEmpty(t *testing.T) {
 	require.Len(t, merged.TrafficExtensions, 1)
 	assert.Equal(t, "filter-a", merged.TrafficExtensions[0].Name)
 }
+
+func TestNamespaces(t *testing.T) {
+	list := models.IstioConfigList{
+		VirtualServices: []*networking_v1.VirtualService{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "vs1", Namespace: "bookinfo"}},
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "vs2", Namespace: "default"}},
+		},
+		DestinationRules: []*networking_v1.DestinationRule{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "dr1", Namespace: "bookinfo"}},
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "dr2", Namespace: "other-ns"}},
+		},
+	}
+
+	namespaces := list.Namespaces()
+	assert.Len(t, namespaces, 3)
+	assert.Contains(t, namespaces, "bookinfo")
+	assert.Contains(t, namespaces, "default")
+	assert.Contains(t, namespaces, "other-ns")
+}
+
+func TestNamespacesEmpty(t *testing.T) {
+	list := models.IstioConfigList{}
+	namespaces := list.Namespaces()
+	assert.Empty(t, namespaces)
+}

@@ -110,7 +110,7 @@ func TestNamespaceLabelChangeTriggersValidation(t *testing.T) {
 	assert.True(vInfo.hasBaseChange, "Namespace label change should set hasBaseChange to true")
 }
 
-func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
+func TestValidateIncludesConfigsFromUnmanagedNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -161,10 +161,11 @@ func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
 	bookinfoKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: bookinfo, Name: "reviews-vs"}
 	assert.Contains(validations, bookinfoKey, "managed namespace should have validations")
 
-	// orphan-ns is NOT managed: nothing should appear for it
-	for key := range validations {
-		assert.NotEqual(orphan, key.Namespace, "unmanaged namespace %q should have no validations", orphan)
-	}
+	// orphan-ns VS should also be validated because Istio processes configs from all
+	// namespaces (unless discovery selectors restrict this). Configs from unmanaged
+	// namespaces are included in the validation pool and validated alongside managed ones.
+	orphanKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: orphan, Name: "ratings-vs"}
+	assert.Contains(validations, orphanKey, "configs from unmanaged namespaces should be validated")
 }
 
 func TestAmbientNamespaceWaypointDoesNotTriggerWaypointNotFound(t *testing.T) {
@@ -452,6 +453,79 @@ func TestMultiPrimaryFilterExportToNamespacesVS(t *testing.T) {
 	assert.Len(filteredBookinfo2, 1, "viewing bookinfo2: only bookinfo2 VS should be included")
 	assert.Equal("ratings", filteredBookinfo2[0].Name)
 	assert.Equal("bookinfo2", filteredBookinfo2[0].Namespace)
+}
+
+func TestMultiPrimaryWithUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Multi-primary: CP1 manages mesh1-ns (exportTo "."), CP2 manages mesh2-ns (exportTo "*").
+	// "ingress-ns" is unmanaged by either CP but has a VirtualService.
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "mesh1-ns"}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"."},
+					},
+				},
+			},
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: false},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "mesh2-ns"}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"."},
+					},
+				},
+			},
+		},
+	}
+
+	vsMesh1 := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-mesh1", Namespace: "mesh1-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"svc1"}},
+	}
+	vsMesh2 := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-mesh2", Namespace: "mesh2-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"svc2"}},
+	}
+	// VS from unmanaged namespace, no explicit exportTo
+	vsIngress := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-ingress", Namespace: "ingress-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"ingress-svc"}},
+	}
+	vsList := []*networking_v1.VirtualService{vsMesh1, vsMesh2, vsIngress}
+
+	// 1) filterIstioConfigByManagedNamespaces should preserve all three VS
+	configList := &models.IstioConfigList{VirtualServices: vsList}
+	filterIstioConfigByManagedNamespaces(configList, &mesh, cluster, []string{"mesh1-ns", "mesh2-ns", "ingress-ns"})
+	assert.Len(configList.VirtualServices, 3, "all VS should be preserved (managed + unmanaged)")
+
+	// 2) Export-to filtering from mesh1-ns perspective:
+	//    - vsMesh1 (mesh1-ns, "."): visible in own namespace -> included
+	//    - vsMesh2 (mesh2-ns, "."): only visible in mesh2-ns -> excluded
+	//    - vsIngress (ingress-ns, unmanaged, no exportTo): no mesh default -> exported to all -> included
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshServiceWithMesh(t, *conf, mesh, objs...)
+	vInfoMesh1 := mockValidationInfo(conf, map[string]bool{"mesh1-ns": false, "mesh2-ns": false, "ingress-ns": false}, "mesh1-ns")
+	vInfoMesh1.mesh = &mesh
+	filteredMesh1 := v.filterVSExportToNamespaces(configList.VirtualServices, &vInfoMesh1)
+	assert.Len(filteredMesh1, 2, "viewing mesh1-ns: mesh1 VS + unmanaged VS should be included, mesh2 VS excluded")
+
+	filteredNames := make([]string, 0, len(filteredMesh1))
+	for _, vs := range filteredMesh1 {
+		filteredNames = append(filteredNames, vs.Name)
+	}
+	assert.Contains(filteredNames, "vs-mesh1", "mesh1 VS visible in own namespace")
+	assert.Contains(filteredNames, "vs-ingress", "unmanaged VS exported to all")
+	assert.NotContains(filteredNames, "vs-mesh2", "mesh2 VS should not leak into mesh1")
 }
 
 func TestFilterExportToNamespacesVS(t *testing.T) {
@@ -1252,6 +1326,135 @@ func getGateway(name, namespace string) []*networking_v1.Gateway {
 				"app": "real",
 			})),
 	}
+}
+
+func TestFilterIstioConfigByManagedNamespacesIncludesUnmanaged(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	configList := &models.IstioConfigList{
+		VirtualServices: []*networking_v1.VirtualService{
+			{ObjectMeta: v1.ObjectMeta{Name: "vs-managed", Namespace: "bookinfo"}},
+			{ObjectMeta: v1.ObjectMeta{Name: "vs-unmanaged", Namespace: "unmanaged-ns"}},
+		},
+		DestinationRules: []*networking_v1.DestinationRule{
+			{ObjectMeta: v1.ObjectMeta{Name: "dr-unmanaged", Namespace: "another-unmanaged"}},
+		},
+		ServiceEntries: []*networking_v1.ServiceEntry{
+			{ObjectMeta: v1.ObjectMeta{Name: "se-managed", Namespace: "bookinfo"}},
+		},
+	}
+
+	filterIstioConfigByManagedNamespaces(configList, mesh, cluster, []string{"bookinfo", "unmanaged-ns", "another-unmanaged"})
+
+	assert.Len(configList.VirtualServices, 2, "VS in unmanaged namespace should be preserved")
+	assert.Len(configList.DestinationRules, 1, "DR in unmanaged namespace should be preserved")
+	assert.Len(configList.ServiceEntries, 1, "SE in managed namespace should be preserved")
+}
+
+func TestFilterVSExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	// VS in an unmanaged namespace with no explicit exportTo should be exported to all (Istio default)
+	vsUnmanaged := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "unmanaged-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"reviews"}},
+	}
+	vsManaged := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"ratings"}},
+	}
+	vsList := []*networking_v1.VirtualService{vsUnmanaged, vsManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterVSExportToNamespaces(vsList, &vInfo)
+	assert.Len(filtered, 2, "VS from unmanaged namespace should be included (exported to all by default)")
+}
+
+func TestFilterDRExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	drUnmanaged := &networking_v1.DestinationRule{
+		ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "unmanaged-ns"},
+	}
+	drManaged := &networking_v1.DestinationRule{
+		ObjectMeta: v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"},
+	}
+	drList := []*networking_v1.DestinationRule{drUnmanaged, drManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterDRExportToNamespaces(drList, &vInfo)
+	assert.Len(filtered, 2, "DR from unmanaged namespace should be included (exported to all by default)")
+}
+
+func TestFilterSEExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	seUnmanaged := &networking_v1.ServiceEntry{
+		ObjectMeta: v1.ObjectMeta{Name: "external-api", Namespace: "unmanaged-ns"},
+	}
+	seManaged := &networking_v1.ServiceEntry{
+		ObjectMeta: v1.ObjectMeta{Name: "internal-svc", Namespace: "bookinfo"},
+	}
+	seList := []*networking_v1.ServiceEntry{seUnmanaged, seManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterSEExportToNamespaces(seList, &vInfo)
+	assert.Len(filtered, 2, "SE from unmanaged namespace should be included (exported to all by default)")
 }
 
 func loadVirtualService(file string, t *testing.T) *networking_v1.VirtualService {
