@@ -33,6 +33,7 @@ const CHATBOT_MESSAGE_INPUT = '[data-testid="chatbot-message-bar-input"]';
 const CHATBOT_TOOL_LABEL = (name: string): string => `[data-test="ai-tool-label-${name}"]`;
 const CHATBOT_TOOL_MODAL = '[data-test="ai-tool-modal"]';
 const CHATBOT_SEND_BUTTON = '.pf-chatbot__button--send';
+const CHATBOT_DANGER_ALERT = '.pf-v6-c-alert.pf-m-danger';
 const CHATBOT_SOURCES = '.pf-chatbot__source';
 const CHATBOT_ALWAYS_NAVIGATE_SWITCH = '[data-testid="chatbot-always-navigate-switch"]';
 const CHATBOT_NAVIGATION_ACTION = '[data-testid="chatbot-navigation-action"]';
@@ -756,8 +757,6 @@ Then('the AI chatbot tool modal should display tool arguments containing {string
 // ============================================================
 // Error handling — HTTP error and SSE error event
 // ============================================================
-
-const CHATBOT_DANGER_ALERT = '.pf-v6-c-alert.pf-m-danger';
 
 When('user sends a message that returns a server error {string}', (message: string) => {
   lastResponseAlias = 'chatAIServerError';

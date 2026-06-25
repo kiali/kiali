@@ -1,5 +1,6 @@
-import { act, fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
+import { Map as ImmutableMap } from 'immutable';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { ChatAIActions } from 'actions/ChatAIActions';
@@ -94,13 +95,14 @@ describe('Prompt error handling', () => {
       fireEvent.click(getByTestId('mock-send-button'));
     });
 
-    // Allow async stream handler to settle
-    await act(async () => {});
-
-    const lastEntry = store.getState().aiChat.chatHistory.last() as any;
-    expect(lastEntry?.get('isStreaming')).toBe(false);
-    expect(lastEntry?.get('error')).toBeDefined();
-    expect(lastEntry?.get('who')).toBe('ai');
+    await waitFor(() => {
+      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      expect(lastEntry?.get('isStreaming')).toBe(false);
+      const error = lastEntry?.get('error') as { message: string } | undefined;
+      expect(error).toBeDefined();
+      expect(error?.message).toContain('Internal Server Error');
+      expect(lastEntry?.get('who')).toBe('ai');
+    });
   });
 
   it('dispatches an error entry when the stream throws a non-AbortError', async () => {
@@ -116,12 +118,12 @@ describe('Prompt error handling', () => {
       fireEvent.click(getByTestId('mock-send-button'));
     });
 
-    await act(async () => {});
-
-    const lastEntry = store.getState().aiChat.chatHistory.last() as any;
-    expect(lastEntry?.get('isStreaming')).toBe(false);
-    expect(lastEntry?.get('error')).toBeDefined();
-    expect(lastEntry?.get('who')).toBe('ai');
+    await waitFor(() => {
+      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      expect(lastEntry?.get('isStreaming')).toBe(false);
+      expect(lastEntry?.get('error')).toBeDefined();
+      expect(lastEntry?.get('who')).toBe('ai');
+    });
   });
 
   it('does not dispatch an error entry when the stream is aborted by the user', async () => {
@@ -137,11 +139,11 @@ describe('Prompt error handling', () => {
       fireEvent.click(getByTestId('mock-send-button'));
     });
 
-    await act(async () => {});
-
     // AbortError is silently ignored — the AI entry keeps its state from the cancel action,
     // and no additional error field is set by the catch handler.
-    const lastEntry = store.getState().aiChat.chatHistory.last() as any;
-    expect(lastEntry?.get('error')).toBeUndefined();
+    await waitFor(() => {
+      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      expect(lastEntry?.get('error')).toBeUndefined();
+    });
   });
 });
