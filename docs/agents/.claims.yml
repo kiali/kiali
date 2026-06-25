@@ -1,0 +1,459 @@
+# Codebase Scribe — Claims Registry
+# Auto-generated. Do not edit by hand.
+# Format: topic-name:section-id:N — claim text — file:line
+
+observability-and-ai:
+  ai-providers:
+  - id: 1
+    claim: "A third AI provider type — Anthropic (config.AnthropicProvider) — is now supported alongside OpenAI and Google, routed through ai/providers/anthropic/"
+    file: "ai/providers/provider.go"
+    approx_line: 27
+  - id: 2
+    claim: "The Anthropic provider uses github.com/anthropics/anthropic-sdk-go and stores system messages separately from dialogue messages in an anthropicConversation struct"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 27
+  - id: 3
+    claim: "Anthropic provider supports only provider.Config = '' (DefaultProviderConfigType); any other config type returns an error"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 58
+  - id: 4
+    claim: "SendChat iterates up to 5 tool-call rounds (maxToolIterations = 5) for the Anthropic provider"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 52
+  - id: 5
+    claim: "StopReasonPauseTurn causes the loop to continue without executing tools (Anthropic-specific streaming pause)"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 72
+  - id: 6
+    claim: "TransformToolCallToToolsProcessor now returns ([]mcp.ToolsProcessor, []string, error) — the interface was extended with an error return value"
+    file: "ai/providers/provider.go"
+    approx_line: 16
+  - id: 7
+    claim: "Tool schemas are normalized for Anthropic API: allOf is merged, anyOf/oneOf are stripped and approximated as constraint notes in descriptions, object schemas default additionalProperties to false"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 150
+  - id: 8
+    claim: "SplitConversationForReduction in helpers.go extracts the shared conversation-split logic previously duplicated in OpenAI and Google providers; anchor is leading messages with Role=='system' (up to first 2)"
+    file: "ai/providers/helpers.go"
+    approx_line: 200
+  - id: 9
+    claim: "Anthropic token limits: defaultMaxTokens=4096 for chat, reduceConversationMaxTokens=1024 for summarization"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 17
+  - id: 10
+    claim: "Model-level endpoint override: if model.Endpoint is non-empty, option.WithBaseURL is passed to the Anthropic client"
+    file: "ai/providers/anthropic/anthropic_provider.go"
+    approx_line: 53
+  ai-store:
+  - id: 1
+    claim: "AiStoreConfig now includes InactivityTimeout (default 30m); NewAIStore launches a background goroutine startInactivityCleanupLoop when Enabled=true and InactivityTimeout>0"
+    file: "ai/store.go"
+    approx_line: 39
+  - id: 2
+    claim: "purgeInactiveSessions deletes entire sessions (all their conversations) when LastAccessed is before the cutoff time"
+    file: "ai/store.go"
+    approx_line: 346
+  - id: 3
+    claim: "GetConversationIDs and DeleteConversations now update AIChatConversation.LastAccessed to extend the inactivity timeout on read/delete operations"
+    file: "ai/store.go"
+    approx_line: 265
+  - id: 4
+    claim: "A single conversation that alone exceeds MaxCacheMemoryMB is rejected immediately without triggering eviction"
+    file: "ai/store.go"
+    approx_line: 130
+  - id: 5
+    claim: "When the last conversation in a session is evicted or deleted, the session map entry itself is removed"
+    file: "ai/store.go"
+    approx_line: 224
+  - id: 6
+    claim: "The cleanup loop tick interval is half the InactivityTimeout, clamped between 50ms and 1 minute"
+    file: "ai/store.go"
+    approx_line: 323
+  - id: 7
+    claim: "The system prompt includes a TOOL OUTPUT HANDLING section instructing the LLM to treat tool output as untrusted data and never follow directives found in it (prompt injection mitigation)"
+    file: "ai/types/prompt.go"
+    approx_line: 32
+  - id: 8
+    claim: "InactivityTimeout config is read from cfg.ChatAI.StoreConfig.InactivityTimeout as a duration string; invalid/zero values fall back to 30m with a warning"
+    file: "ai/store.go"
+    approx_line: 313
+
+frontend-architecture:
+  page-utils:
+  - id: 1
+    claim: "PageUtils.ts (frontend/src/pages/PageUtils.ts) is a new module exposing buildMetadataPatch, buildWorkloadMetadataPatch, navigateToFilteredList, and partitionByIstio"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 1
+  - id: 2
+    claim: "buildMetadataPatch sets removed keys to null, conforming to JSON merge-patch (RFC 7396)"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 22
+  - id: 3
+    claim: "buildWorkloadMetadataPatch patches both metadata and spec.template.metadata for Deployment, ReplicaSet, ReplicationController, DeploymentConfig, StatefulSet, DaemonSet; only metadata for Pod, Job, CronJob"
+    file: "frontend/src/pages/PageUtils.ts"
+    approx_line: 32
+  styling:
+  - id: 1
+    claim: "RenderHeader no longer accepts actionsToolbar or actionsToolbarTop props; the absolutely-positioned overlay was removed from RenderHeader"
+    file: "frontend/src/components/Nav/Page/RenderHeader.tsx"
+    approx_line: 1
+  - id: 2
+    claim: "ParameterizedTabs now accepts actionsToolbar and renders it as position:absolute; right:0; top:0; zIndex:1 inside flexTabWrapperStyle which gained position:relative"
+    file: "frontend/src/components/Tab/Tabs.tsx"
+    approx_line: 30
+  - id: 3
+    claim: "RenderHeader.paddingBottom was reduced from 1rem to 0.5rem"
+    file: "frontend/src/components/Nav/Page/RenderHeader.tsx"
+    approx_line: 11
+  - id: 4
+    claim: "Six new kialiStyle exports in FlexStyles.ts: detailTitleRowStyle, detailTitleMainStyle, detailGridStyle, detailPageTitleStyle, detailCardStackStyle, inlineIconRowStyle, clickableInlineStyle"
+    file: "frontend/src/styles/FlexStyles.ts"
+    approx_line: 61
+  pages:
+  - id: 1
+    claim: "WorkloadPods now renders pod detail in a PF6 Popover (click-triggered) with DescriptionList instead of a Tooltip (hover-triggered) with a custom ul"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 114
+  - id: 2
+    claim: "WorkloadPods column layout: Name=50%, Revision=30%, Health=20% with tableLayout:fixed; previously no explicit widths and column was named 'Status'"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 77
+  - id: 3
+    claim: "Pod names and revision values use ellipsis truncation with Tooltip showing the full value"
+    file: "frontend/src/pages/WorkloadDetails/WorkloadPods.tsx"
+    approx_line: 41
+  - id: 4
+    claim: "ServiceDetailsPage now supports in-place label/annotation editing via handleSaveMetadata calling buildMetadataPatch and API.updateService"
+    file: "frontend/src/pages/ServiceDetails/ServiceDetailsPage.tsx"
+    approx_line: 118
+  - id: 5
+    claim: "GraphDataSource.destroy() cancels all in-flight promises via promiseRegistry.cancelAll()"
+    file: "frontend/src/services/GraphDataSource.ts"
+    approx_line: 143
+
+auth-and-security:
+  auth-controller-interface:
+  - id: 1
+    claim: "ErrSubjectMismatch is a package-level sentinel error used when a token's subject claim does not match the stored subject"
+    file: "handlers/authentication/auth_controller.go"
+    approx_line: 116
+  openid-flow:
+  - id: 1
+    claim: "cachedOpenIdMetadata and cachedOpenIdKeySet are atomic.Pointer[T] values, making their load/store operations race-free without an explicit mutex"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 96
+  - id: 2
+    claim: "NewOpenIdAuthController logs a startup warning when conf.Server.WebFQDN is empty, because the OIDC redirect_uri would be derived from manipulable Host headers"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 111
+  - id: 3
+    claim: "ValidateSession returns fmt.Errorf wrapping ErrSessionNotFound when the OIDC token is absent, instead of returning nil, nil"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 122
+  - id: 4
+    claim: "ValidateSession returns ErrSubjectMismatch when the username claim in the refreshed id_token is not a string type or does not match the stored subject"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 134
+  - id: 5
+    claim: "validateOpenIdNonceCode distinguishes absent nonce claim from nonce value mismatch, and separately rejects non-string nonce claims"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 826
+  - id: 6
+    claim: "All three strategies (OpenID, OpenShift, Token) now use r.Header.Set for Kiali-User to prevent duplicate header accumulation"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 150
+  header-strategy:
+  - id: 1
+    claim: "In header auth Authenticate(), tokenOwner is the verified token subject; displayName is either the impersonation target or tokenOwner; only displayName is stored in the cookie"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 28
+  - id: 2
+    claim: "In header auth ValidateSession(), Kiali-User is set to the freshly verified token subject (via GetTokenSubject), not the session displayName, to prevent audit trail poisoning"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 142
+  session-persistence:
+  - id: 1
+    claim: "ReadAllSessions now actively terminates (MaxAge=-1) cookies whose strategy does not match the current config, rather than silently yielding stale-strategy sessions"
+    file: "handlers/authentication/session_persistor.go"
+    approx_line: 522
+  - id: 2
+    claim: "ReadAllSessions now actively terminates expired session cookies during multi-session reading rather than passing expired sessions to callers for per-strategy handling"
+    file: "handlers/authentication/session_persistor.go"
+    approx_line: 528
+  openshift-flow:
+  - id: 1
+    claim: "The oauth_token URL query parameter code path carries an explicit comment warning that it exposes the bearer token in proxy logs, browser history, and Referer headers"
+    file: "handlers/authentication/openshift_auth_controller.go"
+    approx_line: 470
+  token-strategy:
+  - id: 1
+    claim: "Token strategy ValidateSession uses r.Header.Set (not r.Header.Add) for Kiali-User to prevent duplicate header accumulation"
+    file: "handlers/authentication/token_auth_controller.go"
+    approx_line: 676
+
+kubernetes-client:
+  config-package:
+  - id: 1
+    claim: "AiStoreConfig has an InactivityTimeout field (DurationString, default '30m') that triggers background session eviction in the AI store"
+    file: "config/config.go"
+    approx_line: 787
+  - id: 2
+    claim: "Supported ProviderType constants are OpenAIProvider, AnthropicProvider, GoogleProvider, and DefaultProviderType; AnthropicProvider maps only to DefaultProviderConfigType"
+    file: "config/config.go"
+    approx_line: 806
+  client-factory:
+  - id: 3
+    claim: "User clients are cached by SHA-256 of the bearer token plus any impersonation fields and expire after 15 minutes (defaultExpirationTime)"
+    file: "kubernetes/client_factory.go"
+    approx_line: 1
+  - id: 4
+    claim: "SA clients are created once per cluster at startup and stored in saClientEntries; they are exposed as ClientInterface (read-only) by default"
+    file: "kubernetes/client_factory.go"
+    approx_line: 1
+  multi-cluster:
+  - id: 5
+    claim: "Remote cluster credentials are stored as Kubernetes Secrets in the home cluster and read by GetRemoteClusterInfos() at startup"
+    file: "kubernetes/cluster_secret.go"
+    approx_line: 1
+  - id: 6
+    claim: "conf.Clustering.IgnoreHomeCluster = true causes Kiali to exclude home cluster resources from the UI"
+    file: "config/config.go"
+    approx_line: 1
+_meta:
+  kubernetes-client_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+build-and-dev-conventions:
+  makefile-structure:
+  - id: 1
+    claim: "VERSION is set to v2.27.0-SNAPSHOT in the root Makefile and embedded in the binary at link time via ldflags -X"
+    file: "Makefile"
+    approx_line: 14
+  test-infrastructure:
+  - id: 2
+    claim: "ensureCypressReady() runs 'yarn lint:gherkin' to validate Gherkin .feature files before launching any Cypress test suite"
+    file: "hack/run-integration-tests.sh"
+    approx_line: 375
+  - id: 3
+    claim: "hack/hooks/pre-commit.sh uses anchored regex (.yml$ / .yaml$) for YAML file detection to avoid false positives on files like .yml.bak"
+    file: "hack/hooks/pre-commit.sh"
+    approx_line: 71
+_meta:
+  build-and-dev-conventions_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+business-logic:
+  services:
+  - id: 1
+    claim: "IstioStatusService.getStatusOf() resolves the app label name via conf.GetAppLabelName(workload.Labels) to support custom app label configurations beyond the static IstioAppLabel constant"
+    file: "business/istio_status.go"
+    approx_line: 444
+    provenance:
+      origin: user
+      context: "Driven by a user-reported GitHub issue in kiali/kiali requesting support for custom app label names beyond the default IstioAppLabel constant"
+      recorded: "2026-05-18"
+  - id: 2
+    claim: "IstioValidationsService.NewValidationInfo fetches namespaces before workloads (not after) so namespace metadata is available when building service account maps"
+    file: "business/istio_validations.go"
+    approx_line: 218
+  cache:
+  - id: 3
+    claim: "TransformPod and TransformService preserve CreationTimestamp in the trimmed ObjectMeta alongside Name, Namespace, Labels, Annotations, and OwnerReferences"
+    file: "cache/transform.go"
+    approx_line: 15
+_meta:
+  business-logic_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+auth-and-security:
+  openid-flow:
+  - id: 1
+    claim: "PKCE is mandatory in the OIDC flow — an absent code_verifier cookie causes a hard failure; not negotiated because modern IdPs require it as best practice"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 649
+    provenance:
+      origin: user
+      context: "PKCE made mandatory (not optional/negotiated) because most current identity providers require it as best practice for public clients"
+      recorded: "2026-05-18"
+  - id: 2
+    claim: "When conf.Auth.OpenId.ApiToken == 'access_token', the JWT sanity-check block (ErrSubjectMismatch checks) in ValidateSession is skipped because the access token is opaque"
+    file: "handlers/authentication/openid_auth_controller.go"
+    approx_line: 220
+    provenance:
+      origin: inferred
+  openshift-flow:
+  - id: 3
+    claim: "OpenShift ValidateSession requires a valid home cluster session; clustering.ignore_home_cluster only hides home cluster resources from the data plane and does not bypass this auth check"
+    file: "handlers/authentication/openshift_auth_controller.go"
+    approx_line: 268
+    provenance:
+      origin: inferred
+  header-strategy:
+  - id: 4
+    claim: "Header auth ValidateSession sets Kiali-User from GetTokenSubject; if GetTokenSubject fails, the header is omitted with a warning but the session is still returned as valid"
+    file: "handlers/authentication/header_auth_controller.go"
+    approx_line: 147
+    provenance:
+      origin: inferred
+_meta:
+  auth-and-security_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+frontend-architecture-auth:
+  authentication-flow:
+  - id: 1
+    claim: "AuthenticationController uses a LoginStage enum (LOGIN, POST_LOGIN, LOGGED_IN_AT_LOAD, LOGGED_IN) to gate which UI tree is rendered"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 64
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "For anonymous and header strategies, checkCredentials() is dispatched on mount and the stage is immediately set to LOGGED_IN_AT_LOAD to prevent flashing the login form"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 104
+    provenance:
+      origin: inferred
+  - id: 3
+    claim: "OAuthLogin.prepare() returns AuthResult.HOLD; LoginDispatcher waits 3 seconds then rejects — this is a known limitation when IdP redirects are slow"
+    file: "frontend/src/services/Login.ts"
+    approx_line: 127
+    provenance:
+      origin: user
+      context: "The 3-second delay before rejecting OAuth prepare is a known limitation, not an intentional design tradeoff"
+      recorded: "2026-05-18"
+  - id: 4
+    claim: "isAuthStrategyOAuth() returns true for openshift and openid strategies and is used to keep the initializing screen during post-login for OAuth flows"
+    file: "frontend/src/config/AuthenticationConfig.ts"
+    approx_line: 8
+    provenance:
+      origin: inferred
+  - id: 5
+    claim: "Global Axios interceptor dispatches LoginActions.sessionExpired() on HTTP 401; AuthenticationController.componentDidUpdate transitions back to LOGIN stage"
+    file: "frontend/src/app/AuthenticationController.tsx"
+    approx_line: 83
+    provenance:
+      origin: inferred
+_meta:
+  frontend-architecture_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+graph-engine:
+  caching:
+  - id: 1
+    claim: "Only namespace graphs (GraphNamespaces) are cached; node-detail graphs (GraphNode) are always generated fresh"
+    file: "handlers/graph.go"
+    approx_line: 81
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "Graph cache is keyed per browser session (SessionID from session cookie) rather than per graph options, to prevent cross-user RBAC data leakage"
+    file: "graph/graph_cache.go"
+    approx_line: 73
+    provenance:
+      origin: user
+      context: "Per-session keying is a security choice — different users have different RBAC scopes, so cross-user cache sharing would risk leaking data"
+      recorded: "2026-05-19"
+  - id: 3
+    claim: "RefreshJob fires the first refresh at interval/2, then switches to the full interval — a heuristic approximation to reduce worst-case staleness, not a hard guarantee"
+    file: "graph/refresh_job.go"
+    approx_line: 63
+    provenance:
+      origin: user
+      context: "The interval/2 offset is a good-enough approximation to reduce worst-case staleness rather than a formal staleness-bound guarantee"
+      recorded: "2026-05-19"
+  - id: 4
+    claim: "A RefreshJob panic evicts the session's graph and stops the job; the next user request becomes a cache miss — because serving a stale graph after a panic would be misleading"
+    file: "graph/refresh_job.go"
+    approx_line: 238
+    provenance:
+      origin: user
+      context: "Evict-on-panic is intentional — a panic means the refresh cycle is broken and a stale graph would be misleading; fresh regeneration on next request is preferred"
+      recorded: "2026-05-19"
+  - id: 5
+    claim: "Historical queries (explicit queryTime param, QueryTimeProvided=true) bypass the cache and generate a fresh graph without disrupting the running background refresh job"
+    file: "handlers/graph.go"
+    approx_line: 170
+    provenance:
+      origin: inferred
+  - id: 6
+    claim: "RefreshInterval <= 0 triggers cache bypass mode: stops the refresh job, evicts the cached graph, generates fresh graph without caching"
+    file: "handlers/graph.go"
+    approx_line: 179
+    provenance:
+      origin: inferred
+  - id: 7
+    claim: "graphOptionsMatch deliberately ignores QueryTime when comparing cached vs requested options — background refresh handles time progression"
+    file: "handlers/graph.go"
+    approx_line: 343
+    provenance:
+      origin: inferred
+  - id: 8
+    claim: "Memory estimation: (nodes × 3KB) + (edges × 1KB) × 1.1 overhead; calculated once on first SetSessionGraph and reused on updates"
+    file: "graph/graph_cache.go"
+    approx_line: 286
+    provenance:
+      origin: inferred
+  - id: 9
+    claim: "LRU eviction: when new graph would exceed MaxCacheMemoryMB, oldest-LastAccessed sessions are evicted until enough memory is freed; tracked by kiali_graph_cache_evictions_total Prometheus counter"
+    file: "graph/graph_cache.go"
+    approx_line: 237
+    provenance:
+      origin: inferred
+  - id: 10
+    claim: "getSessionGraphInternal reads the cache without updating LastAccessed — used by RefreshJob to avoid artificially extending session lifetime during inactivity checks"
+    file: "graph/graph_cache.go"
+    approx_line: 120
+    provenance:
+      origin: inferred
+_meta:
+  graph-engine_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
+
+business-logic-health:
+  cache/health-pre-compute:
+  - id: 1
+    claim: "HealthMonitor is started via hcm.Start(ctx) in cmd/server.go after cache initialization; Start returns immediately with the refresh running in a background goroutine"
+    file: "business/health_cache.go"
+    approx_line: 75
+    provenance:
+      origin: inferred
+  - id: 2
+    claim: "RefreshHealth pre-fetches all workloads for the cluster once with GetAllWorkloads, then partitions by namespace — avoiding N per-namespace cluster-wide workload fetches"
+    file: "business/health_cache.go"
+    approx_line: 247
+    provenance:
+      origin: inferred
+  - id: 3
+    claim: "Health is computed with Kiali SA clients, not per-user tokens — all users see the same pre-computed health; namespace-level RBAC filtering is the user isolation boundary"
+    file: "business/health_cache.go"
+    approx_line: 192
+    provenance:
+      origin: user
+      context: "Intentional — health is a shared cluster view; RBAC filtering happens at the namespace level, not at individual health metric level"
+      recorded: "2026-05-19"
+  - id: 4
+    claim: "Panics during the initial or periodic health refresh are recovered — a failed cycle logs the error but does not crash the server"
+    file: "business/health_cache.go"
+    approx_line: 94
+    provenance:
+      origin: inferred
+  - id: 5
+    claim: "calculateDuration() extends the Prometheus query window to elapsed × 1.1 if a cycle was delayed (elapsed > configured duration)"
+    file: "business/health_cache.go"
+    approx_line: 411
+    provenance:
+      origin: inferred
+  - id: 6
+    claim: "HealthStatusExporter tracks naStreak per entity and deletes kiali_health_status gauge series only after max_consecutive_na (default 3) consecutive NA or missing refresh cycles"
+    file: "business/health_status_exporter.go"
+    approx_line: 74
+    provenance:
+      origin: inferred
+  - id: 7
+    claim: "health_config.compute.refresh_interval (default 3m) controls the HealthMonitor ticker; health_config.compute.duration (default 5m) is the Prometheus rate window per query"
+    file: "config/config.go"
+    approx_line: 930
+    provenance:
+      origin: inferred
+  - id: 8
+    claim: "Service health is fetched per-namespace (GetNamespaceServiceHealth); app and workload health use pre-fetched workloads (GetNamespaceAppHealthFromWorkloads / GetNamespaceWorkloadHealthFromWorkloads)"
+    file: "business/health_cache.go"
+    approx_line: 307
+    provenance:
+      origin: inferred
+_meta:
+  business-logic-health_extracted_at: "5b5a2d914858e50b0072a7b3fbf6c92e564908c1"
