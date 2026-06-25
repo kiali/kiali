@@ -41,7 +41,7 @@ describe('#getExprTEST', () => {
   });
 
   it('Check that replaceXCode convert correctly', () => {
-    var backendGo = '[45]XX';
+    let backendGo = '[45]XX';
     expect(replaceXCodeTEST(backendGo)).toStrictEqual('[45]\\d\\d');
 
     backendGo = '[45]xx';

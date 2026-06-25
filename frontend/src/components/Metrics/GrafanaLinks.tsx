@@ -14,7 +14,7 @@ type Props = {
   version?: string;
 };
 
-export class GrafanaLinks extends React.PureComponent<Props, {}> {
+export class GrafanaLinks extends React.PureComponent<Props> {
   static buildGrafanaLinks(props: Props): [string, string][] {
     const links: [string, string][] = [];
     props.links.forEach(d => {

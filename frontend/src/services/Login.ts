@@ -13,7 +13,7 @@ export interface LoginResult {
   status: AuthResult;
 }
 
-interface LoginStrategy<T extends unknown> {
+interface LoginStrategy<T> {
   perform: (request: DispatchRequest<T>) => Promise<LoginResult>;
   prepare: (info: AuthConfig) => Promise<AuthResult>;
 }

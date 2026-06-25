@@ -19,11 +19,8 @@ rstest.mock('components/Charts/CustomTooltip', () => ({
   HookedChartTooltip: () => null
 }));
 
-// eslint-disable-next-line import/first
 import { computeFlyoutOrientation, TraceLabel } from '../TraceTooltip';
-// eslint-disable-next-line import/first
 import { JaegerTrace } from 'types/TracingInfo';
-// eslint-disable-next-line import/first
 import { StatsMatrix } from 'utils/tracing/TraceStats';
 
 const makeTrace = (): JaegerTrace =>

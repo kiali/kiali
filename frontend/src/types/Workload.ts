@@ -41,7 +41,7 @@ export interface Workload {
   additionalDetails: AdditionalItem[];
   annotations: { [key: string]: string };
   appLabel: boolean;
-  availableReplicas: Number;
+  availableReplicas: number;
   cluster?: string;
   createdAt: string;
   gvk: GroupVersionKind;
@@ -57,7 +57,7 @@ export interface Workload {
   name: string;
   namespace: string;
   pods: Pod[];
-  replicas: Number;
+  replicas: number;
   resourceVersion: string;
   runtimes: Runtime[];
   services: Service[];

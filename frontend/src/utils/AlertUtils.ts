@@ -93,7 +93,7 @@ export const addInfo = (content: string, detail = '', isAlert = true): void => {
 export const addError = (
   message: string,
   error: Error,
-  isAlert: boolean = true,
+  isAlert = true,
   type: MessageType = MessageType.DANGER
 ): void => {
   if (isApiError(error)) {

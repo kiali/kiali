@@ -56,13 +56,11 @@ type OwnProps = {
 
 type Props = ReduxProps & StateProps & OwnProps;
 
-interface State {}
-
 const gridStyle = kialiStyle({
   paddingTop: '1rem'
 });
 
-class TraceDetailsComponent extends React.Component<Props, State> {
+class TraceDetailsComponent extends React.Component<Props> {
   constructor(props: Props) {
     super(props);
     const urlTrace = getTraceId();

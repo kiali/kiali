@@ -25,14 +25,8 @@ export const KIALI_PRODUCT_NAME = 'Kiali ServiceMesh Observability Assistant';
 export const INITIAL_NOTICE: AlertMessage = {
   title: 'Important',
   message:
-    `This is a dev preview of the ` +
-    KIALI_PRODUCT_NAME +
-    `. The ` +
-    KIALI_PRODUCT_NAME +
-    ` provides
+    `This is a dev preview of the ${KIALI_PRODUCT_NAME}. The ${KIALI_PRODUCT_NAME} provides
   answers to questions related to the Kiali console.
-  Interactions with the ` +
-    KIALI_PRODUCT_NAME +
-    ` is not utilized to enhance our products and services. `,
+  Interactions with the ${KIALI_PRODUCT_NAME} is not utilized to enhance our products and services. `,
   variant: 'info'
 };

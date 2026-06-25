@@ -118,7 +118,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     height: '100%',
     margin: 0,
     minWidth: summaryPanelWidth,
-    overflowY: 'auto' as 'auto',
+    overflowY: 'auto' as const,
     width: summaryPanelWidth
   };
 

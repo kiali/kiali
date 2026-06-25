@@ -20,7 +20,7 @@ export const isSimilarTrace = (t1: JaegerTrace, t2: JaegerTrace): boolean => {
   //  The closest their count are, the more similar the traces are.
   const nbSpansScore = distanceScore(t1.spans.length, t2.spans.length);
   type OpOccur = { op: string; t1: number; t2: number };
-  const countOperations = new Map<String, OpOccur>();
+  const countOperations = new Map<string, OpOccur>();
   t1.spans.forEach(s => {
     const counter = countOperations.get(s.operationName);
     if (counter) {

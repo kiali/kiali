@@ -41,9 +41,7 @@ const emptyStateStyle = kialiStyle({
   marginTop: 10
 });
 
-type EmptyGraphLayoutState = {};
-
-export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps, EmptyGraphLayoutState> {
+export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps> {
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps): boolean {
     const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);

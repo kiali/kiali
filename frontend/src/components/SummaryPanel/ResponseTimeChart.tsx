@@ -18,7 +18,7 @@ type ResponseTimeChartTypeProp = {
   unit: ResponseTimeUnit;
 };
 
-export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp, {}> {
+export class ResponseTimeChart extends React.Component<ResponseTimeChartTypeProp> {
   thereIsTrafficData = () => {
     return this.props.rtAvg.length > 0;
   };

@@ -38,7 +38,7 @@ const secondaryRightStyle = kialiStyle({
 
 export const TraceListItem: React.FunctionComponent<Props> = props => {
   const formattedTrace = new FormattedTraceInfo(props.trace);
-  const nameStyleToUse = formattedTrace.hasErrors() ? nameStyle + ' ' + errorStyle : nameStyle;
+  const nameStyleToUse = formattedTrace.hasErrors() ? `${nameStyle} ${errorStyle}` : nameStyle;
   return (
     <Tooltip
       content={

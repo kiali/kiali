@@ -76,7 +76,7 @@ export const toVCLines = (
         .map(k => `${k}=${labelsNoReporter[k]}`)
         .sort()
         .join(',');
-      labelsStr = `name=${metric.name},stat=${metric.stat}%` + labelsStr;
+      labelsStr = `name=${metric.name},stat=${metric.stat}%${labelsStr}`;
 
       if (!pairedMetrics[labelsStr]) {
         pairedMetrics[labelsStr] = [undefined, undefined];
@@ -89,7 +89,7 @@ export const toVCLines = (
       const color = colors[i % colors.length];
 
       let datapoints: Datapoint[] = [];
-      let name: string = '';
+      let name = '';
       if (twoLines[0] !== undefined && twoLines[1] !== undefined) {
         name = twoLines[0].name;
         const minDatapointsLength =

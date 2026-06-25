@@ -53,7 +53,7 @@ export class MeshDagreLayout extends BaseLayout implements Layout {
     return new DagreNode(node, nodeDistance, index);
   }
 
-  protected createLayoutLink(edge: Edge, source: LayoutNode, target: LayoutNode, isFalse: boolean = false): LayoutLink {
+  protected createLayoutLink(edge: Edge, source: LayoutNode, target: LayoutNode, isFalse = false): LayoutLink {
     return new DagreLink(edge, source, target, isFalse);
   }
 

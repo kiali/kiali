@@ -1,4 +1,4 @@
-/* eslint-disable import/no-default-export */
+/* eslint-disable import-x/no-default-export */
 declare module 'react-syntax-highlighter/dist/cjs/default-highlight' {
   import { ComponentType } from 'react';
   const SyntaxHighlighter: ComponentType<any>;

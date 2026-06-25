@@ -18,7 +18,7 @@ export const renderDisabledDropdownOption = (
   child: React.ReactElement
 ): JSX.Element => {
   return (
-    <Tooltip key={'tooltip_' + key} position={position} content={<>{message}</>}>
+    <Tooltip key={`tooltip_${key}`} position={position} content={<>{message}</>}>
       <div className={optionDisabledStyle}>{child}</div>
     </Tooltip>
   );

@@ -7,7 +7,7 @@ export const getName = (durationSeconds: number): string => {
   if (name) {
     return name;
   }
-  return durationSeconds + ' seconds';
+  return `${durationSeconds} seconds`;
 };
 
 export const getRefreshIntervalName = (refreshInterval: IntervalInMilliseconds): string => {

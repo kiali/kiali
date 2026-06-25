@@ -39,7 +39,7 @@ export class RateHealth extends HealthAnnotation {
   };
 
   getToleranceConfig = (): ToleranceConfig[] => {
-    var configs: ToleranceConfig[] = [];
+    const configs: ToleranceConfig[] = [];
     if (this.isValid) {
       this.annotation.split(';').forEach(annotate => {
         const splits = annotate.split(',');
@@ -55,7 +55,7 @@ export class RateHealth extends HealthAnnotation {
     return configs;
   };
 
-  private convertRegex = (str: string, code: boolean = false): RegExp => {
+  private convertRegex = (str: string, code = false): RegExp => {
     if (code) {
       return new RegExp(str.replace(/x|X/g, '\\d'));
     }

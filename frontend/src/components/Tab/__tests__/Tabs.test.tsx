@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 import { render } from '@testing-library/react';
 import { Tab } from '@patternfly/react-core';
 import { Provider } from 'react-redux';

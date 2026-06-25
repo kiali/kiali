@@ -104,5 +104,5 @@ export const generateKey = (metrics: Metric[], chartName: string): string => {
     return chartName;
   }
 
-  return chartName + '-' + labelNames.join('-');
+  return `${chartName}-${labelNames.join('-')}`;
 };

@@ -51,7 +51,7 @@ export class FormattedTraceInfo {
 
   absTime() {
     const timeStr = this.mDate.format('h:mm:ss a');
-    return timeStr.slice(0, -3) + ' ' + timeStr.slice(-2);
+    return `${timeStr.slice(0, -3)} ${timeStr.slice(-2)}`;
   }
 
   fromNow() {

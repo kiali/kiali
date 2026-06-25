@@ -73,7 +73,7 @@ export class HookedChartTooltip<T> extends React.Component<HookedTooltipProps<T>
   }
 }
 
-type Props = HookedTooltipProps<{}> & {
+type Props = HookedTooltipProps<Record<string, never>> & {
   showTime?: boolean;
 };
 

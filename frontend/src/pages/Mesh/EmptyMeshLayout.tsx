@@ -28,9 +28,7 @@ const emptyStateStyle = kialiStyle({
   marginTop: 10
 });
 
-type EmptyMeshLayoutState = {};
-
-export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps, EmptyMeshLayoutState> {
+export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps> {
   shouldComponentUpdate(nextProps: EmptyMeshLayoutProps): boolean {
     const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
     const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);

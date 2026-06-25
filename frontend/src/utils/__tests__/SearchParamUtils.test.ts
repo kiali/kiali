@@ -1,4 +1,3 @@
-/* eslint-disable import/first */
 let mockKioskValue = '';
 
 rstest.mock('store/ConfigStore', () => ({
