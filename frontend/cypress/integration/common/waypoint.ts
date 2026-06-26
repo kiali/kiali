@@ -1,6 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
+import { openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
+import { confirmNamespaceTrafficPolicyModal, openNamespaceActionsMenu } from './namespace_actions';
 import { Pod } from 'types/IstioObjects';
 import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
@@ -613,7 +614,7 @@ Then('the user updates the log level to {string}', (level: string) => {
 });
 
 When('user opens the menu', () => {
-  cy.get('[aria-label="Actions"]').click();
+  openNamespaceActionsMenu();
 });
 
 When('the option {string} does not exist for {string} namespace', (option, namespace: string) => {
@@ -642,13 +643,48 @@ When('the user clicks on {string} for {string} namespace', (option, namespace: s
   }
   // Click the menu item button (the button inside the li element)
   cy.get(`[data-test=${selector}]`).find('button').click();
-  // Click outside the menu to close it before interacting with the modal
-  cy.get('body').click(0, 0);
-  // Wait for the modal to appear - check for modal content to ensure it's fully rendered
-  cy.contains('Are you sure?', { timeout: 10000 }).should('be.visible');
-  // Wait for modal confirm button to be visible and clickable
-  cy.get(`[data-test="confirm-create"]`).should('be.visible').should('not.be.disabled').click();
+  confirmNamespaceTrafficPolicyModal();
 });
+
+When('user clicks on {string} in namespace actions', (option: string) => {
+  cy.url().then(url => {
+    const namespace = url.match(/\/(projects|namespaces)\/([^/?]+)/)?.[2] ?? '';
+    let selector = '';
+    switch (option) {
+      case 'removes auto injection':
+        selector = `remove-${namespace}-namespace-sidecar-injection`;
+        break;
+      case 'Add to Ambient':
+        selector = `add-${namespace}-namespace-ambient`;
+        break;
+      case 'remove Ambient':
+        selector = `remove-${namespace}-namespace-ambient`;
+        break;
+      case 'enable sidecar':
+        selector = `enable-${namespace}-namespace-sidecar-injection`;
+        break;
+    }
+    cy.get(`[data-test="${selector}"]`).should('be.visible').click();
+    confirmNamespaceTrafficPolicyModal();
+  });
+});
+
+Then('the namespace {string} labels do not contain {string}', (namespace: string, labelKey: string) => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+    expect(response.status).to.equal(200);
+    expect(response.body.labels).to.not.have.property(labelKey);
+  });
+});
+
+Then(
+  'the namespace {string} labels contain {string} with value {string}',
+  (namespace: string, labelKey: string, labelValue: string) => {
+    cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+      expect(response.status).to.equal(200);
+      expect(response.body.labels[labelKey]).to.equal(labelValue);
+    });
+  }
+);
 
 When('{string} badge {string}', (badge, option: string) => {
   let selector = 'not.exist';
