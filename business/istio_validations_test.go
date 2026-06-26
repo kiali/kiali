@@ -528,6 +528,316 @@ func TestMultiPrimaryWithUnmanagedNamespace(t *testing.T) {
 	assert.NotContains(filteredNames, "vs-mesh2", "mesh2 VS should not leak into mesh1")
 }
 
+// Regression test for https://github.com/kiali/kiali/issues/9937
+// Validates the full pipeline for HTTPRoutes referencing K8s Gateways across
+// managed, Ambient, and unmanaged namespaces.
+func TestHTTPRouteWithGatewayInUnmanagedNamespace(t *testing.T) {
+	ambientNS := "app-ambient"
+	nonAmbientNS := "app-non-ambient"
+	unmanagedGWNS := "istio-ingress"
+
+	// An HTTPRoute in an Ambient namespace referencing a Gateway in an unmanaged
+	// namespace with allowedRoutes.namespaces.from: All must NOT produce KIA1401.
+	t.Run("ambient ns with existing gateway no KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app", ambientNS, []string{"app.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "HTTPRoute should be validated")
+
+		for _, chk := range vals[routeKey].Checks {
+			assert.NotEqual("k8sroutes.nok8sgateway", chk.Code,
+				"KIA1401 must not be reported for an Ambient HTTPRoute referencing a Gateway in an unmanaged namespace with allowedRoutes from: All")
+		}
+	})
+
+	// An HTTPRoute in a non-Ambient, non-managed namespace referencing the same
+	// Gateway must also be validated without a false-positive KIA1401.
+	t.Run("non-ambient unmanaged ns with existing gateway no KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app", nonAmbientNS, []string{"app.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: nonAmbientNS},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "HTTPRoute in non-Ambient namespace should be validated")
+
+		for _, chk := range vals[routeKey].Checks {
+			assert.NotEqual("k8sroutes.nok8sgateway", chk.Code,
+				"KIA1401 must not be reported for a non-Ambient HTTPRoute referencing a Gateway in an unmanaged namespace with allowedRoutes from: All")
+		}
+	})
+
+	// When the referenced Gateway truly does not exist, KIA1401 must be reported.
+	t.Run("non-existent gateway produces KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		httpRouteAmbient := data.AddGatewayParentRefToHTTPRoute("does-not-exist", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app-ambient", ambientNS, []string{"app.example.com"}),
+		)
+		httpRouteNonAmbient := data.AddGatewayParentRefToHTTPRoute("does-not-exist", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app-non-ambient", nonAmbientNS, []string{"app2.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			httpRouteAmbient, httpRouteNonAmbient,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: nonAmbientNS},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		ambientKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app-ambient"}
+		assert.Contains(vals, ambientKey, "Ambient HTTPRoute should be validated")
+		assert.False(vals[ambientKey].Valid, "HTTPRoute referencing non-existent Gateway should be invalid")
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[ambientKey].Checks[0]))
+
+		nonAmbientKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app-non-ambient"}
+		assert.Contains(vals, nonAmbientKey, "Non-Ambient HTTPRoute should be validated")
+		assert.False(vals[nonAmbientKey].Valid, "HTTPRoute referencing non-existent Gateway should be invalid")
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[nonAmbientKey].Checks[0]))
+	})
+}
+
+// Validates that ValidateIstioObject (the details-page path) produces validations
+// for objects in unmanaged namespaces. ControlPlaneForNamespace returns an error
+// for unmanaged namespaces, and the helper functions setNonLocalMTLSConfig,
+// isGatewayToNamespace, and isPolicyAllowAny must ignore that error. If they
+// propagate it, ValidateIstioObject aborts early and returns nil validations
+// with nil error, making it appear as if the object has no issues.
+func TestValidateIstioObjectInUnmanagedNamespace(t *testing.T) {
+	ambientNS := "app-ambient"
+	nonAmbientNS := "app-non-ambient"
+	unmanagedGWNS := "istio-ingress"
+
+	buildTestEnv := func(t *testing.T, routeNS string, managedNamespaces []models.Namespace) IstioValidationsService {
+		t.Helper()
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddBackendRefToHTTPRoute("non-existent-svc", routeNS,
+			data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+				data.CreateEmptyHTTPRoute("app", routeNS, []string{"app.example.com"}),
+			),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				MeshConfig:        models.NewMeshConfig(),
+				RootNamespace:     "istio-system",
+				ManagedNamespaces: managedNamespaces,
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		return NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+	}
+
+	// HTTPRoute in Ambient namespace (managed) — setNonLocalMTLSConfig, isPolicyAllowAny,
+	// and isGatewayToNamespace must not block validation.
+	t.Run("ambient namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, ambientNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, ambientNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "ValidateIstioObject should return validations for Ambient namespace")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
+
+	// HTTPRoute in a non-Ambient managed namespace — same assertion.
+	t.Run("non-ambient managed namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, nonAmbientNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: nonAmbientNS},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, nonAmbientNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "ValidateIstioObject should return validations for managed namespace")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
+
+	// HTTPRoute in an unmanaged namespace — the critical case. If setNonLocalMTLSConfig,
+	// isGatewayToNamespace, or isPolicyAllowAny propagate the ControlPlaneForNamespace
+	// error instead of ignoring it, ValidateIstioObject returns nil validations with nil error,
+	// making it appear as if the object has no issues.
+	t.Run("unmanaged namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, unmanagedGWNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, unmanagedGWNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: unmanagedGWNS, Name: "app"}
+		assert.Contains(vals, routeKey,
+			"ValidateIstioObject must return validations even for objects in unmanaged namespaces; "+
+				"if this fails, setNonLocalMTLSConfig/isGatewayToNamespace/isPolicyAllowAny likely "+
+				"propagate the ControlPlaneForNamespace error instead of ignoring it")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
+}
+
 func TestFilterExportToNamespacesVS(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
