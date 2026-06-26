@@ -18,9 +18,10 @@ import {
 } from '@patternfly/react-core';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
-import { DurationInSeconds } from 'types/Common';
-import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
-import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, Status } from 'types/Health';
+import type { DurationInSeconds } from 'types/Common';
+import type { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
+import type { Status } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY } from 'types/Health';
 import { ControlPlaneBadge } from 'components/Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from 'components/Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from 'components/Badge/NotPartOfMeshBadge';
@@ -31,8 +32,7 @@ import { URLParam } from 'app/History';
 import { getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
 import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { t } from 'utils/I18nUtils';
-import { getNamespaceRevisions } from 'components/VirtualList/Renderers';
-import { isRevisionAvailable } from 'pages/Namespaces/NamespaceRevisionUtils';
+import { getNamespaceRevisions, isRevisionAvailable } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { KialiIcon, createIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
@@ -40,7 +40,7 @@ import { infoStyle } from 'styles/IconStyle';
 import { EditableAnnotationsCard } from 'components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from 'components/Label/EditableLabelsCard';
 import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
-import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
+import type { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { navigateToFilteredList } from '../PageUtils';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
@@ -251,6 +251,26 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
     }
   }
 
+  render(): React.ReactNode {
+    const { namespace } = this.props;
+    const miniGraphSpan = 8;
+
+    return (
+      <>
+        <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
+          <Grid hasGutter={true} className={detailGridStyle}>
+            <GridItem span={4} className={detailLeftColumnStyle}>
+              <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
+            </GridItem>
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
+            </GridItem>
+          </Grid>
+        </div>
+      </>
+    );
+  }
+
   private fetchGraph = (): void => {
     this.graphDataSource.fetchForNamespace(this.props.duration, this.props.namespace, this.props.nsInfo.cluster);
   };
@@ -411,26 +431,6 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
             title={t('Annotations')}
           />
         </StackItem>
-      </>
-    );
-  }
-
-  render(): React.ReactNode {
-    const { namespace } = this.props;
-    const miniGraphSpan = 8;
-
-    return (
-      <>
-        <div className={flexFillStyle} data-test={`namespace-detail-overview-${namespace}`}>
-          <Grid hasGutter={true} className={detailGridStyle}>
-            <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
-            </GridItem>
-            <GridItem span={miniGraphSpan}>
-              <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
-            </GridItem>
-          </Grid>
-        </div>
       </>
     );
   }

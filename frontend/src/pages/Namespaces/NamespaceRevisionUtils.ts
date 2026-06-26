@@ -1,4 +1,5 @@
 import { INJECTION_LABEL_REV } from 'config/ServerConfig';
+import type { NamespaceInfo } from 'types/NamespaceInfo';
 
 type NamespaceLike = {
   labels?: Record<string, string>;
@@ -20,4 +21,26 @@ export const isRevisionAvailable = (ns: NamespaceLike): boolean => {
     .map(r => r.trim())
     .filter(r => r !== '')
     .every(r => controlPlaneRevisions.has(r));
+};
+
+export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
+  let revision: string | undefined;
+  if (ns.labels?.[INJECTION_LABEL_REV]) {
+    revision = ns.labels[INJECTION_LABEL_REV];
+  }
+  if (!revision || revision === '') {
+    revision = ns.revision;
+  }
+  return revision;
+};
+
+export const getNamespaceRevisions = (ns: NamespaceInfo): string[] => {
+  const raw = getNamespaceRevision(ns);
+  if (!raw || raw === '') {
+    return [];
+  }
+  return raw
+    .split(',')
+    .map(r => r.trim())
+    .filter(r => r !== '');
 };
