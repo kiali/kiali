@@ -19,7 +19,7 @@ import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { NamespaceTrafficChart } from '../components/NamespaceTrafficChart';
 import * as API from '../../../services/Api';
-import { IstioMetricsOptions } from 'types/MetricsOptions';
+import { IstioMetricsOptions, buildReporter } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
 import { ApiError } from 'types/Api';
 import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
@@ -424,9 +424,8 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
       direction: direction,
       duration: this.props.duration,
       filters: ['request_count', 'request_error_count'],
-      includeAmbient: serverConfig.ambientEnabled,
       rateInterval: rateParams.rateInterval,
-      reporter: direction === 'inbound' ? 'destination' : 'source',
+      reporter: buildReporter(direction, serverConfig.ambientEnabled),
       step: rateParams.step
     };
 

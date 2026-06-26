@@ -3,7 +3,7 @@ import { DirectionType, TimeInMilliseconds, TimeRange } from '../../types/Common
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../services/Prometheus';
-import { IstioMetricsOptions } from '../../types/MetricsOptions';
+import { IstioMetricsOptions, buildReporter } from '../../types/MetricsOptions';
 import { location, router } from 'app/History';
 import { serverConfig } from '../../config';
 import * as MetricsHelper from '../Metrics/Helper';
@@ -52,9 +52,8 @@ export const ZtunnelMetrics: React.FC<ZtunnelMetricsProps> = (props: ZtunnelMetr
     direction: direction,
     duration: props.rangeDuration.rangeDuration,
     filters: ['request_count', 'request_error_count'],
-    includeAmbient: serverConfig.ambientEnabled,
     rateInterval: rateParams.rateInterval,
-    reporter: 'source',
+    reporter: buildReporter(direction, serverConfig.ambientEnabled),
     step: rateParams.step
   };
 

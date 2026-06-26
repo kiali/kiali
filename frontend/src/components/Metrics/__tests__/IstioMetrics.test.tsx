@@ -110,7 +110,7 @@ describe('Metrics for a service', () => {
             object="svc"
             objectType={MetricsObjectTypes.SERVICE}
             direction={'inbound'}
-            includeAmbient={false}
+            includeWaypoint={false}
           />
         </MemoryRouter>
       </Provider>
@@ -128,7 +128,7 @@ describe('Metrics for a service', () => {
           object="svc"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
-          includeAmbient={false}
+          includeWaypoint={false}
           lastRefreshAt={1720526431902}
         />
       )
@@ -158,7 +158,7 @@ describe('Metrics for a service', () => {
           object="svc"
           objectType={MetricsObjectTypes.SERVICE}
           direction={'inbound'}
-          includeAmbient={false}
+          includeWaypoint={false}
           lastRefreshAt={1720526431902}
         />
       )
@@ -204,7 +204,7 @@ describe('Inbound Metrics for a workload', () => {
             object="svc"
             objectType={MetricsObjectTypes.WORKLOAD}
             direction={'inbound'}
-            includeAmbient={false}
+            includeWaypoint={false}
           />
         </MemoryRouter>
       </Provider>
@@ -222,7 +222,7 @@ describe('Inbound Metrics for a workload', () => {
           object="wkd"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
-          includeAmbient={false}
+          includeWaypoint={false}
           lastRefreshAt={1720526431902}
         />
       )
@@ -252,7 +252,7 @@ describe('Inbound Metrics for a workload', () => {
           object="wkd"
           objectType={MetricsObjectTypes.WORKLOAD}
           direction={'inbound'}
-          includeAmbient={false}
+          includeWaypoint={false}
           lastRefreshAt={1720526431902}
         />
       )

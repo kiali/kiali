@@ -306,8 +306,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_GetMetrics(t *testing.T) {
 					},
 					"reporter": map[string]interface{}{
 						"type":        "string",
-						"description": "Metrics reporter: 'source', 'destination', or 'both'. Optional, defaults to 'source'",
-						"enum":        []interface{}{"source", "destination", "both"},
+						"description": "Metrics reporter(s). Comma-separated list of: 'source', 'destination', 'waypoint', or the special value 'both' (no reporter filter). Optional, defaults to 'source'. Example: 'source,waypoint'",
 					},
 					"requestProtocol": map[string]interface{}{
 						"type":        "string",

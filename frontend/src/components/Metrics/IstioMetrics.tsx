@@ -15,7 +15,7 @@ import {
 import * as API from 'services/Api';
 import { KialiAppState } from 'store/Store';
 import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
-import { Direction, IstioMetricsOptions, Reporter } from 'types/MetricsOptions';
+import { Direction, IstioMetricsOptions, withWaypoint, baseReporter } from 'types/MetricsOptions';
 import { addError } from 'utils/AlertUtils';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
@@ -65,7 +65,7 @@ type ObjectId = {
 
 type IstioMetricsProps = ObjectId & {
   direction: Direction;
-  includeAmbient: boolean;
+  includeWaypoint: boolean;
   objectType: MetricsObjectTypes;
 } & {
   lastRefreshAt: TimeInMilliseconds;
@@ -119,10 +119,10 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   }
 
   private initOptions(settings: MetricsSettings): IstioMetricsOptions {
+    const initialReporter = MetricsReporter.initialReporter(this.props.direction);
     const options: IstioMetricsOptions = {
       direction: this.props.direction,
-      includeAmbient: this.props.includeAmbient,
-      reporter: MetricsReporter.initialReporter(this.props.direction)
+      reporter: withWaypoint(initialReporter, this.props.includeWaypoint)
     };
 
     const defaultLabels = [
@@ -294,8 +294,8 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     this.setState({ labelsSettings: labelsFilters });
   };
 
-  private onReporterChanged = (reporter: Reporter): void => {
-    this.options.reporter = reporter;
+  private onReporterChanged = (reporter: string): void => {
+    this.options.reporter = withWaypoint(reporter, this.props.includeWaypoint);
     this.fetchMetrics();
   };
 
@@ -431,7 +431,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               <MetricsReporter
                 onChanged={this.onReporterChanged}
                 direction={this.props.direction}
-                reporter={this.options.reporter}
+                reporter={baseReporter(this.options.reporter)}
               />
             </ToolbarItem>
 

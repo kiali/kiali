@@ -14,7 +14,7 @@ func TestMetricsLabelsBuilderInboundHttp(t *testing.T) {
 
 	lb := NewMetricsLabelsBuilder("inbound", config.Get())
 	lb.App("test", "ns")
-	lb.Reporter("source", false)
+	lb.Reporters([]string{"source"})
 	lb.Protocol("http")
 	assert.Equal(`{destination_workload_namespace="ns",destination_canonical_service="test",reporter="source",request_protocol="http"}`, lb.Build())
 
@@ -29,7 +29,7 @@ func TestMetricsLabelsBuilderOutboundGrpc(t *testing.T) {
 
 	lb := NewMetricsLabelsBuilder("outbound", config.Get())
 	lb.Workload("test", "ns")
-	lb.Reporter("destination", false)
+	lb.Reporters([]string{"destination"})
 	lb.Protocol("grpc")
 	assert.Equal(`{source_workload_namespace="ns",source_workload="test",reporter="destination",request_protocol="grpc"}`, lb.Build())
 
@@ -37,6 +37,17 @@ func TestMetricsLabelsBuilderOutboundGrpc(t *testing.T) {
 	assert.Len(errs, 2)
 	assert.Equal(`{source_workload_namespace="ns",source_workload="test",reporter="destination",request_protocol="grpc",response_code=~"^0$|^[4-5]\\d\\d$"}`, errs[0])
 	assert.Equal(`{source_workload_namespace="ns",source_workload="test",reporter="destination",request_protocol="grpc",grpc_response_status=~"^[1-9]$|^1[0-6]$",response_code!~"^0$|^[4-5]\\d\\d$"}`, errs[1])
+}
+
+func TestMetricsLabelsBuilderWithWaypoint(t *testing.T) {
+	assert := assert.New(t)
+	config.Set(config.NewConfig())
+
+	lb := NewMetricsLabelsBuilder("inbound", config.Get())
+	lb.App("test", "ns")
+	lb.Reporters([]string{"destination", "waypoint"})
+	lb.Protocol("http")
+	assert.Equal(`{destination_workload_namespace="ns",destination_canonical_service="test",reporter=~"destination|waypoint",request_protocol="http"}`, lb.Build())
 }
 
 func TestMetricsLabelsBuilderInboundPeerLabels(t *testing.T) {

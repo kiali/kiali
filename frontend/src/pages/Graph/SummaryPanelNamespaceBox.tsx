@@ -25,6 +25,7 @@ import {
   getTitle,
   noTrafficStyle
 } from './SummaryPanelCommon';
+import { buildReporter } from '../../types/MetricsOptions';
 import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
@@ -584,10 +585,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           direction: 'inbound',
           duration: props.duration,
           filters: filters,
-          includeAmbient: serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           queryTime: props.queryTime,
           rateInterval: props.rateInterval,
-          reporter: 'destination',
+          reporter: buildReporter('inbound', serverConfig.ambientEnabled), // TODO change to "nodeData.isAmbient" when it is set for this node type
           step: props.step
         },
         cluster
@@ -599,10 +599,9 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           direction: 'outbound',
           duration: props.duration,
           filters: filters,
-          includeAmbient: serverConfig.ambientEnabled, // TODO change to "nodeData.isAmbient" when it is set for this node type
           queryTime: props.queryTime,
           rateInterval: props.rateInterval,
-          reporter: 'source',
+          reporter: buildReporter('outbound', serverConfig.ambientEnabled), // TODO change to "nodeData.isAmbient" when it is set for this node type
           step: props.step
         },
         cluster

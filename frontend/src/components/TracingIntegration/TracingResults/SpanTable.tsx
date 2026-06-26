@@ -40,7 +40,7 @@ type Props = ReduxProps &
     cluster?: string;
     externalURLProvider?: TracingUrlProvider;
     fromWaypoint: boolean; // If the traces come from a waypoint proxy
-    includeAmbient?: boolean;
+    includeWaypoint?: boolean;
     items: RichSpanData[];
     namespace: string;
     target: string;
@@ -203,12 +203,12 @@ class SpanTableComponent extends React.Component<Props, State> {
   }
 
   private fetchComparisonMetrics(items: RichSpanData[]): void {
-    const queries = buildQueriesFromSpans(items, false, this.shouldIncludeAmbient());
+    const queries = buildQueriesFromSpans(items, false, this.shouldIncludeWaypoint());
     this.props.loadMetricsStats(queries, false);
   }
 
-  private shouldIncludeAmbient = (): boolean =>
-    !!this.props.includeAmbient || this.props.items.some(item => isWaypointProxySpan(item));
+  private shouldIncludeWaypoint = (): boolean =>
+    !!this.props.includeWaypoint || this.props.items.some(item => isWaypointProxySpan(item));
 
   private rows = (): IRow[] => {
     const compare = columns[this.state.sortIndex].compare;
@@ -559,7 +559,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             item,
             !this.isExpanded(item.spanID),
             this.props.metricsStats,
-            this.shouldIncludeAmbient(),
+            this.shouldIncludeWaypoint(),
             () => this.fetchComparisonMetrics([item])
           )}
       </div>

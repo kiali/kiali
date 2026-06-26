@@ -192,7 +192,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           cluster={this.state.cluster}
           data-test="inbound-metrics-component"
           direction={'inbound'}
-          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
+          includeWaypoint={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
           object={this.props.appId.app}
@@ -207,7 +207,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
           cluster={this.state.cluster}
           data-test="outbound-metrics-component"
           direction={'outbound'}
-          includeAmbient={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
+          includeWaypoint={serverConfig.ambientEnabled} // TODO: replace this with actual `isAmbient` when supported for app
           lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.appId.namespace}
           object={this.props.appId.app}
@@ -241,7 +241,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
                 target={this.props.appId.app}
                 targetKind={'app'}
                 fromWaypoint={fromWaypoint}
-                includeAmbient={fromWaypoint || !!this.state.app?.isAmbient}
+                includeWaypoint={fromWaypoint || !!this.state.app?.isAmbient}
               />
             </Tab>
           );

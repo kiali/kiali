@@ -29,7 +29,6 @@ import {
   hr
 } from './SummaryPanelCommon';
 import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
-import { Reporter } from '../../types/MetricsOptions';
 import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, nodesOut, select } from 'helpers/GraphHelpers';
 import { ApiResponse } from 'types/Api';
@@ -161,7 +160,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         const filtersRps = ['request_count', 'request_error_count'];
 
         // use dest metrics for inbound, except for service nodes which need source metrics to capture source errors
-        let reporter: Reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
+        let reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
 
         // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
         // comparator in getNodeDatapoints).
@@ -247,8 +246,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         // use source metrics for outbound, except for:
         // - unknown nodes (no source telemetry)
         // - istio namespace nodes (no source telemetry)
-        const reporter: Reporter =
-          nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio ? 'destination' : 'source';
+        const reporter = nodeData.nodeType === NodeType.UNKNOWN || nodeData.isIstio ? 'destination' : 'source';
 
         // note: request_protocol is not a valid byLabel for tcp filters but it is ignored by prometheus
         const byLabels = nodeData.isOutside

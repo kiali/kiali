@@ -17,7 +17,7 @@ import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics
 import * as API from '../../../services/Api';
 import { addError } from '../../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../../services/Prometheus';
-import { IstioMetricsOptions } from '../../../types/MetricsOptions';
+import { IstioMetricsOptions, buildReporter } from '../../../types/MetricsOptions';
 import { isPrometheusAvailable, serverConfig } from '../../../config';
 
 type TargetPanelMetricsProps<T extends MeshNodeData> = TargetPanelCommonProps & {
@@ -38,9 +38,8 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
       direction: 'outbound',
       duration: props.duration,
       filters: ['request_count', 'request_error_count'],
-      includeAmbient: serverConfig.ambientEnabled,
       rateInterval: rateParams.rateInterval,
-      reporter: 'source',
+      reporter: buildReporter('outbound', serverConfig.ambientEnabled),
       step: rateParams.step
     };
 

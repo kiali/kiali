@@ -70,10 +70,10 @@ export let statsCompareKind: 'app' | 'workload' = 'workload';
 export const buildQueriesFromSpans = (
   items: RichSpanData[],
   isCompact: boolean,
-  includeAmbient = false
+  includeWaypoint = false
 ): MetricsStatsQuery[] => {
   const queryTime = Math.floor(Date.now() / 1000);
-  const shouldIncludeAmbient = includeAmbient || items.some(item => isWaypointProxySpan(item));
+  const shouldIncludeWaypoint = includeWaypoint || items.some(item => isWaypointProxySpan(item));
   // Load stats for up to 8 spans to limit the heavy loading. More stats can be loaded individually.
   const queries = items
     .filter(s => s.type === 'envoy')
@@ -100,7 +100,7 @@ export const buildQueriesFromSpans = (
         peerTarget: statsPerPeer ? info.peer : undefined,
         quantiles: isCompact ? compactStatsQuantiles : statsQuantiles,
         queryTime: queryTime,
-        reporters: getStatsReporters(info.direction, shouldIncludeAmbient),
+        reporters: getStatsReporters(info.direction, shouldIncludeWaypoint),
         target: {
           namespace: item.namespace,
           name: name,
@@ -150,7 +150,7 @@ export const getSpanStats = (
   item: RichSpanData,
   metricsStats: Map<string, MetricsStats>,
   isCompact: boolean,
-  includeAmbient: boolean
+  includeWaypoint: boolean
 ): StatsWithIntervalIndex[] => {
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
 
@@ -167,7 +167,7 @@ export const getSpanStats = (
       statsPerPeer ? info.peer : undefined,
       info.direction!,
       interval,
-      getStatsReporters(info.direction!, includeAmbient)
+      getStatsReporters(info.direction!, includeWaypoint)
     );
     if (key) {
       const stats = metricsStats.get(key);
@@ -187,7 +187,7 @@ export const reduceMetricsStats = (
   trace: JaegerTrace,
   allStats: Map<string, MetricsStats>,
   isCompact: boolean,
-  includeAmbient: boolean
+  includeWaypoint: boolean
 ): { isComplete: boolean; matrix: StatsMatrix } => {
   let isComplete = true;
   const intervals = isCompact ? compactStatsIntervals : statsIntervals;
@@ -199,7 +199,7 @@ export const reduceMetricsStats = (
   trace.spans
     .filter(s => s.type === 'envoy')
     .forEach(span => {
-      const spanStats = getSpanStats(span, allStats, isCompact, includeAmbient);
+      const spanStats = getSpanStats(span, allStats, isCompact, includeWaypoint);
       if (spanStats.length > 0) {
         spanStats.forEach(statsPerInterval => {
           statsPerInterval.responseTimes.forEach(stat => {

@@ -53,13 +53,6 @@ func (lb *MetricsLabelsBuilder) addSided(partialKey, value, side string) *Metric
 	return lb
 }
 
-func (lb *MetricsLabelsBuilder) Reporter(name string, includeAmbient bool) *MetricsLabelsBuilder {
-	if includeAmbient {
-		return lb.AddOp("reporter", fmt.Sprintf("%s|%s", name, "waypoint"), "=~")
-	}
-	return lb.Add("reporter", name)
-}
-
 func (lb *MetricsLabelsBuilder) Reporters(reporters []string) *MetricsLabelsBuilder {
 	if len(reporters) == 0 {
 		return lb

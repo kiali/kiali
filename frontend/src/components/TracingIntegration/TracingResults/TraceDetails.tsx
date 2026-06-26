@@ -45,7 +45,7 @@ type StateProps = {
 
 type OwnProps = {
   cluster?: string;
-  includeAmbient?: boolean;
+  includeWaypoint?: boolean;
   namespace: string;
   otherTraces: JaegerTrace[];
   provider?: string;
@@ -88,7 +88,7 @@ class TraceDetailsComponent extends React.Component<Props> {
   }
 
   private fetchComparisonMetrics(spans: RichSpanData[]): void {
-    const queries = buildQueriesFromSpans(spans, false, !!this.props.includeAmbient);
+    const queries = buildQueriesFromSpans(spans, false, !!this.props.includeWaypoint);
     this.props.loadMetricsStats(queries, false, this.props.cluster);
   }
 
@@ -269,13 +269,13 @@ class TraceDetailsComponent extends React.Component<Props> {
 
 const mapStateToProps = (state: KialiAppState, props: OwnProps): StateProps => {
   if (state.tracingState.selectedTrace) {
-    const includeAmbient =
-      !!props.includeAmbient || state.tracingState.selectedTrace.spans.some(span => isWaypointProxySpan(span));
+    const includeWaypoint =
+      !!props.includeWaypoint || state.tracingState.selectedTrace.spans.some(span => isWaypointProxySpan(span));
     const { matrix, isComplete } = reduceMetricsStats(
       state.tracingState.selectedTrace,
       state.metricsStats.data,
       false,
-      includeAmbient
+      includeWaypoint
     );
 
     return {
