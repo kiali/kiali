@@ -4,26 +4,28 @@ import { Label as PFLabel, Tooltip, TooltipPosition } from '@patternfly/react-co
 import { getFiltersFromURL } from '../FilterList/FilterHelper';
 import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
-import { Renderer, Resource, SortResource, TResource, GVKToBadge } from './Config';
+import type { Renderer, Resource, SortResource, TResource } from './Config';
+import { GVKToBadge } from './Config';
 import { HealthIndicator } from '../Health/HealthIndicator';
 import { ValidationObjectSummary } from '../Validations/ValidationObjectSummary';
 import { ValidationServiceSummary } from '../Validations/ValidationServiceSummary';
-import { WorkloadListItem } from '../../types/Workload';
-import { IstioConfigItem } from '../../types/IstioConfigList';
-import { AppListItem } from '../../types/AppList';
-import { ServiceListItem } from '../../types/ServiceList';
-import { ActiveFilter } from '../../types/Filters';
+import type { WorkloadListItem } from '../../types/Workload';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
+import type { AppListItem } from '../../types/AppList';
+import type { ServiceListItem } from '../../types/ServiceList';
+import type { ActiveFilter } from '../../types/Filters';
 import { renderAPILogo } from '../Logo/Logos';
-import { Health } from '../../types/Health';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { Health } from '../../types/Health';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ValidationSummary } from '../Validations/ValidationSummary';
-import { StatefulFiltersRef } from '../Filters/StatefulFilters';
+import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { IstioObjectLink, GetIstioObjectUrl } from '../Link/IstioObjectLink';
 import { labelFilter } from 'components/Filters/CommonFilters';
 import { labelFilter as NsLabelFilter } from '../../pages/Namespaces/Filters';
 import { ValidationSummaryLink } from '../Link/ValidationSummaryLink';
-import { ValidationStatus } from '../../types/IstioObjects';
-import { PFBadgeType, PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import type { ValidationStatus } from '../../types/IstioObjects';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { t } from 'utils/I18nUtils';
 import { getPagePath } from 'utils/NavigationUtils';
@@ -51,7 +53,7 @@ import { ControlPlaneBadge } from '../Badge/ControlPlaneBadge';
 import { DataPlaneBadge } from '../Badge/DataPlaneBadge';
 import { NotPartOfMeshBadge } from '../Badge/NotPartOfMeshBadge';
 import { getNamespaceDetailUrl, getNamespaceModeInfo, isDataPlaneNamespace } from 'utils/NamespaceUtils';
-import { isRevisionAvailable } from '../../pages/Namespaces/NamespaceRevisionUtils';
+import { isRevisionAvailable, getNamespaceRevisions } from '../../pages/Namespaces/NamespaceRevisionUtils';
 
 const revisionWarningIconStyle = kialiStyle({
   verticalAlign: 'middle'
@@ -523,30 +525,6 @@ export const nsMode: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
       </PFLabel>
     </Td>
   );
-};
-
-export const getNamespaceRevision = (ns: NamespaceInfo): string | undefined => {
-  let revision: string | undefined;
-  if (ns.labels) {
-    if (ns.labels[INJECTION_LABEL_REV]) {
-      revision = ns.labels[INJECTION_LABEL_REV];
-    }
-  }
-  if (!revision || revision === '') {
-    revision = ns.revision;
-  }
-  return revision;
-};
-
-export const getNamespaceRevisions = (ns: NamespaceInfo): string[] => {
-  const raw = getNamespaceRevision(ns);
-  if (!raw || raw === '') {
-    return [];
-  }
-  return raw
-    .split(',')
-    .map(r => r.trim())
-    .filter(r => r !== '');
 };
 
 export const nsRevision: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {

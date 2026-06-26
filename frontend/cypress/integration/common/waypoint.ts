@@ -1,6 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { ensureKialiFinishedLoading, openTab, waitForKialiApiReady } from './transition';
+import { openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
+import { confirmNamespaceTrafficPolicyModal, openNamespaceActionsMenu } from './namespace_actions';
 import { Pod } from 'types/IstioObjects';
 import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
@@ -695,17 +696,14 @@ Then('the user updates the log level to {string}', (level: string) => {
 });
 
 When('user opens the namespace actions menu', () => {
-  if (Cypress.env('OSSMC')) {
-    cy.get('button#minigraph-toggle', { timeout: 40000 }).should('be.visible').click();
-  } else {
-    cy.getBySel('namespace-actions-toggle').should('be.visible').click();
-  }
+  openNamespaceActionsMenu();
 });
 
 Then('the option {string} does not exist in namespace actions', (option: string) => {
   cy.get('[role="menu"]').should('be.visible');
   cy.get('[role="menu"]').contains(option).should('not.exist');
   cy.get('body').click(0, 0);
+  cy.get('[role="menu"]').should('not.exist');
 });
 
 When('user clicks on {string} in namespace actions', (option: string) => {
@@ -727,8 +725,7 @@ When('user clicks on {string} in namespace actions', (option: string) => {
         break;
     }
     cy.get(`[data-test="${selector}"]`).should('be.visible').click();
-    cy.get(`[data-test="confirm-create"]`, { timeout: 10000 }).should('be.visible').should('not.be.disabled').click();
-    ensureKialiFinishedLoading();
+    confirmNamespaceTrafficPolicyModal();
   });
 });
 
