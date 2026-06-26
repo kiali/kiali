@@ -37,7 +37,7 @@ describe('Workloads performance tests', () => {
   });
 
   describe('Workload details page', () => {
-    let workloadUrls = new Map<string, string>();
+    const workloadUrls = new Map<string, string>();
 
     before(() => {
       cy.fixture('commonParams.json')

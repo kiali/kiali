@@ -59,7 +59,7 @@ Then(
   }
 );
 
-Then('the {string} column on the {string} row is empty', (column: string, rowText: string, text: string) => {
+Then('the {string} column on the {string} row is empty', (column: string, rowText: string, _text: string) => {
   getColWithRowText(rowText, column).children().should('be.empty');
 });
 
@@ -164,7 +164,7 @@ export const getColWithRowText = (rowSearchText: string, colName: string): Cypre
 //
 // getCellsForCol('Name') or getCellsForCol(0) would both return
 // the cells 'app1' and 'app2'.
-export const getCellsForCol = (column: string | Number): Cypress.Chainable => {
+export const getCellsForCol = (column: string | number): Cypress.Chainable => {
   if (typeof column === 'number') {
     return cy.get('td').eq(column);
   }
@@ -205,7 +205,7 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
 
 When(
   'user clicks in the {string} table {string} badge {string} name row link',
-  (tableName: string, badge: string, name: string) => {
+  (tableName: string, badge: string, _name: string) => {
     let tableId = '';
 
     switch (tableName) {

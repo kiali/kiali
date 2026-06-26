@@ -2,7 +2,6 @@ import { defineConfig } from 'cypress';
 import { getAuthStrategy } from './cypress/plugins/setup';
 import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 
-/* eslint-disable import/no-default-export*/
 export default defineConfig({
   fixturesFolder: 'cypress/fixtures/perf',
   env: {

@@ -4,7 +4,6 @@ import { addCucumberPreprocessorPlugin } from '@badeball/cypress-cucumber-prepro
 import createBundler from '@bahmutov/cypress-esbuild-preprocessor';
 import { createEsbuildPlugin } from '@badeball/cypress-cucumber-preprocessor/esbuild';
 
-/* eslint-disable import/no-default-export*/
 export default defineConfig({
   viewportWidth: 1920,
   viewportHeight: 1080,

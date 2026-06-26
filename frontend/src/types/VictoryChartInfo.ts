@@ -4,7 +4,6 @@ export interface LegendInfo {
   fontSizeLabels: number;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Style = any;
 
 export type VCDataPoint = {

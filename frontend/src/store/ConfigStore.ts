@@ -29,7 +29,6 @@ import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
 
 declare const window;
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 

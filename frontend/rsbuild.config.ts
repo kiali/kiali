@@ -20,7 +20,6 @@ const keepNames = {
   }
 };
 
-// eslint-disable-next-line import/no-default-export
 export default defineConfig({
   plugins: [pluginReact(), pluginSass(), pluginSvgr({ mixedImport: true })],
   html: {

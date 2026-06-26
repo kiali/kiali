@@ -4,10 +4,11 @@ import eslintReact from '@eslint-react/eslint-plugin';
 import jsxA11y from 'eslint-plugin-jsx-a11y-x';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { importX } from 'eslint-plugin-import-x';
+import pluginCypress from 'eslint-plugin-cypress';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['build/**', 'cypress/**', 'public/**'] },
+  { ignores: ['build/**', 'public/**', 'src/test-shims/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
@@ -35,7 +36,7 @@ export default tseslint.config(
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'import-x/no-default-export': 'error',
       'no-case-declarations': 'off',
-      'no-console': 'warn',
+      'no-console': 'off',
       'no-extra-boolean-cast': 'off',
       'no-prototype-builtins': 'off',
       'no-restricted-globals': ['error', 'event'],
@@ -48,7 +49,7 @@ export default tseslint.config(
       // TypeScript rules
       '@typescript-eslint/ban-ts-comment': 'off',
       '@typescript-eslint/no-duplicate-enum-values': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-inferrable-types': 'error',
       '@typescript-eslint/no-non-null-asserted-optional-chain': 'off',
       '@typescript-eslint/no-require-imports': 'off',
@@ -83,6 +84,26 @@ export default tseslint.config(
       'jsx-a11y/label-has-associated-control': 'warn',
       'jsx-a11y/no-autofocus': 'error',
       'jsx-a11y/no-static-element-interactions': 'warn'
+    }
+  },
+  {
+    files: ['cypress/**/*.{ts,js}'],
+    ...pluginCypress.configs.recommended,
+    rules: {
+      ...pluginCypress.configs.recommended.rules,
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_'
+        }
+      ],
+      'cypress/no-unnecessary-waiting': 'warn',
+      'cypress/unsafe-to-chain-command': 'warn'
     }
   }
 );

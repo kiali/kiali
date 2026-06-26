@@ -33,7 +33,7 @@ describe('Apps performance tests', () => {
   });
 
   describe('App details page', () => {
-    let appUrls = new Map<string, string>();
+    const appUrls = new Map<string, string>();
 
     before(() => {
       cy.fixture('commonParams.json')

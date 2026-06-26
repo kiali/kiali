@@ -5,7 +5,6 @@ import { NotificationCenterState } from '../../store/Store';
 import { MessageType } from '../../types/NotificationCenter';
 import { NotificationCenterReducer } from '../../reducers/NotificationCenter';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 

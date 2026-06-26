@@ -164,7 +164,6 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
   const spanIdCounts = new Map();
   const spanMap = new Map<string, RichSpanData>();
   // filter out spans with empty start times
-  // eslint-disable-next-line no-param-reassign
   data.spans = data.spans.filter(span => Boolean(span.startTime));
 
   const max = data.spans.length;
@@ -183,10 +182,8 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     // make sure span IDs are unique
     const idCount = spanIdCounts.get(spanID);
     if (idCount != null) {
-      // eslint-disable-next-line no-console
       console.warn(`Dupe spanID, ${idCount + 1} x ${spanID}`, span, spanMap.get(spanID));
       if (_isEqual(span, spanMap.get(spanID))) {
-        // eslint-disable-next-line no-console
         console.warn('\t two spans with same ID have `isEqual(...) === true`');
       }
       spanIdCounts.set(spanID, idCount + 1);
@@ -228,7 +225,6 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     span.references.forEach(ref => {
       const refSpan = spanMap.get(ref.spanID) as Span;
       if (refSpan) {
-        // eslint-disable-next-line no-param-reassign
         ref.span = refSpan;
       }
     });

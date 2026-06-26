@@ -37,7 +37,7 @@ const measureLoadTime = (
         .its('performance')
         .then(performance => {
           // when namespace does not exist in system, the unhandled promise rejection is thrown
-          cy.on('uncaught:exception', (err, runnable) => {
+          cy.on('uncaught:exception', (_err, _runnable) => {
             return false;
           });
           if (isGraph) {

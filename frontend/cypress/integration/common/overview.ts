@@ -626,7 +626,7 @@ Then('Service insights card shows data tables and footer link', () => {
     }
     if ($body.find('[data-test="service-insights-latencies"]').length > 0) {
       cy.getBySel('service-insights-latencies').within(() => {
-        cy.get('table').then(_ => {
+        cy.get('table').then(() => {
           cy.contains('th', 'Name').should('be.visible');
           cy.contains('th', 'Latency').should('be.visible');
 
@@ -665,7 +665,7 @@ Then('Service insights card shows mock data tables', () => {
 
   // Rates section: should be mock
   cy.getBySel('service-insights-rates').within(() => {
-    cy.get('table').then(_ => {
+    cy.get('table').then(() => {
       cy.contains('th', 'Name').should('be.visible');
       cy.contains('th', 'Errors').should('be.visible');
 

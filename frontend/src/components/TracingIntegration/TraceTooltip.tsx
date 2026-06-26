@@ -142,7 +142,6 @@ export const computeFlyoutOrientation = (props: FlyoutOrientationProps): FlyoutO
 
 export class TraceTooltip extends React.Component<TooltipProps> {
   // Victory passes callback args that are broader than ChartLabelProps.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getOrientation = (props: any): FlyoutOrientation => computeFlyoutOrientation(props);
 
   render(): JSX.Element | null {

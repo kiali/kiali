@@ -33,7 +33,7 @@ describe('Services performance tests', () => {
   });
 
   describe('Service details page', () => {
-    let serviceUrls = new Map<string, string>();
+    const serviceUrls = new Map<string, string>();
 
     before(() => {
       cy.fixture('commonParams.json')

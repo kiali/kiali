@@ -17,6 +17,6 @@ export const getAuthStrategy = async (url: string, allow_insecure?: boolean): Pr
     }
     console.error(errMessage);
 
-    throw new Error(errMessage);
+    throw new Error(errMessage, { cause: err });
   }
 };

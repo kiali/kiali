@@ -7,11 +7,9 @@ import { VictoryVoronoiContainerProps } from 'victory-voronoi-container';
 type BrushDomain = { x: DomainTuple; y: DomainTuple };
 
 export type BrushHandlers = {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   onCleared?: (domain: BrushDomain, props: any) => void;
   onDomainChange?: (domain: BrushDomain, props: any) => void;
   onDomainChangeEnd?: (domain: BrushDomain, props: any) => void;
-  /* eslint-enable @typescript-eslint/no-explicit-any */
 };
 
 const formatValue = (label: string, datum: RichDataPoint, value: number, y0?: number): string => {

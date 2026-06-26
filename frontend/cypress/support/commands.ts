@@ -229,7 +229,7 @@ Cypress.Commands.add('login', (username: string, password: string) => {
         }
 
         cy.request({ url: 'api/auth/info' }).then(({ body }) => {
-          let authEndpoint = body.authorizationEndpoint;
+          const authEndpoint = body.authorizationEndpoint;
           cy.request({
             url: authEndpoint,
             method: 'GET',

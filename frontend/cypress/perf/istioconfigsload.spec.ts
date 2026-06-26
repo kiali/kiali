@@ -33,7 +33,7 @@ describe('Istio Configs performance tests', () => {
   });
 
   describe('Istio Config details page', () => {
-    let configUrls = new Map<string, string>();
+    const configUrls = new Map<string, string>();
 
     before(() => {
       cy.fixture('commonParams.json')

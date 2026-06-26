@@ -134,7 +134,6 @@ When(
       const svc = response.body.services.find(
         s => s.name === service && s.namespace === namespace && s.cluster === cluster
       );
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       expect(svc).to.not.be.undefined;
 
       // If the VirtualService doesn't exist. Create it.
@@ -275,7 +274,6 @@ Then(
       const svc = response.body.services.find(
         s => s.name === service && s.namespace === namespace && s.cluster === cluster
       );
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       expect(svc).to.not.be.undefined;
       // If the VirtualService doesn't exist. Create it.
       // If the DestionationRule doesn't exist. Create it.
