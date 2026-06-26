@@ -1682,6 +1682,7 @@ __metadata:
     deep-freeze: "npm:0.0.1"
     esbuild: "npm:^0.27.7"
     eslint: "npm:^10.5.0"
+    eslint-plugin-cypress: "npm:^6.4.1"
     eslint-plugin-import-x: "npm:^4.15.2"
     eslint-plugin-jsx-a11y-x: "npm:^0.2.0"
     eslint-plugin-react-hooks: "npm:^5.2.0"
@@ -6959,6 +6960,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-cypress@npm:^6.4.1":
+  version: 6.4.1
+  resolution: "eslint-plugin-cypress@npm:6.4.1"
+  dependencies:
+    globals: "npm:^17.6.0"
+  peerDependencies:
+    "@typescript-eslint/parser": ">=8"
+    eslint: ">=9"
+  peerDependenciesMeta:
+    "@typescript-eslint/parser":
+      optional: true
+  checksum: 10c0/6eb4c058d017036cfa8c62db7dfed3fdd5edbcb9faa44dc4b675f02e8bf7f19d69545fa892cb8dd4b1fd40238934e565986cc477f9e340c135a78c050ea73216
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-import-x@npm:^4.15.2":
   version: 4.17.0
   resolution: "eslint-plugin-import-x@npm:4.17.0"
@@ -8057,6 +8073,13 @@ __metadata:
   version: 16.5.0
   resolution: "globals@npm:16.5.0"
   checksum: 10c0/615241dae7851c8012f5aa0223005b1ed6607713d6813de0741768bd4ddc39353117648f1a7086b4b0fa45eae733f1c0a0fe369aa4e543bb63f8de8990178ea9
+  languageName: node
+  linkType: hard
+
+"globals@npm:^17.6.0":
+  version: 17.7.0
+  resolution: "globals@npm:17.7.0"
+  checksum: 10c0/e83f791acf537b85fa1632ac48a45432a1999a61acd9f955b5c2145f66d6b5000a7945029874b6184fa2dfac8d33af03885a5a7ffa457866f1bcf0b40d0c1291
   languageName: node
   linkType: hard
 

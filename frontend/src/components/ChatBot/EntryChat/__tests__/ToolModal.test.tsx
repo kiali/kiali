@@ -10,7 +10,6 @@ import { ToolModal } from '../ToolModal';
 // The mock factory must use require() instead of the imported React reference
 // because rstest.mock() is hoisted before import statements.
 rstest.mock('react-i18next', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactModule = require('react');
 
   // Render a single node safely, converting i18next object interpolations to strings.

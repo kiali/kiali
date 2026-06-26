@@ -52,7 +52,7 @@ When('user deletes gateway named {string} and the resource is no longer availabl
 });
 
 When('user clicks in the {string} actions', (action: string) => {
-  let actionId = '';
+  let actionId: string;
 
   switch (action) {
     case 'Request Routing':

@@ -132,7 +132,7 @@ Then('the log pane should only show logs for the {string} container', (container
     .find('label')
     .contains(containerName)
     .then($podLabel => {
-      let logColor = $podLabel[0].style.color;
+      const logColor = $podLabel[0].style.color;
 
       cy.get('#logsText')
         .find('p')

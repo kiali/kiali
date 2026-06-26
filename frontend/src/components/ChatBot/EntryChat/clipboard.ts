@@ -21,12 +21,10 @@ export const copyToClipboard = async (value: string): Promise<void> => {
       await navigator.clipboard.writeText(value);
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.warn('Rich clipboard write failed, falling back to plain text: ', err);
     try {
       await navigator.clipboard.writeText(value);
     } catch (fallbackErr) {
-      // eslint-disable-next-line no-console
       console.error('Failed to copy to clipboard: ', fallbackErr);
     }
   }

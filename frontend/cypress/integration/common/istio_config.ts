@@ -14,9 +14,9 @@ const labelsStringToJson = (labelsString: string): string => {
     labelsJson = labelsString
       .split(',')
       .map((lbl: string) => {
-        let keyValue = lbl.split('=');
-        let key = keyValue[0];
-        let value = keyValue[1];
+        const keyValue = lbl.split('=');
+        const key = keyValue[0];
+        const value = keyValue[1];
 
         return `"${key}": "${value}"`;
       })

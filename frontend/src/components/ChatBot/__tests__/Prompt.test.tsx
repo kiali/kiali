@@ -43,7 +43,6 @@ rstest.mock('../EntryChat/ToolModal', () => ({
 
 // Lightweight MessageBar stub: renders a send button that calls onSendMessage on click.
 rstest.mock('@patternfly/chatbot', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const ReactModule = require('react');
   return {
     ChatbotDisplayMode: { default: 'default', docked: 'docked', embedded: 'embedded', fullscreen: 'fullscreen' },

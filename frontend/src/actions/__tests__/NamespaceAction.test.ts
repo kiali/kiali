@@ -6,7 +6,6 @@ import { NamespaceThunkActions } from '../NamespaceThunkActions';
 import { NamespaceState } from '../../store/Store';
 import { NamespaceStateReducer, INITIAL_NAMESPACE_STATE } from '../../reducers/NamespaceState';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const reduxThunkModule = require('redux-thunk');
 const thunk = reduxThunkModule.thunk ?? reduxThunkModule.default;
 

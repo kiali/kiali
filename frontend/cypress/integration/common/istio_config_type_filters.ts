@@ -34,7 +34,7 @@ When('user expands the {string} dropdown', (placeholder: string) => {
 });
 
 Then('user can see the filter options', () => {
-  let filters: string[] = [
+  const filters: string[] = [
     'AuthorizationPolicy',
     'DestinationRule',
     'EnvoyFilter',

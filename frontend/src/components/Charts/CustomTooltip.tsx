@@ -5,12 +5,10 @@ import { VCDataPoint } from 'types/VictoryChartInfo';
 const dy = 15;
 const yMargin = 8;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const canvasContext: any = document.createElement('canvas').getContext('2d');
 // TODO: safe way to get this programmatically?
 canvasContext.font = '14px overpass';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomLabel = (props: any & { head?: string; text: string[]; textWidth: number }): React.ReactElement => {
   const x = props.x - 16 - props.textWidth / 2;
   const textsWithHead = props.head ? [props.head].concat(props.text) : props.text;
