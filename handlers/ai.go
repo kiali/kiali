@@ -256,7 +256,7 @@ func ChatAI(
 			}
 		}
 		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
-		recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
+		recordChatAIUsage(conf.ChatAI.Metrics.Enabled, aiStore, userID, usageProviderName, usageModelName, usage)
 	}
 }
 
@@ -283,7 +283,8 @@ func resolveChatAIUsageUserID(r *http.Request, conf *config.Config, fallbackUser
 	return clusterAuth.Username
 }
 
-func recordChatAIUsage(aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
+func recordChatAIUsage(metricsEnabled bool, aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
+
 	if !usage.HasTokens() {
 		return
 	}
@@ -295,7 +296,9 @@ func recordChatAIUsage(aiStore aiTypes.AIStore, userID string, provider string, 
 			log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", userID, provider, model, err)
 		}
 	}
-	internalmetrics.RecordAITokens(userID, provider, model, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
+	if metricsEnabled {
+		internalmetrics.RecordAITokens(userID, provider, model, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
+	}
 }
 
 func ChatSessionUsage(
@@ -377,6 +380,10 @@ func ChatUsage(conf *config.Config, _ aiTypes.AIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !conf.ChatAI.Enabled {
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
+			return
+		}
+		if !conf.ChatAI.Metrics.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI metrics are not enabled")
 			return
 		}
 

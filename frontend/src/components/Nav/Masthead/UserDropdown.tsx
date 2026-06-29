@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
-import { config, isMultiCluster, serverConfig } from '../../../config';
+import { config, isMultiCluster } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -151,7 +151,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
   render(): React.ReactNode {
     const { isDropdownOpen } = this.state;
-    const showSessionTokenStats = serverConfig.chatAI.enabled && serverConfig.chatAI.store.enabled;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
       this.props.session?.clusterInfo?.[cluster] !== undefined;
@@ -174,7 +173,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       });
     }
     const hasDropdownActions =
-      showSessionTokenStats || canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
+      canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
 
     return (
       <>
@@ -241,13 +240,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 <Divider component="li" />
               </>
             )}
-
-            {showSessionTokenStats && (
-              <DropdownItem key={'session_token_stats_option'} onClick={this.openSessionTokenStats}>
-                {t('Session Token Stats')}
-              </DropdownItem>
-            )}
-            {showSessionTokenStats && canLogout && <Divider component="li" />}
             {canLogout && (
               <DropdownItem data-test="user-logout" key={'user_logout_option'} onClick={this.handleLogout}>
                 {t('Logout')}

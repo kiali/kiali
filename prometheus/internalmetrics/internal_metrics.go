@@ -6,6 +6,7 @@ import (
 	// kiali imports here. Most likely you will encounter an import cycle error that will
 	// cause a compilation failure.
 	"context"
+	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -378,10 +379,42 @@ var (
 	aiTokenEventsLog []AITokenEvent
 	aiTokenTotals    = map[string]*AITokenEntry{}
 	aiTokenTotalsMu  sync.RWMutex
-	// maxAITokenEvents is the upper bound for the in-memory event log.
-	// When the cap is hit the oldest 25 % of entries are dropped.
+	// maxAITokenEventAge is the primary retention policy for the event log.
+	// Events older than this TTL are pruned on the next write, making the
+	// time-series window predictable regardless of traffic volume.
+	maxAITokenEventAge = 7 * 24 * time.Hour
+	// maxAITokenEvents is a hard safety cap on the event log length.
+	// It only activates under extreme burst traffic where the TTL window
+	// alone would fill memory (e.g. > 10 000 AI requests within 7 days).
+	// When hit, the oldest entries are dropped to keep the most recent data.
 	maxAITokenEvents = 10_000
+	// maxAITokenTotals is the maximum number of unique (username, provider, model) keys
+	// kept in the cumulative totals map. When the cap is hit the 25 % of entries with
+	// the smallest total-token count are pruned (least-significant users first).
+	maxAITokenTotals = 5_000
 )
+
+// pruneAITokenTotals removes the 25 % of entries with the smallest TotalTokens from
+// aiTokenTotals. Must be called with aiTokenTotalsMu write-locked.
+func pruneAITokenTotals() {
+	pruneCount := maxAITokenTotals / 4
+
+	// Collect all entries into a slice, sort ascending by TotalTokens, and delete
+	// the bottom pruneCount entries.  Sorting is O(n log n) but only happens when
+	// the map is already at capacity, so the amortised cost is acceptable.
+	type kv struct {
+		key   string
+		total int64
+	}
+	entries := make([]kv, 0, len(aiTokenTotals))
+	for k, e := range aiTokenTotals {
+		entries = append(entries, kv{key: k, total: e.TotalTokens})
+	}
+	sort.Slice(entries, func(i, j int) bool { return entries[i].total < entries[j].total })
+	for i := 0; i < pruneCount && i < len(entries); i++ {
+		delete(aiTokenTotals, entries[i].key)
+	}
+}
 
 // GetAITokenEvents returns all token events recorded since the given time.
 // The returned slice is a copy and safe to read after the call returns.
@@ -814,6 +847,13 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 	entry.CompletionTokens += completionTokens
 	entry.PromptTokens += promptTokens
 	entry.TotalTokens += totalTokens
+
+	// Prune the map when it exceeds the cap to prevent unbounded growth with many
+	// unique users. Remove the 25 % of entries with the smallest total-token count
+	// (least-active users) so the most significant data is retained.
+	if len(aiTokenTotals) > maxAITokenTotals {
+		pruneAITokenTotals()
+	}
 	aiTokenTotalsMu.Unlock()
 
 	// Append to the time-series event log.
@@ -827,8 +867,27 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 		TotalTokens:      totalTokens,
 		Username:         username,
 	})
+
+	// Primary retention: drop events older than maxAITokenEventAge so the
+	// time-series window is always predictable, regardless of traffic volume.
+	// Events are appended in chronological order, so a binary search gives an
+	// O(log n) fast-path: if the oldest event is still within the TTL, no work
+	// is done at all.
+	if len(aiTokenEventsLog) > 0 {
+		cutoff := time.Now().Add(-maxAITokenEventAge)
+		if aiTokenEventsLog[0].Timestamp.Before(cutoff) {
+			i := sort.Search(len(aiTokenEventsLog), func(j int) bool {
+				return !aiTokenEventsLog[j].Timestamp.Before(cutoff)
+			})
+			aiTokenEventsLog = aiTokenEventsLog[i:]
+		}
+	}
+
+	// Safety cap: guards against extreme bursts where the TTL window alone
+	// would hold more events than maxAITokenEvents. Drop from the front
+	// (oldest first) to keep the most recent data.
 	if len(aiTokenEventsLog) > maxAITokenEvents {
-		aiTokenEventsLog = aiTokenEventsLog[maxAITokenEvents/4:]
+		aiTokenEventsLog = aiTokenEventsLog[len(aiTokenEventsLog)-maxAITokenEvents:]
 	}
 	aiTokenEventsMu.Unlock()
 }
