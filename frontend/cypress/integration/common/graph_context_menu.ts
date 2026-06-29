@@ -93,8 +93,7 @@ Then('user should see the read-only YAML preview for the {string} action', (wiza
       cy.contains(title).should('be.visible');
       cy.contains('Copy').should('be.visible');
       cy.contains('Download').should('be.visible');
-      cy.get('.ace_editor').should('exist');
-      cy.get('textarea[readonly]').should('exist');
+      cy.get('.monaco-editor').should('exist');
       cy.contains('button', 'Close').should('be.visible');
     });
 });

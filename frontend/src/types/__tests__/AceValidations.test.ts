@@ -152,23 +152,20 @@ const virtualServiceYaml = fs.readFileSync(`./src/types/__testData__/virtualServ
 
 describe('#parseKialiValidations in DestinationRule', () => {
   it('should mark an invalid host', () => {
-    const aceValidations = parseKialiValidations(destinationRuleYaml, destinationRuleValidations);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
+    const validations = parseKialiValidations(destinationRuleYaml, destinationRuleValidations);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    /*
-    Check it marks lines 3-4 (starting to count in 0 instead of 1)
-      host: details
-   */
-    const marker = aceValidations.markers[0];
+    // Markers use 1-based line numbers (Monaco convention)
+    const marker = validations.markers[0];
     expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(3);
-    expect(marker.endRow).toEqual(3);
-    expect(marker.startCol).toEqual(0);
-    expect(marker.endCol).toEqual(0);
+    expect(marker.startLineNumber).toEqual(4);
+    expect(marker.endLineNumber).toEqual(4);
+    expect(marker.startColumn).toEqual(1);
 
-    const annotation = aceValidations.annotations[0];
+    // Annotations keep 0-based row for internal use
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(3);
@@ -179,23 +176,17 @@ describe('#parseKialiValidations in DestinationRule', () => {
 
 describe('#parseKialiValidations in VirtualService', () => {
   it('should detect invalid hosts', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHosts);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 3-5 (starting to count in 0):
-      hosts:
-        - productpage
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(3);
-    expect(marker.endRow).toEqual(4);
-    expect(marker.startCol).toEqual(0);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHosts);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(4);
+    expect(marker.endLineNumber).toEqual(5);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
     expect(annotation.column).toEqual(0);
     expect(annotation.row).toEqual(3);
@@ -204,242 +195,171 @@ describe('#parseKialiValidations in VirtualService', () => {
   });
 
   it('should detect invalid first http route', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstRoute);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 12-19 (starting to count in 0):
-      route:
-        - destination:
-          name: productpage
-          subset: v1
-        - destination:
-          name: productpage
-          subset: v2
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toBe(12);
-    expect(marker.endRow).toBe(18);
-    expect(marker.startCol).toBe(4);
-    expect(marker.endCol).toBe(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstRoute);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toBe(13);
+    expect(marker.endLineNumber).toBe(19);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toBe(0);
+    expect(annotation.column).toBe(4);
     expect(annotation.row).toBe(12);
     expect(annotation.type).toBe('error');
     expect(annotation.text).toBe('All routes should have weight');
   });
 
   it('should detect invalid second http route', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondRoute);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 22-29 (starting to count in 0):
-      route:
-        - destination:
-          name: productpage
-          subset: v3
-        - destination:
-          name: productpage
-          subset: v4
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(22);
-    expect(marker.endRow).toEqual(28);
-    expect(marker.startCol).toEqual(4);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondRoute);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(23);
+    expect(marker.endLineNumber).toEqual(29);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(4);
     expect(annotation.row).toEqual(22);
     expect(annotation.type).toEqual('error');
     expect(annotation.text).toEqual('All routes should have weight');
   });
 
   it('should detect invalid third http route', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdRoute);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 32-39 (starting to count in 0):
-      route:
-        - destination:
-          name: productpage
-          subset: v5
-        - destination:
-          name: productpage
-          subset: v6
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(32);
-    expect(marker.endRow).toEqual(38);
-    expect(marker.startCol).toEqual(4);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdRoute);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(33);
+    expect(marker.endLineNumber).toEqual(39);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(4);
     expect(annotation.row).toEqual(32);
     expect(annotation.type).toEqual('error');
     expect(annotation.text).toEqual('All routes should have weight');
   });
 
   it('should detect invalid second http second destination field', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondSecondDestinationField);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 26-29 (starting to count in 0):
-      - destination:
-            name: productpage
-            subset: v4
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(26);
-    expect(marker.endRow).toEqual(28);
-    expect(marker.startCol).toEqual(4);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpSecondSecondDestinationField);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(27);
+    expect(marker.endLineNumber).toEqual(29);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(4);
     expect(annotation.row).toEqual(26);
     expect(annotation.type).toEqual('error');
     expect(annotation.text).toEqual('Destination field is mandatory');
   });
 
   it('should detect invalid third http first destination field', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstDestinationField);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-    Check it marks lines 33-36 (starting to count in 0):
-      - destination:
-            name: productpage
-            subset: v4
-   */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(33);
-    expect(marker.endRow).toEqual(35);
-    expect(marker.startCol).toEqual(6);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstDestinationField);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(34);
+    expect(marker.endLineNumber).toEqual(36);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(6);
     expect(annotation.row).toEqual(33);
     expect(annotation.type).toEqual('error');
     expect(annotation.text).toEqual('Destination field is mandatory');
   });
 
   it('should detect invalid third http first destination field subset not found', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstSubsetNotFound);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-      Check it marks lines 33-36 (starting to count in 0):
-        - destination:
-              name: productpage
-              subset: v4
-     */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(33);
-    expect(marker.endRow).toEqual(35);
-    expect(marker.startCol).toEqual(8);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpThirdFirstSubsetNotFound);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(34);
+    expect(marker.endLineNumber).toEqual(36);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(8);
     expect(annotation.row).toEqual(33);
     expect(annotation.type).toEqual('warning');
     expect(annotation.text).toEqual('Subset not found');
   });
 
   it('should detect invalid first http second destination field subset not found', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstSecondSubsetNotFound);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-      Check it marks lines 16-19 (starting to count in 0):
-        - destination:
-              name: productpage
-              subset: v4
-     */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(16);
-    expect(marker.endRow).toEqual(18);
-    expect(marker.startCol).toEqual(8);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFirstSecondSubsetNotFound);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(17);
+    expect(marker.endLineNumber).toEqual(19);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(8);
     expect(annotation.row).toEqual(16);
     expect(annotation.type).toEqual('warning');
     expect(annotation.text).toEqual('Subset not found');
   });
 
   it('should detect invalid fourth http first weight', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFourthFirstWeigth);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toBe(1);
-    expect(aceValidations.annotations.length).toBe(1);
-    /*
-      Check it marks lines 46-47 (starting to count in 0):
-        weight: 25a
-     */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(46);
-    expect(marker.endRow).toEqual(46);
-    expect(marker.startCol).toEqual(16);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFourthFirstWeigth);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toBe(1);
+    expect(validations.annotations.length).toBe(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(47);
+    expect(marker.endLineNumber).toEqual(47);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(16);
     expect(annotation.row).toEqual(46);
     expect(annotation.type).toEqual('warning');
     expect(annotation.text).toEqual('Weight must be a number');
   });
 
   it('should detect invalid fifth http second weight', () => {
-    const aceValidations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFifthSecondWeigth);
-    expect(aceValidations).toBeDefined();
-    expect(aceValidations.markers.length).toEqual(1);
-    expect(aceValidations.annotations.length).toEqual(1);
-    /*
-      Check it marks lines 62-63 (starting to count in 0):
-        weight: 28a
-     */
-    const marker = aceValidations.markers[0];
-    expect(marker).toBeDefined();
-    expect(marker.startRow).toEqual(62);
-    expect(marker.endRow).toEqual(62);
-    expect(marker.startCol).toEqual(16);
-    expect(marker.endCol).toEqual(0);
+    const validations = parseKialiValidations(virtualServiceYaml, vsInvalidHttpFifthSecondWeigth);
+    expect(validations).toBeDefined();
+    expect(validations.markers.length).toEqual(1);
+    expect(validations.annotations.length).toEqual(1);
 
-    const annotation = aceValidations.annotations[0];
+    const marker = validations.markers[0];
+    expect(marker).toBeDefined();
+    expect(marker.startLineNumber).toEqual(63);
+    expect(marker.endLineNumber).toEqual(63);
+
+    const annotation = validations.annotations[0];
     expect(annotation).toBeDefined();
-    expect(annotation.column).toEqual(0);
+    expect(annotation.column).toEqual(16);
     expect(annotation.row).toEqual(62);
     expect(annotation.type).toEqual('warning');
     expect(annotation.text).toEqual('Weight must be a number');

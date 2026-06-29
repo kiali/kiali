@@ -12,12 +12,12 @@ import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosit
 import { SummaryTableBuilder } from './tables/BaseTable';
 import { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
-import AceEditor from 'react-ace';
+import Editor from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
 import { KialiIcon } from 'config/KialiIcon';
-import { aceOptions } from 'types/IstioConfigDetails';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
@@ -27,7 +27,7 @@ import {
   tabName as workloadTabName,
   defaultTab as workloadDefaultTab
 } from '../../pages/WorkloadDetails/WorkloadDetailsPage';
-import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { editorStyle } from 'styles/EditorStyle';
 import {
   tabCardStyle,
   constrainedScrollStyle,
@@ -100,14 +100,14 @@ const editorWrapperStyle = kialiStyle({
 });
 
 class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDetailsState> {
-  aceEditorRef: React.RefObject<AceEditor>;
+  monacoEditorRef: React.RefObject<editor.IStandaloneCodeEditor | null>;
   editorWrapperRef: React.RefObject<HTMLDivElement>;
   private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }), 2, 1);
 
   constructor(props: EnvoyDetailsProps) {
     super(props);
 
-    this.aceEditorRef = React.createRef();
+    this.monacoEditorRef = React.createRef();
     this.editorWrapperRef = React.createRef();
 
     this.state = {
@@ -257,10 +257,13 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   editorContent = (): string => JSON.stringify(this.state.config, null, '  ');
 
   onCopyToClipboard = (_text: string, _result: boolean): void => {
-    const editor = this.aceEditorRef.current!['editor'];
+    const ed = this.monacoEditorRef.current;
 
-    if (editor) {
-      editor.selectAll();
+    if (ed) {
+      const model = ed.getModel();
+      if (model) {
+        ed.setSelection(model.getFullModelRange());
+      }
     }
   };
 
@@ -358,18 +361,18 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   </div>
 
                   <div ref={this.editorWrapperRef} className={editorWrapperStyle}>
-                    <AceEditor
-                      ref={this.aceEditorRef}
-                      mode="yaml"
-                      theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
-                      width={'100%'}
-                      height={`${this.state.editorHeight}px`}
-                      className={istioAceEditorStyle}
-                      wrapEnabled={true}
-                      readOnly={true}
-                      setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
-                      value={this.editorContent()}
-                    />
+                    <div className={editorStyle} data-test="envoy-editor">
+                      <Editor
+                        value={this.editorContent()}
+                        language="yaml"
+                        theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+                        height={`${this.state.editorHeight}px`}
+                        onMount={ed => {
+                          (this.monacoEditorRef as any).current = ed;
+                        }}
+                        options={{ readOnly: true, wordWrap: 'on', scrollBeyondLastLine: false, folding: true }}
+                      />
+                    </div>
                   </div>
                 </div>
               </CardBody>

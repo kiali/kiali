@@ -1,9 +1,12 @@
 import * as React from 'react';
 // import { Prompt } from 'react-router-dom';
-import { aceOptions, IstioConfigDetails, IstioConfigId, yamlDumpOptions } from '../../types/IstioConfigDetails';
+import type { IstioConfigDetails, IstioConfigId } from '../../types/IstioConfigDetails';
+import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
-import AceEditor from 'react-ace';
+import Editor from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
+import { MarkerSeverity } from 'monaco-editor';
 import {
   HelpMessage,
   ObjectReference,
@@ -14,11 +17,15 @@ import {
 } from '../../types/IstioObjects';
 import {
   AceValidations,
+  EditorAnnotation,
+  EditorMarker,
+  applyMonacoMarkers,
   parseHelpAnnotations,
   parseKialiValidations,
   parseLine,
   parseYamlValidations
 } from '../../types/AceValidations';
+import type { MonacoInstance } from '../../types/AceValidations';
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
@@ -52,7 +59,6 @@ import {
 import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
-import { Annotation } from 'react-ace/types';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
@@ -61,7 +67,7 @@ import { isParentKiosk, kioskNavigateAction } from '../../components/Kiosk/Kiosk
 import { KialiAppState } from '../../store/Store';
 import { connect, DispatchProp } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
-import { drawerPanelStyle, istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
 import { Theme } from 'types/Common';
 import { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
@@ -99,12 +105,6 @@ interface IstioConfigDetailsState {
   yamlModified: string;
   yamlValidations?: AceValidations;
 }
-
-interface RangeRow {
-  endRow: number;
-  startRow: number;
-}
-
 const tabName = 'list';
 
 const paramToTab: { [key: string]: number } = {
@@ -122,11 +122,13 @@ type IstioConfigDetailsProps = ReduxProps &
   };
 
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
-  aceEditorRef: React.RefObject<AceEditor>;
+  monacoEditorRef: editor.IStandaloneCodeEditor | null = null;
+  monacoRef: MonacoInstance | null = null;
   drawerRef: React.RefObject<IstioConfigDetails>;
   private editorContainerRef = React.createRef<HTMLDivElement>();
   private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }));
   private isObserving = false;
+  private suppressOnChange = false;
   promptTo: string;
   timerId: number;
 
@@ -144,7 +146,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       yamlModified: ''
     };
 
-    this.aceEditorRef = React.createRef();
     this.drawerRef = React.createRef();
     this.promptTo = '';
     this.timerId = -1;
@@ -246,18 +247,42 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     // This will reset the flag to prevent ask multiple times the confirmation to leave with unsaved changed
     this.promptTo = '';
 
-    // Hack to force redisplay of annotations after update
-    // See https://github.com/securingsincity/react-ace/issues/300
-    if (this.aceEditorRef.current) {
-      const editor = this.aceEditorRef.current!['editor'];
+    // Apply validation markers after editor update
+    if (this.monacoEditorRef && this.monacoRef) {
+      // Fold status and/or managedFields fields only when fresh data arrives
+      const dataJustLoaded =
+        this.state.istioObjectDetails !== prevState.istioObjectDetails ||
+        (prevState.isModified && !this.state.isModified);
 
-      // tslint:disable-next-line
-      editor.onChangeAnnotation();
+      if (dataJustLoaded && !this.state.isModified) {
+        // Sync editor content and apply folding when data reloads
+        const yamlSource = this.fetchYaml();
+        if (this.monacoEditorRef.getValue() !== yamlSource) {
+          this.suppressOnChange = true;
+          this.monacoEditorRef.setValue(yamlSource);
+          this.suppressOnChange = false;
+        }
+        const foldLines = this.getFoldLines(yamlSource);
+        if (foldLines.length > 0) {
+          const ed = this.monacoEditorRef;
+          // Defer folding to ensure the editor model has synced the new value
+          setTimeout(() => {
+            for (const line of foldLines) {
+              ed.setPosition({ lineNumber: line + 1, column: 1 });
+              ed.trigger('fold', 'editor.fold', {});
+            }
+            ed.setPosition({ lineNumber: 1, column: 1 });
+          }, 0);
+        }
+      }
 
-      // Fold status and/or managedFields fields
-      const { startRow, endRow } = this.getFoldRanges(this.fetchYaml());
-      if (!this.state.isModified) {
-        editor.session.foldAll(startRow, endRow, 0);
+      // Re-apply validation markers when validations or data change
+      if (
+        dataJustLoaded ||
+        this.state.istioValidations !== prevState.istioValidations ||
+        this.state.yamlValidations !== prevState.yamlValidations
+      ) {
+        this.applyValidationMarkers();
       }
     }
 
@@ -373,7 +398,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const msg: string[] = API.getErrorString(error).split(':');
     const errMsg: string = msg.slice(1, msg.length).join(':');
 
-    const anno: Annotation = {
+    const anno: EditorAnnotation = {
       column: 0,
       row: 0,
       text: errMsg,
@@ -384,11 +409,10 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   resizeEditor = (): void => {
-    if (this.aceEditorRef.current) {
-      // The Drawer has an async animation that needs a timeout before to resize the editor
+    if (this.monacoEditorRef) {
+      // The Drawer has an async animation that needs a timeout before resizing the editor
       setTimeout(() => {
-        const editor = this.aceEditorRef.current!['editor'];
-        editor.resize(true);
+        this.monacoEditorRef?.layout();
       }, 250);
     }
   };
@@ -413,12 +437,15 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     );
   };
 
-  onEditorChange = (value: string): void => {
+  onEditorChange = (value: string | undefined): void => {
+    if (this.suppressOnChange) {
+      return;
+    }
     this.setState({
       isModified: true,
-      yamlModified: value,
+      yamlModified: value || '',
       istioValidations: undefined,
-      yamlValidations: parseYamlValidations(value)
+      yamlValidations: parseYamlValidations(value || '')
     });
   };
 
@@ -476,32 +503,18 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return details.help ?? ([] as HelpMessage[]);
   };
 
-  // Aux function to calculate rows for 'status' and 'managedFields' which are typically folded
-  getFoldRanges = (yaml: string): RangeRow => {
-    let range = {
-      startRow: -1,
-      endRow: -1
-    };
-
-    if (!!yaml) {
+  // Returns line numbers (0-based) of top-level sections that should be folded (status, managedFields)
+  getFoldLines = (yaml: string): number[] => {
+    const lines: number[] = [];
+    if (yaml) {
       const ylines = yaml.split('\n');
       ylines.forEach((line: string, i: number) => {
-        // Counting spaces to check managedFields, yaml is always processed with that structure so this is safe
         if (line.startsWith('status:') || line.startsWith('  managedFields:')) {
-          if (range.startRow === -1) {
-            range.startRow = i;
-          } else if (range.startRow > i) {
-            range.startRow = i;
-          }
-        }
-
-        if (line.startsWith('spec:') && range.startRow !== -1) {
-          range.endRow = i;
+          lines.push(i);
         }
       });
     }
-
-    return range;
+    return lines;
   };
 
   isExpanded = (istioConfigDetails?: IstioConfigDetails): boolean => {
@@ -522,8 +535,51 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   };
 
   onCursorChange = (e: any): void => {
-    const line = parseLine(this.fetchYaml(), e.cursor.row);
-    this.setState({ selectedEditorLine: line });
+    if (e && e.position) {
+      const line = parseLine(this.fetchYaml(), e.position.lineNumber - 1);
+      this.setState({ selectedEditorLine: line });
+    }
+  };
+
+  onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
+    this.monacoEditorRef = ed;
+    this.monacoRef = monaco;
+    ed.onDidChangeCursorPosition(this.onCursorChange);
+    this.applyValidationMarkers();
+  };
+
+  applyValidationMarkers = (): void => {
+    if (!this.monacoRef || !this.monacoEditorRef) {
+      return;
+    }
+    const yamlSource = this.fetchYaml();
+    let markers: EditorMarker[] = [];
+
+    if (!this.state.isModified) {
+      const validations = parseKialiValidations(yamlSource, this.state.istioValidations);
+      markers = [...validations.markers];
+    } else if (this.state.yamlValidations) {
+      markers = [...this.state.yamlValidations.markers];
+    }
+
+    const helpMessages = this.helpMessages(this.state.istioObjectDetails);
+    const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
+    const linesWithMarkers = new Set(markers.map(m => m.startLineNumber));
+    helpAnnotations.forEach(ha => {
+      const lineNumber = ha.row + 1;
+      if (!linesWithMarkers.has(lineNumber)) {
+        markers.push({
+          startLineNumber: lineNumber,
+          startColumn: 1,
+          endLineNumber: lineNumber + 1,
+          endColumn: 1,
+          severity: MarkerSeverity.Info,
+          message: ha.text
+        });
+      }
+    });
+
+    applyMonacoMarkers(this.monacoRef, this.monacoEditorRef, markers);
   };
 
   renderEditor = (): React.ReactNode => {
@@ -547,8 +603,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       editorValidations = parseKialiValidations(yamlSource, this.state.istioValidations);
     } else {
       if (this.state.yamlValidations) {
-        editorValidations.markers = this.state.yamlValidations.markers;
-        editorValidations.annotations = this.state.yamlValidations.annotations;
+        editorValidations.markers = [...this.state.yamlValidations.markers];
+        editorValidations.annotations = [...this.state.yamlValidations.annotations];
       }
     }
 
@@ -589,22 +645,23 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
     const editor = this.state.istioObjectDetails ? (
       <div style={{ width: '100%' }}>
-        <AceEditor
-          ref={this.aceEditorRef}
-          mode="yaml"
-          theme={this.props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
-          onChange={this.onEditorChange}
-          height={`${aceHeight}px`}
-          width="100%"
-          className={istioAceEditorStyle}
-          wrapEnabled={true}
-          readOnly={!this.canUpdate()}
-          setOptions={aceOptions}
-          value={this.state.istioObjectDetails ? yamlSource : undefined}
-          annotations={editorValidations.annotations}
-          markers={editorValidations.markers}
-          onCursorChange={this.onCursorChange}
-        />
+        <div className={editorStyle} data-test="istio-config-editor">
+          <Editor
+            value={yamlSource}
+            language="yaml"
+            theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+            height={`${aceHeight}px`}
+            onChange={this.onEditorChange}
+            onMount={this.onEditorDidMount}
+            options={{
+              readOnly: !this.canUpdate(),
+              wordWrap: 'on',
+              scrollBeyondLastLine: false,
+              folding: true,
+              glyphMargin: true
+            }}
+          />
+        </div>
       </div>
     ) : null;
 

@@ -290,8 +290,7 @@ Then('the chatbot YAML attachment modal should be open', () => {
 });
 
 Then('the chatbot YAML attachment modal should contain {string} in the editor', (snippet: string) => {
-  // AceEditor renders text into .ace_content — checking via Cypress text traversal
-  cy.get(CHATBOT_YAML_MODAL, { timeout: 10000 }).find('.ace_content').should('contain.text', snippet);
+  cy.get(CHATBOT_YAML_MODAL, { timeout: 10000 }).find('.monaco-editor .view-lines').should('contain.text', snippet);
 });
 
 When('user closes the chatbot YAML attachment modal', () => {
@@ -419,12 +418,8 @@ Then('user does not see VirtualService {string} in the Istio Config list', (name
 });
 
 Then('the Istio config YAML editor should contain {string}', (snippet: string) => {
-  cy.get('#ace-editor', { timeout: 30000 }).should('be.visible');
-  cy.window().then(win => {
-    const w = win as Window & { ace?: { edit: (id: string) => { getValue: () => string } } };
-    const editor = w.ace?.edit('ace-editor');
-    expect(editor?.getValue() ?? '').to.include(snippet);
-  });
+  cy.get('[data-test="istio-config-editor"] .monaco-editor', { timeout: 30000 }).should('be.visible');
+  cy.get('[data-test="istio-config-editor"] .view-lines').invoke('text').should('include', snippet);
 });
 
 // ============================================================

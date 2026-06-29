@@ -445,68 +445,52 @@ When('user switches to the Tester tab', () => {
 
 When('user changes the provider in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'provider';
-      let replacer = 'tempo';
-      let provider = 'jaeger';
+    cy.get('[data-test="tracing-config-editor"] .view-lines')
+      .invoke('text')
+      .then((editorText: string) => {
+        let replacer = 'tempo';
+        let provider = 'jaeger';
 
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        if (line.toString().toLowerCase().includes(searchText)) {
-          if (line.includes('tempo')) {
-            replacer = 'jaeger';
-            provider = 'tempo';
-          }
-          break;
+        if (editorText.includes('tempo')) {
+          replacer = 'jaeger';
+          provider = 'tempo';
         }
-      }
-      let val: string = editor.getValue();
-      val = val.replace(`provider: ${provider}`, `provider: ${replacer}`);
-      editor.setValue(val);
-    });
+
+        const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
+
+        cy.get('[data-test="tracing-config-editor"] .monaco-editor textarea.inputarea')
+          .should('exist')
+          .type('{ctrl+a}', { force: true })
+          .type(newText, { force: true, parseSpecialCharSequences: false });
+      });
   });
 });
 
 When('user changes the useGRPC in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'useGRPC';
-      let currentValue: string | null = null;
-      let targetValue = 'true';
+    cy.get('[data-test="tracing-config-editor"] .view-lines')
+      .invoke('text')
+      .then((editorText: string) => {
+        let currentValue: string | null = null;
+        let targetValue = 'true';
 
-      // Find the line containing useGRPC and determine current value
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        const lowerLine = line.toLowerCase();
-        if (lowerLine.includes(searchText.toLowerCase())) {
-          // Check for both true and false patterns
-          if (line.match(/:\s*(true|false)/i)) {
-            if (line.match(/:\s*true/i)) {
-              currentValue = 'true';
-              targetValue = 'false';
-            } else if (line.match(/:\s*false/i)) {
-              currentValue = 'false';
-              targetValue = 'true';
-            }
-          }
-          break;
+        if (/useGRPC\s*:\s*true/i.test(editorText)) {
+          currentValue = 'true';
+          targetValue = 'false';
+        } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
+          currentValue = 'false';
+          targetValue = 'true';
         }
-      }
 
-      // Replace the value using regex to handle various formats (with/without spaces, quotes, etc.)
-      let val: string = editor.getValue();
-      if (currentValue !== null) {
-        // Replace useGRPC with various formats: "useGRPC: true", "useGRPC:false", "useGRPC: true", etc.
-        val = val.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
-        editor.setValue(val);
-      }
-    });
+        if (currentValue !== null) {
+          const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+
+          cy.get('[data-test="tracing-config-editor"] .monaco-editor textarea.inputarea')
+            .should('exist')
+            .type('{ctrl+a}', { force: true })
+            .type(newText, { force: true, parseSpecialCharSequences: false });
+        }
+      });
   });
 });
 

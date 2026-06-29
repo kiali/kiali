@@ -245,7 +245,7 @@ When('user clicks in the {string} {string} {string} reference', (namespace: stri
 Then('user sees the {string} regex in the editor', (regexContent: string) => {
   const re = new RegExp(regexContent);
 
-  cy.get('.ace_content').invoke('text').should('match', re);
+  cy.get('[data-test="editor-preview"] .monaco-editor .view-lines').invoke('text').should('match', re);
 });
 
 When('user clicks on Advanced Options', () => {
