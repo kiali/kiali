@@ -219,10 +219,31 @@ label_namespaces_for_uwm() {
   done
 }
 
+wait_for_uwm_namespace() {
+  local context="$1"
+  info "Waiting for openshift-user-workload-monitoring namespace to be ready (context: ${context})"
+  for _ in {1..60}; do
+    if oc --context "${context}" get namespace openshift-user-workload-monitoring &>/dev/null; then
+      return 0
+    fi
+    sleep 5
+  done
+  error "Timeout waiting for openshift-user-workload-monitoring namespace on context: ${context}"
+}
+
 deploy_thanos_global_cluster1() {
   info "Deploying minimal Thanos Receive+Query in cluster1 (namespace: ${THANOS_NAMESPACE})"
 
   oc --context "${CTX_CLUSTER1}" create namespace "${THANOS_NAMESPACE}" --dry-run=client -o yaml | oc --context "${CTX_CLUSTER1}" apply -f -
+
+  # Create a dedicated ServiceAccount for Thanos and grant it the anyuid SCC so that the
+  # Thanos containers (which run as UID 65534 / nobody) are allowed to start on OpenShift,
+  # where the default restricted SCC only permits UIDs inside the namespace-assigned range.
+  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" \
+    create serviceaccount thanos --dry-run=client -o yaml \
+    | oc --context "${CTX_CLUSTER1}" apply -f -
+  oc --context "${CTX_CLUSTER1}" adm policy add-scc-to-user anyuid \
+    -z thanos -n "${THANOS_NAMESPACE}" >/dev/null
 
   # Minimal Receive+Query. IMPORTANT: Receive requires external labels (see Thanos docs).
   # This is intentionally minimal/hack-oriented; production setups should use a proper Helm chart and storage backend.
@@ -252,6 +273,9 @@ spec:
       labels:
         app: thanos-receive
     spec:
+      serviceAccountName: thanos
+      securityContext:
+        fsGroup: 65534
       containers:
       - name: thanos-receive
         image: quay.io/thanos/thanos:v0.37.2
@@ -311,6 +335,9 @@ spec:
       labels:
         app: thanos-query
     spec:
+      serviceAccountName: thanos
+      securityContext:
+        fsGroup: 65534
       containers:
       - name: thanos-query
         image: quay.io/thanos/thanos:v0.37.2
@@ -342,7 +369,28 @@ EOF
   oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" rollout status deployment/thanos-receive --timeout=10m || true
   oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" rollout status deployment/thanos-query --timeout=10m || true
 
-  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" create route edge thanos-receive --service=thanos-receive --port=remote --insecure-policy=Redirect >/dev/null 2>&1 || true
+  # Create the Route that cluster2 will use to remote_write.
+  # Use insecure-policy=Allow to avoid 3xx redirect for HTTP POST (remote_write) requests.
+  oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" \
+    create route edge thanos-receive \
+    --service=thanos-receive --port=remote \
+    --insecure-policy=Allow \
+    --dry-run=client -o yaml \
+    | oc --context "${CTX_CLUSTER1}" apply -f -
+
+  # Wait for the router to assign a host to the Route before callers try to read it.
+  info "Waiting for thanos-receive Route host to be assigned in cluster1"
+  for _ in {1..30}; do
+    local _host
+    _host="$(oc --context "${CTX_CLUSTER1}" -n "${THANOS_NAMESPACE}" \
+      get route thanos-receive -o jsonpath='{.spec.host}' 2>/dev/null || true)"
+    if [[ -n "${_host}" ]]; then
+      info "thanos-receive Route host: ${_host}"
+      return 0
+    fi
+    sleep 5
+  done
+  info "Warning: thanos-receive Route host was not assigned within the timeout. Continuing anyway."
 }
 
 configure_global_metrics_remote_write() {
@@ -360,33 +408,89 @@ configure_global_metrics_remote_write() {
   local receive_url_cluster2="https://${receive_host}/api/v1/receive"
 
   info "Thanos Receive URL for cluster1 (in-cluster): ${receive_url_cluster1}"
-  info "Thanos Receive URL for cluster2 (route): ${receive_url_cluster2}"
+  info "Thanos Receive URL for cluster2 (route):      ${receive_url_cluster2}"
 
-  # Reduce cardinality to avoid MemoryPressure/evictions: keep only Istio/Envoy and basic 'up'.
-  # NOTE: these patches overwrite the full config.yaml content in their respective ConfigMaps.
+  # Wait for the UWM namespaces to exist before trying to write into them.
+  # The cluster-monitoring operator creates the namespace asynchronously after
+  # enableUserWorkload is set in cluster-monitoring-config.
+  wait_for_uwm_namespace "${CTX_CLUSTER1}"
+  wait_for_uwm_namespace "${CTX_CLUSTER2}"
 
   if [[ "${DISABLE_CLUSTER_MONITORING_REMOTE_WRITE}" == "true" ]]; then
     info "Disabling cluster-monitoring remote_write (prometheus-k8s) in both clusters to avoid exporting platform metrics"
-    oc --context "${CTX_CLUSTER1}" -n openshift-monitoring patch cm cluster-monitoring-config --type=merge -p "$(cat <<EOF
-{"data":{"config.yaml":"enableUserWorkload: true\nprometheusK8s:\n  externalLabels:\n    cluster_name: cluster1\n"}}
+    # Use apply (not patch) so the command succeeds even if the ConfigMap was
+    # just created by the operator and already has content we want to preserve.
+    cat <<EOF | oc --context "${CTX_CLUSTER1}" apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+    prometheusK8s:
+      externalLabels:
+        cluster_name: cluster1
 EOF
-)"
-    oc --context "${CTX_CLUSTER2}" -n openshift-monitoring patch cm cluster-monitoring-config --type=merge -p "$(cat <<EOF
-{"data":{"config.yaml":"enableUserWorkload: true\nprometheusK8s:\n  externalLabels:\n    cluster_name: cluster2\n"}}
+    cat <<EOF | oc --context "${CTX_CLUSTER2}" apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+    prometheusK8s:
+      externalLabels:
+        cluster_name: cluster2
 EOF
-)"
   fi
 
-  info "Configuring UWM remote_write in both clusters"
-  oc --context "${CTX_CLUSTER1}" -n openshift-user-workload-monitoring patch cm user-workload-monitoring-config --type=merge -p "$(cat <<EOF
-{"data":{"config.yaml":"prometheus:\n  externalLabels:\n    cluster_name: cluster1\n  remoteWrite:\n  - url: ${receive_url_cluster1}\n    writeRelabelConfigs:\n    - sourceLabels: [__name__]\n      regex: \"${REMOTE_WRITE_FILTER_REGEX}\"\n      action: keep\n"}}
+  # Use apply instead of patch so the command works whether or not the ConfigMap
+  # already exists. The cluster-monitoring operator may or may not have created it.
+  info "Configuring UWM remote_write in cluster1"
+  cat <<EOF | oc --context "${CTX_CLUSTER1}" apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+data:
+  config.yaml: |
+    prometheus:
+      externalLabels:
+        cluster_name: cluster1
+      remoteWrite:
+      - url: ${receive_url_cluster1}
+        writeRelabelConfigs:
+        - sourceLabels: [__name__]
+          regex: "${REMOTE_WRITE_FILTER_REGEX}"
+          action: keep
 EOF
-)"
 
-  oc --context "${CTX_CLUSTER2}" -n openshift-user-workload-monitoring patch cm user-workload-monitoring-config --type=merge -p "$(cat <<EOF
-{"data":{"config.yaml":"prometheus:\n  externalLabels:\n    cluster_name: cluster2\n  remoteWrite:\n  - url: ${receive_url_cluster2}\n    tlsConfig:\n      insecureSkipVerify: true\n    writeRelabelConfigs:\n    - sourceLabels: [__name__]\n      regex: \"${REMOTE_WRITE_FILTER_REGEX}\"\n      action: keep\n"}}
+  info "Configuring UWM remote_write in cluster2"
+  cat <<EOF | oc --context "${CTX_CLUSTER2}" apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+data:
+  config.yaml: |
+    prometheus:
+      externalLabels:
+        cluster_name: cluster2
+      remoteWrite:
+      - url: ${receive_url_cluster2}
+        tlsConfig:
+          insecureSkipVerify: true
+        writeRelabelConfigs:
+        - sourceLabels: [__name__]
+          regex: "${REMOTE_WRITE_FILTER_REGEX}"
+          action: keep
 EOF
-)"
 
   if [[ "${RESTART_PROMETHEUS}" == "true" ]]; then
     info "Restarting Prometheus statefulsets to apply remote_write configuration"
