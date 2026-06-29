@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import AceEditor from 'react-ace';
+import Editor from '@monaco-editor/react';
 import { Theme } from '../../types/Common';
-import { istioAceEditorStyle } from '../../styles/AceEditorStyle';
-import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
+import { editorStyle } from '../../styles/EditorStyle';
+import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { getKialiTheme } from '../../utils/ThemeUtils';
 import { dump, loadAll, YAMLException } from 'js-yaml';
-import ReactAce from 'react-ace/lib/ace';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { Validation } from '../Validations/Validation';
@@ -26,7 +25,6 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isModified, setIsModified] = React.useState(false);
-  const aceEditorRef = React.useRef<ReactAce | null>(null);
   const [source, setSource] = React.useState<string>(dump(props.configData, yamlDumpOptions));
 
   const theme = getKialiTheme();
@@ -98,8 +96,8 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
     checkConfig();
   };
 
-  const onEditorChange = (value: string): void => {
-    setSource(value);
+  const onEditorChange = (value: string | undefined): void => {
+    setSource(value || '');
     setIsModified(true);
     setError(null);
   };
@@ -108,20 +106,16 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
     <div style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}>
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <span>{t('external_services.tracing configuration:')}</span>
-        <AceEditor
-          name="ace-editor-tester"
-          ref={aceEditorRef}
-          mode="yaml"
-          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-          onChange={onEditorChange}
-          width="100%"
-          className={istioAceEditorStyle}
-          height="95%"
-          wrapEnabled={true}
-          readOnly={false}
-          setOptions={aceOptions}
-          value={source}
-        />
+        <div className={editorStyle} data-test="tracing-config-editor">
+          <Editor
+            value={source}
+            language="yaml"
+            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
+            height="95%"
+            onChange={onEditorChange}
+            options={{ wordWrap: 'on', scrollBeyondLastLine: false }}
+          />
+        </div>
       </div>
       <div>
         <Button

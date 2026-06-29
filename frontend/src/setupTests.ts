@@ -24,6 +24,11 @@ if (!window.customElements) {
   (window as any).customElements = { define: () => {} };
 }
 
+// Monaco Editor accesses document.queryCommandSupported which jsdom does not implement.
+if (!document.queryCommandSupported) {
+  document.queryCommandSupported = () => false;
+}
+
 // jsdom does not implement ResizeObserver. This stub prevents crashes but
 // never fires callbacks, so any test relying on measured heights (e.g.
 // ResizeHeightObserver consumers) must provide its own mock that triggers

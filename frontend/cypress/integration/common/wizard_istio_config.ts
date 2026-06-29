@@ -209,7 +209,8 @@ When('user adds key {string} and value {string} for and saves', (key: string, va
 });
 
 Then('{string} should be in preview', (value: string) => {
-  cy.get('#ace-editor').contains(value);
+  cy.get('[data-test="editor-preview"] .monaco-editor').should('exist');
+  cy.get('[data-test="editor-preview"] .view-lines').should('contain.text', value);
 });
 
 Then('user selects {string} from the cluster dropdown', (clusters: string) => {

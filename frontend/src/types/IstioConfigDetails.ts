@@ -1,7 +1,7 @@
 import { Namespace } from './Namespace';
 import { ResourcePermissions } from './Permissions';
 import { ObjectValidation, IstioObject, References, HelpMessage, K8sResource } from './IstioObjects';
-import { AceOptions } from 'react-ace/types';
+import { editor } from 'monaco-editor';
 
 export type IstioConfigId = {
   namespace: string;
@@ -26,9 +26,9 @@ export interface IstioConfigDetailsQuery {
   validate?: boolean;
 }
 
-export const aceOptions: AceOptions = {
-  autoScrollEditorIntoView: true,
-  showPrintMargin: false
+export const monacoOptions: editor.IStandaloneEditorConstructionOptions = {
+  automaticLayout: true,
+  scrollBeyondLastLine: false
 };
 
 export const yamlDumpOptions = {

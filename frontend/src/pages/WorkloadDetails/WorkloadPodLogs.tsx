@@ -69,14 +69,13 @@ import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { WaypointInfo } from '../../types/Workload';
 import { istioProxyName } from './WorkloadDetailsPage';
-import AceEditor from 'react-ace';
+import Editor from '@monaco-editor/react';
 import { t } from 'utils/I18nUtils';
 import { ParameterizedTabs } from 'components/Tab/Tabs';
 import { basicTabStyle } from 'styles/TabStyles';
 import { classes } from 'typestyle';
-import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { editorStyle } from 'styles/EditorStyle';
 import { constrainedScrollStyle, flexCardStyle, flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
-import 'ace-builds/src-noconflict/mode-json';
 
 const appContainerColors = [PFColors.Blue200, PFColors.Blue300, PFColors.Blue400, PFColors.Blue100];
 const proxyContainerColor = PFColors.Gold300;
@@ -1039,23 +1038,15 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     const theme = this.props.theme;
     const jsonTab = (
       <Tab eventKey={0} title={t('JSON')} key="json">
-        <AceEditor
-          mode="json"
-          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-          value={this.state.jsonModalContent}
-          className={istioAceEditorStyle}
-          name="json-details-viewer"
-          readOnly={true}
-          width="100%"
-          height="100%"
-          setOptions={{
-            useWorker: false,
-            showLineNumbers: true,
-            tabSize: 2,
-            showFoldWidgets: true
-          }}
-          editorProps={{ $blockScrolling: true }}
-        />
+        <div className={editorStyle} data-test="json-details-viewer">
+          <Editor
+            value={this.state.jsonModalContent}
+            language="json"
+            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
+            height="100%"
+            options={{ readOnly: true, scrollBeyondLastLine: false, tabSize: 2, folding: true }}
+          />
+        </div>
       </Tab>
     );
 

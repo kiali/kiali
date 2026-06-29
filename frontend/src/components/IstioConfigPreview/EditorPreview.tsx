@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
-import { AceValidations } from '../../types/AceValidations';
-import AceEditor from 'react-ace';
-import { aceOptions } from '../../types/IstioConfigDetails';
+import type { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import { applyMonacoMarkers } from '../../types/AceValidations';
+import type { MonacoInstance } from '../../types/AceValidations';
+import Editor from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
+import { MarkerSeverity } from 'monaco-editor';
 import { YAMLException, loadAll } from 'js-yaml';
-import { istioAceEditorStyle, istioValidationErrorStyle } from 'styles/AceEditorStyle';
+import { editorStyle } from 'styles/EditorStyle';
 import { Theme } from '../../types/Common';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
-import ReactAce from 'react-ace/lib/ace';
 
 export type PolicyItem = AuthorizationPolicy | Sidecar;
 
@@ -24,66 +25,63 @@ type Props = ReduxProps & {
 
 export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
   const [yaml, setYaml] = React.useState<string>(props.yaml);
-  const [parsedValidations, setParsedValidations] = React.useState<AceValidations>({ markers: [], annotations: [] });
+  const editorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = React.useRef<MonacoInstance | null>(null);
 
-  const aceEditorRef = React.useRef<ReactAce | null>(null);
-
-  const onChange = (value: string): void => {
-    const parsedValidations: AceValidations = {
-      markers: [],
-      annotations: []
-    };
-
-    setYaml(value);
+  const onChange = (value: string | undefined): void => {
+    setYaml(value || '');
 
     try {
-      loadAll(value, object => {
-        setParsedValidations(parsedValidations);
+      loadAll(value || '', object => {
+        clearMarkers();
         props.onChange(object as PolicyItem);
       });
     } catch (e) {
       if (e instanceof YAMLException) {
         const row = e.mark && e.mark.line ? e.mark.line : 0;
-        const col = e.mark && e.mark.column ? e.mark.column : 0;
         const message = e.message ? e.message : '';
 
-        parsedValidations.markers.push({
-          startRow: row,
-          startCol: 0,
-          endRow: row + 1,
-          endCol: 0,
-          className: istioValidationErrorStyle,
-          type: 'fullLine'
-        });
-
-        parsedValidations.annotations.push({
-          row: row,
-          column: col,
-          type: 'error',
-          text: message
-        });
-
-        setParsedValidations(parsedValidations);
+        if (monacoRef.current && editorRef.current) {
+          applyMonacoMarkers(monacoRef.current, editorRef.current, [
+            {
+              startLineNumber: row + 1,
+              startColumn: 1,
+              endLineNumber: row + 2,
+              endColumn: 1,
+              severity: MarkerSeverity.Error,
+              message
+            }
+          ]);
+        }
       }
     }
   };
 
+  const clearMarkers = (): void => {
+    if (monacoRef.current && editorRef.current) {
+      applyMonacoMarkers(monacoRef.current, editorRef.current, []);
+    }
+  };
+
+  const onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
+    editorRef.current = ed;
+    monacoRef.current = monaco;
+    ed.onDidChangeModelContent(() => {
+      onChange(ed.getValue());
+    });
+  };
+
   return (
-    <AceEditor
-      ref={aceEditorRef}
-      mode="yaml"
-      theme={props.theme === Theme.DARK ? 'twilight' : 'eclipse'}
-      onChange={value => onChange(value)}
-      readOnly={props.readOnly}
-      height={'275px'}
-      width={'100%'}
-      className={istioAceEditorStyle}
-      wrapEnabled={true}
-      setOptions={aceOptions}
-      value={yaml}
-      annotations={parsedValidations.annotations}
-      markers={parsedValidations.markers}
-    />
+    <div className={editorStyle} data-test="editor-preview">
+      <Editor
+        value={yaml}
+        language="yaml"
+        theme={props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+        height="275px"
+        onMount={onEditorDidMount}
+        options={{ readOnly: props.readOnly, wordWrap: 'on', scrollBeyondLastLine: false, glyphMargin: true }}
+      />
+    </div>
   );
 };
 
