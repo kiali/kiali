@@ -172,8 +172,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           : loggedOutClusters.push({ cluster: cluster, endpoint: endpoint });
       });
     }
-    const hasDropdownActions =
-      canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
+    const hasDropdownActions = canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
 
     return (
       <>
