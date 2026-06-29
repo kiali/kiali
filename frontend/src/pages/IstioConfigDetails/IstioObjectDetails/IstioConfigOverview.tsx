@@ -4,13 +4,13 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { LocalTime } from 'components/Time/LocalTime';
 import * as React from 'react';
 import type { IstioConfigDetails } from 'types/IstioConfigDetails';
+import { ValidationTypes } from 'types/IstioObjects';
 import type {
   HelpMessage,
   ObjectReference,
   ObjectValidation,
   ServiceReference,
   ValidationMessage,
-  ValidationTypes,
   WorkloadReference
 } from 'types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -43,7 +43,7 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
   const configurationHasWarnings = (): boolean | undefined => {
     return props.istioValidations?.checks.some(check => {
-      return (check.severity as ValidationTypes) === ('warning' as ValidationTypes);
+      return check.severity === ValidationTypes.Warning;
     });
   };
 
