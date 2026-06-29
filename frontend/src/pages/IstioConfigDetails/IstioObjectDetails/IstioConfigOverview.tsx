@@ -1,13 +1,10 @@
-import { Stack, StackItem, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Stack, StackItem, TooltipPosition } from '@patternfly/react-core';
 import { Labels } from 'components/Label/Labels';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { LocalTime } from 'components/Time/LocalTime';
-import { ValidationObjectSummary } from 'components/Validations/ValidationObjectSummary';
-import { GVKToBadge } from 'components/VirtualList/Config';
-import { KialiIcon } from 'config/KialiIcon';
 import * as React from 'react';
-import { IstioConfigDetails } from 'types/IstioConfigDetails';
-import {
+import type { IstioConfigDetails } from 'types/IstioConfigDetails';
+import type {
   HelpMessage,
   ObjectReference,
   ObjectValidation,
@@ -17,18 +14,12 @@ import {
   WorkloadReference
 } from 'types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import {
-  getGVKTypeString,
-  getIstioObject,
-  getIstioObjectGVK,
-  getReconciliationCondition
-} from 'utils/IstioConfigUtils';
+import { getIstioObject } from 'utils/IstioConfigUtils';
 import { IstioConfigHelp } from './IstioConfigHelp';
 import { IstioConfigReferences } from './IstioConfigReferences';
 import { IstioConfigValidationReferences } from './IstioConfigValidationReferences';
 import { IstioStatusMessageList } from './IstioStatusMessageList';
 import { isMultiCluster } from '../../../config';
-import { infoStyle } from 'styles/IconStyle';
 
 interface IstioConfigOverviewProps {
   helpMessages?: HelpMessage[];
@@ -42,22 +33,9 @@ interface IstioConfigOverviewProps {
   workloadReferences: WorkloadReference[];
 }
 
-const iconStyle = kialiStyle({
-  display: 'inline-block'
-});
-
-const healthIconStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
-
-const resourceListStyle = kialiStyle({
-  $nest: {
-    '& > ul > li > span': {
-      float: 'left',
-      width: '125px',
-      fontWeight: 700
-    }
-  }
+const metadataStyle = kialiStyle({
+  color: 'var(--pf-t--global--color--subtle)',
+  fontSize: 'var(--pf-t--global--font--size--sm)'
 });
 
 export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: IstioConfigOverviewProps) => {
@@ -65,9 +43,10 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
   const configurationHasWarnings = (): boolean | undefined => {
     return props.istioValidations?.checks.some(check => {
-      return check.severity === ValidationTypes.Warning;
+      return (check.severity as ValidationTypes) === ('warning' as ValidationTypes);
     });
   };
+
   const hasReferences = (): boolean => {
     return (
       props.objectReferences.length > 0 || props.serviceReferences.length > 0 || props.workloadReferences.length > 0
@@ -76,87 +55,23 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
 
   const istioObject = getIstioObject(props.istioObjectDetails);
 
-  const resourceProperties = (
-    <div key="properties-list" className={resourceListStyle}>
-      <ul style={{ listStyleType: 'none' }}>
-        {istioObject && istioObject.metadata.creationTimestamp && (
-          <li>
-            <span>Created</span>
-
-            <div style={{ display: 'inline-block' }}>
-              <LocalTime time={istioObject.metadata.creationTimestamp} />
-            </div>
-          </li>
-        )}
-
-        {istioObject && istioObject.metadata.resourceVersion && (
-          <li>
-            <span>Version</span>
-            {istioObject.metadata.resourceVersion}
-          </li>
-        )}
-      </ul>
-    </div>
-  );
-
   return (
     <Stack hasGutter={true}>
-      <StackItem>
-        <Title headingLevel="h3" size={TitleSizes.xl}>
-          Overview
-        </Title>
-      </StackItem>
+      {isMultiCluster && (
+        <StackItem>
+          <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {cluster}
+        </StackItem>
+      )}
 
-      <StackItem>
-        {isMultiCluster && (
-          <div key="cluster-icon">
-            <PFBadge badge={PFBadges.Cluster} position={TooltipPosition.right} /> {cluster}
-          </div>
-        )}
-
-        {istioObject && istioObject.kind && (
-          <>
-            <div className={iconStyle}>
-              <PFBadge
-                badge={GVKToBadge[getGVKTypeString(getIstioObjectGVK(istioObject.apiVersion, istioObject.kind))]}
-                position={TooltipPosition.top}
-              />
-            </div>
-
-            {istioObject?.metadata.name}
-
-            <Tooltip
-              position={TooltipPosition.right}
-              content={<div style={{ textAlign: 'left' }}>{resourceProperties}</div>}
-            >
-              <KialiIcon.Info className={infoStyle} />
-            </Tooltip>
-
-            {props.istioValidations &&
-              (!props.statusMessages || props.statusMessages.length === 0) &&
-              (!props.istioValidations.checks || props.istioValidations.checks.length === 0) && (
-                <span className={healthIconStyle}>
-                  <ValidationObjectSummary
-                    id="config-validation"
-                    validations={[props.istioValidations]}
-                    reconciledCondition={getReconciliationCondition(props.istioObjectDetails)}
-                  />
-                </span>
-              )}
-          </>
-        )}
-      </StackItem>
+      {istioObject?.metadata.creationTimestamp && (
+        <StackItem className={metadataStyle}>
+          Created <LocalTime time={istioObject.metadata.creationTimestamp} />
+        </StackItem>
+      )}
 
       {istioObject?.metadata.labels && (
         <StackItem>
           <Labels tooltipMessage="Labels defined on this resource" labels={istioObject?.metadata.labels}></Labels>
-        </StackItem>
-      )}
-
-      {((props.statusMessages && props.statusMessages.length > 0) ||
-        (props.istioValidations && props.istioValidations.checks && props.istioValidations.checks.length > 0)) && (
-        <StackItem>
-          <IstioStatusMessageList messages={props.statusMessages} checks={props.istioValidations?.checks} />
         </StackItem>
       )}
 
@@ -176,6 +91,13 @@ export const IstioConfigOverview: React.FC<IstioConfigOverviewProps> = (props: I
             isValid={!props.istioValidations || props.istioValidations?.valid}
             cluster={cluster}
           />
+        </StackItem>
+      )}
+
+      {((props.statusMessages && props.statusMessages.length > 0) ||
+        (props.istioValidations && props.istioValidations.checks && props.istioValidations.checks.length > 0)) && (
+        <StackItem>
+          <IstioStatusMessageList messages={props.statusMessages} checks={props.istioValidations?.checks} />
         </StackItem>
       )}
 

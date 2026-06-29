@@ -398,6 +398,23 @@ Feature: Kiali Istio Config page
   @crd-validation
   @bookinfo-app
   @sleep-app
+  Scenario: Duplicate validation codes are grouped on the detail page
+    Given there is a "bar" VirtualService in the "sleep" namespace with a "bar-route" http-route to host "sleep" and subset "v1"
+    And the route of the VirtualService has weight 50
+    And the http-route of the VirtualService also has a destination to host "sleep" and subset "v1" with weight 50
+    And a "bar" DestinationRule in the "sleep" namespace for "sleep" host
+    And the DestinationRule has a "v1" subset for "version=v1" labels
+    When the user refreshes the page
+    And user selects the "sleep" namespace
+    Then the "bar" "VirtualService" of the "sleep" namespace should have a "warning"
+    When user clicks on the "bar" VirtualService of the "sleep" namespace
+    Then the user sees the validation message "KIA1105" grouped with count 2
+    And there is not a "bar" "DestinationRule" in the "sleep" namespace
+    And there is not a "bar" "VirtualService" in the "sleep" namespace
+
+  @crd-validation
+  @bookinfo-app
+  @sleep-app
   Scenario: KIA1106 validation
     Given there is a "foo" VirtualService in the "sleep" namespace with a "foo-route" http-route to host "sleep"
     And the VirtualService applies to "sleep" hosts
