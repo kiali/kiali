@@ -110,7 +110,7 @@ func TestNamespaceLabelChangeTriggersValidation(t *testing.T) {
 	assert.True(vInfo.hasBaseChange, "Namespace label change should set hasBaseChange to true")
 }
 
-func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
+func TestValidateIncludesConfigsFromUnmanagedNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -161,10 +161,11 @@ func TestValidateSkipsUnmanagedNamespaces(t *testing.T) {
 	bookinfoKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: bookinfo, Name: "reviews-vs"}
 	assert.Contains(validations, bookinfoKey, "managed namespace should have validations")
 
-	// orphan-ns is NOT managed: nothing should appear for it
-	for key := range validations {
-		assert.NotEqual(orphan, key.Namespace, "unmanaged namespace %q should have no validations", orphan)
-	}
+	// orphan-ns VS should also be validated because Istio processes configs from all
+	// namespaces (unless discovery selectors restrict this). Configs from unmanaged
+	// namespaces are included in the validation pool and validated alongside managed ones.
+	orphanKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: orphan, Name: "ratings-vs"}
+	assert.Contains(validations, orphanKey, "configs from unmanaged namespaces should be validated")
 }
 
 func TestAmbientNamespaceWaypointDoesNotTriggerWaypointNotFound(t *testing.T) {
@@ -452,6 +453,389 @@ func TestMultiPrimaryFilterExportToNamespacesVS(t *testing.T) {
 	assert.Len(filteredBookinfo2, 1, "viewing bookinfo2: only bookinfo2 VS should be included")
 	assert.Equal("ratings", filteredBookinfo2[0].Name)
 	assert.Equal("bookinfo2", filteredBookinfo2[0].Namespace)
+}
+
+func TestMultiPrimaryWithUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Multi-primary: CP1 manages mesh1-ns (exportTo "."), CP2 manages mesh2-ns (exportTo "*").
+	// "ingress-ns" is unmanaged by either CP but has a VirtualService.
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "mesh1-ns"}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"."},
+					},
+				},
+			},
+			{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: false},
+				ManagedClusters:   []*models.KubeCluster{{Name: cluster}},
+				ManagedNamespaces: []models.Namespace{{Name: "mesh2-ns"}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						DefaultVirtualServiceExportTo: []string{"."},
+					},
+				},
+			},
+		},
+	}
+
+	vsMesh1 := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-mesh1", Namespace: "mesh1-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"svc1"}},
+	}
+	vsMesh2 := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-mesh2", Namespace: "mesh2-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"svc2"}},
+	}
+	// VS from unmanaged namespace, no explicit exportTo
+	vsIngress := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "vs-ingress", Namespace: "ingress-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"ingress-svc"}},
+	}
+	vsList := []*networking_v1.VirtualService{vsMesh1, vsMesh2, vsIngress}
+
+	// 1) filterIstioConfigByManagedNamespaces should preserve all three VS
+	configList := &models.IstioConfigList{VirtualServices: vsList}
+	filterIstioConfigByManagedNamespaces(configList, &mesh, cluster, []string{"mesh1-ns", "mesh2-ns", "ingress-ns"})
+	assert.Len(configList.VirtualServices, 3, "all VS should be preserved (managed + unmanaged)")
+
+	// 2) Export-to filtering from mesh1-ns perspective:
+	//    - vsMesh1 (mesh1-ns, "."): visible in own namespace -> included
+	//    - vsMesh2 (mesh2-ns, "."): only visible in mesh2-ns -> excluded
+	//    - vsIngress (ingress-ns, unmanaged, no exportTo): no mesh default -> exported to all -> included
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshServiceWithMesh(t, *conf, mesh, objs...)
+	vInfoMesh1 := mockValidationInfo(conf, map[string]bool{"mesh1-ns": false, "mesh2-ns": false, "ingress-ns": false}, "mesh1-ns")
+	vInfoMesh1.mesh = &mesh
+	filteredMesh1 := v.filterVSExportToNamespaces(configList.VirtualServices, &vInfoMesh1)
+	assert.Len(filteredMesh1, 2, "viewing mesh1-ns: mesh1 VS + unmanaged VS should be included, mesh2 VS excluded")
+
+	filteredNames := make([]string, 0, len(filteredMesh1))
+	for _, vs := range filteredMesh1 {
+		filteredNames = append(filteredNames, vs.Name)
+	}
+	assert.Contains(filteredNames, "vs-mesh1", "mesh1 VS visible in own namespace")
+	assert.Contains(filteredNames, "vs-ingress", "unmanaged VS exported to all")
+	assert.NotContains(filteredNames, "vs-mesh2", "mesh2 VS should not leak into mesh1")
+}
+
+// Regression test for https://github.com/kiali/kiali/issues/9937
+// Validates the full pipeline for HTTPRoutes referencing K8s Gateways across
+// managed, Ambient, and unmanaged namespaces.
+func TestHTTPRouteWithGatewayInUnmanagedNamespace(t *testing.T) {
+	ambientNS := "app-ambient"
+	nonAmbientNS := "app-non-ambient"
+	unmanagedGWNS := "istio-ingress"
+
+	// An HTTPRoute in an Ambient namespace referencing a Gateway in an unmanaged
+	// namespace with allowedRoutes.namespaces.from: All must NOT produce KIA1401.
+	t.Run("ambient ns with existing gateway no KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app", ambientNS, []string{"app.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "HTTPRoute should be validated")
+
+		for _, chk := range vals[routeKey].Checks {
+			assert.NotEqual("k8sroutes.nok8sgateway", chk.Code,
+				"KIA1401 must not be reported for an Ambient HTTPRoute referencing a Gateway in an unmanaged namespace with allowedRoutes from: All")
+		}
+	})
+
+	// An HTTPRoute in a non-Ambient, non-managed namespace referencing the same
+	// Gateway must also be validated without a false-positive KIA1401.
+	t.Run("non-ambient unmanaged ns with existing gateway no KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app", nonAmbientNS, []string{"app.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: nonAmbientNS},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "HTTPRoute in non-Ambient namespace should be validated")
+
+		for _, chk := range vals[routeKey].Checks {
+			assert.NotEqual("k8sroutes.nok8sgateway", chk.Code,
+				"KIA1401 must not be reported for a non-Ambient HTTPRoute referencing a Gateway in an unmanaged namespace with allowedRoutes from: All")
+		}
+	})
+
+	// When the referenced Gateway truly does not exist, KIA1401 must be reported.
+	t.Run("non-existent gateway produces KIA1401", func(t *testing.T) {
+		assert := assert.New(t)
+		require := require.New(t)
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		httpRouteAmbient := data.AddGatewayParentRefToHTTPRoute("does-not-exist", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app-ambient", ambientNS, []string{"app.example.com"}),
+		)
+		httpRouteNonAmbient := data.AddGatewayParentRefToHTTPRoute("does-not-exist", unmanagedGWNS,
+			data.CreateEmptyHTTPRoute("app-non-ambient", nonAmbientNS, []string{"app2.example.com"}),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			httpRouteAmbient, httpRouteNonAmbient,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:         &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace: "istio-system",
+				MeshConfig:      models.NewMeshConfig(),
+				RootNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{
+					{Name: ambientNS, IsAmbient: true},
+					{Name: nonAmbientNS},
+					{Name: "istio-system"},
+				},
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{conf.KubernetesConfig.ClusterName}, nil)
+		require.NoError(err)
+		validationPerformed, vals, err := vs.Validate(context.Background(), conf.KubernetesConfig.ClusterName, vInfo)
+		require.NoError(err)
+		assert.True(validationPerformed)
+
+		ambientKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app-ambient"}
+		assert.Contains(vals, ambientKey, "Ambient HTTPRoute should be validated")
+		assert.False(vals[ambientKey].Valid, "HTTPRoute referencing non-existent Gateway should be invalid")
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[ambientKey].Checks[0]))
+
+		nonAmbientKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app-non-ambient"}
+		assert.Contains(vals, nonAmbientKey, "Non-Ambient HTTPRoute should be validated")
+		assert.False(vals[nonAmbientKey].Valid, "HTTPRoute referencing non-existent Gateway should be invalid")
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nok8sgateway", vals[nonAmbientKey].Checks[0]))
+	})
+}
+
+// Validates that ValidateIstioObject (the details-page path) produces validations
+// for objects in unmanaged namespaces. ControlPlaneForNamespace returns an error
+// for unmanaged namespaces, and the helper functions setNonLocalMTLSConfig,
+// isGatewayToNamespace, and isPolicyAllowAny must ignore that error. If they
+// propagate it, ValidateIstioObject aborts early and returns nil validations
+// with nil error, making it appear as if the object has no issues.
+func TestValidateIstioObjectInUnmanagedNamespace(t *testing.T) {
+	ambientNS := "app-ambient"
+	nonAmbientNS := "app-non-ambient"
+	unmanagedGWNS := "istio-ingress"
+
+	buildTestEnv := func(t *testing.T, routeNS string, managedNamespaces []models.Namespace) IstioValidationsService {
+		t.Helper()
+		conf := config.NewConfig()
+		config.Set(conf)
+
+		gateway := data.AddListenerToK8sGateway(
+			data.CreateSharedToAllListener("default", "*.example.com", 80, "HTTP"),
+			data.CreateEmptyK8sGateway("gateway-internal", unmanagedGWNS),
+		)
+		httpRoute := data.AddBackendRefToHTTPRoute("non-existent-svc", routeNS,
+			data.AddGatewayParentRefToHTTPRoute("gateway-internal", unmanagedGWNS,
+				data.CreateEmptyHTTPRoute("app", routeNS, []string{"app.example.com"}),
+			),
+		)
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespaceWithLabels(ambientNS, map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}),
+			kubetest.FakeNamespace(nonAmbientNS),
+			kubetest.FakeNamespace(unmanagedGWNS),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			gateway, httpRoute,
+		}
+
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				MeshConfig:        models.NewMeshConfig(),
+				RootNamespace:     "istio-system",
+				ManagedNamespaces: managedNamespaces,
+			}},
+		}
+
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		k8s.GatewayAPIEnabled = true
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		return NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+	}
+
+	// HTTPRoute in Ambient namespace (managed) — setNonLocalMTLSConfig, isPolicyAllowAny,
+	// and isGatewayToNamespace must not block validation.
+	t.Run("ambient namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, ambientNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, ambientNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: ambientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "ValidateIstioObject should return validations for Ambient namespace")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
+
+	// HTTPRoute in a non-Ambient managed namespace — same assertion.
+	t.Run("non-ambient managed namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, nonAmbientNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: nonAmbientNS},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, nonAmbientNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: nonAmbientNS, Name: "app"}
+		assert.Contains(vals, routeKey, "ValidateIstioObject should return validations for managed namespace")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
+
+	// HTTPRoute in an unmanaged namespace — the critical case. If setNonLocalMTLSConfig,
+	// isGatewayToNamespace, or isPolicyAllowAny propagate the ControlPlaneForNamespace
+	// error instead of ignoring it, ValidateIstioObject returns nil validations with nil error,
+	// making it appear as if the object has no issues.
+	t.Run("unmanaged namespace produces KIA1402 for missing service", func(t *testing.T) {
+		assert := assert.New(t)
+		conf := config.NewConfig()
+		vs := buildTestEnv(t, unmanagedGWNS, []models.Namespace{
+			{Name: ambientNS, IsAmbient: true},
+			{Name: "istio-system"},
+		})
+
+		vals, _, err := vs.ValidateIstioObject(context.Background(), conf.KubernetesConfig.ClusterName, unmanagedGWNS, kubernetes.K8sHTTPRoutes, "app")
+		assert.NoError(err)
+
+		routeKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sHTTPRoutes, Namespace: unmanagedGWNS, Name: "app"}
+		assert.Contains(vals, routeKey,
+			"ValidateIstioObject must return validations even for objects in unmanaged namespaces; "+
+				"if this fails, setNonLocalMTLSConfig/isGatewayToNamespace/isPolicyAllowAny likely "+
+				"propagate the ControlPlaneForNamespace error instead of ignoring it")
+		assert.False(vals[routeKey].Valid)
+		assert.NoError(validations.ConfirmIstioCheckMessage("k8sroutes.nohost.namenotfound", vals[routeKey].Checks[0]))
+	})
 }
 
 func TestFilterExportToNamespacesVS(t *testing.T) {
@@ -1252,6 +1636,135 @@ func getGateway(name, namespace string) []*networking_v1.Gateway {
 				"app": "real",
 			})),
 	}
+}
+
+func TestFilterIstioConfigByManagedNamespacesIncludesUnmanaged(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	configList := &models.IstioConfigList{
+		VirtualServices: []*networking_v1.VirtualService{
+			{ObjectMeta: v1.ObjectMeta{Name: "vs-managed", Namespace: "bookinfo"}},
+			{ObjectMeta: v1.ObjectMeta{Name: "vs-unmanaged", Namespace: "unmanaged-ns"}},
+		},
+		DestinationRules: []*networking_v1.DestinationRule{
+			{ObjectMeta: v1.ObjectMeta{Name: "dr-unmanaged", Namespace: "another-unmanaged"}},
+		},
+		ServiceEntries: []*networking_v1.ServiceEntry{
+			{ObjectMeta: v1.ObjectMeta{Name: "se-managed", Namespace: "bookinfo"}},
+		},
+	}
+
+	filterIstioConfigByManagedNamespaces(configList, mesh, cluster, []string{"bookinfo", "unmanaged-ns", "another-unmanaged"})
+
+	assert.Len(configList.VirtualServices, 2, "VS in unmanaged namespace should be preserved")
+	assert.Len(configList.DestinationRules, 1, "DR in unmanaged namespace should be preserved")
+	assert.Len(configList.ServiceEntries, 1, "SE in managed namespace should be preserved")
+}
+
+func TestFilterVSExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	// VS in an unmanaged namespace with no explicit exportTo should be exported to all (Istio default)
+	vsUnmanaged := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "unmanaged-ns"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"reviews"}},
+	}
+	vsManaged := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"},
+		Spec:       apinetworkingv1.VirtualService{Hosts: []string{"ratings"}},
+	}
+	vsList := []*networking_v1.VirtualService{vsUnmanaged, vsManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterVSExportToNamespaces(vsList, &vInfo)
+	assert.Len(filtered, 2, "VS from unmanaged namespace should be included (exported to all by default)")
+}
+
+func TestFilterDRExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	drUnmanaged := &networking_v1.DestinationRule{
+		ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "unmanaged-ns"},
+	}
+	drManaged := &networking_v1.DestinationRule{
+		ObjectMeta: v1.ObjectMeta{Name: "ratings", Namespace: "bookinfo"},
+	}
+	drList := []*networking_v1.DestinationRule{drUnmanaged, drManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterDRExportToNamespaces(drList, &vInfo)
+	assert.Len(filtered, 2, "DR from unmanaged namespace should be included (exported to all by default)")
+}
+
+func TestFilterSEExportToNamespacesIncludesUnmanagedNamespace(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	mesh := &models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+			ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}},
+			MeshConfig:        models.NewMeshConfig(),
+		}},
+	}
+
+	seUnmanaged := &networking_v1.ServiceEntry{
+		ObjectMeta: v1.ObjectMeta{Name: "external-api", Namespace: "unmanaged-ns"},
+	}
+	seManaged := &networking_v1.ServiceEntry{
+		ObjectMeta: v1.ObjectMeta{Name: "internal-svc", Namespace: "bookinfo"},
+	}
+	seList := []*networking_v1.ServiceEntry{seUnmanaged, seManaged}
+
+	objs := mockEmpty(t, conf)
+	v := fakeValidationMeshService(t, *conf, objs...)
+	vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false, "unmanaged-ns": false}, "bookinfo")
+	vInfo.mesh = mesh
+
+	filtered := v.filterSEExportToNamespaces(seList, &vInfo)
+	assert.Len(filtered, 2, "SE from unmanaged namespace should be included (exported to all by default)")
 }
 
 func loadVirtualService(file string, t *testing.T) *networking_v1.VirtualService {

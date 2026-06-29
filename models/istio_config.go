@@ -48,6 +48,51 @@ type IstioConfigList struct {
 	IstioValidations       IstioValidations                     `json:"-"`
 }
 
+// Namespaces returns the unique set of namespace names across all config objects.
+func (i *IstioConfigList) Namespaces() []string {
+	seen := make(map[string]struct{})
+	add := func(objs []client.Object) {
+		for _, o := range objs {
+			seen[o.GetNamespace()] = struct{}{}
+		}
+	}
+	add(asClientObjects(i.AuthorizationPolicies))
+	add(asClientObjects(i.DestinationRules))
+	add(asClientObjects(i.EnvoyFilters))
+	add(asClientObjects(i.Gateways))
+	add(asClientObjects(i.K8sGateways))
+	add(asClientObjects(i.K8sGRPCRoutes))
+	add(asClientObjects(i.K8sHTTPRoutes))
+	add(asClientObjects(i.K8sInferencePools))
+	add(asClientObjects(i.K8sReferenceGrants))
+	add(asClientObjects(i.K8sTCPRoutes))
+	add(asClientObjects(i.K8sTLSRoutes))
+	add(asClientObjects(i.PeerAuthentications))
+	add(asClientObjects(i.RequestAuthentications))
+	add(asClientObjects(i.ServiceEntries))
+	add(asClientObjects(i.Sidecars))
+	add(asClientObjects(i.Telemetries))
+	add(asClientObjects(i.TrafficExtensions))
+	add(asClientObjects(i.VirtualServices))
+	add(asClientObjects(i.WasmPlugins))
+	add(asClientObjects(i.WorkloadEntries))
+	add(asClientObjects(i.WorkloadGroups))
+
+	result := make([]string, 0, len(seen))
+	for ns := range seen {
+		result = append(result, ns)
+	}
+	return result
+}
+
+func asClientObjects[T client.Object](slice []T) []client.Object {
+	out := make([]client.Object, len(slice))
+	for i, o := range slice {
+		out[i] = o
+	}
+	return out
+}
+
 func (i IstioConfigList) MarshalJSON() ([]byte, error) {
 	// result map with keys and values
 	jsonMap := make(map[string]interface{})
