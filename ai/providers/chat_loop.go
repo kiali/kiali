@@ -42,7 +42,8 @@ type PrepareNextTurnFunc func(
 // Each iteration:
 //  1. Calls streamTurn to get text + tool calls from the model.
 //  2. Executes tool calls in parallel.
-//  3. Checks for tool result errors (consistent across all providers).
+//  3. Logs tool result errors and forwards them to the LLM as content so it can
+//     compose a coherent partial-failure response (MCP protocol convention).
 //  4. Calls prepareNextTurn to apply results to the provider's state.
 //
 // Returns (responseContent, actions, docs, aborted).  aborted=true means an
@@ -96,12 +97,13 @@ func RunChatLoop(
 			return responseContent, actions, docs, true
 		}
 
-		// Tool result errors are handled consistently for all providers.
+		// Tool result errors are logged for observability but forwarded to the LLM
+		// so it can reason about partial failures (e.g. one cluster unreachable out
+		// of two) and compose a coherent response.  This follows the MCP protocol
+		// convention where tool errors are content, not fatal exceptions.
 		for _, tr := range toolResults {
 			if tr.Status == "error" {
-				Log(provider, LogLevelError, "ToolResult", "Error in tool result: %v", tr.Content)
-				StreamError(onChunk, tr.Content)
-				return responseContent, actions, docs, true
+				Log(provider, LogLevelWarn, "ToolResult", "Tool returned error (forwarded to LLM): %v", tr.Content)
 			}
 		}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,10 +22,17 @@ func collectChunks(out *[]string) func(string) {
 }
 
 // hasErrorEvent returns true when at least one collected chunk is a
-// well-formed LLM_ERROR_EVENT JSON payload.
+// well-formed LLM_ERROR_EVENT JSON payload (event type == "error").
+// It unmarshals the event envelope rather than doing a substring search so
+// that tool_result chunks whose data contains the word "error" are not
+// incorrectly matched.
 func hasErrorEvent(chunks []string) bool {
 	for _, c := range chunks {
-		if strings.Contains(c, LLM_ERROR_EVENT) {
+		var ev types.StreamEvent
+		if err := json.Unmarshal([]byte(c), &ev); err != nil {
+			continue
+		}
+		if ev.Event == LLM_ERROR_EVENT {
 			return true
 		}
 	}
@@ -161,8 +167,10 @@ func TestRunChatLoop_ContextCanceled(t *testing.T) {
 	assert.True(t, hasErrorEvent(chunks), "a context-canceled error event must be emitted")
 }
 
-// TestRunChatLoop_ToolResultError verifies that an error status in any tool
-// result causes an immediate abort.  prepareNextTurn must not be called.
+// TestRunChatLoop_ToolResultError verifies that a tool result with error status
+// is forwarded to prepareNextTurn rather than aborting the loop.  The LLM
+// receives all results (successful and failed) and can compose a coherent
+// partial-failure response, consistent with the MCP protocol convention.
 func TestRunChatLoop_ToolResultError(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 	ki := newTestKialiInterface(t)
@@ -171,7 +179,8 @@ func TestRunChatLoop_ToolResultError(t *testing.T) {
 	streamTurn := func(_ context.Context, _ func(string)) (string, []types.StreamToolCallData, error) {
 		streamCalls++
 		if streamCalls > 1 {
-			t.Fatal("streamTurn must not be called a second time when a tool result errors")
+			// Second call: model received the error result and produces a final answer.
+			return "I could not find the requested tool.", nil, nil
 		}
 		return "", []types.StreamToolCallData{
 			{Name: "nonexistent_tool", Args: map[string]any{}, ID: "tc-err"},
@@ -179,20 +188,81 @@ func TestRunChatLoop_ToolResultError(t *testing.T) {
 	}
 
 	prepareCalled := false
-	prepare := func(_ context.Context, _ []types.StreamToolCallData, _ []types.StreamToolResultData, _ bool, _ func(string)) (bool, string) {
+	var capturedResults []types.StreamToolResultData
+	prepare := func(_ context.Context, _ []types.StreamToolCallData, results []types.StreamToolResultData, _ bool, _ func(string)) (bool, string) {
 		prepareCalled = true
-		return false, ""
+		capturedResults = results
+		return true, "" // continue so the LLM can produce its answer
 	}
 
 	var chunks []string
-	_, _, _, aborted := RunChatLoop(
+	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
 		collectChunks(&chunks), streamTurn, prepare,
 	)
 
-	assert.True(t, aborted)
-	assert.False(t, prepareCalled, "prepareNextTurn must not run after a tool error")
-	assert.True(t, hasErrorEvent(chunks))
+	assert.False(t, aborted, "loop must not abort on a tool error")
+	assert.True(t, prepareCalled, "prepareNextTurn must be called with the error result")
+	assert.False(t, hasErrorEvent(chunks), "no fatal error event must be streamed to the user")
+	require.Len(t, capturedResults, 1)
+	assert.Equal(t, "error", capturedResults[0].Status, "error status must be preserved in the forwarded result")
+	assert.NotEmpty(t, capturedResults[0].Content, "error content must be non-empty so the LLM can reason about it")
+	assert.Equal(t, "I could not find the requested tool.", content)
+}
+
+// TestRunChatLoop_PartialToolFailure verifies that when multiple tools are
+// called in parallel and only some fail, the loop forwards all results to the
+// LLM without aborting.  This is the canonical multi-cluster scenario where one
+// cluster is unreachable and the other succeeds.
+func TestRunChatLoop_PartialToolFailure(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+	ki := newTestKialiInterface(t)
+
+	streamCalls := 0
+	streamTurn := func(_ context.Context, _ func(string)) (string, []types.StreamToolCallData, error) {
+		streamCalls++
+		if streamCalls > 1 {
+			return "Here is what I found (one cluster was unavailable).", nil, nil
+		}
+		return "", []types.StreamToolCallData{
+			// Two parallel calls: one will fail (nonexistent), one will succeed
+			// (get_referenced_docs — the excluded helper always succeeds).
+			{Name: "nonexistent_tool", Args: map[string]any{}, ID: "tc-fail"},
+			{Name: "get_referenced_docs", Args: map[string]any{"keywords": "istio"}, ID: "tc-ok"},
+		}, nil
+	}
+
+	var capturedResults []types.StreamToolResultData
+	prepare := func(_ context.Context, _ []types.StreamToolCallData, results []types.StreamToolResultData, _ bool, _ func(string)) (bool, string) {
+		capturedResults = results
+		return true, ""
+	}
+
+	var chunks []string
+	content, _, _, aborted := RunChatLoop(
+		dummyProvider{}, context.Background(), ki,
+		collectChunks(&chunks), streamTurn, prepare,
+	)
+
+	assert.False(t, aborted, "partial tool failure must not abort the loop")
+	assert.False(t, hasErrorEvent(chunks), "no fatal error event must be emitted for a partial failure")
+	require.Len(t, capturedResults, 2, "both results (success and error) must reach prepareNextTurn")
+
+	var errResult, okResult *types.StreamToolResultData
+	for i := range capturedResults {
+		switch capturedResults[i].ID {
+		case "tc-fail":
+			errResult = &capturedResults[i]
+		case "tc-ok":
+			okResult = &capturedResults[i]
+		}
+	}
+	require.NotNil(t, errResult, "failed tool result must be present")
+	assert.Equal(t, "error", errResult.Status)
+	assert.NotEmpty(t, errResult.Content)
+	require.NotNil(t, okResult, "successful tool result must be present")
+	assert.Equal(t, "success", okResult.Status)
+	assert.Equal(t, "Here is what I found (one cluster was unavailable).", content)
 }
 
 // TestRunChatLoop_PrepareNextTurnFalseStopsLoop verifies that when
@@ -361,13 +431,14 @@ func TestRunChatLoop_ContextCanceledAfterToolExecution(t *testing.T) {
 }
 
 // TestRunChatLoop_SSEChunksAreValidJSON verifies that every SSE chunk emitted
-// by the loop (error events, tool_call events, etc.) is well-formed JSON.
+// by the loop (tool_call events, tool_result events, etc.) is well-formed JSON.
 func TestRunChatLoop_SSEChunksAreValidJSON(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 	ki := newTestKialiInterface(t)
 
-	// Use a nonexistent tool so the loop aborts — we just want to collect the
-	// error SSE event and verify it is valid JSON.
+	// Use a nonexistent tool: the loop forwards the error result to prepareNextTurn
+	// (alwaysStopPrepare returns false), then exits normally.  We verify that all
+	// emitted SSE chunks are valid JSON.
 	streamTurn := func(_ context.Context, _ func(string)) (string, []types.StreamToolCallData, error) {
 		return "", []types.StreamToolCallData{
 			{Name: "nonexistent_tool", Args: map[string]any{}, ID: "tc-1"},
