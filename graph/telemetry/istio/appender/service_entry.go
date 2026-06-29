@@ -130,10 +130,10 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, n
 	}
 
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
-	defaultServiceExportTo, ok := nsExportTo[cluster+":"+namespace]
-	if !ok {
-		return false
-	}
+	defaultServiceExportTo := nsExportTo[cluster+":"+namespace]
+	// When no mesh config is found for this namespace (e.g., unmanaged namespace),
+	// defaultServiceExportTo is nil, which means no default export restriction.
+	// isExportedToNamespace handles nil exportTo by exporting to all namespaces.
 	if !found {
 		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
 			IncludeServiceEntries: true,

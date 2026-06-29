@@ -1015,10 +1015,10 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(vsList []*networki
 		var meshExportTo []string
 		if nsMeshConfigs != nil && nsMeshConfigs[vs.Namespace] != nil {
 			meshExportTo = nsMeshConfigs[vs.Namespace].DefaultVirtualServiceExportTo
-		} else {
-			log.Debugf("filterVSExportToNamespaces: no mesh config found for namespace %s in cluster %s, skipping", vs.Namespace, cluster)
-			continue
 		}
+		// When no mesh config is found (unmanaged namespace), meshExportTo stays nil.
+		// isExportedObjectIncluded treats empty exportTo + empty meshExportTo as
+		// "exported to all namespaces", matching Istio's default behavior.
 		if in.isExportedObjectIncluded(vs.Spec.ExportTo, meshExportTo, vs.Namespace, vInfo) {
 			result = append(result, vs)
 		}
@@ -1045,9 +1045,6 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(dr []*networking_v
 		var meshExportTo []string
 		if nsMeshConfigs != nil && nsMeshConfigs[d.Namespace] != nil {
 			meshExportTo = nsMeshConfigs[d.Namespace].DefaultDestinationRuleExportTo
-		} else {
-			log.Debugf("filterDRExportToNamespaces: no mesh config found for namespace %s in cluster %s, skipping", d.Namespace, cluster)
-			continue
 		}
 		if in.isExportedObjectIncluded(d.Spec.ExportTo, meshExportTo, d.Namespace, vInfo) {
 			result = append(result, d)
@@ -1075,9 +1072,6 @@ func (in *IstioValidationsService) filterSEExportToNamespaces(se []*networking_v
 		var meshExportTo []string
 		if nsMeshConfigs != nil && nsMeshConfigs[s.Namespace] != nil {
 			meshExportTo = nsMeshConfigs[s.Namespace].DefaultServiceExportTo
-		} else {
-			log.Debugf("filterSEExportToNamespaces: no mesh config found for namespace %s in cluster %s, skipping", s.Namespace, cluster)
-			continue
 		}
 		if in.isExportedObjectIncluded(s.Spec.ExportTo, meshExportTo, s.Namespace, vInfo) {
 			result = append(result, s)
@@ -1112,16 +1106,35 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	return false
 }
 
-// filterIstioConfigByManagedNamespaces removes Istio configs from namespaces that are not in
-// the mesh, preventing configs from non-mesh namespaces (e.g., "default") from being used in
-// validation of mesh-belonging namespaces. Uses BuildNamespaceToMeshConfig to determine which
-// namespaces are managed, and also includes root/control plane namespaces for mesh-wide configs.
+// filterIstioConfigByManagedNamespaces keeps Istio configs from namespaces that are managed by
+// a control plane on this cluster, as well as configs from namespaces that are not managed by
+// ANY control plane. Istio processes configs from all namespaces (unless discovery selectors
+// restrict this), so configs in non-injected namespaces can still affect the mesh and must not
+// be silently dropped. Only configs from namespaces that belong to a DIFFERENT control plane
+// in a multi-primary setup would ideally be excluded, but that scoping is handled later by the
+// per-namespace export-to filters.
 func filterIstioConfigByManagedNamespaces(config *models.IstioConfigList, mesh *models.Mesh, cluster string, namespaces []string) {
 	if mesh == nil {
 		return
 	}
-	allowed := mesh.BuildNamespaceToMeshConfig(cluster, namespaces)
-	allowedNames := slices.Collect(maps.Keys(allowed))
+	managed := mesh.BuildNamespaceToMeshConfig(cluster, namespaces)
+	allowedSet := make(map[string]struct{})
+	for ns := range managed {
+		allowedSet[ns] = struct{}{}
+	}
+
+	// Also allow namespaces that appear in the config objects but aren't managed by any CP.
+	// These could contain valid configs (ServiceEntries, DestinationRules, etc.) that affect
+	// mesh traffic even though the namespace itself doesn't have injection enabled.
+	for _, ns := range config.Namespaces() {
+		if _, alreadyAllowed := allowedSet[ns]; !alreadyAllowed {
+			if _, err := mesh.ControlPlaneForNamespace(cluster, ns); err != nil {
+				allowedSet[ns] = struct{}{}
+			}
+		}
+	}
+
+	allowedNames := slices.Collect(maps.Keys(allowedSet))
 
 	config.AuthorizationPolicies = kubernetes.FilterByNamespaceNames(config.AuthorizationPolicies, allowedNames)
 	config.DestinationRules = kubernetes.FilterByNamespaceNames(config.DestinationRules, allowedNames)
@@ -1158,9 +1171,13 @@ func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core
 func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
-	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil || err != nil {
-		return err
+	// Error is intentionally ignored: ControlPlaneForNamespace returns an error for
+	// unmanaged namespaces (no injection/ambient labels). This is a lookup miss, not a
+	// failure. Unmanaged namespaces can still have valid Istio config that needs validation;
+	// auto-mTLS simply stays at its zero value, which the validation pipeline handles.
+	cp, _ := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp == nil {
+		return nil
 	}
 	if cp.MeshConfig != nil && cp.MeshConfig.EnableAutoMtls != nil {
 		vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = cp.MeshConfig.EnableAutoMtls.Value
@@ -1171,9 +1188,10 @@ func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) 
 func (in *IstioValidationsService) isGatewayToNamespace(vInfo *validationInfo) (bool, error) {
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
-	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil || err != nil {
-		return false, err
+	// Error ignored: unmanaged namespaces have no CP — default to false (conservative).
+	cp, _ := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp == nil {
+		return false, nil
 	}
 	return cp.IsGatewayToNamespace, nil
 }
@@ -1181,9 +1199,10 @@ func (in *IstioValidationsService) isGatewayToNamespace(vInfo *validationInfo) (
 func (in *IstioValidationsService) isPolicyAllowAny(vInfo *validationInfo) (bool, error) {
 	cluster := vInfo.clusterInfo.cluster
 	namespace := vInfo.nsInfo.namespace.Name
-	cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil || err != nil {
-		return false, err
+	// Error ignored: unmanaged namespaces have no CP — default to false (REGISTRY_ONLY).
+	cp, _ := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
+	if cp == nil {
+		return false, nil
 	}
 	if cp.MeshConfig != nil && cp.MeshConfig.OutboundTrafficPolicy != nil {
 		return cp.MeshConfig.OutboundTrafficPolicy.Mode == istiov1alpha1.MeshConfig_OutboundTrafficPolicy_ALLOW_ANY, nil
