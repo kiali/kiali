@@ -113,7 +113,7 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
             theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="95%"
             onChange={onEditorChange}
-            options={{ wordWrap: 'on', scrollBeyondLastLine: false }}
+            options={{ wordWrap: 'on', scrollBeyondLastLine: false, editContext: false }}
           />
         </div>
       </div>

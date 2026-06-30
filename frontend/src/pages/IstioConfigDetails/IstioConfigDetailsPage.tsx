@@ -658,7 +658,8 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
               wordWrap: 'on',
               scrollBeyondLastLine: false,
               folding: true,
-              glyphMargin: true
+              glyphMargin: true,
+              editContext: false
             }}
           />
         </div>
