@@ -445,52 +445,58 @@ When('user switches to the Tester tab', () => {
 
 When('user changes the provider in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.get('[data-test="tracing-config-editor"] .view-lines')
-      .invoke('text')
-      .then((editorText: string) => {
-        let replacer = 'tempo';
-        let provider = 'jaeger';
+    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
+    cy.window().then((win: any) => {
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
 
-        if (editorText.includes('tempo')) {
-          replacer = 'jaeger';
-          provider = 'tempo';
-        }
+      let replacer = 'tempo';
+      let provider = 'jaeger';
 
-        const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
+      if (editorText.includes('tempo')) {
+        replacer = 'jaeger';
+        provider = 'tempo';
+      }
 
-        cy.get('[data-test="tracing-config-editor"] .monaco-editor textarea.inputarea')
-          .should('exist')
-          .type('{ctrl+a}', { force: true })
-          .type(newText, { force: true, parseSpecialCharSequences: false });
-      });
+      const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
+      const model = editor.getModel();
+      const fullRange = model.getFullModelRange();
+      editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
+    });
   });
 });
 
 When('user changes the useGRPC in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
-    cy.get('[data-test="tracing-config-editor"] .view-lines')
-      .invoke('text')
-      .then((editorText: string) => {
-        let currentValue: string | null = null;
-        let targetValue = 'true';
+    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
+    cy.window().then((win: any) => {
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
 
-        if (/useGRPC\s*:\s*true/i.test(editorText)) {
-          currentValue = 'true';
-          targetValue = 'false';
-        } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
-          currentValue = 'false';
-          targetValue = 'true';
-        }
+      let currentValue: string | null = null;
+      let targetValue = 'true';
 
-        if (currentValue !== null) {
-          const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+      if (/useGRPC\s*:\s*true/i.test(editorText)) {
+        currentValue = 'true';
+        targetValue = 'false';
+      } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
+        currentValue = 'false';
+        targetValue = 'true';
+      }
 
-          cy.get('[data-test="tracing-config-editor"] .monaco-editor textarea.inputarea')
-            .should('exist')
-            .type('{ctrl+a}', { force: true })
-            .type(newText, { force: true, parseSpecialCharSequences: false });
-        }
-      });
+      if (currentValue !== null) {
+        const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+        const model = editor.getModel();
+        const fullRange = model.getFullModelRange();
+        editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
+      }
+    });
   });
 });
 

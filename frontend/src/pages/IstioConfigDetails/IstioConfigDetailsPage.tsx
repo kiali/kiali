@@ -544,6 +544,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
     this.monacoEditorRef = ed;
     this.monacoRef = monaco;
+    (window as any).monaco = monaco;
     ed.onDidChangeCursorPosition(this.onCursorChange);
     this.applyValidationMarkers();
   };

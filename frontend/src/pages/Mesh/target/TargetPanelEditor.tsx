@@ -20,7 +20,11 @@ const editorStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
+const LINE_HEIGHT = 19;
+const EDITOR_PADDING = 10;
+
 const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+  automaticLayout: true,
   folding: false,
   lineNumbers: 'off',
   minimap: { enabled: false },
@@ -40,6 +44,9 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
     yaml = 'N/A';
   }
 
+  const lineCount = yaml.split('\n').length;
+  const editorHeight = lineCount * LINE_HEIGHT + EDITOR_PADDING;
+
   return (
     <>
       <ConfigButtonsTargetPanel copyText={yaml} includeTitle={props.includeTitle} targetName={props.targetName} />
@@ -49,7 +56,7 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
           value={yaml}
           language="yaml"
           theme={darkTheme ? 'vs-dark' : 'light'}
-          height="sizeToFit"
+          height={`${editorHeight}px`}
           options={{ ...editorOptions, readOnly: true, lineNumbers: 'off' }}
         />
       </div>

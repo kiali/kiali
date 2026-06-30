@@ -106,14 +106,18 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
     <div style={{ display: 'flex', flexDirection: 'column', height: '600px', paddingTop: '1em' }}>
       <div style={{ flexGrow: 1, overflowY: 'auto' }}>
         <span>{t('external_services.tracing configuration:')}</span>
-        <div className={editorStyle} data-test="tracing-config-editor">
+        <div className={editorStyle} data-test="tracing-config-editor" style={{ height: '100%' }}>
           <Editor
             value={source}
             language="yaml"
             theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="95%"
             onChange={onEditorChange}
-            options={{ wordWrap: 'on', scrollBeyondLastLine: false, editContext: false }}
+            onMount={(ed, monaco) => {
+              (window as any).monaco = monaco;
+              (window as any).tracingConfigEditor = ed;
+            }}
+            options={{ wordWrap: 'on', scrollBeyondLastLine: false, editContext: false, automaticLayout: true }}
           />
         </div>
       </div>
