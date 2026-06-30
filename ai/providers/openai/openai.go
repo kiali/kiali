@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -103,7 +104,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			if ctx.Err() == nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
 				providers.Log(p, providers.LogLevelDebug, "Content", "OpenAI stream completed with internal SDK context cleanup — not an error")
 			} else {
-				return text, nil, err
+				return text, nil, enrichAPIError(err)
 			}
 		}
 		if sawTurnUsage {
@@ -287,4 +288,31 @@ func (p *OpenAIProvider) ConversationToProvider(conversation []types.Conversatio
 		}
 	}
 	return params
+}
+
+// enrichAPIError extracts a human-readable reason from an *openai.Error so
+// the user sees the actual API message rather than the opaque HTTP status line.
+//
+// Resolution order:
+//  1. aerr.Message — structured field parsed by the SDK from "error.message".
+//  2. aerr.Response.Body — the SDK repopulates the response body with the raw
+//     bytes after reading it, so we can read it here as a fallback when the
+//     SDK could not parse the structured Message field (e.g. when the provider
+//     uses a non-OpenAI error envelope).
+//  3. The original err — unchanged fallback.
+func enrichAPIError(err error) error {
+	var aerr *openai.Error
+	if !errors.As(err, &aerr) {
+		return err
+	}
+	if aerr.Message != "" {
+		return fmt.Errorf("API error %d (%s): %s", aerr.StatusCode, http.StatusText(aerr.StatusCode), aerr.Message)
+	}
+	if aerr.Response != nil && aerr.Response.Body != nil {
+		body, readErr := io.ReadAll(aerr.Response.Body)
+		if readErr == nil && len(body) > 0 {
+			return fmt.Errorf("API error %d (%s): %s", aerr.StatusCode, http.StatusText(aerr.StatusCode), strings.TrimSpace(string(body)))
+		}
+	}
+	return err
 }
