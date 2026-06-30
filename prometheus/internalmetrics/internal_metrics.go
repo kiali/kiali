@@ -822,9 +822,11 @@ func GetHealthStatusMetric() *prometheus.GaugeVec {
 // The call also updates the in-memory totals map and event log used by the usage summary API.
 func RecordAITokens(username, provider, model string, promptTokens, completionTokens, totalTokens int64) {
 	labels := prometheus.Labels{
-		labelUsername: username,
 		labelProvider: provider,
 		labelModel:    model,
+	}
+	if username != "" {
+		labels[labelUsername] = username
 	}
 	if promptTokens > 0 {
 		Metrics.AIPromptTokensTotal.With(labels).Add(float64(promptTokens))

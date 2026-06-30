@@ -256,7 +256,7 @@ func ChatAI(
 			}
 		}
 		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
-		recordChatAIUsage(conf.ChatAI.Metrics.Enabled, aiStore, userID, usageProviderName, usageModelName, usage)
+		recordChatAIUsage(conf, aiStore, userID, usageProviderName, usageModelName, usage)
 	}
 }
 
@@ -283,8 +283,9 @@ func resolveChatAIUsageUserID(r *http.Request, conf *config.Config, fallbackUser
 	return clusterAuth.Username
 }
 
-func recordChatAIUsage(metricsEnabled bool, aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
-
+func recordChatAIUsage(conf *config.Config, aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
+	metricsEnabled := conf.ChatAI.Metrics.Enabled
+	usernameIncluded := conf.ChatAI.Metrics.IncludeUsername
 	if !usage.HasTokens() {
 		return
 	}
@@ -297,6 +298,9 @@ func recordChatAIUsage(metricsEnabled bool, aiStore aiTypes.AIStore, userID stri
 		}
 	}
 	if metricsEnabled {
+		if !usernameIncluded {
+			userID = ""
+		}
 		internalmetrics.RecordAITokens(userID, provider, model, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
 	}
 }
