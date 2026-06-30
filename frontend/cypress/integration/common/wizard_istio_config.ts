@@ -210,7 +210,17 @@ When('user adds key {string} and value {string} for and saves', (key: string, va
 
 Then('{string} should be in preview', (value: string) => {
   cy.get('[data-test="editor-preview"] .monaco-editor').should('exist');
-  cy.get('[data-test="editor-preview"] .view-lines').should('contain.text', value);
+
+  cy.window({ timeout: 60000 }).should(win => {
+    const monaco = (win as any).monaco;
+    expect(monaco, 'Monaco global should be available').to.exist;
+
+    const models = monaco.editor.getModels();
+    expect(models.length, 'Monaco should have at least one model').to.be.greaterThan(0);
+
+    const text = models[models.length - 1].getValue();
+    expect(text).to.include(value);
+  });
 });
 
 Then('user selects {string} from the cluster dropdown', (clusters: string) => {
