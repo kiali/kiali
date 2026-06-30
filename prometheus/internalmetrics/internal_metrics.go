@@ -881,7 +881,9 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 			i := sort.Search(len(aiTokenEventsLog), func(j int) bool {
 				return !aiTokenEventsLog[j].Timestamp.Before(cutoff)
 			})
-			aiTokenEventsLog = aiTokenEventsLog[i:]
+			trimmed := make([]AITokenEvent, len(aiTokenEventsLog)-i)
+			copy(trimmed, aiTokenEventsLog[i:])
+			aiTokenEventsLog = trimmed
 		}
 	}
 
@@ -889,7 +891,10 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 	// would hold more events than maxAITokenEvents. Drop from the front
 	// (oldest first) to keep the most recent data.
 	if len(aiTokenEventsLog) > maxAITokenEvents {
-		aiTokenEventsLog = aiTokenEventsLog[len(aiTokenEventsLog)-maxAITokenEvents:]
+		keep := aiTokenEventsLog[len(aiTokenEventsLog)-maxAITokenEvents:]
+		trimmed := make([]AITokenEvent, maxAITokenEvents)
+		copy(trimmed, keep)
+		aiTokenEventsLog = trimmed
 	}
 	aiTokenEventsMu.Unlock()
 }
