@@ -163,8 +163,8 @@ DEFAULT_TIMEOUT="1200"
 # Kiali defaults
 DEFAULT_KIALI_NAMESPACE="istio-system"
 DEFAULT_KIALI_REPO_DIR="$(cd "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
-DEFAULT_KIALI_OPERATOR_REPO_DIR="$(cd "${SCRIPT_DIR}/../../kiali-operator" &> /dev/null && pwd)"
-DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && pwd)"
+DEFAULT_KIALI_OPERATOR_REPO_DIR="$(cd "${SCRIPT_DIR}/../../kiali-operator" &> /dev/null && pwd || echo "$(cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd)/kiali-operator")"
+DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && pwd || echo "$(cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd)/helm-charts")"
 DEFAULT_KIALI_INSTALL_TYPE="helm-server"
 KIALI_OLM_OPERATOR_NAMESPACE="openshift-operators"
 KIALI_HELM_OPERATOR_NAMESPACE="kiali-operator"
@@ -2446,14 +2446,7 @@ init_openshift() {
     return 1
   fi
 
-  # Check if pull secret file is provided
-  if [ -z "${CRC_PULL_SECRET_FILE}" ]; then
-    errormsg "Pull secret file is required. Use --crc-pull-secret-file option."
-    errormsg "You can download the pull secret from https://console.redhat.com/openshift/create/local"
-    return 1
-  fi
-
-  if [ ! -f "${CRC_PULL_SECRET_FILE}" ]; then
+  if [ -n "${CRC_PULL_SECRET_FILE}" ] && [ ! -f "${CRC_PULL_SECRET_FILE}" ]; then
     errormsg "Pull secret file not found: ${CRC_PULL_SECRET_FILE}"
     return 1
   fi
@@ -2461,15 +2454,20 @@ init_openshift() {
   infomsg "Starting CRC with configuration:"
   infomsg "  CPUs: ${CRC_CPUS}"
   infomsg "  Disk Size: ${CRC_DISK_SIZE} GB"
-  infomsg "  Pull Secret: ${CRC_PULL_SECRET_FILE}"
+  infomsg "  Pull Secret: ${CRC_PULL_SECRET_FILE:-<not set - CRC will use previously stored secret or prompt>}"
   infomsg "  Cluster Monitoring: enabled"
+
+  local _pull_secret_arg=""
+  if [ -n "${CRC_PULL_SECRET_FILE}" ]; then
+    _pull_secret_arg="-p ${CRC_PULL_SECRET_FILE}"
+  fi
 
   # Start CRC cluster
   "${SCRIPT_DIR}/crc-openshift.sh" \
     --enable-cluster-monitoring true \
     --crc-cpus "${CRC_CPUS}" \
     --crc-virtual-disk-size "${CRC_DISK_SIZE}" \
-    -p "${CRC_PULL_SECRET_FILE}" \
+    ${_pull_secret_arg} \
     start
 
   if [ $? -ne 0 ]; then
