@@ -419,7 +419,11 @@ Then('user does not see VirtualService {string} in the Istio Config list', (name
 
 Then('the Istio config YAML editor should contain {string}', (snippet: string) => {
   cy.get('[data-test="istio-config-editor"] .monaco-editor', { timeout: 30000 }).should('be.visible');
-  cy.get('[data-test="istio-config-editor"] .view-lines').invoke('text').should('include', snippet);
+  cy.window().then((win: any) => {
+    const editors = win.monaco?.editor?.getEditors() ?? [];
+    const text = editors[0]?.getValue() ?? '';
+    expect(text).to.include(snippet);
+  });
 });
 
 // ============================================================
