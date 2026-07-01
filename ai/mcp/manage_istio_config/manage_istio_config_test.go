@@ -569,7 +569,14 @@ func TestExecuteReadOnly_ListSuccess(t *testing.T) {
 
 	result, ok := res.(IstioListResult)
 	require.True(t, ok, "expected IstioListResult, got %T", res)
-	assert.GreaterOrEqual(t, len(result.Items), 2)
+	// Count total resources across all namespaces and GVK groups.
+	total := 0
+	for _, kinds := range result.Namespaces {
+		for _, kvr := range kinds {
+			total += len(kvr.Valid) + len(kvr.Invalid)
+		}
+	}
+	assert.GreaterOrEqual(t, total, 2)
 }
 
 func TestExecuteReadOnly_GetSuccess(t *testing.T) {

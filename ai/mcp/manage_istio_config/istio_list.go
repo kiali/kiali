@@ -43,30 +43,41 @@ var istioConfigCriteria = business.IstioConfigCriteria{
 	IncludeTelemetry:              true,
 }
 
-type IstioListItem struct {
-	Name       string            `json:"name"`
-	Namespace  string            `json:"namespace"`
-	Group      string            `json:"group"`
-	Version    string            `json:"version"`
-	Kind       string            `json:"kind"`
-	Validation ValidationSummary `json:"validation"`
+// istioListItem is an internal flat representation used while collecting
+// resources before they are grouped into the final output structure.
+type istioListItem struct {
+	Name      string
+	Namespace string
+	Group     string
+	Version   string
+	Kind      string
+	Valid     bool
 }
 
-// IstioListResult wraps the list output in a JSON object so the MCP
-// structuredContent requirement (must be a JSON object/record) is satisfied.
+// KindValidationResult holds resource names grouped by validation status for a
+// single GVK within a namespace. The map key in IstioListResult is
+// "group/version/kind" (e.g. "networking.istio.io/v1/VirtualService").
+type KindValidationResult struct {
+	Valid   []string `json:"valid"`
+	Invalid []string `json:"invalid"`
+}
+
+// IstioListResult is the grouped output returned by the list action.
+// Resources are nested as: namespace → "group/version/kind" → {valid, invalid}.
+// This eliminates per-item repetition of namespace, group, version, and kind keys.
 type IstioListResult struct {
-	Cluster string          `json:"cluster"`
-	Items   []IstioListItem `json:"items"`
+	Cluster    string                                     `json:"cluster"`
+	Namespaces map[string]map[string]KindValidationResult `json:"namespaces"`
 }
 
-type ValidationSummary struct {
-	Valid  bool                     `json:"valid"`
-	Checks []ValidationCheckSummary `json:"checks,omitempty"`
+type validationSummary struct {
+	Valid  bool
+	Checks []validationCheckSummary
 }
 
-type ValidationCheckSummary struct {
-	Severity string `json:"severity"`
-	Message  string `json:"message"`
+type validationCheckSummary struct {
+	Severity string
+	Message  string
 }
 
 func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
@@ -220,296 +231,159 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		istioValidations = models.IstioValidations{}
 	}
 
-	items := make([]IstioListItem, 0, len(virtualServices)+len(destinationRules)+len(gateways))
+	items := make([]istioListItem, 0, len(virtualServices)+len(destinationRules)+len(gateways))
+
+	appendItem := func(name, ns string, gvk schema.GroupVersionKind, obj runtime.Object) {
+		v := validationSummaryForRuntimeObject(obj, gvk, istioValidations, cluster)
+		items = append(items, istioListItem{
+			Name:      name,
+			Namespace: ns,
+			Group:     gvk.Group,
+			Version:   gvk.Version,
+			Kind:      gvk.Kind,
+			Valid:     v.Valid,
+		})
+	}
 
 	for _, vs := range virtualServices {
-		if vs == nil {
-			continue
+		if vs != nil {
+			appendItem(vs.Name, vs.Namespace, kubernetes.VirtualServices, vs)
 		}
-		items = append(items, IstioListItem{
-			Name:       vs.Name,
-			Namespace:  vs.Namespace,
-			Group:      kubernetes.VirtualServices.Group,
-			Version:    kubernetes.VirtualServices.Version,
-			Kind:       kubernetes.VirtualServices.Kind,
-			Validation: validationSummaryForRuntimeObject(vs, kubernetes.VirtualServices, istioValidations, cluster),
-		})
 	}
 	for _, dr := range destinationRules {
-		if dr == nil {
-			continue
+		if dr != nil {
+			appendItem(dr.Name, dr.Namespace, kubernetes.DestinationRules, dr)
 		}
-		items = append(items, IstioListItem{
-			Name:       dr.Name,
-			Namespace:  dr.Namespace,
-			Group:      kubernetes.DestinationRules.Group,
-			Version:    kubernetes.DestinationRules.Version,
-			Kind:       kubernetes.DestinationRules.Kind,
-			Validation: validationSummaryForRuntimeObject(dr, kubernetes.DestinationRules, istioValidations, cluster),
-		})
 	}
 	for _, gw := range gateways {
-		if gw == nil {
-			continue
+		if gw != nil {
+			appendItem(gw.Name, gw.Namespace, kubernetes.Gateways, gw)
 		}
-		items = append(items, IstioListItem{
-			Name:       gw.Name,
-			Namespace:  gw.Namespace,
-			Group:      kubernetes.Gateways.Group,
-			Version:    kubernetes.Gateways.Version,
-			Kind:       kubernetes.Gateways.Kind,
-			Validation: validationSummaryForRuntimeObject(gw, kubernetes.Gateways, istioValidations, cluster),
-		})
 	}
 
 	// Remaining supported types (not affected by service_name filtering).
 	for _, se := range serviceEntries {
-		if se == nil {
-			continue
+		if se != nil {
+			appendItem(se.Name, se.Namespace, kubernetes.ServiceEntries, se)
 		}
-		items = append(items, IstioListItem{
-			Name:       se.Name,
-			Namespace:  se.Namespace,
-			Group:      kubernetes.ServiceEntries.Group,
-			Version:    kubernetes.ServiceEntries.Version,
-			Kind:       kubernetes.ServiceEntries.Kind,
-			Validation: validationSummaryForRuntimeObject(se, kubernetes.ServiceEntries, istioValidations, cluster),
-		})
 	}
 	for _, sc := range sidecars {
-		if sc == nil {
-			continue
+		if sc != nil {
+			appendItem(sc.Name, sc.Namespace, kubernetes.Sidecars, sc)
 		}
-		items = append(items, IstioListItem{
-			Name:       sc.Name,
-			Namespace:  sc.Namespace,
-			Group:      kubernetes.Sidecars.Group,
-			Version:    kubernetes.Sidecars.Version,
-			Kind:       kubernetes.Sidecars.Kind,
-			Validation: validationSummaryForRuntimeObject(sc, kubernetes.Sidecars, istioValidations, cluster),
-		})
 	}
 	for _, ef := range envoyFilters {
-		if ef == nil {
-			continue
+		if ef != nil {
+			appendItem(ef.Name, ef.Namespace, kubernetes.EnvoyFilters, ef)
 		}
-		items = append(items, IstioListItem{
-			Name:       ef.Name,
-			Namespace:  ef.Namespace,
-			Group:      kubernetes.EnvoyFilters.Group,
-			Version:    kubernetes.EnvoyFilters.Version,
-			Kind:       kubernetes.EnvoyFilters.Kind,
-			Validation: validationSummaryForRuntimeObject(ef, kubernetes.EnvoyFilters, istioValidations, cluster),
-		})
 	}
 	for _, we := range workloadEntries {
-		if we == nil {
-			continue
+		if we != nil {
+			appendItem(we.Name, we.Namespace, kubernetes.WorkloadEntries, we)
 		}
-		items = append(items, IstioListItem{
-			Name:       we.Name,
-			Namespace:  we.Namespace,
-			Group:      kubernetes.WorkloadEntries.Group,
-			Version:    kubernetes.WorkloadEntries.Version,
-			Kind:       kubernetes.WorkloadEntries.Kind,
-			Validation: validationSummaryForRuntimeObject(we, kubernetes.WorkloadEntries, istioValidations, cluster),
-		})
 	}
 	for _, wg := range workloadGroups {
-		if wg == nil {
-			continue
+		if wg != nil {
+			appendItem(wg.Name, wg.Namespace, kubernetes.WorkloadGroups, wg)
 		}
-		items = append(items, IstioListItem{
-			Name:       wg.Name,
-			Namespace:  wg.Namespace,
-			Group:      kubernetes.WorkloadGroups.Group,
-			Version:    kubernetes.WorkloadGroups.Version,
-			Kind:       kubernetes.WorkloadGroups.Kind,
-			Validation: validationSummaryForRuntimeObject(wg, kubernetes.WorkloadGroups, istioValidations, cluster),
-		})
 	}
 	for _, te := range trafficExtensions {
-		if te == nil {
-			continue
+		if te != nil {
+			appendItem(te.Name, te.Namespace, kubernetes.TrafficExtensions, te)
 		}
-		items = append(items, IstioListItem{
-			Name:       te.Name,
-			Namespace:  te.Namespace,
-			Group:      kubernetes.TrafficExtensions.Group,
-			Version:    kubernetes.TrafficExtensions.Version,
-			Kind:       kubernetes.TrafficExtensions.Kind,
-			Validation: validationSummaryForRuntimeObject(te, kubernetes.TrafficExtensions, istioValidations, cluster),
-		})
 	}
 	for _, wp := range wasmPlugins {
-		if wp == nil {
-			continue
+		if wp != nil {
+			appendItem(wp.Name, wp.Namespace, kubernetes.WasmPlugins, wp)
 		}
-		items = append(items, IstioListItem{
-			Name:       wp.Name,
-			Namespace:  wp.Namespace,
-			Group:      kubernetes.WasmPlugins.Group,
-			Version:    kubernetes.WasmPlugins.Version,
-			Kind:       kubernetes.WasmPlugins.Kind,
-			Validation: validationSummaryForRuntimeObject(wp, kubernetes.WasmPlugins, istioValidations, cluster),
-		})
 	}
 	for _, tl := range telemetries {
-		if tl == nil {
-			continue
+		if tl != nil {
+			appendItem(tl.Name, tl.Namespace, kubernetes.Telemetries, tl)
 		}
-		items = append(items, IstioListItem{
-			Name:       tl.Name,
-			Namespace:  tl.Namespace,
-			Group:      kubernetes.Telemetries.Group,
-			Version:    kubernetes.Telemetries.Version,
-			Kind:       kubernetes.Telemetries.Kind,
-			Validation: validationSummaryForRuntimeObject(tl, kubernetes.Telemetries, istioValidations, cluster),
-		})
 	}
 	for _, ap := range authorizationPolicies {
-		if ap == nil {
-			continue
+		if ap != nil {
+			appendItem(ap.Name, ap.Namespace, kubernetes.AuthorizationPolicies, ap)
 		}
-		items = append(items, IstioListItem{
-			Name:       ap.Name,
-			Namespace:  ap.Namespace,
-			Group:      kubernetes.AuthorizationPolicies.Group,
-			Version:    kubernetes.AuthorizationPolicies.Version,
-			Kind:       kubernetes.AuthorizationPolicies.Kind,
-			Validation: validationSummaryForRuntimeObject(ap, kubernetes.AuthorizationPolicies, istioValidations, cluster),
-		})
 	}
 	for _, pa := range peerAuthentications {
-		if pa == nil {
-			continue
+		if pa != nil {
+			appendItem(pa.Name, pa.Namespace, kubernetes.PeerAuthentications, pa)
 		}
-		items = append(items, IstioListItem{
-			Name:       pa.Name,
-			Namespace:  pa.Namespace,
-			Group:      kubernetes.PeerAuthentications.Group,
-			Version:    kubernetes.PeerAuthentications.Version,
-			Kind:       kubernetes.PeerAuthentications.Kind,
-			Validation: validationSummaryForRuntimeObject(pa, kubernetes.PeerAuthentications, istioValidations, cluster),
-		})
 	}
 	for _, ra := range requestAuthentications {
-		if ra == nil {
-			continue
+		if ra != nil {
+			appendItem(ra.Name, ra.Namespace, kubernetes.RequestAuthentications, ra)
 		}
-		items = append(items, IstioListItem{
-			Name:       ra.Name,
-			Namespace:  ra.Namespace,
-			Group:      kubernetes.RequestAuthentications.Group,
-			Version:    kubernetes.RequestAuthentications.Version,
-			Kind:       kubernetes.RequestAuthentications.Kind,
-			Validation: validationSummaryForRuntimeObject(ra, kubernetes.RequestAuthentications, istioValidations, cluster),
-		})
 	}
-
 	for _, kgw := range k8sGateways {
-		if kgw == nil {
-			continue
+		if kgw != nil {
+			appendItem(kgw.Name, kgw.Namespace, kubernetes.K8sGateways, kgw)
 		}
-		items = append(items, IstioListItem{
-			Name:       kgw.Name,
-			Namespace:  kgw.Namespace,
-			Group:      kubernetes.K8sGateways.Group,
-			Version:    kubernetes.K8sGateways.Version,
-			Kind:       kubernetes.K8sGateways.Kind,
-			Validation: validationSummaryForRuntimeObject(kgw, kubernetes.K8sGateways, istioValidations, cluster),
-		})
 	}
 	for _, hr := range k8sHTTPRoutes {
-		if hr == nil {
-			continue
+		if hr != nil {
+			appendItem(hr.Name, hr.Namespace, kubernetes.K8sHTTPRoutes, hr)
 		}
-		items = append(items, IstioListItem{
-			Name:       hr.Name,
-			Namespace:  hr.Namespace,
-			Group:      kubernetes.K8sHTTPRoutes.Group,
-			Version:    kubernetes.K8sHTTPRoutes.Version,
-			Kind:       kubernetes.K8sHTTPRoutes.Kind,
-			Validation: validationSummaryForRuntimeObject(hr, kubernetes.K8sHTTPRoutes, istioValidations, cluster),
-		})
 	}
 	for _, gr := range k8sGRPCRoutes {
-		if gr == nil {
-			continue
+		if gr != nil {
+			appendItem(gr.Name, gr.Namespace, kubernetes.K8sGRPCRoutes, gr)
 		}
-		items = append(items, IstioListItem{
-			Name:       gr.Name,
-			Namespace:  gr.Namespace,
-			Group:      kubernetes.K8sGRPCRoutes.Group,
-			Version:    kubernetes.K8sGRPCRoutes.Version,
-			Kind:       kubernetes.K8sGRPCRoutes.Kind,
-			Validation: validationSummaryForRuntimeObject(gr, kubernetes.K8sGRPCRoutes, istioValidations, cluster),
-		})
 	}
 	for _, tr := range k8sTCPRoutes {
-		if tr == nil {
-			continue
+		if tr != nil {
+			appendItem(tr.Name, tr.Namespace, kubernetes.K8sTCPRoutes, tr)
 		}
-		items = append(items, IstioListItem{
-			Name:       tr.Name,
-			Namespace:  tr.Namespace,
-			Group:      kubernetes.K8sTCPRoutes.Group,
-			Version:    kubernetes.K8sTCPRoutes.Version,
-			Kind:       kubernetes.K8sTCPRoutes.Kind,
-			Validation: validationSummaryForRuntimeObject(tr, kubernetes.K8sTCPRoutes, istioValidations, cluster),
-		})
 	}
 	for _, tlr := range k8sTLSRoutes {
-		if tlr == nil {
-			continue
+		if tlr != nil {
+			appendItem(tlr.Name, tlr.Namespace, kubernetes.K8sTLSRoutes, tlr)
 		}
-		items = append(items, IstioListItem{
-			Name:       tlr.Name,
-			Namespace:  tlr.Namespace,
-			Group:      kubernetes.K8sTLSRoutes.Group,
-			Version:    kubernetes.K8sTLSRoutes.Version,
-			Kind:       kubernetes.K8sTLSRoutes.Kind,
-			Validation: validationSummaryForRuntimeObject(tlr, kubernetes.K8sTLSRoutes, istioValidations, cluster),
-		})
 	}
 	for _, rg := range k8sReferenceGrants {
-		if rg == nil {
-			continue
+		if rg != nil {
+			appendItem(rg.Name, rg.Namespace, kubernetes.K8sReferenceGrants, rg)
 		}
-		items = append(items, IstioListItem{
-			Name:       rg.Name,
-			Namespace:  rg.Namespace,
-			Group:      kubernetes.K8sReferenceGrants.Group,
-			Version:    kubernetes.K8sReferenceGrants.Version,
-			Kind:       kubernetes.K8sReferenceGrants.Kind,
-			Validation: validationSummaryForRuntimeObject(rg, kubernetes.K8sReferenceGrants, istioValidations, cluster),
-		})
 	}
 	for _, ip := range k8sInferencePools {
-		if ip == nil {
-			continue
+		if ip != nil {
+			appendItem(ip.Name, ip.Namespace, kubernetes.K8sInferencePools, ip)
 		}
-		items = append(items, IstioListItem{
-			Name:       ip.Name,
-			Namespace:  ip.Namespace,
-			Group:      kubernetes.K8sInferencePools.Group,
-			Version:    kubernetes.K8sInferencePools.Version,
-			Kind:       kubernetes.K8sInferencePools.Kind,
-			Validation: validationSummaryForRuntimeObject(ip, kubernetes.K8sInferencePools, istioValidations, cluster),
-		})
 	}
 
+	// Sort for deterministic output: namespace → group/kind → name.
 	sort.Slice(items, func(i, j int) bool {
 		if items[i].Namespace != items[j].Namespace {
 			return items[i].Namespace < items[j].Namespace
 		}
-		if items[i].Kind != items[j].Kind {
-			return items[i].Kind < items[j].Kind
+		gvkI := items[i].Group + "/" + items[i].Kind
+		gvkJ := items[j].Group + "/" + items[j].Kind
+		if gvkI != gvkJ {
+			return gvkI < gvkJ
 		}
 		return items[i].Name < items[j].Name
 	})
 
-	return IstioListResult{Cluster: cluster, Items: items}, http.StatusOK
+	// Group into namespace → "group/version/kind" → {valid, invalid} names.
+	// Because items are pre-sorted the name slices are already in alphabetical order.
+	namespaces := make(map[string]map[string]KindValidationResult)
+	for _, item := range items {
+		gvkKey := item.Group + "/" + item.Version + "/" + item.Kind
+		if namespaces[item.Namespace] == nil {
+			namespaces[item.Namespace] = make(map[string]KindValidationResult)
+		}
+		kvr := namespaces[item.Namespace][gvkKey]
+		if item.Valid {
+			kvr.Valid = append(kvr.Valid, item.Name)
+		} else {
+			kvr.Invalid = append(kvr.Invalid, item.Name)
+		}
+		namespaces[item.Namespace][gvkKey] = kvr
+	}
+
+	return IstioListResult{Cluster: cluster, Namespaces: namespaces}, http.StatusOK
 }
 
 // matchesServiceHost checks if a host specification matches the service name.
@@ -544,7 +418,7 @@ func matchesServiceHost(host, serviceName string) bool {
 	return false
 }
 
-func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.GroupVersionKind, validations models.IstioValidations, cluster string) ValidationSummary {
+func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.GroupVersionKind, validations models.IstioValidations, cluster string) validationSummary {
 	typeAcc, _ := meta.TypeAccessor(obj)
 	objAcc, _ := meta.Accessor(obj)
 
@@ -569,7 +443,7 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 	}
 
 	// Default: valid when we don't find a validation entry.
-	out := ValidationSummary{Valid: true}
+	out := validationSummary{Valid: true}
 	if apiVersion == "" || kind == "" || name == "" {
 		return out
 	}
@@ -592,7 +466,7 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 	}
 
 	out.Valid = v.Valid
-	checks := make([]ValidationCheckSummary, 0, len(v.Checks))
+	checks := make([]validationCheckSummary, 0, len(v.Checks))
 	for _, c := range v.Checks {
 		if c == nil {
 			continue
@@ -601,7 +475,7 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 		if sev != "error" && sev != "warning" {
 			continue
 		}
-		checks = append(checks, ValidationCheckSummary{
+		checks = append(checks, validationCheckSummary{
 			Severity: sev,
 			Message:  c.Message,
 		})

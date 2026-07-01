@@ -662,7 +662,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "manage_istio_config_read",
-				Description: openai.String("Read-only Istio config: list or get objects. For action 'list', returns an array of objects with {name, namespace, type, validation}. For create, patch, or delete use manage_istio_config."),
+				Description: openai.String("Read-only Istio config: list or get objects. 'list' returns namespace→'{full-api-group}/{version}/{kind}'→{valid:[names],invalid:[names]}. The valid/invalid arrays ARE the validation result — do NOT call 'get' on each item just to check health; use the list directly. Only use 'get' to inspect a specific object's full YAML spec. Key parsing: the group is the entire string before the first '/' (e.g. key 'gateway.networking.k8s.io/v1/Gateway' → group='gateway.networking.k8s.io', version='v1', kind='Gateway'). For writes use manage_istio_config."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
@@ -695,7 +695,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 						},
 						"version": map[string]interface{}{
 							"type":        "string",
-							"description": "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+							"description": "API version (e.g. 'v1'). Required for 'get' action. Read directly from the list key: the middle segment between the two '/' characters.",
 						},
 						"kind": map[string]interface{}{
 							"type":        "string",

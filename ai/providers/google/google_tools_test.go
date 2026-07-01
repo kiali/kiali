@@ -501,7 +501,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"version": {
 				Type:        genai.TypeString,
-				Description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+				Description: "API version (e.g. 'v1'). Required for 'get' action. Read directly from the list key: the middle segment between the two '/' characters.",
 			},
 			"kind": {
 				Type:        genai.TypeString,
