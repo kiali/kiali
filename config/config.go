@@ -850,11 +850,12 @@ type ProviderConfig struct {
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
 type ChatAIConfig struct {
-	DefaultProvider string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
-	Enabled         bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Providers       []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
-	StoreConfig     AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
-	Tools           ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
+	DefaultProvider   string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
+	Enabled           bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	MaxToolIterations int              `yaml:"max_tool_iterations,omitempty" json:"max_tool_iterations,omitempty"`
+	Providers         []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
+	StoreConfig       AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
+	Tools             ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
 }
 
 // Clustering defines configuration around multi-cluster functionality.
@@ -1048,9 +1049,10 @@ func NewConfig() (c *Config) {
 			},
 		},
 		ChatAI: ChatAIConfig{
-			Enabled:         false,
-			DefaultProvider: "",
-			Providers:       []ProviderConfig{},
+			Enabled:           false,
+			DefaultProvider:   "",
+			MaxToolIterations: 5,
+			Providers:         []ProviderConfig{},
 			StoreConfig: AiStoreConfig{
 				Enabled:                 true,
 				InactivityTimeout:       "30m",
@@ -1379,6 +1381,10 @@ func (conf *Config) AddHealthDefault() {
 func (conf *Config) ValidateAI() error {
 	if !conf.ChatAI.Enabled {
 		return nil
+	}
+
+	if conf.ChatAI.MaxToolIterations < 1 || conf.ChatAI.MaxToolIterations > 20 {
+		return fmt.Errorf("chat_ai.max_tool_iterations must be between 1 and 20, got %d", conf.ChatAI.MaxToolIterations)
 	}
 
 	if err := normalizeAndValidateToolFilter("chat_ai.tools", &conf.ChatAI.Tools); err != nil {
