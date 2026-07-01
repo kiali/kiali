@@ -44,7 +44,7 @@ func TestMatchesServiceHost(t *testing.T) {
 	}
 }
 
-func TestIstioList_ReturnsCompactYAML(t *testing.T) {
+func TestIstioList_ReturnsGroupedOutput(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	config.Set(conf)
@@ -83,19 +83,22 @@ func TestIstioList_ReturnsCompactYAML(t *testing.T) {
 	result, ok := res.(IstioListResult)
 	require.True(t, ok, "expected IstioListResult output, got %T", res)
 	require.Equal(t, "east", result.Cluster)
-	require.Len(t, result.Items, 2)
 
-	// Validate items are present and compact
-	assert.Equal(t, "bookinfo", result.Items[0].Namespace)
-	assert.NotEmpty(t, result.Items[0].Name)
-	assert.NotEmpty(t, result.Items[0].Group)
-	assert.NotEmpty(t, result.Items[0].Version)
-	assert.NotEmpty(t, result.Items[0].Kind)
+	// Both resources are in the bookinfo namespace.
+	bookinfo, ok := result.Namespaces["bookinfo"]
+	require.True(t, ok, "expected bookinfo namespace in result")
 
-	// Default validation when validations cannot be found (e.g., in unit tests)
-	for _, item := range result.Items {
-		assert.True(t, item.Validation.Valid)
-	}
+	// VirtualService and DestinationRule should each appear under their own GVK key.
+	vsKey := "networking.istio.io/v1/VirtualService"
+	drKey := "networking.istio.io/v1/DestinationRule"
+	require.Contains(t, bookinfo, vsKey)
+	require.Contains(t, bookinfo, drKey)
+
+	// Default validation (no validation store in unit tests) → valid.
+	assert.Equal(t, []string{"reviews"}, bookinfo[vsKey].Valid)
+	assert.Empty(t, bookinfo[vsKey].Invalid)
+	assert.Equal(t, []string{"reviews"}, bookinfo[drKey].Valid)
+	assert.Empty(t, bookinfo[drKey].Invalid)
 }
 
 func TestIstioList_FilterByService(t *testing.T) {
@@ -149,18 +152,26 @@ func TestIstioList_FilterByService(t *testing.T) {
 	result, ok := res.(IstioListResult)
 	require.True(t, ok, "expected IstioListResult output, got %T", res)
 
+	// Collect all names across all namespaces and GVK groups.
 	names := map[string]struct{}{}
-	for _, item := range result.Items {
-		names[item.Name] = struct{}{}
+	for _, kinds := range result.Namespaces {
+		for _, kvr := range kinds {
+			for _, n := range kvr.Valid {
+				names[n] = struct{}{}
+			}
+			for _, n := range kvr.Invalid {
+				names[n] = struct{}{}
+			}
+		}
 	}
 
-	// Should contain reviews-related configs
+	// Should contain reviews-related configs.
 	_, hasReviewsVS := names["reviews-vs"]
 	_, hasReviewsDR := names["reviews-dr"]
 	assert.True(t, hasReviewsVS)
 	assert.True(t, hasReviewsDR)
 
-	// Should NOT contain ratings-related configs
+	// Should NOT contain ratings-related configs.
 	_, hasRatingsVS := names["ratings-vs"]
 	_, hasRatingsDR := names["ratings-dr"]
 	assert.False(t, hasRatingsVS)
@@ -274,5 +285,5 @@ func TestIstioList_IncludesTrafficExtensions(t *testing.T) {
 	result, ok := res.(IstioListResult)
 	require.True(t, ok)
 	assert.Equal(t, "east", result.Cluster)
-	assert.Empty(t, result.Items)
+	assert.Empty(t, result.Namespaces)
 }
