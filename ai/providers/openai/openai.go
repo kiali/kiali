@@ -79,7 +79,6 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			}
 			delta := chunk.Choices[0].Delta
 			if delta.Content != "" {
-				providers.Log(p, providers.LogLevelDebug, "Content", "Content: %s", delta.Content)
 				providers.SendStreamEvent(onChunk, providers.LLM_TOKEN_EVENT, types.StreamTokenData{ID: tokenID, Token: delta.Content})
 				text += delta.Content
 				tokenID++
@@ -106,6 +105,13 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			} else {
 				return text, nil, enrichAPIError(err)
 			}
+		}
+		if text != "" {
+			textPreview := text
+			if len(textPreview) > 400 {
+				textPreview = textPreview[:400] + "..."
+			}
+			providers.Log(p, providers.LogLevelDebug, "Content", "Response content (%d chars): %s", len(text), textPreview)
 		}
 		if sawTurnUsage {
 			usage.Add(turnUsage)
