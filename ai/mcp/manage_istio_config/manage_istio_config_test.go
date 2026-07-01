@@ -573,7 +573,7 @@ func TestExecuteReadOnly_ListSuccess(t *testing.T) {
 	total := 0
 	for _, kinds := range result.Namespaces {
 		for _, kvr := range kinds {
-			total += len(kvr.Valid) + len(kvr.Invalid)
+			total += len(kvr.Names)
 		}
 	}
 	assert.GreaterOrEqual(t, total, 2)

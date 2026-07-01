@@ -54,12 +54,14 @@ type istioListItem struct {
 	Valid     bool
 }
 
-// KindValidationResult holds resource names grouped by validation status for a
-// single GVK within a namespace. The map key in IstioListResult is
-// "group/version/kind" (e.g. "networking.istio.io/v1/VirtualService").
+// KindValidationResult summarises resources for a single GVK within a namespace.
+// The map key in IstioListResult is "group/version/kind".
+// Valid is present (true) only when every resource passes Kiali validation.
+// Invalid lists only the names that failed; omitted when all resources are valid.
 type KindValidationResult struct {
-	Valid   []string `json:"valid"`
-	Invalid []string `json:"invalid"`
+	Names   []string `json:"names"`
+	Valid   *bool    `json:"valid,omitempty"`
+	Invalid []string `json:"invalid,omitempty"`
 }
 
 // IstioListResult is the grouped output returned by the list action.
@@ -366,7 +368,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		return items[i].Name < items[j].Name
 	})
 
-	// Group into namespace → "group/version/kind" → {valid, invalid} names.
+	// Group into namespace → "group/version/kind" → {names, valid, invalid}.
 	// Because items are pre-sorted the name slices are already in alphabetical order.
 	namespaces := make(map[string]map[string]KindValidationResult)
 	for _, item := range items {
@@ -375,12 +377,21 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			namespaces[item.Namespace] = make(map[string]KindValidationResult)
 		}
 		kvr := namespaces[item.Namespace][gvkKey]
-		if item.Valid {
-			kvr.Valid = append(kvr.Valid, item.Name)
-		} else {
+		kvr.Names = append(kvr.Names, item.Name)
+		if !item.Valid {
 			kvr.Invalid = append(kvr.Invalid, item.Name)
 		}
 		namespaces[item.Namespace][gvkKey] = kvr
+	}
+	// Set valid:true only on groups where no resource failed validation.
+	validTrue := true
+	for ns, kinds := range namespaces {
+		for key, kvr := range kinds {
+			if len(kvr.Invalid) == 0 {
+				kvr.Valid = &validTrue
+				namespaces[ns][key] = kvr
+			}
+		}
 	}
 
 	return IstioListResult{Cluster: cluster, Namespaces: namespaces}, http.StatusOK
