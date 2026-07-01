@@ -6,12 +6,17 @@ import (
 	// kiali imports here. Most likely you will encounter an import cycle error that will
 	// cause a compilation failure.
 	"context"
+	"fmt"
+	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"github.com/rs/zerolog"
 
 	"github.com/kiali/kiali/config"
@@ -392,6 +397,10 @@ var (
 	// kept in the cumulative totals map. When the cap is hit the 25 % of entries with
 	// the smallest total-token count are pruned (least-significant users first).
 	maxAITokenTotals = 5_000
+	// aiTokenSeedStep is the Prometheus query step used when back-filling the event log
+	// from historical range data at startup. One hour gives a good balance between
+	// chart resolution and query cost over the 7-day retention window.
+	aiTokenSeedStep = time.Hour
 )
 
 // pruneAITokenTotals removes the 25 % of entries with the smallest TotalTokens from
@@ -822,11 +831,9 @@ func GetHealthStatusMetric() *prometheus.GaugeVec {
 // The call also updates the in-memory totals map and event log used by the usage summary API.
 func RecordAITokens(username, provider, model string, promptTokens, completionTokens, totalTokens int64) {
 	labels := prometheus.Labels{
-		labelProvider: provider,
 		labelModel:    model,
-	}
-	if username != "" {
-		labels[labelUsername] = username
+		labelProvider: provider,
+		labelUsername: username,
 	}
 	if promptTokens > 0 {
 		Metrics.AIPromptTokensTotal.With(labels).Add(float64(promptTokens))
@@ -897,4 +904,276 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 		aiTokenEventsLog = trimmed
 	}
 	aiTokenEventsMu.Unlock()
+}
+
+// InitAITokensFromPrometheus seeds the in-memory AI token totals map and event
+// log by querying the external Prometheus server. It is intended to be called
+// once at startup (in a background goroutine) after the Prometheus client has
+// connected, so that statistics survive a Kiali restart.
+//
+// The function is best-effort: any query errors are logged and the in-memory
+// state is left unchanged for the affected keys. It is safe to call from a
+// single goroutine; no internal locking is performed beyond the existing map
+// and event-log mutexes.
+func InitAITokensFromPrometheus(ctx context.Context, api prom_v1.API) {
+	if api == nil {
+		return
+	}
+	log.Info("Seeding AI token statistics from Prometheus")
+	seedAITokenTotalsFromPrometheus(ctx, api)
+	seedAITokenEventsFromPrometheus(ctx, api)
+	log.Info("AI token statistics seeded from Prometheus")
+}
+
+// promDurationStr converts a time.Duration to a Prometheus-compatible duration
+// string (e.g. 1h, 30m, 45s). Only whole hours, minutes, or seconds are
+// supported; sub-second durations are rounded up to one second.
+func promDurationStr(d time.Duration) string {
+	if h := int64(d / time.Hour); h > 0 && d%time.Hour == 0 {
+		return fmt.Sprintf("%dh", h)
+	}
+	if m := int64(d / time.Minute); m > 0 && d%time.Minute == 0 {
+		return fmt.Sprintf("%dm", m)
+	}
+	s := int64(d / time.Second)
+	if s < 1 {
+		s = 1
+	}
+	return fmt.Sprintf("%ds", s)
+}
+
+// seedAITokenTotalsFromPrometheus queries the three AI token counter metrics
+// from Prometheus and merges the results into the in-memory totals map.
+// For each (username, provider, model) key, the stored value is updated to
+// max(current in-memory value, Prometheus value) so that neither post-restart
+// events nor historical data are discarded.
+func seedAITokenTotalsFromPrometheus(ctx context.Context, api prom_v1.API) {
+	type sample struct {
+		completion float64
+		prompt     float64
+		total      float64
+	}
+	data := map[string]*sample{}
+
+	queryInstant := func(metricName string) model.Vector {
+		result, warnings, err := api.Query(ctx, metricName, time.Now())
+		if len(warnings) > 0 {
+			log.Warningf("InitAITokensFromPrometheus: warnings querying %s: %v", metricName, warnings)
+		}
+		if err != nil {
+			log.Warningf("InitAITokensFromPrometheus: error querying %s: %v", metricName, err)
+			return nil
+		}
+		vec, ok := result.(model.Vector)
+		if !ok {
+			return nil
+		}
+		return vec
+	}
+
+	extractKey := func(metric model.Metric) string {
+		username := string(metric[model.LabelName(labelUsername)])
+		provider := string(metric[model.LabelName(labelProvider)])
+		aiModel := string(metric[model.LabelName(labelModel)])
+		return username + "\x00" + provider + "\x00" + aiModel
+	}
+
+	for _, s := range queryInstant("kiali_ai_total_tokens_total") {
+		key := extractKey(s.Metric)
+		if data[key] == nil {
+			data[key] = &sample{}
+		}
+		data[key].total = float64(s.Value)
+	}
+	for _, s := range queryInstant("kiali_ai_prompt_tokens_total") {
+		key := extractKey(s.Metric)
+		if data[key] == nil {
+			data[key] = &sample{}
+		}
+		data[key].prompt = float64(s.Value)
+	}
+	for _, s := range queryInstant("kiali_ai_completion_tokens_total") {
+		key := extractKey(s.Metric)
+		if data[key] == nil {
+			data[key] = &sample{}
+		}
+		data[key].completion = float64(s.Value)
+	}
+
+	if len(data) == 0 {
+		return
+	}
+
+	aiTokenTotalsMu.Lock()
+	defer aiTokenTotalsMu.Unlock()
+	for key, d := range data {
+		parts := strings.SplitN(key, "\x00", 3)
+		if len(parts) != 3 {
+			continue
+		}
+		entry, exists := aiTokenTotals[key]
+		if !exists {
+			entry = &AITokenEntry{
+				Model:    parts[2],
+				Provider: parts[1],
+				Username: parts[0],
+			}
+			aiTokenTotals[key] = entry
+		}
+		if v := int64(math.Round(d.total)); v > entry.TotalTokens {
+			entry.TotalTokens = v
+		}
+		if v := int64(math.Round(d.prompt)); v > entry.PromptTokens {
+			entry.PromptTokens = v
+		}
+		if v := int64(math.Round(d.completion)); v > entry.CompletionTokens {
+			entry.CompletionTokens = v
+		}
+	}
+	if len(aiTokenTotals) > maxAITokenTotals {
+		pruneAITokenTotals()
+	}
+}
+
+// seedAITokenEventsFromPrometheus reconstructs a synthetic event log from
+// Prometheus range data covering the maxAITokenEventAge retention window.
+// Each synthetic event represents the token increase within one aiTokenSeedStep
+// interval and carries the same label dimensions as the real events. Synthetic
+// events are prepended to the existing in-memory log so that real events
+// recorded since startup are preserved.
+func seedAITokenEventsFromPrometheus(ctx context.Context, api prom_v1.API) {
+	now := time.Now()
+	windowStart := now.Add(-maxAITokenEventAge).Truncate(aiTokenSeedStep)
+	windowEnd := now.Truncate(aiTokenSeedStep)
+
+	if !windowStart.Before(windowEnd) {
+		return
+	}
+
+	// If the in-memory log already starts before the window we would query,
+	// there is no historical gap to fill.
+	aiTokenEventsMu.RLock()
+	if len(aiTokenEventsLog) > 0 && !aiTokenEventsLog[0].Timestamp.After(windowStart) {
+		aiTokenEventsMu.RUnlock()
+		return
+	}
+	aiTokenEventsMu.RUnlock()
+
+	rangeParams := prom_v1.Range{
+		End:   windowEnd,
+		Start: windowStart,
+		Step:  aiTokenSeedStep,
+	}
+	stepStr := promDurationStr(aiTokenSeedStep)
+
+	type eventKey struct {
+		aiModel  string
+		provider string
+		ts       time.Time
+		username string
+	}
+	type eventData struct {
+		completion float64
+		prompt     float64
+		total      float64
+	}
+	merged := map[eventKey]*eventData{}
+
+	queryRange := func(metricName string) model.Matrix {
+		query := fmt.Sprintf("increase(%s[%s])", metricName, stepStr)
+		result, warnings, err := api.QueryRange(ctx, query, rangeParams)
+		if len(warnings) > 0 {
+			log.Warningf("InitAITokensFromPrometheus: warnings querying %s range: %v", metricName, warnings)
+		}
+		if err != nil {
+			log.Warningf("InitAITokensFromPrometheus: error querying %s range: %v", metricName, err)
+			return nil
+		}
+		mat, ok := result.(model.Matrix)
+		if !ok {
+			return nil
+		}
+		return mat
+	}
+
+	for _, series := range queryRange("kiali_ai_total_tokens_total") {
+		username := string(series.Metric[model.LabelName(labelUsername)])
+		provider := string(series.Metric[model.LabelName(labelProvider)])
+		aiModel := string(series.Metric[model.LabelName(labelModel)])
+		for _, point := range series.Values {
+			if point.Value <= 0 {
+				continue
+			}
+			k := eventKey{aiModel: aiModel, provider: provider, ts: point.Timestamp.Time(), username: username}
+			if merged[k] == nil {
+				merged[k] = &eventData{}
+			}
+			merged[k].total = float64(point.Value)
+		}
+	}
+	for _, series := range queryRange("kiali_ai_prompt_tokens_total") {
+		username := string(series.Metric[model.LabelName(labelUsername)])
+		provider := string(series.Metric[model.LabelName(labelProvider)])
+		aiModel := string(series.Metric[model.LabelName(labelModel)])
+		for _, point := range series.Values {
+			if point.Value <= 0 {
+				continue
+			}
+			k := eventKey{aiModel: aiModel, provider: provider, ts: point.Timestamp.Time(), username: username}
+			if merged[k] == nil {
+				merged[k] = &eventData{}
+			}
+			merged[k].prompt = float64(point.Value)
+		}
+	}
+	for _, series := range queryRange("kiali_ai_completion_tokens_total") {
+		username := string(series.Metric[model.LabelName(labelUsername)])
+		provider := string(series.Metric[model.LabelName(labelProvider)])
+		aiModel := string(series.Metric[model.LabelName(labelModel)])
+		for _, point := range series.Values {
+			if point.Value <= 0 {
+				continue
+			}
+			k := eventKey{aiModel: aiModel, provider: provider, ts: point.Timestamp.Time(), username: username}
+			if merged[k] == nil {
+				merged[k] = &eventData{}
+			}
+			merged[k].completion = float64(point.Value)
+		}
+	}
+
+	if len(merged) == 0 {
+		return
+	}
+
+	synthetic := make([]AITokenEvent, 0, len(merged))
+	for k, d := range merged {
+		synthetic = append(synthetic, AITokenEvent{
+			CompletionTokens: int64(math.Round(d.completion)),
+			Model:            k.aiModel,
+			PromptTokens:     int64(math.Round(d.prompt)),
+			Provider:         k.provider,
+			Timestamp:        k.ts,
+			TotalTokens:      int64(math.Round(d.total)),
+			Username:         k.username,
+		})
+	}
+	sort.Slice(synthetic, func(i, j int) bool {
+		return synthetic[i].Timestamp.Before(synthetic[j].Timestamp)
+	})
+
+	aiTokenEventsMu.Lock()
+	defer aiTokenEventsMu.Unlock()
+	// Preserve real in-memory events whose timestamps fall after the seed window
+	// to avoid double-counting the partial hour since the last restart.
+	var tail []AITokenEvent
+	for _, ev := range aiTokenEventsLog {
+		if !ev.Timestamp.Before(windowEnd) {
+			tail = append(tail, ev)
+		}
+	}
+	combined := make([]AITokenEvent, 0, len(synthetic)+len(tail))
+	combined = append(combined, synthetic...)
+	combined = append(combined, tail...)
+	aiTokenEventsLog = combined
 }

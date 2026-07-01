@@ -1577,10 +1577,10 @@ export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetri
   return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
 };
 
-export const getAIUsage = (window?: number, step?: number, provider?: string): Promise<ApiResponse<AIUsageResponse>> => {
+export const getAIUsage = (windowSecs?: number, step?: number, provider?: string): Promise<ApiResponse<AIUsageResponse>> => {
   const params: { [key: string]: string } = {};
-  if (window) {
-    params.window = window.toString();
+  if (windowSecs) {
+    params.window = windowSecs.toString();
   }
   if (step) {
     params.step = step.toString();
