@@ -15,3 +15,7 @@
       clusterName:
         type: "string"
         description: "Optional cluster name to include in the graph. Default is the cluster name in the Kiali configuration (KubeConfig)."
+      ambientTraffic:
+        type: "string"
+        description: "Optional. Filter Ambient Mesh traffic. 'none' excludes all ambient traffic, 'total' includes all (default), 'waypoint' shows only waypoint-reported traffic, 'ztunnel' shows only ztunnel-reported traffic. Only applicable when Ambient Mesh is enabled."
+        enum: ["none", "total", "waypoint", "ztunnel"]

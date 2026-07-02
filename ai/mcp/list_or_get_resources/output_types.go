@@ -157,11 +157,38 @@ type PodInfo struct {
 }
 
 type WorkloadDetailResponse struct {
-	AssociatedServices []string          `json:"associated_services"`
-	Istio              WorkloadIstioInfo `json:"istio"`
-	Pods               []PodInfo         `json:"pods"`
-	Status             WorkloadStatus    `json:"status"`
-	Workload           WorkloadInfo      `json:"workload"`
+	AssociatedServices []string               `json:"associated_services"`
+	Istio              WorkloadIstioInfo      `json:"istio"`
+	Pods               []PodInfo              `json:"pods"`
+	Status             WorkloadStatus         `json:"status"`
+	Workload           WorkloadInfo           `json:"workload"`
+	AmbientNetworking  *AmbientNetworkingInfo `json:"ambientNetworking,omitempty"`
+	WaypointServices   []WaypointServiceInfo  `json:"waypointServices,omitempty"`
+}
+
+// WaypointServiceInfo contains information about services captured by a waypoint proxy
+type WaypointServiceInfo struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+// AmbientNetworkingInfo contains ztunnel-specific networking details for Ambient workloads
+type AmbientNetworkingInfo struct {
+	Captured         bool                 `json:"captured"`
+	Protocol         string               `json:"protocol,omitempty"`    // "HBONE", "TCP"
+	NetworkMode      string               `json:"networkMode,omitempty"` // "Standard", "HostNetwork"
+	Status           string               `json:"status,omitempty"`      // "Healthy", "Unhealthy"
+	Node             string               `json:"node,omitempty"`        // Kubernetes node name
+	TrustDomain      string               `json:"trustDomain,omitempty"` // "cluster.local"
+	CapturedServices []ZtunnelServiceInfo `json:"capturedServices,omitempty"`
+}
+
+// ZtunnelServiceInfo contains service-level ztunnel configuration
+type ZtunnelServiceInfo struct {
+	Name      string   `json:"name"`
+	Namespace string   `json:"namespace"`
+	Vips      []string `json:"vips"`
+	Waypoint  string   `json:"waypoint,omitempty"` // "namespace/workload"
 }
 
 type AppWorkloadInfo struct {

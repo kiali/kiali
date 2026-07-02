@@ -29,10 +29,11 @@ var validGraphTypes = map[string]bool{
 
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
-	Namespaces   []string `json:"namespaces,omitempty"`
-	RateInterval string   `json:"rateInterval,omitempty"`
-	GraphType    string   `json:"graphType,omitempty"`
-	ClusterName  string   `json:"clusterName,omitempty"`
+	Namespaces     []string `json:"namespaces,omitempty"`
+	RateInterval   string   `json:"rateInterval,omitempty"`
+	GraphType      string   `json:"graphType,omitempty"`
+	ClusterName    string   `json:"clusterName,omitempty"`
+	AmbientTraffic string   `json:"ambientTraffic,omitempty"`
 }
 
 // GetMeshGraphResponse encapsulates the mesh graph tool response.
@@ -51,9 +52,23 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
+	toolArgs.AmbientTraffic = mcputil.GetStringArg(args, "ambientTraffic")
 
 	if !validGraphTypes[toolArgs.GraphType] {
 		return fmt.Sprintf("invalid graphType %q: must be one of app, service, versionedApp, workload", toolArgs.GraphType), http.StatusBadRequest
+	}
+
+	// Validate ambientTraffic parameter
+	if toolArgs.AmbientTraffic != "" {
+		validAmbientValues := map[string]bool{
+			"none":     true,
+			"total":    true,
+			"waypoint": true,
+			"ztunnel":  true,
+		}
+		if !validAmbientValues[toolArgs.AmbientTraffic] {
+			return fmt.Sprintf("invalid ambientTraffic %q: must be one of none, total, waypoint, ztunnel", toolArgs.AmbientTraffic), http.StatusBadRequest
+		}
 	}
 
 	// Parse namespaces argument (comma-separated string)
@@ -169,6 +184,9 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 		if toolArgs.RateInterval != "" {
 			q.Set("duration", toolArgs.RateInterval)
+		}
+		if toolArgs.AmbientTraffic != "" {
+			q.Set("ambientTraffic", toolArgs.AmbientTraffic)
 		}
 		graphReq.URL.RawQuery = q.Encode()
 		graphOpts := graph.NewOptions(graphReq, kialiInterface.BusinessLayer, kialiInterface.Conf)

@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
@@ -264,7 +265,7 @@ func TransformServiceDetail(sd *models.ServiceDetails) ServiceDetailResponse {
 	}
 }
 
-func TransformWorkloadDetail(wl *models.Workload) WorkloadDetailResponse {
+func TransformWorkloadDetail(wl *models.Workload, ztunnelDump *kubernetes.ZtunnelConfigDump, waypointServices []models.ServiceReferenceInfo) WorkloadDetailResponse {
 	healthStr := "NA"
 	if wl.Health.Status != nil {
 		healthStr = string(wl.Health.Status.Status)
@@ -367,6 +368,23 @@ func TransformWorkloadDetail(wl *models.Workload) WorkloadDetailResponse {
 	inboundRate := computeSuccessRate(wl.Health.Requests.Inbound)
 	outboundRate := computeSuccessRate(wl.Health.Requests.Outbound)
 
+	var ambientNetworking *AmbientNetworkingInfo
+	if ztunnelDump != nil {
+		ambientNetworking = extractAmbientNetworking(wl, ztunnelDump)
+	}
+
+	// Transform waypoint services if present
+	var waypointSvcs []WaypointServiceInfo
+	if len(waypointServices) > 0 {
+		waypointSvcs = make([]WaypointServiceInfo, 0, len(waypointServices))
+		for _, svc := range waypointServices {
+			waypointSvcs = append(waypointSvcs, WaypointServiceInfo{
+				Name:      svc.Name,
+				Namespace: svc.Namespace,
+			})
+		}
+	}
+
 	return WorkloadDetailResponse{
 		AssociatedServices: svcNames,
 		Istio: WorkloadIstioInfo{
@@ -402,6 +420,8 @@ func TransformWorkloadDetail(wl *models.Workload) WorkloadDetailResponse {
 			Namespace:      wl.Namespace,
 			ServiceAccount: sa,
 		},
+		AmbientNetworking: ambientNetworking,
+		WaypointServices:  waypointSvcs,
 	}
 }
 
@@ -766,4 +786,65 @@ func labelsToString(labels map[string]string) string {
 		pairs = append(pairs, fmt.Sprintf("%s=%s", k, labels[k]))
 	}
 	return strings.Join(pairs, ", ")
+}
+
+// extractAmbientNetworking extracts ztunnel-specific networking information for an Ambient workload
+func extractAmbientNetworking(wl *models.Workload, dump *kubernetes.ZtunnelConfigDump) *AmbientNetworkingInfo {
+	if dump == nil {
+		return nil
+	}
+
+	// Find this workload in the ztunnel dump
+	var ztunnelWorkload *kubernetes.Workload
+	for i := range dump.Workloads {
+		zw := &dump.Workloads[i]
+		if zw.WorkloadName == wl.Name && zw.Namespace == wl.Namespace {
+			ztunnelWorkload = zw
+			break
+		}
+	}
+
+	// If workload not found in ztunnel dump, it's not captured
+	if ztunnelWorkload == nil {
+		return &AmbientNetworkingInfo{Captured: false}
+	}
+
+	// Extract captured services
+	var capturedServices []ZtunnelServiceInfo
+	for i := range dump.Services {
+		svc := &dump.Services[i]
+		// Check if this service references the workload
+		if containsString(ztunnelWorkload.Services, svc.Name) {
+			waypointDest := ""
+			if svc.Waypoint.Destination != "" {
+				waypointDest = svc.Waypoint.Destination
+			}
+			capturedServices = append(capturedServices, ZtunnelServiceInfo{
+				Name:      svc.Name,
+				Namespace: svc.Namespace,
+				Vips:      svc.Vips,
+				Waypoint:  waypointDest,
+			})
+		}
+	}
+
+	return &AmbientNetworkingInfo{
+		Captured:         true,
+		Protocol:         ztunnelWorkload.Protocol,
+		NetworkMode:      ztunnelWorkload.NetworkMode,
+		Status:           ztunnelWorkload.Status,
+		Node:             ztunnelWorkload.Node,
+		TrustDomain:      ztunnelWorkload.TrustDomain,
+		CapturedServices: capturedServices,
+	}
+}
+
+// containsString checks if a string slice contains a specific string
+func containsString(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

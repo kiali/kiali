@@ -46,6 +46,25 @@ type MeshSummaryObservabilityStack struct {
 
 type MeshSummaryDataPlane struct {
 	MonitoredNamespaces []MeshSummaryMonitoredNamespace `json:"monitored_namespaces"`
+	Ztunnel             *MeshSummaryZtunnel             `json:"ztunnel,omitempty"`
+}
+
+type MeshSummaryZtunnel struct {
+	DaemonSet MeshSummaryZtunnelDaemonSet `json:"daemonset"`
+	Pods      []MeshSummaryZtunnelPod     `json:"pods"`
+}
+
+type MeshSummaryZtunnelDaemonSet struct {
+	DesiredPods int32  `json:"desired_pods"`
+	ReadyPods   int32  `json:"ready_pods"`
+	Status      string `json:"status"`
+}
+
+type MeshSummaryZtunnelPod struct {
+	Name  string `json:"name"`
+	Node  string `json:"node"`
+	Phase string `json:"phase"`
+	Ready bool   `json:"ready"`
 }
 
 type MeshSummaryMonitoredNamespace struct {

@@ -112,6 +112,20 @@ func ChatMCP(
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 			return
 		}
+		// Gate Ambient-specific tools when Ambient Mesh is not enabled in any cluster
+		if mcp.IsAmbientTool(toolName) {
+			// Get accessible clusters from SA clients
+			saClients := clientFactory.GetSAClients()
+			accessibleClusters := make([]string, 0, len(saClients))
+			for clusterName := range saClients {
+				accessibleClusters = append(accessibleClusters, clusterName)
+			}
+			if !kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusters) {
+				RespondWithError(w, http.StatusNotFound,
+					fmt.Sprintf("Tool '%s' is not available when Ambient Mesh is not enabled in any cluster", toolName))
+				return
+			}
+		}
 		mcpResult, code := tool.Call(kialiInterface, args)
 		if code != http.StatusOK {
 			RespondWithError(w, code, fmt.Sprintf("Tool %s returned error: %v", toolName, mcpResult))

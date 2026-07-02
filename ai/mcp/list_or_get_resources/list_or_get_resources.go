@@ -209,12 +209,13 @@ func recoverFromPanic(res *interface{}, status *int, resourceType, name, namespa
 
 // ResourceDetailArgs are the optional parameters accepted by the resource detail tool.
 type ResourceDetailArgs struct {
-	ResourceType string    `json:"resource_type,omitempty"`
-	Namespaces   []string  `json:"namespaces,omitempty"`
-	ResourceName string    `json:"resource_name,omitempty"`
-	ClusterName  string    `json:"cluster_name,omitempty"`
-	RateInterval string    `json:"rate_interval,omitempty"`
-	QueryTime    time.Time `json:"query_time,omitempty"`
+	ResourceType   string    `json:"resource_type,omitempty"`
+	Namespaces     []string  `json:"namespaces,omitempty"`
+	ResourceName   string    `json:"resource_name,omitempty"`
+	ClusterName    string    `json:"cluster_name,omitempty"`
+	RateInterval   string    `json:"rate_interval,omitempty"`
+	QueryTime      time.Time `json:"query_time,omitempty"`
+	IncludeZtunnel bool      `json:"include_ztunnel,omitempty"`
 }
 
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
@@ -293,13 +294,16 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 	}
 
+	includeZtunnel := mcputil.GetBoolArg(args, "includeZtunnel")
+
 	resourceArgs := ResourceDetailArgs{
-		ResourceType: resourceType,
-		Namespaces:   namespacesSlice,
-		ResourceName: resourceName,
-		ClusterName:  clusterName,
-		RateInterval: rateInterval,
-		QueryTime:    queryTime,
+		ResourceType:   resourceType,
+		Namespaces:     namespacesSlice,
+		ResourceName:   resourceName,
+		ClusterName:    clusterName,
+		RateInterval:   rateInterval,
+		QueryTime:      queryTime,
+		IncludeZtunnel: includeZtunnel,
 	}
 	var resp interface{}
 	var status int
@@ -309,7 +313,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 	if resourceName != "" && len(namespacesSlice) == 1 {
 		log.Debugf("Getting resource details type: %s for resource name: %s and namespace: %s", resourceType, resourceName, namespacesSlice[0])
-		resp, status, err = getResourceDetails(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, resourceArgs, namespacesSlice[0])
+		resp, status, err = getResourceDetails(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, kialiInterface.KialiCache, resourceArgs, namespacesSlice[0])
 		if err != nil {
 			return err.Error(), status
 		}
@@ -343,7 +347,7 @@ func calculateRateInterval(
 	return interval, nil
 }
 
-func getResourceDetails(ctx context.Context, businessLayer *business.Layer, resourceArgs ResourceDetailArgs, namespace string) (resp interface{}, status int, err error) {
+func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kialiCache cache.KialiCache, resourceArgs ResourceDetailArgs, namespace string) (resp interface{}, status int, err error) {
 	defer recoverFromPanic(&resp, &status, resourceArgs.ResourceType, resourceArgs.ResourceName, namespace)
 
 	istioConfigValidations := models.IstioValidations{}
@@ -391,7 +395,31 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 		if err != nil {
 			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
-		return TransformWorkloadDetail(workloadDetails), http.StatusOK, nil
+
+		// Get ztunnel dump if requested and workload is in Ambient mode
+		var ztunnelDump *kubernetes.ZtunnelConfigDump
+		if resourceArgs.IncludeZtunnel && workloadDetails.IsAmbient && len(workloadDetails.Pods) > 0 {
+			// Use the first pod to get the ztunnel dump
+			pod := workloadDetails.Pods[0]
+			ztunnelDump = kialiCache.GetZtunnelDump(
+				criteria.Cluster,
+				criteria.Namespace,
+				pod.Name,
+			)
+		}
+
+		// Get waypoint captured services if this workload is a waypoint
+		var waypointServices []models.ServiceReferenceInfo
+		if workloadDetails.WorkloadListItem.IsWaypoint {
+			waypointServices = businessLayer.Svc.ListWaypointServices(
+				ctx,
+				workloadDetails.Name,
+				workloadDetails.Namespace,
+				criteria.Cluster,
+			)
+		}
+
+		return TransformWorkloadDetail(workloadDetails, ztunnelDump, waypointServices), http.StatusOK, nil
 	case "app":
 		criteria := business.AppCriteria{
 			Namespace: namespace, AppName: resourceArgs.ResourceName,
