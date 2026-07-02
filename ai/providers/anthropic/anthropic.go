@@ -149,7 +149,7 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 		return true, ""
 	}
 
-	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn)
+	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn, p.conf.ChatAI.MaxToolIterations)
 	if aborted {
 		return types.TokenUsage{}
 	}
