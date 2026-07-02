@@ -432,34 +432,34 @@ See existing tools for end-to-end examples.
 |--------|-------|
 | Tasks Passed | 21/21 (100%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 80738 |
-| MCP Schema Tokens | 52185 |
+| Total Tokens Estimate | 80614 |
+| MCP Schema Tokens | 53403 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Create Istio Gateway | 3923 | 2485 | ✅ |
-| Remove Fault Injection | 5401 | 2485 | ✅ |
-| List and Validate VirtualServices | 2666 | 2485 | ✅ |
-| List and Validate DestinationRules | 2569 | 2485 | ✅ |
-| Update Traffic Shifting | 7665 | 2485 | ✅ |
-| Analyze Service Traffic Volume | 5366 | 2485 | ✅ |
-| Analyze Workload Response Times | 2650 | 2485 | ✅ |
-| Identify Degraded Namespaces | 2891 | 2485 | ✅ |
-| List Mesh-Enabled Namespaces | 3260 | 2485 | ✅ |
-| Inspect Service Details | 4772 | 2485 | ✅ |
-| Inspect Workload Details | 3090 | 2485 | ✅ |
-| Inventory Namespace Services | 2895 | 2485 | ✅ |
-| Inventory Workloads with Sidecar Status | 3211 | 2485 | ✅ |
-| Comprehensive Mesh Health Audit | 3863 | 2485 | ✅ |
-| Visualize Namespace Traffic | 3393 | 2485 | ✅ |
-| Audit Control Plane Connectivity | 2891 | 2485 | ✅ |
-| Visualize Cross-Namespace Traffic | 3499 | 2485 | ✅ |
-| Visualize Workload-Level Topology | 3443 | 2485 | ✅ |
-| Debug Service Errors via Logs | 5261 | 2485 | ✅ |
-| Analyze Latency with Distributed Tracing | 4979 | 2485 | ✅ |
-| Retrieve Recent Workload Logs | 3050 | 2485 | ✅ |
+| Create Istio Gateway | 3336 | 2543 | ✅ |
+| Remove Fault Injection | 9892 | 2543 | ✅ |
+| List and Validate VirtualServices | 2724 | 2543 | ✅ |
+| List and Validate DestinationRules | 2685 | 2543 | ✅ |
+| Update Traffic Shifting | 5940 | 2543 | ✅ |
+| Analyze Service Traffic Volume | 2693 | 2543 | ✅ |
+| Analyze Workload Response Times | 2708 | 2543 | ✅ |
+| Identify Degraded Namespaces | 2949 | 2543 | ✅ |
+| List Mesh-Enabled Namespaces | 2949 | 2543 | ✅ |
+| Inspect Service Details | 4279 | 2543 | ✅ |
+| Inspect Workload Details | 3148 | 2543 | ✅ |
+| Inventory Namespace Services | 2953 | 2543 | ✅ |
+| Inventory Workloads with Sidecar Status | 3269 | 2543 | ✅ |
+| Comprehensive Mesh Health Audit | 4582 | 2543 | ✅ |
+| Visualize Namespace Traffic | 3450 | 2543 | ✅ |
+| Audit Control Plane Connectivity | 2949 | 2543 | ✅ |
+| Visualize Cross-Namespace Traffic | 3556 | 2543 | ✅ |
+| Visualize Workload-Level Topology | 3500 | 2543 | ✅ |
+| Debug Service Errors via Logs | 4922 | 2543 | ✅ |
+| Analyze Latency with Distributed Tracing | 5013 | 2543 | ✅ |
+| Retrieve Recent Workload Logs | 3117 | 2543 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
 ## MCP evaluation (CI)
