@@ -20,9 +20,15 @@ cssRaw(`
 
 export const editorStyle = kialiStyle({
   minHeight: '200px',
+  overflow: 'hidden',
   position: 'relative',
   border: `1px solid ${PFColors.BorderColor200}`,
-  fontSize: 'var(--kiali-global--font-size) !important'
+  fontSize: 'var(--kiali-global--font-size) !important',
+  $nest: {
+    '& > section': {
+      overflow: 'hidden'
+    }
+  }
 } as NestedCSSProperties);
 
 export const drawerPanelStyle = kialiStyle({

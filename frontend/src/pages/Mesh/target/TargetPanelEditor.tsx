@@ -20,9 +20,6 @@ const editorStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
 });
 
-const LINE_HEIGHT = 19;
-const EDITOR_PADDING = 10;
-
 const editorOptions: editor.IStandaloneEditorConstructionOptions = {
   automaticLayout: true,
   folding: false,
@@ -36,16 +33,22 @@ const editorOptions: editor.IStandaloneEditorConstructionOptions = {
 
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: TargetPanelEditorProps) => {
   const darkTheme = useKialiTheme() === Theme.DARK;
+  const [editorHeight, setEditorHeight] = React.useState<string>('200px');
 
   let yaml = '';
   try {
     yaml = dump(props.configData || 'N/A', yamlDumpOptions);
-  } catch (error) {
+  } catch {
     yaml = 'N/A';
   }
 
-  const lineCount = yaml.split('\n').length;
-  const editorHeight = lineCount * LINE_HEIGHT + EDITOR_PADDING;
+  const onEditorDidMount = (ed: editor.IStandaloneCodeEditor): void => {
+    const lineHeight = ed.getOption(editor.EditorOption.lineHeight);
+    const padding = ed.getOption(editor.EditorOption.padding);
+    const lineCount = ed.getModel()?.getLineCount() ?? yaml.split('\n').length;
+    const totalPadding = (padding.top ?? 0) + (padding.bottom ?? 0);
+    setEditorHeight(`${lineCount * lineHeight + totalPadding}px`);
+  };
 
   return (
     <>
@@ -56,7 +59,8 @@ export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: Targe
           value={yaml}
           language="yaml"
           theme={darkTheme ? 'vs-dark' : 'light'}
-          height={`${editorHeight}px`}
+          height={editorHeight}
+          onMount={onEditorDidMount}
           options={{ ...editorOptions, readOnly: true, lineNumbers: 'off' }}
         />
       </div>

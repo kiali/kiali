@@ -215,11 +215,19 @@ Then('{string} should be in preview', (value: string) => {
     const monaco = (win as any).monaco;
     expect(monaco, 'Monaco global should be available').to.exist;
 
-    const models = monaco.editor.getModels();
-    expect(models.length, 'Monaco should have at least one model').to.be.greaterThan(0);
+    const editors = monaco.editor.getEditors();
+    expect(editors.length, 'Monaco should have at least one editor').to.be.greaterThan(0);
 
-    const text = models[models.length - 1].getValue();
-    expect(text).to.include(value);
+    const text = editors
+      .map((ed: any) => {
+        try {
+          return ed.getValue();
+        } catch {
+          return '';
+        }
+      })
+      .find((v: string) => v.includes(value));
+    expect(text, `An editor should contain "${value}"`).to.exist;
   });
 });
 
