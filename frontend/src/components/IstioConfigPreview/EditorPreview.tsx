@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
-import { applyMonacoMarkers } from '../../types/AceValidations';
-import type { MonacoInstance } from '../../types/AceValidations';
+import { applyMonacoMarkers } from '../../types/EditorValidations';
+import type { MonacoInstance } from '../../types/EditorValidations';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { MarkerSeverity } from 'monaco-editor';
@@ -66,6 +66,7 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
   const onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
     editorRef.current = ed;
     monacoRef.current = monaco;
+    (window as any).monaco = monaco;
     ed.onDidChangeModelContent(() => {
       onChange(ed.getValue());
     });

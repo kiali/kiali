@@ -361,12 +361,12 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   </div>
 
                   <div ref={this.editorWrapperRef} className={editorWrapperStyle}>
-                    <div className={editorStyle} data-test="envoy-editor">
+                    <div className={editorStyle} data-test="envoy-editor" style={{ height: '100%' }}>
                       <Editor
                         value={this.editorContent()}
                         language="yaml"
                         theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
-                        height={`${this.state.editorHeight}px`}
+                        height="100%"
                         onMount={ed => {
                           (this.monacoEditorRef as any).current = ed;
                         }}

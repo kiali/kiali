@@ -24,8 +24,8 @@ import {
   parseKialiValidations,
   parseLine,
   parseYamlValidations
-} from '../../types/AceValidations';
-import type { MonacoInstance } from '../../types/AceValidations';
+} from '../../types/EditorValidations';
+import type { MonacoInstance } from '../../types/EditorValidations';
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
@@ -595,23 +595,6 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const refPresent = objectReferences.length > 0;
     const showCards = this.showCards(refPresent, istioStatusMsgs);
 
-    let editorValidations: AceValidations = {
-      markers: [],
-      annotations: []
-    };
-
-    if (!this.state.isModified) {
-      editorValidations = parseKialiValidations(yamlSource, this.state.istioValidations);
-    } else {
-      if (this.state.yamlValidations) {
-        editorValidations.markers = [...this.state.yamlValidations.markers];
-        editorValidations.annotations = [...this.state.yamlValidations.annotations];
-      }
-    }
-
-    const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
-    helpAnnotations.forEach(ha => editorValidations.annotations.push(ha));
-
     const panelContent = (
       <DrawerPanelContent>
         <DrawerHead>
@@ -645,13 +628,13 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     const aceHeight = Math.max(this.state.editorHeight, 200);
 
     const editor = this.state.istioObjectDetails ? (
-      <div style={{ width: '100%' }}>
-        <div className={editorStyle} data-test="istio-config-editor">
+      <div style={{ width: '100%', height: `${aceHeight}px`, overflow: 'hidden' }}>
+        <div className={editorStyle} data-test="istio-config-editor" style={{ height: '100%' }}>
           <Editor
             value={yamlSource}
             language="yaml"
             theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
-            height={`${aceHeight}px`}
+            height="100%"
             onChange={this.onEditorChange}
             onMount={this.onEditorDidMount}
             options={{

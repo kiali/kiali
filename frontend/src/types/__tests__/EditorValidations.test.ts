@@ -1,5 +1,5 @@
 import { ObjectValidation, ValidationTypes } from '../IstioObjects';
-import { parseKialiValidations } from '../AceValidations';
+import { parseKialiValidations } from '../EditorValidations';
 import { dicTypeToGVK, gvkType } from '../IstioConfigList';
 
 const fs = require('fs');
