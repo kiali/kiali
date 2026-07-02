@@ -430,35 +430,36 @@ See existing tools for end-to-end examples.
 
 | Metric | Value |
 |--------|-------|
-| Tasks Passed | 21/21 (100%) |
+| Tasks Passed | 22/22 (100%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 80614 |
-| MCP Schema Tokens | 53403 |
+| Total Tokens Estimate | 80536 |
+| MCP Schema Tokens | 55946 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Create Istio Gateway | 3336 | 2543 | ✅ |
-| Remove Fault Injection | 9892 | 2543 | ✅ |
+| Create Istio Gateway | 3791 | 2543 | ✅ |
+| Remove Fault Injection | 5632 | 2543 | ✅ |
 | List and Validate VirtualServices | 2724 | 2543 | ✅ |
-| List and Validate DestinationRules | 2685 | 2543 | ✅ |
-| Update Traffic Shifting | 5940 | 2543 | ✅ |
-| Analyze Service Traffic Volume | 2693 | 2543 | ✅ |
-| Analyze Workload Response Times | 2708 | 2543 | ✅ |
+| List Comprehensive Istio Configuration | 4309 | 2543 | ✅ |
+| List and Validate DestinationRules | 2627 | 2543 | ✅ |
+| Update Traffic Shifting | 4836 | 2543 | ✅ |
+| Analyze Service Traffic Volume | 3905 | 2543 | ✅ |
+| Analyze Workload Response Times | 4440 | 2543 | ✅ |
 | Identify Degraded Namespaces | 2949 | 2543 | ✅ |
 | List Mesh-Enabled Namespaces | 2949 | 2543 | ✅ |
-| Inspect Service Details | 4279 | 2543 | ✅ |
-| Inspect Workload Details | 3148 | 2543 | ✅ |
+| Inspect Service Details | 3572 | 2543 | ✅ |
+| Inspect Workload Details | 3150 | 2543 | ✅ |
 | Inventory Namespace Services | 2953 | 2543 | ✅ |
 | Inventory Workloads with Sidecar Status | 3269 | 2543 | ✅ |
-| Comprehensive Mesh Health Audit | 4582 | 2543 | ✅ |
+| Comprehensive Mesh Health Audit | 2949 | 2543 | ✅ |
 | Visualize Namespace Traffic | 3450 | 2543 | ✅ |
 | Audit Control Plane Connectivity | 2949 | 2543 | ✅ |
 | Visualize Cross-Namespace Traffic | 3556 | 2543 | ✅ |
 | Visualize Workload-Level Topology | 3500 | 2543 | ✅ |
-| Debug Service Errors via Logs | 4922 | 2543 | ✅ |
-| Analyze Latency with Distributed Tracing | 5013 | 2543 | ✅ |
+| Debug Service Errors via Logs | 4919 | 2543 | ✅ |
+| Analyze Latency with Distributed Tracing | 4990 | 2543 | ✅ |
 | Retrieve Recent Workload Logs | 3117 | 2543 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
