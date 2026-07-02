@@ -578,7 +578,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 	expected := anthropic.ToolUnionParam{
 		OfTool: &anthropic.ToolParam{
 			Name:        "manage_istio_config_read",
-			Description: param.NewOpt("Read Istio config. 'list' returns namespace→'group/version/kind'→{valid:[names],invalid:[names]}. 'get' returns full YAML for a specific object. Group/version/kind are parsed from list keys (e.g. 'gateway.networking.k8s.io/v1/Gateway'). For writes use manage_istio_config."),
+			Description: param.NewOpt("Read Istio config. 'list' groups by namespace→'group/version/kind'→{valid:[...],invalid:[...]} where valid/invalid arrays contain resource names. 'get' returns full YAML. For writes use manage_istio_config."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"action": map[string]interface{}{
