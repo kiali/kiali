@@ -17,8 +17,7 @@
         description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required."
       group:
         type: "string"
-        description: "API group of the Istio object. Required for 'get' action."
-        enum: ["networking.istio.io", "security.istio.io"]
+        description: "API group (e.g. 'networking.istio.io', 'security.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action."
       version:
         type: "string"
         description: "API version (e.g. 'v1'). Required for 'get' action. Read directly from the list key: the middle segment between the two '/' characters."

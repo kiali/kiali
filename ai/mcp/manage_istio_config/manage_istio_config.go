@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -521,6 +522,67 @@ func validateManagedIstioGroupAndKind(group, kind string) error {
 	}
 }
 
+// readableGroupKinds lists all API groups and their kinds that manage_istio_config_read supports.
+// This is a superset of the write tool (which only covers networking/security.istio.io).
+var readableGroupKinds = map[string]map[string]struct{}{
+	"networking.istio.io": {
+		"VirtualService":  {},
+		"DestinationRule": {},
+		"Gateway":         {},
+		"ServiceEntry":    {},
+		"Sidecar":         {},
+		"WorkloadEntry":   {},
+		"WorkloadGroup":   {},
+		"EnvoyFilter":     {},
+	},
+	"security.istio.io": {
+		"AuthorizationPolicy":   {},
+		"PeerAuthentication":    {},
+		"RequestAuthentication": {},
+	},
+	"gateway.networking.k8s.io": {
+		"Gateway":        {},
+		"HTTPRoute":      {},
+		"GRPCRoute":      {},
+		"TCPRoute":       {},
+		"TLSRoute":       {},
+		"ReferenceGrant": {},
+	},
+	"inference.networking.k8s.io": {
+		"InferencePool": {},
+	},
+	"extensions.istio.io": {
+		"WasmPlugin":       {},
+		"TrafficExtension": {},
+	},
+	"telemetry.istio.io": {
+		"Telemetry": {},
+	},
+}
+
+// validateReadableGroupAndKind checks that the group/kind combination is supported
+// by the read-only tool.
+func validateReadableGroupAndKind(group, kind string) error {
+	g := strings.TrimSpace(group)
+	k := strings.TrimSpace(kind)
+	kinds, ok := readableGroupKinds[g]
+	if !ok {
+		return fmt.Errorf("invalid group %q: not a supported Istio or Gateway API group", g)
+	}
+	if k == "" {
+		return fmt.Errorf("kind is required for group %q", g)
+	}
+	if _, ok := kinds[k]; !ok {
+		validKinds := make([]string, 0, len(kinds))
+		for k := range kinds {
+			validKinds = append(validKinds, k)
+		}
+		sort.Strings(validKinds)
+		return fmt.Errorf("invalid kind %q for group %q: must be one of %s", k, g, strings.Join(validKinds, ", "))
+	}
+	return nil
+}
+
 // validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
 func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 	action := mcputil.GetStringArg(args, "action")
@@ -531,10 +593,18 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 	object := mcputil.GetStringArg(args, "object")
 	switch action {
 	case "list":
-		if strings.TrimSpace(group) != "" || strings.TrimSpace(kind) != "" {
-			return validateManagedIstioGroupAndKind(group, kind)
+		hasGroup := strings.TrimSpace(group) != ""
+		hasKind := strings.TrimSpace(kind) != ""
+		if !hasGroup && !hasKind {
+			return nil
 		}
-		return nil
+		if hasKind && !hasGroup {
+			return fmt.Errorf("group is required when kind is specified for action %q", action)
+		}
+		if hasGroup && !hasKind {
+			return fmt.Errorf("kind is required when group is specified for action %q", action)
+		}
+		return validateReadableGroupAndKind(group, kind)
 	case "get":
 		if namespace == "" {
 			return fmt.Errorf("namespace is required for action %q", action)
@@ -551,7 +621,7 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 		if object == "" {
 			return fmt.Errorf("name is required for action %q", action)
 		}
-		return validateManagedIstioGroupAndKind(group, kind)
+		return validateReadableGroupAndKind(group, kind)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of list, get", action)
 	}
