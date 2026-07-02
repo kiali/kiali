@@ -6,16 +6,15 @@ import { ComputedServerConfig } from '../../config/ServerConfig';
 import { KialiAppState } from '../../store/Store';
 import { Alert, AlertActionCloseButton, AlertVariant, Button, ButtonVariant, Tab } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { aceOptions, yamlDumpOptions } from '../../types/IstioConfigDetails';
-import AceEditor from 'react-ace';
+import { yamlDumpOptions } from '../../types/IstioConfigDetails';
+import Editor from '@monaco-editor/react';
 import { ParameterizedTabs } from '../Tab/Tabs';
 import { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
-import { istioAceEditorStyle } from 'styles/AceEditorStyle';
+import { editorStyle } from 'styles/EditorStyle';
 import { Theme } from 'types/Common';
 import { kialiStyle } from 'styles/StyleUtils';
-import ReactAce from 'react-ace/lib/ace';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
 import { ConfigTable } from 'components/Table/ConfigTable';
@@ -107,8 +106,6 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
   const [config, setConfig] = React.useState({});
   const [copyStatus, setCopyStatus] = React.useState(CopyStatus.NOT_COPIED);
   const [currentTab, setCurrentTab] = React.useState(defaultTab);
-
-  const aceEditorRef = React.useRef<ReactAce | null>(null);
 
   const { t } = useKialiTranslation();
 
@@ -229,6 +226,8 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   const copyText = copyTextMap[currentTab];
 
+  const isDarkTheme = props.appState.globalState.theme === Theme.DARK;
+
   const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (
       <Tab eventKey={0} title={t('Kiali Config')} key="kialiConfig">
@@ -236,22 +235,18 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
       </Tab>
     );
 
-    const theme = props.appState.globalState.theme;
-
     const additionalState = (
       <Tab eventKey={1} title={t('Additional State')} key="additionalState">
         <span className={spanStyle}>{t('Please include this information when opening a bug:')}</span>
-        <AceEditor
-          ref={aceEditorRef}
-          mode="yaml"
-          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-          width="100%"
-          className={istioAceEditorStyle}
-          wrapEnabled={true}
-          readOnly={true}
-          setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
-          value={debugInformationText}
-        />
+        <div className={editorStyle} data-test="debug-editor">
+          <Editor
+            value={debugInformationText}
+            language="yaml"
+            theme={isDarkTheme ? 'vs-dark' : 'light'}
+            height="450px"
+            options={{ readOnly: true, wordWrap: 'on', scrollBeyondLastLine: false, folding: true }}
+          />
+        </div>
       </Tab>
     );
 
@@ -260,17 +255,15 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
         <span className={spanStyle}>
           {t('For Performance issues troubleshooting, remove sensitive data before posting:')}
         </span>
-        <AceEditor
-          ref={aceEditorRef}
-          mode="yaml"
-          theme={theme === Theme.DARK ? 'twilight' : 'eclipse'}
-          width="100%"
-          className={istioAceEditorStyle}
-          wrapEnabled={true}
-          readOnly={true}
-          setOptions={aceOptions ?? { foldStyle: 'markbegin' }}
-          value={perfMeasurements}
-        />
+        <div className={editorStyle} data-test="perf-editor">
+          <Editor
+            value={perfMeasurements}
+            language="yaml"
+            theme={isDarkTheme ? 'vs-dark' : 'light'}
+            height="450px"
+            options={{ readOnly: true, wordWrap: 'on', scrollBeyondLastLine: false, folding: true }}
+          />
+        </div>
       </Tab>
     );
     return [kialiConfig, additionalState, perfData];

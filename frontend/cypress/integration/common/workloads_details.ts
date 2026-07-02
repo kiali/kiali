@@ -153,7 +153,8 @@ When('the user looks for the bootstrap tab', () => {
 });
 
 Then('the user sees bootstrap expected information', () => {
-  cy.get('[id="ace-editor"]').contains('bootstrap');
+  cy.get('[data-test="envoy-editor"] .monaco-editor').should('exist');
+  cy.get('[data-test="envoy-editor"] .view-lines').should('contain.text', 'bootstrap');
 });
 
 When('the user looks for the config tab', () => {
@@ -162,7 +163,8 @@ When('the user looks for the config tab', () => {
 });
 
 Then('the user sees config expected information', () => {
-  cy.get('[id="ace-editor"]').contains('config_dump');
+  cy.get('[data-test="envoy-editor"] .monaco-editor').should('exist');
+  cy.get('[data-test="envoy-editor"] .view-lines').should('contain.text', 'config_dump');
 });
 
 Then('the user sees the metrics tab', () => {

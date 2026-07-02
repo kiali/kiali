@@ -445,66 +445,56 @@ When('user switches to the Tester tab', () => {
 
 When('user changes the provider in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
     cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'provider';
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
+
       let replacer = 'tempo';
       let provider = 'jaeger';
 
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        if (line.toString().toLowerCase().includes(searchText)) {
-          if (line.includes('tempo')) {
-            replacer = 'jaeger';
-            provider = 'tempo';
-          }
-          break;
-        }
+      if (editorText.includes('tempo')) {
+        replacer = 'jaeger';
+        provider = 'tempo';
       }
-      let val: string = editor.getValue();
-      val = val.replace(`provider: ${provider}`, `provider: ${replacer}`);
-      editor.setValue(val);
+
+      const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
+      const model = editor.getModel();
+      const fullRange = model.getFullModelRange();
+      editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
     });
   });
 });
 
 When('user changes the useGRPC in the Tester tab', () => {
   cy.get('div[data-test="modal-configuration-tester"]').within(() => {
+    cy.get('[data-test="tracing-config-editor"] .monaco-editor', { timeout: 10000 }).should('be.visible');
     cy.window().then((win: any) => {
-      const editor = win.ace.edit('ace-editor-tester');
-      const session = editor.getSession();
-      const linesCount = session.getLength();
-      const searchText = 'useGRPC';
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
+
       let currentValue: string | null = null;
       let targetValue = 'true';
 
-      // Find the line containing useGRPC and determine current value
-      for (let i = 0; i < linesCount; i++) {
-        const line = session.getLine(i);
-        const lowerLine = line.toLowerCase();
-        if (lowerLine.includes(searchText.toLowerCase())) {
-          // Check for both true and false patterns
-          if (line.match(/:\s*(true|false)/i)) {
-            if (line.match(/:\s*true/i)) {
-              currentValue = 'true';
-              targetValue = 'false';
-            } else if (line.match(/:\s*false/i)) {
-              currentValue = 'false';
-              targetValue = 'true';
-            }
-          }
-          break;
-        }
+      if (/useGRPC\s*:\s*true/i.test(editorText)) {
+        currentValue = 'true';
+        targetValue = 'false';
+      } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
+        currentValue = 'false';
+        targetValue = 'true';
       }
 
-      // Replace the value using regex to handle various formats (with/without spaces, quotes, etc.)
-      let val: string = editor.getValue();
       if (currentValue !== null) {
-        // Replace useGRPC with various formats: "useGRPC: true", "useGRPC:false", "useGRPC: true", etc.
-        val = val.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
-        editor.setValue(val);
+        const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+        const model = editor.getModel();
+        const fullRange = model.getFullModelRange();
+        editor.executeEdits('cypress', [{ range: fullRange, text: newText }]);
       }
     });
   });

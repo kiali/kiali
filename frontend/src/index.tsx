@@ -9,14 +9,6 @@ import '@patternfly/patternfly/patternfly.css';
 import '@patternfly/patternfly/patternfly-charts.css';
 import '@patternfly/patternfly/patternfly-addons.css';
 
-// Enables ACE editor YAML themes
-import 'ace-builds/src-noconflict/mode-yaml';
-import 'ace-builds/src-noconflict/theme-eclipse';
-import 'ace-builds/src-noconflict/theme-twilight';
-
-// Enables the search box for the ACE editor
-import 'ace-builds/src-noconflict/ext-searchbox';
-
 // i18n
 import './i18n';
 

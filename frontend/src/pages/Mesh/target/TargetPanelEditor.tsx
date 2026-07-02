@@ -1,10 +1,9 @@
 import * as React from 'react';
-import AceEditor from 'react-ace';
-import ReactAce from 'react-ace/lib/ace';
+import Editor from '@monaco-editor/react';
+import { editor } from 'monaco-editor';
 import { useKialiTheme } from '../../../utils/ThemeUtils';
 import { Theme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
-import { AceOptions } from 'react-ace/types';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { yamlDumpOptions } from 'types/IstioConfigDetails';
@@ -16,62 +15,55 @@ interface TargetPanelEditorProps {
   targetName: string;
 }
 
-const aceOptions: AceOptions = {
-  highlightActiveLine: false,
-  highlightGutterLine: false,
-  maxLines: Infinity,
-  showLineNumbers: false,
-  showPrintMargin: false
-};
-
-const aceEditorStyle = kialiStyle({
+const editorStyle = kialiStyle({
   marginTop: '0.5rem',
-  backgroundColor: PFColors.BackgroundColor100,
-  $nest: {
-    '& .ace_gutter': {
-      backgroundColor: PFColors.BackgroundColor100,
-      borderRight: 0,
-      left: '-1rem !important'
-    },
-
-    '& .ace_scroller': {
-      left: '1rem !important'
-    },
-
-    '& .ace_cursor': {
-      opacity: 0
-    }
-  }
+  backgroundColor: PFColors.BackgroundColor100
 });
+
+const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+  automaticLayout: true,
+  folding: false,
+  lineNumbers: 'off',
+  minimap: { enabled: false },
+  overviewRulerLanes: 0,
+  renderLineHighlight: 'none',
+  scrollBeyondLastLine: false,
+  wordWrap: 'on'
+};
 
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = (props: TargetPanelEditorProps) => {
   const darkTheme = useKialiTheme() === Theme.DARK;
-  const aceEditorRef = React.useRef<ReactAce | null>(null);
+  const [editorHeight, setEditorHeight] = React.useState<string>('200px');
 
   let yaml = '';
   try {
     yaml = dump(props.configData || 'N/A', yamlDumpOptions);
-  } catch (error) {
+  } catch {
     yaml = 'N/A';
   }
+
+  const onEditorDidMount = (ed: editor.IStandaloneCodeEditor): void => {
+    const lineHeight = ed.getOption(editor.EditorOption.lineHeight);
+    const padding = ed.getOption(editor.EditorOption.padding);
+    const lineCount = ed.getModel()?.getLineCount() ?? yaml.split('\n').length;
+    const totalPadding = (padding.top ?? 0) + (padding.bottom ?? 0);
+    setEditorHeight(`${lineCount * lineHeight + totalPadding}px`);
+  };
 
   return (
     <>
       <ConfigButtonsTargetPanel copyText={yaml} includeTitle={props.includeTitle} targetName={props.targetName} />
 
-      <AceEditor
-        ref={aceEditorRef}
-        mode="yaml"
-        theme={darkTheme ? 'twilight' : 'eclipse'}
-        fontSize={'var(--kiali-global--font-size)'}
-        width="100%"
-        className={aceEditorStyle}
-        wrapEnabled={true}
-        readOnly={true}
-        setOptions={aceOptions}
-        value={yaml}
-        showPrintMargin={false}
-      />
+      <div className={editorStyle} data-test="target-panel-editor">
+        <Editor
+          value={yaml}
+          language="yaml"
+          theme={darkTheme ? 'vs-dark' : 'light'}
+          height={editorHeight}
+          onMount={onEditorDidMount}
+          options={{ ...editorOptions, readOnly: true, lineNumbers: 'off' }}
+        />
+      </div>
     </>
   );
 };
