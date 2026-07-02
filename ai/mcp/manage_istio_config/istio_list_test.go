@@ -94,14 +94,10 @@ func TestIstioList_ReturnsGroupedOutput(t *testing.T) {
 	require.Contains(t, bookinfo, vsKey)
 	require.Contains(t, bookinfo, drKey)
 
-	// Default validation (no validation store in unit tests) → valid:true, no invalid field.
-	assert.Equal(t, []string{"reviews"}, bookinfo[vsKey].Names)
-	require.NotNil(t, bookinfo[vsKey].Valid)
-	assert.True(t, *bookinfo[vsKey].Valid)
+	// Default validation (no validation store in unit tests) → all in valid array, invalid empty.
+	assert.Equal(t, []string{"reviews"}, bookinfo[vsKey].Valid)
 	assert.Empty(t, bookinfo[vsKey].Invalid)
-	assert.Equal(t, []string{"reviews"}, bookinfo[drKey].Names)
-	require.NotNil(t, bookinfo[drKey].Valid)
-	assert.True(t, *bookinfo[drKey].Valid)
+	assert.Equal(t, []string{"reviews"}, bookinfo[drKey].Valid)
 	assert.Empty(t, bookinfo[drKey].Invalid)
 }
 
@@ -160,7 +156,10 @@ func TestIstioList_FilterByService(t *testing.T) {
 	names := map[string]struct{}{}
 	for _, kinds := range result.Namespaces {
 		for _, kvr := range kinds {
-			for _, n := range kvr.Names {
+			for _, n := range kvr.Valid {
+				names[n] = struct{}{}
+			}
+			for _, n := range kvr.Invalid {
 				names[n] = struct{}{}
 			}
 		}

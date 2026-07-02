@@ -56,12 +56,10 @@ type istioListItem struct {
 
 // KindValidationResult summarises resources for a single GVK within a namespace.
 // The map key in IstioListResult is "group/version/kind".
-// Valid is present (true) only when every resource passes Kiali validation.
-// Invalid lists only the names that failed; omitted when all resources are valid.
+// Valid and Invalid are mutually exclusive subsets; both omitted when empty.
 type KindValidationResult struct {
-	Names   []string `json:"names"`
-	Valid   *bool    `json:"valid,omitempty"`
-	Invalid []string `json:"invalid,omitempty"`
+	Valid   []string `json:"valid,omitempty"`   // Resources passing validation
+	Invalid []string `json:"invalid,omitempty"` // Resources failing validation
 }
 
 // IstioListResult is the grouped output returned by the list action.
@@ -368,7 +366,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		return items[i].Name < items[j].Name
 	})
 
-	// Group into namespace → "group/version/kind" → {names, valid, invalid}.
+	// Group into namespace → "group/version/kind" → {valid, invalid}.
 	// Because items are pre-sorted the name slices are already in alphabetical order.
 	namespaces := make(map[string]map[string]KindValidationResult)
 	for _, item := range items {
@@ -377,21 +375,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			namespaces[item.Namespace] = make(map[string]KindValidationResult)
 		}
 		kvr := namespaces[item.Namespace][gvkKey]
-		kvr.Names = append(kvr.Names, item.Name)
-		if !item.Valid {
+		if item.Valid {
+			kvr.Valid = append(kvr.Valid, item.Name)
+		} else {
 			kvr.Invalid = append(kvr.Invalid, item.Name)
 		}
 		namespaces[item.Namespace][gvkKey] = kvr
-	}
-	// Set valid:true only on groups where no resource failed validation.
-	validTrue := true
-	for ns, kinds := range namespaces {
-		for key, kvr := range kinds {
-			if len(kvr.Invalid) == 0 {
-				kvr.Valid = &validTrue
-				namespaces[ns][key] = kvr
-			}
-		}
 	}
 
 	return IstioListResult{Cluster: cluster, Namespaces: namespaces}, http.StatusOK
