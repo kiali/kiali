@@ -15,4 +15,4 @@ spec:
   - llmJudge:
       contains: "reviews-v1"
   prompt:
-    inline: "Inspect the 'reviews-v1' workload in the 'bookinfo' namespace and provide its detailed status and health information."
+    inline: "Inspect the 'reviews-v1' workload in the 'bookinfo' namespace and provide its detailed status and health information. Include the exact workload name 'reviews-v1' in your summary."
