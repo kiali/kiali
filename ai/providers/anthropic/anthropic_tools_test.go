@@ -596,8 +596,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 					},
 					"group": map[string]interface{}{
 						"type":        "string",
-						"description": "API group of the Istio object. Required for 'get' action.",
-						"enum":        []interface{}{"networking.istio.io", "security.istio.io"},
+						"description": "API group (e.g. 'networking.istio.io', 'security.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
 					},
 					"version": map[string]interface{}{
 						"type":        "string",

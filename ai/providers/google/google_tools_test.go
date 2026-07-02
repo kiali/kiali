@@ -496,8 +496,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object. Required for 'get' action.",
-				Enum:        []string{"networking.istio.io", "security.istio.io"},
+				Description: "API group (e.g. 'networking.istio.io', 'security.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
 			},
 			"version": {
 				Type:        genai.TypeString,
