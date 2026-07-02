@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
 	"github.com/google/go-cmp/cmp"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/tests/integration/utils/kube"
@@ -129,6 +127,50 @@ func (in *Instance) GetConfig(ctx context.Context) (*config.Config, error) {
 	return currentConfig, nil
 }
 
+// normalizeDuration converts Go duration format to Kiali CRD enum format.
+// Examples: "5m0s" -> "5m", "1h0m0s" -> "1h", "60s" -> "1m", "7d0h0m0s" -> "7d"
+func normalizeDuration(duration string) string {
+	// Map of common duration conversions
+	conversions := map[string]string{
+		"60s":     "1m",
+		"120s":    "2m",
+		"300s":    "5m",
+		"600s":    "10m",
+		"1800s":   "30m",
+		"3600s":   "1h",
+		"10800s":  "3h",
+		"21600s":  "6h",
+		"43200s":  "12h",
+		"86400s":  "1d",
+		"604800s": "7d",
+		// Add common Go duration format variations
+		"1m0s":     "1m",
+		"2m0s":     "2m",
+		"3m0s":     "3m",
+		"5m0s":     "5m",
+		"10m0s":    "10m",
+		"30m0s":    "30m",
+		"1h0m0s":   "1h",
+		"3h0m0s":   "3h",
+		"6h0m0s":   "6h",
+		"12h0m0s":  "12h",
+		"24h0m0s":  "1d",
+		"168h0m0s": "7d",
+		"720h0m0s": "30d",
+		"1h0s":     "1h",
+		"3h0s":     "3h",
+		"6h0s":     "6h",
+		"12h0s":    "12h",
+	}
+
+	if normalized, ok := conversions[duration]; ok {
+		return normalized
+	}
+
+	// If not in the map, return as-is (might already be in correct format)
+	return duration
+}
+
 // sanitizeConfigForCR removes fields from the config that are not valid in the Kiali CR spec.
 // This only removes fields that NEVER existed in the CRD schema or are runtime-only.
 // It does NOT remove deprecated fields since they may still be valid in older versions.
@@ -182,12 +224,30 @@ func sanitizeConfigForCR(configYAML string) (string, error) {
 		delete(istioLabels, "service_canonical_revision") // Not in current CRD schema
 	}
 
+	// Fix invalid enum values in health_config
+	if healthConfig, ok := data["health_config"].(map[string]any); ok {
+		if compute, ok := healthConfig["compute"].(map[string]any); ok {
+			// Fix duration: "5m0s" should be "5m", "1h0m0s" should be "1h", etc.
+			if duration, ok := compute["duration"].(string); ok {
+				compute["duration"] = normalizeDuration(duration)
+			}
+			// Fix refresh_interval duration format
+			if refreshInterval, ok := compute["refresh_interval"].(string); ok {
+				compute["refresh_interval"] = normalizeDuration(refreshInterval)
+			}
+			// Fix timeout duration format
+			if timeout, ok := compute["timeout"].(string); ok {
+				compute["timeout"] = normalizeDuration(timeout)
+			}
+		}
+	}
+
 	// Fix invalid enum values in kiali_feature_flags
 	if kialiFeatureFlags, ok := data["kiali_feature_flags"].(map[string]any); ok {
 		if uiDefaults, ok := kialiFeatureFlags["ui_defaults"].(map[string]any); ok {
 			// Fix refresh_interval: "60s" should be "1m"
-			if refreshInterval, ok := uiDefaults["refresh_interval"].(string); ok && refreshInterval == "60s" {
-				uiDefaults["refresh_interval"] = "1m"
+			if refreshInterval, ok := uiDefaults["refresh_interval"].(string); ok {
+				uiDefaults["refresh_interval"] = normalizeDuration(refreshInterval)
 			}
 			// Remove invalid graph fields (never in CRD schema)
 			if graph, ok := uiDefaults["graph"].(map[string]any); ok {
