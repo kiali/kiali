@@ -578,7 +578,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 	expected := anthropic.ToolUnionParam{
 		OfTool: &anthropic.ToolParam{
 			Name:        "manage_istio_config_read",
-			Description: param.NewOpt("Read-only Istio config: list or get objects. 'list' returns namespace→'{full-api-group}/{version}/{kind}'→{valid:[names],invalid:[names]}. The valid/invalid arrays ARE the validation result — do NOT call 'get' on each item just to check health; use the list directly. Only use 'get' to inspect a specific object's full YAML spec. Key parsing: the group is the entire string before the first '/' (e.g. key 'gateway.networking.k8s.io/v1/Gateway' → group='gateway.networking.k8s.io', version='v1', kind='Gateway'). For writes use manage_istio_config."),
+			Description: param.NewOpt("Read Istio config. 'list' returns namespace→'group/version/kind'→{valid:[names],invalid:[names]}. 'get' returns full YAML for a specific object. Group/version/kind are parsed from list keys (e.g. 'gateway.networking.k8s.io/v1/Gateway'). For writes use manage_istio_config."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"action": map[string]interface{}{
@@ -588,19 +588,19 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 					},
 					"clusterName": map[string]interface{}{
 						"type":        "string",
-						"description": "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)",
+						"description": "Target cluster. Defaults to Kiali config cluster.",
 					},
 					"namespace": map[string]interface{}{
 						"type":        "string",
-						"description": "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required.",
+						"description": "Namespace. Optional for 'list' (defaults to all). Required for 'get'.",
 					},
 					"group": map[string]interface{}{
 						"type":        "string",
-						"description": "API group (e.g. 'networking.istio.io', 'security.istio.io', 'gateway.networking.k8s.io'). Required for 'get' action.",
+						"description": "API group (e.g. 'networking.istio.io'). Required for 'get'.",
 					},
 					"version": map[string]interface{}{
 						"type":        "string",
-						"description": "API version (e.g. 'v1'). Required for 'get' action. Read directly from the list key: the middle segment between the two '/' characters.",
+						"description": "API version (e.g. 'v1'). Required for 'get'.",
 					},
 					"kind": map[string]interface{}{
 						"type":        "string",
@@ -617,7 +617,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 					},
 					"serviceName": map[string]interface{}{
 						"type":        "string",
-						"description": "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action.",
+						"description": "Filter configs by service (VirtualServices, DestinationRules, Gateways). 'list' only.",
 					},
 				},
 				Required: []string{"action"},
