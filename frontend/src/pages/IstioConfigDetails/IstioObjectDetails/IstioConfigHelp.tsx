@@ -1,6 +1,6 @@
 import { Stack, StackItem, Title, TitleSizes } from '@patternfly/react-core';
 import * as React from 'react';
-import { HelpMessage } from 'types/IstioObjects';
+import type { HelpMessage } from 'types/IstioObjects';
 
 interface IstioConfigHelpProps {
   helpMessages?: HelpMessage[];
@@ -8,7 +8,7 @@ interface IstioConfigHelpProps {
 }
 
 export class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
-  render() {
+  render(): React.ReactNode {
     const helpMessage = this.props.helpMessages?.find(helpMessage =>
       this.props.selectedLine?.includes(helpMessage.objectField.substring(helpMessage.objectField.lastIndexOf('.') + 1))
     );
@@ -35,7 +35,7 @@ export class IstioConfigHelp extends React.Component<IstioConfigHelpProps> {
         )}
         {!helpMessage && (
           <StackItem>
-            <p>Help information will appear when editing on important fields for this configuration.</p>
+            <p>Select a highlighted field in the editor to see contextual help.</p>
           </StackItem>
         )}
       </Stack>
