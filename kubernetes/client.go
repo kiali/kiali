@@ -41,6 +41,10 @@ type ClusterInfo struct {
 	// ClientConfig is the rest.Config is used to create clients for the various APIs.
 	ClientConfig *rest.Config
 
+	// KubeContext is the kubeconfig context used to connect to this cluster.
+	// Empty when the cluster was discovered via remote secrets or in-cluster config.
+	KubeContext string
+
 	// Name is the name of the cluster this client is connected to.
 	Name string
 
@@ -261,6 +265,7 @@ func NewClientsFromKubeConfig(conf *kialiconfig.Config, kubeConfigPath string, r
 		}
 
 		client, err := NewClient(ClusterInfo{
+			KubeContext:  context,
 			Name:         clusterName,
 			ClientConfig: restConf,
 		}, conf)

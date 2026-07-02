@@ -355,6 +355,10 @@ type KubeCluster struct {
 	// KialiInstances is the list of Kialis discovered in the cluster.
 	KialiInstances []KialiInstance `json:"kialiInstances"`
 
+	// KubeContext is the kubeconfig context used to connect to this cluster.
+	// Empty when the cluster was discovered via remote secrets or in-cluster config.
+	KubeContext string `json:"kubeContext,omitempty"`
+
 	// Name specifies the CLUSTER_ID as known by the Control Plane
 	Name string `json:"name"`
 

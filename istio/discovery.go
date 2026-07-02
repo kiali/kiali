@@ -409,9 +409,10 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		info := client.ClusterInfo()
 		meshCluster := models.KubeCluster{
 			// If there's a client for this cluster then it's accessible.
-			Accessible: true,
-			Name:       cluster,
-			SecretName: info.SecretName,
+			Accessible:  true,
+			KubeContext: info.KubeContext,
+			Name:        cluster,
+			SecretName:  info.SecretName,
 		}
 		if info.ClientConfig != nil {
 			meshCluster.ApiEndpoint = info.ClientConfig.Host
