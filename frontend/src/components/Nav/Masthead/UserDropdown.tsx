@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
-import { config, isMultiCluster, serverConfig } from '../../../config';
+import { config, isMultiCluster } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -12,7 +12,6 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { namespacesPerClusterSelector } from 'store/Selectors';
-import { ChatSessionUsageModal } from 'components/ChatSessionUsage/ChatSessionUsageModal';
 import {
   Divider,
   Dropdown,
@@ -151,8 +150,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   render(): React.ReactNode {
-    const { isDropdownOpen, isSessionTokenStatsOpen } = this.state;
-    const showSessionTokenStats = serverConfig.chatAI.enabled && serverConfig.chatAI.store.enabled;
+    const { isDropdownOpen } = this.state;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
       this.props.session?.clusterInfo?.[cluster] !== undefined;
@@ -174,8 +172,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           : loggedOutClusters.push({ cluster: cluster, endpoint: endpoint });
       });
     }
-    const hasDropdownActions =
-      showSessionTokenStats || canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
+    const hasDropdownActions = canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
 
     return (
       <>
@@ -242,13 +239,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 <Divider component="li" />
               </>
             )}
-
-            {showSessionTokenStats && (
-              <DropdownItem key={'session_token_stats_option'} onClick={this.openSessionTokenStats}>
-                {t('Session Token Stats')}
-              </DropdownItem>
-            )}
-            {showSessionTokenStats && canLogout && <Divider component="li" />}
             {canLogout && (
               <DropdownItem data-test="user-logout" key={'user_logout_option'} onClick={this.handleLogout}>
                 {t('Logout')}
@@ -256,8 +246,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
             )}
           </Dropdown>
         )}
-
-        <ChatSessionUsageModal isOpen={isSessionTokenStatsOpen} onClose={this.closeSessionTokenStats} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">

@@ -1095,6 +1095,158 @@ func TestDeleteConversations_SessionScoping(t *testing.T) {
 }
 
 // ========================================================================
+// ChatUsage handler tests
+// ========================================================================
+
+func setupChatUsageHandler(conf *config.Config) http.Handler {
+	return ChatUsage(conf, nil)
+}
+
+func TestChatUsage_ChatAIDisabledReturns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+	conf.ChatAI.Metrics.Enabled = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "ChatAI is not enabled")
+}
+
+func TestChatUsage_MetricsDisabledReturns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.Metrics.Enabled = false
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "ChatAI metrics are not enabled")
+}
+
+func TestChatUsage_BothDisabledChatAICheckedFirst(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = false
+	conf.ChatAI.Metrics.Enabled = false
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	// ChatAI.Enabled is checked first, so the error must reflect that
+	assert.Contains(t, body["error"], "ChatAI is not enabled")
+}
+
+func TestChatUsage_InvalidWindowReturns400(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.Metrics.Enabled = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "?window=notanumber")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "invalid window")
+}
+
+func TestChatUsage_InvalidStepReturns400(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.Metrics.Enabled = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "?window=3600&step=notanumber")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "invalid step")
+}
+
+func TestChatUsage_StepGreaterThanWindowReturns400(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.Metrics.Enabled = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	// step (7200) > window (3600)
+	resp, err := http.Get(ts.URL + "?window=3600&step=7200")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "step must be positive and not greater than window")
+}
+
+func TestChatUsage_EnabledReturnsValidResponse(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ChatAI.Enabled = true
+	conf.ChatAI.Metrics.Enabled = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "?window=3600&step=300")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var body map[string]interface{}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+
+	summary, ok := body["summary"].(map[string]interface{})
+	require.True(t, ok, "response should contain a 'summary' object")
+	assert.Contains(t, summary, "byProvider")
+	assert.Contains(t, summary, "byModel")
+
+	ts2, ok := body["timeSeries"].(map[string]interface{})
+	require.True(t, ok, "response should contain a 'timeSeries' object")
+	assert.Equal(t, "3600", ts2["window"])
+	assert.Equal(t, "300", ts2["step"])
+}
+
+// ========================================================================
 // ChatPrompts handler tests
 // ========================================================================
 

@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -253,7 +256,7 @@ func ChatAI(
 			}
 		}
 		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
-		recordChatAIUsage(aiStore, userID, usageProviderName, usageModelName, usage)
+		recordChatAIUsage(conf, aiStore, userID, usageProviderName, usageModelName, usage)
 	}
 }
 
@@ -280,15 +283,25 @@ func resolveChatAIUsageUserID(r *http.Request, conf *config.Config, fallbackUser
 	return clusterAuth.Username
 }
 
-func recordChatAIUsage(aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
-	if aiStore == nil || !aiStore.Enabled() || !usage.HasTokens() {
+func recordChatAIUsage(conf *config.Config, aiStore aiTypes.AIStore, userID string, provider string, model string, usage aiTypes.TokenUsage) {
+	metricsEnabled := conf.ChatAI.Metrics.Enabled
+	usernameIncluded := conf.ChatAI.Metrics.IncludeUsername
+	if !usage.HasTokens() {
 		return
 	}
 	if userID == "" {
 		userID = "unknown"
 	}
-	if err := aiStore.RecordUsage(userID, provider, model, usage); err != nil {
-		log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", userID, provider, model, err)
+	if aiStore != nil && aiStore.Enabled() {
+		if err := aiStore.RecordUsage(userID, provider, model, usage); err != nil {
+			log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", userID, provider, model, err)
+		}
+	}
+	if metricsEnabled {
+		if !usernameIncluded {
+			userID = ""
+		}
+		internalmetrics.RecordAITokens(userID, provider, model, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
 	}
 }
 
@@ -312,6 +325,240 @@ func ChatSessionUsage(
 	}
 }
 
+// ---- ChatUsage response types -----------------------------------------------
+
+type aiUsageResponse struct {
+	Summary    aiUsageSummary    `json:"summary"`
+	TimeSeries aiUsageTimeSeries `json:"timeSeries"`
+}
+
+type aiUsageSummary struct {
+	ByModel    []aiTokenRow `json:"byModel"`
+	ByProvider []aiTokenRow `json:"byProvider"`
+}
+
+// aiTokenRow is one row in an aggregated token table.
+// Fields that do not apply to a given aggregation level are omitted from JSON.
+type aiTokenRow struct {
+	CompletionTokens int64  `json:"completionTokens"`
+	Model            string `json:"model,omitempty"`
+	PromptTokens     int64  `json:"promptTokens"`
+	Provider         string `json:"provider,omitempty"`
+	TotalTokens      int64  `json:"totalTokens"`
+}
+
+type aiUsageTimeSeries struct {
+	Series []aiTimeSeriesEntry `json:"series"`
+	Step   string              `json:"step"`
+	Window string              `json:"window"`
+}
+
+type aiTimeSeriesEntry struct {
+	Model    string              `json:"model"`
+	Points   []aiTimeSeriesPoint `json:"points"`
+	Provider string              `json:"provider"`
+}
+
+type aiTimeSeriesPoint struct {
+	CompletionTokens int64     `json:"completionTokens"`
+	PromptTokens     int64     `json:"promptTokens"`
+	Timestamp        time.Time `json:"timestamp"`
+	TotalTokens      int64     `json:"totalTokens"`
+}
+
+// ---- ChatUsage handler ------------------------------------------------------
+
+// ChatUsage returns AI token consumption statistics derived from the Prometheus
+// in-memory counters.  It provides:
+//
+//   - summary.byProvider  – total tokens aggregated per provider
+//   - summary.byModel     – total tokens aggregated per (provider, model)
+//   - summary.byUser      – total tokens aggregated per username
+//   - timeSeries          – per-(provider, model) token counts bucketed in time
+//
+// Query parameters:
+//
+//	window  look-back window in seconds (default 86400 = 24 h; e.g. 3600=1h, 21600=6h, 604800=7d)
+//	step    time-series bucket width in seconds (default 3600 = 1 h; e.g. 300=5m, 900=15m)
+func ChatUsage(conf *config.Config, _ aiTypes.AIStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !conf.ChatAI.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
+			return
+		}
+		if !conf.ChatAI.Metrics.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI metrics are not enabled")
+			return
+		}
+
+		windowStr := r.URL.Query().Get("window")
+		if windowStr == "" {
+			windowStr = "86400" // 24 h
+		}
+		stepStr := r.URL.Query().Get("step")
+		if stepStr == "" {
+			stepStr = "3600" // 1 h
+		}
+
+		window, err := parseUsageDuration(windowStr)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, "invalid window: "+err.Error())
+			return
+		}
+		step, err := parseUsageDuration(stepStr)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, "invalid step: "+err.Error())
+			return
+		}
+		if step <= 0 || step > window {
+			RespondWithError(w, http.StatusBadRequest, "step must be positive and not greater than window")
+			return
+		}
+
+		// --- summary aggregations ------------------------------------------------
+		totals := internalmetrics.GetAITokenTotals()
+
+		byProviderMap := map[string]*aiTokenRow{}
+		byModelMap := map[string]*aiTokenRow{}
+
+		for _, e := range totals {
+			addToRow(byProviderMap, e.Provider, func(row *aiTokenRow) {
+				row.Provider = e.Provider
+			}, e.PromptTokens, e.CompletionTokens, e.TotalTokens)
+
+			modelKey := e.Provider + "\x00" + e.Model
+			addToRow(byModelMap, modelKey, func(row *aiTokenRow) {
+				row.Model = e.Model
+				row.Provider = e.Provider
+			}, e.PromptTokens, e.CompletionTokens, e.TotalTokens)
+		}
+
+		byProvider := mapToSortedRows(byProviderMap, func(r aiTokenRow) string { return r.Provider })
+		byModel := mapToSortedRows(byModelMap, func(r aiTokenRow) string { return r.Provider + r.Model })
+
+		// --- time-series ---------------------------------------------------------
+		now := time.Now()
+		since := now.Add(-window)
+		events := internalmetrics.GetAITokenEvents(since)
+
+		numBuckets := int(window/step) + 1
+
+		type seriesKey struct{ provider, model string }
+		type bucketAccum struct {
+			completionTokens int64
+			promptTokens     int64
+			totalTokens      int64
+		}
+		seriesBuckets := map[seriesKey][]bucketAccum{}
+
+		for _, ev := range events {
+			sk := seriesKey{provider: ev.Provider, model: ev.Model}
+			if _, ok := seriesBuckets[sk]; !ok {
+				seriesBuckets[sk] = make([]bucketAccum, numBuckets)
+			}
+			idx := int(ev.Timestamp.Sub(since) / step)
+			if idx < 0 {
+				idx = 0
+			}
+			if idx >= numBuckets {
+				idx = numBuckets - 1
+			}
+			b := &seriesBuckets[sk][idx]
+			b.completionTokens += ev.CompletionTokens
+			b.promptTokens += ev.PromptTokens
+			b.totalTokens += ev.TotalTokens
+		}
+
+		// Sort series keys for deterministic output.
+		sortedKeys := make([]seriesKey, 0, len(seriesBuckets))
+		for k := range seriesBuckets {
+			sortedKeys = append(sortedKeys, k)
+		}
+		sort.Slice(sortedKeys, func(i, j int) bool {
+			if sortedKeys[i].provider != sortedKeys[j].provider {
+				return sortedKeys[i].provider < sortedKeys[j].provider
+			}
+			return sortedKeys[i].model < sortedKeys[j].model
+		})
+
+		series := make([]aiTimeSeriesEntry, 0, len(sortedKeys))
+		for _, sk := range sortedKeys {
+			buckets := seriesBuckets[sk]
+			points := make([]aiTimeSeriesPoint, numBuckets)
+			hasData := false
+			for i := range buckets {
+				points[i] = aiTimeSeriesPoint{
+					CompletionTokens: buckets[i].completionTokens,
+					PromptTokens:     buckets[i].promptTokens,
+					Timestamp:        since.Add(time.Duration(i) * step),
+					TotalTokens:      buckets[i].totalTokens,
+				}
+				if buckets[i].totalTokens > 0 {
+					hasData = true
+				}
+			}
+			// Skip series where every bucket is zero — no activity in this window.
+			if !hasData {
+				continue
+			}
+			series = append(series, aiTimeSeriesEntry{
+				Model:    sk.model,
+				Points:   points,
+				Provider: sk.provider,
+			})
+		}
+
+		RespondWithJSON(w, http.StatusOK, aiUsageResponse{
+			Summary: aiUsageSummary{
+				ByModel:    byModel,
+				ByProvider: byProvider,
+			},
+			TimeSeries: aiUsageTimeSeries{
+				Series: series,
+				Step:   stepStr,
+				Window: windowStr,
+			},
+		})
+	}
+}
+
+// parseUsageDuration parses a plain integer string as a number of seconds.
+// e.g. "60" → 1 minute, "3600" → 1 hour, "86400" → 1 day.
+func parseUsageDuration(s string) (time.Duration, error) {
+	secs, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("expected an integer number of seconds, got %q: %w", s, err)
+	}
+	if secs <= 0 {
+		return 0, fmt.Errorf("duration must be a positive number of seconds, got %d", secs)
+	}
+	return time.Duration(secs) * time.Second, nil
+}
+
+// addToRow upserts a row in the map, applying initFn on first insert, then adds token counts.
+func addToRow(m map[string]*aiTokenRow, key string, initFn func(*aiTokenRow), prompt, completion, total int64) {
+	row, ok := m[key]
+	if !ok {
+		row = &aiTokenRow{}
+		initFn(row)
+		m[key] = row
+	}
+	row.CompletionTokens += completion
+	row.PromptTokens += prompt
+	row.TotalTokens += total
+}
+
+// mapToSortedRows converts a map of *aiTokenRow values into a sorted slice.
+func mapToSortedRows(m map[string]*aiTokenRow, sortKey func(aiTokenRow) string) []aiTokenRow {
+	rows := make([]aiTokenRow, 0, len(m))
+	for _, r := range m {
+		rows = append(rows, *r)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		return sortKey(rows[i]) < sortKey(rows[j])
+	})
+	return rows
+}
 func DeleteConversations(conf *config.Config, aiStore aiTypes.AIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if aiStore == nil || !aiStore.Enabled() {
