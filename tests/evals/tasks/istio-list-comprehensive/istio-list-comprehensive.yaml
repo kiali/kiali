@@ -1,0 +1,33 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "List Comprehensive Istio Configuration"
+  category: "Configuration Management"
+  description: "Lists multiple Istio resources across different types to validate token efficiency with larger datasets. This test validates that the grouped output format provides better token efficiency at scale."
+  difficulty: easy
+spec:
+  cleanup:
+  - script:
+      file: ./cleanup.sh
+      timeout: 120s
+  prompt:
+    inline: |
+      List all Istio configuration resources in the 'bookinfo' namespace.
+      Provide a summary of how many VirtualServices, DestinationRules, Gateways, and ServiceEntries you found.
+      Also report if any of these resources have validation errors.
+  requires:
+  - extension: kubernetes
+    as: k8s
+  setup:
+  - script:
+      file: ./setup.sh
+      timeout: 120s
+  verify:
+  - llmJudge:
+      contains: "VirtualService"
+  - llmJudge:
+      contains: "DestinationRule"
+  - llmJudge:
+      contains: "Gateway"
