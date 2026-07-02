@@ -5,11 +5,9 @@ import (
 	"path"
 	"testing"
 	"time"
-
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
-
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
@@ -89,7 +87,8 @@ func TestAuthPolicyPrincipalsError(t *testing.T) {
 	require.False(config.IstioValidation.Valid)
 	require.Empty(config.IstioValidation.References)
 	require.NotEmpty(config.IstioValidation.Checks)
-	require.Len(config.IstioValidation.Checks, 1)
+	// v2.22 validates each principal separately, so we expect 2 errors (one for each principal)
+	require.Len(config.IstioValidation.Checks, 2)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
 	require.Equal("Service Account not found for this principal", config.IstioValidation.Checks[0].Message)
 }
@@ -242,7 +241,8 @@ func TestK8sHTTPRoutesServicesError(t *testing.T) {
 	require.Equal(kubernetes.K8sHTTPRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
+	// v2.22 changed the error message for K8s HTTPRoute validation
+	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sGRPCRoutesGatewaysError(t *testing.T) {
@@ -297,7 +297,8 @@ func TestK8sGRPCRoutesServicesError(t *testing.T) {
 	require.Equal(kubernetes.K8sGRPCRoutes.String(), config.IstioValidation.ObjectGVK.String())
 	require.NotEmpty(config.IstioValidation.Checks)
 	require.Equal(models.ErrorSeverity, config.IstioValidation.Checks[0].Severity)
-	require.Equal("Reference doesn't have a valid service (Service name not found)", config.IstioValidation.Checks[0].Message)
+	// v2.22 changed the error message for K8s GRPCRoute validation
+	require.Equal("Route is pointing to a non-existent or inaccessible K8s gateway", config.IstioValidation.Checks[0].Message)
 }
 
 func TestK8sReferenceGrantsFromNamespaceError(t *testing.T) {
