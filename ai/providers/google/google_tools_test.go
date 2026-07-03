@@ -193,6 +193,11 @@ func TestConvertToolToGoogle_FromToolDefinition_GetMeshGraph(t *testing.T) {
 	expected := &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
+			"ambientTraffic": {
+				Type:        genai.TypeString,
+				Description: "Optional. Filter Ambient Mesh traffic. 'none' excludes all ambient traffic, 'total' includes all (default), 'waypoint' shows only waypoint-reported traffic, 'ztunnel' shows only ztunnel-reported traffic. Only applicable when Ambient Mesh is enabled.",
+				Enum:        []string{"none", "total", "waypoint", "ztunnel"},
+			},
 			"namespaces": {
 				Type:        genai.TypeString,
 				Description: "Comma-separated list of namespaces to map",
@@ -326,7 +331,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ListOrGetResources(t *testing.T)
 		Properties: map[string]*genai.Schema{
 			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
+				Description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them. When resourceType is 'workload' and the workload is in Ambient mode, ztunnel networking details are included automatically.",
 				Enum:        []string{"service", "workload", "app", "namespace", "argoapp"},
 			},
 			"namespaces": {
