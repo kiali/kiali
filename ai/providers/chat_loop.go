@@ -46,6 +46,10 @@ type PrepareNextTurnFunc func(
 //     compose a coherent partial-failure response (MCP protocol convention).
 //  4. Calls prepareNextTurn to apply results to the provider's state.
 //
+// maxToolIterations caps the number of tool-call iterations (LLM call + tool
+// execution round) before the loop is force-aborted. It comes from
+// config.ChatAI.MaxToolIterations.
+//
 // Returns (responseContent, actions, docs, aborted).  aborted=true means an
 // error was already streamed to onChunk and the caller should return immediately.
 func RunChatLoop(
@@ -55,11 +59,11 @@ func RunChatLoop(
 	onChunk func(string),
 	streamTurn StreamTurnFunc,
 	prepareNextTurn PrepareNextTurnFunc,
+	maxToolIterations int,
 ) (responseContent string, actions []get_action_ui.Action, docs []types.ReferencedDoc, aborted bool) {
 	actions = []get_action_ui.Action{}
 	docs = []types.ReferencedDoc{}
 
-	const maxToolIterations = 5
 	for iter := 0; iter < maxToolIterations; iter++ {
 		text, toolCalls, err := streamTurn(ctx, onChunk)
 		if err != nil {

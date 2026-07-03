@@ -90,7 +90,7 @@ func TestRunChatLoop_NoToolCalls(t *testing.T) {
 	var chunks []string
 	content, actions, docs, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, nopPrepare(t),
+		collectChunks(&chunks), streamTurn, nopPrepare(t), 5,
 	)
 
 	assert.False(t, aborted)
@@ -113,7 +113,7 @@ func TestRunChatLoop_ParseMarkdownApplied(t *testing.T) {
 
 	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(new([]string)), streamTurn, nopPrepare(t),
+		collectChunks(new([]string)), streamTurn, nopPrepare(t), 5,
 	)
 
 	assert.False(t, aborted)
@@ -133,7 +133,7 @@ func TestRunChatLoop_StreamTurnError(t *testing.T) {
 	var chunks []string
 	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, nopPrepare(t),
+		collectChunks(&chunks), streamTurn, nopPrepare(t), 5,
 	)
 
 	assert.True(t, aborted)
@@ -160,7 +160,7 @@ func TestRunChatLoop_ContextCanceled(t *testing.T) {
 	var chunks []string
 	_, _, _, aborted := RunChatLoop(
 		dummyProvider{}, ctx, ki,
-		collectChunks(&chunks), streamTurn, nopPrepare(t),
+		collectChunks(&chunks), streamTurn, nopPrepare(t), 5,
 	)
 
 	assert.True(t, aborted)
@@ -198,7 +198,7 @@ func TestRunChatLoop_ToolResultError(t *testing.T) {
 	var chunks []string
 	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, prepare,
+		collectChunks(&chunks), streamTurn, prepare, 5,
 	)
 
 	assert.False(t, aborted, "loop must not abort on a tool error")
@@ -241,7 +241,7 @@ func TestRunChatLoop_PartialToolFailure(t *testing.T) {
 	var chunks []string
 	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, prepare,
+		collectChunks(&chunks), streamTurn, prepare, 5,
 	)
 
 	assert.False(t, aborted, "partial tool failure must not abort the loop")
@@ -290,7 +290,7 @@ func TestRunChatLoop_PrepareNextTurnFalseStopsLoop(t *testing.T) {
 
 	content, _, docs, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(new([]string)), streamTurn, prepare,
+		collectChunks(new([]string)), streamTurn, prepare, 5,
 	)
 
 	assert.False(t, aborted)
@@ -331,7 +331,7 @@ func TestRunChatLoop_PrepareNextTurnTrueContinuesLoop(t *testing.T) {
 
 	content, _, docs, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(new([]string)), streamTurn, prepare,
+		collectChunks(new([]string)), streamTurn, prepare, 5,
 	)
 
 	assert.False(t, aborted)
@@ -343,29 +343,33 @@ func TestRunChatLoop_PrepareNextTurnTrueContinuesLoop(t *testing.T) {
 
 // TestRunChatLoop_MaxToolIterationsAborts verifies that the loop is
 // force-aborted with an error event when tool calls are returned on every
-// iteration up to the maximum.
+// iteration up to the maximum, and that a custom maxToolIterations value is
+// respected.
 func TestRunChatLoop_MaxToolIterationsAborts(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
-	ki := newTestKialiInterface(t)
 
-	streamCalls := 0
-	streamTurn := func(_ context.Context, _ func(string)) (string, []types.StreamToolCallData, error) {
-		streamCalls++
-		// Always return a tool call so the loop never exits naturally.
-		return "", []types.StreamToolCallData{referencedDocsCall(fmt.Sprintf("tc-%d", streamCalls))}, nil
+	for _, maxIter := range []int{5, 3} {
+		maxIter := maxIter
+		t.Run(fmt.Sprintf("maxToolIterations=%d", maxIter), func(t *testing.T) {
+			ki := newTestKialiInterface(t)
+
+			streamCalls := 0
+			streamTurn := func(_ context.Context, _ func(string)) (string, []types.StreamToolCallData, error) {
+				streamCalls++
+				return "", []types.StreamToolCallData{referencedDocsCall(fmt.Sprintf("tc-%d", streamCalls))}, nil
+			}
+
+			var chunks []string
+			_, _, _, aborted := RunChatLoop(
+				dummyProvider{}, context.Background(), ki,
+				collectChunks(&chunks), streamTurn, alwaysContinuePrepare(), maxIter,
+			)
+
+			assert.True(t, aborted, "loop must abort after reaching maxToolIterations")
+			assert.True(t, hasErrorEvent(chunks), "a max-iterations error event must be emitted")
+			assert.Equal(t, maxIter, streamCalls, "streamTurn must be called exactly maxToolIterations times")
+		})
 	}
-
-	var chunks []string
-	_, _, _, aborted := RunChatLoop(
-		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, alwaysContinuePrepare(),
-	)
-
-	assert.True(t, aborted, "loop must abort after reaching maxToolIterations")
-	assert.True(t, hasErrorEvent(chunks), "a max-iterations error event must be emitted")
-	// 5 iterations: tools execute on 0..3 (iter 4 aborts before executing)
-	// streamTurn is called on each of the 5 iterations.
-	assert.Equal(t, 5, streamCalls)
 }
 
 // TestRunChatLoop_DocsAccumulatedAcrossIterations verifies that referenced
@@ -395,7 +399,7 @@ func TestRunChatLoop_DocsAccumulatedAcrossIterations(t *testing.T) {
 
 	_, _, docs, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(new([]string)), streamTurn, prepare,
+		collectChunks(new([]string)), streamTurn, prepare, 5,
 	)
 
 	assert.False(t, aborted)
@@ -423,7 +427,7 @@ func TestRunChatLoop_ContextCanceledAfterToolExecution(t *testing.T) {
 	var chunks []string
 	_, _, _, aborted := RunChatLoop(
 		dummyProvider{}, ctx, ki,
-		collectChunks(&chunks), streamTurn, alwaysStopPrepare(""),
+		collectChunks(&chunks), streamTurn, alwaysStopPrepare(""), 5,
 	)
 
 	assert.True(t, aborted)
@@ -448,7 +452,7 @@ func TestRunChatLoop_SSEChunksAreValidJSON(t *testing.T) {
 	var chunks []string
 	RunChatLoop( //nolint:errcheck
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(&chunks), streamTurn, alwaysStopPrepare(""),
+		collectChunks(&chunks), streamTurn, alwaysStopPrepare(""), 5,
 	)
 
 	require.NotEmpty(t, chunks)
@@ -476,7 +480,7 @@ func TestRunChatLoop_EmptyTextIsNotAccumulated(t *testing.T) {
 
 	content, _, _, aborted := RunChatLoop(
 		dummyProvider{}, context.Background(), ki,
-		collectChunks(new([]string)), streamTurn, alwaysContinuePrepare(),
+		collectChunks(new([]string)), streamTurn, alwaysContinuePrepare(), 5,
 	)
 
 	assert.False(t, aborted)
