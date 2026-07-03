@@ -1101,8 +1101,10 @@ func TestDeleteConversations_SessionScoping(t *testing.T) {
 func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = true
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
-	handler := ChatPrompts(conf)
+	handler := ChatPrompts(conf, kialiCache, cf)
 
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
@@ -1129,8 +1131,10 @@ func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 func TestChatPrompts_FilterByCategory(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = true
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
-	handler := ChatPrompts(conf)
+	handler := ChatPrompts(conf, kialiCache, cf)
 
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
@@ -1154,8 +1158,10 @@ func TestChatPrompts_FilterByCategory(t *testing.T) {
 func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = true
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
-	handler := ChatPrompts(conf)
+	handler := ChatPrompts(conf, kialiCache, cf)
 
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)
@@ -1175,8 +1181,10 @@ func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 func TestChatPrompts_DisabledWhenChatAIOff(t *testing.T) {
 	conf := config.NewConfig()
 	conf.ChatAI.Enabled = false
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
-	handler := ChatPrompts(conf)
+	handler := ChatPrompts(conf, kialiCache, cf)
 
 	ts := httptest.NewServer(handler)
 	t.Cleanup(ts.Close)

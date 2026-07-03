@@ -85,7 +85,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	l7WithoutWaypointCount := 0
 
 	for _, ap := range istioConfigs.AuthorizationPolicies {
-		analyzed := analyzeAuthorizationPolicy(*ap, nsStatus)
+		analyzed := analyzeAuthorizationPolicy(ap, nsStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 
 		if analyzed.Layer == "L7" {
@@ -125,7 +125,7 @@ func checkNamespaceWaypoint(ctx context.Context, businessLayer *business.Layer, 
 }
 
 // analyzeAuthorizationPolicy classifies a policy as L4 or L7
-func analyzeAuthorizationPolicy(ap security_v1.AuthorizationPolicy, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
+func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
 	isL7, reason := isL7Policy(&ap.Spec)
 
 	analyzed := AnalyzedPolicy{
