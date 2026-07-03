@@ -22,7 +22,7 @@ export interface EditorAnnotation {
   type: string;
 }
 
-export interface AceValidations {
+export interface EditorValidations {
   annotations: Array<EditorAnnotation>;
   markers: Array<EditorMarker>;
 }
@@ -275,8 +275,8 @@ const parseCheck = (yaml: string, check: ObjectCheck): ParsedCheck => {
   return { marker, annotation };
 };
 
-export const parseKialiValidations = (yamlInput: string, kialiValidations?: ObjectValidation): AceValidations => {
-  const validations: AceValidations = {
+export const parseKialiValidations = (yamlInput: string, kialiValidations?: ObjectValidation): EditorValidations => {
+  const validations: EditorValidations = {
     markers: [],
     annotations: []
   };
@@ -293,8 +293,8 @@ export const parseKialiValidations = (yamlInput: string, kialiValidations?: Obje
   return validations;
 };
 
-export const parseYamlValidations = (yamlInput: string): AceValidations => {
-  const parsedValidations: AceValidations = {
+export const parseYamlValidations = (yamlInput: string): EditorValidations => {
+  const parsedValidations: EditorValidations = {
     markers: [],
     annotations: []
   };

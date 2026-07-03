@@ -6,7 +6,7 @@ import { addError, addSuccess } from '../../utils/AlertUtils';
 import * as API from '../../services/Api';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import { MarkerSeverity } from 'monaco-editor';
+import { MarkerSeverity, Selection } from 'monaco-editor';
 import {
   HelpMessage,
   ObjectReference,
@@ -16,7 +16,7 @@ import {
   WorkloadReference
 } from '../../types/IstioObjects';
 import {
-  AceValidations,
+  EditorValidations,
   EditorAnnotation,
   EditorMarker,
   applyMonacoMarkers,
@@ -103,7 +103,7 @@ interface IstioConfigDetailsState {
   originalIstioValidations?: ObjectValidation;
   selectedEditorLine?: string;
   yamlModified: string;
-  yamlValidations?: AceValidations;
+  yamlValidations?: EditorValidations;
 }
 const tabName = 'list';
 
@@ -258,21 +258,18 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
         // Sync editor content and apply folding when data reloads
         const yamlSource = this.fetchYaml();
         if (this.monacoEditorRef.getValue() !== yamlSource) {
+          const scrollTop = this.monacoEditorRef.getScrollTop();
           this.suppressOnChange = true;
           this.monacoEditorRef.setValue(yamlSource);
           this.suppressOnChange = false;
+          this.monacoEditorRef.setScrollTop(scrollTop);
         }
-        const foldLines = this.getFoldLines(yamlSource);
-        if (foldLines.length > 0) {
+        if (this.monacoRef) {
           const ed = this.monacoEditorRef;
-          // Defer folding to ensure the editor model has synced the new value
-          setTimeout(() => {
-            for (const line of foldLines) {
-              ed.setPosition({ lineNumber: line + 1, column: 1 });
-              ed.trigger('fold', 'editor.fold', {});
-            }
-            ed.setPosition({ lineNumber: 1, column: 1 });
-          }, 0);
+          const savedScroll = ed.getScrollTop();
+          this.applyFolding(ed).then(() => {
+            ed.setScrollTop(savedScroll);
+          });
         }
       }
 
@@ -394,7 +391,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     });
   };
 
-  injectGalleyError = (error: ApiError): AceValidations => {
+  injectGalleyError = (error: ApiError): EditorValidations => {
     const msg: string[] = API.getErrorString(error).split(':');
     const errMsg: string = msg.slice(1, msg.length).join(':');
 
@@ -503,18 +500,35 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     return details.help ?? ([] as HelpMessage[]);
   };
 
-  // Returns line numbers (0-based) of top-level sections that should be folded (status, managedFields)
-  getFoldLines = (yaml: string): number[] => {
-    const lines: number[] = [];
+  // Returns 1-based line ranges for managedFields sections that should be folded
+  getFoldRanges = (yaml: string): { start: number; end: number }[] => {
+    const ranges: { start: number; end: number }[] = [];
     if (yaml) {
       const ylines = yaml.split('\n');
-      ylines.forEach((line: string, i: number) => {
-        if (line.startsWith('status:') || line.startsWith('  managedFields:')) {
-          lines.push(i);
+      for (let i = 0; i < ylines.length; i++) {
+        const line = ylines[i];
+        if (line.startsWith('  managedFields:')) {
+          const indent = line.search(/\S/);
+          let end = i;
+          for (let j = i + 1; j < ylines.length; j++) {
+            const next = ylines[j];
+            if (next.trim() === '') {
+              end = j;
+              continue;
+            }
+            const nextIndent = next.search(/\S/);
+            if (nextIndent <= indent && !next.match(/^\s*-/)) {
+              break;
+            }
+            end = j;
+          }
+          if (end > i) {
+            ranges.push({ start: i + 1, end: end + 1 });
+          }
         }
-      });
+      }
     }
-    return lines;
+    return ranges;
   };
 
   isExpanded = (istioConfigDetails?: IstioConfigDetails): boolean => {
@@ -547,6 +561,32 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     (window as any).monaco = monaco;
     ed.onDidChangeCursorPosition(this.onCursorChange);
     this.applyValidationMarkers();
+
+    // Apply initial folding for managedFields: section
+    this.applyFolding(ed);
+  };
+
+  applyFolding = (ed: editor.IStandaloneCodeEditor): Promise<void> => {
+    const yamlSource = this.fetchYaml();
+    const foldRanges = this.getFoldRanges(yamlSource);
+    if (foldRanges.length === 0) {
+      return Promise.resolve();
+    }
+    // Use createFoldingRangeFromSelection which creates a fold region from a selection
+    // and immediately collapses it — works regardless of folding range providers.
+    const foldAction = ed.getAction('editor.createFoldingRangeFromSelection');
+    if (foldAction) {
+      const doFold = async (): Promise<void> => {
+        for (const range of foldRanges) {
+          ed.setSelection(new Selection(range.start, 1, range.end + 1, 1));
+          await foldAction.run();
+        }
+        ed.setPosition({ lineNumber: 1, column: 1 });
+        ed.setSelection(new Selection(1, 1, 1, 1));
+      };
+      return doFold();
+    }
+    return Promise.resolve();
   };
 
   applyValidationMarkers = (): void => {
