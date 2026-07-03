@@ -209,19 +209,18 @@ func recoverFromPanic(res *interface{}, status *int, resourceType, name, namespa
 
 // ResourceDetailArgs are the optional parameters accepted by the resource detail tool.
 type ResourceDetailArgs struct {
-	ResourceType   string    `json:"resource_type,omitempty"`
-	Namespaces     []string  `json:"namespaces,omitempty"`
-	ResourceName   string    `json:"resource_name,omitempty"`
-	ClusterName    string    `json:"cluster_name,omitempty"`
-	RateInterval   string    `json:"rate_interval,omitempty"`
-	QueryTime      time.Time `json:"query_time,omitempty"`
-	IncludeZtunnel bool      `json:"include_ztunnel,omitempty"`
+	ClusterName  string    `json:"cluster_name,omitempty"`
+	Namespaces   []string  `json:"namespaces,omitempty"`
+	QueryTime    time.Time `json:"query_time,omitempty"`
+	RateInterval string    `json:"rate_interval,omitempty"`
+	ResourceName string    `json:"resource_name,omitempty"`
+	ResourceType string    `json:"resource_type,omitempty"`
 }
 
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	// Extract parameters
 	resourceType := mcputil.GetStringArg(args, "resource_type", "resourceType")
-	namespaces := mcputil.GetStringArg(args, "namespaces")
+	namespaces := mcputil.GetStringArg(args, "namespaces", "namespace")
 	resourceName := mcputil.GetStringArg(args, "resource_name", "resourceName")
 	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 	rateInterval := mcputil.GetStringOrDefault(args, DefaultRateInterval, "rateInterval")
@@ -294,16 +293,13 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 	}
 
-	includeZtunnel := mcputil.GetBoolArg(args, "includeZtunnel")
-
 	resourceArgs := ResourceDetailArgs{
-		ResourceType:   resourceType,
-		Namespaces:     namespacesSlice,
-		ResourceName:   resourceName,
-		ClusterName:    clusterName,
-		RateInterval:   rateInterval,
-		QueryTime:      queryTime,
-		IncludeZtunnel: includeZtunnel,
+		ClusterName:  clusterName,
+		Namespaces:   namespacesSlice,
+		QueryTime:    queryTime,
+		RateInterval: rateInterval,
+		ResourceName: resourceName,
+		ResourceType: resourceType,
 	}
 	var resp interface{}
 	var status int
@@ -396,16 +392,27 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
 
-		// Get ztunnel dump if requested and workload is in Ambient mode
+		// For Ambient workloads, automatically fetch ztunnel networking details.
+		// GetZtunnelDump expects a ztunnel DaemonSet pod name; since models.Pod lacks
+		// NodeName we iterate all ztunnel pods until we find the one whose dump contains
+		// this workload. Results are cached after the first fetch.
 		var ztunnelDump *kubernetes.ZtunnelConfigDump
-		if resourceArgs.IncludeZtunnel && workloadDetails.IsAmbient && len(workloadDetails.Pods) > 0 {
-			// Use the first pod to get the ztunnel dump
-			pod := workloadDetails.Pods[0]
-			ztunnelDump = kialiCache.GetZtunnelDump(
-				criteria.Cluster,
-				criteria.Namespace,
-				pod.Name,
-			)
+		if workloadDetails.IsAmbient {
+			for _, ztunnelPod := range kialiCache.GetZtunnelPods(criteria.Cluster) {
+				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Namespace, ztunnelPod.Name)
+				if dump == nil {
+					continue
+				}
+				for i := range dump.Workloads {
+					if dump.Workloads[i].WorkloadName == workloadDetails.Name && dump.Workloads[i].Namespace == workloadDetails.Namespace {
+						ztunnelDump = dump
+						break
+					}
+				}
+				if ztunnelDump != nil {
+					break
+				}
+			}
 		}
 
 		// Get waypoint captured services if this workload is a waypoint

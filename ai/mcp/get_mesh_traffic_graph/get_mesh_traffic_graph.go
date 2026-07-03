@@ -29,11 +29,11 @@ var validGraphTypes = map[string]bool{
 
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
+	AmbientTraffic string   `json:"ambientTraffic,omitempty"`
+	ClusterName    string   `json:"clusterName,omitempty"`
+	GraphType      string   `json:"graphType,omitempty"`
 	Namespaces     []string `json:"namespaces,omitempty"`
 	RateInterval   string   `json:"rateInterval,omitempty"`
-	GraphType      string   `json:"graphType,omitempty"`
-	ClusterName    string   `json:"clusterName,omitempty"`
-	AmbientTraffic string   `json:"ambientTraffic,omitempty"`
 }
 
 // GetMeshGraphResponse encapsulates the mesh graph tool response.

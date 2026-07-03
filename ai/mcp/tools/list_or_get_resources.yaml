@@ -7,7 +7,7 @@
     properties:
       resourceType:
         type: "string"
-        description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them."
+        description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them. When resourceType is 'workload' and the workload is in Ambient mode, ztunnel networking details are included automatically."
         enum: ["service", "workload", "app", "namespace", "argoapp"]
       namespaces:
         type: "string"
@@ -18,6 +18,3 @@
       clusterName:
         type: "string"
         description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig."
-      includeZtunnel:
-        type: "boolean"
-        description: "Optional. Include ztunnel networking details for Ambient workloads (protocol, network mode, captured services, waypoint configuration). Only applicable when resourceType is 'workload' and resourceName is specified. Requires Ambient Mesh enabled. Default: false."

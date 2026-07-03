@@ -14,28 +14,28 @@ import (
 
 // PolicyAnalysisResponse is the output of the analyze_ambient_policies tool
 type PolicyAnalysisResponse struct {
-	Summary         string                 `json:"summary"`
 	NamespaceStatus NamespaceAmbientStatus `json:"namespace_status"`
 	Policies        []AnalyzedPolicy       `json:"policies"`
 	Recommendations []string               `json:"recommendations,omitempty"`
+	Summary         string                 `json:"summary"`
 }
 
 // NamespaceAmbientStatus describes the Ambient configuration of the namespace
 type NamespaceAmbientStatus struct {
-	Name         string `json:"name"`
 	Cluster      string `json:"cluster"`
-	IsAmbient    bool   `json:"is_ambient"`
 	HasWaypoint  bool   `json:"has_waypoint"`
+	IsAmbient    bool   `json:"is_ambient"`
+	Name         string `json:"name"`
 	WaypointName string `json:"waypoint_name,omitempty"`
 }
 
 // AnalyzedPolicy contains the classification and warnings for a single AuthorizationPolicy
 type AnalyzedPolicy struct {
-	Name    string `json:"name"`
 	Layer   string `json:"layer"` // "L4" or "L7"
+	Name    string `json:"name"`
 	Reason  string `json:"reason"`
-	Warning string `json:"warning,omitempty"`
 	Rules   int    `json:"rules_count"`
+	Warning string `json:"warning,omitempty"`
 }
 
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
