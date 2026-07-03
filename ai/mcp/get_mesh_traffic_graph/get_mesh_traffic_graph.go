@@ -58,16 +58,22 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		return fmt.Sprintf("invalid graphType %q: must be one of app, service, versionedApp, workload", toolArgs.GraphType), http.StatusBadRequest
 	}
 
-	// Validate ambientTraffic parameter
+	// Validate ambientTraffic parameter using the canonical constants from the graph package
 	if toolArgs.AmbientTraffic != "" {
 		validAmbientValues := map[string]bool{
-			"none":     true,
-			"total":    true,
-			"waypoint": true,
-			"ztunnel":  true,
+			graph.AmbientTrafficNone:     true,
+			graph.AmbientTrafficTotal:    true,
+			graph.AmbientTrafficWaypoint: true,
+			graph.AmbientTrafficZtunnel:  true,
 		}
 		if !validAmbientValues[toolArgs.AmbientTraffic] {
-			return fmt.Sprintf("invalid ambientTraffic %q: must be one of none, total, waypoint, ztunnel", toolArgs.AmbientTraffic), http.StatusBadRequest
+			return fmt.Sprintf("invalid ambientTraffic %q: must be one of %s, %s, %s, %s",
+				toolArgs.AmbientTraffic,
+				graph.AmbientTrafficNone,
+				graph.AmbientTrafficTotal,
+				graph.AmbientTrafficWaypoint,
+				graph.AmbientTrafficZtunnel,
+			), http.StatusBadRequest
 		}
 	}
 

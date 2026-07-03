@@ -112,25 +112,15 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}, http.StatusOK
 }
 
-// checkNamespaceWaypoint checks if the namespace has a waypoint proxy configured
+// checkNamespaceWaypoint checks if the namespace has a waypoint proxy configured.
+// It uses GetWaypoints (cached) instead of GetWorkloadList to avoid loading all workload details.
 func checkNamespaceWaypoint(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (bool, string) {
-	// Get workloads in the namespace to find waypoint proxies
-	criteria := business.WorkloadCriteria{
-		Namespace: namespace,
-		Cluster:   cluster,
-	}
-	workloads, err := businessLayer.Workload.GetWorkloadList(ctx, criteria)
-	if err != nil {
-		return false, ""
-	}
-
-	// Look for waypoint workloads
-	for _, wl := range workloads.Workloads {
-		if wl.IsWaypoint {
+	waypoints := businessLayer.Workload.GetWaypoints(ctx)
+	for _, wl := range waypoints {
+		if wl.Namespace == namespace && wl.Cluster == cluster {
 			return true, wl.Name
 		}
 	}
-
 	return false, ""
 }
 

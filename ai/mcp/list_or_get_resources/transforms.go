@@ -2,6 +2,7 @@ package list_or_get_resources
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -814,7 +815,7 @@ func extractAmbientNetworking(wl *models.Workload, dump *kubernetes.ZtunnelConfi
 	for i := range dump.Services {
 		svc := &dump.Services[i]
 		// Check if this service references the workload
-		if containsString(ztunnelWorkload.Services, svc.Name) {
+		if slices.Contains(ztunnelWorkload.Services, svc.Name) {
 			waypointDest := ""
 			if svc.Waypoint.Destination != "" {
 				waypointDest = svc.Waypoint.Destination
@@ -837,14 +838,4 @@ func extractAmbientNetworking(wl *models.Workload, dump *kubernetes.ZtunnelConfi
 		TrustDomain:      ztunnelWorkload.TrustDomain,
 		CapturedServices: capturedServices,
 	}
-}
-
-// containsString checks if a string slice contains a specific string
-func containsString(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }

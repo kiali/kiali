@@ -135,24 +135,34 @@ func ChatMCP(
 	}
 }
 
-func ChatPrompts(conf *config.Config) http.HandlerFunc {
+func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !conf.ChatAI.Enabled {
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
 			return
 		}
+
+		// Determine whether Ambient Mesh is enabled in any accessible cluster
+		saClients := clientFactory.GetSAClients()
+		accessibleClusters := make([]string, 0, len(saClients))
+		for clusterName := range saClients {
+			accessibleClusters = append(accessibleClusters, clusterName)
+		}
+		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusters)
+
 		category := r.URL.Query().Get("category")
 		catalog := prompts.Catalog()
-		if category != "" {
-			filtered := make([]prompts.Prompt, 0, len(catalog))
-			for _, p := range catalog {
-				if p.Category == category {
-					filtered = append(filtered, p)
-				}
+		filtered := make([]prompts.Prompt, 0, len(catalog))
+		for _, p := range catalog {
+			if p.IsAmbient && !ambientEnabled {
+				continue
 			}
-			catalog = filtered
+			if category != "" && p.Category != category {
+				continue
+			}
+			filtered = append(filtered, p)
 		}
-		RespondWithJSON(w, http.StatusOK, catalog)
+		RespondWithJSON(w, http.StatusOK, filtered)
 	}
 }
 
