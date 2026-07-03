@@ -6,7 +6,7 @@ metadata:
     kiali_wizard: fault_injection
 spec:
   hosts:
-  - reviews.bookinfo.svc.cluster.local
+  - reviews
   http:
   - fault:
       delay:
@@ -15,15 +15,15 @@ spec:
           value: 100
     route:
     - destination:
-        host: reviews.bookinfo.svc.cluster.local
+        host: reviews
         subset: v1
       weight: 33
     - destination:
-        host: reviews.bookinfo.svc.cluster.local
+        host: reviews
         subset: v2
       weight: 33
     - destination:
-        host: reviews.bookinfo.svc.cluster.local
+        host: reviews
         subset: v3
       weight: 34
 ---

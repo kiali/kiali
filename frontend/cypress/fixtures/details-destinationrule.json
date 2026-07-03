@@ -10,7 +10,7 @@
     "annotations": null
   },
   "spec": {
-    "host": "details",
+    "host": "details.bookinfo.svc.cluster.local",
     "subsets": [
       {
         "name": "v1",
