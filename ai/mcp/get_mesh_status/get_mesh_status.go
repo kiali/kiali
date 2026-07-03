@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/ai/mcputil"
@@ -530,7 +531,7 @@ func extractZtunnelStatus(kialiCache cache.KialiCache, ambientClusters map[strin
 		for _, pod := range pods {
 			ready := false
 			for _, cond := range pod.Status.Conditions {
-				if cond.Type == "Ready" && cond.Status == "True" {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
 					ready = true
 					break
 				}

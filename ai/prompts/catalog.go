@@ -111,5 +111,56 @@ func Catalog() []Prompt {
 			Query:       "Analyze the current workload and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
 			Title:       "Workload Troubleshooting",
 		},
+
+		// Ambient Mesh prompts
+		{
+			Category:    "mesh",
+			Description: "Check if Ambient Mesh is enabled and get ztunnel DaemonSet status across clusters",
+			Name:        "ambient-mesh-status",
+			Query:       "Check if Ambient Mesh is enabled in my clusters. Show ztunnel DaemonSet status, pod health per node, and which namespaces are in Ambient mode.",
+			Title:       "Ambient Mesh Status",
+		},
+		{
+			Category:    "namespaces",
+			Description: "List namespaces with their Ambient mode status and identify which ones need waypoints",
+			Name:        "ambient-namespace-overview",
+			Query:       "List all namespaces with their Ambient status. Identify which namespaces are in Ambient mode, which have waypoints deployed, and which may need waypoints for L7 policies.",
+			Title:       "Ambient Namespace Overview",
+		},
+		{
+			Category:    "namespace-details",
+			Description: "Analyze AuthorizationPolicies in this namespace for Ambient compatibility (L4 vs L7)",
+			Name:        "ambient-policy-analysis",
+			Query:       "Analyze the AuthorizationPolicies in the current namespace for Ambient Mesh compatibility. Show which policies are L4 (ztunnel-enforced) vs L7 (waypoint-required), and warn if L7 policies exist without a waypoint.",
+			Title:       "Ambient Policy Analysis",
+		},
+		{
+			Category:    "workload-details",
+			Description: "Show ztunnel networking details for this Ambient workload (protocol, captured services, waypoint)",
+			Name:        "ambient-workload-networking",
+			Query:       "Show detailed Ambient networking information for the current workload. Include ztunnel capture status, protocol (HBONE/TCP), network mode, captured services with VIPs, and waypoint configuration.",
+			Title:       "Ambient Workload Networking",
+		},
+		{
+			Category:    "workload-details",
+			Description: "For waypoint proxies, show which services they are capturing and enforcing policies for",
+			Name:        "waypoint-captured-services",
+			Query:       "If this workload is a waypoint proxy, show which services it is capturing and enforcing L7 policies for. Include service names and namespaces.",
+			Title:       "Waypoint Captured Services",
+		},
+		{
+			Category:    "graph",
+			Description: "Show traffic topology filtered to Ambient Mesh waypoint-reported traffic only",
+			Name:        "ambient-waypoint-traffic",
+			Query:       "Show the traffic topology for the selected namespaces, filtered to show only waypoint-reported traffic. This helps visualize L7 traffic flow in Ambient mode.",
+			Title:       "Ambient Waypoint Traffic",
+		},
+		{
+			Category:    "istio",
+			Description: "Review AuthorizationPolicies across namespaces for Ambient compatibility issues",
+			Name:        "ambient-policy-audit",
+			Query:       "Audit AuthorizationPolicies across all Ambient namespaces. Report L7 policies in namespaces without waypoints, and recommend where waypoints should be deployed.",
+			Title:       "Ambient Policy Audit",
+		},
 	}
 }

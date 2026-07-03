@@ -257,7 +257,7 @@ func TestTransformWorkloadDetail_InjectionDisabled(t *testing.T) {
 	wl.Namespace = "bookinfo"
 	wl.WorkloadGVK = schema.GroupVersionKind{Kind: "Deployment"}
 
-	result := TransformWorkloadDetail(wl)
+	result := TransformWorkloadDetail(wl, nil, nil)
 	require.NotNil(t, result.Istio.IstioInjectionAnnotation)
 	assert.False(t, *result.Istio.IstioInjectionAnnotation)
 	assert.False(t, result.Istio.IstioSidecar)
@@ -306,7 +306,7 @@ func TestTransformWorkloadDetail(t *testing.T) {
 		},
 	}
 
-	result := TransformWorkloadDetail(wl)
+	result := TransformWorkloadDetail(wl, nil, nil)
 
 	assert.Equal(t, "details-v1", result.Workload.Name)
 	assert.Equal(t, "Deployment", result.Workload.Kind)
@@ -511,7 +511,7 @@ func TestTransformWorkloadDetail_AmbientMode(t *testing.T) {
 	wl.Namespace = "default"
 	wl.IsAmbient = true
 
-	result := TransformWorkloadDetail(wl)
+	result := TransformWorkloadDetail(wl, nil, nil)
 	assert.Equal(t, "Ambient", result.Istio.Mode)
 }
 
@@ -520,7 +520,7 @@ func TestTransformWorkloadDetail_NoIstio(t *testing.T) {
 	wl.Name = "test-wl"
 	wl.Namespace = "default"
 
-	result := TransformWorkloadDetail(wl)
+	result := TransformWorkloadDetail(wl, nil, nil)
 	assert.Equal(t, "None", result.Istio.Mode)
 	assert.Equal(t, "", result.Istio.ProxyVersion)
 	assert.Nil(t, result.Istio.SyncStatus)
