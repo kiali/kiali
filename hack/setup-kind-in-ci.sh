@@ -204,9 +204,7 @@ TARGET_BRANCH="${TARGET_BRANCH:-master}"
 # When using Sail, install-istio-via-sail.sh will pin the Sail chart and map unsupported patch versions
 # (e.g. 1.26.8) to a CRD-supported value (e.g. v1.26-latest).
 if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v1.73" ]; then
-    ISTIO_VERSION="1.18.7"
-  elif [ "${TARGET_BRANCH}" == "v2.4" ]; then
+  if [ "${TARGET_BRANCH}" == "v2.4" ]; then
     ISTIO_VERSION="1.23.6"
   elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
     ISTIO_VERSION="1.26.8"

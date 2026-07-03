@@ -102,18 +102,6 @@ DORP="${DORP:-docker}"
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
 
-# If a specific version of Istio hasn't been provided, try and guess the right one
-# based on the Kiali branch being tested (TARGET_BRANCH) and the compatibility matrices:
-# https://kiali.io/docs/installation/installation-guide/prerequisites/
-# https://istio.io/latest/docs/releases/supported-releases/
-if [ -z "${ISTIO_VERSION}" ]; then
-  if [ "${TARGET_BRANCH}" == "v1.65" ]; then
-    ISTIO_VERSION="1.16.0"
-  elif [ "${TARGET_BRANCH}" == "v1.73" ]; then
-    ISTIO_VERSION="1.18.0"
-  fi
-fi
-
 if [ -z "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR="$(mktemp -d)"
 
