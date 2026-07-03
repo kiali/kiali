@@ -19,28 +19,36 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-var istioConfigCriteria = business.IstioConfigCriteria{
-	IncludeGateways:               true,
-	IncludeK8sGateways:            true,
-	IncludeK8sGRPCRoutes:          true,
-	IncludeK8sHTTPRoutes:          true,
-	IncludeK8sInferencePools:      true,
-	IncludeK8sReferenceGrants:     true,
-	IncludeK8sTCPRoutes:           true,
-	IncludeK8sTLSRoutes:           true,
-	IncludeVirtualServices:        true,
-	IncludeDestinationRules:       true,
-	IncludeServiceEntries:         true,
-	IncludeSidecars:               true,
-	IncludeAuthorizationPolicies:  true,
-	IncludePeerAuthentications:    true,
-	IncludeRequestAuthentications: true,
-	IncludeWorkloadEntries:        true,
-	IncludeWorkloadGroups:         true,
-	IncludeEnvoyFilters:           true,
-	IncludeTrafficExtensions:      true,
-	IncludeWasmPlugins:            true,
-	IncludeTelemetry:              true,
+// defaultIstioConfigCriteria returns the criteria for listing Istio config objects.
+// When enableGatewayAPI is true (i.e. Gateway API CRDs are installed), Gateway API types (K8sGateways, K8sHTTPRoutes, etc.)
+// are included; otherwise they are excluded to avoid unnecessary API calls.
+// When enableInferenceAPI is true (i.e. inference.networking.k8s.io CRDs are installed),
+// InferencePool resources are included.
+func defaultIstioConfigCriteria(enableGatewayAPI bool, enableInferenceAPI ...bool) business.IstioConfigCriteria {
+	inferenceEnabled := len(enableInferenceAPI) > 0 && enableInferenceAPI[0]
+	return business.IstioConfigCriteria{
+		IncludeGateways:               true,
+		IncludeK8sGateways:            enableGatewayAPI,
+		IncludeK8sGRPCRoutes:          enableGatewayAPI,
+		IncludeK8sHTTPRoutes:          enableGatewayAPI,
+		IncludeK8sInferencePools:      inferenceEnabled,
+		IncludeK8sReferenceGrants:     enableGatewayAPI,
+		IncludeK8sTCPRoutes:           enableGatewayAPI,
+		IncludeK8sTLSRoutes:           enableGatewayAPI,
+		IncludeVirtualServices:        true,
+		IncludeDestinationRules:       true,
+		IncludeServiceEntries:         true,
+		IncludeSidecars:               true,
+		IncludeAuthorizationPolicies:  true,
+		IncludePeerAuthentications:    true,
+		IncludeRequestAuthentications: true,
+		IncludeWorkloadEntries:        true,
+		IncludeWorkloadGroups:         true,
+		IncludeEnvoyFilters:           true,
+		IncludeTrafficExtensions:      true,
+		IncludeWasmPlugins:            true,
+		IncludeTelemetry:              true,
+	}
 }
 
 // istioListItem is an internal flat representation used while collecting
@@ -80,7 +88,7 @@ type validationCheckSummary struct {
 	Message  string
 }
 
-func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
+func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config, enableGatewayAPI bool, enableInferenceAPI bool) (interface{}, int) {
 	// Extract parameters
 	cluster := mcputil.GetStringArg(args, "clusterName")
 	namespace := mcputil.GetStringArg(args, "namespace")
@@ -94,9 +102,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		cluster = conf.KubernetesConfig.ClusterName
 	}
 
-	criteria := istioConfigCriteria
+	criteria := defaultIstioConfigCriteria(enableGatewayAPI, enableInferenceAPI)
 	if kind != "" {
-		criteria = criteriaForListFilter(group, kind)
+		if group == "" {
+			group = inferGroupFromKind(kind, enableGatewayAPI, enableInferenceAPI)
+		}
+		criteria = criteriaForListFilter(group, kind, enableGatewayAPI, enableInferenceAPI)
 	}
 
 	if namespace == "" {
@@ -219,10 +230,10 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			}
 		}
 		destinationRules = filteredDR
-	}
 
-	// Filter gateways to only those referenced by VirtualServices
-	gateways, _ = filterGatewaysReferencedByVirtualServices(ctx, businessLayer, cluster, virtualServices, gateways)
+		// When filtering by service, only show Gateways referenced by the matching VirtualServices
+		gateways, _ = filterGatewaysReferencedByVirtualServices(ctx, businessLayer, cluster, virtualServices, gateways)
+	}
 
 	// Get validation warnings for context
 	istioValidations, err := businessLayer.Validations.GetValidations(ctx, cluster)
@@ -561,7 +572,7 @@ func filterGatewaysReferencedByVirtualServices(
 	return out, warnings
 }
 
-func criteriaForListFilter(group, kind string) business.IstioConfigCriteria {
+func criteriaForListFilter(group, kind string, enableGatewayAPI, enableInferenceAPI bool) business.IstioConfigCriteria {
 	// Default: if we can't confidently map it, keep original behavior.
 	c := business.IstioConfigCriteria{}
 
@@ -634,5 +645,5 @@ func criteriaForListFilter(group, kind string) business.IstioConfigCriteria {
 		}
 	}
 
-	return istioConfigCriteria
+	return defaultIstioConfigCriteria(enableGatewayAPI, enableInferenceAPI)
 }

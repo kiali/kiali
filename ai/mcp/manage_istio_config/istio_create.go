@@ -39,7 +39,16 @@ func IstioCreate(r *http.Request, args map[string]interface{}, businessLayer *bu
 		return msg, code
 	}
 
-	body, err := yaml.YAMLToJSON([]byte(data))
+	// Merge LLM-provided data with the resource template to ensure a complete
+	// resource body is submitted. The LLM may provide only spec-level content
+	// without apiVersion/kind/metadata, or omit required fields that the
+	// template supplies as defaults.
+	completeYAML, err := ensureCompleteCreateYAML(args, data, r.Context(), businessLayer, conf)
+	if err != nil {
+		completeYAML = data
+	}
+
+	body, err := yaml.YAMLToJSON([]byte(completeYAML))
 	if err != nil {
 		return fmt.Sprintf("Invalid data (must be valid JSON or YAML): %s", err.Error()), http.StatusBadRequest
 	}

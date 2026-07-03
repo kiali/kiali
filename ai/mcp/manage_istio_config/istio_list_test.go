@@ -77,7 +77,7 @@ func TestIstioList_ReturnsGroupedOutput(t *testing.T) {
 		"namespace": "bookinfo",
 	}
 
-	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
 	require.Equal(t, http.StatusOK, status)
 
 	result, ok := res.(IstioListResult)
@@ -146,7 +146,7 @@ func TestIstioList_FilterByService(t *testing.T) {
 		"serviceName": "reviews",
 	}
 
-	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
 	require.Equal(t, http.StatusOK, status)
 
 	result, ok := res.(IstioListResult)
@@ -226,7 +226,7 @@ func TestCriteriaForListFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := criteriaForListFilter(tt.group, tt.kind)
+			c := criteriaForListFilter(tt.group, tt.kind, true, true)
 
 			if tt.expectDefault {
 				assert.True(t, c.IncludeTrafficExtensions)
@@ -248,17 +248,17 @@ func TestCriteriaForListFilter(t *testing.T) {
 }
 
 func TestCriteriaForListFilter_ExtensionsMutualExclusion(t *testing.T) {
-	txCriteria := criteriaForListFilter("extensions.istio.io", "TrafficExtension")
+	txCriteria := criteriaForListFilter("extensions.istio.io", "TrafficExtension", true, true)
 	assert.True(t, txCriteria.IncludeTrafficExtensions)
 	assert.False(t, txCriteria.IncludeWasmPlugins)
 
-	wpCriteria := criteriaForListFilter("extensions.istio.io", "WasmPlugin")
+	wpCriteria := criteriaForListFilter("extensions.istio.io", "WasmPlugin", true, true)
 	assert.True(t, wpCriteria.IncludeWasmPlugins)
 	assert.False(t, wpCriteria.IncludeTrafficExtensions)
 }
 
 func TestCriteriaForListFilter_UnknownKindInKnownGroup(t *testing.T) {
-	c := criteriaForListFilter("extensions.istio.io", "NonExistent")
+	c := criteriaForListFilter("extensions.istio.io", "NonExistent", true, true)
 	assert.True(t, c.IncludeTrafficExtensions, "unknown kind in known group should fall through to default")
 	assert.True(t, c.IncludeWasmPlugins)
 	assert.True(t, c.IncludeVirtualServices)
@@ -279,7 +279,7 @@ func TestIstioList_IncludesTrafficExtensions(t *testing.T) {
 		"kind":      kubernetes.TrafficExtensions.Kind,
 	}
 
-	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
 	require.Equal(t, http.StatusOK, status)
 
 	result, ok := res.(IstioListResult)

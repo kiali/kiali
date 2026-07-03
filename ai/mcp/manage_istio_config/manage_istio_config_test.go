@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -62,6 +63,15 @@ func kialiIntf(r *http.Request, businessLayer *business.Layer, conf *config.Conf
 		Request:       r,
 		BusinessLayer: businessLayer,
 		Conf:          conf,
+	}
+}
+
+func kialiIntfWithFactory(r *http.Request, businessLayer *business.Layer, conf *config.Config, cf kubernetes.ClientFactory) *mcputil.KialiInterface {
+	return &mcputil.KialiInterface{
+		Request:       r,
+		BusinessLayer: businessLayer,
+		Conf:          conf,
+		ClientFactory: cf,
 	}
 }
 
@@ -257,9 +267,12 @@ func TestValidateReadOnlyIstioConfigInput(t *testing.T) {
 			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "extensions.istio.io", "version": "v1alpha1", "kind": "WasmPlugin", "object": "x"},
 		},
 		{
-			name:    "list filter kind without group",
-			args:    map[string]interface{}{"action": "list", "kind": "VirtualService"},
-			wantErr: "group is required",
+			name: "list filter kind without group infers networking",
+			args: map[string]interface{}{"action": "list", "kind": "VirtualService"},
+		},
+		{
+			name: "list filter Gateway kind without group infers Istio when GW API disabled",
+			args: map[string]interface{}{"action": "list", "kind": "Gateway"},
 		},
 		{
 			name:    "list filter group without kind",
@@ -334,10 +347,14 @@ func TestValidateManagedIstioGroupAndKind(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name:    "empty group",
-			group:   "",
-			kind:    "VirtualService",
-			wantErr: "group is required",
+			name:  "empty group infers from unambiguous kind",
+			group: "",
+			kind:  "VirtualService",
+		},
+		{
+			name:  "empty group infers Gateway as Istio when GW API disabled",
+			group: "",
+			kind:  "Gateway",
 		},
 		{
 			name:    "empty kind",
@@ -745,7 +762,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "v1")
+	assert.Contains(t, resStr, "Object type not managed")
 }
 
 func TestExecute_DeleteNonExistentResource(t *testing.T) {
@@ -1829,4 +1846,458 @@ func TestExecute_CreateAlreadyExistsThroughExecute(t *testing.T) {
 	assert.Contains(t, resStr, "ERROR:")
 	assert.Contains(t, resStr, "already exists")
 	assert.Contains(t, resStr, "patch")
+}
+
+// ---------------------------------------------------------------------------
+// 17. Gateway API support tests
+// ---------------------------------------------------------------------------
+
+func setupTestWithGatewayAPI(t *testing.T, objs ...runtime.Object) (*business.Layer, *config.Config, kubernetes.ClientFactory) {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	runtimeObjs := make([]runtime.Object, 0, len(objs)+1)
+	runtimeObjs = append(runtimeObjs, kubetest.FakeNamespace("bookinfo"))
+	runtimeObjs = append(runtimeObjs, objs...)
+	k8s := kubetest.NewFakeK8sClient(runtimeObjs...)
+	k8s.GatewayAPIEnabled = true
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build(), conf, cf
+}
+
+func TestValidateManagedIstioGroupAndKind_GatewayAPIEnabled(t *testing.T) {
+	gatewayAPIKinds := []string{"Gateway", "HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute"}
+
+	tests := []struct {
+		name    string
+		group   string
+		kind    string
+		enabled bool
+		wantErr string
+	}{
+		{
+			name:    "gateway API disabled rejects group",
+			group:   "gateway.networking.k8s.io",
+			kind:    "Gateway",
+			enabled: false,
+			wantErr: "Gateway API CRDs are not installed on the cluster",
+		},
+		{
+			name:    "gateway API enabled accepts Gateway",
+			group:   "gateway.networking.k8s.io",
+			kind:    "Gateway",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled accepts HTTPRoute",
+			group:   "gateway.networking.k8s.io",
+			kind:    "HTTPRoute",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled accepts GRPCRoute",
+			group:   "gateway.networking.k8s.io",
+			kind:    "GRPCRoute",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled accepts ReferenceGrant",
+			group:   "gateway.networking.k8s.io",
+			kind:    "ReferenceGrant",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled accepts TCPRoute",
+			group:   "gateway.networking.k8s.io",
+			kind:    "TCPRoute",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled accepts TLSRoute",
+			group:   "gateway.networking.k8s.io",
+			kind:    "TLSRoute",
+			enabled: true,
+		},
+		{
+			name:    "gateway API enabled rejects invalid kind",
+			group:   "gateway.networking.k8s.io",
+			kind:    "InferencePool",
+			enabled: true,
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "gateway API enabled still validates Istio kinds",
+			group:   "networking.istio.io",
+			kind:    "VirtualService",
+			enabled: true,
+		},
+	}
+
+	_ = gatewayAPIKinds
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateManagedIstioGroupAndKind(tt.group, tt.kind, tt.enabled)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateReadOnlyIstioConfigInput_GatewayAPIEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    map[string]interface{}
+		wantErr string
+	}{
+		{
+			name: "list filter gateway API group with enabled",
+			args: map[string]interface{}{"action": "list", "group": "gateway.networking.k8s.io", "kind": "HTTPRoute"},
+		},
+		{
+			name: "list filter HTTPRoute without group infers gateway API",
+			args: map[string]interface{}{"action": "list", "kind": "HTTPRoute"},
+		},
+		{
+			name:    "list filter Gateway without group is ambiguous when GW API enabled",
+			args:    map[string]interface{}{"action": "list", "kind": "Gateway"},
+			wantErr: "group is required",
+		},
+		{
+			name: "get gateway API resource with enabled",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "gateway.networking.k8s.io", "version": "v1", "kind": "Gateway", "object": "test-gw"},
+		},
+		{
+			name:    "get gateway API invalid kind with enabled",
+			args:    map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "gateway.networking.k8s.io", "version": "v1", "kind": "InferencePool", "object": "test"},
+			wantErr: "invalid kind",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateReadOnlyIstioConfigInput(tt.args, true)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateIstioConfigInput_GatewayAPIEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    map[string]interface{}
+		wantErr string
+	}{
+		{
+			name: "create gateway API HTTPRoute with enabled",
+			args: map[string]interface{}{
+				"action": "create", "namespace": "bookinfo",
+				"group": "gateway.networking.k8s.io", "version": "v1",
+				"kind": "HTTPRoute", "object": "my-route", "data": "{}",
+			},
+		},
+		{
+			name: "patch gateway API Gateway with enabled",
+			args: map[string]interface{}{
+				"action": "patch", "namespace": "bookinfo",
+				"group": "gateway.networking.k8s.io", "version": "v1",
+				"kind": "Gateway", "object": "my-gw", "data": "{}",
+			},
+		},
+		{
+			name: "delete gateway API ReferenceGrant with enabled",
+			args: map[string]interface{}{
+				"action": "delete", "namespace": "bookinfo",
+				"group": "gateway.networking.k8s.io", "version": "v1",
+				"kind": "ReferenceGrant", "object": "my-rg",
+			},
+		},
+		{
+			name: "create gateway API rejected when disabled",
+			args: map[string]interface{}{
+				"action": "create", "namespace": "bookinfo",
+				"group": "gateway.networking.k8s.io", "version": "v1",
+				"kind": "HTTPRoute", "object": "my-route", "data": "{}",
+			},
+			wantErr: "Gateway API CRDs are not installed on the cluster",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gwEnabled := !strings.Contains(tt.name, "rejected when disabled")
+			err := validateIstioConfigInput(tt.args, gwEnabled)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestExecuteReadOnly_GatewayAPIEnabled_ListFilterGateway(t *testing.T) {
+	businessLayer, conf, cf := setupTestWithGatewayAPI(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action": "list",
+		"group":  "gateway.networking.k8s.io",
+		"kind":   "HTTPRoute",
+	}
+
+	res, status := ExecuteReadOnly(kialiIntfWithFactory(r, businessLayer, conf, cf), args)
+	require.Equal(t, http.StatusOK, status)
+	result, ok := res.(IstioListResult)
+	require.True(t, ok, "expected IstioListResult, got %T", res)
+	assert.NotNil(t, result.Namespaces)
+}
+
+func TestExecute_GatewayAPIEnabled_CreateHTTPRoute(t *testing.T) {
+	businessLayer, conf, cf := setupTestWithGatewayAPI(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "create",
+		"confirmed": true,
+		"namespace": "bookinfo",
+		"group":     "gateway.networking.k8s.io",
+		"version":   "v1",
+		"kind":      "HTTPRoute",
+		"object":    "my-route",
+		"data":      `{"metadata":{"name":"my-route","namespace":"bookinfo"},"spec":{"parentRefs":[{"name":"my-gw"}],"rules":[{"backendRefs":[{"name":"reviews","port":80}]}]}}`,
+	}
+
+	res, status := Execute(kialiIntfWithFactory(r, businessLayer, conf, cf), args)
+	require.Equal(t, http.StatusOK, status)
+
+	b, err := json.Marshal(res)
+	require.NoError(t, err)
+	var resp previewResponse
+	require.NoError(t, json.Unmarshal(b, &resp))
+	require.Len(t, resp.Actions, 1)
+	assert.Equal(t, "create", resp.Actions[0].Operation)
+	assert.Equal(t, "HTTPRoute", resp.Actions[0].KindName)
+	assert.Equal(t, "gateway.networking.k8s.io", resp.Actions[0].Group)
+}
+
+func TestExecute_GatewayAPIDisabled_RejectsCreate(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "create",
+		"confirmed": true,
+		"namespace": "bookinfo",
+		"group":     "gateway.networking.k8s.io",
+		"version":   "v1",
+		"kind":      "HTTPRoute",
+		"object":    "my-route",
+		"data":      `{"metadata":{"name":"my-route","namespace":"bookinfo"},"spec":{}}`,
+	}
+
+	res, status := Execute(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusBadRequest, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Gateway API CRDs are not installed on the cluster")
+}
+
+func TestBuildResourceTemplate_K8sGateway(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "Gateway"}
+	tpl := buildResourceTemplate(gvk, "my-gw", "bookinfo")
+
+	assert.Equal(t, "gateway.networking.k8s.io/v1", tpl["apiVersion"])
+	assert.Equal(t, "Gateway", tpl["kind"])
+	spec, ok := tpl["spec"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "istio", spec["gatewayClassName"])
+	assert.NotNil(t, spec["listeners"])
+}
+
+func TestBuildResourceTemplate_HTTPRoute(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute"}
+	tpl := buildResourceTemplate(gvk, "my-route", "bookinfo")
+
+	assert.Equal(t, "gateway.networking.k8s.io/v1", tpl["apiVersion"])
+	assert.Equal(t, "HTTPRoute", tpl["kind"])
+	spec, ok := tpl["spec"].(map[string]interface{})
+	require.True(t, ok)
+	assert.NotNil(t, spec["parentRefs"])
+	rules, ok := spec["rules"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, rules, 1)
+	rule := rules[0].(map[string]interface{})
+	matches, ok := rule["matches"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, matches, 1)
+	match := matches[0].(map[string]interface{})
+	path := match["path"].(map[string]interface{})
+	assert.Equal(t, "PathPrefix", path["type"])
+	assert.Equal(t, "/", path["value"])
+}
+
+func TestFixHTTPRoutePathTypes(t *testing.T) {
+	input := []byte(`{"spec":{"rules":[{"matches":[{"path":{"type":"Prefix","value":"/"}}]}]}}`)
+	fixed := fixHTTPRoutePathTypes(input)
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(fixed, &obj))
+	spec := obj["spec"].(map[string]interface{})
+	rules := spec["rules"].([]interface{})
+	rule := rules[0].(map[string]interface{})
+	matches := rule["matches"].([]interface{})
+	match := matches[0].(map[string]interface{})
+	path := match["path"].(map[string]interface{})
+	assert.Equal(t, "PathPrefix", path["type"])
+	assert.Equal(t, "/", path["value"])
+}
+
+func TestDefaultIstioConfigCriteria_GatewayAPIEnabled(t *testing.T) {
+	criteria := defaultIstioConfigCriteria(true)
+	assert.True(t, criteria.IncludeK8sGateways)
+	assert.True(t, criteria.IncludeK8sHTTPRoutes)
+	assert.True(t, criteria.IncludeK8sGRPCRoutes)
+	assert.True(t, criteria.IncludeK8sReferenceGrants)
+	assert.True(t, criteria.IncludeK8sTCPRoutes)
+	assert.True(t, criteria.IncludeK8sTLSRoutes)
+	assert.False(t, criteria.IncludeK8sInferencePools)
+	assert.True(t, criteria.IncludeVirtualServices)
+}
+
+func TestDefaultIstioConfigCriteria_GatewayAPIDisabled(t *testing.T) {
+	criteria := defaultIstioConfigCriteria(false)
+	assert.False(t, criteria.IncludeK8sGateways)
+	assert.False(t, criteria.IncludeK8sHTTPRoutes)
+	assert.False(t, criteria.IncludeK8sGRPCRoutes)
+	assert.False(t, criteria.IncludeK8sReferenceGrants)
+	assert.False(t, criteria.IncludeK8sTCPRoutes)
+	assert.False(t, criteria.IncludeK8sTLSRoutes)
+	assert.False(t, criteria.IncludeK8sInferencePools)
+	assert.True(t, criteria.IncludeVirtualServices)
+	assert.True(t, criteria.IncludeDestinationRules)
+}
+
+func TestDefaultIstioConfigCriteria_InferenceAPIEnabled(t *testing.T) {
+	criteria := defaultIstioConfigCriteria(false, true)
+	assert.False(t, criteria.IncludeK8sGateways)
+	assert.True(t, criteria.IncludeK8sInferencePools)
+	assert.True(t, criteria.IncludeVirtualServices)
+}
+
+func TestDefaultIstioConfigCriteria_BothEnabled(t *testing.T) {
+	criteria := defaultIstioConfigCriteria(true, true)
+	assert.True(t, criteria.IncludeK8sGateways)
+	assert.True(t, criteria.IncludeK8sHTTPRoutes)
+	assert.True(t, criteria.IncludeK8sInferencePools)
+	assert.True(t, criteria.IncludeVirtualServices)
+}
+
+func TestValidateManagedIstioGroupAndKind_InferenceAPIEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		group   string
+		kind    string
+		gwFlag  bool
+		infFlag bool
+		wantErr string
+	}{
+		{
+			name:    "inference API disabled rejects group",
+			group:   "inference.networking.k8s.io",
+			kind:    "InferencePool",
+			gwFlag:  false,
+			infFlag: false,
+			wantErr: "Inference API CRDs are not installed on the cluster",
+		},
+		{
+			name:    "inference API enabled accepts InferencePool",
+			group:   "inference.networking.k8s.io",
+			kind:    "InferencePool",
+			gwFlag:  false,
+			infFlag: true,
+		},
+		{
+			name:    "inference API enabled rejects invalid kind",
+			group:   "inference.networking.k8s.io",
+			kind:    "InvalidKind",
+			gwFlag:  false,
+			infFlag: true,
+			wantErr: "invalid kind",
+		},
+		{
+			name:    "inference API enabled still validates Istio kinds",
+			group:   "networking.istio.io",
+			kind:    "VirtualService",
+			gwFlag:  false,
+			infFlag: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateManagedIstioGroupAndKind(tt.group, tt.kind, tt.gwFlag, tt.infFlag)
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestExecuteReadOnly_InferenceAPIDisabled(t *testing.T) {
+	businessLayer, conf := setupTest(t)
+	r := reqWithAuth()
+
+	args := map[string]interface{}{
+		"action":    "get",
+		"namespace": "bookinfo",
+		"group":     "inference.networking.k8s.io",
+		"version":   "v1alpha2",
+		"kind":      "InferencePool",
+		"object":    "test-pool",
+	}
+
+	res, status := ExecuteReadOnly(kialiIntf(r, businessLayer, conf), args)
+	assert.Equal(t, http.StatusOK, status)
+	resStr, ok := res.(string)
+	require.True(t, ok)
+	assert.Contains(t, resStr, "Object type not managed")
+}
+
+func TestBuildResourceTemplate_InferencePool(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "inference.networking.k8s.io", Version: "v1", Kind: "InferencePool"}
+	tpl := buildResourceTemplate(gvk, "my-pool", "default")
+	assert.Equal(t, "inference.networking.k8s.io/v1", tpl["apiVersion"])
+	assert.Equal(t, "InferencePool", tpl["kind"])
+	spec, ok := tpl["spec"].(map[string]interface{})
+	require.True(t, ok)
+	targetPorts, ok := spec["targetPorts"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, targetPorts, 1)
+	port := targetPorts[0].(map[string]interface{})
+	assert.Equal(t, 8000, port["number"])
+	selector, ok := spec["selector"].(map[string]interface{})
+	require.True(t, ok)
+	matchLabels, ok := selector["matchLabels"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "example-model", matchLabels["app"])
+	epr, ok := spec["endpointPickerRef"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, "Service", epr["kind"])
+	assert.Equal(t, "example-model-epp", epr["name"])
+	assert.Equal(t, "FailClose", epr["failureMode"])
 }
