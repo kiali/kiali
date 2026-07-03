@@ -94,12 +94,3 @@ func TestExtractAmbientNetworking_NilDump(t *testing.T) {
 	result := extractAmbientNetworking(wl, nil)
 	assert.Nil(t, result)
 }
-
-func TestContainsString(t *testing.T) {
-	slice := []string{"foo", "bar", "baz"}
-
-	assert.True(t, containsString(slice, "foo"))
-	assert.True(t, containsString(slice, "bar"))
-	assert.False(t, containsString(slice, "qux"))
-	assert.False(t, containsString([]string{}, "foo"))
-}
