@@ -66,7 +66,7 @@ func sampleMeshConfig() meshCommon.Config {
 }
 
 func TestTransformToSummary_Environment(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	assert.Equal(t, "cluster.local", summary.Environment.TrustDomain)
 	assert.Equal(t, "1.28.0", summary.Environment.IstioVersion)
@@ -75,7 +75,7 @@ func TestTransformToSummary_Environment(t *testing.T) {
 }
 
 func TestTransformToSummary_ControlPlane(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	require.Len(t, summary.Components.ControlPlane.Nodes, 1)
 	assert.Equal(t, kubernetes.ComponentHealthy, summary.Components.ControlPlane.Status)
@@ -89,7 +89,7 @@ func TestTransformToSummary_ControlPlane(t *testing.T) {
 }
 
 func TestHasAccessibleControlPlane_TrueWithIstiodNode(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 	assert.True(t, hasAccessibleControlPlane(summary))
 }
 
@@ -103,13 +103,13 @@ func TestHasAccessibleControlPlane_FalseWithoutControlPlaneNodes(t *testing.T) {
 		},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 	assert.False(t, hasAccessibleControlPlane(summary))
 	assert.Equal(t, "UNKNOWN", summary.Components.ControlPlane.Status)
 }
 
 func TestTransformToSummary_ObservabilityStack(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	obs := summary.Components.ObservabilityStack
 	assert.Equal(t, kubernetes.ComponentHealthy, obs.Prometheus)
@@ -121,7 +121,7 @@ func TestTransformToSummary_ObservabilityStack(t *testing.T) {
 }
 
 func TestTransformToSummary_DataPlane(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	expected := []MeshSummaryMonitoredNamespace{
 		{Cluster: "cluster-1", IsAmbient: true, Name: "bookinfo"},
@@ -131,7 +131,7 @@ func TestTransformToSummary_DataPlane(t *testing.T) {
 }
 
 func TestTransformToSummary_Connectivity(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	require.Len(t, summary.ConnectivityGraph, 4)
 
@@ -158,7 +158,7 @@ func TestTransformToSummary_Connectivity(t *testing.T) {
 }
 
 func TestTransformToSummary_CriticalAlerts(t *testing.T) {
-	summary := transformToSummary(sampleMeshConfig())
+	summary := transformToSummary(sampleMeshConfig(), nil)
 
 	require.Len(t, summary.CriticalAlerts, 2)
 
@@ -183,7 +183,7 @@ func TestTransformToSummary_NoNodes_HandlesGracefully(t *testing.T) {
 		Elements:  meshCommon.Elements{},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	assert.Equal(t, "UNKNOWN", summary.Components.ControlPlane.Status)
 	assert.Empty(t, summary.Components.ControlPlane.Nodes)
@@ -200,7 +200,7 @@ func TestTransformToSummary_TempoTraceStore(t *testing.T) {
 		},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	assert.Equal(t, kubernetes.ComponentHealthy, summary.Components.ObservabilityStack.Tempo)
 	assert.Empty(t, summary.Components.ObservabilityStack.Jaeger)
@@ -216,7 +216,7 @@ func TestTransformToSummary_UnhealthyControlPlane_OverallStatus(t *testing.T) {
 		},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	assert.Equal(t, kubernetes.ComponentUnhealthy, summary.Components.ControlPlane.Status)
 	require.Len(t, summary.Components.ControlPlane.Nodes, 2)
@@ -261,7 +261,7 @@ func TestTransformToSummary_MultiClusterDataPlane(t *testing.T) {
 		},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	expected := []MeshSummaryMonitoredNamespace{
 		{Cluster: "east", IsAmbient: true, Name: "bookinfo"},
@@ -286,7 +286,7 @@ func TestTransformToSummary_DuplicateEdges(t *testing.T) {
 		},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	require.Len(t, summary.ConnectivityGraph, 1, "duplicate edges should be deduplicated")
 	assert.Equal(t, "istio-system/istiod", summary.ConnectivityGraph[0].From)
@@ -560,7 +560,7 @@ func TestTransformToSummary_DataPlane_EmptyNotNull(t *testing.T) {
 		Elements:  meshCommon.Elements{},
 		Timestamp: time.Now().Unix(),
 	}
-	summary := transformToSummary(cfg)
+	summary := transformToSummary(cfg, nil)
 
 	require.NotNil(t, summary.Components.DataPlane.MonitoredNamespaces, "monitored_namespaces should be empty slice, not nil")
 	assert.Empty(t, summary.Components.DataPlane.MonitoredNamespaces)
