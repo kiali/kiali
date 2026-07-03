@@ -87,7 +87,7 @@ podman run -it \
   -e CYPRESS_USERNAME="kubeadmin" \
   -e CYPRESS_AUTH_PROVIDER="kube:admin" \
   -e TEST_GROUP="@smoke" \
-  quay.io/kiali/kiali-cypress-tests:v1.73
+  quay.io/kiali/kiali-cypress-tests:latest
 ```
 
 ## Structure

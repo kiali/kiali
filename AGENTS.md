@@ -1541,7 +1541,7 @@ Tests are in `kiali-operator/molecule/`. Each subdirectory is a test scenario (e
 ### Never Modify These Files
 
 **Versioned Operator Roles:**
-- `kiali-operator/roles/v1.73/`, `roles/v2.4/`, etc. - Only modify the `default` role
+- `kiali-operator/roles/v2.4/`, `roles/v2.11/`, etc. - Only modify the `default` role
 
 **Old CSV Versions:**
 - `kiali-operator/manifests/*/[version]/` - Only modify the LATEST version
