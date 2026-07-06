@@ -472,20 +472,19 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"clusterName": {
 				Type:        genai.TypeString,
-				Description: "Cluster containing the Istio object, if not provided, will use the cluster name in the Kiali configuration (KubeConfig)",
+				Description: "Target cluster. Defaults to Kiali config cluster.",
 			},
 			"namespace": {
 				Type:        genai.TypeString,
-				Description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required.",
+				Description: "Namespace. Optional for 'list' (defaults to all). Required for 'get'.",
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object. Required for 'get' action.",
-				Enum:        []string{"networking.istio.io", "security.istio.io"},
+				Description: "API group (e.g. 'networking.istio.io'). Required for 'get'.",
 			},
 			"version": {
 				Type:        genai.TypeString,
-				Description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+				Description: "API version (e.g. 'v1'). Required for 'get'.",
 			},
 			"kind": {
 				Type:        genai.TypeString,
@@ -502,7 +501,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"serviceName": {
 				Type:        genai.TypeString,
-				Description: "Filter Istio configurations (VirtualServices, DestinationRules, and their referenced Gateways) that affect a specific service. Only applicable for 'list' action.",
+				Description: "Filter configs by service (VirtualServices, DestinationRules, Gateways). 'list' only.",
 			},
 		},
 		Required: []string{"action"},
