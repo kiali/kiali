@@ -1465,6 +1465,11 @@ func Set(conf *Config) {
 	}
 
 	conf.AddHealthDefault()
+
+	if conf.ExternalServices.Istio.IstioIdentityDomain == "" {
+		conf.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
+	}
+
 	configuration = *conf
 
 	// Only close the previous credential manager if we actually swapped it out.
