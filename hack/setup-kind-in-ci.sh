@@ -376,6 +376,7 @@ setup_kind_singlecluster() {
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
     ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
+
           PERSES_ARGS=(
         "--set" "external_services.perses.enabled=true"
         "--set" "external_services.perses.internal_url=http://perses.istio-system:8080"
