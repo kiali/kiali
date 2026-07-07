@@ -1115,7 +1115,7 @@ func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var prompts []map[string]string
+	var prompts []map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&prompts)
 	require.NoError(t, err)
 	assert.Greater(t, len(prompts), 0, "should return at least one prompt")
@@ -1145,7 +1145,7 @@ func TestChatPrompts_FilterByCategory(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
-	var prompts []map[string]string
+	var prompts []map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&prompts)
 	require.NoError(t, err)
 	assert.Greater(t, len(prompts), 0, "should return prompts for overview category")
