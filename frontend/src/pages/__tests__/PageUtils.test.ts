@@ -1,7 +1,9 @@
 import {
   buildMetadataPatch,
+  buildWorkloadAnnotationsPatch,
   buildWorkloadMetadataPatch,
   getWorkloadAnnotations,
+  LAST_APPLIED_ANNOTATION,
   navigateToFilteredList
 } from '../PageUtils';
 
@@ -81,16 +83,43 @@ describe('buildMetadataPatch', () => {
 });
 
 describe('getWorkloadAnnotations', () => {
-  it('returns template annotations for templated controller workloads', () => {
+  it('merges controller and template annotations for templated workloads', () => {
     const annotations = getWorkloadAnnotations({
       annotations: { 'deployment.kubernetes.io/revision': '1' },
       gvk: { Kind: 'Deployment' },
       templateAnnotations: { 'proxy.istio.io/config': 'tracing: {}' }
     });
-    expect(annotations).toEqual({ 'proxy.istio.io/config': 'tracing: {}' });
+    expect(annotations).toEqual({
+      'deployment.kubernetes.io/revision': '1',
+      'proxy.istio.io/config': 'tracing: {}'
+    });
   });
 
-  it('falls back to workload annotations when template annotations are empty', () => {
+  it('prefers template values when the same key exists on controller and template', () => {
+    const annotations = getWorkloadAnnotations({
+      annotations: { note: 'controller' },
+      gvk: { Kind: 'Deployment' },
+      templateAnnotations: { note: 'template' }
+    });
+    expect(annotations).toEqual({ note: 'template' });
+  });
+
+  it('filters last-applied-configuration from display', () => {
+    const annotations = getWorkloadAnnotations({
+      annotations: {
+        [LAST_APPLIED_ANNOTATION]: '{"apiVersion":"apps/v1"}',
+        'deployment.kubernetes.io/revision': '1'
+      },
+      gvk: { Kind: 'Deployment' },
+      templateAnnotations: { 'proxy.istio.io/config': 'tracing: {}' }
+    });
+    expect(annotations).toEqual({
+      'deployment.kubernetes.io/revision': '1',
+      'proxy.istio.io/config': 'tracing: {}'
+    });
+  });
+
+  it('falls back to controller annotations when template annotations are empty', () => {
     const annotations = getWorkloadAnnotations({
       annotations: { note: 'controller-level' },
       gvk: { Kind: 'Deployment' },
@@ -106,6 +135,68 @@ describe('getWorkloadAnnotations', () => {
       templateAnnotations: { ignored: 'value' }
     });
     expect(annotations).toEqual({ note: 'pod-level' });
+  });
+});
+
+describe('buildWorkloadAnnotationsPatch', () => {
+  const deployment = {
+    annotations: { 'deployment.kubernetes.io/revision': '1' },
+    gvk: { Kind: 'Deployment' },
+    templateAnnotations: { 'proxy.istio.io/config': 'tracing: {}' }
+  };
+
+  it('patches only the pod template when editing template annotations', () => {
+    const result = JSON.parse(
+      buildWorkloadAnnotationsPatch(deployment, {
+        'deployment.kubernetes.io/revision': '1',
+        'proxy.istio.io/config': 'tracing: { sampling: 100 }'
+      })
+    );
+    expect(result).toEqual({
+      spec: {
+        template: {
+          metadata: {
+            annotations: { 'proxy.istio.io/config': 'tracing: { sampling: 100 }' }
+          }
+        }
+      }
+    });
+  });
+
+  it('patches only controller metadata when editing controller-only annotations', () => {
+    const result = JSON.parse(
+      buildWorkloadAnnotationsPatch(deployment, {
+        'deployment.kubernetes.io/revision': '2',
+        'proxy.istio.io/config': 'tracing: {}'
+      })
+    );
+    expect(result).toEqual({
+      metadata: { annotations: { 'deployment.kubernetes.io/revision': '2' } }
+    });
+  });
+
+  it('routes new annotations to the pod template', () => {
+    const result = JSON.parse(
+      buildWorkloadAnnotationsPatch(deployment, {
+        'deployment.kubernetes.io/revision': '1',
+        'proxy.istio.io/config': 'tracing: {}',
+        note: 'demo'
+      })
+    );
+    expect(result).toEqual({
+      spec: { template: { metadata: { annotations: { note: 'demo' } } } }
+    });
+  });
+
+  it('removes deleted template annotations without touching controller metadata', () => {
+    const result = JSON.parse(
+      buildWorkloadAnnotationsPatch(deployment, {
+        'deployment.kubernetes.io/revision': '1'
+      })
+    );
+    expect(result).toEqual({
+      spec: { template: { metadata: { annotations: { 'proxy.istio.io/config': null } } } }
+    });
   });
 });
 
