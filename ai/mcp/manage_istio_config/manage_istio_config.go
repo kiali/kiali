@@ -29,9 +29,9 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
 	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
-	gwEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
-	inferenceEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
-	if err := validateReadOnlyIstioConfigInput(args, gwEnabled, inferenceEnabled); err != nil {
+	isGatewayAPIEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
+	isInferenceAPIEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
+	if err := validateReadOnlyIstioConfigInput(args, isGatewayAPIEnabled, isInferenceAPIEnabled); err != nil {
 		return err.Error(), http.StatusOK
 	}
 	if action != "list" {
@@ -57,7 +57,7 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 
 	switch action {
 	case "list":
-		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf, gwEnabled, inferenceEnabled)
+		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf, isGatewayAPIEnabled, isInferenceAPIEnabled)
 	case "get":
 		return IstioGet(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	default:
@@ -70,13 +70,13 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	confirmed := mcputil.AsBool(args["confirmed"])
 	mcpMode := mcputil.AsBoolOrDefault(args, false, "mcp_mode")
 	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
-	gwEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
-	inferenceEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
+	isGatewayAPIEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
+	isInferenceAPIEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
 
 	if action == "list" || action == "get" {
 		return "for list and get actions use the manage_istio_config_read tool", http.StatusBadRequest
 	}
-	if err := validateIstioConfigInput(args, gwEnabled, inferenceEnabled); err != nil {
+	if err := validateIstioConfigInput(args, isGatewayAPIEnabled, isInferenceAPIEnabled); err != nil {
 		return err.Error(), http.StatusBadRequest
 	}
 
@@ -524,7 +524,7 @@ func fixInferencePoolSpec(data []byte) []byte {
 		spec["endpointPickerRef"] = map[string]interface{}{
 			"group":       "",
 			"kind":        "Service",
-			"name":        "example-epp",
+			"name":        "example-model-epp",
 			"port":        map[string]interface{}{"number": float64(9002)},
 			"failureMode": "FailClose",
 		}
@@ -698,11 +698,11 @@ var allowedInferenceAPIKinds = map[string]struct{}{
 // inferGroupFromKind attempts to resolve the API group from the kind alone.
 // Returns the group if the kind unambiguously belongs to one group, or "" if ambiguous
 // (e.g. "Gateway" exists in both networking.istio.io and gateway.networking.k8s.io).
-func inferGroupFromKind(kind string, gwEnabled, inferenceEnabled bool) string {
+func inferGroupFromKind(kind string, isGatewayAPIEnabled, isInferenceAPIEnabled bool) string {
 	if _, ok := allowedSecurityIstioKinds[kind]; ok {
 		return "security.istio.io"
 	}
-	if _, ok := allowedInferenceAPIKinds[kind]; ok && inferenceEnabled {
+	if _, ok := allowedInferenceAPIKinds[kind]; ok && isInferenceAPIEnabled {
 		return "inference.networking.k8s.io"
 	}
 	inNetworking := false
@@ -710,7 +710,7 @@ func inferGroupFromKind(kind string, gwEnabled, inferenceEnabled bool) string {
 		inNetworking = true
 	}
 	inGatewayAPI := false
-	if _, ok := allowedGatewayAPIKinds[kind]; ok && gwEnabled {
+	if _, ok := allowedGatewayAPIKinds[kind]; ok && isGatewayAPIEnabled {
 		inGatewayAPI = true
 	}
 	if inNetworking && !inGatewayAPI {
@@ -726,23 +726,23 @@ func inferGroupFromKind(kind string, gwEnabled, inferenceEnabled bool) string {
 // (when Gateway API is discovered) gateway.networking.k8s.io, or (when Inference API is
 // discovered) inference.networking.k8s.io, and kind is allowed for that group.
 // When group is empty but kind is unambiguous, the group is inferred automatically.
-// The variadic flags parameter accepts: [0] = enableGatewayAPI, [1] = enableInferenceAPI.
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
 func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 	g := strings.TrimSpace(group)
 	k := strings.TrimSpace(kind)
-	gwEnabled := len(flags) > 0 && flags[0]
-	inferenceEnabled := len(flags) > 1 && flags[1]
+	isGatewayAPIEnabled := len(flags) > 0 && flags[0]
+	isInferenceAPIEnabled := len(flags) > 1 && flags[1]
 	if g == "" && k != "" {
-		if inferred := inferGroupFromKind(k, gwEnabled, inferenceEnabled); inferred != "" {
+		if inferred := inferGroupFromKind(k, isGatewayAPIEnabled, isInferenceAPIEnabled); inferred != "" {
 			g = inferred
 		}
 	}
 	if g == "" {
 		groups := []string{`"networking.istio.io"`, `"security.istio.io"`}
-		if gwEnabled {
+		if isGatewayAPIEnabled {
 			groups = append(groups, `"gateway.networking.k8s.io"`)
 		}
-		if inferenceEnabled {
+		if isInferenceAPIEnabled {
 			groups = append(groups, `"inference.networking.k8s.io"`)
 		}
 		return fmt.Errorf("group is required and must be %s", strings.Join(groups, ", "))
@@ -768,7 +768,7 @@ func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 		}
 		return nil
 	case "gateway.networking.k8s.io":
-		if !gwEnabled {
+		if !isGatewayAPIEnabled {
 			return fmt.Errorf(`invalid group %q: Gateway API CRDs are not installed on the cluster`, g)
 		}
 		if _, ok := allowedGatewayAPIKinds[k]; !ok {
@@ -779,7 +779,7 @@ func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 		}
 		return nil
 	case "inference.networking.k8s.io":
-		if !inferenceEnabled {
+		if !isInferenceAPIEnabled {
 			return fmt.Errorf(`invalid group %q: Inference API CRDs are not installed on the cluster`, g)
 		}
 		if _, ok := allowedInferenceAPIKinds[k]; !ok {
@@ -791,10 +791,10 @@ func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 		return nil
 	default:
 		groups := []string{`"networking.istio.io"`, `"security.istio.io"`}
-		if gwEnabled {
+		if isGatewayAPIEnabled {
 			groups = append(groups, `"gateway.networking.k8s.io"`)
 		}
-		if inferenceEnabled {
+		if isInferenceAPIEnabled {
 			groups = append(groups, `"inference.networking.k8s.io"`)
 		}
 		return fmt.Errorf("invalid group %q: must be %s", g, strings.Join(groups, ", "))
@@ -863,7 +863,7 @@ func validateReadableGroupAndKind(group, kind string) error {
 }
 
 // validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
-// The variadic flags parameter accepts: [0] = enableGatewayAPI, [1] = enableInferenceAPI.
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
 func validateReadOnlyIstioConfigInput(args map[string]interface{}, flags ...bool) error {
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
@@ -879,9 +879,9 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}, flags ...bool
 			return nil
 		}
 		if hasKind && !hasGroup {
-			gwEnabled := len(flags) > 0 && flags[0]
-			inferenceEnabled := len(flags) > 1 && flags[1]
-			inferred := inferGroupFromKind(kind, gwEnabled, inferenceEnabled)
+			isGatewayAPIEnabled := len(flags) > 0 && flags[0]
+			isInferenceAPIEnabled := len(flags) > 1 && flags[1]
+			inferred := inferGroupFromKind(kind, isGatewayAPIEnabled, isInferenceAPIEnabled)
 			if inferred != "" {
 				return validateReadableGroupAndKind(inferred, kind)
 			}
@@ -917,7 +917,7 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}, flags ...bool
 // It also normalizes args: if "object" is missing it falls back to "name" or
 // extracts metadata.name from "data", writing the resolved value back into
 // args["object"] so downstream code sees it.
-// The variadic flags parameter accepts: [0] = enableGatewayAPI, [1] = enableInferenceAPI.
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
 func validateIstioConfigInput(args map[string]interface{}, flags ...bool) error {
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")

@@ -287,3 +287,59 @@ func TestIstioList_IncludesTrafficExtensions(t *testing.T) {
 	assert.Equal(t, "east", result.Cluster)
 	assert.Empty(t, result.Namespaces)
 }
+
+// TestIstioList_AllGatewaysReturnedWithoutServiceFilter
+// Gateways are only filtered to those referenced
+// by VirtualServices when a serviceName filter is active. Without a service
+// filter every Gateway in the namespace must be returned, even those not
+// referenced by any VirtualService.
+func TestIstioList_AllGatewaysReturnedWithoutServiceFilter(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	// A gateway that IS referenced by a VirtualService.
+	referencedGW := &networking_v1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{Name: "referenced-gw", Namespace: "bookinfo"},
+		Spec:       istio_api_v1alpha3.Gateway{},
+	}
+
+	// A gateway that is NOT referenced by any VirtualService.
+	unreferencedGW := &networking_v1.Gateway{
+		ObjectMeta: metav1.ObjectMeta{Name: "unreferenced-gw", Namespace: "bookinfo"},
+		Spec:       istio_api_v1alpha3.Gateway{},
+	}
+
+	// VirtualService that points only to the first gateway.
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "reviews-vs", Namespace: "bookinfo"},
+		Spec: istio_api_v1alpha3.VirtualService{
+			Hosts:    []string{"reviews"},
+			Gateways: []string{"referenced-gw"},
+		},
+	}
+
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
+	k8s := kubetest.NewFakeK8sClient(ns, referencedGW, unreferencedGW, vs)
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+
+	args := map[string]interface{}{
+		"namespace": "bookinfo",
+	}
+
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
+	require.Equal(t, http.StatusOK, status)
+
+	result, ok := res.(IstioListResult)
+	require.True(t, ok)
+	bookinfo := result.Namespaces["bookinfo"]
+	require.NotNil(t, bookinfo)
+
+	gwKey := "networking.istio.io/v1/Gateway"
+	gwEntry, ok := bookinfo[gwKey]
+	require.True(t, ok, "gateways should appear in the list result")
+
+	allGWNames := append(gwEntry.Valid, gwEntry.Invalid...)
+	assert.Contains(t, allGWNames, "referenced-gw")
+	assert.Contains(t, allGWNames, "unreferenced-gw", "unreferenced-gw must be returned when no service filter is applied")
+}

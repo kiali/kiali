@@ -2036,8 +2036,8 @@ func TestValidateIstioConfigInput_GatewayAPIEnabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gwEnabled := !strings.Contains(tt.name, "rejected when disabled")
-			err := validateIstioConfigInput(tt.args, gwEnabled)
+			isGatewayAPIEnabled := !strings.Contains(tt.name, "rejected when disabled")
+			err := validateIstioConfigInput(tt.args, isGatewayAPIEnabled)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr)
@@ -2165,7 +2165,7 @@ func TestFixHTTPRoutePathTypes(t *testing.T) {
 }
 
 func TestDefaultIstioConfigCriteria_GatewayAPIEnabled(t *testing.T) {
-	criteria := defaultIstioConfigCriteria(true)
+	criteria := defaultIstioConfigCriteria(true, false)
 	assert.True(t, criteria.IncludeK8sGateways)
 	assert.True(t, criteria.IncludeK8sHTTPRoutes)
 	assert.True(t, criteria.IncludeK8sGRPCRoutes)
@@ -2177,7 +2177,7 @@ func TestDefaultIstioConfigCriteria_GatewayAPIEnabled(t *testing.T) {
 }
 
 func TestDefaultIstioConfigCriteria_GatewayAPIDisabled(t *testing.T) {
-	criteria := defaultIstioConfigCriteria(false)
+	criteria := defaultIstioConfigCriteria(false, false)
 	assert.False(t, criteria.IncludeK8sGateways)
 	assert.False(t, criteria.IncludeK8sHTTPRoutes)
 	assert.False(t, criteria.IncludeK8sGRPCRoutes)
@@ -2300,4 +2300,202 @@ func TestBuildResourceTemplate_InferencePool(t *testing.T) {
 	assert.Equal(t, "Service", epr["kind"])
 	assert.Equal(t, "example-model-epp", epr["name"])
 	assert.Equal(t, "FailClose", epr["failureMode"])
+}
+
+// ---------------------------------------------------------------------------
+// fixHTTPRoutePathTypes unit tests
+// ---------------------------------------------------------------------------
+
+func TestFixHTTPRoutePathTypes_PrefixCorrected(t *testing.T) {
+	input := `{"spec":{"rules":[{"matches":[{"path":{"type":"Prefix","value":"/api"}}]}]}}`
+	output := fixHTTPRoutePathTypes([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	path := obj["spec"].(map[string]interface{})["rules"].([]interface{})[0].(map[string]interface{})["matches"].([]interface{})[0].(map[string]interface{})["path"].(map[string]interface{})
+	assert.Equal(t, "PathPrefix", path["type"], "LLM 'Prefix' should be corrected to 'PathPrefix'")
+	assert.Equal(t, "/api", path["value"], "path value should be preserved")
+}
+
+func TestFixHTTPRoutePathTypes_AlreadyPathPrefix(t *testing.T) {
+	input := `{"spec":{"rules":[{"matches":[{"path":{"type":"PathPrefix","value":"/api"}}]}]}}`
+	output := fixHTTPRoutePathTypes([]byte(input))
+	assert.JSONEq(t, input, string(output), "already-correct PathPrefix should be unchanged")
+}
+
+func TestFixHTTPRoutePathTypes_ExactTypeUntouched(t *testing.T) {
+	input := `{"spec":{"rules":[{"matches":[{"path":{"type":"Exact","value":"/ping"}}]}]}}`
+	output := fixHTTPRoutePathTypes([]byte(input))
+	assert.JSONEq(t, input, string(output), "Exact path type should not be modified")
+}
+
+func TestFixHTTPRoutePathTypes_MultipleRulesAndMatches(t *testing.T) {
+	input := `{"spec":{"rules":[{"matches":[{"path":{"type":"Prefix","value":"/a"}},{"path":{"type":"Exact","value":"/b"}}]},{"matches":[{"path":{"type":"Prefix","value":"/c"}}]}]}}`
+	output := fixHTTPRoutePathTypes([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	rules := obj["spec"].(map[string]interface{})["rules"].([]interface{})
+	// rule[0] match[0]: Prefix → PathPrefix
+	m00 := rules[0].(map[string]interface{})["matches"].([]interface{})[0].(map[string]interface{})["path"].(map[string]interface{})
+	assert.Equal(t, "PathPrefix", m00["type"])
+	// rule[0] match[1]: Exact → unchanged
+	m01 := rules[0].(map[string]interface{})["matches"].([]interface{})[1].(map[string]interface{})["path"].(map[string]interface{})
+	assert.Equal(t, "Exact", m01["type"])
+	// rule[1] match[0]: Prefix → PathPrefix
+	m10 := rules[1].(map[string]interface{})["matches"].([]interface{})[0].(map[string]interface{})["path"].(map[string]interface{})
+	assert.Equal(t, "PathPrefix", m10["type"])
+}
+
+func TestFixHTTPRoutePathTypes_InvalidJSONPassthrough(t *testing.T) {
+	input := []byte(`not-json`)
+	output := fixHTTPRoutePathTypes(input)
+	assert.Equal(t, input, output, "invalid JSON should be returned unchanged")
+}
+
+// ---------------------------------------------------------------------------
+// fixInferencePoolSpec unit tests
+// ---------------------------------------------------------------------------
+
+func TestFixInferencePoolSpec_TargetPortNumberMigrated(t *testing.T) {
+	input := `{"spec":{"targetPortNumber":8080,"selector":{"matchLabels":{"app":"model"}},"endpointPickerRef":{"kind":"Service","name":"epp"}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	spec := obj["spec"].(map[string]interface{})
+	assert.Nil(t, spec["targetPortNumber"], "targetPortNumber should be removed")
+	targetPorts, ok := spec["targetPorts"].([]interface{})
+	require.True(t, ok, "targetPorts should be set")
+	require.Len(t, targetPorts, 1)
+	assert.Equal(t, float64(8080), targetPorts[0].(map[string]interface{})["number"])
+}
+
+func TestFixInferencePoolSpec_FlatSelectorWrapped(t *testing.T) {
+	input := `{"spec":{"targetPorts":[{"number":8000}],"selector":{"app":"my-model"},"endpointPickerRef":{"kind":"Service","name":"epp"}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	sel := obj["spec"].(map[string]interface{})["selector"].(map[string]interface{})
+	ml, ok := sel["matchLabels"].(map[string]interface{})
+	require.True(t, ok, "flat selector should be wrapped under matchLabels")
+	assert.Equal(t, "my-model", ml["app"])
+}
+
+func TestFixInferencePoolSpec_AlreadyMatchLabelsSelectorUnchanged(t *testing.T) {
+	input := `{"spec":{"targetPorts":[{"number":8000}],"selector":{"matchLabels":{"app":"x"}},"endpointPickerRef":{"kind":"Service","name":"epp"}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	assert.JSONEq(t, input, string(output), "already-correct selector should not be double-wrapped")
+}
+
+func TestFixInferencePoolSpec_MissingEndpointPickerRefAdded(t *testing.T) {
+	input := `{"spec":{"targetPorts":[{"number":8000}],"selector":{"matchLabels":{"app":"x"}}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	epr := obj["spec"].(map[string]interface{})["endpointPickerRef"].(map[string]interface{})
+	assert.Equal(t, "Service", epr["kind"])
+	assert.Equal(t, "example-model-epp", epr["name"])
+	assert.Equal(t, "FailClose", epr["failureMode"])
+}
+
+func TestFixInferencePoolSpec_ExistingEndpointPickerRefPreserved(t *testing.T) {
+	input := `{"spec":{"targetPorts":[{"number":8000}],"selector":{"matchLabels":{"app":"x"}},"endpointPickerRef":{"kind":"Service","name":"my-real-epp"}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	epr := obj["spec"].(map[string]interface{})["endpointPickerRef"].(map[string]interface{})
+	assert.Equal(t, "my-real-epp", epr["name"], "user-provided endpointPickerRef.name should not be overwritten")
+}
+
+func TestFixInferencePoolSpec_MissingTargetPortsAdded(t *testing.T) {
+	input := `{"spec":{"selector":{"matchLabels":{"app":"x"}},"endpointPickerRef":{"kind":"Service","name":"epp"}}}`
+	output := fixInferencePoolSpec([]byte(input))
+	var obj map[string]interface{}
+	require.NoError(t, json.Unmarshal(output, &obj))
+	targetPorts, ok := obj["spec"].(map[string]interface{})["targetPorts"].([]interface{})
+	require.True(t, ok)
+	assert.Equal(t, float64(8000), targetPorts[0].(map[string]interface{})["number"])
+}
+
+func TestFixInferencePoolSpec_InvalidJSONPassthrough(t *testing.T) {
+	input := []byte(`not-json`)
+	output := fixInferencePoolSpec(input)
+	assert.Equal(t, input, output, "invalid JSON should be returned unchanged")
+}
+
+// ---------------------------------------------------------------------------
+// inferGroupFromKind unit tests
+// ---------------------------------------------------------------------------
+
+func TestInferGroupFromKind(t *testing.T) {
+	tests := []struct {
+		name                  string
+		kind                  string
+		isGatewayAPIEnabled   bool
+		isInferenceAPIEnabled bool
+		expectedGroup         string
+	}{
+		{
+			name:          "security kind inferred without any flags",
+			kind:          "AuthorizationPolicy",
+			expectedGroup: "security.istio.io",
+		},
+		{
+			name:          "networking-only kind inferred when GW API disabled",
+			kind:          "VirtualService",
+			expectedGroup: "networking.istio.io",
+		},
+		{
+			name:                "networking-only kind inferred when GW API enabled",
+			kind:                "VirtualService",
+			isGatewayAPIEnabled: true,
+			expectedGroup:       "networking.istio.io",
+		},
+		{
+			name:                "Gateway is ambiguous when GW API enabled",
+			kind:                "Gateway",
+			isGatewayAPIEnabled: true,
+			expectedGroup:       "",
+		},
+		{
+			name:                "Gateway infers networking.istio.io when GW API disabled",
+			kind:                "Gateway",
+			isGatewayAPIEnabled: false,
+			expectedGroup:       "networking.istio.io",
+		},
+		{
+			name:                  "InferencePool inferred when inference API enabled",
+			kind:                  "InferencePool",
+			isInferenceAPIEnabled: true,
+			expectedGroup:         "inference.networking.k8s.io",
+		},
+		{
+			name:                  "InferencePool returns empty when inference API disabled",
+			kind:                  "InferencePool",
+			isInferenceAPIEnabled: false,
+			expectedGroup:         "",
+		},
+		{
+			name:                "HTTPRoute inferred as gateway API when enabled",
+			kind:                "HTTPRoute",
+			isGatewayAPIEnabled: true,
+			expectedGroup:       "gateway.networking.k8s.io",
+		},
+		{
+			name:                "HTTPRoute returns empty when GW API disabled",
+			kind:                "HTTPRoute",
+			isGatewayAPIEnabled: false,
+			expectedGroup:       "",
+		},
+		{
+			name:          "unknown kind returns empty",
+			kind:          "NoSuchKind",
+			expectedGroup: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := inferGroupFromKind(tt.kind, tt.isGatewayAPIEnabled, tt.isInferenceAPIEnabled)
+			assert.Equal(t, tt.expectedGroup, got)
+		})
+	}
 }
