@@ -4,3 +4,9 @@ logLevel: "debug"
 config:
   provisioning:
     interval: 1m
+volumes:
+- name: plugins
+  emptyDir: {}
+volumeMounts:
+- name: plugins
+  mountPath: /etc/perses/plugins
