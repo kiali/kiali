@@ -1,14 +1,12 @@
 import {
   DefaultNode,
   getShapeComponent,
-  Node,
   NodeShape,
   observer,
   ScaleDetailsLevel,
-  ShapeProps,
-  useHover,
-  WithSelectionProps
+  useHover
 } from '@patternfly/react-topology';
+import type { Node, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import * as React from 'react';
 import { KeyIcon, TopologyIcon } from '@patternfly/react-icons';
@@ -92,8 +90,8 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
-  const ColorSpan = PFColors.Purple200;
-  const OverlayOpacity = 0.3;
+  const ColorSpan = PFColors.Purple500;
+  const OverlayOpacity = 0.35;
   const OverlayWidth = 40;
 
   const findOverlayStyle = kialiStyle({
@@ -113,9 +111,9 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
     strokeOpacity: OverlayOpacity
   });
 
-  // Set the path style when unhighlighted (opacity)
+  // Set the path style when unhighlighted (opacity), but keep trace-overlay nodes visible
   let opacity = 1;
-  if (data.isUnhighlighted) {
+  if (data.isUnhighlighted && !data.hasSpans) {
     opacity = 0.1;
   }
 
