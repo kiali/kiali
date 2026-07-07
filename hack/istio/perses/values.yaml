@@ -5,6 +5,8 @@ config:
   provisioning:
     interval: 1m
 volumes:
+- name: plugins
+  emptyDir: {}
 - name: provisioning
   projected:
     sources:
@@ -15,6 +17,8 @@ volumes:
     - configMap:
         name: perses-provisioning
 volumeMounts:
+- name: plugins
+  mountPath: /etc/perses/plugins
 - name: provisioning
   mountPath: /etc/perses/provisioning
   readOnly: true
