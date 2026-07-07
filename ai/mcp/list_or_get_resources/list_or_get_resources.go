@@ -397,7 +397,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 		// NodeName we iterate all ztunnel pods until we find the one whose dump contains
 		// this workload. Results are cached after the first fetch.
 		var ztunnelDump *kubernetes.ZtunnelConfigDump
-		if workloadDetails.IsAmbient {
+		if workloadDetails.IsAmbient && kialiCache != nil {
 			for _, ztunnelPod := range kialiCache.GetZtunnelPods(criteria.Cluster) {
 				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Namespace, ztunnelPod.Name)
 				if dump == nil {

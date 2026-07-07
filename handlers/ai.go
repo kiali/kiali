@@ -107,14 +107,8 @@ func ChatMCP(
 			RespondWithError(w, http.StatusNotFound, "metrics are unavailable because Prometheus is disabled")
 			return
 		}
-		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-			return
-		}
-		// Gate Ambient-specific tools when Ambient Mesh is not enabled in any cluster
+		// Gate Ambient-specific tools before building the full interface, matching the tracing/metrics pattern above.
 		if mcp.IsAmbientTool(toolName) {
-			// Get accessible clusters from SA clients
 			saClients := clientFactory.GetSAClients()
 			accessibleClusters := make([]string, 0, len(saClients))
 			for clusterName := range saClients {
@@ -125,6 +119,11 @@ func ChatMCP(
 					fmt.Sprintf("Tool '%s' is not available when Ambient Mesh is not enabled in any cluster", toolName))
 				return
 			}
+		}
+		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
 		}
 		mcpResult, code := tool.Call(kialiInterface, args)
 		if code != http.StatusOK {

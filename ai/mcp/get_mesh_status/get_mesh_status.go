@@ -515,10 +515,6 @@ func extractZtunnelStatus(kialiCache cache.KialiCache, ambientClusters map[strin
 	var totalDesired, totalReady int32
 
 	for cluster := range ambientClusters {
-		if !kialiCache.IsAmbientEnabled(cluster) {
-			continue
-		}
-
 		// Get DaemonSet status
 		daemonsets := kialiCache.GetZtunnelDaemonset(cluster)
 		for _, ds := range daemonsets {

@@ -368,6 +368,7 @@ func TestAnalyzeVirtualService_HTTPNoWaypoint_HasWarning(t *testing.T) {
 			Http: []*networking_v1_api.HTTPRoute{
 				{Name: "route-1"},
 			},
+			// No gateways → applies to mesh traffic → needs waypoint
 		},
 	}
 	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
@@ -375,6 +376,56 @@ func TestAnalyzeVirtualService_HTTPNoWaypoint_HasWarning(t *testing.T) {
 	assert.Equal(t, "L7", result.Layer)
 	assert.NotEmpty(t, result.Warning)
 	assert.Contains(t, result.Warning, "NO waypoint")
+}
+
+func TestAnalyzeVirtualService_IngressGatewayOnly_NoWarning(t *testing.T) {
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "ingress-vs"},
+		Spec: networking_v1_api.VirtualService{
+			Gateways: []string{"my-ingress-gateway"},
+			Http: []*networking_v1_api.HTTPRoute{
+				{Name: "route-1"},
+			},
+		},
+	}
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
+	result := analyzeVirtualService(vs, nsStatus)
+	assert.Equal(t, "L7", result.Layer)
+	assert.Empty(t, result.Warning, "VS targeting ingress Gateway should NOT warn about missing waypoint")
+	assert.Contains(t, result.Reason, "ingress/egress Gateway")
+}
+
+func TestAnalyzeVirtualService_MeshAndGateway_HasWarning(t *testing.T) {
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "mesh-and-ingress-vs"},
+		Spec: networking_v1_api.VirtualService{
+			Gateways: []string{"mesh", "my-ingress-gateway"},
+			Http: []*networking_v1_api.HTTPRoute{
+				{Name: "route-1"},
+			},
+		},
+	}
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
+	result := analyzeVirtualService(vs, nsStatus)
+	assert.Equal(t, "L7", result.Layer)
+	assert.NotEmpty(t, result.Warning, "VS targeting both mesh and Gateway still needs waypoint for mesh traffic")
+}
+
+// --- appliesToMeshTraffic tests ---
+
+func TestAppliesToMeshTraffic_Empty(t *testing.T) {
+	assert.True(t, appliesToMeshTraffic(nil), "empty gateways defaults to mesh")
+	assert.True(t, appliesToMeshTraffic([]string{}))
+}
+
+func TestAppliesToMeshTraffic_ExplicitMesh(t *testing.T) {
+	assert.True(t, appliesToMeshTraffic([]string{"mesh"}))
+	assert.True(t, appliesToMeshTraffic([]string{"mesh", "my-gateway"}))
+}
+
+func TestAppliesToMeshTraffic_IngressOnly(t *testing.T) {
+	assert.False(t, appliesToMeshTraffic([]string{"my-ingress-gateway"}))
+	assert.False(t, appliesToMeshTraffic([]string{"ingress-gw", "egress-gw"}))
 }
 
 // --- ambientNoWaypointWarning tests ---

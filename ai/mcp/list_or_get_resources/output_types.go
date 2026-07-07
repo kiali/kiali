@@ -162,8 +162,8 @@ type WorkloadDetailResponse struct {
 	Istio              WorkloadIstioInfo      `json:"istio"`
 	Pods               []PodInfo              `json:"pods"`
 	Status             WorkloadStatus         `json:"status"`
-	Workload           WorkloadInfo           `json:"workload"`
 	WaypointServices   []WaypointServiceInfo  `json:"waypointServices,omitempty"`
+	Workload           WorkloadInfo           `json:"workload"`
 }
 
 // WaypointServiceInfo contains information about services captured by a waypoint proxy

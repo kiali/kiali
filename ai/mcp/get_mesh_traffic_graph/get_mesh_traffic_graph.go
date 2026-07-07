@@ -27,6 +27,13 @@ var validGraphTypes = map[string]bool{
 	graph.GraphTypeWorkload:     true,
 }
 
+var validAmbientTrafficValues = map[string]bool{
+	graph.AmbientTrafficNone:     true,
+	graph.AmbientTrafficTotal:    true,
+	graph.AmbientTrafficWaypoint: true,
+	graph.AmbientTrafficZtunnel:  true,
+}
+
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
 	AmbientTraffic string   `json:"ambientTraffic,omitempty"`
@@ -59,22 +66,14 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 
 	// Validate ambientTraffic parameter using the canonical constants from the graph package
-	if toolArgs.AmbientTraffic != "" {
-		validAmbientValues := map[string]bool{
-			graph.AmbientTrafficNone:     true,
-			graph.AmbientTrafficTotal:    true,
-			graph.AmbientTrafficWaypoint: true,
-			graph.AmbientTrafficZtunnel:  true,
-		}
-		if !validAmbientValues[toolArgs.AmbientTraffic] {
-			return fmt.Sprintf("invalid ambientTraffic %q: must be one of %s, %s, %s, %s",
-				toolArgs.AmbientTraffic,
-				graph.AmbientTrafficNone,
-				graph.AmbientTrafficTotal,
-				graph.AmbientTrafficWaypoint,
-				graph.AmbientTrafficZtunnel,
-			), http.StatusBadRequest
-		}
+	if toolArgs.AmbientTraffic != "" && !validAmbientTrafficValues[toolArgs.AmbientTraffic] {
+		return fmt.Sprintf("invalid ambientTraffic %q: must be one of %s, %s, %s, %s",
+			toolArgs.AmbientTraffic,
+			graph.AmbientTrafficNone,
+			graph.AmbientTrafficTotal,
+			graph.AmbientTrafficWaypoint,
+			graph.AmbientTrafficZtunnel,
+		), http.StatusBadRequest
 	}
 
 	// Parse namespaces argument (comma-separated string)

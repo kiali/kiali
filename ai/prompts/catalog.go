@@ -4,7 +4,7 @@ package prompts
 type Prompt struct {
 	Category    string `json:"category"`
 	Description string `json:"description"`
-	IsAmbient   bool   `json:"isAmbient,omitempty"`
+	IsAmbient   bool   `json:"isAmbient"`
 	Name        string `json:"name"`
 	Query       string `json:"query"`
 	Title       string `json:"title"`

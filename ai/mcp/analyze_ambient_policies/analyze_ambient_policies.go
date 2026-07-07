@@ -13,9 +13,11 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	telemetry_v1 "istio.io/client-go/pkg/apis/telemetry/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/models"
 )
 
 // PolicyAnalysisResponse is the output of the analyze_ambient_policies tool
@@ -97,19 +99,25 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 	}
 
-	// Analyze each namespace
+	// Analyze each namespace, recording per-namespace errors instead of aborting the whole request.
 	namespaceResults := make([]NamespaceAnalysis, 0, len(namespacesToAnalyze))
 	totalL4 := 0
 	totalL7 := 0
 	totalL7WithoutWaypoint := 0
 
 	for _, namespace := range namespacesToAnalyze {
-		// Validate namespace access
-		if errMsg, statusCode := mcputil.ValidateNamespaceAccess(ctx, kialiInterface.BusinessLayer, namespace, clusterName); errMsg != "" {
-			return fmt.Sprintf("namespace '%s': %s", namespace, errMsg), statusCode
+		// Fetch and validate namespace access in one call to avoid a double lookup.
+		nsInfo, errMsg := getValidatedNamespace(ctx, kialiInterface.BusinessLayer, namespace, clusterName)
+		if errMsg != "" {
+			// Record the error per-namespace instead of aborting the entire batch.
+			namespaceResults = append(namespaceResults, NamespaceAnalysis{
+				NamespaceStatus: NamespaceAmbientStatus{Name: namespace, Cluster: clusterName},
+				Summary:         fmt.Sprintf("Error: %s", errMsg),
+			})
+			continue
 		}
 
-		result := analyzeNamespace(ctx, kialiInterface, namespace, clusterName)
+		result := analyzeNamespace(ctx, kialiInterface, nsInfo, clusterName)
 		namespaceResults = append(namespaceResults, result)
 
 		// Count L4/L7 across all namespaces
@@ -134,17 +142,26 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}, http.StatusOK
 }
 
-// analyzeNamespace performs the analysis for a single namespace
-func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterface, namespace, clusterName string) NamespaceAnalysis {
-	// Get namespace details to check if it's Ambient
-	namespaceInfo, err := kialiInterface.BusinessLayer.Namespace.GetClusterNamespace(ctx, namespace, clusterName)
+// getValidatedNamespace fetches the namespace and validates access in a single API call.
+// Returns the namespace info and an empty error string on success, or nil and a message on failure.
+func getValidatedNamespace(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (*models.Namespace, string) {
+	nsInfo, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
-		// Return an error result
-		return NamespaceAnalysis{
-			NamespaceStatus: NamespaceAmbientStatus{Name: namespace, Cluster: clusterName},
-			Summary:         fmt.Sprintf("Error: failed to get namespace info: %v", err),
+		switch {
+		case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+			return nil, fmt.Sprintf("namespace %q is not accessible in cluster %q", namespace, cluster)
+		case k8serrors.IsNotFound(err):
+			return nil, fmt.Sprintf("namespace %q does not exist in cluster %q", namespace, cluster)
+		default:
+			return nil, fmt.Sprintf("failed to get namespace %q in cluster %q: %v", namespace, cluster, err)
 		}
 	}
+	return nsInfo, ""
+}
+
+// analyzeNamespace performs the analysis for a single namespace using an already-fetched namespace object.
+func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterface, namespaceInfo *models.Namespace, clusterName string) NamespaceAnalysis {
+	namespace := namespaceInfo.Name
 
 	// Check if namespace has waypoint
 	hasWaypoint, waypointName := checkNamespaceWaypoint(ctx, kialiInterface.BusinessLayer, namespace, clusterName)
@@ -440,7 +457,9 @@ func analyzeRequestAuthentication(ra *security_v1.RequestAuthentication, nsStatu
 	}
 }
 
-// analyzeVirtualService classifies a VirtualService as L7 (HTTP/TLS routes) or L4 (TCP-only routes)
+// analyzeVirtualService classifies a VirtualService as L7 (HTTP/TLS routes) or L4 (TCP-only routes).
+// A waypoint warning is only emitted when the VS applies to mesh (east-west) traffic. VirtualServices
+// targeting only named ingress/egress Gateways are processed by those Gateways, not by a waypoint.
 func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
 	analyzed := AnalyzedPolicy{
 		ConfigType: "VirtualService",
@@ -448,17 +467,36 @@ func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus NamespaceA
 		Rules:      countVirtualServiceRules(&vs.Spec),
 	}
 
-	// HTTP or TLS routes require waypoint (L7); TCP-only routes are L4
-	if len(vs.Spec.Http) > 0 || len(vs.Spec.Tls) > 0 {
+	isHTTPortTLS := len(vs.Spec.Http) > 0 || len(vs.Spec.Tls) > 0
+
+	if isHTTPortTLS && appliesToMeshTraffic(vs.Spec.Gateways) {
 		analyzed.Layer = "L7"
-		analyzed.Reason = "VirtualService provides HTTP/TLS routing (traffic splitting, retries, timeouts, rewrites)"
+		analyzed.Reason = "VirtualService provides HTTP/TLS routing for mesh traffic (requires waypoint)"
 		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "This VirtualService will NOT work.")
+	} else if isHTTPortTLS {
+		analyzed.Layer = "L7"
+		analyzed.Reason = "VirtualService provides HTTP/TLS routing via ingress/egress Gateway (no waypoint needed)"
 	} else {
 		analyzed.Layer = "L4"
 		analyzed.Reason = "VirtualService only defines TCP routes (L4 load balancing, no HTTP features)"
 	}
 
 	return analyzed
+}
+
+// appliesToMeshTraffic reports whether a VirtualService targets in-mesh (east-west) traffic.
+// A VS applies to mesh traffic when spec.gateways is empty (default) or contains the reserved
+// value "mesh". VSes that only reference named ingress/egress Gateways do not need a waypoint.
+func appliesToMeshTraffic(gateways []string) bool {
+	if len(gateways) == 0 {
+		return true // default: applies to mesh
+	}
+	for _, gw := range gateways {
+		if gw == "mesh" {
+			return true
+		}
+	}
+	return false
 }
 
 // countVirtualServiceRules counts HTTP and TLS routes
