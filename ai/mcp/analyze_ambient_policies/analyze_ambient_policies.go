@@ -594,12 +594,12 @@ func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus NamespaceAmbientStat
 // isL7Telemetry checks if Telemetry config requires L7 processing
 func isL7Telemetry(spec *telemetry_v1_api.Telemetry) (bool, string) {
 	// Check tracing - distributed tracing requires HTTP context propagation
-	if spec.Tracing != nil && len(spec.Tracing) > 0 {
+	if len(spec.Tracing) > 0 {
 		return true, "Configures distributed tracing (requires HTTP header propagation)"
 	}
 
 	// Check access logging - typically includes HTTP-specific fields
-	if spec.AccessLogging != nil && len(spec.AccessLogging) > 0 {
+	if len(spec.AccessLogging) > 0 {
 		return true, "Configures access logging (typically includes HTTP details)"
 	}
 
