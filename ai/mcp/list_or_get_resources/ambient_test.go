@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -93,4 +94,52 @@ func TestExtractAmbientNetworking_NilDump(t *testing.T) {
 
 	result := extractAmbientNetworking(wl, nil)
 	assert.Nil(t, result)
+}
+
+func TestExtractAmbientNetworking_FQDNServiceRefs(t *testing.T) {
+	wl := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name:      "details-v1",
+			Namespace: "bookinfo",
+		},
+	}
+
+	dump := &kubernetes.ZtunnelConfigDump{
+		Workloads: []kubernetes.Workload{
+			{
+				WorkloadName: "details-v1",
+				Namespace:    "bookinfo",
+				Protocol:     "HBONE",
+				Services: []string{
+					"bookinfo/details.bookinfo.svc.cluster.local",
+				},
+			},
+		},
+		Services: []kubernetes.Service{
+			{
+				Hostname:  "details.bookinfo.svc.cluster.local",
+				Name:      "details",
+				Namespace: "bookinfo",
+				Vips:      []string{"10.96.0.1"},
+			},
+		},
+	}
+
+	result := extractAmbientNetworking(wl, dump)
+	require.NotNil(t, result)
+	assert.True(t, result.Captured)
+	require.Len(t, result.CapturedServices, 1)
+	assert.Equal(t, "details", result.CapturedServices[0].Name)
+}
+
+func TestZtunnelReferencesService(t *testing.T) {
+	svc := &kubernetes.Service{
+		Hostname:  "details.bookinfo.svc.cluster.local",
+		Name:      "details",
+		Namespace: "bookinfo",
+	}
+
+	assert.True(t, ztunnelReferencesService([]string{"bookinfo/details.bookinfo.svc.cluster.local"}, svc))
+	assert.True(t, ztunnelReferencesService([]string{"details"}, svc))
+	assert.False(t, ztunnelReferencesService([]string{"bookinfo/reviews.bookinfo.svc.cluster.local"}, svc))
 }

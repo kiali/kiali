@@ -467,13 +467,13 @@ func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus NamespaceA
 		Rules:      countVirtualServiceRules(&vs.Spec),
 	}
 
-	isHTTPortTLS := len(vs.Spec.Http) > 0 || len(vs.Spec.Tls) > 0
+	hasHTTPOrTLS := len(vs.Spec.Http) > 0 || len(vs.Spec.Tls) > 0
 
-	if isHTTPortTLS && appliesToMeshTraffic(vs.Spec.Gateways) {
+	if hasHTTPOrTLS && appliesToMeshTraffic(vs.Spec.Gateways) {
 		analyzed.Layer = "L7"
 		analyzed.Reason = "VirtualService provides HTTP/TLS routing for mesh traffic (requires waypoint)"
 		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "This VirtualService will NOT work.")
-	} else if isHTTPortTLS {
+	} else if hasHTTPOrTLS {
 		analyzed.Layer = "L7"
 		analyzed.Reason = "VirtualService provides HTTP/TLS routing via ingress/egress Gateway (no waypoint needed)"
 	} else {

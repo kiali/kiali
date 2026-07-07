@@ -2,7 +2,6 @@ package list_or_get_resources
 
 import (
 	"fmt"
-	"slices"
 	"sort"
 	"strings"
 
@@ -814,8 +813,8 @@ func extractAmbientNetworking(wl *models.Workload, dump *kubernetes.ZtunnelConfi
 	var capturedServices []ZtunnelServiceInfo
 	for i := range dump.Services {
 		svc := &dump.Services[i]
-		// Check if this service references the workload
-		if slices.Contains(ztunnelWorkload.Services, svc.Name) {
+		// ztunnel workload service refs use "namespace/hostname" (see kubernetes/testdata/ztunnel-config.json).
+		if ztunnelReferencesService(ztunnelWorkload.Services, svc) {
 			waypointDest := ""
 			if svc.Waypoint.Destination != "" {
 				waypointDest = svc.Waypoint.Destination
@@ -838,4 +837,25 @@ func extractAmbientNetworking(wl *models.Workload, dump *kubernetes.ZtunnelConfi
 		TrustDomain:      ztunnelWorkload.TrustDomain,
 		CapturedServices: capturedServices,
 	}
+}
+
+// ztunnelReferencesService reports whether a ztunnel workload service entry references the given service.
+// Workload.Services entries use "namespace/hostname" (e.g. "bookinfo/details.bookinfo.svc.cluster.local").
+func ztunnelReferencesService(workloadServices []string, svc *kubernetes.Service) bool {
+	if len(workloadServices) == 0 {
+		return false
+	}
+	fqdnRef := ""
+	if svc.Hostname != "" {
+		fqdnRef = fmt.Sprintf("%s/%s", svc.Namespace, svc.Hostname)
+	}
+	for _, ref := range workloadServices {
+		if ref == svc.Name || ref == svc.Hostname {
+			return true
+		}
+		if fqdnRef != "" && ref == fqdnRef {
+			return true
+		}
+	}
+	return false
 }

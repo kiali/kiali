@@ -135,9 +135,3 @@ func GetStringOrDefault(args map[string]interface{}, defaultValue string, keys .
 	}
 	return defaultValue
 }
-
-// GetBoolArg returns the boolean value for the first present key in args.
-// Alias for AsBoolFromArgs for consistency with GetStringArg, GetTimeArg.
-func GetBoolArg(args map[string]interface{}, keys ...string) bool {
-	return AsBoolFromArgs(args, keys...)
-}

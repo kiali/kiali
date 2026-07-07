@@ -109,12 +109,7 @@ func ChatMCP(
 		}
 		// Gate Ambient-specific tools before building the full interface, matching the tracing/metrics pattern above.
 		if mcp.IsAmbientTool(toolName) {
-			saClients := clientFactory.GetSAClients()
-			accessibleClusters := make([]string, 0, len(saClients))
-			for clusterName := range saClients {
-				accessibleClusters = append(accessibleClusters, clusterName)
-			}
-			if !kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusters) {
+			if !kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory)) {
 				RespondWithError(w, http.StatusNotFound,
 					fmt.Sprintf("Tool '%s' is not available when Ambient Mesh is not enabled in any cluster", toolName))
 				return
@@ -134,6 +129,16 @@ func ChatMCP(
 	}
 }
 
+// accessibleClusterNames returns cluster names reachable via the client factory's service-account clients.
+func accessibleClusterNames(clientFactory kubernetes.ClientFactory) []string {
+	saClients := clientFactory.GetSAClients()
+	names := make([]string, 0, len(saClients))
+	for clusterName := range saClients {
+		names = append(names, clusterName)
+	}
+	return names
+}
+
 func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !conf.ChatAI.Enabled {
@@ -141,13 +146,7 @@ func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory
 			return
 		}
 
-		// Determine whether Ambient Mesh is enabled in any accessible cluster
-		saClients := clientFactory.GetSAClients()
-		accessibleClusters := make([]string, 0, len(saClients))
-		for clusterName := range saClients {
-			accessibleClusters = append(accessibleClusters, clusterName)
-		}
-		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusters)
+		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory))
 
 		category := r.URL.Query().Get("category")
 		catalog := prompts.Catalog()

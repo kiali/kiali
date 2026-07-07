@@ -1,14 +1,23 @@
 package analyze_ambient_policies
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	networking_v1_api "istio.io/api/networking/v1"
 	security_v1_api "istio.io/api/security/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/kiali/kiali/ai/mcputil"
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes/kubetest"
 )
 
 func TestIsL7Policy_HTTPMethods(t *testing.T) {
@@ -445,4 +454,74 @@ func TestAmbientNoWaypointWarning_AmbientNoWaypoint(t *testing.T) {
 	warning := ambientNoWaypointWarning(nsStatus, "Things will break.")
 	assert.Contains(t, warning, "NO waypoint")
 	assert.Contains(t, warning, "Things will break.")
+}
+
+func setupExecuteTest(t *testing.T, objs ...runtime.Object) (*mcputil.KialiInterface, *config.Config) {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(objs...)
+	layer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	r := httptest.NewRequest(http.MethodPost, "/api/chat/mcp/analyze_ambient_policies", nil)
+	r.Header.Set("Kiali-User", "test-user")
+	return &mcputil.KialiInterface{
+		Request:       r,
+		BusinessLayer: layer,
+		Conf:          conf,
+	}, conf
+}
+
+func TestExecute_BothNamespaceAndNamespaces_ReturnsBadRequest(t *testing.T) {
+	ki, _ := setupExecuteTest(t,
+		kubetest.FakeNamespaceWithLabels("ambient-ns", map[string]string{
+			config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+		}),
+	)
+
+	result, status := Execute(ki, map[string]interface{}{
+		"namespace":  "ambient-ns",
+		"namespaces": []interface{}{"ambient-ns"},
+	})
+	assert.Equal(t, http.StatusBadRequest, status)
+	assert.Contains(t, result.(string), "cannot specify both")
+}
+
+func TestExecute_AutoDiscoverAmbientNamespaces(t *testing.T) {
+	ki, _ := setupExecuteTest(t,
+		kubetest.FakeNamespaceWithLabels("ambient-ns", map[string]string{
+			config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+		}),
+		kubetest.FakeNamespace("default"),
+	)
+
+	result, status := Execute(ki, map[string]interface{}{})
+	assert.Equal(t, http.StatusOK, status)
+
+	resp, ok := result.(PolicyAnalysisResponse)
+	require.True(t, ok)
+	require.Len(t, resp.Namespaces, 1)
+	assert.Equal(t, "ambient-ns", resp.Namespaces[0].NamespaceStatus.Name)
+}
+
+func TestExecute_InvalidNamespace_RecordsPerNamespaceError(t *testing.T) {
+	ki, _ := setupExecuteTest(t,
+		kubetest.FakeNamespaceWithLabels("ambient-ns", map[string]string{
+			config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+		}),
+	)
+
+	result, status := Execute(ki, map[string]interface{}{
+		"namespaces": []interface{}{"ambient-ns", "missing-ns"},
+	})
+	assert.Equal(t, http.StatusOK, status)
+
+	resp, ok := result.(PolicyAnalysisResponse)
+	require.True(t, ok)
+	require.Len(t, resp.Namespaces, 2)
+	assert.Equal(t, "ambient-ns", resp.Namespaces[0].NamespaceStatus.Name)
+	assert.NotContains(t, resp.Namespaces[0].Summary, "Error:")
+	assert.Equal(t, "missing-ns", resp.Namespaces[1].NamespaceStatus.Name)
+	assert.Contains(t, resp.Namespaces[1].Summary, "Error:")
 }
