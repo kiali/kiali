@@ -54,14 +54,6 @@ jobs:
     container:
       image: quay.io/dno/droute:latest
     steps:
-    - name: Check out code
-      # WARNING: head_sha may be from a fork PR. workflow_run runs with base repo write permissions.
-      # Do NOT execute any scripts or files from this checkout — only local action references are
-      # safe, as GitHub resolves those from the base repo, not the checked-out working directory.
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        ref: ${{ github.event.workflow_run.head_sha }}
-
     # Download backend test results and metadata because workflow_run events triggered by PRs from forks
     # don't have access to PR information in github.event.workflow_run.pull_requests
     # See: https://github.com/orgs/community/discussions/25220
@@ -111,32 +103,52 @@ jobs:
           echo "kiali_version=unknown" >> $GITHUB_OUTPUT
         fi
 
+    - name: Download ReportPortal script for backend tests
+      continue-on-error: true
+      run: |
+        curl -sSL -o /tmp/send_report_portal_results.sh \
+          https://raw.githubusercontent.com/openshift-service-mesh/ci-utils/main/report_portal/send_report_portal_results.sh
+        chmod +x /tmp/send_report_portal_results.sh
+
     - name: Report backend tests to ReportPortal
       continue-on-error: true
-      uses: ./.github/actions/report-to-reportportal
-      with:
-        test_suite: 'backend'
-        test_results_dir: 'artifacts/junit-rest-report'
-        test_file_name: 'junit-rest-report.xml'
-        kiali_version: ${{ steps.metadata.outputs.kiali_version }}
-        istio_version: ${{ steps.metadata.outputs.istio_version }}
-        data_plane_mode: 'sidecar'
-        pr_number: ${{ steps.metadata.outputs.pr_number }}
-        target_branch: ${{ steps.metadata.outputs.target_branch }}
-        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
-        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
+      env:
+        REPORT_PORTAL_HOSTNAME: reportportal-ossm.apps.dno.ocp-hub.prod.psi.redhat.com
+        REPORT_PORTAL_PROJECT: osssm_general
+        DATA_ROUTER_USERNAME: ${{ secrets.DATA_ROUTER_USERNAME }}
+        DATA_ROUTER_PASSWORD: ${{ secrets.DATA_ROUTER_PASSWORD }}
+        TEST_RESULTS_DIR: 'artifacts/junit-rest-report'
+        TEST_FILE_NAME: 'junit-rest-report.xml'
+        TEST_SUITE: 'backend'
+        TESTRUN_NAME: Kiali backend test run
+        TESTRUN_DESCRIPTION: Kiali backend test run - PR https://github.com/${{ github.repository }}/pull/${{ steps.metadata.outputs.pr_number }}
+        INSTALLATION_METHOD: helm
+        PRODUCT_STAGE: upstream
+        TEST_REPO: ${{ github.repository }}
+        EXTRA_ATTRIBUTES: '[{"key": "build_type", "value": "pr_build"}, {"key": "kiali_version", "value": "${{ steps.metadata.outputs.kiali_version }}"}, {"key": "istio_version", "value": "${{ steps.metadata.outputs.istio_version }}"}, {"key": "data_plane_mode", "value": "sidecar"}, {"key": "pr_number", "value": "${{ steps.metadata.outputs.pr_number }}"}, {"key": "target_branch", "value": "${{ steps.metadata.outputs.target_branch }}"}]'
+      run: /tmp/send_report_portal_results.sh --verbose
+
+    - name: Download ReportPortal script for frontend tests
+      continue-on-error: true
+      run: |
+        curl -sSL -o /tmp/send_report_portal_results_frontend.sh \
+          https://raw.githubusercontent.com/openshift-service-mesh/ci-utils/main/report_portal/send_report_portal_results.sh
+        chmod +x /tmp/send_report_portal_results_frontend.sh
 
     - name: Report frontend core tests to ReportPortal
       continue-on-error: true
-      uses: ./.github/actions/report-to-reportportal
-      with:
-        test_suite: 'cypress'
-        test_results_dir: 'frontend-core/cypress/results'
-        test_file_name: 'combined-report.xml'
-        kiali_version: ${{ steps.metadata.outputs.kiali_version }}
-        istio_version: ${{ steps.metadata.outputs.istio_version }}
-        data_plane_mode: 'sidecar'
-        pr_number: ${{ steps.metadata.outputs.pr_number }}
-        target_branch: ${{ steps.metadata.outputs.target_branch }}
-        data_router_username: ${{ secrets.DATA_ROUTER_USERNAME }}
-        data_router_password: ${{ secrets.DATA_ROUTER_PASSWORD }}
+      env:
+        REPORT_PORTAL_HOSTNAME: reportportal-ossm.apps.dno.ocp-hub.prod.psi.redhat.com
+        REPORT_PORTAL_PROJECT: osssm_general
+        DATA_ROUTER_USERNAME: ${{ secrets.DATA_ROUTER_USERNAME }}
+        DATA_ROUTER_PASSWORD: ${{ secrets.DATA_ROUTER_PASSWORD }}
+        TEST_RESULTS_DIR: 'frontend-core/cypress/results'
+        TEST_FILE_NAME: 'combined-report.xml'
+        TEST_SUITE: 'cypress'
+        TESTRUN_NAME: Kiali cypress test run
+        TESTRUN_DESCRIPTION: Kiali cypress test run - PR https://github.com/${{ github.repository }}/pull/${{ steps.metadata.outputs.pr_number }}
+        INSTALLATION_METHOD: helm
+        PRODUCT_STAGE: upstream
+        TEST_REPO: ${{ github.repository }}
+        EXTRA_ATTRIBUTES: '[{"key": "build_type", "value": "pr_build"}, {"key": "kiali_version", "value": "${{ steps.metadata.outputs.kiali_version }}"}, {"key": "istio_version", "value": "${{ steps.metadata.outputs.istio_version }}"}, {"key": "data_plane_mode", "value": "sidecar"}, {"key": "pr_number", "value": "${{ steps.metadata.outputs.pr_number }}"}, {"key": "target_branch", "value": "${{ steps.metadata.outputs.target_branch }}"}]'
+      run: /tmp/send_report_portal_results_frontend.sh --verbose
