@@ -125,6 +125,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   monacoEditorRef: editor.IStandaloneCodeEditor | null = null;
   monacoRef: MonacoInstance | null = null;
   drawerRef: React.RefObject<IstioConfigDetails>;
+  private cursorDisposable: { dispose(): void } | null = null;
   private editorContainerRef = React.createRef<HTMLDivElement>();
   private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }));
   private isObserving = false;
@@ -311,6 +312,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     window.onbeforeunload = null;
     window.clearInterval(this.timerId);
     this.heightObserver.disconnect();
+    this.cursorDisposable?.dispose();
   }
 
   private tryStartObserving(): void {
@@ -559,8 +561,17 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     this.monacoEditorRef = ed;
     this.monacoRef = monaco;
     (window as any).monaco = monaco;
-    ed.onDidChangeCursorPosition(this.onCursorChange);
+    this.cursorDisposable = ed.onDidChangeCursorPosition(this.onCursorChange);
     this.applyValidationMarkers();
+
+    // Open the side panel when clicking an info glyph icon in the margin
+    ed.onMouseDown(e => {
+      if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position) {
+        const lineNumber = e.target.position.lineNumber;
+        const line = parseLine(this.fetchYaml(), lineNumber - 1);
+        this.setState({ selectedEditorLine: line, isExpanded: true }, () => this.resizeEditor());
+      }
+    });
 
     // Apply initial folding for managedFields: section
     this.applyFolding(ed);
@@ -609,6 +620,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
     helpAnnotations.forEach(ha => {
       const lineNumber = ha.row + 1;
       if (!linesWithMarkers.has(lineNumber)) {
+        linesWithMarkers.add(lineNumber);
         markers.push({
           startLineNumber: lineNumber,
           startColumn: 1,

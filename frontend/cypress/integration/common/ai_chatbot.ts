@@ -421,8 +421,16 @@ Then('the Istio config YAML editor should contain {string}', (snippet: string) =
   cy.get('[data-test="istio-config-editor"] .monaco-editor', { timeout: 30000 }).should('be.visible');
   cy.window().then((win: any) => {
     const editors = win.monaco?.editor?.getEditors() ?? [];
-    const text = editors[0]?.getValue() ?? '';
-    expect(text).to.include(snippet);
+    const text = editors
+      .map((ed: any) => {
+        try {
+          return ed.getValue();
+        } catch {
+          return '';
+        }
+      })
+      .find((v: string) => v.includes(snippet));
+    expect(text, `An editor should contain "${snippet}"`).to.exist;
   });
 });
 

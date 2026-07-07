@@ -117,7 +117,7 @@ export const parseHelpAnnotations = (yaml: string, helpMessages: HelpMessage[]):
       row: marker.startRow,
       column: marker.startCol,
       type: 'info',
-      text: 'This field has help information. Check the side panel for more information.'
+      text: 'This field has help information. Click on the YAML field and check the side panel for more details.'
     };
 
     if (marker.position !== -1) {
@@ -339,7 +339,10 @@ export const applyMonacoMarkers = (
   if (!model) {
     return;
   }
-  monacoInstance.editor.setModelMarkers(model, 'kiali', markers);
+  // Only set error/warning markers (which produce squiggly underlines).
+  // Info markers only get a glyph icon — no underline or "Problems" tooltip.
+  const underlineMarkers = markers.filter(m => m.severity !== MarkerSeverity.Info);
+  monacoInstance.editor.setModelMarkers(model, 'kiali', underlineMarkers);
 
   const existingCollection = editorDecorationsMap.get(editorInstance);
   if (existingCollection) {
