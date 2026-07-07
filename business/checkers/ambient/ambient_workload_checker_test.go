@@ -273,6 +273,34 @@ func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
 	assert.True(valid)
 }
 
+func TestWaypointWithAuthPolicyDoesNotTriggerKIA1317(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	waypointLabels := map[string]string{
+		config.WaypointLabel: config.WaypointLabelValue,
+	}
+
+	workload := data.CreateWorkload(ns1, "waypoint", waypointLabels)
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	workload.Pods = models.Pods{data.CreatePod("waypoint-pod", waypointLabels, true, false, false)}
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
 func TestWaypointZeroReplicas(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -296,10 +324,37 @@ func TestWaypointZeroReplicas(t *testing.T) {
 		workload,
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
-		[]*security_v1.AuthorizationPolicy{},
+		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
 	).Check()
 
 	// Should not have any validation errors because waypoints are always ambient
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestGatewayWithAuthPolicyDoesNotTriggerKIA1317(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	gatewayLabels := map[string]string{
+		"istio": "ingressgateway",
+	}
+
+	workload := data.CreateWorkload(ns1, "istio-ingressgateway", gatewayLabels)
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	workload.Pods = models.Pods{data.CreatePod("gateway-pod", gatewayLabels, false, true, false)}
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
+		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+	).Check()
+
 	assert.Empty(vals)
 	assert.True(valid)
 }
