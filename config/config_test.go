@@ -230,6 +230,28 @@ func TestSetCreatesNewCredentialManagerAndClosesOld(t *testing.T) {
 	}
 }
 
+func TestSetDefaultsEmptyIstioIdentityDomain(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	conf.ExternalServices.Istio.IstioIdentityDomain = ""
+	Set(conf)
+
+	assert.Equal(t, "svc.cluster.local", Get().ExternalServices.Istio.IstioIdentityDomain)
+}
+
+func TestSetPreservesExplicitIstioIdentityDomain(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.my-custom.domain"
+	Set(conf)
+
+	assert.Equal(t, "svc.my-custom.domain", Get().ExternalServices.Istio.IstioIdentityDomain)
+}
+
 func createTestSecretFile(t *testing.T, parentDir string, name string, content string) {
 	childDir := fmt.Sprintf("%s/%s", parentDir, name)
 	filename := fmt.Sprintf("%s/value.txt", childDir)

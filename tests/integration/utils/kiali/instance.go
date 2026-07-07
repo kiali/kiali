@@ -220,6 +220,18 @@ func sanitizeConfigForCR(configYAML string) (string, error) {
 		}
 	}
 
+	// Fix Go duration strings in health_config.compute that don't match
+	// the CRD enum format (e.g., "5m0s" -> "5m", "1h0m0s" -> "1h")
+	if healthConfig, ok := data["health_config"].(map[string]any); ok {
+		if compute, ok := healthConfig["compute"].(map[string]any); ok {
+			for _, field := range []string{"duration", "refresh_interval", "timeout"} {
+				if val, ok := compute[field].(string); ok {
+					compute[field] = normalizeGoDuration(val)
+				}
+			}
+		}
+	}
+
 	// Remove runtime-only fields that were never in any CRD schema version
 	// These fields are server runtime state, not configuration
 	delete(data, "in_cluster") // Never in CRD schema (deprecated/internal field)
@@ -233,6 +245,31 @@ func sanitizeConfigForCR(configYAML string) (string, error) {
 	}
 
 	return string(cleanedJSON), nil
+}
+
+// normalizeGoDuration converts Go's time.Duration.String() format to a
+// human-friendly format that matches CRD enum values.
+// For example: "5m0s" -> "5m", "1h0m0s" -> "1h", "10m0s" -> "10m".
+// Values that are already in the target format or can't be parsed are
+// returned unchanged.
+func normalizeGoDuration(s string) string {
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		return s
+	}
+
+	switch {
+	case d%(24*time.Hour) == 0:
+		return fmt.Sprintf("%dd", int(d/(24*time.Hour)))
+	case d%time.Hour == 0:
+		return fmt.Sprintf("%dh", int(d/time.Hour))
+	case d%time.Minute == 0:
+		return fmt.Sprintf("%dm", int(d/time.Minute))
+	case d%time.Second == 0:
+		return fmt.Sprintf("%ds", int(d/time.Second))
+	default:
+		return s
+	}
 }
 
 // UpdateConfig will update the Kiali instance with the new config. It will ensure
