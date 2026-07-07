@@ -1097,6 +1097,11 @@ func Set(conf *Config) {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	conf.AddHealthDefault()
+
+	if conf.ExternalServices.Istio.IstioIdentityDomain == "" {
+		conf.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
+	}
+
 	configuration = *conf
 
 	// init these one time, they don't change
