@@ -127,16 +127,16 @@ func Catalog() []Prompt {
 			Description: "List namespaces with their Ambient mode status and identify which ones need waypoints",
 			IsAmbient:   true,
 			Name:        "ambient-namespace-overview",
-			Query:       "List all namespaces with their Ambient status. Identify which namespaces are in Ambient mode, which have waypoints deployed, and which may need waypoints for L7 policies.",
+			Query:       "List all namespaces with their Ambient status. Identify which namespaces are in Ambient mode, which have waypoints deployed, and analyze all Istio configs across Ambient namespaces to determine which need waypoints for L7 features.",
 			Title:       "Ambient Namespace Overview",
 		},
 		{
 			Category:    "namespace-details",
-			Description: "Analyze AuthorizationPolicies in this namespace for Ambient compatibility (L4 vs L7)",
+			Description: "Analyze all Istio configs in this namespace for Ambient compatibility (L4 vs L7)",
 			IsAmbient:   true,
-			Name:        "ambient-policy-analysis",
-			Query:       "Analyze the AuthorizationPolicies in the current namespace for Ambient Mesh compatibility. Show which policies are L4 (ztunnel-enforced) vs L7 (waypoint-required), and warn if L7 policies exist without a waypoint.",
-			Title:       "Ambient Policy Analysis",
+			Name:        "ambient-config-analysis",
+			Query:       "Analyze all Istio configurations in the current namespace for Ambient Mesh compatibility. Show which configs are L4 (ztunnel-processed) vs L7 (waypoint-required) including AuthorizationPolicies, VirtualServices, DestinationRules, RequestAuthentications, PeerAuthentications, WasmPlugins, and Telemetry. Warn if L7 configs exist without a waypoint.",
+			Title:       "Ambient Config Analysis",
 		},
 		{
 			Category:    "workload-details",
@@ -164,11 +164,11 @@ func Catalog() []Prompt {
 		},
 		{
 			Category:    "istio",
-			Description: "Review AuthorizationPolicies across namespaces for Ambient compatibility issues",
+			Description: "Review all Istio configs across namespaces for Ambient compatibility issues",
 			IsAmbient:   true,
-			Name:        "ambient-policy-audit",
-			Query:       "Audit AuthorizationPolicies across all Ambient namespaces. Report L7 policies in namespaces without waypoints, and recommend where waypoints should be deployed.",
-			Title:       "Ambient Policy Audit",
+			Name:        "ambient-config-audit",
+			Query:       "Audit all Istio configurations across all Ambient namespaces. Report L7 configs (AuthorizationPolicies, VirtualServices, RequestAuthentications, DestinationRules, WasmPlugins, Telemetry) in namespaces without waypoints, and recommend where waypoints should be deployed.",
+			Title:       "Ambient Config Audit",
 		},
 	}
 }

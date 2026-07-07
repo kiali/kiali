@@ -1,13 +1,17 @@
 - name: "analyze_ambient_policies"
-  description: "Analyzes AuthorizationPolicies in an Ambient Mesh namespace to determine if they will work correctly. Classifies policies as L4 (ztunnel-enforced) or L7 (waypoint-required) and warns about L7 policies in namespaces without waypoints. Use this when diagnosing policy enforcement issues in Ambient mode."
+  description: "Analyzes all Istio configurations in Ambient Mesh namespaces to determine if they will work correctly. Classifies each config as L4 (ztunnel-enforced) or L7 (waypoint-required). Analyzes: AuthorizationPolicies, PeerAuthentications, RequestAuthentications, VirtualServices, DestinationRules, WasmPlugins, and Telemetry. Warns about L7 configs in namespaces without waypoints. If no namespace is specified, analyzes ALL Ambient namespaces automatically. Use this when diagnosing config enforcement issues in Ambient mode or when planning waypoint deployment."
   toolset: [default, mcp]
   input_schema:
     type: "object"
-    required: ["namespace"]
     properties:
       namespace:
         type: "string"
-        description: "Namespace to analyze AuthorizationPolicies in."
+        description: "Optional: Single namespace to analyze. If omitted (along with namespaces), will analyze all Ambient namespaces."
+      namespaces:
+        type: "array"
+        items:
+          type: "string"
+        description: "Optional: Multiple specific namespaces to analyze in one call. Cannot be used with namespace parameter."
       clusterName:
         type: "string"
         description: "Optional cluster name. If not provided, will use the default cluster name in the Kiali KubeConfig."

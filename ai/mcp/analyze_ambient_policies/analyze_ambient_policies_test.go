@@ -4,7 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	networking_v1_api "istio.io/api/networking/v1"
 	security_v1_api "istio.io/api/security/v1"
+	telemetry_v1_api "istio.io/api/telemetry/v1"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIsL7Policy_HTTPMethods(t *testing.T) {
@@ -182,7 +186,7 @@ func TestGenerateSummary_AmbientWithoutWaypoint(t *testing.T) {
 
 	summary := generateSummary(1, 2, 2, nsStatus)
 	assert.Contains(t, summary, "WARNING")
-	assert.Contains(t, summary, "will NOT be enforced")
+	assert.Contains(t, summary, "will NOT work!")
 }
 
 func TestGenerateRecommendations_NeedWaypoint(t *testing.T) {
@@ -209,4 +213,185 @@ func TestGenerateRecommendations_NoIssues(t *testing.T) {
 	recommendations := generateRecommendations(nsStatus, 2, 0)
 	assert.NotEmpty(t, recommendations)
 	assert.Contains(t, recommendations[0], "No issues found")
+}
+
+// --- isL7Condition tests ---
+
+func TestIsL7Condition_DestinationPortIsL4(t *testing.T) {
+	assert.False(t, isL7Condition("destination.port"), "destination.port should be L4 (processed by ztunnel)")
+}
+
+func TestIsL7Condition_RequestHeaders(t *testing.T) {
+	assert.True(t, isL7Condition("request.headers[x-forwarded-for]"))
+}
+
+func TestIsL7Condition_RequestAuthClaims(t *testing.T) {
+	assert.True(t, isL7Condition("request.auth.claims[iss]"))
+}
+
+// --- isL7DestinationRule tests ---
+
+func TestIsL7DestinationRule_HTTPConnectionPool(t *testing.T) {
+	spec := &networking_v1_api.DestinationRule{
+		TrafficPolicy: &networking_v1_api.TrafficPolicy{
+			ConnectionPool: &networking_v1_api.ConnectionPoolSettings{
+				Http: &networking_v1_api.ConnectionPoolSettings_HTTPSettings{
+					Http1MaxPendingRequests: 1024,
+				},
+			},
+		},
+	}
+	isL7, reason := isL7DestinationRule(spec)
+	assert.True(t, isL7)
+	assert.Contains(t, reason, "HTTP connection pool")
+}
+
+func TestIsL7DestinationRule_HTTPConsistentHash(t *testing.T) {
+	spec := &networking_v1_api.DestinationRule{
+		TrafficPolicy: &networking_v1_api.TrafficPolicy{
+			LoadBalancer: &networking_v1_api.LoadBalancerSettings{
+				LbPolicy: &networking_v1_api.LoadBalancerSettings_ConsistentHash{
+					ConsistentHash: &networking_v1_api.LoadBalancerSettings_ConsistentHashLB{
+						HashKey: &networking_v1_api.LoadBalancerSettings_ConsistentHashLB_HttpHeaderName{
+							HttpHeaderName: "x-user",
+						},
+					},
+				},
+			},
+		},
+	}
+	isL7, reason := isL7DestinationRule(spec)
+	assert.True(t, isL7)
+	assert.Contains(t, reason, "HTTP-based load balancing")
+}
+
+func TestIsL7DestinationRule_L4Only(t *testing.T) {
+	spec := &networking_v1_api.DestinationRule{
+		TrafficPolicy: &networking_v1_api.TrafficPolicy{
+			Tls: &networking_v1_api.ClientTLSSettings{
+				Mode: networking_v1_api.ClientTLSSettings_ISTIO_MUTUAL,
+			},
+		},
+	}
+	isL7, _ := isL7DestinationRule(spec)
+	assert.False(t, isL7, "DestinationRule with only TLS settings should be L4")
+}
+
+func TestIsL7DestinationRule_Empty(t *testing.T) {
+	spec := &networking_v1_api.DestinationRule{}
+	isL7, _ := isL7DestinationRule(spec)
+	assert.False(t, isL7)
+}
+
+// --- isL7Telemetry tests ---
+
+func TestIsL7Telemetry_Tracing(t *testing.T) {
+	spec := &telemetry_v1_api.Telemetry{
+		Tracing: []*telemetry_v1_api.Tracing{
+			{DisableSpanReporting: nil},
+		},
+	}
+	isL7, reason := isL7Telemetry(spec)
+	assert.True(t, isL7)
+	assert.Contains(t, reason, "tracing")
+}
+
+func TestIsL7Telemetry_AccessLogging(t *testing.T) {
+	spec := &telemetry_v1_api.Telemetry{
+		AccessLogging: []*telemetry_v1_api.AccessLogging{
+			{},
+		},
+	}
+	isL7, reason := isL7Telemetry(spec)
+	assert.True(t, isL7)
+	assert.Contains(t, reason, "access logging")
+}
+
+func TestIsL7Telemetry_MetricOverrides(t *testing.T) {
+	spec := &telemetry_v1_api.Telemetry{
+		Metrics: []*telemetry_v1_api.Metrics{
+			{
+				Overrides: []*telemetry_v1_api.MetricsOverrides{
+					{},
+				},
+			},
+		},
+	}
+	isL7, reason := isL7Telemetry(spec)
+	assert.True(t, isL7)
+	assert.Contains(t, reason, "HTTP metrics")
+}
+
+func TestIsL7Telemetry_L4Only(t *testing.T) {
+	spec := &telemetry_v1_api.Telemetry{}
+	isL7, reason := isL7Telemetry(spec)
+	assert.False(t, isL7)
+	assert.Contains(t, reason, "L4 metrics")
+}
+
+// --- analyzeVirtualService tests ---
+
+func TestAnalyzeVirtualService_HTTPRoutes_IsL7(t *testing.T) {
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-vs"},
+		Spec: networking_v1_api.VirtualService{
+			Http: []*networking_v1_api.HTTPRoute{
+				{Name: "route-1"},
+			},
+		},
+	}
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: true, WaypointName: "waypoint"}
+	result := analyzeVirtualService(vs, nsStatus)
+	assert.Equal(t, "L7", result.Layer)
+	assert.Empty(t, result.Warning, "No warning expected when waypoint exists")
+}
+
+func TestAnalyzeVirtualService_TCPOnly_IsL4(t *testing.T) {
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "tcp-vs"},
+		Spec: networking_v1_api.VirtualService{
+			Tcp: []*networking_v1_api.TCPRoute{
+				{},
+			},
+		},
+	}
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
+	result := analyzeVirtualService(vs, nsStatus)
+	assert.Equal(t, "L4", result.Layer, "TCP-only VirtualService should be L4")
+	assert.Empty(t, result.Warning, "No warning for L4 config without waypoint")
+}
+
+func TestAnalyzeVirtualService_HTTPNoWaypoint_HasWarning(t *testing.T) {
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-vs"},
+		Spec: networking_v1_api.VirtualService{
+			Http: []*networking_v1_api.HTTPRoute{
+				{Name: "route-1"},
+			},
+		},
+	}
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
+	result := analyzeVirtualService(vs, nsStatus)
+	assert.Equal(t, "L7", result.Layer)
+	assert.NotEmpty(t, result.Warning)
+	assert.Contains(t, result.Warning, "NO waypoint")
+}
+
+// --- ambientNoWaypointWarning tests ---
+
+func TestAmbientNoWaypointWarning_NotAmbient(t *testing.T) {
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: false}
+	assert.Empty(t, ambientNoWaypointWarning(nsStatus, "consequence"))
+}
+
+func TestAmbientNoWaypointWarning_AmbientWithWaypoint(t *testing.T) {
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: true}
+	assert.Empty(t, ambientNoWaypointWarning(nsStatus, "consequence"))
+}
+
+func TestAmbientNoWaypointWarning_AmbientNoWaypoint(t *testing.T) {
+	nsStatus := NamespaceAmbientStatus{Name: "test-ns", IsAmbient: true, HasWaypoint: false}
+	warning := ambientNoWaypointWarning(nsStatus, "Things will break.")
+	assert.Contains(t, warning, "NO waypoint")
+	assert.Contains(t, warning, "Things will break.")
 }
