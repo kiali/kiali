@@ -16,21 +16,22 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { ObjectCheck, Validations, ValidationTypes } from '../../types/IstioObjects';
-import { WorkloadHealth } from '../../types/Health';
-import { Workload } from '../../types/Workload';
+import type { ObjectCheck, Validations } from '../../types/IstioObjects';
+import { ValidationTypes } from '../../types/IstioObjects';
+import type { WorkloadHealth } from '../../types/Health';
+import type { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import { DurationInSeconds } from 'types/Common';
-import { isIstioNamespace, serverConfig, getAppLabelName, AMBIENT_WAYPOINT_GATEWAY_LABEL } from '../../config/ServerConfig';
+import type { DurationInSeconds } from 'types/Common';
 import {
-  gvkType,
-  IstioConfigList,
-  skipUnrelatedK8sGateways,
-  toIstioItems,
-  validationKey
-} from '../../types/IstioConfigList';
+  isIstioNamespace,
+  serverConfig,
+  getAppLabelName,
+  AMBIENT_WAYPOINT_GATEWAY_LABEL
+} from '../../config/ServerConfig';
+import type { IstioConfigList } from '../../types/IstioConfigList';
+import { gvkType, skipUnrelatedK8sGateways, toIstioItems, validationKey } from '../../types/IstioConfigList';
 import { WorkloadPods } from './WorkloadPods';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
@@ -51,7 +52,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { Paths } from '../../config';
-import { navigateToFilteredList, buildWorkloadMetadataPatch } from '../PageUtils';
+import { navigateToFilteredList, buildWorkloadMetadataPatch, getWorkloadAnnotations } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 
@@ -509,7 +510,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     if (!workload) {
       return;
     }
-    const original = (field === 'labels' ? workload.labels : workload.annotations) ?? {};
+    const original = (field === 'labels' ? workload.labels : getWorkloadAnnotations(workload)) ?? {};
     const jsonPatch = buildWorkloadMetadataPatch(field, original, updated, workload.gvk.Kind);
 
     API.updateWorkload(this.props.namespace, workload.name, workload.gvk, jsonPatch, undefined, workload.cluster)
@@ -543,7 +544,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     return (
       <StackItem key="annotations" data-test="workload-annotations-card">
         <EditableAnnotationsCard
-          annotations={workload.annotations ?? {}}
+          annotations={getWorkloadAnnotations(workload)}
           canEdit={!serverConfig.deployment.viewOnlyMode}
           onSave={annotations => this.handleSaveMetadata('annotations', annotations)}
           prioritizeIstio
@@ -554,6 +555,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     );
   }
 
+  /* eslint-disable-next-line @typescript-eslint/member-ordering -- render follows existing private helper layout */
   render(): React.ReactNode {
     const workload = this.props.workload;
     const pods = workload?.pods ?? [];

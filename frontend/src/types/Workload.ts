@@ -1,5 +1,5 @@
-import { WorkloadHealth, WorkloadHealthResponse } from './Health';
-import {
+import type { WorkloadHealth, WorkloadHealthResponse } from './Health';
+import type {
   GroupVersionKind,
   ObjectReference,
   ObjectValidation,
@@ -9,7 +9,7 @@ import {
   WorkloadGroupEntry
 } from './IstioObjects';
 import { InstanceType } from 'types/Common';
-import { ServiceInfo } from './ServiceInfo';
+import type { ServiceInfo } from './ServiceInfo';
 
 export type WorkloadId = {
   namespace: string;
@@ -62,6 +62,7 @@ export interface Workload {
   runtimes: Runtime[];
   services: Service[];
   spireInfo?: SpireInfo;
+  templateAnnotations?: { [key: string]: string };
   validations?: Validations;
   versionLabel: boolean;
   waypointServices?: WaypointInfo[];

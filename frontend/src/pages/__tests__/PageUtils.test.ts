@@ -1,4 +1,9 @@
-import { buildMetadataPatch, buildWorkloadMetadataPatch, navigateToFilteredList } from '../PageUtils';
+import {
+  buildMetadataPatch,
+  buildWorkloadMetadataPatch,
+  getWorkloadAnnotations,
+  navigateToFilteredList
+} from '../PageUtils';
 
 const mockResetFilters = rstest.fn();
 const mockNavigate = rstest.fn();
@@ -72,6 +77,35 @@ describe('buildMetadataPatch', () => {
     expect(result).toEqual({
       metadata: { labels: {} }
     });
+  });
+});
+
+describe('getWorkloadAnnotations', () => {
+  it('returns template annotations for templated controller workloads', () => {
+    const annotations = getWorkloadAnnotations({
+      annotations: { 'deployment.kubernetes.io/revision': '1' },
+      gvk: { Kind: 'Deployment' },
+      templateAnnotations: { 'proxy.istio.io/config': 'tracing: {}' }
+    });
+    expect(annotations).toEqual({ 'proxy.istio.io/config': 'tracing: {}' });
+  });
+
+  it('falls back to workload annotations when template annotations are empty', () => {
+    const annotations = getWorkloadAnnotations({
+      annotations: { note: 'controller-level' },
+      gvk: { Kind: 'Deployment' },
+      templateAnnotations: {}
+    });
+    expect(annotations).toEqual({ note: 'controller-level' });
+  });
+
+  it('returns workload annotations for non-templated kinds', () => {
+    const annotations = getWorkloadAnnotations({
+      annotations: { note: 'pod-level' },
+      gvk: { Kind: 'Pod' },
+      templateAnnotations: { ignored: 'value' }
+    });
+    expect(annotations).toEqual({ note: 'pod-level' });
   });
 });
 

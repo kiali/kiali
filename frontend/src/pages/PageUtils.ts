@@ -40,6 +40,25 @@ const templatedWorkloadKinds = new Set([
   'DaemonSet'
 ]);
 
+export const isTemplatedWorkloadKind = (kind: string): boolean => templatedWorkloadKinds.has(kind);
+
+/** Returns pod-template annotations for controller workloads when available. */
+export const getWorkloadAnnotations = (workload: {
+  annotations?: Record<string, string>;
+  gvk?: { Kind?: string };
+  templateAnnotations?: Record<string, string>;
+}): Record<string, string> => {
+  const kind = workload.gvk?.Kind ?? '';
+  if (
+    isTemplatedWorkloadKind(kind) &&
+    workload.templateAnnotations &&
+    Object.keys(workload.templateAnnotations).length > 0
+  ) {
+    return workload.templateAnnotations;
+  }
+  return workload.annotations ?? {};
+};
+
 export const buildWorkloadMetadataPatch = (
   field: 'labels' | 'annotations',
   original: Record<string, string>,
