@@ -293,6 +293,28 @@ func TestRaces(t *testing.T) {
 	wg.Wait()
 }
 
+func TestSetDefaultsEmptyIstioIdentityDomain(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	conf.ExternalServices.Istio.IstioIdentityDomain = ""
+	Set(conf)
+
+	assert.Equal(t, "svc.cluster.local", Get().ExternalServices.Istio.IstioIdentityDomain)
+}
+
+func TestSetPreservesExplicitIstioIdentityDomain(t *testing.T) {
+	original := Get()
+	defer Set(original)
+
+	conf := NewConfig()
+	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.my-custom.domain"
+	Set(conf)
+
+	assert.Equal(t, "svc.my-custom.domain", Get().ExternalServices.Istio.IstioIdentityDomain)
+}
+
 func TestAllNamespacesAccessible(t *testing.T) {
 	// cluster wide access flag is the only one that matters
 	cases := map[string]struct {
