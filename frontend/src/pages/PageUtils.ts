@@ -45,8 +45,11 @@ export const isTemplatedWorkloadKind = (kind: string): boolean => templatedWorkl
 export const LAST_APPLIED_ANNOTATION = 'kubectl.kubernetes.io/last-applied-configuration';
 
 /** Hide noisy system annotations from display and edit diffs. */
-export const filterHiddenWorkloadAnnotations = (annotations: Record<string, string>): Record<string, string> =>
+export const filterHiddenAnnotations = (annotations: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(annotations ?? {}).filter(([key]) => key !== LAST_APPLIED_ANNOTATION));
+
+/** @deprecated use filterHiddenAnnotations */
+export const filterHiddenWorkloadAnnotations = filterHiddenAnnotations;
 
 export type WorkloadAnnotationSources = {
   annotations?: Record<string, string>;
@@ -61,11 +64,11 @@ export type WorkloadAnnotationSources = {
  */
 export const getWorkloadAnnotations = (workload: WorkloadAnnotationSources): Record<string, string> => {
   const kind = workload.gvk?.Kind ?? '';
-  const controller = filterHiddenWorkloadAnnotations(workload.annotations ?? {});
+  const controller = filterHiddenAnnotations(workload.annotations ?? {});
   if (!isTemplatedWorkloadKind(kind)) {
     return controller;
   }
-  const template = filterHiddenWorkloadAnnotations(workload.templateAnnotations ?? {});
+  const template = filterHiddenAnnotations(workload.templateAnnotations ?? {});
   return { ...controller, ...template };
 };
 
@@ -79,8 +82,8 @@ export const buildWorkloadAnnotationsPatch = (
     return buildWorkloadMetadataPatch('annotations', getWorkloadAnnotations(workload), updated, kind);
   }
 
-  const controllerOriginal = filterHiddenWorkloadAnnotations(workload.annotations ?? {});
-  const templateOriginal = filterHiddenWorkloadAnnotations(workload.templateAnnotations ?? {});
+  const controllerOriginal = filterHiddenAnnotations(workload.annotations ?? {});
+  const templateOriginal = filterHiddenAnnotations(workload.templateAnnotations ?? {});
   const displayOriginal = getWorkloadAnnotations(workload);
 
   const controllerPatch: Record<string, string | null> = {};
@@ -120,6 +123,15 @@ export const buildWorkloadAnnotationsPatch = (
   }
 
   return JSON.stringify(patch);
+};
+
+/** Re-attach hidden annotations so saves do not delete system-managed metadata. */
+export const preserveHiddenAnnotations = (
+  original: Record<string, string>,
+  updatedVisible: Record<string, string>
+): Record<string, string> => {
+  const hidden = Object.fromEntries(Object.entries(original ?? {}).filter(([key]) => key === LAST_APPLIED_ANNOTATION));
+  return { ...hidden, ...updatedVisible };
 };
 
 export const buildWorkloadMetadataPatch = (

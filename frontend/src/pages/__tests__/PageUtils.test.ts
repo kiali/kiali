@@ -4,6 +4,7 @@ import {
   buildWorkloadMetadataPatch,
   getWorkloadAnnotations,
   LAST_APPLIED_ANNOTATION,
+  preserveHiddenAnnotations,
   navigateToFilteredList
 } from '../PageUtils';
 
@@ -78,6 +79,20 @@ describe('buildMetadataPatch', () => {
     const result = JSON.parse(buildMetadataPatch('labels', {}, {}));
     expect(result).toEqual({
       metadata: { labels: {} }
+    });
+  });
+});
+
+describe('preserveHiddenAnnotations', () => {
+  it('re-attaches last-applied-configuration on save', () => {
+    const original = {
+      [LAST_APPLIED_ANNOTATION]: '{"apiVersion":"v1"}',
+      note: 'old'
+    };
+    const updated = preserveHiddenAnnotations(original, { note: 'new' });
+    expect(updated).toEqual({
+      [LAST_APPLIED_ANNOTATION]: '{"apiVersion":"v1"}',
+      note: 'new'
     });
   });
 });
