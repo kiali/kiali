@@ -245,13 +245,16 @@ func TestValidateReadOnlyIstioConfigInput(t *testing.T) {
 			wantErr: "invalid action",
 		},
 		{
-			name: "valid get",
+			name: "valid get networking",
 			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "VirtualService", "object": "x"},
 		},
 		{
-			name:    "get invalid kind for networking",
-			args:    map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "WasmPlugin", "object": "x"},
-			wantErr: "invalid kind",
+			name: "valid get gateway API",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "gateway.networking.k8s.io", "version": "v1", "kind": "HTTPRoute", "object": "bookinfo"},
+		},
+		{
+			name: "valid get extensions",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "extensions.istio.io", "version": "v1alpha1", "kind": "WasmPlugin", "object": "x"},
 		},
 		{
 			name:    "list filter kind without group",
@@ -264,22 +267,43 @@ func TestValidateReadOnlyIstioConfigInput(t *testing.T) {
 			wantErr: "kind is required",
 		},
 		{
-			name:    "list filter invalid group",
-			args:    map[string]interface{}{"action": "list", "group": "gateway.networking.k8s.io", "kind": "Gateway"},
-			wantErr: "invalid group",
+			name: "list filter gateway API group is now valid",
+			args: map[string]interface{}{"action": "list", "group": "gateway.networking.k8s.io", "kind": "Gateway"},
 		},
 		{
-			name:    "list filter invalid kind for networking",
-			args:    map[string]interface{}{"action": "list", "group": "networking.istio.io", "kind": "WasmPlugin"},
-			wantErr: "invalid kind",
-		},
-		{
-			name: "list filter valid networking",
+			name: "list filter networking",
 			args: map[string]interface{}{"action": "list", "group": "networking.istio.io", "kind": "Sidecar"},
 		},
 		{
-			name: "list filter valid security",
+			name: "list filter security",
 			args: map[string]interface{}{"action": "list", "group": "security.istio.io", "kind": "PeerAuthentication"},
+		},
+		{
+			name: "list filter extensions",
+			args: map[string]interface{}{"action": "list", "group": "extensions.istio.io", "kind": "WasmPlugin"},
+		},
+		{
+			name:    "list filter unknown group",
+			args:    map[string]interface{}{"action": "list", "group": "unknown.example.com", "kind": "Foo"},
+			wantErr: "not a supported Istio or Gateway API group",
+		},
+		{
+			name:    "get unknown group",
+			args:    map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "unknown.example.com", "version": "v1", "kind": "Foo", "object": "x"},
+			wantErr: "not a supported Istio or Gateway API group",
+		},
+		{
+			name:    "get invalid kind for valid group",
+			args:    map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "networking.istio.io", "version": "v1", "kind": "UnknownKind", "object": "x"},
+			wantErr: "invalid kind",
+		},
+		{
+			name: "get telemetry",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "telemetry.istio.io", "version": "v1", "kind": "Telemetry", "object": "x"},
+		},
+		{
+			name: "get inference pool",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "inference.networking.k8s.io", "version": "v1alpha2", "kind": "InferencePool", "object": "x"},
 		},
 	}
 
@@ -569,7 +593,14 @@ func TestExecuteReadOnly_ListSuccess(t *testing.T) {
 
 	result, ok := res.(IstioListResult)
 	require.True(t, ok, "expected IstioListResult, got %T", res)
-	assert.GreaterOrEqual(t, len(result.Items), 2)
+	// Count total resources across all namespaces and GVK groups.
+	total := 0
+	for _, kinds := range result.Namespaces {
+		for _, kvr := range kinds {
+			total += len(kvr.Valid) + len(kvr.Invalid)
+		}
+	}
+	assert.GreaterOrEqual(t, total, 2)
 }
 
 func TestExecuteReadOnly_GetSuccess(t *testing.T) {
@@ -692,11 +723,11 @@ func TestExecuteReadOnly_UnmanagedGVK(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "invalid group")
+	// Now caught at input validation level: unknown group is rejected before reaching business layer.
+	assert.Contains(t, resStr, "not a supported Istio or Gateway API group")
 }
 
-// manage_istio_config only allows networking.istio.io and security.istio.io; Gateway API
-// groups are rejected before GetIstioAPI (no v1beta1 hint path for this tool).
+// gateway.networking.k8s.io with v1beta1 is not managed; the hint to use v1 should appear.
 func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	businessLayer, conf := setupTest(t)
 	r := reqWithAuth()
@@ -714,7 +745,7 @@ func TestExecuteReadOnly_GatewayAPIv1beta1Hint(t *testing.T) {
 	assert.Equal(t, http.StatusOK, status)
 	resStr, ok := res.(string)
 	require.True(t, ok)
-	assert.Contains(t, resStr, "invalid group")
+	assert.Contains(t, resStr, "v1")
 }
 
 func TestExecute_DeleteNonExistentResource(t *testing.T) {
