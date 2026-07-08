@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { ActionGroup, Alert, Button, List, ListItem, TextInput, Title, TitleSizes } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { IRow, Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
+import type { IRow } from '@patternfly/react-table';
+import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
@@ -93,14 +94,6 @@ export class WizardLabels extends React.Component<Props, State> {
       validation.push(t('Empty keys found.'));
     }
 
-    if (
-      Array.from(this.state.labels.values())
-        .map(k => k[1])
-        .filter(e => e.length === 0).length > 0
-    ) {
-      validation.push(t('Empty values found.'));
-    }
-
     this.setState({ validation });
 
     return validation.length === 0 ? true : false;
@@ -142,7 +135,6 @@ export class WizardLabels extends React.Component<Props, State> {
 
             <Th width={40}>
               <TextInput
-                aria-invalid={value === ''}
                 id={`labelInputForValue_${index}`}
                 onChange={(_event, v) => this.changeLabel([key, v], index)}
                 placeholder={t('Value')}

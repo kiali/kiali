@@ -22,6 +22,7 @@ type EditableAnnotationsCardProps = {
   annotations: Record<string, string>;
   canEdit: boolean;
   numAnnotations?: number;
+  onEditClick?: () => void;
   onSave: (annotations: Record<string, string>) => void;
   prioritizeIstio?: boolean;
   prioritizeIstioCount?: boolean;
@@ -52,6 +53,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
   annotations,
   canEdit,
   numAnnotations,
+  onEditClick,
   onSave,
   prioritizeIstio = false,
   prioritizeIstioCount = false,
@@ -82,7 +84,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
         <Button
           variant="plain"
           size="sm"
-          onClick={() => setShowEditor(true)}
+          onClick={onEditClick ?? (() => setShowEditor(true))}
           icon={canEdit ? <KialiIcon.PencilAlt /> : <KialiIcon.ExpandArrows />}
         />
       </Tooltip>

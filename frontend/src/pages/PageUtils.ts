@@ -48,9 +48,6 @@ export const LAST_APPLIED_ANNOTATION = 'kubectl.kubernetes.io/last-applied-confi
 export const filterHiddenAnnotations = (annotations: Record<string, string>): Record<string, string> =>
   Object.fromEntries(Object.entries(annotations ?? {}).filter(([key]) => key !== LAST_APPLIED_ANNOTATION));
 
-/** @deprecated use filterHiddenAnnotations */
-export const filterHiddenWorkloadAnnotations = filterHiddenAnnotations;
-
 export type WorkloadAnnotationSources = {
   annotations?: Record<string, string>;
   gvk?: { Kind?: string };

@@ -81,6 +81,15 @@ describe('buildMetadataPatch', () => {
       metadata: { labels: {} }
     });
   });
+
+  it('preserves empty string values in the patch', () => {
+    const original = { app: 'ratings' };
+    const updated = { app: 'ratings', enabled: '' };
+    const result = JSON.parse(buildMetadataPatch('annotations', original, updated));
+    expect(result).toEqual({
+      metadata: { annotations: { app: 'ratings', enabled: '' } }
+    });
+  });
 });
 
 describe('preserveHiddenAnnotations', () => {
@@ -212,6 +221,27 @@ describe('buildWorkloadAnnotationsPatch', () => {
     expect(result).toEqual({
       spec: { template: { metadata: { annotations: { 'proxy.istio.io/config': null } } } }
     });
+  });
+
+  it('preserves empty string values in the patch', () => {
+    const result = JSON.parse(
+      buildWorkloadAnnotationsPatch(deployment, {
+        'deployment.kubernetes.io/revision': '1',
+        'proxy.istio.io/config': 'tracing: {}',
+        'sidecar.istio.io/inject': ''
+      })
+    );
+    expect(result).toEqual({
+      spec: { template: { metadata: { annotations: { 'sidecar.istio.io/inject': '' } } } }
+    });
+  });
+
+  it('returns empty object when nothing changed', () => {
+    const result = buildWorkloadAnnotationsPatch(deployment, {
+      'deployment.kubernetes.io/revision': '1',
+      'proxy.istio.io/config': 'tracing: {}'
+    });
+    expect(result).toBe('{}');
   });
 });
 
