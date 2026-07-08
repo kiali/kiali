@@ -209,7 +209,26 @@ When('user adds key {string} and value {string} for and saves', (key: string, va
 });
 
 Then('{string} should be in preview', (value: string) => {
-  cy.get('#ace-editor').contains(value);
+  cy.get('[data-test="editor-preview"] .monaco-editor').should('exist');
+
+  cy.window({ timeout: 60000 }).should(win => {
+    const monaco = (win as any).monaco;
+    expect(monaco, 'Monaco global should be available').to.exist;
+
+    const editors = monaco.editor.getEditors();
+    expect(editors.length, 'Monaco should have at least one editor').to.be.greaterThan(0);
+
+    const text = editors
+      .map((ed: any) => {
+        try {
+          return ed.getValue();
+        } catch {
+          return '';
+        }
+      })
+      .find((v: string) => v.includes(value));
+    expect(text, `An editor should contain "${value}"`).to.exist;
+  });
 });
 
 Then('user selects {string} from the cluster dropdown', (clusters: string) => {

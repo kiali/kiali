@@ -245,7 +245,26 @@ When('user clicks in the {string} {string} {string} reference', (namespace: stri
 Then('user sees the {string} regex in the editor', (regexContent: string) => {
   const re = new RegExp(regexContent);
 
-  cy.get('.ace_content').invoke('text').should('match', re);
+  cy.get('[data-test="editor-preview"], [data-test="istio-config-editor"]', { timeout: 60000 }).should('exist');
+
+  cy.window({ timeout: 60000 }).should(win => {
+    const monaco = (win as any).monaco;
+    expect(monaco, 'Monaco global should be available').to.exist;
+
+    const editors = monaco.editor.getEditors();
+    expect(editors.length, 'Monaco should have at least one editor').to.be.greaterThan(0);
+
+    const text = editors
+      .map((ed: any) => {
+        try {
+          return ed.getValue();
+        } catch {
+          return '';
+        }
+      })
+      .find((v: string) => re.test(v));
+    expect(text, `An editor should match regex "${regexContent}"`).to.exist;
+  });
 });
 
 When('user clicks on Advanced Options', () => {

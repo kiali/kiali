@@ -1,7 +1,6 @@
 import { Namespace } from './Namespace';
 import { ResourcePermissions } from './Permissions';
 import { ObjectValidation, IstioObject, References, HelpMessage, K8sResource } from './IstioObjects';
-import { AceOptions } from 'react-ace/types';
 
 export type IstioConfigId = {
   namespace: string;
@@ -25,11 +24,6 @@ export interface IstioConfigDetailsQuery {
   help?: boolean;
   validate?: boolean;
 }
-
-export const aceOptions: AceOptions = {
-  autoScrollEditorIntoView: true,
-  showPrintMargin: false
-};
 
 export const yamlDumpOptions = {
   noArrayIndent: true,

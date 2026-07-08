@@ -4,13 +4,19 @@ When('user updates the {string} AuthorizationPolicy using the text field', (name
   cy.intercept('PATCH', `**/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${name}*`, {
     statusCode: 200
   }).as(`${name}-update`);
-  cy.window()
-    .then(win => {
-      win.eval("let editor = ace.edit('ace-editor');editor.setValue(editor.getValue() + '     ');");
-    })
-    .then(() => {
-      cy.get('button').contains('Save').click();
-    });
+  cy.get('[data-test="istio-config-editor"] .monaco-editor').should('be.visible');
+  cy.window().then((win: any) => {
+    const monaco = win.monaco;
+    const editors = monaco.editor.getEditors();
+    const ed = editors[editors.length - 1];
+    const model = ed.getModel();
+    const lastLine = model.getLineCount();
+    const lastCol = model.getLineMaxColumn(lastLine);
+    ed.executeEdits('cypress-test', [
+      { range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }
+    ]);
+  });
+  cy.get('button').contains('Save').should('not.be.disabled').click();
 });
 
 When('user chooses to delete the object', () => {
@@ -22,7 +28,7 @@ When('user chooses to delete the object', () => {
 });
 
 Then('user can see istio config editor', () => {
-  cy.get('#ace-editor').should('be.visible');
+  cy.get('[data-test="istio-config-editor"] .monaco-editor').should('be.visible');
 });
 
 Then('cluster badge for {string} cluster should be visible in the Istio config side panel', (cluster: string) => {

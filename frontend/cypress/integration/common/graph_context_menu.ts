@@ -93,8 +93,7 @@ Then('user should see the read-only YAML preview for the {string} action', (wiza
       cy.contains(title).should('be.visible');
       cy.contains('Copy').should('be.visible');
       cy.contains('Download').should('be.visible');
-      cy.get('.ace_editor').should('exist');
-      cy.get('textarea[readonly]').should('exist');
+      cy.get('.monaco-editor').should('exist');
       cy.contains('button', 'Close').should('be.visible');
     });
 });
@@ -107,8 +106,10 @@ Then('user should see the {string} item of the context menu disabled in view-onl
     .should('be.disabled')
     .parent()
     .parent()
-    .trigger('mouseover', { force: true })
-    .trigger('mouseenter', { force: true });
+    .as('disabledMenuItem');
+
+  cy.get('@disabledMenuItem').trigger('mouseover', { force: true });
+  cy.get('@disabledMenuItem').trigger('mouseenter', { force: true });
 
   cy.get('[role="tooltip"]').should('be.visible').and('contain', VIEW_ONLY_TOOLTIP);
 });
@@ -129,14 +130,10 @@ Then(
   'user should see no cluster parameter in the url when clicking the {string} link in the context menu',
   (linkText: string) => {
     cy.get('.pf-topology-context-menu__c-dropdown__menu').within(() => {
-      cy.get('button')
-        .contains(linkText)
-        .click()
-        .then(() => {
-          cy.url().should('not.include', 'clusterName=');
-          cy.go('back');
-        });
+      cy.get('button').contains(linkText).click();
     });
+    cy.url().should('not.include', 'clusterName=');
+    cy.go('back');
   }
 );
 
@@ -144,14 +141,10 @@ Then(
   'user should see the {string} cluster parameter in the url when clicking the {string} link in the context menu',
   (cluster: string, linkText: string) => {
     cy.get('.pf-topology-context-menu__c-dropdown__menu').within(() => {
-      cy.get('button')
-        .contains(linkText)
-        .click()
-        .then(() => {
-          cy.url().should('include', `clusterName=${cluster}`);
-          cy.go('back');
-        });
+      cy.get('button').contains(linkText).click();
     });
+    cy.url().should('include', `clusterName=${cluster}`);
+    cy.go('back');
   }
 );
 

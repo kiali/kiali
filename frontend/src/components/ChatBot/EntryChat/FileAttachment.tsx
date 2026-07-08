@@ -1,5 +1,5 @@
 import React from 'react';
-import AceEditor from 'react-ace';
+import Editor from '@monaco-editor/react';
 import { FileDetailsLabel } from '@patternfly/chatbot';
 import { Button, Stack, StackItem } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
@@ -198,15 +198,13 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
       >
         <Stack hasGutter>
           <StackItem>
-            <AceEditor
-              mode="yaml"
-              theme={isDarkTheme ? 'twilight' : 'eclipse'}
-              width="100%"
-              height="350px"
+            <Editor
               value={yamlText}
-              onChange={(v: string) => setYamlText(v)}
-              wrapEnabled={true}
-              setOptions={{ useWorker: false, tabSize: 2 }}
+              language="yaml"
+              theme={isDarkTheme ? 'vs-dark' : 'light'}
+              height="350px"
+              onChange={v => setYamlText(v || '')}
+              options={{ wordWrap: 'on', tabSize: 2, scrollBeyondLastLine: false }}
             />
           </StackItem>
         </Stack>

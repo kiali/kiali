@@ -1,24 +1,33 @@
-import { HelpMessage, ObjectCheck, ObjectValidation } from './IstioObjects';
-import { Annotation } from 'react-ace/types';
-import { IMarker } from 'react-ace';
+import type { HelpMessage, ObjectCheck, ObjectValidation } from './IstioObjects';
+import type { editor } from 'monaco-editor';
+import { MarkerSeverity } from 'monaco-editor';
 import { YAMLException, loadAll } from 'js-yaml';
-import {
-  istioValidationErrorStyle,
-  istioValidationInfoStyle,
-  istioValidationWarningStyle
-} from 'styles/AceEditorStyle';
+import type { Monaco } from '@monaco-editor/react';
 
-export interface AceValidations {
-  annotations: Array<Annotation>;
-  markers: Array<IMarker>;
+export type MonacoInstance = Monaco;
+
+export interface EditorMarker {
+  endColumn: number;
+  endLineNumber: number;
+  message: string;
+  severity: MarkerSeverity;
+  startColumn: number;
+  startLineNumber: number;
 }
 
-interface AceCheck {
-  annotation: Annotation;
-  marker: IMarker;
+export interface EditorAnnotation {
+  column: number;
+  row: number;
+  text: string;
+  type: string;
 }
 
-interface AceMarker {
+export interface EditorValidations {
+  annotations: Array<EditorAnnotation>;
+  markers: Array<EditorMarker>;
+}
+
+interface MarkerPosition {
   endCol: number;
   endRow: number;
   position: number;
@@ -71,7 +80,6 @@ export const rowColToPos = (yaml: string, row: number, col: number): number => {
       currentCol++;
     }
     if (currentRow === row && currentCol === col) {
-      // If col == 0, pos is NL char, so returned pos should be first char after NL
       return col === 0 ? i + 1 : i;
     }
   }
@@ -93,9 +101,9 @@ export const parseLine = (yaml: string, row: number): string => {
   return yaml.substring(i + 1, yaml.indexOf('\n', i + 1));
 };
 
-export const parseHelpAnnotations = (yaml: string, helpMessages: HelpMessage[]): Annotation[] => {
-  let annotations: Annotation[] = [];
-  let lastPosition = -1;
+export const parseHelpAnnotations = (yaml: string, helpMessages: HelpMessage[]): EditorAnnotation[] => {
+  const annotations: EditorAnnotation[] = [];
+  const lastPosition = -1;
 
   helpMessages.forEach(hm => {
     const marker = parseMarker(
@@ -105,11 +113,11 @@ export const parseHelpAnnotations = (yaml: string, helpMessages: HelpMessage[]):
       false
     );
 
-    const annotation = {
+    const annotation: EditorAnnotation = {
       row: marker.startRow,
       column: marker.startCol,
       type: 'info',
-      text: 'This field has help information. Check the side panel for more information.'
+      text: 'This field has help information. Click on the YAML field and check the side panel for more details.'
     };
 
     if (marker.position !== -1) {
@@ -131,8 +139,8 @@ const parseMarker = (
   token: string,
   isArray: boolean,
   arrayIndex?: number
-): AceMarker => {
-  const aceMarker: AceMarker = {
+): MarkerPosition => {
+  const markerPos: MarkerPosition = {
     startRow: 0,
     startCol: 0,
     endRow: 0,
@@ -142,9 +150,7 @@ const parseMarker = (
 
   let tokenPos = startsFrom;
 
-  // Find start of the spec part first, this should skip the whole metadata part
   if (startsFrom < 0) {
-    // Use a regular expression to find 'spec:', ignore 'f:spec:' which comes in 'managedFields:'
     const regex = /\b(?<!f:)spec:/g;
     const match = regex.exec(yaml.slice(tokenPos < 0 ? 0 : tokenPos));
 
@@ -155,24 +161,20 @@ const parseMarker = (
     }
   }
 
-  // Find initial token position
   tokenPos = yaml.indexOf(token, tokenPos);
   if (tokenPos < 0) {
-    return aceMarker;
+    return markerPos;
   }
 
   const maxRows = numRows(yaml);
 
-  // Array should find first '-' token to situate pos
   if (isArray && arrayIndex !== undefined) {
     tokenPos = yaml.indexOf('-', tokenPos);
-    // We should find the right '-' under the same col of the yaml
     const firstArrayRowCol = posToRowCol(yaml, tokenPos);
     let row = firstArrayRowCol.row;
     const col = firstArrayRowCol.col;
     let arrayIndexPos = tokenPos;
     let indexRow = 0;
-    // Iterate to find next '-' token according arrayIndex
     while (row < maxRows && indexRow < arrayIndex) {
       row++;
       const checkPos = rowColToPos(yaml, row, col);
@@ -182,126 +184,117 @@ const parseMarker = (
       }
     }
     const arrayRowCol = posToRowCol(yaml, arrayIndexPos);
-    aceMarker.position = arrayIndexPos + 1; // Increase the index to not repeat same finding on next iteration
-    aceMarker.startRow = arrayRowCol.row;
-    aceMarker.startCol = arrayRowCol.col;
+    markerPos.position = arrayIndexPos + 1;
+    markerPos.startRow = arrayRowCol.row;
+    markerPos.startCol = arrayRowCol.col;
   } else {
     const tokenRowCol = posToRowCol(yaml, tokenPos);
-    aceMarker.position = tokenPos + token.length; // Increase the index to not repeat same finding on next iteration
-    aceMarker.startRow = tokenRowCol.row;
-    aceMarker.startCol = tokenRowCol.col;
+    markerPos.position = tokenPos + token.length;
+    markerPos.startRow = tokenRowCol.row;
+    markerPos.startCol = tokenRowCol.col;
   }
 
-  // Once start is calculated, we should calculate the end of the element iterating by rows
-  for (let row = aceMarker.startRow + 1; row < maxRows + 1; row++) {
-    // It searches by row and column, starting from the beginning of the line
-    for (let col = 0; col <= aceMarker.startCol; col++) {
+  for (let row = markerPos.startRow + 1; row < maxRows + 1; row++) {
+    for (let col = 0; col <= markerPos.startCol; col++) {
       const endTokenPos = rowColToPos(yaml, row, col);
-      // We need to differentiate if token is an array or not to mark the end of the mark
       if (yaml.charAt(endTokenPos) !== ' ' && (isArray || yaml.charAt(endTokenPos) !== '-')) {
-        aceMarker.endRow = row;
-        aceMarker.endCol = 0;
-        return aceMarker;
+        markerPos.endRow = row;
+        markerPos.endCol = 0;
+        return markerPos;
       }
     }
   }
-  return aceMarker;
+  return markerPos;
 };
 
-const getSeverityClassName = (severity: string): string => {
+const getSeverity = (severity: string): MarkerSeverity => {
   switch (severity) {
     case 'error':
-      return istioValidationErrorStyle;
+      return MarkerSeverity.Error;
     case 'warning':
-      return istioValidationWarningStyle;
+      return MarkerSeverity.Warning;
     case 'info':
     default:
-      return istioValidationInfoStyle;
+      return MarkerSeverity.Info;
   }
 };
 
-const parseCheck = (yaml: string, check: ObjectCheck): AceCheck => {
+interface ParsedCheck {
+  annotation: EditorAnnotation;
+  marker: EditorMarker;
+}
+
+const parseCheck = (yaml: string, check: ObjectCheck): ParsedCheck => {
   const severity = check.severity === 'error' || check.severity === 'warning' ? check.severity : 'info';
-  const marker: IMarker = {
-    startRow: 0,
-    startCol: 0,
-    endRow: 0,
-    endCol: 0,
-    className: getSeverityClassName(severity),
-    type: 'fullLine'
-  };
-  const annotation = {
-    row: 0,
-    column: 0,
-    type: severity,
-    text: (check.code ? `${check.code} ` : '') + check.message
-  };
-  let aceMarker = {
+  const message = (check.code ? `${check.code} ` : '') + check.message;
+
+  let markerPos: MarkerPosition = {
     startRow: 0,
     startCol: 0,
     endRow: 0,
     endCol: 0,
     position: -1
   };
-  /*
-    Potential paths:
-      - <empty, no path>
-      - spec/hosts
-      - spec/host
-      - spec/<protocol: http|tcp>[<nRoute>]/route
-      - spec/<protocol: http|tcp>[<nRoute>]/route[nDestination]
-      - spec/<protocol: http|tcp>[<nRoute>]/route[<nDestination>]/weight/<value>
-      - spec/<protocol: http|tcp>[nRoute]/route[nDestination]/destination
-   */
+
   if (check.path.length > 0) {
     const tokens: string[] = check.path.split('/');
-    // It skips the first 'spec' token
     if (tokens.length > 1) {
       for (let i = 1; i < tokens.length; i++) {
         const token = tokens[i];
-        // Check if token has an array or not
         if (token.indexOf('[') > -1 && token.indexOf(']') > -1) {
           const startPos = token.indexOf('[');
           const endPos = token.indexOf(']');
           const arrayIndex = +token.substr(startPos + 1, endPos - startPos - 1);
           const subtoken = token.substr(0, startPos);
-          aceMarker = parseMarker(yaml, aceMarker.position, subtoken, true, arrayIndex);
+          markerPos = parseMarker(yaml, markerPos.position, subtoken, true, arrayIndex);
         } else {
-          aceMarker = parseMarker(yaml, aceMarker.position, token, false);
+          markerPos = parseMarker(yaml, markerPos.position, token, false);
         }
       }
     }
   }
 
-  marker.startRow = aceMarker.startRow;
-  marker.startCol = aceMarker.startCol;
-  // React Ace editor has a flip in the marker indexes
-  marker.endRow = aceMarker.endRow > 0 ? aceMarker.endRow - 1 : 0;
-  marker.endCol = aceMarker.endCol;
-  annotation.row = marker.startRow;
-  return { marker: marker, annotation: annotation };
+  const endRow = markerPos.endRow > 0 ? markerPos.endRow - 1 : 0;
+
+  const marker: EditorMarker = {
+    startLineNumber: markerPos.startRow + 1,
+    startColumn: 1,
+    endLineNumber: endRow + 1,
+    endColumn: 1,
+    severity: getSeverity(severity),
+    message
+  };
+
+  const annotation: EditorAnnotation = {
+    row: markerPos.startRow,
+    column: markerPos.startCol,
+    type: severity,
+    text: message
+  };
+
+  return { marker, annotation };
 };
 
-export const parseKialiValidations = (yamlInput: string, kialiValidations?: ObjectValidation): AceValidations => {
-  const aceValidations: AceValidations = {
+export const parseKialiValidations = (yamlInput: string, kialiValidations?: ObjectValidation): EditorValidations => {
+  const validations: EditorValidations = {
     markers: [],
     annotations: []
   };
 
   if (!kialiValidations || yamlInput.length === 0 || Object.keys(kialiValidations).length === 0) {
-    return aceValidations;
+    return validations;
   }
 
   kialiValidations.checks.forEach(check => {
-    const aceCheck = parseCheck(yamlInput, check);
-    aceValidations.markers.push(aceCheck.marker);
-    aceValidations.annotations.push(aceCheck.annotation);
+    const parsed = parseCheck(yamlInput, check);
+    validations.markers.push(parsed.marker);
+    validations.annotations.push(parsed.annotation);
   });
-  return aceValidations;
+  return validations;
 };
 
-export const parseYamlValidations = (yamlInput: string): AceValidations => {
-  const parsedValidations: AceValidations = {
+export const parseYamlValidations = (yamlInput: string): EditorValidations => {
+  const parsedValidations: EditorValidations = {
     markers: [],
     annotations: []
   };
@@ -313,12 +306,12 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
       const col = e.mark && e.mark.column ? e.mark.column : 0;
       const message = e.message ? e.message : '';
       parsedValidations.markers.push({
-        startRow: row,
-        startCol: 0,
-        endRow: row + 1,
-        endCol: 0,
-        className: istioValidationErrorStyle,
-        type: 'fullLine'
+        startLineNumber: row + 1,
+        startColumn: 1,
+        endLineNumber: row + 2,
+        endColumn: 1,
+        severity: MarkerSeverity.Error,
+        message
       });
       parsedValidations.annotations.push({
         row: row,
@@ -329,4 +322,49 @@ export const parseYamlValidations = (yamlInput: string): AceValidations => {
     }
   }
   return parsedValidations;
+};
+
+const editorDecorationsMap = new WeakMap<editor.IStandaloneCodeEditor, editor.IEditorDecorationsCollection>();
+
+/**
+ * Apply validation markers and glyph margin decorations to a Monaco editor.
+ * Markers produce squiggly underlines; decorations show icons in the glyph margin.
+ */
+export const applyMonacoMarkers = (
+  monacoInstance: MonacoInstance,
+  editorInstance: editor.IStandaloneCodeEditor,
+  markers: EditorMarker[]
+): void => {
+  const model = editorInstance.getModel();
+  if (!model) {
+    return;
+  }
+  // Only set error/warning markers (which produce squiggly underlines).
+  // Info markers only get a glyph icon — no underline or "Problems" tooltip.
+  const underlineMarkers = markers.filter(m => m.severity !== MarkerSeverity.Info);
+  monacoInstance.editor.setModelMarkers(model, 'kiali', underlineMarkers);
+
+  const existingCollection = editorDecorationsMap.get(editorInstance);
+  if (existingCollection) {
+    existingCollection.clear();
+  }
+
+  const decorations: editor.IModelDeltaDecoration[] = markers.map(m => {
+    let glyphClass = 'kiali-glyph-info';
+    if (m.severity === MarkerSeverity.Error) {
+      glyphClass = 'kiali-glyph-error';
+    } else if (m.severity === MarkerSeverity.Warning) {
+      glyphClass = 'kiali-glyph-warning';
+    }
+    return {
+      range: new monacoInstance.Range(m.startLineNumber, 1, m.startLineNumber, 1),
+      options: {
+        glyphMarginClassName: glyphClass,
+        glyphMarginHoverMessage: { value: m.message }
+      }
+    };
+  });
+
+  const collection = editorInstance.createDecorationsCollection(decorations);
+  editorDecorationsMap.set(editorInstance, collection);
 };
