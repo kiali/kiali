@@ -20,21 +20,20 @@ import (
 )
 
 // defaultIstioConfigCriteria returns the criteria for listing Istio config objects.
-// When enableGatewayAPI is true (i.e. Gateway API CRDs are installed), Gateway API types (K8sGateways, K8sHTTPRoutes, etc.)
+// When isGatewayAPIEnabled is true (i.e. Gateway API CRDs are installed), Gateway API types (K8sGateways, K8sHTTPRoutes, etc.)
 // are included; otherwise they are excluded to avoid unnecessary API calls.
-// When enableInferenceAPI is true (i.e. inference.networking.k8s.io CRDs are installed),
+// When isInferenceAPIEnabled is true (i.e. inference.networking.k8s.io CRDs are installed),
 // InferencePool resources are included.
-func defaultIstioConfigCriteria(enableGatewayAPI bool, enableInferenceAPI ...bool) business.IstioConfigCriteria {
-	inferenceEnabled := len(enableInferenceAPI) > 0 && enableInferenceAPI[0]
+func defaultIstioConfigCriteria(isGatewayAPIEnabled bool, isInferenceAPIEnabled bool) business.IstioConfigCriteria {
 	return business.IstioConfigCriteria{
 		IncludeGateways:               true,
-		IncludeK8sGateways:            enableGatewayAPI,
-		IncludeK8sGRPCRoutes:          enableGatewayAPI,
-		IncludeK8sHTTPRoutes:          enableGatewayAPI,
-		IncludeK8sInferencePools:      inferenceEnabled,
-		IncludeK8sReferenceGrants:     enableGatewayAPI,
-		IncludeK8sTCPRoutes:           enableGatewayAPI,
-		IncludeK8sTLSRoutes:           enableGatewayAPI,
+		IncludeK8sGateways:            isGatewayAPIEnabled,
+		IncludeK8sGRPCRoutes:          isGatewayAPIEnabled,
+		IncludeK8sHTTPRoutes:          isGatewayAPIEnabled,
+		IncludeK8sInferencePools:      isInferenceAPIEnabled,
+		IncludeK8sReferenceGrants:     isGatewayAPIEnabled,
+		IncludeK8sTCPRoutes:           isGatewayAPIEnabled,
+		IncludeK8sTLSRoutes:           isGatewayAPIEnabled,
 		IncludeVirtualServices:        true,
 		IncludeDestinationRules:       true,
 		IncludeServiceEntries:         true,
@@ -88,7 +87,7 @@ type validationCheckSummary struct {
 	Message  string
 }
 
-func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config, enableGatewayAPI bool, enableInferenceAPI bool) (interface{}, int) {
+func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config, isGatewayAPIEnabled bool, isInferenceAPIEnabled bool) (interface{}, int) {
 	// Extract parameters
 	cluster := mcputil.GetStringArg(args, "clusterName")
 	namespace := mcputil.GetStringArg(args, "namespace")
@@ -102,12 +101,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		cluster = conf.KubernetesConfig.ClusterName
 	}
 
-	criteria := defaultIstioConfigCriteria(enableGatewayAPI, enableInferenceAPI)
+	criteria := defaultIstioConfigCriteria(isGatewayAPIEnabled, isInferenceAPIEnabled)
 	if kind != "" {
 		if group == "" {
-			group = inferGroupFromKind(kind, enableGatewayAPI, enableInferenceAPI)
+			group = inferGroupFromKind(kind, isGatewayAPIEnabled, isInferenceAPIEnabled)
 		}
-		criteria = criteriaForListFilter(group, kind, enableGatewayAPI, enableInferenceAPI)
+		criteria = criteriaForListFilter(group, kind, isGatewayAPIEnabled, isInferenceAPIEnabled)
 	}
 
 	if namespace == "" {
@@ -572,7 +571,7 @@ func filterGatewaysReferencedByVirtualServices(
 	return out, warnings
 }
 
-func criteriaForListFilter(group, kind string, enableGatewayAPI, enableInferenceAPI bool) business.IstioConfigCriteria {
+func criteriaForListFilter(group, kind string, isGatewayAPIEnabled, isInferenceAPIEnabled bool) business.IstioConfigCriteria {
 	// Default: if we can't confidently map it, keep original behavior.
 	c := business.IstioConfigCriteria{}
 
@@ -645,5 +644,5 @@ func criteriaForListFilter(group, kind string, enableGatewayAPI, enableInference
 		}
 	}
 
-	return defaultIstioConfigCriteria(enableGatewayAPI, enableInferenceAPI)
+	return defaultIstioConfigCriteria(isGatewayAPIEnabled, isInferenceAPIEnabled)
 }
