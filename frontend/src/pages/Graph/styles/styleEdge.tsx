@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { DefaultEdge, Edge, observer, ScaleDetailsLevel, WithSelectionProps } from '@patternfly/react-topology';
+import { DefaultEdge, observer, ScaleDetailsLevel } from '@patternfly/react-topology';
+import type { Edge, WithSelectionProps } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import { useIconFontReady } from 'hooks/useIconFontReady';
@@ -16,8 +17,8 @@ import { AnimationEdge } from '../TrafficAnimation/AnimationEdge';
 //   support [lock] icons on edge tags
 
 const ColorFind = PFColors.Gold400;
-const ColorSpan = PFColors.Purple200;
-const OverlayOpacity = 0.3;
+const ColorSpan = PFColors.Purple500;
+const OverlayOpacity = 0.35;
 const OverlayWidth = 30;
 
 type StyleEdgeProps = {
@@ -34,7 +35,7 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
   const detailsLevel = useDetailsLevel();
   const iconFontReady = useIconFontReady();
 
-  let cssClasses: string[] = [];
+  const cssClasses: string[] = [];
 
   const onMouseEnter = (): void => {
     data.onHover?.(element, true);
@@ -116,9 +117,9 @@ const StyleEdgeComponent: React.FC<StyleEdgeProps> = ({ element, ...rest }) => {
     cssClasses.push(findClass);
   }
 
-  // Set the path style when unhighlighted (opacity)
+  // Set the path style when unhighlighted (opacity), but keep trace-overlay edges visible
   let opacity = 1;
-  if (data.isUnhighlighted) {
+  if (data.isUnhighlighted && !data.hasSpans) {
     opacity = 0.1;
   }
 
