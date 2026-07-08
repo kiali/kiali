@@ -1,5 +1,16 @@
 import * as React from 'react';
-import { ActionGroup, Alert, Button, List, ListItem, TextInput, Title, TitleSizes } from '@patternfly/react-core';
+import {
+  ActionGroup,
+  Alert,
+  Button,
+  List,
+  ListItem,
+  Popover,
+  TextArea,
+  TextInput,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
@@ -32,6 +43,14 @@ const alertStyle = kialiStyle({
 
 const sectionStyle = kialiStyle({
   marginBottom: '1.5rem'
+});
+
+const popoverTextAreaStyle = kialiStyle({
+  fontFamily: 'var(--pf-t--global--font--family--mono)',
+  fontSize: 'var(--pf-t--global--font--size--sm)',
+  minHeight: '20rem',
+  width: '100%',
+  resize: 'vertical'
 });
 
 const toEntries = (record: Record<string, string>): Entry[] => {
@@ -116,6 +135,22 @@ const AnnotationSection: React.FC<SectionProps> = ({
                 />
               </Th>
               <Th>
+                <Popover
+                  headerContent={key || t('Value')}
+                  bodyContent={
+                    <TextArea
+                      className={popoverTextAreaStyle}
+                      id={`${sectionId}_popover_value_${index}`}
+                      onChange={(_event, v) => onChange(index, [key, v])}
+                      value={value}
+                    />
+                  }
+                  elementToFocus={`#${sectionId}_popover_value_${index}`}
+                  minWidth="40rem"
+                  position="left"
+                >
+                  <Button variant="plain" icon={<KialiIcon.Expand />} size="sm" />
+                </Popover>
                 <Button variant="plain" icon={<KialiIcon.Delete />} onClick={() => onRemove(index)} />
               </Th>
             </Tr>
