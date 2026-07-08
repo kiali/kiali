@@ -127,6 +127,7 @@ var KubernetesMCPServerEndpoints = []string{
 	"get_mesh_traffic_graph",
 	"get_mesh_status",
 	"get_metrics",
+	"list_clusters",
 	"list_or_get_resources",
 	"list_traces",
 	"get_trace_details",

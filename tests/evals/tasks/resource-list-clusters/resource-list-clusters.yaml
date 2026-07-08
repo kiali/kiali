@@ -1,0 +1,21 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    suite: kiali
+  name: "Discover Accessible Clusters"
+  category: "Resource Inspection"
+  description: "Lists the Kubernetes clusters that Kiali can access and identifies which one is the home cluster."
+  difficulty: easy
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "home"
+  prompt:
+    inline: |
+      Which Kubernetes clusters can Kiali access in my service mesh?
+      List each cluster name and indicate which one is the home cluster where Kiali is running.
+      Include the word home in your answer when describing the home cluster.
