@@ -107,6 +107,14 @@ func ChatMCP(
 			RespondWithError(w, http.StatusNotFound, "metrics are unavailable because Prometheus is disabled")
 			return
 		}
+		// Gate Ambient-specific tools before building the full interface, matching the tracing/metrics pattern above.
+		if mcp.IsAmbientTool(toolName) {
+			if !kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory)) {
+				RespondWithError(w, http.StatusNotFound,
+					fmt.Sprintf("Tool '%s' is not available when Ambient Mesh is not enabled in any cluster", toolName))
+				return
+			}
+		}
 		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
@@ -121,24 +129,38 @@ func ChatMCP(
 	}
 }
 
-func ChatPrompts(conf *config.Config) http.HandlerFunc {
+// accessibleClusterNames returns cluster names reachable via the client factory's service-account clients.
+func accessibleClusterNames(clientFactory kubernetes.ClientFactory) []string {
+	saClients := clientFactory.GetSAClients()
+	names := make([]string, 0, len(saClients))
+	for clusterName := range saClients {
+		names = append(names, clusterName)
+	}
+	return names
+}
+
+func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !conf.ChatAI.Enabled {
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
 			return
 		}
+
+		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory))
+
 		category := r.URL.Query().Get("category")
 		catalog := prompts.Catalog()
-		if category != "" {
-			filtered := make([]prompts.Prompt, 0, len(catalog))
-			for _, p := range catalog {
-				if p.Category == category {
-					filtered = append(filtered, p)
-				}
+		filtered := make([]prompts.Prompt, 0, len(catalog))
+		for _, p := range catalog {
+			if p.IsAmbient && !ambientEnabled {
+				continue
 			}
-			catalog = filtered
+			if category != "" && p.Category != category {
+				continue
+			}
+			filtered = append(filtered, p)
 		}
-		RespondWithJSON(w, http.StatusOK, catalog)
+		RespondWithJSON(w, http.StatusOK, filtered)
 	}
 }
 

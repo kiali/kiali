@@ -7,10 +7,12 @@ import (
 	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/mesh"
 	meshApi "github.com/kiali/kiali/mesh/api"
@@ -49,7 +51,7 @@ func Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface
 		return "unexpected mesh status response type", http.StatusInternalServerError
 	}
 
-	summary := transformToSummary(meshConfig)
+	summary := transformToSummary(meshConfig, ki.KialiCache)
 	if !hasAccessibleControlPlane(summary) {
 		return "No accessible control plane data found for this token. Cannot retrieve mesh status.", http.StatusForbidden
 	}
@@ -62,11 +64,11 @@ func hasAccessibleControlPlane(summary MeshSummaryFormatted) bool {
 	return len(summary.Components.ControlPlane.Nodes) > 0
 }
 
-func transformToSummary(cfg meshCommon.Config) MeshSummaryFormatted {
+func transformToSummary(cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryFormatted {
 	nodesByID := buildNodeIndex(cfg)
 
 	return MeshSummaryFormatted{
-		Components:        extractComponents(cfg),
+		Components:        extractComponents(cfg, kialiCache),
 		ConnectivityGraph: extractConnectivity(cfg, nodesByID),
 		CriticalAlerts:    extractCriticalAlerts(cfg),
 		Environment:       extractEnvironment(cfg),
@@ -130,12 +132,15 @@ func extractTrustDomain(nd *meshCommon.NodeData) string {
 	return ""
 }
 
-func extractComponents(cfg meshCommon.Config) MeshSummaryComponents {
+func extractComponents(cfg meshCommon.Config, kialiCache cache.KialiCache) MeshSummaryComponents {
 	var cp MeshSummaryControlPlane
 	obs := MeshSummaryObservabilityStack{}
 	monitoredNS := make([]MeshSummaryMonitoredNamespace, 0)
 
 	worstCPStatus := kubernetes.ComponentHealthy
+
+	// Track clusters that have Ambient enabled
+	ambientClusters := make(map[string]bool)
 
 	for _, n := range cfg.Elements.Nodes {
 		if n.Data == nil {
@@ -176,7 +181,15 @@ func extractComponents(cfg meshCommon.Config) MeshSummaryComponents {
 			obs.Perses = health
 
 		case mesh.InfraTypeDataPlane:
-			monitoredNS = append(monitoredNS, extractDataPlaneNamespaces(n.Data)...)
+			nsData := extractDataPlaneNamespaces(n.Data)
+			monitoredNS = append(monitoredNS, nsData...)
+			// Check if any namespace in this cluster has Ambient enabled
+			for _, ns := range nsData {
+				if ns.IsAmbient {
+					ambientClusters[n.Data.Cluster] = true
+					break
+				}
+			}
 		}
 	}
 
@@ -186,9 +199,15 @@ func extractComponents(cfg meshCommon.Config) MeshSummaryComponents {
 		cp.Status = worstCPStatus
 	}
 
+	// Extract ztunnel information for Ambient-enabled clusters
+	var ztunnel *MeshSummaryZtunnel
+	if len(ambientClusters) > 0 && kialiCache != nil {
+		ztunnel = extractZtunnelStatus(kialiCache, ambientClusters)
+	}
+
 	return MeshSummaryComponents{
 		ControlPlane:       cp,
-		DataPlane:          MeshSummaryDataPlane{MonitoredNamespaces: monitoredNS},
+		DataPlane:          MeshSummaryDataPlane{MonitoredNamespaces: monitoredNS, Ztunnel: ztunnel},
 		ObservabilityStack: obs,
 	}
 }
@@ -488,4 +507,57 @@ func mergeStatus(a, b string) string {
 		return b
 	}
 	return a
+}
+
+// extractZtunnelStatus collects ztunnel DaemonSet and pod information across Ambient-enabled clusters
+func extractZtunnelStatus(kialiCache cache.KialiCache, ambientClusters map[string]bool) *MeshSummaryZtunnel {
+	var allPods []MeshSummaryZtunnelPod
+	var totalDesired, totalReady int32
+
+	for cluster := range ambientClusters {
+		// Get DaemonSet status
+		daemonsets := kialiCache.GetZtunnelDaemonset(cluster)
+		for _, ds := range daemonsets {
+			totalDesired += ds.Status.DesiredNumberScheduled
+			totalReady += ds.Status.NumberReady
+		}
+
+		// Get pod details
+		pods := kialiCache.GetZtunnelPods(cluster)
+		for _, pod := range pods {
+			ready := false
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+					ready = true
+					break
+				}
+			}
+			allPods = append(allPods, MeshSummaryZtunnelPod{
+				Name:  pod.Name,
+				Node:  pod.Spec.NodeName,
+				Phase: string(pod.Status.Phase),
+				Ready: ready,
+			})
+		}
+	}
+
+	if totalDesired == 0 {
+		return nil
+	}
+
+	status := "HEALTHY"
+	if totalReady == 0 {
+		status = "UNHEALTHY"
+	} else if totalReady < totalDesired {
+		status = "DEGRADED"
+	}
+
+	return &MeshSummaryZtunnel{
+		DaemonSet: MeshSummaryZtunnelDaemonSet{
+			DesiredPods: totalDesired,
+			ReadyPods:   totalReady,
+			Status:      status,
+		},
+		Pods: allPods,
+	}
 }

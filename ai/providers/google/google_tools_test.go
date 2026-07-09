@@ -193,6 +193,11 @@ func TestConvertToolToGoogle_FromToolDefinition_GetMeshGraph(t *testing.T) {
 	expected := &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
+			"ambientTraffic": {
+				Type:        genai.TypeString,
+				Description: "Optional. Filter Ambient Mesh traffic. 'none' excludes all ambient traffic, 'total' includes all (default), 'waypoint' shows only waypoint-reported traffic, 'ztunnel' shows only ztunnel-reported traffic. Only applicable when Ambient Mesh is enabled.",
+				Enum:        []string{"none", "total", "waypoint", "ztunnel"},
+			},
 			"namespaces": {
 				Type:        genai.TypeString,
 				Description: "Comma-separated list of namespaces to map",
@@ -324,22 +329,26 @@ func TestConvertToolToGoogle_FromToolDefinition_ListOrGetResources(t *testing.T)
 	expected := &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
-			"resourceType": {
+			"clusterName": {
 				Type:        genai.TypeString,
-				Description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
-				Enum:        []string{"service", "workload", "app", "namespace", "argoapp"},
+				Description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
+			},
+			"namespace": {
+				Type:        genai.TypeString,
+				Description: "Optional alias for 'namespaces' when querying a single namespace (e.g., 'bookinfo'). Cannot be combined with a comma-separated 'namespaces' value.",
 			},
 			"namespaces": {
 				Type:        genai.TypeString,
-				Description: "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
+				Description: "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces. The singular alias 'namespace' is also accepted for a single namespace value.",
 			},
 			"resourceName": {
 				Type:        genai.TypeString,
 				Description: "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
 			},
-			"clusterName": {
+			"resourceType": {
 				Type:        genai.TypeString,
-				Description: "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
+				Description: "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them. When resourceType is 'workload' and the workload is in Ambient mode, ztunnel networking details are included automatically.",
+				Enum:        []string{"service", "workload", "app", "namespace", "argoapp"},
 			},
 		},
 		Required: []string{"resourceType"},

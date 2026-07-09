@@ -14,6 +14,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/kiali/kiali/ai/mcp/analyze_ambient_policies"
 	"github.com/kiali/kiali/ai/mcp/get_action_ui"
 	"github.com/kiali/kiali/ai/mcp/get_logs"
 	"github.com/kiali/kiali/ai/mcp/get_mesh_status"
@@ -62,6 +63,13 @@ var TraceToolNames = map[string]struct{}{
 	"get_trace_details": {},
 }
 
+// AmbientToolNames are MCP tools that are 100% specific to Istio Ambient Mesh.
+// They must not be offered or executed when ambient mesh is not enabled in any cluster.
+// Tools that work without Ambient but provide enhanced data when available should NOT be listed here.
+var AmbientToolNames = map[string]struct{}{
+	"analyze_ambient_policies": {}, // L4/L7 policy analysis - Ambient-specific
+}
+
 func IsMetricTool(name string) bool {
 	_, ok := MetricToolNames[name]
 	return ok
@@ -69,6 +77,11 @@ func IsMetricTool(name string) bool {
 
 func IsTraceTool(name string) bool {
 	_, ok := TraceToolNames[name]
+	return ok
+}
+
+func IsAmbientTool(name string) bool {
+	_, ok := AmbientToolNames[name]
 	return ok
 }
 
@@ -167,6 +180,8 @@ func (t ToolDef) GetDefinition() map[string]interface{} {
 
 func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	switch t.Name {
+	case "analyze_ambient_policies":
+		return analyze_ambient_policies.Execute(kialiInterface, args)
 	case "get_mesh_traffic_graph":
 		return get_mesh_traffic_graph.Execute(kialiInterface, args)
 	case "list_or_get_resources":

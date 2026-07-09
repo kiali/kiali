@@ -258,6 +258,16 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMeshGraph(t *testing.T) {
 						"namespaces",
 					},
 					"properties": map[string]interface{}{
+						"ambientTraffic": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional. Filter Ambient Mesh traffic. 'none' excludes all ambient traffic, 'total' includes all (default), 'waypoint' shows only waypoint-reported traffic, 'ztunnel' shows only ztunnel-reported traffic. Only applicable when Ambient Mesh is enabled.",
+							"enum": []interface{}{
+								"none",
+								"total",
+								"waypoint",
+								"ztunnel",
+							},
+						},
 						"namespaces": map[string]interface{}{
 							"type":        "string",
 							"description": "Comma-separated list of namespaces to map",
@@ -436,9 +446,25 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListOrGetResources(t *testing.T)
 						"resourceType",
 					},
 					"properties": map[string]interface{}{
+						"clusterName": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
+						},
+						"namespace": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional alias for 'namespaces' when querying a single namespace (e.g., 'bookinfo'). Cannot be combined with a comma-separated 'namespaces' value.",
+						},
+						"namespaces": map[string]interface{}{
+							"type":        "string",
+							"description": "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces. The singular alias 'namespace' is also accepted for a single namespace value.",
+						},
+						"resourceName": map[string]interface{}{
+							"type":        "string",
+							"description": "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
+						},
 						"resourceType": map[string]interface{}{
 							"type":        "string",
-							"description": "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them.",
+							"description": "The type of resource to query. Use 'app' for Kiali applications (grouped by the Kubernetes 'app' label). Use 'argoapp' for ArgoCD Application CRDs (requires ArgoCD installed and the Kiali service account must have read permissions on applications.argoproj.io). ArgoCD Applications have no Kiali UI page so always use this tool (not get_action_ui) for them. When resourceType is 'workload' and the workload is in Ambient mode, ztunnel networking details are included automatically.",
 							"enum": []interface{}{
 								"service",
 								"workload",
@@ -446,18 +472,6 @@ func TestConvertToolToOpenAI_FromToolDefinition_ListOrGetResources(t *testing.T)
 								"namespace",
 								"argoapp",
 							},
-						},
-						"namespaces": map[string]interface{}{
-							"type":        "string",
-							"description": "Comma-separated list of namespaces to query (e.g., 'bookinfo' or 'bookinfo,default'). If not provided, it will query across all accessible namespaces.",
-						},
-						"resourceName": map[string]interface{}{
-							"type":        "string",
-							"description": "Optional. The specific name of the resource. If left empty, the tool returns a list of all resources of the specified type. If provided, the tool returns deep details for this specific resource.",
-						},
-						"clusterName": map[string]interface{}{
-							"type":        "string",
-							"description": "Optional. Name of the cluster to get resources from. If not provided, will use the default cluster name in the Kiali KubeConfig.",
 						},
 					},
 				},

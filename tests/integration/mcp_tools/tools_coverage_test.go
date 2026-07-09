@@ -107,6 +107,13 @@ func TestAllMCPEndpointsExist(t *testing.T) {
 				}
 				return
 			}
+			if mcp.IsAmbientTool(toolName) {
+				// Ambient-specific tools return 404 when Ambient Mesh is not enabled in any cluster.
+				// A 400 means Ambient is enabled but required args are missing — the tool is reachable.
+				assert.NotEqual(t, 500, resp.StatusCode,
+					"Ambient tool /api/chat/mcp/%s returned an unexpected server error", toolName)
+				return
+			}
 			assert.NotEqual(t, 404, resp.StatusCode,
 				"Tool endpoint /api/chat/mcp/%s returned 404 — not registered", toolName)
 		})

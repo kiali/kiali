@@ -1873,7 +1873,7 @@ func NewRoutes(
 			log.ChatAILogName,
 			"GET",
 			"/api/chat/prompts",
-			handlers.ChatPrompts(conf),
+			handlers.ChatPrompts(conf, kialiCache, clientFactory),
 			true,
 		},
 		// swagger:route POST /chat/{provider}/{model}/ai chat aiChatAI

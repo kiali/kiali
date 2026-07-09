@@ -27,12 +27,20 @@ var validGraphTypes = map[string]bool{
 	graph.GraphTypeWorkload:     true,
 }
 
+var validAmbientTrafficValues = map[string]bool{
+	graph.AmbientTrafficNone:     true,
+	graph.AmbientTrafficTotal:    true,
+	graph.AmbientTrafficWaypoint: true,
+	graph.AmbientTrafficZtunnel:  true,
+}
+
 // MeshGraphArgs are the optional parameters accepted by the mesh graph tool.
 type MeshGraphArgs struct {
-	Namespaces   []string `json:"namespaces,omitempty"`
-	RateInterval string   `json:"rateInterval,omitempty"`
-	GraphType    string   `json:"graphType,omitempty"`
-	ClusterName  string   `json:"clusterName,omitempty"`
+	AmbientTraffic string   `json:"ambientTraffic,omitempty"`
+	ClusterName    string   `json:"clusterName,omitempty"`
+	GraphType      string   `json:"graphType,omitempty"`
+	Namespaces     []string `json:"namespaces,omitempty"`
+	RateInterval   string   `json:"rateInterval,omitempty"`
 }
 
 // GetMeshGraphResponse encapsulates the mesh graph tool response.
@@ -51,9 +59,21 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	toolArgs.RateInterval = mcputil.GetStringOrDefault(args, mcputil.DefaultRateInterval, "rateInterval")
 	toolArgs.GraphType = mcputil.GetStringOrDefault(args, mcputil.DefaultGraphType, "graphType")
 	toolArgs.ClusterName = mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
+	toolArgs.AmbientTraffic = mcputil.GetStringArg(args, "ambientTraffic")
 
 	if !validGraphTypes[toolArgs.GraphType] {
 		return fmt.Sprintf("invalid graphType %q: must be one of app, service, versionedApp, workload", toolArgs.GraphType), http.StatusBadRequest
+	}
+
+	// Validate ambientTraffic parameter using the canonical constants from the graph package
+	if toolArgs.AmbientTraffic != "" && !validAmbientTrafficValues[toolArgs.AmbientTraffic] {
+		return fmt.Sprintf("invalid ambientTraffic %q: must be one of %s, %s, %s, %s",
+			toolArgs.AmbientTraffic,
+			graph.AmbientTrafficNone,
+			graph.AmbientTrafficTotal,
+			graph.AmbientTrafficWaypoint,
+			graph.AmbientTrafficZtunnel,
+		), http.StatusBadRequest
 	}
 
 	// Parse namespaces argument (comma-separated string)
@@ -169,6 +189,9 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		}
 		if toolArgs.RateInterval != "" {
 			q.Set("duration", toolArgs.RateInterval)
+		}
+		if toolArgs.AmbientTraffic != "" {
+			q.Set("ambientTraffic", toolArgs.AmbientTraffic)
 		}
 		graphReq.URL.RawQuery = q.Encode()
 		graphOpts := graph.NewOptions(graphReq, kialiInterface.BusinessLayer, kialiInterface.Conf)

@@ -209,18 +209,18 @@ func recoverFromPanic(res *interface{}, status *int, resourceType, name, namespa
 
 // ResourceDetailArgs are the optional parameters accepted by the resource detail tool.
 type ResourceDetailArgs struct {
-	ResourceType string    `json:"resource_type,omitempty"`
-	Namespaces   []string  `json:"namespaces,omitempty"`
-	ResourceName string    `json:"resource_name,omitempty"`
 	ClusterName  string    `json:"cluster_name,omitempty"`
-	RateInterval string    `json:"rate_interval,omitempty"`
+	Namespaces   []string  `json:"namespaces,omitempty"`
 	QueryTime    time.Time `json:"query_time,omitempty"`
+	RateInterval string    `json:"rate_interval,omitempty"`
+	ResourceName string    `json:"resource_name,omitempty"`
+	ResourceType string    `json:"resource_type,omitempty"`
 }
 
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
 	// Extract parameters
 	resourceType := mcputil.GetStringArg(args, "resource_type", "resourceType")
-	namespaces := mcputil.GetStringArg(args, "namespaces")
+	namespaces := mcputil.GetStringArg(args, "namespaces", "namespace")
 	resourceName := mcputil.GetStringArg(args, "resource_name", "resourceName")
 	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
 	rateInterval := mcputil.GetStringOrDefault(args, DefaultRateInterval, "rateInterval")
@@ -294,12 +294,12 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 
 	resourceArgs := ResourceDetailArgs{
-		ResourceType: resourceType,
-		Namespaces:   namespacesSlice,
-		ResourceName: resourceName,
 		ClusterName:  clusterName,
-		RateInterval: rateInterval,
+		Namespaces:   namespacesSlice,
 		QueryTime:    queryTime,
+		RateInterval: rateInterval,
+		ResourceName: resourceName,
+		ResourceType: resourceType,
 	}
 	var resp interface{}
 	var status int
@@ -309,7 +309,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}
 	if resourceName != "" && len(namespacesSlice) == 1 {
 		log.Debugf("Getting resource details type: %s for resource name: %s and namespace: %s", resourceType, resourceName, namespacesSlice[0])
-		resp, status, err = getResourceDetails(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, resourceArgs, namespacesSlice[0])
+		resp, status, err = getResourceDetails(kialiInterface.Request.Context(), kialiInterface.BusinessLayer, kialiInterface.KialiCache, resourceArgs, namespacesSlice[0])
 		if err != nil {
 			return err.Error(), status
 		}
@@ -343,7 +343,7 @@ func calculateRateInterval(
 	return interval, nil
 }
 
-func getResourceDetails(ctx context.Context, businessLayer *business.Layer, resourceArgs ResourceDetailArgs, namespace string) (resp interface{}, status int, err error) {
+func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kialiCache cache.KialiCache, resourceArgs ResourceDetailArgs, namespace string) (resp interface{}, status int, err error) {
 	defer recoverFromPanic(&resp, &status, resourceArgs.ResourceType, resourceArgs.ResourceName, namespace)
 
 	istioConfigValidations := models.IstioValidations{}
@@ -391,7 +391,42 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, reso
 		if err != nil {
 			return classifyError(err, "workload", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}
-		return TransformWorkloadDetail(workloadDetails), http.StatusOK, nil
+
+		// For Ambient workloads, automatically fetch ztunnel networking details.
+		// GetZtunnelDump expects a ztunnel DaemonSet pod name; since models.Pod lacks
+		// NodeName we iterate all ztunnel pods until we find the one whose dump contains
+		// this workload. Results are cached after the first fetch.
+		var ztunnelDump *kubernetes.ZtunnelConfigDump
+		if workloadDetails.IsAmbient && kialiCache != nil {
+			for _, ztunnelPod := range kialiCache.GetZtunnelPods(criteria.Cluster) {
+				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Namespace, ztunnelPod.Name)
+				if dump == nil {
+					continue
+				}
+				for i := range dump.Workloads {
+					if dump.Workloads[i].WorkloadName == workloadDetails.Name && dump.Workloads[i].Namespace == workloadDetails.Namespace {
+						ztunnelDump = dump
+						break
+					}
+				}
+				if ztunnelDump != nil {
+					break
+				}
+			}
+		}
+
+		// Get waypoint captured services if this workload is a waypoint
+		var waypointServices []models.ServiceReferenceInfo
+		if workloadDetails.WorkloadListItem.IsWaypoint {
+			waypointServices = businessLayer.Svc.ListWaypointServices(
+				ctx,
+				workloadDetails.Name,
+				workloadDetails.Namespace,
+				criteria.Cluster,
+			)
+		}
+
+		return TransformWorkloadDetail(workloadDetails, ztunnelDump, waypointServices), http.StatusOK, nil
 	case "app":
 		criteria := business.AppCriteria{
 			Namespace: namespace, AppName: resourceArgs.ResourceName,
