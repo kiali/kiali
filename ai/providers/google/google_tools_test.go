@@ -436,12 +436,12 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group of the Istio object.",
-				Enum:        []string{"networking.istio.io", "security.istio.io"},
+				Description: "API group of the Istio object. Use 'gateway.networking.k8s.io' for Gateway API resources. Use 'inference.networking.k8s.io' for Inference API resources.",
+				Enum:        []string{"networking.istio.io", "security.istio.io", "gateway.networking.k8s.io", "inference.networking.k8s.io"},
 			},
 			"version": {
 				Type:        genai.TypeString,
-				Description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway.",
+				Description: "API version. Use 'v1' for all resource types.",
 			},
 			"kind": {
 				Type:        genai.TypeString,
@@ -450,6 +450,8 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 					"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
 					"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
 					"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+					"HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute",
+					"InferencePool",
 				},
 			},
 			"object": {
@@ -458,7 +460,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 			},
 			"data": {
 				Type:        genai.TypeString,
-				Description: "Complete JSON or YAML data to apply or create the object. Required for create and patch actions. You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type. Arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element.",
+				Description: "JSON or YAML data for the resource. Required for create and patch actions. For create, you can provide partial content (e.g. only spec) and it will be merged onto a valid template with defaults. Arrays (like servers, http, etc.) are REPLACED entirely, so include ALL elements you want.",
 			},
 			"dataFormat": {
 				Type:        genai.TypeString,
@@ -496,19 +498,22 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 			},
 			"group": {
 				Type:        genai.TypeString,
-				Description: "API group (e.g. 'networking.istio.io'). Required for 'get'.",
+				Description: "API group of the Istio object. Required ONLY for 'get' action. For 'list', OMIT group and kind to retrieve ALL config types in a single call. Use 'gateway.networking.k8s.io' for Gateway API resources. Use 'inference.networking.k8s.io' for Inference API resources.",
+				Enum:        []string{"networking.istio.io", "security.istio.io", "gateway.networking.k8s.io", "inference.networking.k8s.io"},
 			},
 			"version": {
 				Type:        genai.TypeString,
-				Description: "API version (e.g. 'v1'). Required for 'get'.",
+				Description: "API version. Use 'v1' for all resource types. Required for 'get' action.",
 			},
 			"kind": {
 				Type:        genai.TypeString,
-				Description: "Kind of the Istio object. Required for 'get' action.",
+				Description: "Kind of the Istio object. Required ONLY for 'get' action. For 'list', OMIT to return all kinds at once \u2014 do NOT call separately for each kind.",
 				Enum: []string{
 					"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
 					"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
 					"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
+					"HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute",
+					"InferencePool",
 				},
 			},
 			"object": {
