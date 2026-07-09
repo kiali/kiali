@@ -12,19 +12,12 @@ on:
         type: string
         default: "main"
       kiali_ref:
-        description: 'Kiali git ref to use for cluster setup scripts (default: master)'
-        required: false
-        type: string
-        default: "master"
-      kiali_image_version:
-        description: 'Kiali image tag to test (default: pin from kubernetes-mcp-server/build/kiali.mk)'
+        description: 'Kiali git ref override (default: pin from kubernetes-mcp-server/build/kiali.mk)'
         required: false
         type: string
         default: ""
 
 env:
-  BUILD_BRANCH: ${{ github.event.inputs.kiali_ref || 'master' }}
-  KIALI_IMAGE_VERSION: ${{ github.event.inputs.kiali_image_version || '' }}
   KUBERNETES_MCP_SERVER_REF: ${{ github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
 permissions: read-all
@@ -42,12 +35,35 @@ jobs:
     - name: Check out Kiali code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
-        ref: ${{ env.BUILD_BRANCH }}
+        fetch-depth: 0
 
     - name: Install Helm
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
       with:
         version: 'v3.18.4'
+
+    - name: Check out kubernetes-mcp-server
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        repository: containers/kubernetes-mcp-server
+        path: kubernetes-mcp-server
+        ref: ${{ env.KUBERNETES_MCP_SERVER_REF }}
+
+    - name: Resolve pinned Kiali version from kubernetes-mcp-server
+      id: kiali_pin
+      working-directory: kubernetes-mcp-server
+      run: |
+        KIALI_VERSION=$(grep -E '^KIALI_VERSION' build/kiali.mk | awk -F= '{print $2}' | tr -d '[:space:]')
+        echo "kiali_version=${KIALI_VERSION}" >> $GITHUB_OUTPUT
+        echo "kubernetes-mcp-server pins Kiali ${KIALI_VERSION}"
+
+    - name: Check out pinned Kiali version
+      run: |
+        KIALI_REF="${{ github.event.inputs.kiali_ref || steps.kiali_pin.outputs.kiali_version }}"
+        echo "Checking out Kiali ${KIALI_REF}"
+        git checkout "${KIALI_REF}"
+        echo "BUILD_BRANCH=${KIALI_REF}" >> $GITHUB_ENV
+        echo "TARGET_BRANCH=${KIALI_REF}" >> $GITHUB_ENV
 
     # Corepack must be enabled before setup-node so that setup-node's
     # cache: yarn correctly detects the Yarn 4 cache directory.
@@ -69,34 +85,8 @@ jobs:
         cache: true
         cache-dependency-path: go.sum
 
-    - name: Build Kiali binary for cluster setup
+    - name: Build Kiali for cluster setup
       run: make clean-all build-ui build
-
-    - name: Check out kubernetes-mcp-server
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        repository: containers/kubernetes-mcp-server
-        path: kubernetes-mcp-server
-        ref: ${{ env.KUBERNETES_MCP_SERVER_REF }}
-
-    - name: Resolve pinned Kiali version from kubernetes-mcp-server
-      id: kiali_pin
-      working-directory: kubernetes-mcp-server
-      run: |
-        KIALI_VERSION=$(grep -E '^KIALI_VERSION' build/kiali.mk | awk -F= '{print $2}' | tr -d '[:space:]')
-        echo "kiali_version=${KIALI_VERSION}" >> $GITHUB_OUTPUT
-        echo "kubernetes-mcp-server pins Kiali ${KIALI_VERSION}"
-
-    - name: Resolve Kiali image version for contract tests
-      id: kiali_image
-      run: |
-        if [ -n "${KIALI_IMAGE_VERSION}" ]; then
-          IMAGE_VERSION="${KIALI_IMAGE_VERSION}"
-        else
-          IMAGE_VERSION="${{ steps.kiali_pin.outputs.kiali_version }}"
-        fi
-        echo "kiali_image_version=${IMAGE_VERSION}" >> $GITHUB_OUTPUT
-        echo "Testing Kiali image quay.io/kiali/kiali:${IMAGE_VERSION}"
 
     - name: Setup KinD cluster with Istio and Kiali
       run: hack/run-integration-tests.sh --test-suite backend --setup-only true
@@ -104,69 +94,17 @@ jobs:
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
       run: |
-        # Wait for Kiali LoadBalancer to get an external IP
-        echo "Waiting for Kiali LoadBalancer to get external IP..."
         kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=300s
-
-        # Get the external IP from MetalLB
         KIALI_IP=$(kubectl get svc kiali -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
         if [ -z "$KIALI_IP" ]; then
           echo "ERROR: Failed to get Kiali LoadBalancer IP"
           kubectl get svc kiali -n istio-system
           exit 1
         fi
-
-        # Kiali service uses port 80, so the URL is http://IP/kiali
         KIALI_URL="http://${KIALI_IP}/kiali"
         echo "Kiali URL: $KIALI_URL"
         echo "KIALI_URL=${KIALI_URL}" >> $GITHUB_ENV
-
-        # Verify Kiali is accessible
-        echo "Verifying Kiali is accessible at ${KIALI_URL}..."
-        for i in {1..30}; do
-          CURL_OUTPUT=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${KIALI_URL}/api/status" 2>&1)
-          HTTP_CODE=$(echo "$CURL_OUTPUT" | grep "HTTP_CODE:" | cut -d: -f2)
-          RESPONSE_BODY=$(echo "$CURL_OUTPUT" | sed '/HTTP_CODE:/d')
-
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "Kiali is accessible at ${KIALI_URL}"
-            break
-          else
-            echo "Attempt $i/30: HTTP $HTTP_CODE"
-            if [ "$HTTP_CODE" != "200" ]; then
-              echo "Curl output:"
-              echo "$CURL_OUTPUT"
-            fi
-          fi
-
-          if [ $i -eq 30 ]; then
-            echo "ERROR: Kiali is not accessible after 30 attempts"
-            echo "Final curl output:"
-            echo "$CURL_OUTPUT"
-            exit 1
-          fi
-          sleep 2
-        done
-
-    - name: Deploy Kiali release image for contract tests
-      run: |
-        KIALI_VERSION="${{ steps.kiali_image.outputs.kiali_image_version }}"
-        echo "Replacing dev Kiali image with ${KIALI_VERSION}..."
-        kubectl patch deployment kiali -n istio-system -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"kiali\",\"image\":\"quay.io/kiali/kiali:${KIALI_VERSION}\"}]}}}}"
-        kubectl rollout status deployment/kiali -n istio-system --timeout=300s
-
-        echo "Verifying pinned Kiali is accessible at ${KIALI_URL}..."
-        for i in {1..30}; do
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${KIALI_URL}/api/status")
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "Kiali ${KIALI_VERSION} is accessible at ${KIALI_URL}"
-            exit 0
-          fi
-          echo "Attempt $i/30: HTTP $HTTP_CODE"
-          sleep 2
-        done
-        echo "ERROR: Pinned Kiali ${KIALI_VERSION} is not accessible after rollout"
-        exit 1
+        curl -sf --connect-timeout 5 --max-time 15 "${KIALI_URL}/api/status"
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
@@ -196,4 +134,3 @@ jobs:
       with:
         name: debug-info-mcp-contract-tests
         path: debug-output
-
