@@ -1,4 +1,4 @@
-import {
+import type {
   DestinationRule,
   Gateway,
   K8sGateway,
@@ -14,9 +14,9 @@ import {
   K8sResource,
   K8sInferencePool
 } from './IstioObjects';
-import { ResourcePermissions } from './Permissions';
+import type { ResourcePermissions } from './Permissions';
 import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../utils/IstioConfigUtils';
-import { TypeMeta } from './Kubernetes';
+import type { TypeMeta } from './Kubernetes';
 
 export interface IstioConfigItem extends TypeMeta {
   cluster?: string;
@@ -73,6 +73,7 @@ export enum gvkType {
   K8sReferenceGrant = 'K8sReferenceGrant',
   K8sTCPRoute = 'K8sTCPRoute',
   K8sTLSRoute = 'K8sTLSRoute',
+  K8sUDPRoute = 'K8sUDPRoute',
 
   CronJob = 'CronJob',
   DaemonSet = 'DaemonSet',
@@ -109,8 +110,9 @@ export const dicTypeToGVK: { [key in gvkType]: GroupVersionKind } = {
   [gvkType.K8sHTTPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'HTTPRoute' },
   [gvkType.K8sInferencePool]: { Group: 'inference.networking.k8s.io', Version: 'v1', Kind: 'InferencePool' },
   [gvkType.K8sReferenceGrant]: { Group: 'gateway.networking.k8s.io', Version: 'v1beta1', Kind: 'ReferenceGrant' },
-  [gvkType.K8sTCPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1alpha2', Kind: 'TCPRoute' },
+  [gvkType.K8sTCPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'TCPRoute' },
   [gvkType.K8sTLSRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'TLSRoute' },
+  [gvkType.K8sUDPRoute]: { Group: 'gateway.networking.k8s.io', Version: 'v1', Kind: 'UDPRoute' },
 
   [gvkType.CronJob]: { Group: 'batch', Version: 'v1', Kind: 'CronJob' },
   [gvkType.DaemonSet]: { Group: 'apps', Version: 'v1', Kind: 'DaemonSet' },
@@ -256,7 +258,7 @@ export const toIstioItems = (istioConfigList: IstioConfigList, cluster?: string)
 
   const resources = istioConfigList['resources'];
   Object.keys(resources).forEach(field => {
-    let entries = resources[field];
+    const entries = resources[field];
 
     if (!entries) {
       return;

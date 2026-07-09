@@ -241,6 +241,40 @@ func (in *K8SClient) IsGatewayAPI() bool {
 	return *in.isGatewayAPI
 }
 
+// HasTCPRouteInV1 returns true if TCPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
+func (in *K8SClient) HasTCPRouteInV1() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.GatewayAPI() == nil {
+		return false
+	}
+	if in.hasTCPRouteInV1 == nil {
+		v1Types := map[string]string{
+			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
+		}
+		hasTCPRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
+		in.hasTCPRouteInV1 = &hasTCPRoute
+	}
+	return *in.hasTCPRouteInV1
+}
+
+// HasUDPRouteInV1 returns true if UDPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
+func (in *K8SClient) HasUDPRouteInV1() bool {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.GatewayAPI() == nil {
+		return false
+	}
+	if in.hasUDPRouteInV1 == nil {
+		v1Types := map[string]string{
+			K8sUDPRouteType: PluralNames[K8sUDPRouteType],
+		}
+		hasUDPRoute := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
+		in.hasUDPRouteInV1 = &hasUDPRoute
+	}
+	return *in.hasUDPRouteInV1
+}
+
 // HasTLSRouteInV1 returns true if TLSRoute exists in gateway.networking.k8s.io/v1 (GW API 1.5+).
 func (in *K8SClient) HasTLSRouteInV1() bool {
 	in.rwMutex.Lock()
@@ -299,24 +333,6 @@ func (in *K8SClient) IsIstioGateway() bool {
 		in.isIstioGateway = &isIstioGateway
 	}
 	return *in.isIstioGateway
-}
-
-// IsExpGatewayAPI checks if K8s GW API Experimental CRDs are installed
-// TODO: remove once GW API v1.5.0 becomes the minimal supported version
-func (in *K8SClient) IsExpGatewayAPI() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
-	if in.GatewayAPI() == nil {
-		return false
-	}
-	if in.isExpGatewayAPI == nil {
-		v1alpha2Types := map[string]string{
-			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
-		}
-		isGatewayAPIV1Alpha2 := checkGatewayAPIs(in, K8sNetworkingGroupVersionV1Alpha2.String(), v1alpha2Types, true)
-		in.isExpGatewayAPI = &isGatewayAPIV1Alpha2
-	}
-	return *in.isExpGatewayAPI
 }
 
 func checkGatewayAPIs(in *K8SClient, version string, types map[string]string, isExperimental bool) bool {

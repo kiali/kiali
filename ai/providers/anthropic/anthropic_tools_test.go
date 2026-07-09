@@ -589,7 +589,7 @@ func TestConvertToolToAnthropic_FromToolDefinition_ManageIstioConfigRead(t *test
 	expected := anthropic.ToolUnionParam{
 		OfTool: &anthropic.ToolParam{
 			Name:        "manage_istio_config_read",
-			Description: param.NewOpt("Read-only Istio, Gateway API, and Inference API config: list or get objects. For action 'list', returns ALL config objects in a SINGLE call (omit group/kind to get everything). Supports Istio resources (networking.istio.io, security.istio.io), Gateway API resources (gateway.networking.k8s.io), and Inference API resources (inference.networking.k8s.io) when installed on the cluster. For create, patch, or delete use manage_istio_config."),
+			Description: param.NewOpt("Read-only Istio, Gateway API, and Inference API config: list or get objects. For action 'list', returns ALL config objects in a SINGLE call grouped by namespace→'group/version/kind'→{valid:[...],invalid:[...],not_validated:[...]} (not_validated = N/A in UI; omit group/kind to get everything). Supports Istio resources (networking.istio.io, security.istio.io), Gateway API resources (gateway.networking.k8s.io), and Inference API resources (inference.networking.k8s.io) when installed on the cluster. For create, patch, or delete use manage_istio_config."),
 			InputSchema: anthropic.ToolInputSchemaParam{
 				Properties: map[string]interface{}{
 					"action": map[string]interface{}{

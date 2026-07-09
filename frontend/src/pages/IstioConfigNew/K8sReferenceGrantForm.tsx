@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { FormGroup, MenuToggle, MenuToggleElement, Select, SelectList, SelectOption } from '@patternfly/react-core';
-import { GroupVersionKind, K8sReferenceRule } from '../../types/IstioObjects';
-import { Namespace } from '../../types/Namespace';
-import { KialiAppState } from '../../store/Store';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { FormGroup, MenuToggle, Select, SelectList, SelectOption } from '@patternfly/react-core';
+import type { GroupVersionKind, K8sReferenceRule } from '../../types/IstioObjects';
+import type { Namespace } from '../../types/Namespace';
+import type { KialiAppState } from '../../store/Store';
 import { namespaceItemsSelector } from '../../store/Selectors';
-import { KialiDispatch } from '../../types/Redux';
+import type { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
@@ -14,7 +15,8 @@ export const FROM_KINDS = [
   dicTypeToGVK[gvkType.K8sGateway],
   dicTypeToGVK[gvkType.K8sGRPCRoute],
   dicTypeToGVK[gvkType.K8sTCPRoute],
-  dicTypeToGVK[gvkType.K8sTLSRoute]
+  dicTypeToGVK[gvkType.K8sTLSRoute],
+  dicTypeToGVK[gvkType.K8sUDPRoute]
 ];
 
 export const TO_KINDS = {
@@ -81,11 +83,6 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
       isFromNamespaceSelectOpen: false,
       isToKindSelectOpen: false
     });
-  }
-
-  private getFormState(): K8sReferenceGrantState {
-    const { isFromKindSelectOpen, isFromNamespaceSelectOpen, isToKindSelectOpen, ...formState } = this.state;
-    return formState;
   }
 
   render(): React.ReactNode {
@@ -212,6 +209,16 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
         </FormGroup>
       </>
     );
+  }
+
+  private getFormState(): K8sReferenceGrantState {
+    const {
+      isFromKindSelectOpen: _isFromKindSelectOpen,
+      isFromNamespaceSelectOpen: _isFromNamespaceSelectOpen,
+      isToKindSelectOpen: _isToKindSelectOpen,
+      ...formState
+    } = this.state;
+    return formState;
   }
 }
 

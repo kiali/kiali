@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -39,8 +38,9 @@ type IstioConfigList struct {
 	K8sHTTPRoutes      []*k8s_networking_v1.HTTPRoute           `json:"-"`
 	K8sInferencePools  []*k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrants []*k8s_networking_v1beta1.ReferenceGrant `json:"-"`
-	K8sTCPRoutes       []*k8s_networking_v1alpha2.TCPRoute      `json:"-"`
+	K8sTCPRoutes       []*k8s_networking_v1.TCPRoute            `json:"-"`
 	K8sTLSRoutes       []*k8s_networking_v1.TLSRoute            `json:"-"`
+	K8sUDPRoutes       []*k8s_networking_v1.UDPRoute            `json:"-"`
 
 	AuthorizationPolicies  []*security_v1.AuthorizationPolicy   `json:"-"`
 	PeerAuthentications    []*security_v1.PeerAuthentication    `json:"-"`
@@ -67,6 +67,7 @@ func (i *IstioConfigList) Namespaces() []string {
 	add(asClientObjects(i.K8sReferenceGrants))
 	add(asClientObjects(i.K8sTCPRoutes))
 	add(asClientObjects(i.K8sTLSRoutes))
+	add(asClientObjects(i.K8sUDPRoutes))
 	add(asClientObjects(i.PeerAuthentications))
 	add(asClientObjects(i.RequestAuthentications))
 	add(asClientObjects(i.ServiceEntries))
@@ -117,6 +118,7 @@ func (i IstioConfigList) MarshalJSON() ([]byte, error) {
 	resources[kubernetes.K8sReferenceGrants.String()] = i.K8sReferenceGrants
 	resources[kubernetes.K8sTCPRoutes.String()] = i.K8sTCPRoutes
 	resources[kubernetes.K8sTLSRoutes.String()] = i.K8sTLSRoutes
+	resources[kubernetes.K8sUDPRoutes.String()] = i.K8sUDPRoutes
 	resources[kubernetes.AuthorizationPolicies.String()] = i.AuthorizationPolicies
 	resources[kubernetes.PeerAuthentications.String()] = i.PeerAuthentications
 	resources[kubernetes.RequestAuthentications.String()] = i.RequestAuthentications
@@ -219,6 +221,10 @@ func (i *IstioConfigList) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(rawMessage, &i.K8sTLSRoutes); err != nil {
 				return err
 			}
+		case kubernetes.K8sUDPRoutes.String():
+			if err := json.Unmarshal(rawMessage, &i.K8sUDPRoutes); err != nil {
+				return err
+			}
 		case kubernetes.AuthorizationPolicies.String():
 			if err := json.Unmarshal(rawMessage, &i.AuthorizationPolicies); err != nil {
 				return err
@@ -296,10 +302,13 @@ func (i *IstioConfigList) ConvertToResponse() {
 		i.K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
 	}
 	if i.K8sTCPRoutes == nil {
-		i.K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
+		i.K8sTCPRoutes = []*k8s_networking_v1.TCPRoute{}
 	}
 	if i.K8sTLSRoutes == nil {
 		i.K8sTLSRoutes = []*k8s_networking_v1.TLSRoute{}
+	}
+	if i.K8sUDPRoutes == nil {
+		i.K8sUDPRoutes = []*k8s_networking_v1.UDPRoute{}
 	}
 
 	if i.AuthorizationPolicies == nil {
@@ -342,8 +351,9 @@ type IstioConfigDetails struct {
 	K8sHTTPRoute      *k8s_networking_v1.HTTPRoute           `json:"-"`
 	K8sInferencePool  *k8s_inference_v1.InferencePool        `json:"-"`
 	K8sReferenceGrant *k8s_networking_v1beta1.ReferenceGrant `json:"-"`
-	K8sTCPRoute       *k8s_networking_v1alpha2.TCPRoute      `json:"-"`
+	K8sTCPRoute       *k8s_networking_v1.TCPRoute            `json:"-"`
 	K8sTLSRoute       *k8s_networking_v1.TLSRoute            `json:"-"`
+	K8sUDPRoute       *k8s_networking_v1.UDPRoute            `json:"-"`
 
 	Permissions           ResourcePermissions `json:"-"`
 	IstioValidation       *IstioValidation    `json:"-"`
@@ -400,6 +410,8 @@ func (i IstioConfigDetails) MarshalJSON() ([]byte, error) {
 		resource = i.K8sTCPRoute
 	} else if i.K8sTLSRoute != nil {
 		resource = i.K8sTLSRoute
+	} else if i.K8sUDPRoute != nil {
+		resource = i.K8sUDPRoute
 	}
 
 	jsonMap["cluster"] = i.Namespace.Cluster
@@ -576,7 +588,7 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 		icd.K8sReferenceGrant = &refGrant
 
 	case kubernetes.K8sTCPRoutes:
-		var tcpRoute k8s_networking_v1alpha2.TCPRoute
+		var tcpRoute k8s_networking_v1.TCPRoute
 		if err := json.Unmarshal(temp.Resource, &tcpRoute); err != nil {
 			return err
 		}
@@ -588,6 +600,13 @@ func (icd *IstioConfigDetails) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		icd.K8sTLSRoute = &tlsRoute
+
+	case kubernetes.K8sUDPRoutes:
+		var udpRoute k8s_networking_v1.UDPRoute
+		if err := json.Unmarshal(temp.Resource, &udpRoute); err != nil {
+			return err
+		}
+		icd.K8sUDPRoute = &udpRoute
 
 	default:
 		return nil
@@ -736,6 +755,9 @@ var IstioConfigHelpMessages = map[string][]IstioConfigHelp{
 	kubernetes.K8sTLSRoutes.String(): {
 		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. TLSRoute provides a way to route TLS requests"},
 	},
+	kubernetes.K8sUDPRoutes.String(): {
+		{ObjectField: "", Message: "Kubernetes Gateway API Configuration Object. UDPRoute provides a way to route UDP requests"},
+	},
 	"internal": {
 		{ObjectField: "", Message: "Internal resources are not editable"},
 	},
@@ -774,8 +796,9 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 			filtered[ns].K8sHTTPRoutes = []*k8s_networking_v1.HTTPRoute{}
 			filtered[ns].K8sInferencePools = []*k8s_inference_v1.InferencePool{}
 			filtered[ns].K8sReferenceGrants = []*k8s_networking_v1beta1.ReferenceGrant{}
-			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1alpha2.TCPRoute{}
+			filtered[ns].K8sTCPRoutes = []*k8s_networking_v1.TCPRoute{}
 			filtered[ns].K8sTLSRoutes = []*k8s_networking_v1.TLSRoute{}
+			filtered[ns].K8sUDPRoutes = []*k8s_networking_v1.UDPRoute{}
 			filtered[ns].VirtualServices = []*networking_v1.VirtualService{}
 			filtered[ns].ServiceEntries = []*networking_v1.ServiceEntry{}
 			filtered[ns].Sidecars = []*networking_v1.Sidecar{}
@@ -845,6 +868,12 @@ func (configList IstioConfigList) FilterIstioConfigs(nss []string) *IstioConfigs
 		for _, route := range configList.K8sTLSRoutes {
 			if route.Namespace == ns {
 				filtered[ns].K8sTLSRoutes = append(filtered[ns].K8sTLSRoutes, route)
+			}
+		}
+
+		for _, route := range configList.K8sUDPRoutes {
+			if route.Namespace == ns {
+				filtered[ns].K8sUDPRoutes = append(filtered[ns].K8sUDPRoutes, route)
 			}
 		}
 
@@ -935,6 +964,7 @@ func (configList IstioConfigList) MergeConfigs(ns IstioConfigList) IstioConfigLi
 	configList.K8sReferenceGrants = append(configList.K8sReferenceGrants, ns.K8sReferenceGrants...)
 	configList.K8sTCPRoutes = append(configList.K8sTCPRoutes, ns.K8sTCPRoutes...)
 	configList.K8sTLSRoutes = append(configList.K8sTLSRoutes, ns.K8sTLSRoutes...)
+	configList.K8sUDPRoutes = append(configList.K8sUDPRoutes, ns.K8sUDPRoutes...)
 	configList.PeerAuthentications = append(configList.PeerAuthentications, ns.PeerAuthentications...)
 	configList.RequestAuthentications = append(configList.RequestAuthentications, ns.RequestAuthentications...)
 	configList.ServiceEntries = append(configList.ServiceEntries, ns.ServiceEntries...)

@@ -1,10 +1,10 @@
-import { Namespace } from './Namespace';
-import { ServicePort } from './ServiceInfo';
-import { ProxyStatus } from './Health';
-import { TimeInSeconds } from './Common';
+import type { Namespace } from './Namespace';
+import type { ServicePort } from './ServiceInfo';
+import type { ProxyStatus } from './Health';
+import type { TimeInSeconds } from './Common';
 import { KIALI_RELATED_LABEL, KIALI_WIZARD_LABEL } from 'components/IstioWizards/WizardActions';
-import { TypeMeta } from './Kubernetes';
-import { PFColors } from 'components/Pf/PfColors';
+import type { TypeMeta } from './Kubernetes';
+import type { PFColors } from 'components/Pf/PfColors';
 
 // Common types
 
@@ -605,15 +605,15 @@ export interface DestinationRule extends IstioObject {
 export class DestinationRuleC implements DestinationRule {
   metadata: K8sMetadata = { name: '' };
   spec: DestinationRuleSpec = {};
+  status?: IstioStatus | undefined;
+  kind: string;
+  apiVersion: string;
 
   constructor(dr: DestinationRule) {
     this.kind = dr.kind;
     this.apiVersion = dr.apiVersion;
     Object.assign(this, dr);
   }
-  status?: IstioStatus | undefined;
-  kind: string;
-  apiVersion: string;
 
   static fromDrArray(drs: DestinationRule[]): DestinationRuleC[] {
     return drs.map(item => new DestinationRuleC(item));
@@ -872,6 +872,10 @@ export interface K8sTLSRoute extends IstioObject {
   spec: K8sTLSRouteSpec;
 }
 
+export interface K8sUDPRoute extends IstioObject {
+  spec: K8sUDPRouteSpec;
+}
+
 // spec objects used by k8s gateway objects
 export interface K8sCommonRouteSpec {
   parentRefs?: ParentRef[];
@@ -932,6 +936,10 @@ export interface K8sTLSRouteSpec extends K8sCommonRouteSpec {
   rules?: K8sTLSRouteRule[];
 }
 
+export interface K8sUDPRouteSpec extends K8sCommonRouteSpec {
+  rules?: K8sUDPRouteRule[];
+}
+
 // rest of attributes used by k8s gateway objects
 export interface K8sGRPCRouteRule {
   backendRefs?: K8sRouteBackendRef[];
@@ -956,6 +964,10 @@ export interface K8sTCPRouteRule {
 }
 
 export interface K8sTLSRouteRule {
+  backendRefs?: K8sRouteBackendRef[];
+}
+
+export interface K8sUDPRouteRule {
   backendRefs?: K8sRouteBackendRef[];
 }
 

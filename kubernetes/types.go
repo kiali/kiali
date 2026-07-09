@@ -30,6 +30,7 @@ const (
 	K8sReferenceGrantType = "ReferenceGrant"
 	K8sTCPRouteType       = "TCPRoute"
 	K8sTLSRouteType       = "TLSRoute"
+	K8sUDPRouteType       = "UDPRoute"
 
 	// Authorization PeerAuthentications
 	AuthorizationPoliciesType = "AuthorizationPolicy"
@@ -75,8 +76,9 @@ var (
 	K8sHTTPRoutes      = K8sNetworkingGroupVersionV1.WithKind(K8sHTTPRouteType)
 	K8sInferencePools  = K8sInferenceGroupVersionV1.WithKind(K8sInferencePoolsType)
 	K8sReferenceGrants = K8sNetworkingGroupVersionV1Beta1.WithKind(K8sReferenceGrantType)
-	K8sTCPRoutes       = K8sNetworkingGroupVersionV1Alpha2.WithKind(K8sTCPRouteType)
+	K8sTCPRoutes       = K8sNetworkingGroupVersionV1.WithKind(K8sTCPRouteType)
 	K8sTLSRoutes       = K8sNetworkingGroupVersionV1.WithKind(K8sTLSRouteType)
+	K8sUDPRoutes       = K8sNetworkingGroupVersionV1.WithKind(K8sUDPRouteType)
 
 	// Authorization PeerAuthentications
 	AuthorizationPolicies = SecurityGroupVersionV1.WithKind(AuthorizationPoliciesType)
@@ -136,11 +138,6 @@ var (
 		Version: "v1",
 	}
 
-	K8sNetworkingGroupVersionV1Alpha2 = schema.GroupVersion{
-		Group:   "gateway.networking.k8s.io",
-		Version: "v1alpha2",
-	}
-
 	K8sNetworkingGroupVersionV1Beta1 = schema.GroupVersion{
 		Group:   "gateway.networking.k8s.io",
 		Version: "v1beta1",
@@ -177,6 +174,7 @@ var (
 		K8sReferenceGrantType: "referencegrants",
 		K8sTCPRouteType:       "tcproutes",
 		K8sTLSRouteType:       "tlsroutes",
+		K8sUDPRouteType:       "udproutes",
 	}
 
 	// Resources
@@ -200,6 +198,7 @@ var (
 		K8sReferenceGrants.String(): K8sReferenceGrants,
 		K8sTCPRoutes.String():       K8sTCPRoutes,
 		K8sTLSRoutes.String():       K8sTLSRoutes,
+		K8sUDPRoutes.String():       K8sUDPRoutes,
 
 		AuthorizationPolicies.String():  AuthorizationPolicies,
 		PeerAuthentications.String():    PeerAuthentications,

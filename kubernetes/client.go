@@ -53,9 +53,10 @@ type ClientInterface interface {
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	IsOpenShift() bool
-	IsExpGatewayAPI() bool
 	IsGatewayAPI() bool
+	HasTCPRouteInV1() bool
 	HasTLSRouteInV1() bool
+	HasUDPRouteInV1() bool
 	IsInferenceAPI() bool
 	IsIstioGateway() bool
 	IsIstioAPI() bool
@@ -112,12 +113,14 @@ type K8SClient struct {
 	// It is represented as a pointer to include the initialization phase.
 	// See kubernetes_service.go#IsOpenShift() for more details.
 	isOpenShift *bool
-	// isExpGatewayAPI will be merged with isGatewayAPI when experimental features get released
-	isExpGatewayAPI *bool
 	// isGatewayAPI private variable will check if K8s Gateway API CRD exists on cluster or not
 	isGatewayAPI *bool
+	// hasTCPRouteInV1 private variable will check if TCPRoute exists in v1 (GW API 1.6+)
+	hasTCPRouteInV1 *bool
 	// hasTLSRouteInV1 private variable will check if TLSRoute exists in v1 (GW API 1.5+)
 	hasTLSRouteInV1 *bool
+	// hasUDPRouteInV1 private variable will check if UDPRoute exists in v1 (GW API 1.6+)
+	hasUDPRouteInV1 *bool
 	// isInferenceAPI private variable will check if K8s Gateway API Inference Extension CRD exists on cluster or not
 	isInferenceAPI *bool
 	gatewayapi     gatewayapiclient.Interface

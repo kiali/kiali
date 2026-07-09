@@ -117,9 +117,10 @@ var _ kubernetes.ClientInterface = &K8SClientMock{}
 func NewK8SClientMock() *K8SClientMock {
 	k8s := new(K8SClientMock)
 	k8s.On("IsOpenShift").Return(true)
-	k8s.On("IsExpGatewayAPI").Return(false)
 	k8s.On("IsGatewayAPI").Return(false)
+	k8s.On("HasTCPRouteInV1").Return(false)
 	k8s.On("HasTLSRouteInV1").Return(false)
+	k8s.On("HasUDPRouteInV1").Return(false)
 	k8s.On("IsInferenceAPI").Return(false)
 	k8s.On("IsIstioGateway").Return(true)
 	k8s.On("IsIstioAPI").Return(true)
@@ -162,17 +163,22 @@ func (o *K8SClientMock) IsOpenShift() bool {
 	return args.Get(0).(bool)
 }
 
-func (o *K8SClientMock) IsExpGatewayAPI() bool {
-	args := o.Called()
-	return args.Get(0).(bool)
-}
-
 func (o *K8SClientMock) IsGatewayAPI() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) HasTCPRouteInV1() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func (o *K8SClientMock) HasTLSRouteInV1() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) HasUDPRouteInV1() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }

@@ -15,7 +15,6 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	k8sinferencev1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8snetworkingv1 "sigs.k8s.io/gateway-api/apis/v1"
-	k8snetworkingv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8snetworkingv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 	gatewayapischeme "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/scheme"
 )
@@ -43,7 +42,6 @@ func NewScheme() (*runtime.Scheme, error) {
 		telemetryv1.AddToScheme,
 		k8snetworkingv1.Install,
 		k8snetworkingv1beta1.Install,
-		k8snetworkingv1alpha2.Install,
 		k8sinferencev1.Install,
 		osappsscheme.AddToScheme,
 		oauthscheme.AddToScheme,

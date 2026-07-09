@@ -825,6 +825,7 @@ var readableGroupKinds = map[string]map[string]struct{}{
 		"GRPCRoute":      {},
 		"TCPRoute":       {},
 		"TLSRoute":       {},
+		"UDPRoute":       {},
 		"ReferenceGrant": {},
 	},
 	"inference.networking.k8s.io": {
