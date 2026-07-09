@@ -1,37 +1,9 @@
 name: MCP Contract Tests
 
+# Validates kubernetes-mcp-server contract tests against the Kiali version pinned in
+# containers/kubernetes-mcp-server/build/kiali.mk. Run manually via workflow_dispatch.
+
 on:
-  workflow_call:
-    inputs:
-      target_branch:
-        required: true
-        type: string
-      build_branch:
-        required: true
-        type: string
-      istio_version:
-        required: false
-        type: string
-        default: ""
-      kubernetes_mcp_server_ref:
-        description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
-        required: false
-        type: string
-        default: "main"
-  push:
-    paths:
-    - 'routing/routes.go'
-    - 'ai/mcp/**'
-    branches:
-    - master
-    - 'v*.*'
-  pull_request:
-    paths:
-    - 'routing/routes.go'
-    - 'ai/mcp/**'
-    branches:
-    - master
-    - 'v*.*'
   workflow_dispatch:
     inputs:
       kubernetes_mcp_server_ref:
@@ -39,10 +11,21 @@ on:
         required: false
         type: string
         default: "main"
+      kiali_ref:
+        description: 'Kiali git ref to use for cluster setup scripts (default: master)'
+        required: false
+        type: string
+        default: "master"
+      kiali_image_version:
+        description: 'Kiali image tag to test (default: pin from kubernetes-mcp-server/build/kiali.mk)'
+        required: false
+        type: string
+        default: ""
 
 env:
-  TARGET_BRANCH: ${{ inputs.target_branch || github.base_ref || github.ref_name }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
+  BUILD_BRANCH: ${{ github.event.inputs.kiali_ref || 'master' }}
+  KIALI_IMAGE_VERSION: ${{ github.event.inputs.kiali_image_version || '' }}
+  KUBERNETES_MCP_SERVER_REF: ${{ github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
 permissions: read-all
 
@@ -86,28 +69,37 @@ jobs:
         cache: true
         cache-dependency-path: go.sum
 
-    - name: Download go binary
-      if: github.event_name == 'workflow_call'
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-      with:
-        name: kiali
-        path: ~/go/bin/
-
-    - name: Ensure kiali binary is executable
-      if: github.event_name == 'workflow_call'
-      run: chmod +x ~/go/bin/kiali
-
-    - name: Build Kiali binary for direct workflow runs
-      if: github.event_name != 'workflow_call'
+    - name: Build Kiali binary for cluster setup
       run: make clean-all build-ui build
 
-    - name: Install frontend dependencies
-      if: github.event_name == 'workflow_call'
-      working-directory: ./frontend
-      run: yarn install --immutable
+    - name: Check out kubernetes-mcp-server
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        repository: containers/kubernetes-mcp-server
+        path: kubernetes-mcp-server
+        ref: ${{ env.KUBERNETES_MCP_SERVER_REF }}
+
+    - name: Resolve pinned Kiali version from kubernetes-mcp-server
+      id: kiali_pin
+      working-directory: kubernetes-mcp-server
+      run: |
+        KIALI_VERSION=$(grep -E '^KIALI_VERSION' build/kiali.mk | awk -F= '{print $2}' | tr -d '[:space:]')
+        echo "kiali_version=${KIALI_VERSION}" >> $GITHUB_OUTPUT
+        echo "kubernetes-mcp-server pins Kiali ${KIALI_VERSION}"
+
+    - name: Resolve Kiali image version for contract tests
+      id: kiali_image
+      run: |
+        if [ -n "${KIALI_IMAGE_VERSION}" ]; then
+          IMAGE_VERSION="${KIALI_IMAGE_VERSION}"
+        else
+          IMAGE_VERSION="${{ steps.kiali_pin.outputs.kiali_version }}"
+        fi
+        echo "kiali_image_version=${IMAGE_VERSION}" >> $GITHUB_OUTPUT
+        echo "Testing Kiali image quay.io/kiali/kiali:${IMAGE_VERSION}"
 
     - name: Setup KinD cluster with Istio and Kiali
-      run: hack/run-integration-tests.sh --test-suite backend --setup-only true $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+      run: hack/run-integration-tests.sh --test-suite backend --setup-only true
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
@@ -156,12 +148,25 @@ jobs:
           sleep 2
         done
 
-    - name: Check out kubernetes-mcp-server
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      with:
-        repository: containers/kubernetes-mcp-server
-        path: kubernetes-mcp-server
-        ref: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
+    - name: Deploy Kiali release image for contract tests
+      run: |
+        KIALI_VERSION="${{ steps.kiali_image.outputs.kiali_image_version }}"
+        echo "Replacing dev Kiali image with ${KIALI_VERSION}..."
+        kubectl patch deployment kiali -n istio-system -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"kiali\",\"image\":\"quay.io/kiali/kiali:${KIALI_VERSION}\"}]}}}}"
+        kubectl rollout status deployment/kiali -n istio-system --timeout=300s
+
+        echo "Verifying pinned Kiali is accessible at ${KIALI_URL}..."
+        for i in {1..30}; do
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${KIALI_URL}/api/status")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Kiali ${KIALI_VERSION} is accessible at ${KIALI_URL}"
+            exit 0
+          fi
+          echo "Attempt $i/30: HTTP $HTTP_CODE"
+          sleep 2
+        done
+        echo "ERROR: Pinned Kiali ${KIALI_VERSION} is not accessible after rollout"
+        exit 1
 
     - name: Set up Go for kubernetes-mcp-server
       uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
