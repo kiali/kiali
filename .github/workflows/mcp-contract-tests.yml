@@ -1,9 +1,40 @@
 name: MCP Contract Tests
 
 # Validates kubernetes-mcp-server contract tests against the Kiali version pinned in
-# containers/kubernetes-mcp-server/build/kiali.mk. Run manually via workflow_dispatch.
+# containers/kubernetes-mcp-server/build/kiali.mk.
 
 on:
+  workflow_call:
+    inputs:
+      target_branch:
+        required: true
+        type: string
+      build_branch:
+        required: true
+        type: string
+      istio_version:
+        required: false
+        type: string
+        default: ""
+      kubernetes_mcp_server_ref:
+        description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
+        required: false
+        type: string
+        default: "main"
+  push:
+    paths:
+    - 'routing/routes.go'
+    - 'ai/mcp/**'
+    branches:
+    - master
+    - 'v*.*'
+  pull_request:
+    paths:
+    - 'routing/routes.go'
+    - 'ai/mcp/**'
+    branches:
+    - master
+    - 'v*.*'
   workflow_dispatch:
     inputs:
       kubernetes_mcp_server_ref:
@@ -11,14 +42,16 @@ on:
         required: false
         type: string
         default: "main"
-      kiali_ref:
-        description: 'Kiali git ref override (default: pin from kubernetes-mcp-server/build/kiali.mk)'
+      kiali_image_version:
+        description: 'Kiali image tag to test (default: pin from kubernetes-mcp-server/build/kiali.mk)'
         required: false
         type: string
         default: ""
 
 env:
-  KUBERNETES_MCP_SERVER_REF: ${{ github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
+  TARGET_BRANCH: ${{ inputs.target_branch || github.ref_name }}
+  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
+  KUBERNETES_MCP_SERVER_REF: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
 permissions: read-all
 
@@ -33,17 +66,17 @@ jobs:
       TERM: xterm
     steps:
     - name: Check out Kiali code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
-        fetch-depth: 0
+        ref: ${{ env.BUILD_BRANCH }}
 
     - name: Install Helm
-      uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       with:
         version: 'v3.18.4'
 
     - name: Check out kubernetes-mcp-server
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
@@ -57,39 +90,16 @@ jobs:
         echo "kiali_version=${KIALI_VERSION}" >> $GITHUB_OUTPUT
         echo "kubernetes-mcp-server pins Kiali ${KIALI_VERSION}"
 
-    - name: Check out pinned Kiali version
-      run: |
-        KIALI_REF="${{ github.event.inputs.kiali_ref || steps.kiali_pin.outputs.kiali_version }}"
-        echo "Checking out Kiali ${KIALI_REF}"
-        git checkout "${KIALI_REF}"
-        echo "BUILD_BRANCH=${KIALI_REF}" >> $GITHUB_ENV
-        echo "TARGET_BRANCH=${KIALI_REF}" >> $GITHUB_ENV
-
-    # Corepack must be enabled before setup-node so that setup-node's
-    # cache: yarn correctly detects the Yarn 4 cache directory.
-    - name: Enable corepack
-      run: corepack enable
-
-    # This caches the yarn deps but does not touch node_modules so it's still necessary
-    # to run 'yarn install' later to link these into node_modules.
-    - name: Setup node
-      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-      with:
-        node-version: "24"
-        cache: yarn
-        cache-dependency-path: frontend/yarn.lock
-    - name: Set up Go
-      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-      with:
-        go-version-file: go.mod
-        cache: true
-        cache-dependency-path: go.sum
-
-    - name: Build Kiali for cluster setup
-      run: make clean-all build-ui build
-
     - name: Setup KinD cluster with Istio and Kiali
-      run: hack/run-integration-tests.sh --test-suite backend --setup-only true
+      env:
+        KIALI_VERSION: ${{ github.event.inputs.kiali_image_version || steps.kiali_pin.outputs.kiali_version }}
+      run: |
+        ISTIO_ARGS=""
+        if [ -n "${{ inputs.istio_version }}" ]; then
+          ISTIO_ARGS="--istio-version ${{ inputs.istio_version }}"
+        fi
+        echo "Deploying quay.io/kiali/kiali:${KIALI_VERSION}"
+        hack/run-integration-tests.sh --test-suite backend --setup-only true --kiali-version "${KIALI_VERSION}" ${ISTIO_ARGS}
 
     - name: Get Kiali external URL from MetalLB
       id: get_kiali_url
@@ -107,7 +117,7 @@ jobs:
         curl -sf --connect-timeout 5 --max-time 15 "${KIALI_URL}/api/status"
 
     - name: Set up Go for kubernetes-mcp-server
-      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
       with:
         go-version-file: kubernetes-mcp-server/go.mod
         cache: true
@@ -130,7 +140,7 @@ jobs:
 
     - name: Upload debug info artifact
       if: ${{ failure() && steps.contractTests.conclusion == 'failure' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: debug-info-mcp-contract-tests
         path: debug-output
