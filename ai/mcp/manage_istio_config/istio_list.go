@@ -82,13 +82,13 @@ type IstioListResult struct {
 
 type validationSummary struct {
 	// Valid is nil when no validation exists for the resource (matches UI N/A).
-	Valid  *bool
 	Checks []validationCheckSummary
+	Valid  *bool
 }
 
 type validationCheckSummary struct {
-	Severity string
 	Message  string
+	Severity string
 }
 
 func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config, isGatewayAPIEnabled bool, isInferenceAPIEnabled bool) (interface{}, int) {
@@ -251,12 +251,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	appendItem := func(name, ns string, gvk schema.GroupVersionKind, obj runtime.Object) {
 		v := validationSummaryForRuntimeObject(obj, gvk, istioValidations, cluster)
 		items = append(items, istioListItem{
+			Group:           gvk.Group,
+			Kind:            gvk.Kind,
 			Name:            name,
 			Namespace:       ns,
-			Group:           gvk.Group,
-			Version:         gvk.Version,
-			Kind:            gvk.Kind,
 			ValidationValid: v.Valid,
+			Version:         gvk.Version,
 		})
 	}
 
@@ -500,8 +500,8 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 			continue
 		}
 		checks = append(checks, validationCheckSummary{
-			Severity: sev,
 			Message:  c.Message,
+			Severity: sev,
 		})
 	}
 	if len(checks) > 0 {

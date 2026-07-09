@@ -28,7 +28,7 @@
       kind:
         type: "string"
         description: "Kind of the Istio object (e.g., 'VirtualService', 'DestinationRule')."
-        enum: ["VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar", "WorkloadEntry", "WorkloadGroup", "EnvoyFilter", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute", "InferencePool"]
+        enum: ["VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar", "WorkloadEntry", "WorkloadGroup", "EnvoyFilter", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute", "UDPRoute", "InferencePool"]
       object:
         type: "string"
         description: "Name of the Istio object."
