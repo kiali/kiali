@@ -136,6 +136,10 @@ const AnnotationSection: React.FC<SectionProps> = ({
               </Th>
               <Th>
                 <Popover
+                  appendTo={() =>
+                    (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
+                    document.body
+                  }
                   headerContent={key || t('Value')}
                   bodyContent={
                     <TextArea
@@ -145,7 +149,6 @@ const AnnotationSection: React.FC<SectionProps> = ({
                       value={value}
                     />
                   }
-                  elementToFocus={`#${sectionId}_popover_value_${index}`}
                   minWidth="40rem"
                   position="left"
                 >
@@ -189,13 +192,15 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
   const [controllerEntries, setControllerEntries] = React.useState<Entry[]>(() => toEntries(controllerAnnotations));
   const [templateEntries, setTemplateEntries] = React.useState<Entry[]>(() => toEntries(templateAnnotations));
   const [validation, setValidation] = React.useState<string[]>([]);
+  const wasOpen = React.useRef(false);
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpen.current) {
       setControllerEntries(toEntries(controllerAnnotations));
       setTemplateEntries(toEntries(templateAnnotations));
       setValidation([]);
     }
+    wasOpen.current = isOpen;
   }, [isOpen, controllerAnnotations, templateAnnotations]);
 
   const handleClear = (): void => {
