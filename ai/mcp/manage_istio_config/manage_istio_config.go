@@ -29,7 +29,9 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
 	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
-	if err := validateReadOnlyIstioConfigInput(args); err != nil {
+	isGatewayAPIEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
+	isInferenceAPIEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
+	if err := validateReadOnlyIstioConfigInput(args, isGatewayAPIEnabled, isInferenceAPIEnabled); err != nil {
 		return err.Error(), http.StatusOK
 	}
 	if action != "list" {
@@ -38,9 +40,6 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 		kind := mcputil.GetStringArg(args, "kind")
 		gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
 		if !business.GetIstioAPI(gvk) {
-			if group == "gateway.networking.k8s.io" && kind == "Gateway" && version == "v1beta1" {
-				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusOK
-			}
 			return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusOK
 		}
 	}
@@ -58,7 +57,7 @@ func ExecuteReadOnly(kialiInterface *mcputil.KialiInterface, args map[string]int
 
 	switch action {
 	case "list":
-		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
+		return IstioList(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf, isGatewayAPIEnabled, isInferenceAPIEnabled)
 	case "get":
 		return IstioGet(kialiInterface.Request.Context(), args, kialiInterface.BusinessLayer, kialiInterface.Conf)
 	default:
@@ -70,11 +69,14 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	action := mcputil.GetStringArg(args, "action")
 	confirmed := mcputil.AsBool(args["confirmed"])
 	mcpMode := mcputil.AsBoolOrDefault(args, false, "mcp_mode")
+	clusterName := mcputil.GetStringOrDefault(args, kialiInterface.Conf.KubernetesConfig.ClusterName, "clusterName")
+	isGatewayAPIEnabled := isGatewayAPIEnabled(kialiInterface, clusterName)
+	isInferenceAPIEnabled := isInferenceAPIEnabled(kialiInterface, clusterName)
 
 	if action == "list" || action == "get" {
 		return "for list and get actions use the manage_istio_config_read tool", http.StatusBadRequest
 	}
-	if err := validateIstioConfigInput(args); err != nil {
+	if err := validateIstioConfigInput(args, isGatewayAPIEnabled, isInferenceAPIEnabled); err != nil {
 		return err.Error(), http.StatusBadRequest
 	}
 
@@ -84,9 +86,6 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		kind := mcputil.GetStringArg(args, "kind")
 		gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
 		if !business.GetIstioAPI(gvk) {
-			if group == "gateway.networking.k8s.io" && kind == "Gateway" && version == "v1beta1" {
-				return fmt.Sprintf("Object type not managed: %s. Hint: try version 'v1' for Gateway API resources.", gvk.String()), http.StatusBadRequest
-			}
 			return fmt.Sprintf("Object type not managed: %s", gvk.String()), http.StatusBadRequest
 		}
 	}
@@ -330,6 +329,16 @@ func ensureCompleteCreateYAML(args map[string]interface{}, data string, ctx cont
 
 	gvk := schema.GroupVersionKind{Group: group, Version: version, Kind: kind}
 
+	// When data is empty, return the template directly as a complete resource
+	if strings.TrimSpace(data) == "" {
+		base := buildResourceTemplate(gvk, object, namespace)
+		baseYAML, err := yaml.Marshal(base)
+		if err != nil {
+			return "", err
+		}
+		return string(baseYAML), nil
+	}
+
 	// Parse the LLM-provided YAML
 	var llmData map[string]interface{}
 	if err := yaml.Unmarshal([]byte(data), &llmData); err != nil {
@@ -345,8 +354,16 @@ func ensureCompleteCreateYAML(args map[string]interface{}, data string, ctx cont
 	}
 
 	if hasAPIVersion && hasKind && hasMetadata {
-		// LLM provided a complete document - use it as-is
-		return normalizeToYAML(data)
+		// LLM provided a complete document — but if spec is empty/missing,
+		// merge onto the template so required fields are populated.
+		spec, _ := llmData["spec"].(map[string]interface{})
+		if len(spec) > 0 {
+			normalized, err := normalizeToYAML(data)
+			if err != nil {
+				return "", err
+			}
+			return applyGVKFixups(gvk, normalized)
+		}
 	}
 
 	// Try to load existing object from clusterName (same approach as PATCH preview)
@@ -391,6 +408,8 @@ func ensureCompleteCreateYAML(args map[string]interface{}, data string, ctx cont
 		return "", err
 	}
 
+	mergedJSON = applyGVKFixupsJSON(gvk, mergedJSON)
+
 	mergedYAML, err := yaml.JSONToYAML(mergedJSON)
 	if err != nil {
 		return "", err
@@ -401,6 +420,121 @@ func ensureCompleteCreateYAML(args map[string]interface{}, data string, ctx cont
 		out += "\n"
 	}
 	return out, nil
+}
+
+// applyGVKFixupsJSON applies GVK-specific corrections to JSON data in-place.
+func applyGVKFixupsJSON(gvk schema.GroupVersionKind, data []byte) []byte {
+	if gvk.Group == "gateway.networking.k8s.io" && gvk.Kind == "HTTPRoute" {
+		data = fixHTTPRoutePathTypes(data)
+	}
+	if gvk.Group == "inference.networking.k8s.io" && gvk.Kind == "InferencePool" {
+		data = fixInferencePoolSpec(data)
+	}
+	return data
+}
+
+// applyGVKFixups applies GVK-specific corrections to a YAML string.
+func applyGVKFixups(gvk schema.GroupVersionKind, yamlData string) (string, error) {
+	jsonData, err := yaml.YAMLToJSON([]byte(yamlData))
+	if err != nil {
+		return yamlData, nil
+	}
+	fixed := applyGVKFixupsJSON(gvk, jsonData)
+	fixedYAML, err := yaml.JSONToYAML(fixed)
+	if err != nil {
+		return yamlData, nil
+	}
+	return string(fixedYAML), nil
+}
+
+// fixHTTPRoutePathTypes corrects common LLM mistakes in HTTPRoute path match types.
+// LLMs frequently generate "Prefix" instead of the correct "PathPrefix".
+func fixHTTPRoutePathTypes(data []byte) []byte {
+	var obj map[string]interface{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return data
+	}
+	spec, _ := obj["spec"].(map[string]interface{})
+	if spec == nil {
+		return data
+	}
+	rules, _ := spec["rules"].([]interface{})
+	for _, r := range rules {
+		rule, _ := r.(map[string]interface{})
+		if rule == nil {
+			continue
+		}
+		matches, _ := rule["matches"].([]interface{})
+		for _, m := range matches {
+			match, _ := m.(map[string]interface{})
+			if match == nil {
+				continue
+			}
+			path, _ := match["path"].(map[string]interface{})
+			if path == nil {
+				continue
+			}
+			if t, ok := path["type"].(string); ok && t == "Prefix" {
+				path["type"] = "PathPrefix"
+			}
+		}
+	}
+	fixed, err := json.Marshal(obj)
+	if err != nil {
+		return data
+	}
+	return fixed
+}
+
+// fixInferencePoolSpec corrects common LLM mistakes in InferencePool specs.
+// LLMs frequently produce the deprecated flat format instead of the required v1 structure:
+//   - "targetPortNumber" (int) → "targetPorts" (array of {number: int})
+//   - flat "selector: {app: x}" → "selector: {matchLabels: {app: x}}"
+//   - missing "endpointPickerRef" → adds default
+func fixInferencePoolSpec(data []byte) []byte {
+	var obj map[string]interface{}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return data
+	}
+	spec, _ := obj["spec"].(map[string]interface{})
+	if spec == nil {
+		return data
+	}
+
+	// Fix targetPortNumber → targetPorts
+	if portNum, ok := spec["targetPortNumber"]; ok {
+		delete(spec, "targetPortNumber")
+		if num, ok := portNum.(float64); ok {
+			spec["targetPorts"] = []interface{}{map[string]interface{}{"number": num}}
+		}
+	}
+	if spec["targetPorts"] == nil {
+		spec["targetPorts"] = []interface{}{map[string]interface{}{"number": float64(8000)}}
+	}
+
+	// Fix flat selector → selector.matchLabels
+	if sel, ok := spec["selector"].(map[string]interface{}); ok {
+		if _, hasMatchLabels := sel["matchLabels"]; !hasMatchLabels {
+			spec["selector"] = map[string]interface{}{"matchLabels": sel}
+		}
+	}
+
+	// Ensure endpointPickerRef exists
+	if spec["endpointPickerRef"] == nil {
+		spec["endpointPickerRef"] = map[string]interface{}{
+			"group":       "",
+			"kind":        "Service",
+			"name":        "example-model-epp",
+			"port":        map[string]interface{}{"number": float64(9002)},
+			"failureMode": "FailClose",
+		}
+	}
+
+	fixed, err := json.Marshal(obj)
+	if err != nil {
+		return data
+	}
+	return fixed
 }
 
 // buildResourceTemplate creates a minimal valid template for each Istio resource type
@@ -463,9 +597,66 @@ func buildResourceTemplate(gvk schema.GroupVersionKind, name, namespace string) 
 				"mode": "STRICT",
 			},
 		}
+	case gvk.Group == "gateway.networking.k8s.io" && gvk.Kind == "Gateway":
+		base["spec"] = map[string]interface{}{
+			"gatewayClassName": "istio",
+			"listeners": []interface{}{
+				map[string]interface{}{
+					"name":     "http",
+					"port":     80,
+					"protocol": "HTTP",
+				},
+			},
+		}
+	case gvk.Group == "gateway.networking.k8s.io" && gvk.Kind == "HTTPRoute":
+		base["spec"] = map[string]interface{}{
+			"parentRefs": []interface{}{
+				map[string]interface{}{
+					"name": "example-gateway",
+				},
+			},
+			"rules": []interface{}{
+				map[string]interface{}{
+					"matches": []interface{}{
+						map[string]interface{}{
+							"path": map[string]interface{}{
+								"type":  "PathPrefix",
+								"value": "/",
+							},
+						},
+					},
+					"backendRefs": []interface{}{
+						map[string]interface{}{
+							"name": "example",
+							"port": 80,
+						},
+					},
+				},
+			},
+		}
+	case gvk.Group == "inference.networking.k8s.io" && gvk.Kind == "InferencePool":
+		base["spec"] = map[string]interface{}{
+			"targetPorts": []interface{}{
+				map[string]interface{}{
+					"number": 8000,
+				},
+			},
+			"selector": map[string]interface{}{
+				"matchLabels": map[string]interface{}{
+					"app": "example-model",
+				},
+			},
+			"endpointPickerRef": map[string]interface{}{
+				"group": "",
+				"kind":  "Service",
+				"name":  "example-model-epp",
+				"port": map[string]interface{}{
+					"number": 9002,
+				},
+				"failureMode": "FailClose",
+			},
+		}
 	}
-	// For other resource types, just return the base (apiVersion, kind, metadata)
-	// The LLM should provide a complete spec for those.
 
 	return base
 }
@@ -489,13 +680,72 @@ var allowedSecurityIstioKinds = map[string]struct{}{
 	"RequestAuthentication": {},
 }
 
-// validateManagedIstioGroupAndKind ensures group is networking.istio.io or security.istio.io
-// and kind is allowed for that API group.
-func validateManagedIstioGroupAndKind(group, kind string) error {
+// allowedGatewayAPIKinds are the Gateway API kinds supported when Gateway API CRDs are installed.
+var allowedGatewayAPIKinds = map[string]struct{}{
+	"Gateway":        {},
+	"GRPCRoute":      {},
+	"HTTPRoute":      {},
+	"ReferenceGrant": {},
+	"TCPRoute":       {},
+	"TLSRoute":       {},
+}
+
+// allowedInferenceAPIKinds are the Inference API kinds supported when inference.networking.k8s.io CRDs are installed.
+var allowedInferenceAPIKinds = map[string]struct{}{
+	"InferencePool": {},
+}
+
+// inferGroupFromKind attempts to resolve the API group from the kind alone.
+// Returns the group if the kind unambiguously belongs to one group, or "" if ambiguous
+// (e.g. "Gateway" exists in both networking.istio.io and gateway.networking.k8s.io).
+func inferGroupFromKind(kind string, isGatewayAPIEnabled, isInferenceAPIEnabled bool) string {
+	if _, ok := allowedSecurityIstioKinds[kind]; ok {
+		return "security.istio.io"
+	}
+	if _, ok := allowedInferenceAPIKinds[kind]; ok && isInferenceAPIEnabled {
+		return "inference.networking.k8s.io"
+	}
+	inNetworking := false
+	if _, ok := allowedNetworkingIstioKinds[kind]; ok {
+		inNetworking = true
+	}
+	inGatewayAPI := false
+	if _, ok := allowedGatewayAPIKinds[kind]; ok && isGatewayAPIEnabled {
+		inGatewayAPI = true
+	}
+	if inNetworking && !inGatewayAPI {
+		return "networking.istio.io"
+	}
+	if inGatewayAPI && !inNetworking {
+		return "gateway.networking.k8s.io"
+	}
+	return ""
+}
+
+// validateManagedIstioGroupAndKind ensures group is networking.istio.io, security.istio.io,
+// (when Gateway API is discovered) gateway.networking.k8s.io, or (when Inference API is
+// discovered) inference.networking.k8s.io, and kind is allowed for that group.
+// When group is empty but kind is unambiguous, the group is inferred automatically.
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
+func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 	g := strings.TrimSpace(group)
 	k := strings.TrimSpace(kind)
+	isGatewayAPIEnabled := len(flags) > 0 && flags[0]
+	isInferenceAPIEnabled := len(flags) > 1 && flags[1]
+	if g == "" && k != "" {
+		if inferred := inferGroupFromKind(k, isGatewayAPIEnabled, isInferenceAPIEnabled); inferred != "" {
+			g = inferred
+		}
+	}
 	if g == "" {
-		return fmt.Errorf(`group is required and must be "networking.istio.io" or "security.istio.io"`)
+		groups := []string{`"networking.istio.io"`, `"security.istio.io"`}
+		if isGatewayAPIEnabled {
+			groups = append(groups, `"gateway.networking.k8s.io"`)
+		}
+		if isInferenceAPIEnabled {
+			groups = append(groups, `"inference.networking.k8s.io"`)
+		}
+		return fmt.Errorf("group is required and must be %s", strings.Join(groups, ", "))
 	}
 	if k == "" {
 		return fmt.Errorf("kind is required for group %q", g)
@@ -517,8 +767,37 @@ func validateManagedIstioGroupAndKind(group, kind string) error {
 			)
 		}
 		return nil
+	case "gateway.networking.k8s.io":
+		if !isGatewayAPIEnabled {
+			return fmt.Errorf(`invalid group %q: Gateway API CRDs are not installed on the cluster`, g)
+		}
+		if _, ok := allowedGatewayAPIKinds[k]; !ok {
+			return fmt.Errorf(
+				"invalid kind %q for group %q: must be one of Gateway, HTTPRoute, GRPCRoute, ReferenceGrant, TCPRoute, TLSRoute",
+				k, g,
+			)
+		}
+		return nil
+	case "inference.networking.k8s.io":
+		if !isInferenceAPIEnabled {
+			return fmt.Errorf(`invalid group %q: Inference API CRDs are not installed on the cluster`, g)
+		}
+		if _, ok := allowedInferenceAPIKinds[k]; !ok {
+			return fmt.Errorf(
+				"invalid kind %q for group %q: must be InferencePool",
+				k, g,
+			)
+		}
+		return nil
 	default:
-		return fmt.Errorf(`invalid group %q: must be "networking.istio.io" or "security.istio.io"`, g)
+		groups := []string{`"networking.istio.io"`, `"security.istio.io"`}
+		if isGatewayAPIEnabled {
+			groups = append(groups, `"gateway.networking.k8s.io"`)
+		}
+		if isInferenceAPIEnabled {
+			groups = append(groups, `"inference.networking.k8s.io"`)
+		}
+		return fmt.Errorf("invalid group %q: must be %s", g, strings.Join(groups, ", "))
 	}
 }
 
@@ -584,7 +863,8 @@ func validateReadableGroupAndKind(group, kind string) error {
 }
 
 // validateReadOnlyIstioConfigInput validates args for read-only actions (list, get).
-func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
+func validateReadOnlyIstioConfigInput(args map[string]interface{}, flags ...bool) error {
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
 	group := mcputil.GetStringArg(args, "group")
@@ -599,6 +879,12 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 			return nil
 		}
 		if hasKind && !hasGroup {
+			isGatewayAPIEnabled := len(flags) > 0 && flags[0]
+			isInferenceAPIEnabled := len(flags) > 1 && flags[1]
+			inferred := inferGroupFromKind(kind, isGatewayAPIEnabled, isInferenceAPIEnabled)
+			if inferred != "" {
+				return validateReadableGroupAndKind(inferred, kind)
+			}
 			return fmt.Errorf("group is required when kind is specified for action %q", action)
 		}
 		if hasGroup && !hasKind {
@@ -631,7 +917,8 @@ func validateReadOnlyIstioConfigInput(args map[string]interface{}) error {
 // It also normalizes args: if "object" is missing it falls back to "name" or
 // extracts metadata.name from "data", writing the resolved value back into
 // args["object"] so downstream code sees it.
-func validateIstioConfigInput(args map[string]interface{}) error {
+// The variadic flags parameter accepts: [0] = isGatewayAPIEnabled, [1] = isInferenceAPIEnabled.
+func validateIstioConfigInput(args map[string]interface{}, flags ...bool) error {
 	action := mcputil.GetStringArg(args, "action")
 	namespace := mcputil.GetStringArg(args, "namespace")
 	group := mcputil.GetStringArg(args, "group")
@@ -677,7 +964,7 @@ func validateIstioConfigInput(args map[string]interface{}) error {
 				return fmt.Errorf("object (resource name) is required for action %q — set the 'object' parameter", action)
 			}
 		}
-		return validateManagedIstioGroupAndKind(group, kind)
+		return validateManagedIstioGroupAndKind(group, kind, flags...)
 	default:
 		return fmt.Errorf("invalid action %q: must be one of create, patch, delete", action)
 	}
