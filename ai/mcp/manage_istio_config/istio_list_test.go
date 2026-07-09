@@ -76,7 +76,7 @@ func TestIstioList_ReturnsCompactYAML(t *testing.T) {
 		"namespace": "bookinfo",
 	}
 
-	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
 	require.Equal(t, http.StatusOK, status)
 
 	out, ok := res.([]IstioListItem)
@@ -141,7 +141,7 @@ func TestIstioList_FilterByService(t *testing.T) {
 		"serviceName": "reviews",
 	}
 
-	res, status := IstioList(context.Background(), args, businessLayer, conf)
+	res, status := IstioList(context.Background(), args, businessLayer, conf, false, false)
 	require.Equal(t, http.StatusOK, status)
 
 	out, ok := res.([]IstioListItem)

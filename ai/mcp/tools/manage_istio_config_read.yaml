@@ -1,5 +1,5 @@
 - name: "manage_istio_config_read"
-  description: "Read-only Istio config: list or get objects. For action 'list', returns an array of objects with {name, namespace, type, validation}. For create, patch, or delete use manage_istio_config."
+  description: "Read-only Istio, Gateway API, and Inference API config: list or get objects. For action 'list', returns ALL config objects in a SINGLE call (omit group/kind to get everything). Supports Istio resources (networking.istio.io, security.istio.io), Gateway API resources (gateway.networking.k8s.io), and Inference API resources (inference.networking.k8s.io) when installed on the cluster. For create, patch, or delete use manage_istio_config."
   toolset: [default, mcp]
   input_schema:
     type: "object"
@@ -17,15 +17,15 @@
         description: "Namespace containing the Istio object. For 'list', if not provided, returns objects across all namespaces. For 'get', required."
       group:
         type: "string"
-        description: "API group of the Istio object. Required for 'get' action."
-        enum: ["networking.istio.io", "security.istio.io"]
+        description: "API group of the Istio object. Required ONLY for 'get' action. For 'list', OMIT group and kind to retrieve ALL config types in a single call. Use 'gateway.networking.k8s.io' for Gateway API resources. Use 'inference.networking.k8s.io' for Inference API resources."
+        enum: ["networking.istio.io", "security.istio.io", "gateway.networking.k8s.io", "inference.networking.k8s.io"]
       version:
         type: "string"
-        description: "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action."
+        description: "API version. Use 'v1' for all resource types. Required for 'get' action."
       kind:
         type: "string"
-        description: "Kind of the Istio object. Required for 'get' action."
-        enum: ["VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar", "WorkloadEntry", "WorkloadGroup", "EnvoyFilter", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication"]
+        description: "Kind of the Istio object. Required ONLY for 'get' action. For 'list', OMIT to return all kinds at once — do NOT call separately for each kind."
+        enum: ["VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar", "WorkloadEntry", "WorkloadGroup", "EnvoyFilter", "AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication", "HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute", "InferencePool"]
       object:
         type: "string"
         description: "Name of the Istio object. Required for 'get' action."
