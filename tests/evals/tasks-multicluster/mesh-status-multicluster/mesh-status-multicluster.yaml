@@ -20,5 +20,5 @@ spec:
   prompt:
     inline: |
       Perform a mesh health audit for my multicluster Istio deployment.
-      Report control plane and data plane status for each cluster Kiali can access (east and west).
-      Summarize overall mesh health and mention both cluster names in your answer.
+      Report control plane and data plane status for each cluster Kiali can access.
+      Summarize overall mesh health.

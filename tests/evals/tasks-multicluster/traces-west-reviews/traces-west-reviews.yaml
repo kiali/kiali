@@ -21,4 +21,3 @@ spec:
     inline: |
       List recent distributed traces for the reviews service in the bookinfo namespace on the west cluster.
       Summarize how many traces were found and mention any slow or error spans you see.
-      Include reviews and west in your answer.

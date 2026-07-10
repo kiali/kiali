@@ -482,7 +482,7 @@ The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in Gi
 1. A **single-cluster** Kind environment with Istio and Kiali (`hack/run-integration-tests.sh --test-suite backend --setup-only true`)
 2. A **primary-remote multicluster** Kind environment — same setup as Cypress multicluster tests (`hack/run-integration-tests.sh --test-suite frontend-primary-remote --setup-only true`; Jaeger tracing, no Tempo)
 
-Multicluster-specific tasks (for example `list_clusters` and tools using `clusterName`) live under `tests/evals/tasks-multicluster/` and run only in the second job. This is separate from unit/integration tests: it uses an LLM agent and costs API usage.
+Multicluster-specific tasks live under `tests/evals/tasks-multicluster/` and run only in the second job. This is separate from unit/integration tests: it uses an LLM agent and costs API usage.
 
 ### Multicluster evaluation tasks
 
@@ -490,12 +490,14 @@ Primary-remote setup uses Kind clusters **east** (home, where Kiali runs) and **
 
 | Task | MCP tools exercised | What it validates |
 |------|---------------------|-------------------|
-| Discover Accessible Clusters | `list_clusters` | Returns east/west and marks the home cluster |
-| Inspect Remote Cluster Workload | `list_clusters`, `list_or_get_resources` | Workload detail with `clusterName=west` |
+| Discover Accessible Clusters | `list_clusters`¹ | Cluster names (east/west) and which is home |
+| Inspect Remote Cluster Workload | `list_or_get_resources` | Workload detail with `clusterName=west` |
 | Visualize West Cluster Traffic | `get_mesh_traffic_graph` | Traffic graph scoped to west |
 | Analyze Remote Service Metrics | `get_metrics` | Inbound metrics for reviews on west |
 | List Remote Cluster Traces | `list_traces` | Traces for reviews on west (Jaeger, same as frontend-primary-remote CI) |
 | Audit Multicluster Mesh Health | `get_mesh_status` | Control/data plane health across clusters |
+
+¹ Kiali implements `list_clusters` and lists it in `KubernetesMCPServerEndpoints` (contract test) ahead of a paired [kubernetes-mcp-server](https://github.com/containers/kubernetes-mcp-server) change to delegate `/api/chat/mcp/list_clusters`. Until that upstream PR lands, evals reach Kiali tools through kubernetes-mcp-server's existing kiali toolset (for example `get_mesh_status` for cluster discovery).
 
 Task definitions: `tests/evals/tasks-multicluster/*/`.
 
@@ -546,4 +548,6 @@ make mcp-stop-server
 ### Token baseline
 
 Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed eval baselines via the **Update Token Baseline** job: it refreshes `tests/evals/results/mcpchecker-gemini-eval-out.json`, `tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json`, and the [Token Consumption](#token-consumption) and [Multicluster token consumption](#multicluster-token-consumption) sections (through `hack/mcp/update-token-readme.sh`) and may open an automated PR.
+
+The multicluster baseline file is created on the first successful multicluster run on `master`; until then, PR diff comments show _no baseline_ for that job. The update job refreshes each baseline independently when its eval job succeeds.
 

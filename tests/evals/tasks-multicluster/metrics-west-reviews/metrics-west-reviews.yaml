@@ -21,4 +21,3 @@ spec:
     inline: |
       Show me inbound request rate metrics for the reviews service in the bookinfo namespace on the west cluster for the last 10 minutes.
       When querying service metrics, use direction inbound so request series are not empty.
-      Include reviews and west in your summary.

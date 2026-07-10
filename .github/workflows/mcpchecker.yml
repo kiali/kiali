@@ -421,8 +421,7 @@ jobs:
       pull-requests: write
     if: |
       always() &&
-      needs.run-evaluation.result == 'success' &&
-      needs.run-evaluation-multicluster.result == 'success' &&
+      (needs.run-evaluation.result == 'success' || needs.run-evaluation-multicluster.result == 'success') &&
       needs.check-trigger.outputs.is-pr != 'true'
     runs-on: ubuntu-latest
     steps:
@@ -453,69 +452,82 @@ jobs:
         fi
 
     - name: Download mcpchecker results
+      if: needs.run-evaluation.result == 'success'
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: mcpchecker-results
         path: mcpchecker-results/
 
     - name: Download mcpchecker multicluster results
+      if: needs.run-evaluation-multicluster.result == 'success'
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
       with:
         name: mcpchecker-multicluster-results
         path: mcpchecker-multicluster-results/
 
     - name: Update eval results baselines
+      id: update-baselines
       run: |
         set -euo pipefail
         mkdir -p tests/evals/results
 
-        ARTIFACT_JSON="$(ls -t mcpchecker-results/mcpchecker-*-out.json 2>/dev/null | head -1 || true)"
-        for candidate in \
-          mcpchecker-results/tests/evals/results/mcpchecker-gemini-eval-out.json \
-          mcpchecker-results/mcpchecker-gemini-eval-out.json; do
-          if [[ -n "${ARTIFACT_JSON}" ]]; then
-            break
+        if [[ "${{ needs.run-evaluation.result }}" == "success" ]]; then
+          ARTIFACT_JSON="$(ls -t mcpchecker-results/mcpchecker-*-out.json 2>/dev/null | head -1 || true)"
+          for candidate in \
+            mcpchecker-results/tests/evals/results/mcpchecker-gemini-eval-out.json \
+            mcpchecker-results/mcpchecker-gemini-eval-out.json; do
+            if [[ -n "${ARTIFACT_JSON}" ]]; then
+              break
+            fi
+            if [[ -f "${candidate}" ]]; then
+              ARTIFACT_JSON="${candidate}"
+              break
+            fi
+          done
+          if [[ -z "${ARTIFACT_JSON}" ]]; then
+            ARTIFACT_JSON="$(find mcpchecker-results -type f -name mcpchecker-gemini-eval-out.json | head -1)"
           fi
-          if [[ -f "${candidate}" ]]; then
-            ARTIFACT_JSON="${candidate}"
-            break
+          if [[ -z "${ARTIFACT_JSON}" || ! -f "${ARTIFACT_JSON}" ]]; then
+            echo "::error::mcpchecker-gemini-eval-out.json not found in artifact (expected under mcpchecker-results/)"
+            find mcpchecker-results -type f -ls 2>/dev/null || ls -laR mcpchecker-results
+            exit 1
           fi
-        done
-        if [[ -z "${ARTIFACT_JSON}" ]]; then
-          ARTIFACT_JSON="$(find mcpchecker-results -type f -name mcpchecker-gemini-eval-out.json | head -1)"
+          cp "${ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-eval-out.json
+          echo "updated-single=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "updated-single=false" >> "$GITHUB_OUTPUT"
         fi
-        if [[ -z "${ARTIFACT_JSON}" || ! -f "${ARTIFACT_JSON}" ]]; then
-          echo "::error::mcpchecker-gemini-eval-out.json not found in artifact (expected under mcpchecker-results/)"
-          find mcpchecker-results -type f -ls 2>/dev/null || ls -laR mcpchecker-results
-          exit 1
-        fi
-        cp "${ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-eval-out.json
 
-        MC_ARTIFACT_JSON="$(ls -t mcpchecker-multicluster-results/mcpchecker-*-out.json 2>/dev/null | head -1 || true)"
-        for candidate in \
-          mcpchecker-multicluster-results/tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json \
-          mcpchecker-multicluster-results/mcpchecker-gemini-multicluster-eval-out.json; do
-          if [[ -n "${MC_ARTIFACT_JSON}" ]]; then
-            break
+        if [[ "${{ needs.run-evaluation-multicluster.result }}" == "success" ]]; then
+          MC_ARTIFACT_JSON="$(ls -t mcpchecker-multicluster-results/mcpchecker-*-out.json 2>/dev/null | head -1 || true)"
+          for candidate in \
+            mcpchecker-multicluster-results/tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json \
+            mcpchecker-multicluster-results/mcpchecker-gemini-multicluster-eval-out.json; do
+            if [[ -n "${MC_ARTIFACT_JSON}" ]]; then
+              break
+            fi
+            if [[ -f "${candidate}" ]]; then
+              MC_ARTIFACT_JSON="${candidate}"
+              break
+            fi
+          done
+          if [[ -z "${MC_ARTIFACT_JSON}" ]]; then
+            MC_ARTIFACT_JSON="$(find mcpchecker-multicluster-results -type f -name '*multicluster*out.json' | head -1)"
           fi
-          if [[ -f "${candidate}" ]]; then
-            MC_ARTIFACT_JSON="${candidate}"
-            break
+          if [[ -z "${MC_ARTIFACT_JSON}" || ! -f "${MC_ARTIFACT_JSON}" ]]; then
+            echo "::error::multicluster mcpchecker results not found in artifact (expected under mcpchecker-multicluster-results/)"
+            find mcpchecker-multicluster-results -type f -ls 2>/dev/null || ls -laR mcpchecker-multicluster-results
+            exit 1
           fi
-        done
-        if [[ -z "${MC_ARTIFACT_JSON}" ]]; then
-          MC_ARTIFACT_JSON="$(find mcpchecker-multicluster-results -type f -name '*multicluster*out.json' | head -1)"
+          cp "${MC_ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
+          echo "updated-multicluster=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "updated-multicluster=false" >> "$GITHUB_OUTPUT"
         fi
-        if [[ -z "${MC_ARTIFACT_JSON}" || ! -f "${MC_ARTIFACT_JSON}" ]]; then
-          echo "::error::multicluster mcpchecker results not found in artifact (expected under mcpchecker-multicluster-results/)"
-          find mcpchecker-multicluster-results -type f -ls 2>/dev/null || ls -laR mcpchecker-multicluster-results
-          exit 1
-        fi
-        cp "${MC_ARTIFACT_JSON}" tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
 
     - name: Run baseline diff
       id: baseline-diff
-      if: steps.previous-baseline.outputs.has-previous == 'true'
+      if: needs.run-evaluation.result == 'success' && steps.previous-baseline.outputs.has-previous == 'true'
       uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
       with:
         base-results: ${{ steps.previous-baseline.outputs.path }}
@@ -525,7 +537,7 @@ jobs:
 
     - name: Run multicluster baseline diff
       id: baseline-diff-multicluster
-      if: steps.previous-baseline.outputs.has-previous-multicluster == 'true'
+      if: needs.run-evaluation-multicluster.result == 'success' && steps.previous-baseline.outputs.has-previous-multicluster == 'true'
       uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
       with:
         base-results: ${{ steps.previous-baseline.outputs.path-multicluster }}
@@ -541,18 +553,26 @@ jobs:
         {
           echo "### Single-cluster (previous baseline → new baseline)"
           echo ""
-          if [[ "${{ steps.previous-baseline.outputs.has-previous }}" == "true" && -n "${DIFF_OUTPUT}" ]]; then
-            printf '%s\n' "${DIFF_OUTPUT}"
+          if [[ "${{ steps.update-baselines.outputs.updated-single }}" == "true" ]]; then
+            if [[ "${{ steps.previous-baseline.outputs.has-previous }}" == "true" && -n "${DIFF_OUTPUT}" ]]; then
+              printf '%s\n' "${DIFF_OUTPUT}"
+            else
+              echo "_No previous committed single-cluster baseline on \`${DEFAULT_BRANCH}\` — first update or new file._"
+            fi
           else
-            echo "_No previous committed single-cluster baseline on \`${DEFAULT_BRANCH}\` — first update or new file._"
+            echo "_Single-cluster eval did not succeed; baseline unchanged._"
           fi
           echo ""
           echo "### Multicluster (previous baseline → new baseline)"
           echo ""
-          if [[ "${{ steps.previous-baseline.outputs.has-previous-multicluster }}" == "true" && -n "${DIFF_OUTPUT_MULTICLUSTER}" ]]; then
-            printf '%s\n' "${DIFF_OUTPUT_MULTICLUSTER}"
+          if [[ "${{ steps.update-baselines.outputs.updated-multicluster }}" == "true" ]]; then
+            if [[ "${{ steps.previous-baseline.outputs.has-previous-multicluster }}" == "true" && -n "${DIFF_OUTPUT_MULTICLUSTER}" ]]; then
+              printf '%s\n' "${DIFF_OUTPUT_MULTICLUSTER}"
+            else
+              echo "_No previous committed multicluster baseline on \`${DEFAULT_BRANCH}\` — first update or new file._"
+            fi
           else
-            echo "_No previous committed multicluster baseline on \`${DEFAULT_BRANCH}\` — first update or new file._"
+            echo "_Multicluster eval did not succeed; baseline unchanged._"
           fi
         } > baseline-pr-diff.md
 
@@ -570,7 +590,14 @@ jobs:
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
         git checkout -B "$BRANCH"
-        git add tests/evals/results/mcpchecker-gemini-eval-out.json tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json ai/mcp/README.md
+        FILES_TO_ADD=(ai/mcp/README.md)
+        if [[ "${{ steps.update-baselines.outputs.updated-single }}" == "true" ]]; then
+          FILES_TO_ADD+=(tests/evals/results/mcpchecker-gemini-eval-out.json)
+        fi
+        if [[ "${{ steps.update-baselines.outputs.updated-multicluster }}" == "true" ]]; then
+          FILES_TO_ADD+=(tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json)
+        fi
+        git add "${FILES_TO_ADD[@]}"
 
         if git diff --staged --quiet; then
           echo "No changes to commit"
@@ -585,7 +612,7 @@ jobs:
         {
           echo "## MCP Evaluation Token Baseline Update"
           echo ""
-          echo "Updates the committed MCP evaluation results (\`tests/evals/results/mcpchecker-gemini-eval-out.json\` and \`tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json\`) and the token consumption section in \`ai/mcp/README.md\` from the latest **MCP-Checker Evaluation** run on \`${DEFAULT_BRANCH}\`."
+          echo "Updates committed MCP evaluation results and the token consumption section in \`ai/mcp/README.md\` from the latest **MCP-Checker Evaluation** run on \`${DEFAULT_BRANCH}\`."
           echo ""
           cat baseline-pr-diff.md
           echo ""

@@ -23,4 +23,3 @@ spec:
     inline: |
       Which Kubernetes clusters can Kiali access in my service mesh?
       List each cluster name and indicate which one is the home cluster where Kiali is running.
-      Include the words east, west, and home in your answer.

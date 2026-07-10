@@ -20,5 +20,5 @@ spec:
   prompt:
     inline: |
       The reviews-v2 workload runs on the west cluster in the bookinfo namespace.
-      First discover which clusters Kiali can access, then inspect reviews-v2 on the west cluster.
-      Summarize its status and health. Include reviews-v2 and west in your answer.
+      Discover which clusters Kiali can access, then inspect reviews-v2 on the west cluster.
+      Summarize its status and health.

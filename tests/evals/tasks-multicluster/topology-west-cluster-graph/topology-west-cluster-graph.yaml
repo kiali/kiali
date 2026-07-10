@@ -20,4 +20,4 @@ spec:
   prompt:
     inline: |
       Show me a workload-level traffic graph for the bookinfo namespace on the west cluster.
-      Include the words west and bookinfo in your summary of what the graph shows.
+      Summarize what the graph shows.
