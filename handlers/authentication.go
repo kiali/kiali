@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,13 +31,14 @@ type AuthenticationHandler struct {
 }
 
 type AuthInfo struct {
-	Strategy                        string            `json:"strategy"`
 	AuthorizationEndpoint           string            `json:"authorizationEndpoint,omitempty"`
 	AuthorizationEndpointPerCluster map[string]string `json:"authorizationEndpointPerCluster,omitempty"`
+	ImpersonationEnabled            bool              `json:"impersonationEnabled,omitempty"`
 	LogoutEndpoint                  string            `json:"logoutEndpoint,omitempty"`
 	LogoutRedirect                  string            `json:"logoutRedirect,omitempty"`
-	SessionInfo                     sessionInfo       `json:"sessionInfo"`
 	SecretMissing                   bool              `json:"secretMissing,omitempty"`
+	SessionInfo                     sessionInfo       `json:"sessionInfo"`
+	Strategy                        string            `json:"strategy"`
 }
 
 type sessionClusterInfo struct {
@@ -73,6 +75,18 @@ func NewAuthenticationHandler(
 
 func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Defense-in-depth: strip user-supplied impersonation headers for all
+		// strategies except header, where a trusted proxy provides them.
+		if aHandler.conf.Auth.Strategy != config.AuthStrategyHeader {
+			r.Header.Del("Impersonate-User")
+			r.Header.Del("Impersonate-Group")
+			for key := range r.Header {
+				if strings.HasPrefix(key, "Impersonate-Extra-") {
+					r.Header.Del(key)
+				}
+			}
+		}
+
 		statusCode := http.StatusOK
 		userSessions := make(authentication.UserSessions)
 
@@ -207,9 +221,13 @@ func AuthenticationInfo(conf *config.Config, authController authentication.AuthC
 		switch conf.Auth.Strategy {
 		case config.AuthStrategyOpenshift:
 			response.AuthorizationEndpoint = fmt.Sprintf("%s/api/auth/redirect", httputil.GuessKialiURL(conf, r))
-			response.AuthorizationEndpointPerCluster = make(map[string]string)
-			for _, cluster := range clusters {
-				response.AuthorizationEndpointPerCluster[cluster] = fmt.Sprintf("%s/api/auth/redirect/%s", httputil.GuessKialiURL(conf, r), cluster)
+			if conf.Auth.OpenShift.Impersonation.Enabled {
+				response.ImpersonationEnabled = true
+			} else {
+				response.AuthorizationEndpointPerCluster = make(map[string]string)
+				for _, cluster := range clusters {
+					response.AuthorizationEndpointPerCluster[cluster] = fmt.Sprintf("%s/api/auth/redirect/%s", httputil.GuessKialiURL(conf, r), cluster)
+				}
 			}
 		case config.AuthStrategyOpenId:
 			// Do the redirection through an intermediary own endpoint

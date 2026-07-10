@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -194,6 +195,11 @@ func (o *OpenshiftAuthController) OpenshiftAuthRedirect(w http.ResponseWriter, r
 func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	userSessions := make(UserSessions)
 
+	// homeUserName and homeUserGroups store the verified identity from the home cluster's
+	// GetUserInfo call. Used by the impersonation block below.
+	var homeUserName string
+	var homeUserGroups []string
+
 	// In OpenShift auth, it is possible that a session is started by a 3rd party. If that's the case, Kiali
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
@@ -207,6 +213,8 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
+		homeUserName = user.Name
+		homeUserGroups = user.Groups
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
 			AuthInfo:  &api.AuthInfo{Token: token},
 			ExpiresOn: expires,
@@ -225,6 +233,8 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
+		homeUserName = user.Name
+		homeUserGroups = user.Groups
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
 			AuthInfo:  &api.AuthInfo{Token: token},
 			ExpiresOn: expires,
@@ -249,11 +259,48 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				}
 				return nil, err
 			}
+			if session.Cluster == o.conf.KubernetesConfig.ClusterName {
+				homeUserName = user.Name
+				homeUserGroups = user.Groups
+			}
 			userSessions[session.Cluster] = &UserSessionData{
 				AuthInfo:  &api.AuthInfo{Token: session.Payload.AccessToken},
 				ExpiresOn: session.ExpiresOn,
 				SessionID: session.SessionID,
 				Username:  user.Name,
+			}
+		}
+	}
+
+	// When impersonation is enabled, replace all cluster AuthInfo entries with
+	// impersonation-based credentials. The user's real OAuth token was used above
+	// to verify identity via GetUserInfo; all subsequent business logic API calls
+	// will use the SA token + impersonation headers instead.
+	if o.conf.Auth.OpenShift.Impersonation.Enabled {
+		if homeSession, ok := userSessions[o.conf.KubernetesConfig.ClusterName]; ok && homeUserName != "" {
+			groups := make([]string, 0, len(homeUserGroups)+2)
+			groups = append(groups, homeUserGroups...)
+			if !slices.Contains(groups, "system:authenticated") {
+				groups = append(groups, "system:authenticated")
+			}
+			if !slices.Contains(groups, "system:authenticated:oauth") {
+				groups = append(groups, "system:authenticated:oauth")
+			}
+
+			for _, cluster := range o.clusters {
+				existingSessionID := ""
+				if existing, ok := userSessions[cluster]; ok {
+					existingSessionID = existing.SessionID
+				}
+				userSessions[cluster] = &UserSessionData{
+					AuthInfo: &api.AuthInfo{
+						Impersonate:       homeUserName,
+						ImpersonateGroups: groups,
+					},
+					ExpiresOn: homeSession.ExpiresOn,
+					SessionID: existingSessionID,
+					Username:  homeUserName,
+				}
 			}
 		}
 	}

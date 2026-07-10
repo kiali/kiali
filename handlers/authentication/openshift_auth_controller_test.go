@@ -340,6 +340,125 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	require.True(sessionCookieWest.MaxAge < 0, "west session should be dropped")
 }
 
+func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = true
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			Groups: []string{"org-admins"},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	westClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 2)
+
+	for cluster, session := range sessions {
+		require.Equal("~", session.Username, "cluster %s should have username set", cluster)
+		require.Empty(session.AuthInfo.Token, "cluster %s should have empty Token when impersonating", cluster)
+		require.Equal("~", session.AuthInfo.Impersonate, "cluster %s should impersonate the home user", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "system:authenticated",
+			"cluster %s should include system:authenticated", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "system:authenticated:oauth",
+			"cluster %s should include system:authenticated:oauth", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "org-admins",
+			"cluster %s should include user's org group", cluster)
+	}
+}
+
+func TestImpersonationDisabledPreservesLegacyBehavior(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = false
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 1)
+
+	eastSession := sessions["east"]
+	require.NotNil(eastSession)
+	require.Equal("test-token", eastSession.AuthInfo.Token)
+	require.Empty(eastSession.AuthInfo.Impersonate)
+	require.Empty(eastSession.AuthInfo.ImpersonateGroups)
+}
+
 func TestTerminateSession(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()

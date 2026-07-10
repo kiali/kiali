@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -61,6 +62,10 @@ type clientFactory struct {
 
 	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
 	remoteClusterInfos map[string]RemoteClusterInfo
+
+	// saTokenFile is the path to the SA token file for in-cluster authentication.
+	// Saved before stripping auth from baseRestConfig, used for home cluster impersonation.
+	saTokenFile string
 
 	// saClientEntries is a map of cluster name to a Kiali SA client for that cluster.
 	// The Kiali SA client uses the Kiali service account to access the cluster API.
@@ -139,6 +144,7 @@ func NewClientFactoryWithSAClients(ctx context.Context, conf *kialiconfig.Config
 func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restConf *rest.Config) (*clientFactory, error) {
 	// We only want to remove the auth info from the base rest config which is saved and used later
 	// but we will immediately use the auth info for the home cluster SA client.
+	saTokenFile := restConf.BearerTokenFile
 	baseRestConfig := *restConf
 	stripAuthInfo(&baseRestConfig)
 
@@ -149,6 +155,7 @@ func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restCo
 		homeCluster:     kialiConf.KubernetesConfig.ClusterName,
 		recycleChan:     make(chan string),
 		saClientEntries: make(map[string]UserClientInterface),
+		saTokenFile:     saTokenFile,
 	}
 
 	// after creating a client factory
@@ -199,7 +206,10 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 		config.Host = cf.kialiConfig.Auth.OpenId.ApiProxy
 	}
 
-	// Impersonation is valid only for header authentication strategy
+	// HOME CLUSTER impersonation for header strategy — uses proxy-supplied identity.
+	// OpenShift strategy handles its own impersonation (both home and remote) in the
+	// conditional blocks below, based on auth.openshift.impersonation.enabled.
+	// Do NOT merge these two impersonation paths.
 	if cf.kialiConfig.Auth.Strategy == kialiconfig.AuthStrategyHeader && authInfo.Impersonate != "" {
 		config.Impersonate.UserName = authInfo.Impersonate
 		config.Impersonate.Groups = authInfo.ImpersonateGroups
@@ -208,40 +218,78 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 
 	var newClient UserClientInterface
 	if cluster == cf.homeCluster {
-		client, err := NewClient(ClusterInfo{
-			ClientConfig: &config,
-			Name:         cf.homeCluster,
-		}, cf.kialiConfig)
-		if err != nil {
-			log.Errorf("Error creating client for cluster [%s]: %s", cluster, err.Error())
-			return nil, err
+		if cf.kialiConfig.Auth.Strategy == kialiconfig.AuthStrategyOpenshift &&
+			cf.kialiConfig.Auth.OpenShift.Impersonation.Enabled &&
+			authInfo.Impersonate != "" {
+			// IMPERSONATION PATH for home cluster: use the in-cluster SA credentials
+			// (token file) + impersonation headers. The user's OAuth token was
+			// already used for identity verification in ValidateSession.
+			homeConfig := *cf.baseRestConfig
+			if cf.saTokenFile == "" {
+				log.Warning("Impersonation is enabled but no SA token file is available. Home cluster impersonation will fail.")
+			}
+			homeConfig.BearerTokenFile = cf.saTokenFile
+			homeConfig.Impersonate = rest.ImpersonationConfig{
+				UserName: authInfo.Impersonate,
+				Groups:   authInfo.ImpersonateGroups,
+			}
+			cf.applySettings(&homeConfig)
+			client, err := NewClient(ClusterInfo{
+				ClientConfig: &homeConfig,
+				Name:         cf.homeCluster,
+			}, cf.kialiConfig)
+			if err != nil {
+				log.Errorf("Error creating client for cluster [%s]: %s", cluster, err.Error())
+				return nil, err
+			}
+			newClient = client
+		} else {
+			// LEGACY PATH: user's own token authenticates directly.
+			client, err := NewClient(ClusterInfo{
+				ClientConfig: &config,
+				Name:         cf.homeCluster,
+			}, cf.kialiConfig)
+			if err != nil {
+				log.Errorf("Error creating client for cluster [%s]: %s", cluster, err.Error())
+				return nil, err
+			}
+			newClient = client
 		}
-		newClient = client
 	} else {
-		// Remote clusters
-		clusterInfos, err := GetRemoteClusterInfos()
-		if err != nil {
-			log.Errorf("Error getting remote cluster infos: %c", err)
-			return nil, err
-		}
-
-		clusterInfo, ok := clusterInfos[cluster]
+		clusterInfo, ok := cf.remoteClusterInfos[cluster]
 		if !ok {
 			return nil, fmt.Errorf("unable to find cluster [%s] in remote cluster info", cluster)
 		}
 
-		cf.applySettings(clusterInfo.ClientConfig)
+		remoteConfig := rest.CopyConfig(clusterInfo.ClientConfig)
+		cf.applySettings(remoteConfig)
 
-		// Replace the Kiali SA token with the user's auth token
-		// and clear the rest of the auth fields.
-		stripAuthInfo(clusterInfo.ClientConfig)
-		clusterInfo.ClientConfig.BearerToken = authInfo.Token
+		if cf.kialiConfig.Auth.Strategy == kialiconfig.AuthStrategyOpenshift &&
+			cf.kialiConfig.Auth.OpenShift.Impersonation.Enabled &&
+			authInfo.Impersonate != "" {
+			// IMPERSONATION PATH: SA token from secret authenticates the request;
+			// impersonation headers carry the user's identity.
+			// stripAuthInfo is NOT called — the SA token must remain in remoteConfig.
+			remoteConfig.Impersonate = rest.ImpersonationConfig{
+				UserName: authInfo.Impersonate,
+				Groups:   authInfo.ImpersonateGroups,
+			}
+		} else {
+			// LEGACY PATH: user's own token authenticates directly.
+			stripAuthInfo(remoteConfig)
+			remoteConfig.BearerToken = authInfo.Token
+		}
 
-		newClient, err = NewClient(clusterInfo.ClusterInfo, cf.kialiConfig)
+		client, err := NewClient(ClusterInfo{
+			ClientConfig: remoteConfig,
+			Name:         clusterInfo.Name,
+			SecretName:   clusterInfo.SecretName,
+		}, cf.kialiConfig)
 		if err != nil {
 			log.Errorf("Error getting remote client for cluster [%s]. Err: %s", cluster, err.Error())
 			return nil, err
 		}
+		newClient = client
 	}
 
 	// run to recycle client
@@ -387,36 +435,38 @@ func (cf *clientFactory) deleteClient(token string) {
 
 // getTokenHash get the token hash of a client
 func getTokenHash(authInfo *api.AuthInfo) string {
-	tokenData := authInfo.Token
+	h := sha256.New()
 
-	if authInfo.Impersonate != "" {
-		tokenData += authInfo.Impersonate
-	}
+	// Null byte delimiter prevents collision between adjacent fields.
+	// No valid token, username, or group contains a null byte.
+	delim := []byte{0}
 
-	if authInfo.ImpersonateGroups != nil {
-		for _, group := range authInfo.ImpersonateGroups {
-			tokenData += group
-		}
+	h.Write([]byte(authInfo.Token))
+	h.Write(delim)
+	h.Write([]byte(authInfo.Impersonate))
+	h.Write(delim)
+
+	for _, group := range authInfo.ImpersonateGroups {
+		h.Write([]byte(group))
+		h.Write(delim)
 	}
 
 	if authInfo.ImpersonateUserExtra != nil {
-		for key, element := range authInfo.ImpersonateUserExtra {
-			for _, userExtra := range element {
-				tokenData += key + userExtra
+		keys := make([]string, 0, len(authInfo.ImpersonateUserExtra))
+		for k := range authInfo.ImpersonateUserExtra {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			h.Write([]byte(key))
+			h.Write(delim)
+			for _, val := range authInfo.ImpersonateUserExtra[key] {
+				h.Write([]byte(val))
+				h.Write(delim)
 			}
 		}
 	}
 
-	h := sha256.New()
-	_, err := h.Write([]byte(tokenData))
-	if err != nil {
-		// errcheck linter want us to check for the error returned by h.Write.
-		// However, docs of sha256 say that this Writer never returns an error.
-		// See: https://golang.org/pkg/hash/#Hash
-		// So, let's check the error, and panic. Per the docs, this panic should
-		// never be reached.
-		panic("sha256.Write returned error.")
-	}
 	return string(h.Sum(nil))
 }
 

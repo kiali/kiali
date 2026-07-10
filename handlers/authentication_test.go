@@ -456,6 +456,55 @@ func TestAuthenticationInfo(t *testing.T) {
 	}
 }
 
+func TestHandleStripsImpersonationHeadersForOpenShift(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "test-cluster"
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(16))
+
+	var capturedHeaders http.Header
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// The fakeAuthController returns a valid session so Handle proceeds to
+	// the next handler where we can inspect which headers survived.
+	authController := &fakeAuthController{
+		sessions: authentication.UserSessions{
+			"test-cluster": &authentication.UserSessionData{
+				AuthInfo:  &api.AuthInfo{Token: "sa-token"},
+				ExpiresOn: time.Now().Add(time.Hour),
+				Username:  "testuser",
+			},
+		},
+	}
+
+	handler := NewAuthenticationHandler(
+		conf,
+		authController,
+		kubetest.NewFakeK8sClient(),
+		nil,
+		map[string]kubernetes.ClientInterface{},
+	)
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Impersonate-User", "cluster-admin")
+	r.Header.Set("Impersonate-Group", "system:masters")
+	r.Header.Set("Impersonate-Extra-Scopes", "full")
+	w := httptest.NewRecorder()
+
+	handler.Handle(nextHandler).ServeHTTP(w, r)
+
+	require.Equal(http.StatusOK, w.Code)
+	require.NotNil(capturedHeaders, "next handler should have been called")
+	require.Empty(capturedHeaders.Get("Impersonate-User"), "Impersonate-User should be stripped")
+	require.Empty(capturedHeaders.Get("Impersonate-Group"), "Impersonate-Group should be stripped")
+	require.Empty(capturedHeaders.Get("Impersonate-Extra-Scopes"), "Impersonate-Extra-* should be stripped")
+}
+
 type rejectClient struct{ kubernetes.UserClientInterface }
 
 func (r *rejectClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
