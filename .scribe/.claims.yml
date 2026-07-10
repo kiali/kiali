@@ -1,0 +1,173 @@
+_meta:
+  auth-and-security_extracted_at: "e762c602fed1704d53eee77d820fcfd130952a70"
+
+_retired_ids: []
+
+claims:
+# ── CredentialManager and Token Rotation ──────────────────────────────────────
+
+- id: auth-and-security-1
+  type: technology
+  topic: auth-and-security
+  claim: "CredentialManager uses github.com/fsnotify/fsnotify for file system event watching"
+  source: "config/credentials.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-2
+  type: pattern
+  topic: auth-and-security
+  claim: "Credential fields store file paths (starting with '/') or literal values; GetCredential resolves at call time"
+  source: "config/config.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-3
+  type: pattern
+  topic: auth-and-security
+  claim: "CredentialManager watches the parent directory, not individual files, because per-file symlinks never change on Kubernetes secret rotation — only the ..data symlink changes"
+  source: "config/credentials.go"
+  provenance:
+    origin: user
+    context: "The per-file symlinks (/secret/token -> ..data/token) never change their symlink target, so watching individual files never fires. Only ..data itself changes on rotation."
+    recorded: "2026-05-26"
+
+- id: auth-and-security-4
+  type: constraint
+  topic: auth-and-security
+  claim: "GetCertPool() returns a shared pointer; callers must treat it as read-only — no AppendCertsFromPEM on the returned pool"
+  source: "config/credentials.go"
+  provenance:
+    origin: user
+    context: "Cloning an x509.CertPool on every HTTP request is prohibitively expensive in hot paths like request-scoped TLS config creation. Pool is swapped atomically on rotation instead."
+    recorded: "2026-05-26"
+
+- id: auth-and-security-5
+  type: pattern
+  topic: auth-and-security
+  claim: "CA bundle paths loaded by CredentialManager are selected by auth.strategy — OpenShift gets service-ca.crt, OpenID gets openid-server-ca.crt, others get only additional-ca-bundle.pem"
+  source: "config/config.go"
+  provenance:
+    origin: user
+    context: "OpenShift service CA is only relevant when using OpenShift auth. Loading it for other strategies would be incorrect. Strategy is the best available signal at config-load time before any cluster client exists."
+    recorded: "2026-05-26"
+
+- id: auth-and-security-6
+  type: data_flow
+  topic: auth-and-security
+  claim: "On Kubernetes secret rotation, ..data symlink change triggers refreshDir() which re-reads all cached credential files in that directory via os.ReadFile on the unchanged per-file symlink paths"
+  source: "config/credentials.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-7
+  type: boundary
+  topic: auth-and-security
+  claim: "CredentialManager is initialized in config.Unmarshal() and stored on conf.Credentials; it is shut down via conf.Close() at application exit"
+  source: "config/config.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-8
+  type: constraint
+  topic: auth-and-security
+  claim: "CA bundle validation rejects: non-CA certs, expired certs, RSA < 2048 bits, ECDSA < 256 bits, DSA (any strength), and unknown key algorithms"
+  source: "config/credentials.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-9
+  type: constraint
+  topic: auth-and-security
+  claim: "auditRotation events are gated behind conf.Server.AuditLog — rotation is treated as a security audit event, not routine operational logging"
+  source: "config/credentials.go"
+  provenance:
+    origin: user
+    context: "Credential changes are security events that belong in the audit trail rather than always-on debug noise."
+    recorded: "2026-05-26"
+
+- id: auth-and-security-10
+  type: pattern
+  topic: auth-and-security
+  claim: "kubernetes.GetServiceAccountTokenCredential() returns the BearerTokenFile path (not content) when available so CredentialManager can watch it for kubelet rotation"
+  source: "kubernetes/token.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-11
+  type: pattern
+  topic: auth-and-security
+  claim: "refreshCachedFile() skips empty-string refreshes to guard against transient truncation during non-atomic direct file writes (does not affect Kubernetes which uses atomic symlink swaps)"
+  source: "config/credentials.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-12
+  type: pattern
+  topic: auth-and-security
+  claim: "conf.CertPoolWithAdditionalPEM() clones the shared pool before appending to avoid mutating the singleton shared pool"
+  source: "config/config.go"
+  provenance:
+    origin: inferred
+
+# ── External Service Credentials ─────────────────────────────────────────────
+
+- id: auth-and-security-19
+  type: boundary
+  topic: auth-and-security
+  claim: "security.Credentials (config/security/) holds username/passphrase or token for a single external service; token rotation is handled by CredentialManager via conf.GetCredential(auth.Token) in util/httputil, not by the struct itself"
+  source: "config/security/config_security.go"
+  provenance:
+    origin: inferred
+
+# ── Istio Certificate Info ────────────────────────────────────────────────────
+
+- id: auth-and-security-13
+  type: data_flow
+  topic: auth-and-security
+  claim: "Istio CA root cert flows from ConfigMap 'istio-ca-root-cert' (key 'root-cert.pem') → parseIstioControlPlaneCertificate() → ControlPlaneConfiguration.Certificates → Mesh API JSON → IstioCertsInfo React component"
+  source: "istio/discovery.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-14
+  type: pattern
+  topic: auth-and-security
+  claim: "parseIstioControlPlaneCertificate() does not fail hard if the ConfigMap is inaccessible — it logs a warning and leaves Certificates empty"
+  source: "istio/discovery.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-15
+  type: boundary
+  topic: auth-and-security
+  claim: "models.Certificate is the active cert type for the Mesh page; models.CertInfo is dead code with a pending cleanup issue (kiali/kiali#9742) and must not be documented"
+  source: "models/mesh.go"
+  provenance:
+    origin: user
+    context: "CertInfo is dead code. See https://github.com/kiali/kiali/issues/9742 for cleanup details."
+    recorded: "2026-05-26"
+
+- id: auth-and-security-16
+  type: constraint
+  topic: auth-and-security
+  claim: "Istio CA root cert constants are fixed: ConfigMap name 'istio-ca-root-cert', data key 'root-cert.pem' (istio/constants.go)"
+  source: "istio/constants.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-17
+  type: pattern
+  topic: auth-and-security
+  claim: "OIDC client secret rotation is automatic: clientSecret is a Credential type; requestOpenIdToken calls conf.GetCredential() on each token exchange rather than caching the resolved secret"
+  source: "handlers/authentication/openid_auth_controller.go"
+  provenance:
+    origin: inferred
+
+- id: auth-and-security-18
+  type: boundary
+  topic: auth-and-security
+  claim: "conf.CertPool() is consumed by util/httputil when building HTTP transports for external services (Prometheus, tracing, Grafana) — not by Kiali's own TLS listener (handled by tlspolicy)"
+  source: "util/httputil/http_util.go"
+  provenance:
+    origin: inferred

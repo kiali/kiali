@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "branch": "claude-scribe-docs",
+  "last_active_sha": "e762c602fed1704d53eee77d820fcfd130952a70",
+  "last_active_time": "2026-05-26T00:00:00Z",
+  "current_phase": "focus-enrich",
+  "total_files_read": 302,
+  "topics": {
+    "backend-architecture": {
+      "phase_status": "drifted",
+      "files_read": 22,
+      "completeness": 88
+    },
+    "business-logic": {
+      "phase_status": "complete",
+      "files_read": 38,
+      "completeness": 80,
+      "review": "pending"
+    },
+    "kubernetes-client": {
+      "phase_status": "complete",
+      "files_read": 27,
+      "completeness": 85
+    },
+    "graph-engine": {
+      "phase_status": "complete",
+      "files_read": 30,
+      "completeness": 83,
+      "review": "PASS_WITH_ANNOTATIONS"
+    },
+    "observability-and-ai": {
+      "phase_status": "complete",
+      "files_read": 82,
+      "completeness": 90,
+      "review": "PASS_WITH_ANNOTATIONS"
+    },
+    "auth-and-security": {
+      "phase_status": "complete",
+      "files_read": 54,
+      "completeness": 88,
+      "review": "pending"
+    },
+    "frontend-architecture": {
+      "phase_status": "complete",
+      "files_read": 55,
+      "completeness": 91,
+      "review": "pending"
+    },
+    "build-and-dev-conventions": {
+      "phase_status": "complete",
+      "files_read": 15,
+      "completeness": 78,
+      "review": "PASS"
+    }
+  }
+}
