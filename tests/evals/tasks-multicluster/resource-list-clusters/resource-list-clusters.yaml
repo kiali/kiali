@@ -2,6 +2,7 @@ kind: Task
 apiVersion: mcpchecker/v1alpha2
 metadata:
   labels:
+    multicluster: "true"
     suite: kiali
   name: "Discover Accessible Clusters"
   category: "Resource Inspection"
@@ -14,8 +15,12 @@ spec:
   verify:
   - llmJudge:
       contains: "home"
+  - llmJudge:
+      contains: "east"
+  - llmJudge:
+      contains: "west"
   prompt:
     inline: |
       Which Kubernetes clusters can Kiali access in my service mesh?
       List each cluster name and indicate which one is the home cluster where Kiali is running.
-      Include the word home in your answer when describing the home cluster.
+      Include the words east, west, and home in your answer.

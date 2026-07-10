@@ -5,7 +5,9 @@
 MCP_SERVER_PORT ?= 8080
 MCP_SERVER_CONFIG ?= /tmp/mcp-server-config.toml
 MCP_EVAL_CONFIG ?= tests/evals/gemini/eval.yaml
+MCP_EVAL_MULTICLUSTER_CONFIG ?= tests/evals/gemini/eval-multicluster.yaml
 MCP_EVAL_RESULTS ?= tests/evals/results/mcpchecker-gemini-eval-out.json
+MCP_EVAL_MULTICLUSTER_RESULTS ?= tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
 KIALI_URL ?= $(shell kubectl get svc kiali -n istio-system -o=jsonpath='http://{.status.loadBalancer.ingress[0].ip}/kiali' 2>/dev/null)
 KUBERNETES_MCP_SERVER_REPO ?=
 GO_BIN ?= $(shell go env GOPATH)/bin
@@ -112,6 +114,19 @@ mcp-run-eval:
 		mv -f mcpchecker-gemini-eval-out.json ${MCP_EVAL_RESULTS}; \
 	fi
 
+## mcp-run-eval-multicluster: Run the mcpchecker multicluster evaluation
+mcp-run-eval-multicluster:
+	@echo "Running mcpchecker multicluster evaluation..."
+	${MCPCHECKER_BIN} check ${MCP_EVAL_MULTICLUSTER_CONFIG} ${MCP_EVAL_ARGS}
+	@if [ -f mcpchecker-gemini-eval-multicluster-out.json ]; then \
+		mkdir -p $(dir ${MCP_EVAL_MULTICLUSTER_RESULTS}); \
+		mv -f mcpchecker-gemini-eval-multicluster-out.json ${MCP_EVAL_MULTICLUSTER_RESULTS}; \
+	fi
+	@if [ -f mcpchecker-gemini-eval-out.json ]; then \
+		mkdir -p $(dir ${MCP_EVAL_MULTICLUSTER_RESULTS}); \
+		mv -f mcpchecker-gemini-eval-out.json ${MCP_EVAL_MULTICLUSTER_RESULTS}; \
+	fi
+
 ## mcp-eval-summary: Text summary of the evaluation (for logs and GITHUB_STEP_SUMMARY)
 mcp-eval-summary:
 	@if [ ! -f ${MCP_EVAL_RESULTS} ]; then \
@@ -137,7 +152,9 @@ mcp-eval-diff:
 mcp-clean-eval-results:
 	@rm -rf mcpchecker-results
 	@rm -f mcpchecker-gemini-eval-out.json
+	@rm -f mcpchecker-gemini-eval-multicluster-out.json
 	@rm -f tests/evals/results/mcpchecker-gemini-eval-out.json
+	@rm -f tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
 
 ## mcp-update-token-readme: Update the token consumption section in ai/mcp/README.md from mcpchecker result summary of MCP_EVAL_RESULTS
 mcp-update-token-readme:

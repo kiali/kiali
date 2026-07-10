@@ -6,6 +6,7 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
 
 - [Overview](#overview)
 - [Token Consumption](#token-consumption)
+- [Multicluster token consumption](#multicluster-token-consumption)
 - [Available Tools](#available-tools)
   - [get_action_ui](#1-get_action_ui)
   - [get_referenced_docs](#2-get_referenced_docs)
@@ -410,6 +411,7 @@ The AI model calls tools based on user queries:
 - CPU/memory analysis → `get_pod_performance`
 - Distributed traces (list) → `list_traces`; drill-down by id → `get_trace_details`
 - List/detail resources → `list_or_get_resources`
+- List accessible clusters → `list_clusters`
 - List/get Istio config → `manage_istio_config_read`
 - Create/patch/delete Istio config → `manage_istio_config`
 
@@ -463,9 +465,58 @@ See existing tools for end-to-end examples.
 | Retrieve Recent Workload Logs | 3112 | 2543 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
+## Multicluster token consumption
+
+Results from the **multicluster** mcpchecker job (`tests/evals/gemini/eval-multicluster.yaml`). Updated automatically when `tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json` exists (for example after a successful baseline run on `master`).
+
+<!-- TOKENS-CONSUMPTION-MULTICLUSTER-START -->
+
+_No committed multicluster baseline yet. Run MCP-Checker Evaluation on `master` (manual workflow dispatch) to populate this section._
+
+<!-- TOKENS-CONSUMPTION-MULTICLUSTER-END -->
+
 ## MCP evaluation (CI)
 
-The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in GitHub Actions against a Kind cluster with Istio and Kiali (`hack/run-integration-tests.sh` setup, MCP tools enabled). This is separate from unit/integration tests: it uses an LLM agent and costs API usage.
+The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in GitHub Actions against:
+
+1. A **single-cluster** Kind environment with Istio and Kiali (`hack/run-integration-tests.sh --test-suite backend --setup-only true`)
+2. A **primary-remote multicluster** Kind environment — same setup as Cypress multicluster tests (`hack/run-integration-tests.sh --test-suite frontend-primary-remote --setup-only true`; Jaeger tracing, no Tempo)
+
+Multicluster-specific tasks (for example `list_clusters` and tools using `clusterName`) live under `tests/evals/tasks-multicluster/` and run only in the second job. This is separate from unit/integration tests: it uses an LLM agent and costs API usage.
+
+### Multicluster evaluation tasks
+
+Primary-remote setup uses Kind clusters **east** (home, where Kiali runs) and **west** (remote). Bookinfo is split: productpage and most workloads on east; reviews versions (v1–v3) on west.
+
+| Task | MCP tools exercised | What it validates |
+|------|---------------------|-------------------|
+| Discover Accessible Clusters | `list_clusters` | Returns east/west and marks the home cluster |
+| Inspect Remote Cluster Workload | `list_clusters`, `list_or_get_resources` | Workload detail with `clusterName=west` |
+| Visualize West Cluster Traffic | `get_mesh_traffic_graph` | Traffic graph scoped to west |
+| Analyze Remote Service Metrics | `get_metrics` | Inbound metrics for reviews on west |
+| List Remote Cluster Traces | `list_traces` | Traces for reviews on west (Jaeger, same as frontend-primary-remote CI) |
+| Audit Multicluster Mesh Health | `get_mesh_status` | Control/data plane health across clusters |
+
+Task definitions: `tests/evals/tasks-multicluster/*/`.
+
+### Running multicluster evals locally
+
+```bash
+# 1. Build and set up primary-remote Kind + Kiali (same suite as Cypress multicluster tests)
+make build-ui build
+hack/run-integration-tests.sh --test-suite frontend-primary-remote --setup-only true
+
+# 2. Install eval tooling and start kubernetes-mcp-server
+make mcp-install-tools mcp-start-server
+
+# 3. Run multicluster eval (requires GEMINI_API_KEY)
+export GEMINI_API_KEY=...
+make mcp-run-eval-multicluster
+make mcp-eval-summary MCP_EVAL_RESULTS=tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
+
+# 4. Stop MCP server when done
+make mcp-stop-server
+```
 
 ### How to trigger the workflow
 
@@ -475,17 +526,24 @@ The repository runs [mcpchecker](https://github.com/mcpchecker/mcpchecker) in Gi
 
 ### Requirements
 
-- Configure the **`GEMINI_API_KEY`** repository secret. Eval configuration lives under `tests/evals/` (for example `tests/evals/gemini/eval.yaml`).
+- Configure the **`GEMINI_API_KEY`** repository secret. Eval configuration lives under `tests/evals/`:
+  - Single-cluster: `tests/evals/gemini/eval.yaml`
+  - Multicluster: `tests/evals/gemini/eval-multicluster.yaml`
 
 ### Where it is defined
 
 | Piece | Location |
 |-------|----------|
 | Main workflow | `.github/workflows/mcpchecker.yml` |
-| PR results comment | `.github/workflows/mcpchecker.yml` (`post-eval-report` job) |
+| Single-cluster eval config | `tests/evals/gemini/eval.yaml` |
+| Multicluster eval config | `tests/evals/gemini/eval-multicluster.yaml` |
+| Multicluster tasks | `tests/evals/tasks-multicluster/` |
+| PR results comment | `.github/workflows/mcpchecker.yml` (`post-pr-eval-report` job) |
 | Make targets (install, run eval, token summary) | `make/Makefile.mcp.mk` |
+| Multicluster local setup | `hack/run-integration-tests.sh --test-suite frontend-primary-remote --setup-only true` |
+| Multicluster eval run | `make mcp-run-eval-multicluster` |
 
 ### Token baseline
 
-Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed eval baseline via the **Update Token Baseline** job: it refreshes `tests/evals/results/mcpchecker-gemini-eval-out.json` and the [Token Consumption](#token-consumption) section below (through `hack/mcp/update-token-readme.sh`, which derives the summary directly from that results file) and may open an automated PR.
+Successful runs that are **not** tied to a PR comment trigger (for example a manual run on `master`) can update the committed eval baselines via the **Update Token Baseline** job: it refreshes `tests/evals/results/mcpchecker-gemini-eval-out.json`, `tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json`, and the [Token Consumption](#token-consumption) and [Multicluster token consumption](#multicluster-token-consumption) sections (through `hack/mcp/update-token-readme.sh`) and may open an automated PR.
 

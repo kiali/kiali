@@ -1,0 +1,27 @@
+kind: Eval
+metadata:
+  name: "gemini-eval-multicluster"
+config:
+  agent:
+    type: file
+    path: agent.yaml
+  mcpConfigFile: ../mcp-config.yaml
+  extensions:
+    kubernetes:
+      package: https://github.com/mcpchecker/kubernetes-extension@v0.0.5
+      config:
+        kubeconfig: ~/.kube/config
+  llmJudge:
+    ref:
+      type: builtin.llm-agent
+      model: "gemini:gemini-3.1-flash-lite"
+  taskSets:
+  - glob: ../tasks-multicluster/*/*.yaml
+    labelSelector:
+      multicluster: "true"
+    assertions:
+      toolsUsed:
+      - server: kubernetes
+        toolPattern: ".*"
+      minToolCalls: 1
+      maxToolCalls: 20
