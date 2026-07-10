@@ -3,7 +3,8 @@ import { ToolbarItem } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 
 import { MetricsObjectTypes } from 'types/Metrics';
-import { ExternalLink, ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
+import type { ExternalLink } from 'types/Dashboards';
+import { ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
 
 type Props = {
   links: ExternalLink[];
@@ -27,7 +28,7 @@ const buildPersesLinks = (props: Props): [string, string][] => {
     }
     if (MetricsObjectTypes.ZTUNNEL !== props.objectType || d.name !== ISTIO_ZTUNNEL_DASHBOARD) {
       // Check if this is OpenShift format
-      const isOpenShiftFormat = d.url.includes('/monitoring/v2/dashboards');
+      const isOpenShiftFormat = d.url.includes('/monitoring/v2/dashboards/view');
 
       if (isOpenShiftFormat) {
         // For OpenShift format, we need to add the specific object variables
@@ -63,13 +64,14 @@ const buildPersesLinks = (props: Props): [string, string][] => {
         const dsvar = d.variables.datasource && props.project ? `&${d.variables.datasource}=${props.project}` : '';
         const vervar = d.variables.version && props.version ? `&${d.variables.version}=${props.version}` : '';
         switch (props.objectType) {
-          case MetricsObjectTypes.SERVICE:
+          case MetricsObjectTypes.SERVICE: {
             const fullServiceName = `${props.object}.${props.namespace}.svc.cluster.local`;
             if (d.variables.service) {
               const url = `${d.url}${first}${d.variables.service}=${fullServiceName}${nsvar}${dsvar}${vervar}`;
               links.push([d.name, url]);
             }
             break;
+          }
           case MetricsObjectTypes.WORKLOAD:
             if (d.variables.workload) {
               const url = `${d.url}${first}${d.variables.workload}=${props.object}${nsvar}${dsvar}${vervar}`;
@@ -113,7 +115,7 @@ export const PersesLinks: React.FC<Props> = props => {
           {links
             .map((link, idx) => (
               <a
-                key={idx}
+                key={link[1]}
                 id={`perses_link_${idx}`}
                 title={link[0]}
                 href={link[1]}
