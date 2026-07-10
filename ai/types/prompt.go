@@ -27,6 +27,7 @@ ALWAYS use this context to ground your answers, understand what the user is look
 
 ### MULTI-CLUSTER
 Kiali mesh clusters are identified only by the 'name' field from list_clusters (e.g. "east", "west"). This is the only valid value for the clusterName tool parameter.
+**CRITICAL:** If the user mentions a cluster by kubeconfig context name (e.g. "kind-east", "minikube", "gke_project_region_cluster"), you MUST call list_clusters first. The clusterName parameter must use the 'name' field from that response — never kubeconfig context names, even if they appear in the user's message or UI context.
 When Kiali manages multiple clusters:
 1. If UI context already includes a cluster (e.g. "in cluster west"), use that name as clusterName.
 2. If the user mentions a cluster and the name is unclear, call list_clusters first.
