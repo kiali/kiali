@@ -30,6 +30,7 @@ MCP_TOOLS="false"
 OFFLINE="offline"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
+KIALI_VERSION=""
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
 SAIL_OPERATOR_CHART_VERSION=""
@@ -97,6 +98,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -iv|--istio-version)
       ISTIO_VERSION="${2}"
+      shift;shift
+      ;;
+    -kv|--kiali-version)
+      KIALI_VERSION="${2}"
       shift;shift
       ;;
     -klm|--keycloak-limit-memory)
@@ -214,6 +219,10 @@ Valid command line arguments:
   -iv|--istio-version <version>
     Which Istio version to test with. For releases, specify "#.#.#". For dev builds, specify in the form "#.#-dev"
     Default: The latest release
+  -kv|--kiali-version <version>
+    Kiali image version to deploy during cluster setup. Use "dev" for a local dev image
+    (default). Use a release tag such as "v2.27" to deploy quay.io/kiali/kiali instead.
+    Default: dev
   -klm|--keycloak-limit-memory <value>
     Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
   -krm|--keycloak-requests-memory <value>
@@ -331,6 +340,12 @@ if [ -n "${ISTIO_VERSION}" ]; then
   ISTIO_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
 else
   ISTIO_VERSION_ARG=""
+fi
+
+if [ -n "${KIALI_VERSION}" ]; then
+  KIALI_VERSION_ARG="--kiali-version ${KIALI_VERSION}"
+else
+  KIALI_VERSION_ARG=""
 fi
 
 if [ -n "${HELM_CHARTS_DIR}" ]; then
@@ -547,7 +562,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     if [ "${TESTS_ONLY}" == "false" ]; then
       AUTH_PARAM="--auth-strategy anonymous"
     fi
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}

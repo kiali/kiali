@@ -95,6 +95,10 @@ Options:
     This option is ignored if -ii is false.
     If not specified, the latest version of Istio is installed.
     Default: <the latest release>
+-kv|--kiali-version <version>
+    Kiali image version to deploy. Use "dev" to build and load a local dev image
+    (default). Use a release tag such as "v2.27" to pull quay.io/kiali/kiali instead.
+    Default: dev
 -klm|--keycloak-limit-memory
     The keycloak resources limit memory in the keycloak helm charts
 -krm|--keycloak-requests-memory)
@@ -140,6 +144,7 @@ while [[ $# -gt 0 ]]; do
     -hcd|--helm-charts-dir)       HELM_CHARTS_DIR="$2";       shift;shift; ;;
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
+    -kv|--kiali-version)          KIALI_VERSION="$2";         shift;shift; ;;
     -klm|--keycloak-limit-memory) KEYCLOAK_LIMIT_MEMORY="$2"; shift;shift; ;;
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
@@ -195,7 +200,25 @@ DEPLOY_KIALI="${DEPLOY_KIALI:-true}"
 DORP="${DORP:-docker}"
 ENABLE_CACHE="${ENABLE_CACHE:-false}"
 KIALI_ONLY="${KIALI_ONLY:-false}"
+KIALI_VERSION="${KIALI_VERSION:-dev}"
 TEMPO="${TEMPO:-false}"
+
+if [ "${KIALI_VERSION}" == "dev" ]; then
+  KIALI_IMAGE_NAME="localhost/kiali/kiali"
+  KIALI_IMAGE_TAG="dev"
+  KIALI_IMAGE_PULL_POLICY="Never"
+  KIALI_USE_DEV_IMAGE="true"
+else
+  if [[ "${KIALI_VERSION}" != v* ]]; then
+    KIALI_IMAGE_TAG="v${KIALI_VERSION}"
+  else
+    KIALI_IMAGE_TAG="${KIALI_VERSION}"
+  fi
+  KIALI_IMAGE_NAME="quay.io/kiali/kiali"
+  KIALI_IMAGE_PULL_POLICY="IfNotPresent"
+  KIALI_USE_DEV_IMAGE="false"
+fi
+infomsg "Kiali deployment image: ${KIALI_IMAGE_NAME}:${KIALI_IMAGE_TAG} (pull policy: ${KIALI_IMAGE_PULL_POLICY})"
 
 # Defaults the branch to master unless it is already set
 TARGET_BRANCH="${TARGET_BRANCH:-master}"
@@ -212,6 +235,23 @@ if [ -z "${ISTIO_VERSION}" ]; then
     ISTIO_VERSION="1.27.5"
   elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
     ISTIO_VERSION="1.28.3"
+  elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
+    ISTIO_VERSION="1.29.1"
+  fi
+fi
+
+if [ -z "${ISTIO_VERSION}" ] && [ "${KIALI_VERSION}" != "dev" ]; then
+  TARGET_BRANCH="${KIALI_IMAGE_TAG}"
+  if [ "${TARGET_BRANCH}" == "v2.4" ]; then
+    ISTIO_VERSION="1.23.6"
+  elif [ "${TARGET_BRANCH}" == "v2.11" ]; then
+    ISTIO_VERSION="1.26.8"
+  elif [ "${TARGET_BRANCH}" == "v2.17" ]; then
+    ISTIO_VERSION="1.27.5"
+  elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
+    ISTIO_VERSION="1.28.3"
+  elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
+    ISTIO_VERSION="1.29.1"
   fi
 fi
 
@@ -504,8 +544,10 @@ setup_kind_singlecluster() {
   
   fi
 
-  infomsg "Pushing the images into the cluster..."
-  make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+  if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
+    infomsg "Pushing the dev Kiali image into the cluster..."
+    make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+  fi
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
@@ -523,9 +565,9 @@ setup_kind_singlecluster() {
     --set auth.openid.username_claim="preferred_username" \
     "${AI_ARGS[@]}" \
     --set deployment.logger.log_level="trace" \
-    --set deployment.image_name=localhost/kiali/kiali \
-    --set deployment.image_version=dev \
-    --set deployment.image_pull_policy="Never" \
+    --set deployment.image_name="${KIALI_IMAGE_NAME}" \
+    --set deployment.image_version="${KIALI_IMAGE_TAG}" \
+    --set deployment.image_pull_policy="${KIALI_IMAGE_PULL_POLICY}" \
     --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.external_url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
@@ -613,8 +655,10 @@ setup_kind_tempo() {
     return
   fi
 
-  infomsg "Pushing the images into the cluster..."
-  make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+  if [ "${KIALI_USE_DEV_IMAGE}" == "true" ]; then
+    infomsg "Pushing the dev Kiali image into the cluster..."
+    make -e DORP="${DORP}" -e CLUSTER_TYPE="kind" -e KIND_NAME="ci" cluster-push-kiali
+  fi
 
   infomsg "Installing kiali server via Helm"
   infomsg "Chart to be installed: $(ls -1 ${HELM_CHARTS_DIR}/_output/charts/kiali-server-*.tgz)"
@@ -626,9 +670,9 @@ setup_kind_tempo() {
     --wait \
     --set auth.strategy="${AUTH_STRATEGY}" \
     --set deployment.logger.log_level="trace" \
-    --set deployment.image_name=localhost/kiali/kiali \
-    --set deployment.image_version=dev \
-    --set deployment.image_pull_policy="Never" \
+    --set deployment.image_name="${KIALI_IMAGE_NAME}" \
+    --set deployment.image_version="${KIALI_IMAGE_TAG}" \
+    --set deployment.image_pull_policy="${KIALI_IMAGE_PULL_POLICY}" \
     --set deployment.service_type="LoadBalancer" \
     --set external_services.grafana.external_url="http://grafana.istio-system:3000" \
     --set external_services.grafana.dashboards[0].name="Istio Mesh Dashboard" \
