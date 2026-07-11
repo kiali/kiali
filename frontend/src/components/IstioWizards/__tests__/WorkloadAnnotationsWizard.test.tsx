@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { WorkloadAnnotationsWizard } from '../WorkloadAnnotationsWizard';
 
-rstest.mock('utils/I18nUtils', () => ({
+jest.mock('utils/I18nUtils', () => ({
   t: (key: string, opts?: Record<string, unknown>) => {
     if (opts && 'section' in opts) {
       return key.replace('{{section}}', opts.section as string);
@@ -14,14 +14,14 @@ const defaultProps = {
   canEdit: true,
   controllerAnnotations: { 'deployment.kubernetes.io/revision': '1' },
   isOpen: true,
-  onClose: rstest.fn(),
-  onSave: rstest.fn(),
+  onClose: jest.fn(),
+  onSave: jest.fn(),
   templateAnnotations: { 'proxy.istio.io/config': 'tracing: {}' }
 };
 
 describe('WorkloadAnnotationsWizard', () => {
   beforeEach(() => {
-    rstest.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('renders two sections with correct headers', () => {
