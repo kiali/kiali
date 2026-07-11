@@ -124,6 +124,9 @@ func (awc AmbientWorkloadChecker) hasSidecarInAmbientNamespace() bool {
 }
 
 func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
+	if awc.workload.IsWaypoint() || awc.workload.IsGateway() {
+		return false
+	}
 	for _, ap := range awc.authorizationPolicies {
 		if ap.Namespace == awc.workload.Namespace && len(awc.workload.WaypointWorkloads) == 0 {
 			return true
