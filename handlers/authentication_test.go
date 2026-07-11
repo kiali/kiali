@@ -316,10 +316,11 @@ func TestAuthenticationInfo(t *testing.T) {
 	// TODO: test session info.
 	oneHourFromNow := time.Now().Add(time.Hour)
 	cases := map[string]struct {
-		authStrategy     string
-		currentSessions  authentication.UserSessions
-		expectedResponse AuthInfo
-		clusters         []string
+		authStrategy         string
+		currentSessions      authentication.UserSessions
+		expectedResponse     AuthInfo
+		clusters             []string
+		impersonationEnabled bool
 	}{
 		"token auth returns just strategy": {
 			authStrategy: config.AuthStrategyToken,
@@ -427,6 +428,16 @@ func TestAuthenticationInfo(t *testing.T) {
 			},
 			clusters: []string{"test-cluster", "test-cluster-2"},
 		},
+		"openshift with impersonation returns impersonationEnabled and no per-cluster endpoints": {
+			authStrategy:         config.AuthStrategyOpenshift,
+			impersonationEnabled: true,
+			expectedResponse: AuthInfo{
+				AuthorizationEndpoint: "https://kiali.io:20001/api/auth/redirect",
+				ImpersonationEnabled:  true,
+				Strategy:              config.AuthStrategyOpenshift,
+			},
+			clusters: []string{"test-cluster", "test-cluster-2"},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -436,6 +447,7 @@ func TestAuthenticationInfo(t *testing.T) {
 			conf.Server.WebFQDN = "kiali.io"
 			conf.Server.WebSchema = "https"
 			conf.Auth.Strategy = tc.authStrategy
+			conf.Auth.OpenShift.Impersonation.Enabled = tc.impersonationEnabled
 			authController := &fakeAuthController{
 				sessions: tc.currentSessions,
 			}

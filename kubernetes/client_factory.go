@@ -63,10 +63,6 @@ type clientFactory struct {
 	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
 	remoteClusterInfos map[string]RemoteClusterInfo
 
-	// saTokenFile is the path to the SA token file for in-cluster authentication.
-	// Saved before stripping auth from baseRestConfig, used for home cluster impersonation.
-	saTokenFile string
-
 	// saClientEntries is a map of cluster name to a Kiali SA client for that cluster.
 	// The Kiali SA client uses the Kiali service account to access the cluster API.
 	// Note that the underlying type for this map is UserClientInterface but this is only because
@@ -77,6 +73,10 @@ type clientFactory struct {
 	// to write data when you expose them as UserClientInterface. Again, this is only for special cases
 	// like RBAC is disabled or anonymous mode is used).
 	saClientEntries map[string]UserClientInterface
+
+	// saTokenFile is the path to the SA token file for in-cluster authentication.
+	// Saved before stripping auth from baseRestConfig, used for home cluster impersonation.
+	saTokenFile string
 }
 
 // NewClientFactory creates a new client factory.
@@ -226,7 +226,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 			// already used for identity verification in ValidateSession.
 			homeConfig := *cf.baseRestConfig
 			if cf.saTokenFile == "" {
-				log.Warning("Impersonation is enabled but no SA token file is available. Home cluster impersonation will fail.")
+				return nil, fmt.Errorf("impersonation is enabled but no SA token file is available for the home cluster")
 			}
 			homeConfig.BearerTokenFile = cf.saTokenFile
 			homeConfig.Impersonate = rest.ImpersonationConfig{
