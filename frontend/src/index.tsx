@@ -51,7 +51,6 @@ const renderApp = (): void => {
 if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_MOCK_API === 'true') {
   // Enable API mocking with MSW (Mock Service Worker).
   // This allows frontend development without a running backend.
-  // @ts-expect-error - mocks folder is excluded from TypeScript compilation for production builds
   import('./mocks/browser').then(({ worker }) => {
     worker
       .start({
