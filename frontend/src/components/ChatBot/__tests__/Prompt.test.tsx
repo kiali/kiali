@@ -1,6 +1,6 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
-import { Map as ImmutableMap } from 'immutable';
+import type { Map as ImmutableMap } from 'immutable';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { ChatAIActions } from 'actions/ChatAIActions';
@@ -33,9 +33,13 @@ rstest.mock('../hooks/useLocationContext', () => ({
   useLocationContext: () => [undefined, undefined, undefined, undefined]
 }));
 
-rstest.mock('../PageContext', () => ({
-  buildPageContext: () => undefined
-}));
+rstest.mock('../promptContext', async () => {
+  const actual = (await rstest.importActual('../promptContext')) as Record<string, unknown>;
+  return {
+    ...actual,
+    buildPageContext: () => undefined
+  };
+});
 
 rstest.mock('../EntryChat/ToolModal', () => ({
   ToolModal: () => null

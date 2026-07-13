@@ -1,17 +1,16 @@
 import { ChatAIActions } from 'actions/ChatAIActions';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import * as API from '../../services/Api';
 import { throttle, uniqueId } from 'lodash-es';
 import { Map as ImmutableMap } from 'immutable';
 import { useDispatch } from 'react-redux';
-import { ChatInteractionMode, ChatRequest, Prompt as ChatPrompt } from 'types/Chatbot';
+import type { ChatInteractionMode, ChatRequest, Prompt as ChatPrompt } from 'types/Chatbot';
 import { getFetchErrorMessage } from './error';
 import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
-import { buildPageContext } from './PageContext';
 import { router } from 'app/History';
 import {
   Button,
@@ -20,14 +19,26 @@ import {
   DropdownItem,
   DropdownList,
   MenuToggle,
-  MenuToggleElement,
   Tooltip
 } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import { CommentDotsIcon, HelpIcon, WrenchIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
+import { namespacesToString } from 'types/Namespace';
+import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';
+import { usePromptHealth } from './hooks/usePromptHealth';
+import {
+  buildPageContext,
+  buildPromptContext,
+  buildPromptVariables,
+  enrichPromptContext,
+  mergePromptsWithUnhealthy,
+  buildUnhealthyResourcePrompts,
+  substitutePrompts
+} from './promptContext';
 
 type PromptProps = {
   scrollIntoView: () => void;
@@ -47,7 +58,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
-  const [streamController, setStreamController] = React.useState(new AbortController());
+  const [streamController, setStreamController] = React.useState(() => new AbortController());
   const [promptData, setPromptData] = React.useState<ChatPrompt[]>([]);
   const isStreaming = !!chatHistory.last()?.get('isStreaming');
 
@@ -83,14 +94,29 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     };
   }, [category]);
 
+  const activeNamespaces = useSelector(activeNamespacesSelector);
   const [kind, name, namespace, istio, clusterName] = useLocationContext();
-  const pageContext = React.useMemo(() => buildPageContext(kind, name, namespace, istio, clusterName), [
-    kind,
-    name,
-    namespace,
-    istio,
-    clusterName
+  const promptContext = React.useMemo(
+    () =>
+      enrichPromptContext(
+        buildPromptContext(kind, name, namespace, istio, clusterName),
+        activeNamespaces.length > 0 ? namespacesToString(activeNamespaces) : ''
+      ),
+    [activeNamespaces, kind, name, namespace, istio, clusterName]
+  );
+  const { resourceHealthStatus, unhealthyResources } = usePromptHealth(promptContext);
+  const promptVariables = React.useMemo(() => buildPromptVariables(promptContext, resourceHealthStatus), [
+    promptContext,
+    resourceHealthStatus
   ]);
+  const resolvedPrompts = React.useMemo(() => {
+    const unhealthyPrompts = buildUnhealthyResourcePrompts(unhealthyResources, promptVariables.cluster ?? '');
+    return mergePromptsWithUnhealthy(substitutePrompts(promptData, promptVariables), unhealthyPrompts);
+  }, [promptData, promptVariables, unhealthyResources]);
+  const pageContext = React.useMemo(
+    () => buildPageContext(kind, name, namespace, istio, clusterName, resourceHealthStatus),
+    [kind, name, namespace, istio, clusterName, resourceHealthStatus]
+  );
   const onChange = React.useCallback(
     (_e: React.SyntheticEvent, value: string) => {
       if (value.trim().length > 0) {
@@ -354,7 +380,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
   return (
     <div>
-      {promptData.length > 0 && query.trim().length === 0 && (
+      {resolvedPrompts.length > 0 && query.trim().length === 0 && (
         <div
           style={{
             display: 'flex',
@@ -372,7 +398,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
               style={{ flex: '0 0 auto' }}
             />
           </Tooltip>
-          {promptData.map(prompt => (
+          {resolvedPrompts.map(prompt => (
             <Button
               key={`${category}-${prompt.title}`}
               variant={ButtonVariant.secondary}
