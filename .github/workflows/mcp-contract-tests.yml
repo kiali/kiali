@@ -2,39 +2,9 @@ name: MCP Contract Tests
 
 # Validates kubernetes-mcp-server contract tests against the Kiali version pinned in
 # containers/kubernetes-mcp-server/build/kiali.mk.
+# Trigger manually: Actions → MCP Contract Tests → Run workflow.
 
 on:
-  workflow_call:
-    inputs:
-      target_branch:
-        required: true
-        type: string
-      build_branch:
-        required: true
-        type: string
-      istio_version:
-        required: false
-        type: string
-        default: ""
-      kubernetes_mcp_server_ref:
-        description: 'Git ref to checkout for containers/kubernetes-mcp-server (e.g. "main" or "refs/pull/123/head")'
-        required: false
-        type: string
-        default: "main"
-  push:
-    paths:
-    - 'routing/routes.go'
-    - 'ai/mcp/**'
-    branches:
-    - master
-    - 'v*.*'
-  pull_request:
-    paths:
-    - 'routing/routes.go'
-    - 'ai/mcp/**'
-    branches:
-    - master
-    - 'v*.*'
   workflow_dispatch:
     inputs:
       kubernetes_mcp_server_ref:
@@ -47,11 +17,14 @@ on:
         required: false
         type: string
         default: ""
+      istio_version:
+        description: 'Istio version for the KinD cluster (default: integration test default)'
+        required: false
+        type: string
+        default: ""
 
 env:
-  TARGET_BRANCH: ${{ inputs.target_branch || github.ref_name }}
-  BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch || github.ref }}
-  KUBERNETES_MCP_SERVER_REF: ${{ (github.event_name == 'workflow_call' && inputs.kubernetes_mcp_server_ref) || github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
+  KUBERNETES_MCP_SERVER_REF: ${{ github.event.inputs.kubernetes_mcp_server_ref || 'main' }}
 
 permissions: read-all
 
@@ -67,8 +40,6 @@ jobs:
     steps:
     - name: Check out Kiali code
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-      with:
-        ref: ${{ env.BUILD_BRANCH }}
 
     - name: Install Helm
       uses: Azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
@@ -95,8 +66,8 @@ jobs:
         KIALI_VERSION: ${{ github.event.inputs.kiali_image_version || steps.kiali_pin.outputs.kiali_version }}
       run: |
         ISTIO_ARGS=""
-        if [ -n "${{ inputs.istio_version }}" ]; then
-          ISTIO_ARGS="--istio-version ${{ inputs.istio_version }}"
+        if [ -n "${{ github.event.inputs.istio_version }}" ]; then
+          ISTIO_ARGS="--istio-version ${{ github.event.inputs.istio_version }}"
         fi
         echo "Deploying quay.io/kiali/kiali:${KIALI_VERSION}"
         hack/run-integration-tests.sh --test-suite backend --setup-only true --kiali-version "${KIALI_VERSION}" ${ISTIO_ARGS}
