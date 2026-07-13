@@ -1,0 +1,24 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    multicluster: "true"
+    suite: kiali
+  name: "Audit Multicluster Mesh Health"
+  category: "Mesh Health & Status"
+  description: "Audits mesh health across multiple clusters, including control plane connectivity."
+  difficulty: medium
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "east"
+  - llmJudge:
+      contains: "west"
+  prompt:
+    inline: |
+      Perform a mesh health audit for my multicluster Istio deployment.
+      Report control plane and data plane status for each cluster Kiali can access.
+      Summarize overall mesh health.

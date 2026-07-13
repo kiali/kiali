@@ -7,3 +7,4 @@ frontend/build
 
 # Raw mcpchecker eval output (repo root; large, tooling-specific JSON)
 ../tests/evals/results/mcpchecker-gemini-eval-out.json
+../tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json

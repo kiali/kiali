@@ -72,6 +72,7 @@ ai-dev-context
 # Gemini / MCP: root-only artifacts (committed baseline remains under tests/evals/results/)
 /.gemini
 /mcpchecker-gemini-eval-out.json
+/mcpchecker-gemini-eval-multicluster-out.json
 # MCP checker transient step scripts (randomized numeric suffix)
 .mcpchecker-step-*.sh
 

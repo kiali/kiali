@@ -1,0 +1,23 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    multicluster: "true"
+    suite: kiali
+  name: "Visualize West Cluster Traffic"
+  category: "Traffic Observability"
+  description: "Generates a workload-level traffic graph scoped to the remote west cluster."
+  difficulty: medium
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "west"
+  - llmJudge:
+      contains: "bookinfo"
+  prompt:
+    inline: |
+      Show me a workload-level traffic graph for the bookinfo namespace on the west cluster.
+      Summarize what the graph shows.

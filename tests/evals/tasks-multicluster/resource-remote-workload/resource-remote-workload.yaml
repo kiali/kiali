@@ -1,0 +1,24 @@
+kind: Task
+apiVersion: mcpchecker/v1alpha2
+metadata:
+  labels:
+    multicluster: "true"
+    suite: kiali
+  name: "Inspect Remote Cluster Workload"
+  category: "Resource Inspection"
+  description: "Retrieves workload details from a remote cluster using the clusterName parameter."
+  difficulty: medium
+spec:
+  requires:
+  - extension: kubernetes
+    as: k8s
+  verify:
+  - llmJudge:
+      contains: "reviews-v2"
+  - llmJudge:
+      contains: "west"
+  prompt:
+    inline: |
+      The reviews-v2 workload runs on the west cluster in the bookinfo namespace.
+      Discover which clusters Kiali can access, then inspect reviews-v2 on the west cluster.
+      Summarize its status and health.
