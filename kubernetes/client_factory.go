@@ -239,7 +239,7 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 				Name:         cf.homeCluster,
 			}, cf.kialiConfig)
 			if err != nil {
-				log.Errorf("Error creating client for cluster [%s]: %s", cluster, err.Error())
+				log.Errorf("Error creating impersonation client for cluster [%s]: %s", cluster, err.Error())
 				return nil, err
 			}
 			newClient = client
