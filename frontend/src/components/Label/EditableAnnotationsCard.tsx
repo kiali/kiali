@@ -16,12 +16,13 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { WizardLabels } from 'components/IstioWizards/WizardLabels';
 import { t } from 'utils/I18nUtils';
-import { partitionByIstio } from '../../pages/PageUtils';
+import { filterHiddenAnnotations, partitionByIstio, preserveHiddenAnnotations } from '../../pages/PageUtils';
 
 type EditableAnnotationsCardProps = {
   annotations: Record<string, string>;
   canEdit: boolean;
   numAnnotations?: number;
+  onEditClick?: () => void;
   onSave: (annotations: Record<string, string>) => void;
   prioritizeIstio?: boolean;
   prioritizeIstioCount?: boolean;
@@ -52,6 +53,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
   annotations,
   canEdit,
   numAnnotations,
+  onEditClick,
   onSave,
   prioritizeIstio = false,
   prioritizeIstioCount = false,
@@ -59,15 +61,16 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
 }) => {
   const [showEditor, setShowEditor] = React.useState(false);
   const [expanded, setExpanded] = React.useState(false);
+  const visibleAnnotations = filterHiddenAnnotations(annotations ?? {});
 
-  const handleChange = (updated: Record<string, string>): void => {
-    onSave(updated);
+  const handleChange = (updatedVisible: Record<string, string>): void => {
+    onSave(preserveHiddenAnnotations(annotations ?? {}, updatedVisible));
     setShowEditor(false);
   };
 
   const { istioCount, sorted } = prioritizeIstio
-    ? partitionByIstio(annotations ?? {})
-    : { istioCount: 0, sorted: annotations };
+    ? partitionByIstio(visibleAnnotations)
+    : { istioCount: 0, sorted: visibleAnnotations };
   const effectiveNumAnnotations = prioritizeIstioCount ? istioCount : numAnnotations ?? 5;
   const annotationEntries = Object.entries(sorted ?? {});
   if (!prioritizeIstio) {
@@ -81,7 +84,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
         <Button
           variant="plain"
           size="sm"
-          onClick={() => setShowEditor(true)}
+          onClick={onEditClick ?? (() => setShowEditor(true))}
           icon={canEdit ? <KialiIcon.PencilAlt /> : <KialiIcon.ExpandArrows />}
         />
       </Tooltip>
@@ -129,7 +132,7 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
 
       <WizardLabels
         canEdit={canEdit}
-        labels={annotations ?? {}}
+        labels={visibleAnnotations}
         onChange={handleChange}
         onClose={() => setShowEditor(false)}
         showAnotationsWizard={showEditor}

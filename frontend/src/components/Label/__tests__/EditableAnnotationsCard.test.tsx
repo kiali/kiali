@@ -34,6 +34,20 @@ describe('EditableAnnotationsCard', () => {
     expect(screen.getByText('note')).toBeInTheDocument();
   });
 
+  it('hides last-applied-configuration from display', () => {
+    render(
+      <EditableAnnotationsCard
+        {...defaultProps}
+        annotations={{
+          'kubectl.kubernetes.io/last-applied-configuration': '{"apiVersion":"v1"}',
+          note: 'test'
+        }}
+      />
+    );
+    expect(screen.queryByText('kubectl.kubernetes.io/last-applied-configuration')).not.toBeInTheDocument();
+    expect(screen.getByText('note')).toBeInTheDocument();
+  });
+
   it('shows "No annotations" when empty', () => {
     render(<EditableAnnotationsCard {...defaultProps} annotations={{}} />);
     expect(screen.getByText('No annotations')).toBeInTheDocument();
