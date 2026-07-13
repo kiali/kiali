@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { Tr } from '@patternfly/react-table';
-import { Resource, hasHealth, RenderResource, GVKToBadge } from './Config';
+import type { Resource, RenderResource } from './Config';
+import { hasHealth, GVKToBadge } from './Config';
+import type { PFBadgeType } from '../Pf/PfBadges';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
-import { Health } from '../../types/Health';
-import { StatefulFiltersRef } from '../Filters/StatefulFilters';
+import type { Health } from '../../types/Health';
+import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 
@@ -52,7 +54,7 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
       .map(object => object.renderer(item, this.props.config, this.getBadge(), health, this.props.statefulFilterProps));
   };
 
-  getBadge = (): React.ReactNode => {
+  getBadge = (): PFBadgeType | undefined => {
     // TODO this.props.item.type
     return this.props.config.name !== 'istio'
       ? this.props.config.badge

@@ -5,6 +5,7 @@ import sliderCss from './Slider.module.scss';
 import { classes } from 'typestyle';
 
 type BoundariesProps = {
+  children?: React.ReactNode;
   max: number;
   maxWidth?: string;
   min: number;

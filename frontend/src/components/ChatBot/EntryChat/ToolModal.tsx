@@ -1,6 +1,5 @@
-import { Map as ImmutableMap } from 'immutable';
+import type { Map as ImmutableMap } from 'immutable';
 import * as React from 'react';
-import { Trans } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Alert,
@@ -20,7 +19,7 @@ import {
 } from '@patternfly/react-core';
 import { BanIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import { CopyAction } from './CopyAction';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { t } from 'utils/I18nUtils';
 
@@ -72,27 +71,19 @@ export const ToolModal: React.FC = () => {
           </Alert>
         )}
         <p>
-          {isDenied ? (
-            argsFormatted ? (
-              <Trans>
-                The tool <span>{{ name }}</span> was requested with arguments <span>{{ argsFormatted }}</span> but was
-                rejected.
-              </Trans>
-            ) : (
-              <Trans>
-                The tool <span>{{ name }}</span> was requested with no arguments but was rejected.
-              </Trans>
-            )
-          ) : argsFormatted ? (
-            <Trans>
-              The following output was generated when running <span>{{ name }}</span> with arguments{' '}
-              <span>{{ argsFormatted }}</span>.
-            </Trans>
-          ) : (
-            <Trans>
-              The following output was generated when running <span>{{ name }}</span> with no arguments.
-            </Trans>
-          )}
+          {isDenied
+            ? argsFormatted
+              ? t('The tool {{name}} was requested with arguments {{argsFormatted}} but was rejected.', {
+                  argsFormatted,
+                  name
+                })
+              : t('The tool {{name}} was requested with no arguments but was rejected.', { name })
+            : argsFormatted
+            ? t('The following output was generated when running {{name}} with arguments {{argsFormatted}}.', {
+                argsFormatted,
+                name
+              })
+            : t('The following output was generated when running {{name}} with no arguments.', { name })}
         </p>
 
         <DescriptionList isCompact isHorizontal>

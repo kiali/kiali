@@ -8,7 +8,7 @@ const importantTooltip = kialiStyle({
   fontWeight: 700
 });
 
-export const wizardTooltip = (tooltipContent: React.ReactFragment) => {
+export const wizardTooltip = (tooltipContent: React.ReactNode): React.ReactElement => {
   return (
     <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}>
       <KialiIcon.Info className={infoStyle} />
