@@ -256,15 +256,24 @@ func TestCriteriaForListFilter(t *testing.T) {
 
 			assert.True(t, tt.checkField(c), "expected criteria field to be true for %s/%s", tt.group, tt.kind)
 
-			allOthersOff := !c.IncludeGateways &&
-				!c.IncludeK8sGateways &&
-				!c.IncludeK8sGRPCRoutes &&
-				!c.IncludeK8sHTTPRoutes &&
-				!c.IncludeK8sReferenceGrants &&
-				!c.IncludeK8sTCPRoutes &&
-				!c.IncludeK8sTLSRoutes &&
-				!c.IncludeK8sUDPRoutes
-			assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
+			switch tt.kind {
+			case "TCPRoute":
+				assert.False(t, c.IncludeK8sUDPRoutes)
+				assert.False(t, c.IncludeK8sTLSRoutes)
+			case "UDPRoute":
+				assert.False(t, c.IncludeK8sTCPRoutes)
+				assert.False(t, c.IncludeK8sTLSRoutes)
+			default:
+				allOthersOff := !c.IncludeGateways &&
+					!c.IncludeK8sGateways &&
+					!c.IncludeK8sGRPCRoutes &&
+					!c.IncludeK8sHTTPRoutes &&
+					!c.IncludeK8sReferenceGrants &&
+					!c.IncludeK8sTCPRoutes &&
+					!c.IncludeK8sTLSRoutes &&
+					!c.IncludeK8sUDPRoutes
+				assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
+			}
 		})
 	}
 }
