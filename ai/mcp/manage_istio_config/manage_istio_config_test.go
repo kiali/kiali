@@ -1921,6 +1921,13 @@ func TestValidateManagedIstioGroupAndKind_GatewayAPIEnabled(t *testing.T) {
 			enabled: true,
 		},
 		{
+			name:    "gateway API enabled rejects UDPRoute for write tool",
+			group:   "gateway.networking.k8s.io",
+			kind:    "UDPRoute",
+			enabled: true,
+			wantErr: "invalid kind",
+		},
+		{
 			name:    "gateway API enabled rejects invalid kind",
 			group:   "gateway.networking.k8s.io",
 			kind:    "InferencePool",
@@ -1963,6 +1970,14 @@ func TestValidateReadOnlyIstioConfigInput_GatewayAPIEnabled(t *testing.T) {
 		{
 			name: "list filter HTTPRoute without group infers gateway API",
 			args: map[string]interface{}{"action": "list", "kind": "HTTPRoute"},
+		},
+		{
+			name: "list filter UDPRoute with group",
+			args: map[string]interface{}{"action": "list", "group": "gateway.networking.k8s.io", "kind": "UDPRoute"},
+		},
+		{
+			name: "get UDPRoute with group",
+			args: map[string]interface{}{"action": "get", "namespace": "bookinfo", "group": "gateway.networking.k8s.io", "version": "v1", "kind": "UDPRoute", "object": "udp-route"},
 		},
 		{
 			name:    "list filter Gateway without group is ambiguous when GW API enabled",
@@ -2022,6 +2037,15 @@ func TestValidateIstioConfigInput_GatewayAPIEnabled(t *testing.T) {
 				"group": "gateway.networking.k8s.io", "version": "v1",
 				"kind": "ReferenceGrant", "object": "my-rg",
 			},
+		},
+		{
+			name: "create UDPRoute rejected when Gateway API enabled",
+			args: map[string]interface{}{
+				"action": "create", "namespace": "bookinfo",
+				"group": "gateway.networking.k8s.io", "version": "v1",
+				"kind": "UDPRoute", "object": "my-udp-route", "data": "{}",
+			},
+			wantErr: "invalid kind",
 		},
 		{
 			name: "create gateway API rejected when disabled",
@@ -2172,6 +2196,7 @@ func TestDefaultIstioConfigCriteria_GatewayAPIEnabled(t *testing.T) {
 	assert.True(t, criteria.IncludeK8sReferenceGrants)
 	assert.True(t, criteria.IncludeK8sTCPRoutes)
 	assert.True(t, criteria.IncludeK8sTLSRoutes)
+	assert.True(t, criteria.IncludeK8sUDPRoutes)
 	assert.False(t, criteria.IncludeK8sInferencePools)
 	assert.True(t, criteria.IncludeVirtualServices)
 }
@@ -2184,6 +2209,7 @@ func TestDefaultIstioConfigCriteria_GatewayAPIDisabled(t *testing.T) {
 	assert.False(t, criteria.IncludeK8sReferenceGrants)
 	assert.False(t, criteria.IncludeK8sTCPRoutes)
 	assert.False(t, criteria.IncludeK8sTLSRoutes)
+	assert.False(t, criteria.IncludeK8sUDPRoutes)
 	assert.False(t, criteria.IncludeK8sInferencePools)
 	assert.True(t, criteria.IncludeVirtualServices)
 	assert.True(t, criteria.IncludeDestinationRules)

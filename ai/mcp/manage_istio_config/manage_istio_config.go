@@ -688,7 +688,6 @@ var allowedGatewayAPIKinds = map[string]struct{}{
 	"ReferenceGrant": {},
 	"TCPRoute":       {},
 	"TLSRoute":       {},
-	"UDPRoute":       {},
 }
 
 // allowedInferenceAPIKinds are the Inference API kinds supported when inference.networking.k8s.io CRDs are installed.
@@ -774,7 +773,7 @@ func validateManagedIstioGroupAndKind(group, kind string, flags ...bool) error {
 		}
 		if _, ok := allowedGatewayAPIKinds[k]; !ok {
 			return fmt.Errorf(
-				"invalid kind %q for group %q: must be one of Gateway, HTTPRoute, GRPCRoute, ReferenceGrant, TCPRoute, TLSRoute, UDPRoute",
+				"invalid kind %q for group %q: must be one of Gateway, HTTPRoute, GRPCRoute, ReferenceGrant, TCPRoute, TLSRoute",
 				k, g,
 			)
 		}

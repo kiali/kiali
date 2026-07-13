@@ -223,6 +223,18 @@ func TestCriteriaForListFilter(t *testing.T) {
 			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeDestinationRules },
 		},
 		{
+			name:       "TCPRoute returns targeted criteria",
+			group:      "gateway.networking.k8s.io",
+			kind:       "TCPRoute",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeK8sTCPRoutes },
+		},
+		{
+			name:       "UDPRoute returns targeted criteria",
+			group:      "gateway.networking.k8s.io",
+			kind:       "UDPRoute",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeK8sUDPRoutes },
+		},
+		{
 			name:          "unknown group/kind returns default (include-all) criteria",
 			group:         "unknown.io",
 			kind:          "Unknown",
@@ -247,7 +259,11 @@ func TestCriteriaForListFilter(t *testing.T) {
 			allOthersOff := !c.IncludeGateways &&
 				!c.IncludeK8sGateways &&
 				!c.IncludeK8sGRPCRoutes &&
-				!c.IncludeK8sHTTPRoutes
+				!c.IncludeK8sHTTPRoutes &&
+				!c.IncludeK8sReferenceGrants &&
+				!c.IncludeK8sTCPRoutes &&
+				!c.IncludeK8sTLSRoutes &&
+				!c.IncludeK8sUDPRoutes
 			assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
 		})
 	}

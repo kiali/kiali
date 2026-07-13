@@ -644,7 +644,6 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 								"ReferenceGrant",
 								"TCPRoute",
 								"TLSRoute",
-								"UDPRoute",
 								"InferencePool",
 							},
 						},
