@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { TabProps, Tabs } from '@patternfly/react-core';
+import type { TabProps } from '@patternfly/react-core';
+import { Tabs } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 
 import { location, router } from '../../app/History';
@@ -10,6 +11,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
   activeTab: string;
+  children?: React.ReactNode;
   className?: string;
   defaultTab: string;
   id: string;

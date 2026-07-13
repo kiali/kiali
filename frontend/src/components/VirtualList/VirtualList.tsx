@@ -1,41 +1,39 @@
 import * as React from 'react';
+import type { ISortBy, OnSort, SortByDirection, ThProps } from '@patternfly/react-table';
 import {
   Caption,
   InnerScrollContainer,
-  IRow,
-  ISortBy,
-  OnSort,
-  SortByDirection,
   Table,
   TableGridBreakpoint,
   Tbody,
   Td,
   Th,
   Thead,
-  ThProps,
   Tr
 } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
-import { config, RenderResource, Resource, ResourceType } from './Config';
+import type { RenderResource, Resource, ResourceType } from './Config';
+import { config } from './Config';
 import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, PlusCircleIcon, SearchIcon } from '@patternfly/react-icons';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { activeNamespacesSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import { Namespace } from '../../types/Namespace';
-import { SortField } from '../../types/SortFilters';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { Namespace } from '../../types/Namespace';
+import type { SortField } from '../../types/SortFilters';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { currentSortField } from '../FilterList/FilterHelper';
 import { sortFields } from '../../pages/Namespaces/Sorts';
-import { FilterSelected, StatefulFiltersRef } from '../Filters/StatefulFilters';
+import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
+import { FilterSelected } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
 import { classes } from 'typestyle';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { t } from 'utils/I18nUtils';
 import { RefreshIntervalManual } from 'config/Config';
-import { IntervalInMilliseconds } from 'types/Common';
+import type { IntervalInMilliseconds } from 'types/Common';
 
 const emptyStyle = kialiStyle({
   borderBottom: 0
@@ -126,6 +124,10 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     };
   }
 
+  private static getColumnId(column: { id?: string; name: string }): string {
+    return (column.id ?? column.name.toLowerCase()).toLowerCase();
+  }
+
   onSort = (_event: React.MouseEvent, index: number, direction: SortByDirection): void => {
     this.setState({
       sortBy: {
@@ -168,15 +170,88 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     }
   }
 
+  render(): React.ReactNode {
+    const { rows } = this.props;
+    const { sortBy, columns, conf } = this.state;
+
+    const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
+
+    const childrenWithProps = React.Children.map(this.props.children, child => {
+      // Checking isValidElement is the safe way and avoids a TS error too.
+      if (React.isValidElement(child)) {
+        // If parent provides a ref to StatefulFilters, use it so row renderers (e.g. label click) can add/remove filters.
+        const refToUse = this.props.statefulProps ?? this.statefulFilters;
+        return React.cloneElement(child, { ref: refToUse } as React.Attributes);
+      }
+
+      return child;
+    });
+
+    const rowItems = rows.map((row, index) => {
+      return (
+        <VirtualItem
+          key={`vItem_${index}`}
+          item={row}
+          index={index}
+          columns={this.state.columns}
+          config={conf}
+          statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
+          action={this.props.actions && this.props.actions[index] ? this.props.actions[index] : undefined}
+        />
+      );
+    });
+
+    const table = (
+      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
+        {conf.caption && <Caption>{conf.caption}</Caption>}
+        <Thead>
+          <Tr>
+            {columns.map((column, index) => (
+              <Th
+                key={`column_${index}`}
+                dataLabel={column.title}
+                info={column.info}
+                sort={this.getSortParams(column, index, sortBy, this.onSort)}
+                width={column.width}
+                textCenter={column.textCenter}
+              >
+                {column.title}
+              </Th>
+            ))}
+          </Tr>
+        </Thead>
+
+        <Tbody>
+          {this.props.rows.length > 0 ? (
+            rowItems
+          ) : (
+            <Tr className={emptyStyle}>
+              <Td colSpan={columns.length}>{this.renderEmptyState(typeDisplay)}</Td>
+            </Tr>
+          )}
+        </Tbody>
+      </Table>
+    );
+
+    const isManualRefresh = this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded;
+
+    return (
+      <div ref={this.outerDivRef} className={classes(outerContainerStyle, this.props.className)}>
+        {childrenWithProps}
+        {isManualRefresh ? (
+          <ManualRefreshEmptyState />
+        ) : (
+          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+        )}
+      </div>
+    );
+  }
+
   private notifyResize = (): void => {
     if (this.props.onResize && this.outerDivRef.current) {
       this.props.onResize(this.outerDivRef.current.clientHeight);
     }
   };
-
-  private static getColumnId(column: { id?: string; name: string }): string {
-    return (column.id ?? column.name.toLowerCase()).toLowerCase();
-  }
 
   private getColumns = (type: string): ResourceType<R>[] => {
     let columns = [] as ResourceType<R>[];
@@ -271,83 +346,6 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       </EmptyState>
     );
   };
-
-  render(): React.ReactNode {
-    const { rows } = this.props;
-    const { sortBy, columns, conf } = this.state;
-
-    const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
-
-    const childrenWithProps = React.Children.map(this.props.children, child => {
-      // Checking isValidElement is the safe way and avoids a TS error too.
-      if (React.isValidElement(child)) {
-        // If parent provides a ref to StatefulFilters, use it so row renderers (e.g. label click) can add/remove filters.
-        const refToUse = this.props.statefulProps ?? this.statefulFilters;
-        return React.cloneElement(child, { ref: refToUse } as React.Attributes);
-      }
-
-      return child;
-    });
-
-    const rowItems: IRow[] = rows.map((row, index) => {
-      return (
-        <VirtualItem
-          key={`vItem_${index}`}
-          item={row}
-          index={index}
-          columns={this.state.columns}
-          config={conf}
-          statefulFilterProps={this.props.statefulProps ? this.props.statefulProps : this.statefulFilters}
-          action={this.props.actions && this.props.actions[index] ? this.props.actions[index] : undefined}
-        />
-      );
-    });
-
-    const table = (
-      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
-        {conf.caption && <Caption>{conf.caption}</Caption>}
-        <Thead>
-          <Tr>
-            {columns.map((column, index) => (
-              <Th
-                key={`column_${index}`}
-                dataLabel={column.title}
-                info={column.info}
-                sort={this.getSortParams(column, index, sortBy, this.onSort)}
-                width={column.width}
-                textCenter={column.textCenter}
-              >
-                {column.title}
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
-
-        <Tbody>
-          {this.props.rows.length > 0 ? (
-            rowItems
-          ) : (
-            <Tr className={emptyStyle}>
-              <Td colSpan={columns.length}>{this.renderEmptyState(typeDisplay)}</Td>
-            </Tr>
-          )}
-        </Tbody>
-      </Table>
-    );
-
-    const isManualRefresh = this.props.refreshInterval === RefreshIntervalManual && !this.props.loaded;
-
-    return (
-      <div ref={this.outerDivRef} className={classes(outerContainerStyle, this.props.className)}>
-        {childrenWithProps}
-        {isManualRefresh ? (
-          <ManualRefreshEmptyState />
-        ) : (
-          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
-        )}
-      </div>
-    );
-  }
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({

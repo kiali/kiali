@@ -7,21 +7,22 @@ export enum PropertyType {
 }
 
 export type Property = {
-  type: PropertyType;
   margin?: number;
+  type: PropertyType;
 };
 
 type ComputeOffsetProps = {
+  children?: React.ReactNode;
   className: string;
-  maxHeight?: Property;
   handleBoundingClientRect?(rect: Rect): void;
+  maxHeight?: Property;
 };
 
 type ComputeOffsetState = {
   maxHeight?: string;
 };
 
-export const vhMinusTop = (rect: Rect, offset: number) => `calc(100vh - ${rect.top + offset}px)`;
+export const vhMinusTop = (rect: Rect, offset: number): string => `calc(100vh - ${rect.top + offset}px)`;
 
 // Computes the BoundingClientRect of the container, this helps to calculate the remaining height without
 // going further off the screen and without having to fix the value in the code.
@@ -37,15 +38,15 @@ export class BoundingClientAwareComponent extends React.Component<ComputeOffsetP
     this.state = {};
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.handleComponentUpdated();
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(): void {
     this.handleComponentUpdated();
   }
 
-  handleComponentUpdated() {
+  handleComponentUpdated(): void {
     const rect = this.containerRef.current!.getBoundingClientRect();
 
     const stateUpdate: ComputeOffsetState = {};
@@ -66,7 +67,7 @@ export class BoundingClientAwareComponent extends React.Component<ComputeOffsetP
     }
   }
 
-  render() {
+  render(): React.ReactNode {
     const style = {
       maxHeight: this.state.maxHeight
     };
@@ -78,7 +79,7 @@ export class BoundingClientAwareComponent extends React.Component<ComputeOffsetP
     );
   }
 
-  private processProperty(property: Property, rect: Rect) {
+  private processProperty(property: Property, rect: Rect): string {
     const margin = property.margin ? property.margin : 0;
     switch (property.type) {
       case PropertyType.VIEWPORT_HEIGHT_MINUS_TOP:

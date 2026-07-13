@@ -1,4 +1,4 @@
-import * as ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { globalStyle } from 'styles/GlobalStyle';
 import { RouterProvider } from 'react-router-dom-v5-compat';
 import { rootBasename, router, setRouter } from 'app/History';
@@ -45,13 +45,13 @@ const renderApp = (): void => {
     router.navigate(`/${window.location.search}`, { replace: true });
   }
 
-  ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);
+  createRoot(document.getElementById('root') as HTMLElement).render(<RouterProvider router={router} />);
 };
 
 if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_MOCK_API === 'true') {
   // Enable API mocking with MSW (Mock Service Worker).
   // This allows frontend development without a running backend.
-  // @ts-ignore - mocks folder is excluded from TypeScript compilation for production builds
+  // @ts-expect-error - mocks folder is excluded from TypeScript compilation for production builds
   import('./mocks/browser').then(({ worker }) => {
     worker
       .start({
