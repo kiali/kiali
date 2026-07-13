@@ -7,7 +7,7 @@ import * as API from '../../services/Api';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { MarkerSeverity, Selection } from 'monaco-editor';
-import {
+import type {
   HelpMessage,
   ObjectReference,
   ObjectValidation,
@@ -16,16 +16,13 @@ import {
   WorkloadReference
 } from '../../types/IstioObjects';
 import {
-  EditorValidations,
-  EditorAnnotation,
-  EditorMarker,
   applyMonacoMarkers,
   parseHelpAnnotations,
   parseKialiValidations,
   parseLine,
   parseYamlValidations
 } from '../../types/EditorValidations';
-import type { MonacoInstance } from '../../types/EditorValidations';
+import type { MonacoInstance, EditorValidations, EditorAnnotation, EditorMarker } from '../../types/EditorValidations';
 import { IstioActionDropdown } from '../../components/IstioActions/IstioActionsDropdown';
 import { IstioActionButtons } from '../../components/IstioActions/IstioActionsButtons';
 import { HistoryManager, router } from '../../app/History';
@@ -57,19 +54,18 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { showInNotificationCenter } from '../../utils/IstioValidationUtils';
-import { Refresh } from '../../components/Refresh/Refresh';
 import { IstioConfigOverview } from './IstioObjectDetails/IstioConfigOverview';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
-import { ErrorMsg } from '../../types/ErrorMsg';
+import type { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
-import { RefreshNotifier } from '../../components/Refresh/RefreshNotifier';
 import { isParentKiosk, kioskNavigateAction } from '../../components/Kiosk/KioskActions';
-import { KialiAppState } from '../../store/Store';
-import { connect, DispatchProp } from 'react-redux';
+import type { KialiAppState } from '../../store/Store';
+import type { DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
 import { Theme } from 'types/Common';
-import { ApiError, ApiResponse } from 'types/Api';
+import type { ApiError, ApiResponse } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { canDelete as canDeletePermission, canUpdate as canUpdatePermission } from 'types/Permissions';
@@ -121,6 +117,7 @@ type IstioConfigDetailsProps = ReduxProps &
     istioConfigId: IstioConfigId;
   };
 
+/* eslint-disable @typescript-eslint/member-ordering -- legacy class component layout */
 class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
   monacoEditorRef: editor.IStandaloneCodeEditor | null = null;
   monacoRef: MonacoInstance | null = null;
@@ -757,9 +754,7 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
   render(): React.ReactNode {
     return (
       <>
-        <RefreshNotifier onTick={this.onRefresh} />
-
-        <RenderHeader rightToolbar={<Refresh id="config_details_refresh" />}>
+        <RenderHeader>
           {this.state.istioObjectDetails && (
             <div className={detailTitleRowStyle}>
               <div className={detailTitleMainStyle}>
