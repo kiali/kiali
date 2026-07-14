@@ -547,31 +547,31 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       return;
     }
 
-    const controllerOriginal = filterHiddenAnnotations(workload.annotations ?? {});
-    const templateOriginal = filterHiddenAnnotations(workload.templateAnnotations ?? {});
+    const controllerFull = workload.annotations ?? {};
+    const templateFull = workload.templateAnnotations ?? {};
 
-    const controllerWithHidden = preserveHiddenAnnotations(workload.annotations ?? {}, controller);
-    const templateWithHidden = preserveHiddenAnnotations(workload.templateAnnotations ?? {}, template);
+    const controllerWithHidden = preserveHiddenAnnotations(controllerFull, controller);
+    const templateWithHidden = preserveHiddenAnnotations(templateFull, template);
 
     const controllerDiff: Record<string, string | null> = { ...controllerWithHidden };
-    for (const key of Object.keys(workload.annotations ?? {})) {
+    for (const key of Object.keys(controllerFull)) {
       if (!(key in controllerWithHidden)) {
         controllerDiff[key] = null;
       }
     }
 
     const templateDiff: Record<string, string | null> = { ...templateWithHidden };
-    for (const key of Object.keys(workload.templateAnnotations ?? {})) {
+    for (const key of Object.keys(templateFull)) {
       if (!(key in templateWithHidden)) {
         templateDiff[key] = null;
       }
     }
 
     const controllerChanged =
-      JSON.stringify(controllerDiff) !== JSON.stringify(controllerOriginal) ||
+      JSON.stringify(controllerDiff) !== JSON.stringify(controllerFull) ||
       Object.keys(controllerDiff).some(k => controllerDiff[k] === null);
     const templateChanged =
-      JSON.stringify(templateDiff) !== JSON.stringify(templateOriginal) ||
+      JSON.stringify(templateDiff) !== JSON.stringify(templateFull) ||
       Object.keys(templateDiff).some(k => templateDiff[k] === null);
 
     if (!controllerChanged && !templateChanged) {
