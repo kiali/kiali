@@ -33,13 +33,9 @@ rstest.mock('../hooks/useLocationContext', () => ({
   useLocationContext: () => [undefined, undefined, undefined, undefined]
 }));
 
-rstest.mock('../promptContext', async () => {
-  const actual = (await rstest.importActual('../promptContext')) as Record<string, unknown>;
-  return {
-    ...actual,
-    buildPageContext: () => undefined
-  };
-});
+rstest.mock('../hooks/usePromptHealth', () => ({
+  usePromptHealth: () => ({ unhealthyResources: [] })
+}));
 
 rstest.mock('../EntryChat/ToolModal', () => ({
   ToolModal: () => null
