@@ -10,7 +10,6 @@ import type {
   Node,
   NodeModel,
   Edge,
-  GraphLayoutEndEventListener,
   GraphAreaSelectedEventListener
 } from '@patternfly/react-topology';
 import {
@@ -220,6 +219,15 @@ const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
+
   //
   // update model on meshData change
   //
@@ -382,6 +390,12 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (meshData.elementsChanged && hasContent) {
+        initialLayout = true;
+        layoutInProgress = MeshLayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => controller.getGraph().setData({ meshData: meshData }));
 
@@ -389,6 +403,10 @@ const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
+
+      if (layoutInProgress === MeshLayoutType.Layout) {
+        controller.getGraph().layout();
+      }
     };
 
     console.debug(`mesh updateModel`);
@@ -465,8 +483,6 @@ const TopologyContent: React.FC<{
       }
     }
   );
-
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 
