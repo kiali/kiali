@@ -59,8 +59,8 @@ type istioListItem struct {
 	Group     string
 	Version   string
 	Kind      string
-	// ValidationValid is nil when Kiali has no validation for the resource (UI shows N/A).
-	ValidationValid *bool
+	// ValidationResult is nil when Kiali has no validation for the resource (UI shows N/A).
+	ValidationResult *bool
 }
 
 // KindValidationResult summarises resources for a single GVK within a namespace.
@@ -251,12 +251,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	appendItem := func(name, ns string, gvk schema.GroupVersionKind, obj runtime.Object) {
 		v := validationSummaryForRuntimeObject(obj, gvk, istioValidations, cluster)
 		items = append(items, istioListItem{
-			Group:           gvk.Group,
-			Kind:            gvk.Kind,
-			Name:            name,
-			Namespace:       ns,
-			ValidationValid: v.Valid,
-			Version:         gvk.Version,
+			Group:            gvk.Group,
+			Kind:             gvk.Kind,
+			Name:             name,
+			Namespace:        ns,
+			ValidationResult: v.Valid,
+			Version:          gvk.Version,
 		})
 	}
 
@@ -396,9 +396,9 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		}
 		kvr := namespaces[item.Namespace][gvkKey]
 		switch {
-		case item.ValidationValid == nil:
+		case item.ValidationResult == nil:
 			kvr.NotValidated = append(kvr.NotValidated, item.Name)
-		case *item.ValidationValid:
+		case *item.ValidationResult:
 			kvr.Valid = append(kvr.Valid, item.Name)
 		default:
 			kvr.Invalid = append(kvr.Invalid, item.Name)
