@@ -68,7 +68,7 @@ export function layoutMesh(controller: Controller, layoutType: MeshLayoutType, r
     return;
   }
   if (initialLayout) {
-    console.debug('Skip meshLayout, initial layout not yet performed');
+    console.debug('TM: Skip meshLayout, initial layout in progress');
     return;
   }
   if (layoutInProgress) {
@@ -113,6 +113,8 @@ const TopologyContent: React.FC<{
   showLegend,
   toggleLegend
 }) => {
+  const [updateModelTime, setUpdateModelTime] = React.useState(0);
+
   //
   // SelectedIds State
   //
@@ -176,10 +178,13 @@ const TopologyContent: React.FC<{
   }, [controller]);
 
   const onLayoutEnd = React.useCallback(() => {
-    console.debug(`onLayoutEnd layoutInProgress=${layoutInProgress}`);
+    console.debug(
+      `TM: onLayoutEnd initialLayout=${initialLayout} layoutInProgress=${layoutInProgress} hasGraph=${controller.hasGraph()}`
+    );
 
     // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
     if (!initialLayout && !layoutInProgress) {
+      console.debug('TM: onLayoutEnd ignored (unsolicited layout-end event)');
       return;
     }
 
@@ -200,6 +205,7 @@ const TopologyContent: React.FC<{
     if (initialLayout) {
       initialLayout = false;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
+      console.debug('TM: onLayoutEnd initial layout complete, mesh ready');
     }
 
     layoutInProgress = undefined;
@@ -410,23 +416,32 @@ const TopologyContent: React.FC<{
     console.debug(`mesh updateModel`);
     updateModel(controller);
 
-    // notify that the graph has been updated
-    setUpdateTime(Date.now());
+    const updateTime = Date.now();
+    setUpdateModelTime(updateTime);
+    setUpdateTime(updateTime);
   }, [controller, meshData, highlighter, layout, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.debug(`controller changed`);
-    initialLayout = true;
-  }, [controller]);
-
-  React.useEffect(() => {
-    console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
+    console.debug(`TM: meshData changed, elementsChange=${meshData.elementsChanged}`);
     if (meshData.elementsChanged) {
       layoutMesh(controller, MeshLayoutType.Layout);
     }
   }, [controller, meshData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        console.debug(`TM: post-updateModel fit initialLayout=${initialLayout}`);
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`highlighter changed`);

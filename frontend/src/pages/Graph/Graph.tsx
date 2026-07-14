@@ -81,7 +81,7 @@ export function graphLayout(controller: Controller, layoutType: LayoutType, rese
     return;
   }
   if (initialLayout) {
-    console.debug('TG: Skip graphLayout, initial layout not yet performed');
+    console.debug('TG: Skip graphLayout, initial layout in progress');
     return;
   }
   if (layoutInProgress) {
@@ -290,10 +290,13 @@ const TopologyContent: React.FC<{
   }, [controller]);
 
   const onLayoutEnd = React.useCallback(() => {
-    console.debug(`TG: onLayoutEnd layoutInProgress=${layoutInProgress}`);
+    console.debug(
+      `TG: onLayoutEnd initialLayout=${initialLayout} layoutInProgress=${layoutInProgress} hasGraph=${controller.hasGraph()}`
+    );
 
     // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
     if (!initialLayout && !layoutInProgress) {
+      console.debug('TG: onLayoutEnd ignored (unsolicited layout-end event)');
       return;
     }
 
@@ -320,6 +323,7 @@ const TopologyContent: React.FC<{
 
       isReady = true;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds }, true);
+      console.debug('TG: onLayoutEnd initial layout complete, graph ready');
     }
 
     layoutInProgress = undefined;
@@ -674,17 +678,24 @@ const TopologyContent: React.FC<{
   }, [controller, focusNode, isMiniGraph, setSelectedIds]);
 
   React.useEffect(() => {
-    console.debug(`TG: controller changed`);
-    initialLayout = true;
-    isReady = false;
-  }, [controller]);
-
-  React.useEffect(() => {
     console.debug(`TG: graphData changed, elementsChanged=${graphData.elementsChanged}`);
     if (graphData.elementsChanged) {
       graphLayout(controller, LayoutType.Layout);
     }
   }, [controller, graphData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        console.debug(`TG: post-updateModel fit initialLayout=${initialLayout}`);
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: graphSettings changed`);
