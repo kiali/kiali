@@ -156,8 +156,6 @@
   "resolutions": {
     "esbuild": "^0.25.2",
     "js-yaml@npm:3.14.0": "npm:3.15.0",
-    "js-yaml@npm:^3.13.1": "npm:3.15.0",
-    "js-yaml@npm:^4.1.0": "npm:4.3.0",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
