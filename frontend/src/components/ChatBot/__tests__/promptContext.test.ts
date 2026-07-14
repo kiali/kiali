@@ -10,10 +10,8 @@ import {
   buildPageContext,
   buildPromptContext,
   buildPromptVariables,
-  buildUnhealthyResourcePrompts,
   enrichPromptContext,
   formatHealthContext,
-  mergePromptsWithUnhealthy,
   substitutePrompt,
   substitutePrompts,
   substitutePromptVariables
@@ -168,33 +166,6 @@ describe('substitutePrompts', () => {
     );
 
     expect(prompt.query).toBe("Analyze the service 'details' in namespace 'bookinfo' and report health issues.");
-  });
-});
-
-describe('buildUnhealthyResourcePrompts', () => {
-  it('builds targeted troubleshooting prompts', () => {
-    const prompts = buildUnhealthyResourcePrompts([
-      {
-        kind: 'service',
-        name: 'productpage',
-        namespace: 'bookinfo',
-        status: 'Failure'
-      }
-    ]);
-
-    expect(prompts[0].title).toBe('Investigate productpage');
-    expect(prompts[0].query).toContain("failing service 'productpage'");
-  });
-});
-
-describe('mergePromptsWithUnhealthy', () => {
-  it('prepends unique unhealthy prompts before catalog prompts', () => {
-    const catalog = [{ title: 'Service Health Analysis', query: 'Review services', message: 'Review services' }];
-    const unhealthy = [
-      { title: 'Investigate productpage', query: 'Investigate productpage', message: 'Investigate productpage' }
-    ];
-
-    expect(mergePromptsWithUnhealthy(catalog, unhealthy)).toEqual([...unhealthy, ...catalog]);
   });
 });
 

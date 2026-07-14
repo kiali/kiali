@@ -28,13 +28,6 @@ export type PromptContext = {
 
 export type PromptVariables = Record<string, string>;
 
-export type UnhealthyResource = {
-  kind: 'application' | 'service' | 'workload';
-  name: string;
-  namespace: string;
-  status: HealthStatusId;
-};
-
 const LIST_RESOURCE_KINDS = new Set<ResourceKind>(['applications', 'graph', 'services', 'workloads']);
 
 const PROMPT_VARIABLE_DEFAULTS: PromptVariables = {
@@ -42,19 +35,13 @@ const PROMPT_VARIABLE_DEFAULTS: PromptVariables = {
   cluster: '',
   health: '',
   health_context: '',
-  health_status: '',
   istio_object: '',
   istio_type: '',
   namespace: '',
   namespaces: 'currently selected',
-  resource_kind: '',
-  resource_name: '',
   service: '',
   workload: ''
 };
-
-const UNHEALTHY_RESOURCE_PROMPT_TEMPLATE =
-  "Investigate the {health_status} {resource_kind} '{resource_name}' in namespace '{namespace}'{cluster} and report health issues, traffic anomalies, and likely configuration issues.";
 
 const normalizeResourceKind = (kind: string): ResourceKind => {
   switch (kind) {
@@ -233,30 +220,6 @@ export const buildPromptVariables = (
   };
 };
 
-const unhealthyStatusLabel = (status: HealthStatusId): string => {
-  switch (status) {
-    case 'Failure':
-      return 'failing';
-    case 'Degraded':
-      return 'degraded';
-    case 'Not Ready':
-      return 'not ready';
-    default:
-      return 'unhealthy';
-  }
-};
-
-const resourceKindLabel = (kind: UnhealthyResource['kind']): string => {
-  switch (kind) {
-    case 'application':
-      return 'application';
-    case 'workload':
-      return 'workload';
-    default:
-      return 'service';
-  }
-};
-
 type SubstitutablePrompt = Omit<Prompt, 'message'> & { message?: string };
 
 export const substitutePrompt = (prompt: SubstitutablePrompt, variables: PromptVariables): Prompt => {
@@ -276,34 +239,3 @@ export const substitutePrompt = (prompt: SubstitutablePrompt, variables: PromptV
 
 export const substitutePrompts = (prompts: Prompt[], variables: PromptVariables): Prompt[] =>
   prompts.map(prompt => substitutePrompt(prompt, variables));
-
-export const buildUnhealthyResourcePrompts = (resources: UnhealthyResource[], clusterSuffix = ''): Prompt[] =>
-  resources.map(resource => {
-    const variables: PromptVariables = {
-      ...PROMPT_VARIABLE_DEFAULTS,
-      cluster: clusterSuffix,
-      health_status: unhealthyStatusLabel(resource.status),
-      namespace: resource.namespace,
-      resource_kind: resourceKindLabel(resource.kind),
-      resource_name: resource.name
-    };
-    const query = substitutePromptVariables(UNHEALTHY_RESOURCE_PROMPT_TEMPLATE, variables);
-
-    return {
-      description: query,
-      message: query,
-      query,
-      title: `Investigate ${resource.name}`
-    };
-  });
-
-export const mergePromptsWithUnhealthy = (prompts: Prompt[], unhealthyPrompts: Prompt[]): Prompt[] => {
-  if (unhealthyPrompts.length === 0) {
-    return prompts;
-  }
-
-  const seen = new Set(prompts.map(prompt => prompt.title));
-  const uniqueUnhealthyPrompts = unhealthyPrompts.filter(prompt => !seen.has(prompt.title));
-
-  return [...uniqueUnhealthyPrompts, ...prompts];
-};

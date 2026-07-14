@@ -29,14 +29,12 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { namespacesToString } from 'types/Namespace';
 import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';
-import { usePromptHealth } from './hooks/usePromptHealth';
+import { useResourceHealth } from './hooks/useResourceHealth';
 import {
   buildPageContext,
   buildPromptContext,
   buildPromptVariables,
   enrichPromptContext,
-  mergePromptsWithUnhealthy,
-  buildUnhealthyResourcePrompts,
   substitutePrompts
 } from './promptContext';
 
@@ -104,15 +102,15 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       ),
     [activeNamespaces, kind, name, namespace, istio, clusterName]
   );
-  const { resourceHealthStatus, unhealthyResources } = usePromptHealth(promptContext);
+  const resourceHealthStatus = useResourceHealth(promptContext);
   const promptVariables = React.useMemo(() => buildPromptVariables(promptContext, resourceHealthStatus), [
     promptContext,
     resourceHealthStatus
   ]);
-  const resolvedPrompts = React.useMemo(() => {
-    const unhealthyPrompts = buildUnhealthyResourcePrompts(unhealthyResources, promptVariables.cluster ?? '');
-    return mergePromptsWithUnhealthy(substitutePrompts(promptData, promptVariables), unhealthyPrompts);
-  }, [promptData, promptVariables, unhealthyResources]);
+  const resolvedPrompts = React.useMemo(() => substitutePrompts(promptData, promptVariables), [
+    promptData,
+    promptVariables
+  ]);
   const pageContext = React.useMemo(
     () => buildPageContext(kind, name, namespace, istio, clusterName, resourceHealthStatus),
     [kind, name, namespace, istio, clusterName, resourceHealthStatus]
