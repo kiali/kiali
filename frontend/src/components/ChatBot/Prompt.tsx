@@ -30,13 +30,8 @@ import { namespacesToString } from 'types/Namespace';
 import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';
 import { useResourceHealth } from './hooks/useResourceHealth';
-import {
-  buildPageContext,
-  buildPromptContext,
-  buildPromptVariables,
-  enrichPromptContext,
-  substitutePrompts
-} from './promptContext';
+import { buildPageContext } from './pageContext';
+import { buildPromptContext, buildPromptVariables, enrichPromptContext, substitutePrompts } from './promptContext';
 
 type PromptProps = {
   scrollIntoView: () => void;
