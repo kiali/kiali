@@ -257,7 +257,9 @@ const resourceKindLabel = (kind: UnhealthyResource['kind']): string => {
   }
 };
 
-export const substitutePrompt = (prompt: Prompt, variables: PromptVariables): Prompt => {
+type SubstitutablePrompt = Omit<Prompt, 'message'> & { message?: string };
+
+export const substitutePrompt = (prompt: SubstitutablePrompt, variables: PromptVariables): Prompt => {
   const query = substitutePromptVariables(prompt.query, variables);
   const description = prompt.description
     ? substitutePromptVariables(prompt.description, variables)
