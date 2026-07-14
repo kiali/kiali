@@ -3,19 +3,7 @@ package routing
 import (
 	"context"
 	"fmt"
-	"io"
-	"io/fs"
-	"net/http"
-	hpprof "net/http/pprof"
-	rpprof "runtime/pprof"
-	"strconv"
-	"strings"
-
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog/hlog"
-	zerolog "github.com/rs/zerolog/log"
-
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -32,6 +20,17 @@ import (
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 	utilcontext "github.com/kiali/kiali/util/context"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog/hlog"
+	zerolog "github.com/rs/zerolog/log"
+	"io"
+	"io/fs"
+	"net/http"
+	hpprof "net/http/pprof"
+	rpprof "runtime/pprof"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 // NewRouter creates the router with all API routes and the static files handler
@@ -274,7 +273,8 @@ func NewRouter(
 	}
 
 	for _, route := range allRoutes {
-		handlerFunction := metricHandler(route.HandlerFunc, route)
+		validatedHandler := validateQueryParams(route.Name, route.HandlerFunc)
+		handlerFunction := metricHandler(validatedHandler, route)
 		if route.Authenticated {
 			handlerFunction = authenticationHandler.Handle(handlerFunction)
 		} else {
@@ -359,6 +359,44 @@ func updateMetric(ctx context.Context, route string, srw *statusResponseWriter, 
 	if srw.StatusCode == http.StatusInternalServerError || srw.StatusCode == http.StatusServiceUnavailable {
 		internalmetrics.GetAPIFailureMetric(route).Inc()
 	}
+}
+
+func validateQueryParams(routeName string, next http.Handler) http.Handler {
+	allowed, exists := AllowedQueryParams[routeName]
+	if !exists {
+		return next
+	}
+
+	allowedSet := make(map[string]struct{}, len(allowed))
+	for _, p := range allowed {
+		allowedSet[p] = struct{}{}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var unsupported []string
+		for key := range r.URL.Query() {
+			if _, ok := allowedSet[key]; !ok {
+				unsupported = append(unsupported, key)
+			}
+		}
+
+		if len(unsupported) > 0 {
+			sort.Strings(unsupported)
+			sorted := make([]string, len(allowed))
+			copy(sorted, allowed)
+			sort.Strings(sorted)
+
+			msg := fmt.Sprintf(
+				"unsupported query parameter(s): [%s]. Supported parameters are: [%s]",
+				strings.Join(unsupported, ", "),
+				strings.Join(sorted, ", "),
+			)
+			handlers.RespondWithError(w, http.StatusBadRequest, msg)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func metricHandler(next http.Handler, route Route) http.Handler {

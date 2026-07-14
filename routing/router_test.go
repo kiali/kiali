@@ -1,22 +1,22 @@
 package routing
 
 import (
-	"io"
-	"net/http"
-	"net/http/httptest"
-	rpprof "runtime/pprof"
-	"testing"
-
+	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rs/zerolog/hlog"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	utilcontext "github.com/kiali/kiali/util/context"
 	"github.com/kiali/kiali/util/filetest"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/rs/zerolog/hlog"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	rpprof "runtime/pprof"
+	"testing"
 )
 
 func TestDrawPathProperly(t *testing.T) {
@@ -496,4 +496,150 @@ func generateString(length int) string {
 		result[i] = 'a'
 	}
 	return string(result)
+}
+
+func okHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func TestValidateQueryParams_RouteNotInMapSkipsValidation(t *testing.T) {
+	handler := validateQueryParams("NonExistentRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?anything=1&random=2", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestValidateQueryParams_EmptySliceRejectsAllParams(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?foo=bar", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+
+	var body map[string]interface{}
+	err := json.NewDecoder(rr.Body).Decode(&body)
+	require.NoError(t, err)
+	assert.Contains(t, body["error"].(string), "foo")
+}
+
+func TestValidateQueryParams_EmptySliceAllowsNoParams(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestValidateQueryParams_ValidParamsPassThrough(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {"clusterName", "direction", "filters[]"},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?clusterName=east&direction=inbound&filters[]=a", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestValidateQueryParams_InvalidParamRejected(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {"clusterName"},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?clusterName=east&bogus=1", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+
+	var body map[string]interface{}
+	err := json.NewDecoder(rr.Body).Decode(&body)
+	require.NoError(t, err)
+	assert.Contains(t, body["error"].(string), "bogus")
+	assert.Contains(t, body["error"].(string), "clusterName")
+}
+
+func TestValidateQueryParams_ArrayStyleParams(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {"filters[]", "quantiles[]"},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?filters[]=a&filters[]=b&quantiles[]=0.99", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestValidateQueryParams_MultipleInvalidParams(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {"clusterName"},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?bad1=x&bad2=y&clusterName=east", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+
+	var body map[string]interface{}
+	err := json.NewDecoder(rr.Body).Decode(&body)
+	require.NoError(t, err)
+	errMsg := body["error"].(string)
+	assert.Contains(t, errMsg, "bad1")
+	assert.Contains(t, errMsg, "bad2")
+}
+
+func TestValidateQueryParams_DuplicateValidParams(t *testing.T) {
+	origMap := AllowedQueryParams
+	AllowedQueryParams = map[string][]string{
+		"TestRoute": {"clusterName"},
+	}
+	defer func() { AllowedQueryParams = origMap }()
+
+	handler := validateQueryParams("TestRoute", okHandler())
+
+	req := httptest.NewRequest("GET", "/test?clusterName=a&clusterName=b", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
 }

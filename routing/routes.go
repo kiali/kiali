@@ -1,10 +1,6 @@
 package routing
 
 import (
-	"net/http"
-
-	"golang.org/x/exp/maps"
-
 	ai "github.com/kiali/kiali/ai/types"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -19,6 +15,8 @@ import (
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
+	"golang.org/x/exp/maps"
+	"net/http"
 )
 
 // Route describes a single route
@@ -35,6 +33,182 @@ type Route struct {
 // are defined in ../doc.go.  YOu need to manually associate params and routes.
 type Routes struct {
 	Routes []Route
+}
+
+var baseHealthQueryParams = []string{"rateInterval", "queryTime", "clusterName"}
+
+var baseMetricsQueryParams = []string{
+	"rateInterval", "rateFunc", "queryTime", "duration", "step",
+	"quantiles[]", "avg", "byLabels[]", "clusterName",
+}
+
+var istioMetricsQueryParams = append([]string{
+	"filters[]", "direction", "reporter", "requestProtocol",
+}, baseMetricsQueryParams...)
+
+var tracingQueryParams = []string{
+	"clusterName", "startMicros", "endMicros", "limit", "tags", "minDuration",
+}
+
+var graphQueryParams = []string{
+	"ambientTraffic", "appenders", "boxBy", "clusterName", "configVendor",
+	"duration", "graphType", "includeIdleEdges", "injectServiceNodes",
+	"namespaces", "queryTime", "rateGrpc", "rateHttp", "rateTcp",
+	"refreshInterval", "telemetryVendor",
+}
+
+var meshGraphQueryParams = []string{
+	"appenders", "configVendor", "includeGateways", "includeWaypoints", "queryTime",
+}
+
+var appListQueryParams = []string{
+	"clusterName", "health", "istioResources", "rateInterval", "queryTime", "namespaces",
+}
+
+var appDetailQueryParams = []string{
+	"clusterName", "health", "istioResources", "rateInterval", "queryTime",
+}
+
+var serviceListQueryParams = []string{
+	"clusterName", "health", "istioResources", "onlyDefinitions",
+	"rateInterval", "queryTime", "namespaces",
+}
+
+var workloadListQueryParams = []string{
+	"clusterName", "health", "istioResources", "validate", "gvk",
+	"rateInterval", "queryTime", "namespaces",
+}
+
+var workloadDetailQueryParams = []string{
+	"clusterName", "health", "istioResources", "validate", "gvk",
+	"rateInterval", "queryTime",
+}
+
+var podLogQueryParams = []string{
+	"clusterName", "container", "duration", "logType", "sinceTime", "maxLines",
+	"workload", "service",
+}
+
+var istioConfigListQueryParams = []string{
+	"objects", "validate", "labelSelector", "workloadSelector", "clusterName",
+}
+
+var dashboardQueryParams = append([]string{
+	"labelsFilters", "additionalLabels", "rawDataAggregator", "workload",
+}, baseMetricsQueryParams...)
+
+var clusterHealthQueryParams = []string{
+	"namespaces", "clusterName", "type", "rateInterval",
+}
+
+// AllowedQueryParams maps route names to their allowed query parameters.
+// Routes present with a non-empty slice only allow those params.
+// Routes present with an empty slice allow no query params.
+// Routes absent from the map skip validation entirely.
+var AllowedQueryParams = map[string][]string{
+	// No query params
+	"Healthz":                   {},
+	"Root":                      {},
+	"Authenticate":              {},
+	"OpenshiftCheckToken":       {},
+	"Logout":                    {},
+	"AuthenticationInfo":        {},
+	"Status":                    {},
+	"TestGraphCacheMetrics":     {},
+	"TestHealthCacheMetrics":    {},
+	"TestHealthStatusMetrics":   {},
+	"Diagnose":                  {},
+	"Tracing check":             {},
+	"Config":                    {},
+	"DisabledFeatures":          {},
+	"NamespaceList":             {},
+	"IstioStatus":               {},
+	"MeshControlPlanes":         {},
+	"GrafanaURL":                {},
+	"PersesURL":                 {},
+	"TracingURL":                {},
+	"MetricsStats":              {},
+	"OverviewServiceLatencies":  {},
+	"OverviewServiceRates":      {},
+	"OverviewServiceThroughput": {},
+	"OverviewAppRates":          {},
+	"ChatAI":                    {},
+	"ChatMCP":                   {},
+	"ChatSessionUsage":          {},
+
+	// clusterName only
+	"NamespaceInfo":              {"clusterName"},
+	"NamespaceUpdate":            {"clusterName"},
+	"NamespaceValidationSummary": {"clusterName"},
+	"IstioConfigDelete":          {"clusterName"},
+	"IstioConfigUpdate":          {"clusterName"},
+	"IstioConfigCreate":          {"clusterName"},
+	"PodDetails":                 {"clusterName"},
+	"PodConfigDump":              {"clusterName"},
+	"PodProxyResource":           {"clusterName"},
+	"ZtunnelConfigDump":          {"clusterName"},
+
+	// Simple param lists
+	"IstioConfigPermissions":  {"namespaces", "clusterName"},
+	"ConfigValidationSummary": {"namespaces", "clusterName"},
+	"IstioConfigList":         istioConfigListQueryParams,
+	"IstioConfigListAll":      istioConfigListQueryParams,
+	"IstioConfigDetails":      {"validate", "help", "clusterName"},
+	"ServiceDetails":          {"clusterName", "rateInterval", "validate"},
+	"ServiceUpdate":           {"clusterName", "rateInterval", "patchType", "validate"},
+	"WorkloadUpdate":          {"clusterName", "patchType", "gvk", "validate"},
+	"ErrorTraces":             {"duration", "clusterName"},
+	"TracesDetails":           {"clusterName"},
+	"MeshTls":                 {"clusterName", "revision"},
+	"NamespaceTls":            {"clusterName"},
+	"ClusterTls":              {"namespaces", "clusterName"},
+	"PodProxyLogging":         {"level", "clusterName"},
+	"ChatPrompts":             {"category"},
+	"DeleteConversations":     {"conversationIDs"},
+
+	// Shared param sets
+	"ClustersApps":     appListQueryParams,
+	"AppDetails":       appDetailQueryParams,
+	"ClustersServices": serviceListQueryParams,
+	"ClusterWorkloads": workloadListQueryParams,
+	"WorkloadDetails":  workloadDetailQueryParams,
+	"PodLogs":          podLogQueryParams,
+	"ClustersHealth":   clusterHealthQueryParams,
+
+	// Metrics endpoints
+	"ServiceMetrics":      istioMetricsQueryParams,
+	"AggregateMetrics":    istioMetricsQueryParams,
+	"AppMetrics":          istioMetricsQueryParams,
+	"WorkloadMetrics":     istioMetricsQueryParams,
+	"ControlPlaneMetrics": istioMetricsQueryParams,
+	"UsageMetrics":        istioMetricsQueryParams,
+	"NamespaceMetrics":    istioMetricsQueryParams,
+	"ClustersMetrics":     append([]string{"namespaces"}, istioMetricsQueryParams...),
+
+	// Dashboard endpoints
+	"ServiceDashboard":  istioMetricsQueryParams,
+	"AppDashboard":      istioMetricsQueryParams,
+	"WorkloadDashboard": istioMetricsQueryParams,
+	"ZtunnelDashboard":  istioMetricsQueryParams,
+	"CustomDashboard":   dashboardQueryParams,
+
+	// Tracing endpoints
+	"AppTraces":      tracingQueryParams,
+	"ServiceTraces":  tracingQueryParams,
+	"WorkloadTraces": tracingQueryParams,
+	"AppSpans":       tracingQueryParams,
+	"ServiceSpans":   tracingQueryParams,
+	"WorkloadSpans":  tracingQueryParams,
+
+	// Graph endpoints
+	"GraphNamespaces":         graphQueryParams,
+	"GraphAggregate":          graphQueryParams,
+	"GraphAggregateByService": graphQueryParams,
+	"GraphAppVersion":         graphQueryParams,
+	"GraphApp":                graphQueryParams,
+	"GraphService":            graphQueryParams,
+	"GraphWorkload":           graphQueryParams,
+	"MeshGraph":               meshGraphQueryParams,
 }
 
 // NewRoutes creates and returns all the API routes
