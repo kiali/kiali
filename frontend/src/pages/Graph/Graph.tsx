@@ -81,7 +81,7 @@ export function graphLayout(controller: Controller, layoutType: LayoutType, rese
     return;
   }
   if (initialLayout) {
-    console.debug('TG: Skip graphLayout, initial layout in progress');
+    console.debug('TG: Skip graphLayout, initial layout not yet performed');
     return;
   }
   if (layoutInProgress) {
@@ -290,13 +290,10 @@ const TopologyContent: React.FC<{
   }, [controller]);
 
   const onLayoutEnd = React.useCallback(() => {
-    console.debug(
-      `TG: onLayoutEnd initialLayout=${initialLayout} layoutInProgress=${layoutInProgress} hasGraph=${controller.hasGraph()}`
-    );
+    console.debug(`TG: onLayoutEnd layoutInProgress=${layoutInProgress}`);
 
     // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
     if (!initialLayout && !layoutInProgress) {
-      console.debug('TG: onLayoutEnd ignored (unsolicited layout-end event)');
       return;
     }
 
@@ -323,7 +320,6 @@ const TopologyContent: React.FC<{
 
       isReady = true;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds }, true);
-      console.debug('TG: onLayoutEnd initial layout complete, graph ready');
     }
 
     layoutInProgress = undefined;
@@ -690,7 +686,6 @@ const TopologyContent: React.FC<{
     }
     const frameId = requestAnimationFrame(() => {
       if (controller.hasGraph()) {
-        console.debug(`TG: post-updateModel fit initialLayout=${initialLayout}`);
         controller.getGraph().fit(FIT_PADDING);
       }
     });

@@ -68,7 +68,7 @@ export function layoutMesh(controller: Controller, layoutType: MeshLayoutType, r
     return;
   }
   if (initialLayout) {
-    console.debug('TM: Skip meshLayout, initial layout in progress');
+    console.debug('Skip meshLayout, initial layout not yet performed');
     return;
   }
   if (layoutInProgress) {
@@ -178,13 +178,10 @@ const TopologyContent: React.FC<{
   }, [controller]);
 
   const onLayoutEnd = React.useCallback(() => {
-    console.debug(
-      `TM: onLayoutEnd initialLayout=${initialLayout} layoutInProgress=${layoutInProgress} hasGraph=${controller.hasGraph()}`
-    );
+    console.debug(`onLayoutEnd layoutInProgress=${layoutInProgress}`);
 
     // If a layout was called outside of our standard mechanism, don't perform our layoutEnd actions
     if (!initialLayout && !layoutInProgress) {
-      console.debug('TM: onLayoutEnd ignored (unsolicited layout-end event)');
       return;
     }
 
@@ -205,7 +202,6 @@ const TopologyContent: React.FC<{
     if (initialLayout) {
       initialLayout = false;
       onReady({ getController: () => controller, setSelectedIds: setSelectedIds });
-      console.debug('TM: onLayoutEnd initial layout complete, mesh ready');
     }
 
     layoutInProgress = undefined;
@@ -424,7 +420,7 @@ const TopologyContent: React.FC<{
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
   React.useEffect(() => {
-    console.debug(`TM: meshData changed, elementsChange=${meshData.elementsChanged}`);
+    console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
     if (meshData.elementsChanged) {
       layoutMesh(controller, MeshLayoutType.Layout);
     }
@@ -436,7 +432,6 @@ const TopologyContent: React.FC<{
     }
     const frameId = requestAnimationFrame(() => {
       if (controller.hasGraph()) {
-        console.debug(`TM: post-updateModel fit initialLayout=${initialLayout}`);
         controller.getGraph().fit(FIT_PADDING);
       }
     });
