@@ -9,7 +9,8 @@ import {
   TextArea,
   TextInput,
   Title,
-  TitleSizes
+  TitleSizes,
+  Tooltip
 } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
@@ -80,6 +81,79 @@ const validateSection = (entries: Entry[], sectionName: string): string[] => {
   return errors;
 };
 
+interface EditValuePopoverProps {
+  entryKey: string;
+  id: string;
+  onChange: (value: string) => void;
+  value: string;
+}
+
+const popoverActionsStyle = kialiStyle({
+  display: 'flex',
+  gap: '0.25rem',
+  position: 'absolute',
+  top: 'var(--pf-t--global--spacer--sm)',
+  right: 'var(--pf-t--global--spacer--md)'
+});
+
+const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onChange, value }) => {
+  const [draft, setDraft] = React.useState(value);
+  const [isVisible, setIsVisible] = React.useState(false);
+
+  return (
+    <Popover
+      appendTo={() =>
+        (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
+        document.body
+      }
+      headerContent={entryKey || t('Value')}
+      bodyContent={
+        <>
+          <div className={popoverActionsStyle}>
+            <Tooltip content={t('Save')}>
+              <Button
+                variant="plain"
+                size="sm"
+                icon={<KialiIcon.Check />}
+                onClick={() => {
+                  onChange(draft);
+                  setIsVisible(false);
+                }}
+              />
+            </Tooltip>
+            <Tooltip content={t('Cancel')}>
+              <Button
+                variant="plain"
+                size="sm"
+                icon={<KialiIcon.Close />}
+                onClick={() => {
+                  setDraft(value);
+                  setIsVisible(false);
+                }}
+              />
+            </Tooltip>
+          </div>
+          <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
+        </>
+      }
+      isVisible={isVisible}
+      shouldOpen={() => {
+        setDraft(value);
+        setIsVisible(true);
+      }}
+      shouldClose={() => {
+        setDraft(value);
+        setIsVisible(false);
+      }}
+      minWidth="40rem"
+      position="left"
+      showClose={false}
+    >
+      <Button variant="plain" icon={<KialiIcon.PencilAlt />} size="sm" />
+    </Popover>
+  );
+};
+
 interface SectionProps {
   canEdit: boolean;
   entries: Entry[];
@@ -128,32 +202,19 @@ const AnnotationSection: React.FC<SectionProps> = ({
               <Th width={40}>
                 <TextInput
                   id={`${sectionId}_value_${index}`}
-                  onChange={(_event, v) => onChange(index, [key, v])}
                   placeholder={t('Value')}
+                  readOnlyVariant="plain"
                   type="text"
                   value={value}
                 />
               </Th>
               <Th>
-                <Popover
-                  appendTo={() =>
-                    (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
-                    document.body
-                  }
-                  headerContent={key || t('Value')}
-                  bodyContent={
-                    <TextArea
-                      className={popoverTextAreaStyle}
-                      id={`${sectionId}_popover_value_${index}`}
-                      onChange={(_event, v) => onChange(index, [key, v])}
-                      value={value}
-                    />
-                  }
-                  minWidth="40rem"
-                  position="left"
-                >
-                  <Button variant="plain" icon={<KialiIcon.Expand />} size="sm" />
-                </Popover>
+                <EditValuePopover
+                  entryKey={key}
+                  id={`${sectionId}_popover_value_${index}`}
+                  onChange={v => onChange(index, [key, v])}
+                  value={value}
+                />
                 <Button variant="plain" icon={<KialiIcon.Delete />} onClick={() => onRemove(index)} />
               </Th>
             </Tr>
