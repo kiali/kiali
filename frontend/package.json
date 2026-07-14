@@ -89,7 +89,7 @@
     "eventemitter3": "4.0.7",
     "i18next": "^23.10.1",
     "i18next-http-backend": "^2.5.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.3.0",
     "lodash-es": "^4.18.0",
     "micro-memoize": "4.0.9",
     "moment": "^2.29.4",
@@ -146,7 +146,7 @@
     "enzyme": "3.11.0",
     "enzyme-to-json": "3.4.4",
     "husky": "^8.0.3",
-    "i18next-parser": "^9.0.1",
+    "i18next-parser": "^9.4.0",
     "jest-canvas-mock": "2.2.0",
     "junit-report-merger": "^3.0.5",
     "mocha-junit-reporter": "^2.2.1",
@@ -159,6 +159,7 @@
     "typescript": "^4.9.5"
   },
   "resolutions": {
+    "js-yaml@npm:3.14.0": "npm:3.15.0",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
