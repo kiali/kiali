@@ -1715,7 +1715,7 @@ __metadata:
     eslint-plugin-import-x: "npm:^4.15.2"
     eslint-plugin-jsx-a11y-x: "npm:^0.2.0"
     eslint-plugin-react-hooks: "npm:^5.2.0"
-    eventemitter3: "npm:4.0.7"
+    eventemitter3: "npm:5.0.4"
     gherkin-lint: "npm:^4.2.4"
     globals: "npm:^16.2.0"
     husky: "npm:^9.1.7"
@@ -7288,14 +7288,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter3@npm:4.0.7":
-  version: 4.0.7
-  resolution: "eventemitter3@npm:4.0.7"
-  checksum: 10c0/5f6d97cbcbac47be798e6355e3a7639a84ee1f7d9b199a07017f1d2f1e2fe236004d14fa5dfaeba661f94ea57805385e326236a6debbc7145c8877fbc0297c6b
-  languageName: node
-  linkType: hard
-
-"eventemitter3@npm:^5.0.1":
+"eventemitter3@npm:5.0.4, eventemitter3@npm:^5.0.1":
   version: 5.0.4
   resolution: "eventemitter3@npm:5.0.4"
   checksum: 10c0/575b8cac8d709e1473da46f8f15ef311b57ff7609445a7c71af5cd42598583eee6f098fa7a593e30f27e94b8865642baa0689e8fa97c016f742abdb3b1bf6d9a
