@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { WorkloadListPage } from '../WorkloadListPage';
-import { ClusterWorkloadsResponse } from '../../../types/Workload';
+import type { ClusterWorkloadsResponse } from '../../../types/Workload';
 import { InstanceType } from '../../../types/Common';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';

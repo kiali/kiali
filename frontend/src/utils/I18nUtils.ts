@@ -1,6 +1,7 @@
 import { i18n } from 'i18n';
 import type { TOptions } from 'i18next';
-import { UseTranslationResponse, useTranslation } from 'react-i18next';
+import type { UseTranslationResponse } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 const I18N_NAMESPACE = process.env.I18N_NAMESPACE;
 
@@ -17,7 +18,11 @@ export const useKialiTranslation = (): UseTranslationResponse<string, undefined>
  * @param options (optional) options for traslations
  */
 export const t = (value: string, options?: TOptions): string => {
-  return i18n?.isInitialized ? i18n.t(value, { ns: I18N_NAMESPACE, ...options }) : value;
+  if (!i18n?.isInitialized) {
+    return value;
+  }
+
+  return (i18n.t as (key: string, opts?: TOptions) => string)(value, { ns: I18N_NAMESPACE, ...options });
 };
 
 /**

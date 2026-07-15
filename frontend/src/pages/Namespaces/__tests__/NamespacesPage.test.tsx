@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { NamespacesPageComponent } from '../NamespacesPage';
 import type { NamespaceInfo } from '../../../types/NamespaceInfo';
 import type { IntervalInMilliseconds } from 'types/Common';

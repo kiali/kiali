@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { Outlet } from 'react-router-dom-v5-compat';
+import { Outlet } from 'react-router';
 import { t } from 'utils/I18nUtils';
 import { pathRoutes } from 'routes';
 import { router } from 'app/History';

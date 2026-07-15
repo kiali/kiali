@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { globalStyle } from 'styles/GlobalStyle';
-import { RouterProvider } from 'react-router-dom-v5-compat';
+import { RouterProvider } from 'react-router';
 import { rootBasename, router, setRouter } from 'app/History';
 import { pathRoutes } from 'routes';
 import { App } from 'app/App';

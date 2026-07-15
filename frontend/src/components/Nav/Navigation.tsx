@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { RenderPage } from './RenderPage';
 import { MastheadItems } from './Masthead/Masthead';
 import {
@@ -20,11 +20,11 @@ import {
 
 import { kialiStyle } from 'styles/StyleUtils';
 import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../config';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
-import { Link, useLocation } from 'react-router-dom-v5-compat';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import { Link, useLocation } from 'react-router';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';

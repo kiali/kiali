@@ -1,6 +1,7 @@
-import { ActionType, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
-import { MeshCluster } from '../types/Mesh';
+import type { MeshCluster } from '../types/Mesh';
 
 export const ClusterActions = {
   setActiveClusters: createStandardAction(ActionKeys.SET_ACTIVE_CLUSTERS)<MeshCluster[]>(),

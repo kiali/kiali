@@ -1,4 +1,4 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { LoginActions } from '../LoginActions';
 import { LoginStatus } from '../../store/Store';
 

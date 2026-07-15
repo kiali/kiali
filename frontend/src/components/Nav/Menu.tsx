@@ -1,17 +1,17 @@
 import * as React from 'react';
 import _ from 'lodash';
-import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-compat';
+import { Link, useLocation, useNavigate, matchPath } from 'react-router';
 import { Divider, Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
 import { kialiStyle } from 'styles/StyleUtils';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
 import { t } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { isTempoService } from '../../utils/tracing/UrlProviders/Tempo';
 import { TempoUrlFormat } from '../../types/StatusState';
-import { MenuItem } from '../../types/Routes';
+import type { MenuItem } from '../../types/Routes';
 
 const externalLinkStyle = kialiStyle({
   $nest: {

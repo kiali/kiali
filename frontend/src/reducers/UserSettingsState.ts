@@ -1,8 +1,8 @@
-import { getType } from 'typesafe-actions';
-import { UserSettings } from '../store/Store';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { UserSettings } from '../store/Store';
 import { config } from '../config';
 import { updateState } from '../utils/Reducer';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { UserSettingsActions } from '../actions/UserSettingsActions';
 
 export const INITIAL_USER_SETTINGS_STATE: UserSettings = {
