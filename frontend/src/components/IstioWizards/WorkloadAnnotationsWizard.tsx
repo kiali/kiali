@@ -15,6 +15,7 @@ import {
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -34,16 +35,25 @@ const addMoreStyle = kialiStyle({
   marginLeft: '1rem'
 });
 
-const clearButtonStyle = kialiStyle({
-  marginLeft: '0.5rem'
-});
-
 const alertStyle = kialiStyle({
   marginTop: '1rem'
 });
 
 const sectionStyle = kialiStyle({
   marginBottom: '1.5rem'
+});
+
+const valueCellStyle = kialiStyle({
+  overflow: 'hidden',
+  maxWidth: 0,
+  verticalAlign: 'middle'
+});
+
+const valueDisplayStyle = kialiStyle({
+  display: 'block',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap'
 });
 
 const popoverTextAreaStyle = kialiStyle({
@@ -92,8 +102,8 @@ const popoverActionsStyle = kialiStyle({
   display: 'flex',
   gap: '0.25rem',
   position: 'absolute',
-  top: 'var(--pf-t--global--spacer--sm)',
-  right: 'var(--pf-t--global--spacer--md)'
+  top: PFSpacer.sm,
+  right: PFSpacer.md
 });
 
 const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onChange, value }) => {
@@ -199,14 +209,8 @@ const AnnotationSection: React.FC<SectionProps> = ({
                   value={key}
                 />
               </Th>
-              <Th width={40}>
-                <TextInput
-                  id={`${sectionId}_value_${index}`}
-                  placeholder={t('Value')}
-                  readOnlyVariant="plain"
-                  type="text"
-                  value={value}
-                />
+              <Th width={40} className={valueCellStyle}>
+                <span className={valueDisplayStyle}>{value}</span>
               </Th>
               <Th>
                 <EditValuePopover
@@ -264,14 +268,10 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
     wasOpen.current = isOpen;
   }, [isOpen, controllerAnnotations, templateAnnotations]);
 
-  const handleClear = (): void => {
+  const handleClose = (): void => {
     setControllerEntries(toEntries(controllerAnnotations));
     setTemplateEntries(toEntries(templateAnnotations));
     setValidation([]);
-  };
-
-  const handleClose = (): void => {
-    handleClear();
     onClose();
   };
 
@@ -315,9 +315,6 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
         <>
           <Button variant="primary" onClick={handleSave} data-test="save-button">
             {t('Save')}
-          </Button>
-          <Button variant="secondary" className={clearButtonStyle} onClick={handleClear}>
-            {t('Clear')}
           </Button>
           <Button variant="link" onClick={handleClose}>
             {t('Cancel')}
