@@ -17,7 +17,7 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
           <input
             aria-invalid="false"
             aria-label="Date and time picker"
-            data-ouia-component-id="OUIA-Generated-TextInputBase-1"
+            data-ouia-component-id="OUIA-Generated-TextInputBase-:r1:"
             data-ouia-component-type="PF6/TextInput"
             data-ouia-safe="true"
             data-test="date-time-picker"
@@ -36,7 +36,7 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-1"
+            data-ouia-component-id="OUIA-Generated-Button-control-:r3:"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -50,12 +50,24 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 448 512"
                 width="1em"
               >
-                <path
-                  d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
-                />
+                <svg
+                  class="pf-v6-icon-default"
+                  viewBox="0 0 448 512"
+                >
+                  <path
+                    d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
+                  />
+                </svg>
+                <svg
+                  class="pf-v6-icon-rh-ui"
+                  viewBox="0 0 32 32"
+                >
+                  <path
+                    d="M28.5 5H23V3a1 1 0 1 0-2 0v2H11V3a1 1 0 1 0-2 0v2H3.507c-.827 0-1.5.673-1.5 1.5v7c0 .01.003.019.003.029v8.423c0 .017-.01.031-.01.048 0 .279.115.53.299.712l.004.005 6.99 6.99c.092.092.201.165.323.216l.005.002c.121.05.25.076.38.076h18.5c.827 0 1.5-.673 1.5-1.5V6.5c0-.827-.673-1.5-1.5-1.5ZM9 7v2a1 1 0 1 0 2 0V7h10v2a1 1 0 1 0 2 0V7h5v6H4.01V7H9Zm0 19.586L5.414 23H9v3.586ZM11 28v-5.5c0-.827-.673-1.5-1.5-1.5H4.01v-6H28v13H11Z"
+                  />
+                </svg>
               </svg>
             </span>
           </button>
@@ -68,7 +80,7 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
           aria-expanded="false"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-1"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-:r7:"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
@@ -82,12 +94,24 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
               fill="currentColor"
               height="1em"
               role="img"
-              viewBox="0 0 512 512"
               width="1em"
             >
-              <path
-                d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
-              />
+              <svg
+                class="pf-v6-icon-default"
+                viewBox="0 0 512 512"
+              >
+                <path
+                  d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
+                />
+              </svg>
+              <svg
+                class="pf-v6-icon-rh-ui"
+                viewBox="0 0 32 32"
+              >
+                <path
+                  d="M16 1C7.729 1 1 7.729 1 16s6.729 15 15 15 15-6.729 15-15S24.271 1 16 1Zm1 27.949V26a1 1 0 0 0-2 0v2.949C8.63 28.461 3.539 23.37 3.051 17H6a1 1 0 0 0 0-2H3.051C3.565 8.299 9.169 3 16 3s12.436 5.299 12.949 12H26a1 1 0 0 0 0 2h2.949C28.461 23.37 23.37 28.461 17 28.949Zm3.707-9.656a.999.999 0 1 1-1.414 1.414l-4-4A1 1 0 0 1 15 16V8a1 1 0 0 1 2 0v7.586l3.707 3.707Z"
+                />
+              </svg>
             </svg>
           </span>
           <span
@@ -102,11 +126,11 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 320 512"
+                viewBox="0 0 20 20"
                 width="1em"
               >
                 <path
-                  d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                  d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                 />
               </svg>
             </span>
@@ -135,7 +159,7 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
           <input
             aria-invalid="false"
             aria-label="Date and time picker"
-            data-ouia-component-id="OUIA-Generated-TextInputBase-2"
+            data-ouia-component-id="OUIA-Generated-TextInputBase-:r9:"
             data-ouia-component-type="PF6/TextInput"
             data-ouia-safe="true"
             data-test="date-time-picker"
@@ -154,7 +178,7 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-2"
+            data-ouia-component-id="OUIA-Generated-Button-control-:rb:"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -168,12 +192,24 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 448 512"
                 width="1em"
               >
-                <path
-                  d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
-                />
+                <svg
+                  class="pf-v6-icon-default"
+                  viewBox="0 0 448 512"
+                >
+                  <path
+                    d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
+                  />
+                </svg>
+                <svg
+                  class="pf-v6-icon-rh-ui"
+                  viewBox="0 0 32 32"
+                >
+                  <path
+                    d="M28.5 5H23V3a1 1 0 1 0-2 0v2H11V3a1 1 0 1 0-2 0v2H3.507c-.827 0-1.5.673-1.5 1.5v7c0 .01.003.019.003.029v8.423c0 .017-.01.031-.01.048 0 .279.115.53.299.712l.004.005 6.99 6.99c.092.092.201.165.323.216l.005.002c.121.05.25.076.38.076h18.5c.827 0 1.5-.673 1.5-1.5V6.5c0-.827-.673-1.5-1.5-1.5ZM9 7v2a1 1 0 1 0 2 0V7h10v2a1 1 0 1 0 2 0V7h5v6H4.01V7H9Zm0 19.586L5.414 23H9v3.586ZM11 28v-5.5c0-.827-.673-1.5-1.5-1.5H4.01v-6H28v13H11Z"
+                  />
+                </svg>
               </svg>
             </span>
           </button>
@@ -186,7 +222,7 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
           aria-expanded="false"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-2"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-:rf:"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
@@ -200,12 +236,24 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
               fill="currentColor"
               height="1em"
               role="img"
-              viewBox="0 0 512 512"
               width="1em"
             >
-              <path
-                d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
-              />
+              <svg
+                class="pf-v6-icon-default"
+                viewBox="0 0 512 512"
+              >
+                <path
+                  d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
+                />
+              </svg>
+              <svg
+                class="pf-v6-icon-rh-ui"
+                viewBox="0 0 32 32"
+              >
+                <path
+                  d="M16 1C7.729 1 1 7.729 1 16s6.729 15 15 15 15-6.729 15-15S24.271 1 16 1Zm1 27.949V26a1 1 0 0 0-2 0v2.949C8.63 28.461 3.539 23.37 3.051 17H6a1 1 0 0 0 0-2H3.051C3.565 8.299 9.169 3 16 3s12.436 5.299 12.949 12H26a1 1 0 0 0 0 2h2.949C28.461 23.37 23.37 28.461 17 28.949Zm3.707-9.656a.999.999 0 1 1-1.414 1.414l-4-4A1 1 0 0 1 15 16V8a1 1 0 0 1 2 0v7.586l3.707 3.707Z"
+                />
+              </svg>
             </svg>
           </span>
           <span
@@ -220,11 +268,11 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 320 512"
+                viewBox="0 0 20 20"
                 width="1em"
               >
                 <path
-                  d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                  d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                 />
               </svg>
             </span>
@@ -253,7 +301,7 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
           <input
             aria-invalid="false"
             aria-label="Date and time picker"
-            data-ouia-component-id="OUIA-Generated-TextInputBase-6"
+            data-ouia-component-id="OUIA-Generated-TextInputBase-:r19:"
             data-ouia-component-type="PF6/TextInput"
             data-ouia-safe="true"
             data-test="date-time-picker"
@@ -272,7 +320,7 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-6"
+            data-ouia-component-id="OUIA-Generated-Button-control-:r1b:"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -286,12 +334,24 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 448 512"
                 width="1em"
               >
-                <path
-                  d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
-                />
+                <svg
+                  class="pf-v6-icon-default"
+                  viewBox="0 0 448 512"
+                >
+                  <path
+                    d="M148 288h-40c-6.6 0-12-5.4-12-12v-40c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v40c0 6.6-5.4 12-12 12zm108-12v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 96v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm-96 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm192 0v-40c0-6.6-5.4-12-12-12h-40c-6.6 0-12 5.4-12 12v40c0 6.6 5.4 12 12 12h40c6.6 0 12-5.4 12-12zm96-260v352c0 26.5-21.5 48-48 48H48c-26.5 0-48-21.5-48-48V112c0-26.5 21.5-48 48-48h48V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h128V12c0-6.6 5.4-12 12-12h40c6.6 0 12 5.4 12 12v52h48c26.5 0 48 21.5 48 48zm-48 346V160H48v298c0 3.3 2.7 6 6 6h340c3.3 0 6-2.7 6-6z"
+                  />
+                </svg>
+                <svg
+                  class="pf-v6-icon-rh-ui"
+                  viewBox="0 0 32 32"
+                >
+                  <path
+                    d="M28.5 5H23V3a1 1 0 1 0-2 0v2H11V3a1 1 0 1 0-2 0v2H3.507c-.827 0-1.5.673-1.5 1.5v7c0 .01.003.019.003.029v8.423c0 .017-.01.031-.01.048 0 .279.115.53.299.712l.004.005 6.99 6.99c.092.092.201.165.323.216l.005.002c.121.05.25.076.38.076h18.5c.827 0 1.5-.673 1.5-1.5V6.5c0-.827-.673-1.5-1.5-1.5ZM9 7v2a1 1 0 1 0 2 0V7h10v2a1 1 0 1 0 2 0V7h5v6H4.01V7H9Zm0 19.586L5.414 23H9v3.586ZM11 28v-5.5c0-.827-.673-1.5-1.5-1.5H4.01v-6H28v13H11Z"
+                  />
+                </svg>
               </svg>
             </span>
           </button>
@@ -304,7 +364,7 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
           aria-expanded="false"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-6"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-:r1f:"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
@@ -318,12 +378,24 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
               fill="currentColor"
               height="1em"
               role="img"
-              viewBox="0 0 512 512"
               width="1em"
             >
-              <path
-                d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
-              />
+              <svg
+                class="pf-v6-icon-default"
+                viewBox="0 0 512 512"
+              >
+                <path
+                  d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm61.8-104.4l-84.9-61.7c-3.1-2.3-4.9-5.9-4.9-9.7V116c0-6.6 5.4-12 12-12h32c6.6 0 12 5.4 12 12v141.7l66.8 48.6c5.4 3.9 6.5 11.4 2.6 16.8L334.6 349c-3.9 5.3-11.4 6.5-16.8 2.6z"
+                />
+              </svg>
+              <svg
+                class="pf-v6-icon-rh-ui"
+                viewBox="0 0 32 32"
+              >
+                <path
+                  d="M16 1C7.729 1 1 7.729 1 16s6.729 15 15 15 15-6.729 15-15S24.271 1 16 1Zm1 27.949V26a1 1 0 0 0-2 0v2.949C8.63 28.461 3.539 23.37 3.051 17H6a1 1 0 0 0 0-2H3.051C3.565 8.299 9.169 3 16 3s12.436 5.299 12.949 12H26a1 1 0 0 0 0 2h2.949C28.461 23.37 23.37 28.461 17 28.949Zm3.707-9.656a.999.999 0 1 1-1.414 1.414l-4-4A1 1 0 0 1 15 16V8a1 1 0 0 1 2 0v7.586l3.707 3.707Z"
+                />
+              </svg>
             </svg>
           </span>
           <span
@@ -338,11 +410,11 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
                 fill="currentColor"
                 height="1em"
                 role="img"
-                viewBox="0 0 320 512"
+                viewBox="0 0 20 20"
                 width="1em"
               >
                 <path
-                  d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                  d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                 />
               </svg>
             </span>

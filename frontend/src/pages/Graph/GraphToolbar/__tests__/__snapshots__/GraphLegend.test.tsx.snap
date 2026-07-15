@@ -17,7 +17,7 @@ exports[`GraphLegend test > should render correctly 1`] = `
       >
         <button
           class="pf-v6-c-button pf-m-plain"
-          data-ouia-component-id="OUIA-Generated-Button-plain-1"
+          data-ouia-component-id="OUIA-Generated-Button-plain-:r1:"
           data-ouia-component-type="PF6/Button"
           data-ouia-safe="true"
           id="legend_close"
