@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
-import { Namespace } from '../../types/Namespace';
-import { KialiAppState } from '../../store/Store';
+import type { ComponentStatus } from '../../types/IstioStatus';
+import { Status, statusSeverity } from '../../types/IstioStatus';
+import type { Namespace } from '../../types/Namespace';
+import type { KialiAppState } from '../../store/Store';
 import { namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import {
@@ -20,13 +21,14 @@ import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router';
 import { KialiLink } from '../Link/KialiLink';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { useClusterStatus, ClusterStatusMap } from '../../hooks/clusters';
+import type { ClusterStatusMap } from '../../hooks/clusters';
+import { useClusterStatus } from '../../hooks/clusters';
 
 export type { ClusterStatusMap };
 

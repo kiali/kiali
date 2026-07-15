@@ -1,5 +1,6 @@
-import { ActionType, createAction } from 'typesafe-actions';
-import { StatusState } from '../types/StatusState';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction } from 'types/typesafeActionsLegacy';
+import type { StatusState } from '../types/StatusState';
 import { ActionKeys } from './ActionKeys';
 
 export const HelpDropdownActions = {

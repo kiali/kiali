@@ -21,7 +21,7 @@ rstest.mock('services/Api', () => ({
   getChatPrompts: rstest.fn()
 }));
 
-rstest.mock('react-router-dom-v5-compat', () => ({
+rstest.mock('react-router', () => ({
   useLocation: () => ({ pathname: '/overview' })
 }));
 

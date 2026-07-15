@@ -627,7 +627,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     );
   }
 
-  /* eslint-disable-next-line @typescript-eslint/member-ordering -- render follows existing private helper layout */
+  // eslint-disable-next-line @typescript-eslint/member-ordering -- legacy class component layout
   render(): React.ReactNode {
     const workload = this.props.workload;
     const pods = workload?.pods ?? [];

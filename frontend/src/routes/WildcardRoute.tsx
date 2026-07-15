@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from 'react-router-dom-v5-compat';
+import { Navigate, useSearchParams } from 'react-router';
 
 import { addDanger } from '../utils/AlertUtils';
 

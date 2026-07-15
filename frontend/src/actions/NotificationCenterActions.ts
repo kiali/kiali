@@ -1,10 +1,11 @@
-import { ActionType, createAction } from 'typesafe-actions';
-import { MessageType } from '../types/NotificationCenter';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction } from 'types/typesafeActionsLegacy';
+import type { MessageType } from '../types/NotificationCenter';
 import { ActionKeys } from './ActionKeys';
 
 type numberOrNumberArray = number | number[];
 
-const toNumberArray = (n: numberOrNumberArray) => (Array.isArray(n) ? n : [n]);
+const toNumberArray = (n: numberOrNumberArray): number[] => (Array.isArray(n) ? n : [n]);
 
 export const NotificationCenterActions = {
   addMessage: createAction(

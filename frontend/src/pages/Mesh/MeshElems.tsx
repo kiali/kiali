@@ -1,25 +1,26 @@
-import * as React from 'react';
-import {
+import type * as React from 'react';
+import type {
   BadgeLocation,
   EdgeModel,
-  EdgeTerminalType,
   GraphElement,
   LabelPosition,
   Node,
-  NodeModel,
-  NodeShape,
-  NodeStatus
+  NodeModel
 } from '@patternfly/react-topology';
-import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
+import { EdgeTerminalType, NodeShape, NodeStatus } from '@patternfly/react-topology';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadges } from 'components/Pf/PfBadges';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
+import type { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData } from 'types/Mesh';
+import { MeshInfraType } from 'types/Mesh';
 import { BoxByType } from 'types/Graph';
-import { NamespaceInfo } from 'types/NamespaceInfo';
+import type { NamespaceInfo } from 'types/NamespaceInfo';
 
 // Utilities for working with PF Topology
 
 export type NodeMap = Map<string, NodeModel>;
 
+/* eslint-disable @typescript-eslint/member-ordering -- Kiali PFT node.data extensions mixed with upstream fields */
 export type NodeData = DecoratedMeshNodeData & {
   // These are node.data fields that have an impact on the PFT rendering of the node.
   // TODO: Is there an actual type defined for these in PFT?
@@ -42,21 +43,21 @@ export type NodeData = DecoratedMeshNodeData & {
   onCollapseChange?: (group: Node, collapsed: boolean) => void;
   secondaryLabel?: string;
   setLocation?: boolean;
-  showContextMenu?: boolean;
-  showStatusDecorator?: boolean;
-  statusDecoratorTooltip?: React.ReactNode;
-  truncateLength?: number;
-  x?: number;
-  y?: number;
   // These are additions we've made for our own styling
-  // eslint-disable-next-line @typescript-eslint/member-ordering
   isFind?: boolean;
   isFocus?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
+  showContextMenu?: boolean;
+  showStatusDecorator?: boolean;
+  statusDecoratorTooltip?: React.ReactNode;
+  truncateLength?: number;
+  x?: number;
+  y?: number;
 };
+/* eslint-enable @typescript-eslint/member-ordering */
 
 export type EdgeData = DecoratedMeshEdgeData & {
   endTerminalStatus: NodeStatus;

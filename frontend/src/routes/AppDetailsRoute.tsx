@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
-import { AppId } from 'types/App';
+import { useParams } from 'react-router';
+import type { AppId } from 'types/App';
 import { AppDetailsPage } from 'pages/AppDetails/AppDetailsPage';
 
 /**

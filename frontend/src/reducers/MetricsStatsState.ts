@@ -1,7 +1,7 @@
 import { updateState } from '../utils/Reducer';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
-import { MetricsStats } from 'types/Metrics';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { MetricsStats } from 'types/Metrics';
 import { MetricsStatsActions } from 'actions/MetricsStatsActions';
 
 export type MetricsStatsState = {

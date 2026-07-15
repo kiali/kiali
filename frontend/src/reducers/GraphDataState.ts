@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { GraphActions } from '../actions/GraphActions';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { GraphState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import type { GraphState } from '../store/Store';
 import { EdgeMode, GraphLayout, GraphType, TrafficRate } from '../types/Graph';
 import { GraphToolbarActions } from '../actions/GraphToolbarActions';
 import { updateState } from '../utils/Reducer';

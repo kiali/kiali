@@ -1,6 +1,6 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import { createStandardAction } from 'typesafe-actions';
-import type { ActionType } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
 import type { ChatAIConfig, ChatEntry, ChatInteractionMode, ChatResourceHealth, Tool } from 'types/Chatbot';
 import type { ChatbotDisplayMode } from '@patternfly/chatbot';

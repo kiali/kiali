@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
+import type { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
 // Mock heavy ESM dependencies that Jest cannot transform
 rstest.mock('d3-format', () => ({
@@ -21,8 +21,8 @@ let lastChartEvents: any[] = [];
 
 rstest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const MockChart = (props: any) => {
+
+  const MockChart = (props: any): React.ReactElement => {
     // Capture events so click-handler tests can invoke them directly
     const { events, ...rest } = props;
     lastChartEvents = events || [];

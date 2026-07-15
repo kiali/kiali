@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { ServicesListState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { ServicesListState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { ServicesListActions } from '../actions/ServicesListActions';
 
 export const INITIAL_SERVICES_LIST_STATE: ServicesListState = {

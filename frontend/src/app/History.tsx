@@ -1,6 +1,7 @@
 import { toValidDuration } from '../config/ServerConfig';
-import { BoundsInMilliseconds } from 'types/Common';
-import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
+import type { BoundsInMilliseconds } from 'types/Common';
+import type { RouteObject } from 'react-router';
+import { createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router';
 
 export const createRouter = (routes: RouteObject[], basename?: string): any => {
   const baseName = basename ?? rootBasename;
