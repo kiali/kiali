@@ -33,8 +33,8 @@ rstest.mock('../hooks/useLocationContext', () => ({
   useLocationContext: () => [undefined, undefined, undefined, undefined]
 }));
 
-rstest.mock('../hooks/useResourceHealth', () => ({
-  useResourceHealth: () => undefined
+rstest.mock('../hooks/useChatResourceHealth', () => ({
+  useChatResourceHealth: () => undefined
 }));
 
 rstest.mock('../EntryChat/ToolModal', () => ({

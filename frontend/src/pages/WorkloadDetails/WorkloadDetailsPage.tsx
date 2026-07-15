@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
+import type { DispatchProp } from 'react-redux';
 import {
   EmptyState,
   EmptyStateBody,
@@ -10,7 +11,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
+import type { Workload, WorkloadId, WorkloadQuery } from '../../types/Workload';
 import { WorkloadInfo } from './WorkloadInfo';
 import { addError } from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
@@ -18,12 +19,12 @@ import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
 import { getAppLabelName, getVersionLabelName, isPrometheusAvailable, serverConfig } from '../../config/ServerConfig';
 import { WorkloadPodLogs } from './WorkloadPodLogs';
-import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
-import { KialiAppState } from '../../store/Store';
+import type { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
+import type { KialiAppState } from '../../store/Store';
 import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import { TracesComponent } from 'components/TracingIntegration/TracesComponent';
-import { TracingInfo } from 'types/TracingInfo';
+import type { TracingInfo } from 'types/TracingInfo';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
@@ -31,7 +32,7 @@ import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
 import { WorkloadHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
-import { ErrorMsg } from '../../types/ErrorMsg';
+import type { ErrorMsg } from '../../types/ErrorMsg';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
@@ -40,6 +41,7 @@ import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -90,6 +92,10 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     this.fetchWorkload();
   }
 
+  componentWillUnmount(): void {
+    clearChatResourceHealth(this.props.dispatch);
+  }
+
   componentDidUpdate(prevProps: WorkloadDetailsPageProps): void {
     // when linking from one cluster's workload to another cluster's workload, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() ?? this.state.cluster;
@@ -122,6 +128,71 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     //HistoryManager.setParam(URLParam.CLUSTER, this.state.cluster);
   }
 
+  render(): React.ReactNode {
+    // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
+    let useCustomTime = true;
+
+    switch (this.state.currentTab) {
+      case 'info':
+      case 'traffic':
+        useCustomTime = false;
+        break;
+      case 'in_metrics':
+      case 'out_metrics':
+      case 'logs':
+      case 'traces':
+        useCustomTime = true;
+        break;
+    }
+
+    const actionsToolbar =
+      this.state.currentTab === 'info' && this.state.workload ? (
+        <WorkloadWizardDropdown
+          namespace={this.props.workloadId.namespace}
+          workload={this.state.workload}
+          onChange={this.fetchWorkload}
+        />
+      ) : undefined;
+
+    return (
+      <>
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.workload && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.state.workload.name}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
+
+        {this.state.error && <ErrorSection error={this.state.error} />}
+
+        {this.state.workload && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+        )}
+      </>
+    );
+  }
+
   private fetchWorkload = async (cluster?: string): Promise<void> => {
     if (!cluster) {
       cluster = this.state.cluster;
@@ -139,21 +210,30 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           this.setState({ waypointServiceFilter: details.data.services[0].name });
         }
 
+        const health = WorkloadHealth.fromJson(
+          this.props.workloadId.namespace,
+          this.props.workloadId.workload,
+          details.data.health,
+          {
+            rateInterval: this.props.duration,
+            hasSidecar: details.data.istioSidecar,
+            hasAmbient: details.data.isAmbient
+          }
+        );
+        publishChatResourceHealth(this.props.dispatch, {
+          clusterName: cluster,
+          health,
+          namespace: this.props.workloadId.namespace,
+          resourceKind: 'workload',
+          resourceName: this.props.workloadId.workload
+        });
         this.setState({
           workload: details.data,
-          health: WorkloadHealth.fromJson(
-            this.props.workloadId.namespace,
-            this.props.workloadId.workload,
-            details.data.health,
-            {
-              rateInterval: this.props.duration,
-              hasSidecar: details.data.istioSidecar,
-              hasAmbient: details.data.isAmbient
-            }
-          )
+          health
         });
       })
       .catch(error => {
+        clearChatResourceHealth(this.props.dispatch);
         addError('Could not fetch Workload.', error);
 
         const msg: ErrorMsg = {
@@ -386,71 +466,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
   private renderTabs(): React.ReactNode[] {
     // PF4 Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
-  }
-
-  render(): React.ReactNode {
-    // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
-    let useCustomTime = true;
-
-    switch (this.state.currentTab) {
-      case 'info':
-      case 'traffic':
-        useCustomTime = false;
-        break;
-      case 'in_metrics':
-      case 'out_metrics':
-      case 'logs':
-      case 'traces':
-        useCustomTime = true;
-        break;
-    }
-
-    const actionsToolbar =
-      this.state.currentTab === 'info' && this.state.workload ? (
-        <WorkloadWizardDropdown
-          namespace={this.props.workloadId.namespace}
-          workload={this.state.workload}
-          onChange={this.fetchWorkload}
-        />
-      ) : undefined;
-
-    return (
-      <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
-          {this.state.workload && (
-            <div className={detailTitleRowStyle}>
-              <div className={detailTitleMainStyle}>
-                <PFBadge badge={PFBadges.Workload} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
-                  {this.state.workload.name}
-                </Title>
-              </div>
-            </div>
-          )}
-        </RenderHeader>
-
-        {this.state.error && <ErrorSection error={this.state.error} />}
-
-        {this.state.workload && (
-          <ParameterizedTabs
-            id="basic-tabs"
-            className={basicTabStyle}
-            actionsToolbar={actionsToolbar}
-            onSelect={tabValue => {
-              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
-            }}
-            tabMap={paramToTab}
-            tabName={tabName}
-            defaultTab={defaultTab}
-            activeTab={this.state.currentTab}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            {this.renderTabs()}
-          </ParameterizedTabs>
-        )}
-      </>
-    );
   }
 }
 

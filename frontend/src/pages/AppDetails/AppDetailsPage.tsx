@@ -1,25 +1,26 @@
 import * as React from 'react';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
+import type { DispatchProp } from 'react-redux';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import * as API from '../../services/Api';
-import { App, AppId, AppQuery } from '../../types/App';
+import type { App, AppId, AppQuery } from '../../types/App';
 import { AppInfo } from './AppInfo';
 import { addError } from '../../utils/AlertUtils';
 import { IstioMetrics } from '../../components/Metrics/IstioMetrics';
 import { MetricsObjectTypes } from '../../types/Metrics';
 import { CustomMetrics } from '../../components/Metrics/CustomMetrics';
-import { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
-import { KialiAppState } from '../../store/Store';
+import type { DurationInSeconds, TimeInMilliseconds, TimeRange } from '../../types/Common';
+import type { KialiAppState } from '../../store/Store';
 import { durationSelector, timeRangeSelector } from '../../store/Selectors';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
-import { TracingInfo } from '../../types/TracingInfo';
+import type { TracingInfo } from '../../types/TracingInfo';
 import { TracesComponent } from '../../components/TracingIntegration/TracesComponent';
 import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { AppHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
-import { ErrorMsg } from '../../types/ErrorMsg';
+import type { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
@@ -29,6 +30,7 @@ import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
+import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 
 type AppDetailsState = {
   app?: App;
@@ -76,6 +78,10 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     this.fetchApp();
   }
 
+  componentWillUnmount(): void {
+    clearChatResourceHealth(this.props.dispatch);
+  }
+
   componentDidUpdate(prevProps: AppDetailsProps): void {
     // when linking from one cluster's app to another cluster's app, cluster in state should be changed
     const cluster = HistoryManager.getClusterName() || this.state.cluster;
@@ -98,6 +104,58 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     }
   }
 
+  render(): React.ReactNode {
+    // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
+    let useCustomTime = true;
+    switch (this.state.currentTab) {
+      case 'info':
+      case 'traffic':
+        useCustomTime = false;
+        break;
+      case 'in_metrics':
+      case 'out_metrics':
+      case 'traces':
+        useCustomTime = true;
+        break;
+    }
+    return (
+      <>
+        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
+          {this.state.app && (
+            <div className={detailTitleRowStyle}>
+              <div className={detailTitleMainStyle}>
+                <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.props.appId.app}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
+
+        {this.state.error && <ErrorSection error={this.state.error} />}
+
+        {this.state.app && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            className={basicTabStyle}
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
+            }}
+            tabMap={paramToTab}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            {this.renderTabs()}
+          </ParameterizedTabs>
+        )}
+      </>
+    );
+  }
+
   private fetchApp = async (cluster?: string): Promise<void> => {
     if (!cluster) {
       cluster = this.state.cluster;
@@ -106,17 +164,26 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const params: AppQuery = { rateInterval: `${String(this.props.duration)}s`, health: 'true' };
     return API.getApp(this.props.appId.namespace, this.props.appId.app, params, cluster)
       .then(details => {
+        const health = AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
+          rateInterval: this.props.duration,
+          hasSidecar: details.data.workloads.some(w => w.istioSidecar),
+          hasAmbient: details.data.workloads.some(w => w.isAmbient)
+        });
+        publishChatResourceHealth(this.props.dispatch, {
+          clusterName: cluster,
+          health,
+          namespace: this.props.appId.namespace,
+          resourceKind: 'application',
+          resourceName: this.props.appId.app
+        });
         this.setState({
           app: details.data,
-          health: AppHealth.fromJson(this.props.appId.namespace, this.props.appId.app, details.data.health, {
-            rateInterval: this.props.duration,
-            hasSidecar: details.data.workloads.some(w => w.istioSidecar),
-            hasAmbient: details.data.workloads.some(w => w.isAmbient)
-          }),
+          health,
           isSupported: details.data.workloads.some(w => isGVKSupported(w.gvk))
         });
       })
       .catch(error => {
+        clearChatResourceHealth(this.props.dispatch);
         addError('Could not fetch App Details.', error);
         const msg: ErrorMsg = {
           title: 'No App is selected',
@@ -273,58 +340,6 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
   private renderTabs(): React.ReactNode[] {
     // PF Tabs doesn't support static tabs followed of an array of tabs created dynamically.
     return this.staticTabs().concat(this.runtimeTabs());
-  }
-
-  render(): React.ReactNode {
-    // set default to true: all dynamic tabs (unlisted below) are for runtimes dashboards, which uses custom time
-    let useCustomTime = true;
-    switch (this.state.currentTab) {
-      case 'info':
-      case 'traffic':
-        useCustomTime = false;
-        break;
-      case 'in_metrics':
-      case 'out_metrics':
-      case 'traces':
-        useCustomTime = true;
-        break;
-    }
-    return (
-      <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={useCustomTime} />}>
-          {this.state.app && (
-            <div className={detailTitleRowStyle}>
-              <div className={detailTitleMainStyle}>
-                <PFBadge badge={PFBadges.App} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
-                  {this.props.appId.app}
-                </Title>
-              </div>
-            </div>
-          )}
-        </RenderHeader>
-
-        {this.state.error && <ErrorSection error={this.state.error} />}
-
-        {this.state.app && (
-          <ParameterizedTabs
-            id="basic-tabs"
-            className={basicTabStyle}
-            onSelect={tabValue => {
-              this.setState({ currentTab: tabValue, cluster: this.state.cluster });
-            }}
-            tabMap={paramToTab}
-            tabName={tabName}
-            defaultTab={defaultTab}
-            activeTab={this.state.currentTab}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            {this.renderTabs()}
-          </ParameterizedTabs>
-        )}
-      </>
-    );
   }
 }
 

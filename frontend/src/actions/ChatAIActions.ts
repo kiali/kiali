@@ -1,8 +1,9 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import { ActionType, createStandardAction } from 'typesafe-actions';
+import { createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'typesafe-actions';
 import { ActionKeys } from './ActionKeys';
-import { ChatAIConfig, ChatEntry, ChatInteractionMode, Tool } from 'types/Chatbot';
-import { ChatbotDisplayMode } from '@patternfly/chatbot';
+import type { ChatAIConfig, ChatEntry, ChatInteractionMode, ChatResourceHealth, Tool } from 'types/Chatbot';
+import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 export const setChatAI = createStandardAction(ActionKeys.CHAT_AI_SET_CHAT_AI)<ChatAIConfig>();
 export const setConversationID = createStandardAction(ActionKeys.CHAT_AI_SET_CONVERSATION_ID)<{
@@ -38,6 +39,8 @@ export const setAlwaysNavigate = createStandardAction(ActionKeys.CHAT_AI_SET_ALW
 export const setInteractionMode = createStandardAction(ActionKeys.CHAT_AI_SET_INTERACTION_MODE)<{
   interactionMode: ChatInteractionMode;
 }>();
+export const setResourceHealth = createStandardAction(ActionKeys.CHAT_AI_SET_RESOURCE_HEALTH)<ChatResourceHealth>();
+export const clearResourceHealth = createStandardAction(ActionKeys.CHAT_AI_CLEAR_RESOURCE_HEALTH)();
 
 export const ChatAIActions = {
   setChatAI,
@@ -53,7 +56,9 @@ export const ChatAIActions = {
   setSelectedModel,
   setOpenTool,
   clearOpenTool,
-  setDisplayMode
+  setDisplayMode,
+  setResourceHealth,
+  clearResourceHealth
 };
 
 export type ChatAIAction = ActionType<typeof ChatAIActions>;

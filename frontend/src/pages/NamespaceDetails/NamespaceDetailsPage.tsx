@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { connect, DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
+import type { DispatchProp } from 'react-redux';
 import { Tab, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { durationSelector, meshWideMTLSStatusSelector, refreshIntervalSelector } from 'store/Selectors';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
-import { NamespaceInfo } from 'types/NamespaceInfo';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import type { NamespaceInfo } from 'types/NamespaceInfo';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import * as API from 'services/Api';
 import { addError, addSuccess } from 'utils/AlertUtils';
@@ -12,24 +13,26 @@ import { buildMetadataPatch } from '../PageUtils';
 import { ParameterizedTabs, activeTab } from 'components/Tab/Tabs';
 import { RenderHeader } from 'components/Nav/Page/RenderHeader';
 import { ErrorSection } from 'components/ErrorSection/ErrorSection';
-import { ErrorMsg } from 'types/ErrorMsg';
+import type { ErrorMsg } from 'types/ErrorMsg';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
 import { HistoryManager } from 'app/History';
 import { basicTabStyle } from 'styles/TabStyles';
-import { Namespace } from 'types/Namespace';
-import { MTLSStatuses, TLSStatus } from 'types/TLSStatus';
-import { ValidationStatus } from 'types/IstioObjects';
-import { IstioConfigList } from 'types/IstioConfigList';
+import type { Namespace } from 'types/Namespace';
+import { MTLSStatuses } from 'types/TLSStatus';
+import type { TLSStatus } from 'types/TLSStatus';
+import type { ValidationStatus } from 'types/IstioObjects';
+import type { IstioConfigList } from 'types/IstioConfigList';
 import { fetchClusterNamespacesHealth } from 'services/NamespaceHealth';
 import { NamespaceDetailsOverview } from './NamespaceDetailsOverview';
 import { NamespaceActions } from 'pages/Namespaces/NamespaceActions';
 import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { buildNamespaceRowActions } from './namespaceDetailActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
-import { ControlPlane } from 'types/Mesh';
-import { GrafanaInfo, ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
-import { ExternalLink } from 'types/Dashboards';
-import { PersesInfo } from 'types/PersesInfo';
+import type { ControlPlane } from 'types/Mesh';
+import { ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
+import type { GrafanaInfo } from 'types/GrafanaInfo';
+import type { ExternalLink } from 'types/Dashboards';
+import type { PersesInfo } from 'types/PersesInfo';
 import { MessageType } from 'types/NotificationCenter';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
@@ -38,6 +41,8 @@ import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
+import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import type { HealthStatusId } from 'types/Health';
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -76,11 +81,11 @@ const tabIndex: { [tab: string]: number } = {
 };
 
 export class NamespaceDetailsPageComponent extends React.Component<NamespaceDetailsPageProps, State> {
-  private promises = new PromisesRegistry();
-  private _isMounted = false;
-
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
   static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
+
+  private promises = new PromisesRegistry();
+  private _isMounted = false;
 
   constructor(props: NamespaceDetailsPageProps) {
     super(props);
@@ -131,7 +136,88 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
   componentWillUnmount(): void {
     this._isMounted = false;
+    clearChatResourceHealth(this.props.dispatch);
     this.promises.cancelAll();
+  }
+
+  render(): React.ReactNode {
+    const ns = this.state.nsInfo;
+    const healthListDuration = healthComputeDurationValidSeconds();
+
+    const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
+    const hasActions = namespaceActions.some(a => !a.isSeparator);
+
+    const actionsToolbar = hasActions ? (
+      <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
+    ) : undefined;
+
+    return (
+      <>
+        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
+          {!this.state.error && ns && (
+            <div className={detailTitleRowStyle} data-test="namespace-detail-title-row">
+              <div className={detailTitleMainStyle}>
+                <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
+                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
+                  {this.props.namespace}
+                </Title>
+              </div>
+            </div>
+          )}
+        </RenderHeader>
+
+        {this.state.error && <ErrorSection error={this.state.error} />}
+
+        {!this.state.error && ns && (
+          <ParameterizedTabs
+            id="basic-tabs"
+            className={basicTabStyle}
+            actionsToolbar={actionsToolbar}
+            onSelect={tabValue => {
+              this.setState({ currentTab: tabValue });
+            }}
+            tabMap={tabIndex}
+            tabName={tabName}
+            defaultTab={defaultTab}
+            activeTab={this.state.currentTab}
+            mountOnEnter={true}
+            unmountOnExit={true}
+          >
+            <Tab eventKey={0} title={t('Overview')} key="Overview">
+              <NamespaceDetailsOverview
+                canEdit={!serverConfig.deployment.viewOnlyMode}
+                duration={this.props.duration}
+                namespace={this.props.namespace}
+                namespaceActions={namespaceActions}
+                nsInfo={ns}
+                onSaveAnnotations={this.handleSaveAnnotations}
+                onSaveLabels={this.handleSaveLabels}
+              />
+            </Tab>
+          </ParameterizedTabs>
+        )}
+
+        {this.state.nsInfo && (
+          <NamespaceTrafficPolicies
+            opTarget={this.state.opTarget}
+            isOpen={this.state.showTrafficPoliciesModal}
+            controlPlanes={this.state.controlPlanes?.filter(cp =>
+              cp.managedNamespaces?.some(
+                mn =>
+                  mn.name === this.state.nsTarget &&
+                  (!this.state.clusterTarget || mn.cluster === this.state.clusterTarget)
+              )
+            )}
+            kind={this.state.kind}
+            hideConfirmModal={this.handleHideTrafficManagement}
+            nsTarget={this.state.nsTarget}
+            nsInfo={this.state.nsInfo}
+            duration={healthListDuration}
+            load={this.handleChangeAfterPolicy}
+          />
+        )}
+      </>
+    );
   }
 
   private fetchGrafanaInfo = (): void => {
@@ -343,6 +429,14 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
             return;
           }
 
+          publishChatResourceHealth(this.props.dispatch, {
+            clusterName: effectiveCluster,
+            namespace: base.name,
+            resourceKind: 'namespace',
+            resourceName: base.name,
+            status: base.worstStatus as HealthStatusId
+          });
+
           this.setState({
             nsInfo: base,
             error: undefined,
@@ -354,6 +448,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
         if (error?.isCanceled || !this._isMounted) {
           return;
         }
+        clearChatResourceHealth(this.props.dispatch);
         addError(t('Could not fetch Namespace.'), error);
         this.setState({
           error: {
@@ -411,86 +506,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
   private handleSaveAnnotations = (annotations: Record<string, string>): void => {
     this.handleSaveMetadata('annotations', annotations);
   };
-
-  render(): React.ReactNode {
-    const ns = this.state.nsInfo;
-    const healthListDuration = healthComputeDurationValidSeconds();
-
-    const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
-    const hasActions = namespaceActions.some(a => !a.isSeparator);
-
-    const actionsToolbar = hasActions ? (
-      <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
-    ) : undefined;
-
-    return (
-      <>
-        <RenderHeader rightToolbar={<TimeControl customDuration={false} />}>
-          {!this.state.error && ns && (
-            <div className={detailTitleRowStyle} data-test="namespace-detail-title-row">
-              <div className={detailTitleMainStyle}>
-                <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
-                <Title headingLevel="h1" size={TitleSizes.xl} className={detailPageTitleStyle}>
-                  {this.props.namespace}
-                </Title>
-              </div>
-            </div>
-          )}
-        </RenderHeader>
-
-        {this.state.error && <ErrorSection error={this.state.error} />}
-
-        {!this.state.error && ns && (
-          <ParameterizedTabs
-            id="basic-tabs"
-            className={basicTabStyle}
-            actionsToolbar={actionsToolbar}
-            onSelect={tabValue => {
-              this.setState({ currentTab: tabValue });
-            }}
-            tabMap={tabIndex}
-            tabName={tabName}
-            defaultTab={defaultTab}
-            activeTab={this.state.currentTab}
-            mountOnEnter={true}
-            unmountOnExit={true}
-          >
-            <Tab eventKey={0} title={t('Overview')} key="Overview">
-              <NamespaceDetailsOverview
-                canEdit={!serverConfig.deployment.viewOnlyMode}
-                duration={this.props.duration}
-                namespace={this.props.namespace}
-                namespaceActions={namespaceActions}
-                nsInfo={ns}
-                onSaveAnnotations={this.handleSaveAnnotations}
-                onSaveLabels={this.handleSaveLabels}
-              />
-            </Tab>
-          </ParameterizedTabs>
-        )}
-
-        {this.state.nsInfo && (
-          <NamespaceTrafficPolicies
-            opTarget={this.state.opTarget}
-            isOpen={this.state.showTrafficPoliciesModal}
-            controlPlanes={this.state.controlPlanes?.filter(cp =>
-              cp.managedNamespaces?.some(
-                mn =>
-                  mn.name === this.state.nsTarget &&
-                  (!this.state.clusterTarget || mn.cluster === this.state.clusterTarget)
-              )
-            )}
-            kind={this.state.kind}
-            hideConfirmModal={this.handleHideTrafficManagement}
-            nsTarget={this.state.nsTarget}
-            nsInfo={this.state.nsInfo}
-            duration={healthListDuration}
-            load={this.handleChangeAfterPolicy}
-          />
-        )}
-      </>
-    );
-  }
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({

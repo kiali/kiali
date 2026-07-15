@@ -1,7 +1,7 @@
-import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { NotificationGroup } from '../types/NotificationCenter';
-import { Namespace } from '../types/Namespace';
-import {
+import type { List as ImmutableList, Map as ImmutableMap } from 'immutable';
+import type { NotificationGroup } from '../types/NotificationCenter';
+import type { Namespace } from '../types/Namespace';
+import type {
   DurationInSeconds,
   IntervalInMilliseconds,
   KioskData,
@@ -11,7 +11,7 @@ import {
   TimeRange,
   UserName
 } from '../types/Common';
-import {
+import type {
   EdgeLabelMode,
   EdgeMode,
   GraphDefinition,
@@ -23,16 +23,16 @@ import {
   SummaryData,
   TrafficRate
 } from '../types/Graph';
-import { TLSStatus } from '../types/TLSStatus';
-import { StatusState } from '../types/StatusState';
-import { TourInfo } from 'components/Tour/TourStop';
-import { ComponentStatus } from '../types/IstioStatus';
-import { TracingState } from 'reducers/TracingState';
-import { MetricsStatsState } from 'reducers/MetricsStatsState';
-import { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
-import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
-import { ChatInteractionMode, ProviderAI } from 'types/Chatbot';
-import { ChatbotDisplayMode } from '@patternfly/chatbot';
+import type { TLSStatus } from '../types/TLSStatus';
+import type { StatusState } from '../types/StatusState';
+import type { TourInfo } from 'components/Tour/TourStop';
+import type { ComponentStatus } from '../types/IstioStatus';
+import type { TracingState } from 'reducers/TracingState';
+import type { MetricsStatsState } from 'reducers/MetricsStatsState';
+import type { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
+import type { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
+import type { ChatInteractionMode, ChatResourceHealth, ProviderAI } from 'types/Chatbot';
+import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 // Store is the Redux Data store
 
@@ -208,6 +208,7 @@ export interface ChatAIState {
   openTool: ImmutableMap<string, any>;
   providers: ProviderAI[];
   query: string;
+  resourceHealth?: ChatResourceHealth;
   selectedModel: string;
   selectedProvider: string;
 }

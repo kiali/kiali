@@ -29,7 +29,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { namespacesToString } from 'types/Namespace';
 import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';
-import { useResourceHealth } from './hooks/useResourceHealth';
+import { useChatResourceHealth } from './hooks/useChatResourceHealth';
 import { buildPageContext } from './pageContext';
 import { buildPromptContext, buildPromptVariables, enrichPromptContext, substitutePrompts } from './promptContext';
 
@@ -97,7 +97,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       ),
     [activeNamespaces, kind, name, namespace, istio, clusterName]
   );
-  const resourceHealthStatus = useResourceHealth(promptContext);
+  const resourceHealthStatus = useChatResourceHealth(promptContext);
   const promptVariables = React.useMemo(() => buildPromptVariables(promptContext, resourceHealthStatus), [
     promptContext,
     resourceHealthStatus
