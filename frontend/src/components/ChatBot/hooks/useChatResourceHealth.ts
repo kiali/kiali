@@ -2,7 +2,7 @@ import { isMultiCluster } from 'config';
 import { useSelector } from 'react-redux';
 import type { KialiAppState } from 'store/Store';
 import type { HealthStatusId } from 'types/Health';
-import type { PromptContext } from './promptContext';
+import type { PromptContext } from '../promptContext';
 
 const DETAIL_HEALTH_KINDS = new Set(['application', 'namespace', 'service', 'workload']);
 

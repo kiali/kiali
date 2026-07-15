@@ -14,7 +14,7 @@ type PublishChatResourceHealthParams = {
 
 const resolveHealthStatus = (health?: Health, status?: HealthStatusId): HealthStatusId | undefined => {
   const resolved = status ?? health?.getStatus().id;
-  if (!resolved || resolved === 'NA') {
+  if (!resolved || resolved === 'NA' || resolved === 'Info') {
     return undefined;
   }
 
