@@ -7,7 +7,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
   >
     <div
       class="pf-v6-c-card kiali_ff5fcrt kiali_f83crca"
-      data-ouia-component-id="OUIA-Generated-Card-4"
+      data-ouia-component-id="OUIA-Generated-Card-:r1h:"
       data-ouia-component-type="PF6/Card"
       data-ouia-safe="true"
       id=""
@@ -23,10 +23,10 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
           >
             <div
               class="pf-v6-c-toolbar"
-              data-ouia-component-id="OUIA-Generated-Toolbar-4"
+              data-ouia-component-id="OUIA-Generated-Toolbar-:r1j:"
               data-ouia-component-type="PF6/Toolbar"
               data-ouia-safe="true"
-              id="pf-random-id-3"
+              id="pf-random-id-:r1i:"
               style="padding: 0px; margin-bottom: 1.25rem;"
             >
               <div
@@ -39,7 +39,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                   <button
                     aria-expanded="false"
                     class="pf-v6-c-menu-toggle"
-                    data-ouia-component-id="OUIA-Generated-MenuToggle-7"
+                    data-ouia-component-id="OUIA-Generated-MenuToggle-:r1n:"
                     data-ouia-component-type="PF6/MenuToggle"
                     data-ouia-safe="true"
                     type="button"
@@ -61,11 +61,11 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                           fill="currentColor"
                           height="1em"
                           role="img"
-                          viewBox="0 0 320 512"
+                          viewBox="0 0 20 20"
                           width="1em"
                         >
                           <path
-                            d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                            d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                           />
                         </svg>
                       </span>
@@ -86,7 +86,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                       aria-expanded="false"
                       aria-label="Destination"
                       class="pf-v6-c-menu-toggle"
-                      data-ouia-component-id="OUIA-Generated-MenuToggle-8"
+                      data-ouia-component-id="OUIA-Generated-MenuToggle-:r1q:"
                       data-ouia-component-type="PF6/MenuToggle"
                       data-ouia-safe="true"
                       id="metrics_filter_reporter-toggle"
@@ -109,11 +109,11 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                             fill="currentColor"
                             height="1em"
                             role="img"
-                            viewBox="0 0 320 512"
+                            viewBox="0 0 20 20"
                             width="1em"
                           >
                             <path
-                              d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                              d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                             />
                           </svg>
                         </span>
@@ -155,7 +155,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                     <input
                       aria-invalid="false"
                       class="pf-v6-c-check__input"
-                      data-ouia-component-id="OUIA-Generated-Checkbox-4"
+                      data-ouia-component-id="OUIA-Generated-Checkbox-:r1t:"
                       data-ouia-component-type="PF6/Checkbox"
                       data-ouia-safe="true"
                       id="trendlines-show-"
@@ -198,7 +198,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
   >
     <div
       class="pf-v6-c-card kiali_ff5fcrt kiali_f83crca"
-      data-ouia-component-id="OUIA-Generated-Card-1"
+      data-ouia-component-id="OUIA-Generated-Card-:r0:"
       data-ouia-component-type="PF6/Card"
       data-ouia-safe="true"
       id=""
@@ -214,10 +214,10 @@ exports[`Metrics for a service > renders initial layout 1`] = `
           >
             <div
               class="pf-v6-c-toolbar"
-              data-ouia-component-id="OUIA-Generated-Toolbar-1"
+              data-ouia-component-id="OUIA-Generated-Toolbar-:r2:"
               data-ouia-component-type="PF6/Toolbar"
               data-ouia-safe="true"
-              id="pf-random-id-0"
+              id="pf-random-id-:r1:"
               style="padding: 0px; margin-bottom: 1.25rem;"
             >
               <div
@@ -230,7 +230,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                   <button
                     aria-expanded="false"
                     class="pf-v6-c-menu-toggle"
-                    data-ouia-component-id="OUIA-Generated-MenuToggle-1"
+                    data-ouia-component-id="OUIA-Generated-MenuToggle-:r6:"
                     data-ouia-component-type="PF6/MenuToggle"
                     data-ouia-safe="true"
                     type="button"
@@ -252,11 +252,11 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                           fill="currentColor"
                           height="1em"
                           role="img"
-                          viewBox="0 0 320 512"
+                          viewBox="0 0 20 20"
                           width="1em"
                         >
                           <path
-                            d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                            d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                           />
                         </svg>
                       </span>
@@ -277,7 +277,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                       aria-expanded="false"
                       aria-label="Destination"
                       class="pf-v6-c-menu-toggle"
-                      data-ouia-component-id="OUIA-Generated-MenuToggle-2"
+                      data-ouia-component-id="OUIA-Generated-MenuToggle-:r9:"
                       data-ouia-component-type="PF6/MenuToggle"
                       data-ouia-safe="true"
                       id="metrics_filter_reporter-toggle"
@@ -300,11 +300,11 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                             fill="currentColor"
                             height="1em"
                             role="img"
-                            viewBox="0 0 320 512"
+                            viewBox="0 0 20 20"
                             width="1em"
                           >
                             <path
-                              d="M31.3 192h257.3c17.8 0 26.7 21.5 14.1 34.1L174.1 354.8c-7.8 7.8-20.5 7.8-28.3 0L17.2 226.1C4.6 213.5 13.5 192 31.3 192z"
+                              d="m17.65 8.76-6.674 5.72a1.496 1.496 0 0 1-.976.365c-.347 0-.694-.122-.978-.366l-6.673-5.72A1 1 0 0 1 3 7h14a1 1 0 0 1 .65 1.76Z"
                             />
                           </svg>
                         </span>
@@ -346,7 +346,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                     <input
                       aria-invalid="false"
                       class="pf-v6-c-check__input"
-                      data-ouia-component-id="OUIA-Generated-Checkbox-1"
+                      data-ouia-component-id="OUIA-Generated-Checkbox-:rc:"
                       data-ouia-component-type="PF6/Checkbox"
                       data-ouia-safe="true"
                       id="trendlines-show-"
