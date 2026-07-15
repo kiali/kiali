@@ -396,7 +396,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			continue
 		}
 
-		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf))
+		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
 	}
 
 	return true, validations, nil
@@ -798,7 +798,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	validations := runObjectCheckers(ctx, objectCheckers, conf).FilterByKey(objectGVK, object)
+	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
 	for k, v := range validations {
 		in.kialiCache.Validations().Set(k, v)
 	}
@@ -806,7 +806,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	return validations, istioReferences, nil
 }
 
-func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config) models.IstioValidations {
+func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config, perObjectIgnores models.ObjectIgnoreValidations) models.IstioValidations {
 	objectTypeValidations := models.IstioValidations{}
 
 	// Run checks for each IstioObject type
@@ -814,9 +814,23 @@ func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChec
 		objectTypeValidations.MergeValidations(runObjectChecker(ctx, conf, objectChecker))
 	}
 
-	objectTypeValidations.StripIgnoredChecks(conf)
+	objectTypeValidations.StripIgnoredChecks(conf, perObjectIgnores)
 
 	return objectTypeValidations
+}
+
+func buildObjectIgnoreValidations(vInfo *validationInfo, cluster string) models.ObjectIgnoreValidations {
+	perObjectIgnores := models.ObjectIgnoreValidations{}
+	if vInfo.clusterInfo != nil {
+		if vInfo.clusterInfo.istioConfig != nil {
+			perObjectIgnores.Merge(vInfo.clusterInfo.istioConfig.ObjectIgnoreValidations(cluster))
+		}
+		perObjectIgnores.Merge(models.BuildServiceIgnoreValidations(vInfo.clusterInfo.services, cluster))
+	}
+	if workloadsPerNamespace, ok := vInfo.wlMap[cluster]; ok {
+		perObjectIgnores.Merge(models.BuildWorkloadIgnoreValidations(workloadsPerNamespace, cluster))
+	}
+	return perObjectIgnores
 }
 
 func runObjectChecker(ctx context.Context, conf *config.Config, objectChecker checkers.ObjectChecker) models.IstioValidations {

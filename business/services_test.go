@@ -448,6 +448,51 @@ func TestGetServiceDetailsValidationErrors(t *testing.T) {
 	assert.Equal("spec/ports[0]", s.Validations[validationKey].Checks[0].Path)
 }
 
+func TestGetServiceDetailsIgnoresAnnotatedValidation(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	clients := map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(
+			kubetest.FakeNamespace("bookinfo"),
+			&core_v1.Service{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ratings-home-cluster",
+					Namespace: "bookinfo",
+					Labels:    map[string]string{"app": "ratings"},
+					Annotations: map[string]string{
+						models.IgnoreValidationsAnnotation: "KIA0701",
+					},
+				},
+				Spec: core_v1.ServiceSpec{Ports: []core_v1.ServicePort{{Name: "http", Port: 9081, Protocol: "TCP"}}, Selector: map[string]string{"app": "ratings"}},
+			},
+			FakeDeploymentWithPort("ratings", 9080),
+		),
+	}
+
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+
+	promMock := new(prometheustest.PromAPIMock)
+	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
+	prom.Inject(promMock)
+	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
+
+	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "ratings-home-cluster", "60s", time.Now(), true)
+	require.NoError(err)
+
+	validationKey := models.IstioValidationKey{
+		Cluster:   conf.KubernetesConfig.ClusterName,
+		Namespace: "bookinfo", Name: "ratings-home-cluster", ObjectGVK: schema.GroupVersionKind{Group: "", Version: "", Kind: "service"},
+	}
+	assert.NotNil(s.Validations[validationKey])
+	assert.Empty(s.Validations[validationKey].Checks)
+}
+
 func TestServiceListIncludesServiceEntryServices(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)

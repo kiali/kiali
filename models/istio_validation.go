@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -9,6 +10,44 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
+
+const IgnoreValidationsAnnotation = "kiali.io/ignore-validations"
+
+// IgnoreValidationsRule describes which validation checks to ignore for a single object.
+// When IgnoreAll is true, all checks for the object are ignored.
+// Otherwise, only the listed validation codes are ignored.
+type IgnoreValidationsRule struct {
+	Codes     []string
+	IgnoreAll bool
+}
+
+// ObjectIgnoreValidations maps validation object keys to per-object ignore rules.
+type ObjectIgnoreValidations map[IstioValidationKey]IgnoreValidationsRule
+
+func ParseIgnoreValidationsAnnotation(annotations map[string]string) (IgnoreValidationsRule, bool) {
+	value, ok := annotations[IgnoreValidationsAnnotation]
+	if !ok {
+		return IgnoreValidationsRule{}, false
+	}
+
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return IgnoreValidationsRule{IgnoreAll: true}, true
+	}
+
+	codes := strings.Split(value, ",")
+	for i, code := range codes {
+		codes[i] = strings.TrimSpace(code)
+	}
+
+	return IgnoreValidationsRule{Codes: codes}, true
+}
+
+func (rules ObjectIgnoreValidations) Merge(other ObjectIgnoreValidations) {
+	for key, rule := range other {
+		rules[key] = rule
+	}
+}
 
 // NamespaceValidations represents a set of IstioValidations grouped by namespace
 type NamespaceValidations map[string]IstioValidations
@@ -613,32 +652,53 @@ func (iv *IstioValidations) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (iv *IstioValidations) StripIgnoredChecks(conf *config.Config) {
+func (iv *IstioValidations) StripIgnoredChecks(conf *config.Config, perObjectIgnores ObjectIgnoreValidations) {
 	// strip away codes that are to be ignored
 	codesToIgnore := conf.KialiFeatureFlags.Validations.Ignore
-	if len(codesToIgnore) > 0 {
-		for curValidationKey, curValidation := range *iv {
-			idx := 0
-			// loop over each IstioCheck in the current Validation and only keep it if it is not ignored
-			for _, curCheck := range curValidation.Checks {
-				ignoreCheck := false
-				for _, cti := range codesToIgnore {
-					if cti == curCheck.Code {
-						ignoreCheck = true
-						log.Tracef("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectGVK.String(), curValidationKey.Name, curValidationKey.Namespace)
-						break
-					}
-				}
-				if !ignoreCheck {
-					curValidation.Checks[idx] = curCheck
-					idx++
-				}
+	if len(codesToIgnore) == 0 && len(perObjectIgnores) == 0 {
+		return
+	}
+
+	for curValidationKey, curValidation := range *iv {
+		perObjectRule, hasPerObjectRule := perObjectIgnores[curValidationKey]
+		idx := 0
+		// loop over each IstioCheck in the current Validation and only keep it if it is not ignored
+		for _, curCheck := range curValidation.Checks {
+			if shouldIgnoreCheck(curCheck.Code, codesToIgnore, hasPerObjectRule, perObjectRule) {
+				log.Tracef("Ignoring validation failure [%+v] for object [%s:%s] in namespace [%s]", curCheck, curValidationKey.ObjectGVK.String(), curValidationKey.Name, curValidationKey.Namespace)
+				continue
 			}
-			// Prevent memory leak - nil out ignored checks
-			for extraIdx := idx; extraIdx < len(curValidation.Checks); extraIdx++ {
-				curValidation.Checks[extraIdx] = nil
-			}
-			curValidation.Checks = curValidation.Checks[:idx]
+			curValidation.Checks[idx] = curCheck
+			idx++
+		}
+		// Prevent memory leak - nil out ignored checks
+		for extraIdx := idx; extraIdx < len(curValidation.Checks); extraIdx++ {
+			curValidation.Checks[extraIdx] = nil
+		}
+		curValidation.Checks = curValidation.Checks[:idx]
+	}
+}
+
+func shouldIgnoreCheck(code string, globalIgnores []string, hasPerObjectRule bool, perObjectRule IgnoreValidationsRule) bool {
+	for _, ignoredCode := range globalIgnores {
+		if ignoredCode == code {
+			return true
 		}
 	}
+
+	if !hasPerObjectRule {
+		return false
+	}
+
+	if perObjectRule.IgnoreAll {
+		return true
+	}
+
+	for _, ignoredCode := range perObjectRule.Codes {
+		if ignoredCode == code {
+			return true
+		}
+	}
+
+	return false
 }

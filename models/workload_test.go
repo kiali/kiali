@@ -82,6 +82,7 @@ func TestParseReplicaSetToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
+	assert.Equal(map[string]string{"annotation": "value-annot"}, w.Annotations)
 	assert.Len(w.AdditionalDetails, 1)
 	assert.Equal("Annotation", w.AdditionalDetails[0].Title)
 	assert.Equal("value-annot", w.AdditionalDetails[0].Value)

@@ -268,7 +268,7 @@ func (in *SvcService) buildServiceList(ctx context.Context, cluster string, name
 	services := []models.ServiceOverview{}
 	validations := models.IstioValidations{}
 	if !criteria.IncludeOnlyDefinitions {
-		validations = in.getServiceValidations(svcs, deployments, pods)
+		validations = in.getServiceValidations(cluster, svcs, deployments, pods)
 	}
 
 	kubernetesServices := in.buildKubernetesServices(ctx, svcs, pods, istioConfigList, criteria.IncludeOnlyDefinitions, cluster)
@@ -683,7 +683,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			return nil, fmt.Errorf("Error fetching deployments per namespace %s: %s", namespace, err)
 		}
 		deployments := depList.Items
-		s.Validations = in.getServiceValidations(svcs, deployments, pods)
+		s.Validations = in.getServiceValidations(cluster, svcs, deployments, pods)
 	}
 	return &s, nil
 }
@@ -906,9 +906,9 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 	return svc, nil
 }
 
-func (in *SvcService) getServiceValidations(services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {
-	validations := checkers.NewServiceChecker("", deployments, in.businessLayer.Mesh.discovery, pods, services).Check()
-
+func (in *SvcService) getServiceValidations(cluster string, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {
+	validations := checkers.NewServiceChecker(cluster, deployments, in.businessLayer.Mesh.discovery, pods, services).Check()
+	validations.StripIgnoredChecks(in.conf, models.BuildServiceIgnoreValidations(services, cluster))
 	return validations
 }
 
