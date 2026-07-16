@@ -7,7 +7,7 @@
 # from functions.sh when sourcing from other hack scripts.
 #
 # Usage: ensure-gateway-api-crds.sh [version]
-#   version: optional, e.g. v1.5.0 (default: v1.5.0 or K8S_GATEWAY_API_VERSION)
+#   version: optional, e.g. v1.6.0 (default: v1.6.0 or K8S_GATEWAY_API_VERSION)
 #
 ##############################################################################
 
