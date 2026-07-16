@@ -171,8 +171,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, []);
 
   const { kiosk, theme, istioConfigId } = props;
-  // Parent kiosk (e.g. OSSMC) matches OpenShift Console Edit YAML: no in-app leave/reload
-  // modals — only beforeunload for tab close/refresh (see Console usePreventDataLossLock).
+  // Parent kiosk (e.g. OSSMC): no in-app leave/reload modals — only beforeunload for tab close/refresh.
   const parentKiosk = isParentKiosk(kiosk);
 
   const fetchYaml = React.useCallback((): string => {
@@ -411,7 +410,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, [fetchIstioObjectDetailsFromProps, istioConfigId]);
 
   // Standalone Kiali: block SPA navigation when dirty. Parent kiosk skips this — the parent
-  // owns navigation via postMessage and Console Edit YAML has no in-app leave prompt.
+  // owns navigation via postMessage and has no in-app leave prompt.
   const shouldBlock = React.useCallback<BlockerFunction>(
     ({ currentLocation, nextLocation }) =>
       !parentKiosk && isModified && currentLocation.pathname !== nextLocation.pathname,
@@ -437,7 +436,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     setModalType(prev => (prev === 'reload' ? prev : 'leave'));
   }, [blocker, isBlockedState, isModified]);
 
-  // Match OpenShift Console usePreventDataLossLock: warn on tab close/refresh only.
+  // Warn on tab close/refresh when dirty (browser beforeunload only).
   React.useEffect(() => {
     if (!isModified) {
       return;
@@ -524,7 +523,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   const navigateToList = (force = false): void => {
     const backUrl = `/${Paths.ISTIO}?namespaces=${istioConfigId.namespace}`;
 
-    // Standalone: confirm leave when dirty. Parent kiosk: leave immediately (Console Edit YAML).
+    // Standalone: confirm leave when dirty. Parent kiosk: leave immediately.
     if (!force && isModified && !parentKiosk) {
       pendingLeaveUrlRef.current = backUrl;
       setShowModal(true);
@@ -632,7 +631,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, []);
 
   const handleRefresh = (): boolean => {
-    // Standalone: confirm reload when dirty. Parent kiosk: reload immediately (Console Edit YAML).
+    // Standalone: confirm reload when dirty. Parent kiosk: reload immediately.
     if (isModified && !parentKiosk) {
       setShowModal(true);
       setModalType('reload');
