@@ -16,7 +16,11 @@ import (
 
 var mcpClient *MCPClient
 
-const MCPTimeout = 30 * time.Second
+const (
+	MCPTimeout     = 90 * time.Second
+	MCPMaxAttempts = 2
+	MCPRetryWait   = 2 * time.Second
+)
 
 type MCPClient struct {
 	kialiURL   string
@@ -53,7 +57,38 @@ func mcpToolURL(toolName string) string {
 	return fmt.Sprintf("%s/api/chat/mcp/%s", mcpClient.kialiURL, toolName)
 }
 
+func isTransientMCPError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "context deadline exceeded") ||
+		strings.Contains(msg, "Client.Timeout") ||
+		strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "EOF")
+}
+
 func CallMCPTool(toolName string, args map[string]interface{}) (*MCPResponse, error) {
+	var lastErr error
+	for attempt := 1; attempt <= MCPMaxAttempts; attempt++ {
+		resp, err := callMCPToolOnce(toolName, args)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+		if attempt < MCPMaxAttempts && isTransientMCPError(err) {
+			log.Warningf("MCP tool %q attempt %d/%d failed with transient error, retrying in %s: %v",
+				toolName, attempt, MCPMaxAttempts, MCPRetryWait, err)
+			time.Sleep(MCPRetryWait)
+			continue
+		}
+		return nil, err
+	}
+	return nil, lastErr
+}
+
+func callMCPToolOnce(toolName string, args map[string]interface{}) (*MCPResponse, error) {
 	var body []byte
 	var err error
 	if args != nil {
