@@ -86,7 +86,7 @@
     "lint:fix": "eslint --fix src cypress",
     "lint:gherkin": "gherkin-lint cypress/integration/featureFiles",
     "lint:precommit": "unset GIT_DIR && git diff --cached --name-only HEAD --diff-filter=AM | grep -E '\\.tsx?$' | cut -d'/' -f2- | xargs -r eslint -c eslint.config.precommit.mjs",
-    "pre-commit": "yarn run pretty-quick --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run lint:gherkin && npm run format:precommit",
+    "pre-commit": "node ./node_modules/pretty-quick/bin/pretty-quick.js --staged --no-restage --bail --pattern \"**/*.{ts,tsx,scss,json}\" && npm run lint:precommit && npm run lint:gherkin && npm run format:precommit",
     "precypress:run:junit": "npm run cypress:delete:reports",
     "prepare": "cd .. && husky frontend/.husky",
     "prettier": "prettier --write \"**/*.{ts,tsx,scss,json}\"",

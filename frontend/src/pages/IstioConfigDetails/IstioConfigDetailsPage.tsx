@@ -1,5 +1,6 @@
 import * as React from 'react';
-// import { Prompt } from 'react-router-dom';
+import type { BlockerFunction } from 'react-router-dom-v5-compat';
+import { useBlocker } from 'react-router-dom-v5-compat';
 import type { IstioConfigDetails, IstioConfigId } from '../../types/IstioConfigDetails';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { addError, addSuccess } from '../../utils/AlertUtils';
@@ -41,6 +42,10 @@ import {
 } from 'styles/FlexStyles';
 import { ParameterizedTabs, activeTab } from '../../components/Tab/Tabs';
 import {
+  Button,
+  ButtonVariant,
+  Content,
+  ContentVariants,
   Drawer,
   DrawerActions,
   DrawerCloseButton,
@@ -48,6 +53,11 @@ import {
   DrawerContentBody,
   DrawerHead,
   DrawerPanelContent,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
   Tab,
   Title,
   TitleSizes,
@@ -60,15 +70,15 @@ import type { ErrorMsg } from '../../types/ErrorMsg';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
 import { isParentKiosk, kioskNavigateAction } from '../../components/Kiosk/KioskActions';
 import type { KialiAppState } from '../../store/Store';
-import type { DispatchProp } from 'react-redux';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
 import { Theme } from 'types/Common';
-import type { ApiError, ApiResponse } from 'types/Api';
+import type { ApiError } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { canDelete as canDeletePermission, canUpdate as canUpdatePermission } from 'types/Permissions';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const editorDrawer = kialiStyle({
   display: 'flex',
@@ -85,537 +95,209 @@ const editorAreaStyle = kialiStyle({
   minHeight: '200px'
 });
 
-interface IstioConfigDetailsState {
-  cluster?: string;
-  currentTab: string;
-  editorHeight: number;
-  error?: ErrorMsg;
-  isExpanded: boolean;
-  isModified: boolean;
-  isRemoved: boolean;
-  istioObjectDetails?: IstioConfigDetails;
-  istioValidations?: ObjectValidation;
-  originalIstioObjectDetails?: IstioConfigDetails;
-  originalIstioValidations?: ObjectValidation;
-  selectedEditorLine?: string;
-  yamlModified: string;
-  yamlValidations?: EditorValidations;
-}
 const tabName = 'list';
+const defaultTab = 'yaml';
 
 const paramToTab: { [key: string]: number } = {
   yaml: 0
 };
+
+type ConfirmModalType = 'leave' | 'reload';
 
 interface ReduxProps {
   kiosk: string;
   theme: string;
 }
 
-type IstioConfigDetailsProps = ReduxProps &
-  DispatchProp & {
-    istioConfigId: IstioConfigId;
-  };
+type IstioConfigDetailsProps = ReduxProps & {
+  istioConfigId: IstioConfigId;
+};
 
-/* eslint-disable @typescript-eslint/member-ordering -- legacy class component layout */
-class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetailsProps, IstioConfigDetailsState> {
-  monacoEditorRef: editor.IStandaloneCodeEditor | null = null;
-  monacoRef: MonacoInstance | null = null;
-  drawerRef: React.RefObject<IstioConfigDetails>;
-  private cursorDisposable: { dispose(): void } | null = null;
-  private editorContainerRef = React.createRef<HTMLDivElement>();
-  private heightObserver = new ResizeHeightObserver(h => this.setState({ editorHeight: h }));
-  private isObserving = false;
-  private suppressOnChange = false;
-  promptTo: string;
-  timerId: number;
+const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (props: IstioConfigDetailsProps) => {
+  const { t } = useKialiTranslation();
 
-  constructor(props: IstioConfigDetailsProps) {
-    super(props);
-    const cluster = HistoryManager.getClusterName();
+  const [cluster, setCluster] = React.useState<string | undefined>(HistoryManager.getClusterName());
+  const [currentTab, setCurrentTab] = React.useState<string>(activeTab(tabName, defaultTab));
+  const [editorHeight, setEditorHeight] = React.useState<number>(0);
+  const [error, setError] = React.useState<ErrorMsg>();
+  const [isExpanded, setIsExpanded] = React.useState<boolean>(false);
+  const [isModified, setIsModified] = React.useState<boolean>(false);
+  const [isRemoved, setIsRemoved] = React.useState<boolean>(false);
+  const [istioObjectDetails, setIstioObjectDetails] = React.useState<IstioConfigDetails>();
+  const [istioValidations, setIstioValidations] = React.useState<ObjectValidation>();
+  const [modalType, setModalType] = React.useState<ConfirmModalType | null>(null);
+  const [selectedEditorLine, setSelectedEditorLine] = React.useState<string>();
+  const [showModal, setShowModal] = React.useState<boolean>(false);
+  const [yamlModified, setYamlModified] = React.useState<string>('');
+  const [yamlValidations, setYamlValidations] = React.useState<EditorValidations>();
 
-    this.state = {
-      cluster: cluster,
-      editorHeight: 0,
-      isModified: false,
-      isRemoved: false,
-      currentTab: activeTab(tabName, this.defaultTab()),
-      isExpanded: false,
-      yamlModified: ''
-    };
+  const monacoEditorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = React.useRef<MonacoInstance | null>(null);
+  const editorContainerRef = React.useRef<HTMLDivElement>(null);
+  const cursorDisposableRef = React.useRef<{ dispose(): void } | null>(null);
+  const suppressOnChangeRef = React.useRef<boolean>(false);
+  const isObservingRef = React.useRef<boolean>(false);
+  const heightObserverRef = React.useRef<ResizeHeightObserver>(
+    new ResizeHeightObserver(height => setEditorHeight(height))
+  );
 
-    this.drawerRef = React.createRef();
-    this.promptTo = '';
-    this.timerId = -1;
-  }
+  // Keep latest values available to Monaco callbacks / fetch without unstable effect deps.
+  const clusterRef = React.useRef(cluster);
+  const isModifiedRef = React.useRef(isModified);
+  const yamlModifiedRef = React.useRef(yamlModified);
+  const istioObjectDetailsRef = React.useRef(istioObjectDetails);
+  const istioValidationsRef = React.useRef(istioValidations);
+  const yamlValidationsRef = React.useRef(yamlValidations);
 
-  defaultTab(): string {
-    return 'yaml';
-  }
+  clusterRef.current = cluster;
+  isModifiedRef.current = isModified;
+  yamlModifiedRef.current = yamlModified;
+  istioObjectDetailsRef.current = istioObjectDetails;
+  istioValidationsRef.current = istioValidations;
+  yamlValidationsRef.current = yamlValidations;
 
-  objectTitle(): string {
-    let title = '';
+  const { kiosk, theme, istioConfigId } = props;
 
-    if (this.state.istioObjectDetails) {
-      const objectType = this.props.istioConfigId.objectKind;
-      const methodName = objectType.charAt(0).toLowerCase() + objectType.slice(1);
-      const object = this.state.istioObjectDetails[methodName];
-
-      if (object) {
-        title = object.metadata.name;
-      }
+  const fetchYaml = React.useCallback((): string => {
+    if (isModifiedRef.current) {
+      return yamlModifiedRef.current ?? '';
     }
 
-    return title;
-  }
-
-  fetchIstioObjectDetails = (): void => {
-    this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
-  };
-
-  newIstioObjectPromise = (props: IstioConfigId): Promise<ApiResponse<IstioConfigDetails>> => {
-    return API.getIstioConfigDetail(
-      props.namespace,
-      { Group: props.objectGroup, Version: props.objectVersion, Kind: props.objectKind },
-      props.objectName,
-      true,
-      this.state.cluster
-    );
-  };
-
-  fetchIstioObjectDetailsFromProps = (props: IstioConfigId): void => {
-    const promiseConfigDetails = this.newIstioObjectPromise(props);
-
-    // Note that adapters/templates are not supported yet for validations
-    promiseConfigDetails
-      .then(resultConfigDetails => {
-        this.setState(
-          {
-            cluster:
-              resultConfigDetails.data.cluster || resultConfigDetails.data.namespace.cluster || this.state.cluster,
-            istioObjectDetails: resultConfigDetails.data,
-            originalIstioObjectDetails: resultConfigDetails.data,
-            istioValidations: resultConfigDetails.data.validation,
-            originalIstioValidations: resultConfigDetails.data.validation,
-            isModified: false,
-            isExpanded: this.isExpanded(resultConfigDetails.data),
-            yamlModified: '',
-            currentTab: activeTab(tabName, this.defaultTab())
-          },
-          () => this.resizeEditor()
-        );
-      })
-      .catch(error => {
-        const msg: ErrorMsg = {
-          title: 'No Istio object is selected',
-          description: `${this.props.istioConfigId.objectName} is not found in the mesh`
-        };
-
-        this.setState({
-          isRemoved: true,
-          error: msg
-        });
-
-        addError(
-          `Could not fetch Istio object type [${props.objectKind}] name [${props.objectName}] in namespace [${props.namespace}].`,
-          error
-        );
-      });
-  };
-
-  componentDidMount(): void {
-    this.fetchIstioObjectDetails();
-    this.tryStartObserving();
-  }
-
-  componentDidUpdate(prevProps: IstioConfigDetailsProps, prevState: IstioConfigDetailsState): void {
-    // Start observing once the editor container mounts (may happen after
-    // componentDidMount if data was still loading on first render).
-    if (!this.isObserving) {
-      this.tryStartObserving();
-    }
-
-    // This will ask confirmation if we want to leave page on pending changes without save
-    if (this.state.isModified) {
-      window.onbeforeunload = () => true;
-    } else {
-      window.onbeforeunload = null;
-    }
-
-    // This will reset the flag to prevent ask multiple times the confirmation to leave with unsaved changed
-    this.promptTo = '';
-
-    // Apply validation markers after editor update
-    if (this.monacoEditorRef && this.monacoRef) {
-      // Fold status and/or managedFields fields only when fresh data arrives
-      const dataJustLoaded =
-        this.state.istioObjectDetails !== prevState.istioObjectDetails ||
-        (prevState.isModified && !this.state.isModified);
-
-      if (dataJustLoaded && !this.state.isModified) {
-        // Sync editor content and apply folding when data reloads
-        const yamlSource = this.fetchYaml();
-        if (this.monacoEditorRef.getValue() !== yamlSource) {
-          const scrollTop = this.monacoEditorRef.getScrollTop();
-          this.suppressOnChange = true;
-          this.monacoEditorRef.setValue(yamlSource);
-          this.suppressOnChange = false;
-          this.monacoEditorRef.setScrollTop(scrollTop);
-        }
-        if (this.monacoRef) {
-          const ed = this.monacoEditorRef;
-          const savedScroll = ed.getScrollTop();
-          this.applyFolding(ed).then(() => {
-            ed.setScrollTop(savedScroll);
-          });
-        }
-      }
-
-      // Re-apply validation markers when validations or data change
-      if (
-        dataJustLoaded ||
-        this.state.istioValidations !== prevState.istioValidations ||
-        this.state.yamlValidations !== prevState.yamlValidations
-      ) {
-        this.applyValidationMarkers();
-      }
-    }
-
-    const active = activeTab(tabName, this.defaultTab());
-    if (this.state.currentTab !== active) {
-      this.setState({ currentTab: active });
-    }
-
-    if (!this.propsMatch(prevProps)) {
-      this.fetchIstioObjectDetailsFromProps(this.props.istioConfigId);
-    }
-
-    if (this.state.istioValidations && this.state.istioValidations !== prevState.istioValidations) {
-      showInNotificationCenter(this.state.istioValidations);
-    }
-  }
-
-  propsMatch(prevProps: IstioConfigDetailsProps): boolean {
-    return (
-      this.props.istioConfigId.namespace === prevProps.istioConfigId.namespace &&
-      this.props.istioConfigId.objectName === prevProps.istioConfigId.objectName &&
-      this.props.istioConfigId.objectGroup === prevProps.istioConfigId.objectGroup &&
-      this.props.istioConfigId.objectVersion === prevProps.istioConfigId.objectVersion &&
-      this.props.istioConfigId.objectKind === prevProps.istioConfigId.objectKind
-    );
-  }
-
-  componentWillUnmount(): void {
-    window.onbeforeunload = null;
-    window.clearInterval(this.timerId);
-    this.heightObserver.disconnect();
-    this.cursorDisposable?.dispose();
-  }
-
-  private tryStartObserving(): void {
-    if (this.editorContainerRef.current) {
-      this.heightObserver.observe(this.editorContainerRef.current);
-      this.isObserving = true;
-    }
-  }
-
-  backToList = (): void => {
-    // Back to list page
-    const backUrl = `/${Paths.ISTIO}?namespaces=${this.props.istioConfigId.namespace}`;
-
-    if (isParentKiosk(this.props.kiosk)) {
-      kioskNavigateAction(backUrl);
-    } else {
-      router.navigate(backUrl);
-    }
-  };
-
-  canDelete = (): boolean => {
-    return canDeletePermission(this.state.istioObjectDetails?.permissions);
-  };
-
-  canUpdate = (): boolean => {
-    return canUpdatePermission(this.state.istioObjectDetails?.permissions);
-  };
-
-  onCancel = (): void => {
-    this.backToList();
-  };
-
-  onDelete = (): void => {
-    API.deleteIstioConfigDetail(
-      this.props.istioConfigId.namespace,
-      {
-        Group: this.props.istioConfigId.objectGroup,
-        Version: this.props.istioConfigId.objectVersion,
-        Kind: this.props.istioConfigId.objectKind
-      },
-      this.props.istioConfigId.objectName,
-      this.state.cluster
-    )
-      .then(() => this.backToList())
-      .catch(error => {
-        addError('Could not delete IstioConfig details.', error);
-      });
-  };
-
-  onUpdate = (): void => {
-    loadAll(this.state.yamlModified, objectModified => {
-      const jsonPatch = JSON.stringify(
-        mergeJsonPatch(objectModified as object, getIstioObject(this.state.istioObjectDetails))
-      ).replace(new RegExp('(,null)+]', 'g'), ']');
-
-      API.updateIstioConfigDetail(
-        this.props.istioConfigId.namespace,
-        {
-          Group: this.props.istioConfigId.objectGroup,
-          Version: this.props.istioConfigId.objectVersion,
-          Kind: this.props.istioConfigId.objectKind
-        },
-        this.props.istioConfigId.objectName,
-        jsonPatch,
-        this.state.cluster
-      )
-        .then(() => {
-          const targetMessage = `${this.props.istioConfigId.namespace} / ${this.props.istioConfigId.objectKind} / ${this.props.istioConfigId.objectName}`;
-          addSuccess(`Changes applied on ${targetMessage}`);
-          this.fetchIstioObjectDetails();
-        })
-        .catch(error => {
-          addError('Could not update IstioConfig details.', error);
-          this.setState({
-            yamlValidations: this.injectGalleyError(error)
-          });
-        });
-    });
-  };
-
-  injectGalleyError = (error: ApiError): EditorValidations => {
-    const msg: string[] = API.getErrorString(error).split(':');
-    const errMsg: string = msg.slice(1, msg.length).join(':');
-
-    const anno: EditorAnnotation = {
-      column: 0,
-      row: 0,
-      text: errMsg,
-      type: 'error'
-    };
-
-    return { annotations: [anno], markers: [] };
-  };
-
-  resizeEditor = (): void => {
-    if (this.monacoEditorRef) {
-      // The Drawer has an async animation that needs a timeout before resizing the editor
-      setTimeout(() => {
-        this.monacoEditorRef?.layout();
-      }, 250);
-    }
-  };
-
-  onDrawerToggle = (): void => {
-    this.setState(
-      prevState => {
-        return {
-          isExpanded: !prevState.isExpanded
-        };
-      },
-      () => this.resizeEditor()
-    );
-  };
-
-  onDrawerClose = (): void => {
-    this.setState(
-      {
-        isExpanded: false
-      },
-      () => this.resizeEditor()
-    );
-  };
-
-  onEditorChange = (value: string | undefined): void => {
-    if (this.suppressOnChange) {
-      return;
-    }
-    this.setState({
-      isModified: true,
-      yamlModified: value || '',
-      istioValidations: undefined,
-      yamlValidations: parseYamlValidations(value || '')
-    });
-  };
-
-  onRefresh = (): void => {
-    let refresh = true;
-
-    if (this.state.isModified) {
-      refresh = window.confirm('You have unsaved changes, are you sure you want to refresh ?');
-    }
-
-    if (refresh) {
-      this.fetchIstioObjectDetails();
-    }
-  };
-
-  fetchYaml = (): string => {
-    if (this.state.isModified) {
-      return this.state.yamlModified ?? '';
-    }
-
-    const istioObject = getIstioObject(this.state.istioObjectDetails);
+    const istioObject = getIstioObject(istioObjectDetailsRef.current);
     return istioObject ? dump(istioObject, yamlDumpOptions) : '';
+  }, []);
+
+  const getStatusMessages = (details?: IstioConfigDetails): ValidationMessage[] => {
+    const istioObject = getIstioObject(details);
+    return istioObject?.status?.validationMessages ?? [];
   };
 
-  getStatusMessages = (istioConfigDetails?: IstioConfigDetails): ValidationMessage[] => {
-    const istioObject = getIstioObject(istioConfigDetails);
-
-    return istioObject && istioObject.status && istioObject.status.validationMessages
-      ? istioObject.status.validationMessages
-      : ([] as ValidationMessage[]);
+  const objectReferences = (details?: IstioConfigDetails): ObjectReference[] => {
+    return details?.references?.objectReferences ?? [];
   };
 
-  // Not all Istio types have an overview card
-  hasOverview = (): boolean => {
+  const serviceReferences = (details?: IstioConfigDetails): ServiceReference[] => {
+    return details?.references?.serviceReferences ?? [];
+  };
+
+  const workloadReferences = (details?: IstioConfigDetails): WorkloadReference[] => {
+    return details?.references?.workloadReferences ?? [];
+  };
+
+  const helpMessages = (details?: IstioConfigDetails): HelpMessage[] => {
+    return details?.help ?? [];
+  };
+
+  // Not all Istio types have an overview card historically; currently always show overview.
+  const hasOverview = (): boolean => {
     return true;
   };
 
-  objectReferences = (istioConfigDetails?: IstioConfigDetails): ObjectReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
-    return details.references?.objectReferences ?? ([] as ObjectReference[]);
+  const showCards = (refPresent: boolean, istioStatusMsgs: ValidationMessage[]): boolean => {
+    return refPresent || hasOverview() || istioStatusMsgs.length > 0;
   };
 
-  serviceReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
-    return details.references?.serviceReferences ?? ([] as ServiceReference[]);
+  const isExpandedForDetails = (details?: IstioConfigDetails): boolean => {
+    if (!details) {
+      return false;
+    }
+
+    return showCards(objectReferences(details).length > 0, getStatusMessages(details));
   };
 
-  workloadReferences = (istioConfigDetails?: IstioConfigDetails): ServiceReference[] => {
-    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
-    return details.references?.workloadReferences ?? ([] as WorkloadReference[]);
-  };
+  const getFoldRanges = (yaml: string): { end: number; start: number }[] => {
+    const ranges: { end: number; start: number }[] = [];
 
-  helpMessages = (istioConfigDetails?: IstioConfigDetails): HelpMessage[] => {
-    const details: IstioConfigDetails = istioConfigDetails ?? ({} as IstioConfigDetails);
-    return details.help ?? ([] as HelpMessage[]);
-  };
-
-  // Returns 1-based line ranges for managedFields sections that should be folded
-  getFoldRanges = (yaml: string): { start: number; end: number }[] => {
-    const ranges: { start: number; end: number }[] = [];
     if (yaml) {
       const ylines = yaml.split('\n');
+
       for (let i = 0; i < ylines.length; i++) {
         const line = ylines[i];
+
         if (line.startsWith('  managedFields:')) {
           const indent = line.search(/\S/);
           let end = i;
+
           for (let j = i + 1; j < ylines.length; j++) {
             const next = ylines[j];
+
             if (next.trim() === '') {
               end = j;
               continue;
             }
+
             const nextIndent = next.search(/\S/);
+
             if (nextIndent <= indent && !next.match(/^\s*-/)) {
               break;
             }
+
             end = j;
           }
+
           if (end > i) {
-            ranges.push({ start: i + 1, end: end + 1 });
+            ranges.push({ end: end + 1, start: i + 1 });
           }
         }
       }
     }
+
     return ranges;
   };
 
-  isExpanded = (istioConfigDetails?: IstioConfigDetails): boolean => {
-    let isExpanded = false;
+  const applyFolding = React.useCallback(
+    (ed: editor.IStandaloneCodeEditor): Promise<void> => {
+      const yamlSource = fetchYaml();
+      const foldRanges = getFoldRanges(yamlSource);
 
-    if (istioConfigDetails) {
-      isExpanded = this.showCards(
-        this.objectReferences(istioConfigDetails).length > 0,
-        this.getStatusMessages(istioConfigDetails)
-      );
-    }
-
-    return isExpanded;
-  };
-
-  showCards = (refPresent: boolean, istioStatusMsgs: ValidationMessage[]): boolean => {
-    return refPresent || this.hasOverview() || istioStatusMsgs.length > 0;
-  };
-
-  onCursorChange = (e: any): void => {
-    if (e && e.position) {
-      const line = parseLine(this.fetchYaml(), e.position.lineNumber - 1);
-      this.setState({ selectedEditorLine: line });
-    }
-  };
-
-  onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
-    this.monacoEditorRef = ed;
-    this.monacoRef = monaco;
-    (window as any).monaco = monaco;
-    this.cursorDisposable = ed.onDidChangeCursorPosition(this.onCursorChange);
-    this.applyValidationMarkers();
-
-    // Open the side panel when clicking an info glyph icon in the margin
-    ed.onMouseDown(e => {
-      if (e.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && e.target.position) {
-        const lineNumber = e.target.position.lineNumber;
-        const line = parseLine(this.fetchYaml(), lineNumber - 1);
-        this.setState({ selectedEditorLine: line, isExpanded: true }, () => this.resizeEditor());
+      if (foldRanges.length === 0) {
+        return Promise.resolve();
       }
-    });
 
-    // Apply initial folding for managedFields: section
-    this.applyFolding(ed);
-  };
+      // createFoldingRangeFromSelection creates a fold from a selection and collapses it.
+      const foldAction = ed.getAction('editor.createFoldingRangeFromSelection');
 
-  applyFolding = (ed: editor.IStandaloneCodeEditor): Promise<void> => {
-    const yamlSource = this.fetchYaml();
-    const foldRanges = this.getFoldRanges(yamlSource);
-    if (foldRanges.length === 0) {
+      if (foldAction) {
+        const doFold = async (): Promise<void> => {
+          for (const range of foldRanges) {
+            ed.setSelection(new Selection(range.start, 1, range.end + 1, 1));
+            await foldAction.run();
+          }
+
+          ed.setPosition({ lineNumber: 1, column: 1 });
+          ed.setSelection(new Selection(1, 1, 1, 1));
+        };
+
+        return doFold();
+      }
+
       return Promise.resolve();
-    }
-    // Use createFoldingRangeFromSelection which creates a fold region from a selection
-    // and immediately collapses it — works regardless of folding range providers.
-    const foldAction = ed.getAction('editor.createFoldingRangeFromSelection');
-    if (foldAction) {
-      const doFold = async (): Promise<void> => {
-        for (const range of foldRanges) {
-          ed.setSelection(new Selection(range.start, 1, range.end + 1, 1));
-          await foldAction.run();
-        }
-        ed.setPosition({ lineNumber: 1, column: 1 });
-        ed.setSelection(new Selection(1, 1, 1, 1));
-      };
-      return doFold();
-    }
-    return Promise.resolve();
-  };
+    },
+    [fetchYaml]
+  );
 
-  applyValidationMarkers = (): void => {
-    if (!this.monacoRef || !this.monacoEditorRef) {
+  const applyValidationMarkers = React.useCallback((): void => {
+    if (!monacoRef.current || !monacoEditorRef.current) {
       return;
     }
-    const yamlSource = this.fetchYaml();
+
+    const yamlSource = fetchYaml();
     let markers: EditorMarker[] = [];
 
-    if (!this.state.isModified) {
-      const validations = parseKialiValidations(yamlSource, this.state.istioValidations);
+    if (!isModifiedRef.current) {
+      const validations = parseKialiValidations(yamlSource, istioValidationsRef.current);
       markers = [...validations.markers];
-    } else if (this.state.yamlValidations) {
-      markers = [...this.state.yamlValidations.markers];
+    } else if (yamlValidationsRef.current) {
+      markers = [...yamlValidationsRef.current.markers];
     }
 
-    const helpMessages = this.helpMessages(this.state.istioObjectDetails);
-    const helpAnnotations = parseHelpAnnotations(yamlSource, helpMessages);
+    const help = helpMessages(istioObjectDetailsRef.current);
+    const helpAnnotations = parseHelpAnnotations(yamlSource, help);
     const linesWithMarkers = new Set(markers.map(m => m.startLineNumber));
+
     helpAnnotations.forEach(ha => {
       const lineNumber = ha.row + 1;
+
       if (!linesWithMarkers.has(lineNumber)) {
         linesWithMarkers.add(lineNumber);
         markers.push({
@@ -629,38 +311,367 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
       }
     });
 
-    applyMonacoMarkers(this.monacoRef, this.monacoEditorRef, markers);
+    applyMonacoMarkers(monacoRef.current, monacoEditorRef.current, markers);
+  }, [fetchYaml]);
+
+  const resizeEditor = React.useCallback((): void => {
+    if (monacoEditorRef.current) {
+      // The Drawer has an async animation that needs a timeout before resizing the editor
+      setTimeout(() => {
+        monacoEditorRef.current?.layout();
+      }, 250);
+    }
+  }, []);
+
+  const fetchIstioObjectDetailsFromProps = React.useCallback(
+    (configId: IstioConfigId): void => {
+      API.getIstioConfigDetail(
+        configId.namespace,
+        { Group: configId.objectGroup, Version: configId.objectVersion, Kind: configId.objectKind },
+        configId.objectName,
+        true,
+        clusterRef.current
+      )
+        .then(resultConfigDetails => {
+          setCluster(
+            resultConfigDetails.data.cluster || resultConfigDetails.data.namespace.cluster || clusterRef.current
+          );
+          setIstioObjectDetails(resultConfigDetails.data);
+          setIstioValidations(resultConfigDetails.data.validation);
+          setIsModified(false);
+          setIsExpanded(isExpandedForDetails(resultConfigDetails.data));
+          setYamlModified('');
+          setCurrentTab(activeTab(tabName, defaultTab));
+          resizeEditor();
+        })
+        .catch(err => {
+          const msg: ErrorMsg = {
+            title: 'No Istio object is selected',
+            description: `${configId.objectName} is not found in the mesh`
+          };
+
+          setIsRemoved(true);
+          setError(msg);
+
+          addError(
+            `Could not fetch Istio object type [${configId.objectKind}] name [${configId.objectName}] in namespace [${configId.namespace}].`,
+            err
+          );
+        });
+    },
+    // isExpandedForDetails only depends on helpers derived from the fetched payload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [resizeEditor]
+  );
+
+  const fetchIstioObjectDetails = React.useCallback((): void => {
+    fetchIstioObjectDetailsFromProps(istioConfigId);
+  }, [fetchIstioObjectDetailsFromProps, istioConfigId]);
+
+  // Router navigation is blocked when the editor has unsaved changes.
+  const shouldBlock = React.useCallback<BlockerFunction>(
+    ({ currentLocation, nextLocation }) => isModified && currentLocation.pathname !== nextLocation.pathname,
+    [isModified]
+  );
+
+  const blocker = useBlocker(shouldBlock);
+  const isBlockedState = blocker.state === 'blocked';
+
+  React.useEffect(() => {
+    if (isBlockedState && isModified) {
+      setShowModal(true);
+      setModalType('leave');
+    }
+  }, [isBlockedState, isModified]);
+
+  // Block browser/tab close or external navigation when there are unsaved changes.
+  React.useEffect(() => {
+    if (isModified) {
+      window.onbeforeunload = () => true;
+    } else {
+      window.onbeforeunload = null;
+    }
+
+    return () => {
+      window.onbeforeunload = null;
+    };
+  }, [isModified]);
+
+  // Depend on identity fields so a new params object identity does not refetch.
+  React.useEffect(() => {
+    fetchIstioObjectDetailsFromProps(istioConfigId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    fetchIstioObjectDetailsFromProps,
+    istioConfigId.namespace,
+    istioConfigId.objectGroup,
+    istioConfigId.objectKind,
+    istioConfigId.objectName,
+    istioConfigId.objectVersion
+  ]);
+
+  React.useEffect(() => {
+    const heightObserver = heightObserverRef.current;
+
+    const tryStartObserving = (): void => {
+      if (!isObservingRef.current && editorContainerRef.current) {
+        heightObserver.observe(editorContainerRef.current);
+        isObservingRef.current = true;
+      }
+    };
+
+    tryStartObserving();
+
+    return () => {
+      heightObserver.disconnect();
+      cursorDisposableRef.current?.dispose();
+      window.onbeforeunload = null;
+    };
+  }, []);
+
+  // Start observing once the editor container mounts (may happen after first paint while loading).
+  React.useEffect(() => {
+    if (!isObservingRef.current && editorContainerRef.current) {
+      heightObserverRef.current.observe(editorContainerRef.current);
+      isObservingRef.current = true;
+    }
+  });
+
+  // Sync editor content, folding, and markers when data or validations change.
+  React.useEffect(() => {
+    const ed = monacoEditorRef.current;
+
+    if (!ed || !monacoRef.current || isModified) {
+      return;
+    }
+
+    const yamlSource = fetchYaml();
+
+    if (ed.getValue() !== yamlSource) {
+      const scrollTop = ed.getScrollTop();
+      suppressOnChangeRef.current = true;
+      ed.setValue(yamlSource);
+      suppressOnChangeRef.current = false;
+      ed.setScrollTop(scrollTop);
+    }
+
+    const savedScroll = ed.getScrollTop();
+    applyFolding(ed).then(() => {
+      ed.setScrollTop(savedScroll);
+    });
+
+    applyValidationMarkers();
+  }, [istioObjectDetails, istioValidations, isModified, fetchYaml, applyFolding, applyValidationMarkers]);
+
+  React.useEffect(() => {
+    applyValidationMarkers();
+  }, [yamlValidations, applyValidationMarkers]);
+
+  React.useEffect(() => {
+    const active = activeTab(tabName, defaultTab);
+
+    if (currentTab !== active) {
+      setCurrentTab(active);
+    }
+  }, [currentTab]);
+
+  React.useEffect(() => {
+    if (istioValidations) {
+      showInNotificationCenter(istioValidations);
+    }
+  }, [istioValidations]);
+
+  const backToList = (): void => {
+    const backUrl = `/${Paths.ISTIO}?namespaces=${istioConfigId.namespace}`;
+
+    if (isParentKiosk(kiosk)) {
+      kioskNavigateAction(backUrl);
+    } else {
+      router.navigate(backUrl);
+    }
   };
 
-  renderEditor = (): React.ReactNode => {
-    const yamlSource = this.fetchYaml();
-    const istioStatusMsgs = this.getStatusMessages(this.state.istioObjectDetails);
+  const canDelete = (): boolean => {
+    return canDeletePermission(istioObjectDetails?.permissions);
+  };
 
-    const objectReferences = this.objectReferences(this.state.istioObjectDetails);
-    const serviceReferences = this.serviceReferences(this.state.istioObjectDetails);
-    const workloadReferences = this.workloadReferences(this.state.istioObjectDetails);
-    const helpMessages = this.helpMessages(this.state.istioObjectDetails);
+  const canUpdate = (): boolean => {
+    return canUpdatePermission(istioObjectDetails?.permissions);
+  };
 
-    const refPresent = objectReferences.length > 0;
-    const showCards = this.showCards(refPresent, istioStatusMsgs);
+  const onCancel = (): void => {
+    backToList();
+  };
+
+  const onDelete = (): void => {
+    API.deleteIstioConfigDetail(
+      istioConfigId.namespace,
+      {
+        Group: istioConfigId.objectGroup,
+        Version: istioConfigId.objectVersion,
+        Kind: istioConfigId.objectKind
+      },
+      istioConfigId.objectName,
+      cluster
+    )
+      .then(() => backToList())
+      .catch(err => {
+        addError('Could not delete IstioConfig details.', err);
+      });
+  };
+
+  const injectGalleyError = (apiError: ApiError): EditorValidations => {
+    const msg: string[] = API.getErrorString(apiError).split(':');
+    const errMsg: string = msg.slice(1, msg.length).join(':');
+
+    const anno: EditorAnnotation = {
+      column: 0,
+      row: 0,
+      text: errMsg,
+      type: 'error'
+    };
+
+    return { annotations: [anno], markers: [] };
+  };
+
+  const onUpdate = (): void => {
+    loadAll(yamlModified, objectModified => {
+      const jsonPatch = JSON.stringify(
+        mergeJsonPatch(objectModified as object, getIstioObject(istioObjectDetails))
+      ).replace(new RegExp('(,null)+]', 'g'), ']');
+
+      API.updateIstioConfigDetail(
+        istioConfigId.namespace,
+        {
+          Group: istioConfigId.objectGroup,
+          Version: istioConfigId.objectVersion,
+          Kind: istioConfigId.objectKind
+        },
+        istioConfigId.objectName,
+        jsonPatch,
+        cluster
+      )
+        .then(() => {
+          const targetMessage = `${istioConfigId.namespace} / ${istioConfigId.objectKind} / ${istioConfigId.objectName}`;
+          addSuccess(`Changes applied on ${targetMessage}`);
+          fetchIstioObjectDetails();
+        })
+        .catch(err => {
+          addError('Could not update IstioConfig details.', err);
+          setYamlValidations(injectGalleyError(err));
+        });
+    });
+  };
+
+  const onDrawerToggle = (): void => {
+    setIsExpanded(prev => !prev);
+    resizeEditor();
+  };
+
+  const onDrawerClose = (): void => {
+    setIsExpanded(false);
+    resizeEditor();
+  };
+
+  const onEditorChange = (value: string | undefined): void => {
+    if (suppressOnChangeRef.current) {
+      return;
+    }
+
+    setIsModified(true);
+    setYamlModified(value || '');
+    setIstioValidations(undefined);
+    setYamlValidations(parseYamlValidations(value || ''));
+  };
+
+  const onRefresh = (): void => {
+    if (isModified) {
+      setShowModal(true);
+      setModalType('reload');
+      return;
+    }
+
+    fetchIstioObjectDetails();
+  };
+
+  const onCursorChange = (e: any): void => {
+    if (e?.position) {
+      const line = parseLine(fetchYaml(), e.position.lineNumber - 1);
+      setSelectedEditorLine(line);
+    }
+  };
+
+  const onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
+    monacoEditorRef.current = ed;
+    monacoRef.current = monaco;
+    (window as any).monaco = monaco;
+    cursorDisposableRef.current = ed.onDidChangeCursorPosition(onCursorChange);
+    applyValidationMarkers();
+
+    // Open the side panel when clicking an info glyph icon in the margin
+    ed.onMouseDown(mouseEvent => {
+      if (mouseEvent.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && mouseEvent.target.position) {
+        const lineNumber = mouseEvent.target.position.lineNumber;
+        const line = parseLine(fetchYaml(), lineNumber - 1);
+        setSelectedEditorLine(line);
+        setIsExpanded(true);
+        resizeEditor();
+      }
+    });
+
+    applyFolding(ed);
+  };
+
+  const confirmModal = (): void => {
+    if (modalType === 'reload') {
+      fetchIstioObjectDetails();
+    } else if (modalType === 'leave' && blocker.state === 'blocked') {
+      blocker.proceed();
+    }
+
+    setShowModal(false);
+    setModalType(null);
+  };
+
+  const hideModal = (): void => {
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
+
+    setShowModal(false);
+    setModalType(null);
+  };
+
+  const modalActionLabel = modalType === 'reload' ? t('Reload') : t('Leave');
+
+  const renderEditor = (): React.ReactNode => {
+    const yamlSource = fetchYaml();
+    const istioStatusMsgs = getStatusMessages(istioObjectDetails);
+    const objRefs = objectReferences(istioObjectDetails);
+    const svcRefs = serviceReferences(istioObjectDetails);
+    const wlRefs = workloadReferences(istioObjectDetails);
+    const help = helpMessages(istioObjectDetails);
+    const refPresent = objRefs.length > 0;
+    const cardsVisible = showCards(refPresent, istioStatusMsgs);
+    const editorPixelHeight = Math.max(editorHeight, 200);
 
     const panelContent = (
       <DrawerPanelContent>
         <DrawerHead>
           <div>
-            {showCards && (
+            {cardsVisible && (
               <>
-                {this.state.istioObjectDetails && (
+                {istioObjectDetails && (
                   <IstioConfigOverview
-                    istioObjectDetails={this.state.istioObjectDetails}
-                    istioValidations={this.state.istioValidations}
-                    namespace={this.state.istioObjectDetails.namespace.name}
+                    istioObjectDetails={istioObjectDetails}
+                    istioValidations={istioValidations}
+                    namespace={istioObjectDetails.namespace.name}
                     statusMessages={istioStatusMsgs}
-                    objectReferences={objectReferences}
-                    serviceReferences={serviceReferences}
-                    workloadReferences={workloadReferences}
-                    helpMessages={helpMessages}
-                    selectedLine={this.state.selectedEditorLine}
+                    objectReferences={objRefs}
+                    serviceReferences={svcRefs}
+                    workloadReferences={wlRefs}
+                    helpMessages={help}
+                    selectedLine={selectedEditorLine}
                   />
                 )}
               </>
@@ -668,26 +679,24 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
           </div>
 
           <DrawerActions>
-            <DrawerCloseButton onClick={this.onDrawerClose} />
+            <DrawerCloseButton onClick={onDrawerClose} />
           </DrawerActions>
         </DrawerHead>
       </DrawerPanelContent>
     );
 
-    const aceHeight = Math.max(this.state.editorHeight, 200);
-
-    const editor = this.state.istioObjectDetails ? (
-      <div style={{ width: '100%', height: `${aceHeight}px`, overflow: 'hidden' }}>
+    const editorNode = istioObjectDetails ? (
+      <div style={{ width: '100%', height: `${editorPixelHeight}px`, overflow: 'hidden' }}>
         <div className={editorStyle} data-test="istio-config-editor" style={{ height: '100%' }}>
           <Editor
             value={yamlSource}
             language="yaml"
-            theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="100%"
-            onChange={this.onEditorChange}
-            onMount={this.onEditorDidMount}
+            onChange={onEditorChange}
+            onMount={onEditorDidMount}
             options={{
-              readOnly: !this.canUpdate(),
+              readOnly: !canUpdate(),
               wordWrap: 'on',
               scrollBeyondLastLine: false,
               folding: true,
@@ -701,125 +710,123 @@ class IstioConfigDetailsPageComponent extends React.Component<IstioConfigDetails
 
     return (
       <div className={`object-drawer ${editorDrawer} ${drawerPanelStyle}`}>
-        <div ref={this.editorContainerRef} className={editorAreaStyle}>
-          {showCards ? (
-            <Drawer isExpanded={this.state.isExpanded} isInline={true}>
-              <DrawerContent panelContent={showCards ? panelContent : undefined}>
-                <DrawerContentBody>{editor}</DrawerContentBody>
+        <div ref={editorContainerRef} className={editorAreaStyle}>
+          {cardsVisible ? (
+            <Drawer isExpanded={isExpanded} isInline={true}>
+              <DrawerContent panelContent={cardsVisible ? panelContent : undefined}>
+                <DrawerContentBody>{editorNode}</DrawerContentBody>
               </DrawerContent>
             </Drawer>
           ) : (
-            editor
+            editorNode
           )}
         </div>
-        <div className={noShrinkStyle}>{this.renderActionButtons(showCards)}</div>
+        <div className={noShrinkStyle}>{renderActionButtons(cardsVisible)}</div>
       </div>
     );
   };
 
-  renderActionButtons = (showOverview: boolean): React.ReactNode => {
-    // User won't save if file has yaml errors
-    const yamlErrors = !!(this.state.yamlValidations && this.state.yamlValidations.markers.length > 0);
+  const renderActionButtons = (showOverview: boolean): React.ReactNode => {
+    const yamlErrors = !!(yamlValidations && yamlValidations.markers.length > 0);
 
     return (
       <IstioActionButtons
-        objectName={this.props.istioConfigId.objectName}
-        readOnly={!this.canUpdate()}
-        canUpdate={this.canUpdate() && this.state.isModified && !this.state.isRemoved && !yamlErrors}
-        onCancel={this.onCancel}
-        onUpdate={this.onUpdate}
-        onRefresh={this.onRefresh}
+        objectName={istioConfigId.objectName}
+        readOnly={!canUpdate()}
+        canUpdate={canUpdate() && isModified && !isRemoved && !yamlErrors}
+        onCancel={onCancel}
+        onUpdate={onUpdate}
+        onRefresh={onRefresh}
         showOverview={showOverview}
-        overview={this.state.isExpanded}
-        onOverview={this.onDrawerToggle}
+        overview={isExpanded}
+        onOverview={onDrawerToggle}
       />
     );
   };
 
-  renderActions = (): React.ReactNode => {
-    const canDelete = this.canDelete() && !this.state.isRemoved;
-
-    const istioObject = getIstioObject(this.state.istioObjectDetails);
+  const renderActions = (): React.ReactNode => {
+    const istioObject = getIstioObject(istioObjectDetails);
 
     return (
       <IstioActionDropdown
         objectKind={istioObject ? istioObject.kind : undefined}
-        objectName={this.props.istioConfigId.objectName}
-        canDelete={canDelete}
-        onDelete={this.onDelete}
+        objectName={istioConfigId.objectName}
+        canDelete={canDelete() && !isRemoved}
+        onDelete={onDelete}
       />
     );
   };
 
-  render(): React.ReactNode {
-    return (
-      <>
-        <RenderHeader>
-          {this.state.istioObjectDetails && (
-            <div className={detailTitleRowStyle}>
-              <div className={detailTitleMainStyle}>
-                <PFBadge
-                  badge={
-                    GVKToBadge[
-                      getGVKTypeString({
-                        Group: this.props.istioConfigId.objectGroup,
-                        Kind: this.props.istioConfigId.objectKind,
-                        Version: this.props.istioConfigId.objectVersion
-                      })
-                    ]
-                  }
-                  position={TooltipPosition.top}
-                />
-                <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
-                  {this.props.istioConfigId.objectName}
-                </Title>
-              </div>
+  return (
+    <>
+      <RenderHeader>
+        {istioObjectDetails && (
+          <div className={detailTitleRowStyle}>
+            <div className={detailTitleMainStyle}>
+              <PFBadge
+                badge={
+                  GVKToBadge[
+                    getGVKTypeString({
+                      Group: istioConfigId.objectGroup,
+                      Kind: istioConfigId.objectKind,
+                      Version: istioConfigId.objectVersion
+                    })
+                  ]
+                }
+                position={TooltipPosition.top}
+              />
+              <Title headingLevel="h1" size={TitleSizes.xl} style={{ margin: 0, flexShrink: 0 }}>
+                {istioConfigId.objectName}
+              </Title>
             </div>
-          )}
-        </RenderHeader>
-
-        {this.state.error && <ErrorSection error={this.state.error} />}
-
-        {!this.state.error && (
-          <ParameterizedTabs
-            id="basic-tabs"
-            className={basicTabStyle}
-            actionsToolbar={this.renderActions()}
-            onSelect={tabValue => {
-              this.setState({ currentTab: tabValue });
-            }}
-            tabMap={paramToTab}
-            tabName={tabName}
-            defaultTab={this.defaultTab()}
-            activeTab={this.state.currentTab}
-            mountOnEnter={false}
-            unmountOnExit={true}
-          >
-            <Tab key="istio-yaml" title={`YAML ${this.state.isModified ? ' * ' : ''}`} eventKey={0}>
-              <div className={classes(flexFillStyle, constrainedScrollStyle)}>{this.renderEditor()}</div>
-            </Tab>
-          </ParameterizedTabs>
+          </div>
         )}
+      </RenderHeader>
 
-        {/* TODO Enable Prompt
-        <Prompt
-          message={location => {
-            if (this.state.isModified) {
-              // Check if Prompt is invoked multiple times
-              if (this.promptTo === location.pathname) {
-                return true;
-              }
+      {error && <ErrorSection error={error} />}
 
-              this.promptTo = location.pathname;
-              return 'You have unsaved changes, are you sure you want to leave?';
-            }
-            return true;
+      {!error && (
+        <ParameterizedTabs
+          id="basic-tabs"
+          className={basicTabStyle}
+          actionsToolbar={renderActions()}
+          onSelect={tabValue => {
+            setCurrentTab(tabValue);
           }}
-        /> */}
-      </>
-    );
-  }
-}
+          tabMap={paramToTab}
+          tabName={tabName}
+          defaultTab={defaultTab}
+          activeTab={currentTab}
+          mountOnEnter={false}
+          unmountOnExit={true}
+        >
+          <Tab key="istio-yaml" title={`YAML ${isModified ? ' * ' : ''}`} eventKey={0}>
+            <div className={classes(flexFillStyle, constrainedScrollStyle)}>{renderEditor()}</div>
+          </Tab>
+        </ParameterizedTabs>
+      )}
+
+      <Modal variant={ModalVariant.small} isOpen={showModal} onClose={hideModal} data-test="unsaved-changes-modal">
+        <ModalHeader title={t('Confirm {{modalType}}', { modalType: modalActionLabel })} />
+        <ModalBody>
+          <Content component={ContentVariants.p}>
+            {t('You have unsaved changes, are you sure you want to {{modalType}}?', {
+              modalType: modalActionLabel.toLowerCase()
+            })}
+          </Content>
+        </ModalBody>
+        <ModalFooter>
+          <Button key="confirm" variant={ButtonVariant.primary} onClick={confirmModal} data-test="confirm-unsaved">
+            {modalActionLabel}
+          </Button>
+          <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideModal} data-test="cancel-unsaved">
+            {t('Cancel')}
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </>
+  );
+};
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
