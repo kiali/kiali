@@ -139,7 +139,10 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   const editorContainerRef = React.useRef<HTMLDivElement>(null);
   const cursorDisposableRef = React.useRef<{ dispose(): void } | null>(null);
   const foldGenerationRef = React.useRef<number>(0);
+  const fetchGenerationRef = React.useRef<number>(0);
   const isObservingRef = React.useRef<boolean>(false);
+  // Standalone Cancel stores a target URL; useBlocker leave uses proceed() instead.
+  const pendingLeaveUrlRef = React.useRef<string | null>(null);
   const heightObserverRef = React.useRef<ResizeHeightObserver>(
     new ResizeHeightObserver(height => setEditorHeight(height))
   );
@@ -159,7 +162,18 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   istioValidationsRef.current = istioValidations;
   yamlValidationsRef.current = yamlValidations;
 
+  const clearEditorDirtyState = React.useCallback((): void => {
+    setIsModified(false);
+    setYamlModified('');
+    setYamlValidations(undefined);
+    isModifiedRef.current = false;
+    yamlModifiedRef.current = '';
+  }, []);
+
   const { kiosk, theme, istioConfigId } = props;
+  // OSSMC (parent kiosk) matches OpenShift Console Edit YAML: no in-app leave/reload
+  // modals — only beforeunload for tab close/refresh (see Console usePreventDataLossLock).
+  const isOssmc = isParentKiosk(kiosk);
 
   const fetchYaml = React.useCallback((): string => {
     if (isModifiedRef.current) {
@@ -258,7 +272,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         return Promise.resolve();
       }
 
-      // createFoldingRangeFromSelection creates a fold from a selection and collapses it.
+      // Prefer selection-based folding so managedFields collapse without a custom folding provider.
       const foldAction = ed.getAction('editor.createFoldingRangeFromSelection');
 
       if (foldAction) {
@@ -338,6 +352,8 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
 
   const fetchIstioObjectDetailsFromProps = React.useCallback(
     (configId: IstioConfigId): void => {
+      const generation = ++fetchGenerationRef.current;
+
       API.getIstioConfigDetail(
         configId.namespace,
         { Group: configId.objectGroup, Version: configId.objectVersion, Kind: configId.objectKind },
@@ -346,6 +362,11 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         clusterRef.current
       )
         .then(resultConfigDetails => {
+          // Ignore stale responses when the user navigated to another config or re-fetched.
+          if (generation !== fetchGenerationRef.current) {
+            return;
+          }
+
           const istioObject = getIstioObject(resultConfigDetails.data);
           const yamlSource = istioObject ? dump(istioObject, yamlDumpOptions) : '';
 
@@ -354,16 +375,18 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
           );
           setIstioObjectDetails(resultConfigDetails.data);
           setIstioValidations(resultConfigDetails.data.validation);
-          setIsModified(false);
+          clearEditorDirtyState();
           setIsExpanded(isExpandedForDetails(resultConfigDetails.data));
-          setYamlModified('');
-          setYamlValidations(undefined);
           setEditorDefaultValue(yamlSource);
           setEditorRevision(revision => revision + 1);
           setCurrentTab(activeTab(tabName, defaultTab));
           resizeEditor();
         })
         .catch(err => {
+          if (generation !== fetchGenerationRef.current) {
+            return;
+          }
+
           const msg: ErrorMsg = {
             title: 'No Istio object is selected',
             description: `${configId.objectName} is not found in the mesh`
@@ -380,39 +403,53 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     },
     // isExpandedForDetails only depends on helpers derived from the fetched payload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [resizeEditor]
+    [clearEditorDirtyState, resizeEditor]
   );
 
   const fetchIstioObjectDetails = React.useCallback((): void => {
     fetchIstioObjectDetailsFromProps(istioConfigId);
   }, [fetchIstioObjectDetailsFromProps, istioConfigId]);
 
-  // Router navigation is blocked when the editor has unsaved changes.
+  // Standalone Kiali: block SPA navigation when dirty. OSSMC skips this — Console owns
+  // navigation via postMessage and Edit YAML likewise has no in-app leave prompt.
   const shouldBlock = React.useCallback<BlockerFunction>(
-    ({ currentLocation, nextLocation }) => isModified && currentLocation.pathname !== nextLocation.pathname,
-    [isModified]
+    ({ currentLocation, nextLocation }) => !isOssmc && isModified && currentLocation.pathname !== nextLocation.pathname,
+    [isModified, isOssmc]
   );
 
   const blocker = useBlocker(shouldBlock);
   const isBlockedState = blocker.state === 'blocked';
 
   React.useEffect(() => {
-    if (isBlockedState && isModified) {
-      setShowModal(true);
-      setModalType('leave');
+    if (!isBlockedState) {
+      return;
     }
-  }, [isBlockedState, isModified]);
 
-  // Block browser/tab close or external navigation when there are unsaved changes.
+    // Fetch may have cleared dirty state while navigation was already blocked.
+    if (!isModified) {
+      blocker.proceed?.();
+      return;
+    }
+
+    setShowModal(true);
+    // Keep an open reload confirm; leave is offered after reload is dismissed.
+    setModalType(prev => (prev === 'reload' ? prev : 'leave'));
+  }, [blocker, isBlockedState, isModified]);
+
+  // Match OpenShift Console usePreventDataLossLock: warn on tab close/refresh only.
   React.useEffect(() => {
-    if (isModified) {
-      window.onbeforeunload = () => true;
-    } else {
-      window.onbeforeunload = null;
+    if (!isModified) {
+      return;
     }
 
+    const onBeforeUnload = (e: BeforeUnloadEvent): void => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
     return () => {
-      window.onbeforeunload = null;
+      window.removeEventListener('beforeunload', onBeforeUnload);
     };
   }, [isModified]);
 
@@ -444,7 +481,6 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     return () => {
       heightObserver.disconnect();
       cursorDisposableRef.current?.dispose();
-      window.onbeforeunload = null;
     };
   }, []);
 
@@ -454,7 +490,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
       heightObserverRef.current.observe(editorContainerRef.current);
       isObservingRef.current = true;
     }
-  });
+  }, [istioObjectDetails, editorRevision]);
 
   // Re-apply markers when validations change. Do not call setValue here — that fights the
   // user's caret (Monaco React replaces the full model and jumps the cursor to the end).
@@ -476,14 +512,27 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     }
   }, [istioValidations]);
 
-  const backToList = (): void => {
+  const navigateAway = (url: string): void => {
+    if (isOssmc) {
+      kioskNavigateAction(url);
+    } else {
+      router.navigate(url);
+    }
+  };
+
+  const navigateToList = (force = false): void => {
     const backUrl = `/${Paths.ISTIO}?namespaces=${istioConfigId.namespace}`;
 
-    if (isParentKiosk(kiosk)) {
-      kioskNavigateAction(backUrl);
-    } else {
-      router.navigate(backUrl);
+    // Standalone: confirm leave when dirty. OSSMC: leave immediately (Console Edit YAML).
+    if (!force && isModified && !isOssmc) {
+      pendingLeaveUrlRef.current = backUrl;
+      setShowModal(true);
+      setModalType('leave');
+      return;
     }
+
+    pendingLeaveUrlRef.current = null;
+    navigateAway(backUrl);
   };
 
   const canDelete = (): boolean => {
@@ -494,11 +543,11 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     return canUpdatePermission(istioObjectDetails?.permissions);
   };
 
-  const onCancel = (): void => {
-    backToList();
+  const handleCancel = (): void => {
+    navigateToList();
   };
 
-  const onDelete = (): void => {
+  const handleDelete = (): void => {
     API.deleteIstioConfigDetail(
       istioConfigId.namespace,
       {
@@ -509,7 +558,10 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
       istioConfigId.objectName,
       cluster
     )
-      .then(() => backToList())
+      .then(() => {
+        clearEditorDirtyState();
+        navigateToList(true);
+      })
       .catch(err => {
         addError('Could not delete IstioConfig details.', err);
       });
@@ -529,7 +581,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     return { annotations: [anno], markers: [] };
   };
 
-  const onUpdate = (): void => {
+  const handleUpdate = (): void => {
     loadAll(yamlModified, objectModified => {
       const jsonPatch = JSON.stringify(
         mergeJsonPatch(objectModified as object, getIstioObject(istioObjectDetails))
@@ -558,17 +610,17 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     });
   };
 
-  const onDrawerToggle = (): void => {
+  const handleDrawerToggle = (): void => {
     setIsExpanded(prev => !prev);
     resizeEditor();
   };
 
-  const onDrawerClose = (): void => {
+  const handleDrawerClose = (): void => {
     setIsExpanded(false);
     resizeEditor();
   };
 
-  const onEditorChange = React.useCallback((value: string | undefined): void => {
+  const handleEditorChange = React.useCallback((value: string | undefined): void => {
     // Cancel any in-flight folding so async selection/position updates cannot steal focus.
     foldGenerationRef.current++;
 
@@ -578,17 +630,19 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     setYamlValidations(parseYamlValidations(value || ''));
   }, []);
 
-  const onRefresh = (): void => {
-    if (isModified) {
+  const handleRefresh = (): boolean => {
+    // Standalone: confirm reload when dirty. OSSMC: reload immediately (Console Edit YAML).
+    if (isModified && !isOssmc) {
       setShowModal(true);
       setModalType('reload');
-      return;
+      return false;
     }
 
     fetchIstioObjectDetails();
+    return true;
   };
 
-  const onCursorChange = React.useCallback(
+  const handleCursorChange = React.useCallback(
     (e: any): void => {
       if (e?.position) {
         const line = parseLine(fetchYaml(), e.position.lineNumber - 1);
@@ -598,13 +652,13 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     [fetchYaml]
   );
 
-  const onEditorDidMount = React.useCallback(
+  const handleEditorDidMount = React.useCallback(
     (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
       monacoEditorRef.current = ed;
       monacoRef.current = monaco;
       (window as any).monaco = monaco;
       cursorDisposableRef.current?.dispose();
-      cursorDisposableRef.current = ed.onDidChangeCursorPosition(onCursorChange);
+      cursorDisposableRef.current = ed.onDidChangeCursorPosition(handleCursorChange);
       applyValidationMarkers();
 
       // Open the side panel when clicking an info glyph icon in the margin
@@ -623,7 +677,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
 
       applyFolding(ed);
     },
-    [applyFolding, applyValidationMarkers, fetchYaml, onCursorChange, resizeEditor]
+    [applyFolding, applyValidationMarkers, fetchYaml, handleCursorChange, resizeEditor]
   );
 
   const editorOptions = React.useMemo(
@@ -638,18 +692,42 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     [istioObjectDetails?.permissions]
   );
 
-  const confirmModal = (): void => {
+  const handleConfirm = (): void => {
     if (modalType === 'reload') {
+      // User chose reload over a pending leave navigation.
+      if (blocker.state === 'blocked') {
+        blocker.reset();
+      }
+
+      pendingLeaveUrlRef.current = null;
       fetchIstioObjectDetails();
-    } else if (modalType === 'leave' && blocker.state === 'blocked') {
-      blocker.proceed();
+    } else if (modalType === 'leave') {
+      const leaveUrl = pendingLeaveUrlRef.current;
+      pendingLeaveUrlRef.current = null;
+      // Clear dirty before leave so the reused route instance cannot PATCH stale YAML.
+      clearEditorDirtyState();
+
+      if (blocker.state === 'blocked') {
+        blocker.proceed();
+      } else if (leaveUrl) {
+        navigateAway(leaveUrl);
+      }
     }
 
     setShowModal(false);
     setModalType(null);
   };
 
-  const hideModal = (): void => {
+  const handleModalClose = (): void => {
+    if (modalType === 'reload' && (blocker.state === 'blocked' || pendingLeaveUrlRef.current)) {
+      // Reload was dismissed while leave is still pending — ask about leave next.
+      setModalType('leave');
+      setShowModal(true);
+      return;
+    }
+
+    pendingLeaveUrlRef.current = null;
+
     if (blocker.state === 'blocked') {
       blocker.reset();
     }
@@ -694,7 +772,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
           </div>
 
           <DrawerActions>
-            <DrawerCloseButton onClick={onDrawerClose} />
+            <DrawerCloseButton onClick={handleDrawerClose} />
           </DrawerActions>
         </DrawerHead>
       </DrawerPanelContent>
@@ -709,8 +787,8 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
             language="yaml"
             theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="100%"
-            onChange={onEditorChange}
-            onMount={onEditorDidMount}
+            onChange={handleEditorChange}
+            onMount={handleEditorDidMount}
             options={editorOptions}
           />
         </div>
@@ -743,12 +821,12 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         objectName={istioConfigId.objectName}
         readOnly={!canUpdate()}
         canUpdate={canUpdate() && isModified && !isRemoved && !yamlErrors}
-        onCancel={onCancel}
-        onUpdate={onUpdate}
-        onRefresh={onRefresh}
+        onCancel={handleCancel}
+        onUpdate={handleUpdate}
+        onRefresh={handleRefresh}
         showOverview={showOverview}
         overview={isExpanded}
-        onOverview={onDrawerToggle}
+        onOverview={handleDrawerToggle}
       />
     );
   };
@@ -761,7 +839,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         objectKind={istioObject ? istioObject.kind : undefined}
         objectName={istioConfigId.objectName}
         canDelete={canDelete() && !isRemoved}
-        onDelete={onDelete}
+        onDelete={handleDelete}
       />
     );
   };
@@ -815,7 +893,12 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         </ParameterizedTabs>
       )}
 
-      <Modal variant={ModalVariant.small} isOpen={showModal} onClose={hideModal} data-test="unsaved-changes-modal">
+      <Modal
+        variant={ModalVariant.small}
+        isOpen={showModal}
+        onClose={handleModalClose}
+        data-test="unsaved-changes-modal"
+      >
         <ModalHeader title={t('Confirm {{modalType}}', { modalType: modalActionLabel })} />
         <ModalBody>
           <Content component={ContentVariants.p}>
@@ -825,10 +908,10 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
           </Content>
         </ModalBody>
         <ModalFooter>
-          <Button key="confirm" variant={ButtonVariant.primary} onClick={confirmModal} data-test="confirm-unsaved">
+          <Button key="confirm" variant={ButtonVariant.primary} onClick={handleConfirm} data-test="confirm-unsaved">
             {modalActionLabel}
           </Button>
-          <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideModal} data-test="cancel-unsaved">
+          <Button key="cancel" variant={ButtonVariant.secondary} onClick={handleModalClose} data-test="cancel-unsaved">
             {t('Cancel')}
           </Button>
         </ModalFooter>

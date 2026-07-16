@@ -7,7 +7,8 @@ type Props = {
   objectName: string;
   onCancel: () => void;
   onOverview: () => void;
-  onRefresh: () => void;
+  // Return false when refresh is deferred (e.g. unsaved-changes confirmation).
+  onRefresh: () => boolean;
   onUpdate: () => void;
   overview: boolean;
   readOnly: boolean;
@@ -15,9 +16,10 @@ type Props = {
 };
 
 export const IstioActionButtons: React.FC<Props> = (props: Props) => {
-  const handleRefresh = () => {
-    props.onRefresh();
-    triggerRefresh();
+  const handleRefresh = (): void => {
+    if (props.onRefresh()) {
+      triggerRefresh();
+    }
   };
 
   return (
@@ -32,13 +34,13 @@ export const IstioActionButtons: React.FC<Props> = (props: Props) => {
         )}
 
         <span style={{ paddingRight: '0.25rem' }}>
-          <Button variant={ButtonVariant.secondary} onClick={handleRefresh}>
+          <Button variant={ButtonVariant.secondary} onClick={handleRefresh} data-test="reload-istio-config">
             Reload
           </Button>
         </span>
 
         <span style={{ paddingRight: '0.25rem' }}>
-          <Button variant={ButtonVariant.secondary} onClick={props.onCancel}>
+          <Button variant={ButtonVariant.secondary} onClick={props.onCancel} data-test="cancel-istio-config">
             {props.readOnly ? 'Close' : 'Cancel'}
           </Button>
         </span>

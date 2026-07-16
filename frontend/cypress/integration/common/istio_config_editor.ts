@@ -1,9 +1,6 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
-When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
-  cy.intercept('PATCH', `**/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${name}*`, {
-    statusCode: 200
-  }).as(`${name}-update`);
+const editIstioConfigYaml = (): void => {
   cy.get('[data-test="istio-config-editor"] .monaco-editor').should('be.visible');
   cy.window().then((win: any) => {
     const monaco = win.monaco;
@@ -12,11 +9,41 @@ When('user updates the {string} AuthorizationPolicy using the text field', (name
     const model = ed.getModel();
     const lastLine = model.getLineCount();
     const lastCol = model.getLineMaxColumn(lastLine);
-    ed.executeEdits('cypress-test', [
-      { range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }
-    ]);
+    ed.executeEdits('cypress-test', [{ range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }]);
   });
+};
+
+When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
+  cy.intercept('PATCH', `**/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${name}*`, {
+    statusCode: 200
+  }).as(`${name}-update`);
+  editIstioConfigYaml();
   cy.get('button').contains('Save').should('not.be.disabled').click();
+});
+
+When('user edits the Istio config YAML', () => {
+  editIstioConfigYaml();
+});
+
+When('user clicks the Istio config Reload button', () => {
+  cy.getBySel('reload-istio-config').click();
+});
+
+When('user clicks the Istio config Cancel button', () => {
+  cy.getBySel('cancel-istio-config').click();
+});
+
+When('user cancels the unsaved changes modal', () => {
+  cy.getBySel('cancel-unsaved').click();
+});
+
+Then('user sees the unsaved changes modal for {string}', (action: string) => {
+  cy.getBySel('unsaved-changes-modal').should('be.visible');
+  cy.getBySel('confirm-unsaved').should('contain.text', action);
+});
+
+Then('user does not see the unsaved changes modal', () => {
+  cy.getBySel('unsaved-changes-modal').should('not.exist');
 });
 
 When('user chooses to delete the object', () => {
