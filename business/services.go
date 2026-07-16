@@ -577,7 +577,7 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 
 	var vsCreate, vsUpdate, vsDelete bool
 	wg.Add(1)
-	go func() {
+	go func(ctx context.Context) {
 		defer wg.Done()
 		/*
 			We can safely assume that permissions for VirtualServices will be similar as DestinationRules.
@@ -590,8 +590,8 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 			errChan <- fmt.Errorf("client not found for cluster: %s", cluster)
 			return
 		}
-		vsCreate, vsUpdate, vsDelete = getPermissions(context.TODO(), userClient, cluster, namespace, kubernetes.VirtualServices, in.conf)
-	}()
+		vsCreate, vsUpdate, vsDelete = getPermissions(ctx, userClient, cluster, namespace, kubernetes.VirtualServices, in.conf)
+	}(ctx)
 
 	wg.Wait()
 	if len(errChan) != 0 {
@@ -818,7 +818,7 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 	// Identify controller and apply patch to workload
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
 	// if namespace is accessible from Kiali (Deployment.AccessibleNamespaces)
-	if _, err := in.businessLayer.Namespace.GetClusterNamespace(context.TODO(), namespace, cluster); err != nil {
+	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		return nil, err
 	}
 
