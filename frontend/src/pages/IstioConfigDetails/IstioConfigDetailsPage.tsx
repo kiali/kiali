@@ -171,9 +171,9 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, []);
 
   const { kiosk, theme, istioConfigId } = props;
-  // OSSMC (parent kiosk) matches OpenShift Console Edit YAML: no in-app leave/reload
+  // Parent kiosk (e.g. OSSMC) matches OpenShift Console Edit YAML: no in-app leave/reload
   // modals — only beforeunload for tab close/refresh (see Console usePreventDataLossLock).
-  const isOssmc = isParentKiosk(kiosk);
+  const parentKiosk = isParentKiosk(kiosk);
 
   const fetchYaml = React.useCallback((): string => {
     if (isModifiedRef.current) {
@@ -410,11 +410,12 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     fetchIstioObjectDetailsFromProps(istioConfigId);
   }, [fetchIstioObjectDetailsFromProps, istioConfigId]);
 
-  // Standalone Kiali: block SPA navigation when dirty. OSSMC skips this — Console owns
-  // navigation via postMessage and Edit YAML likewise has no in-app leave prompt.
+  // Standalone Kiali: block SPA navigation when dirty. Parent kiosk skips this — the parent
+  // owns navigation via postMessage and Console Edit YAML has no in-app leave prompt.
   const shouldBlock = React.useCallback<BlockerFunction>(
-    ({ currentLocation, nextLocation }) => !isOssmc && isModified && currentLocation.pathname !== nextLocation.pathname,
-    [isModified, isOssmc]
+    ({ currentLocation, nextLocation }) =>
+      !parentKiosk && isModified && currentLocation.pathname !== nextLocation.pathname,
+    [isModified, parentKiosk]
   );
 
   const blocker = useBlocker(shouldBlock);
@@ -513,7 +514,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, [istioValidations]);
 
   const navigateAway = (url: string): void => {
-    if (isOssmc) {
+    if (parentKiosk) {
       kioskNavigateAction(url);
     } else {
       router.navigate(url);
@@ -523,8 +524,8 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   const navigateToList = (force = false): void => {
     const backUrl = `/${Paths.ISTIO}?namespaces=${istioConfigId.namespace}`;
 
-    // Standalone: confirm leave when dirty. OSSMC: leave immediately (Console Edit YAML).
-    if (!force && isModified && !isOssmc) {
+    // Standalone: confirm leave when dirty. Parent kiosk: leave immediately (Console Edit YAML).
+    if (!force && isModified && !parentKiosk) {
       pendingLeaveUrlRef.current = backUrl;
       setShowModal(true);
       setModalType('leave');
@@ -631,8 +632,8 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   }, []);
 
   const handleRefresh = (): boolean => {
-    // Standalone: confirm reload when dirty. OSSMC: reload immediately (Console Edit YAML).
-    if (isModified && !isOssmc) {
+    // Standalone: confirm reload when dirty. Parent kiosk: reload immediately (Console Edit YAML).
+    if (isModified && !parentKiosk) {
       setShowModal(true);
       setModalType('reload');
       return false;
