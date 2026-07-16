@@ -116,9 +116,12 @@ type IstioConfigDetailsProps = ReduxProps & {
 const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (props: IstioConfigDetailsProps) => {
   const { t } = useKialiTranslation();
 
-  const [cluster, setCluster] = React.useState<string | undefined>(HistoryManager.getClusterName());
-  const [currentTab, setCurrentTab] = React.useState<string>(activeTab(tabName, defaultTab));
+  const [cluster, setCluster] = React.useState<string | undefined>(() => HistoryManager.getClusterName());
+  const [currentTab, setCurrentTab] = React.useState<string>(() => activeTab(tabName, defaultTab));
+  const [editorDefaultValue, setEditorDefaultValue] = React.useState<string>('');
   const [editorHeight, setEditorHeight] = React.useState<number>(0);
+  // Remount Monaco when server YAML is (re)loaded so we can stay uncontrolled while typing.
+  const [editorRevision, setEditorRevision] = React.useState<number>(0);
   const [error, setError] = React.useState<ErrorMsg>();
   const [isExpanded, setIsExpanded] = React.useState<boolean>(false);
   const [isModified, setIsModified] = React.useState<boolean>(false);
@@ -135,7 +138,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   const monacoRef = React.useRef<MonacoInstance | null>(null);
   const editorContainerRef = React.useRef<HTMLDivElement>(null);
   const cursorDisposableRef = React.useRef<{ dispose(): void } | null>(null);
-  const suppressOnChangeRef = React.useRef<boolean>(false);
+  const foldGenerationRef = React.useRef<number>(0);
   const isObservingRef = React.useRef<boolean>(false);
   const heightObserverRef = React.useRef<ResizeHeightObserver>(
     new ResizeHeightObserver(height => setEditorHeight(height))
@@ -247,6 +250,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
 
   const applyFolding = React.useCallback(
     (ed: editor.IStandaloneCodeEditor): Promise<void> => {
+      const generation = ++foldGenerationRef.current;
       const yamlSource = fetchYaml();
       const foldRanges = getFoldRanges(yamlSource);
 
@@ -260,8 +264,17 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
       if (foldAction) {
         const doFold = async (): Promise<void> => {
           for (const range of foldRanges) {
+            // Abort if the user started editing or a newer fold pass started.
+            if (generation !== foldGenerationRef.current || isModifiedRef.current) {
+              return;
+            }
+
             ed.setSelection(new Selection(range.start, 1, range.end + 1, 1));
             await foldAction.run();
+          }
+
+          if (generation !== foldGenerationRef.current || isModifiedRef.current) {
+            return;
           }
 
           ed.setPosition({ lineNumber: 1, column: 1 });
@@ -333,6 +346,9 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
         clusterRef.current
       )
         .then(resultConfigDetails => {
+          const istioObject = getIstioObject(resultConfigDetails.data);
+          const yamlSource = istioObject ? dump(istioObject, yamlDumpOptions) : '';
+
           setCluster(
             resultConfigDetails.data.cluster || resultConfigDetails.data.namespace.cluster || clusterRef.current
           );
@@ -341,6 +357,9 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
           setIsModified(false);
           setIsExpanded(isExpandedForDetails(resultConfigDetails.data));
           setYamlModified('');
+          setYamlValidations(undefined);
+          setEditorDefaultValue(yamlSource);
+          setEditorRevision(revision => revision + 1);
           setCurrentTab(activeTab(tabName, defaultTab));
           resizeEditor();
         })
@@ -437,35 +456,11 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     }
   });
 
-  // Sync editor content, folding, and markers when data or validations change.
-  React.useEffect(() => {
-    const ed = monacoEditorRef.current;
-
-    if (!ed || !monacoRef.current || isModified) {
-      return;
-    }
-
-    const yamlSource = fetchYaml();
-
-    if (ed.getValue() !== yamlSource) {
-      const scrollTop = ed.getScrollTop();
-      suppressOnChangeRef.current = true;
-      ed.setValue(yamlSource);
-      suppressOnChangeRef.current = false;
-      ed.setScrollTop(scrollTop);
-    }
-
-    const savedScroll = ed.getScrollTop();
-    applyFolding(ed).then(() => {
-      ed.setScrollTop(savedScroll);
-    });
-
-    applyValidationMarkers();
-  }, [istioObjectDetails, istioValidations, isModified, fetchYaml, applyFolding, applyValidationMarkers]);
-
+  // Re-apply markers when validations change. Do not call setValue here — that fights the
+  // user's caret (Monaco React replaces the full model and jumps the cursor to the end).
   React.useEffect(() => {
     applyValidationMarkers();
-  }, [yamlValidations, applyValidationMarkers]);
+  }, [istioValidations, yamlValidations, editorRevision, applyValidationMarkers]);
 
   React.useEffect(() => {
     const active = activeTab(tabName, defaultTab);
@@ -573,16 +568,15 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     resizeEditor();
   };
 
-  const onEditorChange = (value: string | undefined): void => {
-    if (suppressOnChangeRef.current) {
-      return;
-    }
+  const onEditorChange = React.useCallback((value: string | undefined): void => {
+    // Cancel any in-flight folding so async selection/position updates cannot steal focus.
+    foldGenerationRef.current++;
 
     setIsModified(true);
     setYamlModified(value || '');
     setIstioValidations(undefined);
     setYamlValidations(parseYamlValidations(value || ''));
-  };
+  }, []);
 
   const onRefresh = (): void => {
     if (isModified) {
@@ -594,33 +588,55 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     fetchIstioObjectDetails();
   };
 
-  const onCursorChange = (e: any): void => {
-    if (e?.position) {
-      const line = parseLine(fetchYaml(), e.position.lineNumber - 1);
-      setSelectedEditorLine(line);
-    }
-  };
-
-  const onEditorDidMount = (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
-    monacoEditorRef.current = ed;
-    monacoRef.current = monaco;
-    (window as any).monaco = monaco;
-    cursorDisposableRef.current = ed.onDidChangeCursorPosition(onCursorChange);
-    applyValidationMarkers();
-
-    // Open the side panel when clicking an info glyph icon in the margin
-    ed.onMouseDown(mouseEvent => {
-      if (mouseEvent.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN && mouseEvent.target.position) {
-        const lineNumber = mouseEvent.target.position.lineNumber;
-        const line = parseLine(fetchYaml(), lineNumber - 1);
+  const onCursorChange = React.useCallback(
+    (e: any): void => {
+      if (e?.position) {
+        const line = parseLine(fetchYaml(), e.position.lineNumber - 1);
         setSelectedEditorLine(line);
-        setIsExpanded(true);
-        resizeEditor();
       }
-    });
+    },
+    [fetchYaml]
+  );
 
-    applyFolding(ed);
-  };
+  const onEditorDidMount = React.useCallback(
+    (ed: editor.IStandaloneCodeEditor, monaco: MonacoInstance): void => {
+      monacoEditorRef.current = ed;
+      monacoRef.current = monaco;
+      (window as any).monaco = monaco;
+      cursorDisposableRef.current?.dispose();
+      cursorDisposableRef.current = ed.onDidChangeCursorPosition(onCursorChange);
+      applyValidationMarkers();
+
+      // Open the side panel when clicking an info glyph icon in the margin
+      ed.onMouseDown(mouseEvent => {
+        if (
+          mouseEvent.target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN &&
+          mouseEvent.target.position
+        ) {
+          const lineNumber = mouseEvent.target.position.lineNumber;
+          const line = parseLine(fetchYaml(), lineNumber - 1);
+          setSelectedEditorLine(line);
+          setIsExpanded(true);
+          resizeEditor();
+        }
+      });
+
+      applyFolding(ed);
+    },
+    [applyFolding, applyValidationMarkers, fetchYaml, onCursorChange, resizeEditor]
+  );
+
+  const editorOptions = React.useMemo(
+    () => ({
+      editContext: false,
+      folding: true,
+      glyphMargin: true,
+      readOnly: !canUpdatePermission(istioObjectDetails?.permissions),
+      scrollBeyondLastLine: false,
+      wordWrap: 'on' as const
+    }),
+    [istioObjectDetails?.permissions]
+  );
 
   const confirmModal = (): void => {
     if (modalType === 'reload') {
@@ -645,7 +661,6 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
   const modalActionLabel = modalType === 'reload' ? t('Reload') : t('Leave');
 
   const renderEditor = (): React.ReactNode => {
-    const yamlSource = fetchYaml();
     const istioStatusMsgs = getStatusMessages(istioObjectDetails);
     const objRefs = objectReferences(istioObjectDetails);
     const svcRefs = serviceReferences(istioObjectDetails);
@@ -689,20 +704,14 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
       <div style={{ width: '100%', height: `${editorPixelHeight}px`, overflow: 'hidden' }}>
         <div className={editorStyle} data-test="istio-config-editor" style={{ height: '100%' }}>
           <Editor
-            value={yamlSource}
+            key={editorRevision}
+            defaultValue={editorDefaultValue}
             language="yaml"
             theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             onChange={onEditorChange}
             onMount={onEditorDidMount}
-            options={{
-              readOnly: !canUpdate(),
-              wordWrap: 'on',
-              scrollBeyondLastLine: false,
-              folding: true,
-              glyphMargin: true,
-              editContext: false
-            }}
+            options={editorOptions}
           />
         </div>
       </div>
