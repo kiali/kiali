@@ -30,7 +30,6 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	k8sinferencev1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8snetworkingv1 "sigs.k8s.io/gateway-api/apis/v1"
-	k8snetworkingv1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8snetworkingv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business"
@@ -303,11 +302,14 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 			objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
 			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TLSRoute{})
 		}
+		if k8sClient.HasTCPRouteInV1() {
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TCPRoute{})
+		}
+		if k8sClient.HasUDPRouteInV1() {
+			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.UDPRoute{})
+		}
 		if k8sClient.IsInferenceAPI() {
 			objectsToRemove = append(objectsToRemove, &k8sinferencev1.InferencePool{})
-		}
-		if k8sClient.IsExpGatewayAPI() {
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1alpha2.TCPRoute{})
 		}
 		c := getCache()
 		if c == nil {

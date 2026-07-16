@@ -17,6 +17,7 @@ func TestPluralResourceName(t *testing.T) {
 		{K8sReferenceGrantType, "referencegrants"},
 		{K8sTCPRouteType, "tcproutes"},
 		{K8sTLSRouteType, "tlsroutes"},
+		{K8sUDPRouteType, "udproutes"},
 	}
 
 	for _, tt := range tests {

@@ -48,6 +48,7 @@ const (
 	K8sReferenceGrant = "K8sReferenceGrant"
 	K8sTCPRoute       = "K8sTCPRoute"
 	K8sTLSRoute       = "K8sTLSRoute"
+	K8sUDPRoute       = "K8sUDPRoute"
 
 	// K8s Workloads
 	CronJob               = "CronJob"
@@ -92,8 +93,9 @@ var DicTypeToGVK = map[string]GroupVersionKind{
 	K8sHTTPRoute:      {Group: "gateway.networking.k8s.io", Version: "v1", Kind: "HTTPRoute"},
 	K8sInferencePool:  {Group: "inference.networking.k8s.io", Version: "v1", Kind: "InferencePool"},
 	K8sReferenceGrant: {Group: "gateway.networking.k8s.io", Version: "v1beta1", Kind: "ReferenceGrant"},
-	K8sTCPRoute:       {Group: "gateway.networking.k8s.io", Version: "v1alpha2", Kind: "TCPRoute"},
+	K8sTCPRoute:       {Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TCPRoute"},
 	K8sTLSRoute:       {Group: "gateway.networking.k8s.io", Version: "v1", Kind: "TLSRoute"},
+	K8sUDPRoute:       {Group: "gateway.networking.k8s.io", Version: "v1", Kind: "UDPRoute"},
 
 	// K8s Workloads
 	CronJob:               {Group: "batch", Version: "v1", Kind: "CronJob"},
@@ -149,6 +151,7 @@ func filterIstioObjectsByName(istioObjectsList *models.IstioConfigList, name str
 	result = appendFiltered(result, istioObjectsList.K8sReferenceGrants, name)
 	result = appendFiltered(result, istioObjectsList.K8sTCPRoutes, name)
 	result = appendFiltered(result, istioObjectsList.K8sTLSRoutes, name)
+	result = appendFiltered(result, istioObjectsList.K8sUDPRoutes, name)
 	result = appendFiltered(result, istioObjectsList.PeerAuthentications, name)
 	result = appendFiltered(result, istioObjectsList.RequestAuthentications, name)
 	result = appendFiltered(result, istioObjectsList.ServiceEntries, name)

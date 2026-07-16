@@ -5,11 +5,11 @@
 
 # ensure_gateway_api_crds [version] [context_args]
 # Installs Gateway API CRDs if not already present.
-# Uses K8S_GATEWAY_API_VERSION if set, else defaults to v1.5.0.
+# Uses K8S_GATEWAY_API_VERSION if set, else defaults to v1.6.0.
 # Uses CLIENT_EXE (kubectl/oc) for cluster operations.
-# Optional: version - override (e.g. v1.5.0); context_args - for multicluster (e.g. "--context=kind-dataplane")
+# Optional: version - override (e.g. v1.6.0); context_args - for multicluster (e.g. "--context=kind-dataplane")
 ensure_gateway_api_crds() {
-  local version="${1:-${K8S_GATEWAY_API_VERSION:-v1.5.0}}"
+  local version="${1:-${K8S_GATEWAY_API_VERSION:-v1.6.0}}"
   local context_args="${2:-}"
   local client="${CLIENT_EXE:-kubectl}"
 

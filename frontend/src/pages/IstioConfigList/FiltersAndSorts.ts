@@ -1,6 +1,7 @@
-import { SortField } from '../../types/SortFilters';
-import { IstioConfigItem } from '../../types/IstioConfigList';
-import { FILTER_ACTION_APPEND, FilterType, AllFilterTypes, ToggleType } from '../../types/Filters';
+import type { SortField } from '../../types/SortFilters';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
+import type { FilterType, ToggleType } from '../../types/Filters';
+import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../types/Filters';
 import { serverConfig } from 'config';
 
 export const sortFields: SortField<IstioConfigItem>[] = [
@@ -144,6 +145,10 @@ export const istioTypeFilter: FilterType = {
     {
       id: 'K8sTLSRoute',
       title: 'K8sTLSRoute'
+    },
+    {
+      id: 'K8sUDPRoute',
+      title: 'K8sUDPRoute'
     },
     {
       id: 'PeerAuthentication',

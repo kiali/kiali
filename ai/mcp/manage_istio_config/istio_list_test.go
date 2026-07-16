@@ -11,6 +11,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -94,10 +95,12 @@ func TestIstioList_ReturnsGroupedOutput(t *testing.T) {
 	require.Contains(t, bookinfo, vsKey)
 	require.Contains(t, bookinfo, drKey)
 
-	// Default validation (no validation store in unit tests) → all in valid array, invalid empty.
-	assert.Equal(t, []string{"reviews"}, bookinfo[vsKey].Valid)
+	// Default validation (no validation store in unit tests) → not_validated, matching UI N/A.
+	assert.Equal(t, []string{"reviews"}, bookinfo[vsKey].NotValidated)
+	assert.Empty(t, bookinfo[vsKey].Valid)
 	assert.Empty(t, bookinfo[vsKey].Invalid)
-	assert.Equal(t, []string{"reviews"}, bookinfo[drKey].Valid)
+	assert.Equal(t, []string{"reviews"}, bookinfo[drKey].NotValidated)
+	assert.Empty(t, bookinfo[drKey].Valid)
 	assert.Empty(t, bookinfo[drKey].Invalid)
 }
 
@@ -162,6 +165,9 @@ func TestIstioList_FilterByService(t *testing.T) {
 			for _, n := range kvr.Invalid {
 				names[n] = struct{}{}
 			}
+			for _, n := range kvr.NotValidated {
+				names[n] = struct{}{}
+			}
 		}
 	}
 
@@ -217,6 +223,18 @@ func TestCriteriaForListFilter(t *testing.T) {
 			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeDestinationRules },
 		},
 		{
+			name:       "TCPRoute returns targeted criteria",
+			group:      "gateway.networking.k8s.io",
+			kind:       "TCPRoute",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeK8sTCPRoutes },
+		},
+		{
+			name:       "UDPRoute returns targeted criteria",
+			group:      "gateway.networking.k8s.io",
+			kind:       "UDPRoute",
+			checkField: func(c business.IstioConfigCriteria) bool { return c.IncludeK8sUDPRoutes },
+		},
+		{
 			name:          "unknown group/kind returns default (include-all) criteria",
 			group:         "unknown.io",
 			kind:          "Unknown",
@@ -238,11 +256,24 @@ func TestCriteriaForListFilter(t *testing.T) {
 
 			assert.True(t, tt.checkField(c), "expected criteria field to be true for %s/%s", tt.group, tt.kind)
 
-			allOthersOff := !c.IncludeGateways &&
-				!c.IncludeK8sGateways &&
-				!c.IncludeK8sGRPCRoutes &&
-				!c.IncludeK8sHTTPRoutes
-			assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
+			switch tt.kind {
+			case "TCPRoute":
+				assert.False(t, c.IncludeK8sUDPRoutes)
+				assert.False(t, c.IncludeK8sTLSRoutes)
+			case "UDPRoute":
+				assert.False(t, c.IncludeK8sTCPRoutes)
+				assert.False(t, c.IncludeK8sTLSRoutes)
+			default:
+				allOthersOff := !c.IncludeGateways &&
+					!c.IncludeK8sGateways &&
+					!c.IncludeK8sGRPCRoutes &&
+					!c.IncludeK8sHTTPRoutes &&
+					!c.IncludeK8sReferenceGrants &&
+					!c.IncludeK8sTCPRoutes &&
+					!c.IncludeK8sTLSRoutes &&
+					!c.IncludeK8sUDPRoutes
+				assert.True(t, allOthersOff, "non-targeted criteria fields should remain false for %s/%s", tt.group, tt.kind)
+			}
 		})
 	}
 }
@@ -339,7 +370,57 @@ func TestIstioList_AllGatewaysReturnedWithoutServiceFilter(t *testing.T) {
 	gwEntry, ok := bookinfo[gwKey]
 	require.True(t, ok, "gateways should appear in the list result")
 
-	allGWNames := append(gwEntry.Valid, gwEntry.Invalid...)
+	allGWNames := append(append(gwEntry.Valid, gwEntry.Invalid...), gwEntry.NotValidated...)
 	assert.Contains(t, allGWNames, "referenced-gw")
 	assert.Contains(t, allGWNames, "unreferenced-gw", "unreferenced-gw must be returned when no service filter is applied")
+}
+
+func TestIstioList_TCPAndUDPRoutesAreNotValidated(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	config.Set(conf)
+
+	tcpRoute := &k8s_networking_v1.TCPRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tcp-route",
+			Namespace: "bookinfo",
+		},
+	}
+	udpRoute := &k8s_networking_v1.UDPRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "udp-route",
+			Namespace: "bookinfo",
+		},
+	}
+
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
+	k8s := kubetest.NewFakeK8sClient(ns, tcpRoute, udpRoute)
+	k8s.GatewayAPIEnabled = true
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+
+	args := map[string]interface{}{
+		"namespace": "bookinfo",
+	}
+
+	res, status := IstioList(context.Background(), args, businessLayer, conf, true, false)
+	require.Equal(t, http.StatusOK, status)
+
+	result, ok := res.(IstioListResult)
+	require.True(t, ok)
+
+	bookinfo, ok := result.Namespaces["bookinfo"]
+	require.True(t, ok)
+
+	tcpKey := "gateway.networking.k8s.io/v1/TCPRoute"
+	udpKey := "gateway.networking.k8s.io/v1/UDPRoute"
+	require.Contains(t, bookinfo, tcpKey)
+	require.Contains(t, bookinfo, udpKey)
+
+	assert.Equal(t, []string{"tcp-route"}, bookinfo[tcpKey].NotValidated)
+	assert.Empty(t, bookinfo[tcpKey].Valid)
+	assert.Empty(t, bookinfo[tcpKey].Invalid)
+
+	assert.Equal(t, []string{"udp-route"}, bookinfo[udpKey].NotValidated)
+	assert.Empty(t, bookinfo[udpKey].Valid)
+	assert.Empty(t, bookinfo[udpKey].Invalid)
 }

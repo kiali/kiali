@@ -34,6 +34,7 @@ func defaultIstioConfigCriteria(isGatewayAPIEnabled bool, isInferenceAPIEnabled 
 		IncludeK8sReferenceGrants:     isGatewayAPIEnabled,
 		IncludeK8sTCPRoutes:           isGatewayAPIEnabled,
 		IncludeK8sTLSRoutes:           isGatewayAPIEnabled,
+		IncludeK8sUDPRoutes:           isGatewayAPIEnabled,
 		IncludeVirtualServices:        true,
 		IncludeDestinationRules:       true,
 		IncludeServiceEntries:         true,
@@ -58,19 +59,21 @@ type istioListItem struct {
 	Group     string
 	Version   string
 	Kind      string
-	Valid     bool
+	// ValidationResult is nil when Kiali has no validation for the resource (UI shows N/A).
+	ValidationResult *bool
 }
 
 // KindValidationResult summarises resources for a single GVK within a namespace.
 // The map key in IstioListResult is "group/version/kind".
-// Valid and Invalid are mutually exclusive subsets; both omitted when empty.
+// Valid, Invalid, and NotValidated are mutually exclusive subsets; all omitted when empty.
 type KindValidationResult struct {
-	Valid   []string `json:"valid,omitempty"`   // Resources passing validation
-	Invalid []string `json:"invalid,omitempty"` // Resources failing validation
+	Invalid      []string `json:"invalid,omitempty"`       // Resources failing validation
+	NotValidated []string `json:"not_validated,omitempty"` // Resources without validation (N/A in UI)
+	Valid        []string `json:"valid,omitempty"`         // Resources passing validation
 }
 
 // IstioListResult is the grouped output returned by the list action.
-// Resources are nested as: namespace → "group/version/kind" → {valid, invalid}.
+// Resources are nested as: namespace → "group/version/kind" → {valid, invalid, not_validated}.
 // This eliminates per-item repetition of namespace, group, version, and kind keys.
 type IstioListResult struct {
 	Cluster    string                                     `json:"cluster"`
@@ -78,13 +81,14 @@ type IstioListResult struct {
 }
 
 type validationSummary struct {
-	Valid  bool
+	// Valid is nil when no validation exists for the resource (matches UI N/A).
 	Checks []validationCheckSummary
+	Valid  *bool
 }
 
 type validationCheckSummary struct {
-	Severity string
 	Message  string
+	Severity string
 }
 
 func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config, isGatewayAPIEnabled bool, isInferenceAPIEnabled bool) (interface{}, int) {
@@ -140,6 +144,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	k8sGRPCRoutes := istioConfig.K8sGRPCRoutes
 	k8sTCPRoutes := istioConfig.K8sTCPRoutes
 	k8sTLSRoutes := istioConfig.K8sTLSRoutes
+	k8sUDPRoutes := istioConfig.K8sUDPRoutes
 	k8sReferenceGrants := istioConfig.K8sReferenceGrants
 	k8sInferencePools := istioConfig.K8sInferencePools
 
@@ -246,12 +251,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 	appendItem := func(name, ns string, gvk schema.GroupVersionKind, obj runtime.Object) {
 		v := validationSummaryForRuntimeObject(obj, gvk, istioValidations, cluster)
 		items = append(items, istioListItem{
-			Name:      name,
-			Namespace: ns,
-			Group:     gvk.Group,
-			Version:   gvk.Version,
-			Kind:      gvk.Kind,
-			Valid:     v.Valid,
+			Group:            gvk.Group,
+			Kind:             gvk.Kind,
+			Name:             name,
+			Namespace:        ns,
+			ValidationResult: v.Valid,
+			Version:          gvk.Version,
 		})
 	}
 
@@ -352,6 +357,11 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			appendItem(tlr.Name, tlr.Namespace, kubernetes.K8sTLSRoutes, tlr)
 		}
 	}
+	for _, ur := range k8sUDPRoutes {
+		if ur != nil {
+			appendItem(ur.Name, ur.Namespace, kubernetes.K8sUDPRoutes, ur)
+		}
+	}
 	for _, rg := range k8sReferenceGrants {
 		if rg != nil {
 			appendItem(rg.Name, rg.Namespace, kubernetes.K8sReferenceGrants, rg)
@@ -376,7 +386,7 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 		return items[i].Name < items[j].Name
 	})
 
-	// Group into namespace → "group/version/kind" → {valid, invalid}.
+	// Group into namespace → "group/version/kind" → {valid, invalid, not_validated}.
 	// Because items are pre-sorted the name slices are already in alphabetical order.
 	namespaces := make(map[string]map[string]KindValidationResult)
 	for _, item := range items {
@@ -385,9 +395,12 @@ func IstioList(ctx context.Context, args map[string]interface{}, businessLayer *
 			namespaces[item.Namespace] = make(map[string]KindValidationResult)
 		}
 		kvr := namespaces[item.Namespace][gvkKey]
-		if item.Valid {
+		switch {
+		case item.ValidationResult == nil:
+			kvr.NotValidated = append(kvr.NotValidated, item.Name)
+		case *item.ValidationResult:
 			kvr.Valid = append(kvr.Valid, item.Name)
-		} else {
+		default:
 			kvr.Invalid = append(kvr.Invalid, item.Name)
 		}
 		namespaces[item.Namespace][gvkKey] = kvr
@@ -452,8 +465,8 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 		namespace = objAcc.GetNamespace()
 	}
 
-	// Default: valid when we don't find a validation entry.
-	out := validationSummary{Valid: true}
+	// Default: not validated when we don't find a validation entry (matches UI N/A).
+	out := validationSummary{}
 	if apiVersion == "" || kind == "" || name == "" {
 		return out
 	}
@@ -475,7 +488,8 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 		return out
 	}
 
-	out.Valid = v.Valid
+	valid := v.Valid
+	out.Valid = &valid
 	checks := make([]validationCheckSummary, 0, len(v.Checks))
 	for _, c := range v.Checks {
 		if c == nil {
@@ -486,8 +500,8 @@ func validationSummaryForRuntimeObject(obj runtime.Object, fallbackGVK schema.Gr
 			continue
 		}
 		checks = append(checks, validationCheckSummary{
-			Severity: sev,
 			Message:  c.Message,
+			Severity: sev,
 		})
 	}
 	if len(checks) > 0 {
@@ -619,6 +633,9 @@ func criteriaForListFilter(group, kind string, isGatewayAPIEnabled, isInferenceA
 			return c
 		case "TLSRoute":
 			c.IncludeK8sTLSRoutes = true
+			return c
+		case "UDPRoute":
+			c.IncludeK8sUDPRoutes = true
 			return c
 		}
 	case "inference.networking.k8s.io":

@@ -521,7 +521,7 @@ func TestConvertToolToGoogle_FromToolDefinition_ManageIstioConfigRead(t *testing
 					"VirtualService", "DestinationRule", "Gateway", "ServiceEntry", "Sidecar",
 					"WorkloadEntry", "WorkloadGroup", "EnvoyFilter",
 					"AuthorizationPolicy", "PeerAuthentication", "RequestAuthentication",
-					"HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute",
+					"HTTPRoute", "GRPCRoute", "ReferenceGrant", "TCPRoute", "TLSRoute", "UDPRoute",
 					"InferencePool",
 				},
 			},

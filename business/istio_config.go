@@ -21,7 +21,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	k8s_inference_v1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
-	k8s_networking_v1alpha2 "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/cache"
@@ -56,6 +55,7 @@ type IstioConfigCriteria struct {
 	IncludeK8sReferenceGrants     bool
 	IncludeK8sTCPRoutes           bool
 	IncludeK8sTLSRoutes           bool
+	IncludeK8sUDPRoutes           bool
 	IncludePeerAuthentications    bool
 	IncludeRequestAuthentications bool
 	IncludeServiceEntries         bool
@@ -96,6 +96,8 @@ func (icc IstioConfigCriteria) Include(resource schema.GroupVersionKind) bool {
 		return icc.IncludeK8sTCPRoutes
 	case kubernetes.K8sTLSRoutes:
 		return icc.IncludeK8sTLSRoutes
+	case kubernetes.K8sUDPRoutes:
+		return icc.IncludeK8sUDPRoutes
 	case kubernetes.PeerAuthentications:
 		return icc.IncludePeerAuthentications
 	case kubernetes.RequestAuthentications:
@@ -225,8 +227,9 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		K8sHTTPRoutes:      []*k8s_networking_v1.HTTPRoute{},
 		K8sInferencePools:  []*k8s_inference_v1.InferencePool{},
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{},
-		K8sTCPRoutes:       []*k8s_networking_v1alpha2.TCPRoute{},
+		K8sTCPRoutes:       []*k8s_networking_v1.TCPRoute{},
 		K8sTLSRoutes:       []*k8s_networking_v1.TLSRoute{},
+		K8sUDPRoutes:       []*k8s_networking_v1.UDPRoute{},
 
 		AuthorizationPolicies:  []*security_v1.AuthorizationPolicy{},
 		PeerAuthentications:    []*security_v1.PeerAuthentication{},
@@ -377,8 +380,8 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sReferenceGrants = ToPtrs(list.Items)
 	}
 
-	if userClient.IsExpGatewayAPI() && criteria.Include(kubernetes.K8sTCPRoutes) {
-		list := &k8s_networking_v1alpha2.TCPRouteList{}
+	if userClient.IsGatewayAPI() && userClient.HasTCPRouteInV1() && criteria.Include(kubernetes.K8sTCPRoutes) {
+		list := &k8s_networking_v1.TCPRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
 		}
@@ -397,6 +400,17 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 			return nil, err
 		}
 		istioConfigList.K8sTLSRoutes = ToPtrs(list.Items)
+	}
+
+	if userClient.IsGatewayAPI() && userClient.HasUDPRouteInV1() && criteria.Include(kubernetes.K8sUDPRoutes) {
+		list := &k8s_networking_v1.UDPRouteList{}
+		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
+			return nil, err
+		}
+		if err := kubernetes.EnsureTypeMeta(list); err != nil {
+			return nil, err
+		}
+		istioConfigList.K8sUDPRoutes = ToPtrs(list.Items)
 	}
 
 	if userClient.IsIstioAPI() && criteria.Include(kubernetes.ServiceEntries) {
@@ -585,6 +599,7 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 		K8sReferenceGrants:     kubernetes.FilterByNamespaceNames(istioConfigs.K8sReferenceGrants, namespaceNames),
 		K8sTCPRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sTCPRoutes, namespaceNames),
 		K8sTLSRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sTLSRoutes, namespaceNames),
+		K8sUDPRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sUDPRoutes, namespaceNames),
 		PeerAuthentications:    kubernetes.FilterByNamespaceNames(istioConfigs.PeerAuthentications, namespaceNames),
 		RequestAuthentications: kubernetes.FilterByNamespaceNames(istioConfigs.RequestAuthentications, namespaceNames),
 		ServiceEntries:         kubernetes.FilterByNamespaceNames(istioConfigs.ServiceEntries, namespaceNames),
@@ -702,7 +717,7 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.Object = istioConfigDetail.K8sReferenceGrant
 		}
 	case kubernetes.K8sTCPRoutes:
-		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Get(ctx, object, getOpts)
+		istioConfigDetail.K8sTCPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().TCPRoutes(namespace).Get(ctx, object, getOpts)
 		if err == nil {
 			istioConfigDetail.K8sTCPRoute.Kind = kubernetes.K8sTCPRoutes.Kind
 			istioConfigDetail.K8sTCPRoute.APIVersion = kubernetes.K8sTCPRoutes.GroupVersion().String()
@@ -714,6 +729,13 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 			istioConfigDetail.K8sTLSRoute.Kind = kubernetes.K8sTLSRoutes.Kind
 			istioConfigDetail.K8sTLSRoute.APIVersion = kubernetes.K8sTLSRoutes.GroupVersion().String()
 			istioConfigDetail.Object = istioConfigDetail.K8sTLSRoute
+		}
+	case kubernetes.K8sUDPRoutes:
+		istioConfigDetail.K8sUDPRoute, err = in.userClients[cluster].GatewayAPI().GatewayV1().UDPRoutes(namespace).Get(ctx, object, getOpts)
+		if err == nil {
+			istioConfigDetail.K8sUDPRoute.Kind = kubernetes.K8sUDPRoutes.Kind
+			istioConfigDetail.K8sUDPRoute.APIVersion = kubernetes.K8sUDPRoutes.GroupVersion().String()
+			istioConfigDetail.Object = istioConfigDetail.K8sUDPRoute
 		}
 	case kubernetes.ServiceEntries:
 		istioConfigDetail.ServiceEntry, err = in.userClients[cluster].Istio().NetworkingV1().ServiceEntries(namespace).Get(ctx, object, getOpts)
@@ -846,9 +868,11 @@ func (in *IstioConfigService) DeleteIstioConfigDetail(ctx context.Context, clust
 	case kubernetes.K8sReferenceGrants:
 		err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sTCPRoutes:
-		err = userClient.GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Delete(ctx, name, delOpts)
+		err = userClient.GatewayAPI().GatewayV1().TCPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.K8sTLSRoutes:
 		err = userClient.GatewayAPI().GatewayV1().TLSRoutes(namespace).Delete(ctx, name, delOpts)
+	case kubernetes.K8sUDPRoutes:
+		err = userClient.GatewayAPI().GatewayV1().UDPRoutes(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.ServiceEntries:
 		err = userClient.Istio().NetworkingV1().ServiceEntries(namespace).Delete(ctx, name, delOpts)
 	case kubernetes.Sidecars:
@@ -982,13 +1006,17 @@ func (in *IstioConfigService) UpdateIstioConfigDetail(ctx context.Context, clust
 		istioConfigDetail.K8sReferenceGrant, err = userClient.GatewayAPI().GatewayV1beta1().ReferenceGrants(namespace).Patch(ctx, name, patchType, []byte(fixedPatch), patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sReferenceGrant
 	case kubernetes.K8sTCPRoutes.String():
-		istioConfigDetail.K8sTCPRoute = &k8s_networking_v1alpha2.TCPRoute{}
-		istioConfigDetail.K8sTCPRoute, err = userClient.GatewayAPI().GatewayV1alpha2().TCPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.K8sTCPRoute = &k8s_networking_v1.TCPRoute{}
+		istioConfigDetail.K8sTCPRoute, err = userClient.GatewayAPI().GatewayV1().TCPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sTCPRoute
 	case kubernetes.K8sTLSRoutes.String():
 		istioConfigDetail.K8sTLSRoute = &k8s_networking_v1.TLSRoute{}
 		istioConfigDetail.K8sTLSRoute, err = userClient.GatewayAPI().GatewayV1().TLSRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
 		istioConfigDetail.Object = istioConfigDetail.K8sTLSRoute
+	case kubernetes.K8sUDPRoutes.String():
+		istioConfigDetail.K8sUDPRoute = &k8s_networking_v1.UDPRoute{}
+		istioConfigDetail.K8sUDPRoute, err = userClient.GatewayAPI().GatewayV1().UDPRoutes(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
+		istioConfigDetail.Object = istioConfigDetail.K8sUDPRoute
 	case kubernetes.ServiceEntries.String():
 		istioConfigDetail.ServiceEntry = &networking_v1.ServiceEntry{}
 		istioConfigDetail.ServiceEntry, err = userClient.Istio().NetworkingV1().ServiceEntries(namespace).Patch(ctx, name, patchType, bytePatch, patchOpts)
@@ -1421,6 +1449,7 @@ func ParseIstioConfigCriteria(objects, labelSelector, workloadSelector string) I
 	criteria.IncludeK8sReferenceGrants = defaultInclude
 	criteria.IncludeK8sTCPRoutes = defaultInclude
 	criteria.IncludeK8sTLSRoutes = defaultInclude
+	criteria.IncludeK8sUDPRoutes = defaultInclude
 	criteria.IncludeVirtualServices = defaultInclude
 	criteria.IncludeDestinationRules = defaultInclude
 	criteria.IncludeServiceEntries = defaultInclude
@@ -1465,6 +1494,9 @@ func ParseIstioConfigCriteria(objects, labelSelector, workloadSelector string) I
 	}
 	if checkType(types, kubernetes.K8sTLSRoutes.String()) {
 		criteria.IncludeK8sTLSRoutes = true
+	}
+	if checkType(types, kubernetes.K8sUDPRoutes.String()) {
+		criteria.IncludeK8sUDPRoutes = true
 	}
 	if checkType(types, kubernetes.VirtualServices.String()) {
 		criteria.IncludeVirtualServices = true

@@ -1,13 +1,7 @@
-import {
-  dicTypeToGVK,
-  filterByName,
-  gvkType,
-  IstioConfigItem,
-  IstioConfigList,
-  toIstioItems
-} from '../../../types/IstioConfigList';
+import type { IstioConfigItem, IstioConfigList } from '../../../types/IstioConfigList';
+import { dicTypeToGVK, filterByName, gvkType, toIstioItems } from '../../../types/IstioConfigList';
 import * as IstioConfigListFilters from '../FiltersAndSorts';
-import { SortField } from '../../../types/SortFilters';
+import type { SortField } from '../../../types/SortFilters';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 
 const mockIstioConfigList = (names: string[]): IstioConfigList => {
@@ -89,6 +83,7 @@ describe('IstioConfigList#filterByName', () => {
     expect(filtered.resources[getGVKTypeString(gvkType.K8sReferenceGrant)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sTCPRoute)].length).toBe(0);
     expect(filtered.resources[getGVKTypeString(gvkType.K8sTLSRoute)].length).toBe(0);
+    expect(filtered.resources[getGVKTypeString(gvkType.K8sUDPRoute)].length).toBe(0);
   });
 });
 

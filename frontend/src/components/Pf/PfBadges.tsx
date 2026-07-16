@@ -50,6 +50,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   K8sReferenceGrant: { badge: 'RG', tt: 'ReferenceGrant (K8s)' } as PFBadgeType,
   K8sTCPRoute: { badge: 'TCP', tt: 'TCPRoute (K8s)' } as PFBadgeType,
   K8sTLSRoute: { badge: 'TLS', tt: 'TLSRoute (K8s)' } as PFBadgeType,
+  K8sUDPRoute: { badge: 'UDP', tt: 'UDPRoute (K8s)' } as PFBadgeType,
   Kiali: { badge: 'KI', tt: 'Kiali' } as PFBadgeType,
   Handler: { badge: 'H', tt: 'Handler' },
   Host: { badge: 'H', tt: 'Host' },

@@ -461,6 +461,9 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 	for _, c := range config.K8sTLSRoutes {
 		change = vInfo.update("KTLS", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
+	for _, c := range config.K8sUDPRoutes {
+		change = vInfo.update("KUDP", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
+	}
 	for _, c := range config.PeerAuthentications {
 		change = vInfo.update("PA", cluster, c.Namespace, c.Name, c.ResourceVersion) || change
 	}
@@ -502,6 +505,7 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 		len(config.K8sReferenceGrants) +
 		len(config.K8sTCPRoutes) +
 		len(config.K8sTLSRoutes) +
+		len(config.K8sUDPRoutes) +
 		len(config.PeerAuthentications) +
 		len(config.RequestAuthentications) +
 		len(config.ServiceEntries) +
@@ -786,6 +790,8 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		// Validation on K8sTCPRoutes is not expected
 	case kubernetes.K8sTLSRoutes:
 		// Validation on K8sTLSRoutes is not expected
+	case kubernetes.K8sUDPRoutes:
+		// Validation on K8sUDPRoutes is not expected
 	default:
 		err = fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
