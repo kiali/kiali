@@ -131,6 +131,39 @@ export const preserveHiddenAnnotations = (
   return { ...hidden, ...updatedVisible };
 };
 
+/**
+ * Builds a patch diff from the user's visible edits against the full original,
+ * re-attaching hidden annotations and marking deleted keys as null.
+ */
+export const buildAnnotationsDiff = (
+  original: Record<string, string>,
+  userVisible: Record<string, string>
+): Record<string, string | null> => {
+  const withHidden = preserveHiddenAnnotations(original, userVisible);
+  const diff: Record<string, string | null> = { ...withHidden };
+  for (const key of Object.keys(original)) {
+    if (!(key in withHidden)) {
+      diff[key] = null;
+    }
+  }
+  return diff;
+};
+
+/**
+ * Determines whether user edits differ from the original annotations.
+ * Uses an order-insensitive comparison against the full original.
+ */
+export const hasAnnotationsChanged = (
+  original: Record<string, string>,
+  userVisible: Record<string, string>
+): boolean => {
+  const diff = buildAnnotationsDiff(original, userVisible);
+  return (
+    Object.keys(diff).length !== Object.keys(original).length ||
+    Object.entries(diff).some(([k, v]) => original[k] !== v)
+  );
+};
+
 export const buildWorkloadMetadataPatch = (
   field: 'labels' | 'annotations',
   original: Record<string, string>,
