@@ -7,14 +7,12 @@ import (
 	"time"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -139,7 +137,6 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	var (
 		svcs            []core_v1.Service
 		pods            []core_v1.Pod
-		deployments     []apps_v1.Deployment
 		istioConfigList models.IstioConfigList
 		err             error
 		kubeCache       client.Reader
@@ -173,14 +170,6 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		pods = podList.Items
 	}
 
-	if !criteria.IncludeOnlyDefinitions {
-		depList := &apps_v1.DeploymentList{}
-		if err := kubeCache.List(ctx, depList, client.InNamespace(criteria.Namespace)); err != nil {
-			return nil, fmt.Errorf("Error fetching Deployments per namespace %s: %s", criteria.Namespace, err)
-		}
-		deployments = depList.Items
-	}
-
 	// ServiceEntries are always fetched because buildServiceEntryOverviews needs
 	// them to produce SE-backed services (replacing the old Istio Service Registry).
 	// The remaining Istio resources are only needed for building references/badges.
@@ -205,7 +194,7 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 	istioConfigList = *istioConfigs
 
 	// Convert to Kiali model
-	services := in.buildServiceList(ctx, cluster, criteria.Namespace, svcs, pods, deployments, istioConfigList, criteria)
+	services := in.buildServiceList(ctx, cluster, criteria.Namespace, svcs, pods, istioConfigList, criteria)
 
 	// Check if we need to add health
 
@@ -264,11 +253,13 @@ func getDRKialiScenario(dr []*networking_v1.DestinationRule) string {
 	return scenario
 }
 
-func (in *SvcService) buildServiceList(ctx context.Context, cluster string, namespace string, svcs []core_v1.Service, pods []core_v1.Pod, deployments []apps_v1.Deployment, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
+func (in *SvcService) buildServiceList(ctx context.Context, cluster string, namespace string, svcs []core_v1.Service, pods []core_v1.Pod, istioConfigList models.IstioConfigList, criteria ServiceCriteria) *models.ServiceList {
 	services := []models.ServiceOverview{}
 	validations := models.IstioValidations{}
 	if !criteria.IncludeOnlyDefinitions {
-		validations = in.getServiceValidations(cluster, svcs, deployments, pods)
+		if namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace); err == nil {
+			validations = filterServiceValidations(namespaceValidations)
+		}
 	}
 
 	kubernetesServices := in.buildKubernetesServices(ctx, svcs, pods, istioConfigList, criteria.IncludeOnlyDefinitions, cluster)
@@ -285,6 +276,16 @@ func (in *SvcService) buildServiceList(ctx context.Context, cluster string, name
 		services = append(services, seServices...)
 	}
 	return &models.ServiceList{Namespace: namespace, Services: services, Validations: validations}
+}
+
+func filterServiceValidations(validations models.IstioValidations) models.IstioValidations {
+	serviceValidations := models.IstioValidations{}
+	for key, validation := range validations {
+		if key.ObjectGVK.Kind == "service" {
+			serviceValidations[key] = validation
+		}
+	}
+	return serviceValidations
 }
 
 func (in *SvcService) buildKubernetesServices(ctx context.Context, svcs []core_v1.Service, pods []core_v1.Pod, istioConfigList models.IstioConfigList, onlyDefinitions bool, cluster string) []models.ServiceOverview {
@@ -464,8 +465,10 @@ func (in *SvcService) buildServiceEntryOverviews(ctx context.Context, serviceEnt
 }
 
 // GetService returns a single service and associated data using the interval and queryTime
-// includeValidations: Service specific validations outside the istio configs
+// includeValidations is retained for API compatibility. Service validations are loaded from the
+// validation cache by the handler via IstioValidationsService.GetValidationsForService.
 func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time, includeValidations bool) (*models.ServiceDetails, error) {
+	_ = includeValidations
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceDetails",
 		observability.Attribute("package", "business"),
@@ -672,19 +675,6 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 		s.WaypointWorkloads = waypointWk
 	}
 
-	if includeValidations {
-		svcList := &core_v1.ServiceList{}
-		if err := kubeCache.List(ctx, svcList, client.InNamespace(namespace)); err != nil {
-			return nil, fmt.Errorf("Error fetching Services per namespace %s: %s", namespace, err)
-		}
-		svcs := kubernetes.FilterServicesBySelector(svcList.Items, svc.Labels)
-		depList := &apps_v1.DeploymentList{}
-		if err := kubeCache.List(ctx, depList, client.InNamespace(namespace)); err != nil {
-			return nil, fmt.Errorf("Error fetching deployments per namespace %s: %s", namespace, err)
-		}
-		deployments := depList.Items
-		s.Validations = in.getServiceValidations(cluster, svcs, deployments, pods)
-	}
 	return &s, nil
 }
 
@@ -904,12 +894,6 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 	}
 
 	return svc, nil
-}
-
-func (in *SvcService) getServiceValidations(cluster string, services []core_v1.Service, deployments []apps_v1.Deployment, pods []core_v1.Pod) models.IstioValidations {
-	validations := checkers.NewServiceChecker(cluster, deployments, in.businessLayer.Mesh.discovery, pods, services).Check()
-	validations.StripIgnoredChecks(in.conf, models.BuildServiceIgnoreValidations(services, cluster))
-	return validations
 }
 
 // GetServiceTracingName returns a struct with all the information needed for tracing lookup

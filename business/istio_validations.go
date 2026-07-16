@@ -11,6 +11,7 @@ import (
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -126,9 +127,11 @@ type validationNamespaceInfo struct {
 
 type validationClusterInfo struct {
 	cluster          string                      // the cluster being validated
+	deployments      []apps_v1.Deployment        // K8s deployments for the cluster (all namespaces)
 	identityDomain   string                      // resolved Istio identity domain for this cluster's control plane
 	istioConfig      *models.IstioConfigList     // config for the cluster (all namespaces)
 	kubeServiceHosts kubernetes.KubeServiceHosts // pre-built host lookup from K8s services
+	pods             []core_v1.Pod               // K8s pods for the cluster (all namespaces)
 	rootNamespaces   map[string]string           // namespace => rootNamespace, pre-computed from ControlPlaneForNamespace
 	services         []core_v1.Service           // K8s services for the cluster (all namespaces)
 }
@@ -318,6 +321,18 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	vInfo.clusterInfo.services = svcList.Items
 	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHostsWithNamespaceDefaults(svcList.Items, vInfo.clusterInfo.identityDomain, buildNamespaceToExportTo(vInfo.mesh, cluster, svcList.Items))
 
+	var depList apps_v1.DeploymentList
+	if err := kubeCache.List(ctx, &depList, &client.ListOptions{}); err != nil {
+		return false, nil, fmt.Errorf("unable to list deployments for cluster [%s]: %w", cluster, err)
+	}
+	vInfo.clusterInfo.deployments = depList.Items
+
+	var podList core_v1.PodList
+	if err := kubeCache.List(ctx, &podList, &client.ListOptions{}); err != nil {
+		return false, nil, fmt.Errorf("unable to list pods for cluster [%s]: %w", cluster, err)
+	}
+	vInfo.clusterInfo.pods = podList.Items
+
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -399,6 +414,22 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
 	}
 
+	// Service port-mapping validations are independent of per-namespace Istio config and run once per cluster.
+	managedServices := make([]core_v1.Service, 0, len(vInfo.clusterInfo.services))
+	for _, svc := range vInfo.clusterInfo.services {
+		if _, managed := rootNamespaces[svc.Namespace]; managed {
+			managedServices = append(managedServices, svc)
+		}
+	}
+	serviceChecker := checkers.NewServiceChecker(
+		cluster,
+		vInfo.clusterInfo.deployments,
+		in.mesh.discovery,
+		vInfo.clusterInfo.pods,
+		managedServices,
+	)
+	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{serviceChecker}, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
+
 	return true, validations, nil
 }
 
@@ -426,8 +457,19 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.services {
-		change = vInfo.update("SV", cluster, s.Namespace, s.Name, s.ResourceVersion) || change
+		serviceVersion := fmt.Sprintf("%s:%s", s.ResourceVersion, s.Annotations[models.IgnoreValidationsAnnotation])
+		change = vInfo.update("SV", cluster, s.Namespace, s.Name, serviceVersion) || change
 	}
+
+	// Deployments and pods affect service port-mapping validations (KIA0601/KIA0701).
+	for _, d := range vInfo.clusterInfo.deployments {
+		change = vInfo.update("DP", cluster, d.Namespace, d.Name, d.ResourceVersion) || change
+	}
+	change = vInfo.update("validation-num-deployments", cluster, "", "", strconv.Itoa(len(vInfo.clusterInfo.deployments))) || change
+	for _, p := range vInfo.clusterInfo.pods {
+		change = vInfo.update("PO", cluster, p.Namespace, p.Name, p.ResourceVersion) || change
+	}
+	change = vInfo.update("validation-num-pods", cluster, "", "", strconv.Itoa(len(vInfo.clusterInfo.pods))) || change
 
 	// loop through the config and gather up their resourceVersions
 	config := vInfo.clusterInfo.istioConfig

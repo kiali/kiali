@@ -177,7 +177,7 @@ type WorkloadListItem struct {
 	ValidationKey string
 
 	// ValidationVersion is a pre-calculated string representing the workload "version", basically
-	// the workload information that, if changed, requires re-validation.
+	// the workload information that, if changed, requires re-validation (including per-object ignore rules).
 	ValidationVersion string
 }
 

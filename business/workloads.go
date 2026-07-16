@@ -18,7 +18,6 @@ import (
 	"github.com/nitishm/engarde/pkg/parser"
 	osapps_v1 "github.com/openshift/api/apps/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	batch_v1 "k8s.io/api/batch/v1"
 	core_v1 "k8s.io/api/core/v1"
@@ -28,7 +27,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
@@ -146,36 +144,6 @@ func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
 		return true
 	}
 	return !in.excludedWorkloads[workload]
-}
-
-// @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(ctx context.Context, authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads, cluster string, extraIgnores models.ObjectIgnoreValidations) models.IstioValidations {
-	userClient, ok := in.userClients[cluster]
-	if !ok {
-		return models.IstioValidations{}
-	}
-	namespaces, found := in.cache.GetNamespaces(cluster, userClient.GetToken())
-	if !found {
-		return models.IstioValidations{}
-	}
-
-	mesh, err := in.businessLayer.Mesh.discovery.Mesh(ctx)
-	if err != nil || mesh == nil {
-		return models.IstioValidations{}
-	}
-
-	rootNamespaces := make(map[string]string, len(workloadsPerNamespace))
-	for ns := range workloadsPerNamespace {
-		if cp, err := mesh.ControlPlaneForNamespace(cluster, ns); err == nil && cp != nil {
-			rootNamespaces[ns] = cp.RootNamespace
-		}
-	}
-
-	validations := checkers.NewWorkloadChecker(authpolicies, cluster, in.conf, rootNamespaces, namespaces, workloadsPerNamespace).Check()
-	perObjectIgnores := models.BuildWorkloadIgnoreValidations(workloadsPerNamespace, cluster)
-	perObjectIgnores.Merge(extraIgnores)
-	validations.StripIgnoredChecks(in.conf, perObjectIgnores)
-	return validations
 }
 
 // GetAllWorkloads fetches all workloads across the cluster's namespaces.
@@ -408,15 +376,22 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	}
 
 	if criteria.IncludeIstioResources {
-		// @TODO multi cluster validations
-		authPolicies := istioConfigList.AuthorizationPolicies
-		allWorkloads := map[string]models.Workloads{}
-		allWorkloads[namespace] = ws
-		validations := in.getWorkloadValidations(ctx, authPolicies, allWorkloads, cluster, istioConfigList.ObjectIgnoreValidations(cluster))
-		workloadList.Validations = workloadList.Validations.MergeValidations(validations)
+		if namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace); err == nil {
+			workloadList.Validations = workloadList.Validations.MergeValidations(filterWorkloadValidations(namespaceValidations))
+		}
 	}
 
 	return *workloadList, nil
+}
+
+func filterWorkloadValidations(validations models.IstioValidations) models.IstioValidations {
+	workloadValidations := models.IstioValidations{}
+	for key, validation := range validations {
+		if key.ObjectGVK.Kind == "workload" {
+			workloadValidations[key] = validation
+		}
+	}
+	return workloadValidations
 }
 
 func FilterWorkloadReferences(conf *config.Config, wLabels map[string]string, istioConfigList models.IstioConfigList, cluster string) []*models.IstioValidationKey {
@@ -1708,7 +1683,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 			w.ServiceAccountNames = w.Pods.ServiceAccounts()
 			slices.Sort(w.ServiceAccountNames)
-			w.ValidationVersion = fmt.Sprintf("%v:%v", w.Labels, w.ServiceAccountNames)
+			w.ValidationVersion = fmt.Sprintf("%v:%v:%v", w.Labels, w.ServiceAccountNames, w.Annotations[models.IgnoreValidationsAnnotation])
 
 			// Set SpireInfo if workload is SPIRE-managed or is a SPIRE server
 			spireMatches := w.SpireManagedIdentity()
