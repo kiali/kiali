@@ -192,6 +192,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "This field requires mTLS to be enabled",
 		Severity: ErrorSeverity,
 	},
+	"authorizationpolicy.ambient.l7nowaypoint": {
+		Code:     "KIA0109",
+		Message:  "L7 AuthorizationPolicy in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Code:     "KIA0201",
 		Message:  "More than one DestinationRules for the same host subset combination",
@@ -235,6 +240,16 @@ var checkDescriptors = map[string]IstioCheck{
 	"destinationrules.nodest.subsetnolabels": {
 		Code:     "KIA0209",
 		Message:  "This subset has not labels",
+		Severity: WarningSeverity,
+	},
+	"destinationrule.ambient.l7nowaypoint": {
+		Code:     "KIA0210",
+		Message:  "L7 DestinationRule features in Ambient namespace require waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"destinationrule.ambient.servicenotcaptured": {
+		Code:     "KIA0211",
+		Message:  "L7 DestinationRule targets a service not enrolled to use a waypoint (istio.io/use-waypoint)",
 		Severity: WarningSeverity,
 	},
 	"gateways.multimatch": {
@@ -402,6 +417,31 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "Subset not found",
 		Severity: WarningSeverity,
 	},
+	"virtualservice.ambient.l7nowaypoint": {
+		Code:     "KIA1109",
+		Message:  "L7 VirtualService for mesh traffic in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"virtualservice.ambient.servicenotcaptured": {
+		Code:     "KIA1113",
+		Message:  "L7 VirtualService targets a service not enrolled to use a waypoint (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"requestauthentication.ambient.l7nowaypoint": {
+		Code:     "KIA1110",
+		Message:  "RequestAuthentication in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"wasmplugin.ambient.l7nowaypoint": {
+		Code:     "KIA1111",
+		Message:  "WasmPlugin in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"telemetry.ambient.l7nowaypoint": {
+		Code:     "KIA1112",
+		Message:  "L7 Telemetry in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
 	"workload.ambient.sidecarandlabel": {
 		Code:     "KIA1311",
 		Message:  "This workload has both sidecar and Ambient label",
@@ -434,7 +474,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"workload.ambient.authpolicybutnowaypoint": {
 		Code:     "KIA1317",
-		Message:  "This workload has Authorization Policies but no Waypoint",
+		Message:  "This workload has L7 Authorization Policies but no Waypoint",
 		Severity: WarningSeverity,
 	},
 	"workload.authorizationpolicy.needstobecovered": {

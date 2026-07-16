@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	networking_v1_api "istio.io/api/networking/v1"
-	security_v1_api "istio.io/api/security/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
 	extensions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -17,6 +15,7 @@ import (
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/business/checkers/ambient"
 	"github.com/kiali/kiali/models"
 )
 
@@ -51,6 +50,17 @@ type AnalyzedPolicy struct {
 	Reason     string `json:"reason"`
 	Rules      int    `json:"rules_count"`
 	Warning    string `json:"warning,omitempty"`
+}
+
+func toSharedNamespaceStatus(status NamespaceAmbientStatus, isEnrolled bool) ambient.NamespaceAmbientStatus {
+	return ambient.NamespaceAmbientStatus{
+		Cluster:      status.Cluster,
+		HasWaypoint:  status.HasWaypoint,
+		IsAmbient:    status.IsAmbient,
+		IsEnrolled:   isEnrolled,
+		Name:         status.Name,
+		WaypointName: status.WaypointName,
+	}
 }
 
 func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int) {
@@ -122,7 +132,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 
 		// Count L4/L7 across all namespaces
 		for _, policy := range result.Policies {
-			if policy.Layer == "L7" {
+			if policy.Layer == ambient.LayerL7 {
 				totalL7++
 				if policy.Warning != "" {
 					totalL7WithoutWaypoint++
@@ -163,7 +173,7 @@ func getValidatedNamespace(ctx context.Context, businessLayer *business.Layer, n
 func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterface, namespaceInfo *models.Namespace, clusterName string) NamespaceAnalysis {
 	namespace := namespaceInfo.Name
 
-	// Check if namespace has waypoint
+	// Check if namespace has waypoint workload and enrollment
 	hasWaypoint, waypointName := checkNamespaceWaypoint(ctx, kialiInterface.BusinessLayer, namespace, clusterName)
 
 	nsStatus := NamespaceAmbientStatus{
@@ -173,6 +183,7 @@ func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterfac
 		HasWaypoint:  hasWaypoint,
 		WaypointName: waypointName,
 	}
+	sharedStatus := toSharedNamespaceStatus(nsStatus, ambient.IsEnrolledForWaypoint(nil, namespaceInfo.Labels))
 
 	// Get all relevant Istio configs for Ambient analysis
 	criteria := business.IstioConfigCriteria{
@@ -200,49 +211,49 @@ func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterfac
 
 	// Analyze AuthorizationPolicies
 	for _, ap := range istioConfigs.AuthorizationPolicies {
-		analyzed := analyzeAuthorizationPolicy(ap, nsStatus)
+		analyzed := analyzeAuthorizationPolicy(ap, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze PeerAuthentications
 	for _, pa := range istioConfigs.PeerAuthentications {
-		analyzed := analyzePeerAuthentication(pa, nsStatus)
+		analyzed := analyzePeerAuthentication(pa)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze RequestAuthentications (always L7)
 	for _, ra := range istioConfigs.RequestAuthentications {
-		analyzed := analyzeRequestAuthentication(ra, nsStatus)
+		analyzed := analyzeRequestAuthentication(ra, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze VirtualServices (always L7)
 	for _, vs := range istioConfigs.VirtualServices {
-		analyzed := analyzeVirtualService(vs, nsStatus)
+		analyzed := analyzeVirtualService(vs, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze DestinationRules
 	for _, dr := range istioConfigs.DestinationRules {
-		analyzed := analyzeDestinationRule(dr, nsStatus)
+		analyzed := analyzeDestinationRule(dr, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze WasmPlugins (always L7)
 	for _, wp := range istioConfigs.WasmPlugins {
-		analyzed := analyzeWasmPlugin(wp, nsStatus)
+		analyzed := analyzeWasmPlugin(wp, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
 
 	// Analyze Telemetry
 	for _, tel := range istioConfigs.Telemetries {
-		analyzed := analyzeTelemetry(tel, nsStatus)
+		analyzed := analyzeTelemetry(tel, sharedStatus)
 		analyzedPolicies = append(analyzedPolicies, analyzed)
 		updateCounts(&l4Count, &l7Count, &l7WithoutWaypointCount, analyzed)
 	}
@@ -275,7 +286,7 @@ func checkNamespaceWaypoint(ctx context.Context, businessLayer *business.Layer, 
 
 // updateCounts updates the L4/L7 counters based on analyzed policy
 func updateCounts(l4Count, l7Count, l7WithoutWaypoint *int, analyzed AnalyzedPolicy) {
-	if analyzed.Layer == "L7" {
+	if analyzed.Layer == ambient.LayerL7 {
 		*l7Count++
 		if analyzed.Warning != "" {
 			*l7WithoutWaypoint++
@@ -286,8 +297,8 @@ func updateCounts(l4Count, l7Count, l7WithoutWaypoint *int, analyzed AnalyzedPol
 }
 
 // analyzeAuthorizationPolicy classifies a policy as L4 or L7
-func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
-	isL7, reason := isL7Policy(&ap.Spec)
+func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	isL7, reason := ambient.IsL7AuthorizationPolicy(&ap.Spec)
 
 	analyzed := AnalyzedPolicy{
 		ConfigType: "AuthorizationPolicy",
@@ -296,86 +307,15 @@ func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus Na
 	}
 
 	if isL7 {
-		analyzed.Layer = "L7"
+		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
-		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "This L7 policy will NOT be enforced.")
+		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This L7 policy will NOT be enforced.")
 	} else {
-		analyzed.Layer = "L4"
+		analyzed.Layer = ambient.LayerL4
 		analyzed.Reason = "Only uses L4 fields (source/destination principals, IPs, ports, namespaces)"
 	}
 
 	return analyzed
-}
-
-// isL7Policy determines if an AuthorizationPolicy requires L7 (waypoint) enforcement
-func isL7Policy(spec *security_v1_api.AuthorizationPolicy) (bool, string) {
-	if spec == nil || len(spec.Rules) == 0 {
-		return false, ""
-	}
-
-	// Check for L7-specific fields in rules
-	for _, rule := range spec.Rules {
-		// Check 'when' conditions for L7 fields
-		for _, condition := range rule.When {
-			if isL7Condition(condition.Key) {
-				return true, fmt.Sprintf("Uses L7 condition: %s", condition.Key)
-			}
-		}
-
-		// Check 'to' operations for HTTP-specific fields
-		for _, to := range rule.To {
-			if to.Operation != nil {
-				if len(to.Operation.Methods) > 0 {
-					return true, "Uses HTTP methods field"
-				}
-				if len(to.Operation.Paths) > 0 {
-					return true, "Uses HTTP paths field"
-				}
-				if len(to.Operation.Hosts) > 0 {
-					return true, "Uses HTTP hosts field"
-				}
-			}
-		}
-
-		// Check 'from' for request principals (JWT-based, requires L7)
-		for _, from := range rule.From {
-			if from.Source != nil && len(from.Source.RequestPrincipals) > 0 {
-				return true, "Uses request principals (JWT)"
-			}
-		}
-	}
-
-	// If none of the above L7 indicators are found, it's L4
-	return false, ""
-}
-
-// ambientNoWaypointWarning returns a warning when an L7 config is in an Ambient namespace
-// without a waypoint. Returns empty string if no warning is needed.
-func ambientNoWaypointWarning(nsStatus NamespaceAmbientStatus, consequence string) string {
-	if nsStatus.IsAmbient && !nsStatus.HasWaypoint {
-		return fmt.Sprintf("Namespace '%s' is in Ambient mode but has NO waypoint. %s", nsStatus.Name, consequence)
-	}
-	return ""
-}
-
-// isL7Condition checks if a 'when' condition key requires L7 processing.
-// Note: destination.port is L4 (evaluated by ztunnel), not listed here.
-func isL7Condition(key string) bool {
-	l7Prefixes := []string{
-		"request.headers",
-		"request.auth.claims",
-		"request.auth.principal",
-		"request.auth.audiences",
-		"request.auth.presenter",
-	}
-
-	for _, prefix := range l7Prefixes {
-		if strings.HasPrefix(key, prefix) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // generateSummary creates a human-readable summary
@@ -433,70 +373,45 @@ func generateRecommendations(nsStatus NamespaceAmbientStatus, l7Count, l7Without
 
 // analyzePeerAuthentication classifies a PeerAuthentication as L4
 // PeerAuthentication is processed by ztunnel for mTLS configuration
-func analyzePeerAuthentication(pa *security_v1.PeerAuthentication, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
-	analyzed := AnalyzedPolicy{
+func analyzePeerAuthentication(pa *security_v1.PeerAuthentication) AnalyzedPolicy {
+	return AnalyzedPolicy{
 		ConfigType: "PeerAuthentication",
 		Name:       pa.Name,
-		Layer:      "L4",
+		Layer:      ambient.LayerL4,
 		Reason:     "PeerAuthentication configures mTLS at L4 (processed by ztunnel)",
 		Rules:      1, // PeerAuth doesn't have "rules" but we set 1 for consistency
 	}
-	return analyzed
 }
 
 // analyzeRequestAuthentication classifies a RequestAuthentication as L7
 // JWT validation requires HTTP header parsing, only waypoint can do this
-func analyzeRequestAuthentication(ra *security_v1.RequestAuthentication, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
+func analyzeRequestAuthentication(ra *security_v1.RequestAuthentication, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
 	return AnalyzedPolicy{
 		ConfigType: "RequestAuthentication",
 		Name:       ra.Name,
-		Layer:      "L7",
+		Layer:      ambient.LayerL7,
 		Reason:     "RequestAuthentication validates JWT tokens (requires HTTP header parsing)",
 		Rules:      len(ra.Spec.JwtRules),
-		Warning:    ambientNoWaypointWarning(nsStatus, "This RequestAuthentication will NOT work."),
+		Warning:    ambient.AmbientNoWaypointWarning(nsStatus, "This RequestAuthentication will NOT work."),
 	}
 }
 
 // analyzeVirtualService classifies a VirtualService as L7 (HTTP/TLS routes) or L4 (TCP-only routes).
 // A waypoint warning is only emitted when the VS applies to mesh (east-west) traffic. VirtualServices
 // targeting only named ingress/egress Gateways are processed by those Gateways, not by a waypoint.
-func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
+func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	classification := ambient.ClassifyVirtualService(&vs.Spec)
 	analyzed := AnalyzedPolicy{
 		ConfigType: "VirtualService",
 		Name:       vs.Name,
+		Layer:      classification.Layer,
+		Reason:     classification.Reason,
 		Rules:      countVirtualServiceRules(&vs.Spec),
 	}
-
-	hasHTTPOrTLS := len(vs.Spec.Http) > 0 || len(vs.Spec.Tls) > 0
-
-	if hasHTTPOrTLS && appliesToMeshTraffic(vs.Spec.Gateways) {
-		analyzed.Layer = "L7"
-		analyzed.Reason = "VirtualService provides HTTP/TLS routing for mesh traffic (requires waypoint)"
-		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "This VirtualService will NOT work.")
-	} else if hasHTTPOrTLS {
-		analyzed.Layer = "L7"
-		analyzed.Reason = "VirtualService provides HTTP/TLS routing via ingress/egress Gateway (no waypoint needed)"
-	} else {
-		analyzed.Layer = "L4"
-		analyzed.Reason = "VirtualService only defines TCP routes (L4 load balancing, no HTTP features)"
+	if classification.RequiresWaypoint {
+		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This VirtualService will NOT work.")
 	}
-
 	return analyzed
-}
-
-// appliesToMeshTraffic reports whether a VirtualService targets in-mesh (east-west) traffic.
-// A VS applies to mesh traffic when spec.gateways is empty (default) or contains the reserved
-// value "mesh". VSes that only reference named ingress/egress Gateways do not need a waypoint.
-func appliesToMeshTraffic(gateways []string) bool {
-	if len(gateways) == 0 {
-		return true // default: applies to mesh
-	}
-	for _, gw := range gateways {
-		if gw == "mesh" {
-			return true
-		}
-	}
-	return false
 }
 
 // countVirtualServiceRules counts HTTP and TLS routes
@@ -522,8 +437,8 @@ func countVirtualServiceRules(spec *networking_v1_api.VirtualService) int {
 
 // analyzeDestinationRule classifies a DestinationRule as L4 or L7
 // Basic TLS settings are L4, but HTTP-specific features are L7
-func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
-	isL7, reason := isL7DestinationRule(&dr.Spec)
+func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	isL7, reason := ambient.IsL7DestinationRule(&dr.Spec)
 
 	analyzed := AnalyzedPolicy{
 		ConfigType: "DestinationRule",
@@ -532,84 +447,33 @@ func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus Namespac
 	}
 
 	if isL7 {
-		analyzed.Layer = "L7"
+		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
-		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "This DestinationRule's L7 features will NOT work.")
+		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This DestinationRule's L7 features will NOT work.")
 	} else {
-		analyzed.Layer = "L4"
+		analyzed.Layer = ambient.LayerL4
 		analyzed.Reason = "Only uses L4 features (basic TLS configuration)"
 	}
 
 	return analyzed
 }
 
-// isL7DestinationRule checks if a DestinationRule uses L7 features
-func isL7DestinationRule(spec *networking_v1_api.DestinationRule) (bool, string) {
-	// Check for HTTP-specific traffic policy
-	if spec.TrafficPolicy != nil {
-		tp := spec.TrafficPolicy
-
-		// Load balancer with consistent hash on HTTP headers/cookies
-		if tp.LoadBalancer != nil && tp.LoadBalancer.GetConsistentHash() != nil {
-			ch := tp.LoadBalancer.GetConsistentHash()
-			if ch.GetHttpHeaderName() != "" || ch.GetHttpCookie() != nil {
-				return true, "Uses HTTP-based load balancing (consistent hash on headers/cookies)"
-			}
-		}
-
-		// Connection pool settings for HTTP
-		if tp.ConnectionPool != nil && tp.ConnectionPool.Http != nil {
-			return true, "Uses HTTP connection pool settings"
-		}
-
-		// Circuit breaker with HTTP-specific settings
-		if tp.OutlierDetection != nil {
-			return true, "Uses circuit breaking/outlier detection (requires HTTP metrics)"
-		}
-	}
-
-	// Check subsets for HTTP-specific traffic policies
-	for _, subset := range spec.Subsets {
-		if subset.TrafficPolicy != nil {
-			tp := subset.TrafficPolicy
-
-			if tp.LoadBalancer != nil && tp.LoadBalancer.GetConsistentHash() != nil {
-				ch := tp.LoadBalancer.GetConsistentHash()
-				if ch.GetHttpHeaderName() != "" || ch.GetHttpCookie() != nil {
-					return true, "Uses HTTP-based load balancing in subset"
-				}
-			}
-
-			if tp.ConnectionPool != nil && tp.ConnectionPool.Http != nil {
-				return true, "Uses HTTP connection pool settings in subset"
-			}
-
-			if tp.OutlierDetection != nil {
-				return true, "Uses circuit breaking in subset"
-			}
-		}
-	}
-
-	// If only basic TLS or simple load balancing, it's L4
-	return false, ""
-}
-
 // analyzeWasmPlugin classifies a WasmPlugin as L7
 // WasmPlugins run in the HTTP filter chain
-func analyzeWasmPlugin(wp *extensions_v1alpha1.WasmPlugin, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
+func analyzeWasmPlugin(wp *extensions_v1alpha1.WasmPlugin, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
 	return AnalyzedPolicy{
 		ConfigType: "WasmPlugin",
 		Name:       wp.Name,
-		Layer:      "L7",
+		Layer:      ambient.LayerL7,
 		Reason:     "WasmPlugin processes HTTP requests (runs in waypoint's Envoy filter chain)",
 		Rules:      1,
-		Warning:    ambientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
+		Warning:    ambient.AmbientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
 	}
 }
 
 // analyzeTelemetry classifies Telemetry as L4 or L7 depending on metrics type
-func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus NamespaceAmbientStatus) AnalyzedPolicy {
-	isL7, reason := isL7Telemetry(&tel.Spec)
+func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	isL7, reason := ambient.IsL7Telemetry(&tel.Spec)
 
 	analyzed := AnalyzedPolicy{
 		ConfigType: "Telemetry",
@@ -618,38 +482,15 @@ func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus NamespaceAmbientStat
 	}
 
 	if isL7 {
-		analyzed.Layer = "L7"
+		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
-		analyzed.Warning = ambientNoWaypointWarning(nsStatus, "L7 telemetry features will NOT work.")
+		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "L7 telemetry features will NOT work.")
 	} else {
-		analyzed.Layer = "L4"
+		analyzed.Layer = ambient.LayerL4
 		analyzed.Reason = reason
 	}
 
 	return analyzed
-}
-
-// isL7Telemetry checks if Telemetry config requires L7 processing
-func isL7Telemetry(spec *telemetry_v1_api.Telemetry) (bool, string) {
-	// Check tracing - distributed tracing requires HTTP context propagation
-	if len(spec.Tracing) > 0 {
-		return true, "Configures distributed tracing (requires HTTP header propagation)"
-	}
-
-	// Check access logging - typically includes HTTP-specific fields
-	if len(spec.AccessLogging) > 0 {
-		return true, "Configures access logging (typically includes HTTP details)"
-	}
-
-	// Check for metrics overrides - if metrics are being customized, likely L7
-	for _, metric := range spec.Metrics {
-		if metric != nil && len(metric.Overrides) > 0 {
-			return true, "Collects customized HTTP metrics (request count, duration, status codes)"
-		}
-	}
-
-	// Basic TCP metrics only (connection counts, bytes transferred)
-	return false, "Only collects L4 metrics (TCP connections, bytes transferred)"
 }
 
 // countTelemetryRules counts telemetry configuration items

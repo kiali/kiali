@@ -127,8 +127,15 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 	if awc.workload.IsWaypoint() || awc.workload.IsGateway() {
 		return false
 	}
+	if len(awc.workload.WaypointWorkloads) > 0 {
+		return false
+	}
 	for _, ap := range awc.authorizationPolicies {
-		if ap.Namespace == awc.workload.Namespace && len(awc.workload.WaypointWorkloads) == 0 {
+		if ap.Namespace != awc.workload.Namespace {
+			continue
+		}
+		// Only L7 AuthorizationPolicies require a waypoint; L4 policies are enforced by ztunnel.
+		if isL7, _ := IsL7AuthorizationPolicy(&ap.Spec); isL7 {
 			return true
 		}
 	}

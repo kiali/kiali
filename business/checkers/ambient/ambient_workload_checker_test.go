@@ -228,8 +228,34 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 
 	labels := map[string]string{}
 
-	// Test workload with sidecar and ambient namespace
+	// L7 AuthorizationPolicy (HTTP methods) with no waypoint should warn
 	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+	).Check()
+
+	assert.NotEmpty(vals)
+	assert.False(valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+}
+
+func TestWorkloadHasL4AuthPolicyAndNoWaypoint_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	labels := map[string]string{}
+	workload := data.CreateWorkload(ns1, "l4-workload", labels)
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 
 	vals, valid := NewAmbientWorkloadChecker(
@@ -238,12 +264,11 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 		workload,
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+		[]*security_v1.AuthorizationPolicy{data.CreateAuthorizationPolicyWithPrincipals("l4-ap", ns1, []string{"cluster.local/ns/default/sa/app"})},
 	).Check()
 
-	assert.NotEmpty(vals)
-	assert.False(valid)
-	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+	assert.Empty(vals)
+	assert.True(valid)
 }
 
 func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
