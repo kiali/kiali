@@ -205,7 +205,7 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
 
 When(
   'user clicks in the {string} table {string} badge {string} name row link',
-  (tableName: string, badge: string, _name: string) => {
+  (tableName: string, _badge: string, name: string) => {
     let tableId = '';
 
     switch (tableName) {
@@ -215,8 +215,12 @@ When(
     }
 
     cy.get(`table[aria-label="${tableId}"]`).within(() => {
-      cy.contains('div', badge).siblings().first().click();
+      // Prefer the named link (data-test from IstioObjectLink) — badge sibling clicks are
+      // brittle under PatternFly 6 Tooltip wrappers and can leave the previous page mounted.
+      cy.contains('tr', name).find(`a[data-test*="${name}"]`).first().click();
     });
+
+    cy.location('pathname', { timeout: 60000 }).should('include', '/istio/');
   }
 );
 

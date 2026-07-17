@@ -73,11 +73,9 @@ When(
 );
 
 When('user clicks the {string} item of the context menu', (menuKey: string) => {
-  cy.get('.pf-topology-context-menu__c-dropdown__menu')
-    .find(`[data-test="${menuKey}"]`)
-    .then($item => {
-      cy.wrap($item).click();
-    });
+  // Create-actions are added asynchronously after service-detail fetch; the menu remounts
+  // and detaches any prior subject. Re-query the item on each retry.
+  cy.get(`[data-test="${menuKey}"]`, { timeout: 15000 }).should('be.visible').click({ force: true });
 });
 
 Then('user should see the {string} wizard', (wizardKey: string) => {
