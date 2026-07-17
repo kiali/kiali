@@ -376,7 +376,10 @@ func (in *WorkloadService) GetWorkloadList(ctx context.Context, criteria Workloa
 	}
 
 	if criteria.IncludeIstioResources {
-		if namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace); err == nil {
+		namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace)
+		if err != nil {
+			log.Errorf("Error fetching validations for cluster [%s] namespace [%s]: %s", cluster, namespace, err)
+		} else {
 			workloadList.Validations = workloadList.Validations.MergeValidations(filterWorkloadValidations(namespaceValidations))
 		}
 	}

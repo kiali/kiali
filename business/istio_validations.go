@@ -131,7 +131,6 @@ type validationClusterInfo struct {
 	identityDomain   string                      // resolved Istio identity domain for this cluster's control plane
 	istioConfig      *models.IstioConfigList     // config for the cluster (all namespaces)
 	kubeServiceHosts kubernetes.KubeServiceHosts // pre-built host lookup from K8s services
-	pods             []core_v1.Pod               // K8s pods for the cluster (all namespaces)
 	rootNamespaces   map[string]string           // namespace => rootNamespace, pre-computed from ControlPlaneForNamespace
 	services         []core_v1.Service           // K8s services for the cluster (all namespaces)
 }
@@ -327,12 +326,6 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 	vInfo.clusterInfo.deployments = depList.Items
 
-	var podList core_v1.PodList
-	if err := kubeCache.List(ctx, &podList, &client.ListOptions{}); err != nil {
-		return false, nil, fmt.Errorf("unable to list pods for cluster [%s]: %w", cluster, err)
-	}
-	vInfo.clusterInfo.pods = podList.Items
-
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -415,17 +408,26 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	}
 
 	// Service port-mapping validations are independent of per-namespace Istio config and run once per cluster.
+	// Pods are fetched only when checkers run (not during change detection) and scoped to managed namespaces.
 	managedServices := make([]core_v1.Service, 0, len(vInfo.clusterInfo.services))
 	for _, svc := range vInfo.clusterInfo.services {
 		if _, managed := rootNamespaces[svc.Namespace]; managed {
 			managedServices = append(managedServices, svc)
 		}
 	}
+	var pods []core_v1.Pod
+	for ns := range rootNamespaces {
+		var podList core_v1.PodList
+		if err := kubeCache.List(ctx, &podList, client.InNamespace(ns)); err != nil {
+			return false, nil, fmt.Errorf("unable to list pods for cluster [%s] namespace [%s]: %w", cluster, ns, err)
+		}
+		pods = append(pods, podList.Items...)
+	}
 	serviceChecker := checkers.NewServiceChecker(
 		cluster,
 		vInfo.clusterInfo.deployments,
 		in.mesh.discovery,
-		vInfo.clusterInfo.pods,
+		pods,
 		managedServices,
 	)
 	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{serviceChecker}, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
@@ -461,15 +463,12 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 		change = vInfo.update("SV", cluster, s.Namespace, s.Name, serviceVersion) || change
 	}
 
-	// Deployments and pods affect service port-mapping validations (KIA0601/KIA0701).
+	// Deployments affect service port-mapping validations (KIA0601/KIA0701).
+	// Pods are intentionally not tracked: they churn too often and would force frequent revalidation.
 	for _, d := range vInfo.clusterInfo.deployments {
 		change = vInfo.update("DP", cluster, d.Namespace, d.Name, d.ResourceVersion) || change
 	}
 	change = vInfo.update("validation-num-deployments", cluster, "", "", strconv.Itoa(len(vInfo.clusterInfo.deployments))) || change
-	for _, p := range vInfo.clusterInfo.pods {
-		change = vInfo.update("PO", cluster, p.Namespace, p.Name, p.ResourceVersion) || change
-	}
-	change = vInfo.update("validation-num-pods", cluster, "", "", strconv.Itoa(len(vInfo.clusterInfo.pods))) || change
 
 	// loop through the config and gather up their resourceVersions
 	config := vInfo.clusterInfo.istioConfig

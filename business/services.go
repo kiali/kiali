@@ -257,7 +257,10 @@ func (in *SvcService) buildServiceList(ctx context.Context, cluster string, name
 	services := []models.ServiceOverview{}
 	validations := models.IstioValidations{}
 	if !criteria.IncludeOnlyDefinitions {
-		if namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace); err == nil {
+		namespaceValidations, err := in.businessLayer.Validations.GetValidationsForNamespace(ctx, cluster, namespace)
+		if err != nil {
+			log.Errorf("Error fetching validations for cluster [%s] namespace [%s]: %s", cluster, namespace, err)
+		} else {
 			validations = filterServiceValidations(namespaceValidations)
 		}
 	}
