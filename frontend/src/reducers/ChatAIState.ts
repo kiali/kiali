@@ -1,9 +1,9 @@
-import { ChatAIState } from '../store/Store';
+import type { ChatAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
+import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
@@ -17,6 +17,7 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   openTool: ImmutableMap({ chatEntryIndex: null, id: null }),
   providers: [],
   query: '',
+  resourceHealth: undefined,
   selectedModel: '',
   selectedProvider: ''
 };
@@ -84,6 +85,12 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setInteractionMode): {
       return updateState(state, { interactionMode: action.payload.interactionMode });
+    }
+    case getType(ChatAIActions.setResourceHealth): {
+      return updateState(state, { resourceHealth: action.payload });
+    }
+    case getType(ChatAIActions.clearResourceHealth): {
+      return updateState(state, { resourceHealth: undefined });
     }
     default:
       return state;

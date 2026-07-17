@@ -1,5 +1,6 @@
-import { MessageProps } from '@patternfly/chatbot';
-import { Map as ImmutableMap } from 'immutable';
+import type { MessageProps } from '@patternfly/chatbot';
+import type { Map as ImmutableMap } from 'immutable';
+import type { HealthStatusId } from 'types/Health';
 
 export type ChatInteractionMode = 'ask' | 'troubleshoot';
 
@@ -137,6 +138,14 @@ type ChatEntryAI = {
 };
 
 export type ChatEntry = ChatEntryAI | ChatEntryUser;
+
+export type ChatResourceHealth = {
+  clusterName?: string;
+  namespace: string;
+  resourceKind: 'application' | 'namespace' | 'service' | 'workload';
+  resourceName: string;
+  status?: HealthStatusId;
+};
 
 export type ChatSessionUsageMetric = {
   completion_tokens: number;

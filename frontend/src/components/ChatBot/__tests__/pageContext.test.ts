@@ -1,6 +1,18 @@
-import { buildPageContext } from '../PageContext';
+let mockIsMultiCluster = true;
+
+rstest.mock('config', () => ({
+  get isMultiCluster() {
+    return mockIsMultiCluster;
+  }
+}));
+
+import { buildPageContext } from '../pageContext';
 
 describe('buildPageContext', () => {
+  beforeEach(() => {
+    mockIsMultiCluster = true;
+  });
+
   it('returns undefined when kind is not provided', () => {
     expect(buildPageContext(undefined, undefined, undefined, undefined)).toBeUndefined();
   });
@@ -64,18 +76,31 @@ describe('buildPageContext', () => {
         'User is seeing the information about namespace bookinfo'
       );
     });
+
+    it('appends health status on detail views', () => {
+      expect(buildPageContext('service', 'details', 'bookinfo', undefined, undefined, 'Failure')).toBe(
+        'User is seeing the information about service details of namespace bookinfo with current health status Failure'
+      );
+    });
   });
 
   describe('cluster context', () => {
-    it('appends cluster to list view', () => {
+    it('appends cluster to list view in multi-cluster environments', () => {
       expect(buildPageContext('workloads', undefined, 'bookinfo', undefined, 'east')).toBe(
         'User is seeing the List of workloads for namespaces: bookinfo in cluster east'
       );
     });
 
-    it('appends cluster to detail view', () => {
+    it('appends cluster to detail view in multi-cluster environments', () => {
       expect(buildPageContext('app', 'reviews', 'bookinfo', undefined, 'west')).toBe(
         'User is seeing the information about application reviews of namespace bookinfo in cluster west'
+      );
+    });
+
+    it('does not append cluster in single-cluster environments', () => {
+      mockIsMultiCluster = false;
+      expect(buildPageContext('app', 'reviews', 'bookinfo', undefined, 'west')).toBe(
+        'User is seeing the information about application reviews of namespace bookinfo'
       );
     });
 

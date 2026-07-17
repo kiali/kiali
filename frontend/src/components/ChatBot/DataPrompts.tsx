@@ -1,4 +1,4 @@
-import { Prompt } from 'types/Chatbot';
+import type { Prompt } from 'types/Chatbot';
 
 export const DataPrompts: { [key: string]: Prompt[] } = {
   applications: [
@@ -6,16 +6,16 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Report applications that may need attention, including health issues or missing sidecars',
       message: 'Report applications that may need attention, including health issues or missing sidecars',
       query:
-        'Analyze the applications currently shown and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.',
+        'Analyze the applications in namespaces: {namespaces} and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.',
       title: 'Application Health Analysis'
     }
   ],
   'application-details': [
     {
-      description: 'Analyze the current application for health issues, traffic anomalies, and missing sidecars',
-      message: 'Analyze the current application for health issues, traffic anomalies, and missing sidecars',
+      description: 'Analyze the application for health issues, traffic anomalies, and missing sidecars',
+      message: 'Analyze the application for health issues, traffic anomalies, and missing sidecars',
       query:
-        'Analyze the current application and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.',
+        "Analyze the application '{application}' in namespace '{namespace}'{cluster}{health_context} and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.",
       title: 'Application Troubleshooting'
     }
   ],
@@ -32,16 +32,16 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Highlight Istio objects that may be misconfigured or likely to impact traffic',
       message: 'Highlight Istio objects that may be misconfigured or likely to impact traffic',
       query:
-        'Review the Istio configuration currently shown and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.',
+        'Review the Istio configuration in namespaces: {namespaces} and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.',
       title: 'Istio Config Review'
     }
   ],
   'istio-details': [
     {
-      description: 'Review the current Istio object for misconfiguration, ineffective rules, or traffic impact',
-      message: 'Review the current Istio object for misconfiguration, ineffective rules, or traffic impact',
+      description: 'Review the Istio object for misconfiguration, ineffective rules, or traffic impact',
+      message: 'Review the Istio object for misconfiguration, ineffective rules, or traffic impact',
       query:
-        'Analyze the current Istio configuration object and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.',
+        "Analyze the Istio {istio_type} '{istio_object}' in namespace '{namespace}'{cluster} and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.",
       title: 'Istio Object Review'
     }
   ],
@@ -57,17 +57,17 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
   namespaces: [
     {
       description: 'List all namespaces with their sidecar injection status and Istio labels',
-      message: 'List all namespaces with their sidecar injection status and Istio labels',
+      message: 'List all namespaces and show their sidecar injection status and Istio labels',
       query: 'List all namespaces and show their sidecar injection status and Istio labels',
       title: 'Namespace Overview'
     }
   ],
   'namespace-details': [
     {
-      description: 'Analyze the current namespace for health issues, injection problems, and Istio config issues',
-      message: 'Analyze the current namespace for health issues, injection problems, and Istio config issues',
+      description: 'Analyze the namespace for health issues, injection problems, and Istio config issues',
+      message: 'Analyze the namespace for health issues, injection problems, and Istio config issues',
       query:
-        'Analyze the current namespace and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.',
+        "Analyze the namespace '{namespace}'{cluster}{health_context} and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.",
       title: 'Namespace Troubleshooting'
     }
   ],
@@ -84,16 +84,16 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Highlight services with unhealthy behavior, unusual traffic patterns, or configuration issues',
       message: 'Highlight services with unhealthy behavior, unusual traffic patterns, or configuration issues',
       query:
-        'Review the services currently shown and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.',
+        'Review the services in namespaces: {namespaces} and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.',
       title: 'Service Health Analysis'
     }
   ],
   'service-details': [
     {
-      description: 'Analyze the current service for health issues, unusual traffic, and related workload problems',
-      message: 'Analyze the current service for health issues, unusual traffic, and related workload problems',
+      description: 'Analyze the service for health issues, unusual traffic, and related workload problems',
+      message: 'Analyze the service for health issues, unusual traffic, and related workload problems',
       query:
-        'Analyze the current service and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.',
+        "Analyze the service '{service}' in namespace '{namespace}'{cluster}{health_context} and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.",
       title: 'Service Troubleshooting'
     }
   ],
@@ -102,16 +102,16 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Report degraded workloads, missing sidecars, or other issues that may need troubleshooting',
       message: 'Report degraded workloads, missing sidecars, or other issues that may need troubleshooting',
       query:
-        'Check the workloads currently shown and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.',
+        'Check the workloads in namespaces: {namespaces} and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.',
       title: 'Workload Health Analysis'
     }
   ],
   'workload-details': [
     {
-      description: 'Analyze the current workload for degraded status, traffic anomalies, and sidecar issues',
-      message: 'Analyze the current workload for degraded status, traffic anomalies, and sidecar issues',
+      description: 'Analyze the workload for degraded status, traffic anomalies, and sidecar issues',
+      message: 'Analyze the workload for degraded status, traffic anomalies, and sidecar issues',
       query:
-        'Analyze the current workload and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.',
+        "Analyze the workload '{workload}' in namespace '{namespace}'{cluster}{health_context} and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
       title: 'Workload Troubleshooting'
     }
   ]

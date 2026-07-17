@@ -12,20 +12,32 @@ type Prompt struct {
 
 // Catalog returns the built-in prompt catalog.
 // Prompts are grouped by category matching Kiali UI page sections.
+//
+// Query templates support these variables, substituted by the frontend from UI context:
+//   - {application}   application name (detail views)
+//   - {service}       service name (detail views)
+//   - {workload}      workload name (detail views)
+//   - {namespace}     namespace name (detail views)
+//   - {namespaces}    comma-separated namespace list (list views)
+//   - {istio_object}  Istio object name (detail views)
+//   - {istio_type}    Istio object type (detail views)
+//   - {health_context} health suffix for detail views, e.g. " with current health status Degraded"
+//   - {health}           raw health status (detail views)
+//   - {cluster}          cluster suffix, e.g. " in cluster 'east'" (multi-cluster only)
 func Catalog() []Prompt {
 	return []Prompt{
 		{
 			Category:    "applications",
 			Description: "Report applications that may need attention, including health issues or missing sidecars",
 			Name:        "app-health",
-			Query:       "Analyze the applications currently shown and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.",
+			Query:       "Analyze the applications in namespaces: {namespaces} and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.",
 			Title:       "Application Health Analysis",
 		},
 		{
 			Category:    "application-details",
-			Description: "Analyze the current application for health issues, traffic anomalies, and missing sidecars",
+			Description: "Analyze the application for health issues, traffic anomalies, and missing sidecars",
 			Name:        "app-details-troubleshooting",
-			Query:       "Analyze the current application and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.",
+			Query:       "Analyze the application '{application}' in namespace '{namespace}'{cluster}{health_context} and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.",
 			Title:       "Application Troubleshooting",
 		},
 		{
@@ -39,14 +51,14 @@ func Catalog() []Prompt {
 			Category:    "istio",
 			Description: "Highlight Istio objects that may be misconfigured or likely to impact traffic",
 			Name:        "istio-config-review",
-			Query:       "Review the Istio configuration currently shown and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.",
+			Query:       "Review the Istio configuration in namespaces: {namespaces} and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.",
 			Title:       "Istio Config Review",
 		},
 		{
 			Category:    "istio-details",
-			Description: "Review the current Istio object for misconfiguration, ineffective rules, or traffic impact",
+			Description: "Review the Istio object for misconfiguration, ineffective rules, or traffic impact",
 			Name:        "istio-object-review",
-			Query:       "Analyze the current Istio configuration object and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.",
+			Query:       "Analyze the Istio {istio_type} '{istio_object}' in namespace '{namespace}'{cluster} and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.",
 			Title:       "Istio Object Review",
 		},
 		{
@@ -65,9 +77,9 @@ func Catalog() []Prompt {
 		},
 		{
 			Category:    "namespace-details",
-			Description: "Analyze the current namespace for health issues, injection problems, and Istio config issues",
+			Description: "Analyze the namespace for health issues, injection problems, and Istio config issues",
 			Name:        "namespace-troubleshooting",
-			Query:       "Analyze the current namespace and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.",
+			Query:       "Analyze the namespace '{namespace}'{cluster}{health_context} and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.",
 			Title:       "Namespace Troubleshooting",
 		},
 		{
@@ -81,35 +93,35 @@ func Catalog() []Prompt {
 			Category:    "services",
 			Description: "Highlight services with unhealthy behavior, unusual traffic patterns, or configuration issues",
 			Name:        "service-health",
-			Query:       "Review the services currently shown and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.",
+			Query:       "Review the services in namespaces: {namespaces} and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.",
 			Title:       "Service Health Analysis",
 		},
 		{
 			Category:    "service-details",
-			Description: "Analyze the current service for health issues, unusual traffic, and related workload problems",
+			Description: "Analyze the service for health issues, unusual traffic, and related workload problems",
 			Name:        "service-troubleshooting",
-			Query:       "Analyze the current service and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.",
+			Query:       "Analyze the service '{service}' in namespace '{namespace}'{cluster}{health_context} and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.",
 			Title:       "Service Troubleshooting",
 		},
 		{
 			Category:    "services",
 			Description: "Show the traffic topology for services in the selected namespaces",
 			Name:        "service-traffic",
-			Query:       "Show the traffic topology for services in the selected namespaces",
+			Query:       "Show the traffic topology for services in namespaces: {namespaces}",
 			Title:       "Service Traffic",
 		},
 		{
 			Category:    "workloads",
 			Description: "Report degraded workloads, missing sidecars, or other issues that may need troubleshooting",
 			Name:        "workload-health",
-			Query:       "Check the workloads currently shown and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.",
+			Query:       "Check the workloads in namespaces: {namespaces} and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.",
 			Title:       "Workload Health Analysis",
 		},
 		{
 			Category:    "workload-details",
-			Description: "Analyze the current workload for degraded status, traffic anomalies, and sidecar issues",
+			Description: "Analyze the workload for degraded status, traffic anomalies, and sidecar issues",
 			Name:        "workload-troubleshooting",
-			Query:       "Analyze the current workload and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
+			Query:       "Analyze the workload '{workload}' in namespace '{namespace}'{cluster}{health_context} and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
 			Title:       "Workload Troubleshooting",
 		},
 
@@ -135,7 +147,7 @@ func Catalog() []Prompt {
 			Description: "Analyze all Istio configs in this namespace for Ambient compatibility (L4 vs L7)",
 			IsAmbient:   true,
 			Name:        "ambient-config-analysis",
-			Query:       "Analyze all Istio configurations in the current namespace for Ambient Mesh compatibility. Show which configs are L4 (ztunnel-processed) vs L7 (waypoint-required) including AuthorizationPolicies, VirtualServices, DestinationRules, RequestAuthentications, PeerAuthentications, WasmPlugins, and Telemetry. Warn if L7 configs exist without a waypoint.",
+			Query:       "Analyze all Istio configurations in namespace '{namespace}'{cluster}{health_context} for Ambient Mesh compatibility. Show which configs are L4 (ztunnel-processed) vs L7 (waypoint-required) including AuthorizationPolicies, VirtualServices, DestinationRules, RequestAuthentications, PeerAuthentications, WasmPlugins, and Telemetry. Warn if L7 configs exist without a waypoint.",
 			Title:       "Ambient Config Analysis",
 		},
 		{
@@ -143,7 +155,7 @@ func Catalog() []Prompt {
 			Description: "Show ztunnel networking details for this Ambient workload (protocol, captured services, waypoint)",
 			IsAmbient:   true,
 			Name:        "ambient-workload-networking",
-			Query:       "Show detailed Ambient networking information for the current workload. Include ztunnel capture status, protocol (HBONE/TCP), network mode, captured services with VIPs, and waypoint configuration.",
+			Query:       "Show detailed Ambient networking information for workload '{workload}' in namespace '{namespace}'{cluster}{health_context}. Include ztunnel capture status, protocol (HBONE/TCP), network mode, captured services with VIPs, and waypoint configuration.",
 			Title:       "Ambient Workload Networking",
 		},
 		{
@@ -151,7 +163,7 @@ func Catalog() []Prompt {
 			Description: "For waypoint proxies, show which services they are capturing and enforcing policies for",
 			IsAmbient:   true,
 			Name:        "waypoint-captured-services",
-			Query:       "If this workload is a waypoint proxy, show which services it is capturing and enforcing L7 policies for. Include service names and namespaces.",
+			Query:       "If workload '{workload}' in namespace '{namespace}'{cluster} is a waypoint proxy, show which services it is capturing and enforcing L7 policies for. Include service names and namespaces.",
 			Title:       "Waypoint Captured Services",
 		},
 		{
@@ -159,7 +171,7 @@ func Catalog() []Prompt {
 			Description: "Show traffic topology filtered to Ambient Mesh waypoint-reported traffic only",
 			IsAmbient:   true,
 			Name:        "ambient-waypoint-traffic",
-			Query:       "Show the traffic topology for the selected namespaces, filtered to show only waypoint-reported traffic. This helps visualize L7 traffic flow in Ambient mode.",
+			Query:       "Show the traffic topology for namespaces: {namespaces}, filtered to show only waypoint-reported traffic. This helps visualize L7 traffic flow in Ambient mode.",
 			Title:       "Ambient Waypoint Traffic",
 		},
 		{
