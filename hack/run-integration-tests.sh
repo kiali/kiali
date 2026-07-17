@@ -516,6 +516,39 @@ ensureBookinfoGraphReady() {
   done
 }
 
+# Wait until the MCP HTTP endpoint answers before starting go tests.
+# Graph readiness alone is not enough: KinD CI can still stall Kiali briefly afterward.
+ensureMCPReady() {
+  infomsg "Waiting for MCP endpoint to respond"
+  local start_time
+  local end_time
+  local mcp_url
+  local http_code
+  start_time=$(date +%s)
+  end_time=$((start_time + 120))
+  mcp_url="${KIALI_URL}/api/chat/mcp/list_clusters"
+
+  while true; do
+    http_code=$(curl -k -s -o /dev/null -w "%{http_code}" --max-time 15 \
+      -X POST "${mcp_url}" \
+      -H 'Content-Type: application/json' \
+      -d '{}' || true)
+
+    if [ "${http_code}" != "000" ] && [ -n "${http_code}" ]; then
+      infomsg "MCP endpoint is ready (HTTP ${http_code})"
+      return 0
+    fi
+
+    local now
+    now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Timed out waiting for MCP endpoint at ${mcp_url}"
+      return 1
+    fi
+    sleep 5
+  done
+}
+
 ensureMulticlusterApplicationsAreHealthy() {
   local start_time
   local timeout=300
@@ -580,6 +613,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
   if [ "${MCP_TOOLS}" == "true" ]; then
     echo "Running backend MCP integration tests"
     ensureBookinfoGraphReady
+    ensureMCPReady
     cd "${SCRIPT_DIR}"/../tests/integration/mcp_tools
     go test -tags exclude_frontend -v -failfast ./... 2>&1 | tee >(go-junit-report > ../junit-rest-report-mcp-tools.xml) ../int-test-mcp-tools.log
   else
