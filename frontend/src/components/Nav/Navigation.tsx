@@ -74,7 +74,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   // Keep page content aligned when the notification drawer is collapsed. Focus or
   // automation can scroll drawer__main horizontally into the reserved panel slot.
-  React.useEffect((): void => {
+  React.useEffect(() => {
     if (props.showNotificationCenter) {
       return;
     }
