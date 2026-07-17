@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	networking_v1_api "istio.io/api/networking/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
@@ -288,7 +289,8 @@ func checkNamespaceWaypoint(ctx context.Context, businessLayer *business.Layer, 
 func updateCounts(l4Count, l7Count, l7WithoutWaypoint *int, analyzed AnalyzedPolicy) {
 	if analyzed.Layer == ambient.LayerL7 {
 		*l7Count++
-		if analyzed.Warning != "" {
+		// Count enrollment gaps only (not missing-targetRefs warnings) for the waypoint summary.
+		if strings.Contains(analyzed.Warning, "NOT enrolled") {
 			*l7WithoutWaypoint++
 		}
 	} else {
@@ -309,13 +311,30 @@ func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus am
 	if isL7 {
 		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
-		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This L7 policy will NOT be enforced.")
+		var missingTargetRefs string
+		if !ambient.AuthorizationPolicyHasTargetRefs(&ap.Spec) {
+			missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "AuthorizationPolicy")
+		}
+		analyzed.Warning = joinWarnings(
+			missingTargetRefs,
+			ambient.AmbientNoWaypointWarning(nsStatus, "This L7 policy will NOT be enforced."),
+		)
 	} else {
 		analyzed.Layer = ambient.LayerL4
 		analyzed.Reason = "Only uses L4 fields (source/destination principals, IPs, ports, namespaces)"
 	}
 
 	return analyzed
+}
+
+func joinWarnings(parts ...string) string {
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return strings.Join(out, " ")
 }
 
 // generateSummary creates a human-readable summary
@@ -355,6 +374,7 @@ func generateRecommendations(nsStatus NamespaceAmbientStatus, l7Count, l7Without
 		recommendations = append(recommendations,
 			fmt.Sprintf("Deploy a waypoint proxy in namespace '%s' to enable L7 configs. Use 'istioctl waypoint apply' or create a Gateway resource.", nsStatus.Name),
 			"After deploying the waypoint, verify configs are working by checking metrics or testing the affected services.",
+			"For L7 AuthorizationPolicy and RequestAuthentication, use targetRefs to a Service or Gateway — selector-based policies are ignored by waypoints.",
 		)
 	}
 
@@ -365,7 +385,10 @@ func generateRecommendations(nsStatus NamespaceAmbientStatus, l7Count, l7Without
 	}
 
 	if len(recommendations) == 0 {
-		recommendations = append(recommendations, "No issues found. All configurations are correctly set up for Ambient mode.")
+		recommendations = append(recommendations,
+			"No issues found. All configurations are correctly set up for Ambient mode.",
+			"For L7 AuthorizationPolicy and RequestAuthentication in Ambient, prefer targetRefs over selector so the policy binds to the waypoint.",
+		)
 	}
 
 	return recommendations
@@ -386,13 +409,20 @@ func analyzePeerAuthentication(pa *security_v1.PeerAuthentication) AnalyzedPolic
 // analyzeRequestAuthentication classifies a RequestAuthentication as L7
 // JWT validation requires HTTP header parsing, only waypoint can do this
 func analyzeRequestAuthentication(ra *security_v1.RequestAuthentication, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	var missingTargetRefs string
+	if !ambient.RequestAuthenticationHasTargetRefs(&ra.Spec) {
+		missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "RequestAuthentication")
+	}
 	return AnalyzedPolicy{
 		ConfigType: "RequestAuthentication",
 		Name:       ra.Name,
 		Layer:      ambient.LayerL7,
 		Reason:     "RequestAuthentication validates JWT tokens (requires HTTP header parsing)",
 		Rules:      len(ra.Spec.JwtRules),
-		Warning:    ambient.AmbientNoWaypointWarning(nsStatus, "This RequestAuthentication will NOT work."),
+		Warning: joinWarnings(
+			missingTargetRefs,
+			ambient.AmbientNoWaypointWarning(nsStatus, "This RequestAuthentication will NOT work."),
+		),
 	}
 }
 

@@ -197,6 +197,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "L7 AuthorizationPolicy in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
 		Severity: WarningSeverity,
 	},
+	"authorizationpolicy.ambient.l7notargetrefs": {
+		Code:     "KIA0110",
+		Message:  "L7 AuthorizationPolicy in Ambient requires targetRefs to a Service or Gateway; selector policies are ignored by waypoints",
+		Severity: WarningSeverity,
+	},
 	"destinationrules.multimatch": {
 		Code:     "KIA0201",
 		Message:  "More than one DestinationRules for the same host subset combination",
@@ -440,6 +445,11 @@ var checkDescriptors = map[string]IstioCheck{
 	"requestauthentication.ambient.l7nowaypoint": {
 		Code:     "KIA1110",
 		Message:  "RequestAuthentication in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"requestauthentication.ambient.l7notargetrefs": {
+		Code:     "KIA1115",
+		Message:  "RequestAuthentication in Ambient requires targetRefs to a Service or Gateway; selector policies are ignored by waypoints",
 		Severity: WarningSeverity,
 	},
 	"wasmplugin.ambient.l7nowaypoint": {

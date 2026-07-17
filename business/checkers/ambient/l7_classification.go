@@ -116,6 +116,25 @@ func IsL7AuthorizationPolicy(spec *security_v1_api.AuthorizationPolicy) (bool, s
 	return false, ""
 }
 
+// AuthorizationPolicyHasTargetRefs reports whether the policy attaches via targetRef(s).
+// In Ambient, waypoint proxies ignore selector-based AuthorizationPolicies; targetRefs are required.
+// See https://istio.io/latest/docs/ambient/usage/waypoint/#policy-attachment
+func AuthorizationPolicyHasTargetRefs(spec *security_v1_api.AuthorizationPolicy) bool {
+	if spec == nil {
+		return false
+	}
+	return spec.TargetRef != nil || len(spec.TargetRefs) > 0
+}
+
+// RequestAuthenticationHasTargetRefs reports whether the policy attaches via targetRef(s).
+// In Ambient, waypoint proxies ignore selector-based RequestAuthentications; targetRefs are required.
+func RequestAuthenticationHasTargetRefs(spec *security_v1_api.RequestAuthentication) bool {
+	if spec == nil {
+		return false
+	}
+	return spec.TargetRef != nil || len(spec.TargetRefs) > 0
+}
+
 // IsL7Condition checks if a 'when' condition key requires L7 processing.
 // Note: destination.port is L4 (evaluated by ztunnel), not listed here.
 func IsL7Condition(key string) bool {
@@ -269,6 +288,15 @@ func AmbientNoWaypointWarning(nsStatus NamespaceAmbientStatus, consequence strin
 		return fmt.Sprintf("Namespace '%s' is in Ambient mode but is NOT enrolled to use a waypoint (missing istio.io/use-waypoint). %s", nsStatus.Name, consequence)
 	}
 	return ""
+}
+
+// AmbientMissingTargetRefsWarning returns a warning when an Ambient L7 policy lacks targetRefs.
+// Waypoint proxies ignore selector-based attachment; targetRefs to Service/Gateway are required.
+func AmbientMissingTargetRefsWarning(nsStatus NamespaceAmbientStatus, configKind string) string {
+	if !nsStatus.IsAmbient {
+		return ""
+	}
+	return fmt.Sprintf("%s in Ambient namespace '%s' has no targetRefs. Waypoints ignore selector-based policies; attach via targetRefs to a Service or Gateway.", configKind, nsStatus.Name)
 }
 
 // AmbientServiceNotCapturedWarning returns a warning when a specific service is not enrolled

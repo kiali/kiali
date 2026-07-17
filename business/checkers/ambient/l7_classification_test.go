@@ -7,6 +7,7 @@ import (
 	networking_v1_api "istio.io/api/networking/v1"
 	security_v1_api "istio.io/api/security/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
+	type_v1beta1 "istio.io/api/type/v1beta1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -51,6 +52,25 @@ func TestIsL7AuthorizationPolicy_EmptyAndNil(t *testing.T) {
 	assert.False(t, isL7)
 	isL7, _ = IsL7AuthorizationPolicy(nil)
 	assert.False(t, isL7)
+}
+
+func TestAuthorizationPolicyHasTargetRefs(t *testing.T) {
+	assert.False(t, AuthorizationPolicyHasTargetRefs(nil))
+	assert.False(t, AuthorizationPolicyHasTargetRefs(&security_v1_api.AuthorizationPolicy{}))
+	assert.True(t, AuthorizationPolicyHasTargetRefs(&security_v1_api.AuthorizationPolicy{
+		TargetRefs: []*type_v1beta1.PolicyTargetReference{{Kind: "Service", Name: "reviews"}},
+	}))
+	assert.True(t, AuthorizationPolicyHasTargetRefs(&security_v1_api.AuthorizationPolicy{
+		TargetRef: &type_v1beta1.PolicyTargetReference{Kind: "Gateway", Name: "waypoint"},
+	}))
+}
+
+func TestRequestAuthenticationHasTargetRefs(t *testing.T) {
+	assert.False(t, RequestAuthenticationHasTargetRefs(nil))
+	assert.False(t, RequestAuthenticationHasTargetRefs(&security_v1_api.RequestAuthentication{}))
+	assert.True(t, RequestAuthenticationHasTargetRefs(&security_v1_api.RequestAuthentication{
+		TargetRefs: []*type_v1beta1.PolicyTargetReference{{Kind: "Service", Name: "reviews"}},
+	}))
 }
 
 func TestIsL7Condition_DestinationPortIsL4(t *testing.T) {

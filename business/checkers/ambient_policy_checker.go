@@ -1,6 +1,8 @@
 package checkers
 
 import (
+	"fmt"
+
 	extensions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
@@ -18,8 +20,11 @@ import (
 // Classification logic is shared with the MCP analyze_ambient_policies tool.
 //
 // Rules:
-//   - AuthorizationPolicy / RequestAuthentication / WasmPlugin / Telemetry: CR namespace must be
-//     Ambient; warn when that namespace (or selected workloads) are not enrolled.
+//   - AuthorizationPolicy / RequestAuthentication: require targetRefs (Service/Gateway) in Ambient;
+//     selector-based attachment is ignored by waypoints. Also warn when the namespace (or selected
+//     workloads) are not enrolled.
+//   - WasmPlugin / Telemetry: CR namespace must be Ambient; warn when that namespace (or selected
+//     workloads) are not enrolled.
 //   - VirtualService / DestinationRule: keyed off the *destination* Service. If the destination
 //     namespace is Ambient, warn when the service is not enrolled and/or when the CR is not in the
 //     service namespace (cross-namespace L7 configs do not take effect for Ambient waypoints).
@@ -68,12 +73,16 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		if !isL7 {
 			continue
 		}
+		// Waypoints ignore selector-based policies; L7 AuthPolicies must use targetRefs.
+		if !ambient.AuthorizationPolicyHasTargetRefs(&ap.Spec) {
+			validations.MergeValidations(c.buildCheck(ap.Name, ap.Namespace, kubernetes.AuthorizationPolicies, "authorizationpolicy.ambient.l7notargetrefs", ""))
+		}
 		matchLabels := map[string]string{}
 		if ap.Spec.Selector != nil {
 			matchLabels = ap.Spec.Selector.MatchLabels
 		}
 		if c.selectorNeedsWarning(matchLabels, ap.Namespace, nsByName[ap.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(ap.Name, ap.Namespace, kubernetes.AuthorizationPolicies, "authorizationpolicy.ambient.l7nowaypoint"))
+			validations.MergeValidations(c.buildCheck(ap.Name, ap.Namespace, kubernetes.AuthorizationPolicies, "authorizationpolicy.ambient.l7nowaypoint", ""))
 		}
 	}
 
@@ -82,12 +91,16 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		if !ok || !nsStatus.IsAmbient {
 			continue
 		}
+		// Waypoints ignore selector-based policies; RequestAuthentication must use targetRefs.
+		if !ambient.RequestAuthenticationHasTargetRefs(&ra.Spec) {
+			validations.MergeValidations(c.buildCheck(ra.Name, ra.Namespace, kubernetes.RequestAuthentications, "requestauthentication.ambient.l7notargetrefs", ""))
+		}
 		matchLabels := map[string]string{}
 		if ra.Spec.Selector != nil {
 			matchLabels = ra.Spec.Selector.MatchLabels
 		}
 		if c.selectorNeedsWarning(matchLabels, ra.Namespace, nsByName[ra.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(ra.Name, ra.Namespace, kubernetes.RequestAuthentications, "requestauthentication.ambient.l7nowaypoint"))
+			validations.MergeValidations(c.buildCheck(ra.Name, ra.Namespace, kubernetes.RequestAuthentications, "requestauthentication.ambient.l7nowaypoint", ""))
 		}
 	}
 
@@ -127,7 +140,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 			matchLabels = wp.Spec.Selector.MatchLabels
 		}
 		if c.selectorNeedsWarning(matchLabels, wp.Namespace, nsByName[wp.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(wp.Name, wp.Namespace, kubernetes.WasmPlugins, "wasmplugin.ambient.l7nowaypoint"))
+			validations.MergeValidations(c.buildCheck(wp.Name, wp.Namespace, kubernetes.WasmPlugins, "wasmplugin.ambient.l7nowaypoint", ""))
 		}
 	}
 
@@ -145,7 +158,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 			matchLabels = tel.Spec.Selector.MatchLabels
 		}
 		if c.selectorNeedsWarning(matchLabels, tel.Namespace, nsByName[tel.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(tel.Name, tel.Namespace, kubernetes.Telemetries, "telemetry.ambient.l7nowaypoint"))
+			validations.MergeValidations(c.buildCheck(tel.Name, tel.Namespace, kubernetes.Telemetries, "telemetry.ambient.l7nowaypoint", ""))
 		}
 	}
 
@@ -167,18 +180,19 @@ func (c AmbientPolicyChecker) checkHostBasedConfig(
 	destinations, resolved := c.resolveAmbientDestinations(hosts, objectNamespace, nsNames, servicesByNS, nsStatusByName)
 
 	for _, dest := range destinations {
+		path := ambientHostPath(gvk, dest.HostIndex)
 		if objectNamespace != dest.ServiceNamespace {
-			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notInServiceNsID))
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notInServiceNsID, path))
 		}
 		if !dest.Enrolled {
-			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notCapturedID))
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notCapturedID, path))
 		}
 	}
 
 	// No Ambient destinations resolved: fall back to CR-namespace enrollment when the CR itself is Ambient.
 	if !resolved {
 		if nsStatus, ok := nsStatusByName[objectNamespace]; ok && ambient.NeedsWaypointWarning(nsStatus, true) {
-			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, fallbackNoEnrollmentID))
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, fallbackNoEnrollmentID, ambientHostPath(gvk, 0)))
 		}
 	}
 
@@ -187,6 +201,7 @@ func (c AmbientPolicyChecker) checkHostBasedConfig(
 
 type ambientDestination struct {
 	Enrolled         bool
+	HostIndex        int
 	ServiceName      string
 	ServiceNamespace string
 }
@@ -200,7 +215,7 @@ func (c AmbientPolicyChecker) resolveAmbientDestinations(
 	nsStatusByName map[string]ambient.NamespaceAmbientStatus,
 ) (destinations []ambientDestination, resolved bool) {
 	seen := map[string]bool{}
-	for _, host := range hosts {
+	for hostIdx, host := range hosts {
 		if host == "" || host == "*" {
 			continue
 		}
@@ -227,6 +242,7 @@ func (c AmbientPolicyChecker) resolveAmbientDestinations(
 			}
 			seen[key] = true
 			destinations = append(destinations, ambientDestination{
+				HostIndex:        hostIdx,
 				ServiceName:      svc.Name,
 				ServiceNamespace: parsed.Namespace,
 				Enrolled:         ambient.IsEnrolledForWaypoint(svc.Labels, svcNsLabels),
@@ -234,6 +250,14 @@ func (c AmbientPolicyChecker) resolveAmbientDestinations(
 		}
 	}
 	return destinations, resolved
+}
+
+// ambientHostPath returns the YAML path for the host field that triggered the Ambient warning.
+func ambientHostPath(gvk schema.GroupVersionKind, hostIdx int) string {
+	if gvk == kubernetes.DestinationRules {
+		return "spec/host"
+	}
+	return fmt.Sprintf("spec/hosts[%d]", hostIdx)
 }
 
 // selectorNeedsWarning returns true when L7 config targets workloads/namespace that are not enrolled.
@@ -269,9 +293,9 @@ func (c AmbientPolicyChecker) selectorNeedsWarning(matchLabels map[string]string
 	return false
 }
 
-func (c AmbientPolicyChecker) buildCheck(name, namespace string, gvk schema.GroupVersionKind, checkID string) models.IstioValidations {
+func (c AmbientPolicyChecker) buildCheck(name, namespace string, gvk schema.GroupVersionKind, checkID, path string) models.IstioValidations {
 	key, validation := EmptyValidValidation(name, namespace, gvk, c.Cluster)
-	check := models.Build(checkID, "")
+	check := models.Build(checkID, path)
 	validation.Checks = append(validation.Checks, &check)
 	validation.Valid = false
 	return models.IstioValidations{key: validation}

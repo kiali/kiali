@@ -80,3 +80,30 @@ func CreateAuthorizationPolicyWithPrincipals(name, namespace string, principalsL
 	}
 	return &ap
 }
+
+// CreateAuthorizationPolicyWithTargetRefs builds an L7 AuthorizationPolicy attached via targetRefs (Ambient/waypoint).
+func CreateAuthorizationPolicyWithTargetRefs(name, namespace, serviceName string, methods []string) *security_v1.AuthorizationPolicy {
+	ap := security_v1.AuthorizationPolicy{}
+	ap.Name = name
+	ap.Namespace = namespace
+	ap.Spec.TargetRefs = []*api_v1beta1.PolicyTargetReference{
+		{
+			Group: "",
+			Kind:  "Service",
+			Name:  serviceName,
+		},
+	}
+	ap.Spec.Action = api_security_v1.AuthorizationPolicy_DENY
+	ap.Spec.Rules = []*api_security_v1.Rule{
+		{
+			To: []*api_security_v1.Rule_To{
+				{
+					Operation: &api_security_v1.Operation{
+						Methods: methods,
+					},
+				},
+			},
+		},
+	}
+	return &ap
+}
