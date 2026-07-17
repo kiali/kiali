@@ -252,6 +252,11 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "L7 DestinationRule targets a service not enrolled to use a waypoint (istio.io/use-waypoint)",
 		Severity: WarningSeverity,
 	},
+	"destinationrule.ambient.notinservicenamespace": {
+		Code:     "KIA0212",
+		Message:  "L7 DestinationRule should be in the same namespace as the Ambient destination service to take effect",
+		Severity: WarningSeverity,
+	},
 	"gateways.multimatch": {
 		Code:     "KIA0301",
 		Message:  "More than one Gateway for the same host port combination",
@@ -425,6 +430,11 @@ var checkDescriptors = map[string]IstioCheck{
 	"virtualservice.ambient.servicenotcaptured": {
 		Code:     "KIA1113",
 		Message:  "L7 VirtualService targets a service not enrolled to use a waypoint (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"virtualservice.ambient.notinservicenamespace": {
+		Code:     "KIA1114",
+		Message:  "L7 VirtualService should be in the same namespace as the Ambient destination service to take effect",
 		Severity: WarningSeverity,
 	},
 	"requestauthentication.ambient.l7nowaypoint": {

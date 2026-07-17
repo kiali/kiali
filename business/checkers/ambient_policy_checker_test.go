@@ -262,6 +262,139 @@ func TestAmbientPolicyChecker_NonAmbientNamespace_NoWarning(t *testing.T) {
 	assert.Empty(t, vals)
 }
 
+func TestAmbientPolicyChecker_VirtualServiceCrossNamespace_Warns(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	identityDomain := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	ambientNS := "bookinfo"
+	otherNS := "test"
+
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-from-test", Namespace: otherNS},
+		Spec: networking_v1_api.VirtualService{
+			Hosts: []string{"reviews.bookinfo.svc.cluster.local"},
+			Http:  []*networking_v1_api.HTTPRoute{{Name: "route"}},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster:        cluster,
+		IdentityDomain: identityDomain,
+		Namespaces: models.Namespaces{
+			{Name: ambientNS, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.WaypointUseLabel: "waypoint",
+			}},
+			{Name: otherNS, Cluster: cluster, IsAmbient: false},
+		},
+		Services: []core_v1.Service{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "reviews",
+					Namespace: ambientNS,
+					Labels:    map[string]string{config.WaypointUseLabel: "waypoint"},
+				},
+			},
+		},
+		VirtualServices: []*networking_v1.VirtualService{vs},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ambientNS: {data.CreateWorkload(ambientNS, "reviews-v1", map[string]string{"app": "reviews"})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.VirtualServices, vs.Name, otherNS, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok, "L7 VS in another namespace targeting Ambient service must warn")
+	require.NotEmpty(t, validation.Checks)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("virtualservice.ambient.notinservicenamespace", validation.Checks[0]))
+}
+
+func TestAmbientPolicyChecker_DestinationRuleCrossNamespace_Warns(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	identityDomain := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	ambientNS := "bookinfo"
+	otherNS := "test"
+
+	dr := &networking_v1.DestinationRule{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-from-test", Namespace: otherNS},
+		Spec: networking_v1_api.DestinationRule{
+			Host: "reviews.bookinfo.svc.cluster.local",
+			TrafficPolicy: &networking_v1_api.TrafficPolicy{
+				ConnectionPool: &networking_v1_api.ConnectionPoolSettings{
+					Http: &networking_v1_api.ConnectionPoolSettings_HTTPSettings{Http1MaxPendingRequests: 1024},
+				},
+			},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster:          cluster,
+		IdentityDomain:   identityDomain,
+		DestinationRules: []*networking_v1.DestinationRule{dr},
+		Namespaces: models.Namespaces{
+			{Name: ambientNS, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.WaypointUseLabel: "waypoint",
+			}},
+			{Name: otherNS, Cluster: cluster, IsAmbient: false},
+		},
+		Services: []core_v1.Service{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "reviews",
+					Namespace: ambientNS,
+				},
+			},
+		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ambientNS: {data.CreateWorkload(ambientNS, "reviews-v1", map[string]string{"app": "reviews"})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.DestinationRules, dr.Name, otherNS, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok)
+	codes := map[string]bool{}
+	for _, check := range validation.Checks {
+		codes[check.Code] = true
+	}
+	assert.True(t, codes["KIA0212"], "expected notinservicenamespace warning, got %#v", validation.Checks)
+	assert.False(t, codes["KIA0211"], "namespace enrollment covers the service; only cross-ns warning expected")
+}
+
+func TestAmbientPolicyChecker_VirtualServiceDestinationNotAmbient_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	identityDomain := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	sidecarNS := "bookinfo"
+	otherNS := "test"
+
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-from-test", Namespace: otherNS},
+		Spec: networking_v1_api.VirtualService{
+			Hosts: []string{"reviews.bookinfo.svc.cluster.local"},
+			Http:  []*networking_v1_api.HTTPRoute{{Name: "route"}},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster:        cluster,
+		IdentityDomain: identityDomain,
+		Namespaces: models.Namespaces{
+			{Name: sidecarNS, Cluster: cluster, IsAmbient: false},
+			{Name: otherNS, Cluster: cluster, IsAmbient: false},
+		},
+		Services: []core_v1.Service{
+			{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: sidecarNS}},
+		},
+		VirtualServices: []*networking_v1.VirtualService{vs},
+	}.Check()
+
+	assert.Empty(t, vals, "no Ambient destination → no Ambient waypoint warning")
+}
+
 func TestAmbientPolicyChecker_WaypointWorkloadWithoutEnrollment_StillWarns(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

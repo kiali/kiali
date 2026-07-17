@@ -14,14 +14,15 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
-// AmbientPolicyChecker validates L7 Istio configs in Ambient namespaces when the target is not
-// enrolled to use a waypoint (istio.io/use-waypoint). Classification logic is shared with the
-// MCP analyze_ambient_policies tool.
+// AmbientPolicyChecker validates L7 Istio configs against Ambient waypoint enrollment.
+// Classification logic is shared with the MCP analyze_ambient_policies tool.
 //
-// Two levels of checks:
-//  1. Namespace-scoped L7 configs: warn when the Ambient namespace is not enrolled.
-//  2. Host-scoped L7 configs (VirtualService/DestinationRule): warn when resolved services
-//     are not enrolled (even if the namespace has a waypoint or is enrolled, e.g. use-waypoint: none).
+// Rules:
+//   - AuthorizationPolicy / RequestAuthentication / WasmPlugin / Telemetry: CR namespace must be
+//     Ambient; warn when that namespace (or selected workloads) are not enrolled.
+//   - VirtualService / DestinationRule: keyed off the *destination* Service. If the destination
+//     namespace is Ambient, warn when the service is not enrolled and/or when the CR is not in the
+//     service namespace (cross-namespace L7 configs do not take effect for Ambient waypoints).
 type AmbientPolicyChecker struct {
 	AuthorizationPolicies  []*security_v1.AuthorizationPolicy
 	Cluster                string
@@ -91,37 +92,29 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 	}
 
 	for _, vs := range c.VirtualServices {
-		nsStatus, ok := nsStatusByName[vs.Namespace]
-		if !ok || !nsStatus.IsAmbient {
-			continue
-		}
 		classification := ambient.ClassifyVirtualService(&vs.Spec)
 		if !classification.RequiresWaypoint {
 			continue
 		}
-		uncaptured, resolved := c.uncapturedHosts(vs.Spec.Hosts, vs.Namespace, nsNames, servicesByNS)
-		if len(uncaptured) > 0 {
-			validations.MergeValidations(c.buildCheck(vs.Name, vs.Namespace, kubernetes.VirtualServices, "virtualservice.ambient.servicenotcaptured"))
-		} else if !resolved && ambient.NeedsWaypointWarning(nsStatus, true) {
-			validations.MergeValidations(c.buildCheck(vs.Name, vs.Namespace, kubernetes.VirtualServices, "virtualservice.ambient.l7nowaypoint"))
-		}
+		validations.MergeValidations(c.checkHostBasedConfig(
+			vs.Name, vs.Namespace, kubernetes.VirtualServices, vs.Spec.Hosts, nsNames, nsStatusByName, servicesByNS,
+			"virtualservice.ambient.servicenotcaptured",
+			"virtualservice.ambient.notinservicenamespace",
+			"virtualservice.ambient.l7nowaypoint",
+		))
 	}
 
 	for _, dr := range c.DestinationRules {
-		nsStatus, ok := nsStatusByName[dr.Namespace]
-		if !ok || !nsStatus.IsAmbient {
-			continue
-		}
 		isL7, _ := ambient.IsL7DestinationRule(&dr.Spec)
 		if !isL7 {
 			continue
 		}
-		uncaptured, resolved := c.uncapturedHosts([]string{dr.Spec.Host}, dr.Namespace, nsNames, servicesByNS)
-		if len(uncaptured) > 0 {
-			validations.MergeValidations(c.buildCheck(dr.Name, dr.Namespace, kubernetes.DestinationRules, "destinationrule.ambient.servicenotcaptured"))
-		} else if !resolved && ambient.NeedsWaypointWarning(nsStatus, true) {
-			validations.MergeValidations(c.buildCheck(dr.Name, dr.Namespace, kubernetes.DestinationRules, "destinationrule.ambient.l7nowaypoint"))
-		}
+		validations.MergeValidations(c.checkHostBasedConfig(
+			dr.Name, dr.Namespace, kubernetes.DestinationRules, []string{dr.Spec.Host}, nsNames, nsStatusByName, servicesByNS,
+			"destinationrule.ambient.servicenotcaptured",
+			"destinationrule.ambient.notinservicenamespace",
+			"destinationrule.ambient.l7nowaypoint",
+		))
 	}
 
 	for _, wp := range c.WasmPlugins {
@@ -159,6 +152,90 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 	return validations
 }
 
+// checkHostBasedConfig validates L7 VS/DR against Ambient destination services.
+// Warnings are based on the destination Service namespace (Ambient + enrollment), not only the CR namespace.
+func (c AmbientPolicyChecker) checkHostBasedConfig(
+	name, objectNamespace string,
+	gvk schema.GroupVersionKind,
+	hosts []string,
+	nsNames []string,
+	nsStatusByName map[string]ambient.NamespaceAmbientStatus,
+	servicesByNS map[string][]core_v1.Service,
+	notCapturedID, notInServiceNsID, fallbackNoEnrollmentID string,
+) models.IstioValidations {
+	validations := models.IstioValidations{}
+	destinations, resolved := c.resolveAmbientDestinations(hosts, objectNamespace, nsNames, servicesByNS, nsStatusByName)
+
+	for _, dest := range destinations {
+		if objectNamespace != dest.ServiceNamespace {
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notInServiceNsID))
+		}
+		if !dest.Enrolled {
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, notCapturedID))
+		}
+	}
+
+	// No Ambient destinations resolved: fall back to CR-namespace enrollment when the CR itself is Ambient.
+	if !resolved {
+		if nsStatus, ok := nsStatusByName[objectNamespace]; ok && ambient.NeedsWaypointWarning(nsStatus, true) {
+			validations.MergeValidations(c.buildCheck(name, objectNamespace, gvk, fallbackNoEnrollmentID))
+		}
+	}
+
+	return validations
+}
+
+type ambientDestination struct {
+	Enrolled         bool
+	ServiceName      string
+	ServiceNamespace string
+}
+
+// resolveAmbientDestinations maps hosts to Ambient destination services.
+func (c AmbientPolicyChecker) resolveAmbientDestinations(
+	hosts []string,
+	objectNamespace string,
+	nsNames []string,
+	servicesByNS map[string][]core_v1.Service,
+	nsStatusByName map[string]ambient.NamespaceAmbientStatus,
+) (destinations []ambientDestination, resolved bool) {
+	seen := map[string]bool{}
+	for _, host := range hosts {
+		if host == "" || host == "*" {
+			continue
+		}
+		parsed := kubernetes.GetHost(host, objectNamespace, nsNames, c.IdentityDomain)
+		if !parsed.CompleteInput {
+			continue
+		}
+		svcNsStatus, ok := nsStatusByName[parsed.Namespace]
+		if !ok || !svcNsStatus.IsAmbient {
+			continue
+		}
+		var svcNsLabels map[string]string
+		if svcNs := c.Namespaces.GetNamespace(parsed.Namespace, c.Cluster); svcNs != nil {
+			svcNsLabels = svcNs.Labels
+		}
+		for _, svc := range servicesByNS[parsed.Namespace] {
+			if svc.Name != parsed.Service {
+				continue
+			}
+			resolved = true
+			key := parsed.Namespace + "/" + svc.Name
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			destinations = append(destinations, ambientDestination{
+				ServiceName:      svc.Name,
+				ServiceNamespace: parsed.Namespace,
+				Enrolled:         ambient.IsEnrolledForWaypoint(svc.Labels, svcNsLabels),
+			})
+		}
+	}
+	return destinations, resolved
+}
+
 // selectorNeedsWarning returns true when L7 config targets workloads/namespace that are not enrolled.
 // Namespace-wide (empty selector): warn if namespace is not enrolled.
 // With selector: warn if any matched workload is not enrolled (workload label, else namespace).
@@ -190,41 +267,6 @@ func (c AmbientPolicyChecker) selectorNeedsWarning(matchLabels map[string]string
 		return ambient.NeedsWaypointWarning(nsStatus, true)
 	}
 	return false
-}
-
-// uncapturedHosts resolves hosts to Kubernetes services and returns those not enrolled for a waypoint.
-// resolved is true when at least one host mapped to a known service.
-func (c AmbientPolicyChecker) uncapturedHosts(hosts []string, objectNamespace string, nsNames []string, servicesByNS map[string][]core_v1.Service) (uncaptured []string, resolved bool) {
-	seen := map[string]bool{}
-	for _, host := range hosts {
-		if host == "" || host == "*" {
-			continue
-		}
-		parsed := kubernetes.GetHost(host, objectNamespace, nsNames, c.IdentityDomain)
-		if !parsed.CompleteInput {
-			continue
-		}
-		for _, svc := range servicesByNS[parsed.Namespace] {
-			if svc.Name != parsed.Service {
-				continue
-			}
-			resolved = true
-			key := parsed.Namespace + "/" + svc.Name
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-
-			var svcNsLabels map[string]string
-			if svcNs := c.Namespaces.GetNamespace(parsed.Namespace, c.Cluster); svcNs != nil {
-				svcNsLabels = svcNs.Labels
-			}
-			if !ambient.IsEnrolledForWaypoint(svc.Labels, svcNsLabels) {
-				uncaptured = append(uncaptured, svc.Name)
-			}
-		}
-	}
-	return uncaptured, resolved
 }
 
 func (c AmbientPolicyChecker) buildCheck(name, namespace string, gvk schema.GroupVersionKind, checkID string) models.IstioValidations {
