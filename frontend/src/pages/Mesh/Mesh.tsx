@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import ReactResizeDetector from 'react-resize-detector';
+import { useResizeDetector } from 'react-resize-detector';
 import {
   Controller,
   createTopologyControlButtons,
@@ -173,6 +173,18 @@ const TopologyContent: React.FC<{
   const handleResize = React.useCallback(() => {
     layoutMesh(controller, MeshLayoutType.Resize);
   }, [controller]);
+
+  const bodyRef = React.useRef<HTMLElement>(document.body);
+
+  useResizeDetector({
+    targetRef: bodyRef,
+    refreshMode: 'debounce',
+    refreshRate: 100,
+    handleWidth: true,
+    handleHeight: true,
+    skipOnMount: true,
+    onResize: handleResize
+  });
 
   const onLayoutEnd = React.useCallback(() => {
     console.debug(`onLayoutEnd layoutInProgress=${layoutInProgress}`);
@@ -477,14 +489,6 @@ const TopologyContent: React.FC<{
     </TopologyView>
   ) : (
     <>
-      <ReactResizeDetector
-        refreshMode="debounce"
-        refreshRate={100}
-        handleWidth={true}
-        handleHeight={true}
-        skipOnMount={true}
-        onResize={handleResize}
-      />
       <TopologyView
         data-test="mesh-topology-view-pf"
         controlBar={

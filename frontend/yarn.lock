@@ -1739,7 +1739,7 @@ __metadata:
     react-flexview: "npm:4.0.3"
     react-i18next: "npm:^11.7.3"
     react-redux: "npm:7.2.2"
-    react-resize-detector: "npm:9.1.1"
+    react-resize-detector: "npm:12.3.0"
     react-router: "npm:5.3.x"
     react-router-dom: "npm:5.3.x"
     react-router-dom-v5-compat: "npm:^6.30.3"
@@ -6723,6 +6723,20 @@ __metadata:
     has-tostringtag: "npm:^1.0.2"
     hasown: "npm:^2.0.2"
   checksum: 10c0/ef2ca9ce49afe3931cb32e35da4dcb6d86ab02592cfc2ce3e49ced199d9d0bb5085fc7e73e06312213765f5efa47cc1df553a6a5154584b21448e9fb8355b1af
+  languageName: node
+  linkType: hard
+
+"es-toolkit@npm:^1.39.6":
+  version: 1.49.0
+  resolution: "es-toolkit@npm:1.49.0"
+  dependenciesMeta:
+    "@trivago/prettier-plugin-sort-imports@4.3.0":
+      unplugged: true
+    prettier-plugin-sort-re-exports@0.0.1:
+      unplugged: true
+    vitepress-plugin-sandpack@1.1.4:
+      unplugged: true
+  checksum: 10c0/ab0864bb0c5c494ed09043d53a74b58a0ab9df1b89b9b54bce72a63de2869152d7d65e489dc89ab671f0fea243728922c8a8f8c873f1b2a53350a23360b3e2df
   languageName: node
   linkType: hard
 
@@ -12128,15 +12142,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resize-detector@npm:9.1.1":
-  version: 9.1.1
-  resolution: "react-resize-detector@npm:9.1.1"
+"react-resize-detector@npm:12.3.0":
+  version: 12.3.0
+  resolution: "react-resize-detector@npm:12.3.0"
   dependencies:
-    lodash: "npm:^4.17.21"
+    es-toolkit: "npm:^1.39.6"
   peerDependencies:
-    react: ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: 10c0/6a85892fe46a12fc27b09b5bf5fcc1438f3196f70c75d4685b09eed2c68a2c853dd6eb792bf852038082505a3b4f05dba359055ee0baca3f8b59f022a85a368c
+    react: ^18.0.0 || ^19.0.0
+  checksum: 10c0/58075af4f7842debc97934bee15947d7ac1db1af8849832258fc986482487de97489d80b15edea6658260edbe826ac8f8acf6c2df2a28e527c8f63a4bff3436f
   languageName: node
   linkType: hard
 

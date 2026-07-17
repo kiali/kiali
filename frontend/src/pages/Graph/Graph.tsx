@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import ReactResizeDetector from 'react-resize-detector';
+import { useResizeDetector } from 'react-resize-detector';
 import {
   Controller,
   createTopologyControlButtons,
@@ -300,6 +300,18 @@ const TopologyContent: React.FC<{
   const handleResize = React.useCallback(() => {
     graphLayout(controller, LayoutType.Resize);
   }, [controller]);
+
+  const bodyRef = React.useRef<HTMLElement>(document.body);
+
+  useResizeDetector({
+    targetRef: bodyRef,
+    refreshMode: 'debounce',
+    refreshRate: 100,
+    handleWidth: true,
+    handleHeight: true,
+    skipOnMount: true,
+    onResize: handleResize
+  });
 
   const onLayoutEnd = React.useCallback(() => {
     console.debug(`TG: onLayoutEnd layoutInProgress=${layoutInProgress}`);
@@ -743,28 +755,12 @@ const TopologyContent: React.FC<{
 
   return isMiniGraph ? (
     <>
-      <ReactResizeDetector
-        refreshMode="debounce"
-        refreshRate={100}
-        handleWidth={true}
-        handleHeight={true}
-        skipOnMount={true}
-        onResize={handleResize}
-      />
       <TopologyView data-test="topology-view-pf">
         <VisualizationSurface data-test="visualization-surface" state={{}} />
       </TopologyView>
     </>
   ) : (
     <>
-      <ReactResizeDetector
-        refreshMode="debounce"
-        refreshRate={100}
-        handleWidth={true}
-        handleHeight={true}
-        skipOnMount={true}
-        onResize={handleResize}
-      />
       <TopologyView
         data-test="topology-view-pf"
         controlBar={
