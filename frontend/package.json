@@ -111,7 +111,7 @@
     "axios": "^1.17.0",
     "bootstrap-slider-without-jquery": "10.0.0",
     "deep-freeze": "0.0.1",
-    "eventemitter3": "4.0.7",
+    "eventemitter3": "5.0.4",
     "i18next": "^23.10.1",
     "i18next-http-backend": "^2.5.0",
     "js-yaml": "^4.3.0",
