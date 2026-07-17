@@ -31,6 +31,7 @@ rstest.mock('services/Api', () => ({
 }));
 
 rstest.mock('app/History', () => ({
+  navigateApp: rstest.fn(),
   router: { navigate: rstest.fn() }
 }));
 

@@ -56,6 +56,7 @@ rstest.mock('app/History', () => ({
     getPathname: () => '/',
     getSearch: () => ''
   },
+  navigateApp: rstest.fn(),
   router: { navigate: rstest.fn(), state: { location: { pathname: '/', search: '' } }, basename: '' }
 }));
 
