@@ -9,7 +9,8 @@ rstest.mock('../../Filters/StatefulFilters', () => ({
 rstest.mock('../../../app/History', () => ({
   HistoryManager: {
     getClusterName: rstest.fn(() => undefined)
-  }
+  },
+  navigateApp: rstest.fn()
 }));
 
 describe('BreadcrumbView', () => {

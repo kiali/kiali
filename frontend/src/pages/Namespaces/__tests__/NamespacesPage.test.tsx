@@ -65,6 +65,7 @@ rstest.mock('../../../app/History', () => ({
     getPathname: rstest.fn(() => '/namespaces'),
     getSearch: rstest.fn(() => '')
   },
+  navigateApp: rstest.fn(),
   router: {
     navigate: rstest.fn(),
     state: {

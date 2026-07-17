@@ -24,6 +24,7 @@ rstest.mock('components/Filters/StatefulFilters', () => ({
 }));
 
 rstest.mock('app/History', () => ({
+  navigateApp: rstest.fn(),
   router: { navigate: rstest.fn() },
   URLParam: {
     MESH_HIDE: 'meshHide'

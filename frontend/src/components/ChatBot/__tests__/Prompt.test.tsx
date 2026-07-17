@@ -26,6 +26,7 @@ rstest.mock('react-router', () => ({
 }));
 
 rstest.mock('app/History', () => ({
+  navigateApp: rstest.fn(),
   router: { navigate: rstest.fn() }
 }));
 
