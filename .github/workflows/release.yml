@@ -14,11 +14,17 @@ on:
         - patch
         - minor
         - major
+        - publish
       release_branch:
         description: Branch to release
         required: true
         default: master
         type: string
+      release_tag:
+        description: Existing git tag to publish (required for publish, e.g. v2.27.0)
+        required: false
+        type: string
+        default: ""
       quay_repository:
         description: Quay repository
         type: string
@@ -45,11 +51,12 @@ jobs:
       branch_version: ${{ env.branch_version }}
       next_version: ${{ env.next_version }}
       quay_tag: ${{ env.quay_tag }}
+      build_ref: ${{ env.build_ref }}
     steps:
     - name: Checkout code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
-        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        ref: ${{ github.event.inputs.release_type == 'publish' && github.event.inputs.release_tag || github.event.inputs.release_branch || github.ref_name }}
 
     - name: Prepare scripts
       run: |
@@ -107,26 +114,44 @@ jobs:
           echo "release_type=${{ github.event.inputs.release_type }}" >> $GITHUB_ENV
         fi
 
+    - name: Determine build ref
+      if: ${{ env.release_type != 'skip' }}
+      run: |
+        if [[ "${{ env.release_type }}" == "publish" ]]; then
+          if [ -z "${{ github.event.inputs.release_tag }}" ]; then
+            echo "release_tag is required when release_type is publish"
+            exit 1
+          fi
+          echo "build_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_ENV
+        else
+          echo "build_ref=${{ github.event.inputs.release_branch || github.ref_name }}" >> $GITHUB_ENV
+        fi
+
     - name: Determine release version
       if: ${{ env.release_type != 'skip' }}
       env:
         RELEASE_TYPE: ${{ env.release_type }}
       id: release_version
       run: |
-        RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+        if [[ $RELEASE_TYPE == "publish" ]]
+        then
+          RELEASE_VERSION=${{ github.event.inputs.release_tag }}
+        else
+          RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
 
-        # Remove any pre release identifier (ie: "-SNAPSHOT")
-        RELEASE_VERSION=${RAW_VERSION%-*}
+          # Remove any pre release identifier (ie: "-SNAPSHOT")
+          RELEASE_VERSION=${RAW_VERSION%-*}
 
-        if [[ $RELEASE_TYPE == "patch" ]]
-        then
-          RELEASE_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
-        elif [[ $RELEASE_TYPE == "minor" ]]
-        then
-          RELEASE_VERSION=$RELEASE_VERSION
-        elif [[ $RELEASE_TYPE == "major" ]]
-        then
-          RELEASE_VERSION=$RELEASE_VERSION
+          if [[ $RELEASE_TYPE == "patch" ]]
+          then
+            RELEASE_VERSION=$(python bump.py $RELEASE_TYPE $RELEASE_VERSION)
+          elif [[ $RELEASE_TYPE == "minor" ]]
+          then
+            RELEASE_VERSION=$RELEASE_VERSION
+          elif [[ $RELEASE_TYPE == "major" ]]
+          then
+            RELEASE_VERSION=$RELEASE_VERSION
+          fi
         fi
 
         echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV
@@ -198,7 +223,7 @@ jobs:
     needs: [initialize]
     with:
       target_branch: ${{needs.initialize.outputs.target_branch}}
-      build_branch: ${{ github.ref_name }}
+      build_branch: ${{ needs.initialize.outputs.build_ref }}
 
   build_backend:
     name: Build backend
@@ -206,7 +231,7 @@ jobs:
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize, build_frontend]
     with:
-      build_branch: ${{ github.ref_name }}
+      build_branch: ${{ needs.initialize.outputs.build_ref }}
 
   run_molecule_tests:
     name: Molecule tests
@@ -229,7 +254,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
-        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        ref: ${{ needs.initialize.outputs.build_ref }}
 
     - name: Set up Go
       uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
@@ -323,10 +348,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
-        ref: ${{ github.event.inputs.release_branch || github.ref_name }}
+        ref: ${{ needs.initialize.outputs.build_ref }}
         token: ${{ secrets.KIALI_BOT_TOKEN }}
 
     - name: Set version to release
+      if: ${{ needs.initialize.outputs.release_type != 'publish' }}
       run: |
         # Backend version
         sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
@@ -365,12 +391,14 @@ jobs:
       run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
     - name: Configure git
+      if: ${{ needs.initialize.outputs.release_type != 'publish' }}
       run: |
         git config user.email 'kiali-dev@googlegroups.com'
 
         git config user.name 'kiali-bot'
 
     - name: Create tag
+      if: ${{ needs.initialize.outputs.release_type != 'publish' }}
       run: |
         git add Makefile
 
@@ -379,12 +407,14 @@ jobs:
         git push origin $(git rev-parse HEAD):refs/tags/$RELEASE_VERSION
 
     - name: Create release
+      if: ${{ needs.initialize.outputs.release_type != 'publish' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh release create $RELEASE_VERSION dist/* -t "Kiali $RELEASE_VERSION"
 
     - name: Create or update version branch
+      if: ${{ needs.initialize.outputs.release_type != 'publish' }}
       run: git push origin $(git rev-parse HEAD):refs/heads/$BRANCH_VERSION
 
     - name: Create a PR to prepare for next version
