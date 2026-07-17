@@ -180,6 +180,7 @@
     "typescript": "^5.9.0"
   },
   "resolutions": {
+    "dompurify": "^3.4.7",
     "esbuild": "^0.25.2",
     "js-cookie": "^3.0.8",
     "js-yaml@npm:3.14.0": "npm:3.15.0",
