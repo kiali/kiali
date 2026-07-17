@@ -36,8 +36,8 @@ func NewPortMappingChecker(deployments []apps_v1.Deployment, meshDiscovery istio
 func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
-	// Check Port naming for services in the service mesh
-	if p.hasMatchingPodsWithSidecar(p.Service) {
+	// Check Port naming for services in the service mesh (sidecar or ambient).
+	if p.isInMesh(p.Service) {
 		for portIndex, sp := range p.Service.Spec.Ports {
 			if _, ok := p.Service.Labels["kiali_wizard"]; ok || strings.ToLower(string(sp.Protocol)) == "udp" {
 				continue
@@ -70,10 +70,12 @@ func (p PortMappingChecker) Check() ([]*models.IstioCheck, bool) {
 	return validations, len(validations) == 0
 }
 
-func (p PortMappingChecker) hasMatchingPodsWithSidecar(service corev1.Service) bool {
+// isInMesh returns true when the service's matching pods are part of the mesh,
+// either via sidecar injection or ambient redirection.
+func (p PortMappingChecker) isInMesh(service corev1.Service) bool {
 	sPods := models.Pods{}
 	sPods.Parse(kubernetes.FilterPodsByService(&service, p.Pods), p.MeshDiscovery.IsControlPlane)
-	return sPods.HasIstioSidecar()
+	return sPods.HasIstioSidecar() || sPods.HasAnyAmbient()
 }
 
 func (p PortMappingChecker) findMatchingDeployment(selectors map[string]string) *apps_v1.Deployment {
