@@ -1,0 +1,121 @@
+name: Quay Upload
+
+# Rebuild and push Kiali images to Quay for an existing release commit.
+# Does not create git tags, GitHub releases, or next-version PRs.
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Commit SHA to build and push
+        required: true
+        type: string
+      quay_repository:
+        description: Quay repository
+        type: string
+        default: quay.io/kiali/kiali
+        required: true
+
+permissions: read-all
+
+jobs:
+  initialize:
+    permissions:
+      contents: read
+    name: Initialize
+    runs-on: ubuntu-latest
+    outputs:
+      commit_sha: ${{ env.commit_sha }}
+      release_version: ${{ env.release_version }}
+      branch_version: ${{ env.branch_version }}
+      quay_tag: ${{ env.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        ref: ${{ github.event.inputs.commit_sha }}
+
+    - name: Resolve commit and version
+      id: resolve
+      run: |
+        COMMIT_SHA=$(git rev-parse HEAD)
+        echo "commit_sha=$COMMIT_SHA" >> $GITHUB_ENV
+
+        RAW_VERSION=$(sed -rn 's/^VERSION \?= (.*)/\1/p' Makefile)
+        # Remove any pre-release identifier (ie: "-SNAPSHOT")
+        RELEASE_VERSION=${RAW_VERSION%-*}
+        BRANCH_VERSION=$(echo "$RELEASE_VERSION" | sed 's/\.[0-9]*\+$//')
+
+        if [ -z "${{ github.event.inputs.quay_repository }}" ];
+        then
+          QUAY_REPO="quay.io/kiali/kiali"
+        else
+          QUAY_REPO="${{ github.event.inputs.quay_repository }}"
+        fi
+
+        QUAY_TAG="$QUAY_REPO:$RELEASE_VERSION $QUAY_REPO:$BRANCH_VERSION"
+
+        echo "release_version=$RELEASE_VERSION" >> $GITHUB_ENV
+        echo "branch_version=$BRANCH_VERSION" >> $GITHUB_ENV
+        echo "quay_tag=$QUAY_TAG" >> $GITHUB_ENV
+
+    - name: Log information
+      run: |
+        echo "Commit SHA: ${{ env.commit_sha }}"
+        echo "Release version: ${{ env.release_version }}"
+        echo "Branch version: ${{ env.branch_version }}"
+        echo "Quay tag: ${{ env.quay_tag }}"
+
+  build_frontend:
+    name: Build frontend
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:
+      # pretty-quick compares against this ref; same commit means no dirty files
+      target_branch: ${{ needs.initialize.outputs.commit_sha }}
+      build_branch: ${{ needs.initialize.outputs.commit_sha }}
+
+  push:
+    permissions:
+      contents: read
+    name: Build and push to Quay
+    runs-on: ubuntu-latest
+    needs: [initialize, build_frontend]
+    env:
+      COMMIT_SHA: ${{ needs.initialize.outputs.commit_sha }}
+      RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
+      QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        ref: ${{ env.COMMIT_SHA }}
+
+    - name: Set version for image build
+      run: |
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
+
+        jq -r ".version |= \"${RELEASE_VERSION:1}\"" frontend/package.json > frontend/package.json.tmp
+        mv frontend/package.json.tmp frontend/package.json
+
+    - name: Set up Go
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+      with:
+        go-version-file: go.mod
+        cache: true
+        cache-dependency-path: go.sum
+
+    - name: Download frontend build
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+      with:
+        name: build
+        path: frontend/build
+
+    - name: Login to Quay.io
+      uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USER }}
+        password: ${{ secrets.QUAY_PASSWORD }}
+
+    - name: Build and push image
+      run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
