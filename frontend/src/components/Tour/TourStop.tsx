@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { KialiDispatch } from 'types/Redux';
 import { KialiAppState } from 'store/Store';
-import ReactResizeDetector from 'react-resize-detector';
+import { useResizeDetector } from 'react-resize-detector';
 import { TourActions } from 'actions/TourActions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -148,12 +148,6 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     }
   };
 
-  private onResize = (): void => {
-    if (this.activeInfo()) {
-      this.forceUpdate();
-    }
-  };
-
   private shouldClose = (): void => {
     this.props.endTour();
   };
@@ -175,14 +169,6 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
       <>
         {info ? (
           <>
-            <ReactResizeDetector
-              refreshMode={'debounce'}
-              refreshRate={100}
-              skipOnMount={true}
-              handleWidth={true}
-              handleHeight={true}
-              onResize={this.onResize}
-            />
             <Popover
               bodyContent={info.description ? t(info.description) : info.htmlDescription}
               distance={offset}
@@ -214,6 +200,23 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
   }
 }
 
+const TourStopResizeWrapper: React.FC<TourStopProps> = props => {
+  const componentRef = React.useRef<TourStopComponent>(null);
+  const bodyRef = React.useRef<HTMLElement>(document.body);
+
+  useResizeDetector({
+    targetRef: bodyRef,
+    refreshMode: 'debounce',
+    refreshRate: 100,
+    skipOnMount: true,
+    handleWidth: true,
+    handleHeight: true,
+    onResize: () => componentRef.current?.forceUpdate()
+  });
+
+  return <TourStopComponent ref={componentRef} {...props} />;
+};
+
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   activeTour: state.tourState.activeTour,
   activeStop: state.tourState.activeStop
@@ -226,4 +229,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const TourStop = connect(mapStateToProps, mapDispatchToProps)(TourStopComponent);
+export const TourStop = connect(mapStateToProps, mapDispatchToProps)(TourStopResizeWrapper);

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import ReactResizeDetector from 'react-resize-detector';
+import { useResizeDetector } from 'react-resize-detector';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
 import { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -53,6 +53,18 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
   const onResize = (): void => {
     forceUpdate();
   };
+
+  const bodyRef = React.useRef<HTMLElement>(document.body);
+
+  useResizeDetector({
+    targetRef: bodyRef,
+    refreshMode: 'debounce',
+    refreshRate: 100,
+    skipOnMount: true,
+    handleWidth: true,
+    handleHeight: true,
+    onResize
+  });
 
   const preface =
     'You can use the Find and Hide fields to highlight or hide graph edges and nodes. Each field accepts ' +
@@ -217,15 +229,6 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
 
   return (
     <>
-      <ReactResizeDetector
-        refreshMode="debounce"
-        refreshRate={100}
-        skipOnMount={true}
-        handleWidth={true}
-        handleHeight={true}
-        onResize={onResize}
-      />
-
       {props.isVisible ? (
         <Popover
           data-test="graph-find-hide-help"
