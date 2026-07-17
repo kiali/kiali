@@ -54,13 +54,14 @@ import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { WorkloadAnnotationsWizard } from '../../components/IstioWizards/WorkloadAnnotationsWizard';
 import { Paths } from '../../config';
 import {
+  buildAnnotationsDiff,
   filterHiddenAnnotations,
+  hasAnnotationsChanged,
   navigateToFilteredList,
   buildWorkloadMetadataPatch,
   buildWorkloadAnnotationsPatch,
   getWorkloadAnnotations,
-  isTemplatedWorkloadKind,
-  preserveHiddenAnnotations
+  isTemplatedWorkloadKind
 } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
@@ -547,32 +548,11 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
       return;
     }
 
-    const controllerOriginal = filterHiddenAnnotations(workload.annotations ?? {});
-    const templateOriginal = filterHiddenAnnotations(workload.templateAnnotations ?? {});
+    const controllerFull = workload.annotations ?? {};
+    const templateFull = workload.templateAnnotations ?? {};
 
-    const controllerWithHidden = preserveHiddenAnnotations(workload.annotations ?? {}, controller);
-    const templateWithHidden = preserveHiddenAnnotations(workload.templateAnnotations ?? {}, template);
-
-    const controllerDiff: Record<string, string | null> = { ...controllerWithHidden };
-    for (const key of Object.keys(workload.annotations ?? {})) {
-      if (!(key in controllerWithHidden)) {
-        controllerDiff[key] = null;
-      }
-    }
-
-    const templateDiff: Record<string, string | null> = { ...templateWithHidden };
-    for (const key of Object.keys(workload.templateAnnotations ?? {})) {
-      if (!(key in templateWithHidden)) {
-        templateDiff[key] = null;
-      }
-    }
-
-    const controllerChanged =
-      JSON.stringify(controllerDiff) !== JSON.stringify(controllerOriginal) ||
-      Object.keys(controllerDiff).some(k => controllerDiff[k] === null);
-    const templateChanged =
-      JSON.stringify(templateDiff) !== JSON.stringify(templateOriginal) ||
-      Object.keys(templateDiff).some(k => templateDiff[k] === null);
+    const controllerChanged = hasAnnotationsChanged(controllerFull, controller);
+    const templateChanged = hasAnnotationsChanged(templateFull, template);
 
     if (!controllerChanged && !templateChanged) {
       this.setState({ showAnnotationsWizard: false });
@@ -585,10 +565,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     } = {};
 
     if (controllerChanged) {
-      patch.metadata = { annotations: controllerDiff };
+      patch.metadata = { annotations: buildAnnotationsDiff(controllerFull, controller) };
     }
     if (templateChanged) {
-      patch.spec = { template: { metadata: { annotations: templateDiff } } };
+      patch.spec = { template: { metadata: { annotations: buildAnnotationsDiff(templateFull, template) } } };
     }
 
     const jsonPatch = JSON.stringify(patch);

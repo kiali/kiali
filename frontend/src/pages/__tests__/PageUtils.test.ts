@@ -3,6 +3,7 @@ import {
   buildWorkloadAnnotationsPatch,
   buildWorkloadMetadataPatch,
   getWorkloadAnnotations,
+  hasAnnotationsChanged,
   LAST_APPLIED_ANNOTATION,
   preserveHiddenAnnotations,
   navigateToFilteredList
@@ -342,5 +343,59 @@ describe('navigateToFilteredList', () => {
     navigateToFilteredList('services', 'env', 'prod');
     const url: string = mockNavigate.mock.calls[0][0];
     expect(url).not.toContain('namespaces=');
+  });
+});
+
+describe('hasAnnotationsChanged', () => {
+  it('returns false when no changes are made', () => {
+    const original = { 'app.kubernetes.io/name': 'reviews', version: '1' };
+    const userVisible = { 'app.kubernetes.io/name': 'reviews', version: '1' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(false);
+  });
+
+  it('returns false when last-applied-configuration is present but nothing else changed', () => {
+    const original = {
+      [LAST_APPLIED_ANNOTATION]: '{"big":"json"}',
+      'app.kubernetes.io/name': 'reviews'
+    };
+    const userVisible = { 'app.kubernetes.io/name': 'reviews' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(false);
+  });
+
+  it('returns false regardless of property order', () => {
+    const original: Record<string, string> = {};
+    Object.defineProperty(original, LAST_APPLIED_ANNOTATION, { value: '{}', enumerable: true, writable: true });
+    Object.defineProperty(original, 'alpha', { value: 'a', enumerable: true, writable: true });
+    Object.defineProperty(original, 'beta', { value: 'b', enumerable: true, writable: true });
+
+    const userVisible = { beta: 'b', alpha: 'a' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(false);
+  });
+
+  it('returns true when a value is modified', () => {
+    const original = { 'app.kubernetes.io/name': 'reviews', version: '1' };
+    const userVisible = { 'app.kubernetes.io/name': 'reviews', version: '2' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
+  });
+
+  it('returns true when an annotation is added', () => {
+    const original = { 'app.kubernetes.io/name': 'reviews' };
+    const userVisible = { 'app.kubernetes.io/name': 'reviews', newKey: 'newValue' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
+  });
+
+  it('returns true when an annotation is deleted', () => {
+    const original = { 'app.kubernetes.io/name': 'reviews', version: '1' };
+    const userVisible = { 'app.kubernetes.io/name': 'reviews' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
+  });
+
+  it('returns true when a visible annotation is modified while hidden annotation exists', () => {
+    const original = {
+      [LAST_APPLIED_ANNOTATION]: '{"big":"json"}',
+      'app.kubernetes.io/name': 'reviews'
+    };
+    const userVisible = { 'app.kubernetes.io/name': 'updated' };
+    expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
   });
 });
