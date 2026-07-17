@@ -45,6 +45,28 @@ export const globalStyle = kialiStyle({
     },
 
     /**
+     * Collapse the closed notification drawer panel so it cannot steal horizontal
+     * scroll. PatternFly reserves FlexBasis (e.g. 28.125rem) for the panel while
+     * collapsed; focus/automation can set scrollLeft on drawer__main and shift the
+     * page content under the sidebar, clipping toolbar controls and table headers.
+     */
+    '& .pf-v6-c-drawer:not(.pf-m-expanded) > .pf-v6-c-drawer__main > .pf-v6-c-drawer__panel': {
+      flexBasis: '0 !important',
+      margin: '0 !important',
+      maxWidth: '0 !important',
+      minWidth: '0 !important',
+      overflow: 'hidden',
+      padding: '0 !important',
+      transform: 'none !important',
+      visibility: 'hidden',
+      width: '0 !important'
+    },
+
+    '& .pf-v6-c-drawer__main': {
+      overflowX: 'hidden'
+    },
+
+    /**
      * Reduce padding of menu group title
      */
     '& .pf-v6-c-menu__group-title': {

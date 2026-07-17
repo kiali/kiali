@@ -72,6 +72,24 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     document.title = pageTitle;
   }, []);
 
+  // Keep page content aligned when the notification drawer is collapsed. Focus or
+  // automation can scroll drawer__main horizontally into the reserved panel slot.
+  React.useEffect((): void => {
+    if (props.showNotificationCenter) {
+      return;
+    }
+
+    const resetDrawerScroll = (): void => {
+      document.querySelectorAll('.pf-v6-c-drawer__main').forEach(el => {
+        (el as HTMLElement).scrollLeft = 0;
+      });
+    };
+
+    resetDrawerScroll();
+    const id = requestAnimationFrame(resetDrawerScroll);
+    return () => cancelAnimationFrame(id);
+  }, [props.showNotificationCenter, pathname]);
+
   const isGraph = (): boolean => {
     return pathname.startsWith('/graph') || pathname.startsWith('/mesh');
   };
