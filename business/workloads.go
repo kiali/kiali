@@ -946,14 +946,22 @@ func (in *WorkloadService) setPodsForDeployment(dep *apps_v1.Deployment, pods []
 // indirectly through child ReplicaSets. During canary or degraded updates a single controller may own multiple
 // active ReplicaSets at once; all of them must be considered or pods from stable/canary revisions are missed
 // (see https://github.com/kiali/kiali/issues/10008).
+func replicaSetDesiredCount(rs *apps_v1.ReplicaSet) int32 {
+	if rs.Spec.Replicas != nil {
+		return *rs.Spec.Replicas
+	}
+	return rs.Status.Replicas
+}
+
 func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, controllerName string, controllerGVK schema.GroupVersionKind, controllerNamespace string, repset []apps_v1.ReplicaSet, pods []core_v1.Pod) []core_v1.Pod {
 	var cPods []core_v1.Pod
 	podSeen := make(map[string]struct{})
 	rsSeen := make(map[string]struct{})
-	parsedParent := false
+	var bestRS *apps_v1.ReplicaSet
 	var desiredReplicas, currentReplicas, availableReplicas int32
 
-	for _, rs := range repset {
+	for i := range repset {
+		rs := &repset[i]
 		rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
 		if rsOwnerRef == nil || rs.Namespace != controllerNamespace || rsOwnerRef.Name != controllerName || rsOwnerRef.Kind != controllerGVK.Kind {
 			continue
@@ -965,20 +973,18 @@ func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, co
 		}
 		rsSeen[rsKey] = struct{}{}
 
-		// Workload metadata (labels, GVK, name) comes from the parent controller; use the first matching RS as template.
-		if !parsedParent {
-			w.ParseReplicaSetParent(&rs, controllerName, controllerGVK, in.conf)
-			parsedParent = true
+		// Prefer the ReplicaSet with the most desired replicas for workload metadata (labels/version).
+		// During canary/degraded updates the first matching RS may be an empty or failed revision.
+		if bestRS == nil || replicaSetDesiredCount(rs) > replicaSetDesiredCount(bestRS) {
+			bestRS = rs
 		}
 		// Sum replica counts across revisions so totals reflect the whole controller during multi-RS transitions.
-		if rs.Spec.Replicas != nil {
-			desiredReplicas += *rs.Spec.Replicas
-		}
+		desiredReplicas += replicaSetDesiredCount(rs)
 		currentReplicas += rs.Status.Replicas
 		availableReplicas += rs.Status.AvailableReplicas
 
 		for _, pod := range pods {
-			if !meta_v1.IsControlledBy(&pod, &rs) {
+			if !meta_v1.IsControlledBy(&pod, rs) {
 				continue
 			}
 			// A pod belongs to one RS; the map guards against duplicate list entries only.
@@ -991,7 +997,8 @@ func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, co
 		}
 	}
 
-	if parsedParent {
+	if bestRS != nil {
+		w.ParseReplicaSetParent(bestRS, controllerName, controllerGVK, in.conf)
 		w.DesiredReplicas = desiredReplicas
 		w.CurrentReplicas = currentReplicas
 		w.AvailableReplicas = availableReplicas
@@ -1795,8 +1802,8 @@ func (in controllerMap) parse(key string) (namespace, name string) {
 // addControllersFromReplicaSetsWithoutPods surfaces workloads that own ReplicaSets but currently
 // have no pods (e.g. an Argo Rollout scaled to 0). Pod-based discovery cannot find those because
 // there are no pods to walk. Typed controllers (Deployments, StatefulSets, etc.) already have
-// their own empty-controller loops; this mainly adds custom parents such as Rollout. ReplicaSets
-// with no owner remain listed as ReplicaSet workloads (existing orphan behavior).
+// their own empty-controller loops and are skipped here; this mainly adds custom parents such as
+// Rollout. ReplicaSets with no owner references remain listed as ReplicaSet workloads (orphan behavior).
 // See https://github.com/kiali/kiali/issues/10008.
 func (in controllerMap) addControllersFromReplicaSetsWithoutPods(repset []apps_v1.ReplicaSet, selector labels.Selector) {
 	for _, rs := range repset {
@@ -1806,6 +1813,10 @@ func (in controllerMap) addControllersFromReplicaSetsWithoutPods(repset []apps_v
 
 		ownerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
 		if ownerRef != nil {
+			// Known typed kinds are handled by their own no-pods loops above; avoid redundant entries.
+			if _, known := controllerOrder[ownerRef.Kind]; known {
+				continue
+			}
 			refGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
 			if err != nil {
 				log.Errorf("could not parse OwnerReference api version %q: %v", ownerRef.APIVersion, err)
@@ -1818,9 +1829,12 @@ func (in controllerMap) addControllersFromReplicaSetsWithoutPods(repset []apps_v
 			continue
 		}
 
-		rsKey := in.key(rs.Namespace, rs.Name)
-		if _, exist := in[rsKey]; !exist {
-			in[rsKey] = kubernetes.ReplicaSets
+		// Orphan ReplicaSet: only when there are no owner references at all.
+		if len(rs.OwnerReferences) == 0 {
+			rsKey := in.key(rs.Namespace, rs.Name)
+			if _, exist := in[rsKey]; !exist {
+				in[rsKey] = kubernetes.ReplicaSets
+			}
 		}
 	}
 }
