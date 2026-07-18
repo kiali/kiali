@@ -36,6 +36,13 @@ const addMessage = (msg: Message): void => {
   );
 };
 
+const hasMessage = (content: string, type: MessageType): boolean =>
+  store
+    .getState()
+    .notificationCenter.groups.some(
+      group => group.id === getMessageTypeGroup(type) && group.messages.some(message => message.content === content)
+    );
+
 // addDanger adds a Danger level notification message. Defaults: detail='', isAlert=true
 export const addDanger = (content: string, detail = '', isAlert = true): void => {
   store.dispatch(
@@ -49,8 +56,13 @@ export const addDanger = (content: string, detail = '', isAlert = true): void =>
   );
 };
 
-// addWarning adds a Warning level notification message. Defaults: detail='', isAlert=true
-export const addWarning = (content: string, detail = '', isAlert = true): void => {
+// addWarning adds a Warning level notification message.
+// Defaults: detail='', isAlert=true, showOnce=false
+export const addWarning = (content: string, detail = '', isAlert = true, showOnce = false): void => {
+  if (showOnce && hasMessage(content, MessageType.WARNING)) {
+    return;
+  }
+
   store.dispatch(
     NotificationCenterActions.addMessage(
       content,
