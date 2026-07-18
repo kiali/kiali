@@ -77,60 +77,17 @@ export function getNextTourStop(
   return undefined;
 }
 
-class TourStopComponent extends React.PureComponent<TourStopProps> {
-  tourStopInfo: TourStopInfo[];
+const TourStopComponent: React.FC<TourStopProps> = props => {
+  const { activeStop, activeTour, children, endTour, info, setStop } = props;
 
-  constructor(props: TourStopProps) {
-    super(props);
+  const [tourStopInfo] = React.useState<TourStopInfo[]>(() => (Array.isArray(info) ? info : [info]));
 
-    this.tourStopInfo = Array.isArray(props.info) ? props.info : [props.info];
-  }
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  private getStop = (direction: 'back' | 'forward'): number | undefined => {
-    if (this.props.activeStop === undefined) {
-      return undefined;
-    }
-
-    return getNextTourStop(this.props.activeTour!, this.props.activeStop!, direction);
-  };
-
-  private setStop = (stop: number): void => {
-    this.props.setStop(stop);
-  };
-
-  private backButton = (): React.ReactNode => {
-    const stop = this.getStop('back');
-
-    return (
-      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => this.setStop(stop!)}>
-        {t('Back')}
-      </Button>
-    );
-  };
-
-  private nextButton = (): React.ReactNode => {
-    const stop = this.getStop('forward');
-
-    if (stop === undefined) {
-      return (
-        <Button variant={ButtonVariant.primary} onClick={this.props.endTour}>
-          {t('Done')}
-        </Button>
-      );
-    }
-
-    return (
-      <Button variant={ButtonVariant.primary} onClick={() => this.setStop(stop!)}>
-        {t('Next')}
-      </Button>
-    );
-  };
-
-  private activeInfo = (): TourStopInfo | undefined => {
-    for (const tsi of this.tourStopInfo) {
+  const activeInfo = (): TourStopInfo | undefined => {
+    for (const tsi of tourStopInfo) {
       const name = tsi.name;
-      const isActive =
-        this.props.activeTour !== undefined && name === this.props.activeTour.stops[this.props.activeStop!].name;
+      const isActive = activeTour !== undefined && name === activeTour.stops[activeStop!].name;
 
       if (isActive) {
         return tsi;
@@ -140,68 +97,64 @@ class TourStopComponent extends React.PureComponent<TourStopProps> {
     return undefined;
   };
 
+  const getStop = (direction: 'back' | 'forward'): number | undefined => {
+    if (activeStop === undefined) {
+      return undefined;
+    }
+
+    return getNextTourStop(activeTour!, activeStop!, direction);
+  };
+
+  const setStopHandler = (stop: number): void => {
+    setStop(stop);
+  };
+
+  const backButton = (): React.ReactNode => {
+    const stop = getStop('back');
+
+    return (
+      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => setStopHandler(stop!)}>
+        {t('Back')}
+      </Button>
+    );
+  };
+
+  const nextButton = (): React.ReactNode => {
+    const stop = getStop('forward');
+
+    if (stop === undefined) {
+      return (
+        <Button variant={ButtonVariant.primary} onClick={endTour}>
+          {t('Done')}
+        </Button>
+      );
+    }
+
+    return (
+      <Button variant={ButtonVariant.primary} onClick={() => setStopHandler(stop!)}>
+        {t('Next')}
+      </Button>
+    );
+  };
+
   // This is here to workaround what seems to be a bug.  As far as I know when isVisible is set then outside clicks should not hide
   // the Popover, but it seems to be happening in certain scenarios. So, if the Popover is still valid, unhide it immediately.
-  private onHidden = (): void => {
-    if (this.activeInfo()) {
-      this.forceUpdate();
+  const onHidden = (): void => {
+    if (activeInfo()) {
+      forceUpdate();
     }
   };
 
-  private shouldClose = (): void => {
-    this.props.endTour();
+  const onResize = (): void => {
+    if (activeInfo()) {
+      forceUpdate();
+    }
   };
 
-  componentDidMount(): void {
-    this.tourStopInfo.forEach(ti => (ti.isValid = true));
-  }
+  const shouldClose = (): void => {
+    endTour();
+  };
 
-  componentWillUnmount(): void {
-    this.tourStopInfo.forEach(ti => (ti.isValid = false));
-  }
-
-  render(): React.ReactNode {
-    const info = this.activeInfo();
-    const offset = info && info.distance ? info.distance : 25;
-    const children = this.props.children;
-
-    return (
-      <>
-        {info ? (
-          <>
-            <Popover
-              bodyContent={info.description ? t(info.description) : info.htmlDescription}
-              distance={offset}
-              footerContent={
-                <div className={buttonsStyle}>
-                  {this.backButton()}
-                  {this.nextButton()}
-                </div>
-              }
-              headerContent={
-                <div>
-                  <span className={stopNumberStyle}>{this.props.activeStop! + 1}</span>
-                  <span>{t(info.name)}</span>
-                </div>
-              }
-              isVisible={true}
-              onHidden={this.onHidden}
-              position={info.position}
-              shouldClose={(_event, _) => this.shouldClose()}
-            >
-              <>{children}</>
-            </Popover>
-          </>
-        ) : (
-          <>{children}</>
-        )}
-      </>
-    );
-  }
-}
-
-const TourStopResizeWrapper: React.FC<TourStopProps> = props => {
-  const componentRef = React.useRef<TourStopComponent>(null);
   const bodyRef = React.useRef<HTMLElement>(document.body);
 
   useResizeDetector({
@@ -211,10 +164,51 @@ const TourStopResizeWrapper: React.FC<TourStopProps> = props => {
     skipOnMount: true,
     handleWidth: true,
     handleHeight: true,
-    onResize: () => componentRef.current?.forceUpdate()
+    onResize
   });
 
-  return <TourStopComponent ref={componentRef} {...props} />;
+  React.useEffect(() => {
+    tourStopInfo.forEach(ti => (ti.isValid = true));
+
+    return () => {
+      tourStopInfo.forEach(ti => (ti.isValid = false));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps, @eslint-react/exhaustive-deps
+  }, []);
+
+  const currentInfo = activeInfo();
+  const offset = currentInfo && currentInfo.distance ? currentInfo.distance : 25;
+
+  return (
+    <>
+      {currentInfo ? (
+        <Popover
+          bodyContent={currentInfo.description ? t(currentInfo.description) : currentInfo.htmlDescription}
+          distance={offset}
+          footerContent={
+            <div className={buttonsStyle}>
+              {backButton()}
+              {nextButton()}
+            </div>
+          }
+          headerContent={
+            <div>
+              <span className={stopNumberStyle}>{activeStop! + 1}</span>
+              <span>{t(currentInfo.name)}</span>
+            </div>
+          }
+          isVisible={true}
+          onHidden={onHidden}
+          position={currentInfo.position}
+          shouldClose={(_event, _) => shouldClose()}
+        >
+          <>{children}</>
+        </Popover>
+      ) : (
+        <>{children}</>
+      )}
+    </>
+  );
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
@@ -229,4 +223,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const TourStop = connect(mapStateToProps, mapDispatchToProps)(TourStopResizeWrapper);
+export const TourStop = React.memo(connect(mapStateToProps, mapDispatchToProps)(TourStopComponent));
