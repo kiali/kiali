@@ -34,6 +34,7 @@ jobs:
     outputs:
       release_branch: ${{ steps.versions.outputs.release_branch }}
       release_version: ${{ steps.versions.outputs.release_version }}
+      quay_name: ${{ steps.versions.outputs.quay_name }}
       quay_tag: ${{ steps.versions.outputs.quay_tag }}
       git_sha: ${{ steps.versions.outputs.git_sha }}
     steps:
@@ -115,6 +116,7 @@ jobs:
           echo "release_branch=${RELEASE_BRANCH}"
           echo "release_version=${RELEASE_VERSION}"
           echo "git_sha=${GIT_SHA}"
+          echo "quay_name=${QUAY_REPOSITORY}"
           echo "quay_tag=${QUAY_TAG}"
         } >> "${GITHUB_OUTPUT}"
 
@@ -160,6 +162,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [initialize, build_backend]
     env:
+      QUAY_NAME: ${{ needs.initialize.outputs.quay_name }}
       QUAY_TAG: ${{ needs.initialize.outputs.quay_tag }}
       RELEASE_VERSION: ${{ needs.initialize.outputs.release_version }}
     steps:
@@ -193,8 +196,13 @@ jobs:
         username: ${{ secrets.QUAY_USER }}
         password: ${{ secrets.QUAY_PASSWORD }}
 
+    # QUAY_NAME/QUAY_TAG override Makefile defaults (CONTAINER_NAME/kiali).
     - name: Build and push image
-      run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
+      run: |
+        make -e DOCKER_CLI_EXPERIMENTAL=enabled \
+          QUAY_NAME="${QUAY_NAME}" \
+          QUAY_TAG="${QUAY_TAG}" \
+          build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
     - name: Summarize published tags
       run: |
