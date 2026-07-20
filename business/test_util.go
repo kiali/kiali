@@ -1145,6 +1145,145 @@ func FakeCustomControllerRSSyncedWithPods(conf *config.Config) []apps_v1.Replica
 	}
 }
 
+func FakeMultiReplicaSetCustomController(conf *config.Config) ([]apps_v1.ReplicaSet, []core_v1.Pod) {
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	rolloutOwner := meta_v1.OwnerReference{
+		Controller: &controller,
+		APIVersion: "argoproj.io/v1alpha1",
+		Kind:       "Rollout",
+		Name:       "rollouts-demo-canary",
+	}
+	canaryReplicas := int32(1)
+	stableReplicas := int32(2)
+
+	replicaSets := []apps_v1.ReplicaSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "rollouts-demo-canary-canary-hash",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				OwnerReferences:   []meta_v1.OwnerReference{rolloutOwner},
+			},
+			Spec: apps_v1.ReplicaSetSpec{
+				Replicas: &canaryReplicas,
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "details", versionLabel: "v2"},
+					},
+				},
+			},
+			Status: apps_v1.ReplicaSetStatus{
+				Replicas:          1,
+				AvailableReplicas: 0,
+			},
+		},
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "rollouts-demo-canary-stable-hash",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				OwnerReferences:   []meta_v1.OwnerReference{rolloutOwner},
+			},
+			Spec: apps_v1.ReplicaSetSpec{
+				Replicas: &stableReplicas,
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "details", versionLabel: "v1"},
+					},
+				},
+			},
+			Status: apps_v1.ReplicaSetStatus{
+				Replicas:          2,
+				AvailableReplicas: 2,
+			},
+		},
+	}
+
+	makePod := func(name, rsName, version string) core_v1.Pod {
+		return core_v1.Pod{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              name,
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				Labels:            map[string]string{appLabel: "details", versionLabel: version},
+				OwnerReferences: []meta_v1.OwnerReference{{
+					Controller: &controller,
+					APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+					Kind:       kubernetes.ReplicaSets.Kind,
+					Name:       rsName,
+				}},
+				Annotations: kubetest.FakeIstioAnnotations(),
+			},
+			Spec: core_v1.PodSpec{
+				Containers: []core_v1.Container{
+					{Name: "details", Image: "whatever"},
+					{Name: "istio-proxy", Image: "docker.io/istio/proxy:0.7.1"},
+				},
+			},
+		}
+	}
+
+	pods := []core_v1.Pod{
+		makePod("rollouts-demo-canary-canary-pod", "rollouts-demo-canary-canary-hash", "v2"),
+		makePod("rollouts-demo-canary-stable-pod-1", "rollouts-demo-canary-stable-hash", "v1"),
+		makePod("rollouts-demo-canary-stable-pod-2", "rollouts-demo-canary-stable-hash", "v1"),
+	}
+
+	return replicaSets, pods
+}
+
+// FakeScaledToZeroCustomController returns a Rollout-owned ReplicaSet with zero replicas and no pods.
+// Models Anthony's inactive Rollout case from https://github.com/kiali/kiali/issues/10008.
+func FakeScaledToZeroCustomController(conf *config.Config) []apps_v1.ReplicaSet {
+	appLabel := conf.IstioLabels.AppLabelName
+	versionLabel := conf.IstioLabels.VersionLabelName
+	t1, _ := time.Parse(time.RFC822Z, "08 Mar 18 17:44 +0300")
+	controller := true
+	replicas := int32(0)
+	return []apps_v1.ReplicaSet{
+		{
+			TypeMeta: meta_v1.TypeMeta{
+				APIVersion: kubernetes.ReplicaSets.GroupVersion().String(),
+				Kind:       kubernetes.ReplicaSets.Kind,
+			},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:              "my-inactive-app-aabbccdd22",
+				Namespace:         "Namespace",
+				CreationTimestamp: meta_v1.NewTime(t1),
+				OwnerReferences: []meta_v1.OwnerReference{{
+					Controller: &controller,
+					APIVersion: "argoproj.io/v1alpha1",
+					Kind:       "Rollout",
+					Name:       "my-inactive-app",
+				}},
+			},
+			Spec: apps_v1.ReplicaSetSpec{
+				Replicas: &replicas,
+				Template: core_v1.PodTemplateSpec{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Labels: map[string]string{appLabel: "my-inactive-app", versionLabel: "abc123"},
+					},
+				},
+			},
+			Status: apps_v1.ReplicaSetStatus{
+				Replicas:          0,
+				AvailableReplicas: 0,
+			},
+		},
+	}
+}
+
 func FakeServices(conf config.Config) []core_v1.Service {
 	appLabelName := conf.IstioLabels.AppLabelName
 	if appLabelName == "" {

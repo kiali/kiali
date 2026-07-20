@@ -715,6 +715,127 @@ func TestGetWorkloadFromPods(t *testing.T) {
 	assert.Equal(0, len(workload.AdditionalDetails))
 }
 
+func TestGetWorkloadFromCustomControllerWithMultipleReplicaSets(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.ExternalServices.CustomDashboards.Enabled = false
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	kubernetes.SetConfig(t, *conf)
+
+	replicaSets, pods := FakeMultiReplicaSetCustomController(conf)
+	kubeObjs := []runtime.Object{
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range replicaSets {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	for _, obj := range pods {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	svc := setupWorkloadService(t, k8s, conf)
+
+	criteria := WorkloadCriteria{
+		Cluster:         conf.KubernetesConfig.ClusterName,
+		Namespace:       "Namespace",
+		WorkloadName:    "rollouts-demo-canary",
+		WorkloadGVK:     schema.GroupVersionKind{Group: "argoproj.io", Version: "v1alpha1", Kind: "Rollout"},
+		IncludeServices: false,
+	}
+	workload, err := svc.GetWorkload(context.TODO(), criteria)
+	require.NoError(err)
+
+	assert.Equal("rollouts-demo-canary", workload.Name)
+	assert.Equal("Rollout", workload.WorkloadGVK.Kind)
+	assert.Equal(3, len(workload.Pods))
+	assert.Equal(int32(3), workload.DesiredReplicas)
+	assert.Equal(int32(3), workload.CurrentReplicas)
+}
+
+func TestGetWorkloadListFromCustomControllerWithMultipleReplicaSets(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	replicaSets, pods := FakeMultiReplicaSetCustomController(conf)
+	kubeObjs := []runtime.Object{
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range replicaSets {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	for _, obj := range pods {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	svc := setupWorkloadService(t, k8s, conf)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.Len(workloadList.Workloads, 1)
+	assert.Equal("rollouts-demo-canary", workloadList.Workloads[0].Name)
+	assert.Equal("Rollout", workloadList.Workloads[0].WorkloadGVK.Kind)
+	assert.Equal(3, workloadList.Workloads[0].PodCount)
+}
+
+func TestGetWorkloadListFromCustomControllerScaledToZero(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	config.Set(conf)
+
+	replicaSets := FakeScaledToZeroCustomController(conf)
+	kubeObjs := []runtime.Object{
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "Namespace"}},
+	}
+	for _, obj := range replicaSets {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := kubetest.NewFakeK8sClient(kubeObjs...)
+	k8s.OpenShift = true
+	svc := setupWorkloadService(t, k8s, conf)
+
+	criteria := WorkloadCriteria{Namespace: "Namespace", IncludeIstioResources: false, IncludeHealth: false}
+	workloadList, err := svc.GetWorkloadList(context.TODO(), criteria)
+	require.NoError(err)
+
+	require.Len(workloadList.Workloads, 1)
+	assert.Equal("my-inactive-app", workloadList.Workloads[0].Name)
+	assert.Equal("Rollout", workloadList.Workloads[0].WorkloadGVK.Kind)
+	assert.Equal(0, workloadList.Workloads[0].PodCount)
+
+	detail, err := svc.GetWorkload(context.TODO(), WorkloadCriteria{
+		Cluster:      conf.KubernetesConfig.ClusterName,
+		Namespace:    "Namespace",
+		WorkloadName: "my-inactive-app",
+		WorkloadGVK:  schema.GroupVersionKind{Group: "argoproj.io", Version: "v1alpha1", Kind: "Rollout"},
+	})
+	require.NoError(err)
+	require.NotNil(detail)
+	assert.Equal("my-inactive-app", detail.Name)
+	assert.Equal("Rollout", detail.WorkloadGVK.Kind)
+	assert.Equal(0, len(detail.Pods))
+}
+
 func TestGetPod(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)

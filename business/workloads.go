@@ -919,6 +919,73 @@ func (in *WorkloadService) setPodsForDeployment(dep *apps_v1.Deployment, pods []
 	}
 }
 
+func replicaSetDesiredCount(rs *apps_v1.ReplicaSet) int32 {
+	if rs.Spec.Replicas != nil {
+		return *rs.Spec.Replicas
+	}
+	return rs.Status.Replicas
+}
+
+// collectPodsForCustomController gathers pods from every ReplicaSet owned by a custom controller (e.g. Argo Rollout).
+//
+// Custom controllers configured via custom_workload_types do not have typed parsers in Kiali. Pods are discovered
+// indirectly through child ReplicaSets. During canary or degraded updates a single controller may own multiple
+// active ReplicaSets at once; all of them must be considered or pods from stable/canary revisions are missed
+// (see https://github.com/kiali/kiali/issues/10008).
+func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, controllerName string, controllerGVK schema.GroupVersionKind, controllerNamespace string, repset []apps_v1.ReplicaSet, pods []core_v1.Pod) []core_v1.Pod {
+	var cPods []core_v1.Pod
+	podSeen := make(map[string]struct{})
+	rsSeen := make(map[string]struct{})
+	var bestRS *apps_v1.ReplicaSet
+	var desiredReplicas, currentReplicas, availableReplicas int32
+
+	for i := range repset {
+		rs := &repset[i]
+		rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+		if rsOwnerRef == nil || rs.Namespace != controllerNamespace || rsOwnerRef.Name != controllerName || rsOwnerRef.Kind != controllerGVK.Kind {
+			continue
+		}
+		// The informer list may contain the same ReplicaSet more than once; count each set only once.
+		rsKey := rs.Namespace + "/" + rs.Name
+		if _, seen := rsSeen[rsKey]; seen {
+			continue
+		}
+		rsSeen[rsKey] = struct{}{}
+
+		// Prefer the ReplicaSet with the most desired replicas for workload metadata (labels/version).
+		// During canary/degraded updates the first matching RS may be an empty or failed revision.
+		if bestRS == nil || replicaSetDesiredCount(rs) > replicaSetDesiredCount(bestRS) {
+			bestRS = rs
+		}
+		// Sum replica counts across revisions so totals reflect the whole controller during multi-RS transitions.
+		desiredReplicas += replicaSetDesiredCount(rs)
+		currentReplicas += rs.Status.Replicas
+		availableReplicas += rs.Status.AvailableReplicas
+
+		for _, pod := range pods {
+			if !meta_v1.IsControlledBy(&pod, rs) {
+				continue
+			}
+			// A pod belongs to one RS; the map guards against duplicate list entries only.
+			podKey := pod.Namespace + "/" + pod.Name
+			if _, seen := podSeen[podKey]; seen {
+				continue
+			}
+			podSeen[podKey] = struct{}{}
+			cPods = append(cPods, pod)
+		}
+	}
+
+	if bestRS != nil {
+		w.ParseReplicaSetParent(bestRS, controllerName, controllerGVK, in.conf)
+		w.DesiredReplicas = desiredReplicas
+		w.CurrentReplicas = currentReplicas
+		w.AvailableReplicas = availableReplicas
+	}
+
+	return cPods
+}
+
 // fetchWorkloadsFromCluster returns all cluster workloads for the specified namespaces. The caller must have access to all of
 // the specified namespaces or it is an error. If <namespaces> is empty it returns the workloads for all accessible namespaces.
 func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, fetchNamespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
@@ -1384,16 +1451,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			controllers[depKey] = kubernetes.Deployments
 		}
 	}
-	for _, rs := range repset {
-		selectorCheck := true
-		if selector != nil {
-			selectorCheck = selector.Matches(labels.Set(rs.Spec.Template.Labels))
-		}
-		rsKey := controllers.key(rs.Namespace, rs.Name)
-		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 && selectorCheck {
-			controllers[rsKey] = kubernetes.ReplicaSets
-		}
-	}
+	controllers.addControllersFromReplicaSetsWithoutPods(repset, selector)
 	for _, dc := range depcon {
 		selectorCheck := true
 		if selector != nil {
@@ -1641,19 +1699,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
-			var cPods []core_v1.Pod
-			for _, rs := range repset {
-				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-				if rsOwnerRef != nil && rs.Namespace == controllerNamespace && rsOwnerRef.Name == controllerName && rsOwnerRef.Kind == controllerGVK.Kind {
-					w.ParseReplicaSetParent(&rs, controllerName, controllerGVK, in.conf)
-					for _, pod := range pods {
-						if meta_v1.IsControlledBy(&pod, &rs) {
-							cPods = append(cPods, pod)
-						}
-					}
-					break
-				}
-			}
+			cPods := in.collectPodsForCustomController(w, controllerName, controllerGVK, controllerNamespace, repset, pods)
 			if len(cPods) == 0 {
 				// If no pods were found for a ReplicaSet type, it's possible the controller
 				// is managing the pods itself i.e. the pod's have an owner ref directly to the controller type.
@@ -1730,6 +1776,46 @@ func (in controllerMap) parse(key string) (namespace, name string) {
 		return parts[0], parts[1]
 	}
 	return "", key // fallback for malformed key
+}
+
+// addControllersFromReplicaSetsWithoutPods surfaces workloads that own ReplicaSets but currently
+// have no pods (e.g. an Argo Rollout scaled to 0). Pod-based discovery cannot find those because
+// there are no pods to walk. Typed controllers (Deployments, StatefulSets, etc.) already have
+// their own empty-controller loops and are skipped here; this mainly adds custom parents such as
+// Rollout. ReplicaSets with no owner references remain listed as ReplicaSet workloads (orphan behavior).
+// See https://github.com/kiali/kiali/issues/10008.
+func (in controllerMap) addControllersFromReplicaSetsWithoutPods(repset []apps_v1.ReplicaSet, selector labels.Selector) {
+	for _, rs := range repset {
+		if selector != nil && !selector.Matches(labels.Set(rs.Spec.Template.Labels)) {
+			continue
+		}
+
+		ownerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
+		if ownerRef != nil {
+			// Known typed kinds are handled by their own no-pods loops above; avoid redundant entries.
+			if _, known := controllerOrder[ownerRef.Kind]; known {
+				continue
+			}
+			refGV, err := schema.ParseGroupVersion(ownerRef.APIVersion)
+			if err != nil {
+				log.Errorf("could not parse OwnerReference api version %q: %v", ownerRef.APIVersion, err)
+				continue
+			}
+			parentKey := in.key(rs.Namespace, ownerRef.Name)
+			if _, exist := in[parentKey]; !exist {
+				in[parentKey] = refGV.WithKind(ownerRef.Kind)
+			}
+			continue
+		}
+
+		// Orphan ReplicaSet: only when there are no owner references at all.
+		if len(rs.OwnerReferences) == 0 {
+			rsKey := in.key(rs.Namespace, rs.Name)
+			if _, exist := in[rsKey]; !exist {
+				in[rsKey] = kubernetes.ReplicaSets
+			}
+		}
+	}
 }
 
 func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadCriteria, waypoints models.Workloads) (*models.Workload, error) {
@@ -2126,12 +2212,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			controllers[depKey] = kubernetes.Deployments
 		}
 	}
-	for _, rs := range repset {
-		rsKey := controllers.key(rs.Namespace, rs.Name)
-		if _, exist := controllers[rsKey]; !exist && len(rs.OwnerReferences) == 0 {
-			controllers[rsKey] = kubernetes.ReplicaSets
-		}
-	}
+	controllers.addControllersFromReplicaSetsWithoutPods(repset, nil)
 	if depcon != nil {
 		dcKey := controllers.key(depcon.Namespace, depcon.Name)
 		if _, exist := controllers[dcKey]; !exist {
@@ -2332,19 +2413,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// ReplicaSet should be used to link Pods with a custom controller type i.e. Argo Rollout
 			// Note, we will use the controller found in the Pod resolution, instead that the passed by parameter
 			// This will cover cornercase for https://github.com/kiali/kiali/issues/3830
-			var cPods []core_v1.Pod
-			for _, rs := range repset {
-				rsOwnerRef := meta_v1.GetControllerOf(&rs.ObjectMeta)
-				if rsOwnerRef != nil && rs.Namespace == criteria.Namespace && rsOwnerRef.Name == criteria.WorkloadName && rsOwnerRef.Kind == discoveredControllerGVK.Kind {
-					w.ParseReplicaSetParent(&rs, criteria.WorkloadName, discoveredControllerGVK, in.conf)
-					for _, pod := range pods {
-						if meta_v1.IsControlledBy(&pod, &rs) {
-							cPods = append(cPods, pod)
-						}
-					}
-					break
-				}
-			}
+			cPods := in.collectPodsForCustomController(&w, criteria.WorkloadName, discoveredControllerGVK, criteria.Namespace, repset, pods)
 
 			if len(cPods) == 0 {
 				cPods = kubernetes.FilterPodsByControllerAndNamespace(criteria.WorkloadName, discoveredControllerGVK, criteria.Namespace, pods)
