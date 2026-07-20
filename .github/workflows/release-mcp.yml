@@ -160,7 +160,6 @@ jobs:
     permissions:
       contents: read
     name: Build and push image
-    if: ${{ github.repository == 'kiali/kiali' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     needs: [initialize, build_backend]
     env:
@@ -171,6 +170,11 @@ jobs:
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         ref: ${{ needs.initialize.outputs.release_branch }}
+
+    - name: Set version for image build
+      run: |
+        # Embed the calculated Quay release version in the binary (do not commit).
+        sed -i -r "s/^VERSION \?= (.*)/VERSION \?= $RELEASE_VERSION/" Makefile
 
     - name: Set up Go
       uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
