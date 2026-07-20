@@ -13,9 +13,7 @@ import (
 func TestExtractEmptyDashboardQueryParams(t *testing.T) {
 	assert := assert.New(t)
 
-	queryParams := url.Values{
-		"": []string{""},
-	}
+	queryParams := url.Values{}
 
 	params := models.DashboardQuery{Namespace: "test"}
 	err := extractDashboardQueryParams(queryParams, &params, buildNamespace("ns", time.Time{}))

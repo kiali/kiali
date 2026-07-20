@@ -73,6 +73,20 @@ func TestExtractMetricsQueryParams(t *testing.T) {
 	assert.Equal(t, 1, mq.End.Second())
 }
 
+func TestExtractMetricsQueryParamsUnknownParam(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("duration", "60s")
+	q.Add("unknownParam", "value")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported query parameter 'unknownParam'")
+}
+
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
 	if err != nil {
@@ -182,7 +196,7 @@ func TestAggregateMetricsDefault(t *testing.T) {
 
 	// default has direction=outbound
 	actual, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
 
@@ -289,7 +303,7 @@ func TestAggregateMetricsBadDirection(t *testing.T) {
 
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
 
@@ -313,7 +327,7 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "'reporter' must be 'destination'")
 }
 
@@ -660,7 +674,7 @@ func TestWorkloadMetricsBadQueryTime(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'queryTime'")
 }
 
@@ -689,7 +703,7 @@ func TestWorkloadMetricsBadDuration(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'duration'")
 }
 
@@ -718,7 +732,7 @@ func TestWorkloadMetricsBadStep(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'step'")
 }
 
@@ -746,7 +760,7 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 

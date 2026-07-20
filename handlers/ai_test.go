@@ -958,7 +958,7 @@ func TestDeleteConversations_MissingParam(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { resp.Body.Close() })
 
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 }
 
 func TestDeleteConversations_StoreDisabled(t *testing.T) {
