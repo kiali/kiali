@@ -19,3 +19,27 @@ Feature: Kiali Istio Config editor page
     And user clicks in "Name" column on the "bookinfo" text
     Then user can see istio config editor
     But no cluster badge for the "Istio config" should be visible
+
+  @bookinfo-app
+  @core-2
+  Scenario: Unsaved YAML edits show reload confirmation
+    When user clicks in "Name" column on the "bookinfo" text
+    And user can see istio config editor
+    And user edits the Istio config YAML
+    And user clicks the Istio config Reload button
+    Then user sees the unsaved changes modal for "Reload"
+    When user cancels the unsaved changes modal
+    Then user does not see the unsaved changes modal
+    And user can see istio config editor
+
+  @bookinfo-app
+  @core-2
+  Scenario: Unsaved YAML edits show leave confirmation on Cancel
+    When user clicks in "Name" column on the "bookinfo" text
+    And user can see istio config editor
+    And user edits the Istio config YAML
+    And user clicks the Istio config Cancel button
+    Then user sees the unsaved changes modal for "Leave"
+    When user cancels the unsaved changes modal
+    Then user does not see the unsaved changes modal
+    And user can see istio config editor
