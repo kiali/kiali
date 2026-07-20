@@ -17,9 +17,6 @@ on:
         options:
         - v2.27
         - v2.22
-        - v2.17
-        - v2.11
-        - v2.4
       quay_repository:
         description: Quay repository
         type: string
