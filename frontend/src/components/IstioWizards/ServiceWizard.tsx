@@ -1,22 +1,20 @@
 import * as React from 'react';
 import { Button, ButtonVariant, ExpandableSection, Tab, Tabs } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
 import { K8sRequestRouting } from './K8sRequestRouting';
-import { TrafficShifting, WorkloadWeight } from './TrafficShifting';
-import {
-  TrafficPolicy,
-  ConsistentHashType,
-  TrafficPolicyState,
-  UNSET
-} from '../../components/IstioWizards/TrafficPolicy';
+import type { WorkloadWeight } from './TrafficShifting';
+import { TrafficShifting } from './TrafficShifting';
+import type { TrafficPolicyState } from '../../components/IstioWizards/TrafficPolicy';
+import { TrafficPolicy, ConsistentHashType, UNSET } from '../../components/IstioWizards/TrafficPolicy';
 import { ROUND_ROBIN } from './TrafficPolicy';
-import { FaultInjection, FaultInjectionRoute } from './FaultInjection';
-import { Rule } from './RequestRouting/Rules';
-import { K8sRule } from './K8sRequestRouting/K8sRules';
+import type { FaultInjectionRoute } from './FaultInjection';
+import { FaultInjection } from './FaultInjection';
+import type { Rule } from './RequestRouting/Rules';
+import type { K8sRule } from './K8sRequestRouting/K8sRules';
+import type { ServiceWizardProps, ServiceWizardState, WizardPreviews } from './WizardActions';
 import {
   buildIstioConfig,
   fqdnServiceName,
@@ -36,8 +34,6 @@ import {
   getInitWeights,
   hasGateway,
   hasK8sGateway,
-  ServiceWizardProps,
-  ServiceWizardState,
   WIZARD_FAULT_INJECTION,
   WIZARD_K8S_REQUEST_ROUTING,
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
@@ -46,31 +42,34 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
-  WizardPreviews,
   getInitK8sGRPCRules
 } from './WizardActions';
-import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
-import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
+import type { GatewaySelectorState } from './GatewaySelector';
+import { GatewaySelector } from './GatewaySelector';
+import type { K8sGatewaySelectorState } from './K8sGatewaySelector';
+import { K8sGatewaySelector } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';
 import { K8sRouteHosts } from './K8sRouteHosts';
 import { K8sGRPCRouteHosts } from './K8sGRPCRouteHosts';
 import { HTTP, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
-import {
+import type {
   DestinationRule,
   Gateway,
   K8sGateway,
   K8sGRPCRoute,
   K8sHTTPRoute,
   PeerAuthentication,
-  PeerAuthenticationMutualTLSMode,
   VirtualService
 } from '../../types/IstioObjects';
+import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
-import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
-import _ from 'lodash';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
-import { ApiResponse } from 'types/Api';
+import type { TimeoutRetryRoute } from './RequestTimeouts';
+import { RequestTimeouts } from './RequestTimeouts';
+import type { CircuitBreakerState } from './CircuitBreaker';
+import { CircuitBreaker } from './CircuitBreaker';
+import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
@@ -173,7 +172,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   }
 
   componentDidUpdate(prevProps: ServiceWizardProps): void {
-    if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+    // Only (re)initialize when the wizard opens/closes. Parent refreshes that change
+    // workload props while open must not wipe in-progress form or YAML preview state;
+    // React 18 makes those refreshes more likely to land mid-wizard.
+    if (prevProps.show !== this.props.show) {
       const isViewOnly = serverConfig.deployment.viewOnlyMode;
       let isMainWizardValid: boolean;
 
@@ -380,20 +382,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     }
   }
 
-  compareWorkloads = (prev: WorkloadOverview[], current: WorkloadOverview[]): boolean => {
-    if (prev.length !== current.length) {
-      return false;
-    }
-
-    for (let i = 0; i < prev.length; i++) {
-      if (!current.some(w => _.isEqual(w, prev[i]))) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   onClose = (changed: boolean): void => {
     this.setState(emptyServiceWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)));
     this.props.onClose(changed);
@@ -409,7 +397,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
-      case WIZARD_REQUEST_TIMEOUTS:
+      case WIZARD_REQUEST_TIMEOUTS: {
         const dr = this.state.previews!.dr;
         const vs = this.state.previews!.vs;
         const gw = this.state.previews!.gw;
@@ -552,6 +540,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         }
 
         break;
+      }
       default:
     }
 
@@ -901,8 +890,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         ? isViewOnly
           ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].title)}`
           : this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
+            ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
+            : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
@@ -910,8 +899,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         ? isViewOnly
           ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
           : this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+            ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+            : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
 
     const isTrafficShifting =

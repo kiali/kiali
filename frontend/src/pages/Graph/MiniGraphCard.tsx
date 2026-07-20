@@ -489,13 +489,14 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     // flushSync (via navigateApp) forces the route commit after the kebab has closed.
     const graphUrl = makeNodeGraphUrlFromParams(urlParams);
     this.setState({ isKebabOpen: false }, () => {
+      // Allow PF6 MenuToggle to finish closing before committing the route.
       setTimeout(() => {
         if (isParentKiosk(this.props.kiosk)) {
           kioskNavigateAction(graphUrl);
         } else {
           navigateApp(graphUrl);
         }
-      }, 0);
+      }, 50);
     });
   };
 

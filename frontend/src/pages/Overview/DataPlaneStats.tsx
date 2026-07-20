@@ -18,8 +18,10 @@ import { t } from 'utils/I18nUtils';
 import { useNamespaces } from 'hooks/namespaces';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
-import { DEGRADED, FAILURE, HEALTHY, HealthStatusId, NA, NOT_READY, statusFromString } from 'types/Health';
-import { NamespaceWithHealthStatus, useDataPlanes } from 'hooks/dataPlanes';
+import type { HealthStatusId } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, statusFromString } from 'types/Health';
+import type { NamespaceWithHealthStatus } from 'hooks/dataPlanes';
+import { useDataPlanes } from 'hooks/dataPlanes';
 import {
   cardBodyStyle,
   cardStyle,
@@ -159,6 +161,9 @@ export const DataPlaneStats: React.FC = () => {
   const unhealthyCount = failureCount + degradedCount + notReadyCount;
   const isCardLoading = isNamespacesLoading || isHealthLoading;
   const isCardError = isNamespacesError || isError;
+  // Keep the footer during health-only refreshes so the link is not detached mid-click.
+  // Hide only while namespaces are still loading or the card is in error.
+  const showFooter = !isCardError && !isNamespacesLoading && (total > 0 || !isHealthLoading);
 
   const unhealthyNamespaces: NamespaceWithHealthStatus[] = React.useMemo(() => {
     const severity = (s: HealthStatusId): number => {
@@ -287,7 +292,7 @@ export const DataPlaneStats: React.FC = () => {
           </div>
         )}
       </CardBody>
-      {!isCardLoading && !isCardError && (
+      {showFooter && (
         <CardFooter>
           <KialiLink
             to={buildDataPlanesUrl()}
