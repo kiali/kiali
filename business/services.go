@@ -467,11 +467,10 @@ func (in *SvcService) buildServiceEntryOverviews(ctx context.Context, serviceEnt
 	return services
 }
 
-// GetService returns a single service and associated data using the interval and queryTime
-// includeValidations is retained for API compatibility. Service validations are loaded from the
-// validation cache by the handler via IstioValidationsService.GetValidationsForService.
-func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time, includeValidations bool) (*models.ServiceDetails, error) {
-	_ = includeValidations
+// GetServiceDetails returns a single service and associated data using the interval and queryTime.
+// Service validations are loaded from the validation cache by the handler via
+// IstioValidationsService.GetValidationsForService.
+func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace, service, interval string, queryTime time.Time) (*models.ServiceDetails, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetServiceDetails",
 		observability.Attribute("package", "business"),
@@ -828,7 +827,7 @@ func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, ser
 	in.waitForCacheUpdate(ctx, cluster, svc)
 
 	// After the update we fetch the whole workload
-	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime, false)
+	return in.GetServiceDetails(ctx, cluster, namespace, service, interval, queryTime)
 }
 
 func (in *SvcService) waitForCacheUpdate(ctx context.Context, cluster string, updatedService *core_v1.Service) {

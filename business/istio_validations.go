@@ -374,6 +374,9 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		}
 	}
 
+	// Cluster-scoped ignore annotations; reuse for namespace checkers and ServiceChecker.
+	perObjectIgnores := buildObjectIgnoreValidations(vInfo, cluster)
+
 	for _, namespace := range vInfo.nsMap[cluster] {
 		// Skip validations for a particular namespace, mesh config was not found
 		if _, managed := rootNamespaces[namespace.Name]; !managed {
@@ -404,7 +407,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			continue
 		}
 
-		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
+		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, perObjectIgnores))
 	}
 
 	// Service port-mapping validations are independent of per-namespace Istio config and run once per cluster.
@@ -430,7 +433,7 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		pods,
 		managedServices,
 	)
-	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{serviceChecker}, in.conf, buildObjectIgnoreValidations(vInfo, cluster)))
+	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{serviceChecker}, in.conf, perObjectIgnores))
 
 	return true, validations, nil
 }

@@ -367,8 +367,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 			namespace,
 			resourceArgs.ResourceName,
 			interval,
-			resourceArgs.QueryTime,
-			true)
+			resourceArgs.QueryTime)
 		if err != nil {
 			return classifyError(err, "service", resourceArgs.ResourceName, namespace), classifyErrorStatus(err), nil
 		}

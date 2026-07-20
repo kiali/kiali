@@ -188,7 +188,7 @@ func TestMultiClusterGetServiceDetails(t *testing.T) {
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
 	prom.Inject(promMock)
 	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
-	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now(), true)
+	s, err := svc.GetServiceDetails(context.TODO(), "west", "bookinfo", "ratings-west-cluster", "60s", time.Now())
 	require.NoError(err)
 
 	assert.Equal(s.Service.Name, "ratings-west-cluster")
@@ -942,7 +942,7 @@ func TestGetServiceDetailsSubServicesVersioned(t *testing.T) {
 
 	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
 
-	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now(), false)
+	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now())
 	require.NoError(err)
 
 	require.Len(s.SubServices, 2)
@@ -1133,7 +1133,7 @@ func TestGetServiceDetailsSubServicesFallbackToMainService(t *testing.T) {
 
 	svc := NewLayerBuilder(t, conf).WithClients(clients).WithProm(prom).Build().Svc
 
-	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now(), false)
+	s, err := svc.GetServiceDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "reviews", "60s", time.Now())
 	require.NoError(err)
 
 	require.Len(s.SubServices, 1)

@@ -185,7 +185,7 @@ func ServiceDetails(
 			}()
 		}
 
-		serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime, includeValidations)
+		serviceDetails, err := business.Svc.GetServiceDetails(r.Context(), cluster, namespace, service, rateInterval, queryTime)
 		if includeValidations && err == nil {
 			wg.Wait()
 			serviceDetails.Validations = istioConfigValidations.MergeValidations(serviceDetails.Validations)
