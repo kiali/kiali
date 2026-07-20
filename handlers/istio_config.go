@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -36,33 +35,20 @@ func IstioConfigList(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		query := r.URL.Query()
-		objects := ""
+
+		listParams, err := parseIstioConfigListParams(conf, query)
+		if respondQueryParamError(w, err) {
+			return
+		}
+
 		parsedTypes := make([]string, 0)
-		if _, ok := query["objects"]; ok {
-			objects = query.Get("objects")
-			if len(objects) > 0 {
-				parsedTypes = strings.Split(objects, ";")
-			}
+		if len(listParams.Objects) > 0 {
+			parsedTypes = strings.Split(listParams.Objects, ";")
 		}
 
-		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
-
-		labelSelector := ""
-		if _, found := query["labelSelector"]; found {
-			labelSelector = query.Get("labelSelector")
-		}
-
-		workloadSelector := ""
-		if _, found := query["workloadSelector"]; found {
-			workloadSelector = query.Get("workloadSelector")
-		}
-
-		cluster := clusterNameFromQuery(conf, query)
-		if !conf.IsValidationsEnabled() {
-			includeValidations = false
-		}
-
-		criteria := business.ParseIstioConfigCriteria(objects, labelSelector, workloadSelector)
+		criteria := business.ParseIstioConfigCriteria(listParams.Objects, listParams.LabelSelector, listParams.WorkloadSelector)
+		cluster := listParams.ClusterName
+		includeValidations := listParams.IncludeValidations
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -128,17 +114,14 @@ func IstioConfigDetails(
 		object := params["object"]
 
 		query := r.URL.Query()
-		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
-
-		includeHelp := false
-		if _, found := query["help"]; found {
-			includeHelp = true
+		detailsParams, err := parseIstioConfigDetailsParams(conf, query)
+		if respondQueryParamError(w, err) {
+			return
 		}
 
-		cluster := clusterNameFromQuery(conf, query)
-		if !conf.IsValidationsEnabled() {
-			includeValidations = false
-		}
+		cluster := detailsParams.ClusterName
+		includeValidations := detailsParams.IncludeValidations
+		includeHelp := detailsParams.IncludeHelp
 
 		gvk := schema.GroupVersionKind{
 			Group:   objectGroup,
@@ -240,7 +223,10 @@ func IstioConfigDelete(
 		object := params["object"]
 
 		query := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, query)
+		cluster, err := parseIstioConfigClusterParams(conf, query)
+		if respondQueryParamError(w, err) {
+			return
+		}
 
 		gvk := schema.GroupVersionKind{
 			Group:   objectGroup,
@@ -289,7 +275,10 @@ func IstioConfigUpdate(
 		object := params["object"]
 
 		query := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, query)
+		cluster, err := parseIstioConfigClusterParams(conf, query)
+		if respondQueryParamError(w, err) {
+			return
+		}
 
 		gvk := schema.GroupVersionKind{
 			Group:   objectGroup,
@@ -345,7 +334,10 @@ func IstioConfigCreate(
 		objectKind := params["kind"]
 
 		query := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, query)
+		cluster, err := parseIstioConfigClusterParams(conf, query)
+		if respondQueryParamError(w, err) {
+			return
+		}
 
 		gvk := schema.GroupVersionKind{
 			Group:   objectGroup,
@@ -412,8 +404,10 @@ func IstioConfigPermissions(
 
 		// query params
 		params := r.URL.Query()
-		namespaces := params.Get("namespaces") // csl of namespaces
-		cluster := clusterNameFromQuery(conf, params)
+		cluster, namespaces, err := parseIstioConfigNamespacesParams(conf, params)
+		if respondQueryParamError(w, err) {
+			return
+		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -450,12 +444,14 @@ func IstioConfigValidationSummary(
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		params := r.URL.Query()
-		namespaces := params.Get("namespaces") // csl of namespaces
+		cluster, namespaces, err := parseIstioConfigNamespacesParams(conf, params)
+		if respondQueryParamError(w, err) {
+			return
+		}
 		nss := []string{}
 		if len(namespaces) > 0 {
 			nss = strings.Split(namespaces, ",")
 		}
-		cluster := clusterNameFromQuery(conf, params)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {

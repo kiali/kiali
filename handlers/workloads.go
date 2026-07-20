@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -42,21 +42,25 @@ type workloadParams struct {
 func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(conf, r)
+	if err := p.baseExtract(conf, r, "clusterName", "gvk", "health", "istioResources", "namespaces", "queryTime", "rateInterval", "validate"); err != nil {
+		return err
+	}
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
 
 	var err error
-	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	p.IncludeHealth, err = queryparams.ParseBoolParam(query.Get("health"), "health", true)
 	if err != nil {
-		p.IncludeHealth = true
+		return err
 	}
-	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
+	p.IncludeIstioResources, err = queryparams.ParseBoolParam(query.Get("istioResources"), "istioResources", true)
 	if err != nil {
-		p.IncludeIstioResources = true
+		return err
 	}
-	// Check for "validate" query param - defaults to false like other detail handlers
-	p.IncludeValidations, _ = strconv.ParseBool(query.Get("validate"))
+	p.IncludeValidations, err = queryparams.ParseBoolParam(query.Get("validate"), "validate", false)
+	if err != nil {
+		return err
+	}
 
 	p.WorkloadGVK, err = util.StringToGVK(query.Get("gvk"))
 	if err != nil {
@@ -82,7 +86,7 @@ func ClusterWorkloads(
 		p := workloadParams{}
 		errParse := p.extract(r, conf)
 		if errParse != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
+			RespondWithQueryParamError(w, errParse.Error())
 			return
 		}
 
@@ -157,7 +161,7 @@ func WorkloadDetails(
 		p := workloadParams{}
 		errParse := p.extract(r, conf)
 		if errParse != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Request parsing error: "+errParse.Error())
+			RespondWithQueryParamError(w, errParse.Error())
 			return
 		}
 
@@ -232,6 +236,10 @@ func WorkloadUpdate(
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName", "gvk", "patchType", "validate"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -248,13 +256,17 @@ func WorkloadUpdate(
 		workload := params["workload"]
 		workloadGVK, errGVK := util.StringToGVK(query.Get("gvk"))
 		if errGVK != nil {
-			RespondWithError(w, http.StatusBadRequest, "Update request with bad workloadGVK param: "+errGVK.Error())
+			RespondWithQueryParamError(w, "Update request with bad workloadGVK param: "+errGVK.Error())
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 
-		includeValidations, _ := strconv.ParseBool(query.Get("validate"))
+		includeValidations, err := queryparams.ParseBoolParam(query.Get("validate"), "validate", false)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
@@ -310,6 +322,10 @@ func PodDetails(
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -317,7 +333,7 @@ func PodDetails(
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 		namespace := vars["namespace"]
 		pod := vars["pod"]
 
@@ -350,6 +366,10 @@ func PodLogs(
 		}
 		vars := mux.Vars(r)
 		queryParams := r.URL.Query()
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "container", "duration", "logType", "maxLines", "sinceTime"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -357,7 +377,7 @@ func PodLogs(
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, queryParams)
+		cluster := queryparams.ClusterName(conf, queryParams)
 		namespace := vars["namespace"]
 		pod := vars["pod"]
 
@@ -395,13 +415,19 @@ func ConfigDumpZtunnel(
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, query)
 		namespace := params["namespace"]
 		pod := params["pod"]
 

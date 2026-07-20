@@ -18,6 +18,7 @@ import (
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -148,7 +149,12 @@ func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory
 
 		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory))
 
-		category := r.URL.Query().Get("category")
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "category"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		category := query.Get("category")
 		catalog := prompts.Catalog()
 		filtered := make([]prompts.Prompt, 0, len(catalog))
 		for _, p := range catalog {
@@ -341,9 +347,14 @@ func DeleteConversations(conf *config.Config, aiStore aiTypes.AIStore) http.Hand
 			return
 		}
 
-		idsParam := r.URL.Query().Get("conversationIDs")
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "conversationIDs"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		idsParam := query.Get("conversationIDs")
 		if idsParam == "" {
-			RespondWithError(w, http.StatusBadRequest, "Missing required query parameter: conversationIDs")
+			RespondWithQueryParamError(w, "Missing required query parameter: conversationIDs")
 			return
 		}
 
@@ -355,7 +366,7 @@ func DeleteConversations(conf *config.Config, aiStore aiTypes.AIStore) http.Hand
 			}
 		}
 		if len(ids) == 0 {
-			RespondWithError(w, http.StatusBadRequest, "No valid conversation IDs provided")
+			RespondWithQueryParamError(w, "No valid conversation IDs provided")
 			return
 		}
 

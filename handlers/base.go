@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/kiali/kiali/handlers/queryparams"
 )
 
 const maxRequestBodyBytes int64 = 10 * 1024 * 1024 // 10 MB
@@ -58,6 +60,11 @@ func RespondWithJSONIndent(w http.ResponseWriter, code int, payload interface{})
 
 func RespondWithError(w http.ResponseWriter, code int, message string) {
 	RespondWithJSON(w, code, responseError{Error: message})
+}
+
+// RespondWithQueryParamError returns a 409 response for invalid or unsupported query parameters.
+func RespondWithQueryParamError(w http.ResponseWriter, message string) {
+	RespondWithError(w, queryparams.ErrorStatusCode, message)
 }
 
 func RespondWithDetailedError(w http.ResponseWriter, code int, message, detail string) {

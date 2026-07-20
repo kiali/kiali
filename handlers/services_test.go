@@ -157,7 +157,7 @@ func TestServiceMetricsBadQueryTime(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'queryTime'")
 }
 
@@ -187,7 +187,7 @@ func TestServiceMetricsBadDuration(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'duration'")
 }
 
@@ -217,7 +217,7 @@ func TestServiceMetricsCantParseQuantiles(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'quantiles'")
 }
 
@@ -247,7 +247,7 @@ func TestServiceMetricsBadQuantiles(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "invalid quantile(s)")
 }
 
@@ -276,7 +276,7 @@ func TestServiceMetricsBadStep(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'step'")
 }
 
@@ -304,7 +304,7 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 

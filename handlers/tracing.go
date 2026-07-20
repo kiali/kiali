@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -14,6 +11,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -72,12 +70,12 @@ func AppTraces(
 		namespace := params["namespace"]
 		app := params["app"]
 
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := q.Cluster
 		tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
 		traces, err := business.Tracing.GetAppTraces(r.Context(), namespace, tracingName.Lookup, app, q)
 		if err != nil {
@@ -107,9 +105,9 @@ func ServiceTraces(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		service := params["service"]
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 		traces, err := business.Tracing.GetServiceTraces(r.Context(), namespace, service, q)
@@ -141,9 +139,9 @@ func WorkloadTraces(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		workload := params["workload"]
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 		traces, err := business.Tracing.GetWorkloadTraces(r.Context(), namespace, workload, q)
@@ -175,14 +173,12 @@ func ErrorTraces(
 		namespace := params["namespace"]
 		app := params["app"]
 		queryParams := r.URL.Query()
-		durationInSeconds := queryParams.Get("duration")
-		conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
+		duration, cluster, err := queryparams.ParseErrorTracesDuration(conf, queryParams)
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, "cannot parse parameter 'duration': "+err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
-		traces, err := business.Tracing.GetErrorTraces(r.Context(), cluster, namespace, app, time.Second*time.Duration(conv))
+		traces, err := business.Tracing.GetErrorTraces(r.Context(), cluster, namespace, app, duration)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
@@ -248,12 +244,12 @@ func AppSpans(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		app := params["app"]
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := q.Cluster
 		spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -285,9 +281,9 @@ func ServiceSpans(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		service := params["service"]
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -322,9 +318,9 @@ func WorkloadSpans(
 		params := mux.Vars(r)
 		namespace := params["namespace"]
 		workload := params["workload"]
-		q, err := readQuery(conf, r.URL.Query())
+		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -336,72 +332,6 @@ func WorkloadSpans(
 
 		RespondWithJSON(w, http.StatusOK, spans)
 	}
-}
-
-func readQuery(conf *config.Config, values url.Values) (models.TracingQuery, error) {
-	q := models.TracingQuery{
-		End:     time.Now(),
-		Limit:   100,
-		Tags:    make(map[string]string),
-		Cluster: clusterNameFromQuery(conf, values),
-	}
-
-	if v := values.Get("startMicros"); v != "" {
-		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
-			q.Start = time.Unix(0, num*int64(time.Microsecond))
-		} else {
-			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'startMicros': %s", err.Error())
-		}
-	}
-	if v := values.Get("endMicros"); v != "" {
-		if num, err := strconv.ParseInt(v, 10, 64); err == nil {
-			q.End = time.Unix(0, num*int64(time.Microsecond))
-		} else {
-			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'endMicros': %s", err.Error())
-		}
-	}
-	if strLimit := values.Get("limit"); strLimit != "" {
-		if num, err := strconv.Atoi(strLimit); err == nil {
-			if num <= 0 {
-				return models.TracingQuery{}, fmt.Errorf("parameter 'limit' must be positive")
-			}
-			if num > models.MaxTracingLimit {
-				num = models.MaxTracingLimit
-			}
-			q.Limit = num
-		} else {
-			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'limit': %s", err.Error())
-		}
-	}
-	if rawTags := values.Get("tags"); rawTags != "" {
-		var tags map[string]string
-		err := json.Unmarshal([]byte(rawTags), &tags)
-		if err != nil {
-			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'tags': %s", err.Error())
-		}
-		q.Tags = tags
-	}
-	if strMinD := values.Get("minDuration"); strMinD != "" {
-		if num, err := strconv.Atoi(strMinD); err == nil {
-			q.MinDuration = time.Duration(num) * time.Microsecond
-		} else {
-			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'minDuration': %s", err.Error())
-		}
-	}
-
-	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
-		q.Tags[key] = value
-	}
-
-	// 'cluster' in tags is used to query in tracing by cluster in multi-cluster
-	// while 'Cluster' in models.TracingQuery can have default cluster
-	if values.Get("clusterName") != "" {
-		q.Tags[models.IstioClusterTag] = values.Get("clusterName")
-	} else {
-		q.Tags[models.IstioClusterTag] = q.Cluster
-	}
-
-	return q, nil
 }
 
 // TracingDiagnose is the API handler to diagnose Tracing configuration

@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -84,7 +85,7 @@ func TestMissingQueryParamFails(t *testing.T) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
+	assert.Equalf(http.StatusConflict, resp.StatusCode, "response text: %s", string(body))
 }
 
 func TestIncorrectQueryParamFails(t *testing.T) {
@@ -103,5 +104,5 @@ func TestIncorrectQueryParamFails(t *testing.T) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equalf(400, resp.StatusCode, "response text: %s", string(body))
+	assert.Equalf(http.StatusConflict, resp.StatusCode, "response text: %s", string(body))
 }

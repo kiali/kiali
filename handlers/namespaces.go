@@ -9,6 +9,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -41,9 +42,13 @@ func NamespaceList(conf *config.Config, kialiCache cache.KialiCache, clientFacto
 func NamespaceInfo(conf *config.Config, cache cache.KialiCache, clientFactory kubernetes.ClientFactory, discovery istio.MeshDiscovery) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
@@ -77,10 +82,14 @@ func NamespaceValidationSummary(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -132,7 +141,11 @@ func NamespaceUpdate(conf *config.Config, kialiCache cache.KialiCache, clientFac
 		jsonPatch := string(body)
 
 		query := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, query)
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		cluster := queryparams.ClusterName(conf, query)
 
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {

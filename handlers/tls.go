@@ -10,6 +10,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -40,8 +41,13 @@ func NamespaceTls(
 		}
 
 		namespace := params["namespace"]
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
-		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, clusterNameFromQuery(conf, r.URL.Query()))
+		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, queryparams.ClusterName(conf, query))
 		if err != nil {
 			log.Error(err)
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
@@ -65,6 +71,10 @@ func ClustersTls(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
+		if err := queryparams.RejectUnknown(params, "clusterName", "namespaces"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		namespaces := params.Get("namespaces") // csl of namespaces
 		namespaceNamesFromQuery := map[string]struct{}{}
 		if len(namespaces) > 0 {
@@ -72,7 +82,7 @@ func ClustersTls(
 				namespaceNamesFromQuery[name] = struct{}{}
 			}
 		}
-		cluster := clusterNameFromQuery(conf, params)
+		cluster := queryparams.ClusterName(conf, params)
 
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -125,8 +135,14 @@ func MeshTls(
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
-		revision := r.URL.Query().Get("revision")
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName", "revision"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		cluster := queryparams.ClusterName(conf, query)
+		revision := query.Get("revision")
 		if revision == "" {
 			revision = "default"
 		}
