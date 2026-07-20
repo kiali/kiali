@@ -74,8 +74,15 @@ When(
 
 When('user clicks the {string} item of the context menu', (menuKey: string) => {
   // Create-actions are added asynchronously after service-detail fetch; the menu remounts
-  // and detaches any prior subject. Re-query the item on each retry.
-  cy.get(`[data-test="${menuKey}"]`, { timeout: 15000 }).should('be.visible').click({ force: true });
+  // and detaches any prior subject. Re-query the item on each retry and prefer the
+  // inner button (PF6 DropdownItem puts data-test on the wrapper).
+  cy.get(`[data-test="${menuKey}"]`, { timeout: 15000 })
+    .should('be.visible')
+    .should('not.have.class', 'pf-m-disabled')
+    .then($el => {
+      const $btn = $el.is('button') ? $el : $el.find('button');
+      cy.wrap($btn.length ? $btn : $el).click({ force: true });
+    });
 });
 
 Then('user should see the {string} wizard', (wizardKey: string) => {
