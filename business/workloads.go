@@ -940,12 +940,6 @@ func (in *WorkloadService) setPodsForDeployment(dep *apps_v1.Deployment, pods []
 	}
 }
 
-// collectPodsForCustomController gathers pods from every ReplicaSet owned by a custom controller (e.g. Argo Rollout).
-//
-// Custom controllers configured via custom_workload_types do not have typed parsers in Kiali. Pods are discovered
-// indirectly through child ReplicaSets. During canary or degraded updates a single controller may own multiple
-// active ReplicaSets at once; all of them must be considered or pods from stable/canary revisions are missed
-// (see https://github.com/kiali/kiali/issues/10008).
 func replicaSetDesiredCount(rs *apps_v1.ReplicaSet) int32 {
 	if rs.Spec.Replicas != nil {
 		return *rs.Spec.Replicas
@@ -953,6 +947,12 @@ func replicaSetDesiredCount(rs *apps_v1.ReplicaSet) int32 {
 	return rs.Status.Replicas
 }
 
+// collectPodsForCustomController gathers pods from every ReplicaSet owned by a custom controller (e.g. Argo Rollout).
+//
+// Custom controllers configured via custom_workload_types do not have typed parsers in Kiali. Pods are discovered
+// indirectly through child ReplicaSets. During canary or degraded updates a single controller may own multiple
+// active ReplicaSets at once; all of them must be considered or pods from stable/canary revisions are missed
+// (see https://github.com/kiali/kiali/issues/10008).
 func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, controllerName string, controllerGVK schema.GroupVersionKind, controllerNamespace string, repset []apps_v1.ReplicaSet, pods []core_v1.Pod) []core_v1.Pod {
 	var cPods []core_v1.Pod
 	podSeen := make(map[string]struct{})
