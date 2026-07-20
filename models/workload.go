@@ -177,7 +177,7 @@ type WorkloadListItem struct {
 	ValidationKey string
 
 	// ValidationVersion is a pre-calculated string representing the workload "version", basically
-	// the workload information that, if changed, requires re-validation.
+	// the workload information that, if changed, requires re-validation (including per-object ignore rules).
 	ValidationVersion string
 }
 
@@ -409,6 +409,11 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 
 	workload.CreatedAt = formatTime(meta.CreationTimestamp.Time)
 	workload.ResourceVersion = meta.ResourceVersion
+	if len(meta.Annotations) > 0 {
+		workload.Annotations = meta.Annotations
+	} else {
+		workload.Annotations = map[string]string{}
+	}
 	workload.AdditionalDetails = GetAdditionalDetails(conf, annotations)
 	workload.AdditionalDetailSample = GetFirstAdditionalIcon(conf, annotations)
 	workload.DashboardAnnotations = GetDashboardAnnotation(annotations)

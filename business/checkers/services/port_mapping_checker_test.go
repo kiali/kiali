@@ -218,6 +218,24 @@ func TestServicePortNamingWithoutSidecar(t *testing.T) {
 	assert.Empty(vals)
 }
 
+func TestServicePortNamingAmbient(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	deployments := getDeployment(9080)
+	pods := getAmbientPods()
+	service := getService(9080, "http2foo", nil, "test-namespace", "app", "labelName1")
+	pmc := NewPortMappingChecker(deployments, discovery, pods, service)
+
+	vals, valid := pmc.Check()
+	assert.False(valid)
+	assert.NotEmpty(vals)
+	assert.NoError(validations.ConfirmIstioCheckMessage("port.name.mismatch", vals[0]))
+	assert.Equal("spec/ports[0]", vals[0].Path)
+}
+
 func getService(servicePort int32, portName string, appProtocol *string, namespace string, labelKey string, labelValue string) v1.Service {
 	return v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -284,6 +302,21 @@ func getPods(withSidecar bool) []v1.Pod {
 				},
 				Annotations: map[string]string{
 					annotation: "{\"version\":\"\",\"initContainers\":[\"istio-init\",\"enable-core-dump\"],\"containers\":[\"istio-proxy\"],\"volumes\":[\"istio-envoy\",\"istio-certs\"]}",
+				},
+			},
+		},
+	}
+}
+
+func getAmbientPods() []v1.Pod {
+	return []v1.Pod{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Labels: map[string]string{
+					"dep": "one",
+				},
+				Annotations: map[string]string{
+					config.AmbientAnnotation: config.AmbientAnnotationEnabled,
 				},
 			},
 		},

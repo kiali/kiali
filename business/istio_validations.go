@@ -11,6 +11,7 @@ import (
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -126,6 +127,7 @@ type validationNamespaceInfo struct {
 
 type validationClusterInfo struct {
 	cluster          string                      // the cluster being validated
+	deployments      []apps_v1.Deployment        // K8s deployments for the cluster (all namespaces)
 	identityDomain   string                      // resolved Istio identity domain for this cluster's control plane
 	istioConfig      *models.IstioConfigList     // config for the cluster (all namespaces)
 	kubeServiceHosts kubernetes.KubeServiceHosts // pre-built host lookup from K8s services
@@ -318,6 +320,12 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	vInfo.clusterInfo.services = svcList.Items
 	vInfo.clusterInfo.kubeServiceHosts = kubernetes.NewKubeServiceHostsWithNamespaceDefaults(svcList.Items, vInfo.clusterInfo.identityDomain, buildNamespaceToExportTo(vInfo.mesh, cluster, svcList.Items))
 
+	var depList apps_v1.DeploymentList
+	if err := kubeCache.List(ctx, &depList, &client.ListOptions{}); err != nil {
+		return false, nil, fmt.Errorf("unable to list deployments for cluster [%s]: %w", cluster, err)
+	}
+	vInfo.clusterInfo.deployments = depList.Items
+
 	// grab all config for the cluster
 	criteria := IstioConfigCriteria{
 		IncludeAuthorizationPolicies:  true,
@@ -366,6 +374,9 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		}
 	}
 
+	// Cluster-scoped ignore annotations; reuse for namespace checkers and ServiceChecker.
+	perObjectIgnores := buildObjectIgnoreValidations(vInfo, cluster)
+
 	for _, namespace := range vInfo.nsMap[cluster] {
 		// Skip validations for a particular namespace, mesh config was not found
 		if _, managed := rootNamespaces[namespace.Name]; !managed {
@@ -396,8 +407,33 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 			continue
 		}
 
-		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf))
+		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, perObjectIgnores))
 	}
+
+	// Service port-mapping validations are independent of per-namespace Istio config and run once per cluster.
+	// Pods are fetched only when checkers run (not during change detection) and scoped to managed namespaces.
+	managedServices := make([]core_v1.Service, 0, len(vInfo.clusterInfo.services))
+	for _, svc := range vInfo.clusterInfo.services {
+		if _, managed := rootNamespaces[svc.Namespace]; managed {
+			managedServices = append(managedServices, svc)
+		}
+	}
+	var pods []core_v1.Pod
+	for ns := range rootNamespaces {
+		var podList core_v1.PodList
+		if err := kubeCache.List(ctx, &podList, client.InNamespace(ns)); err != nil {
+			return false, nil, fmt.Errorf("unable to list pods for cluster [%s] namespace [%s]: %w", cluster, ns, err)
+		}
+		pods = append(pods, podList.Items...)
+	}
+	serviceChecker := checkers.NewServiceChecker(
+		cluster,
+		vInfo.clusterInfo.deployments,
+		in.mesh.discovery,
+		pods,
+		managedServices,
+	)
+	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{serviceChecker}, in.conf, perObjectIgnores))
 
 	return true, validations, nil
 }
@@ -426,8 +462,16 @@ func detectClusterConfigChange(vInfo *validationInfo) bool {
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.services {
-		change = vInfo.update("SV", cluster, s.Namespace, s.Name, s.ResourceVersion) || change
+		serviceVersion := fmt.Sprintf("%s:%s", s.ResourceVersion, s.Annotations[models.IgnoreValidationsAnnotation])
+		change = vInfo.update("SV", cluster, s.Namespace, s.Name, serviceVersion) || change
 	}
+
+	// Deployments affect service port-mapping validations (KIA0601/KIA0701).
+	// Pods are intentionally not tracked: they churn too often and would force frequent revalidation.
+	for _, d := range vInfo.clusterInfo.deployments {
+		change = vInfo.update("DP", cluster, d.Namespace, d.Name, d.ResourceVersion) || change
+	}
+	change = vInfo.update("validation-num-deployments", cluster, "", "", strconv.Itoa(len(vInfo.clusterInfo.deployments))) || change
 
 	// loop through the config and gather up their resourceVersions
 	config := vInfo.clusterInfo.istioConfig
@@ -804,7 +848,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return models.IstioValidations{}, istioReferences, err
 	}
 
-	validations := runObjectCheckers(ctx, objectCheckers, conf).FilterByKey(objectGVK, object)
+	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
 	for k, v := range validations {
 		in.kialiCache.Validations().Set(k, v)
 	}
@@ -812,7 +856,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	return validations, istioReferences, nil
 }
 
-func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config) models.IstioValidations {
+func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config, perObjectIgnores models.ObjectIgnoreValidations) models.IstioValidations {
 	objectTypeValidations := models.IstioValidations{}
 
 	// Run checks for each IstioObject type
@@ -820,9 +864,23 @@ func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChec
 		objectTypeValidations.MergeValidations(runObjectChecker(ctx, conf, objectChecker))
 	}
 
-	objectTypeValidations.StripIgnoredChecks(conf)
+	objectTypeValidations.StripIgnoredChecks(conf, perObjectIgnores)
 
 	return objectTypeValidations
+}
+
+func buildObjectIgnoreValidations(vInfo *validationInfo, cluster string) models.ObjectIgnoreValidations {
+	perObjectIgnores := models.ObjectIgnoreValidations{}
+	if vInfo.clusterInfo != nil {
+		if vInfo.clusterInfo.istioConfig != nil {
+			perObjectIgnores.Merge(vInfo.clusterInfo.istioConfig.ObjectIgnoreValidations(cluster))
+		}
+		perObjectIgnores.Merge(models.BuildServiceIgnoreValidations(vInfo.clusterInfo.services, cluster))
+	}
+	if workloadsPerNamespace, ok := vInfo.wlMap[cluster]; ok {
+		perObjectIgnores.Merge(models.BuildWorkloadIgnoreValidations(workloadsPerNamespace, cluster))
+	}
+	return perObjectIgnores
 }
 
 func runObjectChecker(ctx context.Context, conf *config.Config, objectChecker checkers.ObjectChecker) models.IstioValidations {
