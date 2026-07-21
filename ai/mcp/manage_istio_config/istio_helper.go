@@ -13,8 +13,44 @@ import (
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
+
+// isGatewayAPIEnabled checks whether Gateway API CRDs are installed on the
+// target cluster by querying the Kubernetes client's discovery cache.
+// If clusterName is empty, falls back to the home cluster.
+func isGatewayAPIEnabled(ki *mcputil.KialiInterface, clusterName string) bool {
+	if ki == nil || ki.ClientFactory == nil {
+		return false
+	}
+	client := getSAClient(ki, clusterName)
+	if client == nil {
+		return false
+	}
+	return client.IsGatewayAPI()
+}
+
+// isInferenceAPIEnabled checks whether Inference API CRDs
+// (inference.networking.k8s.io) are installed on the target cluster.
+// If clusterName is empty, falls back to the home cluster.
+func isInferenceAPIEnabled(ki *mcputil.KialiInterface, clusterName string) bool {
+	if ki == nil || ki.ClientFactory == nil {
+		return false
+	}
+	client := getSAClient(ki, clusterName)
+	if client == nil {
+		return false
+	}
+	return client.IsInferenceAPI()
+}
+
+func getSAClient(ki *mcputil.KialiInterface, clusterName string) kubernetes.ClientInterface {
+	if clusterName == "" {
+		return ki.ClientFactory.GetSAHomeClusterClient()
+	}
+	return ki.ClientFactory.GetSAClient(clusterName)
+}
 
 func audit(r *http.Request, operation, namespace, gvk, message string) {
 	if config.Get().Server.AuditLog {
