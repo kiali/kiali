@@ -50,6 +50,7 @@ type ClusterInfo struct {
 
 // ClientInterface defines a read-only client API (mocked functions are necessary here)
 type ClientInterface interface {
+	GetCacheKey() string
 	GetServerVersion() (*version.Info, error)
 	GetToken() string
 	IsOpenShift() bool
@@ -143,6 +144,16 @@ type K8SClient struct {
 
 // Ensure the K8SClient implements the full read-write UserClientInterface
 var _ UserClientInterface = &K8SClient{}
+
+// GetCacheKey returns a string suitable for keying per-user caches. Under impersonation,
+// different users share the same bearer token (the SA token); this method returns the
+// impersonated username instead, ensuring each user gets a distinct cache entry.
+func (client *K8SClient) GetCacheKey() string {
+	if client.restConfig != nil && client.restConfig.Impersonate.UserName != "" {
+		return client.restConfig.Impersonate.UserName
+	}
+	return client.token
+}
 
 // GetToken returns the BearerToken used from the config
 func (client *K8SClient) GetToken() string {
