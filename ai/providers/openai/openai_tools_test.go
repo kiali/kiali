@@ -552,7 +552,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "manage_istio_config",
-				Description: openai.String("Create, patch, or delete Istio config. For list and get (read-only) use manage_istio_config_read."),
+				Description: openai.String("Create, patch, or delete Istio, Gateway API, and Inference API config. Supports Istio resources (networking.istio.io, security.istio.io), Gateway API resources (gateway.networking.k8s.io), and Inference API resources (inference.networking.k8s.io) when installed on the cluster. For list and get (read-only) use manage_istio_config_read."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
@@ -588,15 +588,17 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 						},
 						"group": map[string]interface{}{
 							"type":        "string",
-							"description": "API group of the Istio object.",
+							"description": "API group of the Istio object. Use 'gateway.networking.k8s.io' for Gateway API resources. Use 'inference.networking.k8s.io' for Inference API resources.",
 							"enum": []interface{}{
 								"networking.istio.io",
 								"security.istio.io",
+								"gateway.networking.k8s.io",
+								"inference.networking.k8s.io",
 							},
 						},
 						"version": map[string]interface{}{
 							"type":        "string",
-							"description": "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway.",
+							"description": "API version. Use 'v1' for all resource types.",
 						},
 						"kind": map[string]interface{}{
 							"type":        "string",
@@ -613,6 +615,12 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 								"AuthorizationPolicy",
 								"PeerAuthentication",
 								"RequestAuthentication",
+								"HTTPRoute",
+								"GRPCRoute",
+								"ReferenceGrant",
+								"TCPRoute",
+								"TLSRoute",
+								"InferencePool",
 							},
 						},
 						"object": map[string]interface{}{
@@ -621,7 +629,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfig(t *testing.T) 
 						},
 						"data": map[string]interface{}{
 							"type":        "string",
-							"description": "Complete JSON or YAML data to apply or create the object. Required for create and patch actions. You MUST provide a COMPLETE and VALID manifest with ALL required fields for the resource type. Arrays (like servers, http, etc.) are REPLACED entirely, so you must include ALL required fields within each array element.",
+							"description": "JSON or YAML data for the resource. Required for create and patch actions. For create, you can provide partial content (e.g. only spec) and it will be merged onto a valid template with defaults. Arrays (like servers, http, etc.) are REPLACED entirely, so include ALL elements you want.",
 						},
 						"dataFormat": map[string]interface{}{
 							"type":        "string",
@@ -652,7 +660,7 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 		OfFunction: &openai.ChatCompletionFunctionToolParam{
 			Function: openai.FunctionDefinitionParam{
 				Name:        "manage_istio_config_read",
-				Description: openai.String("Read-only Istio config: list or get objects. For action 'list', returns an array of objects with {name, namespace, type, validation}. For create, patch, or delete use manage_istio_config."),
+				Description: openai.String("Read-only Istio, Gateway API, and Inference API config: list or get objects. For action 'list', returns ALL config objects in a SINGLE call (omit group/kind to get everything). Supports Istio resources (networking.istio.io, security.istio.io), Gateway API resources (gateway.networking.k8s.io), and Inference API resources (inference.networking.k8s.io) when installed on the cluster. For create, patch, or delete use manage_istio_config."),
 				Parameters: openai.FunctionParameters{
 					"type": "object",
 					"required": []interface{}{
@@ -677,19 +685,21 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 						},
 						"group": map[string]interface{}{
 							"type":        "string",
-							"description": "API group of the Istio object. Required for 'get' action.",
+							"description": "API group of the Istio object. Required ONLY for 'get' action. For 'list', OMIT group and kind to retrieve ALL config types in a single call. Use 'gateway.networking.k8s.io' for Gateway API resources. Use 'inference.networking.k8s.io' for Inference API resources.",
 							"enum": []interface{}{
 								"networking.istio.io",
 								"security.istio.io",
+								"gateway.networking.k8s.io",
+								"inference.networking.k8s.io",
 							},
 						},
 						"version": map[string]interface{}{
 							"type":        "string",
-							"description": "API version. Use 'v1' for VirtualService, DestinationRule, and Gateway. Required for 'get' action.",
+							"description": "API version. Use 'v1' for all resource types. Required for 'get' action.",
 						},
 						"kind": map[string]interface{}{
 							"type":        "string",
-							"description": "Kind of the Istio object. Required for 'get' action.",
+							"description": "Kind of the Istio object. Required ONLY for 'get' action. For 'list', OMIT to return all kinds at once \u2014 do NOT call separately for each kind.",
 							"enum": []interface{}{
 								"VirtualService",
 								"DestinationRule",
@@ -702,6 +712,12 @@ func TestConvertToolToOpenAI_FromToolDefinition_ManageIstioConfigRead(t *testing
 								"AuthorizationPolicy",
 								"PeerAuthentication",
 								"RequestAuthentication",
+								"HTTPRoute",
+								"GRPCRoute",
+								"ReferenceGrant",
+								"TCPRoute",
+								"TLSRoute",
+								"InferencePool",
 							},
 						},
 						"object": map[string]interface{}{
