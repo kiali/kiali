@@ -17,11 +17,6 @@ on:
         options:
         - v2.27
         - v2.22
-      quay_repository:
-        description: Quay repository
-        type: string
-        default: quay.io/kiali/kiali_mcp
-        required: true
 
 permissions: read-all
 
@@ -47,17 +42,13 @@ jobs:
       id: versions
       env:
         RELEASE_BRANCH: ${{ github.event.inputs.release_branch }}
-        QUAY_REPOSITORY: ${{ github.event.inputs.quay_repository }}
+        QUAY_REPOSITORY: quay.io/kiali/kiali_mcp
       run: |
         set -euo pipefail
 
         if [[ ! "${RELEASE_BRANCH}" =~ ^v[0-9]+\.[0-9]+$ ]]; then
           echo "release_branch must match vX.Y (got: ${RELEASE_BRANCH})"
           exit 1
-        fi
-
-        if [ -z "${QUAY_REPOSITORY}" ]; then
-          QUAY_REPOSITORY="quay.io/kiali/kiali_mcp"
         fi
 
         # quay.io/org/repo -> org/repo for the Quay API
