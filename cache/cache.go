@@ -92,10 +92,10 @@ type KialiCache interface {
 	SetMesh(*models.Mesh)
 
 	// GetNamespace returns a namespace from the in memory cache if it exists.
-	GetNamespace(cluster string, token string, name string) (models.Namespace, bool)
+	GetNamespace(cluster string, cacheKey string, name string) (models.Namespace, bool)
 
-	// GetNamespaces returns all namespaces for the cluster/token from the in memory cache.
-	GetNamespaces(cluster string, token string) ([]models.Namespace, bool)
+	// GetNamespaces returns all namespaces for the cluster/cacheKey from the in memory cache.
+	GetNamespaces(cluster string, cacheKey string) ([]models.Namespace, bool)
 
 	GetWaypoints() (models.Workloads, bool)
 	SetWaypoints(models.Workloads)
@@ -135,11 +135,11 @@ type KialiCache interface {
 	SetClusters([]models.KubeCluster)
 
 	// SetNamespaces sets the in memory cache of namespaces.
-	// We cache all namespaces for cluster + token.
-	SetNamespaces(token string, namespaces []models.Namespace)
+	// We cache all namespaces for cluster + cacheKey.
+	SetNamespaces(cacheKey string, namespaces []models.Namespace)
 
-	// SetNamespace caches a specific namespace by cluster + token.
-	SetNamespace(token string, namespace models.Namespace)
+	// SetNamespace caches a specific namespace by cluster + cacheKey.
+	SetNamespace(cacheKey string, namespace models.Namespace)
 }
 
 type kialiCacheImpl struct {
@@ -178,12 +178,12 @@ type kialiCacheImpl struct {
 	// so using a store here but the only key should be kialiCacheMeshKey.
 	meshStore store.Store[string, *models.Mesh]
 
-	// Store the namespaces per token + cluster as a map[string]namespace where string is the namespace name
+	// Store the namespaces per cacheKey + cluster as a map[string]namespace where string is the namespace name
 	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
 	// we need an additional lock for the namespace map that gets returned from the store to ensure it is threadsafe.
 	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
 
-	// Only necessary because we want to cache the namespaces per cluster and token as a map
+	// Only necessary because we want to cache the namespaces per cluster and cacheKey as a map
 	// and maps are not thread safe. We need an additional lock on top of the Store to ensure
 	// that the map returned from the store is threadsafe.
 	namespacesLock sync.RWMutex
@@ -725,19 +725,21 @@ func (c *kialiCacheImpl) SetWaypoints(waypoints models.Workloads) {
 }
 
 type namespacesKey struct {
-	cluster string
-	token   string
+	// cacheKey identifies the requester via GetCacheKey(). Under impersonation this
+	// is the impersonated username; otherwise it's the bearer token.
+	cacheKey string
+	cluster  string
 }
 
 func (n namespacesKey) String() string {
-	return fmt.Sprintf("cluster: %s\ttoken: xxx", n.cluster)
+	return fmt.Sprintf("cacheKey: xxx\tcluster: %s", n.cluster)
 }
 
-func (c *kialiCacheImpl) GetNamespace(cluster string, token string, namespace string) (models.Namespace, bool) {
+func (c *kialiCacheImpl) GetNamespace(cluster string, cacheKey string, namespace string) (models.Namespace, bool) {
 	c.namespacesLock.RLock()
 	defer c.namespacesLock.RUnlock()
 
-	key := namespacesKey{cluster: cluster, token: token}
+	key := namespacesKey{cacheKey: cacheKey, cluster: cluster}
 	namespaces, found := c.namespaceStore.Get(key)
 	if !found {
 		return models.Namespace{}, false
@@ -747,11 +749,11 @@ func (c *kialiCacheImpl) GetNamespace(cluster string, token string, namespace st
 	return ns, found
 }
 
-func (c *kialiCacheImpl) GetNamespaces(cluster string, token string) ([]models.Namespace, bool) {
+func (c *kialiCacheImpl) GetNamespaces(cluster string, cacheKey string) ([]models.Namespace, bool) {
 	c.namespacesLock.RLock()
 	defer c.namespacesLock.RUnlock()
 
-	key := namespacesKey{cluster: cluster, token: token}
+	key := namespacesKey{cacheKey: cacheKey, cluster: cluster}
 	namespaces, found := c.namespaceStore.Get(key)
 
 	return maps.Values(namespaces), found
@@ -768,7 +770,7 @@ func (c *kialiCacheImpl) RefreshTokenNamespaces(cluster string) {
 	}
 }
 
-func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespace) {
+func (c *kialiCacheImpl) SetNamespaces(cacheKey string, namespaces []models.Namespace) {
 	c.namespacesLock.Lock()
 	defer c.namespacesLock.Unlock()
 
@@ -778,7 +780,7 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	}
 
 	for cluster, clusterNamespaces := range namespacesByCluster {
-		key := namespacesKey{cluster: cluster, token: token}
+		key := namespacesKey{cacheKey: cacheKey, cluster: cluster}
 		ns := make(map[string]models.Namespace)
 		for _, namespace := range clusterNamespaces {
 			ns[namespace.Name] = namespace
@@ -787,11 +789,11 @@ func (c *kialiCacheImpl) SetNamespaces(token string, namespaces []models.Namespa
 	}
 }
 
-func (c *kialiCacheImpl) SetNamespace(token string, namespace models.Namespace) {
+func (c *kialiCacheImpl) SetNamespace(cacheKey string, namespace models.Namespace) {
 	c.namespacesLock.Lock()
 	defer c.namespacesLock.Unlock()
 
-	key := namespacesKey{cluster: namespace.Cluster, token: token}
+	key := namespacesKey{cacheKey: cacheKey, cluster: namespace.Cluster}
 	ns, found := c.namespaceStore.Get(key)
 	if !found {
 		ns = make(map[string]models.Namespace)

@@ -2629,7 +2629,7 @@ func (in *WorkloadService) getCapturingWaypoints(ctx context.Context, workload m
 	if !ok {
 		return waypoints, false
 	}
-	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, userClient.GetToken(), workload.Namespace); nsFound {
+	if ns, nsFound := in.cache.GetNamespace(workload.Cluster, userClient.GetCacheKey(), workload.Namespace); nsFound {
 		waypointUse, waypointUseFound = ns.Labels[config.WaypointUseLabel]
 		waypointUseNamespace, waypointUseNamespaceFound = ns.Labels[config.WaypointUseNamespaceLabel]
 
@@ -2737,7 +2737,7 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster,
 	}
 
 	// Get annotated workloads
-	namespaces, found := in.cache.GetNamespaces(wpCluster, userClient.GetToken())
+	namespaces, found := in.cache.GetNamespaces(wpCluster, userClient.GetCacheKey())
 	namespaceNames := sliceutil.Map(namespaces, func(ns models.Namespace) string {
 		return ns.Name
 	})

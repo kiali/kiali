@@ -285,8 +285,8 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA", cluster)
 	}
 
-	// Check cache first using the SA token
-	if cachedNs, found := in.kialiCache.GetNamespaces(cluster, saClient.GetToken()); found {
+	// Check cache first using the SA cache key
+	if cachedNs, found := in.kialiCache.GetNamespaces(cluster, saClient.GetCacheKey()); found {
 		return cachedNs, nil
 	}
 
@@ -317,7 +317,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	// Apply discovery selector filtering
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 
-	in.kialiCache.SetNamespaces(saClient.GetToken(), namespaces)
+	in.kialiCache.SetNamespaces(saClient.GetCacheKey(), namespaces)
 
 	return namespaces, nil
 }
