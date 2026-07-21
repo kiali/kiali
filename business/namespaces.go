@@ -438,6 +438,8 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 
 	// When the user's effective identity is the same as the SA (e.g. anonymous auth
 	// where no impersonation is involved), the SA list is already the correct answer.
+	// Under impersonation, GetCacheKey() returns the impersonated username (never equal
+	// to the SA's bearer token), so the RBAC intersection below always runs.
 	if in.userClients[cluster].GetCacheKey() == in.kialiSAClients[cluster].GetToken() {
 		return nss, nil
 	}

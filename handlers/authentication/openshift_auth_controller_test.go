@@ -357,6 +357,8 @@ func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
 			},
 			RedirectURIs: []string{"http://localhost:20001/kiali"},
 		},
+		// In production, OpenShift resolves "~" to the real username (e.g. "developer@example.com").
+		// The fake client returns the object as-is, so Name must be "~" to match the GetUser("~") lookup.
 		&osuser_v1.User{
 			Groups: []string{"org-admins"},
 			ObjectMeta: meta_v1.ObjectMeta{

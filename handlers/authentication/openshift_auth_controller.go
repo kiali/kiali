@@ -293,6 +293,9 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					existingSessionID = existing.SessionID
 				}
 				userSessions[cluster] = &UserSessionData{
+					// Token is intentionally empty. The SA token (from the remote cluster
+					// secret or in-cluster token file) provides authentication; impersonation
+					// headers carry the user identity. The client factory handles this.
 					AuthInfo: &api.AuthInfo{
 						Impersonate:       homeUserName,
 						ImpersonateGroups: groups,

@@ -145,6 +145,9 @@ func newClientFactory(ctx context.Context, kialiConf *kialiconfig.Config, restCo
 	// We only want to remove the auth info from the base rest config which is saved and used later
 	// but we will immediately use the auth info for the home cluster SA client.
 	saTokenFile := restConf.BearerTokenFile
+	if kialiConf.Auth.OpenShift.Impersonation.Enabled && saTokenFile == "" {
+		return nil, fmt.Errorf("impersonation is enabled but no SA token file is available; Kiali must run in-cluster")
+	}
 	baseRestConfig := *restConf
 	stripAuthInfo(&baseRestConfig)
 
@@ -225,9 +228,6 @@ func (cf *clientFactory) newClient(authInfo *api.AuthInfo, expirationTime time.D
 			// (token file) + impersonation headers. The user's OAuth token was
 			// already used for identity verification in ValidateSession.
 			homeConfig := *cf.baseRestConfig
-			if cf.saTokenFile == "" {
-				return nil, fmt.Errorf("impersonation is enabled but no SA token file is available for the home cluster")
-			}
 			homeConfig.BearerTokenFile = cf.saTokenFile
 			homeConfig.Impersonate = rest.ImpersonationConfig{
 				UserName: authInfo.Impersonate,

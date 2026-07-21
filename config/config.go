@@ -2152,6 +2152,9 @@ func Validate(conf *Config) error {
 	// log some messages to let the administrator know when credentials are configured certain ways
 	auth := conf.Auth
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
+	if auth.OpenShift.Impersonation.Enabled && auth.Strategy != AuthStrategyOpenshift {
+		return fmt.Errorf("impersonation is only supported with the openshift auth strategy, but auth.strategy is [%s]", auth.Strategy)
+	}
 	if auth.Strategy == AuthStrategyOpenshift && auth.OpenShift.Impersonation.Enabled {
 		log.Infof("OpenShift impersonation mode is enabled")
 	}
