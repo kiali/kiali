@@ -43,7 +43,7 @@ exports[`#Labels render correctly with data > should render badges with More lab
     </div>
     <button
       class="pf-v6-c-button pf-m-link kiali_fw8qhul"
-      data-ouia-component-id="OUIA-Generated-Button-link-:r0:"
+      data-ouia-component-id="OUIA-Generated-Button-link-1"
       data-ouia-component-type="PF6/Button"
       data-ouia-safe="true"
       data-test="label_more"
