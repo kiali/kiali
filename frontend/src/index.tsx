@@ -1,6 +1,9 @@
 import { createRoot } from 'react-dom/client';
 import { globalStyle } from 'styles/GlobalStyle';
-import { RouterProvider } from 'react-router';
+// Must use react-router/dom so RouterProvider wires ReactDOM.flushSync.
+// Without it, navigate(..., { flushSync: true }) is a no-op and React 18 can
+// update the URL while leaving the previous route mounted (Cypress flakes).
+import { RouterProvider } from 'react-router/dom';
 import { rootBasename, router, setRouter } from 'app/History';
 import { pathRoutes } from 'routes';
 import { App } from 'app/App';
