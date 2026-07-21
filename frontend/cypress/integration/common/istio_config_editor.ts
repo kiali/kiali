@@ -11,6 +11,8 @@ const editIstioConfigYaml = (): void => {
     const lastCol = model.getLineMaxColumn(lastLine);
     ed.executeEdits('cypress-test', [{ range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }]);
   });
+  // Wait for React to process the isModified state change before proceeding
+  cy.get('button').contains('Save').should('not.be.disabled');
 };
 
 When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
