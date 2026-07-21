@@ -813,9 +813,15 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	case kubernetes.TrafficExtensions:
 		// Validation on TrafficExtensions is not expected
 	case kubernetes.WasmPlugins:
-		objectCheckers = []checkers.ObjectChecker{newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
+		objectCheckers = []checkers.ObjectChecker{
+			checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
+			newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
+		}
 	case kubernetes.Telemetries:
-		objectCheckers = []checkers.ObjectChecker{newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
+		objectCheckers = []checkers.ObjectChecker{
+			checkers.TelemetryChecker{Namespaces: namespaces, Telemetries: istioConfigList.Telemetries},
+			newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
+		}
 	case kubernetes.K8sGateways:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
@@ -1297,6 +1303,8 @@ func isAmbient(namespaces []models.Namespace, namespace string) bool {
 	return ns != nil && ns.IsAmbient
 }
 
+// newAmbientPolicyChecker centralizes Ambient policy checker setup for both
+// full-resource and single-object validation pipelines.
 func newAmbientPolicyChecker(
 	cluster string,
 	namespaces models.Namespaces,

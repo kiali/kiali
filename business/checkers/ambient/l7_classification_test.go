@@ -29,6 +29,36 @@ func TestIsL7AuthorizationPolicy_HTTPMethods(t *testing.T) {
 	assert.Equal(t, "Uses HTTP methods field", reason)
 }
 
+func TestIsL7AuthorizationPolicy_NotMethods(t *testing.T) {
+	spec := &security_v1_api.AuthorizationPolicy{
+		Rules: []*security_v1_api.Rule{
+			{
+				To: []*security_v1_api.Rule_To{
+					{Operation: &security_v1_api.Operation{NotMethods: []string{"DELETE"}}},
+				},
+			},
+		},
+	}
+	isL7, reason := IsL7AuthorizationPolicy(spec)
+	assert.True(t, isL7)
+	assert.Equal(t, "Uses HTTP methods field", reason)
+}
+
+func TestIsL7AuthorizationPolicy_NotRequestPrincipals(t *testing.T) {
+	spec := &security_v1_api.AuthorizationPolicy{
+		Rules: []*security_v1_api.Rule{
+			{
+				From: []*security_v1_api.Rule_From{
+					{Source: &security_v1_api.Source{NotRequestPrincipals: []string{"*"}}},
+				},
+			},
+		},
+	}
+	isL7, reason := IsL7AuthorizationPolicy(spec)
+	assert.True(t, isL7)
+	assert.Equal(t, "Uses request principals (JWT)", reason)
+}
+
 func TestIsL7AuthorizationPolicy_L4Only(t *testing.T) {
 	spec := &security_v1_api.AuthorizationPolicy{
 		Rules: []*security_v1_api.Rule{

@@ -94,20 +94,20 @@ func IsL7AuthorizationPolicy(spec *security_v1_api.AuthorizationPolicy) (bool, s
 
 		for _, to := range rule.To {
 			if to.Operation != nil {
-				if len(to.Operation.Methods) > 0 {
+				if len(to.Operation.Methods) > 0 || len(to.Operation.NotMethods) > 0 {
 					return true, "Uses HTTP methods field"
 				}
-				if len(to.Operation.Paths) > 0 {
+				if len(to.Operation.Paths) > 0 || len(to.Operation.NotPaths) > 0 {
 					return true, "Uses HTTP paths field"
 				}
-				if len(to.Operation.Hosts) > 0 {
+				if len(to.Operation.Hosts) > 0 || len(to.Operation.NotHosts) > 0 {
 					return true, "Uses HTTP hosts field"
 				}
 			}
 		}
 
 		for _, from := range rule.From {
-			if from.Source != nil && len(from.Source.RequestPrincipals) > 0 {
+			if from.Source != nil && (len(from.Source.RequestPrincipals) > 0 || len(from.Source.NotRequestPrincipals) > 0) {
 				return true, "Uses request principals (JWT)"
 			}
 		}
@@ -162,24 +162,15 @@ func IsL7DestinationRule(spec *networking_v1_api.DestinationRule) (bool, string)
 	}
 
 	if spec.TrafficPolicy != nil {
-		if isL7, reason := trafficPolicyHasL7(spec.TrafficPolicy); isL7 {
+		if isL7, reason := trafficPolicyHasL7(spec.TrafficPolicy, false); isL7 {
 			return true, reason
 		}
 	}
 
 	for _, subset := range spec.Subsets {
 		if subset.TrafficPolicy != nil {
-			if isL7, reason := trafficPolicyHasL7(subset.TrafficPolicy); isL7 {
-				switch reason {
-				case "Uses HTTP-based load balancing (consistent hash on headers/cookies)":
-					return true, "Uses HTTP-based load balancing in subset"
-				case "Uses HTTP connection pool settings":
-					return true, "Uses HTTP connection pool settings in subset"
-				case "Uses circuit breaking/outlier detection (requires HTTP metrics)":
-					return true, "Uses circuit breaking in subset"
-				default:
-					return true, reason
-				}
+			if isL7, reason := trafficPolicyHasL7(subset.TrafficPolicy, true); isL7 {
+				return true, reason
 			}
 		}
 	}
@@ -187,19 +178,28 @@ func IsL7DestinationRule(spec *networking_v1_api.DestinationRule) (bool, string)
 	return false, ""
 }
 
-func trafficPolicyHasL7(tp *networking_v1_api.TrafficPolicy) (bool, string) {
+func trafficPolicyHasL7(tp *networking_v1_api.TrafficPolicy, inSubset bool) (bool, string) {
 	if tp.LoadBalancer != nil && tp.LoadBalancer.GetConsistentHash() != nil {
 		ch := tp.LoadBalancer.GetConsistentHash()
 		if ch.GetHttpHeaderName() != "" || ch.GetHttpCookie() != nil {
+			if inSubset {
+				return true, "Uses HTTP-based load balancing in subset"
+			}
 			return true, "Uses HTTP-based load balancing (consistent hash on headers/cookies)"
 		}
 	}
 
 	if tp.ConnectionPool != nil && tp.ConnectionPool.Http != nil {
+		if inSubset {
+			return true, "Uses HTTP connection pool settings in subset"
+		}
 		return true, "Uses HTTP connection pool settings"
 	}
 
 	if tp.OutlierDetection != nil {
+		if inSubset {
+			return true, "Uses circuit breaking in subset"
+		}
 		return true, "Uses circuit breaking/outlier detection (requires HTTP metrics)"
 	}
 

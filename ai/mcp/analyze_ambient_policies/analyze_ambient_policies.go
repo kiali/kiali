@@ -45,12 +45,13 @@ type NamespaceAmbientStatus struct {
 
 // AnalyzedPolicy contains the classification and warnings for a single Istio configuration
 type AnalyzedPolicy struct {
-	ConfigType string `json:"config_type"` // e.g., "AuthorizationPolicy", "VirtualService", etc.
-	Layer      string `json:"layer"`       // "L4" or "L7"
-	Name       string `json:"name"`
-	Reason     string `json:"reason"`
-	Rules      int    `json:"rules_count"`
-	Warning    string `json:"warning,omitempty"`
+	ConfigType    string `json:"config_type"` // e.g., "AuthorizationPolicy", "VirtualService", etc.
+	Layer         string `json:"layer"`       // "L4" or "L7"
+	Name          string `json:"name"`
+	NeedsWaypoint bool   `json:"needs_waypoint,omitempty"` // true when L7 policy needs waypoint enrollment
+	Reason        string `json:"reason"`
+	Rules         int    `json:"rules_count"`
+	Warning       string `json:"warning,omitempty"`
 }
 
 func toSharedNamespaceStatus(status NamespaceAmbientStatus, isEnrolled bool) ambient.NamespaceAmbientStatus {
@@ -135,7 +136,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		for _, policy := range result.Policies {
 			if policy.Layer == ambient.LayerL7 {
 				totalL7++
-				if policy.Warning != "" {
+				if policy.NeedsWaypoint {
 					totalL7WithoutWaypoint++
 				}
 			} else {
@@ -290,7 +291,7 @@ func updateCounts(l4Count, l7Count, l7WithoutWaypoint *int, analyzed AnalyzedPol
 	if analyzed.Layer == ambient.LayerL7 {
 		*l7Count++
 		// Count enrollment gaps only (not missing-targetRefs warnings) for the waypoint summary.
-		if strings.Contains(analyzed.Warning, "NOT enrolled") {
+		if analyzed.NeedsWaypoint {
 			*l7WithoutWaypoint++
 		}
 	} else {
@@ -311,6 +312,7 @@ func analyzeAuthorizationPolicy(ap *security_v1.AuthorizationPolicy, nsStatus am
 	if isL7 {
 		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
+		analyzed.NeedsWaypoint = ambient.NeedsWaypointWarning(nsStatus, true)
 		var missingTargetRefs string
 		if !ambient.AuthorizationPolicyHasTargetRefs(&ap.Spec) {
 			missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "AuthorizationPolicy")
@@ -414,11 +416,12 @@ func analyzeRequestAuthentication(ra *security_v1.RequestAuthentication, nsStatu
 		missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "RequestAuthentication")
 	}
 	return AnalyzedPolicy{
-		ConfigType: "RequestAuthentication",
-		Name:       ra.Name,
-		Layer:      ambient.LayerL7,
-		Reason:     "RequestAuthentication validates JWT tokens (requires HTTP header parsing)",
-		Rules:      len(ra.Spec.JwtRules),
+		ConfigType:    "RequestAuthentication",
+		Name:          ra.Name,
+		Layer:         ambient.LayerL7,
+		NeedsWaypoint: ambient.NeedsWaypointWarning(nsStatus, true),
+		Reason:        "RequestAuthentication validates JWT tokens (requires HTTP header parsing)",
+		Rules:         len(ra.Spec.JwtRules),
 		Warning: joinWarnings(
 			missingTargetRefs,
 			ambient.AmbientNoWaypointWarning(nsStatus, "This RequestAuthentication will NOT work."),
@@ -439,6 +442,7 @@ func analyzeVirtualService(vs *networking_v1.VirtualService, nsStatus ambient.Na
 		Rules:      countVirtualServiceRules(&vs.Spec),
 	}
 	if classification.RequiresWaypoint {
+		analyzed.NeedsWaypoint = ambient.NeedsWaypointWarning(nsStatus, true)
 		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This VirtualService will NOT work.")
 	}
 	return analyzed
@@ -479,6 +483,7 @@ func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus ambient.
 	if isL7 {
 		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
+		analyzed.NeedsWaypoint = ambient.NeedsWaypointWarning(nsStatus, true)
 		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "This DestinationRule's L7 features will NOT work.")
 	} else {
 		analyzed.Layer = ambient.LayerL4
@@ -492,12 +497,13 @@ func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus ambient.
 // WasmPlugins run in the HTTP filter chain
 func analyzeWasmPlugin(wp *extensions_v1alpha1.WasmPlugin, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
 	return AnalyzedPolicy{
-		ConfigType: "WasmPlugin",
-		Name:       wp.Name,
-		Layer:      ambient.LayerL7,
-		Reason:     "WasmPlugin processes HTTP requests (runs in waypoint's Envoy filter chain)",
-		Rules:      1,
-		Warning:    ambient.AmbientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
+		ConfigType:    "WasmPlugin",
+		Name:          wp.Name,
+		Layer:         ambient.LayerL7,
+		NeedsWaypoint: ambient.NeedsWaypointWarning(nsStatus, true),
+		Reason:        "WasmPlugin processes HTTP requests (runs in waypoint's Envoy filter chain)",
+		Rules:         1,
+		Warning:       ambient.AmbientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
 	}
 }
 
@@ -514,6 +520,7 @@ func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus ambient.NamespaceAmb
 	if isL7 {
 		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
+		analyzed.NeedsWaypoint = ambient.NeedsWaypointWarning(nsStatus, true)
 		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "L7 telemetry features will NOT work.")
 	} else {
 		analyzed.Layer = ambient.LayerL4

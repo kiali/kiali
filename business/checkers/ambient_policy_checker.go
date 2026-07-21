@@ -57,9 +57,14 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		nsStatusByName[ns.Name] = ambient.NewNamespaceAmbientStatus(ns, c.Cluster, workloads)
 	}
 
-	servicesByNS := make(map[string][]core_v1.Service)
+	servicesByNS := make(map[string]map[string]core_v1.Service)
 	for _, svc := range c.Services {
-		servicesByNS[svc.Namespace] = append(servicesByNS[svc.Namespace], svc)
+		byName, ok := servicesByNS[svc.Namespace]
+		if !ok {
+			byName = make(map[string]core_v1.Service)
+			servicesByNS[svc.Namespace] = byName
+		}
+		byName[svc.Name] = svc
 	}
 
 	nsNames := c.Namespaces.GetNames()
@@ -173,7 +178,7 @@ func (c AmbientPolicyChecker) checkHostBasedConfig(
 	hosts []string,
 	nsNames []string,
 	nsStatusByName map[string]ambient.NamespaceAmbientStatus,
-	servicesByNS map[string][]core_v1.Service,
+	servicesByNS map[string]map[string]core_v1.Service,
 	notCapturedID, notInServiceNsID, fallbackNoEnrollmentID string,
 ) models.IstioValidations {
 	validations := models.IstioValidations{}
@@ -211,7 +216,7 @@ func (c AmbientPolicyChecker) resolveAmbientDestinations(
 	hosts []string,
 	objectNamespace string,
 	nsNames []string,
-	servicesByNS map[string][]core_v1.Service,
+	servicesByNS map[string]map[string]core_v1.Service,
 	nsStatusByName map[string]ambient.NamespaceAmbientStatus,
 ) (destinations []ambientDestination, resolved bool) {
 	seen := map[string]bool{}
@@ -227,27 +232,26 @@ func (c AmbientPolicyChecker) resolveAmbientDestinations(
 		if !ok || !svcNsStatus.IsAmbient {
 			continue
 		}
+		svc, ok := servicesByNS[parsed.Namespace][parsed.Service]
+		if !ok {
+			continue
+		}
 		var svcNsLabels map[string]string
 		if svcNs := c.Namespaces.GetNamespace(parsed.Namespace, c.Cluster); svcNs != nil {
 			svcNsLabels = svcNs.Labels
 		}
-		for _, svc := range servicesByNS[parsed.Namespace] {
-			if svc.Name != parsed.Service {
-				continue
-			}
-			resolved = true
-			key := parsed.Namespace + "/" + svc.Name
-			if seen[key] {
-				continue
-			}
-			seen[key] = true
-			destinations = append(destinations, ambientDestination{
-				HostIndex:        hostIdx,
-				ServiceName:      svc.Name,
-				ServiceNamespace: parsed.Namespace,
-				Enrolled:         ambient.IsEnrolledForWaypoint(svc.Labels, svcNsLabels),
-			})
+		resolved = true
+		key := parsed.Namespace + "/" + svc.Name
+		if seen[key] {
+			continue
 		}
+		seen[key] = true
+		destinations = append(destinations, ambientDestination{
+			Enrolled:         ambient.IsEnrolledForWaypoint(svc.Labels, svcNsLabels),
+			HostIndex:        hostIdx,
+			ServiceName:      svc.Name,
+			ServiceNamespace: parsed.Namespace,
+		})
 	}
 	return destinations, resolved
 }
