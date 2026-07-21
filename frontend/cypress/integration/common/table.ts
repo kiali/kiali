@@ -2,7 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
 import { ensureKialiFinishedLoading } from './transition';
-import { getClusterForSingleCluster, linkSelector } from './utils';
+import { getClusterForSingleCluster, linkSelector, normalizeKialiPath } from './utils';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -217,10 +217,13 @@ When(
     cy.get(`table[aria-label="${tableId}"]`).within(() => {
       // Prefer the named link (data-test from IstioObjectLink) — badge sibling clicks are
       // brittle under PatternFly 6 Tooltip wrappers and can leave the previous page mounted.
-      cy.contains('tr', name).find(`a[data-test*="${name}"]`).first().click();
+      // linkSelector matches <a href> and OSSMC kiosk <button data-href>.
+      cy.contains('tr', name).find(linkSelector()).filter(`[data-test*="${name}"]`).first().click();
     });
 
-    cy.location('pathname', { timeout: 60000 }).should('include', '/istio/');
+    cy.location('pathname', { timeout: 60000 }).should(pathname => {
+      expect(normalizeKialiPath(pathname)).to.include('/istio/');
+    });
   }
 );
 
