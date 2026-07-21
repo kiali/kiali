@@ -366,7 +366,7 @@ func PodLogs(
 		}
 		vars := mux.Vars(r)
 		queryParams := r.URL.Query()
-		if err := queryparams.RejectUnknown(queryParams, "clusterName", "container", "duration", "logType", "maxLines", "sinceTime"); err != nil {
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "container", "duration", "logType", "maxLines", "service", "sinceTime", "workload"); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
