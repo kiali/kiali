@@ -96,6 +96,7 @@ func extractDashboardQueryParams(queryParams url.Values, q *models.DashboardQuer
 		"labelsFilters",
 		"rawDataAggregator",
 		"workload",
+		"workloadType",
 	}, baseMetricsQueryParams...)
 	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
 		return err

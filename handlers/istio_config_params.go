@@ -17,7 +17,7 @@ type istioConfigListParams struct {
 }
 
 func parseIstioConfigListParams(conf *config.Config, query url.Values) (istioConfigListParams, error) {
-	if err := queryparams.RejectUnknown(query, "clusterName", "labelSelector", "objects", "validate", "workloadSelector"); err != nil {
+	if err := queryparams.RejectUnknown(query, "_", "clusterName", "labelSelector", "objects", "validate", "workloadSelector"); err != nil {
 		return istioConfigListParams{}, err
 	}
 

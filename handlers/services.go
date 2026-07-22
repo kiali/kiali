@@ -156,7 +156,7 @@ func ServiceDetails(
 		}
 
 		queryParams := r.URL.Query()
-		if err := queryparams.RejectUnknown(queryParams, "clusterName", "rateInterval", "validate"); err != nil {
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "health", "rateInterval", "validate"); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
