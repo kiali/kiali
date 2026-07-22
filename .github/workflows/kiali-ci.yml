@@ -10,6 +10,7 @@ on:
     - "design/**"
     - "**/*.md"
     - "**/*.adoc"
+    - "tests/evals/results/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,10 +46,32 @@ jobs:
       id: branch-pr
       if: ${{ github.base_ref }}
 
+  # Skip backend unit/int/codecov when the PR only touches frontend/**.
+  # Prefer over-running: any non-frontend path keeps the full suite.
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      run_backend: ${{ steps.filter.outputs.frontend != 'true' || steps.filter.outputs.other == 'true' }}
+    steps:
+    - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+      id: filter
+      with:
+        filters: |
+          frontend:
+            - 'frontend/**'
+          other:
+            - '**'
+            - '!frontend/**'
+
   test_backend:
     name: Run backend linters and unit tests
     uses: ./.github/workflows/test-lint-backend.yml
-    needs: [initialize]
+    needs: [initialize, changes]
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -64,6 +87,13 @@ jobs:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
     needs: [initialize, test_backend, build_frontend]
+    # always(): allow build when test_backend was skipped (frontend-only).
+    # Require build_frontend success: the binary embeds frontend/build.
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.test_backend.result == 'success' || needs.test_backend.result == 'skipped') &&
+      needs.build_frontend.result == 'success'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -74,7 +104,8 @@ jobs:
   integration_tests_backend:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
-    needs: [initialize, build_backend]
+    needs: [initialize, changes, build_backend]
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -82,7 +113,8 @@ jobs:
   integration_tests_backend_mcp:
     name: Run backend MCP integration tests
     uses: ./.github/workflows/integration-tests-backend-mcp.yml
-    needs: [initialize, build_backend]
+    needs: [initialize, changes, build_backend]
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -142,7 +174,19 @@ jobs:
 
   wave2_gate:
     name: Wave 2 gate
-    if: contains(github.event.pull_request.labels.*.name, 'ci-full')
+    # always(): tolerate skipped backend jobs on frontend-only PRs.
+    if: |
+      always() &&
+      !cancelled() &&
+      contains(github.event.pull_request.labels.*.name, 'ci-full') &&
+      (needs.integration_tests_backend.result == 'success' || needs.integration_tests_backend.result == 'skipped') &&
+      (needs.integration_tests_backend_mcp.result == 'success' || needs.integration_tests_backend_mcp.result == 'skipped') &&
+      needs.integration_tests_frontend_core_1.result == 'success' &&
+      needs.integration_tests_frontend_core_2.result == 'success' &&
+      needs.integration_tests_frontend_core_caching.result == 'success' &&
+      needs.integration_tests_frontend_core_optional.result == 'success' &&
+      needs.integration_tests_frontend_ambient.result == 'success' &&
+      needs.integration_tests_frontend_ambient_multi_primary.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
@@ -220,7 +264,12 @@ jobs:
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [initialize, build_backend, wave2_gate]
+    needs: [initialize, changes, build_backend, wave2_gate]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.wave2_gate.result == 'success' &&
+      needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -259,8 +308,12 @@ jobs:
         retention-days: 1
 
   codecov_upload_pr_base:
-    if: github.event.pull_request.head.repo.full_name == github.repository
     name: Upload PR base coverage to Codecov
+    needs: [changes]
+    if: |
+      needs.changes.outputs.run_backend == 'true' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -298,12 +351,15 @@ jobs:
   codecov_merge_upload:
     if: |
       always() &&
+      !cancelled() &&
+      needs.changes.outputs.run_backend == 'true' &&
       needs.integration_tests_backend.result == 'success' &&
       needs.test_backend.result == 'success' &&
       (needs.codecov_upload_pr_base.result == 'success' || needs.codecov_upload_pr_base.result == 'skipped') &&
       (needs.integration_tests_backend_multicluster_external_controlplane.result == 'success' || needs.integration_tests_backend_multicluster_external_controlplane.result == 'skipped')
     name: Merge & Upload Coverage to Codecov
     needs:
+    - changes
     - codecov_upload_pr_base
     - integration_tests_backend
     - integration_tests_backend_multicluster_external_controlplane

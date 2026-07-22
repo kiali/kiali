@@ -12,6 +12,7 @@ on:
     - "design/**"
     - "**/*.md"
     - "**/*.adoc"
+    - "tests/evals/results/**"
   workflow_dispatch:
 
 concurrency:
