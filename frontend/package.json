@@ -194,7 +194,7 @@
     "dompurify": "^3.4.7",
     "js-cookie": "^3.0.8",
     "lodash": "^4.18.1",
-    "protobufjs": "^7.6.4",
+    "protobufjs": "^7.6.5",
     "react-markdown": "^8.0.7",
     "unist-util-visit-parents": "^5.1.3"
   },
