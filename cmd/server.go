@@ -107,12 +107,16 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// connects in the background, so we poll DisabledReason() and call the seeding
 	// function only once the connection is confirmed. This mirrors the pattern used
 	// for other kiali_* metrics that are stored in and read back from the same
-	// external_services.prometheus instance.
-	if conf.ExternalServices.Prometheus.Enabled && conf.ChatAI.Metrics.Enabled {
+	// Seed AI token statistics from Prometheus only when ChatAI is fully
+	// enabled (both ChatAI.Enabled and Metrics.Enabled). Skipping seeding when
+	// ChatAI is off avoids issuing expensive 7-day Prometheus range queries
+	// against every CI cluster regardless of whether the feature is in use.
+	if conf.ChatAI.Enabled && conf.ChatAI.Metrics.Enabled && conf.ExternalServices.Prometheus.Enabled {
 		go func() {
 			const (
 				connectTimeout = 5 * time.Minute
 				pollInterval   = 15 * time.Second
+				seedTimeout    = 3 * time.Minute
 			)
 			if lc, ok := prom.(*prometheus.LazyClient); ok {
 				deadline := time.Now().Add(connectTimeout)
@@ -133,7 +137,11 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 					return
 				}
 			}
-			internalmetrics.InitAITokensFromPrometheus(ctx, prom.API())
+			// Bound the seeding with a hard timeout so that slow Prometheus
+			// servers cannot delay the first API response indefinitely.
+			seedCtx, seedCancel := context.WithTimeout(ctx, seedTimeout)
+			defer seedCancel()
+			internalmetrics.InitAITokensFromPrometheus(seedCtx, prom.API())
 		}()
 	} else {
 		// No seeding will happen; mark immediately so the API reports dataReady: true.
