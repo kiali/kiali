@@ -574,10 +574,20 @@ Then('Ambient L7 validation warnings are not present in the {string} namespace',
     const validations = response.body?.validations ?? {};
     const found: string[] = [];
 
+    // TODO: /api/namespaces/{ns}/istio?validate=true still returns cluster-wide validations
+    // (resources are namespaced; validations map is not). Filter client-side until the handler
+    // uses GetValidationsForNamespace. Track in a follow-up issue.
     Object.keys(validations).forEach(gvk => {
       const byName = validations[gvk] ?? {};
       Object.keys(byName).forEach(nameKey => {
-        const checks = byName[nameKey]?.checks ?? [];
+        const entry = byName[nameKey];
+        if (entry?.namespace && entry.namespace !== namespace) {
+          return;
+        }
+        if (!entry?.namespace && !nameKey.endsWith(`.${namespace}`)) {
+          return;
+        }
+        const checks = entry?.checks ?? [];
         checks.forEach((check: { code?: string; message?: string }) => {
           if (check.code && ambientL7ValidationCodes.has(check.code)) {
             found.push(`${gvk}/${nameKey}: ${check.code} ${check.message ?? ''}`.trim());
