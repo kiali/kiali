@@ -58,8 +58,9 @@ jobs:
       id: branch-pr
       if: ${{ github.base_ref }}
 
-  # Broad path filters: prefer over-running CI over missing coverage when new
-  # cross-package dependencies appear (e.g. chatbot using business/).
+  # Path filters: prefer over-running CI. Main skips:
+  # - frontend-only → skip backend unit/int/codecov
+  # - backend-only (no frontend/ai/hack/ci) → skip AI chatbot suite
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
@@ -67,12 +68,10 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      run_backend_unit: ${{ steps.derive.outputs.run_backend_unit }}
-      run_frontend_build: ${{ steps.derive.outputs.run_frontend_build }}
-      run_backend_binary: ${{ steps.derive.outputs.run_backend_binary }}
-      run_backend_int: ${{ steps.derive.outputs.run_backend_int }}
+      run_backend: ${{ steps.derive.outputs.run_backend }}
+      run_builds: ${{ steps.derive.outputs.run_builds }}
       run_frontend_int: ${{ steps.derive.outputs.run_frontend_int }}
-      run_codecov: ${{ steps.derive.outputs.run_codecov }}
+      run_ai_chat: ${{ steps.derive.outputs.run_ai_chat }}
     steps:
     - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
       id: filter
@@ -86,6 +85,7 @@ jobs:
             - 'make/**'
             - 'tests/integration/**'
             - 'deploy/**'
+          ai:
             - 'ai/**'
             - 'tests/evals/**'
             - '!tests/evals/results/**'
@@ -100,66 +100,74 @@ jobs:
             - '.github/workflows/test-lint-backend.yml'
             - '.github/workflows/integration-tests-*.yml'
             - '.github/workflows/report-to-reportportal.yml'
-          # Catch-all so unclassified paths (Dockerfile, .golangci.yml, root
-          # config, operator/, …) still run full CI instead of skipping everything.
+          # Catch-all for unclassified paths (Dockerfile, .golangci.yml, …).
           other:
             - '**'
     - name: Derive job flags
       id: derive
       run: |
         backend="${{ steps.filter.outputs.backend }}"
+        ai="${{ steps.filter.outputs.ai }}"
         frontend="${{ steps.filter.outputs.frontend }}"
         hack="${{ steps.filter.outputs.hack }}"
         ci="${{ steps.filter.outputs.ci }}"
         other="${{ steps.filter.outputs.other }}"
         event_name="${{ github.event_name }}"
 
+        run_backend=true
+        run_builds=true
+        run_frontend_int=true
+        run_ai_chat=true
+
         # Manual runs have no meaningful path diff; run the full suite.
         if [[ "$event_name" == "workflow_dispatch" ]]; then
           echo "event=$event_name -> full CI"
-          echo "run_backend_unit=true" >> "$GITHUB_OUTPUT"
-          echo "run_frontend_build=true" >> "$GITHUB_OUTPUT"
-          echo "run_backend_binary=true" >> "$GITHUB_OUTPUT"
-          echo "run_backend_int=true" >> "$GITHUB_OUTPUT"
-          echo "run_frontend_int=true" >> "$GITHUB_OUTPUT"
-          echo "run_codecov=true" >> "$GITHUB_OUTPUT"
-          exit 0
+        else
+          classified=false
+          if [[ "$backend" == "true" || "$ai" == "true" || "$frontend" == "true" || "$hack" == "true" || "$ci" == "true" ]]; then
+            classified=true
+          fi
+          unclassified=false
+          if [[ "$other" == "true" && "$classified" == "false" ]]; then
+            unclassified=true
+          fi
+
+          frontend_only=false
+          if [[ "$frontend" == "true" && "$backend" != "true" && "$ai" != "true" && "$hack" != "true" && "$ci" != "true" ]]; then
+            frontend_only=true
+          fi
+
+          backend_only=false
+          if [[ "$backend" == "true" && "$frontend" != "true" && "$ai" != "true" && "$hack" != "true" && "$ci" != "true" ]]; then
+            backend_only=true
+          fi
+
+          if [[ "$frontend_only" == "true" ]]; then
+            # UI-only: still build binary + Cypress; skip backend test suites.
+            run_backend=false
+          elif [[ "$backend_only" == "true" ]]; then
+            # Go-only (not under ai/): keep Cypress for API regressions; skip chatbot.
+            run_ai_chat=false
+          elif [[ "$unclassified" == "true" ]]; then
+            : # full CI
+          fi
+          # hack/ci/ai/(frontend+backend)/mixes → full CI (default true)
+
+          echo "backend=$backend ai=$ai frontend=$frontend hack=$hack ci=$ci other=$other"
+          echo "frontend_only=$frontend_only backend_only=$backend_only unclassified=$unclassified"
         fi
 
-        any=false
-        if [[ "$backend" == "true" || "$frontend" == "true" || "$hack" == "true" || "$ci" == "true" ]]; then
-          any=true
-        fi
-
-        # Backend unit/int/codecov: skip on frontend-only PRs.
-        run_backend_unit=false
-        if [[ "$backend" == "true" || "$hack" == "true" || "$ci" == "true" ]]; then
-          run_backend_unit=true
-        fi
-
-        # Unclassified changes only: prefer over-running full CI.
-        if [[ "$other" == "true" && "$backend$frontend$hack$ci" == "falsefalsefalsefalse" ]]; then
-          any=true
-          run_backend_unit=true
-        fi
-
-        # Frontend Cypress (incl. chatbot) and binary build: run for frontend or
-        # backend changes so new backend deps of the UI/AI paths stay covered.
-        # run_frontend_build and run_backend_binary must stay aligned: the binary
-        # job embeds frontend/build and cannot run if build_frontend is skipped.
-        echo "backend=$backend frontend=$frontend hack=$hack ci=$ci other=$other"
-        echo "run_backend_unit=$run_backend_unit" >> "$GITHUB_OUTPUT"
-        echo "run_frontend_build=$any" >> "$GITHUB_OUTPUT"
-        echo "run_backend_binary=$any" >> "$GITHUB_OUTPUT"
-        echo "run_backend_int=$run_backend_unit" >> "$GITHUB_OUTPUT"
-        echo "run_frontend_int=$any" >> "$GITHUB_OUTPUT"
-        echo "run_codecov=$run_backend_unit" >> "$GITHUB_OUTPUT"
+        # run_builds must stay true whenever any suite runs: binary embeds frontend/build.
+        echo "run_backend=$run_backend" >> "$GITHUB_OUTPUT"
+        echo "run_builds=$run_builds" >> "$GITHUB_OUTPUT"
+        echo "run_frontend_int=$run_frontend_int" >> "$GITHUB_OUTPUT"
+        echo "run_ai_chat=$run_ai_chat" >> "$GITHUB_OUTPUT"
 
   test_backend:
     name: Run backend linters and unit tests
     uses: ./.github/workflows/test-lint-backend.yml
     needs: [initialize, changes]
-    if: needs.changes.outputs.run_backend_unit == 'true'
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
@@ -167,7 +175,7 @@ jobs:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
     needs: [initialize, changes]
-    if: needs.changes.outputs.run_frontend_build == 'true'
+    if: needs.changes.outputs.run_builds == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -178,11 +186,11 @@ jobs:
     needs: [initialize, changes, test_backend, build_frontend]
     # always(): allow build when test_backend was skipped (frontend-only).
     # Require build_frontend success (not skipped): the binary embeds
-    # frontend/build. Keep run_frontend_build == run_backend_binary in `changes`.
+    # frontend/build. Keep run_builds true whenever any suite runs.
     if: |
       always() &&
       !cancelled() &&
-      needs.changes.outputs.run_backend_binary == 'true' &&
+      needs.changes.outputs.run_builds == 'true' &&
       (needs.test_backend.result == 'success' || needs.test_backend.result == 'skipped') &&
       needs.build_frontend.result == 'success'
     with:
@@ -192,7 +200,7 @@ jobs:
     name: Run backend MCP integration tests
     uses: ./.github/workflows/integration-tests-backend-mcp.yml
     needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_backend_int == 'true'
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -201,7 +209,7 @@ jobs:
     name: Run backend integration tests
     uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_backend_int == 'true'
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -210,7 +218,7 @@ jobs:
     name: Run frontend AI integration tests
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
     needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    if: needs.changes.outputs.run_ai_chat == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -291,7 +299,7 @@ jobs:
     name: Run backend multicluster external-controlplane integration tests
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_backend_int == 'true'
+    if: needs.changes.outputs.run_backend == 'true'
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -369,7 +377,7 @@ jobs:
     name: Upload PR base coverage to Codecov
     needs: [changes]
     if: |
-      needs.changes.outputs.run_backend_unit == 'true' &&
+      needs.changes.outputs.run_backend == 'true' &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
@@ -409,7 +417,7 @@ jobs:
     if: |
       always() &&
       !cancelled() &&
-      needs.changes.outputs.run_codecov == 'true' &&
+      needs.changes.outputs.run_backend == 'true' &&
       needs.integration_tests_backend.result == 'success' &&
       needs.integration_tests_backend_multicluster_external_controlplane.result == 'success' &&
       needs.test_backend.result == 'success' &&
