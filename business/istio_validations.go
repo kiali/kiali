@@ -1030,6 +1030,12 @@ func (in *IstioValidationsService) setNamespaceIstioConfig(
 	// All RequestAuthentications
 	namespaceIstioConfigList.RequestAuthentications = append(namespaceIstioConfigList.RequestAuthentications, clusterIstioConfig.RequestAuthentications...)
 
+	// All Telemetries (needed by AmbientPolicyChecker for Ambient L7 checks)
+	namespaceIstioConfigList.Telemetries = append(namespaceIstioConfigList.Telemetries, clusterIstioConfig.Telemetries...)
+
+	// All WasmPlugins (needed by AmbientPolicyChecker for Ambient L7 checks)
+	namespaceIstioConfigList.WasmPlugins = append(namespaceIstioConfigList.WasmPlugins, clusterIstioConfig.WasmPlugins...)
+
 	// All WorkloadEntries
 	namespaceIstioConfigList.WorkloadEntries = append(namespaceIstioConfigList.WorkloadEntries, clusterIstioConfig.WorkloadEntries...)
 

@@ -23,8 +23,9 @@ import (
 //   - AuthorizationPolicy / RequestAuthentication: require targetRefs (Service/Gateway) in Ambient;
 //     selector-based attachment is ignored by waypoints. Also warn when the namespace (or selected
 //     workloads) are not enrolled.
-//   - WasmPlugin / Telemetry: CR namespace must be Ambient; warn when that namespace (or selected
-//     workloads) are not enrolled.
+//   - WasmPlugin / Telemetry: only validated when the CR namespace is Ambient (otherwise N/A).
+//     Always emit a validation entry in Ambient; warn when that namespace (or selected workloads)
+//     are not enrolled. L4-only Telemetry is marked Valid (no waypoint warning).
 //   - VirtualService / DestinationRule: keyed off the *destination* Service. If the destination
 //     namespace is Ambient, warn when the service is not enrolled and/or when the CR is not in the
 //     service namespace (cross-namespace L7 configs do not take effect for Ambient waypoints).
@@ -138,33 +139,42 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 	for _, wp := range c.WasmPlugins {
 		nsStatus, ok := nsStatusByName[wp.Namespace]
 		if !ok || !nsStatus.IsAmbient {
+			// Non-Ambient namespaces keep N/A (no validation entry).
 			continue
 		}
+		key, validation := EmptyValidValidation(wp.Name, wp.Namespace, kubernetes.WasmPlugins, c.Cluster)
 		matchLabels := map[string]string{}
 		if wp.Spec.Selector != nil {
 			matchLabels = wp.Spec.Selector.MatchLabels
 		}
 		if c.selectorNeedsWarning(matchLabels, wp.Namespace, nsByName[wp.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(wp.Name, wp.Namespace, kubernetes.WasmPlugins, "wasmplugin.ambient.l7nowaypoint", ""))
+			check := models.Build("wasmplugin.ambient.l7nowaypoint", "")
+			validation.Checks = append(validation.Checks, &check)
+			validation.Valid = false
 		}
+		validations.MergeValidations(models.IstioValidations{key: validation})
 	}
 
 	for _, tel := range c.Telemetries {
 		nsStatus, ok := nsStatusByName[tel.Namespace]
 		if !ok || !nsStatus.IsAmbient {
+			// Non-Ambient namespaces keep N/A (no validation entry).
 			continue
 		}
+		key, validation := EmptyValidValidation(tel.Name, tel.Namespace, kubernetes.Telemetries, c.Cluster)
 		isL7, _ := ambient.IsL7Telemetry(&tel.Spec)
-		if !isL7 {
-			continue
+		if isL7 {
+			matchLabels := map[string]string{}
+			if tel.Spec.Selector != nil {
+				matchLabels = tel.Spec.Selector.MatchLabels
+			}
+			if c.selectorNeedsWarning(matchLabels, tel.Namespace, nsByName[tel.Namespace], nsStatus) {
+				check := models.Build("telemetry.ambient.l7nowaypoint", "")
+				validation.Checks = append(validation.Checks, &check)
+				validation.Valid = false
+			}
 		}
-		matchLabels := map[string]string{}
-		if tel.Spec.Selector != nil {
-			matchLabels = tel.Spec.Selector.MatchLabels
-		}
-		if c.selectorNeedsWarning(matchLabels, tel.Namespace, nsByName[tel.Namespace], nsStatus) {
-			validations.MergeValidations(c.buildCheck(tel.Name, tel.Namespace, kubernetes.Telemetries, "telemetry.ambient.l7nowaypoint", ""))
-		}
+		validations.MergeValidations(models.IstioValidations{key: validation})
 	}
 
 	return validations

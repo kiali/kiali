@@ -557,6 +557,34 @@ func TestAmbientPolicyChecker_WasmPluginWithEnrollment_NoWarning(t *testing.T) {
 		},
 	}.Check()
 
+	key := models.BuildKey(kubernetes.WasmPlugins, wp.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok)
+	assert.True(t, validation.Valid)
+	assert.Empty(t, validation.Checks)
+}
+
+func TestAmbientPolicyChecker_WasmPluginNonAmbient_NoValidation(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "sidecar-ns"
+
+	wp := &extensions_v1alpha1.WasmPlugin{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-wasm", Namespace: ns},
+		Spec: extensions_v1alpha1_api.WasmPlugin{
+			Url: "oci://invalid.example/wasm:latest",
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: false},
+		},
+		WasmPlugins: []*extensions_v1alpha1.WasmPlugin{wp},
+	}.Check()
+
 	assert.Empty(t, vals)
 }
 
@@ -591,6 +619,39 @@ func TestAmbientPolicyChecker_TelemetryL7WithoutEnrollment(t *testing.T) {
 	assert.NoError(t, validations.ConfirmIstioCheckMessage("telemetry.ambient.l7nowaypoint", validation.Checks[0]))
 }
 
+func TestAmbientPolicyChecker_TelemetryL7WithEnrollment_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "ambient-ns"
+
+	tel := &telemetry_v1.Telemetry{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-tracing", Namespace: ns},
+		Spec: telemetry_v1_api.Telemetry{
+			Tracing: []*telemetry_v1_api.Tracing{{}},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.WaypointUseLabel: "waypoint",
+			}},
+		},
+		Telemetries: []*telemetry_v1.Telemetry{tel},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ns: {data.CreateWorkload(ns, "reviews-v1", map[string]string{"app": "reviews"})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.Telemetries, tel.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok)
+	assert.True(t, validation.Valid)
+	assert.Empty(t, validation.Checks)
+}
+
 func TestAmbientPolicyChecker_TelemetryL4_NoWarning(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -613,6 +674,34 @@ func TestAmbientPolicyChecker_TelemetryL4_NoWarning(t *testing.T) {
 		WorkloadsPerNamespace: map[string]models.Workloads{
 			ns: {data.CreateWorkload(ns, "reviews-v1", map[string]string{"app": "reviews"})},
 		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.Telemetries, tel.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok)
+	assert.True(t, validation.Valid)
+	assert.Empty(t, validation.Checks)
+}
+
+func TestAmbientPolicyChecker_TelemetryNonAmbient_NoValidation(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "sidecar-ns"
+
+	tel := &telemetry_v1.Telemetry{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-tracing", Namespace: ns},
+		Spec: telemetry_v1_api.Telemetry{
+			Tracing: []*telemetry_v1_api.Tracing{{}},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: false},
+		},
+		Telemetries: []*telemetry_v1.Telemetry{tel},
 	}.Check()
 
 	assert.Empty(t, vals)
