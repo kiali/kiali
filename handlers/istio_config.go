@@ -86,7 +86,13 @@ func IstioConfigList(
 		}
 
 		if includeValidations {
-			istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+			// Namespace-scoped list should only return validations for that namespace.
+			// Cluster-wide list (/api/istio/config) keeps cluster validations.
+			if namespace != "" {
+				istioConfig.IstioValidations, err = business.Validations.GetValidationsForNamespace(r.Context(), cluster, namespace)
+			} else {
+				istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
+			}
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
 				return
