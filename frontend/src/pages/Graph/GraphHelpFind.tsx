@@ -58,6 +58,7 @@ export const GraphHelpFind: React.FC<GraphHelpFindProps> = (props: GraphHelpFind
 
   useResizeDetector({
     targetRef: bodyRef,
+    disableRerender: true,
     refreshMode: 'debounce',
     refreshRate: 100,
     skipOnMount: true,
