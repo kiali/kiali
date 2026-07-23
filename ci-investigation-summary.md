@@ -27,12 +27,12 @@ PR #9760 (June 2, 2026) added a `push` trigger to `kiali-ci.yml` for Codecov bas
 ### Trigger Changes
 
 - **Removed `push` trigger** from `kiali-ci.yml`. CI only runs on `pull_request` events now.
-- **Added `labeled` event type** so adding the `full-ci` label immediately triggers a new workflow run.
+- **Added `labeled` event type** so adding the `ci-full` label immediately triggers a new workflow run.
 - Master baseline Codecov coverage continues via the existing `codecov-master-baseline.yml` (push-triggered, unit tests only).
 
 ### Two-Wave Gating
 
-Integration tests are split into two waves. Wave 2 is gated behind wave 1 completion and the `full-ci` PR label.
+Integration tests are split into two waves. Wave 2 is gated behind wave 1 completion and the `ci-full` PR label.
 
 **Wave 1 (always runs on PR, ~8 jobs):**
 
@@ -47,7 +47,7 @@ Integration tests are split into two waves. Wave 2 is gated behind wave 1 comple
 | `integration_tests_frontend_ambient` | 1 |
 | `integration_tests_frontend_ambient_multi_primary` | **2** |
 
-**Wave 2 (requires `full-ci` label + wave 1 gate, ~8 jobs):**
+**Wave 2 (requires `ci-full` label + wave 1 gate, ~8 jobs):**
 
 | Job | KinD Clusters |
 |-----|:---:|
@@ -60,7 +60,7 @@ Integration tests are split into two waves. Wave 2 is gated behind wave 1 comple
 | `integration_tests_frontend_multi_mesh` | 1 |
 | `integration_tests_backend_multicluster_external_controlplane` | **2** |
 
-The `wave2_gate` job checks for the `full-ci` label and waits for all wave 1 jobs to complete. When the label is absent, `wave2_gate` is skipped and all wave 2 jobs are automatically skipped by GitHub Actions' dependency resolution.
+The `wave2_gate` job checks for the `ci-full` label and waits for all wave 1 jobs to complete. When the label is absent, `wave2_gate` is skipped and all wave 2 jobs are automatically skipped by GitHub Actions' dependency resolution.
 
 ### Codecov Adjustments
 
@@ -85,7 +85,7 @@ The `wave2_gate` job checks for the `full-ci` label and waits for all wave 1 job
 | Event | What runs |
 |-------|-----------|
 | PR opened (no label) | Build + lint + wave 1 (8 integration jobs) + codecov |
-| `full-ci` label added | Full workflow re-run: build + lint + wave 1 + wave 2 (sequential) |
+| `ci-full` label added | Full workflow re-run: build + lint + wave 1 + wave 2 (sequential) |
 | New commit pushed (no label) | Build + lint + wave 1 + codecov |
 | New commit pushed (label present) | Build + lint + wave 1 + wave 2 (sequential) + codecov |
 | Push to master (merge) | Nothing in `kiali-ci.yml`; `codecov-master-baseline.yml` uploads unit coverage |

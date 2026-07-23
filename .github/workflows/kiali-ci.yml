@@ -141,7 +141,7 @@ jobs:
 
   wave2_gate:
     name: Wave 2 gate
-    if: contains(github.event.pull_request.labels.*.name, 'full-ci')
+    if: contains(github.event.pull_request.labels.*.name, 'ci-full')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
