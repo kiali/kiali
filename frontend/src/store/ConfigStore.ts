@@ -1,6 +1,8 @@
-import { createStore, applyMiddleware, compose, Store } from 'redux';
-import { KialiAppState } from './Store';
-import { persistStore, persistReducer, Transform } from 'redux-persist';
+import type { Store } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
+import type { KialiAppState } from './Store';
+import type { Transform } from 'redux-persist';
+import { persistStore, persistReducer } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
 import { createTransform } from 'redux-persist';
 import { rootReducer } from '../reducers';
@@ -22,7 +24,7 @@ import { INITIAL_MESH_TLS_STATE } from '../reducers/MeshTlsState';
 import { INITIAL_TOUR_STATE } from '../reducers/TourState';
 import { INITIAL_ISTIO_STATUS_STATE } from '../reducers/IstioStatusState';
 import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
-import { KialiAppAction } from 'actions/KialiAppAction';
+import type { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
 import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
@@ -61,7 +63,11 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
-const globalStateFilter = whitelistInputWithInitialState('globalState', ['language', 'theme'], INITIAL_GLOBAL_STATE);
+const globalStateFilter = whitelistInputWithInitialState(
+  'globalState',
+  ['contrastMode', 'language', 'theme'],
+  INITIAL_GLOBAL_STATE
+);
 
 const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState', 'layout'], INITIAL_GRAPH_STATE);
 

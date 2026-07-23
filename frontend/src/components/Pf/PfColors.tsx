@@ -51,11 +51,11 @@ export enum PFColors {
 
   // semantic kiali colors
   Active = 'var(--pf-t--color--blue--50)',
-  Badge = 'var(	pf-t--color--blue--30)',
+  Badge = 'var(--pf-t--color--blue--30)',
   Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',
   LinkTooltipDarkTheme = 'var(--pf-t--global--text--color--link--100)',
-  LinkTooltipLightTheme = 'var(--pf-t--color--blue--20)', // code broken, should be --pf-t--global--dark--text--color--link--100
+  LinkTooltipLightTheme = 'var(--pf-t--global--text--color--link--100)',
 
   // status colors https://www.patternfly.org/design-foundations/colors/#status-and-state-colors
   Custom = 'var(--pf-t--global--color--status--custom--default)',
@@ -66,13 +66,14 @@ export enum PFColors {
 
   // chart-specific color values, for rates charts where 4xx is really Danger not Warning
   ChartDanger = 'var(--pf-t--chart--color--red-orange--500)',
-  ChartOther = 'var(--pf-v6-global--palette-black-1000)',
+  ChartOther = 'var(--pf-t--color--gray--95)',
   ChartWarning = 'var(--pf-t--chart--color--red-orange--400)',
 
   // PF background colors (compatible with dark mode)
   BackgroundColor100 = 'var(--pf-t--global--background--color--primary--default)',
   BackgroundColor150 = 'var(--pf-t--global--background--color--tertiary--default)',
   BackgroundColor200 = 'var(--pf-t--global--background--color--secondary--default)',
+  BackgroundColorGlass = 'var(--pf-t--global--background--color--glass--primary--default)',
   BackgroundColorLight300 = 'var(--pf-t--global--background--color--secondary--default)',
 
   // PF standard colors (compatible with dark mode)

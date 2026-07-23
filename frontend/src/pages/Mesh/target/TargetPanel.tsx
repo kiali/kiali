@@ -2,21 +2,21 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { TourStop } from 'components/Tour/TourStop';
 import { classes } from 'typestyle';
 import { PFColors } from 'components/Pf/PfColors';
-import {
+import type {
   BoxTarget,
   ClusterNodeData,
   DataPlaneNodeData,
   IstiodNodeData,
-  MeshInfraType,
-  MeshType,
   NamespaceNodeData,
   NodeTarget
 } from 'types/Mesh';
-import { TargetPanelCommonProps, targetPanelStyle } from './TargetPanelCommon';
+import { MeshInfraType, MeshType } from 'types/Mesh';
+import type { TargetPanelCommonProps } from './TargetPanelCommon';
+import { targetPanelStyle } from './TargetPanelCommon';
 import { MeshTourStops } from '../MeshHelpTour';
 import { BoxByType } from 'types/Graph';
 import { TargetPanelCluster } from './TargetPanelCluster';
@@ -28,6 +28,7 @@ import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { TargetPanelMetrics } from './TargetPanelMetrics';
+import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   kiosk: string;
@@ -44,7 +45,13 @@ const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
   position: 'relative',
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  $nest: glassHighContrastSurfaceNest({
+    highContrast: {
+      border: 'none',
+      borderLeft: `1px solid ${PFColors.BorderDefault}`
+    }
+  })
 });
 
 const expandedStyle = kialiStyle({ height: '100%' });
@@ -68,7 +75,8 @@ const toggleTargetPanelStyle = kialiStyle({
   position: 'absolute',
   textAlign: 'center',
   transform: 'rotate(-90deg)',
-  transformOrigin: 'left top 0'
+  transformOrigin: 'left top 0',
+  $nest: glassHighContrastSurfaceNest()
 });
 
 export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPanelProps) => {
