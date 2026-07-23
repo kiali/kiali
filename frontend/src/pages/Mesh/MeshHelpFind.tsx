@@ -58,6 +58,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
 
   useResizeDetector({
     targetRef: bodyRef,
+    disableRerender: true,
     refreshMode: 'debounce',
     refreshRate: 100,
     skipOnMount: true,

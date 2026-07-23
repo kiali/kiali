@@ -105,15 +105,11 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
     return getNextTourStop(activeTour!, activeStop!, direction);
   };
 
-  const setStopHandler = (stop: number): void => {
-    setStop(stop);
-  };
-
   const backButton = (): React.ReactNode => {
     const stop = getStop('back');
 
     return (
-      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => setStopHandler(stop!)}>
+      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => setStop(stop!)}>
         {t('Back')}
       </Button>
     );
@@ -131,7 +127,7 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
     }
 
     return (
-      <Button variant={ButtonVariant.primary} onClick={() => setStopHandler(stop!)}>
+      <Button variant={ButtonVariant.primary} onClick={() => setStop(stop!)}>
         {t('Next')}
       </Button>
     );
@@ -151,14 +147,11 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
     }
   };
 
-  const shouldClose = (): void => {
-    endTour();
-  };
-
   const bodyRef = React.useRef<HTMLElement>(document.body);
 
   useResizeDetector({
     targetRef: bodyRef,
+    disableRerender: true,
     refreshMode: 'debounce',
     refreshRate: 100,
     skipOnMount: true,
@@ -200,7 +193,7 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
           isVisible={true}
           onHidden={onHidden}
           position={currentInfo.position}
-          shouldClose={(_event, _) => shouldClose()}
+          shouldClose={(_event, _) => endTour()}
         >
           <>{children}</>
         </Popover>
@@ -223,4 +216,4 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   };
 };
 
-export const TourStop = React.memo(connect(mapStateToProps, mapDispatchToProps)(TourStopComponent));
+export const TourStop = connect(mapStateToProps, mapDispatchToProps)(TourStopComponent);

@@ -305,6 +305,7 @@ const TopologyContent: React.FC<{
 
   useResizeDetector({
     targetRef: bodyRef,
+    disableRerender: true,
     refreshMode: 'debounce',
     refreshRate: 100,
     handleWidth: true,
