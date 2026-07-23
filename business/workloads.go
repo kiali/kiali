@@ -146,47 +146,6 @@ func (in *WorkloadService) isWorkloadIncluded(workload string) bool {
 	return !in.excludedWorkloads[workload]
 }
 
-<<<<<<< HEAD
-=======
-// @TODO do validations per cluster
-func (in *WorkloadService) getWorkloadValidations(ctx context.Context, authpolicies []*security_v1.AuthorizationPolicy, workloadsPerNamespace map[string]models.Workloads, cluster string) models.IstioValidations {
-	userClient, ok := in.userClients[cluster]
-	if !ok {
-		return models.IstioValidations{}
-	}
-	namespaces, found := in.cache.GetNamespaces(cluster, userClient.GetToken())
-	if !found {
-		return models.IstioValidations{}
-	}
-
-	mesh, err := in.businessLayer.Mesh.discovery.Mesh(ctx)
-	if err != nil || mesh == nil {
-		return models.IstioValidations{}
-	}
-
-	rootNamespaces := make(map[string]string, len(workloadsPerNamespace))
-	for ns := range workloadsPerNamespace {
-		if cp, err := mesh.ControlPlaneForNamespace(cluster, ns); err == nil && cp != nil {
-			rootNamespaces[ns] = cp.RootNamespace
-		}
-	}
-
-	var services []core_v1.Service
-	if kubeCache, err := in.cache.GetKubeCache(cluster); err == nil {
-		for ns := range workloadsPerNamespace {
-			var svcList core_v1.ServiceList
-			if err := kubeCache.List(ctx, &svcList, ctrlclient.InNamespace(ns)); err == nil {
-				services = append(services, svcList.Items...)
-			}
-		}
-	}
-
-	validations := checkers.NewWorkloadChecker(authpolicies, cluster, in.conf, rootNamespaces, namespaces, workloadsPerNamespace, services).Check()
-
-	return validations
-}
-
->>>>>>> 493d1a5c3 (hasAuthPolicyAndNoWaypoint warn just if the AuthPolicy L7 points to that workload)
 // GetAllWorkloads fetches all workloads across the cluster's namespaces.
 func (in *WorkloadService) GetAllWorkloads(ctx context.Context, cluster, labelSelector string) (models.Workloads, error) {
 	var end observability.EndFunc
