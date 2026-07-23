@@ -601,7 +601,9 @@ type OpenShiftConfig struct {
 // When enabled, users authenticate once to the home cluster and Kiali uses its service
 // account credentials on all clusters with impersonation headers carrying the user's identity.
 type ImpersonationConfig struct {
-	Enabled bool `yaml:"enabled,omitempty"`
+	AllowedGroups []string `yaml:"allowed_groups,omitempty"`
+	AllowedUsers  []string `yaml:"allowed_users,omitempty"`
+	Enabled       bool     `yaml:"enabled,omitempty"`
 }
 
 // DiscoveryOverrideConfig contains explicit OIDC endpoints to override auto-discovery
@@ -1053,7 +1055,7 @@ func NewConfig() (c *Config) {
 				UsernameClaim:         "sub",
 			},
 			OpenShift: OpenShiftConfig{
-				Impersonation:         ImpersonationConfig{Enabled: false},
+				Impersonation:         ImpersonationConfig{Enabled: false, AllowedGroups: []string{}, AllowedUsers: []string{}},
 				InsecureSkipVerifyTLS: false,
 			},
 		},
@@ -2154,6 +2156,27 @@ func Validate(conf *Config) error {
 	log.Infof("Using authentication strategy [%v]", auth.Strategy)
 	if auth.OpenShift.Impersonation.Enabled && auth.Strategy != AuthStrategyOpenshift {
 		return fmt.Errorf("impersonation is only supported with the openshift auth strategy, but auth.strategy is [%s]", auth.Strategy)
+	}
+	if auth.OpenShift.Impersonation.Enabled {
+		for _, u := range auth.OpenShift.Impersonation.AllowedUsers {
+			if u == "" {
+				return fmt.Errorf("auth.openshift.impersonation.allowed_users must not contain empty strings")
+			}
+			if strings.HasPrefix(u, "system:") {
+				return fmt.Errorf("auth.openshift.impersonation.allowed_users must not contain system: prefixed identities, found [%s]", u)
+			}
+		}
+		for _, g := range auth.OpenShift.Impersonation.AllowedGroups {
+			if g == "" {
+				return fmt.Errorf("auth.openshift.impersonation.allowed_groups must not contain empty strings")
+			}
+			if strings.HasPrefix(g, "system:") {
+				return fmt.Errorf("auth.openshift.impersonation.allowed_groups must not contain system: prefixed groups, found [%s]", g)
+			}
+		}
+		if len(auth.OpenShift.Impersonation.AllowedUsers) == 0 && len(auth.OpenShift.Impersonation.AllowedGroups) == 0 {
+			log.Warningf("Impersonation enabled without allowed_users/allowed_groups: the SA can impersonate any non-system identity. Suggest to configure allowlists for production deployments.")
+		}
 	}
 	if auth.Strategy == AuthStrategyOpenshift && auth.OpenShift.Impersonation.Enabled {
 		log.Infof("OpenShift impersonation mode is enabled")

@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -21,6 +22,43 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
+
+var (
+	ErrImpersonationDenied = errors.New("impersonation denied: privileged identity")
+	ErrNotInAllowlist      = errors.New("impersonation denied: not in allowlist")
+)
+
+// Kubernetes RBAC has no deny rules — the hardcoded guard and RBAC resourceNames
+// serve complementary purposes. The guard blocks known-bad identities (system:*);
+// RBAC resourceNames restricts to known-good identities (the allowlist).
+func ValidateImpersonationIdentity(username string, groups []string) error {
+	if strings.HasPrefix(username, "system:") {
+		return fmt.Errorf("%w: identity %q is a privileged system identity", ErrImpersonationDenied, username)
+	}
+	for _, g := range groups {
+		if g == "system:masters" || g == "system:nodes" || strings.HasPrefix(g, "system:serviceaccounts") {
+			return fmt.Errorf("%w: identity %q belongs to privileged system group %q", ErrImpersonationDenied, username, g)
+		}
+	}
+	return nil
+}
+
+func FilterImpersonationGroups(groups []string, allowedGroups []string, username string) []string {
+	if len(allowedGroups) == 0 {
+		return groups
+	}
+	filtered := make([]string, 0, len(groups))
+	for _, g := range groups {
+		if g == "system:authenticated" || g == "system:authenticated:oauth" {
+			filtered = append(filtered, g)
+		} else if slices.Contains(allowedGroups, g) {
+			filtered = append(filtered, g)
+		} else {
+			log.Warningf("Impersonation: dropping group %q for user %q (not in allowed_groups)", g, username)
+		}
+	}
+	return filtered
+}
 
 // openshiftSessionPayload holds the data that will be persisted in the SessionStore
 // in order to be able to maintain the session of the user across requests.
@@ -286,6 +324,20 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			if !slices.Contains(groups, "system:authenticated:oauth") {
 				groups = append(groups, "system:authenticated:oauth")
 			}
+
+			if err := ValidateImpersonationIdentity(homeUserName, groups); err != nil {
+				log.Warningf("Impersonation rejected for user %q: %v", homeUserName, err)
+				return nil, err
+			}
+
+			if len(o.conf.Auth.OpenShift.Impersonation.AllowedUsers) > 0 {
+				if !slices.Contains(o.conf.Auth.OpenShift.Impersonation.AllowedUsers, homeUserName) {
+					log.Warningf("Impersonation denied: user %q is not in allowed_users list", homeUserName)
+					return nil, fmt.Errorf("%w: user %q", ErrNotInAllowlist, homeUserName)
+				}
+			}
+
+			groups = FilterImpersonationGroups(groups, o.conf.Auth.OpenShift.Impersonation.AllowedGroups, homeUserName)
 
 			for _, cluster := range o.clusters {
 				existingSessionID := ""

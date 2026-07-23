@@ -701,3 +701,68 @@ func TestTerminateSession(t *testing.T) {
 	require.Len(cookies, 1)
 	require.Equal(cookies[0].MaxAge, -1, fmt.Sprintf("cookie: %s should have been dropped.", cookies[0].Name))
 }
+
+func TestValidateImpersonationIdentity_RejectsSystemUsers(t *testing.T) {
+	cases := []struct {
+		name   string
+		user   string
+		groups []string
+	}{
+		{"system:admin", "system:admin", nil},
+		{"system:anonymous", "system:anonymous", nil},
+		{"system:serviceaccount prefix", "system:serviceaccount:default:kiali", nil},
+		{"system:node prefix", "system:node:worker-1", nil},
+		{"any system: prefix", "system:anything", nil},
+		{"system:masters group", "normaluser", []string{"developers", "system:masters"}},
+		{"system:nodes group", "normaluser", []string{"system:nodes"}},
+		{"system:serviceaccounts group", "normaluser", []string{"system:serviceaccounts"}},
+		{"system:serviceaccounts:namespace group", "normaluser", []string{"system:serviceaccounts:kube-system"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := authentication.ValidateImpersonationIdentity(tc.user, tc.groups)
+			require.Error(t, err)
+			require.ErrorIs(t, err, authentication.ErrImpersonationDenied)
+		})
+	}
+}
+
+func TestValidateImpersonationIdentity_AllowsNormalUsers(t *testing.T) {
+	cases := []struct {
+		name   string
+		user   string
+		groups []string
+	}{
+		{"normal user no groups", "developer@example.com", nil},
+		{"normal user with groups", "alice", []string{"developers", "sre-team"}},
+		{"normal user with system:authenticated", "bob", []string{"system:authenticated", "system:authenticated:oauth", "developers"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := authentication.ValidateImpersonationIdentity(tc.user, tc.groups)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFilterImpersonationGroups_FiltersCorrectly(t *testing.T) {
+	t.Run("empty allowedGroups returns all groups", func(t *testing.T) {
+		groups := []string{"system:authenticated", "developers", "sre-team"}
+		result := authentication.FilterImpersonationGroups(groups, nil, "user")
+		require.Equal(t, groups, result)
+	})
+
+	t.Run("filters to allowed groups plus system:authenticated", func(t *testing.T) {
+		groups := []string{"system:authenticated", "system:authenticated:oauth", "developers", "sre-team", "managers"}
+		allowed := []string{"developers", "sre-team"}
+		result := authentication.FilterImpersonationGroups(groups, allowed, "user")
+		require.Equal(t, []string{"system:authenticated", "system:authenticated:oauth", "developers", "sre-team"}, result)
+	})
+
+	t.Run("system:authenticated groups always pass through", func(t *testing.T) {
+		groups := []string{"system:authenticated", "system:authenticated:oauth", "unknown-group"}
+		allowed := []string{"developers"}
+		result := authentication.FilterImpersonationGroups(groups, allowed, "user")
+		require.Equal(t, []string{"system:authenticated", "system:authenticated:oauth"}, result)
+	})
+}

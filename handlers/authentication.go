@@ -97,6 +97,11 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 				if errors.Is(err, authentication.ErrSessionNotFound) || errors.Is(err, authentication.ErrSubjectMismatch) {
 					// Session doesn't exist or has an integrity violation - user needs to authenticate
 					statusCode = http.StatusUnauthorized
+				} else if errors.Is(err, authentication.ErrNotInAllowlist) {
+					statusCode = http.StatusForbidden
+					log.Warningf("Impersonation allowlist denied access [client: %s]: %s", r.RemoteAddr, err.Error())
+				} else if errors.Is(err, authentication.ErrImpersonationDenied) {
+					statusCode = http.StatusUnauthorized
 				} else if k8serrors.IsUnauthorized(err) {
 					// Kubernetes API rejected the token as invalid/expired.
 					// This can occur when ValidateSession calls GetNamespaces, which makes K8s API calls.
