@@ -87,6 +87,20 @@ func TestExtractMetricsQueryParamsUnknownParam(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported query parameter 'unknownParam'")
 }
 
+func TestExtractMetricsQueryParamsAllowsNamespaces(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/clusters/metrics", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("direction", "outbound")
+	q.Add("namespaces", "bookinfo")
+	q.Add("reporter", "destination")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "bookinfo"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("bookinfo", time.Time{}))
+	require.NoError(t, err)
+}
+
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {
 	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
 	if err != nil {

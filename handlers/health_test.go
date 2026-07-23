@@ -319,6 +319,19 @@ func TestClustersHealthUnknownParam(t *testing.T) {
 	assert.Equal(t, http.StatusConflict, resp.StatusCode)
 }
 
+// TestClustersHealthAllowsQueryTime ensures the UI cache-bust/replay queryTime param is accepted.
+func TestClustersHealthAllowsQueryTime(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), setupMockData()}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupClustersHealthEndpoint(t, k8s)
+
+	url := ts.URL + "/api/clusters/health?namespaces=ns&type=app&queryTime=1523364061"
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 // TestClustersHealthPartialCacheMiss tests scenario where some namespaces are cached and some are not
 func TestClustersHealthPartialCacheMiss(t *testing.T) {
 	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), fakeService("ns2", "httpbin"), setupMockData(), setupMockNamespace("ns2")}
