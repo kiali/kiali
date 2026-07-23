@@ -50,6 +50,7 @@ var istioMetricsQueryParams = []string{
 	"direction",
 	"duration",
 	"filters[]",
+	"namespaces",
 	"quantiles[]",
 	"queryTime",
 	"rateFunc",

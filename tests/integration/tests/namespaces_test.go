@@ -71,12 +71,10 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 
 	health, code, err := kiali.NamespaceAppHealth(kiali.BOOKINFO, params)
 
-	// With health cache enabled, invalid rateInterval is ignored and cached data is returned.
-	// The parameter is not validated when serving from cache.
-	require.NoError(err)
-	require.Equal(200, code)
-	require.NotNil(health)
-	// Health may contain cached data for bookinfo namespace - no assertion on contents
+	// Invalid rateInterval is rejected with 409 Conflict.
+	require.Error(err)
+	require.Equal(409, code)
+	require.Nil(health)
 }
 
 func TestNamespaceHealthService(t *testing.T) {
