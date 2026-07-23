@@ -6,14 +6,14 @@ import {
   NewProcessIcon,
   UnknownIcon
 } from '@patternfly/react-icons';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
+import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { getName } from '../utils/RateIntervals';
 import { PFColors } from 'components/Pf/PfColors';
 import { calculateErrorRate } from './ErrorRate';
-import { ToleranceConfig } from './ServerConfig';
+import type { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
-import { HealthAnnotationType } from './HealthAnnotation';
-import { NamespaceStatus } from './NamespaceInfo';
+import type { HealthAnnotationType } from './HealthAnnotation';
+import type { NamespaceStatus } from './NamespaceInfo';
 import { t } from 'utils/I18nUtils';
 
 interface HealthConfig {
@@ -309,8 +309,9 @@ export const mergeStatus = (s1: Status, s2: Status): Status => {
 
 export const ascendingThresholdCheck = (value: number, thresholds: Thresholds): ThresholdStatus => {
   if (value > 0) {
-    // failure === 0 means "unset" / no failure tier (same as business/health_calculator.go applyThresholds).
-    if (thresholds.failure > 0 && value >= thresholds.failure) {
+    // failure: 0 is a valid threshold (docs: value >= FAILURE → Failure), same as
+    // business/health_calculator.go applyThresholds.
+    if (value >= thresholds.failure) {
       return {
         value: value,
         status: FAILURE,
@@ -330,7 +331,7 @@ export const ascendingThresholdCheck = (value: number, thresholds: Thresholds): 
 
 export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfig): ThresholdStatus => {
   if (tolerance && ratio >= 0) {
-    let thresholds = {
+    const thresholds = {
       degraded: tolerance.degraded,
       failure: tolerance.failure,
       unit: '%'
@@ -383,7 +384,7 @@ export abstract class Health {
     // Check if the config applied is the kiali defaults one
     const tolConfDefault = serverConfig.healthConfig.rate[serverConfig.healthConfig.rate.length - 1].tolerance;
 
-    for (let tol of tolConfDefault) {
+    for (const tol of tolConfDefault) {
       // Check if the tolerance applied is one of kiali defaults
       if (this.health.statusConfig && tol === this.health.statusConfig.threshold) {
         // In the case is a kiali's default return undefined
@@ -429,6 +430,16 @@ interface HealthContext {
 const emptyRequestHealth = (): RequestHealth => ({ inbound: {}, outbound: {}, healthAnnotations: {} });
 
 export class ServiceHealth extends Health {
+  constructor(
+    ns: string,
+    srv: string,
+    public requests: RequestHealth,
+    ctx: HealthContext,
+    backendStatus?: CalculatedHealthStatus
+  ) {
+    super(ServiceHealth.computeItems(ns, srv, requests, ctx), backendStatus);
+  }
+
   public static fromJson = (ns: string, srv: string, json: any, ctx: HealthContext): ServiceHealth =>
     new ServiceHealth(ns, srv, json.requests ?? emptyRequestHealth(), ctx, json.status);
 
@@ -476,19 +487,20 @@ export class ServiceHealth extends Health {
     }
     return { items, statusConfig };
   }
+}
 
+export class AppHealth extends Health {
   constructor(
     ns: string,
-    srv: string,
+    app: string,
+    workloadStatuses: WorkloadStatus[],
     public requests: RequestHealth,
     ctx: HealthContext,
     backendStatus?: CalculatedHealthStatus
   ) {
-    super(ServiceHealth.computeItems(ns, srv, requests, ctx), backendStatus);
+    super(AppHealth.computeItems(ns, app, workloadStatuses, requests, ctx), backendStatus);
   }
-}
 
-export class AppHealth extends Health {
   public static fromJson = (ns: string, app: string, json: any, ctx: HealthContext): AppHealth =>
     new AppHealth(ns, app, json.workloadStatuses ?? [], json.requests ?? emptyRequestHealth(), ctx, json.status);
 
@@ -556,17 +568,6 @@ export class AppHealth extends Health {
 
     return { items, statusConfig };
   }
-
-  constructor(
-    ns: string,
-    app: string,
-    workloadStatuses: WorkloadStatus[],
-    public requests: RequestHealth,
-    ctx: HealthContext,
-    backendStatus?: CalculatedHealthStatus
-  ) {
-    super(AppHealth.computeItems(ns, app, workloadStatuses, requests, ctx), backendStatus);
-  }
 }
 
 const emptyWorkloadStatus = (): WorkloadStatus => ({
@@ -578,6 +579,17 @@ const emptyWorkloadStatus = (): WorkloadStatus => ({
 });
 
 export class WorkloadHealth extends Health {
+  constructor(
+    ns: string,
+    workload: string,
+    workloadStatus: WorkloadStatus,
+    public requests: RequestHealth,
+    ctx: HealthContext,
+    backendStatus?: CalculatedHealthStatus
+  ) {
+    super(WorkloadHealth.computeItems(ns, workload, workloadStatus, requests, ctx), backendStatus);
+  }
+
   public static fromJson = (ns: string, workload: string, json: any, ctx: HealthContext): WorkloadHealth =>
     new WorkloadHealth(
       ns,
@@ -680,17 +692,6 @@ export class WorkloadHealth extends Health {
     }
 
     return { items, statusConfig };
-  }
-
-  constructor(
-    ns: string,
-    workload: string,
-    workloadStatus: WorkloadStatus,
-    public requests: RequestHealth,
-    ctx: HealthContext,
-    backendStatus?: CalculatedHealthStatus
-  ) {
-    super(WorkloadHealth.computeItems(ns, workload, workloadStatus, requests, ctx), backendStatus);
   }
 }
 
