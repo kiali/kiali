@@ -1,12 +1,16 @@
 import * as React from 'react';
 import {
   Bullseye,
+  Button,
+  ButtonVariant,
   Card,
   CardBody,
   CardTitle,
+  Divider,
   EmptyState,
   EmptyStateBody,
-  Gallery,
+  Grid,
+  GridItem,
   Spinner
 } from '@patternfly/react-core';
 import { IRow, TableVariant } from '@patternfly/react-table';
@@ -16,6 +20,9 @@ import * as API from 'services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ChatSessionUsageMetric } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
+import { KialiIcon } from 'config/KialiIcon';
+import { onAIResponseReceived } from 'utils/aiEvents';
+import { ClusterIcon, CogIcon, CubesIcon, DesktopIcon } from '@patternfly/react-icons';
 
 const contentStyle = kialiStyle({
   overflow: 'auto'
@@ -34,11 +41,8 @@ const statValueStyle = kialiStyle({
   fontWeight: 700
 });
 
-const statLabelStyle = kialiStyle({
-  color: 'var(--pf-t--global--text--color--subtle)'
-});
-
 const noteStyle = kialiStyle({
+  textAlign: 'center',
   color: 'var(--pf-t--global--text--color--subtle)'
 });
 
@@ -53,50 +57,48 @@ const columns: SortableTh[] = [
   { title: t('Last Updated'), sortable: false }
 ];
 
-const SummaryCard: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+const SummaryCard: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode }> = ({
+  icon,
+  label,
+  value
+}) => (
   <Card isCompact>
-    <CardTitle>{label}</CardTitle>
+    <CardTitle>
+      {icon} {label}
+    </CardTitle>
     <CardBody>
       <div className={statValueStyle}>{value}</div>
-      <div className={statLabelStyle}>{t('Current browser session')}</div>
     </CardBody>
   </Card>
 );
 
-export const ChatSessionUsageContent: React.FC = () => {
+export const ChatSessionUsage: React.FC = () => {
   const [metrics, setMetrics] = React.useState<ChatSessionUsageMetric[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
+
   const [error, setError] = React.useState<string>('');
 
-  React.useEffect(() => {
-    let isMounted = true;
-
-    const loadMetrics = async (): Promise<void> => {
-      try {
-        const response = await API.getChatSessionUsage();
-        if (!isMounted) {
-          return;
-        }
-        setMetrics(response.data);
-        setError('');
-      } catch (err) {
-        if (!isMounted) {
-          return;
-        }
-        setError(API.getErrorString(err as any));
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void loadMetrics();
-
-    return () => {
-      isMounted = false;
-    };
+  const loadMetrics = React.useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await API.getChatSessionUsage();
+      setMetrics(response.data);
+      setError('');
+    } catch (err) {
+      setError(API.getErrorString(err as any));
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    void loadMetrics();
+  }, [loadMetrics]);
+
+  // Refresh whenever the chatbot delivers a new response.
+  React.useEffect(() => {
+    return onAIResponseReceived(() => void loadMetrics());
+  }, [loadMetrics]);
 
   const totals = React.useMemo(
     () =>
@@ -160,21 +162,47 @@ export const ChatSessionUsageContent: React.FC = () => {
 
   return (
     <div className={contentStyle}>
+      <div className={noteStyle}>
+        These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when
+        the server restarts or the session expires.
+      </div>
+      <Divider component="div" />
       {loading ? (
         <Bullseye data-test="session-token-stats-loading">
           <Spinner size="xl" />
         </Bullseye>
       ) : error ? (
         errorState
+      ) : metrics.length === 0 ? (
+        emptyState
       ) : (
         <>
-          <Gallery hasGutter className={galleryStyle}>
-            <SummaryCard label={t('Requests')} value={totals.requestCount.toLocaleString()} />
-            <SummaryCard label={t('Prompt Tokens')} value={totals.promptTokens.toLocaleString()} />
-            <SummaryCard label={t('Completion Tokens')} value={totals.completionTokens.toLocaleString()} />
-            <SummaryCard label={t('Total Tokens')} value={totals.totalTokens.toLocaleString()} />
-            <SummaryCard label={t('Since')} value={since ? <LocalTime time={since} /> : '-'} />
-          </Gallery>
+          <Grid hasGutter className={galleryStyle}>
+            <GridItem span={3}>
+              <SummaryCard icon={<ClusterIcon />} label={t('Requests')} value={totals.requestCount.toLocaleString()} />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard
+                icon={<DesktopIcon />}
+                label={t('Prompt Tokens')}
+                value={totals.promptTokens.toLocaleString()}
+              />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard
+                icon={<CogIcon />}
+                label={t('Completion Tokens')}
+                value={totals.completionTokens.toLocaleString()}
+              />
+            </GridItem>
+            <GridItem span={3}>
+              <SummaryCard icon={<CubesIcon />} label={t('Total Tokens')} value={totals.totalTokens.toLocaleString()} />
+            </GridItem>
+          </Grid>
+          <div style={{ textAlign: 'center' }}>
+            Data calculated {t('Since')} {since ? <LocalTime time={since} /> : '-'}
+            <Button icon={<KialiIcon.Sync />} id="refresh-metrics" variant={ButtonVariant.link} onClick={loadMetrics} />
+          </div>
 
           <div className={sectionStyle}>
             <Card>
@@ -187,17 +215,6 @@ export const ChatSessionUsageContent: React.FC = () => {
                   emptyState={emptyState}
                   variant={TableVariant.compact}
                 />
-              </CardBody>
-            </Card>
-          </div>
-
-          <div className={sectionStyle}>
-            <Card>
-              <CardTitle>{t('About these stats')}</CardTitle>
-              <CardBody className={noteStyle}>
-                {t(
-                  'These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when the server restarts or the session expires.'
-                )}
               </CardBody>
             </Card>
           </div>

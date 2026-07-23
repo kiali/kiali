@@ -21,7 +21,7 @@ let lastChartEvents: any[] = [];
 
 rstest.mock('@patternfly/react-charts/victory', () => {
   const React = require('react');
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+   
   const MockChart = (props: any) => {
     // Capture events so click-handler tests can invoke them directly
     const { events, ...rest } = props;

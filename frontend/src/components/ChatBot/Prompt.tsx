@@ -12,6 +12,7 @@ import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
 import { router } from 'app/History';
+import { dispatchAIResponseReceived } from 'utils/aiEvents';
 import {
   Button,
   ButtonVariant,
@@ -302,6 +303,8 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           }
         }
       }
+      // Notify dashboard components so they can refresh token usage stats.
+      dispatchAIResponseReceived();
     };
     streamResponse().catch(streamError => {
       if (streamError.name !== 'AbortError') {
