@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	extensions_v1alpha1_api "istio.io/api/extensions/v1alpha1"
 	networking_v1_api "istio.io/api/networking/v1"
 	security_v1_api "istio.io/api/security/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
@@ -100,6 +101,39 @@ func TestRequestAuthenticationHasTargetRefs(t *testing.T) {
 	assert.False(t, RequestAuthenticationHasTargetRefs(&security_v1_api.RequestAuthentication{}))
 	assert.True(t, RequestAuthenticationHasTargetRefs(&security_v1_api.RequestAuthentication{
 		TargetRefs: []*type_v1beta1.PolicyTargetReference{{Kind: "Service", Name: "reviews"}},
+	}))
+}
+
+func TestWasmPluginHasTargetRefs(t *testing.T) {
+	assert.False(t, WasmPluginHasTargetRefs(nil))
+	assert.False(t, WasmPluginHasTargetRefs(&extensions_v1alpha1_api.WasmPlugin{}))
+	assert.True(t, WasmPluginHasTargetRefs(&extensions_v1alpha1_api.WasmPlugin{
+		TargetRefs: []*type_v1beta1.PolicyTargetReference{{Kind: "Service", Name: "reviews"}},
+	}))
+	assert.True(t, WasmPluginHasTargetRefs(&extensions_v1alpha1_api.WasmPlugin{
+		TargetRef: &type_v1beta1.PolicyTargetReference{Kind: "Gateway", Name: "waypoint"},
+	}))
+}
+
+func TestTelemetryHasTargetRefs(t *testing.T) {
+	assert.False(t, TelemetryHasTargetRefs(nil))
+	assert.False(t, TelemetryHasTargetRefs(&telemetry_v1_api.Telemetry{}))
+	assert.True(t, TelemetryHasTargetRefs(&telemetry_v1_api.Telemetry{
+		TargetRefs: []*type_v1beta1.PolicyTargetReference{{Kind: "Service", Name: "reviews"}},
+	}))
+}
+
+func TestIsDataplaneAmbientNamespace_ControlPlane(t *testing.T) {
+	assert.False(t, IsDataplaneAmbientNamespace(nil))
+	assert.False(t, IsDataplaneAmbientNamespace(&models.Namespace{
+		Name: "istio-system", IsAmbient: true, IsControlPlane: true,
+	}))
+	assert.True(t, IsDataplaneAmbientNamespace(&models.Namespace{
+		Name: "istio-system", IsAmbient: true, IsControlPlane: true,
+		Labels: map[string]string{config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue},
+	}))
+	assert.True(t, IsDataplaneAmbientNamespace(&models.Namespace{
+		Name: "bookinfo", IsAmbient: true, IsControlPlane: false,
 	}))
 }
 

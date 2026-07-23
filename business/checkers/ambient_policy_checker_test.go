@@ -526,8 +526,44 @@ func TestAmbientPolicyChecker_WasmPluginWithoutEnrollment(t *testing.T) {
 	key := models.BuildKey(kubernetes.WasmPlugins, wp.Name, ns, cluster)
 	validation, ok := vals[key]
 	require.True(t, ok)
+	require.Len(t, validation.Checks, 2)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("wasmplugin.ambient.l7notargetrefs", validation.Checks[0]))
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("wasmplugin.ambient.l7nowaypoint", validation.Checks[1]))
+}
+
+func TestAmbientPolicyChecker_WasmPluginMissingTargetRefs(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "ambient-ns"
+
+	wp := &extensions_v1alpha1.WasmPlugin{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-wasm", Namespace: ns},
+		Spec: extensions_v1alpha1_api.WasmPlugin{
+			Selector: &api_v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "reviews"}},
+			Url:      "oci://invalid.example/wasm:latest",
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.WaypointUseLabel: "waypoint",
+			}},
+		},
+		WasmPlugins: []*extensions_v1alpha1.WasmPlugin{wp},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ns: {data.CreateWorkload(ns, "reviews-v1", map[string]string{"app": "reviews"})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.WasmPlugins, wp.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok)
 	require.Len(t, validation.Checks, 1)
-	assert.NoError(t, validations.ConfirmIstioCheckMessage("wasmplugin.ambient.l7nowaypoint", validation.Checks[0]))
+	assert.False(t, validation.Valid)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("wasmplugin.ambient.l7notargetrefs", validation.Checks[0]))
 }
 
 func TestAmbientPolicyChecker_WasmPluginWithEnrollment_NoWarning(t *testing.T) {
@@ -539,8 +575,10 @@ func TestAmbientPolicyChecker_WasmPluginWithEnrollment_NoWarning(t *testing.T) {
 	wp := &extensions_v1alpha1.WasmPlugin{
 		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-wasm", Namespace: ns},
 		Spec: extensions_v1alpha1_api.WasmPlugin{
-			Selector: &api_v1beta1.WorkloadSelector{MatchLabels: map[string]string{"app": "reviews"}},
-			Url:      "oci://invalid.example/wasm:latest",
+			TargetRefs: []*api_v1beta1.PolicyTargetReference{
+				{Group: "", Kind: "Service", Name: "reviews"},
+			},
+			Url: "oci://invalid.example/wasm:latest",
 		},
 	}
 
@@ -615,8 +653,9 @@ func TestAmbientPolicyChecker_TelemetryL7WithoutEnrollment(t *testing.T) {
 	key := models.BuildKey(kubernetes.Telemetries, tel.Name, ns, cluster)
 	validation, ok := vals[key]
 	require.True(t, ok)
-	require.Len(t, validation.Checks, 1)
-	assert.NoError(t, validations.ConfirmIstioCheckMessage("telemetry.ambient.l7nowaypoint", validation.Checks[0]))
+	require.Len(t, validation.Checks, 2)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("telemetry.ambient.l7notargetrefs", validation.Checks[0]))
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("telemetry.ambient.l7nowaypoint", validation.Checks[1]))
 }
 
 func TestAmbientPolicyChecker_TelemetryL7WithEnrollment_NoWarning(t *testing.T) {
@@ -628,6 +667,9 @@ func TestAmbientPolicyChecker_TelemetryL7WithEnrollment_NoWarning(t *testing.T) 
 	tel := &telemetry_v1.Telemetry{
 		ObjectMeta: meta_v1.ObjectMeta{Name: "reviews-tracing", Namespace: ns},
 		Spec: telemetry_v1_api.Telemetry{
+			TargetRefs: []*api_v1beta1.PolicyTargetReference{
+				{Group: "", Kind: "Service", Name: "reviews"},
+			},
 			Tracing: []*telemetry_v1_api.Tracing{{}},
 		},
 	}
@@ -700,6 +742,32 @@ func TestAmbientPolicyChecker_TelemetryNonAmbient_NoValidation(t *testing.T) {
 		Cluster: cluster,
 		Namespaces: models.Namespaces{
 			{Name: ns, Cluster: cluster, IsAmbient: false},
+		},
+		Telemetries: []*telemetry_v1.Telemetry{tel},
+	}.Check()
+
+	assert.Empty(t, vals)
+}
+
+func TestAmbientPolicyChecker_TelemetryInControlPlane_NoValidation(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "istio-system"
+
+	// Mesh-wide Telemetry in the root namespace is expected without targetRefs / enrollment.
+	// Kiali marks control plane namespaces IsAmbient when Ambient is cluster-enabled.
+	tel := &telemetry_v1.Telemetry{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "otel-tracing", Namespace: ns},
+		Spec: telemetry_v1_api.Telemetry{
+			Tracing: []*telemetry_v1_api.Tracing{{}},
+		},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: true, IsControlPlane: true},
 		},
 		Telemetries: []*telemetry_v1.Telemetry{tel},
 	}.Check()

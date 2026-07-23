@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	extensions_v1alpha1_api "istio.io/api/extensions/v1alpha1"
 	networking_v1_api "istio.io/api/networking/v1"
 	security_v1_api "istio.io/api/security/v1"
 	telemetry_v1_api "istio.io/api/telemetry/v1"
@@ -56,10 +57,25 @@ func NewNamespaceAmbientStatus(ns *models.Namespace, cluster string, workloads m
 		return status
 	}
 	status.Name = ns.Name
-	status.IsAmbient = ns.IsAmbient
+	// Use dataplane Ambient, not Kiali's control-plane IsAmbient (set when Ambient is
+	// cluster-enabled). Mesh-wide Telemetry/Wasm in istio-system must not get waypoint warnings.
+	status.IsAmbient = IsDataplaneAmbientNamespace(ns)
 	status.IsEnrolled = IsEnrolledForWaypoint(nil, ns.Labels)
 	status.HasWaypoint, status.WaypointName = FindNamespaceWaypoint(workloads)
 	return status
+}
+
+// IsDataplaneAmbientNamespace reports whether a namespace is Ambient for data-plane policy attachment.
+// Control plane namespaces may have Namespace.IsAmbient=true when Ambient is enabled in the mesh
+// (UI/control-plane detection), but they are not dataplane Ambient unless labeled as such.
+func IsDataplaneAmbientNamespace(ns *models.Namespace) bool {
+	if ns == nil {
+		return false
+	}
+	if ns.IsControlPlane {
+		return ns.Labels[config.IstioAmbientNamespaceLabel] == config.IstioAmbientNamespaceLabelValue
+	}
+	return ns.IsAmbient
 }
 
 // IsEnrolledForWaypoint reports whether a resource is enrolled to use a waypoint.
@@ -129,6 +145,25 @@ func AuthorizationPolicyHasTargetRefs(spec *security_v1_api.AuthorizationPolicy)
 // RequestAuthenticationHasTargetRefs reports whether the policy attaches via targetRef(s).
 // In Ambient, waypoint proxies ignore selector-based RequestAuthentications; targetRefs are required.
 func RequestAuthenticationHasTargetRefs(spec *security_v1_api.RequestAuthentication) bool {
+	if spec == nil {
+		return false
+	}
+	return spec.TargetRef != nil || len(spec.TargetRefs) > 0
+}
+
+// WasmPluginHasTargetRefs reports whether the WasmPlugin attaches via targetRef(s).
+// In Ambient, waypoint proxies ignore selector-based WasmPlugins; targetRefs are required.
+// See https://istio.io/latest/docs/ambient/usage/l7-features/
+func WasmPluginHasTargetRefs(spec *extensions_v1alpha1_api.WasmPlugin) bool {
+	if spec == nil {
+		return false
+	}
+	return spec.TargetRef != nil || len(spec.TargetRefs) > 0
+}
+
+// TelemetryHasTargetRefs reports whether the Telemetry attaches via targetRef(s).
+// In Ambient, waypoint proxies ignore selector-based Telemetry; targetRefs are required for L7.
+func TelemetryHasTargetRefs(spec *telemetry_v1_api.Telemetry) bool {
 	if spec == nil {
 		return false
 	}

@@ -25,7 +25,8 @@ import (
 //     workloads) are not enrolled.
 //   - WasmPlugin / Telemetry: only validated when the CR namespace is Ambient (otherwise N/A).
 //     Always emit a validation entry in Ambient; warn when that namespace (or selected workloads)
-//     are not enrolled. L4-only Telemetry is marked Valid (no waypoint warning).
+//     are not enrolled. Also warn when targetRefs are missing (waypoints ignore selector).
+//     L4-only Telemetry is marked Valid (no waypoint / targetRefs warning).
 //   - VirtualService / DestinationRule: keyed off the *destination* Service. If the destination
 //     namespace is Ambient, warn when the service is not enrolled and/or when the CR is not in the
 //     service namespace (cross-namespace L7 configs do not take effect for Ambient waypoints).
@@ -143,6 +144,11 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 			continue
 		}
 		key, validation := EmptyValidValidation(wp.Name, wp.Namespace, kubernetes.WasmPlugins, c.Cluster)
+		if !ambient.WasmPluginHasTargetRefs(&wp.Spec) {
+			check := models.Build("wasmplugin.ambient.l7notargetrefs", "")
+			validation.Checks = append(validation.Checks, &check)
+			validation.Valid = false
+		}
 		matchLabels := map[string]string{}
 		if wp.Spec.Selector != nil {
 			matchLabels = wp.Spec.Selector.MatchLabels
@@ -164,6 +170,11 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		key, validation := EmptyValidValidation(tel.Name, tel.Namespace, kubernetes.Telemetries, c.Cluster)
 		isL7, _ := ambient.IsL7Telemetry(&tel.Spec)
 		if isL7 {
+			if !ambient.TelemetryHasTargetRefs(&tel.Spec) {
+				check := models.Build("telemetry.ambient.l7notargetrefs", "")
+				validation.Checks = append(validation.Checks, &check)
+				validation.Valid = false
+			}
 			matchLabels := map[string]string{}
 			if tel.Spec.Selector != nil {
 				matchLabels = tel.Spec.Selector.MatchLabels

@@ -610,7 +610,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices},
 		checkers.TrafficExtensionChecker{Namespaces: namespaces, TrafficExtensions: istioConfigList.TrafficExtensions},
 		checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
-		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, vInfo.clusterInfo.rootNamespaces, namespaces, workloadsPerNamespace),
+		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, vInfo.clusterInfo.rootNamespaces, namespaces, workloadsPerNamespace, services),
 		checkers.WorkloadGroupsChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, ServiceAccounts: vInfo.saMap, WorkloadGroups: istioConfigList.WorkloadGroups},
 		newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
 	}, nil
@@ -795,7 +795,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.NewPeerAuthReferences(cluster, conf, identityDomain, rootNamespaces, *mtlsDetails, workloadsPerNamespace)
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
-		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, rootNamespaces, namespaces, workloadsPerNamespace)
+		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, rootNamespaces, namespaces, workloadsPerNamespace, services)
 		objectCheckers = []checkers.ObjectChecker{workloadChecker}
 	case kubernetes.WorkloadEntries:
 		referenceChecker = references.WorkloadEntryReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries}

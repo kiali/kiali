@@ -1,7 +1,11 @@
 package ambient
 
 import (
+	security_v1_api "istio.io/api/security/v1"
+	api_v1beta1 "istio.io/api/type/v1beta1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/log"
@@ -15,24 +19,27 @@ func NewAmbientWorkloadChecker(
 	namespace string,
 	namespaces models.Namespaces,
 	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	services []core_v1.Service,
 ) AmbientWorkloadChecker {
 	return AmbientWorkloadChecker{
+		authorizationPolicies: authorizationPolicies,
 		cluster:               cluster,
 		conf:                  conf,
-		workload:              workload,
 		namespace:             namespace,
 		namespaces:            namespaces,
-		authorizationPolicies: authorizationPolicies,
+		services:              services,
+		workload:              workload,
 	}
 }
 
 type AmbientWorkloadChecker struct {
+	authorizationPolicies []*security_v1.AuthorizationPolicy
 	cluster               string
 	conf                  *config.Config
-	workload              *models.Workload
 	namespace             string
 	namespaces            models.Namespaces
-	authorizationPolicies []*security_v1.AuthorizationPolicy
+	services              []core_v1.Service
+	workload              *models.Workload
 }
 
 func (awc AmbientWorkloadChecker) Check() ([]*models.IstioCheck, bool) {
@@ -135,10 +142,87 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 			continue
 		}
 		// Only L7 AuthorizationPolicies require a waypoint; L4 policies are enforced by ztunnel.
-		if isL7, _ := IsL7AuthorizationPolicy(&ap.Spec); isL7 {
+		isL7, _ := IsL7AuthorizationPolicy(&ap.Spec)
+		if !isL7 {
+			continue
+		}
+		if awc.l7AuthPolicyAppliesToWorkload(&ap.Spec) {
 			return true
 		}
 	}
+	return false
+}
+
+// l7AuthPolicyAppliesToWorkload reports whether an L7 AuthorizationPolicy targets this workload.
+// Ambient attachment is scoped: selector match and/or targetRefs to a Service that selects the workload.
+// Gateway targetRefs attach to the waypoint itself, so they do not apply to workloads without a waypoint.
+func (awc AmbientWorkloadChecker) l7AuthPolicyAppliesToWorkload(spec *security_v1_api.AuthorizationPolicy) bool {
+	if spec == nil {
+		return false
+	}
+
+	if AuthorizationPolicyHasTargetRefs(spec) {
+		return awc.workloadMatchedByServiceTargetRefs(spec.TargetRef, spec.TargetRefs)
+	}
+
+	if spec.Selector != nil && len(spec.Selector.MatchLabels) > 0 {
+		return labels.SelectorFromSet(spec.Selector.MatchLabels).Matches(labels.Set(awc.workload.Labels))
+	}
+
+	// No selector and no targetRefs: namespace-wide policy.
+	return true
+}
+
+func (awc AmbientWorkloadChecker) workloadMatchedByServiceTargetRefs(targetRef *api_v1beta1.PolicyTargetReference, targetRefs []*api_v1beta1.PolicyTargetReference) bool {
+	refs := make([]*api_v1beta1.PolicyTargetReference, 0, len(targetRefs)+1)
+	if targetRef != nil {
+		refs = append(refs, targetRef)
+	}
+	refs = append(refs, targetRefs...)
+
+	for _, ref := range refs {
+		if ref == nil || !isServicePolicyTarget(ref) {
+			continue
+		}
+		if awc.workloadSelectedByService(ref.Name) {
+			return true
+		}
+	}
+	return false
+}
+
+func isServicePolicyTarget(ref *api_v1beta1.PolicyTargetReference) bool {
+	if ref == nil {
+		return false
+	}
+	// Core Service refs use kind Service with an empty group.
+	return ref.Kind == "Service" && (ref.Group == "" || ref.Group == "core")
+}
+
+func (awc AmbientWorkloadChecker) workloadSelectedByService(serviceName string) bool {
+	if serviceName == "" {
+		return false
+	}
+
+	for _, svc := range awc.services {
+		if svc.Namespace != awc.workload.Namespace || svc.Name != serviceName {
+			continue
+		}
+		if len(svc.Spec.Selector) == 0 {
+			continue
+		}
+		if labels.SelectorFromSet(svc.Spec.Selector).Matches(labels.Set(awc.workload.Labels)) {
+			return true
+		}
+	}
+
+	// Fallback when Services were not provided to the checker (e.g. some list paths).
+	for _, svc := range awc.workload.Services {
+		if svc.Name == serviceName {
+			return true
+		}
+	}
+
 	return false
 }
 

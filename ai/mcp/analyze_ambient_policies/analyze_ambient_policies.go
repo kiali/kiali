@@ -376,7 +376,7 @@ func generateRecommendations(nsStatus NamespaceAmbientStatus, l7Count, l7Without
 		recommendations = append(recommendations,
 			fmt.Sprintf("Deploy a waypoint proxy in namespace '%s' to enable L7 configs. Use 'istioctl waypoint apply' or create a Gateway resource.", nsStatus.Name),
 			"After deploying the waypoint, verify configs are working by checking metrics or testing the affected services.",
-			"For L7 AuthorizationPolicy and RequestAuthentication, use targetRefs to a Service or Gateway — selector-based policies are ignored by waypoints.",
+			"For L7 AuthorizationPolicy, RequestAuthentication, WasmPlugin, and L7 Telemetry, use targetRefs to a Service or Gateway — selector-based policies are ignored by waypoints.",
 		)
 	}
 
@@ -389,7 +389,7 @@ func generateRecommendations(nsStatus NamespaceAmbientStatus, l7Count, l7Without
 	if len(recommendations) == 0 {
 		recommendations = append(recommendations,
 			"No issues found. All configurations are correctly set up for Ambient mode.",
-			"For L7 AuthorizationPolicy and RequestAuthentication in Ambient, prefer targetRefs over selector so the policy binds to the waypoint.",
+			"For L7 AuthorizationPolicy, RequestAuthentication, WasmPlugin, and L7 Telemetry in Ambient, prefer targetRefs over selector so the policy binds to the waypoint.",
 		)
 	}
 
@@ -496,6 +496,10 @@ func analyzeDestinationRule(dr *networking_v1.DestinationRule, nsStatus ambient.
 // analyzeWasmPlugin classifies a WasmPlugin as L7
 // WasmPlugins run in the HTTP filter chain
 func analyzeWasmPlugin(wp *extensions_v1alpha1.WasmPlugin, nsStatus ambient.NamespaceAmbientStatus) AnalyzedPolicy {
+	var missingTargetRefs string
+	if !ambient.WasmPluginHasTargetRefs(&wp.Spec) {
+		missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "WasmPlugin")
+	}
 	return AnalyzedPolicy{
 		ConfigType:    "WasmPlugin",
 		Name:          wp.Name,
@@ -503,7 +507,10 @@ func analyzeWasmPlugin(wp *extensions_v1alpha1.WasmPlugin, nsStatus ambient.Name
 		NeedsWaypoint: ambient.NeedsWaypointWarning(nsStatus, true),
 		Reason:        "WasmPlugin processes HTTP requests (runs in waypoint's Envoy filter chain)",
 		Rules:         1,
-		Warning:       ambient.AmbientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
+		Warning: joinWarnings(
+			missingTargetRefs,
+			ambient.AmbientNoWaypointWarning(nsStatus, "This WasmPlugin will NOT be loaded."),
+		),
 	}
 }
 
@@ -521,7 +528,14 @@ func analyzeTelemetry(tel *telemetry_v1.Telemetry, nsStatus ambient.NamespaceAmb
 		analyzed.Layer = ambient.LayerL7
 		analyzed.Reason = reason
 		analyzed.NeedsWaypoint = ambient.NeedsWaypointWarning(nsStatus, true)
-		analyzed.Warning = ambient.AmbientNoWaypointWarning(nsStatus, "L7 telemetry features will NOT work.")
+		var missingTargetRefs string
+		if !ambient.TelemetryHasTargetRefs(&tel.Spec) {
+			missingTargetRefs = ambient.AmbientMissingTargetRefsWarning(nsStatus, "Telemetry")
+		}
+		analyzed.Warning = joinWarnings(
+			missingTargetRefs,
+			ambient.AmbientNoWaypointWarning(nsStatus, "L7 telemetry features will NOT work."),
+		)
 	} else {
 		analyzed.Layer = ambient.LayerL4
 		analyzed.Reason = reason

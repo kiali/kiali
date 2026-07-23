@@ -564,7 +564,9 @@ const ambientL7ValidationCodes = new Set([
   'KIA1112',
   'KIA1113',
   'KIA1114',
-  'KIA1115'
+  'KIA1115',
+  'KIA1116',
+  'KIA1117'
 ]);
 
 Then('Ambient L7 validation warnings are not present in the {string} namespace', (namespace: string) => {

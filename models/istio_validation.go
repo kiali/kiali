@@ -457,9 +457,19 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "WasmPlugin in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
 		Severity: WarningSeverity,
 	},
+	"wasmplugin.ambient.l7notargetrefs": {
+		Code:     "KIA1116",
+		Message:  "WasmPlugin in Ambient requires targetRefs to a Service or Gateway; selector policies are ignored by waypoints",
+		Severity: WarningSeverity,
+	},
 	"telemetry.ambient.l7nowaypoint": {
 		Code:     "KIA1112",
 		Message:  "L7 Telemetry in Ambient namespace requires waypoint enrollment (istio.io/use-waypoint)",
+		Severity: WarningSeverity,
+	},
+	"telemetry.ambient.l7notargetrefs": {
+		Code:     "KIA1117",
+		Message:  "L7 Telemetry in Ambient requires targetRefs to a Service or Gateway; selector policies are ignored by waypoints",
 		Severity: WarningSeverity,
 	},
 	"workload.ambient.sidecarandlabel": {
