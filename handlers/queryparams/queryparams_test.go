@@ -69,6 +69,8 @@ func TestValidateEnum(t *testing.T) {
 func TestValidatePromDuration(t *testing.T) {
 	assert.NoError(t, ValidatePromDuration("", "rateInterval"))
 	assert.NoError(t, ValidatePromDuration("5m", "rateInterval"))
+	assert.NoError(t, ValidatePromDuration("1h30m", "rateInterval"))
+	assert.NoError(t, ValidatePromDuration("1d2h30m", "rateInterval"))
 
 	err := ValidatePromDuration("5 minutes", "rateInterval")
 	require.Error(t, err)

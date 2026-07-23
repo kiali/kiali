@@ -50,6 +50,37 @@ var istioMetricsQueryParams = []string{
 	"direction",
 	"duration",
 	"filters[]",
+	"quantiles[]",
+	"queryTime",
+	"rateFunc",
+	"rateInterval",
+	"reporter",
+	"requestProtocol",
+	"step",
+}
+
+var aggregateMetricsQueryParams = []string{
+	"avg",
+	"byLabels[]",
+	"direction",
+	"duration",
+	"filters[]",
+	"quantiles[]",
+	"queryTime",
+	"rateFunc",
+	"rateInterval",
+	"reporter",
+	"requestProtocol",
+	"step",
+}
+
+var clusterMetricsQueryParams = []string{
+	"avg",
+	"byLabels[]",
+	"clusterName",
+	"direction",
+	"duration",
+	"filters[]",
 	"namespaces",
 	"quantiles[]",
 	"queryTime",
@@ -191,7 +222,7 @@ func AggregateMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 		oldestNs := GetOldestNamespace(namespaceInfo)
 
 		params := models.IstioMetricsQuery{Namespace: namespace, Aggregate: aggregate, AggregateValue: aggregateValue}
-		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
+		if err := extractIstioMetricsQueryParams(r, &params, oldestNs, aggregateMetricsQueryParams...); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
@@ -405,7 +436,7 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		for _, namespace := range nss {
 			params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace.Name}
 
-			err = extractIstioMetricsQueryParams(r, &params, oldestNs)
+			err = extractIstioMetricsQueryParams(r, &params, oldestNs, clusterMetricsQueryParams...)
 			if err != nil {
 				RespondWithQueryParamError(w, err.Error())
 				return
@@ -424,9 +455,12 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 	}
 }
 
-func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace) error {
+func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace, allowed ...string) error {
 	queryParams := r.URL.Query()
-	if err := queryparams.RejectUnknown(queryParams, istioMetricsQueryParams...); err != nil {
+	if len(allowed) == 0 {
+		allowed = istioMetricsQueryParams
+	}
+	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
 		return err
 	}
 
