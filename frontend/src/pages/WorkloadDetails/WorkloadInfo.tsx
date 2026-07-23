@@ -221,14 +221,12 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               (!pod.istioContainers || pod.istioContainers.length === 0) &&
               (!pod.istioInitContainers || pod.istioInitContainers.length === 0)
             ) {
-              if (
-                !(
-                  serverConfig.ambientEnabled &&
-                  (pod.annotations
-                    ? pod.annotations[istioAnnotations.ambientAnnotation] === istioAnnotations.ambientAnnotationEnabled
-                    : false)
-                )
-              ) {
+              if (!(
+                serverConfig.ambientEnabled &&
+                (pod.annotations
+                  ? pod.annotations[istioAnnotations.ambientAnnotation] === istioAnnotations.ambientAnnotationEnabled
+                  : false)
+              )) {
                 validations.pod[pod.name].checks.push(noIstiosidecar);
               }
             } else {
