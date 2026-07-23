@@ -4,24 +4,26 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { SummaryPanelEdge } from './SummaryPanelEdge';
 import { SummaryPanelGraph } from './SummaryPanelGraph';
 import { SummaryPanelAppBox } from './SummaryPanelAppBox';
-import { SummaryPanelPropType, BoxByType, SummaryData, NodeAttr, FocusNode } from '../../types/Graph';
+import type { SummaryPanelPropType, BoxByType, SummaryData, FocusNode } from '../../types/Graph';
+import { NodeAttr } from '../../types/Graph';
 import { KialiIcon } from 'config/KialiIcon';
 import { SummaryPanelNode } from './SummaryPanelNode';
-import { TracingState } from 'reducers/TracingState';
+import type { TracingState } from 'reducers/TracingState';
 import { SummaryPanelTraceDetails } from './SummaryPanelTraceDetails';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { SummaryPanelClusterBox } from './SummaryPanelClusterBox';
 import { SummaryPanelNamespaceBox } from './SummaryPanelNamespaceBox';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { TourStop } from 'components/Tour/TourStop';
 import { summaryPanelWidth } from './SummaryPanelCommon';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { PeerAuthentication } from '../../types/IstioObjects';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import type { PeerAuthentication } from '../../types/IstioObjects';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';
-import { GraphElement } from '@patternfly/react-topology';
+import type { GraphElement } from '@patternfly/react-topology';
+import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -51,7 +53,13 @@ const mainStyle = kialiStyle({
   fontSize: 'var(--graph-side-panel--font-size)',
   padding: '0',
   position: 'relative',
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  $nest: glassHighContrastSurfaceNest({
+    highContrast: {
+      border: 'none',
+      borderLeft: `1px solid ${PFColors.BorderDefault}`
+    }
+  })
 });
 
 const expandedStyle = kialiStyle({ height: '100%' });
@@ -84,7 +92,8 @@ const toggleSidePanelStyle = kialiStyle({
   position: 'absolute',
   textAlign: 'center',
   transform: 'rotate(-90deg)',
-  transformOrigin: 'left top 0'
+  transformOrigin: 'left top 0',
+  $nest: glassHighContrastSurfaceNest()
 });
 
 class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, SummaryPanelState> {
@@ -112,7 +121,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
         : expandedStyle
       : collapsedStyle;
 
-    let tourStops = [GraphTourStops.SidePanel];
+    const tourStops = [GraphTourStops.SidePanel];
 
     tourStops.unshift(GraphTourStops.Graph);
     tourStops.unshift(GraphTourStops.ContextualMenu);

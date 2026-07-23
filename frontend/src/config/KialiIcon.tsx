@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { PFColors } from '../components/Pf/PfColors';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
+import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import {
+  AdjustIcon,
   AngleDoubleDownIcon,
   AngleDoubleLeftIcon,
   AngleDoubleRightIcon,
@@ -34,6 +35,7 @@ import {
   FileDownloadIcon,
   FilterIcon,
   GithubIcon,
+  GlassesIcon,
   GlobeAmericasIcon,
   GlobeRouteIcon,
   HistoryIcon,
@@ -97,6 +99,7 @@ export interface IconProps {
 // keep alphabetized
 export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } = {
   AddMore: (props: IconProps) => createIcon(props, PlusCircleIcon),
+  Adjust: (props: IconProps) => createIcon(props, AdjustIcon),
   AngleDoubleDown: (props: IconProps) => createIcon(props, AngleDoubleDownIcon),
   AngleDoubleLeft: (props: IconProps) => createIcon(props, AngleDoubleLeftIcon),
   AngleDoubleRight: (props: IconProps) => createIcon(props, AngleDoubleRightIcon),
@@ -128,6 +131,7 @@ export const KialiIcon: { [name: string]: React.FunctionComponent<IconProps> } =
   Filter: (props: IconProps) => createIcon(props, FilterIcon),
   Gateway: (props: IconProps) => createIcon(props, GlobeRouteIcon),
   Github: (props: IconProps) => createIcon(props, GithubIcon),
+  Glasses: (props: IconProps) => createIcon(props, GlassesIcon),
   Help: (props: IconProps) => createIcon(props, OutlinedQuestionCircleIcon),
   History: (props: IconProps) => createIcon(props, HistoryIcon),
   Info: (props: IconProps) => createIcon(props, InfoAltIcon, PFColors.Info),

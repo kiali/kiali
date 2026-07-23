@@ -1,12 +1,14 @@
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { highContrastNoShadowNest } from 'styles/ThemeSurfaces';
 
 export const panelStyle = kialiStyle({
   marginBottom: '1.5rem',
   border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: '1px',
   '-webkit-box-shadow': '0 1px 1px rgba(0, 0, 0, 0.05)',
-  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.05)'
+  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.05)',
+  $nest: highContrastNoShadowNest()
 });
 
 export const panelHeadingStyle = kialiStyle({

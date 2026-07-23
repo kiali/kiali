@@ -3,16 +3,17 @@ import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Spinner, Title } from '@patternfly/react-core';
 import { validateExternalUrl } from './TraceConfigurationModal';
 import { kialiStyle } from '../../styles/StyleUtils';
-import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
+import type { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import * as API from '../../services/Api';
-import { ExternalServiceInfo } from '../../types/StatusState';
-import { KialiDispatch } from '../../types/Redux';
+import type { ExternalServiceInfo } from '../../types/StatusState';
+import type { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { classes } from 'typestyle';
+import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -52,10 +53,11 @@ const containerStyle = kialiStyle({
   width: '100%',
   overflowX: 'scroll',
   backgroundColor: PFColors.BackgroundColor100,
-  border: '1px solid #ddd',
+  border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: '6px',
   padding: '1rem',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  $nest: glassHighContrastSurfaceNest()
 });
 
 const blueDisplay = kialiStyle({

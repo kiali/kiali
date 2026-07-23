@@ -1,166 +1,434 @@
 // Rstest Snapshot v1
 
-exports[`ThemeSwitch renders > dark theme 1`] = `
+exports[`ThemeSwitch renders > dark theme with glass contrast 1`] = `
 <div>
   <div
-    aria-label="Theme switch"
-    class="pf-v6-c-toggle-group"
-    role="group"
+    class="kiali_f12jgvbb"
+    data-test="theme-switch"
   >
     <div
-      class="pf-v6-c-toggle-group__item"
+      aria-label="Color scheme"
+      class="pf-v6-c-toggle-group pf-m-compact"
+      role="group"
     >
-      <button
-        aria-label="Light theme"
-        aria-pressed="false"
-        class="pf-v6-c-toggle-group__button"
-        type="button"
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="theme-light"
+        title="Light theme"
       >
-        <span
-          class="pf-v6-c-toggle-group__icon"
+        <button
+          aria-label="Light theme"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="theme-light"
+          type="button"
         >
           <span
-            class="pf-v6-c-icon pf-m-inline"
+            class="pf-v6-c-toggle-group__icon"
           >
             <span
-              class="pf-v6-c-icon__content"
+              class="pf-v6-c-icon pf-m-inline"
             >
-              <svg
-                aria-hidden="true"
-                class="pf-v6-svg"
-                fill="currentColor"
-                height="1em"
-                role="img"
-                viewBox="0 0 512 512"
-                width="1em"
+              <span
+                class="pf-v6-c-icon__content"
               >
-                <path
-                  d="M256 160c-52.9 0-96 43.1-96 96s43.1 96 96 96 96-43.1 96-96-43.1-96-96-96zm246.4 80.5l-94.7-47.3 33.5-100.4c4.5-13.6-8.4-26.5-21.9-21.9l-100.4 33.5-47.4-94.8c-6.4-12.8-24.6-12.8-31 0l-47.3 94.7L92.7 70.8c-13.6-4.5-26.5 8.4-21.9 21.9l33.5 100.4-94.7 47.4c-12.8 6.4-12.8 24.6 0 31l94.7 47.3-33.5 100.5c-4.5 13.6 8.4 26.5 21.9 21.9l100.4-33.5 47.3 94.7c6.4 12.8 24.6 12.8 31 0l47.3-94.7 100.4 33.5c13.6 4.5 26.5-8.4 21.9-21.9l-33.5-100.4 94.7-47.3c13-6.5 13-24.7.2-31.1zm-155.9 106c-49.9 49.9-131.1 49.9-181 0-49.9-49.9-49.9-131.1 0-181 49.9-49.9 131.1-49.9 181 0 49.9 49.9 49.9 131.1 0 181z"
-                />
-              </svg>
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M256 160c-52.9 0-96 43.1-96 96s43.1 96 96 96 96-43.1 96-96-43.1-96-96-96zm246.4 80.5l-94.7-47.3 33.5-100.4c4.5-13.6-8.4-26.5-21.9-21.9l-100.4 33.5-47.4-94.8c-6.4-12.8-24.6-12.8-31 0l-47.3 94.7L92.7 70.8c-13.6-4.5-26.5 8.4-21.9 21.9l33.5 100.4-94.7 47.4c-12.8 6.4-12.8 24.6 0 31l94.7 47.3-33.5 100.5c-4.5 13.6 8.4 26.5 21.9 21.9l100.4-33.5 47.3 94.7c6.4 12.8 24.6 12.8 31 0l47.3-94.7 100.4 33.5c13.6 4.5 26.5-8.4 21.9-21.9l-33.5-100.4 94.7-47.3c13-6.5 13-24.7.2-31.1zm-155.9 106c-49.9 49.9-131.1 49.9-181 0-49.9-49.9-49.9-131.1 0-181 49.9-49.9 131.1-49.9 181 0 49.9 49.9 49.9 131.1 0 181z"
+                  />
+                </svg>
+              </span>
             </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="theme-dark"
+        title="Dark theme"
+      >
+        <button
+          aria-label="Dark theme"
+          aria-pressed="true"
+          class="pf-v6-c-toggle-group__button pf-m-selected"
+          id="theme-dark"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M283.211 512c78.962 0 151.079-35.925 198.857-94.792 7.068-8.708-.639-21.43-11.562-19.35-124.203 23.654-238.262-71.576-238.262-196.954 0-72.222 38.662-138.635 101.498-174.394 9.686-5.512 7.25-20.197-3.756-22.23A258.156 258.156 0 0 0 283.211 0c-141.309 0-256 114.511-256 256 0 141.309 114.511 256 256 256z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
     </div>
     <div
-      class="pf-v6-c-toggle-group__item"
+      aria-label="Contrast mode"
+      class="pf-v6-c-toggle-group pf-m-compact"
+      role="group"
     >
-      <button
-        aria-label="Dark theme"
-        aria-pressed="true"
-        class="pf-v6-c-toggle-group__button pf-m-selected"
-        type="button"
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-default"
+        title="Default contrast"
       >
-        <span
-          class="pf-v6-c-toggle-group__icon"
+        <button
+          aria-label="Default contrast"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="contrast-default"
+          type="button"
         >
           <span
-            class="pf-v6-c-icon pf-m-inline"
+            class="pf-v6-c-toggle-group__icon"
           >
             <span
-              class="pf-v6-c-icon__content"
+              class="pf-v6-c-icon pf-m-inline"
             >
-              <svg
-                aria-hidden="true"
-                class="pf-v6-svg"
-                fill="currentColor"
-                height="1em"
-                role="img"
-                viewBox="0 0 512 512"
-                width="1em"
+              <span
+                class="pf-v6-c-icon__content"
               >
-                <path
-                  d="M283.211 512c78.962 0 151.079-35.925 198.857-94.792 7.068-8.708-.639-21.43-11.562-19.35-124.203 23.654-238.262-71.576-238.262-196.954 0-72.222 38.662-138.635 101.498-174.394 9.686-5.512 7.25-20.197-3.756-22.23A258.156 258.156 0 0 0 283.211 0c-141.309 0-256 114.511-256 256 0 141.309 114.511 256 256 256z"
-                />
-              </svg>
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 896 1024"
+                  width="1em"
+                >
+                  <path
+                    d="M704,448.1 L832,448.1 L832,320 L704,320 L704,448.1 Z M64,448.1 L192,448.1 L192,320 L64,320 L64,448.1 Z M384,704 L512,704 L512,576 L384,576 L384,704 Z M512,0 L512,511.6 L544,511.6 C561.673112,511.6 576,525.926888 576,543.6 L576,736 C576,753.673112 561.673112,768 544,768 L512,768 L512,1024 L384,1024 L384,768 L352,768 C334.326888,768 320,753.673112 320,736 L320,543.6 C320,525.926888 334.326888,511.6 352,511.6 L384,511.6 L384,0 L512,0 Z M832,0.1 L832,256 L864,256 C881.673112,256 896,270.326888 896,288 L896,480 C896,497.673112 881.673112,512 864,512 L832,512 L832,1024 L704,1024 L704,512 L672,512 C654.326888,512 640,497.673112 640,480 L640,288 C640,270.326888 654.326888,256 672,256 L704,256 L704,0.1 L832,0.1 Z M192,0.1 L192,256 L224,256 C241.673112,256 256,270.326888 256,288 L256,480 C256,497.673112 241.673112,512 224,512 L192,512 L192,1024 L64,1024 L64,512 L32,512 C14.326888,512 0,497.673112 0,480 L0,288 C0,270.326888 14.326888,256 32,256 L64,256 L64,0.1 L192,0.1 Z"
+                  />
+                </svg>
+              </span>
             </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-glass"
+        title="Glass theme"
+      >
+        <button
+          aria-label="Glass theme"
+          aria-pressed="true"
+          class="pf-v6-c-toggle-group__button pf-m-selected"
+          id="contrast-glass"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 576 512"
+                  width="1em"
+                >
+                  <path
+                    d="M574.1 280.37L528.75 98.66c-5.91-23.7-21.59-44.05-43-55.81-21.44-11.73-46.97-14.11-70.19-6.33l-15.25 5.08c-8.39 2.79-12.92 11.86-10.12 20.24l5.06 15.18c2.79 8.38 11.85 12.91 20.23 10.12l13.18-4.39c10.87-3.62 23-3.57 33.16 1.73 10.29 5.37 17.57 14.56 20.37 25.82l38.46 153.82c-22.19-6.81-49.79-12.46-81.2-12.46-34.77 0-73.98 7.02-114.85 26.74h-73.18c-40.87-19.74-80.08-26.75-114.86-26.75-31.42 0-59.02 5.65-81.21 12.46l38.46-153.83c2.79-11.25 10.09-20.45 20.38-25.81 10.16-5.3 22.28-5.35 33.15-1.73l13.17 4.39c8.38 2.79 17.44-1.74 20.23-10.12l5.06-15.18c2.8-8.38-1.73-17.45-10.12-20.24l-15.25-5.08c-23.22-7.78-48.75-5.41-70.19 6.33-21.41 11.77-37.09 32.11-43 55.8L1.9 280.37A64.218 64.218 0 0 0 0 295.86v70.25C0 429.01 51.58 480 115.2 480h37.12c60.28 0 110.37-45.94 114.88-105.37l2.93-38.63h35.75l2.93 38.63C313.31 434.06 363.4 480 423.68 480h37.12c63.62 0 115.2-50.99 115.2-113.88v-70.25c0-5.23-.64-10.43-1.9-15.5zm-370.72 89.42c-1.97 25.91-24.4 46.21-51.06 46.21H115.2C86.97 416 64 393.62 64 366.11v-37.54c18.12-6.49 43.42-12.92 72.58-12.92 23.86 0 47.26 4.33 69.93 12.92l-3.13 41.22zM512 366.12c0 27.51-22.97 49.88-51.2 49.88h-37.12c-26.67 0-49.1-20.3-51.06-46.21l-3.13-41.22c22.67-8.59 46.08-12.92 69.95-12.92 29.12 0 54.43 6.44 72.55 12.93v37.54z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-high"
+        title="High contrast"
+      >
+        <button
+          aria-label="High contrast"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="contrast-high"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
 `;
 
-exports[`ThemeSwitch renders > light theme 1`] = `
+exports[`ThemeSwitch renders > light theme with default contrast 1`] = `
 <div>
   <div
-    aria-label="Theme switch"
-    class="pf-v6-c-toggle-group"
-    role="group"
+    class="kiali_f12jgvbb"
+    data-test="theme-switch"
   >
     <div
-      class="pf-v6-c-toggle-group__item"
+      aria-label="Color scheme"
+      class="pf-v6-c-toggle-group pf-m-compact"
+      role="group"
     >
-      <button
-        aria-label="Light theme"
-        aria-pressed="true"
-        class="pf-v6-c-toggle-group__button pf-m-selected"
-        type="button"
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="theme-light"
+        title="Light theme"
       >
-        <span
-          class="pf-v6-c-toggle-group__icon"
+        <button
+          aria-label="Light theme"
+          aria-pressed="true"
+          class="pf-v6-c-toggle-group__button pf-m-selected"
+          id="theme-light"
+          type="button"
         >
           <span
-            class="pf-v6-c-icon pf-m-inline"
+            class="pf-v6-c-toggle-group__icon"
           >
             <span
-              class="pf-v6-c-icon__content"
+              class="pf-v6-c-icon pf-m-inline"
             >
-              <svg
-                aria-hidden="true"
-                class="pf-v6-svg"
-                fill="currentColor"
-                height="1em"
-                role="img"
-                viewBox="0 0 512 512"
-                width="1em"
+              <span
+                class="pf-v6-c-icon__content"
               >
-                <path
-                  d="M256 160c-52.9 0-96 43.1-96 96s43.1 96 96 96 96-43.1 96-96-43.1-96-96-96zm246.4 80.5l-94.7-47.3 33.5-100.4c4.5-13.6-8.4-26.5-21.9-21.9l-100.4 33.5-47.4-94.8c-6.4-12.8-24.6-12.8-31 0l-47.3 94.7L92.7 70.8c-13.6-4.5-26.5 8.4-21.9 21.9l33.5 100.4-94.7 47.4c-12.8 6.4-12.8 24.6 0 31l94.7 47.3-33.5 100.5c-4.5 13.6 8.4 26.5 21.9 21.9l100.4-33.5 47.3 94.7c6.4 12.8 24.6 12.8 31 0l47.3-94.7 100.4 33.5c13.6 4.5 26.5-8.4 21.9-21.9l-33.5-100.4 94.7-47.3c13-6.5 13-24.7.2-31.1zm-155.9 106c-49.9 49.9-131.1 49.9-181 0-49.9-49.9-49.9-131.1 0-181 49.9-49.9 131.1-49.9 181 0 49.9 49.9 49.9 131.1 0 181z"
-                />
-              </svg>
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M256 160c-52.9 0-96 43.1-96 96s43.1 96 96 96 96-43.1 96-96-43.1-96-96-96zm246.4 80.5l-94.7-47.3 33.5-100.4c4.5-13.6-8.4-26.5-21.9-21.9l-100.4 33.5-47.4-94.8c-6.4-12.8-24.6-12.8-31 0l-47.3 94.7L92.7 70.8c-13.6-4.5-26.5 8.4-21.9 21.9l33.5 100.4-94.7 47.4c-12.8 6.4-12.8 24.6 0 31l94.7 47.3-33.5 100.5c-4.5 13.6 8.4 26.5 21.9 21.9l100.4-33.5 47.3 94.7c6.4 12.8 24.6 12.8 31 0l47.3-94.7 100.4 33.5c13.6 4.5 26.5-8.4 21.9-21.9l-33.5-100.4 94.7-47.3c13-6.5 13-24.7.2-31.1zm-155.9 106c-49.9 49.9-131.1 49.9-181 0-49.9-49.9-49.9-131.1 0-181 49.9-49.9 131.1-49.9 181 0 49.9 49.9 49.9 131.1 0 181z"
+                  />
+                </svg>
+              </span>
             </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="theme-dark"
+        title="Dark theme"
+      >
+        <button
+          aria-label="Dark theme"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="theme-dark"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M283.211 512c78.962 0 151.079-35.925 198.857-94.792 7.068-8.708-.639-21.43-11.562-19.35-124.203 23.654-238.262-71.576-238.262-196.954 0-72.222 38.662-138.635 101.498-174.394 9.686-5.512 7.25-20.197-3.756-22.23A258.156 258.156 0 0 0 283.211 0c-141.309 0-256 114.511-256 256 0 141.309 114.511 256 256 256z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
     </div>
     <div
-      class="pf-v6-c-toggle-group__item"
+      aria-label="Contrast mode"
+      class="pf-v6-c-toggle-group pf-m-compact"
+      role="group"
     >
-      <button
-        aria-label="Dark theme"
-        aria-pressed="false"
-        class="pf-v6-c-toggle-group__button"
-        type="button"
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-default"
+        title="Default contrast"
       >
-        <span
-          class="pf-v6-c-toggle-group__icon"
+        <button
+          aria-label="Default contrast"
+          aria-pressed="true"
+          class="pf-v6-c-toggle-group__button pf-m-selected"
+          id="contrast-default"
+          type="button"
         >
           <span
-            class="pf-v6-c-icon pf-m-inline"
+            class="pf-v6-c-toggle-group__icon"
           >
             <span
-              class="pf-v6-c-icon__content"
+              class="pf-v6-c-icon pf-m-inline"
             >
-              <svg
-                aria-hidden="true"
-                class="pf-v6-svg"
-                fill="currentColor"
-                height="1em"
-                role="img"
-                viewBox="0 0 512 512"
-                width="1em"
+              <span
+                class="pf-v6-c-icon__content"
               >
-                <path
-                  d="M283.211 512c78.962 0 151.079-35.925 198.857-94.792 7.068-8.708-.639-21.43-11.562-19.35-124.203 23.654-238.262-71.576-238.262-196.954 0-72.222 38.662-138.635 101.498-174.394 9.686-5.512 7.25-20.197-3.756-22.23A258.156 258.156 0 0 0 283.211 0c-141.309 0-256 114.511-256 256 0 141.309 114.511 256 256 256z"
-                />
-              </svg>
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 896 1024"
+                  width="1em"
+                >
+                  <path
+                    d="M704,448.1 L832,448.1 L832,320 L704,320 L704,448.1 Z M64,448.1 L192,448.1 L192,320 L64,320 L64,448.1 Z M384,704 L512,704 L512,576 L384,576 L384,704 Z M512,0 L512,511.6 L544,511.6 C561.673112,511.6 576,525.926888 576,543.6 L576,736 C576,753.673112 561.673112,768 544,768 L512,768 L512,1024 L384,1024 L384,768 L352,768 C334.326888,768 320,753.673112 320,736 L320,543.6 C320,525.926888 334.326888,511.6 352,511.6 L384,511.6 L384,0 L512,0 Z M832,0.1 L832,256 L864,256 C881.673112,256 896,270.326888 896,288 L896,480 C896,497.673112 881.673112,512 864,512 L832,512 L832,1024 L704,1024 L704,512 L672,512 C654.326888,512 640,497.673112 640,480 L640,288 C640,270.326888 654.326888,256 672,256 L704,256 L704,0.1 L832,0.1 Z M192,0.1 L192,256 L224,256 C241.673112,256 256,270.326888 256,288 L256,480 C256,497.673112 241.673112,512 224,512 L192,512 L192,1024 L64,1024 L64,512 L32,512 C14.326888,512 0,497.673112 0,480 L0,288 C0,270.326888 14.326888,256 32,256 L64,256 L64,0.1 L192,0.1 Z"
+                  />
+                </svg>
+              </span>
             </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-glass"
+        title="Glass theme"
+      >
+        <button
+          aria-label="Glass theme"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="contrast-glass"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 576 512"
+                  width="1em"
+                >
+                  <path
+                    d="M574.1 280.37L528.75 98.66c-5.91-23.7-21.59-44.05-43-55.81-21.44-11.73-46.97-14.11-70.19-6.33l-15.25 5.08c-8.39 2.79-12.92 11.86-10.12 20.24l5.06 15.18c2.79 8.38 11.85 12.91 20.23 10.12l13.18-4.39c10.87-3.62 23-3.57 33.16 1.73 10.29 5.37 17.57 14.56 20.37 25.82l38.46 153.82c-22.19-6.81-49.79-12.46-81.2-12.46-34.77 0-73.98 7.02-114.85 26.74h-73.18c-40.87-19.74-80.08-26.75-114.86-26.75-31.42 0-59.02 5.65-81.21 12.46l38.46-153.83c2.79-11.25 10.09-20.45 20.38-25.81 10.16-5.3 22.28-5.35 33.15-1.73l13.17 4.39c8.38 2.79 17.44-1.74 20.23-10.12l5.06-15.18c2.8-8.38-1.73-17.45-10.12-20.24l-15.25-5.08c-23.22-7.78-48.75-5.41-70.19 6.33-21.41 11.77-37.09 32.11-43 55.8L1.9 280.37A64.218 64.218 0 0 0 0 295.86v70.25C0 429.01 51.58 480 115.2 480h37.12c60.28 0 110.37-45.94 114.88-105.37l2.93-38.63h35.75l2.93 38.63C313.31 434.06 363.4 480 423.68 480h37.12c63.62 0 115.2-50.99 115.2-113.88v-70.25c0-5.23-.64-10.43-1.9-15.5zm-370.72 89.42c-1.97 25.91-24.4 46.21-51.06 46.21H115.2C86.97 416 64 393.62 64 366.11v-37.54c18.12-6.49 43.42-12.92 72.58-12.92 23.86 0 47.26 4.33 69.93 12.92l-3.13 41.22zM512 366.12c0 27.51-22.97 49.88-51.2 49.88h-37.12c-26.67 0-49.1-20.3-51.06-46.21l-3.13-41.22c22.67-8.59 46.08-12.92 69.95-12.92 29.12 0 54.43 6.44 72.55 12.93v37.54z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
+      <div
+        class="pf-v6-c-toggle-group__item"
+        data-test="contrast-high"
+        title="High contrast"
+      >
+        <button
+          aria-label="High contrast"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          id="contrast-high"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__icon"
+          >
+            <span
+              class="pf-v6-c-icon pf-m-inline"
+            >
+              <span
+                class="pf-v6-c-icon__content"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="pf-v6-svg"
+                  fill="currentColor"
+                  height="1em"
+                  role="img"
+                  viewBox="0 0 512 512"
+                  width="1em"
+                >
+                  <path
+                    d="M8 256c0 136.966 111.033 248 248 248s248-111.034 248-248S392.966 8 256 8 8 119.033 8 256zm248 184V72c101.705 0 184 82.311 184 184 0 101.705-82.311 184-184 184z"
+                  />
+                </svg>
+              </span>
+            </span>
+          </span>
+        </button>
+      </div>
     </div>
   </div>
 </div>
