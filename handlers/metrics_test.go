@@ -97,8 +97,36 @@ func TestExtractMetricsQueryParamsAllowsNamespaces(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	mq := models.IstioMetricsQuery{Namespace: "bookinfo"}
-	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("bookinfo", time.Time{}))
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("bookinfo", time.Time{}), clusterMetricsQueryParams...)
 	require.NoError(t, err)
+}
+
+func TestExtractMetricsQueryParamsRejectsNamespacesOnNonClusterEndpoint(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/services/svc/metrics", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("namespaces", "bookinfo")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported query parameter 'namespaces'")
+}
+
+func TestExtractAggregateMetricsRejectsClusterName(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://host/api/namespaces/ns/aggregates/agg/val/metrics", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("clusterName", "cluster1")
+	q.Add("direction", "inbound")
+	q.Add("reporter", "destination")
+	req.URL.RawQuery = q.Encode()
+
+	mq := models.IstioMetricsQuery{Namespace: "ns"}
+	err = extractIstioMetricsQueryParams(req, &mq, buildNamespace("ns", time.Time{}), aggregateMetricsQueryParams...)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported query parameter 'clusterName'")
 }
 
 func TestExtractMetricsQueryParamsStepLimitCase(t *testing.T) {

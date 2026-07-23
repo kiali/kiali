@@ -43,12 +43,18 @@ func ParseTracingQuery(conf *config.Config, values url.Values) (models.TracingQu
 		if err != nil {
 			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'startMicros': %s", err.Error())
 		}
+		if num < 0 {
+			return models.TracingQuery{}, fmt.Errorf("parameter 'startMicros' must be non-negative")
+		}
 		q.Start = time.Unix(0, num*int64(time.Microsecond))
 	}
 	if v := values.Get("endMicros"); v != "" {
 		num, err := strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'endMicros': %s", err.Error())
+		}
+		if num < 0 {
+			return models.TracingQuery{}, fmt.Errorf("parameter 'endMicros' must be non-negative")
 		}
 		q.End = time.Unix(0, num*int64(time.Microsecond))
 	}
@@ -70,6 +76,9 @@ func ParseTracingQuery(conf *config.Config, values url.Values) (models.TracingQu
 		if err := json.Unmarshal([]byte(rawTags), &tags); err != nil {
 			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'tags': %s", err.Error())
 		}
+		if tags == nil {
+			return models.TracingQuery{}, fmt.Errorf("parameter 'tags' must be a JSON object, not null")
+		}
 		q.Tags = tags
 	}
 	if strMinD := values.Get("minDuration"); strMinD != "" {
@@ -77,10 +86,13 @@ func ParseTracingQuery(conf *config.Config, values url.Values) (models.TracingQu
 		if err != nil {
 			return models.TracingQuery{}, fmt.Errorf("cannot parse parameter 'minDuration': %s", err.Error())
 		}
+		if num < 0 {
+			return models.TracingQuery{}, fmt.Errorf("parameter 'minDuration' must be non-negative")
+		}
 		q.MinDuration = time.Duration(num) * time.Microsecond
 	}
 
-	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
+	for key, value := range conf.ExternalServices.Tracing.QueryScope {
 		q.Tags[key] = value
 	}
 
@@ -103,6 +115,9 @@ func ParseErrorTracesDuration(conf *config.Config, values url.Values) (time.Dura
 	conv, err := strconv.ParseInt(durationInSeconds, 10, 64)
 	if err != nil {
 		return 0, "", fmt.Errorf("cannot parse parameter 'duration': %s", err.Error())
+	}
+	if conv <= 0 {
+		return 0, "", fmt.Errorf("parameter 'duration' must be positive")
 	}
 
 	return time.Second * time.Duration(conv), ClusterName(conf, values), nil

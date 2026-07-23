@@ -17,13 +17,13 @@ type baseHealthParams struct {
 	//
 	// in: path
 	Namespace string `json:"namespace"`
+	// The time to use for the prometheus query
+	QueryTime time.Time
 	// The rate interval used for fetching error rate
 	//
 	// in: query
 	// default: 5m (matches health_config.compute.duration)
 	RateInterval string `json:"rateInterval"`
-	// The time to use for the prometheus query
-	QueryTime time.Time
 }
 
 func (p *baseHealthParams) parse(conf *config.Config, queryParams url.Values) error {
