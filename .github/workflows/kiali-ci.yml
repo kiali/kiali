@@ -58,9 +58,8 @@ jobs:
       id: branch-pr
       if: ${{ github.base_ref }}
 
-  # Path filters: prefer over-running CI. Main skips:
-  # - frontend-only → skip backend unit/int/codecov
-  # - backend-only (no frontend/ai/hack/ci) → skip AI chatbot suite
+  # Skip backend unit/int/codecov when the PR only touches frontend/**.
+  # Prefer over-running: any non-frontend path keeps the full suite.
   changes:
     name: Detect changed paths
     runs-on: ubuntu-latest
@@ -68,100 +67,17 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      run_backend: ${{ steps.derive.outputs.run_backend }}
-      run_builds: ${{ steps.derive.outputs.run_builds }}
-      run_frontend_int: ${{ steps.derive.outputs.run_frontend_int }}
-      run_ai_chat: ${{ steps.derive.outputs.run_ai_chat }}
+      run_backend: ${{ steps.filter.outputs.frontend != 'true' || steps.filter.outputs.other == 'true' }}
     steps:
     - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
       id: filter
       with:
         filters: |
-          backend:
-            - '**/*.go'
-            - 'go.mod'
-            - 'go.sum'
-            - 'Makefile'
-            - 'make/**'
-            - 'tests/integration/**'
-            - 'deploy/**'
-          ai:
-            - 'ai/**'
-            - 'tests/evals/**'
-            - '!tests/evals/results/**'
           frontend:
             - 'frontend/**'
-          hack:
-            - 'hack/**'
-          ci:
-            - '.github/workflows/kiali-ci.yml'
-            - '.github/workflows/build-backend.yml'
-            - '.github/workflows/build-frontend.yml'
-            - '.github/workflows/test-lint-backend.yml'
-            - '.github/workflows/integration-tests-*.yml'
-            - '.github/workflows/report-to-reportportal.yml'
-          # Catch-all for unclassified paths (Dockerfile, .golangci.yml, …).
           other:
             - '**'
-    - name: Derive job flags
-      id: derive
-      run: |
-        backend="${{ steps.filter.outputs.backend }}"
-        ai="${{ steps.filter.outputs.ai }}"
-        frontend="${{ steps.filter.outputs.frontend }}"
-        hack="${{ steps.filter.outputs.hack }}"
-        ci="${{ steps.filter.outputs.ci }}"
-        other="${{ steps.filter.outputs.other }}"
-        event_name="${{ github.event_name }}"
-
-        run_backend=true
-        run_builds=true
-        run_frontend_int=true
-        run_ai_chat=true
-
-        # Manual runs have no meaningful path diff; run the full suite.
-        if [[ "$event_name" == "workflow_dispatch" ]]; then
-          echo "event=$event_name -> full CI"
-        else
-          classified=false
-          if [[ "$backend" == "true" || "$ai" == "true" || "$frontend" == "true" || "$hack" == "true" || "$ci" == "true" ]]; then
-            classified=true
-          fi
-          unclassified=false
-          if [[ "$other" == "true" && "$classified" == "false" ]]; then
-            unclassified=true
-          fi
-
-          frontend_only=false
-          if [[ "$frontend" == "true" && "$backend" != "true" && "$ai" != "true" && "$hack" != "true" && "$ci" != "true" ]]; then
-            frontend_only=true
-          fi
-
-          backend_only=false
-          if [[ "$backend" == "true" && "$frontend" != "true" && "$ai" != "true" && "$hack" != "true" && "$ci" != "true" ]]; then
-            backend_only=true
-          fi
-
-          if [[ "$frontend_only" == "true" ]]; then
-            # UI-only: still build binary + Cypress; skip backend test suites.
-            run_backend=false
-          elif [[ "$backend_only" == "true" ]]; then
-            # Go-only (not under ai/): keep Cypress for API regressions; skip chatbot.
-            run_ai_chat=false
-          elif [[ "$unclassified" == "true" ]]; then
-            : # full CI
-          fi
-          # hack/ci/ai/(frontend+backend)/mixes → full CI (default true)
-
-          echo "backend=$backend ai=$ai frontend=$frontend hack=$hack ci=$ci other=$other"
-          echo "frontend_only=$frontend_only backend_only=$backend_only unclassified=$unclassified"
-        fi
-
-        # run_builds must stay true whenever any suite runs: binary embeds frontend/build.
-        echo "run_backend=$run_backend" >> "$GITHUB_OUTPUT"
-        echo "run_builds=$run_builds" >> "$GITHUB_OUTPUT"
-        echo "run_frontend_int=$run_frontend_int" >> "$GITHUB_OUTPUT"
-        echo "run_ai_chat=$run_ai_chat" >> "$GITHUB_OUTPUT"
+            - '!frontend/**'
 
   test_backend:
     name: Run backend linters and unit tests
@@ -174,8 +90,7 @@ jobs:
   build_frontend:
     name: Build frontend
     uses: ./.github/workflows/build-frontend.yml
-    needs: [initialize, changes]
-    if: needs.changes.outputs.run_builds == 'true'
+    needs: [initialize]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -183,14 +98,12 @@ jobs:
   build_backend:
     name: Build backend
     uses: ./.github/workflows/build-backend.yml
-    needs: [initialize, changes, test_backend, build_frontend]
+    needs: [initialize, test_backend, build_frontend]
     # always(): allow build when test_backend was skipped (frontend-only).
-    # Require build_frontend success (not skipped): the binary embeds
-    # frontend/build. Keep run_builds true whenever any suite runs.
+    # Require build_frontend success: the binary embeds frontend/build.
     if: |
       always() &&
       !cancelled() &&
-      needs.changes.outputs.run_builds == 'true' &&
       (needs.test_backend.result == 'success' || needs.test_backend.result == 'skipped') &&
       needs.build_frontend.result == 'success'
     with:
@@ -217,8 +130,7 @@ jobs:
   integration_tests_frontend_chat:
     name: Run frontend AI integration tests
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_ai_chat == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -226,8 +138,7 @@ jobs:
   integration_tests_frontend_core_1:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-1.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -235,8 +146,7 @@ jobs:
   integration_tests_frontend_core_2:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-2.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -244,8 +154,7 @@ jobs:
   integration_tests_frontend_core_caching:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-caching.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -253,8 +162,7 @@ jobs:
   integration_tests_frontend_core_optional:
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -262,8 +170,7 @@ jobs:
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -271,8 +178,7 @@ jobs:
   integration_tests_frontend_ambient_multi_primary:
     name: Run frontend Ambient Multi-Primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -280,8 +186,7 @@ jobs:
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -289,8 +194,7 @@ jobs:
   integration_tests_frontend_local_offline:
     name: Run frontend local and offline mode integration tests
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -307,8 +211,7 @@ jobs:
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -316,8 +219,7 @@ jobs:
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -325,8 +227,7 @@ jobs:
   integration_tests_frontend_multicluster_external_kiali:
     name: Run frontend multicluster external-kiali integration tests
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
@@ -334,8 +235,7 @@ jobs:
   integration_tests_frontend_multi_mesh:
     name: Run frontend multi mesh integration tests
     uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
-    needs: [initialize, changes, build_backend]
-    if: needs.changes.outputs.run_frontend_int == 'true'
+    needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
