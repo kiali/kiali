@@ -147,10 +147,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
     const workloadSelector = wkLabels.join(',');
     if (workloadSelector) {
+      // Resources only: validations for these objects come from getWorkload(?validate=true)
+      // via workload.validations (GetValidationsForWorkload). Avoid pulling cluster/ns-wide
+      // validations from /namespaces/{ns}/istio?validate=true.
       API.getIstioConfig(
         this.props.namespace,
         workloadIstioResources,
-        true,
+        false,
         '',
         workloadSelector,
         this.props.workload.cluster
@@ -634,7 +637,15 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     const workloadEntries = workload?.workloadEntries ?? [];
 
     const istioConfigItems = skipUnrelatedK8sGateways(
-      this.state.workloadIstioConfig ? toIstioItems(this.state.workloadIstioConfig, workload?.cluster || '') : [],
+      this.state.workloadIstioConfig
+        ? toIstioItems(
+            {
+              ...this.state.workloadIstioConfig,
+              validations: workload?.validations ?? this.state.workloadIstioConfig.validations ?? {}
+            },
+            workload?.cluster || ''
+          )
+        : [],
       this.props.workload?.labels[AMBIENT_WAYPOINT_GATEWAY_LABEL]
     );
 
