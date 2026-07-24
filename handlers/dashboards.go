@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -52,7 +53,7 @@ func CustomDashboard(
 		params := models.DashboardQuery{Namespace: namespace}
 		err = extractDashboardQueryParams(queryParams, &params, info)
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -89,6 +90,18 @@ func CustomDashboard(
 }
 
 func extractDashboardQueryParams(queryParams url.Values, q *models.DashboardQuery, namespaceInfo *models.Namespace) error {
+	allowed := append([]string{
+		"additionalLabels",
+		"clusterName",
+		"labelsFilters",
+		"rawDataAggregator",
+		"workload",
+		"workloadType",
+	}, baseMetricsQueryParams...)
+	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
+		return err
+	}
+
 	q.FillDefaults()
 	q.LabelsFilters = extractLabelsFilters(queryParams.Get("labelsFilters"))
 	additionalLabels := strings.Split(queryParams.Get("additionalLabels"), ",")
@@ -145,7 +158,7 @@ func AppDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -193,7 +206,7 @@ func ServiceDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -242,7 +255,7 @@ func WorkloadDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -284,7 +297,7 @@ func ZtunnelDashboard(
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
 		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 

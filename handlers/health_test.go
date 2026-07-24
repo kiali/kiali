@@ -302,7 +302,34 @@ func TestClustersHealthInvalidType(t *testing.T) {
 	resp, err := http.Get(url)
 	require.NoError(t, err)
 
-	assert.Equal(t, 400, resp.StatusCode)
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+}
+
+// TestClustersHealthUnknownParam tests that unsupported query parameters are rejected.
+func TestClustersHealthUnknownParam(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), setupMockData()}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupClustersHealthEndpoint(t, k8s)
+
+	url := ts.URL + "/api/clusters/health?foo=bar"
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+}
+
+// TestClustersHealthAllowsQueryTime ensures the UI cache-bust/replay queryTime param is accepted.
+func TestClustersHealthAllowsQueryTime(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), setupMockData()}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupClustersHealthEndpoint(t, k8s)
+
+	url := ts.URL + "/api/clusters/health?namespaces=ns&type=app&queryTime=1523364061"
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 // TestClustersHealthPartialCacheMiss tests scenario where some namespaces are cached and some are not

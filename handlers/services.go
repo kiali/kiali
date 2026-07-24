@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -32,24 +32,28 @@ type serviceListParams struct {
 	IncludeOnlyDefinitions bool `json:"onlyDefinitions"`
 }
 
-func (p *serviceListParams) extract(conf *config.Config, r *http.Request) {
+func (p *serviceListParams) extract(conf *config.Config, r *http.Request) error {
 	vars := mux.Vars(r)
 	query := r.URL.Query()
-	p.baseExtract(conf, r)
+	if err := p.baseExtract(conf, r, "clusterName", "health", "istioResources", "namespaces", "onlyDefinitions", "queryTime", "rateInterval"); err != nil {
+		return err
+	}
 	p.Namespace = vars["namespace"]
+
 	var err error
-	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
+	p.IncludeHealth, err = queryparams.ParseBoolParam(query.Get("health"), "health", true)
 	if err != nil {
-		p.IncludeHealth = true
+		return err
 	}
-	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
+	p.IncludeIstioResources, err = queryparams.ParseBoolParam(query.Get("istioResources"), "istioResources", true)
 	if err != nil {
-		p.IncludeIstioResources = true
+		return err
 	}
-	p.IncludeOnlyDefinitions, err = strconv.ParseBool(query.Get("onlyDefinitions"))
+	p.IncludeOnlyDefinitions, err = queryparams.ParseBoolParam(query.Get("onlyDefinitions"), "onlyDefinitions", true)
 	if err != nil {
-		p.IncludeOnlyDefinitions = true
+		return err
 	}
+	return nil
 }
 
 // ClustersServices is the API handler to fetch the list of services from a given cluster
@@ -67,7 +71,10 @@ func ClustersServices(
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := serviceListParams{}
-		p.extract(conf, r)
+		if err := p.extract(conf, r); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -149,15 +156,25 @@ func ServiceDetails(
 		}
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "rateInterval", "validate"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		cluster := queryparams.ClusterName(conf, queryParams)
 
-		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = config.DefaultHealthRateInterval
+		} else if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
 		}
 
-		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		includeValidations, err := queryparams.ParseBoolParam(queryParams.Get("validate"), "validate", false)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
@@ -222,12 +239,18 @@ func ServiceUpdate(
 		}
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "patchType", "rateInterval", "validate"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		cluster := queryparams.ClusterName(conf, queryParams)
 
-		// Rate interval is needed to fetch request rates based health
 		rateInterval := queryParams.Get("rateInterval")
 		if rateInterval == "" {
 			rateInterval = config.DefaultHealthRateInterval
+		} else if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
 		}
 
 		patchType := queryParams.Get("patchType")
@@ -235,7 +258,11 @@ func ServiceUpdate(
 			patchType = defaultPatchType
 		}
 
-		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		includeValidations, err := queryparams.ParseBoolParam(queryParams.Get("validate"), "validate", false)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
