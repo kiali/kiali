@@ -1,7 +1,7 @@
 import * as React from 'react';
-import ReactResizeDetector from 'react-resize-detector';
+import { useTopologyResize } from 'utils/ResizeDetectorUtils';
 import { Tab, Popover, PopoverPosition } from '@patternfly/react-core';
-import { ThProps, IRow } from '@patternfly/react-table';
+import type { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
@@ -50,9 +50,11 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
   // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
-  const onResize = (): void => {
+  const handleResize = (): void => {
     forceUpdate();
   };
+
+  useTopologyResize(handleResize);
 
   const preface =
     'You can use the Find and Hide fields to highlight or hide mesh nodes and edges. Each field accepts ' +
@@ -153,15 +155,6 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
 
   return (
     <>
-      <ReactResizeDetector
-        refreshMode="debounce"
-        refreshRate={100}
-        skipOnMount={true}
-        handleWidth={true}
-        handleHeight={true}
-        onResize={onResize}
-      />
-
       {props.isVisible ? (
         <Popover
           data-test="mesh-find-hide-help"
