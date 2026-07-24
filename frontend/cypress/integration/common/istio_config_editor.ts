@@ -2,17 +2,21 @@ import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const editIstioConfigYaml = (): void => {
   cy.get('[data-test="istio-config-editor"] .monaco-editor').should('be.visible');
-  cy.window().then((win: any) => {
-    const monaco = win.monaco;
-    const editors = monaco.editor.getEditors();
-    const ed = editors[editors.length - 1];
-    const model = ed.getModel();
-    const lastLine = model.getLineCount();
-    const lastCol = model.getLineMaxColumn(lastLine);
-    ed.executeEdits('cypress-test', [{ range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }]);
-  });
-  // Wait for React to process the isModified state change before proceeding
-  cy.get('button').contains('Save').should('not.be.disabled');
+  // window.monaco is set in handleEditorDidMount — waiting for it guarantees the
+  // onMount effect (and the onChange listener registered in the same flush) has fired.
+  cy.window()
+    .should('have.property', 'monaco')
+    .then((monaco: any) => {
+      const editors = monaco.editor.getEditors();
+      const ed = editors[editors.length - 1];
+      const model = ed.getModel();
+      const lastLine = model.getLineCount();
+      const lastCol = model.getLineMaxColumn(lastLine);
+      ed.executeEdits('cypress-test', [
+        { range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }
+      ]);
+    });
+  cy.contains('button', 'Save').should('not.be.disabled');
 };
 
 When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
@@ -20,7 +24,7 @@ When('user updates the {string} AuthorizationPolicy using the text field', (name
     statusCode: 200
   }).as(`${name}-update`);
   editIstioConfigYaml();
-  cy.get('button').contains('Save').should('not.be.disabled').click();
+  cy.contains('button', 'Save').should('not.be.disabled').click();
 });
 
 When('user edits the Istio config YAML', () => {
