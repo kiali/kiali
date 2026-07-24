@@ -18,6 +18,8 @@ import (
 
 // AmbientPolicyChecker validates L7 Istio configs against Ambient waypoint enrollment.
 // Classification logic is shared with the MCP analyze_ambient_policies tool.
+// All warnings are Ambient-only (dataplane Ambient via NewNamespaceAmbientStatus /
+// IsDataplaneAmbientNamespace). Sidecar and out-of-mesh namespaces are skipped.
 //
 // Rules:
 //   - AuthorizationPolicy / RequestAuthentication: require targetRefs (Service/Gateway) in Ambient;

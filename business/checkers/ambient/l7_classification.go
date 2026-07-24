@@ -66,14 +66,18 @@ func NewNamespaceAmbientStatus(ns *models.Namespace, cluster string, workloads m
 }
 
 // IsDataplaneAmbientNamespace reports whether a namespace is Ambient for data-plane policy attachment.
-// Control plane namespaces may have Namespace.IsAmbient=true when Ambient is enabled in the mesh
-// (UI/control-plane detection), but they are not dataplane Ambient unless labeled as such.
+// Ambient L7 validations (KIA02xx / KIA11xx / KIA1317) must use this — not UI/mesh-level Ambient flags.
+// Prefer istio.io/dataplane-mode=ambient; control-plane Namespace.IsAmbient can mean "Ambient enabled
+// in the mesh" without dataplane enrollment.
 func IsDataplaneAmbientNamespace(ns *models.Namespace) bool {
 	if ns == nil {
 		return false
 	}
+	if label, ok := ns.Labels[config.IstioAmbientNamespaceLabel]; ok {
+		return label == config.IstioAmbientNamespaceLabelValue
+	}
 	if ns.IsControlPlane {
-		return ns.Labels[config.IstioAmbientNamespaceLabel] == config.IstioAmbientNamespaceLabelValue
+		return false
 	}
 	return ns.IsAmbient
 }

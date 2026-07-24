@@ -96,9 +96,9 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 			return fmt.Sprintf("failed to get namespaces: %v", err), http.StatusInternalServerError
 		}
 
-		// Filter to only Ambient namespaces
+		// Filter to only dataplane Ambient namespaces (not control-plane mesh Ambient flags).
 		for _, ns := range allNamespaces {
-			if ns.IsAmbient {
+			if ambient.IsDataplaneAmbientNamespace(&ns) {
 				namespacesToAnalyze = append(namespacesToAnalyze, ns.Name)
 			}
 		}
@@ -178,10 +178,12 @@ func analyzeNamespace(ctx context.Context, kialiInterface *mcputil.KialiInterfac
 	// Check if namespace has waypoint workload and enrollment
 	hasWaypoint, waypointName := checkNamespaceWaypoint(ctx, kialiInterface.BusinessLayer, namespace, clusterName)
 
+	// Use dataplane Ambient only — mesh/control-plane IsAmbient must not trigger L7 waypoint warnings.
+	isAmbient := ambient.IsDataplaneAmbientNamespace(namespaceInfo)
 	nsStatus := NamespaceAmbientStatus{
 		Name:         namespace,
 		Cluster:      clusterName,
-		IsAmbient:    namespaceInfo.IsAmbient,
+		IsAmbient:    isAmbient,
 		HasWaypoint:  hasWaypoint,
 		WaypointName: waypointName,
 	}

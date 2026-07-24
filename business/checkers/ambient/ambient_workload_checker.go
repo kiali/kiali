@@ -134,6 +134,11 @@ func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
 	if awc.workload.IsWaypoint() || awc.workload.IsGateway() {
 		return false
 	}
+	// KIA1317 is Ambient-only: L7 AuthPolicies need a waypoint. Sidecar and out-of-mesh
+	// workloads do not — sidecars enforce L7, and out-of-mesh ignores these policies.
+	if !awc.workload.IsAmbient && !awc.hasAmbientLabel() {
+		return false
+	}
 	if len(awc.workload.WaypointWorkloads) > 0 {
 		return false
 	}

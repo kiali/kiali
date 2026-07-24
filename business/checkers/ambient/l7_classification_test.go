@@ -135,6 +135,13 @@ func TestIsDataplaneAmbientNamespace_ControlPlane(t *testing.T) {
 	assert.True(t, IsDataplaneAmbientNamespace(&models.Namespace{
 		Name: "bookinfo", IsAmbient: true, IsControlPlane: false,
 	}))
+	assert.False(t, IsDataplaneAmbientNamespace(&models.Namespace{
+		Name: "bookinfo", IsAmbient: false, IsControlPlane: false,
+	}), "out-of-mesh / non-Ambient must not be treated as dataplane Ambient")
+	assert.False(t, IsDataplaneAmbientNamespace(&models.Namespace{
+		Name: "bookinfo", IsAmbient: true, IsControlPlane: false,
+		Labels: map[string]string{config.IstioAmbientNamespaceLabel: "none"},
+	}), "explicit dataplane-mode=none opts out even if IsAmbient is stale")
 }
 
 func TestIsL7Condition_DestinationPortIsL4(t *testing.T) {
