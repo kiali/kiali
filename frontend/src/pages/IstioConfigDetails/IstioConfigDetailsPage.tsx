@@ -104,6 +104,13 @@ const paramToTab: { [key: string]: number } = {
 
 type ConfirmModalType = 'leave' | 'reload';
 
+const IDLE_BLOCKER: { location: undefined; proceed: undefined; reset: undefined; state: 'unblocked' } = {
+  location: undefined,
+  proceed: undefined,
+  reset: undefined,
+  state: 'unblocked'
+};
+
 interface ReduxProps {
   kiosk: string;
   theme: string;
@@ -417,7 +424,9 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     [isModified, parentKiosk]
   );
 
-  const blocker = useBlocker(shouldBlock);
+  // parentKiosk is static for the app lifetime (set once at init), so the branch is stable across renders.
+  // eslint-disable-next-line react-hooks/rules-of-hooks, @eslint-react/rules-of-hooks
+  const blocker = parentKiosk ? IDLE_BLOCKER : useBlocker(shouldBlock);
   const isBlockedState = blocker.state === 'blocked';
 
   React.useEffect(() => {
