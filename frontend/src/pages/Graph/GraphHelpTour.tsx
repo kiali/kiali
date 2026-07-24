@@ -1,5 +1,5 @@
 import { PopoverPosition } from '@patternfly/react-core';
-import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
+import type { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 import { t } from 'utils/I18nUtils';
 import { GraphShortcuts } from './GraphToolbar/GraphShortcuts';
 
@@ -65,7 +65,7 @@ export const GraphTourStops: { [name: string]: TourStopInfo } = {
   },
   Shortcuts: {
     name: t('Shortcuts'),
-    htmlDescription: GraphShortcuts,
+    htmlDescription: GraphShortcuts(),
     position: PopoverPosition.leftStart
   },
   SidePanel: {

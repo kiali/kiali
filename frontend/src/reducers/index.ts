@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux';
 
-import { KialiAppState } from '../store/Store';
 import { NotificationCenterReducer } from './NotificationCenter';
 import { LoginStateReducer } from './LoginState';
 import { HelpDropdownStateReducer } from './HelpDropdownState';
@@ -14,7 +13,6 @@ import { WorkloadsListStateReducer } from './WorkloadsListState';
 import { ClusterStateReducer } from './ClusterState';
 import { UserSettingsStateReducer } from './UserSettingsState';
 import { TourStateReducer } from './TourState';
-import { KialiAppAction } from '../actions/KialiAppAction';
 import { MeshTlsStateReducer } from './MeshTlsState';
 import { IstioStatusStateReducer } from './IstioStatusState';
 import { TracingStateReducer } from './TracingState';
@@ -22,7 +20,7 @@ import { MetricsStatsStateReducer } from './MetricsStatsState';
 import { MeshDataStateReducer } from './MeshDataState';
 import { ChatAiStateReducer } from './ChatAIState';
 
-export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
+export const rootReducer = combineReducers({
   authentication: LoginStateReducer,
   aiChat: ChatAiStateReducer,
   clusters: ClusterStateReducer,

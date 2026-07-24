@@ -1,6 +1,7 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
-import { TourInfo } from '../components/Tour/TourStop';
+import type { TourInfo } from '../components/Tour/TourStop';
 
 export const TourActions = {
   endTour: createAction(ActionKeys.TOUR_END),

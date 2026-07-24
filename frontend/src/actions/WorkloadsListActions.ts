@@ -1,4 +1,5 @@
-import { ActionType, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
 
 export const WorkloadsListActions = {

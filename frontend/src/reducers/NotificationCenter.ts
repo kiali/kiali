@@ -1,7 +1,8 @@
-import { MessageType, NotificationMessage } from '../types/NotificationCenter';
-import { NotificationCenterState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import type { NotificationMessage } from '../types/NotificationCenter';
+import { MessageType } from '../types/NotificationCenter';
+import type { NotificationCenterState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'types/typesafeActionsLegacy';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';
@@ -104,7 +105,6 @@ export const NotificationCenterReducer = (
             return message.content !== content;
           });
 
-          let newMessage: NotificationMessage;
           let count = 1;
           let firstTriggered: Date | undefined = undefined;
 
@@ -115,7 +115,7 @@ export const NotificationCenterReducer = (
             count += existingMessage.count;
           }
 
-          newMessage = createMessage(
+          const newMessage = createMessage(
             state.nextId,
             content,
             detail,

@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
-import { ExternalServiceInfo } from '../../../types/StatusState';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import type { ExternalServiceInfo } from '../../../types/StatusState';
+import { MemoryRouter } from 'react-router';
 import { store } from 'store/ConfigStore';
 import { Provider } from 'react-redux';
 import { LoginActions } from 'actions/LoginActions';
 import { Theme } from 'types/Common';
 
 rstest.mock('app/History', async () => {
-  const actual = await rstest.importActual<typeof import('app/History')>('app/History');
+  const actual = await rstest.importActual('app/History');
   return {
     ...actual,
     router: {

@@ -1,20 +1,24 @@
 import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
 import ReactResizeDetector from 'react-resize-detector';
-import {
+import type {
   Controller,
+  EdgeModel,
+  GraphElement,
+  GraphModel,
+  Model,
+  Node,
+  NodeModel,
+  Edge,
+  GraphAreaSelectedEventListener
+} from '@patternfly/react-topology';
+import {
   createTopologyControlButtons,
   defaultControlButtonsOptions,
   EdgeAnimationSpeed,
-  EdgeModel,
   EdgeStyle,
-  GraphElement,
-  GraphModel,
   GRAPH_LAYOUT_END_EVENT,
-  Model,
   ModelKind,
-  Node,
-  NodeModel,
   SELECTION_STATE,
   TopologyControlBar,
   TopologyView,
@@ -23,51 +27,35 @@ import {
   Visualization,
   VisualizationProvider,
   VisualizationSurface,
-  Edge,
-  GraphAreaSelectedEventListener,
-  GRAPH_AREA_SELECTED_EVENT,
-  GraphLayoutEndEventListener
+  GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
-import {
-  BoxByType,
-  EdgeLabelMode,
-  EdgeMode,
-  FocusNode,
-  GraphLayout,
-  LayoutType,
-  NodeAttr,
-  NodeType,
-  RankMode,
-  RankResult,
-  SummaryData,
-  UNKNOWN
-} from 'types/Graph';
-import { JaegerTrace } from 'types/TracingInfo';
+import type { EdgeLabelMode, FocusNode, RankResult, SummaryData } from 'types/Graph';
+import { BoxByType, EdgeMode, GraphLayout, LayoutType, NodeAttr, NodeType, RankMode, UNKNOWN } from 'types/Graph';
+import type { JaegerTrace } from 'types/TracingInfo';
 import { stylesComponentFactory } from './components/stylesComponentFactory';
 import { elementFactory } from '../Graph/elements/elementFactory';
+import type { EdgeData, GraphSettings, NodeData } from './GraphElems';
 import {
   assignEdgeHealth,
-  EdgeData,
   getNodeShape,
   getNodeStatus,
-  GraphSettings,
-  NodeData,
   setEdgeOptions,
   setNodeAttachments,
   setNodeLabel
 } from './GraphElems';
-import { elems, selectAnd, SelectAnd, setObserved } from 'helpers/GraphHelpers';
+import type { SelectAnd } from 'helpers/GraphHelpers';
+import { elems, selectAnd, setObserved } from 'helpers/GraphHelpers';
 import { layoutFactory } from './layouts/layoutFactory';
 import { hideTrace, showTrace } from './Trace';
-import { TimeInMilliseconds } from 'types/Common';
+import type { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
 import { getValidGraphLayout, supportsGroups } from 'utils/GraphUtils';
-import { GraphData, GraphRefs } from './GraphPage';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
-import { ServiceDetailsInfo } from 'types/ServiceInfo';
-import { PeerAuthentication } from 'types/IstioObjects';
+import type { GraphData, GraphRefs } from './GraphPage';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { ServiceDetailsInfo } from 'types/ServiceInfo';
+import type { PeerAuthentication } from 'types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'pages/Graph/GraphScore';
@@ -349,6 +337,15 @@ const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
+
   //
   // update model on graphData change
   //
@@ -377,7 +374,7 @@ const TopologyContent: React.FC<{
     // Manage the GraphData / DataModel
     //
     const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
-      let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
+      const nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
       const onHover = (element: GraphElement, isMouseIn: boolean): void => {
@@ -473,7 +470,7 @@ const TopologyContent: React.FC<{
       });
 
       // Compute rank result if enabled
-      let scoringCriteria: ScoringCriteria[] = [];
+      const scoringCriteria: ScoringCriteria[] = [];
 
       if (showRank) {
         for (const ranking of rankBy) {
@@ -486,8 +483,7 @@ const TopologyContent: React.FC<{
           }
         }
 
-        let upperBound = 0;
-        ({ upperBound } = scoreNodes(graphData.elements, ...scoringCriteria));
+        const { upperBound } = scoreNodes(graphData.elements, ...scoringCriteria);
 
         if (setRankResult) {
           setRankResult({ upperBound });
@@ -545,6 +541,13 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (graphData.elementsChanged && hasContent) {
+        initialLayout = true;
+        isReady = false;
+        layoutInProgress = LayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => {
         controller.getGraph().setData({
@@ -562,7 +565,7 @@ const TopologyContent: React.FC<{
       // pre-select node-graph node, only when elems have changed (like on first render, or a structural change)
       const graphNode = graphData.fetchParams.node;
       if (graphNode && graphData.elementsChanged) {
-        let selector: SelectAnd = [
+        const selector: SelectAnd = [
           { prop: NodeAttr.namespace, val: graphNode.namespace.name },
           { prop: NodeAttr.nodeType, val: graphNode.nodeType }
         ];
@@ -610,6 +613,10 @@ const TopologyContent: React.FC<{
 
           setObserved(() => target.setData(data));
         }
+      }
+
+      if (layoutInProgress === LayoutType.Layout) {
+        controller.getGraph().layout();
       }
     };
 
@@ -667,17 +674,23 @@ const TopologyContent: React.FC<{
   }, [controller, focusNode, isMiniGraph, setSelectedIds]);
 
   React.useEffect(() => {
-    console.debug(`TG: controller changed`);
-    initialLayout = true;
-    isReady = false;
-  }, [controller]);
-
-  React.useEffect(() => {
     console.debug(`TG: graphData changed, elementsChanged=${graphData.elementsChanged}`);
     if (graphData.elementsChanged) {
       graphLayout(controller, LayoutType.Layout);
     }
   }, [controller, graphData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: graphSettings changed`);
@@ -737,8 +750,6 @@ const TopologyContent: React.FC<{
     }
   );
 
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 
   return isMiniGraph ? (
@@ -762,7 +773,7 @@ const TopologyContent: React.FC<{
         refreshRate={100}
         handleWidth={true}
         handleHeight={true}
-        skipOnMount={true}
+        skipOnMount={false}
         onResize={handleResize}
       />
       <TopologyView

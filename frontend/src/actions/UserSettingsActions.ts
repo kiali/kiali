@@ -1,5 +1,6 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeRange } from '../types/Common';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeRange } from '../types/Common';
 import { ActionKeys } from './ActionKeys';
 
 export const UserSettingsActions = {

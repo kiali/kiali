@@ -1,5 +1,6 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { Namespace } from '../types/Namespace';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { Namespace } from '../types/Namespace';
 import { ActionKeys } from './ActionKeys';
 
 export const NamespaceActions = {

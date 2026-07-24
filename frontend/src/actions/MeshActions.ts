@@ -1,8 +1,9 @@
-import { ActionType, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
-import { TimeInMilliseconds } from 'types/Common';
-import { MeshDefinition, MeshTarget } from 'types/Mesh';
-import { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
+import type { TimeInMilliseconds } from 'types/Common';
+import type { MeshDefinition, MeshTarget } from 'types/Mesh';
+import type { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 
 export const MeshActions = {
   setDefinition: createStandardAction(ActionKeys.MESH_SET_DEFINITION)<MeshDefinition>(),

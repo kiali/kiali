@@ -1,7 +1,7 @@
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { IstioStatusActions } from '../actions/IstioStatusActions';
-import { getType } from 'typesafe-actions';
-import { ClusterStatusMap } from '../components/IstioStatus/IstioStatus';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { ClusterStatusMap } from '../components/IstioStatus/IstioStatus';
 
 export const INITIAL_ISTIO_STATUS_STATE: ClusterStatusMap = {};
 

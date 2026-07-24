@@ -1,10 +1,10 @@
 import React from 'react';
 import { act, render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { NamespacesPageComponent } from '../NamespacesPage';
-import { NamespaceInfo } from '../../../types/NamespaceInfo';
-import { IntervalInMilliseconds } from 'types/Common';
+import type { NamespaceInfo } from '../../../types/NamespaceInfo';
+import type { IntervalInMilliseconds } from 'types/Common';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { RefreshIntervalManual } from '../../../config/Config';
@@ -65,6 +65,7 @@ rstest.mock('../../../app/History', () => ({
     getPathname: rstest.fn(() => '/namespaces'),
     getSearch: rstest.fn(() => '')
   },
+  navigateApp: rstest.fn(),
   router: {
     navigate: rstest.fn(),
     state: {
@@ -502,7 +503,9 @@ describe('NamespacesPageComponent', () => {
         isNumeric: false
       };
 
-      ref.current!.sort(sortField, true);
+      act(() => {
+        ref.current!.sort(sortField, true);
+      });
 
       expect(ref.current!.state.namespaces[0].name).toBe('a-namespace');
       expect(ref.current!.state.namespaces[1].name).toBe('z-namespace');

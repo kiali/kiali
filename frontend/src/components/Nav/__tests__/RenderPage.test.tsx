@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
-import { ExternalServiceInfo } from '../../../types/StatusState';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import type { ExternalServiceInfo } from '../../../types/StatusState';
+import { RouterProvider, createMemoryRouter } from 'react-router';
 import { pathRoutes } from 'routes';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';

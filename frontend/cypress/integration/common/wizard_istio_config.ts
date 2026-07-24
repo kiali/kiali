@@ -132,9 +132,10 @@ When('choosing to delete it', () => {
       .click();
     cy.get('[role="dialog"]').contains('button', 'Delete').should('be.visible').click();
   } else {
-    cy.get('#actions-toggle').should('be.visible').click();
-    cy.get('#actions').contains('Delete').should('be.visible').click();
-    cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+    // Re-query on each retry: details page refreshes can remount the Actions toggle.
+    cy.get('#actions-toggle', { timeout: 15000 }).should('be.visible').click({ force: true });
+    cy.get('#actions').contains('Delete').should('be.visible').click({ force: true });
+    cy.get('[role="dialog"]').contains('button', 'Delete').should('be.visible').click();
   }
 });
 

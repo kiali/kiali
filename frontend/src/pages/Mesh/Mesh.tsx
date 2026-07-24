@@ -1,20 +1,24 @@
 import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
 import ReactResizeDetector from 'react-resize-detector';
-import {
+import type {
   Controller,
+  EdgeModel,
+  GraphElement,
+  GraphModel,
+  Model,
+  Node,
+  NodeModel,
+  Edge,
+  GraphAreaSelectedEventListener
+} from '@patternfly/react-topology';
+import {
   createTopologyControlButtons,
   defaultControlButtonsOptions,
   EdgeAnimationSpeed,
-  EdgeModel,
   EdgeStyle,
-  GraphElement,
-  GraphModel,
   GRAPH_LAYOUT_END_EVENT,
-  Model,
   ModelKind,
-  Node,
-  NodeModel,
   SELECTION_STATE,
   TopologyControlBar,
   TopologyView,
@@ -23,23 +27,20 @@ import {
   Visualization,
   VisualizationProvider,
   VisualizationSurface,
-  Edge,
-  GraphLayoutEndEventListener,
-  GraphAreaSelectedEventListener,
   GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
 import { elementFactory } from './elements/ElementFactory';
 import { getValidMeshLayout, layoutFactory, MeshLayoutType, MeshLayout } from './layouts/LayoutFactory';
-import { TimeInMilliseconds } from 'types/Common';
+import type { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { meshComponentFactory } from './components/MeshComponentFactory';
-import { MeshData, MeshRefs } from './MeshPage';
-import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
+import type { MeshData, MeshRefs } from './MeshPage';
+import type { MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshType } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';
+import type { EdgeData, NodeData } from './MeshElems';
 import {
-  EdgeData,
-  NodeData,
   assignEdgeHealth,
   getNodeShape,
   getNodeStatus,
@@ -112,6 +113,8 @@ const TopologyContent: React.FC<{
   showLegend,
   toggleLegend
 }) => {
+  const [updateModelTime, setUpdateModelTime] = React.useState(0);
+
   //
   // SelectedIds State
   //
@@ -216,6 +219,15 @@ const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
+
   //
   // update model on meshData change
   //
@@ -241,7 +253,7 @@ const TopologyContent: React.FC<{
     // Manage the GraphData / DataModel
     //
     const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
-      let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
+      const nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
       const onHover = (element: GraphElement, isMouseIn: boolean): void => {
@@ -378,6 +390,12 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (meshData.elementsChanged && hasContent) {
+        initialLayout = true;
+        layoutInProgress = MeshLayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => controller.getGraph().setData({ meshData: meshData }));
 
@@ -385,28 +403,40 @@ const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
+
+      if (layoutInProgress === MeshLayoutType.Layout) {
+        controller.getGraph().layout();
+      }
     };
 
     console.debug(`mesh updateModel`);
     updateModel(controller);
 
-    // notify that the graph has been updated
-    setUpdateTime(Date.now());
+    const updateTime = Date.now();
+    setUpdateModelTime(updateTime);
+    setUpdateTime(updateTime);
   }, [controller, meshData, highlighter, layout, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
-  React.useEffect(() => {
-    console.debug(`controller changed`);
-    initialLayout = true;
-  }, [controller]);
-
   React.useEffect(() => {
     console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
     if (meshData.elementsChanged) {
       layoutMesh(controller, MeshLayoutType.Layout);
     }
   }, [controller, meshData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`highlighter changed`);
@@ -462,8 +492,6 @@ const TopologyContent: React.FC<{
     }
   );
 
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 
   // TODO: I expected to find some sort of "onResize" hook in PFT, but after looking at the code
@@ -482,7 +510,7 @@ const TopologyContent: React.FC<{
         refreshRate={100}
         handleWidth={true}
         handleHeight={true}
-        skipOnMount={true}
+        skipOnMount={false}
         onResize={handleResize}
       />
       <TopologyView
