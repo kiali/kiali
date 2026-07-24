@@ -2,9 +2,11 @@ package authentication
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -20,6 +22,43 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/util"
 )
+
+var (
+	ErrImpersonationDenied = errors.New("impersonation denied: privileged identity")
+	ErrNotInAllowlist      = errors.New("impersonation denied: not in allowlist")
+)
+
+// Kubernetes RBAC has no deny rules — the hardcoded guard and RBAC resourceNames
+// serve complementary purposes. The guard blocks known-bad identities (system:*);
+// RBAC resourceNames restricts to known-good identities (the allowlist).
+func ValidateImpersonationIdentity(username string, groups []string) error {
+	if strings.HasPrefix(username, "system:") {
+		return fmt.Errorf("%w: identity %q is a privileged system identity", ErrImpersonationDenied, username)
+	}
+	for _, g := range groups {
+		if g == "system:masters" || g == "system:nodes" || strings.HasPrefix(g, "system:serviceaccounts") {
+			return fmt.Errorf("%w: identity %q belongs to privileged system group %q", ErrImpersonationDenied, username, g)
+		}
+	}
+	return nil
+}
+
+func FilterImpersonationGroups(groups []string, allowedGroups []string, username string) []string {
+	if len(allowedGroups) == 0 {
+		return groups
+	}
+	filtered := make([]string, 0, len(groups))
+	for _, g := range groups {
+		if g == "system:authenticated" || g == "system:authenticated:oauth" {
+			filtered = append(filtered, g)
+		} else if slices.Contains(allowedGroups, g) {
+			filtered = append(filtered, g)
+		} else {
+			log.Warningf("Impersonation: dropping group %q for user %q (not in allowed_groups)", g, username)
+		}
+	}
+	return filtered
+}
 
 // openshiftSessionPayload holds the data that will be persisted in the SessionStore
 // in order to be able to maintain the session of the user across requests.
@@ -194,6 +233,11 @@ func (o *OpenshiftAuthController) OpenshiftAuthRedirect(w http.ResponseWriter, r
 func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (UserSessions, error) {
 	userSessions := make(UserSessions)
 
+	// homeUserName and homeUserGroups store the verified identity from the home cluster's
+	// GetUserInfo call. Used by the impersonation block below.
+	var homeUserName string
+	var homeUserGroups []string
+
 	// In OpenShift auth, it is possible that a session is started by a 3rd party. If that's the case, Kiali
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
@@ -207,6 +251,8 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
+		homeUserName = user.Name
+		homeUserGroups = user.Groups
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
 			AuthInfo:  &api.AuthInfo{Token: token},
 			ExpiresOn: expires,
@@ -225,6 +271,8 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
+		homeUserName = user.Name
+		homeUserGroups = user.Groups
 		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
 			AuthInfo:  &api.AuthInfo{Token: token},
 			ExpiresOn: expires,
@@ -249,11 +297,65 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				}
 				return nil, err
 			}
+			if session.Cluster == o.conf.KubernetesConfig.ClusterName {
+				homeUserName = user.Name
+				homeUserGroups = user.Groups
+			}
 			userSessions[session.Cluster] = &UserSessionData{
 				AuthInfo:  &api.AuthInfo{Token: session.Payload.AccessToken},
 				ExpiresOn: session.ExpiresOn,
 				SessionID: session.SessionID,
 				Username:  user.Name,
+			}
+		}
+	}
+
+	// When impersonation is enabled, replace all cluster AuthInfo entries with
+	// impersonation-based credentials. The user's real OAuth token was used above
+	// to verify identity via GetUserInfo; all subsequent business logic API calls
+	// will use the SA token + impersonation headers instead.
+	if o.conf.Auth.OpenShift.Impersonation.Enabled {
+		if homeSession, ok := userSessions[o.conf.KubernetesConfig.ClusterName]; ok && homeUserName != "" {
+			groups := make([]string, 0, len(homeUserGroups)+2)
+			groups = append(groups, homeUserGroups...)
+			if !slices.Contains(groups, "system:authenticated") {
+				groups = append(groups, "system:authenticated")
+			}
+			if !slices.Contains(groups, "system:authenticated:oauth") {
+				groups = append(groups, "system:authenticated:oauth")
+			}
+
+			if err := ValidateImpersonationIdentity(homeUserName, groups); err != nil {
+				log.Warningf("Impersonation rejected for user %q: %v", homeUserName, err)
+				return nil, err
+			}
+
+			if len(o.conf.Auth.OpenShift.Impersonation.AllowedUsers) > 0 {
+				if !slices.Contains(o.conf.Auth.OpenShift.Impersonation.AllowedUsers, homeUserName) {
+					log.Warningf("Impersonation denied: user %q is not in allowed_users list", homeUserName)
+					return nil, fmt.Errorf("%w: user %q", ErrNotInAllowlist, homeUserName)
+				}
+			}
+
+			groups = FilterImpersonationGroups(groups, o.conf.Auth.OpenShift.Impersonation.AllowedGroups, homeUserName)
+
+			for _, cluster := range o.clusters {
+				existingSessionID := ""
+				if existing, ok := userSessions[cluster]; ok {
+					existingSessionID = existing.SessionID
+				}
+				userSessions[cluster] = &UserSessionData{
+					// Token is intentionally empty. The SA token (from the remote cluster
+					// secret or in-cluster token file) provides authentication; impersonation
+					// headers carry the user identity. The client factory handles this.
+					AuthInfo: &api.AuthInfo{
+						Impersonate:       homeUserName,
+						ImpersonateGroups: groups,
+					},
+					ExpiresOn: homeSession.ExpiresOn,
+					SessionID: existingSessionID,
+					Username:  homeUserName,
+				}
 			}
 		}
 	}

@@ -316,10 +316,11 @@ func TestAuthenticationInfo(t *testing.T) {
 	// TODO: test session info.
 	oneHourFromNow := time.Now().Add(time.Hour)
 	cases := map[string]struct {
-		authStrategy     string
-		currentSessions  authentication.UserSessions
-		expectedResponse AuthInfo
-		clusters         []string
+		authStrategy         string
+		currentSessions      authentication.UserSessions
+		expectedResponse     AuthInfo
+		clusters             []string
+		impersonationEnabled bool
 	}{
 		"token auth returns just strategy": {
 			authStrategy: config.AuthStrategyToken,
@@ -427,6 +428,16 @@ func TestAuthenticationInfo(t *testing.T) {
 			},
 			clusters: []string{"test-cluster", "test-cluster-2"},
 		},
+		"openshift with impersonation returns impersonationEnabled and no per-cluster endpoints": {
+			authStrategy:         config.AuthStrategyOpenshift,
+			impersonationEnabled: true,
+			expectedResponse: AuthInfo{
+				AuthorizationEndpoint: "https://kiali.io:20001/api/auth/redirect",
+				ImpersonationEnabled:  true,
+				Strategy:              config.AuthStrategyOpenshift,
+			},
+			clusters: []string{"test-cluster", "test-cluster-2"},
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -436,6 +447,7 @@ func TestAuthenticationInfo(t *testing.T) {
 			conf.Server.WebFQDN = "kiali.io"
 			conf.Server.WebSchema = "https"
 			conf.Auth.Strategy = tc.authStrategy
+			conf.Auth.OpenShift.Impersonation.Enabled = tc.impersonationEnabled
 			authController := &fakeAuthController{
 				sessions: tc.currentSessions,
 			}
@@ -454,6 +466,55 @@ func TestAuthenticationInfo(t *testing.T) {
 			require.Equal(tc.expectedResponse, response)
 		})
 	}
+}
+
+func TestHandleStripsImpersonationHeadersForOpenShift(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "test-cluster"
+	conf.LoginToken.SigningKey = config.Credential(util.RandomString(16))
+
+	var capturedHeaders http.Header
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// The fakeAuthController returns a valid session so Handle proceeds to
+	// the next handler where we can inspect which headers survived.
+	authController := &fakeAuthController{
+		sessions: authentication.UserSessions{
+			"test-cluster": &authentication.UserSessionData{
+				AuthInfo:  &api.AuthInfo{Token: "sa-token"},
+				ExpiresOn: time.Now().Add(time.Hour),
+				Username:  "testuser",
+			},
+		},
+	}
+
+	handler := NewAuthenticationHandler(
+		conf,
+		authController,
+		kubetest.NewFakeK8sClient(),
+		nil,
+		map[string]kubernetes.ClientInterface{},
+	)
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Impersonate-User", "cluster-admin")
+	r.Header.Set("Impersonate-Group", "system:masters")
+	r.Header.Set("Impersonate-Extra-Scopes", "full")
+	w := httptest.NewRecorder()
+
+	handler.Handle(nextHandler).ServeHTTP(w, r)
+
+	require.Equal(http.StatusOK, w.Code)
+	require.NotNil(capturedHeaders, "next handler should have been called")
+	require.Empty(capturedHeaders.Get("Impersonate-User"), "Impersonate-User should be stripped")
+	require.Empty(capturedHeaders.Get("Impersonate-Group"), "Impersonate-Group should be stripped")
+	require.Empty(capturedHeaders.Get("Impersonate-Extra-Scopes"), "Impersonate-Extra-* should be stripped")
 }
 
 type rejectClient struct{ kubernetes.UserClientInterface }

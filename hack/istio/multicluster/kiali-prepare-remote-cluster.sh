@@ -38,6 +38,7 @@ DEFAULT_REMOTE_CLUSTER_URL=""
 DEFAULT_RESOURCE_NAME="kiali"
 DEFAULT_VIEW_ONLY="true"
 DEFAULT_EXEC_AUTH_JSON=""
+DEFAULT_USE_IMPERSONATION="false"
 
 : ${ALLOW_SKIP_TLS_VERIFY:=${DEFAULT_ALLOW_SKIP_TLS_VERIFY}}
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
@@ -57,6 +58,7 @@ DEFAULT_EXEC_AUTH_JSON=""
 : ${REMOTE_CLUSTER_URL:=${DEFAULT_REMOTE_CLUSTER_URL}}
 : ${VIEW_ONLY:=${DEFAULT_VIEW_ONLY}}
 : ${EXEC_AUTH_JSON:=${DEFAULT_EXEC_AUTH_JSON}}
+: ${USE_IMPERSONATION:=${DEFAULT_USE_IMPERSONATION}}
 
 DRY_RUN_ARG="--dry-run=none"
 
@@ -111,6 +113,14 @@ create_resources_in_remote_cluster() {
     helm_repo_arg=""
   fi
 
+  local auth_helm_args="--set auth.strategy=anonymous"
+  if [ "${USE_IMPERSONATION}" == "true" ]; then
+    if [ "${IS_OPENSHIFT}" != "true" ]; then
+      error "--use-impersonation is only supported on OpenShift clusters (requires OpenShift auth strategy)"
+    fi
+    auth_helm_args="--set auth.strategy=openshift --set auth.openshift.impersonation.enabled=true"
+  fi
+
   local helm_template_output="$(${HELM} template            \
       ${helm_version_arg:-}                                 \
       --namespace ${REMOTE_CLUSTER_NAMESPACE}               \
@@ -119,7 +129,7 @@ create_resources_in_remote_cluster() {
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
       --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
-      --set auth.strategy=anonymous                         \
+      ${auth_helm_args}                                     \
       ${helm_repo_arg}                                      \
       kiali-server                                          \
       ${KIALI_SERVER_HELM_CHARTS})"
@@ -418,6 +428,11 @@ while [ $# -gt 0 ]; do
       REMOTE_CLUSTER_URL="$2"
       shift;shift
       ;;
+    -ui|--use-impersonation)
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--use-impersonation must be 'true' or 'false'"
+      USE_IMPERSONATION="$2"
+      shift;shift
+      ;;
     -vo|--view-only)
       [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && error "--view-only must be 'true' or 'false'"
       VIEW_ONLY="$2"
@@ -526,6 +541,12 @@ Valid command line arguments:
                              If empty, the local kubeconfig will be examined and the server
                              associated with the remote cluster context will be used.
                              Default: "${DEFAULT_REMOTE_CLUSTER_URL}"
+  -ui|--use-impersonation: if 'true' the remote cluster resources will be configured
+                           for Kubernetes API impersonation instead of per-cluster OAuth.
+                           The Kiali SA will get a ClusterRole with impersonate permissions
+                           on users and groups. No OAuthClient will be created.
+                           Only supported on OpenShift clusters.
+                           Default: "${DEFAULT_USE_IMPERSONATION}"
   -vo|--view-only: if 'true' then the created service account/remote secret
                    will only provide a read-only view of the remote cluster.
                    Default: "${DEFAULT_VIEW_ONLY}"
@@ -566,6 +587,7 @@ info REMOTE_CLUSTER_CONTEXT=${REMOTE_CLUSTER_CONTEXT}
 info REMOTE_CLUSTER_NAME=${REMOTE_CLUSTER_NAME}
 info REMOTE_CLUSTER_NAMESPACE=${REMOTE_CLUSTER_NAMESPACE}
 info REMOTE_CLUSTER_URL=${REMOTE_CLUSTER_URL}
+info USE_IMPERSONATION=${USE_IMPERSONATION}
 info VIEW_ONLY=${VIEW_ONLY}
 info EXEC_AUTH_JSON="${EXEC_AUTH_JSON}"
 

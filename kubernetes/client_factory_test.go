@@ -573,6 +573,53 @@ func TestNewClientFactoryClosesRecycleWhenCTXCancelled(t *testing.T) {
 }
 
 // TODO: This test fails when you have created the /kiali-remote-cluster-secrets directory locally.
+func TestGetTokenHashWithDelimiters(t *testing.T) {
+	// Two authInfos that would collide without null-byte delimiters must produce different hashes.
+	a1 := &api.AuthInfo{Impersonate: "user1", ImpersonateGroups: []string{"group1"}, Token: ""}
+	a2 := &api.AuthInfo{Impersonate: "user1group1", Token: ""}
+	assert.NotEqual(t, getTokenHash(a1), getTokenHash(a2))
+}
+
+func TestGetTokenHashDeterministic(t *testing.T) {
+	a := &api.AuthInfo{
+		Impersonate:       "user1",
+		ImpersonateGroups: []string{"g1", "g2"},
+		ImpersonateUserExtra: map[string][]string{
+			"key1": {"v1"},
+			"key2": {"v2"},
+		},
+		Token: "",
+	}
+	h1 := getTokenHash(a)
+	h2 := getTokenHash(a)
+	assert.Equal(t, h1, h2)
+}
+
+func TestGetTokenHashDifferentUsers(t *testing.T) {
+	a1 := &api.AuthInfo{Impersonate: "alice", ImpersonateGroups: []string{"system:authenticated"}}
+	a2 := &api.AuthInfo{Impersonate: "bob", ImpersonateGroups: []string{"system:authenticated"}}
+	assert.NotEqual(t, getTokenHash(a1), getTokenHash(a2))
+}
+
+func TestGetTokenHashExtraKeyOrder(t *testing.T) {
+	// Keys in ImpersonateUserExtra are sorted, so insertion order must not matter.
+	a1 := &api.AuthInfo{
+		Impersonate: "user1",
+		ImpersonateUserExtra: map[string][]string{
+			"alpha": {"a"},
+			"beta":  {"b"},
+		},
+	}
+	a2 := &api.AuthInfo{
+		Impersonate: "user1",
+		ImpersonateUserExtra: map[string][]string{
+			"beta":  {"b"},
+			"alpha": {"a"},
+		},
+	}
+	assert.Equal(t, getTokenHash(a1), getTokenHash(a2))
+}
+
 func TestClientFactoryGetClients(t *testing.T) {
 	cases := map[string]struct {
 		auth               config.AuthConfig

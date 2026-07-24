@@ -95,7 +95,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 	clustersToCheck := make(map[string]kubernetes.ClientInterface)
 	namespaces := []models.Namespace{}
 	for cluster, client := range in.userClients {
-		cachedNamespaces, found := in.kialiCache.GetNamespaces(cluster, client.GetToken())
+		cachedNamespaces, found := in.kialiCache.GetNamespaces(cluster, client.GetCacheKey())
 		if !found {
 			clustersToCheck[cluster] = client
 		} else {
@@ -156,7 +156,7 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 		namespacesPerCluster[ns.Cluster] = append(namespacesPerCluster[ns.Cluster], ns)
 	}
 	for cluster, ns := range namespacesPerCluster {
-		in.kialiCache.SetNamespaces(in.userClients[cluster].GetToken(), ns)
+		in.kialiCache.SetNamespaces(in.userClients[cluster].GetCacheKey(), ns)
 	}
 
 	return namespaces, nil
@@ -285,8 +285,8 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA", cluster)
 	}
 
-	// Check cache first using the SA token
-	if cachedNs, found := in.kialiCache.GetNamespaces(cluster, saClient.GetToken()); found {
+	// Check cache first using the SA cache key
+	if cachedNs, found := in.kialiCache.GetNamespaces(cluster, saClient.GetCacheKey()); found {
 		return cachedNs, nil
 	}
 
@@ -317,7 +317,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	// Apply discovery selector filtering
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 
-	in.kialiCache.SetNamespaces(saClient.GetToken(), namespaces)
+	in.kialiCache.SetNamespaces(saClient.GetCacheKey(), namespaces)
 
 	return namespaces, nil
 }
@@ -355,7 +355,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	}
 
 	// Cache already has discovery selectors applied
-	if ns, found := in.kialiCache.GetNamespace(cluster, client.GetToken(), namespace); found {
+	if ns, found := in.kialiCache.GetNamespace(cluster, client.GetCacheKey(), namespace); found {
 		return &ns, nil
 	}
 
@@ -436,10 +436,11 @@ func (in *NamespaceService) getNamespacesUsingKialiSA(cluster string, labelSelec
 		return nil, err
 	}
 
-	// When the user token is the same as the SA token (e.g. anonymous auth)
-	// the SA list is already the correct answer — skip the redundant user
-	// LIST and intersection/filter.
-	if in.userClients[cluster].GetToken() == in.kialiSAClients[cluster].GetToken() {
+	// When the user's effective identity is the same as the SA (e.g. anonymous auth
+	// where no impersonation is involved), the SA list is already the correct answer.
+	// Under impersonation, GetCacheKey() returns the impersonated username (never equal
+	// to the SA's bearer token), so the RBAC intersection below always runs.
+	if in.userClients[cluster].GetCacheKey() == in.kialiSAClients[cluster].GetToken() {
 		return nss, nil
 	}
 

@@ -134,6 +134,13 @@ func NewOpenshiftOAuthService(ctx context.Context, conf *config.Config, kialiSAC
 			continue
 		}
 
+		// When impersonation is enabled, only the home cluster needs OAuth config
+		// (for the initial user login). Remote clusters use SA + impersonation headers.
+		if conf.Auth.OpenShift.Impersonation.Enabled && cluster != conf.KubernetesConfig.ClusterName {
+			log.Debugf("Skipping OAuth config for cluster [%s] — impersonation mode does not require per-cluster OAuth", cluster)
+			continue
+		}
+
 		log.Debugf("Getting OAuth config for cluster [%s]", cluster)
 		// Use CA info from kube config.
 		url := client.ClusterInfo().ClientConfig.Host + "/.well-known/oauth-authorization-server"

@@ -204,7 +204,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			publicConfig.Clusters[cluster.Name] = cluster
 
 			if client := userClients[cluster.Name]; client != nil {
-				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetToken()); found {
+				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetCacheKey()); found {
 					for _, ns := range namespaces {
 						if discovery.IsControlPlane(r.Context(), cluster.Name, ns.Name) {
 							publicConfig.ControlPlanes[cluster.Name] = ns.Name
