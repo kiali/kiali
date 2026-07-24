@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Popover, PopoverPosition } from '@patternfly/react-core';
+import type { PopoverPosition } from '@patternfly/react-core';
+import { Button, ButtonVariant, Popover } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiDispatch } from 'types/Redux';
-import { KialiAppState } from 'store/Store';
-import { useResizeDetector } from 'react-resize-detector';
+import type { KialiDispatch } from 'types/Redux';
+import type { KialiAppState } from 'store/Store';
+import { useTopologyResize } from 'utils/ResizeDetectorUtils';
 import { TourActions } from 'actions/TourActions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -109,7 +110,11 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
     const stop = getStop('back');
 
     return (
-      <Button isDisabled={stop === undefined} variant={ButtonVariant.secondary} onClick={() => setStop(stop!)}>
+      <Button
+        isDisabled={stop === undefined}
+        variant={ButtonVariant.secondary}
+        onClick={() => stop !== undefined && setStop(stop)}
+      >
         {t('Back')}
       </Button>
     );
@@ -127,7 +132,7 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
     }
 
     return (
-      <Button variant={ButtonVariant.primary} onClick={() => setStop(stop!)}>
+      <Button variant={ButtonVariant.primary} onClick={() => setStop(stop)}>
         {t('Next')}
       </Button>
     );
@@ -135,30 +140,19 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
 
   // This is here to workaround what seems to be a bug.  As far as I know when isVisible is set then outside clicks should not hide
   // the Popover, but it seems to be happening in certain scenarios. So, if the Popover is still valid, unhide it immediately.
-  const onHidden = (): void => {
+  const handleHidden = (): void => {
     if (activeInfo()) {
       forceUpdate();
     }
   };
 
-  const onResize = (): void => {
+  const handleResize = (): void => {
     if (activeInfo()) {
       forceUpdate();
     }
   };
 
-  const bodyRef = React.useRef<HTMLElement>(document.body);
-
-  useResizeDetector({
-    targetRef: bodyRef,
-    disableRerender: true,
-    refreshMode: 'debounce',
-    refreshRate: 100,
-    skipOnMount: true,
-    handleWidth: true,
-    handleHeight: true,
-    onResize
-  });
+  useTopologyResize(handleResize);
 
   React.useEffect(() => {
     tourStopInfo.forEach(ti => (ti.isValid = true));
@@ -191,7 +185,7 @@ const TourStopComponent: React.FC<TourStopProps> = props => {
             </div>
           }
           isVisible={true}
-          onHidden={onHidden}
+          onHidden={handleHidden}
           position={currentInfo.position}
           shouldClose={(_event, _) => endTour()}
         >

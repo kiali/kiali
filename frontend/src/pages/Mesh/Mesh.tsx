@@ -1,20 +1,25 @@
 import * as React from 'react';
 import { Bullseye, Spinner } from '@patternfly/react-core';
-import { useResizeDetector } from 'react-resize-detector';
-import {
+import { useTopologyResize } from 'utils/ResizeDetectorUtils';
+import type {
   Controller,
+  EdgeModel,
+  GraphElement,
+  GraphModel,
+  Model,
+  Node,
+  NodeModel,
+  Edge,
+  GraphLayoutEndEventListener,
+  GraphAreaSelectedEventListener
+} from '@patternfly/react-topology';
+import {
   createTopologyControlButtons,
   defaultControlButtonsOptions,
   EdgeAnimationSpeed,
-  EdgeModel,
   EdgeStyle,
-  GraphElement,
-  GraphModel,
   GRAPH_LAYOUT_END_EVENT,
-  Model,
   ModelKind,
-  Node,
-  NodeModel,
   SELECTION_STATE,
   TopologyControlBar,
   TopologyView,
@@ -23,23 +28,20 @@ import {
   Visualization,
   VisualizationProvider,
   VisualizationSurface,
-  Edge,
-  GraphLayoutEndEventListener,
-  GraphAreaSelectedEventListener,
   GRAPH_AREA_SELECTED_EVENT
 } from '@patternfly/react-topology';
 import { elementFactory } from './elements/ElementFactory';
 import { getValidMeshLayout, layoutFactory, MeshLayoutType, MeshLayout } from './layouts/LayoutFactory';
-import { TimeInMilliseconds } from 'types/Common';
+import type { TimeInMilliseconds } from 'types/Common';
 import { HistoryManager, URLParam } from 'app/History';
 import { TourStop } from 'components/Tour/TourStop';
 import { meshComponentFactory } from './components/MeshComponentFactory';
-import { MeshData, MeshRefs } from './MeshPage';
-import { MeshInfraType, MeshTarget, MeshType } from 'types/Mesh';
+import type { MeshData, MeshRefs } from './MeshPage';
+import type { MeshTarget } from 'types/Mesh';
+import { MeshInfraType, MeshType } from 'types/Mesh';
 import { MeshHighlighter } from './MeshHighlighter';
+import type { EdgeData, NodeData } from './MeshElems';
 import {
-  EdgeData,
-  NodeData,
   assignEdgeHealth,
   getNodeShape,
   getNodeStatus,
@@ -174,18 +176,7 @@ const TopologyContent: React.FC<{
     layoutMesh(controller, MeshLayoutType.Resize);
   }, [controller]);
 
-  const bodyRef = React.useRef<HTMLElement>(document.body);
-
-  useResizeDetector({
-    targetRef: bodyRef,
-    disableRerender: true,
-    refreshMode: 'debounce',
-    refreshRate: 100,
-    handleWidth: true,
-    handleHeight: true,
-    skipOnMount: true,
-    onResize: handleResize
-  });
+  useTopologyResize(handleResize);
 
   const onLayoutEnd = React.useCallback(() => {
     console.debug(`onLayoutEnd layoutInProgress=${layoutInProgress}`);
@@ -254,7 +245,7 @@ const TopologyContent: React.FC<{
     // Manage the GraphData / DataModel
     //
     const generateDataModel = (): { edges: EdgeModel[]; nodes: NodeModel[] } => {
-      let nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
+      const nodeMap: Map<string, NodeModel> = new Map<string, NodeModel>();
       const edges: EdgeModel[] = [];
 
       const onHover = (element: GraphElement, isMouseIn: boolean): void => {
@@ -479,11 +470,6 @@ const TopologyContent: React.FC<{
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 
-  // TODO: I expected to find some sort of "onResize" hook in PFT, but after looking at the code
-  // I ended up adding a ReactResizeDetector. It doesn't seem to work perfectly with PFT, but it's
-  // not terrible.  Later I found https://github.com/patternfly/react-topology/issues/62, which
-  // indicates that this is currently the way to go.  I added a suggestion there for some kind
-  // of hook or option, but it would be a future.
   return isMiniMesh ? (
     <TopologyView data-test="mesh-topology-view-pf">
       <VisualizationSurface data-test="mesh-visualization-surface" state={{}} />

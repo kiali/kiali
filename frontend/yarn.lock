@@ -1739,7 +1739,7 @@ __metadata:
     react-flexview: "npm:4.0.3"
     react-i18next: "npm:^11.7.3"
     react-redux: "npm:7.2.2"
-    react-resize-detector: "npm:12.3.0"
+    react-resize-detector: "npm:^12.3.0"
     react-router: "npm:5.3.x"
     react-router-dom: "npm:5.3.x"
     react-router-dom-v5-compat: "npm:^6.30.3"
@@ -12142,7 +12142,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-resize-detector@npm:12.3.0":
+"react-resize-detector@npm:^12.3.0":
   version: 12.3.0
   resolution: "react-resize-detector@npm:12.3.0"
   dependencies:
