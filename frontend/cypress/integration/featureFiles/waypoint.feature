@@ -398,7 +398,8 @@ Feature: Kiali Waypoint related features
     Then the user updates the log level to "Debug"
 
   Scenario: [Traffic] Sidecar Ambient traffic
-    Given user is at the "graph" page
+    Given the graph page has enough data for sidecar ambient traffic
+    And user is at the "graph" page
     When user graphs "test-ambient,test-sidecar" namespaces
     Then user sees the "test-ambient" namespace
     Then user sees the "test-sidecar" namespace

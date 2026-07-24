@@ -76,17 +76,17 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   retryCount = 0,
   lastEdgeCount = -1
 ): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${
-        ambientTraffic === 'waypoint' ? 8 : 9
-      }, baseUrl=${Cypress.config('baseUrl')})`
-    );
+  let totalEdges = 9;
+  if (ambientTraffic === 'waypoint' || ambientTraffic === 'total') {
+    totalEdges = 8;
   }
 
-  let totalEdges = 9;
-  if (ambientTraffic === 'waypoint') {
-    totalEdges = 8;
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${totalEdges}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
   }
 
   cy.request({
@@ -294,8 +294,8 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
         responseBody === undefined
           ? 'undefined'
           : typeof responseBody === 'string'
-          ? responseBody
-          : JSON.stringify(responseBody);
+            ? responseBody
+            : JSON.stringify(responseBody);
       const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
       const workload = responseBody;
@@ -434,6 +434,10 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
 });
 
+Then('the graph page has enough data for sidecar ambient traffic', () => {
+  waitForBookinfoWaypointTrafficGeneratedInGraph('test-ambient,test-sidecar', 'total', 12);
+});
+
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   waitForWorkloadTracesInApi(namespace, workload);
 });
@@ -562,7 +566,8 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
     .contains('a,button', waypoint)
     .then($el => {
       // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
-      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      const target =
+        $el.prop('tagName')?.toLowerCase() === 'a' ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
       expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
       if (isOSSMC) {
         // Even if the button exist, the click event doesn't work (Even with force).
@@ -583,7 +588,7 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
     const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
     expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    const target = $el.is('a') ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
     expect(target).to.include(`clusterName=${cluster}`);
   });
 });
