@@ -294,8 +294,8 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
         responseBody === undefined
           ? 'undefined'
           : typeof responseBody === 'string'
-          ? responseBody
-          : JSON.stringify(responseBody);
+            ? responseBody
+            : JSON.stringify(responseBody);
       const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
       const workload = responseBody;
@@ -550,6 +550,58 @@ Then('the workload description card has no config issues', () => {
   cy.get('[data-test=workload-details-card]').should('be.visible').and('not.contain', 'Config Issues');
 });
 
+// Ambient L7 validation codes from AmbientPolicyChecker (issue #7900).
+// Baseline bookinfo + waypoint enrollment should not produce these warnings.
+const ambientL7ValidationCodes = new Set([
+  'KIA0109',
+  'KIA0110',
+  'KIA0210',
+  'KIA0211',
+  'KIA0212',
+  'KIA1109',
+  'KIA1110',
+  'KIA1111',
+  'KIA1112',
+  'KIA1113',
+  'KIA1114',
+  'KIA1115',
+  'KIA1116',
+  'KIA1117'
+]);
+
+Then('Ambient L7 validation warnings are not present in the {string} namespace', (namespace: string) => {
+  cy.request({ url: `/api/namespaces/${namespace}/istio?validate=true` }).then(response => {
+    expect(response.status).to.eq(200);
+    // API shape: validations[gvk][name.namespace] = { checks: [...] }
+    const validations = response.body?.validations ?? {};
+    const found: string[] = [];
+
+    // TODO: /api/namespaces/{ns}/istio?validate=true still returns cluster-wide validations
+    // (resources are namespaced; validations map is not). Filter client-side until the handler
+    // uses GetValidationsForNamespace. Track in a follow-up issue.
+    Object.keys(validations).forEach(gvk => {
+      const byName = validations[gvk] ?? {};
+      Object.keys(byName).forEach(nameKey => {
+        const entry = byName[nameKey];
+        if (entry?.namespace && entry.namespace !== namespace) {
+          return;
+        }
+        if (!entry?.namespace && !nameKey.endsWith(`.${namespace}`)) {
+          return;
+        }
+        const checks = entry?.checks ?? [];
+        checks.forEach((check: { code?: string; message?: string }) => {
+          if (check.code && ambientL7ValidationCodes.has(check.code)) {
+            found.push(`${gvk}/${nameKey}: ${check.code} ${check.message ?? ''}`.trim());
+          }
+        });
+      });
+    });
+
+    expect(found, `unexpected Ambient L7 validation warnings in ${namespace}`).to.deep.equal([]);
+  });
+});
+
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-resources-card]').should('contain', 'L7');
   cy.get('[data-test=waypoint-link]').closest('li').find('span').contains('L7');
@@ -562,7 +614,8 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
     .contains('a,button', waypoint)
     .then($el => {
       // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
-      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      const target =
+        $el.prop('tagName')?.toLowerCase() === 'a' ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
       expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
       if (isOSSMC) {
         // Even if the button exist, the click event doesn't work (Even with force).
@@ -583,7 +636,7 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
     const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
     expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    const target = $el.is('a') ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
     expect(target).to.include(`clusterName=${cluster}`);
   });
 });

@@ -40,6 +40,7 @@ func TestValidAmbientWorkloads(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.Empty(vals)
@@ -69,6 +70,7 @@ func TestWorkloadBothSidecarAndAmbientLabels(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -98,6 +100,7 @@ func TestWorkloadWaypointAndNotAmbient(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -128,6 +131,7 @@ func TestWorkloadReferencesNonExistentWaypoint(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -158,6 +162,7 @@ func TestWorkloadPodWithSidecarLabelAndAmbientRedirection(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -186,6 +191,7 @@ func TestWorkloadPodWithSidecarInjectAndAmbientLabel(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -213,6 +219,7 @@ func TestWorkloadSidecarInAmbientNamespace(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	assert.NotEmpty(vals)
@@ -226,10 +233,191 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 
 	assert := assert.New(t)
 
-	labels := map[string]string{}
+	labels := map[string]string{"app": "reviews"}
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
 
-	// Test workload with sidecar and ambient namespace
-	workload := data.CreateWorkload(ns1, "mixed-workload", labels)
+	// L7 AuthorizationPolicy selecting this Ambient workload with no waypoint should warn
+	workload := data.CreateWorkload(ns1, "reviews-v1", labels)
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.NotEmpty(vals)
+	assert.False(valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+}
+
+func TestWorkloadHasAuthPolicyAndNoWaypoint_OutOfMesh_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Out-of-mesh / non-Ambient workloads must not get KIA1317 for L7 AuthPolicies.
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{"app": "reviews"})
+	workload.IsAmbient = false
+	workload.IstioSidecar = false
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: false}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWorkloadHasAuthPolicyAndNoWaypoint_Sidecar_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Sidecar workloads enforce L7 AuthPolicies without a waypoint — KIA1317 must not fire.
+	nsLabels := map[string]string{config.IstioInjectionLabelName: "enabled"}
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{"app": "reviews"})
+	workload.IsAmbient = false
+	workload.IstioSidecar = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: false}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWorkloadHasL7AuthPolicyForOtherWorkload_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+
+	// productpage must not get KIA1317 when the L7 AuthPolicy only selects reviews
+	workload := data.CreateWorkload(ns1, "productpage-v1", map[string]string{"app": "productpage"})
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWorkloadHasL7AuthPolicyTargetRefsService_WarnsMatchedWorkload(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{"app": "reviews"})
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicyWithTargetRefs("reviews-deny-get", ns1, "reviews", []string{"GET"})
+	services := data.CreateFakeServicesWithSelector("reviews", ns1)
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		services,
+	).Check()
+
+	assert.NotEmpty(vals)
+	assert.False(valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+}
+
+func TestWorkloadHasL7AuthPolicyTargetRefsService_NoWarningForOtherWorkload(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+	workload := data.CreateWorkload(ns1, "productpage-v1", map[string]string{"app": "productpage"})
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicyWithTargetRefs("reviews-deny-get", ns1, "reviews", []string{"GET"})
+	services := data.CreateFakeServicesWithSelector("reviews", ns1)
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		services,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWorkloadHasL4AuthPolicyAndNoWaypoint_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+	workload := data.CreateWorkload(ns1, "l4-workload", map[string]string{})
+	workload.IsAmbient = true
 	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
 
 	vals, valid := NewAmbientWorkloadChecker(
@@ -237,13 +425,13 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint(t *testing.T) {
 		conf,
 		workload,
 		ns1,
-		models.Namespaces{models.Namespace{Name: ns1, Labels: labels}},
-		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{data.CreateAuthorizationPolicyWithPrincipals("l4-ap", ns1, []string{"cluster.local/ns/default/sa/app"})},
+		nil,
 	).Check()
 
-	assert.NotEmpty(vals)
-	assert.False(valid)
-	assert.NoError(validations.ConfirmIstioCheckMessage("workload.ambient.authpolicybutnowaypoint", vals[0]))
+	assert.Empty(vals)
+	assert.True(valid)
 }
 
 func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
@@ -266,6 +454,7 @@ func TestWorkloadZeroReplicasInAmbientNamespace(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: labels, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{},
+		nil,
 	).Check()
 
 	// Should not have any validation errors because there are no pods to check
@@ -295,6 +484,7 @@ func TestWaypointWithAuthPolicyDoesNotTriggerKIA1317(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
 		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+		nil,
 	).Check()
 
 	assert.Empty(vals)
@@ -325,6 +515,7 @@ func TestWaypointZeroReplicas(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}, IsAmbient: true}},
 		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+		nil,
 	).Check()
 
 	// Should not have any validation errors because waypoints are always ambient
@@ -353,6 +544,7 @@ func TestGatewayWithAuthPolicyDoesNotTriggerKIA1317(t *testing.T) {
 		ns1,
 		models.Namespaces{models.Namespace{Name: ns1, Labels: map[string]string{}}},
 		[]*security_v1.AuthorizationPolicy{data.CreateEmptyAuthorizationPolicy("test", ns1)},
+		nil,
 	).Check()
 
 	assert.Empty(vals)

@@ -340,7 +340,9 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		IncludeRequestAuthentications: true,
 		IncludeServiceEntries:         true,
 		IncludeSidecars:               true,
+		IncludeTelemetry:              true,
 		IncludeVirtualServices:        true,
+		IncludeWasmPlugins:            true,
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
@@ -608,8 +610,9 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices},
 		checkers.TrafficExtensionChecker{Namespaces: namespaces, TrafficExtensions: istioConfigList.TrafficExtensions},
 		checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
-		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, vInfo.clusterInfo.rootNamespaces, namespaces, workloadsPerNamespace),
+		checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, vInfo.clusterInfo.rootNamespaces, namespaces, workloadsPerNamespace, services),
 		checkers.WorkloadGroupsChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, ServiceAccounts: vInfo.saMap, WorkloadGroups: istioConfigList.WorkloadGroups},
+		newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
 	}, nil
 }
 
@@ -687,7 +690,9 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		IncludeRequestAuthentications: true,
 		IncludeServiceEntries:         true,
 		IncludeSidecars:               true,
+		IncludeTelemetry:              true,
 		IncludeVirtualServices:        true,
+		IncludeWasmPlugins:            true,
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
@@ -752,11 +757,11 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		referenceChecker = references.GatewayReferences{Conf: conf, Gateways: istioConfigList.Gateways, IdentityDomain: identityDomain, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.VirtualServices:
 		virtualServiceChecker := checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices}
-		objectCheckers = []checkers.ObjectChecker{noServiceChecker, virtualServiceChecker}
+		objectCheckers = []checkers.ObjectChecker{noServiceChecker, virtualServiceChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 		referenceChecker = references.VirtualServiceReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, Namespace: namespace, Namespaces: nsNames, VirtualServices: istioConfigList.VirtualServices}
 	case kubernetes.DestinationRules:
 		destinationRulesChecker := checkers.DestinationRulesChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, MTLSDetails: *mtlsDetails, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries}
-		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker}
+		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 		referenceChecker = references.DestinationRuleReferences{Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.ServiceEntries:
 		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
@@ -783,14 +788,14 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			VirtualServices:       istioConfigList.VirtualServices,
 			WorkloadsPerNamespace: workloadsPerNamespace,
 		}
-		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker}
+		objectCheckers = []checkers.ObjectChecker{authPoliciesChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 		referenceChecker = references.NewAuthorizationPolicyReferences(rbacDetails.AuthorizationPolicies, conf, identityDomain, cluster, rootNamespaces, namespace, nsNames, istioConfigList.ServiceEntries, istioConfigList.VirtualServices, kubeServiceHosts, workloadsPerNamespace)
 	case kubernetes.PeerAuthentications:
 		peerAuthnChecker := checkers.NewPeerAuthenticationChecker(cluster, conf, identityDomain, rootNamespaces, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace)
 		objectCheckers = []checkers.ObjectChecker{peerAuthnChecker}
 		referenceChecker = references.NewPeerAuthReferences(cluster, conf, identityDomain, rootNamespaces, *mtlsDetails, workloadsPerNamespace)
 	case schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}:
-		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, rootNamespaces, namespaces, workloadsPerNamespace)
+		workloadChecker := checkers.NewWorkloadChecker(rbacDetails.AuthorizationPolicies, cluster, conf, rootNamespaces, namespaces, workloadsPerNamespace, services)
 		objectCheckers = []checkers.ObjectChecker{workloadChecker}
 	case kubernetes.WorkloadEntries:
 		referenceChecker = references.WorkloadEntryReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries}
@@ -802,15 +807,21 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		referenceChecker = references.WorkloadGroupReferences{WorkloadGroups: istioConfigList.WorkloadGroups, WorkloadEntries: istioConfigList.WorkloadEntries, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.RequestAuthentications:
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
-		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker}
+		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 	case kubernetes.EnvoyFilters:
 		// Validation on EnvoyFilters are not yet in place
 	case kubernetes.TrafficExtensions:
 		// Validation on TrafficExtensions is not expected
 	case kubernetes.WasmPlugins:
-		// Validation on WasmPlugins is not expected
+		objectCheckers = []checkers.ObjectChecker{
+			checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
+			newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
+		}
 	case kubernetes.Telemetries:
-		// Validation on Telemetries is not expected
+		objectCheckers = []checkers.ObjectChecker{
+			checkers.TelemetryChecker{Namespaces: namespaces, Telemetries: istioConfigList.Telemetries},
+			newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain),
+		}
 	case kubernetes.K8sGateways:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sGatewayChecker{Cluster: cluster, K8sGateways: istioConfigList.K8sGateways, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
@@ -1018,6 +1029,12 @@ func (in *IstioValidationsService) setNamespaceIstioConfig(
 
 	// All RequestAuthentications
 	namespaceIstioConfigList.RequestAuthentications = append(namespaceIstioConfigList.RequestAuthentications, clusterIstioConfig.RequestAuthentications...)
+
+	// All Telemetries (needed by AmbientPolicyChecker for Ambient L7 checks)
+	namespaceIstioConfigList.Telemetries = append(namespaceIstioConfigList.Telemetries, clusterIstioConfig.Telemetries...)
+
+	// All WasmPlugins (needed by AmbientPolicyChecker for Ambient L7 checks)
+	namespaceIstioConfigList.WasmPlugins = append(namespaceIstioConfigList.WasmPlugins, clusterIstioConfig.WasmPlugins...)
 
 	// All WorkloadEntries
 	namespaceIstioConfigList.WorkloadEntries = append(namespaceIstioConfigList.WorkloadEntries, clusterIstioConfig.WorkloadEntries...)
@@ -1290,6 +1307,35 @@ func exists(namespaces []models.Namespace, namespace string) bool {
 func isAmbient(namespaces []models.Namespace, namespace string) bool {
 	ns := sliceutil.Find(namespaces, func(ns models.Namespace) bool { return ns.Name == namespace })
 	return ns != nil && ns.IsAmbient
+}
+
+// newAmbientPolicyChecker centralizes Ambient policy checker setup for both
+// full-resource and single-object validation pipelines.
+func newAmbientPolicyChecker(
+	cluster string,
+	namespaces models.Namespaces,
+	workloadsPerNamespace map[string]models.Workloads,
+	authorizationPolicies []*security_v1.AuthorizationPolicy,
+	istioConfigList *models.IstioConfigList,
+	services []core_v1.Service,
+	identityDomain string,
+) checkers.AmbientPolicyChecker {
+	checker := checkers.AmbientPolicyChecker{
+		AuthorizationPolicies: authorizationPolicies,
+		Cluster:               cluster,
+		IdentityDomain:        identityDomain,
+		Namespaces:            namespaces,
+		Services:              services,
+		WorkloadsPerNamespace: workloadsPerNamespace,
+	}
+	if istioConfigList != nil {
+		checker.DestinationRules = istioConfigList.DestinationRules
+		checker.RequestAuthentications = istioConfigList.RequestAuthentications
+		checker.Telemetries = istioConfigList.Telemetries
+		checker.VirtualServices = istioConfigList.VirtualServices
+		checker.WasmPlugins = istioConfigList.WasmPlugins
+	}
+	return checker
 }
 
 func getNsNames(nss []models.Namespace) []string {

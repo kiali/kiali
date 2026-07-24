@@ -44,6 +44,7 @@ func TestWorkloadCoveredByMeshWideAuthPolicyMultiCP(t *testing.T) {
 		rootNamespaces,
 		models.Namespaces{},
 		workloadsPerNamespace,
+		nil,
 	)
 
 	vals := checker.Check()
@@ -106,6 +107,7 @@ func TestWorkloadCoveredBySameNamespaceAuthPolicy(t *testing.T) {
 		rootNamespaces,
 		models.Namespaces{},
 		workloadsPerNamespace,
+		nil,
 	)
 
 	vals := checker.Check()
@@ -150,6 +152,7 @@ func TestWorkloadUncoveredWhenNoMatchingAuthPolicy(t *testing.T) {
 		rootNamespaces,
 		models.Namespaces{},
 		workloadsPerNamespace,
+		nil,
 	)
 
 	vals := checker.Check()

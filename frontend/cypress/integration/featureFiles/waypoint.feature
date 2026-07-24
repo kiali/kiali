@@ -123,6 +123,11 @@ Feature: Kiali Waypoint related features
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" object in "bookinfo" namespace with "waypoint" name Istio Config is valid
 
+  Scenario: [Istio Config] Bookinfo Ambient namespace has no Ambient L7 validation warnings
+    Given user is at the "istio" page
+    And user selects the "bookinfo" namespace
+    Then Ambient L7 validation warnings are not present in the "bookinfo" namespace
+
   Scenario: [Namespaces] Namespace is labeled with the waypoint labels
     Given user is at the "namespaces" list page
     When user selects filter "Namespace"
