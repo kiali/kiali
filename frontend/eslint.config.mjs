@@ -105,5 +105,17 @@ export default tseslint.config(
       'cypress/no-unnecessary-waiting': 'warn',
       'cypress/unsafe-to-chain-command': 'warn'
     }
+  },
+  // CommonJS scripts (.cjs) — allow require() and Node globals
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.commonjs },
+      sourceType: 'commonjs'
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off'
+    }
   }
 );

@@ -124,7 +124,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     </Masthead>
   );
 
-  const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
+  const menu = <Menu ai={props.chatbotEnabled} isNavOpen={isNavOpen} externalServices={props.externalServices} />;
 
   const Sidebar = kioskMode ? undefined : (
     <PageSidebar isSidebarOpen={isNavOpen}>

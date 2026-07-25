@@ -848,11 +848,18 @@ type ProviderConfig struct {
 	Type               ProviderType       `yaml:"type" json:"type"`
 }
 
+// AIMetricsConfig defines configuration for the AI metrics subsystem
+type AIMetricsConfig struct {
+	Enabled         bool `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	IncludeUsername bool `yaml:"include_username,omitempty" json:"includeUsername,omitempty"`
+}
+
 // ChatAIConfig defines configuration for the ChatAI subsystem
 type ChatAIConfig struct {
 	DefaultProvider   string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
 	Enabled           bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 	MaxToolIterations int              `yaml:"max_tool_iterations,omitempty" json:"max_tool_iterations,omitempty"`
+	Metrics           AIMetricsConfig  `yaml:"metrics,omitempty" json:"metrics,omitempty"`
 	Providers         []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
 	StoreConfig       AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
 	Tools             ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
@@ -1049,10 +1056,14 @@ func NewConfig() (c *Config) {
 			},
 		},
 		ChatAI: ChatAIConfig{
-			Enabled:           false,
 			DefaultProvider:   "",
+			Enabled:           false,
 			MaxToolIterations: 5,
-			Providers:         []ProviderConfig{},
+			Metrics: AIMetricsConfig{
+				Enabled:         true,
+				IncludeUsername: false,
+			},
+			Providers: []ProviderConfig{},
 			StoreConfig: AiStoreConfig{
 				Enabled:                 true,
 				InactivityTimeout:       "30m",
