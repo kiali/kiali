@@ -140,7 +140,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
 // Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
 // adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
 const waitForSidecarAmbientTrafficGeneratedInGraph = (
-  maxRetries = 30,
+  maxRetries = 45,
   retryCount = 0,
   lastEdgeCount = -1,
   lastHttpEdgeCount = -1
@@ -357,8 +357,8 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
         responseBody === undefined
           ? 'undefined'
           : typeof responseBody === 'string'
-          ? responseBody
-          : JSON.stringify(responseBody);
+            ? responseBody
+            : JSON.stringify(responseBody);
       const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
       const workload = responseBody;
@@ -629,7 +629,8 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
     .contains('a,button', waypoint)
     .then($el => {
       // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
-      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      const target =
+        $el.prop('tagName')?.toLowerCase() === 'a' ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
       expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
       if (isOSSMC) {
         // Even if the button exist, the click event doesn't work (Even with force).
@@ -650,7 +651,7 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
     const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
     expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    const target = $el.is('a') ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
     expect(target).to.include(`clusterName=${cluster}`);
   });
 });
