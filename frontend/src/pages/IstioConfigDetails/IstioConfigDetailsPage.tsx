@@ -657,6 +657,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
       monacoEditorRef.current = ed;
       monacoRef.current = monaco;
       (window as any).monaco = monaco;
+      (window as any).istioConfigEditor = ed;
       cursorDisposableRef.current?.dispose();
       cursorDisposableRef.current = ed.onDidChangeCursorPosition(handleCursorChange);
       applyValidationMarkers();

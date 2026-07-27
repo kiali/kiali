@@ -2,17 +2,25 @@ import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 
 const editIstioConfigYaml = (): void => {
   cy.get('[data-test="istio-config-editor"] .monaco-editor').should('be.visible');
+  // Rendered view-lines prove the full mount+effect cycle completed, so
+  // @monaco-editor/react's onDidChangeModelContent listener is registered.
+  cy.get('[data-test="istio-config-editor"] .view-lines').should('not.be.empty');
+  cy.window().should('have.property', 'istioConfigEditor');
   cy.window().then((win: any) => {
-    const monaco = win.monaco;
-    const editors = monaco.editor.getEditors();
-    const ed = editors[editors.length - 1];
+    const ed = win.istioConfigEditor;
     const model = ed.getModel();
+    expect(model.getLineCount(), 'editor should have YAML content').to.be.greaterThan(1);
+
+    // Use trigger('type') rather than executeEdits. The latter can race with
+    // the @monaco-editor/react useEffect that registers the onChange listener;
+    // trigger('type') flows through Monaco's full input pipeline and reliably
+    // fires onDidChangeModelContent → React onChange → setIsModified(true).
     const lastLine = model.getLineCount();
     const lastCol = model.getLineMaxColumn(lastLine);
-    ed.executeEdits('cypress-test', [{ range: new monaco.Range(lastLine, lastCol, lastLine, lastCol), text: '     ' }]);
+    ed.setPosition({ lineNumber: lastLine, column: lastCol });
+    ed.trigger('cypress-test', 'type', { text: '\n# cypress-unsaved-edit' });
   });
-  // Wait for React to process the isModified state change before proceeding
-  cy.get('button').contains('Save').should('not.be.disabled');
+  cy.contains('button', 'Save').should('not.be.disabled');
 };
 
 When('user updates the {string} AuthorizationPolicy using the text field', (name: string) => {
@@ -20,7 +28,7 @@ When('user updates the {string} AuthorizationPolicy using the text field', (name
     statusCode: 200
   }).as(`${name}-update`);
   editIstioConfigYaml();
-  cy.get('button').contains('Save').should('not.be.disabled').click();
+  cy.contains('button', 'Save').should('not.be.disabled').click();
 });
 
 When('user edits the Istio config YAML', () => {
