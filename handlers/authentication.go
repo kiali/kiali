@@ -272,7 +272,14 @@ func Logout(conf *config.Config, authController authentication.AuthController) h
 			RespondWithCode(w, http.StatusNoContent)
 		} else {
 			err := authController.TerminateSession(r, w)
-			if err != nil {
+			if lr, ok := err.(*authentication.LogoutRedirect); ok {
+				if conf.Server.AuditLog {
+					log.FromRequest(r).Info().
+						Str("client", r.RemoteAddr).
+						Msg("AUDIT: Logout completed (redirecting to IdP)")
+				}
+				RespondWithJSON(w, http.StatusOK, map[string]string{"redirect_url": lr.RedirectURL})
+			} else if err != nil {
 				log.Errorf("Logout failed [client: %s]: %s", r.RemoteAddr, err.Error())
 				if e, ok := err.(*authentication.TerminateSessionError); ok {
 					RespondWithError(w, e.HttpStatus, e.Error())

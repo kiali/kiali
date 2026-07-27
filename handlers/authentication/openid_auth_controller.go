@@ -54,12 +54,13 @@ var openIdFlightGroup singleflight.Group
 // This was borrowed from https://github.com/coreos/go-oidc/blob/8d771559cf6e5111c9b9159810d0e4538e7cdc82/oidc.go
 // and some additional fields were added.
 type openIdMetadata struct {
-	Issuer      string   `json:"issuer"`
-	AuthURL     string   `json:"authorization_endpoint"`
-	TokenURL    string   `json:"token_endpoint"`
-	JWKSURL     string   `json:"jwks_uri"`
-	UserInfoURL string   `json:"userinfo_endpoint"`
-	Algorithms  []string `json:"id_token_signing_alg_values_supported"`
+	Issuer        string   `json:"issuer"`
+	AuthURL       string   `json:"authorization_endpoint"`
+	EndSessionURL string   `json:"end_session_endpoint"`
+	TokenURL      string   `json:"token_endpoint"`
+	JWKSURL       string   `json:"jwks_uri"`
+	UserInfoURL   string   `json:"userinfo_endpoint"`
+	Algorithms    []string `json:"id_token_signing_alg_values_supported"`
 
 	// Some extra fields
 	ScopesSupported        []string `json:"scopes_supported"`
@@ -69,6 +70,12 @@ type openIdMetadata struct {
 // oidcSessionPayload is a helper type used as session data storage. An instance
 // of this type is used with the SessionPersistor for session creation and persistance.
 type oidcSessionPayload struct {
+	// IdToken holds the id_token from the OpenId server, stored separately only when
+	// api_token is "access_token" (i.e., Token holds the access_token). When api_token
+	// is "id_token" (the default), IdToken is empty and Token itself is the id_token.
+	// TerminateSession uses IdToken for id_token_hint, falling back to Token when empty.
+	IdToken string `json:"id_token,omitempty"`
+
 	// Subject is the resolved name of the user that logged into Kiali.
 	Subject string `json:"subject,omitempty"`
 
@@ -287,10 +294,63 @@ func (c OpenIdAuthController) ValidateSession(r *http.Request, w http.ResponseWr
 	return userSessions, nil
 }
 
-// TerminateSession unconditionally terminates any existing session without any validation.
+// TerminateSession clears the local Kiali session and, when the IdP publishes an
+// end_session_endpoint (OIDC RP-Initiated Logout), returns a LogoutRedirect so the
+// caller can direct the browser to the IdP's logout page. When the endpoint is
+// unavailable the method returns nil and the caller falls back to local-only logout.
 func (c OpenIdAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
+	// Read the session before clearing it so we can extract the id_token for the hint.
+	// IdToken is set separately only when api_token is access_token; otherwise the
+	// Token field itself holds the id_token, so we fall back to it.
+	var idTokenHint string
+	sData, err := c.SessionStore.ReadSession(r, w, c.conf.KubernetesConfig.ClusterName)
+	if err == nil && sData != nil && sData.Payload != nil {
+		idTokenHint = sData.Payload.IdToken
+		if idTokenHint == "" {
+			idTokenHint = sData.Payload.Token
+		}
+	}
+
 	c.SessionStore.TerminateSession(r, w, c.conf.KubernetesConfig.ClusterName)
-	return nil
+
+	metadata, err := getOpenIdMetadata(c.conf)
+	if err != nil {
+		log.Warningf("Could not fetch OpenID metadata for RP-Initiated Logout: %v", err)
+		return nil
+	}
+
+	if metadata.EndSessionURL == "" {
+		log.Debugf("OpenID provider does not publish end_session_endpoint; performing local-only logout")
+		return nil
+	}
+
+	logoutURL, err := url.Parse(metadata.EndSessionURL)
+	if err != nil {
+		log.Warningf("Invalid end_session_endpoint URL [%s]: %v", metadata.EndSessionURL, err)
+		return nil
+	}
+
+	if logoutURL.Scheme != "https" && logoutURL.Scheme != "http" {
+		log.Warningf("Rejecting end_session_endpoint with unsupported scheme [%s]: %s", logoutURL.Scheme, metadata.EndSessionURL)
+		return nil
+	}
+
+	q := logoutURL.Query()
+	if idTokenHint != "" {
+		q.Set("id_token_hint", idTokenHint)
+	} else {
+		q.Set("client_id", c.conf.Auth.OpenId.ClientId)
+	}
+
+	postLogoutURI := c.conf.Auth.OpenId.PostLogoutRedirectURI
+	if postLogoutURI == "" {
+		postLogoutURI = httputil.GuessKialiURL(c.conf, r)
+	}
+	q.Set("post_logout_redirect_uri", postLogoutURI)
+
+	logoutURL.RawQuery = q.Encode()
+
+	return &LogoutRedirect{RedirectURL: logoutURL.String()}
 }
 
 // authenticateWithAuthorizationCodeFlow is the entry point to handle OpenId authentication using the authorization
@@ -991,10 +1051,18 @@ func buildSessionPayload(openIdParams *openidFlowHelper) *oidcSessionPayload {
 		token = openIdParams.AccessToken
 	}
 
-	return &oidcSessionPayload{
-		Token:   token,
+	payload := &oidcSessionPayload{
 		Subject: openIdParams.Subject,
+		Token:   token,
 	}
+
+	// Only store IdToken separately when Token holds the access_token.
+	// When Token already is the id_token, storing it again would bloat the session cookie.
+	if openIdParams.UseAccessToken {
+		payload.IdToken = openIdParams.IdToken
+	}
+
+	return payload
 }
 
 // checkDomain verifies that the "hd" or the "email" claims in tokenClaims contain a domain
@@ -1237,11 +1305,12 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 		cfg := conf.Auth.OpenId
 
 		// Check if we have explicit endpoint configuration
-		var authEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
+		var authEndpoint, endSessionEndpoint, tokenEndpoint, jwksUri, userInfoEndpoint string
 
 		// Use discovery_override for explicit endpoint configuration
 		if cfg.DiscoveryOverride.AuthorizationEndpoint != "" && cfg.DiscoveryOverride.TokenEndpoint != "" {
 			authEndpoint = cfg.DiscoveryOverride.AuthorizationEndpoint
+			endSessionEndpoint = cfg.DiscoveryOverride.EndSessionEndpoint
 			tokenEndpoint = cfg.DiscoveryOverride.TokenEndpoint
 			jwksUri = cfg.DiscoveryOverride.JwksUri
 			userInfoEndpoint = cfg.DiscoveryOverride.UserinfoEndpoint
@@ -1256,11 +1325,12 @@ func getOpenIdMetadata(conf *config.Config) (*openIdMetadata, error) {
 			log.Infof("Using explicit OpenID endpoints for restricted environment")
 
 			metadata := &openIdMetadata{
-				Issuer:      cfg.IssuerUri,
-				AuthURL:     authEndpoint,
-				TokenURL:    tokenEndpoint,
-				JWKSURL:     jwksUri,
-				UserInfoURL: userInfoEndpoint,
+				Issuer:        cfg.IssuerUri,
+				AuthURL:       authEndpoint,
+				EndSessionURL: endSessionEndpoint,
+				TokenURL:      tokenEndpoint,
+				JWKSURL:       jwksUri,
+				UserInfoURL:   userInfoEndpoint,
 				// Assume "code" is supported when explicit config is provided
 				ResponseTypesSupported: []string{"code"},
 			}
