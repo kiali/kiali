@@ -42,7 +42,8 @@ func ClusterHealth(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		if err := queryparams.RejectUnknown(params, "clusterName", "namespaces", "rateInterval", "type"); err != nil {
+		// queryTime is accepted for UI cache-bust/replay even though ClusterHealth does not use it.
+		if err := queryparams.RejectUnknown(params, "clusterName", "namespaces", "queryTime", "rateInterval", "type"); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
