@@ -157,7 +157,7 @@ jobs:
     - run: echo "Wave 1 complete – starting wave 2"
 
   # ---------------------------------------------------------------------------
-  # Wave 2: Requires the 'full-ci' label and wave 1 completion.
+  # Wave 2: Requires the 'ci-full' label and wave 1 completion.
   # ---------------------------------------------------------------------------
 
   integration_tests_frontend_chat:
