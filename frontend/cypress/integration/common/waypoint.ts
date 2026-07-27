@@ -72,18 +72,21 @@ const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retry
 const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   targetNamespace: string,
   ambientTraffic: string,
-  maxRetries = 30,
+  maxRetries = 60,
   retryCount = 0,
-  lastEdgeCount = -1
+  lastEdgeCount = -1,
+  lastHttpEdgeCount = -1
 ): void => {
   let totalEdges = 9;
   if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
   }
+  // TCP-only graphs show up first; wait until HTTP edges exist too.
+  const minHttpEdges = 2;
 
   if (retryCount >= maxRetries) {
     throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${totalEdges}, baseUrl=${Cypress.config(
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, lastHttpEdgeCount=${lastHttpEdgeCount}, expected>=${totalEdges}, expectedHttp>=${minHttpEdges}, baseUrl=${Cypress.config(
         'baseUrl'
       )})`
     );
@@ -108,39 +111,45 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     }
   }).then(response => {
     expect(response.status).to.equal(200);
-    const elements = response.body.elements;
-    const edgeCount = elements?.edges?.length ?? -1;
+    const edges = response.body.elements?.edges ?? [];
+    const edgeCount = edges.length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
 
-    if (edgeCount >= totalEdges) {
+    if (edgeCount >= totalEdges && httpEdgeCount >= minHttpEdges) {
       return;
-    } else {
-      if (retryCount === 0 || retryCount % 5 === 0) {
-        Cypress.log({
-          name: 'waitForGraphTraffic',
-          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
-            'baseUrl'
-          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} expected>=${totalEdges} baseUrl=${Cypress.config(
-            'baseUrl'
-          )} targetNamespace=${targetNamespace}`
-        });
-      }
-      return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(
-          targetNamespace,
-          ambientTraffic,
-          maxRetries,
-          retryCount + 1,
-          edgeCount
-        );
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForGraphTraffic',
+        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+          'baseUrl'
+        )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} httpEdges=${httpEdgeCount} expected>=${totalEdges} expectedHttp>=${minHttpEdges} baseUrl=${Cypress.config(
+          'baseUrl'
+        )} targetNamespace=${targetNamespace}`
       });
     }
+
+    return cy.wait(10000).then(() => {
+      return waitForBookinfoWaypointTrafficGeneratedInGraph(
+        targetNamespace,
+        ambientTraffic,
+        maxRetries,
+        retryCount + 1,
+        edgeCount,
+        httpEdgeCount
+      );
+    });
   });
 };
 
 // Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
 // adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
 const waitForSidecarAmbientTrafficGeneratedInGraph = (
-  maxRetries = 45,
+  maxRetries = 60,
   retryCount = 0,
   lastEdgeCount = -1,
   lastHttpEdgeCount = -1

@@ -16,8 +16,6 @@ Feature: Kiali Waypoint related features
   Scenario: [Setup] namespace is labeled with waypoint label
     Then "bookinfo" namespace is labeled with the waypoint label
     And the graph page has enough data
-    # Start Sidecar↔Ambient traffic wait early so metrics are ready before the late scenario.
-    And the graph page has enough data for sidecar ambient traffic
     And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
     And use_waypoint_name is enabled if tracing services contain waypoint in "bookinfo"
 
