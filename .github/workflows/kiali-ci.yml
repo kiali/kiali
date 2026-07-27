@@ -135,7 +135,7 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   # ---------------------------------------------------------------------------
-  # Wave 2 gate: Waits for wave 1 to finish, only runs when 'full-ci' label
+  # Wave 2 gate: Waits for wave 1 to finish, only runs when 'ci-full' label
   # is present on the PR. When skipped, all wave 2 jobs are skipped too.
   # ---------------------------------------------------------------------------
 
