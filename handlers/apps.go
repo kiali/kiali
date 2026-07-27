@@ -146,7 +146,7 @@ func AppDetails(
 		}
 
 		criteria := business.AppCriteria{
-			Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
+			Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: p.IncludeIstioResources, IncludeHealth: p.IncludeHealth,
 			RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName,
 		}
 

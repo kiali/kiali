@@ -156,7 +156,8 @@ func ServiceDetails(
 		}
 
 		queryParams := r.URL.Query()
-		if err := queryparams.RejectUnknown(queryParams, "clusterName", "rateInterval", "validate"); err != nil {
+		// health is accepted for compatibility with clients/tests; GetServiceDetails always includes health today.
+		if err := queryparams.RejectUnknown(queryParams, "clusterName", "health", "rateInterval", "validate"); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
@@ -177,6 +178,10 @@ func ServiceDetails(
 		}
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
+		}
+		if _, err := queryparams.ParseBoolParam(queryParams.Get("health"), "health", true); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
 		}
 
 		params := mux.Vars(r)
