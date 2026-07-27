@@ -178,7 +178,10 @@ const waitForSidecarAmbientTrafficGeneratedInGraph = (
     expect(response.status).to.equal(200);
     const edges = response.body.elements?.edges ?? [];
     const edgeCount = edges.length;
-    const httpEdgeCount = edges.filter((e: { data?: { protocol?: string } }) => e.data?.protocol === 'http').length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
 
     if (httpEdgeCount >= minHttpEdges && edgeCount >= minTotalEdges) {
       return;
