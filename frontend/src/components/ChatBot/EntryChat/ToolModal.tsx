@@ -74,22 +74,22 @@ export const ToolModal: React.FC = () => {
         <p>
           {isDenied ? (
             argsFormatted ? (
-              <Trans>
+              <Trans i18nKey="toolModal.deniedWithArgs">
                 The tool <span>{{ name }}</span> was requested with arguments <span>{{ argsFormatted }}</span> but was
                 rejected.
               </Trans>
             ) : (
-              <Trans>
+              <Trans i18nKey="toolModal.deniedNoArgs">
                 The tool <span>{{ name }}</span> was requested with no arguments but was rejected.
               </Trans>
             )
           ) : argsFormatted ? (
-            <Trans>
+            <Trans i18nKey="toolModal.outputWithArgs">
               The following output was generated when running <span>{{ name }}</span> with arguments{' '}
               <span>{{ argsFormatted }}</span>.
             </Trans>
           ) : (
-            <Trans>
+            <Trans i18nKey="toolModal.outputNoArgs">
               The following output was generated when running <span>{{ name }}</span> with no arguments.
             </Trans>
           )}
