@@ -72,21 +72,24 @@ const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retry
 const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   targetNamespace: string,
   ambientTraffic: string,
-  maxRetries = 30,
+  maxRetries = 60,
   retryCount = 0,
-  lastEdgeCount = -1
+  lastEdgeCount = -1,
+  lastHttpEdgeCount = -1
 ): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${
-        ambientTraffic === 'waypoint' ? 8 : 9
-      }, baseUrl=${Cypress.config('baseUrl')})`
-    );
-  }
-
   let totalEdges = 9;
   if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
+  }
+  // TCP-only graphs show up first; wait until HTTP edges exist too.
+  const minHttpEdges = 2;
+
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, lastHttpEdgeCount=${lastHttpEdgeCount}, expected>=${totalEdges}, expectedHttp>=${minHttpEdges}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
   }
 
   cy.request({
@@ -108,32 +111,101 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     }
   }).then(response => {
     expect(response.status).to.equal(200);
-    const elements = response.body.elements;
-    const edgeCount = elements?.edges?.length ?? -1;
+    const edges = response.body.elements?.edges ?? [];
+    const edgeCount = edges.length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
 
-    if (edgeCount >= totalEdges) {
+    if (edgeCount >= totalEdges && httpEdgeCount >= minHttpEdges) {
       return;
-    } else {
-      if (retryCount === 0 || retryCount % 5 === 0) {
-        Cypress.log({
-          name: 'waitForGraphTraffic',
-          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
-            'baseUrl'
-          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} expected>=${totalEdges} baseUrl=${Cypress.config(
-            'baseUrl'
-          )} targetNamespace=${targetNamespace}`
-        });
-      }
-      return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(
-          targetNamespace,
-          ambientTraffic,
-          maxRetries,
-          retryCount + 1,
-          edgeCount
-        );
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForGraphTraffic',
+        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+          'baseUrl'
+        )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} httpEdges=${httpEdgeCount} expected>=${totalEdges} expectedHttp>=${minHttpEdges} baseUrl=${Cypress.config(
+          'baseUrl'
+        )} targetNamespace=${targetNamespace}`
       });
     }
+
+    return cy.wait(10000).then(() => {
+      return waitForBookinfoWaypointTrafficGeneratedInGraph(
+        targetNamespace,
+        ambientTraffic,
+        maxRetries,
+        retryCount + 1,
+        edgeCount,
+        httpEdgeCount
+      );
+    });
+  });
+};
+
+// Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
+// adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
+const waitForSidecarAmbientTrafficGeneratedInGraph = (
+  maxRetries = 60,
+  retryCount = 0,
+  lastEdgeCount = -1,
+  lastHttpEdgeCount = -1
+): void => {
+  const targetNamespace = 'test-ambient,test-sidecar';
+  const minHttpEdges = 4;
+  const minTotalEdges = 8;
+
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForSidecarAmbientTrafficGeneratedInGraph, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, lastHttpEdgeCount=${lastHttpEdgeCount}, expectedHttp>=${minHttpEdges}, expectedTotal>=${minTotalEdges}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '300s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: false,
+      ambientTraffic: 'total',
+      appenders: 'deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: targetNamespace
+    }
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const edges = response.body.elements?.edges ?? [];
+    const edgeCount = edges.length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
+
+    if (httpEdgeCount >= minHttpEdges && edgeCount >= minTotalEdges) {
+      return;
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForSidecarAmbientTraffic',
+        message: `retry=${retryCount}/${maxRetries} edges=${edgeCount} httpEdges=${httpEdgeCount} expectedHttp>=${minHttpEdges} expectedTotal>=${minTotalEdges} targetNamespace=${targetNamespace}`
+      });
+    }
+
+    return cy.wait(10000).then(() => {
+      return waitForSidecarAmbientTrafficGeneratedInGraph(maxRetries, retryCount + 1, edgeCount, httpEdgeCount);
+    });
   });
 };
 
@@ -432,6 +504,10 @@ Then('the graph page has enough data for L7', () => {
 
 Then('the graph page has enough data for L7 in the {string} namespace', (namespace: string) => {
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
+});
+
+Then('the graph page has enough data for sidecar ambient traffic', () => {
+  waitForSidecarAmbientTrafficGeneratedInGraph();
 });
 
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
