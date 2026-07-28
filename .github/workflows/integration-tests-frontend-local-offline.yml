@@ -38,6 +38,11 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        docker system prune -af --volumes
+
     # Corepack must be enabled before setup-node so that setup-node's
     # cache: yarn correctly detects the Yarn 4 cache directory.
     - name: Enable corepack

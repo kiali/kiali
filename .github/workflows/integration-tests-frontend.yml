@@ -43,6 +43,11 @@ jobs:
       with:
         ref: ${{ inputs.build_branch }}
 
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        docker system prune -af --volumes
+
     - name: Install Helm
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
       with:
