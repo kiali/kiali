@@ -44,6 +44,10 @@ jobs:
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
         docker system prune -af --volumes
 
+    - name: Start resource sampler
+      run: nohup nice -n 19 bash hack/ci-resource-sampler.sh start --csv /tmp/ci-telemetry-frontend-multi-mesh.csv > /tmp/sampler.out 2>&1 &
+      continue-on-error: true
+
     - name: Install Helm
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
       with:
@@ -80,6 +84,21 @@ jobs:
     - name: Run frontend integration tests for multi mesh
       run: hack/run-integration-tests.sh --test-suite frontend-multi-mesh --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
+    - name: Stop resource sampler
+      if: always()
+      run: bash hack/ci-resource-sampler.sh stop --csv /tmp/ci-telemetry-frontend-multi-mesh.csv || true
+      continue-on-error: true
+
+    - name: Upload resource telemetry
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      continue-on-error: true
+      with:
+        name: resource-telemetry-frontend-multi-mesh
+        path: /tmp/ci-telemetry-frontend-multi-mesh.csv
+        retention-days: 14
+        if-no-files-found: ignore
+
     - name: Get debug info when integration tests fail
       if: failure()
       run: |
@@ -90,19 +109,19 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: debug-info-${{ github.job }}
+        name: debug-info-frontend-multi-mesh
         path: debug-output
 
     - name: Upload cypress screenshots when tests fail
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: failure()
       with:
-        name: cypress-screenshots-${{ github.job }}
+        name: cypress-screenshots-frontend-multi-mesh
         path: frontend/cypress/screenshots
 
     - name: Upload cypress logs from stern
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: ${{ inputs.stern_logs == true }}
       with:
-        name: cypress-logs-${{ github.job }}
+        name: cypress-logs-frontend-multi-mesh
         path: hack/stern

@@ -38,6 +38,10 @@ jobs:
         sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
         docker system prune -af --volumes
 
+    - name: Start resource sampler
+      run: nohup nice -n 19 bash hack/ci-resource-sampler.sh start --csv /tmp/ci-telemetry-backend-mc-ext-controlplane.csv > /tmp/sampler.out 2>&1 &
+      continue-on-error: true
+
     - name: Install Helm
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
       with:
@@ -62,17 +66,32 @@ jobs:
     - name: Run backend integration tests
       run: hack/run-integration-tests.sh --test-suite backend-external-controlplane $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi) $(if [ -n "${{ inputs.sail_operator_git_ref }}" ]; then echo "--sail-operator-git-ref ${{ inputs.sail_operator_git_ref }}"; fi)
 
+    - name: Stop resource sampler
+      if: always()
+      run: bash hack/ci-resource-sampler.sh stop --csv /tmp/ci-telemetry-backend-mc-ext-controlplane.csv || true
+      continue-on-error: true
+
+    - name: Upload resource telemetry
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      continue-on-error: true
+      with:
+        name: resource-telemetry-backend-mc-ext-controlplane
+        path: /tmp/ci-telemetry-backend-mc-ext-controlplane.csv
+        retention-days: 14
+        if-no-files-found: ignore
+
     - name: Get debug info when integration tests fail
       if: failure()
       run: |
         mkdir debug-output
-        hack/ci-get-debug-info.sh --output-directory debug-output --kubectl-context kind-controlplane
+        hack/ci-get-debug-info.sh --output-directory debug-output
 
     - name: Upload debug info artifact
       if: failure()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: debug-info-${{ github.job }}
+        name: debug-info-backend-mc-ext-controlplane
         path: debug-output
 
     - name: Upload multicluster coverage artifact
