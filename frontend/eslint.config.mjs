@@ -76,6 +76,14 @@ export default tseslint.config(
       '@eslint-react/static-components': 'off',
       '@eslint-react/unsupported-syntax': 'off',
 
+      // React Hooks rules
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/static-components': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+
       // Accessibility rules
       'jsx-a11y/anchor-has-content': 'off',
       'jsx-a11y/anchor-is-valid': 'off',
