@@ -145,7 +145,7 @@
   "devDependencies": {
     "@badeball/cypress-cucumber-preprocessor": "^24.0.1",
     "@bahmutov/cypress-esbuild-preprocessor": "^2.2.8",
-    "@eslint-react/eslint-plugin": "^5.9.2",
+    "@eslint-react/eslint-plugin": "^5.18.0",
     "@eslint/js": "^10.0.1",
     "@rsbuild/core": "^2.0.12",
     "@rsbuild/plugin-react": "^2.0.1",
@@ -170,13 +170,13 @@
     "cypress": "^15.16.0",
     "cypress-multi-reporters": "^2.0.5",
     "esbuild": "^0.27.7",
-    "eslint": "^10.5.0",
-    "eslint-plugin-cypress": "^6.4.1",
-    "eslint-plugin-import-x": "^4.15.2",
+    "eslint": "^10.8.0",
+    "eslint-plugin-cypress": "^6.4.3",
+    "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-jsx-a11y-x": "^0.2.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "gherkin-lint": "^4.2.4",
-    "globals": "^16.2.0",
+    "globals": "^17.8.0",
     "husky": "^9.1.7",
     "i18next-parser": "^9.4.0",
     "jsdom": "^29.1.1",
@@ -187,7 +187,7 @@
     "pretty-quick": "^4.2.2",
     "seedrandom": "^3.0.5",
     "typescript": "^5.9.0",
-    "typescript-eslint": "^8.34.0"
+    "typescript-eslint": "^8.65.0"
   },
   "resolutions": {
     "dompurify": "^3.4.7",
