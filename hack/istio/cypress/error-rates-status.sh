@@ -22,8 +22,6 @@ apps=("a-client"
 
 kubectl wait pods -n alpha --for condition=Ready --timeout=60s --all
 alpha_input=$(kubectl get pods -n alpha -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
-kubectl wait pods -n beta --for condition=Ready --timeout=60s --all
-beta_input=$(kubectl get pods -n beta -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
 
 for pod in "${!apps[@]}"; do
   count=$(echo "$alpha_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
@@ -35,15 +33,21 @@ for pod in "${!apps[@]}"; do
   fi
 done
 
-for pod in "${!apps[@]}"; do
-  count=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
-  status=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
-  if [ $count -ne 1 ] || [ $status != "Running" ]
-  then
-    echo "Invalid number of pods in a Running state detected in the beta namespace."
-    exit 1
-  fi
-done
+# Only check beta if the namespace exists (it may be skipped to reduce CI resource usage)
+if kubectl get namespace beta &>/dev/null; then
+  kubectl wait pods -n beta --for condition=Ready --timeout=60s --all
+  beta_input=$(kubectl get pods -n beta -o=custom-columns=NAME:.metadata.name,Status:.status.phase --no-headers=true)
+
+  for pod in "${!apps[@]}"; do
+    count=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $1}' | wc -l)
+    status=$(echo "$beta_input" | grep "${apps[$pod]}" | awk -F ' ' '{print $2}')
+    if [ $count -ne 1 ] || [ $status != "Running" ]
+    then
+      echo "Invalid number of pods in a Running state detected in the beta namespace."
+      exit 1
+    fi
+  done
+fi
 
 echo "Error rates ready."
 exit 0
