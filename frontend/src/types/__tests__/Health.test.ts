@@ -1,6 +1,6 @@
 import * as H from '../Health';
 import { DEGRADED, HEALTHY } from '../Health';
-import { ToleranceConfig } from '../ServerConfig';
+import type { ToleranceConfig } from '../ServerConfig';
 import { setServerConfig } from '../../config/ServerConfig';
 import { healthConfig } from '../__testData__/HealthConfig';
 
@@ -71,14 +71,14 @@ describe('Health', () => {
     expect(result.value).toEqual(50);
     expect(result.violation).toEqual('50.00%>=20%');
   });
-  it('should skip failure tier when failure is 0 (matches server applyThresholds)', () => {
+  it('should treat failure: 0 as Failure when there are errors (matches server applyThresholds)', () => {
     const tol: ToleranceConfig = { code: '', degraded: 10, failure: 0 };
-    expect(H.getRequestErrorsStatus(0.15, tol).status).toEqual(H.DEGRADED);
-    expect(H.getRequestErrorsStatus(0.05, tol).status).toEqual(H.HEALTHY);
+    expect(H.getRequestErrorsStatus(0.15, tol).status).toEqual(H.FAILURE);
+    expect(H.getRequestErrorsStatus(0.05, tol).status).toEqual(H.FAILURE);
   });
-  it('should use degraded tier when failure is 0 and degraded is 0 but there are errors', () => {
+  it('should use Failure when failure is 0 and degraded is 0 but there are errors', () => {
     const tol: ToleranceConfig = { code: '', degraded: 0, failure: 0 };
-    expect(H.getRequestErrorsStatus(0.01, tol).status).toEqual(H.DEGRADED);
+    expect(H.getRequestErrorsStatus(0.01, tol).status).toEqual(H.FAILURE);
   });
   it('should get comparable error ratio with NA', () => {
     const r1 = H.getRequestErrorsStatus(-1, toleranceDefault);
