@@ -1686,7 +1686,7 @@ __metadata:
     "@patternfly/react-topology": "npm:^6.4.0"
     "@rsbuild/core": "npm:^2.0.12"
     "@rsbuild/plugin-react": "npm:^2.0.1"
-    "@rsbuild/plugin-sass": "npm:^1.5.2"
+    "@rsbuild/plugin-sass": "npm:^2.0.1"
     "@rsbuild/plugin-svgr": "npm:^2.0.2"
     "@rstest/adapter-rsbuild": "npm:^0.10.1"
     "@rstest/core": "npm:^0.10.3"
@@ -1751,7 +1751,6 @@ __metadata:
     redux-thunk: "npm:2.4.1"
     regression: "npm:^2.0.1"
     reselect: "npm:4.0.0"
-    sass: "npm:^1.63.6"
     seedrandom: "npm:^3.0.5"
     typesafe-actions: "npm:^4.2.1"
     typescript: "npm:^5.9.0"
@@ -2657,21 +2656,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsbuild/plugin-sass@npm:^1.5.2":
-  version: 1.5.3
-  resolution: "@rsbuild/plugin-sass@npm:1.5.3"
+"@rsbuild/plugin-sass@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@rsbuild/plugin-sass@npm:2.0.1"
   dependencies:
     deepmerge: "npm:^4.3.1"
     loader-utils: "npm:^2.0.4"
     postcss: "npm:^8.5.15"
-    reduce-configs: "npm:^1.1.2"
+    reduce-configs: "npm:^2.0.1"
     sass-embedded: "npm:^1.100.0"
   peerDependencies:
-    "@rsbuild/core": ^1.3.0 || ^2.0.0-0
+    "@rsbuild/core": ^2.0.0
   peerDependenciesMeta:
     "@rsbuild/core":
       optional: true
-  checksum: 10c0/31b4662d2fbc3ddb4aae601e7603ac3210a954ce404a55584c7a6c35ed0dae07a13c0aa2dfae3ad42b449dd69d493af8352cacdace4369b6cf8684f8652d68a7
+  checksum: 10c0/eb3e7fcb2ad1e6a9a28b722f73266325d016c7adb60dee1271c891c20a23a113f65e727abadee58f670b7e2681b6b98ce54e2683846c738ef926659380bc6c46
   languageName: node
   linkType: hard
 
@@ -4367,7 +4366,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"anymatch@npm:^3.1.3, anymatch@npm:~3.1.2":
+"anymatch@npm:^3.1.3":
   version: 3.1.3
   resolution: "anymatch@npm:3.1.3"
   dependencies:
@@ -4637,13 +4636,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"binary-extensions@npm:^2.0.0":
-  version: 2.2.0
-  resolution: "binary-extensions@npm:2.2.0"
-  checksum: 10c0/d73d8b897238a2d3ffa5f59c0241870043aa7471335e89ea5e1ff48edb7c2d0bb471517a3e4c5c3f4c043615caa2717b5f80a5e61e07503d51dc85cb848e665d
-  languageName: node
-  linkType: hard
-
 "birecord@npm:^0.1.1":
   version: 0.1.1
   resolution: "birecord@npm:0.1.1"
@@ -4736,7 +4728,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"braces@npm:^3.0.3, braces@npm:~3.0.2":
+"braces@npm:^3.0.3":
   version: 3.0.3
   resolution: "braces@npm:3.0.3"
   dependencies:
@@ -5019,25 +5011,6 @@ __metadata:
     undici: "npm:^7.19.0"
     whatwg-mimetype: "npm:^4.0.0"
   checksum: 10c0/91a566aabfa9962f28056045bb7d92d79c0f8f3abb1fb86a852a9d1760556adddeb01a36b6f08fa7c133282375d387ae450a181a659e76c6a64016c30cc3f611
-  languageName: node
-  linkType: hard
-
-"chokidar@npm:>=3.0.0 <4.0.0":
-  version: 3.5.3
-  resolution: "chokidar@npm:3.5.3"
-  dependencies:
-    anymatch: "npm:~3.1.2"
-    braces: "npm:~3.0.2"
-    fsevents: "npm:~2.3.2"
-    glob-parent: "npm:~5.1.2"
-    is-binary-path: "npm:~2.1.0"
-    is-glob: "npm:~4.0.1"
-    normalize-path: "npm:~3.0.0"
-    readdirp: "npm:~3.6.0"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  checksum: 10c0/1076953093e0707c882a92c66c0f56ba6187831aa51bb4de878c1fec59ae611a3bf02898f190efec8e77a086b8df61c2b2a3ea324642a0558bdf8ee6c5dc9ca1
   languageName: node
   linkType: hard
 
@@ -7753,7 +7726,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@npm:~2.3.2, fsevents@npm:~2.3.3":
+"fsevents@npm:~2.3.3":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
   dependencies:
@@ -7763,7 +7736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fsevents@patch:fsevents@npm%3A~2.3.2#optional!builtin<compat/fsevents>, fsevents@patch:fsevents@npm%3A~2.3.3#optional!builtin<compat/fsevents>":
+"fsevents@patch:fsevents@npm%3A~2.3.3#optional!builtin<compat/fsevents>":
   version: 2.3.3
   resolution: "fsevents@patch:fsevents@npm%3A2.3.3#optional!builtin<compat/fsevents>::version=2.3.3&hash=df0bf1"
   dependencies:
@@ -7944,7 +7917,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob-parent@npm:^5.1.2, glob-parent@npm:~5.1.2":
+"glob-parent@npm:^5.1.2":
   version: 5.1.2
   resolution: "glob-parent@npm:5.1.2"
   dependencies:
@@ -8567,13 +8540,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:^4.0.0":
-  version: 4.3.8
-  resolution: "immutable@npm:4.3.8"
-  checksum: 10c0/3de58996305a0faf6ef3fc0685f996c42653ad757760214f5aec7d4a6b59ea7abb882522c5f9a61776fae88c0b45e08eb77cbded5a4f57745ec7c63f9642e44b
-  languageName: node
-  linkType: hard
-
 "immutable@npm:^5.1.5":
   version: 5.1.6
   resolution: "immutable@npm:5.1.6"
@@ -8736,15 +8702,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-binary-path@npm:~2.1.0":
-  version: 2.1.0
-  resolution: "is-binary-path@npm:2.1.0"
-  dependencies:
-    binary-extensions: "npm:^2.0.0"
-  checksum: 10c0/a16eaee59ae2b315ba36fad5c5dcaf8e49c3e27318f8ab8fa3cdb8772bf559c8d1ba750a589c2ccb096113bb64497084361a25960899cb6172a6925ab6123d38
-  languageName: node
-  linkType: hard
-
 "is-boolean-object@npm:^1.1.0":
   version: 1.1.1
   resolution: "is-boolean-object@npm:1.1.1"
@@ -8824,7 +8781,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-glob@npm:^4.0.0, is-glob@npm:^4.0.1, is-glob@npm:^4.0.3, is-glob@npm:~4.0.1":
+"is-glob@npm:^4.0.0, is-glob@npm:^4.0.1, is-glob@npm:^4.0.3":
   version: 4.0.3
   resolution: "is-glob@npm:4.0.3"
   dependencies:
@@ -11168,7 +11125,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"normalize-path@npm:3.0.0, normalize-path@npm:^3.0.0, normalize-path@npm:~3.0.0":
+"normalize-path@npm:3.0.0, normalize-path@npm:^3.0.0":
   version: 3.0.0
   resolution: "normalize-path@npm:3.0.0"
   checksum: 10c0/e008c8142bcc335b5e38cf0d63cfd39d6cf2d97480af9abdbe9a439221fd4d749763bab492a8ee708ce7a194bb00c9da6d0a115018672310850489137b3da046
@@ -11547,7 +11504,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"picomatch@npm:^2.0.4, picomatch@npm:^2.2.1, picomatch@npm:^2.3.1":
+"picomatch@npm:^2.0.4, picomatch@npm:^2.3.1":
   version: 2.3.1
   resolution: "picomatch@npm:2.3.1"
   checksum: 10c0/26c02b8d06f03206fc2ab8d16f19960f2ff9e81a658f831ecb656d8f17d9edc799e8364b1f4a7873e89d9702dff96204be0fa26fe4181f6843f040f819dac4be
@@ -12303,15 +12260,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"readdirp@npm:~3.6.0":
-  version: 3.6.0
-  resolution: "readdirp@npm:3.6.0"
-  dependencies:
-    picomatch: "npm:^2.2.1"
-  checksum: 10c0/6fa848cf63d1b82ab4e985f4cf72bd55b7dcfd8e0a376905804e48c3634b7e749170940ba77b32804d5fe93b3cc521aa95a8d7e7d725f830da6d93f3669ce66b
-  languageName: node
-  linkType: hard
-
 "redent@npm:^3.0.0":
   version: 3.0.0
   resolution: "redent@npm:3.0.0"
@@ -12322,10 +12270,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reduce-configs@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "reduce-configs@npm:1.1.2"
-  checksum: 10c0/dfd1c11e8e01b7ffef4469747a49f9f4f03442fddb2dab8a85fff094fd90eb8dd130fabba4e7fdd30272cae1e06d43d690b8cf01684ef17e821b3d0aad47dc3f
+"reduce-configs@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "reduce-configs@npm:2.0.1"
+  checksum: 10c0/671c25b3c1700be1c075bbf138c6e6f926589bf118ecd783a0d8d4369d49d03253c3fcdc1014a6ae8c94bd4004cdc3314dc9a88701736fa0b71074adb182deb1
   languageName: node
   linkType: hard
 
@@ -13052,19 +13000,6 @@ __metadata:
   bin:
     sass: sass.js
   checksum: 10c0/e2aab47c87b69d2d4f8e48fa665138548069f56a7fd0fc4e15c9bde888b715798e49d33436e873918a8849ca3cc6c141a68618f58e2f3b2e6ec179cc309ca622
-  languageName: node
-  linkType: hard
-
-"sass@npm:^1.63.6":
-  version: 1.63.6
-  resolution: "sass@npm:1.63.6"
-  dependencies:
-    chokidar: "npm:>=3.0.0 <4.0.0"
-    immutable: "npm:^4.0.0"
-    source-map-js: "npm:>=0.6.2 <2.0.0"
-  bin:
-    sass: sass.js
-  checksum: 10c0/32e3245634f133e4e103f5c2adaaa85d7563fa17781db123c63b18b3501aeef51e60b97d97ffbf487b39ee4078e2914ba3ede3cee0567b04f1e3b0b45cef0b46
   languageName: node
   linkType: hard
 
