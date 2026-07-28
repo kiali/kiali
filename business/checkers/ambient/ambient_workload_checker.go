@@ -223,7 +223,7 @@ func (awc AmbientWorkloadChecker) workloadSelectedByService(serviceName string) 
 
 	// Fallback when Services were not provided to the checker (e.g. some list paths).
 	for _, svc := range awc.workload.Services {
-		if svc.Name == serviceName {
+		if svc.Namespace == awc.workload.Namespace && svc.Name == serviceName {
 			return true
 		}
 	}
