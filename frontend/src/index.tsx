@@ -15,8 +15,35 @@ import './i18n';
 // Use the locally bundled monaco-editor instead of fetching from cdn.jsdelivr.net.
 // Without this, @monaco-editor/react loads worker scripts from the CDN at runtime,
 // which fails in air-gapped environments and causes flaky CI failures.
+//
+// The new URL(..., import.meta.url) pattern is required so Rspack emits each worker
+// with correct chunk-loading paths. A plain `import * as monaco` plus `loader.config`
+// breaks because assetPrefix is relative ('./') and workers resolve it from their own
+// URL, producing doubled paths like /static/js/async/static/js/...
 import { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
+
+self.MonacoEnvironment = {
+  getWorker(_, label) {
+    switch (label) {
+      case 'json':
+        return new Worker(new URL('monaco-editor/esm/vs/language/json/json.worker.js', import.meta.url));
+      case 'css':
+      case 'scss':
+      case 'less':
+        return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker.js', import.meta.url));
+      case 'html':
+      case 'handlebars':
+      case 'razor':
+        return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker.js', import.meta.url));
+      case 'typescript':
+      case 'javascript':
+        return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker.js', import.meta.url));
+      default:
+        return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url));
+    }
+  }
+};
 
 loader.config({ monaco });
 
