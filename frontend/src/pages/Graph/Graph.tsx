@@ -10,8 +10,7 @@ import type {
   Node,
   NodeModel,
   Edge,
-  GraphAreaSelectedEventListener,
-  GraphLayoutEndEventListener
+  GraphAreaSelectedEventListener
 } from '@patternfly/react-topology';
 import {
   createTopologyControlButtons,
@@ -340,6 +339,15 @@ const TopologyContent: React.FC<{
     }
   }, [controller]);
 
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
+
   //
   // update model on graphData change
   //
@@ -535,6 +543,13 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (graphData.elementsChanged && hasContent) {
+        initialLayout = true;
+        isReady = false;
+        layoutInProgress = LayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => {
         controller.getGraph().setData({
@@ -601,6 +616,10 @@ const TopologyContent: React.FC<{
           setObserved(() => target.setData(data));
         }
       }
+
+      if (layoutInProgress === LayoutType.Layout) {
+        controller.getGraph().layout();
+      }
     };
 
     console.debug(`TG: updateModel`);
@@ -657,17 +676,23 @@ const TopologyContent: React.FC<{
   }, [controller, focusNode, isMiniGraph, setSelectedIds]);
 
   React.useEffect(() => {
-    console.debug(`TG: controller changed`);
-    initialLayout = true;
-    isReady = false;
-  }, [controller]);
-
-  React.useEffect(() => {
     console.debug(`TG: graphData changed, elementsChanged=${graphData.elementsChanged}`);
     if (graphData.elementsChanged) {
       graphLayout(controller, LayoutType.Layout);
     }
   }, [controller, graphData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`TG: graphSettings changed`);
@@ -726,8 +751,6 @@ const TopologyContent: React.FC<{
       }
     }
   );
-
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`TG: Render Topology hasGraph=${controller.hasGraph()}`);
 

@@ -10,7 +10,7 @@ const contentStyle = kialiStyle({
   minHeight: 0
 });
 
-export class RenderContent extends React.Component {
+export class RenderContent extends React.Component<{ children?: React.ReactNode }> {
   render(): React.ReactNode {
     return <div className={contentStyle}>{this.props.children}</div>;
   }

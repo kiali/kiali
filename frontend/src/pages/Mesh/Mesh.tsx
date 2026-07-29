@@ -10,7 +10,6 @@ import type {
   Node,
   NodeModel,
   Edge,
-  GraphLayoutEndEventListener,
   GraphAreaSelectedEventListener
 } from '@patternfly/react-topology';
 import {
@@ -114,6 +113,8 @@ const TopologyContent: React.FC<{
   showLegend,
   toggleLegend
 }) => {
+  const [updateModelTime, setUpdateModelTime] = React.useState(0);
+
   //
   // SelectedIds State
   //
@@ -219,6 +220,15 @@ const TopologyContent: React.FC<{
       });
     }
   }, [controller]);
+
+  // Register before updateModel. React 18 can emit layout-end synchronously from fromModel;
+  // useEventListener at the bottom of this component runs too late in effect order.
+  React.useEffect(() => {
+    controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    return () => {
+      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
+    };
+  }, [controller, onLayoutEnd]);
 
   //
   // update model on meshData change
@@ -382,6 +392,12 @@ const TopologyContent: React.FC<{
         }
       });
 
+      const hasContent = model.nodes.length > 0 || model.edges.length > 0;
+      if (meshData.elementsChanged && hasContent) {
+        initialLayout = true;
+        layoutInProgress = MeshLayoutType.Layout;
+      }
+
       controller.fromModel(model);
       setObserved(() => controller.getGraph().setData({ meshData: meshData }));
 
@@ -389,28 +405,40 @@ const TopologyContent: React.FC<{
 
       // set decorators
       nodes.forEach(n => setNodeAttachments(n));
+
+      if (layoutInProgress === MeshLayoutType.Layout) {
+        controller.getGraph().layout();
+      }
     };
 
     console.debug(`mesh updateModel`);
     updateModel(controller);
 
-    // notify that the graph has been updated
-    setUpdateTime(Date.now());
+    const updateTime = Date.now();
+    setUpdateModelTime(updateTime);
+    setUpdateTime(updateTime);
   }, [controller, meshData, highlighter, layout, onReady, setDetailsLevel, setSelectedIds, setUpdateTime]);
 
   //TODO REMOVE THESE DEBUGGING MESSAGES...
   // Leave them for now, they are just good for understanding state changes while we develop this PFT graph.
-  React.useEffect(() => {
-    console.debug(`controller changed`);
-    initialLayout = true;
-  }, [controller]);
-
   React.useEffect(() => {
     console.debug(`meshData changed, elementsChange=${meshData.elementsChanged}`);
     if (meshData.elementsChanged) {
       layoutMesh(controller, MeshLayoutType.Layout);
     }
   }, [controller, meshData]);
+
+  React.useEffect(() => {
+    if (!controller?.hasGraph() || updateModelTime === 0) {
+      return undefined;
+    }
+    const frameId = requestAnimationFrame(() => {
+      if (controller.hasGraph()) {
+        controller.getGraph().fit(FIT_PADDING);
+      }
+    });
+    return () => cancelAnimationFrame(frameId);
+  }, [controller, updateModelTime]);
 
   React.useEffect(() => {
     console.debug(`highlighter changed`);
@@ -465,8 +493,6 @@ const TopologyContent: React.FC<{
       }
     }
   );
-
-  useEventListener<GraphLayoutEndEventListener>(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
 
   console.debug(`Render Topology hasGraph=${controller.hasGraph()}`);
 

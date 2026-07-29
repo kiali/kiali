@@ -1,21 +1,6 @@
 import * as React from 'react';
-import {
-  ActionsColumn,
-  IAction,
-  InnerScrollContainer,
-  IRow,
-  IRowData,
-  ISortBy,
-  OnSort,
-  Table,
-  TableVariant,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  ThProps,
-  Tr
-} from '@patternfly/react-table';
+import type { IAction, IRow, IRowData, ISortBy, OnSort, TableVariant, ThProps } from '@patternfly/react-table';
+import { ActionsColumn, InnerScrollContainer, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const stickyWrapperStyle = kialiStyle({
@@ -119,11 +104,22 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
         {props.rows.length > 0 ? (
           props.rows.map((row, rowIndex) => (
             <Tr key={row.key ?? `row_${rowIndex}`} className={row.className}>
-              {row.cells?.map((cell: React.ReactNode, colIndex: number) => (
-                <Td key={`cell_${rowIndex}_${colIndex}`} dataLabel={props.columns[colIndex].title} className={tdStyle}>
-                  {cell}
-                </Td>
-              ))}
+              {row.cells?.map((cell, colIndex: number) => {
+                const cellContent =
+                  typeof cell === 'object' && cell !== null && 'title' in cell
+                    ? (cell as { title: React.ReactNode }).title
+                    : (cell as React.ReactNode);
+
+                return (
+                  <Td
+                    key={`cell_${rowIndex}_${colIndex}`}
+                    dataLabel={props.columns[colIndex].title}
+                    className={tdStyle}
+                  >
+                    {cellContent}
+                  </Td>
+                );
+              })}
 
               {getActionToggle(row, rowIndex)}
             </Tr>

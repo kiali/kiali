@@ -3,14 +3,15 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateFooter } from 
 import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
 import { KialiIcon } from '../../config/KialiIcon';
-import { DecoratedMeshElements } from 'types/Mesh';
+import type { DecoratedMeshElements } from 'types/Mesh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
-import { IntervalInMilliseconds } from 'types/Common';
+import type { IntervalInMilliseconds } from 'types/Common';
 import { RefreshIntervalManual } from 'config/Config';
 import { t } from 'utils/I18nUtils';
 
 type EmptyMeshLayoutProps = {
   action?: any;
+  children?: React.ReactNode;
   elements?: DecoratedMeshElements;
   error?: string;
   isError: boolean;

@@ -12,6 +12,7 @@ import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
 import { router } from 'app/History';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -21,11 +22,10 @@ import {
   MenuToggle,
   Tooltip
 } from '@patternfly/react-core';
-import type { MenuToggleElement } from '@patternfly/react-core';
 import { CommentDotsIcon, HelpIcon, WrenchIcon } from '@patternfly/react-icons';
 import { t } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router';
 import { namespacesToString } from 'types/Namespace';
 import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';

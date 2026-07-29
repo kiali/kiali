@@ -9,18 +9,19 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import * as _ from 'lodash';
-import { Namespace } from '../../types/Namespace';
+import type { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
-import { DecoratedGraphElements } from '../../types/Graph';
+import type { DecoratedGraphElements } from '../../types/Graph';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { RefreshIntervalManual } from 'config/Config';
-import { IntervalInMilliseconds } from 'types/Common';
+import type { IntervalInMilliseconds } from 'types/Common';
 import { t } from 'utils/I18nUtils';
 import { RunMode } from 'types/ServerConfig';
 import { isPrometheusAvailable, serverConfig } from 'config';
 
 type EmptyGraphLayoutProps = {
   action?: any;
+  children?: React.ReactNode;
   elements?: DecoratedGraphElements;
   error?: string;
   isError: boolean;

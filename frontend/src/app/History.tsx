@@ -1,6 +1,7 @@
 import { toValidDuration } from '../config/ServerConfig';
-import { BoundsInMilliseconds } from 'types/Common';
-import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
+import type { BoundsInMilliseconds } from 'types/Common';
+import type { RouteObject } from 'react-router';
+import { createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router';
 
 export const createRouter = (routes: RouteObject[], basename?: string): any => {
   const baseName = basename ?? rootBasename;
@@ -8,8 +9,8 @@ export const createRouter = (routes: RouteObject[], basename?: string): any => {
   return process.env.TEST_RUNNER
     ? createMemoryRouter(routes, { basename: baseName })
     : historyMode === 'hash'
-    ? createHashRouter(routes, { basename: baseName })
-    : createBrowserRouter(routes, { basename: baseName });
+      ? createHashRouter(routes, { basename: baseName })
+      : createBrowserRouter(routes, { basename: baseName });
 };
 
 export const webRoot = (window as any).WEB_ROOT ?? '/';
@@ -36,6 +37,15 @@ const location = {
   getSearch: (): string => {
     return router.state.location.search;
   }
+};
+
+/**
+ * Navigate and commit the route update synchronously. React 18 can defer route
+ * rendering when navigate() runs during dropdown/modal unmount; Cypress then
+ * sees the URL change while the previous page stays mounted.
+ */
+export const navigateApp = (to: string, opts?: { replace?: boolean }): Promise<void> => {
+  return router.navigate(to, { ...opts, flushSync: true });
 };
 
 export { router, location };

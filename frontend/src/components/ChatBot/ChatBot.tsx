@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { t } from 'utils/I18nUtils';
-import { Chatbot, ChatbotToggle, Conversation } from '@patternfly/chatbot';
+import type { Conversation } from '@patternfly/chatbot';
+import { Chatbot, ChatbotToggle } from '@patternfly/chatbot';
 import '@patternfly/chatbot/dist/css/main.css';
 import { Theme } from 'types/Common';
 import { useKialiTheme } from 'utils/ThemeUtils';
 import { ChatBotHeader } from './ChatBotHeader';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { ChatBotFooter } from './ChatBotFooter';
 import { ChatBotMock } from './ChatBotMock';
-import { ExtendedMessage } from 'types/Chatbot';
+import type { ExtendedMessage } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-lightbkg.svg';
@@ -58,7 +59,7 @@ export const ChatBot: React.FC = () => {
   const [selectedMockConversation, setSelectedMockConversation] = useState<string>('Select one Mock Conversation');
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState<boolean>(false);
   const chatHistoryEndRef = React.useRef<HTMLDivElement | null>(null);
-  const scrollIntoView = React.useCallback((behavior = 'smooth') => {
+  const scrollIntoView = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
     defer(() => {
       chatHistoryEndRef?.current?.scrollIntoView({ behavior });
     });

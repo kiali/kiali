@@ -1,7 +1,7 @@
 import type { ChatAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';

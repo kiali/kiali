@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
-import { IstioConfigId } from 'types/IstioConfigDetails';
+import { useParams } from 'react-router';
+import type { IstioConfigId } from 'types/IstioConfigDetails';
 import { IstioConfigDetailsPage } from 'pages/IstioConfigDetails/IstioConfigDetailsPage';
 
 /**

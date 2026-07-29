@@ -2,7 +2,6 @@
 
 exports[`#LoginPage render correctly > should render LoginPage 1`] = `
 <div>
-  
   <div
     class="pf-v6-c-login kiali_f1atptrz"
   >
@@ -32,7 +31,6 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
           >
             Log in Kiali
           </h2>
-          
         </div>
         <div
           class="pf-v6-c-login__main-body"

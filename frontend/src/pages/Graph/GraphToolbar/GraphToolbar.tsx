@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../../../store/Store';
+import type { KialiAppState } from '../../../store/Store';
 import {
   activeNamespacesSelector,
   edgeLabelsSelector,
@@ -21,10 +21,18 @@ import {
 } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphSettings } from './GraphSettings';
-import { GraphType, NodeParamsType, EdgeLabelMode, SummaryData, TrafficRate, RankMode } from '../../../types/Graph';
+import type {
+  GraphType,
+  NodeParamsType,
+  EdgeLabelMode,
+  SummaryData,
+  TrafficRate,
+  RankMode
+} from '../../../types/Graph';
 import { router, HistoryManager, URLParam, location } from '../../../app/History';
-import { Namespace, namespacesFromString, namespacesToString } from '../../../types/Namespace';
-import { KialiDispatch } from '../../../types/Redux';
+import type { Namespace } from '../../../types/Namespace';
+import { namespacesFromString, namespacesToString } from '../../../types/Namespace';
+import type { KialiDispatch } from '../../../types/Redux';
 import { NamespaceActions } from '../../../actions/NamespaceAction';
 import { GraphActions } from '../../../actions/GraphActions';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
@@ -37,7 +45,7 @@ import { INITIAL_USER_SETTINGS_STATE } from 'reducers/UserSettingsState';
 import { GraphReset } from './GraphReset';
 import { GraphFind } from './GraphFind';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
-import { GraphElement } from '@patternfly/react-topology';
+import type { GraphElement } from '@patternfly/react-topology';
 import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
@@ -192,17 +200,21 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
   }
 
   render(): React.ReactNode {
+    // Prefer URL over Redux for first paint: setNode runs in GraphPage.componentDidMount,
+    // so Redux can lag one frame behind a node-graph route.
+    const isNodeGraph = !!this.props.node || location.getPathname().includes('/graph/node');
+
     return (
       <>
         <GraphSecondaryMasthead
           disabled={this.props.disabled}
           graphType={this.props.graphType}
-          isNodeGraph={!!this.props.node}
+          isNodeGraph={isNodeGraph}
           onGraphTypeChange={this.props.setGraphType}
         />
         <Toolbar style={{ paddingTop: '1rem', width: '100%' }}>
           <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
-            {this.props.node && (
+            {isNodeGraph && (
               <ToolbarItem style={{ margin: 0 }}>
                 <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={t('Back to full graph')}>
                   <Button variant={ButtonVariant.link} onClick={this.handleNamespaceReturn}>

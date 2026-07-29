@@ -1,26 +1,26 @@
 import * as React from 'react';
-import {
+import type {
   BadgeLocation,
   EdgeModel,
-  EdgeTerminalType,
   GraphElement,
   LabelPosition,
   Node,
-  NodeModel,
-  NodeShape,
-  NodeStatus,
-  TopologyQuadrant
+  NodeModel
 } from '@patternfly/react-topology';
-import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
+import { EdgeTerminalType, NodeShape, NodeStatus, TopologyQuadrant } from '@patternfly/react-topology';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadges } from 'components/Pf/PfBadges';
 import { homeCluster as kialiHomeCluster, icons } from 'config';
-import {
-  BoxByType,
-  CLUSTER_DEFAULT,
+import type {
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
+  GraphLayout
+} from 'types/Graph';
+import {
+  BoxByType,
+  CLUSTER_DEFAULT,
   EdgeLabelMode,
-  GraphLayout,
   GraphType,
   NodeType,
   numLabels,
@@ -29,20 +29,21 @@ import {
   UNKNOWN
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { Namespace } from 'types/Namespace';
+import type { Namespace } from 'types/Namespace';
 import _ from 'lodash';
 import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/TracingInfo';
-import { IconType } from 'config/Icons';
+import type { Span } from 'types/TracingInfo';
+import type { IconType } from 'config/Icons';
 import { NodeDecorator } from './NodeDecorator';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import type { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
 
 // Utilities for working with PF Topology
 
 export type NodeMap = Map<string, NodeModel>;
 
+/* eslint-disable @typescript-eslint/member-ordering -- Kiali PFT node.data extensions mixed with upstream fields */
 export type NodeData = DecoratedGraphNodeData & {
   // These are node.data fields that have an impact on the PFT rendering of the node.
   // TODO: Is there an actual type defined for these in PFT?
@@ -62,14 +63,7 @@ export type NodeData = DecoratedGraphNodeData & {
   labelPosition?: LabelPosition;
   secondaryLabel?: string;
   setLocation?: boolean;
-  showContextMenu?: boolean;
-  showStatusDecorator?: boolean;
-  statusDecoratorTooltip?: React.ReactNode;
-  truncateLength?: number;
-  x?: number;
-  y?: number;
   // These are additions we've made for our own styling
-  // eslint-disable-next-line @typescript-eslint/member-ordering
   hasSpans?: Span[];
   isFind?: boolean;
   isFocus?: boolean;
@@ -77,7 +71,14 @@ export type NodeData = DecoratedGraphNodeData & {
   isSelected?: boolean;
   isUnhighlighted?: boolean;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
+  showContextMenu?: boolean;
+  showStatusDecorator?: boolean;
+  statusDecoratorTooltip?: React.ReactNode;
+  truncateLength?: number;
+  x?: number;
+  y?: number;
 };
+/* eslint-enable @typescript-eslint/member-ordering */
 
 export type EdgeData = DecoratedGraphEdgeData & {
   animation?: TrafficPointGenerator;
@@ -242,11 +243,10 @@ export const setNodeLabel = (
   let box1Type: string | undefined, box2Type: string | undefined;
 
   if (isBoxed && supportsGroups(layoutName)) {
-    let box1: NodeModel | undefined, box2: NodeModel | undefined;
-    box1 = nodeMap.get(data.parent!);
+    const box1 = nodeMap.get(data.parent!);
     const box1Data = box1?.data as NodeData | undefined;
     box1Type = box1Data?.isBox;
-    box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
+    const box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
     box2Type = box2 ? (box2.data as NodeData).isBox : undefined;
   }
 
@@ -409,7 +409,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   const isVerbose = data.isSelected;
   const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
 
-  let labels = [] as string[];
+  const labels = [] as string[];
   if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
     let rate = 0;
     let pErr = 0;
@@ -454,7 +454,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-    let responseTime = data.responseTime;
+    const responseTime = data.responseTime;
 
     if (responseTime > 0) {
       labels.push(toFixedDuration(responseTime));
@@ -462,7 +462,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
-    let rate = data.throughput;
+    const rate = data.throughput;
 
     if (rate > 0) {
       labels.push(toFixedByteRate(rate, includeUnits));
@@ -500,7 +500,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   if (data.hasTraffic && data.responses) {
     if (nodeMap.get(edge.target!)?.data?.hasCB) {
       const responses = data.responses;
-      for (let code of _.keys(responses)) {
+      for (const code of _.keys(responses)) {
         // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
         // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
         // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
@@ -524,7 +524,7 @@ const trimFixed = (fixed: string): string => {
   while (fixed.endsWith('0')) {
     fixed = fixed.slice(0, -1);
   }
-  return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+  return fixed.endsWith('.') ? fixed.slice(0, -1) : fixed;
 };
 
 const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { serverConfig } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
 
 type FindKind = 'find' | 'hide';
 
@@ -22,7 +23,7 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
   const [options, setOptions] = React.useState<React.ReactNode[]>([]);
 
   React.useEffect(() => {
-    const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
+    const getOptionItems = (kind: FindKind): React.ReactNode[] => {
       const options =
         kind === 'find'
           ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Label, Tooltip } from '@patternfly/react-core';
-import { useLocation } from 'react-router-dom-v5-compat';
+import { useLocation } from 'react-router';
 import { KialiLink } from '../Link/KialiLink';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { useKialiTheme } from 'utils/ThemeUtils';

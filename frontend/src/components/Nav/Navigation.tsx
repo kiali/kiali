@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { RenderPage } from './RenderPage';
 import { MastheadItems } from './Masthead/Masthead';
 import {
@@ -20,11 +20,11 @@ import {
 
 import { kialiStyle } from 'styles/StyleUtils';
 import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../config';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
-import { Link, useLocation } from 'react-router-dom-v5-compat';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import { Link, useLocation } from 'react-router';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { Theme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
@@ -71,6 +71,24 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
     document.title = pageTitle;
   }, []);
+
+  // Keep page content aligned when the notification drawer is collapsed. Focus or
+  // automation can scroll drawer__main horizontally into the reserved panel slot.
+  React.useEffect(() => {
+    if (props.showNotificationCenter) {
+      return;
+    }
+
+    const resetDrawerScroll = (): void => {
+      document.querySelectorAll('.pf-v6-c-drawer__main').forEach(el => {
+        (el as HTMLElement).scrollLeft = 0;
+      });
+    };
+
+    resetDrawerScroll();
+    const id = requestAnimationFrame(resetDrawerScroll);
+    return () => cancelAnimationFrame(id);
+  }, [props.showNotificationCenter, pathname]);
 
   const isGraph = (): boolean => {
     return pathname.startsWith('/graph') || pathname.startsWith('/mesh');

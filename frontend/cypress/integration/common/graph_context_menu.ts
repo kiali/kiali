@@ -73,10 +73,15 @@ When(
 );
 
 When('user clicks the {string} item of the context menu', (menuKey: string) => {
-  cy.get('.pf-topology-context-menu__c-dropdown__menu')
-    .find(`[data-test="${menuKey}"]`)
-    .then($item => {
-      cy.wrap($item).click();
+  // Create-actions are added asynchronously after service-detail fetch; the menu remounts
+  // and detaches any prior subject. Re-query the item on each retry and prefer the
+  // inner button (PF6 DropdownItem puts data-test on the wrapper).
+  cy.get(`[data-test="${menuKey}"]`, { timeout: 15000 })
+    .should('be.visible')
+    .should('not.have.class', 'pf-m-disabled')
+    .then($el => {
+      const $btn = $el.is('button') ? $el : $el.find('button');
+      cy.wrap($btn.length ? $btn : $el).click({ force: true });
     });
 });
 

@@ -1,6 +1,7 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
-import { TracingInfo, JaegerTrace, TracingCheck } from 'types/TracingInfo';
+import type { TracingInfo, JaegerTrace, TracingCheck } from 'types/TracingInfo';
 
 // synchronous action creators
 export const TracingActions = {

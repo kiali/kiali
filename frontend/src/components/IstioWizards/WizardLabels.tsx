@@ -219,7 +219,7 @@ export class WizardLabels extends React.Component<Props, State> {
                 {this.props.canEdit && <Th></Th>}
               </Tr>
             </Thead>
-            <Tbody>{this.generateInput()}</Tbody>
+            <Tbody>{this.generateInput() as React.ReactNode}</Tbody>
           </Table>
 
           {this.props.canEdit && (

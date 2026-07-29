@@ -1,6 +1,6 @@
-import { getType } from 'typesafe-actions';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { MeshState } from '../store/Store';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import type { MeshState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { MeshActions } from 'actions/MeshActions';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
