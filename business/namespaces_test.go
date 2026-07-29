@@ -731,3 +731,91 @@ func TestMixedClustersNoError(t *testing.T) {
 	require.Equal("beta", namespaces[1].Name)
 	require.Equal("vanilla", namespaces[1].Cluster)
 }
+
+func TestGetNamespacesSameTokenDifferentImpersonation(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 600000
+
+	// Both user clients share the same Token (SA token) but have different CacheKeys
+	// (simulating different impersonated users).
+	userA := kubetest.NewFakeK8sClient()
+	userA.Token = "shared-sa-token"
+	userA.CacheKey = "user-a@example.com"
+
+	userB := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns-b-only"}},
+	)
+	userB.Token = "shared-sa-token"
+	userB.CacheKey = "user-b@example.com"
+
+	saClient := kubetest.NewFakeK8sClient()
+	saClient.Token = "shared-sa-token"
+
+	saClients := map[string]kubernetes.ClientInterface{"east": saClient}
+
+	// Populate cache as user A with a narrow list.
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	kialiCache.SetNamespaces(
+		userA.GetCacheKey(),
+		[]models.Namespace{{Name: "ns-a-only", Cluster: "east"}},
+	)
+
+	// Now query as user B — should NOT get user A's cached entry.
+	userBClients := map[string]kubernetes.UserClientInterface{"east": userB}
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userBClients)
+
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(err)
+
+	// User B should get their own namespaces (ns-b-only from the fake client),
+	// NOT user A's cached "ns-a-only".
+	for _, ns := range namespaces {
+		require.NotEqual("ns-a-only", ns.Name, "user B should not see user A's cached namespace")
+	}
+}
+
+func TestGetNamespacesImpersonationDoesNotSkipRBACIntersection(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.Deployment.ClusterWideAccess = true
+
+	// SA client can see all namespaces.
+	saClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "allowed"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "forbidden"}},
+	)
+	saClient.Token = "shared-sa-token"
+
+	// User client (impersonated) can only see "allowed" via its own LIST.
+	// Same SA token but different CacheKey (impersonated username).
+	userClient := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "allowed"}},
+	)
+	userClient.Token = "shared-sa-token"
+	userClient.CacheKey = "restricted-user@example.com"
+
+	saClients := map[string]kubernetes.ClientInterface{"east": saClient}
+	userClients := map[string]kubernetes.UserClientInterface{"east": userClient}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(err)
+
+	// The user should only see "allowed" — the RBAC intersection must run
+	// because GetCacheKey() != GetToken() of the SA.
+	names := make([]string, 0, len(namespaces))
+	for _, ns := range namespaces {
+		names = append(names, ns.Name)
+	}
+	require.Contains(names, "allowed")
+	require.NotContains(names, "forbidden", "impersonated user should not see namespaces beyond their RBAC")
+}

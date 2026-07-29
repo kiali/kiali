@@ -203,6 +203,11 @@ func (o *K8SClientMock) GetServerVersion() (*version.Info, error) {
 	return args.Get(0).(*version.Info), args.Error(1)
 }
 
+func (o *K8SClientMock) GetCacheKey() string {
+	args := o.Called()
+	return args.Get(0).(string)
+}
+
 func (o *K8SClientMock) GetToken() string {
 	args := o.Called()
 	return args.Get(0).(string)

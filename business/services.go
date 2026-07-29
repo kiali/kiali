@@ -704,7 +704,7 @@ func (in *SvcService) getCapturingWaypoints(svc *models.Service, all bool) ([]mo
 	}
 
 	// If we don't have a service override, look for a namespace-level waypoint
-	if ns, nsFound := in.kialiCache.GetNamespace(svc.Cluster, in.userClients[svc.Cluster].GetToken(), svc.Namespace); nsFound {
+	if ns, nsFound := in.kialiCache.GetNamespace(svc.Cluster, in.userClients[svc.Cluster].GetCacheKey(), svc.Namespace); nsFound {
 		waypointUse, waypointUseFound = ns.Labels[config.WaypointUseLabel]
 		waypointUseNamespace, waypointUseNamespaceFound = ns.Labels[config.WaypointUseNamespaceLabel]
 
