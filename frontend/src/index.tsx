@@ -12,6 +12,14 @@ import '@patternfly/patternfly/patternfly-addons.css';
 // i18n
 import './i18n';
 
+// Use the locally bundled monaco-editor instead of fetching from cdn.jsdelivr.net.
+// Without this, @monaco-editor/react loads worker scripts from the CDN at runtime,
+// which fails in air-gapped environments and causes flaky CI failures.
+import { loader } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
+
+loader.config({ monaco });
+
 declare global {
   interface Date {
     toLocaleStringWithConditionalDate(): string;
@@ -51,7 +59,7 @@ const renderApp = (): void => {
 if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_MOCK_API === 'true') {
   // Enable API mocking with MSW (Mock Service Worker).
   // This allows frontend development without a running backend.
-  // @ts-ignore - mocks folder is excluded from TypeScript compilation for production builds
+  // @ts-expect-error - mocks folder is excluded from TypeScript compilation for production builds
   import('./mocks/browser').then(({ worker }) => {
     worker
       .start({
