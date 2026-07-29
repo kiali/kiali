@@ -13,6 +13,26 @@ import (
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
+func TestExportMultiHostMatchDisjointNamespaceWildcards(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []*networking_v1.DestinationRule{
+		data.CreateTestDestinationRule("istio-test1", "vault-no-tls", "*.vault.svc.cluster.local"),
+		data.CreateTestDestinationRule("istio-test1", "test3-no-tls", "*.istio-test3.svc.cluster.local"),
+	}
+
+	vals := MultiMatchChecker{
+		IdentityDomain:   "svc.cluster.local",
+		Namespaces:       []string{"istio-test1", "vault", "istio-test3"},
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.Empty(vals, "wildcard hosts targeting different namespaces must not overlap")
+}
+
 func TestExportMultiHostMatchCorrect(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

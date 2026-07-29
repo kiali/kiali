@@ -200,6 +200,48 @@ func TestMultiHostMatchWildcardInvalid(t *testing.T) {
 	assert.Equal("rule2", validation.References[0].Name)
 }
 
+// OSSM-15084: disjoint namespace-scoped wildcards must not trigger KIA0201.
+func TestMultiHostMatchDisjointNamespaceWildcards(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []*networking_v1.DestinationRule{
+		data.CreateTestDestinationRule("istio-test1", "vault-no-tls", "*.vault.svc.cluster.local"),
+		data.CreateTestDestinationRule("istio-test1", "test3-no-tls", "*.istio-test3.svc.cluster.local"),
+	}
+
+	vals := MultiMatchChecker{
+		IdentityDomain:   "svc.cluster.local",
+		Namespaces:       []string{"istio-test1", "vault", "istio-test3"},
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.Empty(vals, "wildcard hosts targeting different namespaces must not overlap")
+}
+
+func TestMultiHostMatchSameNamespaceWildcardsStillConflict(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []*networking_v1.DestinationRule{
+		data.CreateTestDestinationRule("istio-test1", "rule1", "*.vault.svc.cluster.local"),
+		data.CreateTestDestinationRule("istio-test1", "rule2", "*.vault.svc.cluster.local"),
+	}
+
+	vals := MultiMatchChecker{
+		IdentityDomain:   "svc.cluster.local",
+		Namespaces:       []string{"istio-test1", "vault"},
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+}
+
 func TestMultiHostMatchBothWildcardInvalid(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

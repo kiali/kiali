@@ -1,19 +1,16 @@
 package destinationrules
 
 import (
-	"fmt"
 	"strings"
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type MultiMatchChecker struct {
 	Cluster          string
-	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	IdentityDomain   string
 	Namespaces       []string
@@ -49,35 +46,41 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		}
 
 		foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
+		currentHost := fqdn.String()
 
-		if fqdn.IsWildcard() {
-			// We need to check the matching subsets from all hosts now
-			for _, h := range seenHostSubsets {
-				checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h, m.Cluster)
+		// Only collide with previously seen hosts that actually overlap this one.
+		// Wildcard hosts must honor the namespace/domain suffix (e.g. *.vault... must not
+		// collide with *.istio-test3...); previously any wildcard was compared to all hosts.
+		for hostKey, existing := range seenHostSubsets {
+			if hostsOverlap(currentHost, hostKey) {
+				checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, existing, m.Cluster)
 			}
-			// We add * later
-		}
-		// Search "*" first and then exact name
-		if previous, found := seenHostSubsets[fmt.Sprintf("*.%s.%s", fqdn.Namespace, fqdn.Cluster)]; found {
-			// Need to check subsets of "*"
-			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous, m.Cluster)
 		}
 
-		if previous, found := seenHostSubsets[fqdn.String()]; found {
-			// Host found, need to check underlying subsets
-			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous, m.Cluster)
-		}
-		// Nothing threw an error, so add these
-		if _, found := seenHostSubsets[fqdn.String()]; !found {
-			seenHostSubsets[fqdn.String()] = make(map[string][]rule)
+		if _, found := seenHostSubsets[currentHost]; !found {
+			seenHostSubsets[currentHost] = make(map[string][]rule)
 		}
 		for _, s := range foundSubsets {
-			seenHostSubsets[fqdn.String()][s.Name] = append(seenHostSubsets[fqdn.String()][s.Name], rule{destinationRulesName, destinationRulesNamespace})
+			seenHostSubsets[currentHost][s.Name] = append(seenHostSubsets[currentHost][s.Name], rule{destinationRulesName, destinationRulesNamespace})
 		}
 
 	}
 
 	return validations
+}
+
+// hostsOverlap reports whether two DestinationRule host keys select the same traffic.
+// Exact matches overlap; a bare "*" overlaps everything; otherwise a wildcard overlaps
+// a host (or a more specific wildcard) when the non-wildcard/more-specific side falls
+// within the wildcard's domain suffix.
+func hostsOverlap(a, b string) bool {
+	if a == b {
+		return true
+	}
+	if a == "*" || b == "*" {
+		return true
+	}
+	return kubernetes.HostWithinWildcardHost(b, a) || kubernetes.HostWithinWildcardHost(a, b)
 }
 
 func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, service string) bool {
