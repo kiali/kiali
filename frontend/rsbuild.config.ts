@@ -32,6 +32,9 @@ export default defineConfig({
     sourceMap: { css: false, js: false }
   },
   source: {
+    alias: {
+      'monaco-editor': 'monaco-editor/esm/vs/editor/editor.api'
+    },
     define: {
       ...publicVars,
       ...processEnvFallback,

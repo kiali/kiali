@@ -16,34 +16,13 @@ import './i18n';
 // Without this, @monaco-editor/react loads worker scripts from the CDN at runtime,
 // which fails in air-gapped environments and causes flaky CI failures.
 //
-// The new URL(..., import.meta.url) pattern is required so Rspack emits each worker
-// with correct chunk-loading paths. A plain `import * as monaco` plus `loader.config`
-// breaks because assetPrefix is relative ('./') and workers resolve it from their own
-// URL, producing doubled paths like /static/js/async/static/js/...
-import { loader } from '@monaco-editor/react';
+// We import the editor API entry point (without worker bundles) to avoid web worker
+// chunk-loading. Workers use importScripts with the relative assetPrefix ('./'), which
+// resolves incorrectly from their nested async directory, producing doubled paths like
+// /static/js/async/static/js/... Running language services on the main thread is fine
+// for Kiali's small YAML/JSON config editing.
 import * as monaco from 'monaco-editor';
-
-self.MonacoEnvironment = {
-  getWorker(_, label) {
-    switch (label) {
-      case 'json':
-        return new Worker(new URL('monaco-editor/esm/vs/language/json/json.worker.js', import.meta.url));
-      case 'css':
-      case 'scss':
-      case 'less':
-        return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker.js', import.meta.url));
-      case 'html':
-      case 'handlebars':
-      case 'razor':
-        return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker.js', import.meta.url));
-      case 'typescript':
-      case 'javascript':
-        return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker.js', import.meta.url));
-      default:
-        return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url));
-    }
-  }
-};
+import { loader } from '@monaco-editor/react';
 
 loader.config({ monaco });
 
