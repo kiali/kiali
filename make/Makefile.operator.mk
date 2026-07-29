@@ -157,13 +157,14 @@ endif
 ## ossmconsole-create: Create a OSSMConsole CR to the cluster, informing the Kiali operator to install OSSMC.
 ossmconsole-create: .ensure-operator-repo-exists .prepare-cluster .create-plugin-pull-secret
 ifeq ($(CLUSTER_TYPE),openshift)
-	@while ! (${OC} get pods -l app.kubernetes.io/name=kiali --all-namespaces --no-headers 2>/dev/null | grep -q Running); do echo "Kiali needs to be installed and running before you can install OSSMC. Waiting for Kiali to start..."; sleep 2; done
+	@(${OC} get pods -l app.kubernetes.io/name=kiali --all-namespaces --no-headers 2>/dev/null | grep -q Running) || echo "Kiali is not yet installed and running, but continuing to install OSSMC anyway."
 	@echo Deploy OSSM Console using the settings found in ${OSSMCONSOLE_CR_FILE}
 	cat ${OSSMCONSOLE_CR_FILE} | \
 DEPLOYMENT_IMAGE_NAME="${CLUSTER_PLUGIN_INTERNAL_NAME}" \
 DEPLOYMENT_IMAGE_VERSION="${PLUGIN_CONTAINER_VERSION}" \
 PULL_SECRET_NAME="${PLUGIN_IMAGE_PULL_SECRET_NAME}" \
 OSSMCONSOLE_CR_SPEC_VERSION="${OSSMCONSOLE_CR_SPEC_VERSION}" \
+OSSMCONSOLE_CR_AUTO_DISCOVER="${OSSMCONSOLE_CR_AUTO_DISCOVER}" \
 envsubst | ${OC} apply -n "${OSSMCONSOLE_NAMESPACE}" -f -
 else
 	@echo "Will not create OSSMConsole CR on non-OpenShift environments."
