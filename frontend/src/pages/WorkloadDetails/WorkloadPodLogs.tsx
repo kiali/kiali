@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Alert,
   AlertActionCloseButton,
@@ -18,7 +19,6 @@ import {
   GridItem,
   MenuGroup,
   MenuToggle,
-  MenuToggleElement,
   Tab,
   TextInput,
   Toolbar,
@@ -32,28 +32,23 @@ import memoize from 'micro-memoize';
 import { AutoSizer, List } from 'react-virtualized';
 import { kialiStyle } from 'styles/StyleUtils';
 import { addError, addSuccess } from 'utils/AlertUtils';
-import { AccessLog, LogEntry, LogType, Pod, PodLogs } from '../../types/IstioObjects';
+import type { AccessLog, LogEntry, Pod, PodLogs } from '../../types/IstioObjects';
+import { LogType } from '../../types/IstioObjects';
 import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../services/Api';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
-import {
-  evalTimeRange,
-  isEqualTimeRange,
-  Theme,
-  TimeInMilliseconds,
-  TimeInSeconds,
-  TimeRange
-} from '../../types/Common';
+import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
+import { evalTimeRange, isEqualTimeRange, Theme } from '../../types/Common';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { timeRangeSelector } from '../../store/Selectors';
 import { PFColors } from 'components/Pf/PfColors';
 import { AccessLogModal } from 'components/Envoy/AccessLogModal';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { location, router, URLParam } from 'app/History';
-import { Span, TracingQuery } from 'types/Tracing';
+import type { Span, TracingQuery } from 'types/Tracing';
 import moment from 'moment';
 import { formatDuration } from 'utils/tracing/TracingHelper';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
@@ -62,12 +57,12 @@ import { KioskElement } from '../../components/Kiosk/KioskElement';
 import { TimeDurationModal } from '../../components/Time/TimeDurationModal';
 import { TimeDurationIndicator } from '../../components/Time/TimeDurationIndicator';
 import { serverConfig } from '../../config';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TRACE_LIMIT_DEFAULT } from 'components/Metrics/TraceLimit';
 import { TraceSpansLimit } from 'components/Metrics/TraceSpansLimit';
 import { infoStyle } from 'styles/IconStyle';
-import { WaypointInfo } from '../../types/Workload';
+import type { WaypointInfo } from '../../types/Workload';
 import { istioProxyName } from './WorkloadDetailsPage';
 import Editor from '@monaco-editor/react';
 import { t } from 'utils/I18nUtils';
@@ -364,6 +359,56 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private readonly logsRef: React.RefObject<any>;
   private podOptions: string[] = [];
   private promises: PromisesRegistry = new PromisesRegistry();
+
+  // filteredEntries is a memoized function which returns the set of entries that should be visible in the
+  // logs pane, given the values of show and hide filter, and given the "use regex" configuration.
+  // When the function is called for the first time with certain combination of parameters, the set of filtered
+  // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
+  // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
+  // set is discarded.
+  private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
+    let filteredEntries = entries;
+
+    if (!!showValue) {
+      if (useRegex) {
+        try {
+          const regexp = RegExp(showValue);
+          filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
+
+          if (!!this.state.showError) {
+            this.setState({ showError: undefined });
+          }
+        } catch (e) {
+          if (e instanceof Error) {
+            this.setState({ showError: `Show: ${e.message}` });
+          }
+        }
+      } else {
+        filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
+      }
+    }
+
+    if (!!hideValue) {
+      if (useRegex) {
+        try {
+          const regexp = RegExp(hideValue);
+          filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
+
+          if (!!this.state.hideError) {
+            this.setState({ hideError: undefined });
+          }
+        } catch (e) {
+          if (e instanceof Error) {
+            this.setState({ hideError: `Hide: ${e.message}` });
+          }
+        }
+      } else {
+        filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
+      }
+    }
+
+    return filteredEntries;
+  });
 
   constructor(props: WorkloadPodLogsProps) {
     super(props);
@@ -770,7 +815,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private renderLogLine = ({ index, style }: { index: number; style: React.CSSProperties }): React.ReactNode => {
-    let e = this.filteredEntries(
+    const e = this.filteredEntries(
       this.state.entries,
       this.state.showLogValue,
       this.state.hideLogValue,
@@ -1041,7 +1086,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         <div className={editorStyle} data-test="json-details-viewer">
           <Editor
             value={this.state.jsonModalContent}
-            language="json"
+            language="yaml"
             theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             options={{ readOnly: true, scrollBeyondLastLine: false, tabSize: 2, folding: true }}
@@ -1218,56 +1263,6 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     }
   };
 
-  // filteredEntries is a memoized function which returns the set of entries that should be visible in the
-  // logs pane, given the values of show and hide filter, and given the "use regex" configuration.
-  // When the function is called for the first time with certain combination of parameters, the set of filtered
-  // entries is calculated, cached and returned. Thereafter, if the function is called with the same values, the
-  // cached set is returned; otherwise, a new set is re-calculated, re-cached and returned, and the old
-  // set is discarded.
-  private filteredEntries = memoize((entries: Entry[], showValue: string, hideValue: string, useRegex: boolean) => {
-    let filteredEntries = entries;
-
-    if (!!showValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(showValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || regexp.test(e.logEntry.message));
-
-          if (!!this.state.showError) {
-            this.setState({ showError: undefined });
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ showError: `Show: ${e.message}` });
-          }
-        }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || e.logEntry.message.includes(showValue));
-      }
-    }
-
-    if (!!hideValue) {
-      if (useRegex) {
-        try {
-          const regexp = RegExp(hideValue);
-          filteredEntries = filteredEntries.filter(e => !e.logEntry || !regexp.test(e.logEntry.message));
-
-          if (!!this.state.hideError) {
-            this.setState({ hideError: undefined });
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            this.setState({ hideError: `Hide: ${e.message}` });
-          }
-        }
-      } else {
-        filteredEntries = filteredEntries.filter(e => !e.logEntry || !e.logEntry.message.includes(hideValue));
-      }
-    }
-
-    return filteredEntries;
-  });
-
   private clearShow = (): void => {
     // TODO: when TextInput refs are fixed in PF4 then use the ref and remove the direct HTMLElement usage
     // this.showInputRef.value = '';
@@ -1342,7 +1337,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     });
 
     let appContainerCount = 0;
-    let containerOptions = containers.map(c => {
+    const containerOptions = containers.map(c => {
       const name = c.name;
 
       const isAmbient = c.isAmbient;
@@ -1470,7 +1465,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           const spans = showSpans ? (responses[0].data as Span[]) : ([] as Span[]);
 
           entries = spans.map(span => {
-            let startTimeU = Math.floor(span.startTime / 1000);
+            const startTimeU = Math.floor(span.startTime / 1000);
 
             return {
               timestamp: moment(startTimeU).utc().format('YYYY-MM-DD HH:mm:ss.SSS'),
@@ -1481,7 +1476,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           responses.shift();
         }
 
-        let linesTruncatedContainers: string[] = [];
+        const linesTruncatedContainers: string[] = [];
 
         // TODO: Merge just if showZtunnel?
         const allContainers = selectedContainers.concat(extraContainers);
@@ -1577,7 +1572,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
         return typeof parsed === 'object' && parsed !== null;
       }
       return false;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -1608,11 +1603,11 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     return null;
   };
 
-  openJSONModal = (jsonEntry: Entry): void => {
+  private openJSONModal = (jsonEntry: Entry): void => {
     this.setState({ isJSONModalOpen: true, jsonModalContent: this.entryToJSON(jsonEntry) });
   };
 
-  closeJSONModal = (): void => {
+  private closeJSONModal = (): void => {
     this.setState({ isJSONModalOpen: false, jsonModalContent: undefined });
   };
 
@@ -1620,7 +1615,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
 }
 
 const formatDate = (timestamp: string): string => {
-  let entryTimestamp = moment(timestamp).format('YYYY-MM-DD HH:mm:ss.SSS');
+  const entryTimestamp = moment(timestamp).format('YYYY-MM-DD HH:mm:ss.SSS');
 
   return entryTimestamp;
 };
