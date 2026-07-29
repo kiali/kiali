@@ -23,6 +23,12 @@ Feature: Kiali Istio Config page
     And user sees Type information for Istio objects
     And user sees Configuration information for Istio objects
 
+  @bookinfo-app
+  @core-1
+  Scenario: Sidecar bookinfo has no Ambient L7 validation warnings
+    Then Ambient L7 validation warnings are not present in the "bookinfo" namespace
+    And Ambient L7 validation warnings are not present for the "reviews-v1" workload in the "bookinfo" namespace
+
   # There is no Configuration column for offline mode because the istio API is disabled
   # so you don't get validations.
   @offline
