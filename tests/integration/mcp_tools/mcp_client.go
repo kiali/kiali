@@ -18,13 +18,14 @@ var mcpClient *MCPClient
 
 const (
 	MCPTimeout     = 90 * time.Second
-	MCPMaxAttempts = 2
+	MCPMaxAttempts = 4
 	MCPRetryWait   = 2 * time.Second
 )
 
 type MCPClient struct {
 	kialiURL   string
 	httpClient *http.Client
+	transport  *http.Transport
 }
 
 type MCPResponse struct {
@@ -42,14 +43,16 @@ func newMCPClient() *MCPClient {
 	if url == "" {
 		log.Fatalf("URL environment variable is required.")
 	}
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	return &MCPClient{
 		kialiURL: url,
 		httpClient: &http.Client{
-			Timeout: MCPTimeout,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			},
+			Timeout:   MCPTimeout,
+			Transport: transport,
 		},
+		transport: transport,
 	}
 }
 
@@ -69,6 +72,11 @@ func isTransientMCPError(err error) bool {
 		strings.Contains(msg, "EOF")
 }
 
+// mcpRetryWait returns exponential backoff: 2s, 4s, 8s for attempts 1..3.
+func mcpRetryWait(attempt int) time.Duration {
+	return MCPRetryWait * time.Duration(1<<(attempt-1))
+}
+
 func CallMCPTool(toolName string, args map[string]interface{}) (*MCPResponse, error) {
 	var lastErr error
 	for attempt := 1; attempt <= MCPMaxAttempts; attempt++ {
@@ -78,9 +86,12 @@ func CallMCPTool(toolName string, args map[string]interface{}) (*MCPResponse, er
 		}
 		lastErr = err
 		if attempt < MCPMaxAttempts && isTransientMCPError(err) {
+			// Drop poisoned keep-alive connections so the next attempt opens a fresh one.
+			mcpClient.transport.CloseIdleConnections()
+			wait := mcpRetryWait(attempt)
 			log.Warningf("MCP tool %q attempt %d/%d failed with transient error, retrying in %s: %v",
-				toolName, attempt, MCPMaxAttempts, MCPRetryWait, err)
-			time.Sleep(MCPRetryWait)
+				toolName, attempt, MCPMaxAttempts, wait, err)
+			time.Sleep(wait)
 			continue
 		}
 		return nil, err
