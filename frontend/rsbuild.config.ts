@@ -1,7 +1,11 @@
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const { publicVars } = loadEnv({ prefixes: ['REACT_APP_'] });
 
@@ -32,9 +36,6 @@ export default defineConfig({
     sourceMap: { css: false, js: false }
   },
   source: {
-    alias: {
-      'monaco-editor': 'monaco-editor/esm/vs/editor/editor.api'
-    },
     define: {
       ...publicVars,
       ...processEnvFallback,
@@ -53,6 +54,14 @@ export default defineConfig({
       loaderOptions: {
         publicPath: '../../'
       }
+    },
+    rspack: config => {
+      config.resolve = config.resolve || {};
+      config.resolve.alias = config.resolve.alias || {};
+      config.resolve.alias['monaco-editor$'] = resolve(
+        __dirname,
+        'node_modules/monaco-editor/esm/vs/editor/editor.api.js'
+      );
     }
   },
   server: {
