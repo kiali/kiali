@@ -16,12 +16,12 @@ import './i18n';
 // Without this, @monaco-editor/react loads worker scripts from the CDN at runtime,
 // which fails in air-gapped environments and causes flaky CI failures.
 //
-// We import the editor API entry point (without worker bundles) to avoid web worker
-// chunk-loading. Workers use importScripts with the relative assetPrefix ('./'), which
-// resolves incorrectly from their nested async directory, producing doubled paths like
-// /static/js/async/static/js/... Running language services on the main thread is fine
-// for Kiali's small YAML/JSON config editing.
+// The rsbuild.config.ts aliases 'monaco-editor' to the worker-free editor.api entry
+// to avoid web worker chunk-loading (workers use importScripts with the relative
+// assetPrefix './' which resolves incorrectly from their nested async directory).
+// editor.api excludes basic-languages, so we register the ones Kiali needs explicitly.
 import * as monaco from 'monaco-editor';
+import 'monaco-editor/esm/vs/basic-languages/yaml/yaml.contribution';
 import { loader } from '@monaco-editor/react';
 
 loader.config({ monaco });
