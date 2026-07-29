@@ -27,6 +27,12 @@ WORKDIR $HOME
 RUN mkdir .cache
 ENV CYPRESS_CACHE_FOLDER=$HOME/.cache
 
+# Corepack stores Yarn as yarn.js under COREPACK_HOME (default: $HOME/.cache/node/corepack).
+# With HOME == project dir and package.json "type":"module", Node loads that yarn.js as ESM
+# and fails with: Dynamic require of "util" is not supported.
+# Keep the Corepack cache outside the project tree (see yarnpkg/berry#5831, issue #10123).
+ENV COREPACK_HOME=/tmp/corepack
+
 # Enable corepack to use the Yarn version specified in package.json
 RUN corepack enable
 
@@ -34,8 +40,8 @@ RUN corepack enable
 RUN yarn install --immutable
 
 # Set required permissions for OpenShift usage
-RUN chgrp -R 0 $HOME && \
-    chmod -R g=u $HOME
+RUN chgrp -R 0 $HOME $COREPACK_HOME && \
+    chmod -R g=u $HOME $COREPACK_HOME
 
 ENV TEST_GROUP="not @multi-cluster"
 
