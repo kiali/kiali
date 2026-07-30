@@ -685,8 +685,8 @@ elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-ai "true"
 
-    # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    # Install demo apps (skip beta namespace -- not needed by chatbot tests)
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
   fi
 
   ensureKialiServerReady
@@ -739,8 +739,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
-    # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    # Install demo apps (skip beta namespace -- not needed by core-2 tests)
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
   fi
 
   ensureKialiServerReady
@@ -810,8 +810,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
-    # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+    # Install only bookinfo + sleep (crd-validation/perses tests don't need error-rates or loggers).
+    # Skipping error-rates (11 pods) and loggers (2 pods) saves ~26 sidecar containers.
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+    "${SCRIPT_DIR}"/istio/install-sleep-demo.sh -c kubectl
+    kubectl rollout status deployment/sleep -n sleep --timeout=120s
   fi
 
   ensureKialiServerReady
@@ -1023,8 +1026,8 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
     # Setup single cluster with multi mesh
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
-    # Install demo apps
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true
+    # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
 
      "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
 

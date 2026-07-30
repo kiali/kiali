@@ -25,6 +25,7 @@ MINIKUBE_PROFILE="minikube"
 : ${ARCH:=amd64}
 : ${BOOKINFO_ONLY:=false}
 : ${DELETE_DEMOS:=false}
+: ${INSTALL_ERRORRATES_BETA:=true}
 : ${ENABLE_INJECTION:=true}
 : ${GATEWAY_HOST:=""}
 : ${USE_GATEWAY_API:=false}
@@ -57,6 +58,10 @@ while [ $# -gt 0 ]; do
       GATEWAY_HOST="$2"
       shift;shift
       ;;
+    -eb|--install-errorrates-beta)
+      INSTALL_ERRORRATES_BETA="$2"
+      shift;shift
+      ;;
     -mp|--minikube-profile)
       MINIKUBE_PROFILE="$2"
       shift;shift
@@ -76,6 +81,7 @@ Valid command line arguments:
   -ab|--ambient: Istio Ambient enabled
   -bo|--bookinfo-only: if 'true' only bookinfo demo will be installed (default: false).
   -c|--client: either 'oc' or 'kubectl'
+  -eb|--install-errorrates-beta <true|false>: If 'false' the error-rates beta namespace is skipped (default: true).
   -d|--delete: if 'true' demos will be deleted; otherwise, they will be installed
   -g|--gateway-host: host to use for the ingress gateway
   -gw|--use-gateway-api: if 'true' gateway API CRs will be used instead of istio CRs (default: false).
@@ -191,7 +197,7 @@ EOF
       # Install just bookinfo for now for Ambient
       if [ "${AMBIENT_ENABLED}" != "true" ]; then
         echo "Deploying error rates demo ..."
-        "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+        "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} --install-beta ${INSTALL_ERRORRATES_BETA} ${AMBIENT_ARGS_ERROR_RATES}
       else
         ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
 
@@ -231,7 +237,7 @@ EOF
     # Only install additional demos if not in bookinfo-only mode
     if [ "${BOOKINFO_ONLY}" != "true" ]; then
       echo "Deploying error rates demo..."
-      "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
+      "${SCRIPT_DIR}/install-error-rates-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} --install-beta ${INSTALL_ERRORRATES_BETA} ${AMBIENT_ARGS_ERROR_RATES}
 
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
@@ -254,12 +260,18 @@ EOF
   if [ "${BOOKINFO_ONLY}" == "true" ]; then
     wait_for_workloads "bookinfo"
   elif [ "${AMBIENT_ENABLED}" == "true" ]; then
-    for namespace in bookinfo alpha beta gamma test-ambient test-sidecar
+    ns_list="bookinfo alpha"
+    [ "${INSTALL_ERRORRATES_BETA}" == "true" ] && ns_list="${ns_list} beta"
+    ns_list="${ns_list} gamma test-ambient test-sidecar"
+    for namespace in ${ns_list}
     do
       wait_for_workloads "${namespace}"
     done
   else
-    for namespace in bookinfo alpha beta gamma
+    ns_list="bookinfo alpha"
+    [ "${INSTALL_ERRORRATES_BETA}" == "true" ] && ns_list="${ns_list} beta"
+    ns_list="${ns_list} gamma"
+    for namespace in ${ns_list}
     do
       wait_for_workloads "${namespace}"
     done

@@ -179,3 +179,119 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       istio_version: ${{ needs.initialize.outputs.istio-version }}
       sail_operator_git_ref: ${{ needs.initialize.outputs.sail-operator-git-ref }}
+
+  integration_tests_backend_mcp:
+    name: Run backend MCP integration tests
+    uses: ./.github/workflows/integration-tests-backend-mcp.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  integration_tests_frontend_ambient_multi_primary:
+    name: Run frontend Ambient Multi-Primary integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  integration_tests_frontend_chat:
+    name: Run frontend AI integration tests
+    uses: ./.github/workflows/integration-tests-frontend-chat.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  integration_tests_frontend_local_offline:
+    name: Run frontend local and offline mode integration tests
+    uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  integration_tests_frontend_multicluster_external_kiali:
+    name: Run frontend multicluster external-kiali integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  integration_tests_frontend_multi_mesh:
+    name: Run frontend multi mesh integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+      istio_version: ${{ needs.initialize.outputs.istio-version }}
+
+  codecov_merge_upload:
+    if: |
+      always() &&
+      (github.event.schedule == '0 6 * * *' || github.event_name == 'workflow_dispatch') &&
+      needs.integration_tests_backend.result == 'success' &&
+      needs.test_backend.result == 'success'
+    name: Merge and Upload Coverage to Codecov
+    needs:
+    - initialize
+    - integration_tests_backend
+    - integration_tests_backend_multicluster_external_controlplane
+    - test_backend
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0
+        ref: ${{ needs.initialize.outputs.build-branch }}
+
+    - name: Download unit coverage
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-unit
+        path: coverage
+
+    - name: Download backend coverage
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-backend
+        path: coverage
+
+    - name: Download multicluster coverage
+      if: needs.integration_tests_backend_multicluster_external_controlplane.result == 'success'
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-multicluster
+        path: coverage
+
+    - name: Merge coverage files
+      run: |
+        echo "mode: set" > coverage.out
+        grep -h -v "^mode:" coverage/coverage-unit.out >> coverage.out
+        grep -h -v "^mode:" coverage/coverage-backend.out >> coverage.out
+        if [ -f coverage/coverage-multicluster.out ]; then
+          grep -h -v "^mode:" coverage/coverage-multicluster.out >> coverage.out
+        fi
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage.out
+        flags: integration
+        override_branch: ${{ needs.initialize.outputs.build-branch }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true

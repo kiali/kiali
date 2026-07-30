@@ -110,8 +110,7 @@ function ensureMulticlusterApplicationsAreHealthy(startTime: number): void {
   }
 
   cy.request({
-    url:
-      'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+    url: 'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
   }).then(resp => {
     const has_http_200 = resp.body.elements.nodes.some(
       (node: any) =>
@@ -139,8 +138,7 @@ function ensureAmbientMulticlusterApplicationsAreHealthy(startTime: number): voi
   }
 
   cy.request({
-    url:
-      'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
+    url: 'api/namespaces/graph?duration=60s&graphType=versionedApp&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health&rateGrpc=requests&rateHttp=requests&rateTcp=sent&namespaces=bookinfo'
   }).then(resp => {
     const has_tcp = resp.body.elements.nodes.some(
       (node: any) =>
@@ -286,8 +284,11 @@ Cypress.Commands.add('login', (username: string, password: string) => {
     {
       cacheAcrossSpecs: true,
       validate: () => {
-        // Make an API request that returns a 200 only when logged in
-        cy.request({ url: '/api/status' }).its('status').should('eq', 200);
+        // Use /api/config instead of /api/status because /api/status fans out
+        // to Prometheus, Grafana, Jaeger, and Perses — each call can time out
+        // under CI resource pressure, causing the validate to exceed
+        // Cypress's responseTimeout.
+        cy.request({ url: '/api/config' }).its('status').should('eq', 200);
       }
     }
   );

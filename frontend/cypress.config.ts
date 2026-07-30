@@ -9,7 +9,7 @@ export default defineConfig({
   viewportHeight: 1080,
   defaultCommandTimeout: 40000,
   retries: {
-    runMode: 2,
+    runMode: 1,
     openMode: 0
   },
   animationDistanceThreshold: 20,

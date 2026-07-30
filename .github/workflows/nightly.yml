@@ -2,8 +2,8 @@ name: Nightly Build
 
 on:
   schedule:
-  # Every night at 04:00 (UTC)
-  - cron: "0 4 * * *"
+  # Every night at 03:30 (UTC) - offset from test-istio-version.yml (04:00) to avoid runner contention
+  - cron: "30 3 * * *"
   workflow_dispatch:
     inputs:
       release_branch:
@@ -16,6 +16,11 @@ on:
         type: string
         default: quay.io/kiali/kiali
         required: true
+      run_integration_tests:
+        description: Run frontend integration tests (test-istio-version runs nightly, so this is usually unnecessary)
+        type: boolean
+        default: false
+        required: false
 
 permissions: read-all
 
@@ -26,8 +31,9 @@ jobs:
     name: Initialize
     runs-on: ubuntu-latest
     outputs:
-      target_branch: ${{ github.ref_name }}
+      build_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
       quay_tag: ${{ env.quay_tag }}
+      target_branch: ${{ github.event.inputs.release_branch || github.ref_name }}
     steps:
     - name: Checkout code
       uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -116,11 +122,11 @@ jobs:
       run: make -e DOCKER_CLI_EXPERIMENTAL=enabled build-linux-multi-arch container-multi-arch-all-push-kiali-quay
 
   integration_tests_frontend:
+    if: ${{ inputs.run_integration_tests == true }}
     name: Run frontend integration tests
     uses: ./.github/workflows/integration-tests-frontend.yml
     needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.initialize.outputs.target-branch }}
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-      istio_version: ${{ needs.initialize.outputs.istio-version }}
+      target_branch: ${{ needs.initialize.outputs.target_branch }}
+      build_branch: ${{ needs.initialize.outputs.build_branch }}
       stern_logs: true
