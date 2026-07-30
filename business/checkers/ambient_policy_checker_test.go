@@ -334,6 +334,102 @@ func TestAmbientPolicyChecker_NonAmbientNamespace_NoWarning(t *testing.T) {
 	assert.Empty(t, vals)
 }
 
+func TestAmbientPolicyChecker_RequestAuthentication_NonAmbientNamespace_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "sidecar-ns"
+
+	ra := &security_v1.RequestAuthentication{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "jwt", Namespace: ns},
+		Spec:       security_v1_api.RequestAuthentication{},
+	}
+
+	vals := AmbientPolicyChecker{
+		Cluster: cluster,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: false},
+		},
+		RequestAuthentications: []*security_v1.RequestAuthentication{ra},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ns: {data.CreateWorkload(ns, "app", map[string]string{})},
+		},
+	}.Check()
+
+	assert.Empty(t, vals)
+}
+
+func TestAmbientPolicyChecker_SelectorMatchesOnlyOptedOutWorkload_NoEnrollmentWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "ambient-ns"
+
+	ap := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	ap.Namespace = ns
+
+	vals := AmbientPolicyChecker{
+		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
+		Cluster:               cluster,
+		IdentityDomain:        conf.ExternalServices.Istio.IstioIdentityDomain,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+			}},
+		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ns: {data.CreateWorkload(ns, "reviews-v1", map[string]string{
+				"app":                             "reviews",
+				config.IstioAmbientNamespaceLabel: config.WaypointNone,
+			})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.AuthorizationPolicies, ap.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok, "missing targetRefs still warns")
+	require.Len(t, validation.Checks, 1)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("authorizationpolicy.ambient.l7notargetrefs", validation.Checks[0]))
+}
+
+func TestAmbientPolicyChecker_TargetRefsServiceOptOut_WarnsDespiteNsEnrollment(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ns := "ambient-ns"
+
+	ap := data.CreateAuthorizationPolicyWithTargetRefs("reviews-l7-deny-get", ns, "reviews", []string{"GET"})
+
+	vals := AmbientPolicyChecker{
+		AuthorizationPolicies: []*security_v1.AuthorizationPolicy{ap},
+		Cluster:               cluster,
+		IdentityDomain:        conf.ExternalServices.Istio.IstioIdentityDomain,
+		Namespaces: models.Namespaces{
+			{Name: ns, Cluster: cluster, IsAmbient: true, Labels: map[string]string{
+				config.WaypointUseLabel: "waypoint",
+			}},
+		},
+		Services: []core_v1.Service{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "reviews",
+					Namespace: ns,
+					Labels:    map[string]string{config.WaypointUseLabel: config.WaypointNone},
+				},
+			},
+		},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			ns: {data.CreateWorkload(ns, "reviews-v1", map[string]string{"app": "reviews"})},
+		},
+	}.Check()
+
+	key := models.BuildKey(kubernetes.AuthorizationPolicies, ap.Name, ns, cluster)
+	validation, ok := vals[key]
+	require.True(t, ok, "expected warning when Service has use-waypoint:none despite ns enrollment")
+	require.Len(t, validation.Checks, 1)
+	assert.NoError(t, validations.ConfirmIstioCheckMessage("authorizationpolicy.ambient.l7nowaypoint", validation.Checks[0]))
+}
+
 func TestAmbientPolicyChecker_VirtualServiceCrossNamespace_Warns(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

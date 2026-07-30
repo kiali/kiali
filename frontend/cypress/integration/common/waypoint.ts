@@ -626,8 +626,8 @@ Then('the workload description card has no config issues', () => {
   cy.get('[data-test=workload-details-card]').should('be.visible').and('not.contain', 'Config Issues');
 });
 
-// Ambient L7 validation codes from AmbientPolicyChecker (issue #7900).
-// Baseline bookinfo + waypoint enrollment should not produce these warnings.
+// Ambient L7 validation codes from AmbientPolicyChecker / AmbientWorkloadChecker (issues #7900, #10113).
+// Baseline bookinfo (sidecar or enrolled Ambient) should not produce these warnings.
 const ambientL7ValidationCodes = new Set([
   'KIA0109',
   'KIA0110',
@@ -642,41 +642,50 @@ const ambientL7ValidationCodes = new Set([
   'KIA1114',
   'KIA1115',
   'KIA1116',
-  'KIA1117'
+  'KIA1117',
+  'KIA1317'
 ]);
+
+const collectAmbientL7Warnings = (validations: Record<string, any> | undefined): string[] => {
+  const found: string[] = [];
+  Object.keys(validations ?? {}).forEach(gvk => {
+    const byName = validations?.[gvk] ?? {};
+    Object.keys(byName).forEach(nameKey => {
+      const entry = byName[nameKey];
+      const checks = entry?.checks ?? [];
+      checks.forEach((check: { code?: string; message?: string }) => {
+        if (check.code && ambientL7ValidationCodes.has(check.code)) {
+          found.push(`${gvk}/${nameKey}: ${check.code} ${check.message ?? ''}`.trim());
+        }
+      });
+    });
+  });
+  return found;
+};
 
 Then('Ambient L7 validation warnings are not present in the {string} namespace', (namespace: string) => {
   cy.request({ url: `/api/namespaces/${namespace}/istio?validate=true` }).then(response => {
     expect(response.status).to.eq(200);
-    // API shape: validations[gvk][name.namespace] = { checks: [...] }
-    const validations = response.body?.validations ?? {};
-    const found: string[] = [];
-
-    // TODO: /api/namespaces/{ns}/istio?validate=true still returns cluster-wide validations
-    // (resources are namespaced; validations map is not). Filter client-side until the handler
-    // uses GetValidationsForNamespace. Track in a follow-up issue.
-    Object.keys(validations).forEach(gvk => {
-      const byName = validations[gvk] ?? {};
-      Object.keys(byName).forEach(nameKey => {
-        const entry = byName[nameKey];
-        if (entry?.namespace && entry.namespace !== namespace) {
-          return;
-        }
-        if (!entry?.namespace && !nameKey.endsWith(`.${namespace}`)) {
-          return;
-        }
-        const checks = entry?.checks ?? [];
-        checks.forEach((check: { code?: string; message?: string }) => {
-          if (check.code && ambientL7ValidationCodes.has(check.code)) {
-            found.push(`${gvk}/${nameKey}: ${check.code} ${check.message ?? ''}`.trim());
-          }
-        });
-      });
-    });
-
+    // Namespace-scoped API returns validations for that namespace only.
+    const found = collectAmbientL7Warnings(response.body?.validations);
     expect(found, `unexpected Ambient L7 validation warnings in ${namespace}`).to.deep.equal([]);
   });
 });
+
+Then(
+  'Ambient L7 validation warnings are not present for the {string} workload in the {string} namespace',
+  (workload: string, namespace: string) => {
+    cy.request({
+      url: `/api/namespaces/${namespace}/workloads/${workload}?validate=true&rateInterval=60s&health=true`
+    }).then(response => {
+      expect(response.status).to.eq(200);
+      const found = collectAmbientL7Warnings(response.body?.validations);
+      expect(found, `unexpected Ambient L7 validation warnings for workload ${namespace}/${workload}`).to.deep.equal(
+        []
+      );
+    });
+  }
+);
 
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-resources-card]').should('contain', 'L7');

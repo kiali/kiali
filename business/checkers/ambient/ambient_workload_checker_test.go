@@ -317,6 +317,72 @@ func TestWorkloadHasAuthPolicyAndNoWaypoint_Sidecar_NoWarning(t *testing.T) {
 	assert.True(valid)
 }
 
+func TestWorkloadHasAuthPolicyAndNoWaypoint_WorkloadOptOut_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Namespace Ambient + workload dataplane-mode=none must not get KIA1317.
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{
+		"app":                             "reviews",
+		config.IstioAmbientNamespaceLabel: config.WaypointNone,
+	})
+	workload.IsAmbient = false
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
+func TestWorkloadHasAuthPolicyAndNoWaypoint_WorkloadOptOut_StaleIsAmbient_NoWarning(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	// Explicit dataplane-mode=none wins even when IsAmbient is incorrectly true.
+	nsLabels := map[string]string{
+		config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+	}
+	workload := data.CreateWorkload(ns1, "reviews-v1", map[string]string{
+		"app":                             "reviews",
+		config.IstioAmbientNamespaceLabel: config.WaypointNone,
+	})
+	workload.IsAmbient = true
+	workload.WaypointWorkloads = make([]models.WorkloadReferenceInfo, 0)
+	l7Policy := data.CreateAuthorizationPolicy([]string{"bookinfo"}, []string{"GET"}, []string{"reviews"}, map[string]string{"app": "reviews"})
+	l7Policy.Namespace = ns1
+
+	vals, valid := NewAmbientWorkloadChecker(
+		conf.KubernetesConfig.ClusterName,
+		conf,
+		workload,
+		ns1,
+		models.Namespaces{models.Namespace{Name: ns1, Labels: nsLabels, IsAmbient: true}},
+		[]*security_v1.AuthorizationPolicy{l7Policy},
+		nil,
+	).Check()
+
+	assert.Empty(vals)
+	assert.True(valid)
+}
+
 func TestWorkloadHasL7AuthPolicyForOtherWorkload_NoWarning(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

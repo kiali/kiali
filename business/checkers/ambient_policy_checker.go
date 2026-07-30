@@ -3,6 +3,7 @@ package checkers
 import (
 	"fmt"
 
+	api_v1beta1 "istio.io/api/type/v1beta1"
 	extensions_v1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/business/checkers/ambient"
+	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
@@ -90,7 +92,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		if ap.Spec.Selector != nil {
 			matchLabels = ap.Spec.Selector.MatchLabels
 		}
-		if c.selectorNeedsWarning(matchLabels, ap.Namespace, nsByName[ap.Namespace], nsStatus) {
+		if c.enrollmentNeedsWarning(ap.Spec.TargetRef, ap.Spec.TargetRefs, matchLabels, ap.Namespace, nsByName[ap.Namespace], nsStatus) {
 			validations.MergeValidations(c.buildCheck(ap.Name, ap.Namespace, kubernetes.AuthorizationPolicies, "authorizationpolicy.ambient.l7nowaypoint", ""))
 		}
 	}
@@ -108,7 +110,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		if ra.Spec.Selector != nil {
 			matchLabels = ra.Spec.Selector.MatchLabels
 		}
-		if c.selectorNeedsWarning(matchLabels, ra.Namespace, nsByName[ra.Namespace], nsStatus) {
+		if c.enrollmentNeedsWarning(ra.Spec.TargetRef, ra.Spec.TargetRefs, matchLabels, ra.Namespace, nsByName[ra.Namespace], nsStatus) {
 			validations.MergeValidations(c.buildCheck(ra.Name, ra.Namespace, kubernetes.RequestAuthentications, "requestauthentication.ambient.l7nowaypoint", ""))
 		}
 	}
@@ -155,7 +157,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 		if wp.Spec.Selector != nil {
 			matchLabels = wp.Spec.Selector.MatchLabels
 		}
-		if c.selectorNeedsWarning(matchLabels, wp.Namespace, nsByName[wp.Namespace], nsStatus) {
+		if c.enrollmentNeedsWarning(wp.Spec.TargetRef, wp.Spec.TargetRefs, matchLabels, wp.Namespace, nsByName[wp.Namespace], nsStatus) {
 			check := models.Build("wasmplugin.ambient.l7nowaypoint", "")
 			validation.Checks = append(validation.Checks, &check)
 			validation.Valid = false
@@ -181,7 +183,7 @@ func (c AmbientPolicyChecker) Check() models.IstioValidations {
 			if tel.Spec.Selector != nil {
 				matchLabels = tel.Spec.Selector.MatchLabels
 			}
-			if c.selectorNeedsWarning(matchLabels, tel.Namespace, nsByName[tel.Namespace], nsStatus) {
+			if c.enrollmentNeedsWarning(tel.Spec.TargetRef, tel.Spec.TargetRefs, matchLabels, tel.Namespace, nsByName[tel.Namespace], nsStatus) {
 				check := models.Build("telemetry.ambient.l7nowaypoint", "")
 				validation.Checks = append(validation.Checks, &check)
 				validation.Valid = false
@@ -287,9 +289,75 @@ func ambientHostPath(gvk schema.GroupVersionKind, hostIdx int) string {
 	return fmt.Sprintf("spec/hosts[%d]", hostIdx)
 }
 
+// enrollmentNeedsWarning reports whether L7 policy attachment targets are missing waypoint enrollment.
+// Service targetRefs take precedence: a Service with use-waypoint=none must warn even when the
+// namespace is enrolled (selector/ns fallback alone would miss that opt-out).
+func (c AmbientPolicyChecker) enrollmentNeedsWarning(
+	targetRef *api_v1beta1.PolicyTargetReference,
+	targetRefs []*api_v1beta1.PolicyTargetReference,
+	matchLabels map[string]string,
+	namespace string,
+	ns *models.Namespace,
+	nsStatus ambient.NamespaceAmbientStatus,
+) bool {
+	if checked, needsWarning := c.serviceTargetRefsNeedWarning(targetRef, targetRefs, namespace, ns); checked {
+		return needsWarning
+	}
+	return c.selectorNeedsWarning(matchLabels, namespace, ns, nsStatus)
+}
+
+// serviceTargetRefsNeedWarning checks enrollment for Service targetRefs.
+// Returns checked=false when there are no resolvable Service targetRefs (caller should fall back).
+func (c AmbientPolicyChecker) serviceTargetRefsNeedWarning(
+	targetRef *api_v1beta1.PolicyTargetReference,
+	targetRefs []*api_v1beta1.PolicyTargetReference,
+	namespace string,
+	ns *models.Namespace,
+) (checked bool, needsWarning bool) {
+	refs := make([]*api_v1beta1.PolicyTargetReference, 0, len(targetRefs)+1)
+	if targetRef != nil {
+		refs = append(refs, targetRef)
+	}
+	refs = append(refs, targetRefs...)
+
+	var nsLabels map[string]string
+	if ns != nil {
+		nsLabels = ns.Labels
+	}
+
+	resolvedAny := false
+	for _, ref := range refs {
+		if ref == nil || ref.Kind != "Service" || (ref.Group != "" && ref.Group != "core") {
+			continue
+		}
+		svc := c.findService(namespace, ref.Name)
+		if svc == nil {
+			continue
+		}
+		resolvedAny = true
+		if !ambient.IsEnrolledForWaypoint(svc.Labels, nsLabels) {
+			return true, true
+		}
+	}
+	if resolvedAny {
+		return true, false
+	}
+	return false, false
+}
+
+func (c AmbientPolicyChecker) findService(namespace, name string) *core_v1.Service {
+	for i := range c.Services {
+		if c.Services[i].Namespace == namespace && c.Services[i].Name == name {
+			return &c.Services[i]
+		}
+	}
+	return nil
+}
+
 // selectorNeedsWarning returns true when L7 config targets workloads/namespace that are not enrolled.
 // Namespace-wide (empty selector): warn if namespace is not enrolled.
-// With selector: warn if any matched workload is not enrolled (workload label, else namespace).
+// With selector: warn if any matched Ambient workload is not enrolled (workload label, else namespace).
+// Workloads opted out of Ambient (istio.io/dataplane-mode=none) are ignored, consistent with KIA1317.
 func (c AmbientPolicyChecker) selectorNeedsWarning(matchLabels map[string]string, namespace string, ns *models.Namespace, nsStatus ambient.NamespaceAmbientStatus) bool {
 	var nsLabels map[string]string
 	if ns != nil {
@@ -302,22 +370,32 @@ func (c AmbientPolicyChecker) selectorNeedsWarning(matchLabels map[string]string
 
 	selector := labels.Set(matchLabels).AsSelector()
 	workloads := c.WorkloadsPerNamespace[namespace]
-	matched := false
+	matchedAmbient := false
+	matchedOptedOutOnly := false
 	for _, wl := range workloads {
 		if wl == nil || wl.IsWaypoint() {
 			continue
 		}
-		if selector.Matches(labels.Set(wl.Labels)) {
-			matched = true
-			if !ambient.IsEnrolledForWaypoint(wl.Labels, nsLabels) {
-				return true
-			}
+		if !selector.Matches(labels.Set(wl.Labels)) {
+			continue
+		}
+		if wl.Labels[config.IstioAmbientNamespaceLabel] == config.WaypointNone {
+			matchedOptedOutOnly = true
+			continue
+		}
+		matchedAmbient = true
+		if !ambient.IsEnrolledForWaypoint(wl.Labels, nsLabels) {
+			return true
 		}
 	}
-	if !matched {
-		return ambient.NeedsWaypointWarning(nsStatus, true)
+	if matchedAmbient {
+		return false
 	}
-	return false
+	if matchedOptedOutOnly {
+		// Selector only hits workloads opted out of Ambient — no waypoint enrollment warning.
+		return false
+	}
+	return ambient.NeedsWaypointWarning(nsStatus, true)
 }
 
 func (c AmbientPolicyChecker) buildCheck(name, namespace string, gvk schema.GroupVersionKind, checkID, path string) models.IstioValidations {
