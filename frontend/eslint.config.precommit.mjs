@@ -35,6 +35,10 @@ export default tseslint.config(...baseConfig, {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_'
       }
-    ]
+    ],
+
+    // React Hooks rules
+    'react-hooks/immutability': 'error',
+    'react-hooks/purity': 'error'
   }
 });

@@ -340,6 +340,288 @@ func TestMulticlusterUnauthorizedUserSessionGetsDropped(t *testing.T) {
 	require.True(sessionCookieWest.MaxAge < 0, "west session should be dropped")
 }
 
+func TestImpersonationEnabledSetsImpersonationOnAllClusters(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = true
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		// In production, OpenShift resolves "~" to the real username (e.g. "developer@example.com").
+		// The fake client returns the object as-is, so Name must be "~" to match the GetUser("~") lookup.
+		&osuser_v1.User{
+			Groups: []string{"org-admins"},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	westClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 2)
+
+	for cluster, session := range sessions {
+		require.Equal("~", session.Username, "cluster %s should have username set", cluster)
+		require.Empty(session.AuthInfo.Token, "cluster %s should have empty Token when impersonating", cluster)
+		require.Equal("~", session.AuthInfo.Impersonate, "cluster %s should impersonate the home user", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "system:authenticated",
+			"cluster %s should include system:authenticated", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "system:authenticated:oauth",
+			"cluster %s should include system:authenticated:oauth", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "org-admins",
+			"cluster %s should include user's org group", cluster)
+	}
+}
+
+func TestImpersonationDisabledPreservesLegacyBehavior(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = false
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 1)
+
+	eastSession := sessions["east"]
+	require.NotNil(eastSession)
+	require.Equal("test-token", eastSession.AuthInfo.Token)
+	require.Empty(eastSession.AuthInfo.Impersonate)
+	require.Empty(eastSession.AuthInfo.ImpersonateGroups)
+}
+
+func TestImpersonationEnabledNoHomeSessionSkipsImpersonation(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = true
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	// Bearer token that will fail GetUserInfo (no User "~" in the fake client)
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer bad-token")
+	w := httptest.NewRecorder()
+
+	_, err = authController.ValidateSession(r, w)
+	require.Error(err, "should fail when home cluster user cannot be validated")
+}
+
+func TestImpersonationWithBearerTokenSetsIdentity(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = true
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			Groups: []string{"developers"},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	westClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+	)
+	westClient.OpenShift = true
+	westClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": westClient,
+	}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 2)
+
+	// Both clusters should have impersonation from the Bearer token path
+	for cluster, session := range sessions {
+		require.Equal("~", session.AuthInfo.Impersonate,
+			"cluster %s should impersonate home user from Bearer token", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "developers",
+			"cluster %s should include user's org group", cluster)
+		require.Contains(session.AuthInfo.ImpersonateGroups, "system:authenticated",
+			"cluster %s should include system:authenticated", cluster)
+	}
+}
+
+func TestImpersonationGroupDeduplication(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.Auth.OpenShift.Impersonation.Enabled = true
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := kubetest.NewFakeK8sClient(
+		&osoauth_v1.OAuthClient{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "kiali-istio-system",
+			},
+			RedirectURIs: []string{"http://localhost:20001/kiali"},
+		},
+		&osuser_v1.User{
+			Groups: []string{"system:authenticated", "system:authenticated:oauth", "developers"},
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name: "~",
+			},
+		},
+	)
+	eastClient.OpenShift = true
+	eastClient.KubeClusterInfo.ClientConfig = &rest.Config{Host: metadataServer.URL}
+
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+	require.NoError(err)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+
+	session := sessions["east"]
+	require.NotNil(session)
+
+	// Count occurrences — system groups should not be duplicated
+	count := 0
+	for _, g := range session.AuthInfo.ImpersonateGroups {
+		if g == "system:authenticated" {
+			count++
+		}
+	}
+	require.Equal(1, count, "system:authenticated should appear exactly once, not duplicated")
+}
+
 func TestTerminateSession(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -418,4 +700,69 @@ func TestTerminateSession(t *testing.T) {
 	cookies := w.Result().Cookies()
 	require.Len(cookies, 1)
 	require.Equal(cookies[0].MaxAge, -1, fmt.Sprintf("cookie: %s should have been dropped.", cookies[0].Name))
+}
+
+func TestValidateImpersonationIdentity_RejectsSystemUsers(t *testing.T) {
+	cases := []struct {
+		name   string
+		user   string
+		groups []string
+	}{
+		{"system:admin", "system:admin", nil},
+		{"system:anonymous", "system:anonymous", nil},
+		{"system:serviceaccount prefix", "system:serviceaccount:default:kiali", nil},
+		{"system:node prefix", "system:node:worker-1", nil},
+		{"any system: prefix", "system:anything", nil},
+		{"system:masters group", "normaluser", []string{"developers", "system:masters"}},
+		{"system:nodes group", "normaluser", []string{"system:nodes"}},
+		{"system:serviceaccounts group", "normaluser", []string{"system:serviceaccounts"}},
+		{"system:serviceaccounts:namespace group", "normaluser", []string{"system:serviceaccounts:kube-system"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := authentication.ValidateImpersonationIdentity(tc.user, tc.groups)
+			require.Error(t, err)
+			require.ErrorIs(t, err, authentication.ErrImpersonationDenied)
+		})
+	}
+}
+
+func TestValidateImpersonationIdentity_AllowsNormalUsers(t *testing.T) {
+	cases := []struct {
+		name   string
+		user   string
+		groups []string
+	}{
+		{"normal user no groups", "developer@example.com", nil},
+		{"normal user with groups", "alice", []string{"developers", "sre-team"}},
+		{"normal user with system:authenticated", "bob", []string{"system:authenticated", "system:authenticated:oauth", "developers"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := authentication.ValidateImpersonationIdentity(tc.user, tc.groups)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFilterImpersonationGroups_FiltersCorrectly(t *testing.T) {
+	t.Run("empty allowedGroups returns all groups", func(t *testing.T) {
+		groups := []string{"system:authenticated", "developers", "sre-team"}
+		result := authentication.FilterImpersonationGroups(groups, nil, "user")
+		require.Equal(t, groups, result)
+	})
+
+	t.Run("filters to allowed groups plus system:authenticated", func(t *testing.T) {
+		groups := []string{"system:authenticated", "system:authenticated:oauth", "developers", "sre-team", "managers"}
+		allowed := []string{"developers", "sre-team"}
+		result := authentication.FilterImpersonationGroups(groups, allowed, "user")
+		require.Equal(t, []string{"system:authenticated", "system:authenticated:oauth", "developers", "sre-team"}, result)
+	})
+
+	t.Run("system:authenticated groups always pass through", func(t *testing.T) {
+		groups := []string{"system:authenticated", "system:authenticated:oauth", "unknown-group"}
+		allowed := []string{"developers"}
+		result := authentication.FilterImpersonationGroups(groups, allowed, "user")
+		require.Equal(t, []string{"system:authenticated", "system:authenticated:oauth"}, result)
+	})
 }

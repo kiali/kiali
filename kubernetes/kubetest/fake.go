@@ -190,21 +190,29 @@ type FakeK8sClient struct {
 	// Underlying gateway api clientset.
 	GatewayAPIClientset gatewayapi.Interface
 	// Token is the kiali token this client uses.
-	Token           string
+	Token string
+	// CacheKey overrides the cache identity when set (simulates impersonation).
+	CacheKey        string
 	KubeClusterInfo kialikube.ClusterInfo
 	ProjectFake     *projectfake.Clientset
 	UserFake        *userfake.Clientset
 	OAuthFake       *oauthfake.Clientset
 }
 
-func (c *FakeK8sClient) IsOpenShift() bool                  { return c.OpenShift }
-func (c *FakeK8sClient) IsGatewayAPI() bool                 { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) HasTCPRouteInV1() bool              { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) HasTLSRouteInV1() bool              { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) HasUDPRouteInV1() bool              { return c.GatewayAPIEnabled }
-func (c *FakeK8sClient) IsInferenceAPI() bool               { return c.InferenceAPIEnabled }
-func (c *FakeK8sClient) IsIstioGateway() bool               { return c.IstioGatewayInstalled }
-func (c *FakeK8sClient) IsIstioAPI() bool                   { return c.IstioAPIInstalled }
+func (c *FakeK8sClient) IsOpenShift() bool     { return c.OpenShift }
+func (c *FakeK8sClient) IsGatewayAPI() bool    { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) HasTCPRouteInV1() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) HasTLSRouteInV1() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) HasUDPRouteInV1() bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) IsInferenceAPI() bool  { return c.InferenceAPIEnabled }
+func (c *FakeK8sClient) IsIstioGateway() bool  { return c.IstioGatewayInstalled }
+func (c *FakeK8sClient) IsIstioAPI() bool      { return c.IstioAPIInstalled }
+func (c *FakeK8sClient) GetCacheKey() string {
+	if c.CacheKey != "" {
+		return c.CacheKey
+	}
+	return c.Token
+}
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }
 func (c *FakeK8sClient) ClusterInfo() kialikube.ClusterInfo { return c.KubeClusterInfo }
 func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level string) error {

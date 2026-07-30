@@ -22,6 +22,7 @@ Feature: Kiali Istio Config editor page
 
   @bookinfo-app
   @core-2
+  @skip-ossmc
   Scenario: Unsaved YAML edits show reload confirmation
     When user clicks in "Name" column on the "bookinfo" text
     And user can see istio config editor
@@ -34,6 +35,7 @@ Feature: Kiali Istio Config editor page
 
   @bookinfo-app
   @core-2
+  @skip-ossmc
   Scenario: Unsaved YAML edits show leave confirmation on Cancel
     When user clicks in "Name" column on the "bookinfo" text
     And user can see istio config editor

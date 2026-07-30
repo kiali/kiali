@@ -72,21 +72,24 @@ const waitForWorkloadEnrolled = (targetNamespace: string, maxRetries = 30, retry
 const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   targetNamespace: string,
   ambientTraffic: string,
-  maxRetries = 30,
+  maxRetries = 60,
   retryCount = 0,
-  lastEdgeCount = -1
+  lastEdgeCount = -1,
+  lastHttpEdgeCount = -1
 ): void => {
-  if (retryCount >= maxRetries) {
-    throw new Error(
-      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, expected>=${
-        ambientTraffic === 'waypoint' ? 8 : 9
-      }, baseUrl=${Cypress.config('baseUrl')})`
-    );
-  }
-
   let totalEdges = 9;
   if (ambientTraffic === 'waypoint') {
     totalEdges = 8;
+  }
+  // TCP-only graphs show up first; wait until HTTP edges exist too.
+  const minHttpEdges = 2;
+
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForBookinfoWaypointTrafficGeneratedInGraph, ambientTraffic=${ambientTraffic}, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, lastHttpEdgeCount=${lastHttpEdgeCount}, expected>=${totalEdges}, expectedHttp>=${minHttpEdges}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
   }
 
   cy.request({
@@ -108,32 +111,101 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
     }
   }).then(response => {
     expect(response.status).to.equal(200);
-    const elements = response.body.elements;
-    const edgeCount = elements?.edges?.length ?? -1;
+    const edges = response.body.elements?.edges ?? [];
+    const edgeCount = edges.length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
 
-    if (edgeCount >= totalEdges) {
+    if (edgeCount >= totalEdges && httpEdgeCount >= minHttpEdges) {
       return;
-    } else {
-      if (retryCount === 0 || retryCount % 5 === 0) {
-        Cypress.log({
-          name: 'waitForGraphTraffic',
-          message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
-            'baseUrl'
-          )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} expected>=${totalEdges} baseUrl=${Cypress.config(
-            'baseUrl'
-          )} targetNamespace=${targetNamespace}`
-        });
-      }
-      return cy.wait(10000).then(() => {
-        return waitForBookinfoWaypointTrafficGeneratedInGraph(
-          targetNamespace,
-          ambientTraffic,
-          maxRetries,
-          retryCount + 1,
-          edgeCount
-        );
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForGraphTraffic',
+        message: `retry=${retryCount}/${maxRetries} url=${Cypress.config(
+          'baseUrl'
+        )}/api/namespaces/graph ambientTraffic=${ambientTraffic} edges=${edgeCount} httpEdges=${httpEdgeCount} expected>=${totalEdges} expectedHttp>=${minHttpEdges} baseUrl=${Cypress.config(
+          'baseUrl'
+        )} targetNamespace=${targetNamespace}`
       });
     }
+
+    return cy.wait(10000).then(() => {
+      return waitForBookinfoWaypointTrafficGeneratedInGraph(
+        targetNamespace,
+        ambientTraffic,
+        maxRetries,
+        retryCount + 1,
+        edgeCount,
+        httpEdgeCount
+      );
+    });
+  });
+};
+
+// Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
+// adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
+const waitForSidecarAmbientTrafficGeneratedInGraph = (
+  maxRetries = 60,
+  retryCount = 0,
+  lastEdgeCount = -1,
+  lastHttpEdgeCount = -1
+): void => {
+  const targetNamespace = 'test-ambient,test-sidecar';
+  const minHttpEdges = 4;
+  const minTotalEdges = 8;
+
+  if (retryCount >= maxRetries) {
+    throw new Error(
+      `Condition not met after ${maxRetries} retries (waitForSidecarAmbientTrafficGeneratedInGraph, namespace=${targetNamespace}, lastEdgeCount=${lastEdgeCount}, lastHttpEdgeCount=${lastHttpEdgeCount}, expectedHttp>=${minHttpEdges}, expectedTotal>=${minTotalEdges}, baseUrl=${Cypress.config(
+        'baseUrl'
+      )})`
+    );
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '300s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: false,
+      ambientTraffic: 'total',
+      appenders: 'deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: targetNamespace
+    }
+  }).then(response => {
+    expect(response.status).to.equal(200);
+    const edges = response.body.elements?.edges ?? [];
+    const edgeCount = edges.length;
+    // Graph API puts protocol under data.traffic; UI decorates data.protocol later.
+    const httpEdgeCount = edges.filter(
+      (e: { data?: { traffic?: { protocol?: string } } }) => e.data?.traffic?.protocol === 'http'
+    ).length;
+
+    if (httpEdgeCount >= minHttpEdges && edgeCount >= minTotalEdges) {
+      return;
+    }
+
+    if (retryCount === 0 || retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waitForSidecarAmbientTraffic',
+        message: `retry=${retryCount}/${maxRetries} edges=${edgeCount} httpEdges=${httpEdgeCount} expectedHttp>=${minHttpEdges} expectedTotal>=${minTotalEdges} targetNamespace=${targetNamespace}`
+      });
+    }
+
+    return cy.wait(10000).then(() => {
+      return waitForSidecarAmbientTrafficGeneratedInGraph(maxRetries, retryCount + 1, edgeCount, httpEdgeCount);
+    });
   });
 };
 
@@ -294,8 +366,8 @@ const waitForHealthyWaypoint = (name: string, namespace: string, cluster?: strin
         responseBody === undefined
           ? 'undefined'
           : typeof responseBody === 'string'
-          ? responseBody
-          : JSON.stringify(responseBody);
+            ? responseBody
+            : JSON.stringify(responseBody);
       const responseBodyShort = responseBodyStr.length > 800 ? `${responseBodyStr.slice(0, 800)}...` : responseBodyStr;
 
       const workload = responseBody;
@@ -434,6 +506,10 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
   waitForBookinfoWaypointTrafficGeneratedInGraph(namespace, 'waypoint');
 });
 
+Then('the graph page has enough data for sidecar ambient traffic', () => {
+  waitForSidecarAmbientTrafficGeneratedInGraph();
+});
+
 Then('the {string} tracing data is ready in the {string} namespace', (workload: string, namespace: string) => {
   waitForWorkloadTracesInApi(namespace, workload);
 });
@@ -550,6 +626,58 @@ Then('the workload description card has no config issues', () => {
   cy.get('[data-test=workload-details-card]').should('be.visible').and('not.contain', 'Config Issues');
 });
 
+// Ambient L7 validation codes from AmbientPolicyChecker (issue #7900).
+// Baseline bookinfo + waypoint enrollment should not produce these warnings.
+const ambientL7ValidationCodes = new Set([
+  'KIA0109',
+  'KIA0110',
+  'KIA0210',
+  'KIA0211',
+  'KIA0212',
+  'KIA1109',
+  'KIA1110',
+  'KIA1111',
+  'KIA1112',
+  'KIA1113',
+  'KIA1114',
+  'KIA1115',
+  'KIA1116',
+  'KIA1117'
+]);
+
+Then('Ambient L7 validation warnings are not present in the {string} namespace', (namespace: string) => {
+  cy.request({ url: `/api/namespaces/${namespace}/istio?validate=true` }).then(response => {
+    expect(response.status).to.eq(200);
+    // API shape: validations[gvk][name.namespace] = { checks: [...] }
+    const validations = response.body?.validations ?? {};
+    const found: string[] = [];
+
+    // TODO: /api/namespaces/{ns}/istio?validate=true still returns cluster-wide validations
+    // (resources are namespaced; validations map is not). Filter client-side until the handler
+    // uses GetValidationsForNamespace. Track in a follow-up issue.
+    Object.keys(validations).forEach(gvk => {
+      const byName = validations[gvk] ?? {};
+      Object.keys(byName).forEach(nameKey => {
+        const entry = byName[nameKey];
+        if (entry?.namespace && entry.namespace !== namespace) {
+          return;
+        }
+        if (!entry?.namespace && !nameKey.endsWith(`.${namespace}`)) {
+          return;
+        }
+        const checks = entry?.checks ?? [];
+        checks.forEach((check: { code?: string; message?: string }) => {
+          if (check.code && ambientL7ValidationCodes.has(check.code)) {
+            found.push(`${gvk}/${nameKey}: ${check.code} ${check.message ?? ''}`.trim());
+          }
+        });
+      });
+    });
+
+    expect(found, `unexpected Ambient L7 validation warnings in ${namespace}`).to.deep.equal([]);
+  });
+});
+
 Then('the user sees the L7 {string} link', (waypoint: string) => {
   cy.get('[data-test=workload-resources-card]').should('contain', 'L7');
   cy.get('[data-test=waypoint-link]').closest('li').find('span').contains('L7');
@@ -562,7 +690,8 @@ Then('the link for the waypoint {string} should redirect to a valid workload det
     .contains('a,button', waypoint)
     .then($el => {
       // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
-      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      const target =
+        $el.prop('tagName')?.toLowerCase() === 'a' ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
       expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
       if (isOSSMC) {
         // Even if the button exist, the click event doesn't work (Even with force).
@@ -583,7 +712,7 @@ Then('the waypoint link points to the {string} cluster', (cluster: string) => {
     const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
     expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    const target = $el.is('a') ? ($el.attr('href') ?? '') : ($el.attr('data-href') ?? '');
     expect(target).to.include(`clusterName=${cluster}`);
   });
 });

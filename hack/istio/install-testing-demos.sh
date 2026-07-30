@@ -194,11 +194,13 @@ EOF
         "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_ERROR_RATES}
       else
         ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
-        echo "Deploying waypoint proxies ..."
-        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
 
+        # Install early so Sidecar↔Ambient traffic accumulates while other demos start.
         echo "Deploying sidecar-ambient ..."
         "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
+
+        echo "Deploying waypoint proxies ..."
+        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
       fi
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
@@ -211,14 +213,15 @@ EOF
 
     # Only install additional demos if not in bookinfo-only mode
     if [ "${BOOKINFO_ONLY}" != "true" ]; then
+      # Install early so Sidecar↔Ambient traffic accumulates while other demos start.
+      echo "Deploying sidecar-ambient ..."
+      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
+
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
 
       echo "Deploying waypoint proxies ..."
       "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
-
-      echo "Deploying sidecar-ambient ..."
-      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
     fi
 
   else
@@ -250,6 +253,11 @@ EOF
 
   if [ "${BOOKINFO_ONLY}" == "true" ]; then
     wait_for_workloads "bookinfo"
+  elif [ "${AMBIENT_ENABLED}" == "true" ]; then
+    for namespace in bookinfo alpha beta gamma test-ambient test-sidecar
+    do
+      wait_for_workloads "${namespace}"
+    done
   else
     for namespace in bookinfo alpha beta gamma
     do

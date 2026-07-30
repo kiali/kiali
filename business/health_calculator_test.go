@@ -488,7 +488,7 @@ func TestCalculateWithZeroDegradedThreshold(t *testing.T) {
 }
 
 func TestCalculateWithZeroFailureThreshold(t *testing.T) {
-	// Test behavior when failure threshold is 0 (should skip failure check)
+	// failure: 0 is a valid threshold (docs: any matching error rate >= 0% → Failure)
 	conf := config.NewConfig()
 	conf.HealthConfig.Rate = []config.Rate{
 		{
@@ -508,8 +508,31 @@ func TestCalculateWithZeroFailureThreshold(t *testing.T) {
 	}
 
 	result := calc.CalculateServiceHealth("test", "my-service", health, nil)
-	// With failure=0, should only trigger degraded (not failure)
-	assert.Equal(t, models.HealthStatusDegraded, result.Status)
+	assert.Equal(t, models.HealthStatusFailure, result.Status)
+}
+
+func TestCalculateWithZeroDegradedAndZeroFailureThreshold(t *testing.T) {
+	// Both at 0: Failure wins by priority (value >= failure)
+	conf := config.NewConfig()
+	conf.HealthConfig.Rate = []config.Rate{
+		{
+			Tolerance: []config.Tolerance{
+				{Code: "5XX", Protocol: "http", Direction: ".*", Degraded: 0, Failure: 0},
+			},
+		},
+	}
+	calc := NewHealthCalculator(conf)
+
+	health := &models.ServiceHealth{
+		Requests: models.RequestHealth{
+			Inbound: map[string]map[string]float64{
+				"http": {"200": 99, "500": 1}, // 1% errors
+			},
+		},
+	}
+
+	result := calc.CalculateServiceHealth("test", "my-service", health, nil)
+	assert.Equal(t, models.HealthStatusFailure, result.Status)
 }
 
 func TestCalculateReturnsErrorRatio(t *testing.T) {
