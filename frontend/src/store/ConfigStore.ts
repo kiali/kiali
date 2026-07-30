@@ -63,11 +63,7 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
-const globalStateFilter = whitelistInputWithInitialState(
-  'globalState',
-  ['contrastMode', 'language', 'theme'],
-  INITIAL_GLOBAL_STATE
-);
+const globalStateFilter = whitelistInputWithInitialState('globalState', ['language', 'theme'], INITIAL_GLOBAL_STATE);
 
 const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState', 'layout'], INITIAL_GRAPH_STATE);
 

@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
 import { Theme } from 'types/Common';
-import { applyDocumentTheme, getKialiContrastMode, getKialiTheme, isParentOwnedTheme } from 'utils/ThemeUtils';
+import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme } from 'utils/ThemeUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
 type initializingScreenProps = {
@@ -63,7 +63,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
   const theme = getKialiTheme();
   // Do not overwrite OpenShift Console theme classes when embedded (OSSMC).
   if (!isParentOwnedTheme()) {
-    applyDocumentTheme(theme, getKialiContrastMode());
+    applyDocumentTheme(theme);
   }
 
   return (

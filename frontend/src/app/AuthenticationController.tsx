@@ -31,7 +31,7 @@ import type { StatusState } from 'types/StatusState';
 import { StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
-import { applyDocumentTheme, getKialiContrastMode, getKialiTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
+import { applyDocumentTheme, getKialiTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
 import { isParentKiosk } from '../components/Kiosk/KioskActions';
 import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
@@ -339,16 +339,15 @@ class AuthenticationControllerComponent extends React.Component<
   private setDocLayout = (): void => {
     const kiosk = getKioskMode();
 
-    // OSSMC / same-window parent: OpenShift Console owns <html> theme classes.
-    // Sync Redux from the document; do not overwrite console glass/HC/dark classes.
+    // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
+    // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
+    // do not overwrite console classes.
     if (isParentKiosk(kiosk) && window.top === window.self) {
       syncReduxThemeFromDocument();
     } else {
       const theme = getKialiTheme();
-      const contrastMode = getKialiContrastMode();
-      applyDocumentTheme(theme, contrastMode);
+      applyDocumentTheme(theme);
       store.dispatch(GlobalActions.setTheme(theme));
-      store.dispatch(GlobalActions.setContrastMode(contrastMode));
     }
 
     // Set Kiosk mode

@@ -7,7 +7,6 @@ import type { KioskData, KioskMode } from '../types/Common';
 export const GlobalActions = {
   decrementLoadingCounter: createAction(ActionKeys.DECREMENT_LOADING_COUNTER),
   incrementLoadingCounter: createAction(ActionKeys.INCREMENT_LOADING_COUNTER),
-  setContrastMode: createStandardAction(ActionKeys.SET_CONTRAST_MODE)<string>(),
   setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>(),
   setKioskData: createStandardAction(ActionKeys.SET_KIOSK_DATA)<KioskData>(),
   setLanguage: createStandardAction(ActionKeys.SET_LANGUAGE)<string>(),

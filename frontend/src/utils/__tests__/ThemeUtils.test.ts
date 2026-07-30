@@ -1,107 +1,77 @@
-import { ContrastMode, PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST, Theme } from 'types/Common';
+import { PF_THEME_DARK, Theme } from 'types/Common';
 import {
   applyDocumentTheme,
   isParentOwnedTheme,
   observeDocumentTheme,
-  readDocumentContrastMode,
   readDocumentTheme,
   syncReduxThemeFromDocument
-} from '../ThemeUtils';
+} from 'utils/ThemeUtils';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
 
 describe('applyDocumentTheme', () => {
-  beforeEach(() => {
+  afterEach(() => {
     document.documentElement.className = '';
   });
 
-  it('applies dark color scheme', () => {
-    applyDocumentTheme(Theme.DARK, ContrastMode.DEFAULT);
-
+  it('toggles dark class for color scheme', () => {
+    applyDocumentTheme(Theme.DARK);
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
-    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
-    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
-  });
 
-  it('applies glass contrast mode', () => {
-    applyDocumentTheme(Theme.LIGHT, ContrastMode.GLASS);
-
+    applyDocumentTheme(Theme.LIGHT);
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
-    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
-    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
   });
 
-  it('applies high contrast and not glass', () => {
-    applyDocumentTheme(Theme.DARK, ContrastMode.HIGH_CONTRAST);
-
-    expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
-    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
-    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
-  });
-
-  it('clears previous classes when switching modes', () => {
-    applyDocumentTheme(Theme.DARK, ContrastMode.GLASS);
-    applyDocumentTheme(Theme.LIGHT, ContrastMode.HIGH_CONTRAST);
-
-    expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
-    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
-    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
+  it('does not apply glass or high-contrast classes', () => {
+    applyDocumentTheme(Theme.DARK);
+    expect(document.documentElement.classList.contains('pf-v6-theme-glass')).toBe(false);
+    expect(document.documentElement.classList.contains('pf-v6-theme-high-contrast')).toBe(false);
   });
 });
 
-describe('readDocumentTheme / readDocumentContrastMode', () => {
-  beforeEach(() => {
+describe('readDocumentTheme', () => {
+  afterEach(() => {
     document.documentElement.className = '';
   });
 
-  it('reads light + default when no theme classes', () => {
+  it('reads light by default', () => {
     expect(readDocumentTheme()).toBe(Theme.LIGHT);
-    expect(readDocumentContrastMode()).toBe(ContrastMode.DEFAULT);
   });
 
-  it('reads dark + glass from document classes', () => {
-    document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS);
-
+  it('reads dark from document classes', () => {
+    document.documentElement.classList.add(PF_THEME_DARK);
     expect(readDocumentTheme()).toBe(Theme.DARK);
-    expect(readDocumentContrastMode()).toBe(ContrastMode.GLASS);
-  });
-
-  it('prefers high contrast over glass when both present', () => {
-    document.documentElement.classList.add(PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST);
-
-    expect(readDocumentContrastMode()).toBe(ContrastMode.HIGH_CONTRAST);
   });
 });
 
 describe('syncReduxThemeFromDocument', () => {
-  beforeEach(() => {
+  afterEach(() => {
     document.documentElement.className = '';
+    store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
   });
 
-  it('updates redux from document without changing classes', () => {
-    document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS);
+  it('dispatches theme without mutating document classes', () => {
+    document.documentElement.classList.add(PF_THEME_DARK, 'pf-v6-theme-glass');
     const classesBefore = document.documentElement.className;
 
-    const result = syncReduxThemeFromDocument();
+    const theme = syncReduxThemeFromDocument();
 
-    expect(result).toEqual({ theme: Theme.DARK, contrastMode: ContrastMode.GLASS });
+    expect(theme).toBe(Theme.DARK);
     expect(store.getState().globalState.theme).toBe(Theme.DARK);
-    expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
     expect(document.documentElement.className).toBe(classesBefore);
   });
 });
 
 describe('observeDocumentTheme', () => {
-  beforeEach(() => {
+  afterEach(() => {
     document.documentElement.className = '';
   });
 
-  it('notifies when theme classes change', async () => {
+  it('notifies when theme class changes', async () => {
     const onChange = rstest.fn();
     const unsubscribe = observeDocumentTheme(onChange);
 
     document.documentElement.classList.add(PF_THEME_DARK);
-
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(onChange).toHaveBeenCalled();
@@ -113,7 +83,7 @@ describe('observeDocumentTheme', () => {
     const unsubscribe = observeDocumentTheme(onChange);
     unsubscribe();
 
-    document.documentElement.classList.add(PF_THEME_GLASS);
+    document.documentElement.classList.add(PF_THEME_DARK);
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(onChange).not.toHaveBeenCalled();
@@ -123,7 +93,6 @@ describe('observeDocumentTheme', () => {
 describe('isParentOwnedTheme', () => {
   afterEach(() => {
     store.dispatch(GlobalActions.setKiosk(''));
-    window.history.replaceState({}, '', '/');
   });
 
   it('is false in standalone mode', () => {

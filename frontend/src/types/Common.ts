@@ -25,23 +25,16 @@ export enum HTTP_VERBS {
 }
 
 export const PF_THEME_DARK = 'pf-v6-theme-dark';
+// Applied by OpenShift Console (OCP 5.0+) / PatternFly 6.5+. Kept for CSS selectors only —
+// Kiali does not set these classes (standalone remains on PatternFly 6.4).
 export const PF_THEME_GLASS = 'pf-v6-theme-glass';
 export const PF_THEME_HIGH_CONTRAST = 'pf-v6-theme-high-contrast';
 
-export const KIALI_CONTRAST_MODE = 'KIALI_CONTRAST_MODE';
 export const KIALI_THEME = 'KIALI_THEME';
 
-// Color scheme (light / dark). Orthogonal to ContrastMode.
 export const enum Theme {
   DARK = 'Dark',
   LIGHT = 'Light'
-}
-
-// PatternFly contrast modes. Glass and high contrast are mutually exclusive.
-export const enum ContrastMode {
-  DEFAULT = 'Default',
-  GLASS = 'Glass',
-  HIGH_CONTRAST = 'HighContrast'
 }
 
 export const enum Language {

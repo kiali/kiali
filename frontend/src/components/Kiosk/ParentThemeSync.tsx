@@ -3,7 +3,7 @@ import { isParentOwnedTheme, observeDocumentTheme, syncReduxThemeFromDocument } 
 
 /**
  * When embedded in the same window as OpenShift Console (OSSMC), keep Redux
- * theme/contrastMode in sync with PF classes the console sets on <html>.
+ * theme in sync with PF classes the console sets on <html>.
  * Does nothing in standalone Kiali or iframe embeds that own their document.
  */
 export const ParentThemeSync: React.FC = () => {
