@@ -11,14 +11,17 @@ const RESOURCE_DELETION_POLL_MS = 3000;
 
 /**
  * Waits for the Kiali API to be ready (e.g. after a restart from enableKialiFeature).
- * Polls /api/status until it returns 200 or the timeout is reached.
+ * Polls /api/config until it returns 200 or the timeout is reached.
+ * Uses /api/config instead of /api/status because /api/status fans out to
+ * Prometheus, Grafana, Jaeger, and Perses — each can hang under CI resource
+ * pressure, triggering Cypress's responseTimeout before the retry logic runs.
  */
 export const waitForKialiApiReady = (timeoutMs = KIALI_API_READY_TIMEOUT_MS): void => {
   const start = Date.now();
 
   cy.log(`Wait for Kiali API to be ready for ${timeoutMs}ms`);
   function attempt(): void {
-    cy.request({ url: '/api/status', failOnStatusCode: false }).then(resp => {
+    cy.request({ url: '/api/config', failOnStatusCode: false }).then(resp => {
       if (resp.status === 200) {
         return;
       }
