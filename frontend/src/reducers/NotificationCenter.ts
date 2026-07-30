@@ -1,6 +1,6 @@
-import { MessageType, NotificationMessage } from '../types/NotificationCenter';
-import { NotificationCenterState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { MessageType, NotificationMessage } from '../types/NotificationCenter';
+import type { NotificationCenterState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { updateState } from '../utils/Reducer';
@@ -88,7 +88,7 @@ export const NotificationCenterReducer = (
 ): NotificationCenterState => {
   switch (action.type) {
     case getType(NotificationCenterActions.addMessage): {
-      const { content, detail, groupId, messageType, isAlert } = action.payload;
+      const { content, detail, groupId, messageType, isAlert, showOnce } = action.payload;
 
       const groups = state.groups.map(group => {
         if (group.id === groupId) {
@@ -99,12 +99,15 @@ export const NotificationCenterReducer = (
             return message.content === content;
           });
 
+          if (showOnce && existingMessage) {
+            return group;
+          }
+
           // remove the old message from the list
           const filteredArray = _.filter(group.messages, message => {
             return message.content !== content;
           });
 
-          let newMessage: NotificationMessage;
           let count = 1;
           let firstTriggered: Date | undefined = undefined;
 
@@ -115,7 +118,7 @@ export const NotificationCenterReducer = (
             count += existingMessage.count;
           }
 
-          newMessage = createMessage(
+          const newMessage = createMessage(
             state.nextId,
             content,
             detail,
