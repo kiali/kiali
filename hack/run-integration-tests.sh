@@ -810,8 +810,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
-    # Install demo apps (skip beta namespace -- not needed by crd-validation/perses tests)
-    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
+    # Install only bookinfo + sleep (crd-validation/perses tests don't need error-rates or loggers).
+    # Skipping error-rates (11 pods) and loggers (2 pods) saves ~26 sidecar containers.
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+    "${SCRIPT_DIR}"/istio/install-sleep-demo.sh -c kubectl
+    kubectl rollout status deployment/sleep -n sleep --timeout=120s
   fi
 
   ensureKialiServerReady
