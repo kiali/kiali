@@ -19,6 +19,7 @@ permissions: read-all
 
 jobs:
   initialize:
+    if: github.event.action != 'labeled' || github.event.label.name == 'ci-full'
     permissions:
       contents: read
     name: Initialize
