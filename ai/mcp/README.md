@@ -514,7 +514,7 @@ Primary-remote setup uses Kind clusters **east** (home, where Kiali runs) and **
 | List Remote Cluster Traces | `list_traces` | Traces for reviews on west (Jaeger, same as frontend-primary-remote CI) |
 | Audit Multicluster Mesh Health | `get_mesh_status` | Control/data plane health across clusters |
 
-¹ Kiali implements `list_clusters` and lists it in `KubernetesMCPServerEndpoints` (contract test) ahead of a paired [kubernetes-mcp-server](https://github.com/containers/kubernetes-mcp-server) change to delegate `/api/chat/mcp/list_clusters`. Until that upstream PR lands, evals reach Kiali tools through kubernetes-mcp-server's existing kiali toolset (for example `get_mesh_status` for cluster discovery).
+¹ Kiali implements `list_clusters` and lists it in `KubernetesMCPServerEndpoints` (`tests/integration/mcp_tools`) ahead of a paired [kubernetes-mcp-server](https://github.com/containers/kubernetes-mcp-server) change to delegate `/api/chat/mcp/list_clusters`. Until that upstream PR lands, evals reach Kiali tools through kubernetes-mcp-server's existing kiali toolset (for example `get_mesh_status` for cluster discovery).
 
 Task definitions: `tests/evals/tasks-multicluster/*/`.
 
