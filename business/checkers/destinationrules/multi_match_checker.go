@@ -81,6 +81,19 @@ func hostsOverlap(a, b string) bool {
 	return kubernetes.HostWithinWildcardHost(b, a) || kubernetes.HostWithinWildcardHost(a, b)
 }
 
+// isNonLocalmTLSForServiceEnabled reports whether dr is a mesh-wide or namespace-wide
+// ISTIO_MUTUAL DestinationRule that should be ignored by multi-match / traffic-policy
+// overlap checks.
+//
+// Istio's recommended pattern for enabling mTLS uses hosts like "*.local" (mesh) or
+// "*.{namespace}.{identityDomain}" (namespace). Those DRs are meant to set a default
+// TLS mode and coexist with more specific DestinationRules, so treating them as
+// host collisions would produce false KIA0201 warnings.
+//
+// Only those exact host shapes qualify. A service-scoped wildcard such as
+// "*.vault.svc.cluster.local" with ISTIO_MUTUAL is still a normal DestinationRule and
+// must not be skipped for multi-match or treated as non-local for traffic-policy checks
+// (previously any host starting with "*" was treated as non-local).
 func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, identityDomain string) bool {
 	if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
 		return true
