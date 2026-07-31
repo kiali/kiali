@@ -10,10 +10,11 @@ import (
 )
 
 type ServiceEntryChecker struct {
-	ServiceEntries  []*networking_v1.ServiceEntry
-	Namespaces      models.Namespaces
-	WorkloadEntries []*networking_v1.WorkloadEntry
 	Cluster         string
+	ImportScope     common.ImportScope
+	Namespaces      models.Namespaces
+	ServiceEntries  []*networking_v1.ServiceEntry
+	WorkloadEntries []*networking_v1.WorkloadEntry
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
@@ -30,9 +31,11 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 }
 
 func (s ServiceEntryChecker) runGroupChecks() models.IstioValidations {
+	// Multi-match (KIA1211/1212) only considers Sidecar-imported ServiceEntries.
+	conflictSEs := common.FilterServiceEntriesByImport(s.ServiceEntries, s.ImportScope)
 	return serviceentries.MultiMatchChecker{
 		Cluster:        s.Cluster,
-		ServiceEntries: s.ServiceEntries,
+		ServiceEntries: conflictSEs,
 	}.Check()
 }
 
