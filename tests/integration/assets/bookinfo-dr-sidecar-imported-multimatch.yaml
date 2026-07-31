@@ -16,7 +16,7 @@ kind: DestinationRule
 metadata:
   name: kiali-test-imported-dr-a
 spec:
-  host: echo.default.svc.cluster.local
+  host: kubernetes.default.svc.cluster.local
   exportTo:
   - "."
   trafficPolicy:
@@ -28,7 +28,7 @@ kind: DestinationRule
 metadata:
   name: kiali-test-imported-dr-b
 spec:
-  host: echo.default.svc.cluster.local
+  host: kubernetes.default.svc.cluster.local
   exportTo:
   - "."
   trafficPolicy:

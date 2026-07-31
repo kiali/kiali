@@ -72,15 +72,16 @@ func TestDestinationRuleSidecarImportKeepsImportedForeignMultimatch(t *testing.T
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-dr-sidecar-imported-multimatch.yaml")
 	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
 
-	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-a", kubernetes.DestinationRules, false, require)
+	// Assert code presence (not Valid/Checks[0]): other DR checks may also appear.
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-a", kubernetes.DestinationRules, true, require)
 	require.NoError(err)
 	require.NotNil(config)
-	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "kiali-test-imported-dr-a", "KIA0201", true, require)
+	assertConfigDetailsHasCode(*config, "KIA0201", require)
 
-	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-b", kubernetes.DestinationRules, false, require)
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-b", kubernetes.DestinationRules, true, require)
 	require.NoError(err)
 	require.NotNil(config)
-	assertConfigDetailsValidations(*config, kiali.BOOKINFO, kubernetes.DestinationRules, "kiali-test-imported-dr-b", "KIA0201", true, require)
+	assertConfigDetailsHasCode(*config, "KIA0201", require)
 }
 
 func TestDestinationRuleExportMultimatch(t *testing.T) {
@@ -426,6 +427,19 @@ func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, nam
 	require.Equal(valid, configDetails.IstioValidation.Valid)
 	require.NotEmpty(configDetails.IstioValidation.Checks)
 	require.Equal(code, configDetails.IstioValidation.Checks[0].Code)
+}
+
+func assertConfigDetailsHasCode(configDetails models.IstioConfigDetails, code string, require *require.Assertions) {
+	require.NotNil(configDetails.IstioValidation)
+	found := false
+	for _, check := range configDetails.IstioValidation.Checks {
+		if check.Code == code {
+			found = true
+			break
+		}
+	}
+	require.True(found, "expected validation code %s on %s/%s, got %+v",
+		code, configDetails.IstioValidation.Namespace, configDetails.IstioValidation.Name, configDetails.IstioValidation.Checks)
 }
 
 func assertConfigDetailsHasNoCode(configDetails models.IstioConfigDetails, code string, require *require.Assertions) {
