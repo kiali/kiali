@@ -11,12 +11,11 @@ import (
 )
 
 type DestinationRulesChecker struct {
+	Cluster          string
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	MTLSDetails      kubernetes.MTLSDetails
-	ServiceEntries   []*networking_v1.ServiceEntry
 	Namespaces       models.Namespaces
-	Cluster          string
 }
 
 func (in DestinationRulesChecker) Check() models.IstioValidations {
@@ -31,10 +30,8 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	seHosts := kubernetes.ServiceEntryHostnames(in.ServiceEntries)
-
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Conf: in.Conf, Namespaces: in.Namespaces.GetNames(), ServiceEntries: seHosts, DestinationRules: in.DestinationRules, Cluster: in.Cluster},
+		destinationrules.MultiMatchChecker{Cluster: in.Cluster, Conf: in.Conf, DestinationRules: in.DestinationRules, Namespaces: in.Namespaces.GetNames()},
 	}
 
 	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{Conf: in.Conf, DestinationRules: in.DestinationRules, MTLSDetails: in.MTLSDetails, Cluster: in.Cluster})

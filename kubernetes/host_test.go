@@ -27,6 +27,35 @@ func TestGatewayAsHost(t *testing.T) {
 	assert.Equal("mygateway.bookinfo.svc.cluster.local", ParseGatewayAsHost("mygateway.bookinfo.svc.cluster.local", "bookinfo", conf).String())
 }
 
+func TestHostWithinWildcardHost(t *testing.T) {
+	cases := []struct {
+		subdomain, wildcard string
+		expected            bool
+		reason              string
+	}{
+		{"host1.test.svc.cluster.local", "*.test.svc.cluster.local", true, "concrete host in namespace"},
+		{"*.test.svc.cluster.local", "*.test.svc.cluster.local", true, "identical wildcards"},
+		{"*.vault.svc.cluster.local", "*.local", true, "mesh-wide covers namespace wildcard"},
+		{"host.vault.svc.cluster.local", "*.local", true, "mesh-wide covers concrete host"},
+		{"en.wikipedia.org", "*.wikipedia.org", true, "external wildcard"},
+		{"*", "*", true, "bare wildcard"},
+		{"anything", "*", true, "bare wildcard matches all"},
+		{"svc.istio-test.svc.cluster.local", "*.test.svc.cluster.local", false, "ns suffix must not match across label boundary"},
+		{"*.istio-test.svc.cluster.local", "*.test.svc.cluster.local", false, "wildcard ns suffix must not match across label boundary"},
+		{"host.ntest.svc.cluster.local", "*.test.svc.cluster.local", false, "partial label suffix must not match"},
+		{"foo.mysvc.cluster.local", "*.svc.cluster.local", false, "partial domain label must not match"},
+		{"host1.test.svc.cluster.local", "host1.test.svc.cluster.local", false, "non-wildcard domain is not a wildcard"},
+		{"*.foo.com", "*.bar.com", false, "disjoint wildcards"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.reason, func(t *testing.T) {
+			assert.Equal(t, tc.expected, HostWithinWildcardHost(tc.subdomain, tc.wildcard),
+				"%s within %s", tc.subdomain, tc.wildcard)
+		})
+	}
+}
+
 func TestHasMatchingVirtualServices(t *testing.T) {
 	assert := assert.New(t)
 

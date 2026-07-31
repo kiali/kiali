@@ -481,7 +481,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) [
 
 	return []checkers.ObjectChecker{
 		checkers.AuthorizationPolicyChecker{Conf: conf, AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, WorkloadsPerNamespace: workloadsPerNamespace, MtlsDetails: *mtlsDetails, VirtualServices: istioConfigList.VirtualServices, RegistryServices: registryServices, PolicyAllowAny: in.isPolicyAllowAny(vInfo.mesh), Cluster: cluster, ServiceAccounts: vInfo.saMap},
-		checkers.DestinationRulesChecker{Conf: conf, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries, Cluster: cluster},
+		checkers.DestinationRulesChecker{Conf: conf, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, Cluster: cluster},
 		checkers.GatewayChecker{Conf: conf, Gateways: istioConfigList.Gateways, WorkloadsPerNamespace: workloadsPerNamespace, IsGatewayToNamespace: in.isGatewayToNamespace(vInfo.mesh), Cluster: cluster},
 		checkers.K8sGatewayChecker{K8sGateways: istioConfigList.K8sGateways, Cluster: cluster, GatewayClasses: in.kialiCache.GatewayAPIClasses(cluster)},
 		checkers.K8sGRPCRouteChecker{Conf: conf, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sGateways: istioConfigList.K8sGateways, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, RegistryServices: registryServices, Cluster: cluster},
@@ -608,7 +608,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, virtualServiceChecker}
 		referenceChecker = references.VirtualServiceReferences{Conf: conf, Namespace: namespace, Namespaces: nsNames, VirtualServices: istioConfigList.VirtualServices, DestinationRules: istioConfigList.DestinationRules, AuthorizationPolicies: rbacDetails.AuthorizationPolicies}
 	case kubernetes.DestinationRules:
-		destinationRulesChecker := checkers.DestinationRulesChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails, ServiceEntries: istioConfigList.ServiceEntries}
+		destinationRulesChecker := checkers.DestinationRulesChecker{Conf: conf, Cluster: cluster, Namespaces: namespaces, DestinationRules: istioConfigList.DestinationRules, MTLSDetails: *mtlsDetails}
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker}
 		referenceChecker = references.DestinationRuleReferences{Conf: conf, Namespace: namespace, Namespaces: nsNames, DestinationRules: istioConfigList.DestinationRules, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace, ServiceEntries: istioConfigList.ServiceEntries, RegistryServices: registryServices}
 	case kubernetes.ServiceEntries:

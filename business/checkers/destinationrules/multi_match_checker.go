@@ -1,9 +1,6 @@
 package destinationrules
 
 import (
-	"fmt"
-	"strings"
-
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
@@ -16,7 +13,6 @@ type MultiMatchChecker struct {
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	Namespaces       []string
-	ServiceEntries   map[string][]string
 }
 
 type subset struct {
@@ -34,7 +30,7 @@ type rule struct {
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	// Equality search is: [fqdn.String()][subset] except for ServiceEntry targets which use [host][subset]
+	// Equality search is: [fqdn.String()][subset]
 	seenHostSubsets := make(map[string]map[string][]rule)
 
 	for _, dr := range m.DestinationRules {
@@ -42,36 +38,29 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		destinationRulesNamespace := dr.Namespace
 		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces, m.Conf)
 
-		// Skip DR validation if it enables mTLS either namespace or mesh-wide
-		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+		// Skip mesh-wide / namespace-wide mTLS DestinationRules (e.g. *.local, *.ns.svc...).
+		// These are intended to coexist with more specific DRs and must not drive multi-match.
+		if isNonLocalmTLSForServiceEnabled(dr, m.Conf) {
 			continue
 		}
 
 		foundSubsets := extractSubsets(dr, destinationRulesName, destinationRulesNamespace)
+		currentHost := fqdn.String()
 
-		if fqdn.IsWildcard() {
-			// We need to check the matching subsets from all hosts now
-			for _, h := range seenHostSubsets {
-				checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, h, m.Cluster)
+		// Only collide with previously seen hosts that actually overlap this one.
+		// Wildcard hosts must honor the namespace/domain suffix (e.g. *.vault... must not
+		// collide with *.istio-test3...); previously any wildcard was compared to all hosts.
+		for hostKey, existing := range seenHostSubsets {
+			if hostsOverlap(currentHost, hostKey) {
+				checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, existing, m.Cluster)
 			}
-			// We add * later
-		}
-		// Search "*" first and then exact name
-		if previous, found := seenHostSubsets[fmt.Sprintf("*.%s.%s", fqdn.Namespace, fqdn.Cluster)]; found {
-			// Need to check subsets of "*"
-			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous, m.Cluster)
 		}
 
-		if previous, found := seenHostSubsets[fqdn.String()]; found {
-			// Host found, need to check underlying subsets
-			checkCollisions(validations, destinationRulesNamespace, destinationRulesName, foundSubsets, previous, m.Cluster)
-		}
-		// Nothing threw an error, so add these
-		if _, found := seenHostSubsets[fqdn.String()]; !found {
-			seenHostSubsets[fqdn.String()] = make(map[string][]rule)
+		if _, found := seenHostSubsets[currentHost]; !found {
+			seenHostSubsets[currentHost] = make(map[string][]rule)
 		}
 		for _, s := range foundSubsets {
-			seenHostSubsets[fqdn.String()][s.Name] = append(seenHostSubsets[fqdn.String()][s.Name], rule{destinationRulesName, destinationRulesNamespace})
+			seenHostSubsets[currentHost][s.Name] = append(seenHostSubsets[currentHost][s.Name], rule{destinationRulesName, destinationRulesNamespace})
 		}
 
 	}
@@ -79,8 +68,41 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, service string) bool {
-	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
+// hostsOverlap reports whether two DestinationRule host keys select the same traffic.
+// Exact matches overlap; a bare "*" overlaps everything; otherwise a wildcard overlaps
+// a host (or a more specific wildcard) when the non-wildcard/more-specific side falls
+// within the wildcard's domain suffix.
+func hostsOverlap(a, b string) bool {
+	if a == b {
+		return true
+	}
+	if a == "*" || b == "*" {
+		return true
+	}
+	return kubernetes.HostWithinWildcardHost(b, a) || kubernetes.HostWithinWildcardHost(a, b)
+}
+
+// isNonLocalmTLSForServiceEnabled reports whether dr is a mesh-wide or namespace-wide
+// ISTIO_MUTUAL DestinationRule that should be ignored by multi-match / traffic-policy
+// overlap checks.
+//
+// Istio's recommended pattern for enabling mTLS uses hosts like "*.local" (mesh) or
+// "*.{namespace}.{identityDomain}" (namespace). Those DRs are meant to set a default
+// TLS mode and coexist with more specific DestinationRules, so treating them as
+// host collisions would produce false KIA0201 warnings.
+//
+// Only those exact host shapes qualify. A service-scoped wildcard such as
+// "*.vault.svc.cluster.local" with ISTIO_MUTUAL is still a normal DestinationRule and
+// must not be skipped for multi-match or treated as non-local for traffic-policy checks
+// (previously any host starting with "*" was treated as non-local).
+func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, conf *config.Config) bool {
+	if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
+		return true
+	}
+	if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(dr.Namespace, dr, conf); enabled {
+		return true
+	}
+	return false
 }
 
 func ismTLSEnabled(dr *networking_v1.DestinationRule) bool {

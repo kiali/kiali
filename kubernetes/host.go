@@ -247,11 +247,15 @@ func HasMatchingReferenceGrant(fromNamespace string, toNamespace string, fromKin
 }
 
 func HostWithinWildcardHost(subdomain, wildcardDomain string) bool {
-	if !strings.HasPrefix(wildcardDomain, "*") {
+	if wildcardDomain == "*" {
+		return true
+	}
+	// "*.suffix" only — require a DNS-label boundary so "*.test.svc..." does not
+	// match "...istio-test.svc..." (suffix of the namespace label).
+	if !strings.HasPrefix(wildcardDomain, "*.") {
 		return false
 	}
-
-	return len(wildcardDomain) > 2 && strings.HasSuffix(subdomain, wildcardDomain[2:])
+	return strings.HasSuffix(subdomain, wildcardDomain[1:])
 }
 
 func ParseGatewayAsHost(gateway, currentNamespace string, conf *config.Config) Host {
