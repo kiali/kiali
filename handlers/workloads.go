@@ -39,30 +39,28 @@ type workloadParams struct {
 	IncludeValidations    bool `json:"validate"`
 }
 
+// Package-level schema — documents the workload list/details query contract.
+var workloadQueryParams = []queryparams.Param{
+	queryparams.BoolParam("health", true),
+	queryparams.BoolParam("istioResources", true),
+	queryparams.BoolParam("validate", false),
+	queryparams.PresenceParam("gvk"),
+	queryparams.StringParam("namespaces", ""),
+}
+
 func (p *workloadParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
-	query := r.URL.Query()
-	if err := p.baseExtract(conf, r, "clusterName", "gvk", "health", "istioResources", "namespaces", "queryTime", "rateInterval", "validate"); err != nil {
+	result, err := p.parseSchema(conf, r, workloadQueryParams...)
+	if err != nil {
 		return err
 	}
 	p.Namespace = vars["namespace"]
 	p.WorkloadName = vars["workload"]
+	p.IncludeHealth = result.Bool("health")
+	p.IncludeIstioResources = result.Bool("istioResources")
+	p.IncludeValidations = result.Bool("validate")
 
-	var err error
-	p.IncludeHealth, err = queryparams.ParseBoolParam(query.Get("health"), "health", true)
-	if err != nil {
-		return err
-	}
-	p.IncludeIstioResources, err = queryparams.ParseBoolParam(query.Get("istioResources"), "istioResources", true)
-	if err != nil {
-		return err
-	}
-	p.IncludeValidations, err = queryparams.ParseBoolParam(query.Get("validate"), "validate", false)
-	if err != nil {
-		return err
-	}
-
-	p.WorkloadGVK, err = util.StringToGVK(query.Get("gvk"))
+	p.WorkloadGVK, err = util.StringToGVK(result.String("gvk"))
 	if err != nil {
 		return err
 	}

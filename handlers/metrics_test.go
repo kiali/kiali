@@ -238,7 +238,7 @@ func TestAggregateMetricsDefault(t *testing.T) {
 
 	// default has direction=outbound
 	actual, _ := io.ReadAll(resp.Body)
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
 
@@ -345,7 +345,7 @@ func TestAggregateMetricsBadDirection(t *testing.T) {
 
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "'direction' must be 'inbound'")
 }
 
@@ -369,7 +369,7 @@ func TestAggregateMetricsBadReporter(t *testing.T) {
 
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "'reporter' must be 'destination'")
 }
 
@@ -716,7 +716,7 @@ func TestWorkloadMetricsBadQueryTime(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'queryTime'")
 }
 
@@ -745,7 +745,7 @@ func TestWorkloadMetricsBadDuration(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'duration'")
 }
 
@@ -774,7 +774,7 @@ func TestWorkloadMetricsBadStep(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "cannot parse query parameter 'step'")
 }
 
@@ -802,7 +802,7 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 	}
 	actual, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "query parameter 'rateFunc' must be either 'rate' or 'irate'")
 }
 

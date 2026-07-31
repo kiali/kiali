@@ -85,7 +85,7 @@ func TestMissingQueryParamFails(t *testing.T) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equalf(http.StatusConflict, resp.StatusCode, "response text: %s", string(body))
+	assert.Equalf(http.StatusBadRequest, resp.StatusCode, "response text: %s", string(body))
 }
 
 func TestIncorrectQueryParamFails(t *testing.T) {
@@ -104,5 +104,5 @@ func TestIncorrectQueryParamFails(t *testing.T) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	assert.Equalf(http.StatusConflict, resp.StatusCode, "response text: %s", string(body))
+	assert.Equalf(http.StatusBadRequest, resp.StatusCode, "response text: %s", string(body))
 }

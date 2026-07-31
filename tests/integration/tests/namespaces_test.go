@@ -71,9 +71,9 @@ func TestNamespaceHealthInvalidRate(t *testing.T) {
 
 	health, code, err := kiali.NamespaceAppHealth(kiali.BOOKINFO, params)
 
-	// Invalid rateInterval is rejected with 409 Conflict.
+	// Invalid rateInterval is rejected with 400 Bad Request.
 	require.Error(err)
-	require.Equal(409, code)
+	require.Equal(400, code)
 	require.Nil(health)
 }
 

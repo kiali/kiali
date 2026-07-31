@@ -12,7 +12,7 @@ import (
 )
 
 // ErrorStatusCode is the HTTP status returned for invalid or unsupported query parameters.
-const ErrorStatusCode = http.StatusConflict
+const ErrorStatusCode = http.StatusBadRequest
 
 // validPromDurationRe matches a valid Prometheus duration string (e.g. "5m", "1h30m").
 var validPromDurationRe = regexp.MustCompile(`^([0-9]+(ms|s|m|h|d|w|y))+$`)

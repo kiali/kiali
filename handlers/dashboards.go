@@ -34,7 +34,7 @@ func CustomDashboard(
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		pathParams := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
+		cluster := queryparams.ClusterName(conf, queryParams)
 		namespace := pathParams["namespace"]
 		dashboardName := pathParams["dashboard"]
 
@@ -90,15 +90,15 @@ func CustomDashboard(
 }
 
 func extractDashboardQueryParams(queryParams url.Values, q *models.DashboardQuery, namespaceInfo *models.Namespace) error {
-	allowed := append([]string{
-		"additionalLabels",
-		"clusterName",
-		"labelsFilters",
-		"rawDataAggregator",
-		"workload",
-		"workloadType",
+	allowed := append([]queryparams.Param{
+		queryparams.PresenceParam("additionalLabels"),
+		queryparams.ClusterParam(),
+		queryparams.PresenceParam("labelsFilters"),
+		queryparams.PresenceParam("rawDataAggregator"),
+		queryparams.PresenceParam("workload"),
+		queryparams.PresenceParam("workloadType"),
 	}, baseMetricsQueryParams...)
-	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
+	if err := queryparams.RejectUnknown(queryParams, queryparams.Names(allowed)...); err != nil {
 		return err
 	}
 
@@ -149,7 +149,7 @@ func AppDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -190,7 +190,7 @@ func ServiceDashboard(
 		service := vars["service"]
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
+		cluster := queryparams.ClusterName(conf, queryParams)
 
 		layer, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceLoader, grafana, discovery)
 		if err != nil {
@@ -246,7 +246,7 @@ func WorkloadDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -284,7 +284,7 @@ func ZtunnelDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, _ := checkNamespaceAccessMultiCluster(w, r, conf, cache, discovery, clientFactory, namespace)
 		if namespaceInfo == nil {

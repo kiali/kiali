@@ -16,25 +16,32 @@ type istioConfigListParams struct {
 	WorkloadSelector   string
 }
 
-func parseIstioConfigListParams(conf *config.Config, query url.Values) (istioConfigListParams, error) {
-	if err := queryparams.RejectUnknown(query, "_", "clusterName", "labelSelector", "objects", "validate", "workloadSelector"); err != nil {
-		return istioConfigListParams{}, err
-	}
+var istioConfigListQueryParams = []queryparams.Param{
+	queryparams.PresenceParam("_"),
+	queryparams.ClusterParam(),
+	queryparams.StringParam("labelSelector", ""),
+	queryparams.StringParam("objects", ""),
+	queryparams.BoolParam("validate", false),
+	queryparams.StringParam("workloadSelector", ""),
+}
 
-	includeValidations, err := queryparams.ParseBoolParam(query.Get("validate"), "validate", false)
+func parseIstioConfigListParams(conf *config.Config, query url.Values) (istioConfigListParams, error) {
+	result, err := queryparams.ParseWithConfig(query, conf, istioConfigListQueryParams)
 	if err != nil {
 		return istioConfigListParams{}, err
 	}
+
+	includeValidations := result.Bool("validate")
 	if !conf.IsValidationsEnabled() {
 		includeValidations = false
 	}
 
 	return istioConfigListParams{
-		ClusterName:        queryparams.ClusterName(conf, query),
+		ClusterName:        result.Cluster(),
 		IncludeValidations: includeValidations,
-		LabelSelector:      query.Get("labelSelector"),
-		Objects:            query.Get("objects"),
-		WorkloadSelector:   query.Get("workloadSelector"),
+		LabelSelector:      result.String("labelSelector"),
+		Objects:            result.String("objects"),
+		WorkloadSelector:   result.String("workloadSelector"),
 	}, nil
 }
 
@@ -44,39 +51,54 @@ type istioConfigDetailsParams struct {
 	IncludeValidations bool
 }
 
-func parseIstioConfigDetailsParams(conf *config.Config, query url.Values) (istioConfigDetailsParams, error) {
-	if err := queryparams.RejectUnknown(query, "clusterName", "help", "validate"); err != nil {
-		return istioConfigDetailsParams{}, err
-	}
+var istioConfigDetailsQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("help"),
+	queryparams.BoolParam("validate", false),
+}
 
-	includeValidations, err := queryparams.ParseBoolParam(query.Get("validate"), "validate", false)
+func parseIstioConfigDetailsParams(conf *config.Config, query url.Values) (istioConfigDetailsParams, error) {
+	result, err := queryparams.ParseWithConfig(query, conf, istioConfigDetailsQueryParams)
 	if err != nil {
 		return istioConfigDetailsParams{}, err
 	}
+
+	includeValidations := result.Bool("validate")
 	if !conf.IsValidationsEnabled() {
 		includeValidations = false
 	}
 
 	_, includeHelp := query["help"]
 	return istioConfigDetailsParams{
-		ClusterName:        queryparams.ClusterName(conf, query),
+		ClusterName:        result.Cluster(),
 		IncludeHelp:        includeHelp,
 		IncludeValidations: includeValidations,
 	}, nil
 }
 
+var istioConfigClusterQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+}
+
 func parseIstioConfigClusterParams(conf *config.Config, query url.Values) (string, error) {
-	if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+	result, err := queryparams.ParseWithConfig(query, conf, istioConfigClusterQueryParams)
+	if err != nil {
 		return "", err
 	}
-	return queryparams.ClusterName(conf, query), nil
+	return result.Cluster(), nil
+}
+
+var istioConfigNamespacesQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.StringParam("namespaces", ""),
 }
 
 func parseIstioConfigNamespacesParams(conf *config.Config, query url.Values) (cluster, namespaces string, err error) {
-	if err := queryparams.RejectUnknown(query, "clusterName", "namespaces"); err != nil {
+	result, err := queryparams.ParseWithConfig(query, conf, istioConfigNamespacesQueryParams)
+	if err != nil {
 		return "", "", err
 	}
-	return queryparams.ClusterName(conf, query), query.Get("namespaces"), nil
+	return result.Cluster(), result.String("namespaces"), nil
 }
 
 func respondQueryParamError(w http.ResponseWriter, err error) bool {

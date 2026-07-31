@@ -62,7 +62,7 @@ func RespondWithError(w http.ResponseWriter, code int, message string) {
 	RespondWithJSON(w, code, responseError{Error: message})
 }
 
-// RespondWithQueryParamError returns a 409 response for invalid or unsupported query parameters.
+// RespondWithQueryParamError returns a 400 response for invalid or unsupported query parameters.
 func RespondWithQueryParamError(w http.ResponseWriter, message string) {
 	RespondWithError(w, queryparams.ErrorStatusCode, message)
 }

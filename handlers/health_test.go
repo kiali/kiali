@@ -302,7 +302,7 @@ func TestClustersHealthInvalidType(t *testing.T) {
 	resp, err := http.Get(url)
 	require.NoError(t, err)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 // TestClustersHealthUnknownParam tests that unsupported query parameters are rejected.
@@ -316,7 +316,7 @@ func TestClustersHealthUnknownParam(t *testing.T) {
 	resp, err := http.Get(url)
 	require.NoError(t, err)
 
-	assert.Equal(t, http.StatusConflict, resp.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 // TestClustersHealthAllowsQueryTime ensures the UI cache-bust/replay queryTime param is accepted.

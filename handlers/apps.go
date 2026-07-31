@@ -31,24 +31,23 @@ type appParams struct {
 	IncludeIstioResources bool `json:"istioResources"`
 }
 
+// Package-level schema — documents the app list/details query contract.
+var appQueryParams = []queryparams.Param{
+	queryparams.BoolParam("health", true),
+	queryparams.BoolParam("istioResources", true),
+	queryparams.StringParam("namespaces", ""),
+}
+
 func (p *appParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
-	query := r.URL.Query()
-	if err := p.baseExtract(conf, r, "clusterName", "health", "istioResources", "namespaces", "queryTime", "rateInterval"); err != nil {
+	result, err := p.parseSchema(conf, r, appQueryParams...)
+	if err != nil {
 		return err
 	}
 	p.Namespace = vars["namespace"]
 	p.AppName = vars["app"]
-
-	var err error
-	p.IncludeHealth, err = queryparams.ParseBoolParam(query.Get("health"), "health", true)
-	if err != nil {
-		return err
-	}
-	p.IncludeIstioResources, err = queryparams.ParseBoolParam(query.Get("istioResources"), "istioResources", true)
-	if err != nil {
-		return err
-	}
+	p.IncludeHealth = result.Bool("health")
+	p.IncludeIstioResources = result.Bool("istioResources")
 	return nil
 }
 

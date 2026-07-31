@@ -42,24 +42,20 @@ func ClusterHealth(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		// queryTime is accepted for UI cache-bust/replay even though ClusterHealth does not use it.
-		if err := queryparams.RejectUnknown(params, "clusterName", "namespaces", "queryTime", "rateInterval", "type"); err != nil {
+		parsed, err := queryparams.ParseWithConfig(params, conf, clusterHealthQueryParams)
+		if err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
-		namespaces := params.Get("namespaces") // csl of namespaces
+		namespaces := parsed.String("namespaces") // csl of namespaces
 		nss := []string{}
 		if len(namespaces) > 0 {
 			nss = strings.Split(namespaces, ",")
 		}
-		cluster := queryparams.ClusterName(conf, params)
+		cluster := parsed.Cluster()
 
-		healthType := params.Get("type")
-		if err := queryparams.ValidateEnum(healthType, "type", "app", "service", "workload"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
+		healthType := parsed.String("type")
 
 		// Determine which health types to fetch
 		var healthTypes []string
@@ -87,13 +83,7 @@ func ClusterHealth(
 			RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
 			return
 		}
-		rateInterval := params.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
-		} else if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
+		rateInterval := parsed.Duration("rateInterval")
 		result, healthCachedHeader, err := businessLayer.Health.GetNamespaceHealth(r.Context(), nss, cluster, healthTypes, rateInterval)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())

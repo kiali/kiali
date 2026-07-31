@@ -32,27 +32,41 @@ type serviceListParams struct {
 	IncludeOnlyDefinitions bool `json:"onlyDefinitions"`
 }
 
+// Package-level schema — documents the service list query contract.
+var serviceListQueryParams = []queryparams.Param{
+	queryparams.BoolParam("health", true),
+	queryparams.BoolParam("istioResources", true),
+	queryparams.BoolParam("onlyDefinitions", true),
+	queryparams.StringParam("namespaces", ""),
+}
+
+// serviceDetailsQueryParams documents the ServiceDetails query contract.
+// health is accepted for compatibility with clients/tests; GetServiceDetails always includes health today.
+var serviceDetailsQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.BoolParam("health", true),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
+	queryparams.BoolParam("validate", false),
+}
+
+// serviceUpdateQueryParams documents the ServiceUpdate query contract.
+var serviceUpdateQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.StringParam("patchType", defaultPatchType),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
+	queryparams.BoolParam("validate", false),
+}
+
 func (p *serviceListParams) extract(conf *config.Config, r *http.Request) error {
 	vars := mux.Vars(r)
-	query := r.URL.Query()
-	if err := p.baseExtract(conf, r, "clusterName", "health", "istioResources", "namespaces", "onlyDefinitions", "queryTime", "rateInterval"); err != nil {
+	result, err := p.parseSchema(conf, r, serviceListQueryParams...)
+	if err != nil {
 		return err
 	}
 	p.Namespace = vars["namespace"]
-
-	var err error
-	p.IncludeHealth, err = queryparams.ParseBoolParam(query.Get("health"), "health", true)
-	if err != nil {
-		return err
-	}
-	p.IncludeIstioResources, err = queryparams.ParseBoolParam(query.Get("istioResources"), "istioResources", true)
-	if err != nil {
-		return err
-	}
-	p.IncludeOnlyDefinitions, err = queryparams.ParseBoolParam(query.Get("onlyDefinitions"), "onlyDefinitions", true)
-	if err != nil {
-		return err
-	}
+	p.IncludeHealth = result.Bool("health")
+	p.IncludeIstioResources = result.Bool("istioResources")
+	p.IncludeOnlyDefinitions = result.Bool("onlyDefinitions")
 	return nil
 }
 
@@ -156,32 +170,17 @@ func ServiceDetails(
 		}
 
 		queryParams := r.URL.Query()
-		// health is accepted for compatibility with clients/tests; GetServiceDetails always includes health today.
-		if err := queryparams.RejectUnknown(queryParams, "clusterName", "health", "rateInterval", "validate"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
-		cluster := queryparams.ClusterName(conf, queryParams)
-
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
-		} else if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
-
-		includeValidations, err := queryparams.ParseBoolParam(queryParams.Get("validate"), "validate", false)
+		parsed, err := queryparams.ParseWithConfig(queryParams, conf, serviceDetailsQueryParams)
 		if err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
+		cluster := parsed.Cluster()
+		rateInterval := parsed.Duration("rateInterval")
+
+		includeValidations := parsed.Bool("validate")
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
-		}
-		if _, err := queryparams.ParseBoolParam(queryParams.Get("health"), "health", true); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
 		}
 
 		params := mux.Vars(r)
@@ -244,30 +243,20 @@ func ServiceUpdate(
 		}
 
 		queryParams := r.URL.Query()
-		if err := queryparams.RejectUnknown(queryParams, "clusterName", "patchType", "rateInterval", "validate"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
-		cluster := queryparams.ClusterName(conf, queryParams)
-
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
-		} else if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
-			RespondWithQueryParamError(w, err.Error())
-			return
-		}
-
-		patchType := queryParams.Get("patchType")
-		if patchType == "" {
-			patchType = defaultPatchType
-		}
-
-		includeValidations, err := queryparams.ParseBoolParam(queryParams.Get("validate"), "validate", false)
+		parsed, err := queryparams.ParseWithConfig(queryParams, conf, serviceUpdateQueryParams)
 		if err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
+		cluster := parsed.Cluster()
+		rateInterval := parsed.Duration("rateInterval")
+
+		patchType := parsed.String("patchType")
+		if patchType == "" {
+			patchType = defaultPatchType
+		}
+
+		includeValidations := parsed.Bool("validate")
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}

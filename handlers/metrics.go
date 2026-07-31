@@ -31,64 +31,65 @@ import (
 
 var validPromLabelRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
-var baseMetricsQueryParams = []string{
-	"avg",
-	"byLabels[]",
-	"clusterName",
-	"duration",
-	"quantiles[]",
-	"queryTime",
-	"rateFunc",
-	"rateInterval",
-	"step",
+// Declarative metrics query schemas — RejectUnknown uses Names(); typed parsing stays in extractors.
+var baseMetricsQueryParams = []queryparams.Param{
+	queryparams.PresenceParam("avg"),
+	queryparams.PresenceParam("byLabels[]"),
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("quantiles[]"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("rateFunc"),
+	queryparams.PresenceParam("rateInterval"),
+	queryparams.PresenceParam("step"),
 }
 
-var istioMetricsQueryParams = []string{
-	"avg",
-	"byLabels[]",
-	"clusterName",
-	"direction",
-	"duration",
-	"filters[]",
-	"quantiles[]",
-	"queryTime",
-	"rateFunc",
-	"rateInterval",
-	"reporter",
-	"requestProtocol",
-	"step",
+var istioMetricsQueryParams = []queryparams.Param{
+	queryparams.PresenceParam("avg"),
+	queryparams.PresenceParam("byLabels[]"),
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("direction"),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("filters[]"),
+	queryparams.PresenceParam("quantiles[]"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("rateFunc"),
+	queryparams.PresenceParam("rateInterval"),
+	queryparams.PresenceParam("reporter"),
+	queryparams.PresenceParam("requestProtocol"),
+	queryparams.PresenceParam("step"),
 }
 
-var aggregateMetricsQueryParams = []string{
-	"avg",
-	"byLabels[]",
-	"direction",
-	"duration",
-	"filters[]",
-	"quantiles[]",
-	"queryTime",
-	"rateFunc",
-	"rateInterval",
-	"reporter",
-	"requestProtocol",
-	"step",
+var aggregateMetricsQueryParams = []queryparams.Param{
+	queryparams.PresenceParam("avg"),
+	queryparams.PresenceParam("byLabels[]"),
+	queryparams.PresenceParam("direction"),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("filters[]"),
+	queryparams.PresenceParam("quantiles[]"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("rateFunc"),
+	queryparams.PresenceParam("rateInterval"),
+	queryparams.PresenceParam("reporter"),
+	queryparams.PresenceParam("requestProtocol"),
+	queryparams.PresenceParam("step"),
 }
 
-var clusterMetricsQueryParams = []string{
-	"avg",
-	"byLabels[]",
-	"clusterName",
-	"direction",
-	"duration",
-	"filters[]",
-	"namespaces",
-	"quantiles[]",
-	"queryTime",
-	"rateFunc",
-	"rateInterval",
-	"reporter",
-	"requestProtocol",
-	"step",
+var clusterMetricsQueryParams = []queryparams.Param{
+	queryparams.PresenceParam("avg"),
+	queryparams.PresenceParam("byLabels[]"),
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("direction"),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("filters[]"),
+	queryparams.PresenceParam("namespaces"),
+	queryparams.PresenceParam("quantiles[]"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("rateFunc"),
+	queryparams.PresenceParam("rateInterval"),
+	queryparams.PresenceParam("reporter"),
+	queryparams.PresenceParam("requestProtocol"),
+	queryparams.PresenceParam("step"),
 }
 
 // validK8sNameRe matches valid Kubernetes resource names (DNS label subset).
@@ -101,7 +102,7 @@ func AppMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Di
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -131,7 +132,7 @@ func WorkloadMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -161,7 +162,7 @@ func ServiceMetrics(conf *config.Config, cache cache.KialiCache, discovery *isti
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		service := vars["service"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -268,7 +269,7 @@ func ControlPlaneMetrics(
 
 		controlPlane := vars["controlplane"]
 		conf := config.Get()
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		if !discovery.HasControlPlane(r.Context(), cluster, namespace, controlPlane) {
 			RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("provided namespace [%s] and control plane [%s] are not found in the cluster [%s] ", namespace, controlPlane, cluster))
@@ -330,7 +331,7 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 			return
 		}
 		conf := config.Get()
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -367,7 +368,7 @@ func NamespaceMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -405,7 +406,7 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 				namespacesFromQueryParams[ns] = struct{}{}
 			}
 		}
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 
 		userClients, err := getUserClients(r, clientFactory)
 		if err != nil {
@@ -455,12 +456,13 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 	}
 }
 
-func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace, allowed ...string) error {
+func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery, namespaceInfo *models.Namespace, allowed ...queryparams.Param) error {
 	queryParams := r.URL.Query()
-	if len(allowed) == 0 {
-		allowed = istioMetricsQueryParams
+	schema := allowed
+	if len(schema) == 0 {
+		schema = istioMetricsQueryParams
 	}
-	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
+	if err := queryparams.RejectUnknown(queryParams, queryparams.Names(schema)...); err != nil {
 		return err
 	}
 

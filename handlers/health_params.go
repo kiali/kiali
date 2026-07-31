@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/queryparams"
-	"github.com/kiali/kiali/util"
 )
 
 type baseHealthParams struct {
@@ -26,31 +24,39 @@ type baseHealthParams struct {
 	RateInterval string `json:"rateInterval"`
 }
 
-func (p *baseHealthParams) parse(conf *config.Config, queryParams url.Values) error {
-	p.RateInterval = config.DefaultHealthRateInterval
-	p.QueryTime = util.Clock.Now()
-	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
-		if err := queryparams.ValidatePromDuration(rateInterval, "rateInterval"); err != nil {
-			return err
-		}
-		p.RateInterval = rateInterval
-	}
-	p.ClusterName = queryparams.ClusterName(conf, queryParams)
-	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
-		parsed, err := queryparams.ParseQueryTime(queryTime)
-		if err != nil {
-			return err
-		}
-		p.QueryTime = parsed
-	}
-	return nil
+// baseHealthQueryParams are shared by list/detail endpoints that use rateInterval + queryTime.
+var baseHealthQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.TimestampParam("queryTime"),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
 }
 
-// baseExtract parses common health-related query parameters after validating the allowed set.
-func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request, allowed ...string) error {
-	queryParams := r.URL.Query()
-	if err := queryparams.RejectUnknown(queryParams, allowed...); err != nil {
-		return err
+// clusterHealthQueryParams documents the ClusterHealth query contract.
+// queryTime is accepted for UI cache-bust/replay even though ClusterHealth does not use it.
+var clusterHealthQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.StringParam("namespaces", ""),
+	queryparams.TimestampParam("queryTime"),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
+	queryparams.EnumParam("type", "app", "service", "workload"),
+}
+
+func (p *baseHealthParams) apply(result queryparams.Result) {
+	p.ClusterName = result.Cluster()
+	p.QueryTime = result.Time("queryTime")
+	p.RateInterval = result.Duration("rateInterval")
+}
+
+// parseSchema rejects unknown keys and applies shared health fields from a declarative schema.
+func (p *baseHealthParams) parseSchema(conf *config.Config, r *http.Request, extra ...queryparams.Param) (queryparams.Result, error) {
+	params := make([]queryparams.Param, 0, len(baseHealthQueryParams)+len(extra))
+	params = append(params, baseHealthQueryParams...)
+	params = append(params, extra...)
+
+	result, err := queryparams.ParseWithConfig(r.URL.Query(), conf, params)
+	if err != nil {
+		return queryparams.Result{}, err
 	}
-	return p.parse(conf, queryParams)
+	p.apply(result)
+	return result, nil
 }
