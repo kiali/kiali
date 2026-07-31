@@ -1,8 +1,6 @@
 package destinationrules
 
 import (
-	"strings"
-
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/kubernetes"
@@ -14,7 +12,6 @@ type MultiMatchChecker struct {
 	DestinationRules []*networking_v1.DestinationRule
 	IdentityDomain   string
 	Namespaces       []string
-	ServiceEntries   map[string][]string
 }
 
 type subset struct {
@@ -32,7 +29,7 @@ type rule struct {
 func (m MultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	// Equality search is: [fqdn.String()][subset] except for ServiceEntry targets which use [host][subset]
+	// Equality search is: [fqdn.String()][subset]
 	seenHostSubsets := make(map[string]map[string][]rule)
 
 	for _, dr := range m.DestinationRules {
@@ -40,8 +37,9 @@ func (m MultiMatchChecker) Check() models.IstioValidations {
 		destinationRulesNamespace := dr.Namespace
 		fqdn := kubernetes.GetHost(dr.Spec.Host, dr.Namespace, m.Namespaces, m.IdentityDomain)
 
-		// Skip DR validation if it enables mTLS either namespace or mesh-wide
-		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+		// Skip mesh-wide / namespace-wide mTLS DestinationRules (e.g. *.local, *.ns.svc...).
+		// These are intended to coexist with more specific DRs and must not drive multi-match.
+		if isNonLocalmTLSForServiceEnabled(dr, m.IdentityDomain) {
 			continue
 		}
 
@@ -83,8 +81,14 @@ func hostsOverlap(a, b string) bool {
 	return kubernetes.HostWithinWildcardHost(b, a) || kubernetes.HostWithinWildcardHost(a, b)
 }
 
-func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, service string) bool {
-	return strings.HasPrefix(service, "*") && ismTLSEnabled(dr)
+func isNonLocalmTLSForServiceEnabled(dr *networking_v1.DestinationRule, identityDomain string) bool {
+	if enabled, _ := kubernetes.DestinationRuleHasMeshWideMTLSEnabled(dr); enabled {
+		return true
+	}
+	if enabled, _ := kubernetes.DestinationRuleHasNamespaceWideMTLSEnabled(dr.Namespace, dr, identityDomain); enabled {
+		return true
+	}
+	return false
 }
 
 func ismTLSEnabled(dr *networking_v1.DestinationRule) bool {

@@ -57,8 +57,7 @@ func (t TrafficPolicyChecker) Check() models.IstioValidations {
 func (t TrafficPolicyChecker) drsWithNonLocalmTLSEnabled() []*networking_v1.DestinationRule {
 	mtlsDrs := make([]*networking_v1.DestinationRule, 0)
 	for _, dr := range t.MTLSDetails.DestinationRules {
-		fqdn := kubernetes.ParseHost(dr.Spec.Host, dr.Namespace, t.IdentityDomain)
-		if isNonLocalmTLSForServiceEnabled(dr, fqdn.String()) {
+		if isNonLocalmTLSForServiceEnabled(dr, t.IdentityDomain) {
 			mtlsDrs = append(mtlsDrs, dr)
 		}
 	}

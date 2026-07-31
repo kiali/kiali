@@ -13,26 +13,6 @@ import (
 	"github.com/kiali/kiali/tests/testutils/validations"
 )
 
-func TestExportMultiHostMatchDisjointNamespaceWildcards(t *testing.T) {
-	conf := config.NewConfig()
-	config.Set(conf)
-
-	assert := assert.New(t)
-
-	destinationRules := []*networking_v1.DestinationRule{
-		data.CreateTestDestinationRule("istio-test1", "vault-no-tls", "*.vault.svc.cluster.local"),
-		data.CreateTestDestinationRule("istio-test1", "test3-no-tls", "*.istio-test3.svc.cluster.local"),
-	}
-
-	vals := MultiMatchChecker{
-		IdentityDomain:   "svc.cluster.local",
-		Namespaces:       []string{"istio-test1", "vault", "istio-test3"},
-		DestinationRules: destinationRules,
-	}.Check()
-
-	assert.Empty(vals, "wildcard hosts targeting different namespaces must not overlap")
-}
-
 func TestExportMultiHostMatchCorrect(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -464,7 +444,7 @@ func TestExportMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 
 	edr := []*networking_v1.DestinationRule{
 		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
-			data.CreateTestDestinationRule("test2", "rule2", "*.test.svc.cluster.local")),
+			data.CreateTestDestinationRule("test2", "rule2", "*.test2.svc.cluster.local")),
 	}
 
 	vals := MultiMatchChecker{
@@ -562,16 +542,12 @@ func TestExportMultiServiceEntry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
-	seB := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-b", "test2", []string{"api.service_b.com"}))
-
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test2", "service-b", "api.service_b.com")
 
 	vals := MultiMatchChecker{
 		IdentityDomain:   "svc.cluster.local",
 		DestinationRules: []*networking_v1.DestinationRule{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{seA, seB}),
 	}.Check()
 
 	assert.Empty(vals)
@@ -583,15 +559,12 @@ func TestExportMultiServiceEntryInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
-
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test2", "service-a2", "api.service_a.com")
 
 	vals := MultiMatchChecker{
 		IdentityDomain:   "svc.cluster.local",
 		DestinationRules: []*networking_v1.DestinationRule{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{seA}),
 	}.Check()
 
 	assert.NotEmpty(vals)

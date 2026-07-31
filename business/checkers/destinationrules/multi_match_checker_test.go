@@ -335,6 +335,59 @@ func TestMultiHostMatchingNamespaceWideMTLSDestinationRule(t *testing.T) {
 	assert.Nil(validation)
 }
 
+// Service-scoped wildcard mTLS (e.g. *.vault) must still participate in multi-match;
+// only mesh-wide / namespace-wide mTLS DRs are skipped.
+func TestMultiHostMatchingServiceScopedMTLSWildcardStillConflicts(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	destinationRules := []*networking_v1.DestinationRule{
+		data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+			data.CreateTestDestinationRule("istio-test1", "vault-mtls", "*.vault.svc.cluster.local")),
+		data.CreateTestDestinationRule("istio-test1", "vault-no-tls", "*.vault.svc.cluster.local"),
+	}
+
+	vals := MultiMatchChecker{
+		IdentityDomain:   "svc.cluster.local",
+		Namespaces:       []string{"istio-test1", "vault"},
+		DestinationRules: destinationRules,
+	}.Check()
+
+	assert.NotEmpty(vals)
+	assert.Equal(2, len(vals))
+}
+
+func TestHostsOverlap(t *testing.T) {
+	cases := []struct {
+		a, b     string
+		expected bool
+		reason   string
+	}{
+		{"*.svc.cluster.local", "*.test.svc.cluster.local", true, "broader wildcard contains narrower"},
+		{"*.test.svc.cluster.local", "*.svc.cluster.local", true, "reverse of above"},
+		{"*.wikipedia.org", "en.wikipedia.org", true, "non-cluster wildcard containing concrete"},
+		{"*.foo.com", "*.bar.com", false, "disjoint external wildcards"},
+		{"foo", "foo", true, "identity"},
+		{"*", "anything", true, "bare wildcard"},
+		{"anything", "*", true, "bare wildcard (reversed)"},
+		{"*.vault.svc.cluster.local", "*.istio-test3.svc.cluster.local", false, "disjoint namespace-scoped wildcards (OSSM-15084)"},
+		{"host1.test.svc.cluster.local", "*.test.svc.cluster.local", true, "concrete host within namespace wildcard"},
+		{"*.test.svc.cluster.local", "host1.test.svc.cluster.local", true, "reversed"},
+		{"host1.test.svc.cluster.local", "host1.test.svc.cluster.local", true, "exact match"},
+		{"host1.test.svc.cluster.local", "host2.test.svc.cluster.local", false, "different concrete hosts"},
+		{"*", "*", true, "bare wildcard identity"},
+		{"*.test.svc.cluster.local", "*.test.svc.cluster.local", true, "identical wildcards"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.reason, func(t *testing.T) {
+			assert.Equal(t, tc.expected, hostsOverlap(tc.a, tc.b), "%s vs %s", tc.a, tc.b)
+		})
+	}
+}
+
 func TestMultiHostMatchDifferentSubsets(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -413,16 +466,12 @@ func TestMultiServiceEntry(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
-	seB := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-b", "test", []string{"api.service_b.com"}))
-
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test", "service-b", "api.service_b.com")
 
 	vals := MultiMatchChecker{
 		IdentityDomain:   "svc.cluster.local",
 		DestinationRules: []*networking_v1.DestinationRule{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{seA, seB}),
 	}.Check()
 
 	assert.Empty(vals)
@@ -434,15 +483,12 @@ func TestMultiServiceEntryInvalid(t *testing.T) {
 
 	assert := assert.New(t)
 
-	seA := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(443, "https", "TLS"), data.CreateEmptyMeshExternalServiceEntry("service-a", "test", []string{"api.service_a.com"}))
-
 	drA := data.CreateEmptyDestinationRule("test", "service-a", "api.service_a.com")
 	drB := data.CreateEmptyDestinationRule("test", "service-a2", "api.service_a.com")
 
 	vals := MultiMatchChecker{
 		IdentityDomain:   "svc.cluster.local",
 		DestinationRules: []*networking_v1.DestinationRule{drA, drB},
-		ServiceEntries:   kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{seA}),
 	}.Check()
 
 	assert.NotEmpty(vals)
