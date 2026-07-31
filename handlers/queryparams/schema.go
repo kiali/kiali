@@ -83,11 +83,11 @@ func Names(params []Param) []string {
 
 // Result holds parsed query parameter values from ParseWithConfig.
 type Result struct {
-	bools     map[string]bool
-	strings   map[string]string
-	times     map[string]time.Time
-	raw       url.Values
-	cluster   string
+	bools      map[string]bool
+	strings    map[string]string
+	times      map[string]time.Time
+	raw        url.Values
+	cluster    string
 	hasCluster bool
 }
 
