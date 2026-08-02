@@ -112,6 +112,15 @@ Complete documentation is available at http://kiali.io/docs/.`,
 			}
 			log.Tracef("Kiali Configuration:\n%s", conf)
 
+			if argConfigFile != "" && conf.Server.HotReloadConfig {
+				watcher, err := config.NewConfigWatcher(argConfigFile)
+				if err != nil {
+					log.Errorf("Failed to start config hot reload watcher (continuing without it): %v", err)
+				} else {
+					defer watcher.Close()
+				}
+			}
+
 			restConf, err := ctrl.GetConfig()
 			if err != nil {
 				return fmt.Errorf("failed to get config: %v", err)
@@ -139,7 +148,7 @@ Complete documentation is available at http://kiali.io/docs/.`,
 	}
 	cmd.PersistentFlags().FuncP("config", "c", "Path to the YAML configuration file. If not specified, environment variables will be used for configuration.", FileNameFlag(&argConfigFile))
 	cmd.PersistentFlags().StringVarP(&logLevel, "log-level", "l", "", "Log level (trace, debug, info, warn, error, fatal). If not specified, the LOG_LEVEL environment variable will be used.")
-	cmd.AddCommand(newRunCmd(conf))
+	cmd.AddCommand(newRunCmd(conf, &argConfigFile))
 	cmd.AddCommand(newGatherCmd(conf))
 	return cmd
 }

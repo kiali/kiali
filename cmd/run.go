@@ -19,7 +19,7 @@ import (
 	"github.com/kiali/kiali/util/httputil"
 )
 
-func newRunCmd(conf *config.Config) *cobra.Command {
+func newRunCmd(conf *config.Config, argConfigFile *string) *cobra.Command {
 	var (
 		clusterNameOverrides  []string
 		homeClusterContext    string
@@ -40,6 +40,9 @@ EXPERIMENTAL: This command and the flags are subject to change.`,
 			// Override some settings in local mode.
 			conf.RunMode = config.RunModeLocal
 			conf.Auth.Strategy = config.AuthStrategyAnonymous
+			// Hot reloading feature flags is on by default in local mode, where rapidly
+			// trying out different config while developing is common.
+			conf.Server.HotReloadConfig = true
 
 			// Set cluster name overrides from flag
 			if len(clusterNameOverrides) > 0 {
@@ -58,6 +61,15 @@ EXPERIMENTAL: This command and the flags are subject to change.`,
 			config.Set(conf)
 			if err := config.Validate(conf); err != nil {
 				return fmt.Errorf("invalid configuration: %v", err)
+			}
+
+			if *argConfigFile != "" && conf.Server.HotReloadConfig {
+				watcher, err := config.NewConfigWatcher(*argConfigFile)
+				if err != nil {
+					log.Errorf("Failed to start config hot reload watcher (continuing without it): %v", err)
+				} else {
+					defer watcher.Close()
+				}
 			}
 
 			ctx, cancel := context.WithCancel(cmd.Context())
