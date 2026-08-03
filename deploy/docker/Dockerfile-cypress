@@ -33,6 +33,9 @@ ENV CYPRESS_CACHE_FOLDER=$HOME/.cache
 # Keep the Corepack cache outside the project tree (see yarnpkg/berry#5831, issue #10123).
 ENV COREPACK_HOME=/tmp/corepack
 
+# Ensure COREPACK_HOME exists (corepack enable doesn't create it)
+RUN mkdir -p $COREPACK_HOME
+
 # Enable corepack to use the Yarn version specified in package.json
 RUN corepack enable
 
