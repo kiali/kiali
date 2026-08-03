@@ -219,6 +219,11 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 	}
 	vInfo.mesh = mesh
 
+	// Always refresh waypoints before building the workload map used by checkers. Otherwise a
+	// waypointStore miss that cached an empty list (TTL defaults to 4m) can produce KIA1313 and,
+	// without a tracked change after the cache refreshes, leave that false positive stuck forever.
+	in.workload.cache.ClearWaypoints()
+
 	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
 		namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
@@ -257,7 +262,12 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 		}
 		changeDetected = changeMap.update("validation-num-namespaces", strconv.Itoa(numNamespaces), vInfo.reportChange) || changeDetected
 
-		// loop through workloads, looking for label/serviceAccount changes that affect validations
+		// Track the resolved waypoint set itself. Waypoint appearance/disappearance is not
+		// otherwise visible via namespace/workload label keys alone once enrollment is stable.
+		waypoints := in.workload.GetWaypoints(ctx)
+		changeDetected = changeMap.update("validation-waypoints", waypointWorkloadsValidationDigest(waypoints), vInfo.reportChange) || changeDetected
+
+		// loop through workloads, looking for label/serviceAccount/waypoint changes that affect validations
 		numWorkloads := 0
 		for _, workloadsMap := range vInfo.wlMap {
 			for _, workloads := range workloadsMap {

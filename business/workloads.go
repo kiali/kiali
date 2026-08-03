@@ -1732,7 +1732,9 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 
 			w.ServiceAccountNames = w.Pods.ServiceAccounts()
 			slices.Sort(w.ServiceAccountNames)
-			w.ValidationVersion = fmt.Sprintf("%v:%v:%v", w.Labels, w.ServiceAccountNames, w.Annotations[models.IgnoreValidationsAnnotation])
+			// Include resolved waypoints so a stale empty waypoint cache that later refreshes
+			// is treated as a validation-relevant change (avoids sticky KIA1313 false positives).
+			w.ValidationVersion = fmt.Sprintf("%v:%v:%v:%s", w.Labels, w.ServiceAccountNames, w.Annotations[models.IgnoreValidationsAnnotation], waypointRefsValidationDigest(w.WaypointWorkloads))
 
 			// Set SpireInfo if workload is SPIRE-managed or is a SPIRE server
 			spireMatches := w.SpireManagedIdentity()
@@ -2524,6 +2526,32 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	}
 	in.cache.SetWaypoints(waypoints)
 	return waypoints
+}
+
+// waypointRefsValidationDigest returns a stable digest of resolved waypoint references for change detection.
+func waypointRefsValidationDigest(refs []models.WorkloadReferenceInfo) string {
+	if len(refs) == 0 {
+		return ""
+	}
+	parts := make([]string, len(refs))
+	for i, ref := range refs {
+		parts[i] = strings.Join([]string{ref.Cluster, ref.Namespace, ref.Name, ref.Type}, "/")
+	}
+	slices.Sort(parts)
+	return strings.Join(parts, ",")
+}
+
+// waypointWorkloadsValidationDigest returns a stable digest of discovered waypoint workloads for change detection.
+func waypointWorkloadsValidationDigest(waypoints models.Workloads) string {
+	if len(waypoints) == 0 {
+		return ""
+	}
+	parts := make([]string, len(waypoints))
+	for i, wp := range waypoints {
+		parts[i] = strings.Join([]string{wp.Cluster, wp.Namespace, wp.Name}, "/")
+	}
+	slices.Sort(parts)
+	return strings.Join(parts, ",")
 }
 
 // getCapturingWaypoints returns waypoint references that capture the workload. Only the active waypoint is returned unless <all>
