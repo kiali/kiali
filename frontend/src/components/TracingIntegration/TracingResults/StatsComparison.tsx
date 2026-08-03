@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { InfoAltIcon } from '@patternfly/react-icons';
-import _round from 'lodash/round';
+import { round } from 'lodash-es';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { MetricsStats } from 'types/Metrics';
 import { PFColors } from 'components/Pf/PfColors';
@@ -44,7 +44,7 @@ const renderHeatMap = (item: RichSpanData, stats: StatsWithIntervalIndex[], isCo
       colorMap={healthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PFColors.ColorLight200}
-      valueFormat={v => `${v > 0 ? '+' : ''}${_round(v, 1)}`}
+      valueFormat={v => `${v > 0 ? '+' : ''}${round(v, 1)}`}
       tooltip={(x, y, v) => {
         // Build explanation tooltip
         const slowOrFast = v > 0 ? 'slower' : 'faster';
@@ -63,7 +63,7 @@ const renderHeatMap = (item: RichSpanData, stats: StatsWithIntervalIndex[], isCo
         const thisObj = statsCompareKind === 'app' ? item.app : item.workload;
         const peer = statsPerPeer ? `${rev} ${info.peer}` : '';
 
-        return `This request has been ${_round(Math.abs(v), 2)}ms ${slowOrFast} than the ${stat} of all ${
+        return `This request has been ${round(Math.abs(v), 2)}ms ${slowOrFast} than the ${stat} of all ${
           info.direction
         } requests ${dir} ${thisObj} ${peer} in the last ${interval}`;
       }}
@@ -122,14 +122,14 @@ export const renderTraceHeatMap = (matrix: StatsMatrix, isCompact: boolean): Rea
       colorMap={healthColorMap}
       dataRange={{ from: -10, to: 10 }}
       colorUndefined={PFColors.ColorLight200}
-      valueFormat={v => `${v > 0 ? '+' : ''}${_round(v, 1)}`}
+      valueFormat={v => `${v > 0 ? '+' : ''}${round(v, 1)}`}
       tooltip={(x, y, v) => {
         // Build explanation tooltip
         const slowOrFast = v > 0 ? 'slower' : 'faster';
         const stat = statToText[quantilesWithAvg[x]]?.long || quantilesWithAvg[x];
         const interval = intervals[y];
 
-        return `Trace requests have been, in average, ${_round(
+        return `Trace requests have been, in average, ${round(
           Math.abs(v),
           2
         )}ms ${slowOrFast} than the ${stat} of the requests involving the same services in the last ${interval}`;

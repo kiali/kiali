@@ -68,7 +68,7 @@ import {
 import { kialiStyle } from 'styles/StyleUtils';
 import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
 import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
-import _ from 'lodash';
+import { isEqual } from 'lodash-es';
 import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
@@ -386,7 +386,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
     }
 
     for (let i = 0; i < prev.length; i++) {
-      if (!current.some(w => _.isEqual(w, prev[i]))) {
+      if (!current.some(w => isEqual(w, prev[i]))) {
         return false;
       }
     }

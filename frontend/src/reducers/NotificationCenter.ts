@@ -5,7 +5,7 @@ import { getType } from 'typesafe-actions';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';
-import _ from 'lodash';
+import { filter } from 'lodash-es';
 
 export const INITIAL_NOTIFICATION_CENTER_STATE: NotificationCenterState = {
   // predefined groups are specifically ordered by status
@@ -100,7 +100,7 @@ export const NotificationCenterReducer = (
           });
 
           // remove the old message from the list
-          const filteredArray = _.filter(group.messages, message => {
+          const filteredArray = filter(group.messages, message => {
             return message.content !== content;
           });
 

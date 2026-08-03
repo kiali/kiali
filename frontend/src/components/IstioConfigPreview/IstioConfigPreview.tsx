@@ -29,9 +29,8 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import { EditResources } from './EditResources';
-import { cloneDeep } from 'lodash';
 import { PFColors } from '../Pf/PfColors';
-import _ from 'lodash';
+import { cloneDeep, isEqual, uniq } from 'lodash-es';
 import { download } from 'utils/Common';
 import { t } from 'utils/I18nUtils';
 import { dump } from 'js-yaml';
@@ -108,7 +107,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props): void {
-    if (!_.isEqual(prevProps.items, this.props.items) || prevProps.isOpen !== this.props.isOpen) {
+    if (!isEqual(prevProps.items, this.props.items) || prevProps.isOpen !== this.props.isOpen) {
       this.setStateValues(this.props.items);
     }
   }
@@ -192,7 +191,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   };
 
   groupItems = (list: ConfigPreviewItem[] = this.state.items): ConfigPreviewItem[] => {
-    const gvks = _.uniq(list.map(item => item.objectGVK));
+    const gvks = uniq(list.map(item => item.objectGVK));
 
     const itemsGrouped: ConfigPreviewItem[] = gvks.map(gvk => {
       const filtered = list.filter(it => getGVKTypeString(it.objectGVK) === getGVKTypeString(gvk));

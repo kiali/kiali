@@ -30,7 +30,7 @@ import {
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
 import { Namespace } from 'types/Namespace';
-import _ from 'lodash';
+import { keys } from 'lodash-es';
 import { PFColors } from 'components/Pf/PfColors';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
@@ -500,7 +500,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   if (data.hasTraffic && data.responses) {
     if (nodeMap.get(edge.target!)?.data?.hasCB) {
       const responses = data.responses;
-      for (let code of _.keys(responses)) {
+      for (let code of keys(responses)) {
         // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
         // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
         // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.

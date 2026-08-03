@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import { map } from 'lodash-es';
 import { TracingUrlProvider, TEMPO } from 'types/Tracing';
 import { BoundsInMilliseconds } from 'types/Common';
 import { SpanData, TraceData } from 'types/TracingInfo';
@@ -111,7 +111,7 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
   }
 
   AppSearchUrl(app: string, bounds: BoundsInMilliseconds, tags: Record<string, string>): string {
-    const tagFilters = _.map(tags, (tag, value) => {
+    const tagFilters = map(tags, (tag, value) => {
       return {
         id: generateId(5), // We need a random unique ID per filter
         tag: tag,

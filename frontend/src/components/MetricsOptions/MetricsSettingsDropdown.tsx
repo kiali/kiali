@@ -11,7 +11,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash-es';
 import { location, router, URLParam } from '../../app/History';
 import { MetricsSettings, Quantiles, allQuantiles, LabelsSettings } from './MetricsSettings';
 import {

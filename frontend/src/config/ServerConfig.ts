@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { isEmpty, mapValues, reject } from 'lodash-es';
 import { RunMode, ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
 import { MeshCluster } from '../types/Mesh';
@@ -22,7 +22,7 @@ function getHomeCluster(cfg: ServerConfig): MeshCluster | undefined {
 }
 
 export const humanDurations = (cfg: ComputedServerConfig, prefix?: string, suffix?: string): Durations =>
-  _.mapValues(cfg.durations, v => _.reject([prefix, v, suffix], _.isEmpty).join(' '));
+  mapValues(cfg.durations, v => reject([prefix, v, suffix], isEmpty).join(' '));
 
 const toDurations = (tupleArray: [number, string][]): Durations => {
   const obj: Durations = {};

@@ -34,7 +34,7 @@ import { isValid } from 'utils/Common';
 import { EdgeData, NodeData } from 'pages/Graph/GraphElems';
 import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
-import { isArray } from 'lodash';
+import { isArray } from 'lodash-es';
 import { graphLayout } from 'pages/Graph/Graph';
 import { TimeInMilliseconds } from 'types/Common';
 

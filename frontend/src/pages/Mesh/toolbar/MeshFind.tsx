@@ -36,7 +36,7 @@ import {
   descendents,
   toSafeFieldName
 } from 'helpers/GraphHelpers';
-import { isArray } from 'lodash';
+import { isArray } from 'lodash-es';
 import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
