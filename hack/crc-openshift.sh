@@ -37,6 +37,40 @@ debug() {
   fi
 }
 
+# Normalize an OpenShift version string to major.minor (e.g. "4.22.1" -> "4.22").
+normalize_openshift_minor_version() {
+  echo "$1" | sed -E 's/^(4\.[0-9]+).*/\1/'
+}
+
+# Looks up CRC tool and bundle versions for an OpenShift release from OPENSHIFT_VERSION_MAP.
+# On success, sets _RESOLVED_CRC_VERSION and _RESOLVED_CRC_BUNDLE_VERSION.
+lookup_crc_versions_for_openshift() {
+  local osv_minor
+  local entry
+  osv_minor="$(normalize_openshift_minor_version "$1")"
+  _RESOLVED_CRC_VERSION=""
+  _RESOLVED_CRC_BUNDLE_VERSION=""
+  while IFS= read -r entry; do
+    [ -z "${entry}" ] && continue
+    local map_os map_crc map_bundle
+    map_os="$(echo "${entry}" | cut -d: -f1)"
+    map_crc="$(echo "${entry}" | cut -d: -f2)"
+    map_bundle="$(echo "${entry}" | cut -d: -f3)"
+    if [ "${map_os}" = "${osv_minor}" ]; then
+      _RESOLVED_CRC_VERSION="${map_crc}"
+      _RESOLVED_CRC_BUNDLE_VERSION="${map_bundle}"
+      return 0
+    fi
+  done <<< "${OPENSHIFT_VERSION_MAP}"
+  infomsg "ERROR: Unsupported OpenShift version [${1}] (normalized: ${osv_minor})."
+  infomsg "Supported OpenShift versions: $(list_supported_openshift_versions)"
+  return 1
+}
+
+list_supported_openshift_versions() {
+  echo "${OPENSHIFT_VERSION_MAP}" | grep -v '^[[:space:]]*$' | cut -d: -f1 | tr '\n' ' '
+}
+
 get_downloader() {
   if [ -z "$DOWNLOADER" ] ; then
     # Use wget command if available, otherwise try curl
@@ -590,11 +624,26 @@ EOF
 SCRIPT_ROOT="$( cd "$(dirname "$0")" || exit ; pwd -P )"
 cd ${SCRIPT_ROOT} || exit
 
-# The default version of the crc tool to be downloaded
-DEFAULT_CRC_DOWNLOAD_VERSION="2.61.0"
+# To see versions of crc and openshift, go to either:
+# * http://cdk-builds.usersys.redhat.com/builds/crc/releases
+# * https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc
+# Pick a CRC release, and drill down into release-info.json - it will tell you what OpenShift it has inside.
+#
+# When adding support for a new OpenShift release, add a row to OPENSHIFT_VERSION_MAP below
+# and update DEFAULT_OPENSHIFT_VERSION if it should become the new default.
 
-# The default version of the crc bundle - this is typically the version included with the CRC download
-DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION="4.21.14"
+# The default OpenShift version to run when --openshift-version is not specified
+DEFAULT_OPENSHIFT_VERSION="4.22"
+
+# Maps OpenShift minor version to crc tool version and crc bundle version.
+# Format: openshift_minor:crc_version:bundle_version
+OPENSHIFT_VERSION_MAP="
+4.22:2.62.0:4.22.1
+4.21:2.61.0:4.21.14
+4.20:2.57.0:4.20.5
+4.19:2.53.0:4.19.3
+4.18:2.49.0:4.18.2
+"
 
 # The default virtual CPUs assigned to the CRC VM
 DEFAULT_CRC_CPUS="6"
@@ -683,6 +732,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -clv|--crc-libvirt-version)
       CRC_LIBVIRT_DOWNLOAD_VERSION="$2"
+      _CRC_LIBVIRT_VERSION_EXPLICIT="true"
       shift;shift
       ;;
     -ccpus|--crc-cpus)
@@ -699,6 +749,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     -cv|--crc-version)
       CRC_DOWNLOAD_VERSION="$2"
+      _CRC_VERSION_EXPLICIT="true"
       shift;shift
       ;;
     -cvdisk|--crc-virtual-disk-size)
@@ -715,6 +766,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -eunm|--enable-user-network-mode)
       ENABLE_USER_NETWORK_MODE="$2"
+      shift;shift
+      ;;
+    -osv|--openshift-version)
+      OPENSHIFT_VERSION="$2"
       shift;shift
       ;;
     -he|--hydra-enabled)
@@ -745,10 +800,15 @@ Valid options:
   -ca|--crc-arch <architecture>
       The architecture of the crc binary to use.
       Default: amd64
+  -osv|--openshift-version <version>
+      OpenShift version to run (e.g. 4.22 or 4.20).
+      Selects matching CRC tool and bundle versions automatically.
+      Default: ${DEFAULT_OPENSHIFT_VERSION}
+      Supported: $(list_supported_openshift_versions)
   -clv|--crc-libvirt-version <version>
       The version of the crc libvirt bundle to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: ${DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION}
+      Overrides the bundle version selected by --openshift-version.
   -ccpus|--crc-cpus <num CPUs>
       Number of virtual CPUs to assign to the VM.
       Default: ${DEFAULT_CRC_CPUS}
@@ -763,7 +823,7 @@ Valid options:
   -cv|--crc-version <version>
       The version of the crc binary to use.
       If one does not exist in the bin directory, it will be downloaded there.
-      Default: ${DEFAULT_CRC_DOWNLOAD_VERSION}
+      Overrides the CRC tool version selected by --openshift-version.
   -cvdisk|--crc-virtual-disk-size <disk size>
       The size of the virtual disk (in GB) to assign to the VM.
       Default: ${DEFAULT_CRC_VIRTUAL_DISK_SIZE}
@@ -847,10 +907,20 @@ if [ "${DETECTED_OS_PLATFORM}" = "linux" ] || [ "${DETECTED_OS_PLATFORM}" = "dar
   DEFAULT_OS_PLATFORM=${DETECTED_OS_PLATFORM}
   debug "The operating system has been detected as ${DEFAULT_OS_PLATFORM}"
 fi
-CRC_DOWNLOAD_VERSION="${CRC_DOWNLOAD_VERSION:-${DEFAULT_CRC_DOWNLOAD_VERSION}}"
+_effective_openshift_version="${OPENSHIFT_VERSION:-${DEFAULT_OPENSHIFT_VERSION}}"
+if [ "${_CRC_VERSION_EXPLICIT}" != "true" ] || [ "${_CRC_LIBVIRT_VERSION_EXPLICIT}" != "true" ]; then
+  lookup_crc_versions_for_openshift "${_effective_openshift_version}" || exit 1
+  if [ "${_CRC_VERSION_EXPLICIT}" != "true" ]; then
+    CRC_DOWNLOAD_VERSION="${_RESOLVED_CRC_VERSION}"
+  fi
+  if [ "${_CRC_LIBVIRT_VERSION_EXPLICIT}" != "true" ]; then
+    CRC_LIBVIRT_DOWNLOAD_VERSION="${_RESOLVED_CRC_BUNDLE_VERSION}"
+  fi
+fi
+CRC_DOWNLOAD_VERSION="${CRC_DOWNLOAD_VERSION:?CRC tool version is not set}"
+CRC_LIBVIRT_DOWNLOAD_VERSION="${CRC_LIBVIRT_DOWNLOAD_VERSION:?CRC bundle version is not set}"
 CRC_DOWNLOAD_PLATFORM="${CRC_DOWNLOAD_PLATFORM:-${DEFAULT_OS_PLATFORM}}"
 CRC_DOWNLOAD_ARCH="${CRC_DOWNLOAD_ARCH:-amd64}"
-CRC_LIBVIRT_DOWNLOAD_VERSION="${CRC_LIBVIRT_DOWNLOAD_VERSION:-${DEFAULT_CRC_LIBVIRT_DOWNLOAD_VERSION}}"
 CRC_ROOT_DIR="${HOME}/.crc"
 CRC_KUBEADMIN_PASSWORD_FILE="${CRC_ROOT_DIR}/machines/crc/kubeadmin-password"
 CRC_KUBECONFIG="${CRC_ROOT_DIR}/machines/crc/kubeconfig"
@@ -873,12 +943,6 @@ CRC_VIRTUAL_DISK_SIZE=${CRC_VIRTUAL_DISK_SIZE:-${DEFAULT_CRC_VIRTUAL_DISK_SIZE}}
 #--------------------------------------------------------------
 
 # Determine where to get the binaries and their full paths and how to execute them.
-
-# To see versions of crc and openshift, go to either:
-# * http://cdk-builds.usersys.redhat.com/builds/crc/releases
-# * https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc
-# Pick a version, and drill down into release-info.json - it will tell you what OpenShift it has inside, for example.
-
 #CRC_DOWNLOAD_LOCATION="https://mirror.openshift.com/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_DOWNLOAD_LOCATION="https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
 CRC_DOWNLOAD_LOCATION_ALT="http://cdk-builds.usersys.redhat.com/builds/crc/releases/${CRC_DOWNLOAD_VERSION}/crc-${CRC_DOWNLOAD_PLATFORM}-${CRC_DOWNLOAD_ARCH}.tar.xz"
@@ -899,6 +963,7 @@ CRC_OC="${CRC_OC_BIN} --kubeconfig ${CRC_KUBECONFIG}"
 
 debug "ENVIRONMENT:
   command=$_CMD
+  OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-${DEFAULT_OPENSHIFT_VERSION}}
   CRC_COMMAND=$CRC_COMMAND
   CRC_CPUS=$CRC_CPUS
   CRC_DOWNLOAD_LOCATION=$CRC_DOWNLOAD_LOCATION

@@ -185,6 +185,7 @@ DEFAULT_SKIP_BUILD="false"
 DEFAULT_CRC_CPUS="12"
 DEFAULT_CRC_DISK_SIZE="100"
 DEFAULT_CRC_PULL_SECRET_FILE=""
+DEFAULT_OPENSHIFT_VERSION=""
 
 # Runtime variables
 _VERBOSE="false"
@@ -2452,6 +2453,7 @@ init_openshift() {
   fi
 
   infomsg "Starting CRC with configuration:"
+  infomsg "  OpenShift Version: ${OPENSHIFT_VERSION:-<default from crc-openshift.sh>}"
   infomsg "  CPUs: ${CRC_CPUS}"
   infomsg "  Disk Size: ${CRC_DISK_SIZE} GB"
   infomsg "  Pull Secret: ${CRC_PULL_SECRET_FILE:-<not set - CRC will use previously stored secret or prompt>}"
@@ -2462,11 +2464,17 @@ init_openshift() {
     _pull_secret_arg="-p ${CRC_PULL_SECRET_FILE}"
   fi
 
+  local _osv_arg=""
+  if [ -n "${OPENSHIFT_VERSION}" ]; then
+    _osv_arg="--openshift-version ${OPENSHIFT_VERSION}"
+  fi
+
   # Start CRC cluster
   "${SCRIPT_DIR}/crc-openshift.sh" \
     --enable-cluster-monitoring true \
     --crc-cpus "${CRC_CPUS}" \
     --crc-virtual-disk-size "${CRC_DISK_SIZE}" \
+    ${_osv_arg} \
     ${_pull_secret_arg} \
     start
 
@@ -3806,6 +3814,7 @@ while [[ $# -gt 0 ]]; do
     -cc|--crc-cpus) CRC_CPUS="$2"; shift; shift ;;
     -cds|--crc-disk-size) CRC_DISK_SIZE="$2"; shift; shift ;;
     -cps|--crc-pull-secret-file) CRC_PULL_SECRET_FILE="$2"; shift; shift ;;
+    -osv|--openshift-version) OPENSHIFT_VERSION="$2"; shift; shift ;;
     -tc|--traffic-count) TRAFFIC_COUNT="$2"; shift; shift ;;
     -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
     -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
@@ -3874,6 +3883,11 @@ Valid options:
   -cps|--crc-pull-secret-file <path>
       Path to the Red Hat pull secret file (required for init-openshift command).
       Download from: https://console.redhat.com/openshift/create/local
+  -osv|--openshift-version <version>
+      OpenShift version for the CRC cluster (e.g. 4.22 or 4.20).
+      Passed through to crc-openshift.sh, which selects matching CRC tool and bundle versions.
+      Default: ${DEFAULT_OPENSHIFT_VERSION:-<default from crc-openshift.sh>}
+      Used only for the init-openshift and create-all commands.
   -tc|--traffic-count <num>
       Number of requests to send to test app (for traffic command).
       Default: ${DEFAULT_TRAFFIC_COUNT}
@@ -3993,6 +4007,7 @@ done
 : ${CRC_CPUS:=${DEFAULT_CRC_CPUS}}
 : ${CRC_DISK_SIZE:=${DEFAULT_CRC_DISK_SIZE}}
 : ${CRC_PULL_SECRET_FILE:=${DEFAULT_CRC_PULL_SECRET_FILE}}
+: ${OPENSHIFT_VERSION:=${DEFAULT_OPENSHIFT_VERSION}}
 : ${TRAFFIC_COUNT:=${DEFAULT_TRAFFIC_COUNT}}
 : ${TRAFFIC_INTERVAL:=${DEFAULT_TRAFFIC_INTERVAL}}
 : ${TRAFFIC_CONTINUOUS:=false}
@@ -4012,6 +4027,7 @@ debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
 debug "KIALI_OPERATOR_REPO_DIR=${KIALI_OPERATOR_REPO_DIR}"
 debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
 debug "SIDECAR_APP_NAMESPACE=${SIDECAR_APP_NAMESPACE}"
+debug "OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-<default from crc-openshift.sh>}"
 debug "AMBIENT_MODE=${AMBIENT_MODE}"
 debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 debug "SKIP_BUILD=${SKIP_BUILD}"
