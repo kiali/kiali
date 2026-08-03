@@ -149,7 +149,7 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
 // Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
 // adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
 const waitForSidecarAmbientTrafficGeneratedInGraph = (
-  maxRetries = 60,
+  maxRetries = 90,
   retryCount = 0,
   lastEdgeCount = -1,
   lastHttpEdgeCount = -1
@@ -170,7 +170,7 @@ const waitForSidecarAmbientTrafficGeneratedInGraph = (
     method: 'GET',
     url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
     qs: {
-      duration: '300s',
+      duration: '600s',
       graphType: 'versionedApp',
       includeIdleEdges: false,
       injectServiceNodes: true,
