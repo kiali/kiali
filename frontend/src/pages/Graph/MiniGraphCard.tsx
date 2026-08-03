@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Card,
   CardBody,
@@ -9,46 +10,39 @@ import {
   DropdownItem,
   DropdownList,
   MenuToggle,
-  MenuToggleElement,
   ToolbarItem
 } from '@patternfly/react-core';
-import { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
+import type { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
-import { GraphDataSource } from '../../services/GraphDataSource';
-import {
-  DecoratedGraphElements,
-  EdgeMode,
-  SummaryData,
-  GraphLayout,
-  GraphType,
-  NodeType,
-  UNKNOWN
-} from '../../types/Graph';
-import { GraphUrlParams, makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
+import type { GraphDataSource } from '../../services/GraphDataSource';
+import type { DecoratedGraphElements, SummaryData } from '../../types/Graph';
+import { EdgeMode, GraphLayout, GraphType, NodeType, UNKNOWN } from '../../types/Graph';
+import type { GraphUrlParams } from 'components/Nav/NavUtils';
+import { makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
 import { store } from 'store/ConfigStore';
-import { TimeInMilliseconds } from '../../types/Common';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { KialiAppState } from '../../store/Store';
+import type { TimeInMilliseconds } from '../../types/Common';
+import type { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import type { KialiAppState } from '../../store/Store';
 import { Graph } from './Graph';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { isKiosk, isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
 import { toRangeString } from 'components/Time/Utils';
 import { KioskElement } from 'components/Kiosk/KioskElement';
 import { TimeDurationIndicator } from 'components/Time/TimeDurationIndicator';
 import { TimeDurationModal } from 'components/Time/TimeDurationModal';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { GraphActions } from 'actions/GraphActions';
-import { NodeData } from './GraphElems';
+import type { NodeData } from './GraphElems';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/WorkloadWizardActionsDropdownGroup';
-import { Workload } from 'types/Workload';
-import { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
+import type { Workload } from 'types/Workload';
+import type { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { NamespaceActionsDropdownGroup } from 'pages/Namespaces/NamespaceActionsDropdownGroup';
-import { GraphRefs } from './GraphPage';
+import type { GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
@@ -123,10 +117,6 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     this.props.dataSource.removeListener('fetchSuccess', this.refresh);
     this.props.dataSource.removeListener('fetchError', this.refresh);
   }
-
-  private refresh = (): void => {
-    this.setState({ graphData: this.props.dataSource.graphData, isLoading: this.props.dataSource.isLoading });
-  };
 
   render(): React.ReactNode {
     const hasNode =
@@ -296,6 +286,10 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     );
   }
 
+  private refresh = (): void => {
+    this.setState({ graphData: this.props.dataSource.graphData, isLoading: this.props.dataSource.isLoading });
+  };
+
   private handleReady = (refs: GraphRefs | undefined, isReady: boolean): void => {
     this.setState({ graphRefs: refs, isReady: isReady });
   };
@@ -364,7 +358,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
         }
       }
 
-      router.navigate(`${location.getPathname()}?&{urlParams.toString()}`, { replace: true });
+      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     }
   };
 
@@ -401,8 +395,8 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     (node as any).selected = false;
 
     // Redirect to the details page of the tapped node.
-    let resource = data[eNodeType];
-    let resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
+    const resource = data[eNodeType];
+    const resourceType: string = eNodeType === NodeType.APP ? 'application' : eNodeType;
 
     let href = `/namespaces/${data.namespace}/${resourceType}s/${resource}`;
 
