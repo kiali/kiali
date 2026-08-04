@@ -1,7 +1,8 @@
 import { map } from 'lodash-es';
-import { TracingUrlProvider, TEMPO } from 'types/Tracing';
-import { BoundsInMilliseconds } from 'types/Common';
-import { SpanData, TraceData } from 'types/TracingInfo';
+import type { BoundsInMilliseconds } from 'types/Common';
+import { TEMPO } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
+import type { SpanData, TraceData } from 'types/TracingInfo';
 
 function dec2hex(dec: number): string {
   return dec.toString(16).padStart(2, '0');
@@ -30,10 +31,10 @@ function base64ToHex(str: string): string {
 //
 // https://grafana.com/docs/grafana/v10.1/explore/#generating-explore-urls-from-external-tools
 export class GrafanaUrlProvider implements TracingUrlProvider {
-  private readonly datasourceUID: string;
-  private readonly orgID: string;
-  private readonly grafanaUrl: string | undefined;
   readonly valid: boolean = true;
+  private readonly datasourceUID: string;
+  private readonly grafanaUrl: string | undefined;
+  private readonly orgID: string;
 
   constructor(grafanaUrl: string, options: { datasource_uid: string; orgID?: string }) {
     this.datasourceUID = options.datasource_uid;
@@ -111,10 +112,11 @@ export class GrafanaUrlProvider implements TracingUrlProvider {
   }
 
   AppSearchUrl(app: string, bounds: BoundsInMilliseconds, tags: Record<string, string>): string {
-    const tagFilters = map(tags, (tag, value) => {
+    // lodash map on an object iterates as (value, key)
+    const tagFilters = map(tags, (value, key) => {
       return {
         id: generateId(5), // We need a random unique ID per filter
-        tag: tag,
+        tag: key,
         operator: '=',
         scope: 'span',
         value: [value],
