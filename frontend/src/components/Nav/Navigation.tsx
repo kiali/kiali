@@ -80,7 +80,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     }
 
     const resetDrawerScroll = (): void => {
-      document.querySelectorAll('.pf-v6-c-page__drawer .pf-v6-c-drawer__main').forEach(el => {
+      document.querySelectorAll('.pf-v6-c-page__drawer > .pf-v6-c-drawer > .pf-v6-c-drawer__main').forEach(el => {
         (el as HTMLElement).scrollLeft = 0;
       });
     };

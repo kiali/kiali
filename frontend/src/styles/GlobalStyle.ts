@@ -50,7 +50,7 @@ export const globalStyle = kialiStyle({
      * collapsed; focus/automation can set scrollLeft on drawer__main and shift the
      * page content under the sidebar, clipping toolbar controls and table headers.
      */
-    '& .pf-v6-c-page__drawer .pf-v6-c-drawer:not(.pf-m-expanded) > .pf-v6-c-drawer__main > .pf-v6-c-drawer__panel': {
+    '& .pf-v6-c-page__drawer > .pf-v6-c-drawer:not(.pf-m-expanded) > .pf-v6-c-drawer__main > .pf-v6-c-drawer__panel': {
       flexBasis: '0 !important',
       margin: '0 !important',
       maxWidth: '0 !important',
@@ -62,7 +62,7 @@ export const globalStyle = kialiStyle({
       width: '0 !important'
     },
 
-    '& .pf-v6-c-page__drawer .pf-v6-c-drawer__main': {
+    '& .pf-v6-c-page__drawer > .pf-v6-c-drawer > .pf-v6-c-drawer__main': {
       overflowX: 'hidden'
     },
 
