@@ -97,6 +97,8 @@ type KialiCache interface {
 	// GetNamespaces returns all namespaces for the cluster/cacheKey from the in memory cache.
 	GetNamespaces(cluster string, cacheKey string) ([]models.Namespace, bool)
 
+	// ClearWaypoints removes the cached waypoint list so the next GetWaypoints refreshes from the cluster.
+	ClearWaypoints()
 	GetWaypoints() (models.Workloads, bool)
 	SetWaypoints(models.Workloads)
 
@@ -712,6 +714,11 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 	}
 
 	return result
+}
+
+// ClearWaypoints removes the cached waypoint list so the next GetWaypoints refreshes from the cluster.
+func (c *kialiCacheImpl) ClearWaypoints() {
+	c.waypointStore.Remove(kialiCacheWaypointsKey)
 }
 
 // GetWaypoints Returns a list of waypoint proxies by cluster and namespace
