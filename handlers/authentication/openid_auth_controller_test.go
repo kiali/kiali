@@ -2030,6 +2030,351 @@ func TestOpenIdCodeFlowShouldRejectMissingCodeVerifierCookie(t *testing.T) {
 // predate PKCE support (pre-2015), and forcing PKCE validation would break those installations. By always
 // sending PKCE parameters but not requiring provider validation, we provide enhanced security for modern
 // providers while maintaining compatibility with legacy systems.
+func TestBuildSessionPayloadAlwaysPreservesIdToken(t *testing.T) {
+	params := &openidFlowHelper{
+		IdToken:     "the-id-token",
+		AccessToken: "the-access-token",
+		Subject:     "user@example.com",
+	}
+
+	t.Run("id_token mode stores id_token only in Token to avoid cookie bloat", func(t *testing.T) {
+		params.UseAccessToken = false
+		payload := buildSessionPayload(params)
+		assert.Empty(t, payload.IdToken, "IdToken should be empty when Token already holds the id_token")
+		assert.Equal(t, "the-id-token", payload.Token)
+		assert.Equal(t, "user@example.com", payload.Subject)
+	})
+
+	t.Run("access_token mode stores access_token in Token but preserves id_token in IdToken", func(t *testing.T) {
+		params.UseAccessToken = true
+		payload := buildSessionPayload(params)
+		assert.Equal(t, "the-id-token", payload.IdToken)
+		assert.Equal(t, "the-access-token", payload.Token)
+		assert.Equal(t, "user@example.com", payload.Subject)
+	})
+}
+
+func TestTerminateSessionReturnsLogoutRedirect(t *testing.T) {
+	require := require.New(t)
+	cachedOpenIdMetadata.Store(nil)
+
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		EndSessionURL:          testServer.URL + "/logout",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	require.NoError(err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 3600
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(conf)
+
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	require.NoError(err)
+
+	controller := OpenIdAuthController{
+		SessionStore: store,
+		conf:         conf,
+	}
+
+	// Default id_token mode: IdToken is empty, Token holds the id_token.
+	// TerminateSession should fall back to Token for the id_token_hint.
+	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyOpenId, clockTime.Add(time.Hour), &oidcSessionPayload{
+		Subject: "user@example.com",
+		Token:   "test-id-token-value",
+	})
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	err = store.CreateSession(r, rr, *sessionData)
+	require.NoError(err)
+
+	logoutReq := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	for _, c := range rr.Result().Cookies() {
+		logoutReq.AddCookie(c)
+	}
+	logoutRR := httptest.NewRecorder()
+
+	result := controller.TerminateSession(logoutReq, logoutRR)
+
+	require.NotNil(result)
+	lr, ok := result.(*LogoutRedirect)
+	require.True(ok, "expected LogoutRedirect, got %T", result)
+
+	parsedURL, err := url.Parse(lr.RedirectURL)
+	require.NoError(err)
+	assert.True(t, strings.HasPrefix(lr.RedirectURL, testServer.URL+"/logout"))
+	assert.Equal(t, "test-id-token-value", parsedURL.Query().Get("id_token_hint"))
+	assert.Empty(t, parsedURL.Query().Get("client_id"), "client_id should not be sent when id_token_hint is present")
+	assert.NotEmpty(t, parsedURL.Query().Get("post_logout_redirect_uri"))
+}
+
+func TestTerminateSessionWithNoSessionStillBuildsLogoutURL(t *testing.T) {
+	require := require.New(t)
+	cachedOpenIdMetadata.Store(nil)
+
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		EndSessionURL:          testServer.URL + "/logout",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	require.NoError(err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(conf)
+
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	require.NoError(err)
+
+	controller := OpenIdAuthController{
+		SessionStore: store,
+		conf:         conf,
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	rr := httptest.NewRecorder()
+
+	result := controller.TerminateSession(r, rr)
+
+	require.NotNil(result)
+	lr, ok := result.(*LogoutRedirect)
+	require.True(ok, "expected LogoutRedirect even without a session")
+
+	parsedURL, err := url.Parse(lr.RedirectURL)
+	require.NoError(err)
+	assert.True(t, strings.HasPrefix(lr.RedirectURL, testServer.URL+"/logout"))
+	assert.Empty(t, parsedURL.Query().Get("id_token_hint"), "id_token_hint should be absent when there is no session")
+	assert.Equal(t, "kiali-client", parsedURL.Query().Get("client_id"))
+	assert.NotEmpty(t, parsedURL.Query().Get("post_logout_redirect_uri"))
+}
+
+func TestTerminateSessionFallsBackWhenNoEndSessionEndpoint(t *testing.T) {
+	require := require.New(t)
+	cachedOpenIdMetadata.Store(nil)
+
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	require.NoError(err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 3600
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(conf)
+
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	require.NoError(err)
+
+	controller := OpenIdAuthController{
+		SessionStore: store,
+		conf:         conf,
+	}
+
+	r := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	rr := httptest.NewRecorder()
+
+	result := controller.TerminateSession(r, rr)
+	assert.Nil(t, result, "should return nil when end_session_endpoint is not available")
+}
+
+func TestTerminateSessionUsesIdTokenFieldInAccessTokenMode(t *testing.T) {
+	require := require.New(t)
+	cachedOpenIdMetadata.Store(nil)
+
+	var oidcMetadata []byte
+	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.well-known/openid-configuration" {
+			w.WriteHeader(200)
+			_, _ = w.Write(oidcMetadata)
+		}
+	}))
+	defer testServer.Close()
+
+	oidcMeta := openIdMetadata{
+		Issuer:                 testServer.URL,
+		AuthURL:                testServer.URL + "/auth",
+		EndSessionURL:          testServer.URL + "/logout",
+		TokenURL:               testServer.URL + "/token",
+		JWKSURL:                testServer.URL + "/jwks",
+		ResponseTypesSupported: []string{"code"},
+	}
+	oidcMetadata, err := json.Marshal(oidcMeta)
+	require.NoError(err)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 3600
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = testServer.URL
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	config.Set(conf)
+
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	require.NoError(err)
+
+	controller := OpenIdAuthController{
+		SessionStore: store,
+		conf:         conf,
+	}
+
+	// Simulate access_token mode: IdToken holds the id_token, Token holds the access_token
+	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyOpenId, clockTime.Add(time.Hour), &oidcSessionPayload{
+		IdToken: "the-real-id-token",
+		Subject: "user@example.com",
+		Token:   "the-access-token",
+	})
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	err = store.CreateSession(r, rr, *sessionData)
+	require.NoError(err)
+
+	logoutReq := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	for _, c := range rr.Result().Cookies() {
+		logoutReq.AddCookie(c)
+	}
+	logoutRR := httptest.NewRecorder()
+
+	result := controller.TerminateSession(logoutReq, logoutRR)
+
+	require.NotNil(result)
+	lr, ok := result.(*LogoutRedirect)
+	require.True(ok, "expected LogoutRedirect, got %T", result)
+
+	parsedURL, err := url.Parse(lr.RedirectURL)
+	require.NoError(err)
+	assert.Equal(t, "the-real-id-token", parsedURL.Query().Get("id_token_hint"),
+		"should use IdToken (id_token) not Token (access_token) for id_token_hint")
+	assert.Empty(t, parsedURL.Query().Get("client_id"),
+		"client_id should not be sent when id_token_hint is present")
+}
+
+func TestTerminateSessionUsesDiscoveryOverrideEndSessionEndpoint(t *testing.T) {
+	require := require.New(t)
+	cachedOpenIdMetadata.Store(nil)
+
+	clockTime := time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC)
+	util.Clock = util.ClockMock{Time: clockTime}
+
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.LoginToken.ExpirationSeconds = 3600
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+	conf.Auth.OpenId.IssuerUri = "https://idp.example.com"
+	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Auth.OpenId.PostLogoutRedirectURI = "https://kiali.example.com/"
+	conf.Auth.OpenId.DiscoveryOverride = config.DiscoveryOverrideConfig{
+		AuthorizationEndpoint: "https://idp.example.com/auth",
+		EndSessionEndpoint:    "https://idp.example.com/logout",
+		TokenEndpoint:         "https://idp.example.com/token",
+	}
+	config.Set(conf)
+
+	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
+	require.NoError(err)
+
+	controller := OpenIdAuthController{
+		SessionStore: store,
+		conf:         conf,
+	}
+
+	sessionData, err := NewSessionData(conf.KubernetesConfig.ClusterName, config.AuthStrategyOpenId, clockTime.Add(time.Hour), &oidcSessionPayload{
+		IdToken: "override-id-token",
+		Subject: "user@example.com",
+		Token:   "override-id-token",
+	})
+	require.NoError(err)
+
+	rr := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	err = store.CreateSession(r, rr, *sessionData)
+	require.NoError(err)
+
+	logoutReq := httptest.NewRequest(http.MethodGet, "/api/logout", nil)
+	for _, c := range rr.Result().Cookies() {
+		logoutReq.AddCookie(c)
+	}
+	logoutRR := httptest.NewRecorder()
+
+	result := controller.TerminateSession(logoutReq, logoutRR)
+
+	require.NotNil(result)
+	lr, ok := result.(*LogoutRedirect)
+	require.True(ok, "expected LogoutRedirect, got %T", result)
+
+	parsedURL, err := url.Parse(lr.RedirectURL)
+	require.NoError(err)
+	assert.True(t, strings.HasPrefix(lr.RedirectURL, "https://idp.example.com/logout"))
+	assert.Equal(t, "override-id-token", parsedURL.Query().Get("id_token_hint"))
+	assert.Empty(t, parsedURL.Query().Get("client_id"), "client_id should not be sent when id_token_hint is present")
+	assert.Equal(t, "https://kiali.example.com/", parsedURL.Query().Get("post_logout_redirect_uri"))
+}
+
 func TestOpenIdPKCEWorksWithProviderThatIgnoresIt(t *testing.T) {
 	cachedOpenIdMetadata.Store(nil)
 	var oidcMetadata []byte

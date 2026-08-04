@@ -1,45 +1,41 @@
-import axios, { AxiosHeaders } from 'axios';
+import type { AxiosHeaders } from 'axios';
+import axios from 'axios';
 import { config } from '../config';
-import { LoginSession } from '../store/Store';
-import { App, AppQuery } from '../types/App';
-import { AppList, AppListQuery } from '../types/AppList';
-import { AuthInfo, getCSRFToken } from '../types/Auth';
-import { DurationInSeconds, HTTP_VERBS, Password, TimeInSeconds, UserName } from '../types/Common';
-import { DashboardModel } from 'types/Dashboards';
-import { GrafanaInfo } from '../types/GrafanaInfo';
-import { ChatSessionUsageMetric } from '../types/Chatbot';
-import { GraphDefinition, GraphElementsQuery, NodeParamsType, NodeType } from '../types/Graph';
-import {
-  AppHealth,
+import type { LoginSession } from '../store/Store';
+import type { App, AppQuery } from '../types/App';
+import type { AppList, AppListQuery } from '../types/AppList';
+import type { AuthInfo } from '../types/Auth';
+import { getCSRFToken } from '../types/Auth';
+import type { DurationInSeconds, Password, TimeInSeconds, UserName } from '../types/Common';
+import { HTTP_VERBS } from '../types/Common';
+import type { DashboardModel } from 'types/Dashboards';
+import type { GrafanaInfo } from '../types/GrafanaInfo';
+import type { ChatSessionUsageMetric } from '../types/Chatbot';
+import type { GraphDefinition, GraphElementsQuery, NodeParamsType } from '../types/Graph';
+import { NodeType } from '../types/Graph';
+import type {
   HealthStatusId,
   NamespaceAppHealth,
   NamespaceHealth,
   NamespaceHealthQuery,
   NamespaceServiceHealth,
-  NamespaceWorkloadHealth,
-  ServiceHealth,
-  WorkloadHealth
+  NamespaceWorkloadHealth
 } from '../types/Health';
-import {
+import { AppHealth, ServiceHealth, WorkloadHealth } from '../types/Health';
+import type {
   IstioConfigDetails,
   IstioConfigDetailsQuery,
   IstioPermissions,
   IstioPermissionsQuery
 } from '../types/IstioConfigDetails';
-import {
-  dicTypeToGVK,
-  gvkType,
-  IstioConfigList,
-  IstioConfigListQuery,
-  IstioConfigsMapQuery
-} from '../types/IstioConfigList';
-import {
+import type { IstioConfigList, IstioConfigListQuery, IstioConfigsMapQuery } from '../types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from '../types/IstioConfigList';
+import type {
   Pod,
   PodLogs,
   ValidationStatus,
   EnvoyProxyDump,
   VirtualService,
-  DestinationRuleC,
   K8sHTTPRoute,
   K8sGRPCRoute,
   OutboundTrafficPolicy,
@@ -49,41 +45,43 @@ import {
   GroupVersionKind,
   ZtunnelConfigDump
 } from '../types/IstioObjects';
-import { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
-import {
+import { DestinationRuleC } from '../types/IstioObjects';
+import type { ComponentStatus, IstiodResourceThresholds } from '../types/IstioStatus';
+import type {
   ConfigurationValidation,
   TracingCheck,
   TracingInfo,
   TracingResponse,
   TracingSingleResponse
 } from '../types/TracingInfo';
-import { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
-import { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
-import { IstioMetricsMap, MetricsPerNamespace, MetricsStatsResult, ResourceUsageMetricsMap } from '../types/Metrics';
-import { Namespace } from '../types/Namespace';
-import { KialiDisabledFeatures, ServerConfig } from '../types/ServerConfig';
-import { StatusState } from '../types/StatusState';
-import {
-  ServiceDetailsInfo,
-  ServiceDetailsQuery,
-  ServiceUpdateQuery,
-  isServiceDetailsInfo
-} from '../types/ServiceInfo';
-import { ServiceList, ServiceListQuery } from '../types/ServiceList';
-import { Span, TracingQuery } from 'types/Tracing';
-import { TLSStatus } from '../types/TLSStatus';
-import {
+import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
+import type { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import type {
+  IstioMetricsMap,
+  MetricsPerNamespace,
+  MetricsStatsResult,
+  ResourceUsageMetricsMap
+} from '../types/Metrics';
+import type { Namespace } from '../types/Namespace';
+import type { KialiDisabledFeatures, ServerConfig } from '../types/ServerConfig';
+import type { StatusState } from '../types/StatusState';
+import type { ServiceDetailsInfo, ServiceDetailsQuery, ServiceUpdateQuery } from '../types/ServiceInfo';
+import { isServiceDetailsInfo } from '../types/ServiceInfo';
+import type { ServiceList, ServiceListQuery } from '../types/ServiceList';
+import type { Span, TracingQuery } from 'types/Tracing';
+import type { TLSStatus } from '../types/TLSStatus';
+import type {
   Workload,
   WorkloadListQuery,
   ClusterWorkloadsResponse,
   WorkloadQuery,
   WorkloadUpdateQuery
 } from '../types/Workload';
-import { ApiError, ApiResponse } from 'types/Api';
+import type { ApiError, ApiResponse } from 'types/Api';
 import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
-import { PersesInfo } from '../types/PersesInfo';
-import { ChatRequest, Prompt } from 'types/Chatbot';
+import type { PersesInfo } from '../types/PersesInfo';
+import type { ChatRequest, Prompt } from 'types/Chatbot';
 
 export const ANONYMOUS_USER = 'anonymous';
 
@@ -191,9 +189,13 @@ export const login = async (
   return axios(axiosRequest);
 };
 
-export const logout = (): Promise<ApiResponse<void>> => {
-  return newRequest<void>(HTTP_VERBS.GET, urls.logout, {}, {});
+export const logout = (): Promise<ApiResponse<LogoutResponse>> => {
+  return newRequest<LogoutResponse>(HTTP_VERBS.GET, urls.logout, {}, {});
 };
+
+export interface LogoutResponse {
+  redirect_url?: string;
+}
 
 export const getAuthInfo = async (): Promise<ApiResponse<AuthInfo>> => {
   return newRequest<AuthInfo>(HTTP_VERBS.GET, urls.authInfo, {}, {});

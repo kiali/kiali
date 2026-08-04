@@ -1489,9 +1489,11 @@ func TestOpenIdDiscoveryOverrideDefaults(t *testing.T) {
 
 	// Test that DiscoveryOverride fields are initialized to empty strings
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.EndSessionEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, "", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
+	assert.Equal(t, "", conf.Auth.OpenId.PostLogoutRedirectURI)
 }
 
 // TestOpenIdDiscoveryOverrideUnmarshaling tests that DiscoveryOverride can be unmarshaled from YAML
@@ -1502,8 +1504,10 @@ auth:
   openid:
     issuer_uri: "https://example.com"
     client_id: "kiali-client"
+    post_logout_redirect_uri: "https://example.com/kiali"
     discovery_override:
       authorization_endpoint: "https://custom.example.com/auth"
+      end_session_endpoint: "https://custom.example.com/logout"
       token_endpoint: "https://custom.example.com/token"
       userinfo_endpoint: "https://custom.example.com/userinfo"
       jwks_uri: "https://custom.example.com/jwks"
@@ -1515,7 +1519,9 @@ auth:
 	assert.Equal(t, "openid", conf.Auth.Strategy)
 	assert.Equal(t, "https://example.com", conf.Auth.OpenId.IssuerUri)
 	assert.Equal(t, "kiali-client", conf.Auth.OpenId.ClientId)
+	assert.Equal(t, "https://example.com/kiali", conf.Auth.OpenId.PostLogoutRedirectURI)
 	assert.Equal(t, "https://custom.example.com/auth", conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, "https://custom.example.com/logout", conf.Auth.OpenId.DiscoveryOverride.EndSessionEndpoint)
 	assert.Equal(t, "https://custom.example.com/token", conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	assert.Equal(t, "https://custom.example.com/userinfo", conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, "https://custom.example.com/jwks", conf.Auth.OpenId.DiscoveryOverride.JwksUri)
@@ -1528,8 +1534,10 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	conf.Auth.Strategy = "openid"
 	conf.Auth.OpenId.IssuerUri = "https://example.com"
 	conf.Auth.OpenId.ClientId = "kiali-client"
+	conf.Auth.OpenId.PostLogoutRedirectURI = "https://example.com/kiali"
 	conf.Auth.OpenId.DiscoveryOverride = DiscoveryOverrideConfig{
 		AuthorizationEndpoint: "https://custom.example.com/auth",
+		EndSessionEndpoint:    "https://custom.example.com/logout",
 		TokenEndpoint:         "https://custom.example.com/token",
 		UserinfoEndpoint:      "https://custom.example.com/userinfo",
 		JwksUri:               "https://custom.example.com/jwks",
@@ -1547,7 +1555,9 @@ func TestOpenIdDiscoveryOverrideMarshalUnmarshal(t *testing.T) {
 	assert.Equal(t, conf.Auth.Strategy, conf2.Auth.Strategy)
 	assert.Equal(t, conf.Auth.OpenId.IssuerUri, conf2.Auth.OpenId.IssuerUri)
 	assert.Equal(t, conf.Auth.OpenId.ClientId, conf2.Auth.OpenId.ClientId)
+	assert.Equal(t, conf.Auth.OpenId.PostLogoutRedirectURI, conf2.Auth.OpenId.PostLogoutRedirectURI)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint, conf2.Auth.OpenId.DiscoveryOverride.AuthorizationEndpoint)
+	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.EndSessionEndpoint, conf2.Auth.OpenId.DiscoveryOverride.EndSessionEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.TokenEndpoint, conf2.Auth.OpenId.DiscoveryOverride.TokenEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint, conf2.Auth.OpenId.DiscoveryOverride.UserinfoEndpoint)
 	assert.Equal(t, conf.Auth.OpenId.DiscoveryOverride.JwksUri, conf2.Auth.OpenId.DiscoveryOverride.JwksUri)

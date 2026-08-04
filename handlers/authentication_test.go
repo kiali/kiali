@@ -293,8 +293,9 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 }
 
 type fakeAuthController struct {
-	sessions authentication.UserSessions
-	err      error
+	sessions     authentication.UserSessions
+	err          error
+	terminateErr error
 }
 
 func (f *fakeAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*authentication.UserSessionData, error) {
@@ -302,7 +303,7 @@ func (f *fakeAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 }
 
 func (f *fakeAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
-	return nil
+	return f.terminateErr
 }
 
 func (f *fakeAuthController) ValidateSession(r *http.Request, w http.ResponseWriter) (authentication.UserSessions, error) {
@@ -515,6 +516,41 @@ func TestHandleStripsImpersonationHeadersForOpenShift(t *testing.T) {
 	require.Empty(capturedHeaders.Get("Impersonate-User"), "Impersonate-User should be stripped")
 	require.Empty(capturedHeaders.Get("Impersonate-Group"), "Impersonate-Group should be stripped")
 	require.Empty(capturedHeaders.Get("Impersonate-Extra-Scopes"), "Impersonate-Extra-* should be stripped")
+}
+
+func TestLogoutHandlerReturnsRedirectWhenControllerReturnsLogoutRedirect(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+
+	controller := &fakeAuthController{
+		terminateErr: &authentication.LogoutRedirect{RedirectURL: "https://idp.example.com/logout?id_token_hint=abc"},
+	}
+
+	r := httptest.NewRequest("GET", "/api/logout", nil)
+	w := httptest.NewRecorder()
+	Logout(conf, controller)(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Result().StatusCode)
+
+	var body map[string]string
+	err := json.NewDecoder(w.Result().Body).Decode(&body)
+	require.NoError(t, err)
+	assert.Equal(t, "https://idp.example.com/logout?id_token_hint=abc", body["redirect_url"])
+}
+
+func TestLogoutHandlerReturns204WhenNoRedirect(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenId
+
+	controller := &fakeAuthController{
+		terminateErr: nil,
+	}
+
+	r := httptest.NewRequest("GET", "/api/logout", nil)
+	w := httptest.NewRecorder()
+	Logout(conf, controller)(w, r)
+
+	assert.Equal(t, http.StatusNoContent, w.Result().StatusCode)
 }
 
 type rejectClient struct{ kubernetes.UserClientInterface }

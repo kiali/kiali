@@ -609,9 +609,10 @@ type ImpersonationConfig struct {
 // DiscoveryOverrideConfig contains explicit OIDC endpoints to override auto-discovery
 type DiscoveryOverrideConfig struct {
 	AuthorizationEndpoint string `yaml:"authorization_endpoint,omitempty"`
+	EndSessionEndpoint    string `yaml:"end_session_endpoint,omitempty"`
+	JwksUri               string `yaml:"jwks_uri,omitempty"`
 	TokenEndpoint         string `yaml:"token_endpoint,omitempty"`
 	UserinfoEndpoint      string `yaml:"userinfo_endpoint,omitempty"`
-	JwksUri               string `yaml:"jwks_uri,omitempty"`
 }
 
 // OpenIdConfig contains specific configuration for authentication using an OpenID provider
@@ -632,6 +633,7 @@ type OpenIdConfig struct {
 	HTTPSProxy            string                  `yaml:"https_proxy,omitempty"`
 	InsecureSkipVerifyTLS bool                    `yaml:"insecure_skip_verify_tls,omitempty"`
 	IssuerUri             string                  `yaml:"issuer_uri,omitempty"`
+	PostLogoutRedirectURI string                  `yaml:"post_logout_redirect_uri,omitempty"`
 	Scopes                []string                `yaml:"scopes,omitempty"`
 	UsernameClaim         string                  `yaml:"username_claim,omitempty"`
 }
@@ -1045,12 +1047,14 @@ func NewConfig() (c *Config) {
 				DisableRBAC:             false,
 				DiscoveryOverride: DiscoveryOverrideConfig{
 					AuthorizationEndpoint: "",
+					EndSessionEndpoint:    "",
+					JwksUri:               "",
 					TokenEndpoint:         "",
 					UserinfoEndpoint:      "",
-					JwksUri:               "",
 				},
 				InsecureSkipVerifyTLS: false,
 				IssuerUri:             "",
+				PostLogoutRedirectURI: "",
 				Scopes:                []string{"openid", "profile", "email"},
 				UsernameClaim:         "sub",
 			},

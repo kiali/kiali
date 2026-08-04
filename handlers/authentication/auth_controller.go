@@ -42,6 +42,8 @@ type AuthController interface {
 
 	// TerminateSession performs the needed procedures to terminate an existing session. If there is no
 	// active session, nothing is performed. If there is some invalid session, it is cleared.
+	// Implementations may return a *LogoutRedirect (which satisfies error) to signal that the
+	// caller should redirect the user to an IdP logout page; this is not an error condition.
 	TerminateSession(r *http.Request, w http.ResponseWriter) error
 }
 
@@ -111,6 +113,20 @@ func (e *AuthenticationFailureError) Error() string {
 	}
 
 	return e.Reason
+}
+
+// LogoutRedirect is returned by TerminateSession when the IdP supports
+// RP-Initiated Logout. It carries the URL the frontend should navigate to
+// in order to terminate the IdP session. It implements the error interface
+// (following the io.EOF sentinel pattern) so it can travel through the
+// existing TerminateSession() error return without changing the
+// AuthController interface -- only the OpenID controller uses it.
+type LogoutRedirect struct {
+	RedirectURL string
+}
+
+func (e *LogoutRedirect) Error() string {
+	return fmt.Sprintf("logout redirect to: %s", e.RedirectURL)
 }
 
 // ErrSubjectMismatch is returned when the subject claim in a token does not match
