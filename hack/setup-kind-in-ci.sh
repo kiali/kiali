@@ -375,6 +375,7 @@ setup_kind_singlecluster() {
     kubectl apply -f "${SCRIPT_DIR}"/istio/perses/dashboard.yaml
 
     ${HELM} repo add perses https://perses.github.io/helm-charts
+    # Chart 0.23+ mounts /etc/perses/plugins itself; do not re-add that volume in values.yaml.
     ${HELM} install perses perses/perses -n istio-system -f "${SCRIPT_DIR}"/istio/perses/values.yaml
 
           PERSES_ARGS=(
