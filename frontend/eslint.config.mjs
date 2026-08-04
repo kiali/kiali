@@ -36,6 +36,13 @@ export default tseslint.config(
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'import-x/no-default-export': 'error',
       'no-case-declarations': 'off',
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{ name: 'lodash', message: "Use named imports from 'lodash-es' instead." }],
+          patterns: [{ group: ['lodash/*'], message: "Use named imports from 'lodash-es' instead." }]
+        }
+      ],
       'no-console': 'off',
       'no-extra-boolean-cast': 'off',
       'no-prototype-builtins': 'off',
