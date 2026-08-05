@@ -41,6 +41,85 @@ func TestDestinationRuleMultimatch(t *testing.T) {
 	assertConfigListValidations(*configList, kiali.BOOKINFO, kubernetes.DestinationRules, "all.googleapis.com2", "KIA0201", true, require)
 }
 
+// TestDestinationRuleSidecarImportSkipsForeignMultimatch verifies issue #10124:
+// with Sidecar egress limited to ./* (+ control plane), DestinationRules for a
+// foreign host are not co-applied by local proxies, so KIA0201 must not fire.
+func TestDestinationRuleSidecarImportSkipsForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-dr-sidecar-foreign-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-dr-a", kubernetes.DestinationRules, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA0201", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-dr-b", kubernetes.DestinationRules, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA0201", require)
+
+	configList, err := kiali.IstioConfigsList(kiali.BOOKINFO)
+	require.NoError(err)
+	assertConfigListHasNoCode(*configList, kiali.BOOKINFO, "kiali-test-foreign-dr-a", "KIA0201", require)
+	assertConfigListHasNoCode(*configList, kiali.BOOKINFO, "kiali-test-foreign-dr-b", "KIA0201", require)
+}
+
+// TestDestinationRuleSidecarImportKeepsImportedForeignMultimatch: when Sidecar
+// imports the foreign namespace (default/*), same-host DRs still get KIA0201.
+func TestDestinationRuleSidecarImportKeepsImportedForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-dr-sidecar-imported-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	// Assert code presence (not Valid/Checks[0]): other DR checks may also appear.
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-a", kubernetes.DestinationRules, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasCode(*config, "KIA0201", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-imported-dr-b", kubernetes.DestinationRules, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasCode(*config, "KIA0201", require)
+}
+
+// TestVirtualServiceSidecarImportSkipsForeignMultimatch: Sidecar ./* means foreign-host
+// VirtualServices are not co-applied, so KIA1106 must not fire.
+func TestVirtualServiceSidecarImportSkipsForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-vs-sidecar-foreign-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-vs-a", kubernetes.VirtualServices, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1106", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-vs-b", kubernetes.VirtualServices, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1106", require)
+}
+
+// TestServiceEntrySidecarImportSkipsForeignMultimatch: Sidecar ./* means foreign-host
+// ServiceEntries are not co-applied, so KIA1211 must not fire.
+func TestServiceEntrySidecarImportSkipsForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-se-sidecar-foreign-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-se-a", kubernetes.ServiceEntries, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1211", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-se-b", kubernetes.ServiceEntries, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1211", require)
+}
+
 func TestDestinationRuleExportMultimatch(t *testing.T) {
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-destination-rule-export-multimatch.yaml")
@@ -384,4 +463,41 @@ func assertConfigDetailsValidations(configDetails models.IstioConfigDetails, nam
 	require.Equal(valid, configDetails.IstioValidation.Valid)
 	require.NotEmpty(configDetails.IstioValidation.Checks)
 	require.Equal(code, configDetails.IstioValidation.Checks[0].Code)
+}
+
+func assertConfigDetailsHasCode(configDetails models.IstioConfigDetails, code string, require *require.Assertions) {
+	require.NotNil(configDetails.IstioValidation)
+	found := false
+	for _, check := range configDetails.IstioValidation.Checks {
+		if check.Code == code {
+			found = true
+			break
+		}
+	}
+	require.True(found, "expected validation code %s on %s/%s, got %+v",
+		code, configDetails.IstioValidation.Namespace, configDetails.IstioValidation.Name, configDetails.IstioValidation.Checks)
+}
+
+func assertConfigDetailsHasNoCode(configDetails models.IstioConfigDetails, code string, require *require.Assertions) {
+	require.NotNil(configDetails.IstioValidation)
+	for _, check := range configDetails.IstioValidation.Checks {
+		require.NotEqual(code, check.Code, "unexpected validation code %s on %s/%s", code, configDetails.IstioValidation.Namespace, configDetails.IstioValidation.Name)
+	}
+}
+
+func assertConfigListHasNoCode(configList models.IstioConfigList, namespace, objName, code string, require *require.Assertions) {
+	require.NotNil(configList.IstioValidations)
+	found := false
+	for key, validation := range configList.IstioValidations {
+		if key.Name != objName || key.Namespace != namespace {
+			continue
+		}
+		found = true
+		require.NotNil(validation)
+		for _, check := range validation.Checks {
+			require.NotEqual(code, check.Code, "unexpected validation code %s on %s/%s", code, namespace, objName)
+		}
+		break
+	}
+	require.True(found, "expected config %s/%s to appear in validations list", namespace, objName)
 }

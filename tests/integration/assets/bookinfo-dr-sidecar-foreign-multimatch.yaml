@@ -1,0 +1,36 @@
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: kiali-test-sidecar-import
+spec:
+  egress:
+  - hosts:
+    - "./*"
+    - "istio-system/*"
+---
+# Two DestinationRules for the same foreign host. With Sidecar ./* these hosts
+# are not imported by bookinfo proxies, so KIA0201 must not be reported.
+# Use kubernetes.default (always present) so KIA0202 does not obscure the check.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: kiali-test-foreign-dr-a
+spec:
+  host: kubernetes.default.svc.cluster.local
+  exportTo:
+  - "."
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: kiali-test-foreign-dr-b
+spec:
+  host: kubernetes.default.svc.cluster.local
+  exportTo:
+  - "."
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST

@@ -15,6 +15,7 @@ type DestinationRulesChecker struct {
 	Conf             *config.Config
 	DestinationRules []*networking_v1.DestinationRule
 	IdentityDomain   string
+	ImportScope      common.ImportScope
 	MTLSDetails      kubernetes.MTLSDetails
 	Namespaces       models.Namespaces
 }
@@ -31,11 +32,16 @@ func (in DestinationRulesChecker) Check() models.IstioValidations {
 func (in DestinationRulesChecker) runGroupChecks() models.IstioValidations {
 	validations := models.IstioValidations{}
 
+	// Conflict/override checks only consider hosts imported by the effective Sidecar.
+	conflictDRs := common.FilterDestinationRulesByImport(in.DestinationRules, in.ImportScope)
+
 	enabledDRCheckers := []GroupChecker{
-		destinationrules.MultiMatchChecker{Cluster: in.Cluster, DestinationRules: in.DestinationRules, IdentityDomain: in.IdentityDomain, Namespaces: in.Namespaces.GetNames()},
+		destinationrules.MultiMatchChecker{Cluster: in.Cluster, DestinationRules: conflictDRs, IdentityDomain: in.IdentityDomain, Namespaces: in.Namespaces.GetNames()},
 	}
 
-	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{Cluster: in.Cluster, DestinationRules: in.DestinationRules, IdentityDomain: in.IdentityDomain, MTLSDetails: in.MTLSDetails})
+	mtlsDetails := in.MTLSDetails
+	mtlsDetails.DestinationRules = common.FilterDestinationRulesByImport(mtlsDetails.DestinationRules, in.ImportScope)
+	enabledDRCheckers = append(enabledDRCheckers, destinationrules.TrafficPolicyChecker{Cluster: in.Cluster, DestinationRules: conflictDRs, IdentityDomain: in.IdentityDomain, MTLSDetails: mtlsDetails})
 
 	for _, checker := range enabledDRCheckers {
 		validations = validations.MergeValidations(checker.Check())

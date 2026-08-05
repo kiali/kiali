@@ -1,0 +1,36 @@
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: kiali-test-sidecar-import
+spec:
+  egress:
+  - hosts:
+    - "./*"
+    - "default/*"
+    - "istio-system/*"
+---
+# Same foreign host pair as the skip case, but Sidecar imports default/*, so
+# both DestinationRules are co-applied and KIA0201 is expected.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: kiali-test-imported-dr-a
+spec:
+  host: kubernetes.default.svc.cluster.local
+  exportTo:
+  - "."
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: kiali-test-imported-dr-b
+spec:
+  host: kubernetes.default.svc.cluster.local
+  exportTo:
+  - "."
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_REQUEST

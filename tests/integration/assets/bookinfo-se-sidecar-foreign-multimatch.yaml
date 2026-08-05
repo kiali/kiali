@@ -1,0 +1,43 @@
+apiVersion: networking.istio.io/v1
+kind: Sidecar
+metadata:
+  name: kiali-test-sidecar-import-se
+spec:
+  egress:
+  - hosts:
+    - "./*"
+    - "istio-system/*"
+---
+# Two ServiceEntries for the same foreign host. With Sidecar ./* these hosts
+# are not imported by bookinfo proxies, so KIA1211 must not be reported.
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: kiali-test-foreign-se-a
+spec:
+  hosts:
+  - kubernetes.default.svc.cluster.local
+  location: MESH_INTERNAL
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: NONE
+  exportTo:
+  - "."
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: kiali-test-foreign-se-b
+spec:
+  hosts:
+  - kubernetes.default.svc.cluster.local
+  location: MESH_INTERNAL
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: NONE
+  exportTo:
+  - "."
