@@ -84,6 +84,42 @@ func TestDestinationRuleSidecarImportKeepsImportedForeignMultimatch(t *testing.T
 	assertConfigDetailsHasCode(*config, "KIA0201", require)
 }
 
+// TestVirtualServiceSidecarImportSkipsForeignMultimatch: Sidecar ./* means foreign-host
+// VirtualServices are not co-applied, so KIA1106 must not fire.
+func TestVirtualServiceSidecarImportSkipsForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-vs-sidecar-foreign-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-vs-a", kubernetes.VirtualServices, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1106", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-vs-b", kubernetes.VirtualServices, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1106", require)
+}
+
+// TestServiceEntrySidecarImportSkipsForeignMultimatch: Sidecar ./* means foreign-host
+// ServiceEntries are not co-applied, so KIA1211 must not fire.
+func TestServiceEntrySidecarImportSkipsForeignMultimatch(t *testing.T) {
+	require := require.New(t)
+	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-se-sidecar-foreign-multimatch.yaml")
+	require.True(utils.ApplyFileWithCleanup(t, filePath, kiali.BOOKINFO))
+
+	config, err := getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-se-a", kubernetes.ServiceEntries, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1211", require)
+
+	config, err = getConfigDetails(kiali.BOOKINFO, "kiali-test-foreign-se-b", kubernetes.ServiceEntries, true, require)
+	require.NoError(err)
+	require.NotNil(config)
+	assertConfigDetailsHasNoCode(*config, "KIA1211", require)
+}
+
 func TestDestinationRuleExportMultimatch(t *testing.T) {
 	require := require.New(t)
 	filePath := path.Join(cmd.KialiProjectRoot, kiali.ASSETS+"/bookinfo-destination-rule-export-multimatch.yaml")

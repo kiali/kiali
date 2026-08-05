@@ -99,6 +99,34 @@ func TestDestinationRulesCheckerSidecarImportSkipsSameForeignHostMultiMatch(t *t
 	}
 }
 
+// Ambient namespaces use unrestricted ImportScope (buildImportScope skips Sidecar
+// filtering). Foreign same-host DRs must still multi-match when filtering is off.
+func TestDestinationRulesCheckerUnrestrictedImportKeepsForeignMultiMatch(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	assert := assert.New(t)
+
+	drs := []*networking_v1.DestinationRule{
+		data.CreateTestDestinationRule("istio-test1", "vault-a", "echo.vault.svc.cluster.local"),
+		data.CreateTestDestinationRule("istio-test1", "vault-b", "echo.vault.svc.cluster.local"),
+	}
+
+	vals := DestinationRulesChecker{
+		Cluster:          config.DefaultClusterID,
+		Conf:             conf,
+		DestinationRules: drs,
+		IdentityDomain:   "svc.cluster.local",
+		ImportScope:      common.ImportScope{}, // unrestricted — Ambient / no Sidecar
+		MTLSDetails:      kubernetes.MTLSDetails{},
+		Namespaces:       models.Namespaces{{Name: "istio-test1"}, {Name: "vault"}},
+	}.Check()
+
+	keyA := models.BuildKey(kubernetes.DestinationRules, "vault-a", "istio-test1", config.DefaultClusterID)
+	keyB := models.BuildKey(kubernetes.DestinationRules, "vault-b", "istio-test1", config.DefaultClusterID)
+	assert.True(hasCheckCode(vals[keyA], "KIA0201"), "Ambient/unrestricted must keep KIA0201")
+	assert.True(hasCheckCode(vals[keyB], "KIA0201"), "Ambient/unrestricted must keep KIA0201")
+}
+
 // When Sidecar imports the foreign namespace, same-host multi-match still applies.
 func TestDestinationRulesCheckerSidecarImportKeepsImportedForeignMultiMatch(t *testing.T) {
 	conf := config.NewConfig()
@@ -161,6 +189,32 @@ func TestDestinationRulesCheckerSidecarImportSkipsForeignTrafficPolicyOverride(t
 	if v, ok := vals[key]; ok {
 		assert.False(hasCheckCode(v, "KIA0204"), "foreign DR should not get traffic-policy override under ./*")
 	}
+}
+
+// Ambient/unrestricted ImportScope must still report VS single-host multi-match.
+func TestVirtualServiceCheckerUnrestrictedImportKeepsForeignSingleHost(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	assert := assert.New(t)
+
+	vss := []*networking_v1.VirtualService{
+		data.CreateEmptyVirtualService("vs-a", "istio-test1", []string{"reviews.bookinfo.svc.cluster.local"}),
+		data.CreateEmptyVirtualService("vs-b", "istio-test1", []string{"reviews.bookinfo.svc.cluster.local"}),
+	}
+
+	vals := VirtualServiceChecker{
+		Cluster:         config.DefaultClusterID,
+		Conf:            conf,
+		IdentityDomain:  "svc.cluster.local",
+		ImportScope:     common.ImportScope{},
+		Namespaces:      models.Namespaces{{Name: "istio-test1"}, {Name: "bookinfo"}},
+		VirtualServices: vss,
+	}.Check()
+
+	keyA := models.BuildKey(kubernetes.VirtualServices, "vs-a", "istio-test1", config.DefaultClusterID)
+	keyB := models.BuildKey(kubernetes.VirtualServices, "vs-b", "istio-test1", config.DefaultClusterID)
+	assert.True(hasCheckCode(vals[keyA], "KIA1106"))
+	assert.True(hasCheckCode(vals[keyB], "KIA1106"))
 }
 
 func TestVirtualServiceCheckerSidecarImportSkipsForeignSingleHost(t *testing.T) {
