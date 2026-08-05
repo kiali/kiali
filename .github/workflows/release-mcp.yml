@@ -9,8 +9,8 @@ name: Release MCP
 # After publish (or with skip_publication=true), optionally validates the Kiali
 # version pinned by the selected kubernetes-mcp-server ref (build/kiali.mk →
 # quay.io/kiali/kiali_mcp:<pin>) using tests/integration/mcp_tools.
-# Validation is non-blocking (continue-on-error): a failed pin check does not
-# fail the Release MCP workflow after a successful publish.
+# Validate-only (skip_publication=true) is blocking. After a successful publish,
+# validation is non-blocking so a pin check failure does not fail the release.
 
 on:
   workflow_dispatch:
@@ -34,7 +34,7 @@ on:
         type: string
         default: main
       run_validation:
-        description: After publish (or when skipping publish), run mcp_tools against the MCP pin (non-blocking)
+        description: Run mcp_tools against the MCP pin (blocking if skip_publication; non-blocking after publish)
         required: false
         type: boolean
         default: true
@@ -247,8 +247,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     needs: [initialize, publish]
-    # Non-blocking: publish can succeed even if pin validation fails.
-    continue-on-error: true
+    # Blocking for validate-only; non-blocking after a successful publish.
+    continue-on-error: ${{ github.event.inputs.skip_publication != 'true' }}
     # Run when validation is enabled and either publish succeeded or was skipped.
     if: >-
       always() &&
