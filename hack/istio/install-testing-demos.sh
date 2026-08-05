@@ -187,26 +187,28 @@ spec:
 EOF
   fi
   # Installed demos should be the exact same for both environments.
+  # Ambient demos do not depend on bookinfo. Install them first so Sidecar↔Ambient and
+  # waypoint traffic accumulate while bookinfo (and other demos) are still starting.
+  if [ "${AMBIENT_ENABLED}" == "true" ] && [ "${BOOKINFO_ONLY}" != "true" ]; then
+    echo "Deploying sidecar-ambient ..."
+    "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
+
+    echo "Deploying waypoint proxies ..."
+    "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
+  fi
+
   # Only the args passed to the scripts differ from each other.
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     echo "Deploying bookinfo demo ..."
     "${SCRIPT_DIR}/install-bookinfo-demo.sh" -tg -in ${ISTIO_NAMESPACE} -a ${ARCH} ${gateway_yaml:+-g ${gateway_yaml}} ${AMBIENT_ARGS_BOOKINFO}
-    
+
     # Only install additional demos if not in bookinfo-only mode
     if [ "${BOOKINFO_ONLY}" != "true" ]; then
-      # Install just bookinfo for now for Ambient
       if [ "${AMBIENT_ENABLED}" != "true" ]; then
         echo "Deploying error rates demo ..."
         "${SCRIPT_DIR}/install-error-rates-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} --install-beta ${INSTALL_ERRORRATES_BETA} ${AMBIENT_ARGS_ERROR_RATES}
       else
         ${CLIENT_EXE} apply -f "${SCRIPT_DIR}/ambient/resources/waypoint.yaml" -n bookinfo
-
-        # Install early so Sidecar↔Ambient traffic accumulates while other demos start.
-        echo "Deploying sidecar-ambient ..."
-        "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
-
-        echo "Deploying waypoint proxies ..."
-        "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
       fi
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
@@ -219,15 +221,8 @@ EOF
 
     # Only install additional demos if not in bookinfo-only mode
     if [ "${BOOKINFO_ONLY}" != "true" ]; then
-      # Install early so Sidecar↔Ambient traffic accumulates while other demos start.
-      echo "Deploying sidecar-ambient ..."
-      "${SCRIPT_DIR}/ambient/install-sidecars-ambient.sh" -c ${CLIENT_EXE} -a ${ARCH}
-
       echo "Deploying sleep demo ..."
       "${SCRIPT_DIR}/install-sleep-demo.sh" -c kubectl -in ${ISTIO_NAMESPACE} -a ${ARCH} ${AMBIENT_ARGS_BOOKINFO}
-
-      echo "Deploying waypoint proxies ..."
-      "${SCRIPT_DIR}/ambient/install-waypoints.sh" -c ${CLIENT_EXE} -a ${ARCH}
     fi
 
   else
