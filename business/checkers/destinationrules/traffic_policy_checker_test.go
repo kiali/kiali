@@ -240,6 +240,25 @@ func TestCrossNamespaceServiceEntryProtection(t *testing.T) {
 	testValidationsNotAdded(t, destinationRules, mTLSDetails)
 }
 
+// Context: Service-scoped wildcard mTLS (e.g. *.vault), not mesh/ns-wide
+// Context: Another DestinationRule for that namespace has no trafficPolicy
+// It must not treat the service-scoped DR as non-local mTLS (no traffic-policy warning).
+func TestServiceScopedMTLSWildcardDoesNotDriveTrafficPolicy(t *testing.T) {
+	mTLSDetails := kubernetes.MTLSDetails{
+		DestinationRules: []*networking_v1.DestinationRule{
+			// Host targets vault services but DR lives in another namespace — not ns-wide for istio-test1.
+			data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+				data.CreateEmptyDestinationRule("istio-test1", "vault-mtls", "*.vault.svc.cluster.local")),
+		},
+	}
+
+	destinationRules := []*networking_v1.DestinationRule{
+		data.CreateEmptyDestinationRule("vault", "reviews", "reviews"),
+	}
+
+	testValidationsNotAdded(t, destinationRules, mTLSDetails)
+}
+
 func testValidationAdded(t *testing.T, destinationRules []*networking_v1.DestinationRule, mTLSDetails kubernetes.MTLSDetails) *models.IstioValidation {
 	assert := assert.New(t)
 
