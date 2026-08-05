@@ -6,7 +6,7 @@ import { bindActionCreators } from 'redux';
 import { KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { TrafficRate, isAmbientRate, isGrpcRate, isHttpRate, isTcpRate } from '../../../types/Graph';
-import * as _ from 'lodash';
+import { startCase } from 'lodash-es';
 import { trafficRatesSelector } from 'store/Selectors';
 import {
   BoundingClientAwareComponent,
@@ -55,7 +55,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
     const trafficRateOptions: TrafficRateOptionType[] = [
       {
         id: TrafficRate.AMBIENT_GROUP,
-        labelText: _.startCase(TrafficRate.AMBIENT_GROUP),
+        labelText: startCase(TrafficRate.AMBIENT_GROUP),
         isChecked: trafficRates.includes(TrafficRate.AMBIENT_GROUP),
         isHidden: !serverConfig.ambientEnabled,
         tooltip: (
@@ -67,7 +67,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.GRPC_GROUP,
-        labelText: _.startCase(TrafficRate.GRPC_GROUP),
+        labelText: startCase(TrafficRate.GRPC_GROUP),
         isChecked: trafficRates.includes(TrafficRate.GRPC_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -78,7 +78,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.HTTP_GROUP,
-        labelText: _.startCase(TrafficRate.HTTP_GROUP),
+        labelText: startCase(TrafficRate.HTTP_GROUP),
         isChecked: trafficRates.includes(TrafficRate.HTTP_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>
@@ -89,7 +89,7 @@ const GraphTrafficComponent: React.FC<GraphTrafficProps> = (props: GraphTrafficP
       },
       {
         id: TrafficRate.TCP_GROUP,
-        labelText: _.startCase(TrafficRate.TCP_GROUP),
+        labelText: startCase(TrafficRate.TCP_GROUP),
         isChecked: trafficRates.includes(TrafficRate.TCP_GROUP),
         tooltip: (
           <div style={{ textAlign: 'left' }}>

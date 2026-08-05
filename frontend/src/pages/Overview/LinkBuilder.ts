@@ -1,5 +1,5 @@
 import { URLParam } from '../../app/History';
-import { camelCase } from 'lodash';
+import { camelCase } from 'lodash-es';
 import { categoryFilter, healthFilter, modeFilter, NamespaceCategory } from '../Namespaces/Filters';
 import { isMultiCluster, Paths } from '../../config';
 import { DEGRADED, FAILURE, HealthStatusId, NOT_READY } from '../../types/Health';

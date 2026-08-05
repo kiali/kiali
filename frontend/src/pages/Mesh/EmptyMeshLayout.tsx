@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, EmptyStateFooter } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import * as _ from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedMeshElements } from 'types/Mesh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
@@ -30,8 +30,8 @@ const emptyStateStyle = kialiStyle({
 
 export class EmptyMeshLayout extends React.Component<EmptyMeshLayoutProps> {
   shouldComponentUpdate(nextProps: EmptyMeshLayoutProps): boolean {
-    const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
-    const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);
+    const currentIsEmpty = this.props.elements === undefined || isEmpty(this.props.elements.nodes);
+    const nextIsEmpty = nextProps.elements === undefined || isEmpty(nextProps.elements.nodes);
 
     // Update if we have elements and we are not loading
     if (!nextProps.isLoading && !nextIsEmpty) {

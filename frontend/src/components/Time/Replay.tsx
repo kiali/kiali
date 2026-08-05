@@ -15,7 +15,7 @@ import { toString } from './Utils';
 import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
-import _ from 'lodash';
+import { mapValues } from 'lodash-es';
 import { HistoryManager, URLParam, location } from 'app/History';
 
 type ReduxStateProps = {
@@ -86,7 +86,7 @@ const replayIntervals = {
   1800000: '30 minutes'
 };
 
-const replayLastIntervals = _.mapValues(replayIntervals, i => `Last ${i}`);
+const replayLastIntervals = mapValues(replayIntervals, i => `Last ${i}`);
 
 // key represents speed in milliseconds (i.e. how long to wait before refreshing-the-frame (fetching new data)
 const replaySpeeds: ReplaySpeed[] = [

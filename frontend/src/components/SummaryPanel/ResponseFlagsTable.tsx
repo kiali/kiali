@@ -1,5 +1,5 @@
 import * as React from 'react';
-import _ from 'lodash';
+import { keys } from 'lodash-es';
 import { Responses } from '../../types/Graph';
 import { responseFlags } from '../../utils/ResponseFlags';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
@@ -29,8 +29,8 @@ interface Row {
 export const ResponseFlagsTable: React.FC<ResponseFlagsTableProps> = (props: ResponseFlagsTableProps) => {
   const getRows = (responses: Responses): Row[] => {
     const rows: Row[] = [];
-    _.keys(responses).forEach(code => {
-      _.keys(responses[code].flags).forEach(f => {
+    keys(responses).forEach(code => {
+      keys(responses[code].flags).forEach(f => {
         rows.push({ key: `${code} ${f}`, code: code, flags: f, val: responses[code].flags[f] });
       });
     });

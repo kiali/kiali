@@ -22,7 +22,7 @@ import { naTextStyle } from 'styles/HealthStyle';
 import { classes } from 'typestyle';
 import { Paths } from 'config';
 import { URLParam } from 'app/History';
-import { camelCase } from 'lodash';
+import { camelCase } from 'lodash-es';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { KialiLink } from 'components/Link/KialiLink';

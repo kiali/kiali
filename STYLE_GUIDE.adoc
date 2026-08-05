@@ -75,6 +75,10 @@ instance := &MyStruct{
 
 By default, we try to follow community conventions. link:https://github.com/basarat/typescript-book/blob/master/docs/styleguide/styleguide.md[Basarat's Style Guide] is used as a reference, with a few exceptions that are listed below:
 
+==== Imports
+
+Prefer named imports from `lodash-es` (ex: `import { cloneDeep } from 'lodash-es';`) instead of importing from `lodash` or using default/namespace imports (ex: `import _ from 'lodash';`). `lodash-es` is tree-shakeable, which keeps bundle size down, and named imports make dependencies on specific utilities explicit. This is enforced by the `no-restricted-imports` ESLint rule.
+
 ==== File names
 
 Most files are named after the main type / class / interface it's exporting. For instance, `ServiceList.ts` is named after the `ServiceList` interface that it's exporting. Which means that, unlike in Basarat's guide, we often use `PascalCase`.

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import _ from 'lodash';
+import { keys } from 'lodash-es';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Responses } from '../../types/Graph';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
@@ -36,8 +36,8 @@ interface Row {
 export const ResponseHostsTable: React.FC<ResponseHostsTableProps> = (props: ResponseHostsTableProps) => {
   const getRows = (responses: Responses): Row[] => {
     const rows: Row[] = [];
-    _.keys(responses).forEach(code => {
-      _.keys(responses[code].hosts).forEach(h => {
+    keys(responses).forEach(code => {
+      keys(responses[code].hosts).forEach(h => {
         rows.push({ key: `${code} ${h}`, code: code, host: h, val: responses[code].hosts[h] });
       });
     });

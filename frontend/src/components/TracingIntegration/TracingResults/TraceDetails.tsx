@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import _round from 'lodash/round';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { tabCardStyle } from 'styles/FlexStyles';
@@ -30,7 +29,7 @@ import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
 import { TracingUrlProvider } from 'types/Tracing';
-import _ from 'lodash';
+import { map, round } from 'lodash-es';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
@@ -163,11 +162,11 @@ class TraceDetailsComponent extends React.Component<Props> {
         colorMap={healthColorMap}
         dataRange={{ from: -10, to: 10 }}
         colorUndefined={PFColors.ColorLight200}
-        valueFormat={v => `${v > 0 ? '+' : ''}${_round(v, 1)}`}
+        valueFormat={v => `${v > 0 ? '+' : ''}${round(v, 1)}`}
         tooltip={(x, _, v) => {
           // Build explanation tooltip
           const slowOrFast = v > 0 ? 'slower' : 'faster';
-          const diff = _round(Math.abs(v), 2);
+          const diff = round(Math.abs(v), 2);
           const versus =
             x === similarTracesToShow.length
               ? 'the mean of all similar traces on chart'
@@ -194,7 +193,7 @@ class TraceDetailsComponent extends React.Component<Props> {
 
     const comparisonLink =
       similarTraces.length > 0
-        ? this.props.tracingURLProvider?.ComparisonUrl(trace.traceID, ..._.map(similarTraces, t => t.traceID))
+        ? this.props.tracingURLProvider?.ComparisonUrl(trace.traceID, ...map(similarTraces, t => t.traceID))
         : undefined;
 
     return (

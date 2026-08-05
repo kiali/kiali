@@ -6,7 +6,7 @@ import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { GraphType } from 'types/Graph';
-import * as _ from 'lodash';
+import { capitalize, findKey, mapValues, startCase } from 'lodash-es';
 import { TimeDurationComponent } from '../../../components/Time/TimeDurationComponent';
 import { GraphTraffic } from './GraphTraffic';
 
@@ -37,7 +37,7 @@ const rightToolbarStyle = kialiStyle({
  *
  *  Example:  GraphType => {'APP': 'App', 'VERSIONED_APP': 'VersionedApp'}
  */
-const GRAPH_TYPES = _.mapValues(GraphType, val => `${_.capitalize(_.startCase(val))} graph`);
+const GRAPH_TYPES = mapValues(GraphType, val => `${capitalize(startCase(val))} graph`);
 
 export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (props: GraphSecondaryMastheadProps) => {
   const setGraphType = (type: string): void => {
@@ -47,7 +47,7 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
     }
   };
 
-  const graphTypeKey = _.findKey(GraphType, val => val === props.graphType)!;
+  const graphTypeKey = findKey(GraphType, val => val === props.graphType)!;
 
   return (
     <SecondaryMasthead>

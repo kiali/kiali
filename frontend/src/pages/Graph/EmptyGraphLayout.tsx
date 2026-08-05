@@ -8,7 +8,7 @@ import {
   EmptyStateFooter
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import * as _ from 'lodash';
+import { isEmpty, isEqual } from 'lodash-es';
 import { Namespace } from '../../types/Namespace';
 import { KialiIcon } from '../../config/KialiIcon';
 import { DecoratedGraphElements } from '../../types/Graph';
@@ -43,8 +43,8 @@ const emptyStateStyle = kialiStyle({
 
 export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps> {
   shouldComponentUpdate(nextProps: EmptyGraphLayoutProps): boolean {
-    const currentIsEmpty = this.props.elements === undefined || _.isEmpty(this.props.elements.nodes);
-    const nextIsEmpty = nextProps.elements === undefined || _.isEmpty(nextProps.elements.nodes);
+    const currentIsEmpty = this.props.elements === undefined || isEmpty(this.props.elements.nodes);
+    const nextIsEmpty = nextProps.elements === undefined || isEmpty(nextProps.elements.nodes);
 
     // Update if we have elements and we are not loading
     if (!nextProps.isLoading && !nextIsEmpty) {
@@ -56,7 +56,7 @@ export class EmptyGraphLayout extends React.Component<EmptyGraphLayoutProps> {
       return true;
     }
     // Do not update if we have elements and the namespace didn't change, as this means we are refreshing
-    return !(!nextIsEmpty && _.isEqual(this.props.namespaces, nextProps.namespaces));
+    return !(!nextIsEmpty && isEqual(this.props.namespaces, nextProps.namespaces));
   }
 
   namespacesText(): React.ReactElement | null {

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { KialiDispatch } from 'types/Redux';
-import _ from 'lodash';
+import { difference } from 'lodash-es';
 import { kialiStyle } from 'styles/StyleUtils';
 import {
   Button,
@@ -105,7 +105,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     const urlNamespaces = (HistoryManager.getParam(URLParam.NAMESPACES) || '').split(',').filter(Boolean);
     if (
       urlNamespaces.length > 0 &&
-      _.difference(
+      difference(
         urlNamespaces,
         this.props.activeNamespaces.map(item => item.name)
       )

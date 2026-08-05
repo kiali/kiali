@@ -1,4 +1,4 @@
-import { camelCase } from 'lodash';
+import { camelCase } from 'lodash-es';
 import { URLParam, HistoryManager, router, location } from '../../app/History';
 import { config } from '../../config';
 import {

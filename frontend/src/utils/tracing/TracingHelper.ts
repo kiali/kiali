@@ -1,4 +1,4 @@
-import _round from 'lodash/round';
+import { round } from 'lodash-es';
 import moment from 'moment';
 import {
   EnvoySpanInfo,
@@ -389,7 +389,7 @@ export function formatDuration(micros: number): string {
     unit = 's';
     d /= 1000;
   }
-  return _round(d, 2) + unit;
+  return round(d, 2) + unit;
 }
 
 const TODAY = 'Today';

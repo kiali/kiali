@@ -9,7 +9,7 @@ import { Overlay } from 'types/Overlay';
 import { KChart } from './KChart';
 import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
 import { BrushHandlers } from './Container';
-import { isArray } from 'lodash';
+import { isArray } from 'lodash-es';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 

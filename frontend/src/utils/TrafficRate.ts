@@ -1,5 +1,5 @@
 import { GraphElement } from '@patternfly/react-topology';
-import _ from 'lodash';
+import { reduce } from 'lodash-es';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 const safeRate = (rate: any) => (isNaN(rate) ? 0.0 : Number(rate));
@@ -40,7 +40,7 @@ export const getTrafficRateGrpc = (element: any, trafficType: TRAFFIC_GRPC = NOD
 };
 
 export const getAccumulatedTrafficRateGrpc = (elements: any): TrafficRateGrpc => {
-  return _.reduce(
+  return reduce(
     elements,
     (r: TrafficRateGrpc, element): TrafficRateGrpc => {
       const elementTrafficRate = getTrafficRateGrpc(element, EDGE_GRPC);
@@ -95,7 +95,7 @@ export const getTrafficRateHttp = (element: any, trafficType: TRAFFIC_HTTP = NOD
 };
 
 export const getAccumulatedTrafficRateHttp = (elements): TrafficRateHttp => {
-  return _.reduce(
+  return reduce(
     elements,
     (r: TrafficRateHttp, element): TrafficRateHttp => {
       const elementTrafficRate = getTrafficRateHttp(element, EDGE_HTTP);
@@ -132,7 +132,7 @@ export const getTrafficRateTcp = (element: any, trafficType: TRAFFIC_TCP = NODE_
 };
 
 export const getAccumulatedTrafficRateTcp = (elements: any): TrafficRateTcp => {
-  return _.reduce(
+  return reduce(
     elements,
     (r: TrafficRateTcp, element): TrafficRateTcp => {
       const elementTrafficRate = getTrafficRateTcp(element, EDGE_TCP);

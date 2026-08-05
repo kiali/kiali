@@ -9,7 +9,7 @@ import {
   StatusCondition,
   Validations
 } from '../types/IstioObjects';
-import _ from 'lodash';
+import { isObject, mergeWith } from 'lodash-es';
 import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
 
 // Guard against prototype pollution via crafted keys in deep-merged objects.
@@ -26,12 +26,12 @@ export const mergeJsonPatch = (objectModified: object, object?: object): object 
     if (!objValue) {
       return null;
     }
-    if (_.isObject(objValue) && _.isObject(srcValue)) {
-      _.mergeWith(objValue, srcValue, customizer);
+    if (isObject(objValue) && isObject(srcValue)) {
+      mergeWith(objValue, srcValue, customizer);
     }
     return objValue;
   };
-  _.mergeWith(objectModified, object, customizer);
+  mergeWith(objectModified, object, customizer);
   return objectModified;
 };
 

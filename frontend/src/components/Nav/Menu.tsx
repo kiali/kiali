@@ -1,5 +1,5 @@
 import * as React from 'react';
-import _ from 'lodash';
+import { filter } from 'lodash-es';
 import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-compat';
 import { Divider, Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
@@ -67,7 +67,7 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
       let isRoute = matchPath({ path: item.to }, pathname) ? true : false;
 
       if (!isRoute && item.pathsActive) {
-        isRoute = _.filter(item.pathsActive, path => path.test(pathname)).length > 0;
+        isRoute = filter(item.pathsActive, path => path.test(pathname)).length > 0;
       }
 
       return isRoute;

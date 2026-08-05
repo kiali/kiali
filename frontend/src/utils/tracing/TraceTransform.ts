@@ -1,4 +1,4 @@
-import _isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash-es';
 import { KeyValuePair, Span, SpanData, JaegerTrace, TraceData, RichSpanData } from 'types/TracingInfo';
 import { extractSpanInfo, getAppFromSpan, getWorkloadFromSpan, isWaypointProxySpan } from './TracingHelper';
 
@@ -183,7 +183,7 @@ export function transformTraceData(data: TraceData<SpanData>, cluster?: string):
     const idCount = spanIdCounts.get(spanID);
     if (idCount != null) {
       console.warn(`Dupe spanID, ${idCount + 1} x ${spanID}`, span, spanMap.get(spanID));
-      if (_isEqual(span, spanMap.get(spanID))) {
+      if (isEqual(span, spanMap.get(spanID))) {
         console.warn('\t two spans with same ID have `isEqual(...) === true`');
       }
       spanIdCounts.set(spanID, idCount + 1);
