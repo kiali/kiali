@@ -1,14 +1,7 @@
 import * as React from 'react';
 import { CubesIcon } from '@patternfly/react-icons';
-import {
-  DefaultGroup,
-  Node,
-  observer,
-  Rect,
-  ScaleDetailsLevel,
-  ShapeProps,
-  WithSelectionProps
-} from '@patternfly/react-topology';
+import type { Node, Rect, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
+import { DefaultGroup, observer, ScaleDetailsLevel } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -108,16 +101,17 @@ const StyleGroupComponent: React.FC<StyleGroupProps> = ({
 
   const boxRef = React.useRef<Rect | null>(null);
   boxRef.current = element.getBounds();
+  const boxBounds = boxRef.current;
 
   return (
     <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      {data.isFocus && (
+      {data.isFocus && boxBounds && (
         <rect
           className={focusOverlayStyle}
-          x={boxRef.current.x}
-          y={boxRef.current.y}
-          width={boxRef.current.width}
-          height={boxRef.current.height}
+          x={boxBounds.x}
+          y={boxBounds.y}
+          width={boxBounds.width}
+          height={boxBounds.height}
         />
       )}
       <DefaultGroup

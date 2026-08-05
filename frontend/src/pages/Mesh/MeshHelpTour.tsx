@@ -1,5 +1,5 @@
 import { PopoverPosition } from '@patternfly/react-core';
-import { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
+import type { TourStopInfo, TourInfo } from 'components/Tour/TourStop';
 import { MeshShortcuts } from './toolbar/MeshShortcuts';
 import { t } from 'utils/I18nUtils';
 
@@ -42,7 +42,7 @@ export const MeshTourStops: { [name: string]: TourStopInfo } = {
   },
   Shortcuts: {
     name: t('Shortcuts'),
-    htmlDescription: MeshShortcuts,
+    htmlDescription: MeshShortcuts(),
     position: PopoverPosition.leftStart
   },
   TargetPanel: {
