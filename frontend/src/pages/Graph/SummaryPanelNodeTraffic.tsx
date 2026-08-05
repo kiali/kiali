@@ -225,9 +225,10 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
     // Ignore outbound traffic if it is a non-root outsider (because they have no outbound edges) or a
     // service node or aggregate node (because they don't have "real" outbound edges).
-    if (
-      !([NodeType.SERVICE, NodeType.AGGREGATE].includes(nodeData.nodeType) || (nodeData.isOutside && !nodeData.isRoot))
-    ) {
+    if (!(
+      [NodeType.SERVICE, NodeType.AGGREGATE].includes(nodeData.nodeType) ||
+      (nodeData.isOutside && !nodeData.isRoot)
+    )) {
       const filters = [] as string[];
 
       if (this.hasHttpOut(nodeData) || (this.hasGrpcOut(nodeData) && isGrpcRequests)) {
@@ -407,15 +408,15 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {hr()}
         </div>
 
-        {hasGrpc && !hasGrpcIn && renderNoTraffic('gRPC inbound')}
+        {hasGrpc && !nodeData.isRoot && !hasGrpcIn && renderNoTraffic('gRPC inbound')}
         {hasGrpc && !hasGrpcOut && renderNoTraffic('gRPC outbound')}
         {!hasGrpc && renderNoTraffic('gRPC')}
 
-        {hasHttp && !hasHttpIn && renderNoTraffic('HTTP inbound')}
+        {hasHttp && !nodeData.isRoot && !hasHttpIn && renderNoTraffic('HTTP inbound')}
         {hasHttp && !hasHttpOut && renderNoTraffic('HTTP outbound')}
         {!hasHttp && renderNoTraffic('HTTP')}
 
-        {hasTcp && !hasTcpIn && renderNoTraffic('TCP inbound')}
+        {hasTcp && !nodeData.isRoot && !hasTcpIn && renderNoTraffic('TCP inbound')}
         {hasTcp && !hasTcpOut && renderNoTraffic('TCP outbound')}
         {!hasTcp && renderNoTraffic('TCP')}
       </>
@@ -423,12 +424,14 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   }
 
   private renderGrpcRates = (node: any): React.ReactNode => {
+    const nodeData = node.getData();
     const inbound = getTrafficRateGrpc(node);
     const outboundEdges = edgesOut([node]);
     const outbound = getAccumulatedTrafficRateGrpc(outboundEdges);
 
     return (
       <InOutRateTableGrpc
+        hideIn={nodeData.isRoot}
         title="gRPC Traffic (requests per second):"
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
@@ -441,12 +444,14 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
   };
 
   private renderHttpRates = (node: any): React.ReactNode => {
+    const nodeData = node.getData();
     const inbound = getTrafficRateHttp(node);
     const outboundEdges = edgesOut([node]);
     const outbound = getAccumulatedTrafficRateHttp(outboundEdges);
 
     return (
       <InOutRateTableHttp
+        hideIn={nodeData.isRoot}
         title="HTTP (requests per second):"
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
