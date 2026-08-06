@@ -13,7 +13,7 @@ import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
 import type { KialiAppState } from '../../store/Store';
 import { classes } from 'typestyle';
-import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
+import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -57,7 +57,7 @@ const containerStyle = kialiStyle({
   borderRadius: '6px',
   padding: '1rem',
   boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-  $nest: glassHighContrastSurfaceNest()
+  $nest: contrastSurfaceNest()
 });
 
 const blueDisplay = kialiStyle({

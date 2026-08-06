@@ -31,8 +31,7 @@ import type { StatusState } from 'types/StatusState';
 import { StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
-import { applyDocumentTheme, getKialiTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
-import { isParentKiosk } from '../components/Kiosk/KioskActions';
+import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
 import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import type { ChatAIConfig } from 'types/Chatbot';
@@ -342,7 +341,7 @@ class AuthenticationControllerComponent extends React.Component<
     // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
     // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
     // do not overwrite console classes.
-    if (isParentKiosk(kiosk) && window.top === window.self) {
+    if (isParentOwnedTheme()) {
       syncReduxThemeFromDocument();
     } else {
       const theme = getKialiTheme();

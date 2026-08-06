@@ -5,14 +5,19 @@ import type { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
-import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
+import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 const containerStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
   flexShrink: 0,
   paddingBottom: '0.5rem',
-  $nest: glassHighContrastSurfaceNest({
-    highContrast: {
+  $nest: contrastSurfaceNest({
+    // Match RenderContent / tabs so detail pages share one background under glass.
+    glass: {
+      boxShadow: 'none',
+      border: 'none'
+    },
+    contrast: {
       border: 'none',
       borderBottom: `1px solid ${PFColors.BorderDefault}`
     }

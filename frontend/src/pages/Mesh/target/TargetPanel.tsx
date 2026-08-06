@@ -28,7 +28,7 @@ import { TargetPanelDataPlane } from './TargetPanelDataPlane';
 import { TargetPanelControlPlane } from './TargetPanelControlPlane';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { TargetPanelMetrics } from './TargetPanelMetrics';
-import { glassHighContrastSurfaceNest } from 'styles/ThemeSurfaces';
+import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   kiosk: string;
@@ -46,8 +46,8 @@ const mainStyle = kialiStyle({
   padding: '0',
   position: 'relative',
   backgroundColor: PFColors.BackgroundColor100,
-  $nest: glassHighContrastSurfaceNest({
-    highContrast: {
+  $nest: contrastSurfaceNest({
+    contrast: {
       border: 'none',
       borderLeft: `1px solid ${PFColors.BorderDefault}`
     }
@@ -76,7 +76,7 @@ const toggleTargetPanelStyle = kialiStyle({
   textAlign: 'center',
   transform: 'rotate(-90deg)',
   transformOrigin: 'left top 0',
-  $nest: glassHighContrastSurfaceNest()
+  $nest: contrastSurfaceNest()
 });
 
 export const TargetPanelComponent: React.FC<TargetPanelProps> = (props: TargetPanelProps) => {

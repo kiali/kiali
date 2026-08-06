@@ -3,19 +3,21 @@ import { PFColors } from 'components/Pf/PfColors';
 import { PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST } from 'types/Common';
 
 /**
- * Nested selectors for Kiali surfaces that must adapt under PatternFly glass
- * and high-contrast modes. Use inside kialiStyle({ ...base, $nest: glassHighContrastSurfaceNest() }).
+ * Nested selectors for Kiali surfaces under OpenShift contrast modes (glass / high-contrast).
+ * Use inside kialiStyle({ ...base, $nest: contrastSurfaceNest() }).
  *
- * Glass: translucent fill + blur so PF background imagery can show through.
+ * Glass (OSSMC/OCP 5.0): keep an opaque primary fill. PatternFly forbids glass-on-glass
+ * layering; dense Kiali UI (tables, legends, detail panels) must stay readable over the
+ * Console's page glass background.
  * High contrast: solid fill, no soft shadows, stronger border (glass is disabled).
  */
-export const glassHighContrastSurfaceNest = (overrides?: {
+export const contrastSurfaceNest = (overrides?: {
+  contrast?: NestedCSSProperties;
   glass?: NestedCSSProperties;
-  highContrast?: NestedCSSProperties;
 }): NestedCSSProperties['$nest'] => ({
   [`html.${PF_THEME_GLASS} &`]: {
-    backgroundColor: PFColors.BackgroundColorGlass,
-    backdropFilter: 'blur(var(--pf-t--global--background--filter--glass--default))',
+    backgroundColor: PFColors.BackgroundColor100,
+    backdropFilter: 'none',
     borderColor: 'var(--pf-t--global--border--color--glass--default)',
     boxShadow: 'var(--pf-t--global--box-shadow--glass--default)',
     ...overrides?.glass
@@ -25,12 +27,12 @@ export const glassHighContrastSurfaceNest = (overrides?: {
     backdropFilter: 'none',
     boxShadow: 'none',
     border: `1px solid ${PFColors.BorderDefault}`,
-    ...overrides?.highContrast
+    ...overrides?.contrast
   }
 });
 
 /** Soft panel shadows that should disappear under high contrast. */
-export const highContrastNoShadowNest = (): NestedCSSProperties['$nest'] => ({
+export const contrastNoShadowNest = (): NestedCSSProperties['$nest'] => ({
   [`html.${PF_THEME_HIGH_CONTRAST} &`]: {
     boxShadow: 'none',
     '-webkit-box-shadow': 'none',
