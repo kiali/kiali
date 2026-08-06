@@ -1,0 +1,72 @@
+# Playwright-only CI for the Cypress → Playwright migration epic branch.
+# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration
+# and by pushes to that branch.
+name: Playwright CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+    - epic/playwright-migration
+  push:
+    branches:
+    - epic/playwright-migration
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  initialize:
+    permissions:
+      contents: read
+    name: Initialize
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      target-branch: ${{ github.base_ref || github.ref_name }}
+      build-branch: ${{ env.branch-master || env.branch-pr }}
+    steps:
+    - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
+    - run: |
+        echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.ref_name }}"
+      id: branch-master
+      if: ${{ !github.base_ref }}
+    - run: |
+        echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> ${{ github.base_ref }}"
+      id: branch-pr
+      if: ${{ github.base_ref }}
+
+  test_backend:
+    name: Run backend linters and unit tests
+    uses: ./.github/workflows/test-lint-backend.yml
+    needs: [initialize]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  build_frontend:
+    name: Build frontend
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [initialize]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  build_backend:
+    name: Build backend
+    uses: ./.github/workflows/build-backend.yml
+    needs: [initialize, test_backend, build_frontend]
+    with:
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright:
+    name: Run Playwright smoke tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
