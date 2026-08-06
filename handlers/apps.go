@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -12,6 +11,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -31,22 +31,24 @@ type appParams struct {
 	IncludeIstioResources bool `json:"istioResources"`
 }
 
-func (p *appParams) extract(r *http.Request, conf *config.Config) {
+// Package-level schema — documents the app list/details query contract.
+var appQueryParams = []queryparams.Param{
+	queryparams.BoolParam("health", true),
+	queryparams.BoolParam("istioResources", true),
+	queryparams.StringParam("namespaces", ""),
+}
+
+func (p *appParams) extract(r *http.Request, conf *config.Config) error {
 	vars := mux.Vars(r)
-	query := r.URL.Query()
-	p.baseExtract(conf, r)
+	result, err := p.parseSchema(conf, r, appQueryParams...)
+	if err != nil {
+		return err
+	}
 	p.Namespace = vars["namespace"]
-	p.ClusterName = clusterNameFromQuery(conf, query)
 	p.AppName = vars["app"]
-	var err error
-	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
-	if err != nil {
-		p.IncludeHealth = true
-	}
-	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
-	if err != nil {
-		p.IncludeIstioResources = true
-	}
+	p.IncludeHealth = result.Bool("health")
+	p.IncludeIstioResources = result.Bool("istioResources")
+	return nil
 }
 
 // ClusterApps is the API handler to fetch all the apps to be displayed, related to a single cluster
@@ -65,7 +67,10 @@ func ClusterApps(
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := appParams{}
-		p.extract(r, conf)
+		if err := p.extract(r, conf); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -134,10 +139,13 @@ func AppDetails(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := appParams{}
-		p.extract(r, conf)
+		if err := p.extract(r, conf); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		criteria := business.AppCriteria{
-			Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: true, IncludeHealth: p.IncludeHealth,
+			Namespace: p.Namespace, AppName: p.AppName, IncludeIstioResources: p.IncludeIstioResources, IncludeHealth: p.IncludeHealth,
 			RateInterval: p.RateInterval, QueryTime: p.QueryTime, Cluster: p.ClusterName,
 		}
 

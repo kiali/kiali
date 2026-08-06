@@ -12,6 +12,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -33,7 +34,7 @@ func CustomDashboard(
 	return func(w http.ResponseWriter, r *http.Request) {
 		queryParams := r.URL.Query()
 		pathParams := mux.Vars(r)
-		cluster := clusterNameFromQuery(conf, queryParams)
+		cluster := queryparams.ClusterName(conf, queryParams)
 		namespace := pathParams["namespace"]
 		dashboardName := pathParams["dashboard"]
 
@@ -52,7 +53,7 @@ func CustomDashboard(
 		params := models.DashboardQuery{Namespace: namespace}
 		err = extractDashboardQueryParams(queryParams, &params, info)
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -89,6 +90,18 @@ func CustomDashboard(
 }
 
 func extractDashboardQueryParams(queryParams url.Values, q *models.DashboardQuery, namespaceInfo *models.Namespace) error {
+	allowed := append([]queryparams.Param{
+		queryparams.PresenceParam("additionalLabels"),
+		queryparams.ClusterParam(),
+		queryparams.PresenceParam("labelsFilters"),
+		queryparams.PresenceParam("rawDataAggregator"),
+		queryparams.PresenceParam("workload"),
+		queryparams.PresenceParam("workloadType"),
+	}, baseMetricsQueryParams...)
+	if err := queryparams.RejectUnknown(queryParams, queryparams.Names(allowed)...); err != nil {
+		return err
+	}
+
 	q.FillDefaults()
 	q.LabelsFilters = extractLabelsFilters(queryParams.Get("labelsFilters"))
 	additionalLabels := strings.Split(queryParams.Get("additionalLabels"), ",")
@@ -136,7 +149,7 @@ func AppDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		app := vars["app"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -145,7 +158,7 @@ func AppDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, App: app}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -177,7 +190,7 @@ func ServiceDashboard(
 		service := vars["service"]
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
+		cluster := queryparams.ClusterName(conf, queryParams)
 
 		layer, err := getLayer(r, conf, cache, clientFactory, cpm, prom, traceLoader, grafana, discovery)
 		if err != nil {
@@ -193,7 +206,7 @@ func ServiceDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Service: service}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -233,7 +246,7 @@ func WorkloadDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		workload := vars["workload"]
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
@@ -242,7 +255,7 @@ func WorkloadDashboard(
 
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workload}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
@@ -271,7 +284,7 @@ func ZtunnelDashboard(
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		namespaceInfo, _ := checkNamespaceAccessMultiCluster(w, r, conf, cache, discovery, clientFactory, namespace)
 		if namespaceInfo == nil {
@@ -284,7 +297,7 @@ func ZtunnelDashboard(
 		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace}
 
 		if err := extractIstioMetricsQueryParams(r, &params, oldestNs); err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 )
@@ -16,7 +17,13 @@ func ConfigDump(conf *config.Config, kialiCache cache.KialiCache, clientFactory 
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		cluster := queryparams.ClusterName(conf, query)
 		namespace := params["namespace"]
 		pod := params["pod"]
 
@@ -48,7 +55,13 @@ func ConfigDumpResourceEntries(conf *config.Config, kialiCache cache.KialiCache,
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		cluster := queryparams.ClusterName(conf, query)
 		namespace := params["namespace"]
 		pod := params["pod"]
 		resource := params["resource"]

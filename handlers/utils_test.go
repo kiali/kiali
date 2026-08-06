@@ -15,6 +15,7 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -37,13 +38,13 @@ func TestClusterNameFromQuery(t *testing.T) {
 	conf := config.NewConfig()
 
 	query := url.Values{"clusterName": []string{"east"}}
-	assert.Equal("east", clusterNameFromQuery(conf, query))
+	assert.Equal("east", queryparams.ClusterName(conf, query))
 
 	query = url.Values{}
-	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(conf, query))
+	assert.Equal(conf.KubernetesConfig.ClusterName, queryparams.ClusterName(conf, query))
 
 	query = url.Values{"notcluster": []string{"east"}}
-	assert.Equal(conf.KubernetesConfig.ClusterName, clusterNameFromQuery(conf, query))
+	assert.Equal(conf.KubernetesConfig.ClusterName, queryparams.ClusterName(conf, query))
 }
 
 func TestCheckNamespaceAccessWithService(t *testing.T) {

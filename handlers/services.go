@@ -3,7 +3,6 @@ package handlers
 import (
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -32,24 +32,42 @@ type serviceListParams struct {
 	IncludeOnlyDefinitions bool `json:"onlyDefinitions"`
 }
 
-func (p *serviceListParams) extract(conf *config.Config, r *http.Request) {
+// Package-level schema — documents the service list query contract.
+var serviceListQueryParams = []queryparams.Param{
+	queryparams.BoolParam("health", true),
+	queryparams.BoolParam("istioResources", true),
+	queryparams.BoolParam("onlyDefinitions", true),
+	queryparams.StringParam("namespaces", ""),
+}
+
+// serviceDetailsQueryParams documents the ServiceDetails query contract.
+// health is accepted for compatibility with clients/tests; GetServiceDetails always includes health today.
+var serviceDetailsQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.BoolParam("health", true),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
+	queryparams.BoolParam("validate", false),
+}
+
+// serviceUpdateQueryParams documents the ServiceUpdate query contract.
+var serviceUpdateQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.StringParam("patchType", defaultPatchType),
+	queryparams.PromDurationParam("rateInterval", config.DefaultHealthRateInterval),
+	queryparams.BoolParam("validate", false),
+}
+
+func (p *serviceListParams) extract(conf *config.Config, r *http.Request) error {
 	vars := mux.Vars(r)
-	query := r.URL.Query()
-	p.baseExtract(conf, r)
+	result, err := p.parseSchema(conf, r, serviceListQueryParams...)
+	if err != nil {
+		return err
+	}
 	p.Namespace = vars["namespace"]
-	var err error
-	p.IncludeHealth, err = strconv.ParseBool(query.Get("health"))
-	if err != nil {
-		p.IncludeHealth = true
-	}
-	p.IncludeIstioResources, err = strconv.ParseBool(query.Get("istioResources"))
-	if err != nil {
-		p.IncludeIstioResources = true
-	}
-	p.IncludeOnlyDefinitions, err = strconv.ParseBool(query.Get("onlyDefinitions"))
-	if err != nil {
-		p.IncludeOnlyDefinitions = true
-	}
+	p.IncludeHealth = result.Bool("health")
+	p.IncludeIstioResources = result.Bool("istioResources")
+	p.IncludeOnlyDefinitions = result.Bool("onlyDefinitions")
+	return nil
 }
 
 // ClustersServices is the API handler to fetch the list of services from a given cluster
@@ -67,7 +85,10 @@ func ClustersServices(
 		query := r.URL.Query()
 		namespacesQueryParam := query.Get("namespaces") // csl of namespaces
 		p := serviceListParams{}
-		p.extract(conf, r)
+		if err := p.extract(conf, r); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
@@ -149,15 +170,15 @@ func ServiceDetails(
 		}
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
-
-		// Rate interval is needed to fetch request rates based health
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
+		parsed, err := queryparams.ParseWithConfig(queryParams, conf, serviceDetailsQueryParams)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
 		}
+		cluster := parsed.Cluster()
+		rateInterval := parsed.Duration("rateInterval")
 
-		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		includeValidations := parsed.Bool("validate")
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}
@@ -222,20 +243,20 @@ func ServiceUpdate(
 		}
 
 		queryParams := r.URL.Query()
-		cluster := clusterNameFromQuery(conf, queryParams)
-
-		// Rate interval is needed to fetch request rates based health
-		rateInterval := queryParams.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
+		parsed, err := queryparams.ParseWithConfig(queryParams, conf, serviceUpdateQueryParams)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
 		}
+		cluster := parsed.Cluster()
+		rateInterval := parsed.Duration("rateInterval")
 
-		patchType := queryParams.Get("patchType")
+		patchType := parsed.String("patchType")
 		if patchType == "" {
 			patchType = defaultPatchType
 		}
 
-		includeValidations, _ := strconv.ParseBool(queryParams.Get("validate"))
+		includeValidations := parsed.Bool("validate")
 		if !conf.IsValidationsEnabled() {
 			includeValidations = false
 		}

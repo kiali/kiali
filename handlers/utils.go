@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"net/http"
-	"net/url"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -133,16 +132,6 @@ func getAuthInfo(r *http.Request) (map[string]*api.AuthInfo, error) {
 	} else {
 		return nil, errors.New("authInfo missing from the request context")
 	}
-}
-
-// clusterNameFromQuery extracts the cluster name from the query parameters
-// and provides a default value if it's not present.
-func clusterNameFromQuery(conf *config.Config, queryParams url.Values) string {
-	cluster := queryParams.Get("clusterName")
-	if cluster == "" {
-		cluster = conf.KubernetesConfig.ClusterName
-	}
-	return cluster
 }
 
 func getLayer(

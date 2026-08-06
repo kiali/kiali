@@ -44,7 +44,7 @@ func TestServiceMetrics(t *testing.T) {
 	ctx := context.TODO()
 
 	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
+		METRICS_PARAMS["clusterName"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "services", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestCount, metrics.RequestDurationMillis, metrics.RequestErrorCount), err
 	})
@@ -59,7 +59,7 @@ func TestAppMetrics(t *testing.T) {
 	ctx := context.TODO()
 
 	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
+		METRICS_PARAMS["clusterName"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "apps", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestDurationMillis), err
 	})
@@ -74,7 +74,7 @@ func TestWorkloadMetrics(t *testing.T) {
 	ctx := context.TODO()
 
 	pollErr := wait.PollUntilContextTimeout(ctx, time.Second, time.Minute, false, func(ctx context.Context) (bool, error) {
-		METRICS_PARAMS["cluster"] = conf.KubernetesConfig.ClusterName
+		METRICS_PARAMS["clusterName"] = conf.KubernetesConfig.ClusterName
 		metrics, err := kiali.ObjectMetrics(kiali.BOOKINFO, name, "workloads", METRICS_PARAMS)
 		return CheckMetrics(metrics.RequestSize, metrics.ResponseSize), err
 	})

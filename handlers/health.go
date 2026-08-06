@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
@@ -42,20 +42,20 @@ func ClusterHealth(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		namespaces := params.Get("namespaces") // csl of namespaces
+		parsed, err := queryparams.ParseWithConfig(params, conf, clusterHealthQueryParams)
+		if err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		namespaces := parsed.String("namespaces") // csl of namespaces
 		nss := []string{}
 		if len(namespaces) > 0 {
 			nss = strings.Split(namespaces, ",")
 		}
-		cluster := clusterNameFromQuery(conf, params)
+		cluster := parsed.Cluster()
 
-		// Extract health type from query params
-		// If type is not specified, we'll fetch all types (app, service, workload)
-		healthType := params.Get("type")
-		if healthType != "" && healthType != "app" && healthType != "service" && healthType != "workload" {
-			RespondWithError(w, http.StatusBadRequest, "Bad request, query parameter 'type' must be one of ['app','service','workload']")
-			return
-		}
+		healthType := parsed.String("type")
 
 		// Determine which health types to fetch
 		var healthTypes []string
@@ -83,10 +83,7 @@ func ClusterHealth(
 			RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
 			return
 		}
-		rateInterval := params.Get("rateInterval")
-		if rateInterval == "" {
-			rateInterval = config.DefaultHealthRateInterval
-		}
+		rateInterval := parsed.Duration("rateInterval")
 		result, healthCachedHeader, err := businessLayer.Health.GetNamespaceHealth(r.Context(), nss, cluster, healthTypes, rateInterval)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
@@ -94,38 +91,6 @@ func ClusterHealth(
 		}
 		w.Header().Set(HealthCachedHeader, healthCachedHeader)
 		RespondWithJSON(w, http.StatusOK, result)
-	}
-}
-
-type baseHealthParams struct {
-	// Cluster name
-	ClusterName string `json:"clusterName"`
-	// The namespace scope
-	//
-	// in: path
-	Namespace string `json:"namespace"`
-	// The rate interval used for fetching error rate
-	//
-	// in: query
-	// default: 5m (matches health_config.compute.duration)
-	RateInterval string `json:"rateInterval"`
-	// The time to use for the prometheus query
-	QueryTime time.Time
-}
-
-func (p *baseHealthParams) baseExtract(conf *config.Config, r *http.Request) {
-	queryParams := r.URL.Query()
-	p.RateInterval = config.DefaultHealthRateInterval
-	p.QueryTime = util.Clock.Now()
-	if rateInterval := queryParams.Get("rateInterval"); rateInterval != "" {
-		p.RateInterval = rateInterval
-	}
-	p.ClusterName = clusterNameFromQuery(conf, queryParams)
-	if queryTime := queryParams.Get("queryTime"); queryTime != "" {
-		unix, err := strconv.ParseInt(queryTime, 10, 64)
-		if err == nil {
-			p.QueryTime = time.Unix(unix, 0)
-		}
 	}
 }
 

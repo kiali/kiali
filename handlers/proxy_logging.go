@@ -11,6 +11,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/grafana"
+	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/prometheus"
@@ -44,18 +45,22 @@ func LoggingUpdate(
 		namespace := params["namespace"]
 		pod := params["pod"]
 		query := r.URL.Query()
+		if err := queryparams.RejectUnknown(query, "clusterName", "level"); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
 		level := query.Get("level")
 		switch {
 		case level == "":
-			RespondWithError(w, 400, "level query param is not set")
+			RespondWithQueryParamError(w, "level query param is not set")
 			return
 		case !business.IsValidProxyLogLevel(level):
 			msg := fmt.Sprintf("%s is an invalid log level. Valid log levels are: %s", level, strings.Join(business.ValidProxyLogLevels, ", "))
-			RespondWithError(w, 400, msg)
+			RespondWithQueryParamError(w, msg)
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, query)
+		cluster := queryparams.ClusterName(conf, query)
 
 		if err := businessLayer.ProxyLogging.SetLogLevel(cluster, namespace, pod, level); err != nil {
 			handleErrorResponse(w, err)
