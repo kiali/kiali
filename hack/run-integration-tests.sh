@@ -31,6 +31,7 @@ OFFLINE="offline"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KIALI_VERSION=""
+KIALI_IMAGE_NAME=""
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
 SAIL_OPERATOR_CHART_VERSION=""
@@ -102,6 +103,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kv|--kiali-version)
       KIALI_VERSION="${2}"
+      shift;shift
+      ;;
+    -kin|--kiali-image-name)
+      KIALI_IMAGE_NAME="${2}"
       shift;shift
       ;;
     -klm|--keycloak-limit-memory)
@@ -221,8 +226,12 @@ Valid command line arguments:
     Default: The latest release
   -kv|--kiali-version <version>
     Kiali image version to deploy during cluster setup. Use "dev" for a local dev image
-    (default). Use a release tag such as "v2.27" to deploy quay.io/kiali/kiali instead.
+    (default). Use a release tag such as "v2.27" to deploy a published image instead.
     Default: dev
+  -kin|--kiali-image-name <name>
+    Container image name (without tag) when --kiali-version is not "dev".
+    Examples: quay.io/kiali/kiali (default), quay.io/kiali/kiali_mcp.
+    Default: quay.io/kiali/kiali
   -klm|--keycloak-limit-memory <value>
     Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
   -krm|--keycloak-requests-memory <value>
@@ -346,6 +355,12 @@ if [ -n "${KIALI_VERSION}" ]; then
   KIALI_VERSION_ARG="--kiali-version ${KIALI_VERSION}"
 else
   KIALI_VERSION_ARG=""
+fi
+
+if [ -n "${KIALI_IMAGE_NAME}" ]; then
+  KIALI_IMAGE_NAME_ARG="--kiali-image-name ${KIALI_IMAGE_NAME}"
+else
+  KIALI_IMAGE_NAME_ARG=""
 fi
 
 if [ -n "${HELM_CHARTS_DIR}" ]; then
@@ -595,7 +610,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     if [ "${TESTS_ONLY}" == "false" ]; then
       AUTH_PARAM="--auth-strategy anonymous"
     fi
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${KIALI_IMAGE_NAME_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}

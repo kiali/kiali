@@ -97,8 +97,13 @@ Options:
     Default: <the latest release>
 -kv|--kiali-version <version>
     Kiali image version to deploy. Use "dev" to build and load a local dev image
-    (default). Use a release tag such as "v2.27" to pull quay.io/kiali/kiali instead.
+    (default). Use a release tag such as "v2.27" to pull a published image instead.
     Default: dev
+-kin|--kiali-image-name <name>
+    Container image name (without tag) when --kiali-version is not "dev".
+    Examples: quay.io/kiali/kiali (default), quay.io/kiali/kiali_mcp.
+    Ignored when --kiali-version is "dev".
+    Default: quay.io/kiali/kiali
 -klm|--keycloak-limit-memory
     The keycloak resources limit memory in the keycloak helm charts
 -krm|--keycloak-requests-memory)
@@ -145,6 +150,7 @@ while [[ $# -gt 0 ]]; do
     -ip|--install-perses)         INSTALL_PERSES="$2";        shift;shift; ;;
     -iv|--istio-version)          ISTIO_VERSION="$2";         shift;shift; ;;
     -kv|--kiali-version)          KIALI_VERSION="$2";         shift;shift; ;;
+    -kin|--kiali-image-name)      KIALI_IMAGE_NAME_OVERRIDE="$2"; shift;shift; ;;
     -klm|--keycloak-limit-memory) KEYCLOAK_LIMIT_MEMORY="$2"; shift;shift; ;;
     -krm|--keycloak-requests-memory) KEYCLOAK_REQUESTS_MEMORY="$2"; shift;shift; ;;
     -mc|--multicluster)
@@ -208,13 +214,16 @@ if [ "${KIALI_VERSION}" == "dev" ]; then
   KIALI_IMAGE_TAG="dev"
   KIALI_IMAGE_PULL_POLICY="Never"
   KIALI_USE_DEV_IMAGE="true"
+  if [ -n "${KIALI_IMAGE_NAME_OVERRIDE}" ]; then
+    infomsg "Ignoring --kiali-image-name (${KIALI_IMAGE_NAME_OVERRIDE}) because --kiali-version is dev"
+  fi
 else
   if [[ "${KIALI_VERSION}" != v* ]]; then
     KIALI_IMAGE_TAG="v${KIALI_VERSION}"
   else
     KIALI_IMAGE_TAG="${KIALI_VERSION}"
   fi
-  KIALI_IMAGE_NAME="quay.io/kiali/kiali"
+  KIALI_IMAGE_NAME="${KIALI_IMAGE_NAME_OVERRIDE:-quay.io/kiali/kiali}"
   KIALI_IMAGE_PULL_POLICY="IfNotPresent"
   KIALI_USE_DEV_IMAGE="false"
 fi
