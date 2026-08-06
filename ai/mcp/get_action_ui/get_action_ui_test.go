@@ -141,7 +141,7 @@ func TestExecute(t *testing.T) {
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
 		assert.Equal(t, "View workload Details", resp.Actions[0].Title)
-		assert.Equal(t, "/namespaces/bookinfo/workloads/details-v1?tab=logs", resp.Actions[0].Payload)
+		assert.Equal(t, "/namespaces/bookinfo/workloads/details-v1?tab=logs&clusterName=east", resp.Actions[0].Payload)
 	})
 
 	t.Run("Istio List Action", func(t *testing.T) {
@@ -171,7 +171,7 @@ func TestExecute(t *testing.T) {
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
 		assert.Equal(t, "View service Details", resp.Actions[0].Title)
-		assert.Equal(t, "/namespaces/bookinfo/services/productpage?tab=metrics", resp.Actions[0].Payload)
+		assert.Equal(t, "/namespaces/bookinfo/services/productpage?tab=metrics&clusterName=east", resp.Actions[0].Payload)
 	})
 
 	t.Run("All Namespaces Action", func(t *testing.T) {
@@ -328,7 +328,7 @@ func TestExecute(t *testing.T) {
 		resp := res.(GetActionUIResponse)
 		require.Len(t, resp.Actions, 1)
 		assert.Equal(t, "View service Details", resp.Actions[0].Title)
-		assert.Equal(t, "/namespaces/bookinfo/services/productpage?tab=info", resp.Actions[0].Payload)
+		assert.Equal(t, "/namespaces/bookinfo/services/productpage?tab=info&clusterName=east", resp.Actions[0].Payload)
 	})
 
 	t.Run("Namespaces Action", func(t *testing.T) {

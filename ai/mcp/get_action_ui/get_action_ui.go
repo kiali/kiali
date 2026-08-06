@@ -162,7 +162,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	actions := make([]Action, 0)
 	switch resourceType {
 	case "graph":
-		actions = append(actions, getGraphAction(namespacesValue, graph, graphType))
+		actions = append(actions, getGraphAction(namespacesValue, graph, graphType, clusterName))
 	case "overview":
 		actions = append(actions, getOverviewAction())
 	case "namespaces":
@@ -189,7 +189,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 		if resourceName == "" && (namespaces == "" || namespaces == "all") {
 			nsForAction = namespaces
 		}
-		actions = append(actions, getResourceAction(nsForAction, resourceType, resourceName, tab))
+		actions = append(actions, getResourceAction(nsForAction, resourceType, resourceName, tab, clusterName))
 	}
 
 	return GetActionUIResponse{
@@ -198,7 +198,7 @@ func Execute(kialiInterface *mcputil.KialiInterface, args map[string]interface{}
 	}, http.StatusOK
 }
 
-func getGraphAction(namespaces string, graph string, graphType string) Action {
+func getGraphAction(namespaces string, graph string, graphType string, clusterName string) Action {
 	if graphType == "" {
 		graphType = "versionedApp"
 	}
@@ -213,10 +213,14 @@ func getGraphAction(namespaces string, graph string, graphType string) Action {
 	if namespaces == "" {
 		namespacesLabel = " for all namespaces"
 	}
+	payload := "/graph/namespaces?namespaces=" + namespaces + "&graphType=" + graphType
+	if clusterName != "" {
+		payload += "&clusterName=" + clusterName
+	}
 	return Action{
 		Title:   "View Traffic Graph" + namespacesLabel,
 		Kind:    ActionKindNavigation,
-		Payload: "/graph/namespaces?namespaces=" + namespaces + "&graphType=" + graphType,
+		Payload: payload,
 	}
 }
 
@@ -236,7 +240,7 @@ func getNamespacesAction() Action {
 	}
 }
 
-func getResourceAction(namespaces string, resourceType string, resourceName string, tab string) Action {
+func getResourceAction(namespaces string, resourceType string, resourceName string, tab string, clusterName string) Action {
 	resourceLabel := "services"
 	switch resourceType {
 	case "workload":
@@ -255,10 +259,14 @@ func getResourceAction(namespaces string, resourceType string, resourceName stri
 			Payload: "/" + resourceLabel + queryNamespaces,
 		}
 	}
+	payload := "/namespaces/" + namespaces + "/" + resourceLabel + "/" + resourceName + "?tab=" + getTabLabel(tab, resourceType)
+	if clusterName != "" {
+		payload += "&clusterName=" + clusterName
+	}
 	return Action{
 		Title:   "View " + resourceType + " Details",
 		Kind:    ActionKindNavigation,
-		Payload: "/namespaces/" + namespaces + "/" + resourceLabel + "/" + resourceName + "?tab=" + getTabLabel(tab, resourceType),
+		Payload: payload,
 	}
 }
 
@@ -285,10 +293,8 @@ func getIstioAction(ctx context.Context, businessLayer *business.Layer, clusterN
 		var istioConfig *models.IstioConfigList
 		var err error
 		if len(strings.Split(namespace, ",")) > 1 {
-			// This means that we are listing all Istio configs for all namespaces
 			istioConfig, err = businessLayer.IstioConfig.GetIstioConfigList(ctx, clusterName, business.ParseIstioConfigCriteria("", "", ""))
 		} else {
-			// This means that we are listing all Istio configs for a specific namespace
 			istioConfig, err = businessLayer.IstioConfig.GetIstioConfigListForNamespace(
 				ctx, clusterName, namespace, business.ParseIstioConfigCriteria("", "", ""))
 		}
@@ -297,7 +303,7 @@ func getIstioAction(ctx context.Context, businessLayer *business.Layer, clusterN
 			return []Action{}, err
 		}
 		istioObjectsFiltered := filterIstioObjectsByName(istioConfig, resourceName)
-		actions = GetActionsForIstioObjects(istioObjectsFiltered)
+		actions = GetActionsForIstioObjects(istioObjectsFiltered, clusterName)
 	} else {
 		actions = append(actions, Action{
 			Title:   "View Istio List of Configs",

@@ -1,0 +1,5 @@
+- name: "list_clusters"
+  description: "Returns the list of Kubernetes clusters that Kiali can access in the mesh. Each cluster includes its name and whether it is the home cluster (where Kiali is running). Use this tool to discover available cluster names before calling other tools that accept a clusterName parameter."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"

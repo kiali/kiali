@@ -5,12 +5,14 @@ export const useLocationContext = (): [
   string | undefined,
   string | undefined,
   string | undefined,
+  string | undefined,
   string | undefined
 ] => {
   const [kind, setKind] = React.useState<string>();
   const [name, setName] = React.useState<string>();
   const [namespace, setNamespace] = React.useState<string>();
   const [istio, setIstio] = React.useState<string>();
+  const [clusterName, setClusterName] = React.useState<string>();
 
   const location = useLocation();
   const path = location?.pathname;
@@ -22,6 +24,7 @@ export const useLocationContext = (): [
     let newIstio = '';
 
     const searchParams = new URLSearchParams(location.search);
+    const newClusterName = searchParams.get('clusterName') || '';
     const nsParams = searchParams.getAll('namespace');
     const nssParams = searchParams.getAll('namespaces');
 
@@ -88,7 +91,8 @@ export const useLocationContext = (): [
     setName(newName || undefined);
     setNamespace(newNamespace || undefined);
     setIstio(newIstio || undefined);
+    setClusterName(newClusterName || undefined);
   }, [location.search, path]);
 
-  return [kind, name, namespace, istio];
+  return [kind, name, namespace, istio, clusterName];
 };
