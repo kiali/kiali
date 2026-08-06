@@ -1,14 +1,10 @@
 # Playwright-only CI for the Cypress → Playwright migration epic branch.
-# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration
-# and by pushes to that branch.
+# Does not run Cypress suites. Used by PRs targeting epic/playwright-migration.
 name: Playwright CI
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-    - epic/playwright-migration
-  push:
     branches:
     - epic/playwright-migration
 
