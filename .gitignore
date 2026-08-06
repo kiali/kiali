@@ -123,6 +123,13 @@ frontend/cypress/videos
 frontend/cypress/screenshots
 frontend/cypress/results
 
+# Playwright
+frontend/playwright-report/
+frontend/playwright-results/
+frontend/playwright/.auth/
+frontend/test-results/
+frontend/blob-report/
+
 # locales
 frontend/public/locales/en
 
