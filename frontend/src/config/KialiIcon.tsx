@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PFColors } from '../components/Pf/PfColors';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
+import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import {
   AngleDoubleDownIcon,
   AngleDoubleLeftIcon,

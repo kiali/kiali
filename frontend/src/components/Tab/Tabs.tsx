@@ -6,6 +6,7 @@ import { location, router } from '../../app/History';
 import { PFColors } from 'components/Pf/PfColors';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
@@ -26,7 +27,17 @@ export const activeTab = (tabName: string, defaultTab: string): string => {
 };
 
 const tabStyle = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  $nest: contrastSurfaceNest({
+    // Keep tab bar aligned with header/content backgrounds under glass/HC.
+    glass: {
+      boxShadow: 'none',
+      border: 'none'
+    },
+    contrast: {
+      border: 'none'
+    }
+  })
 });
 
 const flexTabWrapperStyle = kialiStyle({

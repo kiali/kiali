@@ -87,6 +87,20 @@ export const globalStyle = kialiStyle({
         }
       }
     },
+
+    /**
+     * Under OpenShift glass contrast, keep list tables on an opaque primary fill so
+     * rows stay readable over the Console page background (no glass-on-glass).
+     */
+    [`html.pf-v6-theme-glass & .pf-v6-c-table`]: {
+      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    },
+    [`html.pf-v6-theme-glass & .pf-v6-c-table tbody`]: {
+      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    },
+    [`html.pf-v6-theme-glass & .pf-v6-c-toolbar`]: {
+      backgroundColor: 'transparent'
+    },
     /**
      * ChatBot docked mode should fit within the page drawer height
      */

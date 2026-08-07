@@ -1,15 +1,27 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { BreadcrumbView } from '../../BreadcrumbView/BreadcrumbView';
-import { KialiAppState } from '../../../store/Store';
+import type { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
+import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
 
 const containerStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
   flexShrink: 0,
-  paddingBottom: '0.5rem'
+  paddingBottom: '0.5rem',
+  $nest: contrastSurfaceNest({
+    // Match RenderContent / tabs so detail pages share one background under glass.
+    glass: {
+      boxShadow: 'none',
+      border: 'none'
+    },
+    contrast: {
+      border: 'none',
+      borderBottom: `1px solid ${PFColors.BorderDefault}`
+    }
+  })
 });
 
 const headerRowStyle = kialiStyle({
