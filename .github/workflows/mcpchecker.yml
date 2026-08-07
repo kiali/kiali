@@ -351,7 +351,7 @@ jobs:
     - name: Run single-cluster diff
       id: mcpchecker-diff-single
       if: steps.normalize.outputs.has-single == 'true' && steps.baseline-single.outputs.has-baseline == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
       with:
         base-results: ${{ steps.baseline-single.outputs.baseline-file }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
@@ -361,7 +361,7 @@ jobs:
     - name: Run multicluster diff
       id: mcpchecker-diff-multicluster
       if: steps.normalize.outputs.has-multicluster == 'true' && steps.baseline-multicluster.outputs.has-baseline == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
       with:
         base-results: ${{ steps.baseline-multicluster.outputs.baseline-file }}
         current-results: tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
@@ -528,7 +528,7 @@ jobs:
     - name: Run baseline diff
       id: baseline-diff
       if: needs.run-evaluation.result == 'success' && steps.previous-baseline.outputs.has-previous == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
       with:
         base-results: ${{ steps.previous-baseline.outputs.path }}
         current-results: tests/evals/results/mcpchecker-gemini-eval-out.json
@@ -538,7 +538,7 @@ jobs:
     - name: Run multicluster baseline diff
       id: baseline-diff-multicluster
       if: needs.run-evaluation-multicluster.result == 'success' && steps.previous-baseline.outputs.has-previous-multicluster == 'true'
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@d246e7ebfbb6aebcb269796af8932377f642fb2a # v0.0.18
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-diff-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
       with:
         base-results: ${{ steps.previous-baseline.outputs.path-multicluster }}
         current-results: tests/evals/results/mcpchecker-gemini-multicluster-eval-out.json
