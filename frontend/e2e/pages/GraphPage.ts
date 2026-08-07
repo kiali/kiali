@@ -5,7 +5,6 @@ import { waitForLoadingComplete } from '../utils/transition';
 export class GraphPage extends BasePage {
   /**
    * Visit graph with prometheus.enabled=false mocked via the config API route.
-   * Replaces Cypress "prometheus is reported as disabled in the config".
    */
   async openWithPrometheusDisabled(): Promise<void> {
     await this.page.route('**/api/config', async route => {

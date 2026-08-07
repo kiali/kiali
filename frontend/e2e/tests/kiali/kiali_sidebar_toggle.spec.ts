@@ -1,9 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
 
-/**
- * Migrated from cypress/integration/featureFiles/kiali_sidebar_toggle.feature (@smoke).
- * Feature is @skip-ossmc in Cypress.
- */
 test.describe('Sidebar toggle', () => {
   test.beforeEach(async ({ sidebarPage }) => {
     await sidebarPage.openOverview();

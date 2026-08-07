@@ -1,8 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
 
-/**
- * Migrated from cypress/integration/featureFiles/services.feature (@smoke scenarios).
- */
 test.describe('Services list toggles', () => {
   test.beforeEach(async ({ servicesPage }) => {
     await servicesPage.openList();

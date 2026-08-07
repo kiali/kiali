@@ -1,9 +1,5 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
 
-/**
- * Migrated from cypress/integration/featureFiles/kiali_about.feature (@smoke).
- * Feature is @skip-ossmc in Cypress — keep that in mind for OSSMC suites.
- */
 test.describe('Kiali help about', () => {
   test.beforeEach(async ({ overviewPage }) => {
     await overviewPage.open();

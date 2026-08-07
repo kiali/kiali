@@ -17,8 +17,6 @@ export const gotoConsolePage = async (
 
 /**
  * Navigate to a list page with include-toggles enabled via `/api/config` rewrite.
- * Replaces Cypress "user is at the {string} list page".
- *
  * OSSMC-safe: leading `**` matches proxy-prefixed API paths.
  */
 export const gotoListPage = async (page: Page, pagePath: string): Promise<void> => {

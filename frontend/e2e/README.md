@@ -3,7 +3,7 @@
 Patterns for remaining migrations:
 
 - Native Playwright Test (not playwright-bdd); tags in test titles drive projects
-- `testIdAttribute: 'data-test'` (matches Cypress `cy.getBySel`)
+- `testIdAttribute: 'data-test'` (Kiali `data-test` selectors)
 - Auth via `storageState` (`e2e/global-setup/auth.setup.ts`); Phase 0 = anonymous only
 - Page objects extend `BasePage` (`getBySel`, `robustClick`, `waitForLoad`, `retryOnError`)
 - API mocks use `page.route('**/api/...')` for OSSMC proxy compatibility
@@ -26,6 +26,5 @@ Use `yarn playwright:install` for browsers — not `yarn playwright install`.
 
 ## CI
 
-PRs and pushes targeting `epic/playwright-migration` run **Playwright CI** only
+PRs and pushes targeting `epic/playwright-migration` run Playwright CI
 (`.github/workflows/playwright-ci.yml`): build + `hack/run-integration-tests.sh --test-suite playwright-smoke`.
-Cypress suites are not run on that branch.

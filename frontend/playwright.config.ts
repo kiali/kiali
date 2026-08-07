@@ -1,35 +1,51 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 import { AUTH_FILE } from './e2e/utils/auth';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001';
+const isCI = !!process.env.CI;
+
+/** Jenkins / local video override: on | off | retain-on-failure (default). */
+const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
 
 /**
- * Playwright projects mirror Cypress TAGS / hack/run-integration-tests.sh suites.
+ * CI uses blob reporter so jenkins can merge the first run + --last-failed
+ * into playwright-results/combined-report.xml (see playwright.merge.config.ts).
+ */
+const reporters: ReporterDescription[] = isCI
+  ? [['list'], ['blob', { outputDir: 'blob-report' }]]
+  : [
+      ['list'],
+      ['html', { open: 'never', outputFolder: 'playwright-report' }],
+      ['junit', { outputFile: 'playwright-results/junit-results.xml' }]
+    ];
+
+/**
+ * Projects mirror hack/run-integration-tests.sh suites.
  * Suite membership is controlled by grep tags in test titles (e.g. `@smoke`).
  * Overlapping tags use negative lookaheads (e.g. @waypoint vs @waypoint-tracing).
  */
 export default defineConfig({
   testDir: './e2e/tests',
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
-  workers: process.env.CI ? 2 : undefined,
+  forbidOnly: isCI,
+  retries: isCI ? 1 : 0,
+  workers: isCI ? 2 : undefined,
   timeout: 60_000,
   expect: {
     timeout: 40_000
   },
-  reporter: [
-    ['list'],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }],
-    ['junit', { outputFile: 'playwright-results/junit-results.xml' }]
-  ],
+  reporter: reporters,
+  grep: process.env.PLAYWRIGHT_GREP ? new RegExp(process.env.PLAYWRIGHT_GREP) : undefined,
+  grepInvert: process.env.PLAYWRIGHT_GREP_INVERT ? new RegExp(process.env.PLAYWRIGHT_GREP_INVERT) : undefined,
   use: {
     baseURL,
-    // Kiali uses data-test (Cypress cy.getBySel), not Playwright's default data-testid
+    // OpenShift routes / CRC often use custom or self-signed certs
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === '1' || baseURL.startsWith('https://'),
+    // Kiali interactive elements use data-test (not Playwright's default data-testid)
     testIdAttribute: 'data-test',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: videoMode,
     viewport: { width: 1920, height: 1080 },
     actionTimeout: 40_000,
     navigationTimeout: 90_000

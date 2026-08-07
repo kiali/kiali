@@ -3,7 +3,6 @@ import { expect } from '@playwright/test';
 
 /**
  * Wait until Kiali finished its loading screens / login form / spinner.
- * Replaces Cypress `ensureKialiFinishedLoading()`.
  */
 export const waitForLoadingComplete = async (page: Page): Promise<void> => {
   await expect(page.getByTestId('loading-screen')).toHaveCount(0);
