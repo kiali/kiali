@@ -26,6 +26,11 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
 - [Response Format](#response-format)
 - [Usage in AI Conversations](#usage-in-ai-conversations)
 - [Adding New Tools](#adding-new-tools)
+- [Testing layers](#testing-layers)
+- [Release MCP and pin validation](#release-mcp-and-pin-validation)
+  - [Validate pin without publishing](#validate-pin-without-publishing)
+  - [When to update mcp_tools tests](#when-to-update-mcp_tools-tests)
+  - [Local equivalents](#local-equivalents)
 
 ## Overview
 
@@ -421,9 +426,104 @@ The AI model calls tools based on user queries:
 2. Implement the tool in `ai/mcp/<tool_name>/` with an `Execute(ki *mcputil.KialiInterface, args map[string]interface{}) (interface{}, int)` function.
 3. Add a switch case in `ToolDef.Call` in `mcp_tools.go`.
 4. If the tool only emits UI actions/referenced_docs, add the name to `ExcludedToolNames`.
+5. Add an integration test at `tests/integration/mcp_tools/<tool_name>_test.go` (file name must match the tool / MCP endpoint name). See [When to update mcp_tools tests](#when-to-update-mcp_tools-tests).
+6. If the tool is exposed through [kubernetes-mcp-server](https://github.com/containers/kubernetes-mcp-server), ensure the matching entry exists in that repo's `pkg/toolsets/kiali/tools/endpoints.go` (or coordinate a paired PR).
 
 See existing tools for end-to-end examples.
 
+## Testing layers
+
+MCP coverage uses several complementary layers:
+
+| Layer | Location | What it checks | When it runs |
+|-------|----------|----------------|--------------|
+| Unit | `ai/mcp/<tool>/…_test.go` | Tool logic in isolation | `make test` / PR CI |
+| Integration (`mcp_tools`) | `tests/integration/mcp_tools/` | Live HTTP `/api/chat/mcp/<tool>` against a Kind cluster | PR CI (`integration-tests-backend-mcp`), Release MCP validate |
+| Endpoint coverage | `hack/mcp/check-mcp-endpoint-coverage.sh` | Every MCP→Kiali path in kubernetes-mcp-server has a `*_test.go` | Release MCP validate job |
+| LLM evals (mcpchecker) | `tests/evals/` | Agent tool use with a real model | Manual / `/run-mcpchecker` — see [MCP evaluation (CI)](#mcp-evaluation-ci) |
+
+`TestAllToolsHaveIntegrationTests` in `tools_coverage_test.go` also fails CI if a YAML tool under `ai/mcp/tools/` lacks a matching `tests/integration/mcp_tools/<name>_test.go`.
+
+## Release MCP and pin validation
+
+The manual **Release MCP** workflow (`.github/workflows/release-mcp.yml`) publishes Kiali images used by kubernetes-mcp-server to `quay.io/kiali/kiali_mcp`, and can validate the version that MCP currently pins.
+
+**Publish path** (default):
+
+1. Build from the selected `release_branch` (e.g. `v2.27`).
+2. Compute the next patch from existing Quay tags and push:
+   - `quay.io/kiali/kiali_mcp:vX.Y.Z-<sha7>` (immutable)
+   - `quay.io/kiali/kiali_mcp:vX.Y` (floating branch line)
+3. Optionally run pin validation (non-blocking after a successful publish).
+
+**Validate path** reads pins from the chosen kubernetes-mcp-server git ref (`build/kiali.mk` → `KIALI_VERSION` / `ISTIO_VERSION`), deploys `quay.io/kiali/kiali_mcp:<KIALI_VERSION>`, runs endpoint coverage, then `tests/integration/mcp_tools`.
+
+Important details:
+
+- Validation checks out **this workflow’s commit** for Kiali hack scripts and `mcp_tools` (so docs/tests from the branch you ran the workflow on are used), while the **deployed image** is the pin from MCP — not necessarily the image just published.
+- After publish, validation uses `continue-on-error` so a pin mismatch does not fail the release. With `skip_publication=true`, validation is **blocking**.
+
+Workflow inputs:
+
+| Input | Purpose |
+|-------|---------|
+| `release_branch` | Branch line to publish from (`v2.27`, `v2.22`, …) |
+| `skip_publication` | Skip Quay push; run pin validation only |
+| `kubernetes_mcp_server_ref` | MCP git ref whose `build/kiali.mk` pins are used (default `main`) |
+| `run_validation` | Enable/disable the validate job (default `true`) |
+
+### Validate pin without publishing
+
+Use this when you want to confirm that the Kiali image currently pinned by kubernetes-mcp-server still passes `mcp_tools`, without publishing a new tag:
+
+1. GitHub → **Actions** → **Release MCP** → **Run workflow**.
+2. Set:
+   - `skip_publication` = **true**
+   - `run_validation` = **true**
+   - `kubernetes_mcp_server_ref` = `main` (or a PR branch / tag / SHA in kubernetes-mcp-server)
+   - `release_branch` still required by the form (initialize runs; publish jobs are skipped)
+3. Confirm the job summary shows the resolved `KIALI_VERSION` / `ISTIO_VERSION` and that **Validate MCP pin** succeeds (blocking).
+
+Typical uses: before bumping the pin in kubernetes-mcp-server, after changing `mcp_tools` on master, or when debugging a pin breakage without releasing.
+
+### When to update mcp_tools tests
+
+Update or add tests under `tests/integration/mcp_tools/` when:
+
+| Change | Required test update |
+|--------|----------------------|
+| New tool YAML in `ai/mcp/tools/` | Add `<tool_name>_test.go` (enforced by `TestAllToolsHaveIntegrationTests`) |
+| New MCP→Kiali endpoint in kubernetes-mcp-server `endpoints.go` | Add `<endpoint>_test.go` (enforced by `check-mcp-endpoint-coverage.sh` on Release MCP validate) |
+| Behavior / contract change of an existing tool | Update that tool’s integration test (and unit tests as needed) |
+| Internal-only refactor with no API/YAML change | Usually no new `mcp_tools` file; keep existing tests green |
+
+Naming rule: the integration test file must be named `<endpoint>_test.go` where `<endpoint>` matches both the tool YAML basename and the path segment after `/api/chat/mcp/` in kubernetes-mcp-server.
+
+### Local equivalents
+
+Endpoint coverage (clone kubernetes-mcp-server first):
+
+```bash
+hack/mcp/check-mcp-endpoint-coverage.sh /path/to/kubernetes-mcp-server tests/integration/mcp_tools
+```
+
+Run `mcp_tools` against a pinned `kiali_mcp` image (same idea as validate-only):
+
+```bash
+# Read KIALI_VERSION / ISTIO_VERSION from kubernetes-mcp-server build/kiali.mk, then:
+hack/run-integration-tests.sh \
+  --test-suite backend \
+  --mcp-tools true \
+  --kiali-version "<KIALI_VERSION>" \
+  --kiali-image-name quay.io/kiali/kiali_mcp \
+  --istio-version "<ISTIO_VERSION>"
+```
+
+For day-to-day PR work against a locally built binary/image, CI uses:
+
+```bash
+hack/run-integration-tests.sh --test-suite backend --mcp-tools true
+```
 
 # Token Consumption
 <!-- TOKENS-CONSUMPTION-START -->
