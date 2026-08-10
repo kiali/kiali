@@ -3,11 +3,15 @@ import { OverviewPage } from '../pages/OverviewPage';
 import { ServicesPage } from '../pages/ServicesPage';
 import { GraphPage } from '../pages/GraphPage';
 import { SidebarPage } from '../pages/SidebarPage';
+import { IstioConfigPage } from '../pages/IstioConfigPage';
+import { MeshPage } from '../pages/MeshPage';
 
 type KialiFixtures = {
+  graphPage: GraphPage;
+  istioConfigPage: IstioConfigPage;
+  meshPage: MeshPage;
   overviewPage: OverviewPage;
   servicesPage: ServicesPage;
-  graphPage: GraphPage;
   sidebarPage: SidebarPage;
 };
 
@@ -26,6 +30,12 @@ export const test = base.extend<KialiFixtures>({
   },
   sidebarPage: async ({ page }, use) => {
     await use(new SidebarPage(page));
+  },
+  istioConfigPage: async ({ page }, use) => {
+    await use(new IstioConfigPage(page));
+  },
+  meshPage: async ({ page }, use) => {
+    await use(new MeshPage(page));
   }
 });
 
