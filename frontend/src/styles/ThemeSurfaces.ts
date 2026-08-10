@@ -61,9 +61,3 @@ export const contrastPanelNest = (): NestedCSSProperties['$nest'] => ({
     border: `1px solid ${PFColors.BorderDefault}`
   }
 });
-
-/** @deprecated Prefer contrastOverlayNest for floating overlays. */
-export const contrastSurfaceNest = contrastOverlayNest;
-
-/** @deprecated Prefer contrastPanelNest. */
-export const contrastNoShadowNest = contrastPanelNest;
