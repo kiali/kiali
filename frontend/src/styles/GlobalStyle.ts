@@ -1,3 +1,5 @@
+import { PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST } from 'types/Common';
+
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -67,18 +69,34 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Under OpenShift glass contrast, keep list tables on an opaque primary fill so
-     * rows stay readable over the Console page background (no glass-on-glass).
+     * Under OpenShift glass, keep list toolbars/tables flush with the Console page
+     * (no opaque slab). High contrast: solid sticky table fill.
      */
-    [`html.pf-v6-theme-glass & .pf-v6-c-table`]: {
-      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-toolbar`]: {
+      backgroundColor: 'transparent',
+      boxShadow: 'none'
     },
-    [`html.pf-v6-theme-glass & .pf-v6-c-table tbody`]: {
-      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
-    },
-    [`html.pf-v6-theme-glass & .pf-v6-c-toolbar`]: {
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table`]: {
       backgroundColor: 'transparent'
     },
+    [`html.${PF_THEME_HIGH_CONTRAST} & .pf-v6-c-table`]: {
+      backgroundColor: 'var(--pf-t--global--background--color--sticky--default)'
+    },
+
+    /**
+     * Under OpenShift glass, clear PF sticky-header elevation/fill on all tables
+     * (thead::after = shadow/radius; th::after = fill + bottom border).
+     */
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table.pf-m-sticky-header > .pf-v6-c-table__thead::after`]: {
+      boxShadow: 'none',
+      borderRadius: 0,
+      borderBlockEndWidth: 0
+    },
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table.pf-m-sticky-header > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: 'transparent',
+      borderBlockEndWidth: 0
+    },
+
     /**
      * ChatBot docked mode should fit within the page drawer height
      */

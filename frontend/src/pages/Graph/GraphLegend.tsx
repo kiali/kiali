@@ -6,7 +6,7 @@ import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
+import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 interface GraphLegendProps {
   closeLegend: () => void;
@@ -18,7 +18,7 @@ const legendBoxStyle = kialiStyle({
   border: `1px solid ${PFColors.BorderColor100}`,
   overflowY: 'auto',
   zIndex: 3,
-  $nest: contrastSurfaceNest()
+  $nest: contrastOverlayNest()
 });
 
 const headerStyle = kialiStyle({
