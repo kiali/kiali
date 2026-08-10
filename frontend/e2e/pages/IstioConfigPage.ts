@@ -24,6 +24,11 @@ const TYPE_FILTERS = [
 const VALIDATION_FILTERS = ['Valid', 'Not Valid', 'Not Validated', 'Warning'] as const;
 
 export class IstioConfigPage extends BasePage {
+  private filterOption(name: string) {
+    // Exact match avoids Gateway⊂K8sGateway and Valid⊂Not Valid / Not Validated.
+    return this.page.locator('#filter_select_value').getByRole('option', { name, exact: true });
+  }
+
   async open(): Promise<void> {
     await gotoConsolePage(this.page, 'istio');
   }
@@ -35,7 +40,10 @@ export class IstioConfigPage extends BasePage {
 
   async selectFilterCategory(category: 'Type' | 'Config'): Promise<void> {
     await this.page.locator('button#filter_select_type-toggle').click();
-    await this.page.locator('div#filter_select_type button').filter({ hasText: category }).click();
+    await this.page
+      .locator('div#filter_select_type button')
+      .filter({ hasText: new RegExp(`^${category}$`) })
+      .click();
   }
 
   async expectNoActiveFilters(): Promise<void> {
@@ -47,7 +55,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectTypeFilterPhrase(phrase: string): Promise<void> {
-    await expect(this.page.locator('#filter_select_value').getByText(phrase)).toBeVisible();
+    await expect(this.page.locator('#filter_select_value').getByText(phrase, { exact: true })).toBeVisible();
   }
 
   async expandTypeFilterDropdown(): Promise<void> {
@@ -56,7 +64,7 @@ export class IstioConfigPage extends BasePage {
 
   async expectAllTypeFilterOptions(): Promise<void> {
     for (const name of TYPE_FILTERS) {
-      await expect(this.page.locator('div#filter_select_value button').filter({ hasText: name })).toHaveCount(1);
+      await expect(this.filterOption(name)).toBeVisible();
     }
   }
 
@@ -64,8 +72,10 @@ export class IstioConfigPage extends BasePage {
     const responsePromise = this.page.waitForResponse(
       response => response.url().includes('/api/istio/config') && response.request().method() === 'GET'
     );
-    await this.page.locator('input[placeholder="Filter by Type"]').fill(typeName);
-    await this.page.locator(`li[label="${typeName}"]`).getByRole('button').click();
+    const input = this.page.locator('input[placeholder="Filter by Type"]');
+    await input.click();
+    await input.fill(typeName);
+    await this.filterOption(typeName).click();
     await responsePromise;
     await waitForLoadingComplete(this.page);
   }
@@ -95,8 +105,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async chooseNTypeFilters(count: number): Promise<void> {
-    await this.page.locator('button#filter_select_type-toggle').click();
-    await this.page.locator('div#filter_select_type button').filter({ hasText: 'Type' }).click();
+    await this.selectFilterCategory('Type');
 
     for (let i = 1; i <= count; i++) {
       await this.page.locator('input[placeholder="Filter by Type"]').click();
@@ -126,7 +135,7 @@ export class IstioConfigPage extends BasePage {
   async expectAllValidationFilterOptions(): Promise<void> {
     for (const name of VALIDATION_FILTERS) {
       await this.page.locator('button#filter_select_value-toggle').click();
-      await expect(this.page.locator('div#filter_select_value button').filter({ hasText: name })).toHaveCount(1);
+      await expect(this.filterOption(name)).toBeVisible();
       await this.page.locator('button#filter_select_value-toggle').click();
     }
   }
@@ -136,15 +145,16 @@ export class IstioConfigPage extends BasePage {
       response => response.url().includes('/api/istio/config') && response.request().method() === 'GET'
     );
     await this.page.locator('button#filter_select_value-toggle').click();
-    await this.page.locator('div#filter_select_value button').filter({ hasText: category }).click();
+    await this.filterOption(category).click();
     await responsePromise;
     await waitForLoadingComplete(this.page);
-    await expect(this.page.locator('#filter-selection > :nth-child(2)').getByText(category)).toBeVisible();
+    await expect(
+      this.page.locator('#filter-selection > :nth-child(2)').getByText(category, { exact: true })
+    ).toBeVisible();
   }
 
   async chooseNValidationFilters(count: number): Promise<void> {
-    await this.page.locator('button#filter_select_type-toggle').click();
-    await this.page.locator('div#filter_select_type button').filter({ hasText: 'Config' }).click();
+    await this.selectFilterCategory('Config');
     await expect(this.page.locator('button#filter_select_value-toggle')).toBeVisible();
 
     for (let i = 0; i < count; i++) {
