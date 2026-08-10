@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 type OpenShiftLoginOptions = {
   authProvider?: string;
@@ -8,10 +8,12 @@ type OpenShiftLoginOptions = {
 
 /**
  * OpenShift OAuth login (htpasswd IdP). Follows cross-origin redirects natively.
+ *
+ * Prefer page.request (shares browser cookies) over the standalone request fixture,
+ * which has no session and gets 401 on /api/status after login.
  */
 export async function loginOpenShift(
   page: Page,
-  request: APIRequestContext,
   { authProvider, password, username }: OpenShiftLoginOptions
 ): Promise<void> {
   if (!password) {
@@ -35,8 +37,8 @@ export async function loginOpenShift(
 
   // Land back on Kiali console after OAuth redirect
   await expect(page).toHaveURL(/\/(console|kiali)/, { timeout: 120_000 });
-  const status = await request.get('/api/status');
-  expect(status.ok()).toBeTruthy();
+  const status = await page.request.get('/api/status');
+  expect(status.ok(), `Expected /api/status OK after openshift login, got ${status.status()}`).toBeTruthy();
 }
 
 export function playwrightCredentials(): {

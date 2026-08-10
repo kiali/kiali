@@ -31,7 +31,7 @@ setup('authenticate', async ({ page, request }) => {
     expect(status.ok()).toBeTruthy();
   } else if (strategy === 'openshift') {
     const { username, password, authProvider } = playwrightCredentials();
-    await loginOpenShift(page, request, {
+    await loginOpenShift(page, {
       authProvider,
       password,
       username
