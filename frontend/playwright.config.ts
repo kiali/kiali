@@ -8,11 +8,15 @@ const isCI = !!process.env.CI;
 const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
 
 /**
- * CI uses blob reporter so jenkins can merge the first run + --last-failed
- * into playwright-results/combined-report.xml (see playwright.merge.config.ts).
+ * CI: blob (for optional --last-failed merge) + junit (Jenkins fallback when
+ * merge is empty). Local: html + junit.
  */
 const reporters: ReporterDescription[] = isCI
-  ? [['list'], ['blob', { outputDir: 'blob-report' }]]
+  ? [
+      ['list'],
+      ['blob', { outputDir: 'blob-report' }],
+      ['junit', { outputFile: 'playwright-results/junit-results.xml' }]
+    ]
   : [
       ['list'],
       ['html', { open: 'never', outputFolder: 'playwright-report' }],
