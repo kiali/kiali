@@ -80,7 +80,7 @@
     "cypress:run:test-group:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"${TEST_GROUP}\"",
     "cypress:run:tracing": "cypress run -e TAGS=\"@tracing\"",
     "playwright:install": "playwright install",
-    "playwright:install:ci": "playwright install --with-deps chromium",
+    "playwright:install:ci": "playwright install chromium",
     "playwright:test": "playwright test",
     "playwright:ui": "playwright test --ui",
     "playwright:delete:reports": "rm -rf blob-report playwright-results playwright-report test-results || true",
