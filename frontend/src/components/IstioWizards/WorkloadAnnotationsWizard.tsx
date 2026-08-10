@@ -15,7 +15,6 @@ import {
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
-import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -64,6 +63,12 @@ const popoverTextAreaStyle = kialiStyle({
   resize: 'vertical'
 });
 
+const popoverFooterStyle = kialiStyle({
+  display: 'flex',
+  gap: '0.25rem',
+  justifyContent: 'flex-end'
+});
+
 const toEntries = (record: Record<string, string>): Entry[] => {
   const entries = Object.entries(record);
   return entries.length > 0 ? entries : [['', '']];
@@ -105,14 +110,6 @@ interface EditValuePopoverProps {
   value: string;
 }
 
-const popoverActionsStyle = kialiStyle({
-  display: 'flex',
-  gap: '0.25rem',
-  position: 'absolute',
-  top: PFSpacer.sm,
-  right: PFSpacer.md
-});
-
 const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onChange, onVisibleChange, value }) => {
   const [draft, setDraft] = React.useState(value);
   const [isVisible, setIsVisible] = React.useState(false);
@@ -130,33 +127,37 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
       }
       headerContent={entryKey || t('Value')}
       bodyContent={
-        <>
-          <div className={popoverActionsStyle}>
-            <Tooltip content={t('Save')} trigger="mouseenter">
-              <Button
-                variant="plain"
-                size="sm"
-                icon={<KialiIcon.Check />}
-                onClick={() => {
-                  onChange(draft);
-                  setVisible(false);
-                }}
-              />
-            </Tooltip>
-            <Tooltip content={t('Cancel')} trigger="mouseenter">
-              <Button
-                variant="plain"
-                size="sm"
-                icon={<KialiIcon.Close />}
-                onClick={() => {
-                  setDraft(value);
-                  setVisible(false);
-                }}
-              />
-            </Tooltip>
-          </div>
-          <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
-        </>
+        <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
+      }
+      footerContent={
+        <div className={popoverFooterStyle}>
+          <Tooltip content={t('Save')} trigger="mouseenter">
+            <Button
+              aria-label={t('Save')}
+              data-test="annotation-value-save"
+              variant="plain"
+              size="sm"
+              icon={<KialiIcon.Check />}
+              onClick={() => {
+                onChange(draft);
+                setVisible(false);
+              }}
+            />
+          </Tooltip>
+          <Tooltip content={t('Cancel')} trigger="mouseenter">
+            <Button
+              aria-label={t('Cancel')}
+              data-test="annotation-value-cancel"
+              variant="plain"
+              size="sm"
+              icon={<KialiIcon.Close />}
+              onClick={() => {
+                setDraft(value);
+                setVisible(false);
+              }}
+            />
+          </Tooltip>
+        </div>
       }
       elementToFocus={`#${id}`}
       hideOnOutsideClick={false}
@@ -174,7 +175,13 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
       showClose={false}
       withFocusTrap
     >
-      <Button variant="plain" icon={<KialiIcon.PencilAlt />} size="sm" />
+      <Button
+        aria-label={t('Edit value')}
+        data-test="annotation-value-edit"
+        variant="plain"
+        icon={<KialiIcon.PencilAlt />}
+        size="sm"
+      />
     </Popover>
   );
 };

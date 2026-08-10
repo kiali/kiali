@@ -102,4 +102,24 @@ describe('WorkloadAnnotationsWizard', () => {
     expect(screen.getByText('Close')).toBeInTheDocument();
     expect(screen.queryByTestId('save-button')).not.toBeInTheDocument();
   });
+
+  it('shows Save and Cancel when editing an annotation value', () => {
+    render(<WorkloadAnnotationsWizard {...defaultProps} />);
+    fireEvent.click(screen.getAllByTestId('annotation-value-edit')[0]);
+    expect(screen.getByTestId('annotation-value-save')).toBeInTheDocument();
+    expect(screen.getByTestId('annotation-value-cancel')).toBeInTheDocument();
+  });
+
+  it('saves edited annotation value from the popover', () => {
+    render(<WorkloadAnnotationsWizard {...defaultProps} />);
+    fireEvent.click(screen.getAllByTestId('annotation-value-edit')[0]);
+    const textArea = screen.getByDisplayValue('1');
+    fireEvent.change(textArea, { target: { value: '2' } });
+    fireEvent.click(screen.getByTestId('annotation-value-save'));
+    fireEvent.click(screen.getByTestId('save-button'));
+    expect(defaultProps.onSave).toHaveBeenCalledWith(
+      { 'deployment.kubernetes.io/revision': '2' },
+      { 'proxy.istio.io/config': 'tracing: {}' }
+    );
+  });
 });
