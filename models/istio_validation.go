@@ -179,7 +179,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"authorizationpolicy.to.wrongmethod": {
 		Code:     "KIA0102",
-		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
+		Message:  "Only HTTP methods, wildcards, and fully-qualified gRPC names are allowed",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.nodest.matchingregistry": {
