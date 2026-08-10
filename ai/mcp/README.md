@@ -432,37 +432,37 @@ See existing tools for end-to-end examples.
 
 | Metric | Value |
 |--------|-------|
-| Tasks Passed | 21/22 (95%) |
-| Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 86173 |
-| MCP Schema Tokens | 57530 |
+| Tasks Passed | 14/22 (64%) |
+| Assertions Pass Rate | 91% |
+| Total Tokens Estimate | 85755 |
+| MCP Schema Tokens | 66748 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Create Istio Gateway | 4049 | 2615 | ✅ |
-| Remove Fault Injection | 7223 | 2615 | ✅ |
-| List and Validate VirtualServices | 4035 | 2615 | ✅ |
-| List Comprehensive Istio Configuration | 2911 | 2615 | ✅ |
-| List and Validate DestinationRules | 2749 | 2615 | ✅ |
-| Update Traffic Shifting | 4827 | 2615 | ✅ |
-| Analyze Service Traffic Volume | 2765 | 2615 | ✅ |
-| Analyze Workload Response Times | 2780 | 2615 | ✅ |
-| Identify Degraded Namespaces | 3021 | 2615 | ✅ |
-| List Mesh-Enabled Namespaces | 3021 | 2615 | ✅ |
-| Inspect Service Details | 7217 | 2615 | ✅ |
-| Inspect Workload Details | 3762 | 2615 | ❌ |
-| Inventory Namespace Services | 3025 | 2615 | ✅ |
-| Inventory Workloads with Sidecar Status | 3341 | 2615 | ✅ |
-| Comprehensive Mesh Health Audit | 3021 | 2615 | ✅ |
-| Visualize Namespace Traffic | 3523 | 2615 | ✅ |
-| Audit Control Plane Connectivity | 3027 | 2615 | ✅ |
-| Visualize Cross-Namespace Traffic | 3629 | 2615 | ✅ |
-| Visualize Workload-Level Topology | 3571 | 2615 | ✅ |
-| Debug Service Errors via Logs | 5769 | 2615 | ✅ |
-| Analyze Latency with Distributed Tracing | 5723 | 2615 | ✅ |
-| Retrieve Recent Workload Logs | 3184 | 2615 | ✅ |
+| Create Istio Gateway | 3699 | 3034 | ✅ |
+| Remove Fault Injection | 7770 | 3034 | ✅ |
+| List and Validate VirtualServices | 3103 | 3034 | ❌ |
+| List Comprehensive Istio Configuration | 3103 | 3034 | ❌ |
+| List and Validate DestinationRules | 3172 | 3034 | ✅ |
+| Update Traffic Shifting | 3103 | 3034 | ❌ |
+| Analyze Service Traffic Volume | 4830 | 3034 | ✅ |
+| Analyze Workload Response Times | 3201 | 3034 | ✅ |
+| Identify Degraded Namespaces | 3058 | 3034 | ❌ |
+| List Mesh-Enabled Namespaces | 3430 | 3034 | ✅ |
+| Inspect Service Details | 5897 | 3034 | ✅ |
+| Inspect Workload Details | 3395 | 3034 | ✅ |
+| Inventory Namespace Services | 3444 | 3034 | ❌ |
+| Inventory Workloads with Sidecar Status | 4266 | 3034 | ✅ |
+| Comprehensive Mesh Health Audit | 3034 | 3034 | ❌ |
+| Visualize Namespace Traffic | 3120 | 3034 | ❌ |
+| Audit Control Plane Connectivity | 3517 | 3034 | ✅ |
+| Visualize Cross-Namespace Traffic | 3505 | 3034 | ❌ |
+| Visualize Workload-Level Topology | 3034 | 3034 | ✅ |
+| Debug Service Errors via Logs | 5150 | 3034 | ✅ |
+| Analyze Latency with Distributed Tracing | 5321 | 3034 | ✅ |
+| Retrieve Recent Workload Logs | 3603 | 3034 | ✅ |
 <!-- TOKENS-CONSUMPTION-END -->
 
 ## Multicluster token consumption
@@ -477,19 +477,19 @@ Results from the **multicluster** mcpchecker job (`tests/evals/gemini/eval-multi
 |--------|-------|
 | Tasks Passed | 5/6 (83%) |
 | Assertions Pass Rate | 100% |
-| Total Tokens Estimate | 28222 |
-| MCP Schema Tokens | 17304 |
+| Total Tokens Estimate | 22765 |
+| MCP Schema Tokens | 18204 |
 
 ### Per-Task Breakdown
 
 | Task | Tokens Estimate | MCP Schema Tokens | Passed |
 |------|----------------:|------------------:|--------|
-| Audit Multicluster Mesh Health | 8999 | 2884 | ✅ |
-| Analyze Remote Service Metrics | 4133 | 2884 | ✅ |
-| Discover Accessible Clusters | 3255 | 2884 | ✅ |
-| Inspect Remote Cluster Workload | 3889 | 2884 | ❌ |
-| Visualize West Cluster Traffic | 4111 | 2884 | ✅ |
-| List Remote Cluster Traces | 3835 | 2884 | ✅ |
+| Audit Multicluster Mesh Health | 3439 | 3034 | ✅ |
+| Analyze Remote Service Metrics | 4243 | 3034 | ✅ |
+| Discover Accessible Clusters | 3451 | 3034 | ✅ |
+| Inspect Remote Cluster Workload | 3702 | 3034 | ❌ |
+| Visualize West Cluster Traffic | 3902 | 3034 | ✅ |
+| List Remote Cluster Traces | 4028 | 3034 | ✅ |
 <!-- TOKENS-CONSUMPTION-MULTICLUSTER-END -->
 
 ## MCP evaluation (CI)
