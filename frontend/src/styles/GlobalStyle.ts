@@ -1,4 +1,4 @@
-import { PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST } from 'types/Common';
+import { PF_THEME_GLASS } from 'types/Common';
 
 import { kialiStyle } from './StyleUtils';
 
@@ -69,30 +69,15 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Under OpenShift glass, keep list toolbars/tables flush with the Console page
-     * (no opaque slab). High contrast: solid sticky table fill.
-     */
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-toolbar`]: {
-      backgroundColor: 'transparent',
-      boxShadow: 'none'
-    },
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-table`]: {
-      backgroundColor: 'transparent'
-    },
-    [`html.${PF_THEME_HIGH_CONTRAST} & .pf-v6-c-table`]: {
-      backgroundColor: 'var(--pf-t--global--background--color--sticky--default)'
-    },
-
-    /**
      * Under OpenShift glass, clear PF sticky-header elevation/fill on all tables
      * (thead::after = shadow/radius; th::after = fill + bottom border).
      */
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-table.pf-m-sticky-header > .pf-v6-c-table__thead::after`]: {
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
       boxShadow: 'none',
       borderRadius: 0,
       borderBlockEndWidth: 0
     },
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-table.pf-m-sticky-header > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
       backgroundColor: 'transparent',
       borderBlockEndWidth: 0
     },
