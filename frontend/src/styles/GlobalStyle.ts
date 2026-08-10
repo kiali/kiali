@@ -1,3 +1,5 @@
+import { PF_THEME_GLASS } from 'types/Common';
+
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -67,18 +69,19 @@ export const globalStyle = kialiStyle({
     },
 
     /**
-     * Under OpenShift glass contrast, keep list tables on an opaque primary fill so
-     * rows stay readable over the Console page background (no glass-on-glass).
+     * Under OpenShift glass, clear PF sticky-header elevation/fill on all tables
+     * (thead::after = shadow/radius; th::after = fill + bottom border).
      */
-    [`html.pf-v6-theme-glass & .pf-v6-c-table`]: {
-      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
+      boxShadow: 'none',
+      borderRadius: 0,
+      borderBlockEndWidth: 0
     },
-    [`html.pf-v6-theme-glass & .pf-v6-c-table tbody`]: {
-      backgroundColor: 'var(--pf-t--global--background--color--primary--default)'
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: 'transparent',
+      borderBlockEndWidth: 0
     },
-    [`html.pf-v6-theme-glass & .pf-v6-c-toolbar`]: {
-      backgroundColor: 'transparent'
-    },
+
     /**
      * ChatBot docked mode should fit within the page drawer height
      */

@@ -23,7 +23,7 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';
 import type { GraphElement } from '@patternfly/react-topology';
-import { contrastSurfaceNest } from 'styles/ThemeSurfaces';
+import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -54,8 +54,8 @@ const mainStyle = kialiStyle({
   padding: '0',
   position: 'relative',
   backgroundColor: PFColors.BackgroundColor100,
-  $nest: contrastSurfaceNest({
-    contrast: {
+  $nest: contrastOverlayNest({
+    highContrast: {
       border: 'none',
       borderLeft: `1px solid ${PFColors.BorderDefault}`
     }
@@ -93,7 +93,7 @@ const toggleSidePanelStyle = kialiStyle({
   textAlign: 'center',
   transform: 'rotate(-90deg)',
   transformOrigin: 'left top 0',
-  $nest: contrastSurfaceNest()
+  $nest: contrastOverlayNest()
 });
 
 class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, SummaryPanelState> {

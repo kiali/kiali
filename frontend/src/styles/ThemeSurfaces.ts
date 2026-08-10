@@ -1,38 +1,60 @@
 import type { NestedCSSProperties } from 'typestyle/lib/types';
+
 import { PFColors } from 'components/Pf/PfColors';
 import { PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST } from 'types/Common';
 
-/**
- * Nested selectors for Kiali surfaces under OpenShift contrast modes (glass / high-contrast).
- * Use inside kialiStyle({ ...base, $nest: contrastSurfaceNest() }).
- *
- * Glass (OSSMC/OCP 5.0): keep an opaque primary fill. PatternFly forbids glass-on-glass
- * layering; dense Kiali UI (tables, legends, detail panels) must stay readable over the
- * Console's page glass background.
- * High contrast: solid fill, no soft shadows, stronger border (glass is disabled).
- */
-export const contrastSurfaceNest = (overrides?: {
-  contrast?: NestedCSSProperties;
+export type ContrastNestOverrides = {
   glass?: NestedCSSProperties;
-}): NestedCSSProperties['$nest'] => ({
+  highContrast?: NestedCSSProperties;
+};
+
+/**
+ * Floating overlays (graph/mesh legends, side panels) under OpenShift contrast modes.
+ * Glass: opaque sticky fill + elevation shadow. High contrast: solid fill, no shadow, border.
+ * Same-key fields in overrides replace defaults; new keys are added.
+ */
+export const contrastOverlayNest = (overrides?: ContrastNestOverrides): NestedCSSProperties['$nest'] => ({
   [`html.${PF_THEME_GLASS} &`]: {
-    backgroundColor: PFColors.BackgroundColor100,
+    backgroundColor: PFColors.BackgroundColorSticky,
     backdropFilter: 'none',
-    borderColor: 'var(--pf-t--global--border--color--glass--default)',
     boxShadow: 'var(--pf-t--global--box-shadow--glass--default)',
     ...overrides?.glass
   },
   [`html.${PF_THEME_HIGH_CONTRAST} &`]: {
-    backgroundColor: PFColors.BackgroundColor100,
+    backgroundColor: PFColors.BackgroundColorSticky,
     backdropFilter: 'none',
     boxShadow: 'none',
     border: `1px solid ${PFColors.BorderDefault}`,
-    ...overrides?.contrast
+    ...overrides?.highContrast
   }
 });
 
-/** Soft panel shadows that should disappear under high contrast. */
-export const contrastNoShadowNest = (): NestedCSSProperties['$nest'] => ({
+/**
+ * In-page content surfaces (RenderContent, header, tabs, toolbars, VirtualList) under
+ * contrast modes — as opposed to floating overlays. Glass: transparent so the Console
+ * glass page shows through. High contrast: solid sticky, no outer border.
+ */
+export const contrastContentNest = (overrides?: ContrastNestOverrides): NestedCSSProperties['$nest'] => ({
+  [`html.${PF_THEME_GLASS} &`]: {
+    backgroundColor: 'transparent',
+    backdropFilter: 'none',
+    boxShadow: 'none',
+    border: 'none',
+    ...overrides?.glass
+  },
+  [`html.${PF_THEME_HIGH_CONTRAST} &`]: {
+    backgroundColor: PFColors.BackgroundColorSticky,
+    backdropFilter: 'none',
+    boxShadow: 'none',
+    border: 'none',
+    ...overrides?.highContrast
+  }
+});
+
+/**
+ * Soft-shadowed inner panels under high contrast (replace elevation with a border).
+ */
+export const contrastPanelNest = (): NestedCSSProperties['$nest'] => ({
   [`html.${PF_THEME_HIGH_CONTRAST} &`]: {
     boxShadow: 'none',
     '-webkit-box-shadow': 'none',
