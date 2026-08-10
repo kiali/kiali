@@ -58,9 +58,16 @@ const valueDisplayStyle = kialiStyle({
 const popoverTextAreaStyle = kialiStyle({
   fontFamily: 'var(--pf-t--global--font--family--mono)',
   fontSize: 'var(--pf-t--global--font--size--sm)',
-  minHeight: '20rem',
+  // Keep the editor short enough to fit when opened from the first annotation row.
+  maxHeight: '30vh',
+  minHeight: '8rem',
   width: '100%',
   resize: 'vertical'
+});
+
+const popoverHeaderStyle = kialiStyle({
+  overflowWrap: 'anywhere',
+  wordBreak: 'break-word'
 });
 
 const popoverFooterStyle = kialiStyle({
@@ -121,11 +128,9 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
 
   return (
     <Popover
-      appendTo={() =>
-        (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
-        document.body
-      }
-      headerContent={entryKey || t('Value')}
+      // Append to body so the value editor is not clipped by Modal overflow.
+      appendTo={() => document.body}
+      headerContent={<div className={popoverHeaderStyle}>{entryKey || t('Value')}</div>}
       bodyContent={
         <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
       }
@@ -160,6 +165,10 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
         </div>
       }
       elementToFocus={`#${id}`}
+      enableFlip
+      // Prefer top-aligned left placement so the first-row editor is not cut off above the modal.
+      // Flip to left-end near the bottom of the viewport.
+      flipBehavior={['left-start', 'left-end', 'right-start', 'right-end', 'bottom', 'top']}
       hideOnOutsideClick={false}
       isVisible={isVisible}
       shouldOpen={() => {
@@ -170,10 +179,11 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
         setDraft(value);
         setVisible(false);
       }}
-      minWidth="40rem"
-      position="left"
+      minWidth="30rem"
+      position="left-start"
       showClose={false}
       withFocusTrap
+      zIndex={10000}
     >
       <Button
         aria-label={t('Edit value')}
