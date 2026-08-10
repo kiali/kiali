@@ -17,6 +17,13 @@ Patterns for migrations:
 mesh local-kiali, istio config type + validation filters). OpenShift-only scenarios skip when
 auth strategy is not `openshift`.
 
+### Tag filtering (`PLAYWRIGHT_GREP` / Jenkins `TEST_TAGS`)
+
+Prefer `--project=smoke` / `yarn playwright:run:smoke` for smoke-only. If you use
+`PLAYWRIGHT_GREP=@smoke` (or Jenkins `TEST_TAGS`), run auth setup first — the setup test
+title is `authenticate` and does not match suite tags. `yarn playwright:run:test-group:junit`
+does that automatically.
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):

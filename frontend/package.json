@@ -92,7 +92,7 @@
     "playwright:run:ambient:junit": "playwright test --project=ambient --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
     "playwright:run:multi-cluster:junit": "playwright test --project=multi-cluster --pass-with-no-tests",
     "playwright:run:multi-primary:junit": "playwright test --project=multi-primary --pass-with-no-tests",
-    "playwright:run:test-group:junit": "playwright test --pass-with-no-tests",
+    "playwright:run:test-group:junit": "node scripts/playwright-test-group.mjs",
     "playwright:show-report": "playwright show-report playwright-report",
     "generate:chatbot-conversations": "node src/mocks/scripts/generateChatbotConversations.js",
     "format:precommit": "../hack/hooks/pre-commit.sh",
