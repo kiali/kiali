@@ -15,6 +15,7 @@ import {
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
+import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -65,7 +66,7 @@ const popoverTextAreaStyle = kialiStyle({
 
 const popoverFooterStyle = kialiStyle({
   display: 'flex',
-  gap: '0.25rem',
+  gap: PFSpacer.xs,
   justifyContent: 'flex-end'
 });
 
@@ -128,6 +129,10 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
     onVisibleChange?.(visible);
   };
 
+  const valueAriaLabel = entryKey
+    ? t('Annotation value for {{key}}', { key: entryKey })
+    : t('Value');
+
   return (
     <Popover
       appendTo={() =>
@@ -136,7 +141,14 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
       }
       headerContent={entryKey || t('Value')}
       bodyContent={
-        <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
+        <TextArea
+          aria-label={valueAriaLabel}
+          className={popoverTextAreaStyle}
+          data-test="annotation-value-input"
+          id={id}
+          onChange={(_event, v) => setDraft(v)}
+          value={draft}
+        />
       }
       footerContent={
         <div className={popoverFooterStyle}>
