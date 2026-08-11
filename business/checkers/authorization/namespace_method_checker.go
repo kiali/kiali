@@ -106,21 +106,50 @@ func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to []*api_security
 
 func validMethod(m string) bool {
 	method := strings.TrimSpace(m)
+	if method == "" {
+		return false
+	}
 
-	// Istio AuthorizationPolicy string fields support presence match ("*"):
+	// Istio AuthorizationPolicy string fields support Exact / Prefix / Suffix / Presence match:
 	// https://istio.io/latest/docs/reference/config/security/authorization-policy/
+	// Presence match: "*" matches when the value is not empty.
 	if method == "*" {
 		return true
 	}
 
+	// Fully-qualified gRPC names like "/package.service/method"
 	if methodMatcher.MatchString(method) {
 		return true
 	}
 
-	upper := strings.ToUpper(method)
+	// Prefix match: "GET*" ; Suffix match: "*ET" (only one wildcard, at start or end)
+	prefixMatch := strings.HasSuffix(method, "*") && !strings.HasPrefix(method, "*")
+	suffixMatch := strings.HasPrefix(method, "*") && !strings.HasSuffix(method, "*")
+
+	var pattern string
+	switch {
+	case prefixMatch:
+		pattern = strings.ToUpper(strings.TrimSuffix(method, "*"))
+	case suffixMatch:
+		pattern = strings.ToUpper(strings.TrimPrefix(method, "*"))
+	default:
+		pattern = strings.ToUpper(method)
+	}
+
 	for _, httpMethod := range httputil.HttpMethods() {
-		if upper == httpMethod {
-			return true
+		switch {
+		case prefixMatch:
+			if strings.HasPrefix(httpMethod, pattern) {
+				return true
+			}
+		case suffixMatch:
+			if strings.HasSuffix(httpMethod, pattern) {
+				return true
+			}
+		default:
+			if httpMethod == pattern {
+				return true
+			}
 		}
 	}
 
