@@ -105,13 +105,24 @@ func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to []*api_security
 }
 
 func validMethod(m string) bool {
-	valid := false
+	method := strings.TrimSpace(m)
 
-	for _, httpMethod := range httputil.HttpMethods() {
-		// HTTP methods allowed or
-		// For gRPC service, a fully-qualified name like “/package.service/method”
-		valid = valid || (strings.TrimSpace(strings.ToUpper(m)) == httpMethod || methodMatcher.MatchString(m))
+	// Istio AuthorizationPolicy string fields support presence match ("*"):
+	// https://istio.io/latest/docs/reference/config/security/authorization-policy/
+	if method == "*" {
+		return true
 	}
 
-	return valid
+	if methodMatcher.MatchString(method) {
+		return true
+	}
+
+	upper := strings.ToUpper(method)
+	for _, httpMethod := range httputil.HttpMethods() {
+		if upper == httpMethod {
+			return true
+		}
+	}
+
+	return false
 }
