@@ -3,6 +3,7 @@ package k8sgateways
 import (
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/models"
@@ -19,16 +20,25 @@ type K8sGatewayStatus struct {
 
 const GwAPICheckerCode string = "GWAPI"
 
-// K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
+// K8sGatewayConditionStatus maps Gateway-level condition types to the status value that
+// indicates a problem. Maps include GEP-1364 conditions (Accepted, Programmed) and legacy
+// types (Scheduled, Ready) so both modern and older controllers are covered.
+// Programmed=False is only flagged when the reason is not benign (see isBenignProgrammedReason).
 var K8sGatewayConditionStatus = map[string]string{
-	"Scheduled": "False",
-	"Ready":     "False",
+	"Accepted":   "False",
+	"Programmed": "False",
+	"Ready":      "False",
+	"Scheduled":  "False",
 }
 
-// K8sGatewayConditionStatus represents the status failures for a Condition in a K8sGateway
+// K8sGatewayListenersStatus maps Listener condition types to problematic values. Includes
+// GEP-1364 conditions (Accepted, Programmed, ResolvedRefs, Conflicted) and legacy types
+// (Detached, Ready). Programmed=False uses the same benign-reason filter as gateway-level.
 var K8sGatewayListenersStatus = map[string]string{
+	"Accepted":     "False",
 	"Conflicted":   "True",
 	"Detached":     "True",
+	"Programmed":   "False",
 	"Ready":        "False",
 	"ResolvedRefs": "False",
 }
@@ -38,7 +48,7 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 	validations := make([]*models.IstioCheck, 0)
 
 	for i, c := range m.K8sGateway.Status.Conditions {
-		if K8sGatewayConditionStatus[c.Type] == string(c.Status) {
+		if isProblematicGatewayCondition(c) {
 			check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%d]/reason/%s", i, c.Reason))
 			validations = append(validations, &check)
 		}
@@ -46,7 +56,7 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 
 	for i, l := range m.K8sGateway.Status.Listeners {
 		for _, c := range l.Conditions {
-			if K8sGatewayListenersStatus[c.Type] == string(c.Status) {
+			if isProblematicListenerCondition(c) {
 				check := createGwChecker(fmt.Sprintf("%s. GWAPI errors should be changed in the spec.", c.Message), fmt.Sprintf("status/conditions[%d]/type/%s", i, c.Reason))
 				validations = append(validations, &check)
 			}
@@ -54,6 +64,37 @@ func (m StatusChecker) Check() ([]*models.IstioCheck, bool) {
 	}
 
 	return validations, len(validations) == 0
+}
+
+func isProblematicGatewayCondition(c metav1.Condition) bool {
+	return isProblematicCondition(c, K8sGatewayConditionStatus)
+}
+
+func isProblematicListenerCondition(c metav1.Condition) bool {
+	return isProblematicCondition(c, K8sGatewayListenersStatus)
+}
+
+func isProblematicCondition(c metav1.Condition, problematicStatus map[string]string) bool {
+	expectedStatus, ok := problematicStatus[c.Type]
+	if !ok || string(c.Status) != expectedStatus {
+		return false
+	}
+	if c.Type == "Programmed" && c.Status == metav1.ConditionFalse {
+		return !isBenignProgrammedReason(c.Reason)
+	}
+	return true
+}
+
+// isBenignProgrammedReason reports Gateway API Programmed=False reasons that reflect
+// controller progress or missing routes, not invalid Gateway spec. Other reasons
+// (Invalid, NoResources, etc.) are surfaced as GWAPI warnings.
+func isBenignProgrammedReason(reason string) bool {
+	switch reason {
+	case "Pending", "ListenersNotValid":
+		return true
+	default:
+		return false
+	}
 }
 
 // Create checker for GW validation (Gateway status)

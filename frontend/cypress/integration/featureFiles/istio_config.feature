@@ -173,7 +173,7 @@ Feature: Kiali Istio Config page
   Scenario: KIA0104 validation
     Given there is not a "bookinfo" "VirtualService" in the "bookinfo" namespace
     Given a "foo" AuthorizationPolicy in the "bookinfo" namespace
-    And the AuthorizationPolicy has a to-operation rule with "missing.hostname" host
+    And the AuthorizationPolicy has a to-operation rule with "missing.bookinfo" host
     When the user refreshes the page
     And user selects the "bookinfo" namespace
     Then the AuthorizationPolicy should have a "warning"

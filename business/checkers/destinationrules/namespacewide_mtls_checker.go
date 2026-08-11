@@ -23,6 +23,12 @@ func (m NamespaceWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
+	// With auto-mTLS, Istio encrypts without requiring an explicit PeerAuthentication
+	// (same escape hatch as KIA0501 / NamespaceMtlsChecker).
+	if m.MTLSDetails.EnabledAutoMtls {
+		return validations, true
+	}
+
 	// otherwise, check among PeerAuthentications for a rule enabling ns-wide mTLS
 	for _, mp := range m.MTLSDetails.PeerAuthentications {
 		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {

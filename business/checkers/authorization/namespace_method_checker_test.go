@@ -47,10 +47,11 @@ func TestSourceNamespaceNotFound(t *testing.T) {
 func TestToMethodWrongHTTP(t *testing.T) {
 	assert := assert.New(t)
 
+	// gRPC FQNs belong in paths, not methods — they must be flagged here.
 	vals, valid := NamespaceMethodChecker{
 		AuthorizationPolicy: toMethodsAuthPolicy([]string{
-			"GET", "/grpc.package/method", "/grpc.package/subpackage/subpackage/method",
-			"GOT", "WRONG", "/grpc.pkg/hello.method", "grpc.pkg/noinitialslash",
+			"GET", "POST",
+			"GOT", "WRONG", "/grpc.package/method", "grpc.pkg/noinitialslash",
 		}),
 		Namespaces: []string{"bookinfo"},
 	}.Check()
@@ -58,7 +59,7 @@ func TestToMethodWrongHTTP(t *testing.T) {
 	assert.True(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 4)
-	for i, m := range []int{3, 4, 5, 6} {
+	for i, m := range []int{2, 3, 4, 5} {
 		assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.to.wrongmethod", vals[i]))
 		assert.Equal(vals[i].Severity, models.WarningSeverity)
 		assert.Equal(vals[i].Path, fmt.Sprintf("spec/rules[0]/to[0]/operation/methods[%d]", m))
@@ -77,17 +78,29 @@ func TestToMethodWildcardPresenceMatch(t *testing.T) {
 	assert.Empty(vals)
 }
 
-func TestToMethodWildcardWithInvalidStillFlags(t *testing.T) {
+func TestToMethodWildcardPrefixAndSuffix(t *testing.T) {
 	assert := assert.New(t)
 
 	vals, valid := NamespaceMethodChecker{
-		AuthorizationPolicy: toMethodsAuthPolicy([]string{"*", "GOT", "WRONG"}),
+		AuthorizationPolicy: toMethodsAuthPolicy([]string{"GET*", "G*", "*ET", "*POST"}),
 		Namespaces:          []string{"bookinfo"},
 	}.Check()
 
 	assert.True(valid)
-	assert.Len(vals, 2)
-	for i, m := range []int{1, 2} {
+	assert.Empty(vals)
+}
+
+func TestToMethodWildcardWithInvalidStillFlags(t *testing.T) {
+	assert := assert.New(t)
+
+	vals, valid := NamespaceMethodChecker{
+		AuthorizationPolicy: toMethodsAuthPolicy([]string{"*", "GOT", "WRONG", "GOT*", "*WRONG", "*BAD*"}),
+		Namespaces:          []string{"bookinfo"},
+	}.Check()
+
+	assert.True(valid)
+	assert.Len(vals, 5)
+	for i, m := range []int{1, 2, 3, 4, 5} {
 		assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.to.wrongmethod", vals[i]))
 		assert.Equal(vals[i].Severity, models.WarningSeverity)
 		assert.Equal(vals[i].Path, fmt.Sprintf("spec/rules[0]/to[0]/operation/methods[%d]", m))

@@ -47,13 +47,74 @@ func TestNonExistingService(t *testing.T) {
 		PolicyAllowAny:      true,
 	}.Check()
 
-	// Wrong host is not present
+	// Short-name typo is still flagged (soft registry lint)
 	assert.False(valid)
 	assert.NotEmpty(vals)
 	assert.Len(vals, 1)
 	assert.Equal(models.WarningSeverity, vals[0].Severity)
 	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
 	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[0].Path)
+}
+
+func TestNonExistingServiceNamespaceShorthand(t *testing.T) {
+	assert := assert.New(t)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local"}, "bookinfo")
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		AuthorizationPolicy: authPolicyWithHost([]string{"missing.bookinfo"}),
+		Namespaces:          []string{"bookinfo"},
+		ServiceEntries:      map[string][]string{},
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
+		PolicyAllowAny:      true,
+	}.Check()
+
+	// service.namespace shorthand is registry-checked when the namespace is known
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.Equal(models.WarningSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
+}
+
+func TestHTTPHostHeaderSkipped(t *testing.T) {
+	assert := assert.New(t)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local"}, "bookinfo")
+
+	for _, host := range []string{"api.example.com", "wrong.org", "myservice.test", "api.info", "app.tech"} {
+		vals, valid := NoHostChecker{
+			IdentityDomain:      "svc.cluster.local",
+			AuthorizationPolicy: authPolicyWithHost([]string{host}),
+			Namespaces:          []string{"bookinfo"},
+			ServiceEntries:      map[string][]string{},
+			KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
+			PolicyAllowAny:      true,
+		}.Check()
+
+		assert.True(valid, "host %q should not be registry-validated", host)
+		assert.Empty(vals, "host %q should not produce KIA0104", host)
+	}
+}
+
+func TestNonExistingServiceErrorSeverity(t *testing.T) {
+	assert := assert.New(t)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"details.bookinfo.svc.cluster.local"}, "bookinfo")
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		AuthorizationPolicy: authPolicyWithHost([]string{"wrong"}),
+		Namespaces:          []string{"bookinfo"},
+		ServiceEntries:      map[string][]string{},
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
+		PolicyAllowAny:      false,
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.Equal(models.ErrorSeverity, vals[0].Severity)
+	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
 }
 
 func TestWildcardHost(t *testing.T) {
@@ -69,7 +130,7 @@ func TestWildcardHost(t *testing.T) {
 		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
-	// Well configured object
+	// Host-header wildcards are valid Istio AuthZ matchers
 	assert.True(valid)
 	assert.Empty(vals)
 }
@@ -87,15 +148,9 @@ func TestWildcardHostOutsideNamespace(t *testing.T) {
 		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices, "svc.cluster.local"),
 	}.Check()
 
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 2)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
-	assert.Equal(models.ErrorSeverity, vals[1].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[1]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[1]", vals[1].Path)
+	// Wildcard Host-header matchers are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestServiceEntryPresent(t *testing.T) {
@@ -161,13 +216,9 @@ func TestExportedExternalServiceEntryFail(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 	}.Check()
 
-	// www.wrong.com host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestWildcardExportedInternalServiceEntryPresent(t *testing.T) {
@@ -199,13 +250,9 @@ func TestWildcardExportedInternalServiceEntryFail(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 	}.Check()
 
-	// details.bookinfo3.svc.cluster.local host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
@@ -220,13 +267,9 @@ func TestExportedNonFQDNInternalServiceEntryFail(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 	}.Check()
 
-	// details.bookinfo2.svc.cluster.local host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestServiceEntryNotPresent(t *testing.T) {
@@ -240,13 +283,9 @@ func TestServiceEntryNotPresent(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 	}.Check()
 
-	// Wrong.org host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestExportedInternalServiceEntryNotPresent(t *testing.T) {
@@ -260,13 +299,9 @@ func TestExportedInternalServiceEntryNotPresent(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{serviceEntry}),
 	}.Check()
 
-	// Wrong.org host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestVirtualServicePresent(t *testing.T) {
@@ -297,13 +332,9 @@ func TestVirtualServiceNotPresent(t *testing.T) {
 		VirtualServices:     []*networking_v1.VirtualService{&virtualService},
 	}.Check()
 
-	// Wrong.org host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.ErrorSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	// Dotted Host-header values are not registry-validated
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func TestWildcardServiceEntryHost(t *testing.T) {
@@ -318,11 +349,10 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 		ServiceEntries:      kubernetes.ServiceEntryHostnames([]*networking_v1.ServiceEntry{&serviceEntry}),
 	}.Check()
 
-	// Well configured object
 	assert.True(valid)
 	assert.Empty(vals)
 
-	// Not matching
+	// Non-matching dotted Host header is still not registry-validated
 	vals, valid = NoHostChecker{
 		IdentityDomain:      "svc.cluster.local",
 		AuthorizationPolicy: authPolicyWithHost([]string{"maps.apple.com"}),
@@ -331,13 +361,8 @@ func TestWildcardServiceEntryHost(t *testing.T) {
 		PolicyAllowAny:      true,
 	}.Check()
 
-	// apple.com host is not present
-	assert.False(valid)
-	assert.NotEmpty(vals)
-	assert.Len(vals, 1)
-	assert.Equal(models.WarningSeverity, vals[0].Severity)
-	assert.NoError(validations.ConfirmIstioCheckMessage("authorizationpolicy.nodest.matchingregistry", vals[0]))
-	assert.Equal("spec/rules[0]/to[0]/operation/hosts[0]", vals[0].Path)
+	assert.True(valid)
+	assert.Empty(vals)
 }
 
 func authPolicyWithHost(hostList []string) *security_v1.AuthorizationPolicy {
@@ -350,14 +375,15 @@ func authPolicyWithHost(hostList []string) *security_v1.AuthorizationPolicy {
 func TestValidServiceRegistry(t *testing.T) {
 	assert := assert.New(t)
 
+	// Dotted FQDNs are Host-header matchers and skip registry validation
 	validations, valid := NoHostChecker{
 		IdentityDomain:      "svc.cluster.local",
 		AuthorizationPolicy: authPolicyWithHost([]string{"ratings.mesh2-bookinfo.svc.mesh1-imports.local"}),
 		Namespaces:          []string{"outside", "bookinfo"},
 	}.Check()
 
-	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.True(valid)
+	assert.Empty(validations)
 
 	conf := config.NewConfig()
 	conf.ExternalServices.Istio.IstioIdentityDomain = "svc.mesh1-imports.local"
@@ -385,8 +411,8 @@ func TestValidServiceRegistry(t *testing.T) {
 		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices2, id),
 	}.Check()
 
-	assert.False(valid)
-	assert.NotEmpty(validations)
+	assert.True(valid)
+	assert.Empty(validations)
 
 	config.Set(config.NewConfig())
 	fakeServices3 := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
@@ -401,13 +427,12 @@ func TestValidServiceRegistry(t *testing.T) {
 	assert.True(valid)
 	assert.Empty(validations)
 
-	fakeServices4 := data.CreateFakeMultiServices([]string{"ratings.bookinfo.svc.cluster.local"}, "bookinfo")
-
+	// Short names remain registry-validated
 	validations, valid = NoHostChecker{
 		IdentityDomain:      "svc.cluster.local",
-		AuthorizationPolicy: authPolicyWithHost([]string{"ratings2.bookinfo.svc.cluster.local"}),
+		AuthorizationPolicy: authPolicyWithHost([]string{"ratings2"}),
 		Namespaces:          []string{"outside", "bookinfo"},
-		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices4, "svc.cluster.local"),
+		KubeServiceHosts:    kubernetes.KubeServiceFQDNs(fakeServices3, "svc.cluster.local"),
 	}.Check()
 
 	assert.False(valid)
