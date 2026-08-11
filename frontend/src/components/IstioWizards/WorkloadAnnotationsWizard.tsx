@@ -58,16 +58,9 @@ const valueDisplayStyle = kialiStyle({
 const popoverTextAreaStyle = kialiStyle({
   fontFamily: 'var(--pf-t--global--font--family--mono)',
   fontSize: 'var(--pf-t--global--font--size--sm)',
-  // Keep the editor short enough to fit when opened from the first annotation row.
-  maxHeight: '30vh',
-  minHeight: '8rem',
+  minHeight: '20rem',
   width: '100%',
   resize: 'vertical'
-});
-
-const popoverHeaderStyle = kialiStyle({
-  overflowWrap: 'anywhere',
-  wordBreak: 'break-word'
 });
 
 const popoverFooterStyle = kialiStyle({
@@ -110,6 +103,8 @@ const disabledEditorStyle = kialiStyle({
 });
 
 interface EditValuePopoverProps {
+  // First Controller Annotations row sits near the modal top; left-start keeps the Value header on-screen.
+  alignStart?: boolean;
   entryKey: string;
   id: string;
   onChange: (value: string) => void;
@@ -117,7 +112,14 @@ interface EditValuePopoverProps {
   value: string;
 }
 
-const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onChange, onVisibleChange, value }) => {
+const EditValuePopover: React.FC<EditValuePopoverProps> = ({
+  alignStart = false,
+  entryKey,
+  id,
+  onChange,
+  onVisibleChange,
+  value
+}) => {
   const [draft, setDraft] = React.useState(value);
   const [isVisible, setIsVisible] = React.useState(false);
 
@@ -128,9 +130,11 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
 
   return (
     <Popover
-      // Append to body so the value editor is not clipped by Modal overflow.
-      appendTo={() => document.body}
-      headerContent={<div className={popoverHeaderStyle}>{entryKey || t('Value')}</div>}
+      appendTo={() =>
+        (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
+        document.body
+      }
+      headerContent={entryKey || t('Value')}
       bodyContent={
         <TextArea className={popoverTextAreaStyle} id={id} onChange={(_event, v) => setDraft(v)} value={draft} />
       }
@@ -165,10 +169,7 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
         </div>
       }
       elementToFocus={`#${id}`}
-      enableFlip
-      // Prefer top-aligned left placement so the first-row editor is not cut off above the modal.
-      // Flip to left-end near the bottom of the viewport.
-      flipBehavior={['left-start', 'left-end', 'right-start', 'right-end', 'bottom', 'top']}
+      enableFlip={!alignStart}
       hideOnOutsideClick={false}
       isVisible={isVisible}
       shouldOpen={() => {
@@ -179,11 +180,10 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({ entryKey, id, onCha
         setDraft(value);
         setVisible(false);
       }}
-      minWidth="30rem"
-      position="left-start"
+      minWidth="40rem"
+      position={alignStart ? 'left-start' : 'left'}
       showClose={false}
       withFocusTrap
-      zIndex={10000}
     >
       <Button
         aria-label={t('Edit value')}
@@ -251,6 +251,7 @@ const AnnotationSection: React.FC<SectionProps> = ({
               </Th>
               <Th>
                 <EditValuePopover
+                  alignStart={sectionId === 'controller' && index === 0}
                   entryKey={key}
                   id={`${sectionId}_popover_value_${index}`}
                   onChange={v => onChange(index, [key, v])}
