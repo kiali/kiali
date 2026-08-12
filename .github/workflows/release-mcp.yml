@@ -263,7 +263,7 @@ jobs:
     # Checkout the workflow SHA (not release_branch) so hack scripts / mcp_tools
     # match this PR even when publishing an older release line.
     - name: Check out Kiali code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Install Helm
       uses: Azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
@@ -278,7 +278,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Check out kubernetes-mcp-server (pin + endpoints)
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         repository: containers/kubernetes-mcp-server
         path: kubernetes-mcp-server
