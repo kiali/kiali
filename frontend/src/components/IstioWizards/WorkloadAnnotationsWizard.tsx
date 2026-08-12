@@ -59,15 +59,29 @@ const valueDisplayStyle = kialiStyle({
 const popoverTextAreaStyle = kialiStyle({
   fontFamily: 'var(--pf-t--global--font--family--mono)',
   fontSize: 'var(--pf-t--global--font--size--sm)',
-  minHeight: '20rem',
-  width: '100%',
-  resize: 'vertical'
+  maxHeight: '20rem',
+  overflowY: 'auto',
+  resize: 'none',
+  width: '100%'
 });
 
-const popoverFooterStyle = kialiStyle({
+const popoverHeaderStyle = kialiStyle({
+  alignItems: 'center',
   display: 'flex',
-  gap: PFSpacer.xs,
-  justifyContent: 'flex-end'
+  gap: PFSpacer.md,
+  justifyContent: 'space-between',
+  width: '100%'
+});
+
+const popoverHeaderTitleStyle = kialiStyle({
+  overflowWrap: 'anywhere',
+  wordBreak: 'break-word'
+});
+
+const popoverHeaderActionsStyle = kialiStyle({
+  display: 'flex',
+  flexShrink: 0,
+  gap: PFSpacer.xs
 });
 
 const toEntries = (record: Record<string, string>): Entry[] => {
@@ -133,13 +147,51 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
     ? t('Annotation value for {{key}}', { key: entryKey })
     : t('Value');
 
+  const title = entryKey || t('Value');
+
+  const headerActions = (
+    <div className={popoverHeaderActionsStyle}>
+      <Tooltip content={t('Save')} trigger="mouseenter">
+        <Button
+          aria-label={t('Save')}
+          data-test="annotation-value-save"
+          variant="plain"
+          size="sm"
+          icon={<KialiIcon.Check />}
+          onClick={() => {
+            onChange(draft);
+            setVisible(false);
+          }}
+        />
+      </Tooltip>
+      <Tooltip content={t('Cancel')} trigger="mouseenter">
+        <Button
+          aria-label={t('Cancel')}
+          data-test="annotation-value-cancel"
+          variant="plain"
+          size="sm"
+          icon={<KialiIcon.Close />}
+          onClick={() => {
+            setDraft(value);
+            setVisible(false);
+          }}
+        />
+      </Tooltip>
+    </div>
+  );
+
   return (
     <Popover
       appendTo={() =>
         (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
         document.body
       }
-      headerContent={entryKey || t('Value')}
+      headerContent={
+        <div className={popoverHeaderStyle}>
+          <span className={popoverHeaderTitleStyle}>{title}</span>
+          {headerActions}
+        </div>
+      }
       bodyContent={
         <TextArea
           aria-label={valueAriaLabel}
@@ -147,38 +199,9 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
           data-test="annotation-value-input"
           id={id}
           onChange={(_event, v) => setDraft(v)}
+          rows={10}
           value={draft}
         />
-      }
-      footerContent={
-        <div className={popoverFooterStyle}>
-          <Tooltip content={t('Save')} trigger="mouseenter">
-            <Button
-              aria-label={t('Save')}
-              data-test="annotation-value-save"
-              variant="plain"
-              size="sm"
-              icon={<KialiIcon.Check />}
-              onClick={() => {
-                onChange(draft);
-                setVisible(false);
-              }}
-            />
-          </Tooltip>
-          <Tooltip content={t('Cancel')} trigger="mouseenter">
-            <Button
-              aria-label={t('Cancel')}
-              data-test="annotation-value-cancel"
-              variant="plain"
-              size="sm"
-              icon={<KialiIcon.Close />}
-              onClick={() => {
-                setDraft(value);
-                setVisible(false);
-              }}
-            />
-          </Tooltip>
-        </div>
       }
       elementToFocus={`#${id}`}
       enableFlip={!alignStart}
