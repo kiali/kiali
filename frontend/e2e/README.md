@@ -5,7 +5,7 @@ Patterns for migrations:
 - Native Playwright Test (not playwright-bdd); tags in test titles drive projects
 - `testIdAttribute: 'data-test'` (Kiali `data-test` selectors)
 - Auth via `storageState` (`e2e/global-setup/auth.setup.ts`); supports anonymous and OpenShift (`PLAYWRIGHT_*` env)
-- Page objects extend `BasePage` (`getBySel`, `robustClick`, `waitForLoad`, `retryOnError`)
+- Page objects extend `BasePage` (`getBySel`, `waitForLoad`); Playwright auto-retries clicks and assertions
 - API mocks use `page.route('**/api/...')` for OSSMC proxy compatibility
 - `linkSelector()` matches `<a href>` and `<button data-href>` (OSSMC kiosk)
 - List pages that need toggles: `gotoListPage()` rewrites `/api/config` `showIncludeToggles`

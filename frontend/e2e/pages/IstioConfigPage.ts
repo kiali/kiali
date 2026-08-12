@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { selectNamespace } from '../utils/namespace';
@@ -29,6 +29,14 @@ export class IstioConfigPage extends BasePage {
     return this.page.locator('#filter_select_value').getByRole('option', { name, exact: true });
   }
 
+  private filterSelection(): Locator {
+    return this.page.locator('#filter-selection');
+  }
+
+  private activeFilterCloseButtons(): Locator {
+    return this.filterSelection().locator('button[aria-label^="Close "]');
+  }
+
   async open(): Promise<void> {
     await gotoConsolePage(this.page, 'istio');
   }
@@ -47,7 +55,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectNoActiveFilters(): Promise<void> {
-    await expect(this.page.locator('#filter-selection > :nth-child(2)')).toBeHidden();
+    await expect(this.activeFilterCloseButtons()).toHaveCount(0);
   }
 
   async typeIntoTypeFilter(input: string): Promise<void> {
@@ -99,32 +107,28 @@ export class IstioConfigPage extends BasePage {
     const responsePromise = this.page.waitForResponse(
       response => response.url().includes('/api/istio/config') && response.request().method() === 'GET'
     );
-    await this.page.locator('#filter-selection > :nth-child(2)').getByText('Clear all filters').click();
+    await this.filterSelection().getByRole('button', { name: 'Clear all filters' }).click();
     await responsePromise;
     await waitForLoadingComplete(this.page);
   }
 
   async chooseNTypeFilters(count: number): Promise<void> {
     await this.selectFilterCategory('Type');
-
-    for (let i = 1; i <= count; i++) {
-      await this.page.locator('input[placeholder="Filter by Type"]').click();
-      await this.page.locator(`[data-test=istio-type-dropdown] > :nth-child(${i})`).click();
-      await waitForLoadingComplete(this.page);
+    for (const typeName of TYPE_FILTERS.slice(0, count)) {
+      await this.applyTypeFilter(typeName);
     }
   }
 
   async expectActiveFilterCount(count: number): Promise<void> {
-    const chips = this.page.locator('#filter-selection > :nth-child(2)').locator('button[aria-label^="Close "]');
-    await expect(chips).toHaveCount(count);
+    await expect(this.activeFilterCloseButtons()).toHaveCount(count);
   }
 
   async showMoreFilters(): Promise<void> {
-    await this.page.locator('#filter-selection button.pf-v6-c-label.pf-m-overflow').click();
+    await this.filterSelection().getByRole('button', { name: /^\+/ }).click();
   }
 
   async clickShowLess(): Promise<void> {
-    await this.page.locator('#filter-selection > :nth-child(2)').getByText('Show Less').click();
+    await this.filterSelection().getByText('Show Less').click();
     await waitForLoadingComplete(this.page);
   }
 
@@ -133,11 +137,11 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectAllValidationFilterOptions(): Promise<void> {
+    await this.page.locator('button#filter_select_value-toggle').click();
     for (const name of VALIDATION_FILTERS) {
-      await this.page.locator('button#filter_select_value-toggle').click();
       await expect(this.filterOption(name)).toBeVisible();
-      await this.page.locator('button#filter_select_value-toggle').click();
     }
+    await this.page.locator('button#filter_select_value-toggle').click();
   }
 
   async applyValidationFilter(category: string): Promise<void> {
@@ -148,18 +152,16 @@ export class IstioConfigPage extends BasePage {
     await this.filterOption(category).click();
     await responsePromise;
     await waitForLoadingComplete(this.page);
-    await expect(
-      this.page.locator('#filter-selection > :nth-child(2)').getByText(category, { exact: true })
-    ).toBeVisible();
+    await expect(this.filterSelection().getByText(category, { exact: true })).toBeVisible();
   }
 
   async chooseNValidationFilters(count: number): Promise<void> {
     await this.selectFilterCategory('Config');
     await expect(this.page.locator('button#filter_select_value-toggle')).toBeVisible();
 
-    for (let i = 0; i < count; i++) {
+    for (const name of VALIDATION_FILTERS.slice(0, count)) {
       await this.page.locator('button#filter_select_value-toggle').click();
-      await this.page.locator('div#filter_select_value').locator('button').nth(i).click();
+      await this.filterOption(name).click();
       await waitForLoadingComplete(this.page);
     }
   }

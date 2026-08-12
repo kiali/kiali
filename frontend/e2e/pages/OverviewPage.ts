@@ -9,11 +9,11 @@ export class OverviewPage extends BasePage {
   }
 
   async openHelpMenu(): Promise<void> {
-    await this.robustClick(this.getBySel('about-help-button'));
+    await this.getBySel('about-help-button').click();
   }
 
   async openAbout(): Promise<void> {
-    await this.robustClick(this.page.locator('li[role="none"]').filter({ hasText: 'About' }));
+    await this.page.getByRole('menuitem', { name: 'About' }).click();
   }
 
   async openHelpAndAbout(): Promise<void> {
@@ -23,16 +23,16 @@ export class OverviewPage extends BasePage {
 
   async expectHelpMenuOptions(options: string[]): Promise<void> {
     for (const option of options) {
-      await expect(this.page.locator('li[role="none"]').filter({ hasText: option })).toBeVisible();
+      await expect(this.page.getByRole('menuitem', { name: option })).toBeVisible();
     }
   }
 
   async openHelpMenuItem(title: string): Promise<void> {
-    await this.robustClick(this.page.locator('li[role="none"]').filter({ hasText: title }));
+    await this.page.getByRole('menuitem', { name: title }).click();
   }
 
   async expectModalTitle(title: string): Promise<void> {
-    await expect(this.page.locator('h1.pf-v6-c-modal-box__title').filter({ hasText: title })).toBeVisible();
+    await expect(this.page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
   }
 
   async expectDebugInfoClusterCount(expected: number): Promise<void> {
@@ -51,19 +51,19 @@ export class OverviewPage extends BasePage {
       response => response.url().includes('/api/istio/status') && response.request().method() === 'GET'
     );
     await this.waitForLoad();
-    await this.robustClick(this.getBySel('refresh-button'));
+    await this.getBySel('refresh-button').click();
     await statusResponse;
     await expect(this.getBySel('istio-status-danger')).toHaveCount(0);
     await expect(this.getBySel('istio-status-warning')).toHaveCount(0);
   }
 
   async openUserDropdown(): Promise<void> {
-    await this.robustClick(this.getBySel('user-dropdown'));
+    await this.getBySel('user-dropdown').click();
   }
 
   async logout(): Promise<void> {
     const logoutResponse = this.page.waitForResponse(response => response.url().includes('/api/logout'));
-    await this.robustClick(this.getBySel('user-logout'));
+    await this.getBySel('user-logout').click();
     const response = await logoutResponse;
     expect(response.status()).toBe(204);
   }

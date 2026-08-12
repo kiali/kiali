@@ -15,7 +15,7 @@ export class SidebarPage extends BasePage {
     await expect(this.sidebar).toBeVisible();
     const hidden = await this.sidebar.getAttribute('aria-hidden');
     if (hidden === 'true') {
-      await this.robustClick(this.navToggle);
+      await this.navToggle.click();
     }
     await expect(this.sidebar).toBeVisible();
   }
@@ -25,13 +25,13 @@ export class SidebarPage extends BasePage {
     await expect(this.sidebar).toBeAttached();
     const hidden = await this.sidebar.getAttribute('aria-hidden');
     if (hidden === 'false') {
-      await this.robustClick(this.navToggle);
+      await this.navToggle.click();
     }
     await expect(this.sidebar).not.toBeVisible();
   }
 
   async toggleNavigation(): Promise<void> {
-    await this.robustClick(this.navToggle);
+    await this.navToggle.click();
   }
 
   async expectSidebarVisible(): Promise<void> {

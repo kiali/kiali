@@ -23,8 +23,6 @@ setup('authenticate', async ({ page, request }) => {
   const authInfo = (await authResponse.json()) as AuthInfo;
   const strategy = authInfo.strategy ?? 'anonymous';
 
-  process.env.KIALI_AUTH_STRATEGY = strategy;
-
   if (strategy === 'anonymous') {
     await page.goto('/console/overview?refresh=0');
     const status = await request.get('/api/status');
