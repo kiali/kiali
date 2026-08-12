@@ -56,6 +56,7 @@ Feature: Kiali Istio Config wizard
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    And user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
 
   @gateway-api
   @bookinfo-app
@@ -76,6 +77,7 @@ Feature: Kiali Istio Config wizard
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    And user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
 
   @gateway-api
   @bookinfo-app
