@@ -359,9 +359,9 @@ Feature: Kiali Istio Config wizard
     And the "gatewayapi-2" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should be referenced
-    When user is at the "istio" page
-    And viewing the detail for "gatewayapi-2"
+    When user is at the details page for the K8sGateway "gatewayapi-2" in the "bookinfo" namespace
     And choosing to delete it
+    And user is at the details page for the K8sGateway "gatewayapi-1" in the "bookinfo" namespace
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
