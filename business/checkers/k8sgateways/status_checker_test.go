@@ -107,6 +107,48 @@ func TestK8sGatewaysProgrammedPendingNotFlagged(t *testing.T) {
 	assert.Empty(check)
 }
 
+func TestK8sGatewaysAcceptedListenersNotValidNotFlagged(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.CreateEmptyK8sGateway("validk8sgateway", "test")
+	k8sgwObject.Status.Conditions = append(k8sgwObject.Status.Conditions,
+		metav1.Condition{Type: "Accepted", Status: "False", Reason: "ListenersNotValid", Message: "Listeners have no routes"})
+
+	k8sgws := StatusChecker{k8sgwObject}
+
+	check, isValid := k8sgws.Check()
+
+	assert.True(isValid)
+	assert.Empty(check)
+}
+
+func TestK8sGatewayListenerAcceptedPendingNotFlagged(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.AddListenerToK8sGateway(data.CreateListener("http", "example.com", 80, "HTTP"),
+		data.CreateEmptyK8sGateway("validk8sgateway", "test"))
+	k8sgwObject.Status.Listeners = []k8s_networking_v1.ListenerStatus{
+		{
+			Conditions: []metav1.Condition{
+				{Type: "Accepted", Status: "False", Reason: "Pending", Message: "Waiting for controller"},
+			},
+		},
+	}
+
+	k8sgws := StatusChecker{k8sgwObject}
+
+	check, isValid := k8sgws.Check()
+
+	assert.True(isValid)
+	assert.Empty(check)
+}
+
 func TestIncorrectK8sGatewaysProgrammedNoResourcesStatus(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

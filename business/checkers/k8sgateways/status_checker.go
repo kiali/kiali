@@ -23,7 +23,8 @@ const GwAPICheckerCode string = "GWAPI"
 // K8sGatewayConditionStatus maps Gateway-level condition types to the status value that
 // indicates a problem. Maps include GEP-1364 conditions (Accepted, Programmed) and legacy
 // types (Scheduled, Ready) so both modern and older controllers are covered.
-// Programmed=False is only flagged when the reason is not benign (see isBenignProgrammedReason).
+// Programmed=False is only flagged when the reason is not benign (see
+// isBenignPositiveConditionFalse).
 var K8sGatewayConditionStatus = map[string]string{
 	"Accepted":   "False",
 	"Programmed": "False",
@@ -79,18 +80,25 @@ func isProblematicCondition(c metav1.Condition, problematicStatus map[string]str
 	if !ok || string(c.Status) != expectedStatus {
 		return false
 	}
-	if c.Type == "Programmed" && c.Status == metav1.ConditionFalse {
-		return !isBenignProgrammedReason(c.Reason)
+	if isBenignPositiveConditionFalse(c.Type, c.Status, c.Reason) {
+		return false
 	}
 	return true
 }
 
-// isBenignProgrammedReason reports Gateway API Programmed=False reasons that reflect
-// controller progress or missing routes, not invalid Gateway spec. Other reasons
-// (Invalid, NoResources, etc.) are surfaced as GWAPI warnings.
-func isBenignProgrammedReason(reason string) bool {
+// isBenignPositiveConditionFalse reports positive-polarity conditions set to False for
+// transitional controller states (no routes yet, listeners skipped, etc.), not spec errors.
+func isBenignPositiveConditionFalse(condType string, status metav1.ConditionStatus, reason string) bool {
+	if status != metav1.ConditionFalse {
+		return false
+	}
+	switch condType {
+	case "Accepted", "Programmed", "Ready", "ResolvedRefs", "Scheduled":
+	default:
+		return false
+	}
 	switch reason {
-	case "Pending", "ListenersNotValid":
+	case "Pending", "ListenersNotValid", "ListenerSetsNotValid":
 		return true
 	default:
 		return false
