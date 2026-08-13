@@ -64,7 +64,10 @@ export class ListPage extends BasePage {
       await this.page.locator(`li[label="${filterValue}"] button`).click();
     } else if (filter === 'Istio Sidecar' || filter === 'Health') {
       await this.page.locator('button#filter_select_value-toggle').click();
-      await this.page.locator('div#filter_select_value button').filter({ hasText: filterValue }).click();
+      await this.page
+        .locator('div#filter_select_value')
+        .getByRole('option', { name: filterValue, exact: true })
+        .click();
     } else if (filter === 'Label') {
       await this.page.locator('input#filter_input_label').fill(filterValue);
       await this.page.locator('input#filter_input_label').press('Enter');

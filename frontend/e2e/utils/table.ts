@@ -72,12 +72,13 @@ export const expectHealthIconInRow = async (page: Page, rowText: string): Promis
 };
 
 export const expectOnlyHealthyApps = async (page: Page): Promise<void> => {
-  const icons = page.locator('tbody span.pf-v6-c-icon');
+  const icons = page.locator('tbody td[data-label="Health"] span.pf-v6-c-icon');
   const count = await icons.count();
   expect(count).toBeGreaterThan(0);
   for (let i = 0; i < count; i++) {
     const className = await icons.nth(i).getAttribute('class');
-    expect(className).toContain('icon-healthy');
+    expect(className).toBeTruthy();
+    expect(className!).toContain('icon-healthy');
   }
 };
 
@@ -124,7 +125,7 @@ export const checkHealthStatusInTable = async (
   const testId = rowDataTestId(cluster, namespace, type, itemName);
   const row = page.getByTestId(testId);
   await row.locator('td').first().locator('.pf-v6-c-icon__content').hover();
-  await expect(page.getByLabel('Health indicator').locator('strong')).toContainText(healthStatus);
+  await expect(row.getByLabel('Health indicator').locator('strong')).toContainText(healthStatus);
 };
 
 export const expectAppsWithNameCount = async (page: Page, request: Page['request'], name: string): Promise<void> => {
