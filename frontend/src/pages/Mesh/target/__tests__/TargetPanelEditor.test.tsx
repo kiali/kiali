@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { TargetPanelEditor } from '../TargetPanelEditor';
 
@@ -13,12 +12,10 @@ rstest.mock('@monaco-editor/react', () => ({
     height: string;
     onMount: (ed: { getContentHeight: () => number; onDidContentSizeChange: (cb: () => void) => void }) => void;
   }) => {
-    React.useEffect(() => {
-      onMount({
-        getContentHeight: mockGetContentHeight,
-        onDidContentSizeChange: mockOnDidContentSizeChange
-      });
-    }, [onMount]);
+    onMount({
+      getContentHeight: mockGetContentHeight,
+      onDidContentSizeChange: mockOnDidContentSizeChange
+    });
 
     return <div data-test="monaco-editor-mock" data-height={height} />;
   }
