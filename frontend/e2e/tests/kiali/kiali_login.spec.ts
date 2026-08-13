@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
 import { getAuthStrategy } from '../../utils/auth-strategy';
 import { playwrightCredentials, submitOpenShiftLoginForm, loginOpenShift } from '../../utils/openshift-auth';
+import { smokeAndCoreCaching } from '../../utils/suite-tags';
 
 /**
  * Login smoke tests need a clean browser context (no storageState from auth.setup).
@@ -8,7 +9,7 @@ import { playwrightCredentials, submitOpenShiftLoginForm, loginOpenShift } from 
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Kiali login', () => {
-  test('Try to log in with an invalid username @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with an invalid username', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Invalid-login smoke requires openshift auth');
 
@@ -23,7 +24,7 @@ test.describe('Kiali login', () => {
     });
   });
 
-  test('Try to log in with an invalid password @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with an invalid password', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Invalid-login smoke requires openshift auth');
 
@@ -38,7 +39,7 @@ test.describe('Kiali login', () => {
     });
   });
 
-  test('Try to log in with a valid password @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with a valid password', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Valid-login smoke requires openshift auth');
 
@@ -47,7 +48,7 @@ test.describe('Kiali login', () => {
     await expect(page).toHaveURL(/overview/, { timeout: 60_000 });
   });
 
-  test('An expiring session should show a pop up to renew @smoke @core-caching', async ({ page }) => {
+  test('An expiring session should show a pop up to renew', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy === 'anonymous', 'Session timeout requires a login-based auth strategy');
 
