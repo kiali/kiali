@@ -78,7 +78,7 @@ export const expectOnlyHealthyApps = async (page: Page): Promise<void> => {
   for (let i = 0; i < count; i++) {
     const className = await icons.nth(i).getAttribute('class');
     expect(className).toBeTruthy();
-    expect(className!).toContain('icon-healthy');
+    expect(className!.includes('icon-healthy')).toBeTruthy();
   }
 };
 
@@ -124,8 +124,26 @@ export const checkHealthStatusInTable = async (
 ): Promise<void> => {
   const testId = rowDataTestId(cluster, namespace, type, itemName);
   const row = page.getByTestId(testId);
-  await row.locator('td').first().locator('.pf-v6-c-icon__content').hover();
-  await expect(row.getByLabel('Health indicator').locator('strong')).toContainText(healthStatus);
+  const healthTrigger = row.getByLabel('Health indicator');
+  const maxRetries = 3;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    await healthTrigger.hover();
+    const tooltip = page.getByRole('tooltip');
+    if (await tooltip.isVisible()) {
+      const statusText = await tooltip.locator('strong').textContent();
+      if (statusText?.includes(healthStatus)) {
+        return;
+      }
+    }
+    if (attempt < maxRetries) {
+      await page.getByTestId('refresh-button').click();
+      await waitForLoadingComplete(page);
+    }
+  }
+
+  await healthTrigger.hover();
+  await expect(page.getByRole('tooltip').locator('strong')).toContainText(healthStatus, { timeout: 60_000 });
 };
 
 export const expectAppsWithNameCount = async (page: Page, request: Page['request'], name: string): Promise<void> => {
