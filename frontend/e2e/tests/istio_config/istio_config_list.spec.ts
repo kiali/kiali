@@ -1,6 +1,12 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { selectNamespace } from '../../utils/namespace';
 import { expectGatewayApiEnabled } from '../../pages/IstioConfigPage';
+import {
+  applyMinimalK8sInferencePool,
+  deleteK8sInferencePool,
+  ensureInferenceApiCrds,
+  isInferenceApiCrdInstalled
+} from '../../utils/inferenceApi';
 import { core1 } from '../../utils/suite-tags';
 
 test.describe('Istio Config list', () => {
@@ -58,6 +64,23 @@ test.describe('Istio Config list', () => {
     const enabled = await expectGatewayApiEnabled(page.request);
     test.skip(!enabled, 'gateway API not enabled on cluster');
     await istioConfigPage.expectCanCreateK8sIstioObject('gateway.networking.k8s.io', 'v1', 'Gateway');
+  });
+
+  test('K8s Inference Pool list', core1, async ({ istioConfigPage }) => {
+    const crdInstalledBeforeEnsure = isInferenceApiCrdInstalled();
+    if (!crdInstalledBeforeEnsure) {
+      ensureInferenceApiCrds();
+      test.skip(!isInferenceApiCrdInstalled(), 'Inference API CRDs not available on cluster');
+      test.skip(true, 'Inference API CRDs were installed during this run; restart Kiali and re-run');
+    }
+
+    deleteK8sInferencePool('foo', 'bookinfo');
+    applyMinimalK8sInferencePool('foo', 'bookinfo', 'details-v1');
+    await istioConfigPage.refreshList();
+    await istioConfigPage.filterBy('Type', 'K8sInferencePool');
+    await istioConfigPage.expectObjectConfigurationStatus('bookinfo', 'K8sInferencePool', 'foo', 'N/A');
+
+    deleteK8sInferencePool('foo', 'bookinfo');
   });
 
   test('Ability to create a PeerAuthentication object', core1, async ({ istioConfigPage }) => {

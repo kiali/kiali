@@ -296,6 +296,20 @@ export class IstioConfigPage extends BasePage {
     await this.getBySel('refresh-button').click();
     await waitForLoadingComplete(this.page);
   }
+
+  async expectObjectConfigurationStatus(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    statusText: string
+  ): Promise<void> {
+    const row = this.page.locator(`[data-test="VirtualItem_Ns${namespace}_${typeName}_${instanceName}"]`);
+
+    await expect(async () => {
+      await this.refreshList();
+      await expect(row).toContainText(statusText);
+    }).toPass({ intervals: [10_000], timeout: 60_000 });
+  }
 }
 
 export async function expectGatewayApiEnabled(request: APIRequestContext): Promise<boolean> {
