@@ -158,6 +158,12 @@ DASHBOARD_KEYS = {
     "istio-extension-dashboard": "dashboard-extension",
 }
 
+# Kiali slugifies dashboard display names from config (e.g. "Istio Mesh Dashboard"
+# -> "istio-mesh-dashboard"). community-dashboards uses "istio-mesh" for the mesh ID.
+DASHBOARD_ID_OVERRIDES = {
+    "istio-mesh": "istio-mesh-dashboard",
+}
+
 ORDER = list(DASHBOARD_KEYS.keys())
 
 dashboards = {}
@@ -197,7 +203,12 @@ lines = [
 
 for name in ORDER:
     key = DASHBOARD_KEYS[name]
-    compact = json.dumps(dashboards[name], separators=(",", ":"))
+    dashboard = dashboards[name]
+    provisioned_name = DASHBOARD_ID_OVERRIDES.get(name, name)
+    if provisioned_name != name:
+        dashboard = json.loads(json.dumps(dashboard))
+        dashboard["metadata"]["name"] = provisioned_name
+    compact = json.dumps(dashboard, separators=(",", ":"))
     lines.append(f"  {key}.json: |")
     lines.append(f"    {compact}")
 
@@ -209,7 +220,8 @@ else:
     output_file.write_text(content, encoding="utf-8")
 
 for name in ORDER:
-    print(f"  {DASHBOARD_KEYS[name]}.json <- {name}")
+    suffix = f" (provisioned as {DASHBOARD_ID_OVERRIDES[name]})" if name in DASHBOARD_ID_OVERRIDES else ""
+    print(f"  {DASHBOARD_KEYS[name]}.json <- {name}{suffix}")
 PYEOF
 
 if [ "${DRY_RUN}" = "true" ]; then
