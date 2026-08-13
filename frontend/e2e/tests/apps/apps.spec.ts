@@ -2,8 +2,7 @@ import { execSync } from 'child_process';
 import { test } from '../../fixtures/kialiFixtures';
 import { selectNamespace } from '../../utils/namespace';
 import { waitForAppHealthStatus } from '../../utils/health';
-
-const core1 = { tag: '@core-1' as const };
+import { core1 } from '../../utils/suite-tags';
 
 test.describe('Apps list', () => {
   test.beforeEach(async ({ appsPage, page }) => {

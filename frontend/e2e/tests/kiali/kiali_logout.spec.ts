@@ -1,6 +1,7 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { getAuthStrategy } from '../../utils/auth-strategy';
 import { loginOpenShift, playwrightCredentials } from '../../utils/openshift-auth';
+import { smokeAndCoreCaching } from '../../utils/suite-tags';
 
 /**
  * Logout must not use the shared auth.setup storageState: /api/logout invalidates
@@ -9,7 +10,7 @@ import { loginOpenShift, playwrightCredentials } from '../../utils/openshift-aut
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Kiali logout', () => {
-  test('Kiali logout successfully', { tag: ['@smoke', '@core-caching'] }, async ({ overviewPage, page }) => {
+  test('Kiali logout successfully', smokeAndCoreCaching, async ({ overviewPage, page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Logout UI is openshift-only in Cypress');
 

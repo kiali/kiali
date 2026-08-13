@@ -1,7 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { selectNamespace } from '../../utils/namespace';
-
-const core1 = { tag: '@core-1' as const };
+import { core1 } from '../../utils/suite-tags';
 
 test.describe('Column management', () => {
   test.describe('Apps list', () => {

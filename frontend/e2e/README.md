@@ -3,6 +3,7 @@
 Patterns for migrations:
 
 - Native Playwright Test (not playwright-bdd); native `tag` option on tests drives projects
+- Suite tags: `e2e/utils/suite-tags.ts` (`smokeAndCoreCaching`, `core1`, …) — aligned with Cypress @tags
 - `testIdAttribute: 'data-test'` (Kiali `data-test` selectors)
 - Auth via `storageState` (`e2e/global-setup/auth.setup.ts`); supports anonymous and OpenShift (`PLAYWRIGHT_*` env)
 - Page objects extend `BasePage` (`getBySel`, `waitForLoad`); Playwright auto-retries clicks and assertions

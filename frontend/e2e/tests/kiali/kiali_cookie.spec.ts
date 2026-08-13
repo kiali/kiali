@@ -1,8 +1,9 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
 import { getAuthStrategy } from '../../utils/auth-strategy';
+import { smokeAndCoreCaching } from '../../utils/suite-tags';
 
 test.describe('Kiali login cookie', () => {
-  test('Console is visible after login', { tag: ['@smoke', '@core-caching'] }, async ({ page }) => {
+  test('Console is visible after login', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Cookie/console URL smoke is openshift-oriented in Cypress');
 

@@ -1,13 +1,12 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
-
-const smokeCoreCaching = { tag: ['@smoke', '@core-caching'] as const };
+import { smokeAndCoreCaching } from '../../utils/suite-tags';
 
 test.describe('Kiali help about', () => {
   test.beforeEach(async ({ overviewPage }) => {
     await overviewPage.open();
   });
 
-  test('Open Kiali about page', smokeCoreCaching, async ({ overviewPage, page }) => {
+  test('Open Kiali about page', smokeAndCoreCaching, async ({ overviewPage, page }) => {
     await overviewPage.openHelpAndAbout();
 
     await expect(page.getByText('Kiali', { exact: true }).first()).toBeVisible();
@@ -17,7 +16,7 @@ test.describe('Kiali help about', () => {
     await expect(page.locator('[href="https://github.com/kiali"]')).toHaveAttribute('href', 'https://github.com/kiali');
   });
 
-  test('Verify version information is displayed correctly', smokeCoreCaching, async ({ overviewPage, page }) => {
+  test('Verify version information is displayed correctly', smokeAndCoreCaching, async ({ overviewPage, page }) => {
     await overviewPage.openHelpAndAbout();
 
     const kialiVersion = page.getByTestId('kiali-version');
