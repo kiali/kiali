@@ -451,6 +451,34 @@ make cypress-selected   # Runs @selected tagged tests (tag a scenario with @sele
 
 **Tip:** To debug a single scenario, add the `@selected` tag to it in the `.feature` file, then run `make cypress-selected`.
 
+#### Playwright e2e (Cypress migration — #9712)
+
+**Before adding or porting Playwright tests, read [`frontend/e2e/README.md`](./frontend/e2e/README.md).** It is the living migration plan (conventions, CI, follow-ups). Work happens on `epic/playwright-migration` until cutover.
+
+**AI agents — do not repeat these mistakes:**
+
+1. **No Cypress retry patterns** — no `robustClick`, `retryOnError`, `waitForTimeout`, or manual click loops. Use `locator.click()` and `await expect(…)` (Playwright auto-waits; `actionTimeout: 40_000`).
+2. **Upgrade selectors when porting** — do not copy Cypress verbatim. No `:nth-child`, `li[role="none"]`, or PF internal classes (`pf-v6-*`). Use `getByRole`, `getByTestId`, `data-test`; add `data-test` in source when needed.
+3. **Suite tags** — use Playwright’s native `tag` option via [`frontend/e2e/utils/suite-tags.ts`](./frontend/e2e/utils/suite-tags.ts) (`core1`, `smokeAndCoreCaching`, …), not `@smoke` embedded only in titles. Run with `yarn playwright:run:smoke` / `yarn playwright:run:core1` or `--project=`.
+4. **Auth** — `getAuthStrategy(page)` from `/api/auth/info`, never `process.env` from setup. OpenShift-only tests: `test.skip(strategy !== 'openshift')`. Logout spec uses empty `storageState` so it does not invalidate shared `AUTH_FILE`.
+5. **OSSMC** — `page.route('**/api/…')`, [`linkSelector()`](./frontend/e2e/utils/linkSelector.ts) for navigation links.
+6. **Health table tooltips** — hover `td[data-label="Health"] .pf-v6-c-icon__content`; assert `getByRole('tooltip').toContainText(status)` (failure/degraded tooltips have multiple `<strong>` nodes).
+7. **Filters** — `getByRole('option', { name, exact: true })`; open dropdown once to assert all options; do not loop open/close per option.
+8. **CI** — do not run `playwright test --last-failed` before blob merge (Jenkins JUnit under-reports). Copy patterns from existing `frontend/e2e/` specs and page objects before inventing new helpers.
+
+**Commands:**
+
+```bash
+cd frontend
+yarn playwright:install chromium
+yarn playwright:run:smoke
+yarn playwright:run:core1
+hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + local Kiali
+hack/run-integration-tests.sh --test-suite playwright-core-1
+```
+
+**Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`. Cypress remains in `frontend/cypress/` until cutover.
+
 #### Debugging Cypress Tests with Playwright MCP
 
 AI agents can connect to the actual Cypress-controlled Chrome browser via the Chrome DevTools Protocol (CDP) to inspect the test runner and the application under test.
