@@ -19,7 +19,7 @@ export const gotoConsolePage = async (
  * Navigate to a list page with include-toggles enabled via `/api/config` rewrite.
  * OSSMC-safe: leading `**` matches proxy-prefixed API paths.
  */
-export const gotoListPage = async (page: Page, pagePath: string): Promise<void> => {
+export const gotoListPage = async (page: Page, pagePath: string, query: Record<string, string> = {}): Promise<void> => {
   await page.route('**/api/config', async route => {
     const response = await route.fetch();
     const body = await response.json();
@@ -36,5 +36,6 @@ export const gotoListPage = async (page: Page, pagePath: string): Promise<void> 
     await route.fulfill({ response, json: body });
   });
 
-  await gotoConsolePage(page, pagePath);
+  await gotoConsolePage(page, pagePath, query);
+  await page.locator('#filter-selection').waitFor({ state: 'visible', timeout: 15_000 });
 };

@@ -2,9 +2,8 @@
 /**
  * Produce playwright-results/combined-report.xml for Jenkins / Polarion.
  *
- * Prefer merging CI blob reports (first run + optional --last-failed).
- * Fall back to the direct junit reporter output when merge is empty/missing
- * (e.g. clean run where --last-failed was a no-op).
+ * Merge CI blob reports into combined-report.xml for Jenkins / Polarion.
+ * Falls back to the direct junit reporter output when merge is empty/missing.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';

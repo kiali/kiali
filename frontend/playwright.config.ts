@@ -8,8 +8,7 @@ const isCI = !!process.env.CI;
 const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
 
 /**
- * CI: blob (for optional --last-failed merge) + junit (Jenkins fallback when
- * merge is empty). Local: html + junit.
+ * CI: blob (for merge-reports) + junit (fallback when merge is empty).
  */
 const reporters: ReporterDescription[] = isCI
   ? [
@@ -25,7 +24,8 @@ const reporters: ReporterDescription[] = isCI
 
 /**
  * Projects mirror hack/run-integration-tests.sh suites.
- * Suite membership is controlled by grep tags in test titles (e.g. `@smoke`).
+ * Suite membership is controlled by Playwright test tags (e.g. `{ tag: '@smoke' }`).
+ * Project `grep` matches those tags (and titles if tags are embedded there).
  * Overlapping tags use negative lookaheads (e.g. @waypoint vs @waypoint-tracing).
  */
 export default defineConfig({
