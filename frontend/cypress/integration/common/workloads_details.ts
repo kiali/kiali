@@ -85,6 +85,13 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
 
     // Validate the href contains istio-mesh-dashboard
     cy.get('#perses_link_0').should('have.attr', 'href').and('include', 'istio-mesh-dashboard');
+
+    // Validate the Perses dashboard URL is reachable (requires Perses port-forward on localhost:4000)
+    cy.get('#perses_link_0')
+      .invoke('attr', 'href')
+      .then(href => {
+        cy.request({ url: href, failOnStatusCode: false }).its('status').should('eq', 200);
+      });
   });
 });
 

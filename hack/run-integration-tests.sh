@@ -46,6 +46,7 @@ TESTS_ONLY="false"
 WAYPOINT="false"
 WITH_VIDEO="false"
 KIALI_PID=""
+PERSES_PORT_FORWARD_PID=""
 OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
 
 cleanup_offline_seeded_traffic_routing() {
@@ -58,6 +59,28 @@ cleanup_kiali() {
   cleanup_offline_seeded_traffic_routing
   if [ -n "${KIALI_PID}" ]; then
     kill "${KIALI_PID}" 2>/dev/null || true
+  fi
+}
+
+start_perses_port_forward() {
+  if kubectl get svc perses -n istio-system &>/dev/null; then
+    infomsg "Starting Perses port-forward on localhost:4000"
+    kubectl port-forward -n istio-system svc/perses 4000:8080 &
+    PERSES_PORT_FORWARD_PID=$!
+    for _ in $(seq 1 30); do
+      if curl -s --fail "http://localhost:4000/api/v1/health" > /dev/null 2>&1; then
+        infomsg "Perses port-forward is ready"
+        return 0
+      fi
+      sleep 1
+    done
+    infomsg "WARNING: Perses port-forward may not be ready"
+  fi
+}
+
+stop_perses_port_forward() {
+  if [ -n "${PERSES_PORT_FORWARD_PID}" ]; then
+    kill "${PERSES_PORT_FORWARD_PID}" 2>/dev/null || true
   fi
 }
 
@@ -843,12 +866,15 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
     exit 0
   fi
 
+  start_perses_port_forward
+
   cd "${SCRIPT_DIR}"/../frontend
   set +e
   TEST_GROUP="@crd-validation or @perses" yarn run cypress:run:test-group:junit
   CYPRESS_EXIT=$?
   set -e
   yarn run cypress:combine:reports
+  stop_perses_port_forward
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
