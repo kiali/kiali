@@ -24,11 +24,6 @@ export const sliderStyle = (maxWidth?: string): string =>
         backgroundImage: `radial-gradient(${PFColors.Color200}, ${PFColors.Color200} 2px, transparent 0) !important`,
         '-webkit-box-shadow': 'none',
         boxShadow: 'none'
-      },
-
-      // Make sure slider tooltips are below datepicker popper but above secondary masthead
-      '& .tooltip': {
-        zIndex: 10
       }
     }
   });
