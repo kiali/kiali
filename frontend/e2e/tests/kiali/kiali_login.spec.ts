@@ -7,8 +7,10 @@ import { playwrightCredentials, submitOpenShiftLoginForm, loginOpenShift } from 
  */
 test.use({ storageState: { cookies: [], origins: [] } });
 
+const smokeCoreCaching = { tag: ['@smoke', '@core-caching'] as const };
+
 test.describe('Kiali login', () => {
-  test('Try to log in with an invalid username @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with an invalid username', smokeCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Invalid-login smoke requires openshift auth');
 
@@ -23,7 +25,7 @@ test.describe('Kiali login', () => {
     });
   });
 
-  test('Try to log in with an invalid password @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with an invalid password', smokeCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Invalid-login smoke requires openshift auth');
 
@@ -38,7 +40,7 @@ test.describe('Kiali login', () => {
     });
   });
 
-  test('Try to log in with a valid password @smoke @core-caching', async ({ page }) => {
+  test('Try to log in with a valid password', smokeCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Valid-login smoke requires openshift auth');
 
@@ -47,7 +49,7 @@ test.describe('Kiali login', () => {
     await expect(page).toHaveURL(/overview/, { timeout: 60_000 });
   });
 
-  test('An expiring session should show a pop up to renew @smoke @core-caching', async ({ page }) => {
+  test('An expiring session should show a pop up to renew', smokeCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy === 'anonymous', 'Session timeout requires a login-based auth strategy');
 

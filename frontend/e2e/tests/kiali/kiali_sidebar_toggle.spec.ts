@@ -5,13 +5,13 @@ test.describe('Sidebar toggle', () => {
     await sidebarPage.openOverview();
   });
 
-  test('Close the sidebar @core-caching', async ({ sidebarPage }) => {
+  test('Close the sidebar', { tag: '@core-caching' }, async ({ sidebarPage }) => {
     await sidebarPage.ensureSidebarOpen();
     await sidebarPage.toggleNavigation();
     await sidebarPage.expectSidebarHidden();
   });
 
-  test('Open the sidebar @smoke @core-caching', async ({ sidebarPage }) => {
+  test('Open the sidebar', { tag: ['@smoke', '@core-caching'] }, async ({ sidebarPage }) => {
     await sidebarPage.ensureSidebarClosed();
     await sidebarPage.toggleNavigation();
     await sidebarPage.expectSidebarVisible();

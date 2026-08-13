@@ -1,15 +1,17 @@
 import { test } from '../../fixtures/kialiFixtures';
 
+const smokeCoreCaching = { tag: ['@smoke', '@core-caching'] as const };
+
 test.describe('Services list toggles', () => {
   test.beforeEach(async ({ servicesPage }) => {
     await servicesPage.openList();
   });
 
-  test('See all Services toggles @smoke @core-caching', async ({ servicesPage }) => {
+  test('See all Services toggles', smokeCoreCaching, async ({ servicesPage }) => {
     await servicesPage.expectAllTogglesChecked();
   });
 
-  test('Toggle Services configuration toggle @smoke @core-caching', async ({ servicesPage }) => {
+  test('Toggle Services configuration toggle', smokeCoreCaching, async ({ servicesPage }) => {
     await servicesPage.setToggle('configuration', false);
     await servicesPage.expectColumn('Configuration', false);
 

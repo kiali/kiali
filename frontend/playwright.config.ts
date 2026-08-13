@@ -25,7 +25,8 @@ const reporters: ReporterDescription[] = isCI
 
 /**
  * Projects mirror hack/run-integration-tests.sh suites.
- * Suite membership is controlled by grep tags in test titles (e.g. `@smoke`).
+ * Suite membership is controlled by Playwright test tags (e.g. `{ tag: '@smoke' }`).
+ * Project `grep` matches those tags (and titles if tags are embedded there).
  * Overlapping tags use negative lookaheads (e.g. @waypoint vs @waypoint-tracing).
  */
 export default defineConfig({

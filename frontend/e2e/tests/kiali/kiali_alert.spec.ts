@@ -5,7 +5,7 @@ test.describe('Kiali alerts', () => {
     await overviewPage.open();
   });
 
-  test('Open Kiali notifications @smoke @core-caching', async ({ overviewPage }) => {
+  test('Open Kiali notifications', { tag: ['@smoke', '@core-caching'] }, async ({ overviewPage }) => {
     await overviewPage.refreshAndExpectNoIstioComponentStatus();
   });
 });

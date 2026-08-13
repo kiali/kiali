@@ -9,7 +9,7 @@ import { loginOpenShift, playwrightCredentials } from '../../utils/openshift-aut
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Kiali logout', () => {
-  test('Kiali logout successfully @smoke @core-caching', async ({ overviewPage, page }) => {
+  test('Kiali logout successfully', { tag: ['@smoke', '@core-caching'] }, async ({ overviewPage, page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Logout UI is openshift-only in Cypress');
 
