@@ -134,7 +134,9 @@ export const checkHealthStatusInTable = async (
       await healthIcon.hover({ timeout: 10_000 });
       const tooltip = page.getByRole('tooltip');
       await expect(tooltip).toBeVisible({ timeout: 5_000 });
-      await expect(tooltip.locator('strong')).toContainText(healthStatus, { timeout: 5_000 });
+      // Cypress: any strong in the health tooltip may match; degraded/failure tooltips
+      // also include legend <strong> labels — assert on the tooltip text as a whole.
+      await expect(tooltip).toContainText(healthStatus, { timeout: 5_000 });
       return;
     } catch {
       if (attempt < maxRetries) {
@@ -146,7 +148,7 @@ export const checkHealthStatusInTable = async (
 
   await healthIcon.scrollIntoViewIfNeeded();
   await healthIcon.hover();
-  await expect(page.getByRole('tooltip').locator('strong')).toContainText(healthStatus, { timeout: 60_000 });
+  await expect(page.getByRole('tooltip')).toContainText(healthStatus, { timeout: 60_000 });
 };
 
 export const expectAppsWithNameCount = async (page: Page, request: Page['request'], name: string): Promise<void> => {

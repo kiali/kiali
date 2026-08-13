@@ -85,7 +85,6 @@
     "playwright:ui": "playwright test --ui",
     "playwright:delete:reports": "rm -rf blob-report playwright-results playwright-report test-results || true",
     "playwright:combine:reports": "node scripts/playwright-combine-reports.mjs",
-    "playwright:run:last-failed": "node scripts/playwright-last-failed.mjs",
     "playwright:run:smoke": "playwright test --project=smoke --pass-with-no-tests",
     "playwright:run:core1": "playwright test --project=core-1 --pass-with-no-tests",
     "playwright:run:junit": "playwright test --project=crd-validation --project=core-1 --project=core-2 --project=core-caching --pass-with-no-tests",

@@ -8,8 +8,7 @@ const isCI = !!process.env.CI;
 const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
 
 /**
- * CI: blob (for optional --last-failed merge) + junit (Jenkins fallback when
- * merge is empty). Local: html + junit.
+ * CI: blob (for merge-reports) + junit (fallback when merge is empty).
  */
 const reporters: ReporterDescription[] = isCI
   ? [
