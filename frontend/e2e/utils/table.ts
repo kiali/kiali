@@ -124,25 +124,28 @@ export const checkHealthStatusInTable = async (
 ): Promise<void> => {
   const testId = rowDataTestId(cluster, namespace, type, itemName);
   const row = page.getByTestId(testId);
-  const healthTrigger = row.getByLabel('Health indicator');
+  await expect(row).toBeVisible();
+  const healthIcon = row.locator('td[data-label="Health"] .pf-v6-c-icon__content');
   const maxRetries = 3;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    await healthTrigger.hover();
-    const tooltip = page.getByRole('tooltip');
-    if (await tooltip.isVisible()) {
-      const statusText = await tooltip.locator('strong').textContent();
-      if (statusText?.includes(healthStatus)) {
-        return;
+    try {
+      await healthIcon.scrollIntoViewIfNeeded();
+      await healthIcon.hover({ timeout: 10_000 });
+      const tooltip = page.getByRole('tooltip');
+      await expect(tooltip).toBeVisible({ timeout: 5_000 });
+      await expect(tooltip.locator('strong')).toContainText(healthStatus, { timeout: 5_000 });
+      return;
+    } catch {
+      if (attempt < maxRetries) {
+        await page.getByTestId('refresh-button').click();
+        await waitForLoadingComplete(page);
       }
-    }
-    if (attempt < maxRetries) {
-      await page.getByTestId('refresh-button').click();
-      await waitForLoadingComplete(page);
     }
   }
 
-  await healthTrigger.hover();
+  await healthIcon.scrollIntoViewIfNeeded();
+  await healthIcon.hover();
   await expect(page.getByRole('tooltip').locator('strong')).toContainText(healthStatus, { timeout: 60_000 });
 };
 
