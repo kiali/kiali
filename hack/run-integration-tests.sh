@@ -28,6 +28,7 @@ FRONTEND_TEMPO="frontend-tempo"
 LOCAL="local"
 MCP_TOOLS="false"
 OFFLINE="offline"
+PLAYWRIGHT_CORE_1="playwright-core-1"
 PLAYWRIGHT_SMOKE="playwright-smoke"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
@@ -175,8 +176,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}' or '${PLAYWRIGHT_SMOKE}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}' or '${PLAYWRIGHT_SMOKE}'"
         exit 1
       fi
       shift;shift
@@ -258,7 +259,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_SMOKE}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_SMOKE}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -1189,6 +1190,72 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_SMOKE}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run playwright:run:smoke
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
+  ensurePlaywrightReady
+
+  GOPATH=$(go env GOPATH)
+
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+
+  KIALI_BINARY="${GOPATH}/bin/kiali"
+  if [ ! -f "${KIALI_BINARY}" ]; then
+    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
+    exit 1
+  fi
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Full demo apps (bookinfo, sleep, error-rates) — same as Cypress frontend-core-1
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
+  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
+  KIALI_PID=$!
+
+  KIALI_URL="http://localhost:20001"
+
+  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 60))
+  while true; do
+    if ! ps -p ${KIALI_PID} > /dev/null; then
+      echo "Kiali process is not running. An error must have occurred. Check the logs above."
+      exit 1
+    fi
+    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Kiali server is healthy"
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  trap cleanup_kiali EXIT
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:core1
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   ensureCypressReady
   

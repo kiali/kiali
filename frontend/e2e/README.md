@@ -41,4 +41,4 @@ Use `yarn playwright:install` for browsers — not `yarn playwright install`.
 ## CI
 
 PRs and pushes targeting `epic/playwright-migration` run Playwright CI
-(`.github/workflows/playwright-ci.yml`): build + `hack/run-integration-tests.sh --test-suite playwright-smoke`.
+(`.github/workflows/playwright-ci.yml`): build + `playwright-smoke` and `playwright-core-1` integration suites.
