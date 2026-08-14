@@ -5,11 +5,7 @@
 Kiali is developed as a community project at
 [kiali/kiali](https://github.com/kiali/kiali) (this repository).
 
-Unlike Istio and the Sail Operator — which maintain separate midstream forks under
-[openshift-service-mesh](https://github.com/openshift-service-mesh) — **there is no
-`openshift-service-mesh/kiali` midstream repository**. Red Hat OpenShift Service Mesh
-(OSSM) ships Kiali built from upstream sources. OSSM-specific packaging and
-distribution live in the operator bundles and related repositories described below.
+Red Hat OpenShift Service Mesh(OSSM) ships Kiali built from upstream sources. OSSM-specific packaging and distribution live in the operator bundles and related repositories described below.
 
 Kiali derives its core server and UI from this upstream codebase. The Kiali Operator
 publishes separate OLM bundles for community (`kiali-upstream`) and Red Hat
