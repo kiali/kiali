@@ -27,6 +27,7 @@ const editorContainerStyle = kialiStyle({
 });
 
 const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+  automaticLayout: true,
   folding: false,
   lineNumbers: 'off',
   minimap: { enabled: false },
