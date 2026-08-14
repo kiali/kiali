@@ -168,6 +168,26 @@ func TestIncorrectK8sGatewaysProgrammedNoResourcesStatus(t *testing.T) {
 	assert.Equal("No gateway pods. GWAPI errors should be changed in the spec.", check[0].Message)
 }
 
+func TestIncorrectK8sGatewaysProgrammedAddressNotAssignedStatus(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.CreateEmptyK8sGateway("validk8sgateway", "test")
+	k8sgwObject.Status.Conditions = append(k8sgwObject.Status.Conditions,
+		metav1.Condition{Type: "Programmed", Status: "False", Reason: "AddressNotAssigned", Message: "demo Programmed=False"})
+
+	k8sgws := StatusChecker{k8sgwObject}
+
+	check, isValid := k8sgws.Check()
+
+	assert.False(isValid)
+	assert.Len(check, 1)
+	assert.Equal("demo Programmed=False. GWAPI errors should be changed in the spec.", check[0].Message)
+	assert.Equal(models.WarningSeverity, check[0].Severity)
+}
+
 func TestIncorrectK8sGatewaysScheduledStatus(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
