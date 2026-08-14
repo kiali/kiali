@@ -1,6 +1,6 @@
 import { expect, type APIRequestContext, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { gotoConsolePage } from '../utils/navigation';
+import { gotoListPage } from '../utils/navigation';
 import { selectNamespace } from '../utils/namespace';
 import { waitForLoadingComplete } from '../utils/transition';
 import { linkSelector } from '../utils/linkSelector';
@@ -43,7 +43,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async open(): Promise<void> {
-    await gotoConsolePage(this.page, 'istio');
+    await gotoListPage(this.page, 'istio');
   }
 
   async openWithNamespace(namespace: string): Promise<void> {
@@ -173,8 +173,12 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectBookinfoConfigRows(): Promise<void> {
-    await expect(this.page.locator('tbody').getByRole('row').filter({ hasText: 'bookinfo' })).toBeVisible();
-    await expect(this.page.locator('tbody').getByRole('row').filter({ hasText: 'bookinfo-gateway' })).toBeVisible();
+    await expect(this.getBySel('VirtualItem_Nsbookinfo_VirtualService_bookinfo')).toBeVisible();
+    await expect(this.getBySel('VirtualItem_Nsbookinfo_Gateway_bookinfo-gateway')).toBeVisible();
+  }
+
+  async expectColumn(colName: string, visible: boolean): Promise<void> {
+    await colExists(this.page, colName, visible);
   }
 
   async expectIstioObjectColumnInformation(object: string): Promise<void> {
@@ -233,7 +237,14 @@ export class IstioConfigPage extends BasePage {
 
   async expectRowsVisible(...names: string[]): Promise<void> {
     for (const name of names) {
-      await expect(this.page.locator('tbody').getByRole('row').filter({ hasText: name })).toBeVisible();
+      await expect(
+        this.page
+          .locator('tbody')
+          .getByRole('row')
+          .filter({
+            has: this.page.getByRole('cell', { name, exact: true })
+          })
+      ).toBeVisible();
     }
   }
 

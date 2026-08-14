@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { expectMiniGraphReady } from '../utils/graphTopology';
 import { waitForLoadingComplete } from '../utils/transition';
 
 export class AppDetailsPage extends BasePage {
@@ -10,9 +11,8 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectMinigraphVisible(): Promise<void> {
-    const card = this.page.locator('#MiniGraphCard');
-    await expect(card).toBeVisible();
-    await expect(card.getByRole('heading', { name: 'Empty Graph' })).toHaveCount(0);
+    await expect(this.page.locator('#MiniGraphCard')).toBeVisible();
+    await expectMiniGraphReady(this.page);
   }
 
   async expectUrlIncludes(text: string): Promise<void> {
