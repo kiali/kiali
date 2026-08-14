@@ -1,10 +1,7 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { clusterParameterExists } from './navigation';
-
-const openTab = (tab: string): void => {
-  cy.get('#basic-tabs').should('exist').contains(tab).click();
-};
+import { openTab } from './transition';
 
 const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('exist').contains(tab).click();
@@ -67,21 +64,21 @@ Then('user sees workload outbound metrics information', () => {
 });
 
 Then('user sees Perses link in the Inbound Metrics tab', () => {
+  cy.intercept('**/api/perses').as('persesInfo');
+
   openTab('Inbound Metrics');
+  cy.wait('@persesInfo', { timeout: 60000 });
   cy.waitForReact();
 
-  // Check that the Perses link exists within the card body
-  cy.get('.pf-v5-c-card__body').within(() => {
-    cy.get('#perses_link_0')
-      .should('be.visible')
-      .and('have.attr', 'title', 'Istio Mesh Dashboard')
-      .and('have.attr', 'target', '_blank')
-      .and('have.attr', 'rel', 'noopener noreferrer')
-      .and('contain', 'View in Perses');
-
-    // Validate the href contains istio-mesh-dashboard
-    cy.get('#perses_link_0').should('have.attr', 'href').and('include', 'istio-mesh-dashboard');
-  });
+  // IstioMetrics does not forward data-test to the DOM; #perses_link_0 is unique on the page.
+  cy.get('#perses_link_0', { timeout: 60000 })
+    .should('be.visible')
+    .and('have.attr', 'title', 'Istio Mesh Dashboard')
+    .and('have.attr', 'target', '_blank')
+    .and('have.attr', 'rel', 'noopener noreferrer')
+    .and('contain', 'View in Perses')
+    .and('have.attr', 'href')
+    .and('include', 'istio-mesh-dashboard');
 });
 
 When('user can filter spans by workload {string}', (workload: string) => {
