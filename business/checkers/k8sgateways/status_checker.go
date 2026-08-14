@@ -2,6 +2,7 @@ package k8sgateways
 
 import (
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
@@ -80,7 +81,7 @@ func isProblematicCondition(c metav1.Condition, problematicStatus map[string]str
 	if !ok || string(c.Status) != expectedStatus {
 		return false
 	}
-	if isBenignPositiveConditionFalse(c.Type, c.Status, c.Reason) {
+	if isBenignPositiveConditionFalse(c.Type, c.Status, c.Reason, c.Message) {
 		return false
 	}
 	return true
@@ -88,7 +89,7 @@ func isProblematicCondition(c metav1.Condition, problematicStatus map[string]str
 
 // isBenignPositiveConditionFalse reports positive-polarity conditions set to False for
 // transitional controller states (no routes yet, listeners skipped, etc.), not spec errors.
-func isBenignPositiveConditionFalse(condType string, status metav1.ConditionStatus, reason string) bool {
+func isBenignPositiveConditionFalse(condType string, status metav1.ConditionStatus, reason, message string) bool {
 	if status != metav1.ConditionFalse {
 		return false
 	}
@@ -100,6 +101,11 @@ func isBenignPositiveConditionFalse(condType string, status metav1.ConditionStat
 	switch reason {
 	case "Pending", "ListenersNotValid", "ListenerSetsNotValid":
 		return true
+	case "AddressNotAssigned":
+		// Istio often reports gateway-level address assignment as in-progress ("address pending")
+		// while listeners are already Programmed=True. That is operational, not a spec error.
+		// Manual status patches for demos/tests can still surface GWAPI with other messages.
+		return strings.Contains(strings.ToLower(message), "address pending")
 	default:
 		return false
 	}

@@ -149,6 +149,29 @@ func TestK8sGatewayListenerAcceptedPendingNotFlagged(t *testing.T) {
 	assert.Empty(check)
 }
 
+func TestK8sGatewaysProgrammedAddressPendingMessageNotFlagged(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.CreateEmptyK8sGateway("validk8sgateway", "test")
+	k8sgwObject.Status.Conditions = append(k8sgwObject.Status.Conditions,
+		metav1.Condition{
+			Type:    "Programmed",
+			Status:  "False",
+			Reason:  "AddressNotAssigned",
+			Message: "Assigned to service(s) gw-istio.bookinfo.svc.cluster.local:80, but failed to assign to all requested addresses: address pending for hostname \"gw-istio.bookinfo.svc.cluster.local\"",
+		})
+
+	k8sgws := StatusChecker{k8sgwObject}
+
+	check, isValid := k8sgws.Check()
+
+	assert.True(isValid)
+	assert.Empty(check)
+}
+
 func TestIncorrectK8sGatewaysProgrammedNoResourcesStatus(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
