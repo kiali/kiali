@@ -23,8 +23,6 @@ const CHATBOT_TOGGLE = '[data-test="ai-chatbot-toggle"]';
 const CHATBOT_STOP_BUTTON = '.pf-chatbot__button--stop';
 const CHATBOT_TOGGLE_ICON_LIGHT = '[data-test="ai-chatbot-toggle-icon-light"]';
 const CHATBOT_TOGGLE_ICON_DARK = '[data-test="ai-chatbot-toggle-icon-dark"]';
-const THEME_SWITCH_DARK = 'button[aria-label="Dark theme"]';
-const THEME_SWITCH_LIGHT = 'button[aria-label="Light theme"]';
 const CHATBOT_VISIBLE = '.pf-chatbot.pf-chatbot--visible';
 const CHATBOT_HIDDEN = '.pf-chatbot.pf-chatbot--hidden';
 const CHATBOT_WELCOME_TITLE = '.pf-chatbot__hello';
@@ -82,24 +80,8 @@ Then('the AI chatbot toggle button should be visible', () => {
 
 // ============================================================
 // Theme-aware toggle icon
+// Theme switch steps live in themes.ts (shared with themes.feature).
 // ============================================================
-
-/**
- * Guarantees light theme before the icon-variant test.
- * Needed because localStorage persists between test runs and could leave the
- * browser in dark mode, causing the icon data-test to be "…-dark" instead.
- */
-Given('the theme is explicitly set to light', () => {
-  // Remove the dark-mode class if it was toggled by a previous test
-  cy.get('html').then($html => {
-    if ($html.hasClass('pf-v6-theme-dark')) {
-      cy.get(THEME_SWITCH_LIGHT).click();
-      cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
-    }
-  });
-  // Clear the persisted preference so future page loads also start in light mode
-  cy.window().then(win => win.localStorage.removeItem('KIALI_THEME'));
-});
 
 /**
  * The chatbot must be CLOSED for the closedToggleIcon to be rendered.
@@ -114,17 +96,6 @@ Then('the AI chatbot toggle should show the light theme icon', () => {
 Then('the AI chatbot toggle should show the dark theme icon', () => {
   cy.get(CHATBOT_TOGGLE_ICON_DARK, { timeout: 5000 }).should('exist');
   cy.get(CHATBOT_TOGGLE_ICON_LIGHT).should('not.exist');
-});
-
-When('the user switches to dark theme', () => {
-  cy.get(THEME_SWITCH_DARK).click();
-  // Wait for the Redux state and DOM to update
-  cy.get('html').should('have.class', 'pf-v6-theme-dark');
-});
-
-When('the user switches to light theme', () => {
-  cy.get(THEME_SWITCH_LIGHT).click();
-  cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
 
 When('user clicks the AI chatbot toggle', () => {

@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@patternfly/react-core';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { KIALI_THEME, PF_THEME_DARK, Theme } from 'types/Common';
+import { KIALI_THEME, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { applyDocumentTheme } from 'utils/ThemeUtils';
 
 type ThemeSwitchProps = {
   theme: string;
@@ -19,13 +20,13 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   const handleTheme = (): void => {
     const theme = darkTheme ? Theme.LIGHT : Theme.DARK;
 
-    document.documentElement.classList.toggle(PF_THEME_DARK);
+    applyDocumentTheme(theme);
     store.dispatch(GlobalActions.setTheme(theme));
     localStorage.setItem(KIALI_THEME, theme);
   };
 
   return (
-    <ToggleGroup aria-label={t('Theme switch')}>
+    <ToggleGroup aria-label={t('Theme switch')} data-test="theme-switch">
       <ToggleGroupItem
         aria-label={t('Light theme')}
         icon={<KialiIcon.Sun isInline />}
