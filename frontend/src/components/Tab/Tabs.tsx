@@ -4,6 +4,7 @@ import { location, router } from '../../app/History';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
+import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 type TabsProps = {
   activeTab: string;
@@ -23,7 +24,8 @@ export const activeTab = (tabName: string, defaultTab: string): string => {
 };
 
 const tabStyle = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor100
+  backgroundColor: PFColors.BackgroundColor100,
+  $nest: contrastContentNest()
 });
 
 type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;

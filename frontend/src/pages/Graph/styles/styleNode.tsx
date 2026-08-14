@@ -80,7 +80,7 @@ const nodeStyle = kialiStyle({
 const labelStyle = kialiStyle({
   $nest: {
     '& .pf-topology__node__label__icon__background': {
-      fill: 'var(pf-t--global--color--nonstatus--purple--300)'
+      fill: 'var(--pf-t--global--color--nonstatus--purple--300)'
     }
   }
 });

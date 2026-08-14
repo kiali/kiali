@@ -33,6 +33,7 @@ import { SortableTh } from 'components/Table/SimpleTable';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
+import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 const emptyStyle = kialiStyle({
   borderBottom: 0
@@ -57,6 +58,10 @@ const innerScrollContainerStyle = kialiStyle({
   flex: 1,
   overflow: 'auto',
   paddingRight: '0.5rem'
+});
+
+const tableContrastStyle = kialiStyle({
+  $nest: contrastContentNest()
 });
 
 // ******************************
@@ -247,7 +252,12 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       );
     });
     const table = (
-      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
+      <Table
+        className={tableContrastStyle}
+        gridBreakPoint={TableGridBreakpoint.none}
+        role="presentation"
+        isStickyHeader
+      >
         {conf.caption && <Caption>{conf.caption}</Caption>}
         <Thead>
           <Tr>

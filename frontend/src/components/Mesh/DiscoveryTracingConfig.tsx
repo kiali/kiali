@@ -13,6 +13,7 @@ import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
 import { KialiAppState } from '../../store/Store';
 import { classes } from 'typestyle';
+import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -52,10 +53,11 @@ const containerStyle = kialiStyle({
   width: '100%',
   overflowX: 'scroll',
   backgroundColor: PFColors.BackgroundColor100,
-  border: '1px solid #ddd',
+  border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: '6px',
   padding: '1rem',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  $nest: contrastOverlayNest()
 });
 
 const blueDisplay = kialiStyle({
@@ -83,13 +85,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
     useGRPC: 'UseGRPC'
   };
 
-  React.useEffect(() => {
-    if (!props.tracingDiagnose) {
-      fetchCheckService();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
     setError(null);
@@ -109,6 +104,13 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   const handleCheckService = async (): Promise<void> => {
     fetchCheckService();
   };
+
+  React.useEffect(() => {
+    if (!props.tracingDiagnose) {
+      fetchCheckService();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
