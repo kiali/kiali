@@ -714,8 +714,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
     exit 0
   fi
 
+  start_perses_port_forward
+
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
+  stop_perses_port_forward
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
   ensureCypressReady
