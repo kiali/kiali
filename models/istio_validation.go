@@ -372,11 +372,6 @@ var checkDescriptors = map[string]IstioCheck{
 		Message:  "ServiceEntries have conflicting protocols for the same host and port",
 		Severity: WarningSeverity,
 	},
-	"serviceentries.workloadentries.addressmatch": {
-		Code:     "KIA1201",
-		Message:  "Missing one or more addresses from matching WorkloadEntries",
-		Severity: WarningSeverity,
-	},
 	"sidecar.egress.servicenotfound": {
 		Code:     "KIA1004",
 		Message:  "This host has no matching entry in the service registry",

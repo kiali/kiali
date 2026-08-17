@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	core_v1 "k8s.io/api/core/v1"
@@ -136,6 +137,35 @@ func (nsn NamespaceNames) Includes(namespace string) bool {
 		if ns == namespace {
 			return true
 		}
+	}
+	return false
+}
+
+// MatchesPattern reports whether any known namespace matches an AuthorizationPolicy
+// source.namespaces entry (exact, prefix*, *suffix, or *).
+func (nsn NamespaceNames) MatchesPattern(pattern string) bool {
+	if pattern == "*" {
+		return len(nsn) > 0
+	}
+	if nsn.Includes(pattern) {
+		return true
+	}
+	for _, ns := range nsn {
+		if namespacePatternMatches(pattern, ns) {
+			return true
+		}
+	}
+	return false
+}
+
+func namespacePatternMatches(pattern, namespace string) bool {
+	if strings.HasSuffix(pattern, "*") {
+		prefix := strings.TrimSuffix(pattern, "*")
+		return prefix != "" && strings.HasPrefix(namespace, prefix)
+	}
+	if strings.HasPrefix(pattern, "*") {
+		suffix := strings.TrimPrefix(pattern, "*")
+		return suffix != "" && strings.HasSuffix(namespace, suffix)
 	}
 	return false
 }

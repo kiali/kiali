@@ -60,7 +60,7 @@ func (a AuthorizationPolicyChecker) runChecks(authPolicy *security_v1.Authorizat
 	}
 
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies, matchLabels, a.WorkloadsPerNamespace),
+		common.SelectorNoWorkloadFoundChecker(kubernetes.AuthorizationPolicies, authPolicy.Namespace, matchLabels, a.WorkloadsPerNamespace),
 		authorization.NamespaceMethodChecker{AuthorizationPolicy: authPolicy, Namespaces: a.Namespaces},
 		authorization.NoHostChecker{AuthorizationPolicy: authPolicy, IdentityDomain: a.IdentityDomain, KubeServiceHosts: a.KubeServiceHosts,
 			Namespaces: a.Namespaces, PolicyAllowAny: a.PolicyAllowAny, ServiceEntries: serviceHosts, VirtualServices: a.VirtualServices},

@@ -16,6 +16,7 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		kubernetes.Sidecars,
+		"bookinfo",
 		map[string]string{
 			"app":     "details",
 			"version": "v1",
@@ -29,6 +30,7 @@ func TestPresentWorkloads(t *testing.T) {
 
 	validations, valid = WorkloadSelectorNoWorkloadFoundChecker(
 		kubernetes.Sidecars,
+		"bookinfo",
 		map[string]string{
 			"app": "details",
 		},
@@ -38,6 +40,27 @@ func TestPresentWorkloads(t *testing.T) {
 	// Well configured object
 	assert.True(valid)
 	assert.Empty(validations)
+}
+
+func TestWorkloadNotFoundIgnoresOtherNamespaces(t *testing.T) {
+	assert := assert.New(t)
+	// details exists only in bookinfo2; policy namespace bookinfo should still warn.
+	wl := map[string]models.Workloads{
+		"bookinfo": models.Workloads{},
+		"bookinfo2": models.Workloads{
+			data.CreateWorkload("bookinfo2", "details-v1", map[string]string{"app": "details", "version": "v1"}),
+		},
+	}
+	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
+		kubernetes.Sidecars,
+		"bookinfo",
+		map[string]string{"app": "details"},
+		wl,
+	).Check()
+
+	assert.True(valid)
+	assert.NotEmpty(vals)
+	assert.Len(vals, 1)
 }
 
 func TestWorkloadNotFound(t *testing.T) {
@@ -51,16 +74,17 @@ func TestWorkloadNotFound(t *testing.T) {
 }
 
 func testFailureWithWorkloadList(assert *assert.Assertions, selector map[string]string) {
-	testFailure(assert, selector, workloads(), "generic.selector.workloadnotfound")
+	testFailure(assert, selector, workloads(), "generic.selector.workloadnotfound", "bookinfo")
 }
 
 func testFailureWithEmptyWorkloadList(assert *assert.Assertions, selector map[string]string) {
-	testFailure(assert, selector, data.CreateWorkloadsPerNamespace([]string{"test"}, models.Workloads{}), "generic.selector.workloadnotfound")
+	testFailure(assert, selector, data.CreateWorkloadsPerNamespace([]string{"test"}, models.Workloads{}), "generic.selector.workloadnotfound", "test")
 }
 
-func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.Workloads, code string) {
+func testFailure(assert *assert.Assertions, selector map[string]string, wl map[string]models.Workloads, code, namespace string) {
 	vals, valid := WorkloadSelectorNoWorkloadFoundChecker(
 		kubernetes.Sidecars,
+		namespace,
 		selector,
 		wl,
 	).Check()
