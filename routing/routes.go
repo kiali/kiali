@@ -1966,6 +1966,28 @@ func NewRoutes(
 			handlers.ChatSessionUsage(conf, aiStore),
 			true,
 		},
+		// swagger:route GET /chat/usage chat aiChatUsage
+		// ---
+		// Endpoint to get token usage statistics for the current user session
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"ChatUsage",
+			log.ChatAILogName,
+			"GET",
+			"/api/chat/usage",
+			handlers.ChatUsage(conf, aiStore),
+			true,
+		},
 	}
 	return
 }
