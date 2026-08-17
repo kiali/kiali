@@ -40,15 +40,17 @@ test.describe('Graph display', () => {
 
   test('Graph bookinfo namespace', core1, async ({ graphPage }) => {
     await graphPage.graphNamespaces('bookinfo');
+    await graphPage.expectGraphLoaded();
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');
   });
 
   test('User clicks Display Menu', core1, async ({ graphPage }) => {
     await graphPage.graphNamespaces('bookinfo');
+    await graphPage.expectGraphLoaded();
+    await graphPage.expectGraphReflectsDefaultSettings();
     await graphPage.openDisplayMenu();
     await graphPage.expectDisplayMenuOpen();
     await graphPage.expectDisplayMenuDefaultSettings();
-    await graphPage.expectGraphReflectsDefaultSettings();
     await graphPage.closeDisplayMenu();
   });
 });
@@ -56,6 +58,7 @@ test.describe('Graph display', () => {
 test.describe('Graph display edge labels', () => {
   test.beforeEach(async ({ graphPage }) => {
     await graphPage.graphNamespaces('bookinfo');
+    await graphPage.expectGraphLoaded();
   });
 
   test('Average Response-time edge labels', core1, async ({ graphPage }) => {

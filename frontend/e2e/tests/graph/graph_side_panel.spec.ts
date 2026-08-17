@@ -10,8 +10,12 @@ const WIZARD_ACTIONS = [
 ] as const;
 
 test.describe('Graph side panel', () => {
-  test('Delete traffic routing from side panel kebab', core1, async ({ graphPage }) => {
+  test.beforeEach(async ({ graphPage }) => {
     await graphPage.graphNamespaces('bookinfo');
+    await graphPage.expectGraphLoaded();
+  });
+
+  test('Delete traffic routing from side panel kebab', core1, async ({ graphPage }) => {
     await graphPage.clickGraphNode('productpage', 'service');
     await graphPage.openSidePanelKebab();
     await graphPage.clickSidePanelKebabItem('delete_traffic_routing');
@@ -20,7 +24,6 @@ test.describe('Graph side panel', () => {
 
   for (const action of WIZARD_ACTIONS) {
     test(`Launch ${action} wizard from side panel`, core1, async ({ graphPage }) => {
-      await graphPage.graphNamespaces('bookinfo');
       await graphPage.clickGraphNode('reviews', 'service');
       await graphPage.openSidePanelKebab();
       await graphPage.clickSidePanelKebabItem(action);
@@ -29,7 +32,6 @@ test.describe('Graph side panel', () => {
   }
 
   test('Validate summary panel edge', core1, async ({ graphPage }) => {
-    await graphPage.graphNamespaces('bookinfo');
     await graphPage.clickGraphEdge('productpage', 'app', 'details', 'service');
     await graphPage.expectSummaryPanelContains('Edge (HTTP)');
   });

@@ -1,5 +1,6 @@
-import { execSync } from 'child_process';
 import { test } from '../../fixtures/kialiFixtures';
+import { ensureDemoApp } from '../../utils/demoApps';
+import { kubectlNamespaceExists, kubectlScale } from '../../utils/kubectl';
 import { selectNamespace } from '../../utils/namespace';
 import { waitForAppHealthStatus } from '../../utils/health';
 import { core1 } from '../../utils/suite-tags';
@@ -65,14 +66,21 @@ test.describe('Apps list', () => {
 
 test.describe('Apps list idle health', () => {
   test.afterEach(() => {
-    execSync('kubectl scale -n sleep --replicas=1 deployment/sleep', { stdio: 'ignore' });
+    if (kubectlNamespaceExists('sleep')) {
+      try {
+        kubectlScale('sleep', 'sleep', 1);
+      } catch {
+        // Best-effort restore after scale-down; ignore if deployment is already scaled.
+      }
+    }
   });
 
   test(
     'The idle status of a logical mesh application is reported in the list',
     core1,
     async ({ appsPage, page, request }) => {
-      execSync('kubectl scale -n sleep --replicas=0 deployment/sleep', { stdio: 'ignore' });
+      ensureDemoApp('sleep');
+      kubectlScale('sleep', 'sleep', 0);
       await waitForAppHealthStatus(request, 'sleep', 'sleep', 'Not Ready');
       await appsPage.openList();
       await selectNamespace(page, 'sleep');

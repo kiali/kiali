@@ -236,15 +236,17 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectRowsVisible(...names: string[]): Promise<void> {
+    const rowTestIds: Record<string, string> = {
+      bookinfo: 'VirtualItem_Nsbookinfo_VirtualService_bookinfo',
+      'bookinfo-gateway': 'VirtualItem_Nsbookinfo_Gateway_bookinfo-gateway'
+    };
     for (const name of names) {
-      await expect(
-        this.page
-          .locator('tbody')
-          .getByRole('row')
-          .filter({
-            has: this.page.getByRole('cell', { name, exact: true })
-          })
-      ).toBeVisible();
+      const testId = rowTestIds[name];
+      if (testId) {
+        await expect(this.getBySel(testId)).toBeVisible();
+      } else {
+        await expect(this.page.getByRole('row').filter({ hasText: name })).toBeVisible();
+      }
     }
   }
 

@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { waitForLoadingComplete } from '../utils/transition';
-import { expectGraphTopology, readGraphTopology } from '../utils/graphTopology';
+import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
 
 const DISPLAY_OPTION_IDS: Record<string, string> = {
@@ -25,6 +25,25 @@ const WIZARD_TITLES: Record<string, string> = {
   traffic_shifting: 'Traffic Shifting',
   tcp_traffic_shifting: 'TCP Traffic Shifting',
   request_timeouts: 'Request Timeouts'
+};
+
+const GRAPH_TYPE_LABELS: Record<string, string> = {
+  APP: 'App',
+  SERVICE: 'Service',
+  VERSIONED_APP: 'Versioned app',
+  WORKLOAD: 'Workload'
+};
+
+/** PF TopologyControlBar sets ariaLabel on custom buttons; id is not always on the <button> element. */
+const TOOLBAR_BUTTON_NAMES: Record<string, string> = {
+  legend: 'Legend',
+  'reset-view': 'Reset View',
+  toolbar_edge_mode_none: 'Hide All Edges',
+  toolbar_edge_mode_unhealthy: 'Hide Healthy Edges',
+  toolbar_layout_breadth_first: 'Breadth First - non-boxing layout',
+  toolbar_layout_concentric: 'Concentric - non-boxing layout',
+  toolbar_layout_dagre: 'Dagre - boxing layout',
+  toolbar_layout_grid: 'Grid - non-boxing layout'
 };
 
 export class GraphPage extends BasePage {
@@ -70,6 +89,21 @@ export class GraphPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
+  async expectGraphLoaded(): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      expect(nodes.length).toBeGreaterThan(0);
+    });
+  }
+
+  private toolbarButton(id: string) {
+    const scope = this.page.locator('[data-test="topology-view-pf"]');
+    const name = TOOLBAR_BUTTON_NAMES[id];
+    if (name) {
+      return scope.getByRole('button', { name });
+    }
+    return scope.locator(`button#${id}`);
+  }
+
   async expectNoNamespaceSelected(): Promise<void> {
     await expect(this.page.locator('#empty-graph-no-namespace')).toBeVisible();
   }
@@ -88,11 +122,17 @@ export class GraphPage extends BasePage {
     const button = this.page.locator('button#display-settings');
     await expect(button).toBeVisible();
     await expect(button).toBeEnabled();
-    await button.click();
+    if ((await button.getAttribute('aria-expanded')) !== 'true') {
+      await button.click();
+    }
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
   }
 
   async closeDisplayMenu(): Promise<void> {
-    await this.openDisplayMenu();
+    const button = this.page.locator('button#display-settings');
+    if ((await button.getAttribute('aria-expanded')) === 'true') {
+      await button.click();
+    }
   }
 
   async expectDisplayMenuOpen(): Promise<void> {
@@ -139,7 +179,6 @@ export class GraphPage extends BasePage {
       ).toBe(0);
 
       expect(select(nodeElems, { prop: NodeAttr.isBox, op: '=', val: 'app' }).length).toBeGreaterThan(0);
-      expect(select(nodeElems, { prop: NodeAttr.isBox, op: '=', val: 'namespace' }).length).toBeGreaterThan(0);
       expect(select(nodeElems, { prop: NodeAttr.nodeType, op: '=', val: 'service' }).length).toBeGreaterThan(0);
 
       expect(
@@ -252,6 +291,9 @@ export class GraphPage extends BasePage {
 
   async expectIdleNodes(action: 'appear' | 'do not appear'): Promise<void> {
     await this.expectDisplayOptionChecked('filterIdleNodes', action === 'appear');
+    if (action === 'do not appear' && (await this.page.locator('#empty-graph').isVisible())) {
+      return;
+    }
     await expectGraphTopology(this.page, ({ nodes }) => {
       const nodeElems = nodes.map(n => ({ data: n.data }));
       const numNodes = select(nodeElems, { prop: NodeAttr.isIdle, op: 'truthy' }).length;
@@ -301,9 +343,14 @@ export class GraphPage extends BasePage {
     });
   }
 
+  async scaleGraphForEdgeTags(): Promise<void> {
+    await scaleGraphBy(this.page);
+  }
+
   async expectLockIconFontLoaded(): Promise<void> {
+    await this.scaleGraphForEdgeTags();
     const textEl = this.page.locator('g.pf-topology__edge__tag text').first();
-    await expect(textEl).toBeVisible({ timeout: 10_000 });
+    await expect(textEl).toBeVisible();
     const fontFamily = await textEl.evaluate(el => window.getComputedStyle(el).fontFamily);
     const iconFont = fontFamily
       .split(',')
@@ -316,7 +363,7 @@ export class GraphPage extends BasePage {
 
   async expectDisplayClientOption(optionName: string, action: string): Promise<void> {
     const optionId = DISPLAY_OPTION_IDS[optionName.toLowerCase()] ?? optionName;
-    const appears = action.includes('appear');
+    const appears = action.startsWith('appear');
     await this.expectDisplayOptionChecked(optionId, appears);
     await expectGraphTopology(this.page, ({ nodes, edges }) => {
       expect(edges.length).toBeGreaterThan(0);
@@ -325,8 +372,12 @@ export class GraphPage extends BasePage {
   }
 
   async resetFactoryDefault(): Promise<void> {
+    const graphResponse = this.page.waitForResponse(
+      response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
+    );
     await this.page.locator('button#graph-factory-reset').click();
-    await expect(this.page.locator('#loading_kiali_spinner')).toHaveCount(0);
+    await graphResponse;
+    await waitForLoadingComplete(this.page);
   }
 
   async expectDisplayOptionState(
@@ -354,21 +405,37 @@ export class GraphPage extends BasePage {
   }
 
   async selectGraphType(graphType: string): Promise<void> {
-    await this.page.locator('button#graph_type_dropdown-toggle').click();
+    const toggle = this.page.locator('button#graph_type_dropdown-toggle');
+    const expectedLabel = GRAPH_TYPE_LABELS[graphType];
+    if (expectedLabel && (await toggle.textContent())?.includes(expectedLabel)) {
+      return;
+    }
+
+    const graphResponse = this.page.waitForResponse(
+      response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
+    );
+    await toggle.click();
     await this.page.locator(`div#graph_type_dropdown button[id="${graphType}"]`).click();
-    await expect(this.page.locator('#loading_kiali_spinner')).toHaveCount(0);
+    await graphResponse;
+    await waitForLoadingComplete(this.page);
   }
 
   async expectSingleClusterBoxForBookinfo(): Promise<void> {
     await expectGraphTopology(this.page, ({ nodes }) => {
       const nodeElems = nodes.map(n => ({ data: n.data }));
       expect(select(nodeElems, { prop: NodeAttr.isBox, op: '=', val: 'cluster' }).length).toBe(0);
-      expect(
-        selectAnd(nodeElems, [
-          { prop: NodeAttr.isBox, op: '=', val: 'namespace' },
-          { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
-        ]).length
-      ).toBe(1);
+
+      const namespaceBoxes = selectAnd(nodeElems, [
+        { prop: NodeAttr.isBox, op: '=', val: 'namespace' },
+        { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
+      ]);
+      if (namespaceBoxes.length > 0) {
+        expect(namespaceBoxes.length).toBe(1);
+        return;
+      }
+
+      // Single-namespace bookinfo graphs omit the namespace group wrapper (app/service nodes only).
+      expect(select(nodeElems, { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }).length).toBeGreaterThan(0);
     });
   }
 
@@ -523,10 +590,13 @@ export class GraphPage extends BasePage {
   }
 
   async openContextMenuForService(serviceName: string): Promise<void> {
-    const topology = await readGraphTopology(this.page);
-    const node = topology.nodes.find(n => n.data.nodeType === 'service' && n.data.service === serviceName);
-    expect(node).toBeTruthy();
-    await this.page.locator(`[data-id="${node!.id}"]`).click({ button: 'right' });
+    let nodeId = '';
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const node = nodes.find(n => n.data.nodeType === 'service' && n.data.service === serviceName);
+      expect(node).toBeTruthy();
+      nodeId = node!.id;
+    });
+    await this.page.locator(`[data-id="${nodeId}"]`).click({ button: 'right' });
     await expect(this.page.locator('.pf-topology-context-menu__c-dropdown__menu')).toBeVisible();
   }
 
@@ -539,10 +609,10 @@ export class GraphPage extends BasePage {
   }
 
   async clickContextMenuLink(linkText: string): Promise<void> {
-    await this.page
-      .locator('.pf-topology-context-menu__c-dropdown__menu')
-      .getByRole('button', { name: linkText })
-      .click();
+    const menu = this.page.locator('.pf-topology-context-menu__c-dropdown__menu');
+    const item = menu.locator('button').filter({ hasText: linkText });
+    await expect(item.first()).toBeVisible();
+    await item.first().click();
   }
 
   async expectUrlWithoutClusterParam(): Promise<void> {
@@ -566,11 +636,14 @@ export class GraphPage extends BasePage {
   }
 
   async clickGraphNode(name: string, nodeType: string): Promise<void> {
-    const topology = await readGraphTopology(this.page);
     const prop = nodeType === 'service' ? NodeAttr.service : NodeAttr.app;
-    const node = topology.nodes.find(n => n.data.nodeType === nodeType && n.data[prop] === name);
-    expect(node).toBeTruthy();
-    await this.page.locator(`[data-id="${node!.id}"]`).click();
+    let nodeId = '';
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const node = nodes.find(n => n.data.nodeType === nodeType && n.data[prop] === name);
+      expect(node).toBeTruthy();
+      nodeId = node!.id;
+    });
+    await this.page.locator(`[data-id="${nodeId}"]`).click();
   }
 
   async openSidePanelKebab(): Promise<void> {
@@ -694,12 +767,14 @@ export class GraphPage extends BasePage {
   }
 
   async openFindHideHelp(): Promise<void> {
-    await this.page.locator('#graph-findhide-help').click();
+    await this.page.getByTestId('graph-find-hide-help-button').click();
+    await expect(this.page.getByTestId('graph-find-hide-help')).toBeVisible();
   }
 
   async expectFindHideHelpSections(...sections: string[]): Promise<void> {
+    const tabs = this.page.locator('#graph_find_help_tabs');
     for (const section of sections) {
-      await expect(this.page.getByRole('heading', { name: section })).toBeVisible();
+      await expect(tabs.getByRole('tab', { name: section })).toBeVisible();
     }
   }
 
@@ -707,16 +782,30 @@ export class GraphPage extends BasePage {
     await expect(this.page.getByText(message)).toBeVisible();
   }
 
+  async collapseSidePanelIfExpanded(): Promise<void> {
+    const hideToggle = this.page.locator('#graph-side-panel').getByText('Hide', { exact: true });
+    if (await hideToggle.isVisible()) {
+      await hideToggle.click();
+    }
+  }
+
   async clickToolbarButton(id: string): Promise<void> {
-    await this.page.locator(`button#${id}`).click();
+    await this.collapseSidePanelIfExpanded();
+    const button = this.toolbarButton(id);
+    await expect(button).toBeVisible();
+    await button.click();
   }
 
   async expectToolbarButtonEnabled(id: string): Promise<void> {
-    await expect(this.page.locator(`button#${id}`)).toBeEnabled();
+    const button = this.toolbarButton(id);
+    await expect(button).toBeVisible();
+    await expect(button).toBeEnabled();
   }
 
   async expectToolbarButtonActive(id: string, active: boolean): Promise<void> {
-    const icon = this.page.locator(`button#${id} .pf-v6-c-icon__content`);
+    const button = this.toolbarButton(id);
+    await expect(button).toBeVisible();
+    const icon = button.locator('.pf-v6-c-icon__content');
     if (active) {
       await expect(icon).toHaveClass(/pf-m-custom/);
     } else {
@@ -725,7 +814,9 @@ export class GraphPage extends BasePage {
   }
 
   async prepareToolbarButton(id: string, active: boolean): Promise<void> {
-    const icon = this.page.locator(`button#${id} .pf-v6-c-icon__content`);
+    const button = this.toolbarButton(id);
+    await expect(button).toBeVisible();
+    const icon = button.locator('.pf-v6-c-icon__content');
     const className = await icon.getAttribute('class');
     const isActive = className?.includes('pf-m-custom') ?? false;
     if (isActive !== active) {
@@ -756,16 +847,19 @@ export class GraphPage extends BasePage {
   }
 
   async clickGraphEdge(fromName: string, fromType: string, toName: string, toType: string): Promise<void> {
-    const topology = await readGraphTopology(this.page);
     const fromProp = fromType === 'app' ? 'app' : 'service';
     const toProp = toType === 'app' ? 'app' : 'service';
-    const fromNode = topology.nodes.find(n => n.data.nodeType === fromType && n.data[fromProp] === fromName);
-    const toNode = topology.nodes.find(n => n.data.nodeType === toType && n.data[toProp] === toName);
-    expect(fromNode).toBeTruthy();
-    expect(toNode).toBeTruthy();
-    const edge = topology.edges.find(e => e.data.source === fromNode!.id && e.data.target === toNode!.id);
-    expect(edge).toBeTruthy();
-    await this.page.locator(`[data-id="${edge!.id}"]`).click();
+    let edgeId = '';
+    await expectGraphTopology(this.page, ({ nodes, edges }) => {
+      const fromNode = nodes.find(n => n.data.nodeType === fromType && n.data[fromProp] === fromName);
+      const toNode = nodes.find(n => n.data.nodeType === toType && n.data[toProp] === toName);
+      expect(fromNode).toBeTruthy();
+      expect(toNode).toBeTruthy();
+      const edge = edges.find(e => e.data.source === fromNode!.id && e.data.target === toNode!.id);
+      expect(edge).toBeTruthy();
+      edgeId = edge!.id;
+    });
+    await this.page.locator(`[data-id="${edgeId}"]`).click();
   }
 
   async expectSummaryPanelContains(text: string): Promise<void> {

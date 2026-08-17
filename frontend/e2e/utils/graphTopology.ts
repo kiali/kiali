@@ -19,17 +19,20 @@ export type GraphTopology = {
 
 type ComponentGraphState = Record<string, unknown>;
 
+type GraphControllerOperation = { type: 'read' } | { type: 'scale'; factor: number; times: number };
+
 /**
- * Read PF topology graph elements via React fiber.
+ * Read or mutate PF topology graph via React fiber.
  * TODO(#9712): Prefer DOM/data-test assertions when graph exposes stable test hooks.
  */
-async function readComponentGraphTopology(
+async function evaluateGraphPageComponent(
   page: Page,
   componentName: string,
-  stateFilter: ComponentGraphState
-): Promise<GraphTopology> {
+  stateFilter: ComponentGraphState,
+  operation: GraphControllerOperation
+): Promise<GraphTopology | void> {
   return page.evaluate(
-    ({ componentName: name, stateFilter: filter }) => {
+    ({ componentName: name, stateFilter: filter, operation: op }) => {
       const getReactFiber = (el: Element): unknown => {
         if ('_reactRootContainer' in el) {
           const container = (
@@ -210,8 +213,7 @@ async function readComponentGraphTopology(
             getElements: () => Array<{
               getData: () => Record<string, unknown>;
               getId: () => string;
-              isEdge?: () => boolean;
-              isNode?: () => boolean;
+              getKind: () => string;
               isVisible?: () => boolean;
             }>;
             hasGraph: () => boolean;
@@ -222,24 +224,43 @@ async function readComponentGraphTopology(
       if (!controller.hasGraph()) {
         throw new Error('Graph controller has no graph');
       }
+      if (op.type === 'scale') {
+        const graph = controller.getGraph();
+        for (let i = 0; i < op.times; i++) {
+          graph.scaleBy(op.factor);
+        }
+        return;
+      }
       const elems = controller.getElements();
       const nodes: TopologyNode[] = [];
       const edges: TopologyEdge[] = [];
+      const modelNode = 'node';
+      const modelGroup = 'group';
+      const modelEdge = 'edge';
       elems.forEach(el => {
-        if (el.isNode?.()) {
+        const kind = el.getKind?.();
+        if (kind === modelNode || kind === modelGroup) {
           nodes.push({
             id: el.getId(),
             data: el.getData(),
             visible: el.isVisible?.() ?? true
           });
-        } else if (el.isEdge?.()) {
+        } else if (kind === modelEdge) {
           edges.push({ id: el.getId(), data: el.getData() });
         }
       });
       return { nodes, edges };
     },
-    { componentName, stateFilter }
+    { componentName, stateFilter, operation }
   );
+}
+
+async function readComponentGraphTopology(
+  page: Page,
+  componentName: string,
+  stateFilter: ComponentGraphState
+): Promise<GraphTopology> {
+  return (await evaluateGraphPageComponent(page, componentName, stateFilter, { type: 'read' })) as GraphTopology;
 }
 
 export async function readGraphTopology(page: Page): Promise<GraphTopology> {
@@ -247,6 +268,18 @@ export async function readGraphTopology(page: Page): Promise<GraphTopology> {
     graphData: { isLoading: false },
     isReady: true
   });
+}
+
+export async function scaleGraphBy(page: Page, factor = 4 / 3, times = 6): Promise<void> {
+  await evaluateGraphPageComponent(
+    page,
+    'GraphPageComponent',
+    {
+      graphData: { isLoading: false },
+      isReady: true
+    },
+    { type: 'scale', factor, times }
+  );
 }
 
 export async function readMiniGraphTopology(page: Page): Promise<GraphTopology> {
@@ -266,11 +299,20 @@ export async function expectMiniGraphReady(page: Page): Promise<void> {
 }
 
 export async function expectGraphTopology(page: Page, assertFn: (topology: GraphTopology) => void): Promise<void> {
+  let lastError: unknown;
   await expect
     .poll(async () => {
-      const topology = await readGraphTopology(page);
-      assertFn(topology);
-      return true;
+      try {
+        const topology = await readGraphTopology(page);
+        assertFn(topology);
+        return true;
+      } catch (error) {
+        lastError = error;
+        return false;
+      }
     })
     .toBe(true);
+  if (lastError) {
+    throw lastError;
+  }
 }

@@ -12,6 +12,7 @@ const WIZARD_ACTIONS = [
 test.describe('Graph context menu', () => {
   test.beforeEach(async ({ graphPage }) => {
     await graphPage.graphNamespaces('bookinfo');
+    await graphPage.expectGraphLoaded();
   });
 
   test('Detail action in context menu for service node', core1, async ({ graphPage, page }) => {

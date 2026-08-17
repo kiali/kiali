@@ -4,6 +4,7 @@ import { core1 } from '../../utils/suite-tags';
 test.describe('Graph find hide', () => {
   test.beforeEach(async ({ graphPage }) => {
     await graphPage.graphNamespaces('alpha,beta');
+    await graphPage.expectGraphLoaded();
   });
 
   test('Find unhealthy workloads', core1, async ({ graphPage }) => {

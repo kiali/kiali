@@ -15,6 +15,7 @@ const TOOLBAR_BUTTONS = [
 test.describe('Graph toolbar legend', () => {
   test.beforeEach(async ({ graphPage }) => {
     await graphPage.graphNamespaces('alpha,beta');
+    await graphPage.expectGraphLoaded();
   });
 
   for (const id of TOOLBAR_BUTTONS) {
