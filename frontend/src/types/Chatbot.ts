@@ -158,3 +158,44 @@ export type ChatSessionUsageMetric = {
   total_tokens: number;
   user_id: string;
 };
+
+// ---- AI global usage (GET /api/chat/usage) ----------------------------------
+
+/** One row in a provider- or model-level aggregation. */
+export type AITokenRow = {
+  completionTokens: number;
+  model?: string;
+  promptTokens: number;
+  provider?: string;
+  totalTokens: number;
+  timeSeries?: AITimeSeriesPoint[];
+};
+
+/** A single time-bucket point in a per-(provider, model) series. */
+export type AITimeSeriesPoint = {
+  completionTokens: number;
+  promptTokens: number;
+  timestamp: string;
+  totalTokens: number;
+};
+
+/** One time series for a specific provider + model combination. */
+export type AITimeSeriesEntry = {
+  model: string;
+  points: AITimeSeriesPoint[];
+  provider: string;
+};
+
+export type TokenMetric = 'totalTokens' | 'promptTokens' | 'completionTokens';
+/** Full response shape returned by GET /api/chat/usage. */
+export type AIUsageResponse = {
+  summary: {
+    byModel: AITokenRow[];
+    byProvider: AITokenRow[];
+  };
+  timeSeries: {
+    series: AITimeSeriesEntry[];
+    step: string;
+    window: string;
+  };
+};

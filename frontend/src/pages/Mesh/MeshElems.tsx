@@ -49,7 +49,7 @@ export type NodeData = DecoratedMeshNodeData & {
   x?: number;
   y?: number;
   // These are additions we've made for our own styling
-  // eslint-disable-next-line @typescript-eslint/member-ordering
+   
   isFind?: boolean;
   isFocus?: boolean;
   isHighlighted?: boolean;

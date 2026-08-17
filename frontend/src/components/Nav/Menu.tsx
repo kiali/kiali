@@ -43,6 +43,7 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
 );
 
 type MenuProps = {
+  ai: boolean;
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
 };
@@ -108,6 +109,10 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
     };
 
     const renderNavItem = (item: MenuItem): React.ReactNode => {
+      if (item.id === 'ai' && !props.ai) {
+        return null;
+      }
+
       const title = item.title;
 
       if (item.id === 'tracing') {

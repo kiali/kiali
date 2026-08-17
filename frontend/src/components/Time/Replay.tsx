@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import type { KialiDispatch } from 'types/Redux';
-import type { KialiAppState } from 'store/Store';
+import { KialiDispatch } from 'types/Redux';
+import { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core';
-import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { Slider } from 'components/IstioWizards/Slider/Slider';
@@ -155,6 +155,20 @@ const vrStyle = kialiStyle({
 });
 
 class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
+  static getFrameCount = (elapsedTime: IntervalInMilliseconds): number => {
+    return elapsedTime > 0 ? Math.floor(elapsedTime / frameInterval) : 0;
+  };
+
+  static queryTimeToFrame = (replayQueryTime: TimeInMilliseconds, replayStartTime: TimeInMilliseconds): number => {
+    const elapsedTime: IntervalInMilliseconds = replayQueryTime - replayStartTime;
+    const frame: number = ReplayComponent.getFrameCount(elapsedTime);
+    return frame;
+  };
+
+  static frameToQueryTime = (frame: number, replayWindow: ReplayWindow): TimeInMilliseconds => {
+    return replayWindow.startTime + frame * frameInterval;
+  };
+
   constructor(props: ReplayProps) {
     super(props);
 
@@ -187,20 +201,6 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
       status: 'initialized'
     };
   }
-
-  static getFrameCount = (elapsedTime: IntervalInMilliseconds): number => {
-    return elapsedTime > 0 ? Math.floor(elapsedTime / frameInterval) : 0;
-  };
-
-  static queryTimeToFrame = (replayQueryTime: TimeInMilliseconds, replayStartTime: TimeInMilliseconds): number => {
-    const elapsedTime: IntervalInMilliseconds = replayQueryTime - replayStartTime;
-    const frame: number = ReplayComponent.getFrameCount(elapsedTime);
-    return frame;
-  };
-
-  static frameToQueryTime = (frame: number, replayWindow: ReplayWindow): TimeInMilliseconds => {
-    return replayWindow.startTime + frame * frameInterval;
-  };
 
   componentDidUpdate(_prevProps: ReplayProps, prevState: ReplayState): void {
     const isCustomStartChange = this.state.isCustomStartTime !== prevState.isCustomStartTime;
@@ -456,8 +456,9 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
       return;
     }
 
-    const refresherRef = window.setInterval(this.handleRefresh, this.state.replaySpeed);
-    this.setState({ refresherRef });
+    let refresherRef: number | undefined = undefined;
+    refresherRef = window.setInterval(this.handleRefresh, this.state.replaySpeed);
+    this.setState({ refresherRef: refresherRef });
   };
 
   private handleRefresh = (): void => {
@@ -475,7 +476,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const isActive = this.state.replaySpeed === replaySpeed.speed;
 
     return (
-      <React.Fragment key={`speed-${replaySpeed.text}`}>
+      <>
         <Button
           icon={
             <Content component="p" className={isActive ? speedActiveStyle : undefined}>
@@ -483,6 +484,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
             </Content>
           }
           data-test={`speed-${replaySpeed.text}`}
+          key={`speed-${replaySpeed.text}`}
           className={speedStyle}
           variant={ButtonVariant.plain}
           isClicked={isActive}
@@ -490,7 +492,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         />
 
         {!isLast && <div className={vrStyle} />}
-      </React.Fragment>
+      </>
     );
   };
 }

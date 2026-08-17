@@ -3,17 +3,16 @@ import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Spinner, Title } from '@patternfly/react-core';
 import { validateExternalUrl } from './TraceConfigurationModal';
 import { kialiStyle } from '../../styles/StyleUtils';
-import type { TracingCheck, TracingInfo } from '../../types/TracingInfo';
+import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
 import { PFColors } from '../Pf/PfColors';
 import * as API from '../../services/Api';
-import type { ExternalServiceInfo } from '../../types/StatusState';
-import type { KialiDispatch } from '../../types/Redux';
+import { ExternalServiceInfo } from '../../types/StatusState';
+import { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
-import type { KialiAppState } from '../../store/Store';
+import { KialiAppState } from '../../store/Store';
 import { classes } from 'typestyle';
-import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -53,11 +52,10 @@ const containerStyle = kialiStyle({
   width: '100%',
   overflowX: 'scroll',
   backgroundColor: PFColors.BackgroundColor100,
-  border: `1px solid ${PFColors.BorderColor100}`,
+  border: '1px solid #ddd',
   borderRadius: '6px',
   padding: '1rem',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-  $nest: contrastOverlayNest()
+  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
 });
 
 const blueDisplay = kialiStyle({
@@ -85,6 +83,13 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
     useGRPC: 'UseGRPC'
   };
 
+  React.useEffect(() => {
+    if (!props.tracingDiagnose) {
+      fetchCheckService();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const fetchCheckService = async (): Promise<void> => {
     setLoading(true);
     setError(null);
@@ -104,13 +109,6 @@ export const CheckConfigComp: React.FC<CheckModalProps> = (props: CheckModalProp
   const handleCheckService = async (): Promise<void> => {
     fetchCheckService();
   };
-
-  React.useEffect(() => {
-    if (!props.tracingDiagnose) {
-      fetchCheckService();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div
