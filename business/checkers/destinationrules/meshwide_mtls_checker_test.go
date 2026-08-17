@@ -106,6 +106,21 @@ func TestMTLSDRDisabledWithMeshPolicy(t *testing.T) {
 	testNoValidationsFound(t, destinationRule, mTlsDetails)
 }
 
+// Context: DestinationRule enables mesh-wide mTLS
+// Context: auto-mTLS is enabled and no MeshPolicy exists
+// It doesn't return any validation
+func TestMTLSMeshWideDREnabledWithAutoMtls(t *testing.T) {
+	destinationRule := data.AddTrafficPolicyToDestinationRule(data.CreateMTLSTrafficPolicyForDestinationRules(),
+		data.CreateEmptyDestinationRule("istio-system", "dr-mtls", "*.local"))
+
+	mTlsDetails := kubernetes.MTLSDetails{
+		EnabledAutoMtls:         true,
+		MeshPeerAuthentications: []*security_v1.PeerAuthentication{},
+	}
+
+	testNoValidationsFound(t, destinationRule, mTlsDetails)
+}
+
 // Context: DestinationRule not enabling mTLS
 // Context: There is one MeshPolicy not enabling mTLS
 // It doesn't return any validation

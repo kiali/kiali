@@ -22,6 +22,17 @@ When('viewing the detail for {string}', (object: string) => {
   cy.get(linkSelector()).contains(object).should('be.visible').click();
 });
 
+When(
+  'user is at the details page for the K8sGateway {string} in the {string} namespace',
+  (name: string, namespace: string) => {
+    cy.visit({
+      url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/istio/gateway.networking.k8s.io/v1/Gateway/${name}`,
+      qs: { refresh: '0' }
+    });
+    ensureKialiFinishedLoading();
+  }
+);
+
 When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();

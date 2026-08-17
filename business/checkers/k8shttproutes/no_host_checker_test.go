@@ -7,6 +7,7 @@ import (
 	k8s_networking_v1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tests/data"
 	"github.com/kiali/kiali/tests/testutils/validations"
@@ -24,6 +25,31 @@ func TestValidRefHost(t *testing.T) {
 	vals, valid := NoHostChecker{
 		Services:           fakeServices,
 		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")},
+		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+func TestValidRefHostMultiToGrant(t *testing.T) {
+	c := config.Get()
+	c.ExternalServices.Istio.IstioIdentityDomain = "svc.cluster.local"
+	config.Set(c)
+
+	assert := assert.New(t)
+
+	fakeServices := data.CreateFakeMultiServices([]string{"other.bookinfo.svc.cluster.local", "reviews.bookinfo.svc.cluster.local"}, "bookinfo")
+
+	grant := data.CreateReferenceGrant("grant", "bookinfo", "bookinfo2")
+	grant.Spec.To = []k8s_networking_v1beta1.ReferenceGrantTo{
+		{Kind: "Secret"},
+		{Kind: kubernetes.ServiceType},
+	}
+
+	vals, valid := NoHostChecker{
+		Services:           fakeServices,
+		K8sReferenceGrants: []*k8s_networking_v1beta1.ReferenceGrant{grant},
 		K8sHTTPRoute:       data.AddServiceParentRefToHTTPRoute("reviews", "bookinfo", data.AddBackendRefToHTTPRoute("reviews", "bookinfo", data.CreateHTTPRoute("route", "bookinfo2", "gatewayapi", []string{"bookinfo"}))),
 	}.Check()
 

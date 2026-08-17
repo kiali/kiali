@@ -20,6 +20,12 @@ func (m MeshWideMTLSChecker) Check() ([]*models.IstioCheck, bool) {
 		return validations, true
 	}
 
+	// With auto-mTLS, Istio encrypts without requiring an explicit PeerAuthentication
+	// (same escape hatch as KIA0401 / MeshMtlsChecker).
+	if m.MTLSDetails.EnabledAutoMtls {
+		return validations, true
+	}
+
 	// otherwise, check among MeshPeerAuthentications for a rule enabling mesh-wide mTLS
 	for _, mp := range m.MTLSDetails.MeshPeerAuthentications {
 		if enabled, _ := kubernetes.PeerAuthnHasMTLSEnabled(mp); enabled {
