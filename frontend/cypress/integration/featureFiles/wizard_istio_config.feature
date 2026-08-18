@@ -350,7 +350,7 @@ Feature: Kiali Istio Config wizard
     And user types "80" in the "addPort_0" input
     And user adds a hostname
     And user chooses "Hostname" mode from the "addType_0" select
-    And user types "gatewayapi-1-istio.bookinfo.svc.cluster.local" in the "addValue_0" input
+    And user types "gatewayapi-2-istio.bookinfo.svc.cluster.local" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
