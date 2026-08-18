@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
 import {
   Card,
   CardBody,
@@ -31,6 +32,7 @@ import {
 } from '../../types/IstioObjects';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { PromisesRegistry } from 'utils/CancelablePromises';
+import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import {
   drToIstioItems,
@@ -44,6 +46,8 @@ import {
   k8sInferencePoolToIstioItems
 } from '../../types/IstioConfigList';
 import { canCreate, canUpdate } from '../../types/Permissions';
+import { KialiAppState } from '../../store/Store';
+import { durationSelector } from '../../store/Selectors';
 import { ServiceNetwork } from './ServiceNetwork';
 import { IstioConfigCard } from '../../components/IstioConfigCard/IstioConfigCard';
 import { ServiceWizard } from '../../components/IstioWizards/ServiceWizard';
@@ -69,10 +73,14 @@ import { Paths } from '../../config';
 import { navigateToFilteredList } from '../PageUtils';
 import { t } from 'utils/I18nUtils';
 
-interface Props extends ServiceId {
+type ReduxProps = {
+  duration: DurationInSeconds;
+};
+
+interface Props extends ServiceId, ReduxProps {
   cluster?: string;
+  duration: DurationInSeconds;
   gateways: Gateway[];
-  graphDataSource: GraphDataSource;
   k8sGateways: K8sGateway[];
   onSaveAnnotations: (annotations: Record<string, string>) => void;
   onSaveLabels: (labels: Record<string, string>) => void;
@@ -88,8 +96,9 @@ type ServiceInfoState = {
   wizardType: string;
 };
 
-export class ServiceInfo extends React.Component<Props, ServiceInfoState> {
+class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
   private promises = new PromisesRegistry();
+  private graphDataSource = new GraphDataSource();
 
   constructor(props: Props) {
     super(props);
@@ -101,9 +110,34 @@ export class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     };
   }
 
+  componentDidMount(): void {
+    this.fetchBackend();
+  }
+
   componentWillUnmount(): void {
     this.promises.cancelAll();
+    this.graphDataSource.destroy();
   }
+
+  componentDidUpdate(prev: Props): void {
+    if (prev.duration !== this.props.duration || prev.serviceDetails !== this.props.serviceDetails) {
+      this.fetchBackend();
+    }
+  }
+
+  private fetchBackend = (): void => {
+    if (!this.props.serviceDetails) {
+      return;
+    }
+
+    this.promises.cancelAll();
+    this.graphDataSource.fetchForService(
+      this.props.duration,
+      this.props.namespace,
+      this.props.service,
+      this.props.cluster
+    );
+  };
 
   private getServiceValidation(): ObjectValidation | undefined {
     if (this.props.validations && this.props.validations.service && this.props.serviceDetails) {
@@ -493,7 +527,7 @@ export class ServiceInfo extends React.Component<Props, ServiceInfoState> {
 
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard
-                dataSource={this.props.graphDataSource}
+                dataSource={this.graphDataSource}
                 onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
                 onLaunchWizard={this.handleLaunchWizard}
                 serviceDetails={this.props.serviceDetails}
@@ -541,3 +575,9 @@ export class ServiceInfo extends React.Component<Props, ServiceInfoState> {
     );
   }
 }
+
+const mapStateToProps = (state: KialiAppState): ReduxProps => ({
+  duration: durationSelector(state)
+});
+
+export const ServiceInfo = connect(mapStateToProps)(ServiceInfoComponent);

@@ -23,6 +23,7 @@ import type { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
+import type { DurationInSeconds } from 'types/Common';
 import {
   isIstioNamespace,
   serverConfig,
@@ -66,7 +67,7 @@ import { t } from 'utils/I18nUtils';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 
 type WorkloadInfoProps = {
-  graphDataSource: GraphDataSource;
+  duration: DurationInSeconds;
   health?: WorkloadHealth;
   namespace: string;
   refreshWorkload: () => void;
@@ -96,6 +97,8 @@ const workloadIstioResources = [
 ];
 
 export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInfoState> {
+  private graphDataSource = new GraphDataSource();
+
   constructor(props: WorkloadInfoProps) {
     super(props);
     this.state = {
@@ -108,8 +111,12 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     this.fetchBackend();
   }
 
+  componentWillUnmount(): void {
+    this.graphDataSource.destroy();
+  }
+
   componentDidUpdate(prev: WorkloadInfoProps): void {
-    if (this.props.workload !== prev.workload) {
+    if (prev.duration !== this.props.duration || this.props.workload !== prev.workload) {
       this.fetchBackend();
     }
   }
@@ -118,6 +125,13 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     if (!this.props.workload) {
       return;
     }
+
+    this.graphDataSource.fetchForWorkload(
+      this.props.duration,
+      this.props.namespace,
+      this.props.workload.name,
+      this.props.workload.cluster
+    );
 
     this.setState({
       validations: this.workloadValidations(this.props.workload)
@@ -680,7 +694,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
             <GridItem span={miniGraphSpan}>
               <MiniGraphCard
-                dataSource={this.props.graphDataSource}
+                dataSource={this.graphDataSource}
                 namespace={this.props.namespace}
                 workload={this.props.workload}
                 refreshWorkload={this.props.refreshWorkload}

@@ -4,13 +4,10 @@ import {
   buildWorkloadMetadataPatch,
   getWorkloadAnnotations,
   hasAnnotationsChanged,
-  isRootGraphNode,
   LAST_APPLIED_ANNOTATION,
   preserveHiddenAnnotations,
   navigateToFilteredList
 } from '../PageUtils';
-import type { GraphElements } from '../../types/Graph';
-import { NodeType } from '../../types/Graph';
 
 const mockResetFilters = rstest.fn();
 const mockNavigate = rstest.fn();
@@ -400,40 +397,5 @@ describe('hasAnnotationsChanged', () => {
     };
     const userVisible = { 'app.kubernetes.io/name': 'updated' };
     expect(hasAnnotationsChanged(original, userVisible)).toBe(true);
-  });
-});
-
-describe('isRootGraphNode', () => {
-  const graphData: GraphElements = {
-    nodes: [
-      {
-        data: {
-          app: 'ingress',
-          cluster: 'east',
-          id: 'root-app',
-          isRoot: true,
-          namespace: 'istio-system',
-          nodeType: NodeType.APP
-        }
-      },
-      {
-        data: {
-          cluster: 'east',
-          id: 'regular-workload',
-          namespace: 'bookinfo',
-          nodeType: NodeType.WORKLOAD,
-          workload: 'reviews-v1'
-        }
-      }
-    ]
-  };
-
-  it('matches the root entity by type, namespace, name and cluster', () => {
-    expect(isRootGraphNode(graphData, NodeType.APP, 'istio-system', 'ingress', 'east')).toBe(true);
-  });
-
-  it('does not treat a different entity or cluster as root', () => {
-    expect(isRootGraphNode(graphData, NodeType.WORKLOAD, 'bookinfo', 'reviews-v1', 'east')).toBe(false);
-    expect(isRootGraphNode(graphData, NodeType.APP, 'istio-system', 'ingress', 'west')).toBe(false);
   });
 });
