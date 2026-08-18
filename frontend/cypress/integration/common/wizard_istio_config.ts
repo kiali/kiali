@@ -33,6 +33,18 @@ When(
   }
 );
 
+Then('the details page does not include any error or warning', () => {
+  ensureKialiFinishedLoading();
+
+  cy.get('main').within(() => {
+    cy.get('[data-test="icon-error-validation"]').should('not.exist');
+    cy.get('[data-test="icon-warning-validation"]').should('not.exist');
+  });
+
+  cy.get('.pf-v6-c-alert.pf-m-danger').should('not.exist');
+  cy.get('.pf-v6-c-alert.pf-m-warning').should('not.exist');
+});
+
 When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
