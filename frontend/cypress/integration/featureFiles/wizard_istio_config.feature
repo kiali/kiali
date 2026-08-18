@@ -362,6 +362,7 @@ Feature: Kiali Istio Config wizard
     When user is at the details page for the K8sGateway "gatewayapi-2" in the "bookinfo" namespace
     And choosing to delete it
     And user is at the details page for the K8sGateway "gatewayapi-1" in the "bookinfo" namespace
+    And the details page does not include any error or warning
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace
