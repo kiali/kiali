@@ -79,7 +79,7 @@
     "cypress:run:smoke": "cypress run -e TAGS=\"@smoke\"",
     "cypress:run:test-group:junit": "cypress run --reporter cypress-multi-reporters --reporter-options configFile=reporter-config.json -e TAGS=\"${TEST_GROUP}\"",
     "cypress:run:tracing": "cypress run -e TAGS=\"@tracing\"",
-    "generate:chatbot-conversations": "node src/mocks/scripts/generateChatbotConversations.js",
+    "generate:chatbot-conversations": "node src/mocks/scripts/generateChatbotConversations.cjs",
     "format:precommit": "../hack/hooks/pre-commit.sh",
     "i18n": "i18next 'src/**/*.{ts,tsx}' -c './i18next-parser.config.ts' --silent",
     "lint": "eslint src cypress",
