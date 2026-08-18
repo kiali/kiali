@@ -65,15 +65,28 @@ const popoverTextAreaStyle = kialiStyle({
   width: '100%'
 });
 
+const annotationValuePopoverStyle = kialiStyle({
+  $nest: {
+    '.pf-v6-c-popover__title': {
+      width: '100%'
+    },
+    '.pf-v6-c-popover__title-text': {
+      display: 'block',
+      width: '100%'
+    }
+  }
+});
+
 const popoverHeaderStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
   gap: PFSpacer.md,
-  justifyContent: 'space-between',
   width: '100%'
 });
 
 const popoverHeaderTitleStyle = kialiStyle({
+  flex: '1 1 auto',
+  minWidth: 0,
   overflowWrap: 'anywhere',
   wordBreak: 'break-word'
 });
@@ -81,7 +94,8 @@ const popoverHeaderTitleStyle = kialiStyle({
 const popoverHeaderActionsStyle = kialiStyle({
   display: 'flex',
   flexShrink: 0,
-  gap: PFSpacer.xs
+  gap: PFSpacer.xs,
+  marginLeft: 'auto'
 });
 
 const toEntries = (record: Record<string, string>): Entry[] => {
@@ -182,6 +196,7 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
 
   return (
     <Popover
+      className={annotationValuePopoverStyle}
       appendTo={() =>
         (document.querySelector('[aria-labelledby="workload-annotations-wizard-title"]') as HTMLElement) ||
         document.body
