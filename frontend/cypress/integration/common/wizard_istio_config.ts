@@ -103,32 +103,14 @@ When('user checks validation of the hostname {string} input', (id: string) => {
   cy.inputValidation(id, 'HOST.com', false); // capital letters are not allowed
 });
 
-When('user checks validation of the gateway address {string} input', (id: string) => {
-  const typeId = id.replace('addValue', 'addType');
-
+When('user checks validation of the gateway IP address {string} input', (id: string) => {
   cy.inputValidation(id, 'invalid', false);
   cy.inputValidation(id, '192.168.1.1', true);
+});
 
-  cy.get('body').then($body => {
-    if ($body.find(`select[id="${typeId}"]`).length > 0) {
-      cy.get(`select[id="${typeId}"]`).select('Hostname');
-    } else {
-      cy.get(`button[id="${typeId}-toggle"]`).click();
-      cy.get('.pf-v6-c-menu__list-item').contains('Hostname').click();
-    }
-  });
-
+When('user checks validation of the gateway hostname address {string} input', (id: string) => {
   cy.inputValidation(id, 'bookinfo-istio-system', false);
   cy.inputValidation(id, 'example.com', true);
-
-  cy.get('body').then($body => {
-    if ($body.find(`select[id="${typeId}"]`).length > 0) {
-      cy.get(`select[id="${typeId}"]`).select('IPAddress');
-    } else {
-      cy.get(`button[id="${typeId}-toggle"]`).click();
-      cy.get('.pf-v6-c-menu__list-item').contains('IPAddress').click();
-    }
-  });
 });
 
 When('user adds a server to a server list', () => {

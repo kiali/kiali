@@ -92,7 +92,10 @@ Feature: Kiali Istio Config wizard
     And user types "website.com" in the "addHostname_0" input
     And user types "8080" in the "addPort_0" input
     And user adds a hostname
-    And user checks validation of the gateway address "addValue_0" input
+    And user checks validation of the gateway IP address "addValue_0" input
+    And user chooses "Hostname" mode from the "addType_0" select
+    And user checks validation of the gateway hostname address "addValue_0" input
+    And user chooses "IPAddress" mode from the "addType_0" select
     And user types "192.168.1.1" in the "addValue_0" input
     And user previews the configuration
     Then "192.168.1.1" should be in preview
