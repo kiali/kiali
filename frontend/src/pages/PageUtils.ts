@@ -1,5 +1,28 @@
 import { URLParam, router } from '../app/History';
 import { FilterSelected } from '../components/Filters/StatefulFilters';
+import type { GraphElements } from '../types/Graph';
+import { NodeType } from '../types/Graph';
+
+export const isRootGraphNode = (
+  graphData: GraphElements,
+  nodeType: NodeType,
+  namespace: string,
+  name: string,
+  cluster?: string
+): boolean =>
+  graphData.nodes?.some(({ data }) => {
+    const nodeName =
+      nodeType === NodeType.APP ? data.app : nodeType === NodeType.SERVICE ? data.service : data.workload;
+
+    return (
+      !data.isBox &&
+      !!data.isRoot &&
+      data.nodeType === nodeType &&
+      data.namespace === namespace &&
+      nodeName === name &&
+      (!cluster || data.cluster === cluster)
+    );
+  }) ?? false;
 
 export const navigateToFilteredList = (
   path: string,

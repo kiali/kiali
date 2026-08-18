@@ -42,12 +42,17 @@ import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import { GraphDataSource } from '../../services/GraphDataSource';
+import type { DecoratedGraphElements } from '../../types/Graph';
+import { NodeType } from '../../types/Graph';
+import { isRootGraphNode } from '../PageUtils';
 
 type WorkloadDetailsState = {
   cluster?: string;
   currentTab: string;
   error?: ErrorMsg;
   health?: WorkloadHealth;
+  isRoot: boolean;
   waypointServiceFilter?: string;
   workload?: Workload;
 };
@@ -82,18 +87,24 @@ const paramToTab: { [key: string]: number } = {
 let nextTabIndex = 6;
 
 class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPageProps, WorkloadDetailsState> {
+  private graphDataSource = new GraphDataSource();
+
   constructor(props: WorkloadDetailsPageProps) {
     super(props);
     const cluster = HistoryManager.getClusterName();
-    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
+    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster, isRoot: false };
   }
 
   componentDidMount(): void {
+    this.graphDataSource.on('fetchSuccess', this.handleGraphFetchSuccess);
+    this.fetchGraph();
     this.fetchWorkload();
   }
 
   componentWillUnmount(): void {
     clearChatResourceHealth(this.props.dispatch);
+    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphFetchSuccess);
+    this.graphDataSource.destroy();
   }
 
   componentDidUpdate(prevProps: WorkloadDetailsPageProps): void {
@@ -117,6 +128,9 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         currentTab === 'waypoint' ||
         currentTab === 'ztunnel'
       ) {
+        if (mustFetch) {
+          this.fetchGraph(cluster);
+        }
         this.fetchWorkload(cluster).then(() => {
           this.setState({ currentTab: currentTab, cluster: cluster });
         });
@@ -253,7 +267,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       <Tab title="Overview" eventKey={0} key="Overview">
         <WorkloadInfo
           workload={this.state.workload}
-          duration={this.props.duration}
+          graphDataSource={this.graphDataSource}
           health={this.state.health}
           namespace={this.props.workloadId.namespace}
           refreshWorkload={this.fetchWorkload}
@@ -300,19 +314,25 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               namespace={this.props.workloadId.namespace}
               cluster={this.state.cluster}
             />
-          </Tab>,
-          <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
-            <IstioMetrics
-              data-test="inbound-metrics-component"
-              direction="inbound"
-              includeWaypoint={!!this.state.workload?.isAmbient}
-              lastRefreshAt={this.props.lastRefreshAt}
-              namespace={this.props.workloadId.namespace}
-              object={this.props.workloadId.workload}
-              cluster={this.state.cluster}
-              objectType={MetricsObjectTypes.WORKLOAD}
-            />
-          </Tab>,
+          </Tab>
+        );
+        if (!this.state.isRoot) {
+          tabsArray.push(
+            <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
+              <IstioMetrics
+                data-test="inbound-metrics-component"
+                direction="inbound"
+                includeWaypoint={!!this.state.workload?.isAmbient}
+                lastRefreshAt={this.props.lastRefreshAt}
+                namespace={this.props.workloadId.namespace}
+                object={this.props.workloadId.workload}
+                cluster={this.state.cluster}
+                objectType={MetricsObjectTypes.WORKLOAD}
+              />
+            </Tab>
+          );
+        }
+        tabsArray.push(
           <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
             <IstioMetrics
               data-test="outbound-metrics-component"
@@ -396,6 +416,34 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     return tabsArray;
   }
+
+  private handleRootChange = (isRoot: boolean): void => {
+    if (isRoot && this.state.currentTab === 'in_metrics') {
+      HistoryManager.setParam(tabName, defaultTab);
+      this.setState({ currentTab: defaultTab, isRoot });
+    } else if (isRoot !== this.state.isRoot) {
+      this.setState({ isRoot });
+    }
+  };
+
+  private fetchGraph = (cluster?: string): void => {
+    this.graphDataSource.fetchForWorkload(
+      this.props.duration,
+      this.props.workloadId.namespace,
+      this.props.workloadId.workload,
+      cluster ?? this.state.cluster
+    );
+  };
+
+  private handleGraphFetchSuccess = (
+    _graphTimestamp: number,
+    _graphDuration: number,
+    graphData: DecoratedGraphElements
+  ): void => {
+    this.handleRootChange(
+      isRootGraphNode(graphData, NodeType.WORKLOAD, this.props.workloadId.namespace, this.props.workloadId.workload)
+    );
+  };
 
   private hasIstioSidecars(workload: Workload): boolean {
     let hasIstioSidecars = false;

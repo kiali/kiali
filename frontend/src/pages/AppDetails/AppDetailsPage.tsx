@@ -31,6 +31,10 @@ import { getAppLabelName } from 'config/ServerConfig';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import { GraphDataSource } from '../../services/GraphDataSource';
+import type { DecoratedGraphElements } from '../../types/Graph';
+import { NodeType } from '../../types/Graph';
+import { isRootGraphNode } from '../PageUtils';
 
 type AppDetailsState = {
   app?: App;
@@ -40,6 +44,7 @@ type AppDetailsState = {
   currentTab: string;
   error?: ErrorMsg;
   health?: AppHealth;
+  isRoot: boolean;
   isSupported?: boolean;
 };
 
@@ -68,18 +73,24 @@ const paramToTab: { [key: string]: number } = {
 };
 
 class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
+  private graphDataSource = new GraphDataSource();
+
   constructor(props: AppDetailsProps) {
     super(props);
     const cluster = HistoryManager.getClusterName();
-    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster };
+    this.state = { currentTab: activeTab(tabName, defaultTab), cluster: cluster, isRoot: false };
   }
 
   componentDidMount(): void {
+    this.graphDataSource.on('fetchSuccess', this.handleGraphFetchSuccess);
+    this.fetchGraph();
     this.fetchApp();
   }
 
   componentWillUnmount(): void {
     clearChatResourceHealth(this.props.dispatch);
+    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphFetchSuccess);
+    this.graphDataSource.destroy();
   }
 
   componentDidUpdate(prevProps: AppDetailsProps): void {
@@ -95,6 +106,9 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       this.props.duration !== prevProps.duration;
     if (mustFetch || currentTab !== this.state.currentTab) {
       if (mustFetch || currentTab === 'info') {
+        if (mustFetch) {
+          this.fetchGraph(cluster);
+        }
         this.fetchApp(cluster).then(() => {
           this.setState({ currentTab: currentTab, cluster: cluster });
         });
@@ -234,7 +248,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
       <Tab title="Overview" eventKey={0} key={'Overview'}>
         <AppInfo
           app={this.state.app}
-          duration={this.props.duration}
+          graphDataSource={this.graphDataSource}
           health={this.state.health}
           isSupported={this.state.isSupported}
         />
@@ -287,7 +301,11 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     const tabsArray: React.ReactNode[] = [overTab];
     if (this.state.isSupported) {
       if (isPrometheusAvailable()) {
-        tabsArray.push(trafficTab, inTab, outTab);
+        tabsArray.push(trafficTab);
+        if (!this.state.isRoot) {
+          tabsArray.push(inTab);
+        }
+        tabsArray.push(outTab);
       }
       // Conditional Traces tab
       if (this.props.tracingInfo && this.props.tracingInfo.enabled) {
@@ -336,6 +354,32 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
     return tabsArray;
   }
+
+  private handleRootChange = (isRoot: boolean): void => {
+    if (isRoot && this.state.currentTab === 'in_metrics') {
+      HistoryManager.setParam(tabName, defaultTab);
+      this.setState({ currentTab: defaultTab, isRoot });
+    } else if (isRoot !== this.state.isRoot) {
+      this.setState({ isRoot });
+    }
+  };
+
+  private fetchGraph = (cluster?: string): void => {
+    this.graphDataSource.fetchForVersionedApp(
+      this.props.duration,
+      this.props.appId.namespace,
+      this.props.appId.app,
+      cluster ?? this.state.cluster
+    );
+  };
+
+  private handleGraphFetchSuccess = (
+    _graphTimestamp: number,
+    _graphDuration: number,
+    graphData: DecoratedGraphElements
+  ): void => {
+    this.handleRootChange(isRootGraphNode(graphData, NodeType.APP, this.props.appId.namespace, this.props.appId.app));
+  };
 
   private renderTabs(): React.ReactNode[] {
     // PF Tabs doesn't support static tabs followed of an array of tabs created dynamically.

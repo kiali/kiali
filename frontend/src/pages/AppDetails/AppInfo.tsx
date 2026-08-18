@@ -18,7 +18,6 @@ import {
 import { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
-import { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
 import { AppHealth } from 'types/Health';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
@@ -29,41 +28,12 @@ import { t } from 'utils/I18nUtils';
 
 type AppInfoProps = {
   app?: App;
-  duration: DurationInSeconds;
+  graphDataSource: GraphDataSource;
   health?: AppHealth;
   isSupported?: boolean;
 };
 
 export class AppInfo extends React.Component<AppInfoProps> {
-  private graphDataSource = new GraphDataSource();
-
-  componentDidMount(): void {
-    this.fetchBackend();
-  }
-
-  componentWillUnmount(): void {
-    this.graphDataSource.destroy();
-  }
-
-  componentDidUpdate(prev: AppInfoProps): void {
-    if (this.props.duration !== prev.duration || this.props.app !== prev.app) {
-      this.fetchBackend();
-    }
-  }
-
-  private fetchBackend = (): void => {
-    if (!this.props.app) {
-      return;
-    }
-
-    this.graphDataSource.fetchForVersionedApp(
-      this.props.duration,
-      this.props.app.namespace.name,
-      this.props.app.name,
-      this.props.app.cluster
-    );
-  };
-
   private renderDetailsCard(app: App): React.ReactNode {
     return (
       <StackItem key="details">
@@ -161,7 +131,7 @@ export class AppInfo extends React.Component<AppInfoProps> {
           </GridItem>
 
           <GridItem span={miniGraphSpan}>
-            <MiniGraphCard dataSource={this.graphDataSource} />
+            <MiniGraphCard dataSource={this.props.graphDataSource} />
           </GridItem>
         </Grid>
       </div>

@@ -36,12 +36,17 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { t } from 'utils/I18nUtils';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import { GraphDataSource } from '../../services/GraphDataSource';
+import type { DecoratedGraphElements } from '../../types/Graph';
+import { NodeType } from '../../types/Graph';
+import { isRootGraphNode } from '../PageUtils';
 
 type ServiceDetailsState = {
   cluster?: string;
   currentTab: string;
   error?: ErrorMsg;
   gateways: Gateway[];
+  isRoot: boolean;
   k8sGateways: K8sGateway[];
   peerAuthentications: PeerAuthentication[];
   serviceDetails?: ServiceDetailsInfo;
@@ -71,6 +76,7 @@ const tabIndex: { [tab: string]: number } = {
 };
 
 class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, ServiceDetailsState> {
+  private graphDataSource = new GraphDataSource();
   private promises = new PromisesRegistry();
 
   constructor(props: ServiceDetailsProps) {
@@ -81,6 +87,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       cluster: cluster,
       currentTab: activeTab(tabName, defaultTab),
       gateways: [],
+      isRoot: false,
       k8sGateways: [],
       validations: {},
       peerAuthentications: []
@@ -88,11 +95,15 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
   }
 
   componentDidMount(): void {
+    this.graphDataSource.on('fetchSuccess', this.handleGraphFetchSuccess);
+    this.fetchGraph();
     this.fetchService();
   }
 
   componentWillUnmount(): void {
     clearChatResourceHealth(this.props.dispatch);
+    this.graphDataSource.removeListener('fetchSuccess', this.handleGraphFetchSuccess);
+    this.graphDataSource.destroy();
     this.promises.cancelAll();
   }
 
@@ -109,6 +120,9 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       this.props.duration !== prevProps.duration;
     if (mustFetch || currentTab !== this.state.currentTab) {
       if (mustFetch || currentTab === 'info') {
+        if (mustFetch) {
+          this.fetchGraph(cluster);
+        }
         this.fetchService(cluster).then(() => {
           this.setState({ currentTab: currentTab, cluster: cluster });
         });
@@ -320,6 +334,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           service={this.props.serviceId.service}
           serviceDetails={this.state.serviceDetails}
           gateways={this.state.gateways}
+          graphDataSource={this.graphDataSource}
           k8sGateways={this.state.k8sGateways}
           onSaveAnnotations={this.handleSaveAnnotations}
           onSaveLabels={this.handleSaveLabels}
@@ -355,7 +370,10 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
       </Tab>
     );
 
-    const tabsArray: React.ReactNode[] = isPrometheusAvailable() ? [overTab, trafficTab, inTab] : [overTab];
+    const tabsArray: React.ReactNode[] = isPrometheusAvailable() ? [overTab, trafficTab] : [overTab];
+    if (isPrometheusAvailable() && !this.state.isRoot) {
+      tabsArray.push(inTab);
+    }
 
     if (this.props.tracingInfo && this.props.tracingInfo.enabled && this.props.tracingInfo.integration) {
       const fromWaypoint =
@@ -379,6 +397,34 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
     return tabsArray;
   }
+
+  private handleRootChange = (isRoot: boolean): void => {
+    if (isRoot && this.state.currentTab === 'metrics') {
+      HistoryManager.setParam(tabName, defaultTab);
+      this.setState({ currentTab: defaultTab, isRoot });
+    } else if (isRoot !== this.state.isRoot) {
+      this.setState({ isRoot });
+    }
+  };
+
+  private fetchGraph = (cluster?: string): void => {
+    this.graphDataSource.fetchForService(
+      this.props.duration,
+      this.props.serviceId.namespace,
+      this.props.serviceId.service,
+      cluster ?? this.state.cluster
+    );
+  };
+
+  private handleGraphFetchSuccess = (
+    _graphTimestamp: number,
+    _graphDuration: number,
+    graphData: DecoratedGraphElements
+  ): void => {
+    this.handleRootChange(
+      isRootGraphNode(graphData, NodeType.SERVICE, this.props.serviceId.namespace, this.props.serviceId.service)
+    );
+  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
