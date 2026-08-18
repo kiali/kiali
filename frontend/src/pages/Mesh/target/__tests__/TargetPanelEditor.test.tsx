@@ -24,7 +24,7 @@ rstest.mock('@monaco-editor/react', () => {
           mockOnDidContentSizeChange(cb);
         }
       });
-    }, [onMount]);
+    }, []);
 
     return (
       <div
