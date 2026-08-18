@@ -10,11 +10,11 @@ The main installation mechanism is the Kiali Operator.
 
 OSSMC provides two layers of functionality:
 
-1. **Navigating multiple meshes** — The **Istio control planes** and **Kiali instances** pages list every Istio and Kiali CR on the cluster. They talk to the Kubernetes API directly, so they work even when no Kiali server is connected to the plugin. From **Kiali instances**, admins can **Connect** or **Disconnect** which Kiali server OSSMC uses for observability.
+1. **Navigating multiple meshes** — The **Istios** and **Kialis** pages list every Istio and Kiali CR on the cluster. They talk to the Kubernetes API directly, so they work even when no Kiali server is connected to the plugin. From **Kialis**, admins can **Connect** or **Disconnect** which Kiali server OSSMC uses for observability.
 
 2. **Kiali-powered observability** — When a Kiali instance is connected and reachable, OSSMC adds Overview, Traffic Graph, Mesh, Namespaces, Applications, Services, Workloads, Istio Config, and **Service Mesh** tabs on OpenShift resource detail pages. These pages proxy through the connected Kiali server configured on the OSSMConsole CR.
 
-When a Kiali server is connected, **Istio control planes** and **Kiali instances** appear at the bottom of the Service Mesh menu (below a separator). When no Kiali server is connected, those two pages are the Service Mesh menu.
+When a Kiali server is connected, **Istios** and **Kialis** appear at the bottom of the Service Mesh menu (below a separator). When no Kiali server is connected, those two pages are the Service Mesh menu.
 
 See the official documentation for details:
 
@@ -31,7 +31,7 @@ These are the things you need before developers can start working with OSSMC:
 2. `oc` client available in the path
 3. `podman` or `docker` client available in the path
 
-A Kiali Server is optional. You need one to develop or test Kiali-powered observability pages, but not to develop or test **Istio control planes** and **Kiali instances**.
+A Kiali Server is optional. You need one to develop or test Kiali-powered observability pages, but not to develop or test **Istios** and **Kialis**.
 
 ## Operator (kiali repo make targets)
 
