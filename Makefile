@@ -164,6 +164,7 @@ KIALI_CR_FILE ?= ${ROOTDIR}/operator/deploy/kiali/kiali_cr_dev.yaml
 # When creating a OSSMConsole CR, these can customize it
 OSSMCONSOLE_CR_FILE ?= ${ROOTDIR}/operator/deploy/ossmconsole/ossmconsole_cr_dev.yaml
 OSSMCONSOLE_CR_SPEC_VERSION ?= default
+OSSMCONSOLE_CR_AUTO_DISCOVER ?= true
 
 # When ensuring the helm chart repo exists, by default the make infrastructure will pull the latest code from git.
 # If you do not want this to happen (i.e. if you want to retain the local copies of your helm charts), set this to false.
