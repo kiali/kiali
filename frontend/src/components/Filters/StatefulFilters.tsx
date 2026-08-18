@@ -5,6 +5,7 @@ import {
   Label,
   LabelGroup,
   TextInput,
+  TextInputTypes,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
@@ -13,17 +14,21 @@ import {
   Select,
   SelectList,
   SelectOption,
+  MenuToggleElement,
   MenuToggle,
   TextInputGroup,
   TextInputGroupMain,
+  ToolbarLabelGroup,
+  ToolbarLabel,
   Tooltip
 } from '@patternfly/react-core';
-import type { TextInputTypes, MenuToggleElement, ToolbarLabelGroup, ToolbarLabel } from '@patternfly/react-core';
-import { DEFAULT_LABEL_OPERATION, FILTER_ACTION_UPDATE, AllFilterTypes } from '../../types/Filters';
-import type {
+import {
   ActiveFilter,
   ActiveFiltersInfo,
+  DEFAULT_LABEL_OPERATION,
+  FILTER_ACTION_UPDATE,
   FilterType,
+  AllFilterTypes,
   LabelOperation,
   ToggleType,
   ActiveTogglesInfo
@@ -41,7 +46,7 @@ import { serverConfig } from 'config';
 import { PFColors } from '../Pf/PfColors';
 import { t } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
-import type { KialiAppState } from 'store/Store';
+import { KialiAppState } from 'store/Store';
 import { languageSelector } from 'store/Selectors';
 import { classes } from 'typestyle';
 import { PFSpacer } from 'styles/PfSpacer';
@@ -213,6 +218,43 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
   componentDidMount(): void {
     this.loadDynamicFilters();
   }
+
+  private loadDynamicFilters = (): void => {
+    // Call all loaders from FilterTypes and set results in state
+    const filterTypePromises = this.props.initialFilters.map(async ft => {
+      if (ft.loader) {
+        return ft.loader().then(values => {
+          ft.filterValues = values;
+
+          return {
+            category: ft.category,
+            placeholder: ft.placeholder,
+            filterType: ft.filterType,
+            action: ft.action,
+            filterValues: ft.filterValues
+          };
+        });
+      } else {
+        return Promise.resolve(ft);
+      }
+    });
+
+    this.promises
+      .registerAll('filterType', filterTypePromises)
+      .then(types => this.setState({ filterTypes: types }))
+      .catch(err => {
+        if (!err.isCanceled) {
+          console.debug(err);
+        }
+      });
+  };
+
+  private getCurrentFilterTypes = (): FilterType => {
+    return (
+      this.props.initialFilters.find(f => f.category === this.state.currentFilterType.category) ??
+      this.props.initialFilters[0]
+    );
+  };
 
   componentDidUpdate(prevProps: StatefulFiltersProps, prevState: StatefulFiltersState): void {
     // If the props filters changed (e.g. different values), some state update is necessary
@@ -556,23 +598,26 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
   };
 
   renderChildren = (): React.ReactNode => {
-    const childArray = React.Children.toArray(this.props.children);
-    if (childArray.length === 0) return null;
     return (
-      <ToolbarGroup style={{ marginRight: '10px' }}>
-        {childArray.length > 1 ? (
-          childArray.map((child, index) => (
-            <ToolbarItem
-              key={(child as React.ReactElement).key}
-              className={index === childArray.length - 1 ? paddingStyle : dividerStyle}
-            >
-              {child}
-            </ToolbarItem>
-          ))
-        ) : (
-          <ToolbarItem>{childArray[0]}</ToolbarItem>
-        )}
-      </ToolbarGroup>
+      this.props.children && (
+        <ToolbarGroup style={{ marginRight: '10px' }}>
+          {Array.isArray(this.props.children) ? (
+            (this.props.children as Array<any>).map(
+              (child, index) =>
+                child && (
+                  <ToolbarItem
+                    key={`toolbar_statefulFilters_${index}`}
+                    className={index === (this.props.children as Array<any>).length - 1 ? paddingStyle : dividerStyle}
+                  >
+                    {child}
+                  </ToolbarItem>
+                )
+            )
+          ) : (
+            <ToolbarItem>{this.props.children}</ToolbarItem>
+          )}
+        </ToolbarGroup>
+      )
     );
   };
 
@@ -667,8 +712,8 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
             <ToolbarGroup>
               {showIncludeToggles &&
                 this.props.initialToggles &&
-                this.props.initialToggles.map(t => (
-                  <ToolbarItem key={`toggle-${t.name}`}>
+                this.props.initialToggles.map((t, i) => (
+                  <ToolbarItem key={`toggle-${i}`}>
                     <Checkbox
                       data-test={`toggle-${t.name}`}
                       id={t.name}
@@ -765,43 +810,6 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
       </>
     );
   }
-
-  private loadDynamicFilters = (): void => {
-    // Call all loaders from FilterTypes and set results in state
-    const filterTypePromises = this.props.initialFilters.map(async ft => {
-      if (ft.loader) {
-        return ft.loader().then(values => {
-          ft.filterValues = values;
-
-          return {
-            category: ft.category,
-            placeholder: ft.placeholder,
-            filterType: ft.filterType,
-            action: ft.action,
-            filterValues: ft.filterValues
-          };
-        });
-      } else {
-        return Promise.resolve(ft);
-      }
-    });
-
-    this.promises
-      .registerAll('filterType', filterTypePromises)
-      .then(types => this.setState({ filterTypes: types }))
-      .catch(err => {
-        if (!err.isCanceled) {
-          console.debug(err);
-        }
-      });
-  };
-
-  private getCurrentFilterTypes = (): FilterType => {
-    return (
-      this.props.initialFilters.find(f => f.category === this.state.currentFilterType.category) ??
-      this.props.initialFilters[0]
-    );
-  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
