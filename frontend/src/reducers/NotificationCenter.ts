@@ -136,8 +136,10 @@ export const NotificationCenterReducer = (
         }
         return group;
       });
-      const messageAdded = groups.some((g, i) => g !== state.groups[i]);
-      return updateState(state, { groups, nextId: messageAdded ? state.nextId + 1 : state.nextId });
+      if (!groups.some((g, i) => g !== state.groups[i])) {
+        return state;
+      }
+      return updateState(state, { groups, nextId: state.nextId + 1 });
     }
 
     case getType(NotificationCenterActions.removeMessage): {

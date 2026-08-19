@@ -182,6 +182,7 @@ describe('NotificationCenterReducer reducer', () => {
       initialState,
       NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING, true, true)
     );
+    expect(result).toBe(initialState);
     expect(result.groups[0].messages).toHaveLength(1);
     expect(result.groups[0].messages[0].count).toBe(1);
     expect(result.groups[0].messages[0].seen).toBe(true);
