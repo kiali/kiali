@@ -186,6 +186,7 @@ describe('NotificationCenterReducer reducer', () => {
     expect(result.groups[0].messages[0].count).toBe(1);
     expect(result.groups[0].messages[0].seen).toBe(true);
     expect(result.groups[0].messages[0].isAlert).toBe(false);
+    expect(result.nextId).toBe(1);
   });
 
   it('should add first occurrence even when showOnce is true', () => {
@@ -208,6 +209,7 @@ describe('NotificationCenterReducer reducer', () => {
     expect(result.groups[0].messages).toHaveLength(1);
     expect(result.groups[0].messages[0].content).toBe('new warning');
     expect(result.groups[0].messages[0].created).toEqual(date);
+    expect(result.nextId).toBe(1);
   });
 
   it('should handle REMOVE_MESSAGE', () => {

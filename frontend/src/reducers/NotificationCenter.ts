@@ -1,4 +1,4 @@
-import type { MessageType, NotificationMessage } from '../types/NotificationCenter';
+import { MessageType, type NotificationMessage } from '../types/NotificationCenter';
 import type { NotificationCenterState } from '../store/Store';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
@@ -136,7 +136,8 @@ export const NotificationCenterReducer = (
         }
         return group;
       });
-      return updateState(state, { groups: groups, nextId: state.nextId + 1 });
+      const messageAdded = groups.some((g, i) => g !== state.groups[i]);
+      return updateState(state, { groups, nextId: messageAdded ? state.nextId + 1 : state.nextId });
     }
 
     case getType(NotificationCenterActions.removeMessage): {

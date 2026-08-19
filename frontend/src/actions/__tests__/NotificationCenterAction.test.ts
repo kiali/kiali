@@ -2,7 +2,7 @@ import { createStore, applyMiddleware, combineReducers, type Store } from 'redux
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import type { NotificationCenterState } from '../../store/Store';
-import type { MessageType } from '../../types/NotificationCenter';
+import { MessageType } from '../../types/NotificationCenter';
 import { NotificationCenterReducer } from '../../reducers/NotificationCenter';
 
 const reduxThunkModule = require('redux-thunk');
