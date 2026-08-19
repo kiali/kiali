@@ -180,7 +180,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
         const percentiles = await this.percentilesPromise;
         options.minDuration = percentiles.get(this.state.querySettings.percentile);
         if (!options.minDuration) {
-          addWarning('Cannot perform query above the requested percentile (value unknown).');
+          addWarning('Cannot perform query above the requested percentile (value unknown).', '', true, true);
         }
       } catch (err) {
         addDanger('Could not fetch percentiles', `${err}`);
@@ -216,7 +216,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
 
   private percentilesFetched = (q: MetricsStatsQuery, r: MetricsStatsResult): Map<string, number> => {
     if (r.warnings) {
-      addWarning(r.warnings.join(', '));
+      addWarning(r.warnings.join(', '), '', true, true);
     }
     const [mapInbound, mapOutbound] = (['inbound', 'outbound'] as Direction[]).map(dir => {
       const map = new Map<string, number>();

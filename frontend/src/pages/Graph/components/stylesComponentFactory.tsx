@@ -195,16 +195,24 @@ const handleGraphNav = (fromNode: GraphElement, kiosk: string): void => {
   if (fromNodeData.isOutOfMesh) {
     if (!serverConfig.ambientEnabled) {
       addWarning(
-        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`
+        `A node with a missing sidecar provides no node-specific telemetry and can not provide a node detail graph.`,
+        '',
+        true,
+        true
       );
     } else {
-      addWarning(`A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`);
+      addWarning(
+        `A node out of the mesh provides no node-specific telemetry and can not provide a node detail graph.`,
+        '',
+        true,
+        true
+      );
     }
 
     return;
   }
   if (fromNodeData.isIdle) {
-    addWarning(`An idle node has no node-specific traffic and can not provide a node detail graph.`);
+    addWarning(`An idle node has no node-specific traffic and can not provide a node detail graph.`, '', true, true);
     return;
   }
   if (fromNodeData.isOutside) {
