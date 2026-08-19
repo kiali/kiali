@@ -205,7 +205,13 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     return (
       <>
-        <Card isCompact id="MiniGraphCard" data-test="mini-graph" className={cardStyle}>
+        <Card
+          isCompact
+          id="MiniGraphCard"
+          data-test="mini-graph"
+          data-ready={!isLoading && this.state.isReady}
+          className={cardStyle}
+        >
           <CardHeader>
             <div className={cardHeaderStyle}>
               <Title headingLevel="h4" size={TitleSizes.md}>
