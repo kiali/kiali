@@ -21,10 +21,10 @@ test.describe('Kiali help about', () => {
 
     const kialiVersion = page.getByTestId('kiali-version');
     await expect(kialiVersion).toBeVisible();
-    await expect(kialiVersion).toHaveText(/^\d+\.\d+\.\d+/);
+    await expect(kialiVersion).toHaveText(/^v?\d+\.\d+\.\d+/);
 
     const containerVersion = page.getByTestId('kiali-container-version');
     await expect(containerVersion).toBeVisible();
-    await expect(containerVersion).toHaveText(/^\d+\.\d+\.\d+/);
+    await expect(containerVersion).toHaveText(/^v?\d+\.\d+\.\d+/);
   });
 });
