@@ -60,8 +60,12 @@ export class IstioConfigPage extends BasePage {
     await expect(this.activeFilterCloseButtons()).toHaveCount(0);
   }
 
+  private filterTypeInputEl(): Locator {
+    return this.page.getByTestId('filter-type-input').locator('input');
+  }
+
   async typeIntoTypeFilter(input: string): Promise<void> {
-    await this.page.getByTestId('filter-type-input').fill(input);
+    await this.filterTypeInputEl().fill(input);
   }
 
   async expectTypeFilterPhrase(phrase: string): Promise<void> {
@@ -69,7 +73,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expandTypeFilterDropdown(): Promise<void> {
-    await this.page.getByTestId('filter-type-input').click();
+    await this.filterTypeInputEl().click();
   }
 
   async expectAllTypeFilterOptions(): Promise<void> {
@@ -82,7 +86,7 @@ export class IstioConfigPage extends BasePage {
     const responsePromise = this.page.waitForResponse(
       response => response.url().includes('/api/istio/config') && response.request().method() === 'GET'
     );
-    const input = this.page.getByTestId('filter-type-input');
+    const input = this.filterTypeInputEl();
     await input.click();
     await input.fill(typeName);
     await this.filterOption(typeName).click();
