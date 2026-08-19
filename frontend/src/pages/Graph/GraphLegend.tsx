@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import type { GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
-import { legendData } from './GraphLegendData';
+import { legendData, GraphLegendItem, GraphLegendItemRow } from './GraphLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 interface GraphLegendProps {
   closeLegend: () => void;
@@ -17,8 +15,7 @@ const legendBoxStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
   border: `1px solid ${PFColors.BorderColor100}`,
   overflowY: 'auto',
-  zIndex: 3,
-  $nest: contrastOverlayNest()
+  zIndex: 3
 });
 
 const headerStyle = kialiStyle({
@@ -57,7 +54,7 @@ const legendColumnHeadingStyle = kialiStyle({
 
 const legendBadgeStyle = kialiStyle({
   borderRadius: '0.25rem',
-  backgroundColor: PFColors.Color200
+  backgroundColor: '#6a6e73'
 });
 
 export const GraphLegend: React.FC<GraphLegendProps> = (props: GraphLegendProps) => {

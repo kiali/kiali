@@ -30,7 +30,6 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
 import { ChatBot } from 'components/ChatBot/ChatBot';
-import { ParentThemeSync } from 'components/Kiosk/ParentThemeSync';
 
 type ReduxStateProps = {
   chatbotEnabled: boolean;
@@ -143,7 +142,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     </Masthead>
   );
 
-  const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
+  const menu = <Menu ai={props.chatbotEnabled} isNavOpen={isNavOpen} externalServices={props.externalServices} />;
 
   const Sidebar = kioskMode ? undefined : (
     <PageSidebar isSidebarOpen={isNavOpen}>
@@ -159,7 +158,6 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       isNotificationDrawerExpanded={props.showNotificationCenter}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
-      {kioskMode && <ParentThemeSync />}
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>

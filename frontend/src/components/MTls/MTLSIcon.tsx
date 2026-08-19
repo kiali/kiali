@@ -1,7 +1,7 @@
 import * as React from 'react';
-import type { TooltipPosition } from '@patternfly/react-core';
-import { Tooltip } from '@patternfly/react-core';
-import { PFColors } from 'components/Pf/PfColors';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { useKialiTheme } from 'utils/ThemeUtils';
+import { Theme } from 'types/Common';
 import { MTLSIconTypes } from './MTLSIconTypes';
 import { ReactComponent as FullLockIcon } from '../../assets/img/mtls/mtls-status-full.svg';
 import { ReactComponent as HollowLockIcon } from '../../assets/img/mtls/mtls-status-partial.svg';
@@ -18,8 +18,10 @@ type MTLSIconProps = {
 };
 
 export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
-  // Use a semantic token so the icon tracks light/dark/glass/high-contrast automatically.
-  const iconColor = props.color ?? PFColors.Color200;
+  const darkTheme = useKialiTheme() === Theme.DARK;
+
+  const defaultColor = darkTheme ? '#d1d1d1' : '#72767b';
+  const iconColor = props.color ?? defaultColor;
 
   const circleBackgroundColor = props.backgroundColor;
 
@@ -27,12 +29,12 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
     props.icon === MTLSIconTypes.LOCK_FULL
       ? FullLockIcon
       : props.icon === MTLSIconTypes.LOCK_HOLLOW
-        ? HollowLockIcon
-        : props.icon === MTLSIconTypes.LOCK_OPEN
-          ? LockOpenIcon
-          : props.icon === MTLSIconTypes.ARROW_DOWN
-            ? InheritArrowIcon
-            : undefined;
+      ? HollowLockIcon
+      : props.icon === MTLSIconTypes.LOCK_OPEN
+      ? LockOpenIcon
+      : props.icon === MTLSIconTypes.ARROW_DOWN
+      ? InheritArrowIcon
+      : undefined;
 
   const useCircle = !!circleBackgroundColor;
   const circleStyle: React.CSSProperties = useCircle

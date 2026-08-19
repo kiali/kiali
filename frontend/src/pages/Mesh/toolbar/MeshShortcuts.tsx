@@ -18,7 +18,7 @@ const shortcuts: Shortcut[] = [
 
 const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   return (
-    <div key={shortcut.shortcut} style={{ display: 'flex', marginBottom: '10px' }}>
+    <div style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '40%' }}>
         <Label variant="outline">{t(shortcut.shortcut)}</Label>
       </div>
@@ -29,8 +29,10 @@ const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
 
 export const MeshShortcuts = (): React.ReactNode => (
   <>
-    {shortcuts.map((s: Shortcut): React.ReactNode => {
-      return makeShortcut(s);
-    })}
+    {shortcuts.map(
+      (s: Shortcut): React.ReactNode => {
+        return makeShortcut(s);
+      }
+    )}
   </>
 );

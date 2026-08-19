@@ -69,7 +69,7 @@ export type NodeData = DecoratedGraphNodeData & {
   x?: number;
   y?: number;
   // These are additions we've made for our own styling
-  // eslint-disable-next-line @typescript-eslint/member-ordering
+   
   hasSpans?: Span[];
   isFind?: boolean;
   isFocus?: boolean;

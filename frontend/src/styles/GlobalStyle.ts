@@ -1,5 +1,3 @@
-import { PF_THEME_GLASS } from 'types/Common';
-
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -89,21 +87,6 @@ export const globalStyle = kialiStyle({
         }
       }
     },
-
-    /**
-     * Under OpenShift glass, clear PF sticky-header elevation/fill on all tables
-     * (thead::after = shadow/radius; th::after = fill + bottom border).
-     */
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
-      boxShadow: 'none',
-      borderRadius: 0,
-      borderBlockEndWidth: 0
-    },
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
-      backgroundColor: 'transparent',
-      borderBlockEndWidth: 0
-    },
-
     /**
      * ChatBot docked mode should fit within the page drawer height
      */

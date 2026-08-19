@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { Tabs, type TabProps } from '@patternfly/react-core';
+import { TabProps, Tabs } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 
 import { location, router } from '../../app/History';
 import { PFColors } from 'components/Pf/PfColors';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
@@ -27,8 +26,7 @@ export const activeTab = (tabName: string, defaultTab: string): string => {
 };
 
 const tabStyle = kialiStyle({
-  backgroundColor: PFColors.BackgroundColor100,
-  $nest: contrastContentNest()
+  backgroundColor: PFColors.BackgroundColor100
 });
 
 const flexTabWrapperStyle = kialiStyle({

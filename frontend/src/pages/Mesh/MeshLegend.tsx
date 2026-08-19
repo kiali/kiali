@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import type { MeshLegendItem, MeshLegendItemRow } from './MeshLegendData';
-import { legendData } from './MeshLegendData';
+import { legendData, MeshLegendItem, MeshLegendItemRow } from './MeshLegendData';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { contrastOverlayNest } from 'styles/ThemeSurfaces';
 
 interface MeshLegendProps {
   closeLegend: () => void;
@@ -17,8 +15,7 @@ const legendBoxStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
   border: `1px solid ${PFColors.BorderColor100}`,
   overflowY: 'auto',
-  zIndex: 3,
-  $nest: contrastOverlayNest()
+  zIndex: 3
 });
 
 const headerStyle = kialiStyle({
