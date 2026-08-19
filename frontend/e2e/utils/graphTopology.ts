@@ -292,8 +292,12 @@ export async function readMiniGraphTopology(page: Page): Promise<GraphTopology> 
 export async function expectMiniGraphReady(page: Page): Promise<void> {
   await expect
     .poll(async () => {
-      const topology = await readMiniGraphTopology(page);
-      return topology.nodes.length;
+      try {
+        const topology = await readMiniGraphTopology(page);
+        return topology.nodes.length;
+      } catch {
+        return 0;
+      }
     })
     .toBeGreaterThan(0);
 }
