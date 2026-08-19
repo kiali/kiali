@@ -12,9 +12,7 @@ export class SidebarPage extends BasePage {
 
   async ensureSidebarOpen(): Promise<void> {
     await this.waitForLoad();
-    await expect(this.sidebar).toBeVisible();
-    const hidden = await this.sidebar.getAttribute('aria-hidden');
-    if (hidden === 'true') {
+    if (await this.sidebar.isHidden()) {
       await this.navToggle.click();
     }
     await expect(this.sidebar).toBeVisible();
@@ -22,9 +20,7 @@ export class SidebarPage extends BasePage {
 
   async ensureSidebarClosed(): Promise<void> {
     await this.waitForLoad();
-    await expect(this.sidebar).toBeAttached();
-    const hidden = await this.sidebar.getAttribute('aria-hidden');
-    if (hidden === 'false') {
+    if (await this.sidebar.isVisible()) {
       await this.navToggle.click();
     }
     await expect(this.sidebar).not.toBeVisible();

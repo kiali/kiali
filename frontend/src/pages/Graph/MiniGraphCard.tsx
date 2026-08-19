@@ -190,7 +190,12 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     return (
       <>
-        <Card id={'MiniGraphCard'} data-test="mini-graph" className={cardStyle}>
+        <Card
+          id={'MiniGraphCard'}
+          data-test="mini-graph"
+          data-ready={!isLoading && this.state.isReady}
+          className={cardStyle}
+        >
           <CardHeader
             actions={{
               actions: (

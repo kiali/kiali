@@ -34,16 +34,16 @@ setup('authenticate', async ({ page, request }) => {
       password,
       username
     });
-  } else if (strategy === 'token') {
-    throw new Error(
-      'token auth setup is not implemented yet. Use anonymous or openshift auth, or extend auth.setup.ts.'
-    );
-  } else if (strategy === 'openid') {
-    throw new Error(
-      'openid auth setup is not implemented yet. Use anonymous or openshift auth, or extend auth.setup.ts.'
-    );
   } else {
-    throw new Error(`Unsupported auth strategy: ${strategy}`);
+    // Write empty storageState before failing so dependent projects produce JUnit
+    // output (skipped) instead of crashing with zero results, which breaks Jenkins.
+    fs.writeFileSync(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
+    const implemented = ['anonymous', 'openshift'];
+    expect(
+      implemented,
+      `Auth strategy "${strategy}" is not implemented in auth.setup.ts — add support or switch to: ${implemented.join(', ')}`
+    ).toContain(strategy);
+    return;
   }
 
   await page.context().storageState({ path: AUTH_FILE });
