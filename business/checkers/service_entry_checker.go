@@ -10,11 +10,10 @@ import (
 )
 
 type ServiceEntryChecker struct {
-	Cluster         string
-	ImportScope     common.ImportScope
-	Namespaces      models.Namespaces
-	ServiceEntries  []*networking_v1.ServiceEntry
-	WorkloadEntries []*networking_v1.WorkloadEntry
+	Cluster        string
+	ImportScope    common.ImportScope
+	Namespaces     models.Namespaces
+	ServiceEntries []*networking_v1.ServiceEntry
 }
 
 func (s ServiceEntryChecker) Check() models.IstioValidations {
@@ -22,9 +21,8 @@ func (s ServiceEntryChecker) Check() models.IstioValidations {
 
 	validations.MergeValidations(s.runGroupChecks())
 
-	weMap := serviceentries.GroupWorkloadEntriesByLabels(s.WorkloadEntries)
 	for _, se := range s.ServiceEntries {
-		validations.MergeValidations(s.runSingleChecks(se, weMap))
+		validations.MergeValidations(s.runSingleChecks(se))
 	}
 
 	return validations
@@ -39,12 +37,10 @@ func (s ServiceEntryChecker) runGroupChecks() models.IstioValidations {
 	}.Check()
 }
 
-func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry, workloadEntriesMap map[string][]string) models.IstioValidations {
+func (s ServiceEntryChecker) runSingleChecks(se *networking_v1.ServiceEntry) models.IstioValidations {
 	key, validations := EmptyValidValidation(se.Name, se.Namespace, kubernetes.ServiceEntries, s.Cluster)
 
-	enabledCheckers := []Checker{
-		serviceentries.HasMatchingWorkloadEntryAddress{ServiceEntry: se, WorkloadEntries: workloadEntriesMap},
-	}
+	enabledCheckers := []Checker{}
 	if !s.Namespaces.IsNamespaceAmbient(se.Namespace, s.Cluster) {
 		enabledCheckers = append(enabledCheckers, common.ExportToNamespaceChecker{ExportTo: se.Spec.ExportTo, Namespaces: s.Namespaces.GetNames()})
 	}

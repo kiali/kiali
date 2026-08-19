@@ -25,6 +25,42 @@ func TestSourceNamespaceExisting(t *testing.T) {
 	assert.Empty(validations)
 }
 
+func TestSourceNamespaceWildcardPrefix(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NamespaceMethodChecker{
+		AuthorizationPolicy: sourceNamespaceAuthPolicy([]string{"bookinfo*"}),
+		Namespaces:          []string{"bookinfo", "bookinfo2"},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestSourceNamespaceWildcardSuffix(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NamespaceMethodChecker{
+		AuthorizationPolicy: sourceNamespaceAuthPolicy([]string{"*info"}),
+		Namespaces:          []string{"bookinfo"},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
+func TestSourceNamespaceWildcardPresence(t *testing.T) {
+	assert := assert.New(t)
+
+	validations, valid := NamespaceMethodChecker{
+		AuthorizationPolicy: sourceNamespaceAuthPolicy([]string{"*"}),
+		Namespaces:          []string{"bookinfo"},
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(validations)
+}
+
 func TestSourceNamespaceNotFound(t *testing.T) {
 	assert := assert.New(t)
 

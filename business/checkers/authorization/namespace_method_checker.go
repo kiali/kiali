@@ -57,7 +57,7 @@ func (ap NamespaceMethodChecker) validateFromField(ruleIdx int, from []*api_secu
 		}
 
 		for i, n := range f.Source.Namespaces {
-			if !ap.Namespaces.Includes(n) {
+			if !ap.Namespaces.MatchesPattern(n) {
 				valid = true
 				path := fmt.Sprintf("spec/rules[%d]/from[%d]/source/namespaces[%d]", ruleIdx, fromIdx, i)
 				validation := models.Build("authorizationpolicy.source.namespacenotfound", path)

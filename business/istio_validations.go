@@ -616,7 +616,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.NewPeerAuthenticationChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace},
-		checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadEntries: istioConfigList.WorkloadEntries},
+		checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries},
 		checkers.NewSidecarChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
 		checkers.TelemetryChecker{Namespaces: namespaces, Telemetries: istioConfigList.Telemetries},
 		checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, ImportScope: importScope, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices},
@@ -777,7 +777,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 		referenceChecker = references.DestinationRuleReferences{Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.ServiceEntries:
-		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
+		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars}
 	case kubernetes.Sidecars:
