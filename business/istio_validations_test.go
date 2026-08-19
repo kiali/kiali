@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	apinetworkingv1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -494,6 +495,72 @@ func meshWithDefaultExportTo(conf *config.Config, exportTo string) *models.Mesh 
 		},
 	}
 	return m
+}
+
+func TestSetNonLocalMTLSConfigDefaultsAutoMtlsTrue(t *testing.T) {
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	svc := IstioValidationsService{}
+
+	t.Run("nil EnableAutoMtls defaults to true", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false}, "bookinfo")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: false}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{EnableAutoMtls: nil},
+				},
+				RootNamespace: "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.True(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
+
+	t.Run("unmanaged namespace defaults to true", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"unmanaged": false}, "unmanaged")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: false}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig:        models.NewMeshConfig(),
+				RootNamespace:     "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.True(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
+
+	t.Run("explicit false is preserved", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false}, "bookinfo")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: true}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						EnableAutoMtls: &wrapperspb.BoolValue{Value: false},
+					},
+				},
+				RootNamespace: "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.False(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
 }
 
 func mockValidationInfo(conf *config.Config, namespaces map[string]bool, namespace string) validationInfo {

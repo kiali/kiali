@@ -1292,19 +1292,19 @@ func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core
 // setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the control plane
 // that manages the namespace being validated (multi-primary support).
 func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
-	cluster := vInfo.clusterInfo.cluster
-	namespace := vInfo.nsInfo.namespace.Name
-	// Error is intentionally ignored: ControlPlaneForNamespace returns an error for
-	// unmanaged namespaces (no injection/ambient labels). This is a lookup miss, not a
-	// failure. Unmanaged namespaces can still have valid Istio config that needs validation;
-	// auto-mTLS simply stays at its zero value, which the validation pipeline handles.
-	cp, _ := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil {
+	if vInfo.nsInfo == nil || vInfo.nsInfo.mtlsDetails == nil {
 		return nil
 	}
-	if cp.MeshConfig != nil && cp.MeshConfig.EnableAutoMtls != nil {
-		vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = cp.MeshConfig.EnableAutoMtls.Value
+	cluster, namespace := "", ""
+	if vInfo.clusterInfo != nil {
+		cluster = vInfo.clusterInfo.cluster
 	}
+	if vInfo.nsInfo.namespace != nil {
+		namespace = vInfo.nsInfo.namespace.Name
+	}
+	// Istio defaults enableAutoMtls to true when unset. Reuse autoMTLSFromMesh so KIA0105
+	// matches the Namespaces TLS badge and does not false-positive on inherited mesh PERMISSIVE.
+	vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = autoMTLSFromMesh(vInfo.mesh, cluster, namespace)
 	return nil
 }
 
