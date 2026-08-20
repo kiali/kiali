@@ -7,7 +7,7 @@
 # to install the Kiali Operator, then creates a Kiali CR to install the Server, and
 # creates a OSSMConsole CR to install OSSMC.
 
-set -eu
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 cd ${SCRIPT_DIR} || exit

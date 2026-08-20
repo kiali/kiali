@@ -8,7 +8,7 @@
 # Works on both openshift and non-openshift environments.
 ##############################################################################
 
-set -eu
+set -euo pipefail
 HACK_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${HACK_SCRIPT_DIR}/functions.sh
 

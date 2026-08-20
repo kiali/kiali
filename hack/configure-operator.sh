@@ -7,7 +7,7 @@
 # See: https://kiali.io/docs/faq/installation/#operator-configuration
 ##############################################################################
 
-set -eu
+set -euo pipefail
 
 DEFAULT_ANSIBLE_DEBUG_LOGS=""
 DEFAULT_ANSIBLE_VERBOSITY_KIALI_KIALI_IO=""

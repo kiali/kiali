@@ -2,7 +2,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/env.sh "$@"
 
-set -e
+set -eo pipefail
 
 infomsg() {
   echo "[INFO] ${1}"

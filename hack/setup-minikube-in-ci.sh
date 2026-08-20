@@ -71,7 +71,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # abort on any error
-set -e
+set -eo pipefail
 
 # Find the hack script to be used to install istio
 ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/istio/install-istio-via-sail.sh"

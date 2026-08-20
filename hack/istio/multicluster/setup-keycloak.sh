@@ -40,7 +40,7 @@ if [ "${DELETE_KEYCLOAK:-}" == "true" ]; then
   exit 0
 fi
 
-set -e
+set -eo pipefail
 
 CLUSTER1_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER1_CONTEXT}" -n openshift-authentication oauth-openshift -o jsonpath='{.spec.host}')
 CLUSTER2_OPENSHIFT_OAUTH_ROUTE=https://$(kubectl get routes --context "${CLUSTER2_CONTEXT}" -n openshift-authentication oauth-openshift -o jsonpath='{.spec.host}')

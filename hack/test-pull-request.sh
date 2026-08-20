@@ -54,7 +54,7 @@
 #
 ###############################################
 
-set -eu
+set -euo pipefail
 
 helpmsg() {
   cat <<HELP

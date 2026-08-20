@@ -21,7 +21,7 @@
 # https://github.com/kubernetes/minikube/issues/7923#issuecomment-737058797
 # for more details.
 
-set -e
+set -eo pipefail
 
 DATA_DIR="$(mktemp -d)"
 TEMPLATE_DIR="$(dirname "$0")/workloadentry"

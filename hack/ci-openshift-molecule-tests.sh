@@ -208,7 +208,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # abort on any error
-set -e
+set -eo pipefail
 
 # set up some of our defaults
 KUBEADMIN_USER="${KUBEADMIN_USER:-kubeadmin}"

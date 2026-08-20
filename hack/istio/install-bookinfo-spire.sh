@@ -15,7 +15,7 @@
 #
 ##############################################################################
 
-set -e
+set -eo pipefail
 
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 NAMESPACE="${NAMESPACE:-bookinfo}"

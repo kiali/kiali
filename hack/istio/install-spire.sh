@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-set -e
+set -eo pipefail
 
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 TRUST_DOMAIN="${TRUST_DOMAIN:-example.org}"

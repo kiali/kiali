@@ -215,7 +215,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # abort on any error
-set -e
+set -eo pipefail
 
 # set up some of our defaults
 CLIENT_EXE=${CLIENT_EXE:-kubectl}

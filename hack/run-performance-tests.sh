@@ -89,7 +89,7 @@ TEST_NAMESPACES=$TEST_NAMESPACES
 === SETTINGS ===
 EOM
 
-set -e
+set -eo pipefail
 
 # Determine where this script is and make it the cwd
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"

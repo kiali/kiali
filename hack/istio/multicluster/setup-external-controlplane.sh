@@ -2,7 +2,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/env.sh "$@"
 
-set -e
+set -eo pipefail
 
 CTX_EXTERNAL_CLUSTER="kind-controlplane"
 CTX_REMOTE_CLUSTER="kind-dataplane"

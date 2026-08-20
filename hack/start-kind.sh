@@ -115,7 +115,7 @@ if [ "${DORP}" != "docker" ]; then
 fi
 
 # abort on any error
-set -e
+set -eo pipefail
 
 # Find the kind executable
 KIND_EXE=`which kind`

@@ -2,7 +2,7 @@
 
 # Installs Ory Hydra for KinD clusters
 
-set -e
+set -eo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
