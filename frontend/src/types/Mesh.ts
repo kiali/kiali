@@ -196,11 +196,13 @@ export interface ConfigSource {
   configMap: any;
   name?: string;
   namespace?: string;
+  path?: string;
 }
 
 export interface ControlPlaneConfig {
   certificates?: CertsInfo[];
   effectiveConfig?: ConfigSource;
+  fileConfig?: ConfigSource;
   sharedConfig?: ConfigSource;
   standardConfig?: ConfigSource;
 }

@@ -676,11 +676,10 @@ Then('the mesh tab count matches the number of meshes with control planes', () =
       const meshNames = new Set(
         controlPlaneNodes.map(n => {
           const data = n.getData() as MeshNodeData;
-          return (
-            data.infraData?.config?.standardConfig?.configMap?.mesh?.defaultConfig?.meshId ||
-            data.infraData?.config?.standardConfig?.configMap?.mesh?.trustDomain ||
-            'Istio mesh'
-          );
+          const meshConfig =
+            data.infraData?.config?.standardConfig?.configMap?.mesh ||
+            data.infraData?.config?.effectiveConfig?.configMap?.mesh;
+          return meshConfig?.defaultConfig?.meshId || meshConfig?.trustDomain || 'Istio mesh';
         })
       );
 
