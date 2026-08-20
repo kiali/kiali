@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ##############################################################################
 # config-mesh-networks.sh
@@ -62,8 +63,7 @@ get_gateway_node_port() {
 
 echo "==== OBTAIN HOST IP AND NODE PORT FOR CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 switch_cluster "${CLUSTER1_CONTEXT}" "${CLUSTER1_USER}" "${CLUSTER1_PASS}"
-_GATEWAY_IP1="$(get_gateway_load_balancer_ip)"
-if [ "$?" == "0" ]; then
+if _GATEWAY_IP1="$(get_gateway_load_balancer_ip)"; then
   _GATEWAY_PORT1="$(get_gateway_load_balancer_port)"
 else
   _GATEWAY_IP1="$(get_gateway_node_ip)"
@@ -72,8 +72,7 @@ fi
 
 echo "==== OBTAIN HOST IP AND NODE PORT FOR CLUSTER #2 [${CLUSTER2_NAME}] - ${CLUSTER2_CONTEXT}"
 switch_cluster "${CLUSTER2_CONTEXT}" "${CLUSTER2_USER}" "${CLUSTER2_PASS}"
-_GATEWAY_IP2="$(get_gateway_load_balancer_ip)"
-if [ "$?" == "0" ]; then
+if _GATEWAY_IP2="$(get_gateway_load_balancer_ip)"; then
   _GATEWAY_PORT2="$(get_gateway_load_balancer_port)"
 else
   _GATEWAY_IP2="$(get_gateway_node_ip)"

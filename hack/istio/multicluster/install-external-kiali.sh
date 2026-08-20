@@ -1,5 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2155
+set -e
 
 ##############################################################################
 # install-external-kiali.sh
@@ -59,15 +60,13 @@ create_crossnetwork_gateway() {
     profile_flag="--set profile=openshift"
   fi
 
-  printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -
-  if [ "$?" != "0" ]; then
+  if ! printf "%s" "${gateway_yaml}" | "${ISTIOCTL}" install ${profile_flag} ${image_hub_arg} ${image_tag_arg:-} -y -f -; then
     echo "Failed to install crossnetwork gateway on cluster [${clustername}]"
     exit 1
   fi
 
   # expose services
-  ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"
-  if [ "$?" != "0" ]; then
+  if ! ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${EXPOSE_SERVICES_YAML}"; then
     echo "Failed to expose services on cluster [${clustername}]"
     exit 1
   fi
@@ -89,8 +88,7 @@ create_remote_secret() {
     fi
     echo "Choosing to use: [${secretname}]"
   fi
-  REMOTE_SECRET="$("${ISTIOCTL}" create-remote-secret --name "${clustername}" ${secretname})"
-  if [ "$?" != "0" ]; then
+  if ! REMOTE_SECRET="$("${ISTIOCTL}" create-remote-secret --name "${clustername}" ${secretname})"; then
     echo "Failed to generate remote secret for cluster [${clustername}]"
     exit 1
   fi

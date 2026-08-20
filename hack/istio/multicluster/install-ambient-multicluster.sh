@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Helper function to install ambient multicluster for a single cluster
 install_ambient_on_cluster() {
@@ -35,15 +36,13 @@ install_ambient_on_cluster() {
 
     # Install Istio using the Sail operator script with ambient profile and multicluster configuration
     echo "Installing Istio with ambient profile and multicluster configuration..."
-    "${ISTIO_INSTALL_SCRIPT}" \
+    if ! "${ISTIO_INSTALL_SCRIPT}" \
       --config-profile ambient \
       --mesh-id "${MESH_ID}" \
       --cluster-name "${cluster_name}" \
       --network "${network}" \
       --addons "prometheus grafana jaeger" \
-      --wait true
-
-    if [ "$?" != "0" ]; then
+      --wait true; then
       echo "Failed to install Istio with ambient profile using Sail operator"
       exit 1
     fi
@@ -62,7 +61,7 @@ install_ambient_on_cluster() {
     # Install Istio using the istioctl install script with ambient profile and multicluster configuration.
     # NOTE: We rely on switch_cluster() to ensure kubectl/oc is pointed at the right cluster.
     echo "Installing Istio with ambient profile and multicluster configuration..."
-    "${ISTIO_INSTALL_SCRIPT}" \
+    if ! "${ISTIO_INSTALL_SCRIPT}" \
       --client-exe kubectl \
       --config-profile ambient \
       --mesh-id "${MESH_ID}" \
@@ -70,9 +69,7 @@ install_ambient_on_cluster() {
       --network "${network}" \
       --addons "prometheus grafana jaeger" \
       --set "values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK=true" \
-      --set "values.pilot.env.AMBIENT_ENABLE_BAGGAGE=true"
-
-    if [ "$?" != "0" ]; then
+      --set "values.pilot.env.AMBIENT_ENABLE_BAGGAGE=true"; then
       echo "Failed to install Istio with ambient profile using istioctl"
       exit 1
     fi
