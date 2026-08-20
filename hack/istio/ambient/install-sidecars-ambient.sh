@@ -145,18 +145,24 @@ wait_for_sidecar_injector() {
 # Confirm every running pod in the namespace has an istio-proxy container.
 # Pods created before the injector was ready stay Ready without a sidecar, so
 # restart deployments once if injection was missed.
+#
+# jsonpath `{.spec.containers[*].name}` concatenates names with no separator
+# (`curl-clientistio-proxy`), so join with spaces via `{range}`. Skip
+# Terminating pods — rollout status can return while old replicas still exist.
 ensure_sidecar_injected() {
   local ns="$1"
   local attempt
   for attempt in 1 2; do
     local missing=""
-    local pod containers
-    while read -r pod containers; do
+    local pod deleting phase names
+    while IFS='|' read -r pod deleting phase names; do
       [ -z "${pod}" ] && continue
-      if [[ " ${containers} " != *" istio-proxy "* ]]; then
+      [ "${phase}" = "Running" ] || continue
+      [ -z "${deleting}" ] || continue
+      if [[ " ${names} " != *" istio-proxy "* ]]; then
         missing="${missing} ${pod}"
       fi
-    done < <(${CLIENT_EXE} get pods -n "${ns}" --field-selector=status.phase!=Succeeded -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[*].name}{"\n"}{end}')
+    done < <(${CLIENT_EXE} get pods -n "${ns}" -o jsonpath='{range .items[*]}{.metadata.name}{"|"}{.metadata.deletionTimestamp}{"|"}{.status.phase}{"|"}{range .spec.initContainers[*]}{.name}{" "}{end}{range .spec.containers[*]}{.name}{" "}{end}{"\n"}{end}')
 
     if [ -z "${missing// }" ]; then
       echo "All pods in ${ns} have an istio-proxy sidecar"
