@@ -72,11 +72,11 @@ export const summaryTitle = kialiStyle({
 });
 
 export const getMeshId = (nodeData: MeshNodeData): string => {
-  return (
-    nodeData.infraData?.config?.standardConfig?.configMap?.mesh?.defaultConfig?.meshId ||
-    nodeData.infraData?.config?.standardConfig?.configMap?.mesh?.trustDomain ||
-    t('Istio mesh')
-  );
+  const meshConfig =
+    nodeData.infraData?.config?.standardConfig?.configMap?.mesh ||
+    nodeData.infraData?.config?.effectiveConfig?.configMap?.mesh;
+
+  return meshConfig?.defaultConfig?.meshId || meshConfig?.trustDomain || t('Istio mesh');
 };
 
 export const targetPanelHR = <hr className={hrStyle} />;

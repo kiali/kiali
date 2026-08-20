@@ -275,36 +275,49 @@ func TestConvertToDiscoverySelectors(t *testing.T) {
 
 func TestParseArgsInto(t *testing.T) {
 	tests := map[string]struct {
-		args            []string
-		expectedMonPort int
+		args             []string
+		expectedMeshPath string
+		expectedMonPort  int
 	}{
 		"Valid monitoring addr with custom port (space-separated)": {
-			args:            []string{"pilot-discovery", "--monitoringAddr", ":8080", "discovery"},
-			expectedMonPort: 8080,
+			args:             []string{"pilot-discovery", "--monitoringAddr", ":8080", "discovery"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  8080,
 		},
 		"Valid monitoring addr with custom port (equals format)": {
-			args:            []string{"pilot-discovery", "--monitoringAddr=:9090", "discovery"},
-			expectedMonPort: 9090,
+			args:             []string{"pilot-discovery", "--monitoringAddr=:9090", "discovery"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  9090,
 		},
 		"Valid monitoring addr with host:port format": {
-			args:            []string{"pilot-discovery", "--monitoringAddr=localhost:7777", "discovery"},
-			expectedMonPort: 7777,
+			args:             []string{"pilot-discovery", "--monitoringAddr=localhost:7777", "discovery"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  7777,
 		},
 		"Invalid format - missing colon": {
-			args:            []string{"pilot-discovery", "--monitoringAddr=8080", "discovery"},
-			expectedMonPort: defaultMonitoringPort,
+			args:             []string{"pilot-discovery", "--monitoringAddr=8080", "discovery"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  defaultMonitoringPort,
 		},
 		"No monitoring addr argument": {
-			args:            []string{"pilot-discovery", "discovery"},
-			expectedMonPort: defaultMonitoringPort,
+			args:             []string{"pilot-discovery", "discovery"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  defaultMonitoringPort,
 		},
 		"Empty args": {
-			args:            []string{},
-			expectedMonPort: defaultMonitoringPort,
+			args:             []string{},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  defaultMonitoringPort,
 		},
 		"Unknown flags should not break parsing": {
-			args:            []string{"pilot-discovery", "--unknown-flag=value", "--monitoringAddr=:3333", "--another-unknown", "test"},
-			expectedMonPort: 3333,
+			args:             []string{"pilot-discovery", "--unknown-flag=value", "--monitoringAddr=:3333", "--another-unknown", "test"},
+			expectedMeshPath: defaultMeshConfigPath,
+			expectedMonPort:  3333,
+		},
+		"Custom mesh config path": {
+			args:             []string{"--meshConfig=./custom/mesh.yaml"},
+			expectedMeshPath: "/custom/mesh.yaml",
+			expectedMonPort:  defaultMonitoringPort,
 		},
 	}
 
@@ -317,7 +330,122 @@ func TestParseArgsInto(t *testing.T) {
 
 			parseArgsInto(tt.args, controlPlane)
 
+			assert.Equal(tt.expectedMeshPath, controlPlane.MeshConfigFilePath)
 			assert.Equal(tt.expectedMonPort, controlPlane.MonitoringPort, "Expected MonitoringPort to be %d, got %d for args %v", tt.expectedMonPort, controlPlane.MonitoringPort, tt.args)
+		})
+	}
+}
+
+func TestFindMeshConfigFile(t *testing.T) {
+	tests := map[string]struct {
+		container corev1.Container
+		expected  *models.MeshConfigFileReference
+		path      string
+		volumes   []corev1.Volume
+	}{
+		"directory mount": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{{MountPath: "/etc/istio/config", Name: "config"}}},
+			expected: &models.MeshConfigFileReference{
+				ConfigMapKey:  "mesh",
+				ConfigMapName: "istio-local",
+				Path:          defaultMeshConfigPath,
+			},
+			path: defaultMeshConfigPath,
+			volumes: []corev1.Volume{{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "istio-local"},
+				}},
+			}},
+		},
+		"mapped key and custom path": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{{MountPath: "/var/lib/istio", Name: "config"}}},
+			expected: &models.MeshConfigFileReference{
+				ConfigMapKey:  "mesh-config.yaml",
+				ConfigMapName: "custom-config",
+				Path:          "/var/lib/istio/config/mesh.yaml",
+			},
+			path: "/var/lib/istio/config/mesh.yaml",
+			volumes: []corev1.Volume{{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+					Items:                []corev1.KeyToPath{{Key: "mesh-config.yaml", Path: "config/mesh.yaml"}},
+					LocalObjectReference: corev1.LocalObjectReference{Name: "custom-config"},
+				}},
+			}},
+		},
+		"subPath mount": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{{
+				MountPath: "/etc/istio/config/mesh",
+				Name:      "config",
+				SubPath:   "mesh.yaml",
+			}}},
+			expected: &models.MeshConfigFileReference{
+				ConfigMapKey:  "mesh",
+				ConfigMapName: "istio-local",
+				Path:          defaultMeshConfigPath,
+			},
+			path: defaultMeshConfigPath,
+			volumes: []corev1.Volume{{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+					Items:                []corev1.KeyToPath{{Key: "mesh", Path: "mesh.yaml"}},
+					LocalObjectReference: corev1.LocalObjectReference{Name: "istio-local"},
+				}},
+			}},
+		},
+		"unrelated mount": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{{MountPath: "/var/run/secrets", Name: "config"}}},
+			path:      defaultMeshConfigPath,
+			volumes: []corev1.Volume{{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: "unrelated"},
+				}},
+			}},
+		},
+		"unmatched projected item": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{{MountPath: "/etc/istio/config", Name: "config"}}},
+			path:      defaultMeshConfigPath,
+			volumes: []corev1.Volume{{
+				Name: "config",
+				VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+					Items:                []corev1.KeyToPath{{Key: "other", Path: "other"}},
+					LocalObjectReference: corev1.LocalObjectReference{Name: "istio-local"},
+				}},
+			}},
+		},
+		"most specific mount wins": {
+			container: corev1.Container{VolumeMounts: []corev1.VolumeMount{
+				{MountPath: "/", Name: "root-config"},
+				{MountPath: "/etc/istio/config", Name: "istio-config"},
+			}},
+			expected: &models.MeshConfigFileReference{
+				ConfigMapKey:  "mesh",
+				ConfigMapName: "istio-local",
+				Path:          defaultMeshConfigPath,
+			},
+			path: defaultMeshConfigPath,
+			volumes: []corev1.Volume{
+				{
+					Name: "root-config",
+					VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: "root"},
+					}},
+				},
+				{
+					Name: "istio-config",
+					VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: "istio-local"},
+					}},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, findMeshConfigFile(tt.container, tt.volumes, tt.path))
 		})
 	}
 }

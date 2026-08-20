@@ -1,5 +1,11 @@
+import { render } from '@testing-library/react';
 import { MeshInfraType, MeshNodeType, ControlPlane, MeshNodeWrapper } from 'types/Mesh';
-import { isRemoteCluster } from '../TargetPanelControlPlane';
+import {
+  configSourceDescription,
+  getControlPlaneConfigTabs,
+  hasControlPlaneConfigTabs,
+  isRemoteCluster
+} from '../TargetPanelControlPlane';
 
 rstest.mock('@patternfly/react-topology', () => ({
   Controller: rstest.fn(),
@@ -31,7 +37,7 @@ const makeControlPlane = (overrides: Partial<ControlPlane> = {}): ControlPlane =
     managedNamespaces: [{ name: 'bookinfo' }, { name: 'default' }],
     thresholds: {},
     ...overrides
-  } as ControlPlane);
+  }) as ControlPlane;
 
 const makeIstiodNode = (cluster: string, namespace: string, cp?: ControlPlane): MeshNodeWrapper => ({
   data: {
@@ -60,6 +66,48 @@ describe('isRemoteCluster', () => {
 
   it('returns false when controlPlaneClusters value is empty string', () => {
     expect(isRemoteCluster({ 'topology.istio.io/controlPlaneClusters': '' })).toBe(false);
+  });
+});
+
+describe('control plane configuration tabs', () => {
+  const fileConfig = {
+    cluster: 'external',
+    configMap: { mesh: { trustDomain: 'external.local' } },
+    name: 'istio',
+    namespace: 'external-istiod',
+    path: '/etc/istio/config/mesh'
+  };
+
+  const controlPlane = makeControlPlane({
+    config: {
+      effectiveConfig: {
+        configMap: { mesh: { enableTracing: true, trustDomain: 'external.local' } }
+      },
+      fileConfig,
+      sharedConfig: {
+        cluster: 'remote',
+        configMap: { mesh: { enableTracing: true, trustDomain: 'remote.local' } },
+        name: 'istio',
+        namespace: 'external-istiod'
+      }
+    }
+  });
+
+  it('shows separate effective, file, and shared configuration tabs', () => {
+    expect(getControlPlaneConfigTabs(controlPlane).map(tab => tab.title)).toEqual(['effective', 'file', 'shared']);
+    expect(hasControlPlaneConfigTabs(controlPlane)).toBe(true);
+  });
+
+  it('shows the mounted file and backing ConfigMap provenance', () => {
+    const { container, getByText } = render(<>{configSourceDescription(fileConfig)}</>);
+
+    expect(getByText('File')).toBeTruthy();
+    expect(getByText('Path:')).toBeTruthy();
+    expect(getByText('ConfigMap name:')).toBeTruthy();
+    expect(container.textContent).toContain('/etc/istio/config/mesh');
+    expect(container.textContent).toContain('istio');
+    expect(container.textContent).toContain('external-istiod');
+    expect(container.textContent).toContain('external');
   });
 });
 
