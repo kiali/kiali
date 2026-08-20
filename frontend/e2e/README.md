@@ -1,17 +1,37 @@
-# Playwright e2e
+# Playwright e2e — Migration Guide & Tracking
 
-Living guide for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)).
-Supplements the [migration plan](../../migration-plan.md) with conventions, architecture, gotchas, and lessons from Phase 0–2 (PRs [#10174](https://github.com/kiali/kiali/pull/10174), [#10195](https://github.com/kiali/kiali/pull/10195), [#10217](https://github.com/kiali/kiali/pull/10217), [#10220](https://github.com/kiali/kiali/pull/10220)).
+Single source of truth for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)).
+Covers conventions, architecture, gotchas, tracking checklists, and lessons from Phase 0–2 (PRs [#10174](https://github.com/kiali/kiali/pull/10174), [#10195](https://github.com/kiali/kiali/pull/10195), [#10217](https://github.com/kiali/kiali/pull/10217), [#10220](https://github.com/kiali/kiali/pull/10220)).
+
+---
 
 ## Quick reference
 
 - Native Playwright Test (not `playwright-bdd`)
 - Suite tags: `e2e/utils/suite-tags.ts` (`smokeAndCoreCaching`, `core1`, …) — use Playwright's native `tag` option, not tags in titles
 - `testIdAttribute: 'data-test'` in `playwright.config.ts`
+- Timeouts: `actionTimeout: 40_000`, `expect.timeout: 40_000`, `test timeout: 60_000`, `navigationTimeout: 90_000`
+- CI: `retries: 1`, `workers: 2` (avoids OOM on Jenkins shared runners)
 - Auth: `storageState` from `e2e/global-setup/auth.setup.ts`; strategy via `getAuthStrategy(page)` (`/api/auth/info`)
 - Page objects extend `BasePage` (`getBySel`, `waitForLoad`) — no custom click/retry helpers
+- List pages extend `ListPage` (shared filters, columns) — `AppsPage`, `ServicesPage`, `WorkloadsPage`
 - OSSMC: `page.route('**/api/...')`, `linkSelector()` for kiosk `<button data-href>`
 - List pages with toggles: `gotoListPage()` rewrites `/api/config` `showIncludeToggles`
+- Demo app setup: `ensureDemoApp('bookinfo')` etc. in `demoApps.ts` — mirrors Cypress `@bookinfo-app` hooks
+
+---
+
+## Decisions & tracking
+
+- [x] Decision documented: **Native Playwright Test** (not `playwright-bdd`) — self-contained `.spec.ts` + Page Object Models; no third-party Gherkin dependency. (PR #10174)
+- [x] React fiber policy documented: prefer `data-test` / DOM assertions; no new `page.evaluate()` fiber walking without a TODO. `data-ready` DOM attribute demonstrated on MiniGraphCard. (PR #10217, PR #10220)
+- [ ] CI strategy documented: **coexistence on `master` first**; LTS/supported branches after master cutover
+- [ ] Private pipelines (Jenkins) included in cutover acceptance — not GitHub Actions only
+- [ ] Epic broken into sub-issues (Phase 0 spike, migration skill, smoke, core-1, core-2, specialized, OSSMC, Jenkins, Cypress removal)
+- [x] Suite tags: use Playwright's native `tag` option via centralized exports in `e2e/utils/suite-tags.ts`, not title-only strings. Non-project conditions (e.g. `@prometheus-disabled`) use the `annotation` API. (PR #10174 review, PR #10195, PR #10217)
+- [x] Test-migration PR scope: only `data-test` attributes and `aria-label` additions in source code. No ESLint fixes, refactors, or production behavioral changes — those go to dedicated PRs targeting `master`. (PR #10217 — StatefulFilters revert)
+- [x] Auth setup failure handling: write empty `storageState` then fail via `expect().toContain()`, not `throw`. Hard throws produce zero JUnit output; `expect` produces 1 FAILED + 18 SKIPPED. (PR #10217)
+- [x] `playwright:run:last-failed` removed — `--last-failed` overwrites `blob-report/` and produces misleading Jenkins failure counts. CI reports reflect the full first pass only. (PR #10195)
 
 ---
 
@@ -220,34 +240,103 @@ frontend/e2e/
 ├── fixtures/kialiFixtures.ts     # Playwright fixtures extending base test
 ├── global-setup/auth.setup.ts    # Auth setup (anonymous / openshift)
 ├── pages/                        # Page Object Models
-│   ├── BasePage.ts               # getBySel, waitForLoad
-│   ├── OverviewPage.ts           # Help menu, about modal, alerts
-│   ├── ServicesPage.ts           # List toggles, column management
+│   ├── BasePage.ts               # getBySel, waitForLoad, expectVisible
+│   ├── ListPage.ts               # Shared list page (filters, columns, toggles)
+│   ├── AppDetailsPage.ts         # App detail view, mini-graph readiness
+│   ├── AppsPage.ts               # Apps list, health tooltips (extends ListPage)
 │   ├── GraphPage.ts              # Graph display, toolbar, side panel
 │   ├── IstioConfigPage.ts        # Filters (type, validation), list
-│   ├── SidebarPage.ts            # Navigation toggle
 │   ├── MeshPage.ts               # Mesh graph API assertions
-│   ├── ListPage.ts               # Shared list page (filters, columns)
-│   └── AppsPage.ts               # Apps list, health tooltips
+│   ├── OverviewPage.ts           # Help menu, about modal, alerts
+│   ├── ServicesPage.ts           # Service list toggles (extends ListPage)
+│   ├── SidebarPage.ts            # Navigation toggle
+│   └── WorkloadsPage.ts          # Workloads list (extends ListPage)
 ├── tests/                        # Spec files organized by feature
-│   ├── kiali/                    # About, alert, cookie, help, login, logout, sidebar
-│   ├── graph/                    # Display, toolbar, find/hide, context menu, replay
+│   ├── apps/                     # Apps list, health, app details graph
+│   ├── column_management/        # Column management (shared across list pages)
+│   ├── graph/                    # Display, toolbar, legend, find/hide, context menu, side panel, replay
 │   ├── istio_config/             # Type filters, validation filters, list
-│   ├── services/                 # Service toggles
+│   ├── kiali/                    # About, alert, cookie, help, login, logout, sidebar
 │   ├── mesh/                     # Mesh connectivity
-│   └── apps/                     # Apps list, column management, health
+│   └── services/                 # Service toggles
 └── utils/                        # Shared utilities
-    ├── suite-tags.ts             # Centralized tag exports
-    ├── auth.ts                   # AUTH_FILE path
-    ├── auth-strategy.ts          # getAuthStrategy(page)
-    ├── openshift-auth.ts         # OpenShift login helpers
-    ├── namespace.ts              # Namespace dropdown selection
-    ├── navigation.ts             # gotoConsolePage, gotoListPage
-    ├── transition.ts             # waitForLoadingComplete
-    ├── table.ts                  # Column assertions
+    ├── suite-tags.ts             # Centralized tag exports (smokeAndCoreCaching, core1, smokeOnly, etc.)
+    ├── auth.ts                   # AUTH_FILE path constant
+    ├── auth-strategy.ts          # getAuthStrategy(page) — /api/auth/info
+    ├── openshift-auth.ts         # OpenShift login helpers (playwrightCredentials, loginOpenShift)
+    ├── ambientValidation.ts      # Ambient L7 validation codes (KIA0109, KIA0110, …)
+    ├── cluster.ts                # getClusterForSingleCluster (via /api/config)
+    ├── demoApps.ts               # ensureDemoApp — install/verify bookinfo, error-rates, sleep, loggers
+    ├── graphSelect.ts            # Graph topology node/edge selectors (select, selectAnd, selectOr)
+    ├── graphTopology.ts          # React fiber graph reads + data-ready (expectMiniGraphReady)
+    ├── health.ts                 # waitForAppHealthStatus (API polling)
+    ├── inferenceApi.ts           # Inference API CRD helpers (install, apply InferencePool)
+    ├── kubectl.ts                # kubectl shell helpers (namespaceExists, scale)
     ├── linkSelector.ts           # OSSMC-safe link matching
-    └── graphTopology.ts          # Graph fiber reads + data-ready
+    ├── namespace.ts              # Namespace dropdown selection
+    ├── navigation.ts             # gotoConsolePage, gotoListPage (config rewrite)
+    ├── table.ts                  # Column assertions
+    └── transition.ts             # waitForLoadingComplete
 ```
+
+### Suite tags → projects → CI mapping
+
+Projects in `playwright.config.ts` (note the negative lookaheads/lookbehinds to disambiguate overlapping tags):
+
+```typescript
+projects: [
+  { name: 'setup',                    testMatch: /auth\.setup\.ts/ },  // auth setup — no tag
+  { name: 'smoke',                    grep: /@smoke/ },
+  { name: 'core-1',                   grep: /@core-1/ },
+  { name: 'core-2',                   grep: /@core-2/ },
+  { name: 'core-caching',             grep: /@core-caching/ },
+  { name: 'crd-validation',           grep: /@crd-validation/ },
+  { name: 'perses',                   grep: /@perses/ },
+  { name: 'ambient',                  grep: /@ambient(?!-)/ },          // excludes @ambient-multi-primary
+  { name: 'waypoint',                 grep: /@waypoint(?!-)/ },         // excludes @waypoint-tracing, @waypoint-multicluster
+  { name: 'waypoint-tracing',         grep: /@waypoint-tracing/ },
+  { name: 'ambient-multi-primary',    grep: /@ambient-multi-primary/ },
+  { name: 'waypoint-multicluster',    grep: /@waypoint-multicluster/ },
+  { name: 'multi-cluster',            grep: /@multi-cluster/ },
+  { name: 'multi-primary',            grep: /@multi-primary/ },
+  { name: 'multi-mesh',              grep: /@multi-mesh/ },
+  { name: 'external-kiali',           grep: /@external-kiali/ },
+  { name: 'tracing',                  grep: /(?<!waypoint-)@tracing/ }, // excludes @waypoint-tracing
+  { name: 'offline',                  grep: /@offline/ },
+  { name: 'ai-chatbot',              grep: /@ai-chatbot/ },
+]
+```
+
+Available tag exports in `e2e/utils/suite-tags.ts`:
+
+| Export | Tags | Use for |
+|---|---|---|
+| `smokeAndCoreCaching` | `@smoke`, `@core-caching` | Tests in both smoke and core-caching suites |
+| `smokeOnly` | `@smoke` | Smoke-only tests |
+| `coreCachingOnly` | `@core-caching` | Core-caching-only tests |
+| `core1` | `@core-1` | Core-1 suite |
+| `smokeAndPrometheusDisabled` | `@smoke`, `@prometheus-disabled` | Smoke tests that also annotate Prometheus-disabled |
+
+Add new exports here as suites are ported (e.g. `core2`, `ambient`, `multiCluster`).
+
+Mapping to `hack/run-integration-tests.sh --test-suite` values:
+
+| `--test-suite` | Playwright project(s) / tags |
+|---|---|
+| `local` | `smoke` (`@smoke`) |
+| `frontend-core-1` | `core-1` (`@core-1`) |
+| `frontend-core-2` | `core-2` (`@core-2`) |
+| `frontend-core-caching` | `core-caching` (`@core-caching`) |
+| `frontend-core-optional` | `crd-validation` + `perses` (`@crd-validation`, `@perses`) |
+| `frontend` | `crd-validation` + `core-1` + `core-2` + `perses` + `core-caching` |
+| `frontend-ambient` | `ambient` + `waypoint` + `waypoint-tracing` |
+| `frontend-primary-remote` | `multi-cluster` (`@multi-cluster and not @multi-primary`) |
+| `frontend-multi-primary` | `multi-primary` (and when ambient: `ambient-multi-primary` + `waypoint-multicluster`) |
+| `frontend-multi-mesh` | `multi-mesh` (`@multi-mesh`) |
+| `frontend-external-kiali` | `external-kiali` (`@external-kiali`) |
+| `frontend-tempo` | `tracing` (`@tracing`) |
+| `offline` | `offline` (`@offline`) |
+| `ai-chatbot` | `ai-chatbot` (`@ai-chatbot`) |
 
 ### StatefulFilters data-test attributes
 
@@ -265,6 +354,72 @@ frontend/e2e/
 ### MiniGraphCard data-ready attribute
 
 `MiniGraphCard.tsx` exposes `data-ready={!isLoading && isReady}` on the root `<Card>` element. Tests check readiness with `page.locator('#MiniGraphCard[data-ready="true"]')` instead of polling React fiber state.
+
+---
+
+## Phase tracking
+
+### Phase 0 — Infrastructure
+
+- [x] `@playwright/test` ≥1.48 installed in `frontend/` (pin documented, e.g. v1.61.x)
+- [x] `playwright.config.ts` with projects matching CI suites via `grep` tags (see [Suite tags → projects → CI mapping](#suite-tags--projects--ci-mapping))
+- [x] `BasePage` with `getBySel()`, `waitForLoad` — **no** `robustClick` / `retryOnError` (PR #10174)
+- [x] `auth.setup.ts` / `storageState` handles: `anonymous`, `openshift`. Unimplemented strategies (`token`, `openid`) fail gracefully via `expect().toContain()`. (PR #10174, #10217)
+- [ ] `cleanup` fixture established (replaces `@clean-istio-namespace-resources-after`-style hooks)
+- [x] Shared utils ported: navigation, table, `linkSelector`, transition, namespace, suite-tags (PR #10174, #10195, #10217)
+- [x] JUnit reporter configured (built-in Playwright reporter — no Cypress multi-reporter stack) (PR #10174)
+- [x] `yarn playwright:run:smoke` passes headless (PR #10174)
+- [ ] Playwright MCP (`@playwright/mcp`) produces a valid `browser_snapshot` of the Kiali UI
+- [ ] Kiali-specific migration skill added (adapted from [openshift/console#16315](https://github.com/openshift/console/pull/16315)): auth strategies, graph WebSocket mocking, OSSMC proxy patterns, vendored-code boundary
+- [ ] At least one smoke path verified OSSMC-safe: `linkSelector()` + `**/api/**` route patterns
+
+### Migration completeness
+
+- [ ] All existing Cypress Gherkin scenarios migrated to Playwright `.spec.ts` + Page Object Models under `frontend/e2e/`
+- [ ] `page.routeWebSocket()` used alongside `page.route()` wherever graph/watch APIs are mocked
+- [ ] React fiber usages (`getReact` / `waitForReact` / `getCurrentState` / `getProps`) replaced with `data-test` or DOM assertions (no residual Cypress React helpers). Graph topology fiber reads remain with TODO (PR #10220).
+- [x] `@smoke` suite passes (~32 scenarios, PR #10174)
+- [x] `@core-1` suite passes (145 tests, PR #10195 + #10220)
+- [ ] `@core-2` suite passes
+- [ ] `@core-caching` suite passes
+- [ ] `@crd-validation` suite passes
+- [ ] `@perses` suite passes
+- [ ] `@ambient` suite passes
+- [ ] `@waypoint` suite passes
+- [ ] `@waypoint-tracing` suite passes
+- [ ] `@ambient-multi-primary` suite passes
+- [ ] `@waypoint-multicluster` suite passes
+- [ ] `@multi-cluster` suite passes
+- [ ] `@multi-primary` suite passes
+- [ ] `@multi-mesh` suite passes
+- [ ] `@external-kiali` suite passes
+- [ ] `@tracing` suite passes
+- [ ] `@offline` suite passes
+- [ ] `@ai-chatbot` suite passes
+
+### CI / pipelines
+
+- [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
+- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke` and `playwright-core-1` suites (PR #10174, #10195, #10220)
+- [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
+- [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure) (PR #10174, #10220)
+- [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress removal
+- [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is removed
+
+### OSSMC
+
+- [ ] `hack/copy-frontend-src-to-ossmc.sh` updated to sync Playwright e2e (and stop syncing Cypress once cut over)
+- [ ] OSSMC-specific tests migrated (`sidebar_navigation`, any non-vendored support: visit/request rewriting, Console login, guided tour)
+- [ ] OSSMC plugin mode verified: Console proxy API paths + `linkSelector` (kiosk `<button data-href>`) work under Playwright
+- [ ] OSSMC Cypress test image / Dockerfile updated or replaced for Playwright
+
+### Cutover & docs
+
+- [ ] Cypress and all Cypress-specific `devDependencies` removed from `frontend/package.json` (and OSSMC `plugin/package.json`)
+- [ ] Cypress configs, support, feature files, and Cucumber preprocessor config removed
+- [ ] `.mcp.json` / `AGENTS.md`: Playwright MCP debugging guidance replaces `CYPRESS_REMOTE_DEBUGGING_PORT=9222` Cypress CDP section
+- [ ] Zero Cypress e2e references remaining in Kiali and OSSMC codebases (perf suite migrated or explicitly deferred with follow-up issue)
+- [ ] LTS/supported-branch backport strategy executed or explicitly deferred with a tracked follow-up
 
 ---
 
@@ -299,9 +454,15 @@ Both reviewers agreed: "revert all changes on code behavioral scope, and leave t
 
 ---
 
-## Smoke coverage
+## Current coverage
 
-`yarn playwright:run:smoke` runs the Playwright ports of all Cypress `@smoke` scenarios (about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters). On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session).
+### Smoke (`yarn playwright:run:smoke`)
+
+Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters. On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session).
+
+### Core-1 (`yarn playwright:run:core1`)
+
+Ports all Cypress `@core-1` scenarios (145 tests): graph display, graph toolbar, graph legend, graph find/hide, graph context menu, graph side panel, graph replay, istio config list, apps list, app details graph, column management.
 
 ## Local run
 
@@ -326,16 +487,20 @@ Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwrigh
 
 ---
 
-## Follow-ups
+## Open questions
 
-Tracked in [`migration-plan.md` § Action items](../../migration-plan.md#action-items).
+- **Graph topology DOM hooks:** PR #10220 uses `page.evaluate()` to walk React's fiber tree for graph topology assertions. A TODO marks this for migration to DOM/`data-test`. What `data-test` attributes or DOM hooks should graph components expose? (raised by hhovsepy, acknowledged by jshaughn)
+
+---
+
+## Action items
 
 - [ ] Replace remaining React fiber reads in `graphTopology.ts` with `data-test` / DOM attributes (PR #10220 TODO)
 - [ ] Implement `token` and `openid` auth strategies in `auth.setup.ts` (PR #10174 / #10217)
-- [ ] Create `cleanup` fixture (`cleanup.trackNamespace()`) for demo mutation teardown (PR #10195)
-- [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations (PR #10217)
+- [ ] Create `cleanup` fixture (`cleanup.trackNamespace()`) for demo mutation teardown (PR #10195 pattern)
+- [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations deferred from PR #10217
 - [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites (PR #10220 — deferred)
 - [ ] Add `page.routeWebSocket()` where graph live updates are mocked
-- [ ] Verify TextInputGroupMain `data-test` scoping — PF renders on outer `<div>`, assess if PF patch needed (PR #10217)
-- [ ] Add `data-test` on `StatefulFilters` overflow button — verify PF6 LabelGroup `collapsedTextProps` (PR #10174 review)
+- [ ] Verify TextInputGroupMain `data-test` scoping — PF renders `data-test` on outer `<div>`, not inner `<input>`; assess if PF should be patched or if `getByTestId().locator('input')` is sufficient (PR #10217)
+- [ ] Add `data-test` on `StatefulFilters` overflow button area — verify `collapsedTextProps` in PF6 LabelGroup (PR #10174 review)
 - [ ] OSSMC Playwright sync and Cypress cutover ([#9712](https://github.com/kiali/kiali/issues/9712) later phases)
