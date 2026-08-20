@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ##############################################################################
 # setup-ca.sh
@@ -21,13 +22,11 @@ create_secret() {
   fi
 
   if ! ${CLIENT_EXE} get secret cacerts -n ${ISTIO_NAMESPACE}; then
-    ${CLIENT_EXE} create secret generic cacerts -n ${ISTIO_NAMESPACE} \
+    if ! ${CLIENT_EXE} create secret generic cacerts -n ${ISTIO_NAMESPACE} \
         --from-file ${CERTS_DIR}/${clustername}/ca-cert.pem           \
         --from-file ${CERTS_DIR}/${clustername}/ca-key.pem            \
         --from-file ${CERTS_DIR}/${clustername}/root-cert.pem         \
-        --from-file ${CERTS_DIR}/${clustername}/cert-chain.pem
-
-    if [ "$?" != "0" ]; then
+        --from-file ${CERTS_DIR}/${clustername}/cert-chain.pem; then
       echo "Failed to create secret in cluster [${clustername}]"
       exit 1
     fi

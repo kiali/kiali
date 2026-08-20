@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ##############################################################################
 # start-minikube.sh
@@ -23,15 +24,13 @@ start_minikube() {
   if [ "${MINIKUBE_DISK}" != "" ]; then local disk="--kubernetes-disk ${MINIKUBE_DISK}"; fi
   if [ "${MINIKUBE_MEMORY}" != "" ]; then local mem="--kubernetes-memory ${MINIKUBE_MEMORY}"; fi
 
-  "${K8S_MINIKUBE_SCRIPT}"                   \
+  if ! "${K8S_MINIKUBE_SCRIPT}"                   \
     --minikube-profile "${profile}"          \
     --load-balancer-addrs "${lb_addrs}"      \
     --kubernetes-driver "${MINIKUBE_DRIVER}" \
     -mf "${extra_config}"                    \
     ${cpu:-} ${disk:-} ${mem:-}              \
-    start
-
-  if [ "$?" != "0" ]; then
+    start; then
     echo "Failed to start minikube for cluster [${profile}]"
     exit 1
   fi
