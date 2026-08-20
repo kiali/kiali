@@ -125,6 +125,59 @@ fi
 ${CLIENT_EXE} label ns ${SIDECAR_NS} istio-injection=enabled
 ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/dataplane-mode=ambient
 
+wait_for_sidecar_injector() {
+  echo "Waiting for Istio sidecar injector webhook..."
+  local elapsed=0
+  local timeout=60
+  while [ "${elapsed}" -lt "${timeout}" ]; do
+    local cfgs
+    cfgs=$(${CLIENT_EXE} get mutatingwebhookconfiguration -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null | grep -E 'sidecar-injector|istio-revision' || true)
+    if [ -n "${cfgs}" ]; then
+      echo "Found sidecar injector webhook: ${cfgs}"
+      return 0
+    fi
+    sleep 2
+    elapsed=$((elapsed + 2))
+  done
+  echo "WARNING: sidecar injector MutatingWebhookConfiguration not found; pods may start without sidecars"
+}
+
+# Confirm every running pod in the namespace has an istio-proxy container.
+# Pods created before the injector was ready stay Ready without a sidecar, so
+# restart deployments once if injection was missed.
+ensure_sidecar_injected() {
+  local ns="$1"
+  local attempt
+  for attempt in 1 2; do
+    local missing=""
+    local pod containers
+    while read -r pod containers; do
+      [ -z "${pod}" ] && continue
+      if [[ " ${containers} " != *" istio-proxy "* ]]; then
+        missing="${missing} ${pod}"
+      fi
+    done < <(${CLIENT_EXE} get pods -n "${ns}" --field-selector=status.phase!=Succeeded -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.containers[*].name}{"\n"}{end}')
+
+    if [ -z "${missing// }" ]; then
+      echo "All pods in ${ns} have an istio-proxy sidecar"
+      return 0
+    fi
+
+    echo "Pods in ${ns} missing istio-proxy:${missing}"
+    if [ "${attempt}" = "1" ]; then
+      echo "Restarting deployments in ${ns} so the sidecar injector can attach"
+      ${CLIENT_EXE} rollout restart deployment -n "${ns}"
+      ${CLIENT_EXE} rollout status deployment -n "${ns}" --timeout=180s
+    fi
+  done
+
+  echo "ERROR: pods in ${ns} still missing istio-proxy after restart"
+  ${CLIENT_EXE} get pods -n "${ns}" -o wide
+  exit 1
+}
+
+wait_for_sidecar_injector
+
 # Determine curl image version based on ARCH
 if [ "${ARCH}" == "ppc64le" ] || [ "${ARCH}" == "s390x" ]; then
   CURL_IMAGE="quay.io/curl/curl:8.4.0"
@@ -136,7 +189,8 @@ fi
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
 
-# Create the curl client deployment for sidecar namespace
+# Create the curl client deployment for sidecar namespace.
+# Timeouts match waypoint-forworkload: hung curls otherwise stall the loop for minutes.
 cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -159,7 +213,14 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient; sleep 5; done;
+        - |
+          while true; do
+            echo "Calling echo-service.test-ambient..."
+            if ! curl -sSf --connect-timeout 5 --max-time 15 "http://echo-service.test-ambient/" >/dev/null; then
+              echo "[test-sidecar] curl failed for echo-service.test-ambient"
+            fi
+            sleep 5
+          done
 NAD
 
 # Create the curl client deployment for ambient namespace
@@ -185,8 +246,21 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar; sleep 5; done;
+        - |
+          while true; do
+            echo "Calling echo-service.test-sidecar..."
+            if ! curl -sSf --connect-timeout 5 --max-time 15 "http://echo-service.test-sidecar/" >/dev/null; then
+              echo "[test-ambient] curl failed for echo-service.test-sidecar"
+            fi
+            sleep 5
+          done
 NAD
+
+for ns in ${SIDECAR_NS} ${AMBIENT_NS}; do
+  ${CLIENT_EXE} rollout status deployment/echo-server -n "${ns}" --timeout=180s
+  ${CLIENT_EXE} rollout status deployment/curl-client -n "${ns}" --timeout=180s
+done
+ensure_sidecar_injected "${SIDECAR_NS}"
 
 # Use waypoint?
 if [ "${WAYPOINT}" == "true" ]; then
