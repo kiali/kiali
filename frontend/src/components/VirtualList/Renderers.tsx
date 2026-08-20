@@ -507,10 +507,17 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   const isDataPlane = isDataPlaneNamespace(ns);
+  const revisions = ns.isControlPlane && ns.revision ? ns.revision.split(',') : undefined;
 
   return (
     <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      {ns.isControlPlane ? <ControlPlaneBadge /> : isDataPlane ? <DataPlaneBadge /> : <NotPartOfMeshBadge />}
+      {ns.isControlPlane ? (
+        <ControlPlaneBadge revisions={revisions} />
+      ) : isDataPlane ? (
+        <DataPlaneBadge />
+      ) : (
+        <NotPartOfMeshBadge />
+      )}
     </Td>
   );
 };

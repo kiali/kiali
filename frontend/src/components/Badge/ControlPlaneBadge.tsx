@@ -20,22 +20,36 @@ const badgeTooltipLinkStyle = kialiStyle({
   }
 });
 
-export const ControlPlaneBadge: React.FC = () => {
+interface ControlPlaneBadgeProps {
+  revisions?: string[];
+}
+
+export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ revisions }) => {
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
-  // Tooltip has reversed theme (light theme = dark background), so link colors are inverted
   const darkTheme = useKialiTheme() === Theme.DARK;
   const linkColor = darkTheme ? PFColors.LinkTooltipDarkTheme : PFColors.LinkTooltipLightTheme;
 
-  // Remote clusters do not have istio status because istio is not running there
-  // so don't display istio status badge for those.
+  const count = revisions ? revisions.length : 1;
+
   return (
     <>
       <Tooltip
         content={
           <>
-            <span>{t('Istio control plane')}</span>
+            {count > 1 ? (
+              <div style={{ textAlign: 'left' }}>
+                <div>{t('Istio control planes ({{count}}):', { count })}</div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  {revisions!.map(rev => (
+                    <div key={rev}>{t('Revision: {{revision}}', { revision: rev })}</div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <span>{t('Istio control plane')}</span>
+            )}
             {!pathname.endsWith('/mesh') && (
               <div className={badgeTooltipLinkStyle}>
                 <span>{t('More info at')}</span>
@@ -48,7 +62,7 @@ export const ControlPlaneBadge: React.FC = () => {
         }
       >
         <Label color="green" isCompact data-test="control-plane-badge">
-          {t('CP')}
+          {count > 1 ? t('CP ({{count}})', { count }) : t('CP')}
         </Label>
       </Tooltip>
     </>
