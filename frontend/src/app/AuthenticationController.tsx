@@ -206,7 +206,7 @@ class AuthenticationControllerComponent extends React.Component<
       // Notify the user about Prometheus availability.
       if (configs[1].data.prometheus.disabledReason) {
         // Prometheus is enabled but was unreachable at startup — warn the user.
-        addWarning(configs[1].data.prometheus.disabledReason);
+        addWarning(configs[1].data.prometheus.disabledReason, '', true, true);
       } else if (!configs[1].data.prometheus.enabled) {
         // Prometheus was explicitly disabled by the user.
         addInfo(
