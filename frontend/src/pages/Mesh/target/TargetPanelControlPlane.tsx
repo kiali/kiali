@@ -93,24 +93,69 @@ const tabStyle = kialiStyle({
   }
 });
 
-const configMapDescription = (configSource?: ConfigSource): React.ReactElement => (
+const configSourceDetailsStyle = kialiStyle({
+  paddingLeft: '1rem'
+});
+
+export const configSourceDescription = (configSource?: ConfigSource): React.ReactElement => (
   <div>
-    ConfigMap
-    <div style={{ paddingLeft: '1em' }}>
-      <b> Name:</b> {configSource?.name}
+    {configSource?.path ? t('File') : t('ConfigMap')}
+    <div className={configSourceDetailsStyle}>
+      {configSource?.path && (
+        <>
+          <b>{t('Path')}:</b> {configSource.path}
+          <br />
+        </>
+      )}
+      <b>{t('ConfigMap name')}:</b> {configSource?.name}
       <br />
-      <b> Namespace:</b> {configSource?.namespace}
+      <b>{t('Namespace')}:</b> {configSource?.namespace}
       <br />
-      <b> Cluster:</b> {configSource?.cluster}
+      <b>{t('Cluster')}:</b> {configSource?.cluster}
     </div>
   </div>
 );
 
-interface tabInfo {
+interface TabInfo {
   config?: ConfigSource;
   configDescription: React.ReactNode;
   title: string;
 }
+
+export const getControlPlaneConfigTabs = (controlPlane: ControlPlane): TabInfo[] =>
+  [
+    {
+      title: 'effective',
+      config: controlPlane.config.effectiveConfig,
+      configDescription: t(
+        'The effective config combines all discovered configuration sources. This is the configuration that the Control Plane uses.'
+      )
+    },
+    {
+      title: 'file',
+      config: controlPlane.config.fileConfig,
+      configDescription: t(
+        'The mesh configuration file mounted into the Control Plane. It takes precedence over the shared mesh ConfigMap.'
+      )
+    },
+    {
+      title: 'standard',
+      config: controlPlane.config.standardConfig,
+      configDescription: t(
+        'The standard mesh ConfigMap for the Control Plane. It takes precedence over the shared mesh ConfigMap.'
+      )
+    },
+    {
+      title: 'shared',
+      config: controlPlane.config.sharedConfig,
+      configDescription: t(
+        'The shared mesh ConfigMap comes from the SHARED_MESH_CONFIG environment variable on Istiod. The Control Plane merges it with the local mesh configuration.'
+      )
+    }
+  ].filter(tab => tab.config);
+
+export const hasControlPlaneConfigTabs = (controlPlane: ControlPlane): boolean =>
+  !!controlPlane.config.fileConfig || !!controlPlane.config.sharedConfig;
 
 export class TargetPanelControlPlane extends React.Component<
   TargetPanelControlPlaneProps,
@@ -161,26 +206,8 @@ export class TargetPanelControlPlane extends React.Component<
 
     const controlPlane: ControlPlane = data.infraData;
 
-    const tabs: tabInfo[] = [
-      {
-        title: 'effective',
-        config: controlPlane.config.effectiveConfig,
-        configDescription:
-          'The effective config is the combination of the standard and shared configmaps. This is the configuration that the Control Plane uses.'
-      },
-      {
-        title: 'standard',
-        config: controlPlane.config.standardConfig,
-        configDescription:
-          'The standard mesh configmap for the Control Plane. Takes precedence over the shared mesh configmap.'
-      },
-      {
-        title: 'shared',
-        config: controlPlane.config.sharedConfig,
-        configDescription:
-          'The shared mesh configmap. Comes from the SHARED_MESH_CONFIG environment variable on the istiod. The Control Plane merges this with the standard mesh configmap. Configuration in the standard configmap takes precedence over the shared.'
-      }
-    ];
+    const tabs = getControlPlaneConfigTabs(controlPlane);
+    const showConfigTabs = hasControlPlaneConfigTabs(controlPlane);
 
     // This is defaulted to ALLOW_ANY inside istio but the backend only shows what is explicitly
     // on the configmap but in this case the frontend wants to display the default.
@@ -222,14 +249,14 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
           <div className={summaryTitle}>Configuration</div>
-          {controlPlane.config.standardConfig && controlPlane.config.sharedConfig ? (
+          {showConfigTabs ? (
             <SimpleTabs className={tabStyle} id="mesh-configs" defaultTab={0}>
               {tabs.map((tabInfo, index) => {
                 const ref = React.createRef<HTMLElement>();
                 return (
                   <Tab
                     data-test={`config-tab-${tabInfo.title}`}
-                    key={index}
+                    key={tabInfo.title}
                     style={{ gap: '0px', flex: '0' }}
                     title={tabInfo.title}
                     eventKey={index}
@@ -248,7 +275,7 @@ export class TargetPanelControlPlane extends React.Component<
                         includeTitle={false}
                         targetName={data.infraName}
                       ></TargetPanelEditor>
-                      {tabInfo.title !== 'effective' && configMapDescription(tabInfo.config)}
+                      {tabInfo.title !== 'effective' && configSourceDescription(tabInfo.config)}
                     </div>
                   </Tab>
                 );
