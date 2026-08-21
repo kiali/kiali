@@ -554,8 +554,8 @@ ensureBookinfoGraphReady() {
   done
 }
 
-# Sidecar↔ambient HTTP edges are required by waypoint.feature. Fail setup
-# instead of letting Cypress poll for minutes when telemetry is missing.
+# Sidecar↔ambient HTTP edges are required by waypoint.feature. This wait is
+# diagnostic only: dump the graph if thresholds are not met, then continue.
 ensureSidecarAmbientGraphReady() {
   infomsg "Waiting for sidecar↔ambient HTTP graph data"
   local start_time
@@ -596,12 +596,24 @@ ensureSidecarAmbientGraphReady() {
     local now
     now=$(date +%s)
     if [ "${now}" -gt "${end_time}" ]; then
-      echo "Timed out waiting for sidecar↔ambient HTTP graph data (httpEdges=${http_edges} totalEdges=${total_edges}, expected http>=4 total>=8)"
+      echo "Sidecar↔ambient graph still short of Cypress thresholds (httpEdges=${http_edges} totalEdges=${total_edges}, expected http>=4 total>=8); continuing so tests can run"
+      echo "Graph edges:"
+      echo "${payload}" | jq -r '
+        (.elements.nodes // []) as $nodes
+        | ($nodes | map({(.data.id): (
+            (.data.nodeType // "?") + ":" + (.data.namespace // "") + "/" +
+            (if .data.nodeType == "service" then (.data.service // "")
+             else ((.data.app // .data.workload // "") + (if .data.version then (":" + .data.version) else "" end))
+             end)
+          )}) | add // {}) as $names
+        | (.elements.edges // [])[]
+        | (.data.traffic.protocol // "?") + "  " + ($names[.data.source] // .data.source) + " -> " + ($names[.data.target] // .data.target)
+      ' 2>/dev/null || echo "${payload}" | jq -c '.elements.edges[]?.data | {protocol: .traffic.protocol, source, target}' 2>/dev/null || true
       kubectl get pods -n test-sidecar -o wide || true
       kubectl get pods -n test-ambient -o wide || true
       kubectl logs -n test-sidecar -l app=curl-client --tail=20 || true
       kubectl logs -n test-ambient -l app=curl-client --tail=20 || true
-      exit 1
+      return 0
     fi
     infomsg "Waiting for sidecar↔ambient HTTP edges (httpEdges=${http_edges} totalEdges=${total_edges})"
     sleep 5
