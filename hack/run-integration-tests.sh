@@ -609,10 +609,7 @@ ensureSidecarAmbientGraphReady() {
         | (.elements.edges // [])[]
         | (.data.traffic.protocol // "?") + "  " + ($names[.data.source] // .data.source) + " -> " + ($names[.data.target] // .data.target)
       ' 2>/dev/null || echo "${payload}" | jq -c '.elements.edges[]?.data | {protocol: .traffic.protocol, source, target}' 2>/dev/null || true
-      kubectl get pods -n test-sidecar -o wide || true
-      kubectl get pods -n test-ambient -o wide || true
-      kubectl logs -n test-sidecar -l app=curl-client --tail=20 || true
-      kubectl logs -n test-ambient -l app=curl-client --tail=20 || true
+      "${SCRIPT_DIR}/istio/ambient/verify-sidecar-ambient-traffic.sh" -c kubectl || true
       return 0
     fi
     infomsg "Waiting for sidecar↔ambient HTTP edges (httpEdges=${http_edges} totalEdges=${total_edges})"
