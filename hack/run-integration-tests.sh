@@ -554,6 +554,69 @@ ensureBookinfoGraphReady() {
   done
 }
 
+# Sidecar↔ambient HTTP edges are required by waypoint.feature. This wait is
+# diagnostic only: dump the graph if thresholds are not met, then continue.
+ensureSidecarAmbientGraphReady() {
+  infomsg "Waiting for sidecar↔ambient HTTP graph data"
+  local start_time
+  local end_time
+  local kiali_token
+  local graph_url
+  start_time=$(date +%s)
+  end_time=$((start_time + 120))
+
+  if [ ! -f cookies.txt ]; then
+    kiali_token=$(kubectl -n istio-system create token kiali)
+    curl --cookie-jar cookies.txt "${KIALI_URL}/api/authenticate" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        --request POST \
+        --data-raw "token=${kiali_token}" >/dev/null
+  fi
+
+  graph_url="${KIALI_URL}/api/namespaces/graph?duration=600s&graphType=versionedApp&includeIdleEdges=false&injectServiceNodes=true&boxBy=cluster,namespace,app&waypoints=false&appenders=deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient&rateGrpc=requests&rateHttp=requests&rateTcp=sent&ambientTraffic=total&namespaces=test-ambient,test-sidecar"
+  infomsg "Graph url: ${graph_url}"
+  while true; do
+    local payload
+    local http_edges
+    local total_edges
+    payload=$(curl -k -s "$graph_url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' -b cookies.txt || true)
+    http_edges=$(echo "${payload}" | jq '[.elements.edges[]? | select(.data.traffic.protocol=="http")] | length' 2>/dev/null || echo 0)
+    total_edges=$(echo "${payload}" | jq '[.elements.edges[]?] | length' 2>/dev/null || echo 0)
+    http_edges=${http_edges:-0}
+    total_edges=${total_edges:-0}
+
+    if [ "${http_edges}" -ge 4 ] && [ "${total_edges}" -ge 8 ]; then
+      infomsg "Sidecar↔ambient graph is ready (httpEdges=${http_edges} totalEdges=${total_edges})"
+      return 0
+    fi
+
+    local now
+    now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Sidecar↔ambient graph still short of Cypress thresholds (httpEdges=${http_edges} totalEdges=${total_edges}, expected http>=4 total>=8); continuing so tests can run"
+      echo "Graph edges:"
+      echo "${payload}" | jq -r '
+        (.elements.nodes // []) as $nodes
+        | ($nodes | map({(.data.id): (
+            (.data.nodeType // "?") + ":" + (.data.namespace // "") + "/" +
+            (if .data.nodeType == "service" then (.data.service // "")
+             else ((.data.app // .data.workload // "") + (if .data.version then (":" + .data.version) else "" end))
+             end)
+          )}) | add // {}) as $names
+        | (.elements.edges // [])[]
+        | (.data.traffic.protocol // "?") + "  " + ($names[.data.source] // .data.source) + " -> " + ($names[.data.target] // .data.target)
+      ' 2>/dev/null || echo "${payload}" | jq -c '.elements.edges[]?.data | {protocol: .traffic.protocol, source, target}' 2>/dev/null || true
+      "${SCRIPT_DIR}/istio/ambient/verify-sidecar-ambient-traffic.sh" -c kubectl || true
+      return 0
+    fi
+    infomsg "Waiting for sidecar↔ambient HTTP edges (httpEdges=${http_edges} totalEdges=${total_edges})"
+    sleep 5
+  done
+}
+
 # Wait until the MCP HTTP endpoint answers before starting go tests.
 # Graph readiness alone is not enough: KinD CI can still stall Kiali briefly afterward.
 ensureMCPReady() {
@@ -893,6 +956,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
 
   ensureKialiServerReady
   ensureBookinfoGraphReady
+  ensureSidecarAmbientGraphReady
   # TODO: traces are not available at this time, but tests are passing anyway
   # ensureKialiTracesReady "false"
 
