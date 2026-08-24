@@ -275,6 +275,3 @@ if [ "${WAYPOINT}" == "true" ]; then
   ${CLIENT_EXE} label ns ${AMBIENT_NS} istio.io/use-waypoint=waypoint
 fi
 
-echo "Running sidecar↔ambient traffic diagnostics after demo install..."
-"${HACK_SCRIPT_DIR}/verify-sidecar-ambient-traffic.sh" -c "${CLIENT_EXE}" || true
-
