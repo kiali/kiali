@@ -348,6 +348,7 @@
   "Istio configs could not be loaded": "Istio 설정을 불러올 수 없습니다",
   "Istio configs with errors": "오류가 있는 Istio 설정",
   "Istio configs with warnings": "경고가 있는 Istio 설정",
+  "Istio configuration may be incomplete": "Istio 구성이 불완전할 수 있습니다",
   "Istio control plane": "Istio 컨트롤 플레인",
   "Istio control plane.": "Istio 컨트롤 플레인.",
   "Istio deployment status disabled.": "Istio 배포 상태가 비활성화되었습니다.",

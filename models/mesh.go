@@ -128,6 +128,9 @@ type ControlPlane struct {
 	// Config
 	Config ControlPlaneConfiguration `json:"config"`
 
+	// ConfigWarning describes configuration sources that Kiali could not load.
+	ConfigWarning string `json:"configWarning,omitempty"`
+
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
 	ExternalControlPlane bool `json:"externalControlPlane"`
 
@@ -172,6 +175,12 @@ type ControlPlane struct {
 
 	// MeshConfigFilePath is the mesh configuration file path used by istiod.
 	MeshConfigFilePath string `json:"-"`
+
+	// MeshNetworksConfigFile describes a ConfigMap-backed mesh networks file mounted into istiod.
+	MeshNetworksConfigFile *MeshConfigFileReference `json:"-"`
+
+	// MeshNetworksConfigFilePath is the mesh networks file path used by istiod.
+	MeshNetworksConfigFilePath string `json:"-"`
 
 	// MonitoringPort is the port used for monitoring metrics, parsed from the --monitoringAddr argument.
 	// Defaults to 15014 if not specified or in invalid format.

@@ -50,17 +50,21 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigM
 		return err
 	}
 
+	return parseMeshNetworks(istioConfig, into)
+}
+
+func parseMeshNetworks(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
 	meshNetworksYAML, ok := istioConfig.Data["meshNetworks"]
 	if !ok {
 		log.Debugf("parseIstioConfigMap: Cannot find Istio mesh networks [%v]", istioConfig)
-	} else {
-		if into.MeshNetworks == nil {
-			into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
-		}
-		if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
-			log.Warningf("parseIstioConfigMap: Cannot read Istio mesh configuration.")
-			return err
-		}
+		return nil
+	}
+	if into.MeshNetworks == nil {
+		into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
+		log.Warningf("parseIstioConfigMap: Cannot read Istio mesh networks configuration.")
+		return err
 	}
 
 	return nil
@@ -72,6 +76,16 @@ func parseMeshConfigFile(meshConfigYAML string, into *models.MeshConfigMap) erro
 	}
 	if err := k8syaml.Unmarshal([]byte(meshConfigYAML), into.Mesh); err != nil {
 		return fmt.Errorf("unable to parse Istio mesh configuration file: %w", err)
+	}
+	return nil
+}
+
+func parseMeshNetworksFile(meshNetworksYAML string, into *models.MeshConfigMap) error {
+	if into.MeshNetworks == nil {
+		into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
+		return fmt.Errorf("unable to parse Istio mesh networks file: %w", err)
 	}
 	return nil
 }
@@ -108,18 +122,20 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 		log.Tracef("Shared mesh config '%s' is present", controlPlane.SharedMeshConfig)
 		sharedConfigCluster := controlPlane.Cluster.Name
 		sharedConfigCache := kubeCache
-		if controlPlane.ID != controlPlane.Cluster.Name {
+		if controlPlane.ManagesExternal && controlPlane.ID != controlPlane.Cluster.Name {
 			sharedConfigCluster = controlPlane.ID
 			var err error
 			sharedConfigCache, err = in.kialiCache.GetKubeCache(sharedConfigCluster)
 			if err != nil {
 				log.Errorf("Unable to access Shared Mesh ConfigMap cluster [%s]: %s", sharedConfigCluster, err)
+				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration from cluster [%s]: %s", sharedConfigCluster, err))
 				sharedConfigCache = nil
 			}
 		}
 		if sharedConfigCache != nil {
 			if err := setSharedConfig(controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
 				log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
+				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration: %s", err))
 			}
 		}
 	}
@@ -128,6 +144,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	if shouldLoadMeshConfigFile(controlPlane, configMapName) {
 		if err := setFileConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
 			log.Warningf("Unable to load mounted mesh configuration file; falling back to the standard ConfigMap: %s", err)
+			appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load mounted mesh configuration file; displaying the standard ConfigMap instead: %s", err))
 		} else {
 			loadedFileConfig = true
 		}
@@ -174,12 +191,19 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	return nil
 }
 
+func appendConfigWarning(controlPlane *models.ControlPlane, warning string) {
+	if controlPlane.ConfigWarning == "" {
+		controlPlane.ConfigWarning = warning
+		return
+	}
+	controlPlane.ConfigWarning += "\n" + warning
+}
+
 func shouldLoadMeshConfigFile(controlPlane *models.ControlPlane, standardConfigMapName string) bool {
 	if controlPlane.MeshConfigFile == nil {
 		return false
 	}
-	return controlPlane.ID != controlPlane.Cluster.Name ||
-		controlPlane.MeshConfigFile.ConfigMapName != standardConfigMapName ||
+	return controlPlane.MeshConfigFile.ConfigMapName != standardConfigMapName ||
 		controlPlane.MeshConfigFile.ConfigMapKey != "mesh"
 }
 
@@ -212,9 +236,43 @@ func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.C
 	if err := parseMeshConfigFile(meshConfigYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
 		return fmt.Errorf("unable to parse mesh configuration file [%s] into EffectiveConfig: %w", fileRef.Path, err)
 	}
+	if err := setFileMeshNetworks(controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
+		return err
+	}
 
 	controlPlaneConf.FileConfig = fileConfig
 	controlPlaneConf.StandardConfig = nil
+	return nil
+}
+
+func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
+	fileRef := controlPlane.MeshNetworksConfigFile
+	if fileRef == nil {
+		return nil
+	}
+
+	networksConfigMap := meshConfigMap
+	if fileRef.ConfigMapName != meshConfigMap.Name {
+		networksConfigMap = &corev1.ConfigMap{}
+		if err := kubeCache.Get(
+			context.Background(),
+			ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
+			networksConfigMap,
+		); err != nil {
+			return fmt.Errorf("unable to get mesh networks file ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", fileRef.ConfigMapName, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		}
+	}
+
+	meshNetworksYAML, ok := networksConfigMap.Data[fileRef.ConfigMapKey]
+	if !ok {
+		return nil
+	}
+	if err := parseMeshNetworksFile(meshNetworksYAML, fileConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh networks file [%s] from ConfigMap [%s/%s] on cluster [%s]: %w", fileRef.Path, controlPlane.IstiodNamespace, fileRef.ConfigMapName, controlPlane.Cluster.Name, err)
+	}
+	if err := parseMeshNetworksFile(meshNetworksYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh networks file [%s] into EffectiveConfig: %w", fileRef.Path, err)
+	}
 	return nil
 }
 
@@ -232,16 +290,16 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
-		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
+		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	if err := parseIstioConfigMap(sharedUserConfigMap, sharedConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	// Unmarshal again into effective.
 	if err := parseIstioConfigMap(sharedUserConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	controlPlaneConf.SharedConfig = sharedConfig
@@ -249,6 +307,9 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 }
 
 func findMeshConfigFile(container corev1.Container, volumes []corev1.Volume, meshConfigPath string) *models.MeshConfigFileReference {
+	if !isValidContainerPath(meshConfigPath) {
+		return nil
+	}
 	cleanConfigPath := cleanContainerPath(meshConfigPath)
 	var configFile *models.MeshConfigFileReference
 	longestMountPath := -1
@@ -271,8 +332,6 @@ func findMeshConfigFile(container corev1.Container, volumes []corev1.Volume, mes
 				continue
 			}
 			relativePath = mount.SubPath
-		} else if cleanConfigPath == cleanMountPath {
-			relativePath = path.Base(cleanConfigPath)
 		}
 
 		for _, volume := range volumes {
@@ -303,6 +362,18 @@ func findMeshConfigFile(container corev1.Container, volumes []corev1.Volume, mes
 		}
 	}
 	return configFile
+}
+
+func isValidContainerPath(filePath string) bool {
+	if !path.IsAbs(filePath) && !strings.HasPrefix(filePath, "./") {
+		return false
+	}
+	for _, segment := range strings.Split(filePath, "/") {
+		if segment == ".." {
+			return false
+		}
+	}
+	return true
 }
 
 func cleanContainerPath(filePath string) string {
@@ -697,6 +768,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				// Parse the deployment args and set fields on the control plane
 				parseArgsInto(containers[0].Args, &controlPlane)
 				controlPlane.MeshConfigFile = findMeshConfigFile(containers[0], istiod.Spec.Template.Spec.Volumes, controlPlane.MeshConfigFilePath)
+				controlPlane.MeshNetworksConfigFile = findMeshConfigFile(containers[0], istiod.Spec.Template.Spec.Volumes, controlPlane.MeshNetworksConfigFilePath)
 
 				controlPlane.Resources = containers[0].Resources
 				if memoryLimit := controlPlane.Resources.Limits.Memory(); memoryLimit != nil {
@@ -1009,14 +1081,15 @@ func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
 	return models.ControlPlane{
-		Cluster:            cluster,
-		IstiodName:         istiod.Name,
-		IstiodNamespace:    istiod.Namespace,
-		Labels:             istiod.Labels,
-		MeshConfig:         models.NewMeshConfig(),
-		MeshConfigFilePath: defaultMeshConfigPath,
-		MonitoringPort:     defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
-		Revision:           istiod.Labels[config.IstioRevisionLabel],
+		Cluster:                    cluster,
+		IstiodName:                 istiod.Name,
+		IstiodNamespace:            istiod.Namespace,
+		Labels:                     istiod.Labels,
+		MeshConfig:                 models.NewMeshConfig(),
+		MeshConfigFilePath:         defaultMeshConfigPath,
+		MeshNetworksConfigFilePath: defaultMeshNetworksConfigPath,
+		MonitoringPort:             defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
+		Revision:                   istiod.Labels[config.IstioRevisionLabel],
 	}
 }
 
@@ -1327,6 +1400,7 @@ func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
 
 	monitoringAddr := flagSet.String("monitoringAddr", "", "Monitoring address in format :port")
 	meshConfigPath := flagSet.String("meshConfig", defaultMeshConfigPath, "File name for Istio mesh configuration")
+	meshNetworksConfigPath := flagSet.String("networksConfigFile", defaultMeshNetworksConfigPath, "File name for Istio mesh networks configuration")
 
 	if err := flagSet.Parse(args); err != nil {
 		log.Debugf("Unable to parse args from control plane: %s", err)
@@ -1344,5 +1418,16 @@ func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
 			log.Debugf("Invalid --monitoringAddr format '%s', expected 'host:port' or ':port'. Using default port %d: %s", *monitoringAddr, defaultMonitoringPort, err)
 		}
 	}
-	controlPlane.MeshConfigFilePath = cleanContainerPath(*meshConfigPath)
+	if isValidContainerPath(*meshConfigPath) {
+		controlPlane.MeshConfigFilePath = cleanContainerPath(*meshConfigPath)
+	} else {
+		log.Debugf("Invalid --meshConfig path '%s'. Using default path %s", *meshConfigPath, defaultMeshConfigPath)
+		controlPlane.MeshConfigFilePath = defaultMeshConfigPath
+	}
+	if isValidContainerPath(*meshNetworksConfigPath) {
+		controlPlane.MeshNetworksConfigFilePath = cleanContainerPath(*meshNetworksConfigPath)
+	} else {
+		log.Debugf("Invalid --networksConfigFile path '%s'. Using default path %s", *meshNetworksConfigPath, defaultMeshNetworksConfigPath)
+		controlPlane.MeshNetworksConfigFilePath = defaultMeshNetworksConfigPath
+	}
 }

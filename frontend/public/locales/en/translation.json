@@ -348,6 +348,7 @@
   "Istio configs could not be loaded": "Istio configs could not be loaded",
   "Istio configs with errors": "Istio configs with errors",
   "Istio configs with warnings": "Istio configs with warnings",
+  "Istio configuration may be incomplete": "Istio configuration may be incomplete",
   "Istio control plane": "Istio control plane",
   "Istio control plane.": "Istio control plane.",
   "Istio deployment status disabled.": "Istio deployment status disabled.",

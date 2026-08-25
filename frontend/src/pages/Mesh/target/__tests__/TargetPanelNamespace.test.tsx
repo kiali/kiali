@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { MeshInfraType, MeshNodeType, ControlPlane, MeshNodeWrapper } from 'types/Mesh';
 import {
+  configWarningAlert,
   configSourceDescription,
   getControlPlaneConfigTabs,
   hasControlPlaneConfigTabs,
@@ -108,6 +109,21 @@ describe('control plane configuration tabs', () => {
     expect(container.textContent).toContain('istio');
     expect(container.textContent).toContain('external-istiod');
     expect(container.textContent).toContain('external');
+  });
+
+  it('shows configuration warnings when a source cannot be loaded', () => {
+    const warning = 'Unable to load shared mesh configuration';
+    const { container, getByText } = render(<>{configWarningAlert(warning)}</>);
+
+    expect(getByText('Istio configuration may be incomplete')).toBeTruthy();
+    expect(getByText(warning)).toBeTruthy();
+    expect(container.querySelector('[data-test="mesh-config-warning"]')).toBeTruthy();
+  });
+
+  it('does not show a warning without an error', () => {
+    const { container } = render(<>{configWarningAlert()}</>);
+
+    expect(container.querySelector('[data-test="mesh-config-warning"]')).toBeNull();
   });
 });
 

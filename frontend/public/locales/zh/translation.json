@@ -340,6 +340,7 @@
   "Istio configs could not be loaded": "Istio configs could not be loaded",
   "Istio configs with errors": "Istio configs with errors",
   "Istio configs with warnings": "Istio configs with warnings",
+  "Istio configuration may be incomplete": "Istio 配置可能不完整",
   "Istio control plane": "Istio控制面板",
   "Istio control plane.": "Istio control plane.",
   "Istio deployment status disabled.": "Istio deployment status disabled.",

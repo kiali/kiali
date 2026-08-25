@@ -356,6 +356,7 @@
   "Istio configs could not be loaded": "No se pudieron cargar las configuraciones de Istio",
   "Istio configs with errors": "Configuraciones de Istio con errores",
   "Istio configs with warnings": "Configuraciones de Istio con advertencias",
+  "Istio configuration may be incomplete": "La configuración de Istio puede estar incompleta",
   "Istio control plane": "Plano de control de Istio",
   "Istio control plane.": "Plano de control de Istio.",
   "Istio deployment status disabled.": "El estado de implementación de Istio está deshabilitado.",

@@ -224,6 +224,9 @@ CROSSNETWORK_GATEWAY_REQUIRED="true"
 # Under some conditions, manually configuring the mesh network will be required.
 MANUAL_MESH_NETWORK_CONFIG=""
 
+# Mount the external control plane mesh configuration from a non-standard ConfigMap.
+MESH_CONFIG_FILE_ENABLED="${MESH_CONFIG_FILE_ENABLED:-false}"
+
 # Tempo instead of Jaeger
 TEMPO="${TEMPO:-false}"
 
@@ -504,6 +507,11 @@ while [[ $# -gt 0 ]]; do
       MESH_ID="$2"
       shift;shift
       ;;
+    -mcf|--mesh-config-file)
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--mesh-config-file must be 'true' or 'false'" && exit 1
+      MESH_CONFIG_FILE_ENABLED="$2"
+      shift;shift
+      ;;
     -mk|--manage-kind)
       [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--manage-kind must be 'true' or 'false'" && exit 1
       MANAGE_KIND="$2"
@@ -617,6 +625,7 @@ Valid command line arguments:
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
   -mi|--mesh-id <id>: When Istio is installed, it will be part of the mesh with this given name. (Default: mesh-default)
+  -mcf|--mesh-config-file <bool>: If true, mount a non-standard mesh ConfigMap as an istiod file. Used by external control plane setup. (Default: false)
   -mk|--manage-kind <bool>: If "true" and if --client-exe is kubectl, two kind instances will be managed
   -mm|--manage-minikube <bool>: If "true" and if --client-exe is kubectl, two minikube instances will be managed
   -mmem|--minikube-memory <mem>: Amount of memory to give to each minikube cluster

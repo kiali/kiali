@@ -121,6 +121,53 @@ REMOTE_KUBE_API_SERVER_URL="https://${KIND_IP}:6443"
   --create-service-account=false | \
   kubectl apply -f - --context="${CTX_EXTERNAL_CLUSTER}"
 
+MESH_CONFIG_FILE_ARGS=""
+MESH_CONFIG_MAP_NAME="istio-external-istiod"
+MESH_CONFIG_MOUNT_PATH="/etc/istio/config"
+if [ "${MESH_CONFIG_FILE_ENABLED}" == "true" ]; then
+  kubectl apply --context "${CTX_REMOTE_CLUSTER}" -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio
+  namespace: external-istiod
+data:
+  mesh: |
+    defaultConfig:
+      proxyMetadata:
+        SHARED_CONFIG_SOURCE: remote
+    enableTracing: true
+    trustDomain: shared.external
+EOF
+  kubectl apply --context "${CTX_EXTERNAL_CLUSTER}" -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio-custom
+  namespace: external-istiod
+data:
+  mesh: |
+    defaultConfig:
+      discoveryAddress: $EXTERNAL_ISTIOD_ADDR:15012
+      holdApplicationUntilProxyStarts: true
+    rootNamespace: external-istiod
+    trustDomain: file.external
+  meshNetworks: |
+    networks:
+      network1:
+        endpoints:
+          - fromRegistry: ${REMOTE_CLUSTER_NAME}
+EOF
+  MESH_CONFIG_MAP_NAME="istio-custom"
+  MESH_CONFIG_MOUNT_PATH="/etc/istio/custom"
+  MESH_CONFIG_FILE_ARGS=$(cat <<EOF
+      extraContainerArgs:
+        - --meshConfig=${MESH_CONFIG_MOUNT_PATH}/mesh
+        - --networksConfigFile=${MESH_CONFIG_MOUNT_PATH}/meshNetworks
+EOF
+)
+fi
+
 kubectl apply --context "${CTX_EXTERNAL_CLUSTER}" -f - <<EOF
 apiVersion: sailoperator.io/v1
 kind: Istio
@@ -136,16 +183,17 @@ spec:
         discoveryAddress: $EXTERNAL_ISTIOD_ADDR:15012
     pilot:
       enabled: true
+${MESH_CONFIG_FILE_ARGS}
       volumes:
         - name: config-volume
           configMap:
-            name: istio-external-istiod
+            name: ${MESH_CONFIG_MAP_NAME}
         - name: inject-volume
           configMap:
             name: istio-sidecar-injector-external-istiod
       volumeMounts:
         - name: config-volume
-          mountPath: /etc/istio/config
+          mountPath: ${MESH_CONFIG_MOUNT_PATH}
         - name: inject-volume
           mountPath: /var/lib/istio/inject
       env:

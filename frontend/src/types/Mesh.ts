@@ -210,6 +210,7 @@ export interface ControlPlaneConfig {
 export interface ControlPlane {
   cluster: MeshCluster;
   config: ControlPlaneConfig;
+  configWarning?: string;
   istiodName: string;
   managedClusters?: { name: string }[];
   managedNamespaces?: NamespaceInfo[];
@@ -279,10 +280,7 @@ export interface BoxTarget<T extends BoxNodeData> {
 }
 
 export type MeshTarget<N extends MeshNodeData = MeshNodeData, B extends BoxNodeData = BoxNodeData> =
-  | NodeTarget<N>
-  | MeshControllerTarget
-  | EdgeTarget
-  | BoxTarget<B>;
+  NodeTarget<N> | MeshControllerTarget | EdgeTarget | BoxTarget<B>;
 
 export const MeshAttr = {
   // shared attrs

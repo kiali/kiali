@@ -2581,17 +2581,23 @@ func TestExternalControlPlaneMeshConfigFile(t *testing.T) {
 	istiod.Spec.Template.Spec.Volumes = []core_v1.Volume{{
 		Name: "config-volume",
 		VolumeSource: core_v1.VolumeSource{ConfigMap: &core_v1.ConfigMapVolumeSource{
-			LocalObjectReference: core_v1.LocalObjectReference{Name: "istio"},
+			LocalObjectReference: core_v1.LocalObjectReference{Name: "istio-custom"},
 		}},
 	}}
 
 	localMeshConfig := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "external-istiod"},
+		ObjectMeta: v1.ObjectMeta{Name: "istio-custom", Namespace: "external-istiod"},
 		Data: map[string]string{
 			"mesh": `
 defaultConfig:
   holdApplicationUntilProxyStarts: true
 trustDomain: external.local
+`,
+			"meshNetworks": `
+networks:
+  network1:
+    endpoints:
+    - fromRegistry: remote
 `,
 		},
 	}
@@ -2629,15 +2635,17 @@ trustDomain: remote.local
 	controlPlane := mesh.ControlPlanes[0]
 	require.Nil(controlPlane.Config.StandardConfig)
 	require.Equal("external", controlPlane.Config.FileConfig.Cluster)
-	require.Equal("istio", controlPlane.Config.FileConfig.Name)
+	require.Equal("istio-custom", controlPlane.Config.FileConfig.Name)
 	require.Equal("external-istiod", controlPlane.Config.FileConfig.Namespace)
 	require.Equal("/etc/istio/config/mesh", controlPlane.Config.FileConfig.Path)
 	require.Equal("external.local", controlPlane.Config.FileConfig.ConfigMap.Mesh.TrustDomain)
+	require.Contains(controlPlane.Config.FileConfig.ConfigMap.MeshNetworks.Networks, "network1")
 	require.Equal("remote", controlPlane.Config.SharedConfig.Cluster)
 	require.Equal("istio", controlPlane.Config.SharedConfig.Name)
 	require.Equal("external-istiod", controlPlane.Config.SharedConfig.Namespace)
 	require.Equal("remote.local", controlPlane.Config.SharedConfig.ConfigMap.Mesh.TrustDomain)
 	require.Equal("external.local", controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.TrustDomain)
+	require.Contains(controlPlane.Config.EffectiveConfig.ConfigMap.MeshNetworks.Networks, "network1")
 	require.True(controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.EnableTracing)
 	require.Equal("istiod.external.svc:15012", controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.DefaultConfig.DiscoveryAddress)
 	require.True(controlPlane.Config.EffectiveConfig.ConfigMap.Mesh.DefaultConfig.HoldApplicationUntilProxyStarts.Value)
@@ -2680,41 +2688,70 @@ func TestMountedStandardMeshConfigRemainsStandard(t *testing.T) {
 }
 
 func TestMountedMeshConfigFallsBackToStandardConfig(t *testing.T) {
-	require := require.New(t)
-	conf := config.NewConfig()
-	istiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
-	istiod.Spec.Template.Spec.Containers[0].VolumeMounts = []core_v1.VolumeMount{{
-		MountPath: "/etc/istio/config",
-		Name:      "config-volume",
-	}}
-	istiod.Spec.Template.Spec.Volumes = []core_v1.Volume{{
-		Name: "config-volume",
-		VolumeSource: core_v1.VolumeSource{ConfigMap: &core_v1.ConfigMapVolumeSource{
-			LocalObjectReference: core_v1.LocalObjectReference{Name: "custom-config"},
-		}},
-	}}
-
-	client := kubetest.NewFakeK8sClient(
-		istiod,
-		&core_v1.ConfigMap{
-			ObjectMeta: v1.ObjectMeta{Name: "custom-config", Namespace: "istio-system"},
-			Data:       map[string]string{"other": "trustDomain: ignored.local"},
+	cases := map[string]struct {
+		customConfig *core_v1.ConfigMap
+		warning      string
+	}{
+		"ConfigMap missing key": {
+			customConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{Name: "custom-config", Namespace: "istio-system"},
+				Data:       map[string]string{"other": "trustDomain: ignored.local"},
+			},
+			warning: "unable to find key [mesh]",
 		},
-		&core_v1.ConfigMap{
-			ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
-			Data:       map[string]string{"mesh": "trustDomain: cluster.local"},
+		"ConfigMap not found": {
+			warning: "unable to get mesh configuration file ConfigMap",
 		},
-		certtest.FakeIstioCertificateConfigMap("istio-system"),
-	)
-	cache := cache.NewTestingCache(t, client, *conf)
-	discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
+		"invalid YAML in mesh config file": {
+			customConfig: &core_v1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{Name: "custom-config", Namespace: "istio-system"},
+				Data:       map[string]string{"mesh": "invalid: yaml: {{{{"},
+			},
+			warning: "unable to parse mesh configuration file",
+		},
+	}
 
-	mesh, err := discovery.Mesh(context.Background())
-	require.NoError(err)
-	require.Len(mesh.ControlPlanes, 1)
-	require.NotNil(mesh.ControlPlanes[0].Config.StandardConfig)
-	require.Nil(mesh.ControlPlanes[0].Config.FileConfig)
-	require.Equal("cluster.local", mesh.ControlPlanes[0].MeshConfig.TrustDomain)
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			conf := config.NewConfig()
+			istiod := fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, false)
+			istiod.Spec.Template.Spec.Containers[0].VolumeMounts = []core_v1.VolumeMount{{
+				MountPath: "/etc/istio/config",
+				Name:      "config-volume",
+			}}
+			istiod.Spec.Template.Spec.Volumes = []core_v1.Volume{{
+				Name: "config-volume",
+				VolumeSource: core_v1.VolumeSource{ConfigMap: &core_v1.ConfigMapVolumeSource{
+					LocalObjectReference: core_v1.LocalObjectReference{Name: "custom-config"},
+				}},
+			}}
+
+			objects := []runtime.Object{
+				istiod,
+				&core_v1.ConfigMap{
+					ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
+					Data:       map[string]string{"mesh": "trustDomain: cluster.local"},
+				},
+				certtest.FakeIstioCertificateConfigMap("istio-system"),
+			}
+			if tc.customConfig != nil {
+				objects = append(objects, tc.customConfig)
+			}
+
+			client := kubetest.NewFakeK8sClient(objects...)
+			cache := cache.NewTestingCache(t, client, *conf)
+			discovery := istio.NewDiscovery(map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: client}, cache, conf)
+
+			mesh, err := discovery.Mesh(context.Background())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 1)
+			require.NotNil(mesh.ControlPlanes[0].Config.StandardConfig)
+			require.Nil(mesh.ControlPlanes[0].Config.FileConfig)
+			require.Equal("cluster.local", mesh.ControlPlanes[0].MeshConfig.TrustDomain)
+			require.Contains(mesh.ControlPlanes[0].ConfigWarning, tc.warning)
+		})
+	}
 }
 
 func TestIsControlPlane(t *testing.T) {

@@ -11,7 +11,7 @@ import {
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { Popover, Tab, TabAction, Title, TitleSizes } from '@patternfly/react-core';
+import { Alert, Popover, Tab, TabAction, Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
 import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { DirectionType } from 'types/Common';
@@ -39,6 +39,7 @@ import { HelpIcon } from '@patternfly/react-icons';
 import { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { addDanger } from '../../../utils/AlertUtils';
+import { PFSpacer } from 'styles/PfSpacer';
 
 type TargetPanelControlPlaneProps = TargetPanelCommonProps & {
   meshStatus: string;
@@ -94,8 +95,26 @@ const tabStyle = kialiStyle({
 });
 
 const configSourceDetailsStyle = kialiStyle({
-  paddingLeft: '1rem'
+  paddingLeft: PFSpacer.md
 });
+
+const configWarningStyle = kialiStyle({
+  marginBottom: PFSpacer.md,
+  whiteSpace: 'pre-line'
+});
+
+export const configWarningAlert = (warning?: string): React.ReactElement | null =>
+  warning ? (
+    <Alert
+      className={configWarningStyle}
+      data-test="mesh-config-warning"
+      isInline={true}
+      title={t('Istio configuration may be incomplete')}
+      variant="warning"
+    >
+      {warning}
+    </Alert>
+  ) : null;
 
 export const configSourceDescription = (configSource?: ConfigSource): React.ReactElement => (
   <div>
@@ -249,6 +268,7 @@ export class TargetPanelControlPlane extends React.Component<
 
           {targetPanelHR}
           <div className={summaryTitle}>Configuration</div>
+          {configWarningAlert(controlPlane.configWarning)}
           {showConfigTabs ? (
             <SimpleTabs className={tabStyle} id="mesh-configs" defaultTab={0}>
               {tabs.map((tabInfo, index) => {
