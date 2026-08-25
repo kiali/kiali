@@ -360,3 +360,51 @@ func TestMeshGraph(t *testing.T) {
 	}
 	assert.Equal(t, 200, resp.StatusCode)
 }
+
+func TestMeshGraphHidesKialiByDefault(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	globalInfo, err := mockMeshGraph(t)
+	require.NoError(err)
+	globalInfo.IstioStatusGetter = &fakeMeshStatusGetter{}
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/mesh/graph", func(w http.ResponseWriter, r *http.Request) {
+		code, config := graphMesh(r.Context(), globalInfo, mesh.NewOptions(r, &globalInfo.Business.Namespace))
+		respond(w, code, config)
+	})
+
+	ts := httptest.NewServer(mr)
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/api/mesh/graph?queryTime=1523364075")
+	require.NoError(err)
+	require.Equal(http.StatusOK, resp.StatusCode)
+
+	var payload struct {
+		Elements struct {
+			Nodes []struct {
+				Data struct {
+					InfraName string `json:"infraName"`
+					InfraType string `json:"infraType"`
+				} `json:"data"`
+			} `json:"nodes"`
+		} `json:"elements"`
+	}
+	require.NoError(json.NewDecoder(resp.Body).Decode(&payload))
+
+	kialiCount := 0
+	observCount := 0
+	for _, n := range payload.Elements.Nodes {
+		switch n.Data.InfraType {
+		case mesh.InfraTypeKiali:
+			kialiCount++
+		case mesh.InfraTypeGrafana, mesh.InfraTypeMetricStore, mesh.InfraTypePerses, mesh.InfraTypeTraceStore:
+			observCount++
+		}
+	}
+
+	assert.Zero(kialiCount, "Kiali nodes should be hidden by default")
+	assert.Zero(observCount, "Kiali observability components should be hidden when Kiali is hidden")
+}
