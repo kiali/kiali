@@ -86,9 +86,13 @@ Feature: Kiali Istio Config page
   Scenario: Ability to create a K8sGateway object
     Then the user can create a "gateway.networking.k8s.io" "v1" "Gateway" K8s Istio object
 
+  # Skip on OSSMC: downstream OSSMC clusters do not have the InferencePool CRD.
+  # Istio is installed via Sail/OLM, which does not apply Gateway API Inference
+  # Extension CRDs, and OSSMC does not run the Cypress hook that would install them.
   @bookinfo-app
   @gateway-api-ie
   @core-1
+  @skip-ossmc
   Scenario: K8s Inference Pool list
     Given user deletes k8sinferencepool named "foo" and the resource is no longer available
     When there is a "foo" K8sInferencePool in the "bookinfo" namespace with "details-v1" selector
