@@ -19,6 +19,7 @@ spec:
         image: mirror.gcr.io/ealen/echo-server
         ports:
         - containerPort: 80
+          name: http
 ---
 apiVersion: v1
 kind: Service
@@ -28,6 +29,8 @@ spec:
   selector:
     app: echo-server
   ports:
-  - protocol: TCP
+  - appProtocol: http
+    name: http
     port: 80
+    protocol: TCP
     targetPort: 80

@@ -146,10 +146,24 @@ const waitForBookinfoWaypointTrafficGeneratedInGraph = (
   });
 };
 
+// Ambient→sidecar HTTP dest-reporter can stick with source_workload=unknown if HBONE
+// opens before ztunnel/sidecar have peer metadata (typical right after a fresh Sail
+// install). Restarting on a warm mesh opens new connections with curl-client labels.
+const restartSidecarAmbientDemoWorkloads = (): void => {
+  Cypress.log({
+    name: 'restartSidecarAmbientDemo',
+    message: 'Restart test-ambient/test-sidecar deployments so inbound HTTP is labeled curl-client'
+  });
+  ['test-sidecar', 'test-ambient'].forEach(ns => {
+    cy.exec(`kubectl rollout restart deployment -n ${ns}`);
+    cy.exec(`kubectl rollout status deployment -n ${ns} --timeout=120s`, { timeout: 150000 });
+  });
+};
+
 // Cross-ns curl clients produce 4 HTTP edges (client->service->workload x2). Ambient TCP
 // adds more for a full 8-edge graph. Wait for HTTP readiness and the full edge count.
 const waitForSidecarAmbientTrafficGeneratedInGraph = (
-  maxRetries = 90,
+  maxRetries = 30,
   retryCount = 0,
   lastEdgeCount = -1,
   lastHttpEdgeCount = -1
@@ -507,6 +521,7 @@ Then('the graph page has enough data for L7 in the {string} namespace', (namespa
 });
 
 Then('the graph page has enough data for sidecar ambient traffic', () => {
+  restartSidecarAmbientDemoWorkloads();
   waitForSidecarAmbientTrafficGeneratedInGraph();
 });
 

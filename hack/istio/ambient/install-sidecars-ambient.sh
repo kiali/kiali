@@ -136,7 +136,8 @@ fi
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${AMBIENT_NS}
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n ${SIDECAR_NS}
 
-# Create the curl client deployment for sidecar namespace
+# Create the curl client deployment for sidecar namespace.
+# Timeouts match waypoint-forworkload: hung curls otherwise stall the loop for minutes.
 cat <<NAD | ${CLIENT_EXE} -n ${SIDECAR_NS} apply -f -
 apiVersion: apps/v1
 kind: Deployment
@@ -159,7 +160,14 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-ambient; sleep 5; done;
+        - |
+          while true; do
+            echo "Calling echo-service.test-ambient..."
+            if ! curl -sSf --connect-timeout 5 --max-time 15 "http://echo-service.test-ambient/" >/dev/null; then
+              echo "[test-sidecar] curl failed for echo-service.test-ambient"
+            fi
+            sleep 5
+          done
 NAD
 
 # Create the curl client deployment for ambient namespace
@@ -185,8 +193,20 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service.test-sidecar; sleep 5; done;
+        - |
+          while true; do
+            echo "Calling echo-service.test-sidecar..."
+            if ! curl -sSf --connect-timeout 5 --max-time 15 "http://echo-service.test-sidecar/" >/dev/null; then
+              echo "[test-ambient] curl failed for echo-service.test-sidecar"
+            fi
+            sleep 5
+          done
 NAD
+
+for ns in ${SIDECAR_NS} ${AMBIENT_NS}; do
+  ${CLIENT_EXE} rollout status deployment/echo-server -n "${ns}" --timeout=180s
+  ${CLIENT_EXE} rollout status deployment/curl-client -n "${ns}" --timeout=180s
+done
 
 # Use waypoint?
 if [ "${WAYPOINT}" == "true" ]; then
