@@ -1,16 +1,16 @@
-import { Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
+import { Checkbox, Dropdown, DropdownList, type MenuToggleElement, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
-import { KialiAppState, MeshToolbarState } from '../../../store/Store';
+import type { KialiAppState, MeshToolbarState } from '../../../store/Store';
 import {
   BoundingClientAwareComponent,
   PropertyType
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
 import { containerStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { serverConfig } from '../../../config';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -111,7 +111,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
           {visibilityOptions.map((item: DisplayOptionType) =>
             renderDisplayMenuRow(
               `visibility-${item.id}`,
-              <label key={item.id} className={itemStyleWithoutInfo}>
+              <label key={item.id} htmlFor={item.id} className={itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -180,6 +180,31 @@ const withURLAwareness = (
       );
     }
 
+    componentDidUpdate(prev: MeshSettingsProps): void {
+      this.alignURLBool(
+        URLParam.MESH_GATEWAYS,
+        INITIAL_MESH_STATE.toolbarState.showGateways,
+        prev.showGateways,
+        this.props.showGateways
+      );
+      this.alignURLBool(
+        URLParam.MESH_KIALI,
+        INITIAL_MESH_STATE.toolbarState.showKiali,
+        prev.showKiali,
+        this.props.showKiali
+      );
+      this.alignURLBool(
+        URLParam.MESH_WAYPOINTS,
+        INITIAL_MESH_STATE.toolbarState.showWaypoints,
+        prev.showWaypoints,
+        this.props.showWaypoints
+      );
+    }
+
+    render(): React.ReactNode {
+      return <MeshSettingsComponent {...this.props} />;
+    }
+
     private handleURLBool = (
       param: URLParam,
       paramDefault: boolean,
@@ -208,31 +233,6 @@ const withURLAwareness = (
         HistoryManager.setParam(param, String(curr));
       }
     };
-
-    componentDidUpdate(prev: MeshSettingsProps): void {
-      this.alignURLBool(
-        URLParam.MESH_GATEWAYS,
-        INITIAL_MESH_STATE.toolbarState.showGateways,
-        prev.showGateways,
-        this.props.showGateways
-      );
-      this.alignURLBool(
-        URLParam.MESH_KIALI,
-        INITIAL_MESH_STATE.toolbarState.showKiali,
-        prev.showKiali,
-        this.props.showKiali
-      );
-      this.alignURLBool(
-        URLParam.MESH_WAYPOINTS,
-        INITIAL_MESH_STATE.toolbarState.showWaypoints,
-        prev.showWaypoints,
-        this.props.showWaypoints
-      );
-    }
-
-    render(): React.ReactNode {
-      return <MeshSettingsComponent {...this.props} />;
-    }
   };
 };
 
