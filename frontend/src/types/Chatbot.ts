@@ -92,7 +92,13 @@ export type ModelAI = {
   name: string;
 };
 
+export type AIConfig = {
+  enabled: boolean;
+  chatAI: ChatAIConfig;
+};
+
 export type ChatAIConfig = {
+  allowed: boolean;
   defaultProvider: string;
   enabled: boolean;
   providers: ProviderAI[];

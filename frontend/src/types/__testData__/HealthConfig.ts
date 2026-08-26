@@ -4,12 +4,16 @@ import { getExpr } from '../../config/HealthConfig';
 export const healthConfig = {
   authStrategy: '',
   ambientEnabled: false,
-  chatAI: {
+  ai: {
     enabled: false,
-    providers: [],
-    defaultProvider: '',
-    store: {
-      enabled: false
+    chatAI: {
+      allowed: false,
+      enabled: false,
+      providers: [],
+      defaultProvider: '',
+      store: {
+        enabled: false
+      }
     }
   },
   clusters: {},

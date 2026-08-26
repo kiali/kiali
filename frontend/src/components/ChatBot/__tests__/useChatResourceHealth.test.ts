@@ -21,10 +21,12 @@ const serviceDetailContext: PromptContext = {
 
 const buildState = (resourceHealth?: ChatResourceHealth): KialiAppState =>
   ({
-    aiChat: {
-      resourceHealth
+    ai: {
+      chatAI: {
+        resourceHealth
+      }
     }
-  } as KialiAppState);
+  }) as KialiAppState;
 
 describe('selectChatResourceHealthStatus', () => {
   beforeEach(() => {

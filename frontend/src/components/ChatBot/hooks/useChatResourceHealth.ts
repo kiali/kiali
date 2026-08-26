@@ -14,7 +14,7 @@ export const selectChatResourceHealthStatus = (
     return undefined;
   }
 
-  const stored = state.aiChat.resourceHealth;
+  const stored = state.ai.chatAI.resourceHealth;
   if (!stored || stored.resourceKind !== ctx.resourceKind || stored.resourceName !== ctx.resourceName) {
     return undefined;
   }

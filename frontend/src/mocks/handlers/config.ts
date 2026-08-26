@@ -65,6 +65,7 @@ const generateChatAIConfig = (): ChatAIConfig => {
   const scenarioConfig = getScenarioConfig();
   if (!scenarioConfig.chatAI) {
     return {
+      allowed: true,
       enabled: false,
       providers: [],
       defaultProvider: '',
@@ -74,6 +75,7 @@ const generateChatAIConfig = (): ChatAIConfig => {
     };
   }
   return {
+    allowed: scenarioConfig.chatAI.allowed ?? true,
     enabled: scenarioConfig.chatAI.enabled ?? false,
     providers:
       scenarioConfig.chatAI.providers?.map(provider => ({
@@ -100,7 +102,10 @@ const generateServerConfig = (): ServerConfig => {
   return {
     ambientEnabled: scenarioConfig.ambientEnabled,
     authStrategy: 'anonymous',
-    chatAI: generateChatAIConfig(),
+    ai: {
+      enabled: scenarioConfig.chatAI?.enabled ?? false,
+      chatAI: generateChatAIConfig()
+    },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
     controlPlanes: generateControlPlanes(),

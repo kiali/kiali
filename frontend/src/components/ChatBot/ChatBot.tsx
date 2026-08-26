@@ -33,12 +33,13 @@ export const ChatBot: React.FC = () => {
   const theme = useKialiTheme();
   const isDarkTheme = theme === Theme.DARK;
   const ClosedToggleIcon = isDarkTheme ? KialiIconDark : KialiIconLight;
-  const displayMode = useSelector((state: KialiAppState) => state.aiChat.displayMode);
-  const selectedProvider = useSelector((state: KialiAppState) => state.aiChat.selectedProvider);
-  const selectedModel = useSelector((state: KialiAppState) => state.aiChat.selectedModel);
-  const providers = useSelector((state: KialiAppState) => state.aiChat.providers);
-  const conversationID = useSelector((state: KialiAppState) => state.aiChat.conversationID);
-  const chatHistory = useSelector((state: KialiAppState) => state.aiChat.chatHistory);
+  const allowedToUseChatbot = useSelector((state: KialiAppState) => state.ai.chatAI.allowed);
+  const displayMode = useSelector((state: KialiAppState) => state.ai.chatAI.displayMode);
+  const selectedProvider = useSelector((state: KialiAppState) => state.ai.chatAI.selectedProvider);
+  const selectedModel = useSelector((state: KialiAppState) => state.ai.chatAI.selectedModel);
+  const providers = useSelector((state: KialiAppState) => state.ai.chatAI.providers);
+  const conversationID = useSelector((state: KialiAppState) => state.ai.chatAI.conversationID);
+  const chatHistory = useSelector((state: KialiAppState) => state.ai.chatAI.chatHistory);
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
@@ -53,6 +54,7 @@ export const ChatBot: React.FC = () => {
     backgroundColor: toggleBg,
     border: `1px solid ${toggleBorder}`
   } as React.CSSProperties;
+
   // Mock API
   const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
   const [selectedMockConversation, setSelectedMockConversation] = useState<string>('Select one Mock Conversation');
@@ -173,9 +175,15 @@ export const ChatBot: React.FC = () => {
       }}
     >
       <ChatbotToggle
-        tooltipLabel={chatbotVisible ? t('Minimize') : t('Chat with AI')}
+        tooltipLabel={
+          allowedToUseChatbot
+            ? chatbotVisible
+              ? t('Minimize')
+              : t('Chat with AI')
+            : t('Chatbot is not allowed for this user')
+        }
         isChatbotVisible={chatbotVisible}
-        onToggleChatbot={() => setChatbotVisible(prev => !prev)}
+        onToggleChatbot={() => allowedToUseChatbot && setChatbotVisible(prev => !prev)}
         isRound={true}
         closedToggleIcon={() => (
           <span data-test={isDarkTheme ? 'ai-chatbot-toggle-icon-dark' : 'ai-chatbot-toggle-icon-light'}>

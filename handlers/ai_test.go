@@ -471,7 +471,7 @@ func setupChatAIHandlerForTest(t *testing.T, conf *config.Config) (http.Handler,
 
 func TestChatAI_DisabledReturnsError(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
 
@@ -491,7 +491,7 @@ func TestChatAI_DisabledReturnsError(t *testing.T) {
 
 func TestChatAI_InvalidRequestBody(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -516,7 +516,7 @@ func TestChatAI_InvalidRequestBody(t *testing.T) {
 
 func TestChatAI_ProviderNotFound(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -541,7 +541,7 @@ func TestChatAI_ProviderNotFound(t *testing.T) {
 
 func TestChatAI_AuthInfoMissingClusterName(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyToken
 	conf.KubernetesConfig.ClusterName = "primary-cluster"
 
@@ -619,7 +619,7 @@ func aiRequestsCounterValue(provider, model string) float64 {
 
 func TestChatAI_MetricsNotIncrementedOnProviderFailure(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -645,7 +645,7 @@ func TestChatAI_MetricsNotIncrementedOnProviderFailure(t *testing.T) {
 
 func TestChatAI_MetricsNotIncrementedOnDisabled(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
 
@@ -668,7 +668,7 @@ func TestChatAI_MetricsNotIncrementedOnDisabled(t *testing.T) {
 
 func TestChatAI_MetricsNotIncrementedOnBadRequest(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -709,10 +709,10 @@ func openaiSSEResponse(content string) string {
 // chatAIConfWithFakeProvider builds a config that points the AI provider to the given endpoint.
 func chatAIConfWithFakeProvider(endpoint string) *config.Config {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
-	conf.ChatAI.DefaultProvider = "test-openai"
-	conf.ChatAI.Providers = []config.ProviderConfig{{
+	conf.AI.ChatAI.DefaultProvider = "test-openai"
+	conf.AI.ChatAI.Providers = []config.ProviderConfig{{
 		Name:         "test-openai",
 		Type:         config.OpenAIProvider,
 		Config:       config.DefaultProviderConfigType,
@@ -873,7 +873,7 @@ func withSessionID(sessionID string, hf http.HandlerFunc) http.HandlerFunc {
 
 func TestDeleteConversations_Success(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -905,7 +905,7 @@ func TestDeleteConversations_Success(t *testing.T) {
 
 func TestDeleteConversations_MultipleIDs(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	for _, id := range []string{"conv-1", "conv-2", "conv-3"} {
@@ -942,7 +942,7 @@ func TestDeleteConversations_MultipleIDs(t *testing.T) {
 
 func TestDeleteConversations_MissingParam(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
@@ -1002,7 +1002,7 @@ func TestDeleteConversations_NilStore(t *testing.T) {
 
 func TestDeleteConversations_NonexistentID(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
@@ -1023,7 +1023,7 @@ func TestDeleteConversations_NonexistentID(t *testing.T) {
 
 func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -1063,7 +1063,7 @@ func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
 
 func TestDeleteConversations_SessionScoping(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -1100,7 +1100,7 @@ func TestDeleteConversations_SessionScoping(t *testing.T) {
 
 func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1130,7 +1130,7 @@ func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 
 func TestChatPrompts_FilterByCategory(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1157,7 +1157,7 @@ func TestChatPrompts_FilterByCategory(t *testing.T) {
 
 func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1180,7 +1180,7 @@ func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 
 func TestChatPrompts_DisabledWhenChatAIOff(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -56,8 +57,14 @@ type ChatAIStoreConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
+type AIConfig struct {
+	Enabled bool         `json:"enabled"`
+	ChatAI  ChatAIConfig `json:"chatAI,omitempty"`
+}
+
 type ChatAIConfig struct {
 	Enabled         bool              `json:"enabled"`
+	Allowed         bool              `json:"allowed"`
 	DefaultProvider string            `json:"defaultProvider"`
 	Providers       []ProviderConfig  `json:"providers"`
 	Store           ChatAIStoreConfig `json:"store"`
@@ -74,7 +81,7 @@ type AIModel struct {
 type PublicConfig struct {
 	AuthStrategy          string                        `json:"authStrategy,omitempty"`
 	AmbientEnabled        bool                          `json:"ambientEnabled,omitempty"`
-	ChatAI                ChatAIConfig                  `json:"chatAI,omitempty"`
+	AI                    AIConfig                      `json:"ai,omitempty"`
 	Clusters              map[string]models.KubeCluster `json:"clusters,omitempty"`
 	ClusterWideAccess     bool                          `json:"clusterWideAccess,omitempty"`
 	ControlPlanes         map[string]string             `json:"controlPlanes,omitempty"`
@@ -121,16 +128,12 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// Note that we determine the Prometheus config at request time because it is not
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig(conf, prom, logger)
+
+		aiConfig := getAIConfig(conf, r)
+
 		publicConfig := PublicConfig{
-			AuthStrategy: conf.Auth.Strategy,
-			ChatAI: ChatAIConfig{
-				Enabled:         conf.ChatAI.Enabled,
-				DefaultProvider: conf.ChatAI.DefaultProvider,
-				Providers:       []ProviderConfig{},
-				Store: ChatAIStoreConfig{
-					Enabled: conf.ChatAI.Enabled && conf.ChatAI.StoreConfig.Enabled,
-				},
-			},
+			AuthStrategy:      conf.Auth.Strategy,
+			AI:                aiConfig,
 			Clusters:          make(map[string]models.KubeCluster),
 			ClusterWideAccess: conf.Deployment.ClusterWideAccess,
 			ControlPlanes:     make(map[string]string),
@@ -213,31 +216,84 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				}
 			}
 		}
-		providers := []ProviderConfig{}
-		for _, provider := range conf.ChatAI.Providers {
-			models := []AIModel{}
-			if provider.Enabled {
-				for _, model := range provider.Models {
-					if model.Enabled {
-						models = append(models, AIModel{
-							Name:        model.Name,
-							Model:       model.Model,
-							Description: model.Description,
-						})
-					}
-				}
-				providers = append(providers, ProviderConfig{
-					Name:         provider.Name,
-					Description:  provider.Description,
-					DefaultModel: provider.DefaultModel,
-					Models:       models,
-				})
-			}
-		}
-		publicConfig.ChatAI.Providers = providers
 
 		RespondWithJSONIndent(w, http.StatusOK, publicConfig)
 	}
+}
+
+func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
+	if !conf.AI.Enabled {
+		return AIConfig{}
+	}
+	if !conf.AI.ChatAI.Enabled {
+		return AIConfig{
+			Enabled: conf.AI.Enabled,
+			ChatAI: ChatAIConfig{
+				Enabled: false,
+			},
+		}
+	}
+	fallbackUserID := "anonymous"
+	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
+		authInfo, err := getAuthInfo(r)
+		if err != nil {
+			log.Error("AI initialization error, loading config: " + err.Error())
+			return AIConfig{}
+		}
+		clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
+		if !ok || clusterAuth == nil {
+			log.Error("AI initialization error, loading config: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName)
+			return AIConfig{}
+		}
+		fallbackUserID = clusterAuth.Username
+	}
+
+	if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, fallbackUserID) {
+		log.Infof("AI initialization: user %q is not allowed to use the ChatAI feature", fallbackUserID)
+		return AIConfig{
+			Enabled: conf.AI.Enabled,
+			ChatAI: ChatAIConfig{
+				Enabled: conf.AI.ChatAI.Enabled,
+				Allowed: false,
+			},
+		}
+	}
+
+	aiConfig := AIConfig{
+		Enabled: conf.AI.Enabled,
+		ChatAI: ChatAIConfig{
+			Enabled:         conf.AI.ChatAI.Enabled,
+			Allowed:         true,
+			DefaultProvider: conf.AI.ChatAI.DefaultProvider,
+			Providers:       []ProviderConfig{},
+			Store: ChatAIStoreConfig{
+				Enabled: conf.AI.ChatAI.Enabled && conf.AI.ChatAI.StoreConfig.Enabled,
+			},
+		},
+	}
+	providers := []ProviderConfig{}
+	for _, provider := range conf.AI.ChatAI.Providers {
+		models := []AIModel{}
+		if provider.Enabled {
+			for _, model := range provider.Models {
+				if model.Enabled {
+					models = append(models, AIModel{
+						Name:        model.Name,
+						Model:       model.Model,
+						Description: model.Description,
+					})
+				}
+			}
+			providers = append(providers, ProviderConfig{
+				Name:         provider.Name,
+				Description:  provider.Description,
+				DefaultModel: provider.DefaultModel,
+				Models:       models,
+			})
+		}
+	}
+	aiConfig.ChatAI.Providers = providers
+	return aiConfig
 }
 
 type PrometheusPartialConfig struct {

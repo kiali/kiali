@@ -200,7 +200,7 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
-      this.props.setChatAI(configs[1].data.chatAI);
+      this.props.setChatAI(configs[1].data.ai.chatAI);
       this.applyUIDefaults();
 
       // Notify the user about Prometheus availability.

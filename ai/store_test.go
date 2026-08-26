@@ -203,12 +203,13 @@ func TestStore_EstimateConversationMemory_Empty(t *testing.T) {
 
 func TestLoadAIStoreConfig_FromConfig(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
-	conf.ChatAI.StoreConfig.Enabled = true
-	conf.ChatAI.StoreConfig.InactivityTimeout = "45m"
-	conf.ChatAI.StoreConfig.MaxCacheMemoryMB = 2048
-	conf.ChatAI.StoreConfig.ReduceWithAI = true
-	conf.ChatAI.StoreConfig.ReduceThreshold = 20
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.StoreConfig.Enabled = true
+	conf.AI.ChatAI.StoreConfig.InactivityTimeout = "45m"
+	conf.AI.ChatAI.StoreConfig.MaxCacheMemoryMB = 2048
+	conf.AI.ChatAI.StoreConfig.ReduceWithAI = true
+	conf.AI.ChatAI.StoreConfig.ReduceThreshold = 20
 
 	storeCfg := LoadAIStoreConfig(conf)
 
@@ -221,8 +222,9 @@ func TestLoadAIStoreConfig_FromConfig(t *testing.T) {
 
 func TestLoadAIStoreConfig_DisabledWhenChatAIDisabled(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
-	conf.ChatAI.StoreConfig.Enabled = true
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = false
+	conf.AI.ChatAI.StoreConfig.Enabled = true
 
 	storeCfg := LoadAIStoreConfig(conf)
 	assert.False(t, storeCfg.Enabled, "store should be disabled when ChatAI is disabled")
@@ -230,9 +232,10 @@ func TestLoadAIStoreConfig_DisabledWhenChatAIDisabled(t *testing.T) {
 
 func TestLoadAIStoreConfig_InvalidMemoryUsesDefault(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
-	conf.ChatAI.StoreConfig.Enabled = true
-	conf.ChatAI.StoreConfig.MaxCacheMemoryMB = -1
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.StoreConfig.Enabled = true
+	conf.AI.ChatAI.StoreConfig.MaxCacheMemoryMB = -1
 
 	storeCfg := LoadAIStoreConfig(conf)
 	assert.Equal(t, 1024, storeCfg.MaxCacheMemoryMB, "invalid memory should default to 1024")
@@ -240,9 +243,10 @@ func TestLoadAIStoreConfig_InvalidMemoryUsesDefault(t *testing.T) {
 
 func TestLoadAIStoreConfig_ZeroMemoryUsesDefault(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
-	conf.ChatAI.StoreConfig.Enabled = true
-	conf.ChatAI.StoreConfig.MaxCacheMemoryMB = 0
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.StoreConfig.Enabled = true
+	conf.AI.ChatAI.StoreConfig.MaxCacheMemoryMB = 0
 
 	storeCfg := LoadAIStoreConfig(conf)
 	assert.Equal(t, 1024, storeCfg.MaxCacheMemoryMB, "zero memory should default to 1024")
@@ -250,9 +254,10 @@ func TestLoadAIStoreConfig_ZeroMemoryUsesDefault(t *testing.T) {
 
 func TestLoadAIStoreConfig_InvalidTimeoutUsesDefault(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
-	conf.ChatAI.StoreConfig.Enabled = true
-	conf.ChatAI.StoreConfig.InactivityTimeout = "not-a-duration"
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.StoreConfig.Enabled = true
+	conf.AI.ChatAI.StoreConfig.InactivityTimeout = "not-a-duration"
 
 	storeCfg := LoadAIStoreConfig(conf)
 

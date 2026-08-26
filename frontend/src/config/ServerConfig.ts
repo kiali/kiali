@@ -72,12 +72,16 @@ const computeValidDurations = (cfg: ComputedServerConfig): void => {
 const defaultServerConfig: ComputedServerConfig = {
   ambientEnabled: false,
   authStrategy: '',
-  chatAI: {
+  ai: {
     enabled: false,
-    providers: [],
-    defaultProvider: '',
-    store: {
-      enabled: false
+    chatAI: {
+      allowed: false,
+      enabled: false,
+      providers: [],
+      defaultProvider: '',
+      store: {
+        enabled: false
+      }
     }
   },
   clusters: {},

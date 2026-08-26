@@ -620,9 +620,10 @@ func TestValidateSigningKeyLength(t *testing.T) {
 func TestValidateAI(t *testing.T) {
 	newValidConfig := func() *Config {
 		conf := NewConfig()
-		conf.ChatAI.Enabled = true
-		conf.ChatAI.DefaultProvider = "provider-1"
-		conf.ChatAI.Providers = []ProviderConfig{
+		conf.AI.Enabled = true
+		conf.AI.ChatAI.Enabled = true
+		conf.AI.ChatAI.DefaultProvider = "provider-1"
+		conf.AI.ChatAI.Providers = []ProviderConfig{
 			{
 				Name:         "provider-1",
 				Type:         OpenAIProvider,
@@ -656,165 +657,165 @@ func TestValidateAI(t *testing.T) {
 		},
 		"global tool filter duplicate enabled_tools": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Tools.EnabledTools = []string{"get_logs", "get_logs"}
+				conf.AI.ChatAI.Tools.EnabledTools = []string{"get_logs", "get_logs"}
 			},
 			expectErr: "chat_ai.tools.enabled_tools contains duplicate name",
 		},
 		"global tool filter overlap is allowed": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Tools.EnabledTools = []string{"get_logs"}
-				conf.ChatAI.Tools.DisabledTools = []string{"get_logs"}
+				conf.AI.ChatAI.Tools.EnabledTools = []string{"get_logs"}
+				conf.AI.ChatAI.Tools.DisabledTools = []string{"get_logs"}
 			},
 			expectErr: "",
 		},
 		"provider tool filter trims whitespace": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Tools.EnabledTools = []string{" get_logs "}
+				conf.AI.ChatAI.Providers[0].Tools.EnabledTools = []string{" get_logs "}
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, []string{"get_logs"}, conf.ChatAI.Providers[0].Tools.EnabledTools)
+				assert.Equal(t, []string{"get_logs"}, conf.AI.ChatAI.Providers[0].Tools.EnabledTools)
 			},
 		},
 		"provider tool filter duplicate disabled_tools": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Tools.DisabledTools = []string{"get_logs", "get_logs"}
+				conf.AI.ChatAI.Providers[0].Tools.DisabledTools = []string{"get_logs", "get_logs"}
 			},
 			expectErr: "chat_ai.providers[\"provider-1\"].tools.disabled_tools contains duplicate name",
 		},
 		"default provider disabled": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Enabled = false
+				conf.AI.ChatAI.Providers[0].Enabled = false
 			},
 			expectErr: "default_provider",
 		},
 		"default model disabled": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Models[0].Enabled = false
+				conf.AI.ChatAI.Providers[0].Models[0].Enabled = false
 			},
 			expectErr: "default_model",
 		},
 		"invalid provider type": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = ProviderType("bad")
+				conf.AI.ChatAI.Providers[0].Type = ProviderType("bad")
 			},
 			expectErr: "type",
 		},
 		"empty provider type defaults to openai": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = ""
+				conf.AI.ChatAI.Providers[0].Type = ""
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, OpenAIProvider, conf.ChatAI.Providers[0].Type)
+				assert.Equal(t, OpenAIProvider, conf.AI.ChatAI.Providers[0].Type)
 			},
 		},
 		"default provider type defaults to openai": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = DefaultProviderType
+				conf.AI.ChatAI.Providers[0].Type = DefaultProviderType
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, OpenAIProvider, conf.ChatAI.Providers[0].Type)
+				assert.Equal(t, OpenAIProvider, conf.AI.ChatAI.Providers[0].Type)
 			},
 		},
 		"invalid provider config": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Config = ProviderConfigType("bad")
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigType("bad")
 			},
 			expectErr: "config",
 		},
 		"empty provider config defaults": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Config = ""
+				conf.AI.ChatAI.Providers[0].Config = ""
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+				assert.Equal(t, DefaultProviderConfigType, conf.AI.ChatAI.Providers[0].Config)
 			},
 		},
 		"openai config azure is valid": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = OpenAIProvider
-				conf.ChatAI.Providers[0].Config = OpenAIProviderConfigAzure
+				conf.AI.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.AI.ChatAI.Providers[0].Config = OpenAIProviderConfigAzure
 			},
 			expectErr: "",
 		},
 		"openai config gemini is valid": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = OpenAIProvider
-				conf.ChatAI.Providers[0].Config = ProviderConfigGemini
+				conf.AI.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigGemini
 			},
 			expectErr: "",
 		},
 		"openai config invalid for type": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = OpenAIProvider
-				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+				conf.AI.ChatAI.Providers[0].Type = OpenAIProvider
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
 			},
 			expectErr: "config",
 		},
 		"anthropic config default is valid": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = AnthropicProvider
-				conf.ChatAI.Providers[0].Config = DefaultProviderConfigType
+				conf.AI.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.AI.ChatAI.Providers[0].Config = DefaultProviderConfigType
 			},
 			expectErr: "",
 		},
 		"anthropic config empty defaults to default": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = AnthropicProvider
-				conf.ChatAI.Providers[0].Config = ""
+				conf.AI.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.AI.ChatAI.Providers[0].Config = ""
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+				assert.Equal(t, DefaultProviderConfigType, conf.AI.ChatAI.Providers[0].Config)
 			},
 		},
 		"anthropic config invalid for type": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = AnthropicProvider
-				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+				conf.AI.ChatAI.Providers[0].Type = AnthropicProvider
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
 			},
 			expectErr: "config",
 		},
 		"google config must be gemini": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = GoogleProvider
-				conf.ChatAI.Providers[0].Config = ""
+				conf.AI.ChatAI.Providers[0].Type = GoogleProvider
+				conf.AI.ChatAI.Providers[0].Config = ""
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, ProviderConfigGemini, conf.ChatAI.Providers[0].Config)
+				assert.Equal(t, ProviderConfigGemini, conf.AI.ChatAI.Providers[0].Config)
 			},
 		},
 		"google config gemini is valid": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = GoogleProvider
-				conf.ChatAI.Providers[0].Config = ProviderConfigGemini
+				conf.AI.ChatAI.Providers[0].Type = GoogleProvider
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigGemini
 			},
 			expectErr: "",
 		},
 		"google config empty defaults to gemini": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = GoogleProvider
-				conf.ChatAI.Providers[0].Config = ""
+				conf.AI.ChatAI.Providers[0].Type = GoogleProvider
+				conf.AI.ChatAI.Providers[0].Config = ""
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, ProviderConfigGemini, conf.ChatAI.Providers[0].Config)
+				assert.Equal(t, ProviderConfigGemini, conf.AI.ChatAI.Providers[0].Config)
 			},
 		},
 		"google config invalid for type": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Type = GoogleProvider
-				conf.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
+				conf.AI.ChatAI.Providers[0].Type = GoogleProvider
+				conf.AI.ChatAI.Providers[0].Config = ProviderConfigType("not-supported")
 			},
 			expectErr: "config",
 		},
 		"disabled provider skips validation": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+				conf.AI.ChatAI.Providers = append(conf.AI.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-2",
 					Type:         ProviderType("bad"),
 					Config:       ProviderConfigType("bad"),
@@ -827,19 +828,19 @@ func TestValidateAI(t *testing.T) {
 		},
 		"default provider not found": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.DefaultProvider = "missing"
+				conf.AI.ChatAI.DefaultProvider = "missing"
 			},
 			expectErr: "not found in providers",
 		},
 		"default model not found": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].DefaultModel = "missing"
+				conf.AI.ChatAI.Providers[0].DefaultModel = "missing"
 			},
 			expectErr: "not found in models",
 		},
 		"duplicate provider name": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+				conf.AI.ChatAI.Providers = append(conf.AI.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-1",
 					Type:         OpenAIProvider,
 					Config:       DefaultProviderConfigType,
@@ -862,7 +863,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"duplicate model name in provider": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
+				conf.AI.ChatAI.Providers[0].Models = append(conf.AI.ChatAI.Providers[0].Models, AIModel{
 					Name:        "model-1",
 					Model:       "gpt-4",
 					Description: "duplicate model",
@@ -875,7 +876,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"same model name across providers": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers = append(conf.ChatAI.Providers, ProviderConfig{
+				conf.AI.ChatAI.Providers = append(conf.AI.ChatAI.Providers, ProviderConfig{
 					Name:         "provider-2",
 					Type:         OpenAIProvider,
 					Config:       DefaultProviderConfigType,
@@ -898,21 +899,21 @@ func TestValidateAI(t *testing.T) {
 		},
 		"missing key when provider key empty": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Key = ""
-				conf.ChatAI.Providers[0].Models[0].Key = ""
+				conf.AI.ChatAI.Providers[0].Key = ""
+				conf.AI.ChatAI.Providers[0].Models[0].Key = ""
 			},
 			expectErr: "requires a key",
 		},
 		"provider key empty but model has key": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Key = ""
-				conf.ChatAI.Providers[0].Models[0].Key = "model-key"
+				conf.AI.ChatAI.Providers[0].Key = ""
+				conf.AI.ChatAI.Providers[0].Models[0].Key = "model-key"
 			},
 			expectErr: "",
 		},
 		"disabled model skips key validation": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Models = append(conf.ChatAI.Providers[0].Models, AIModel{
+				conf.AI.ChatAI.Providers[0].Models = append(conf.AI.ChatAI.Providers[0].Models, AIModel{
 					Name:        "model-2",
 					Model:       "gpt-4",
 					Description: "disabled model",
@@ -929,22 +930,22 @@ func TestValidateAI(t *testing.T) {
 		// one, and that check is enforced in getProviderOptions at runtime.
 		"endpoint is optional when both model and provider endpoint are empty": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Endpoint = ""
-				conf.ChatAI.Providers[0].Models[0].Endpoint = ""
+				conf.AI.ChatAI.Providers[0].Endpoint = ""
+				conf.AI.ChatAI.Providers[0].Models[0].Endpoint = ""
 			},
 			expectErr: "",
 		},
 		"model endpoint overrides empty provider endpoint": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Endpoint = ""
-				conf.ChatAI.Providers[0].Models[0].Endpoint = "https://model.example.com"
+				conf.AI.ChatAI.Providers[0].Endpoint = ""
+				conf.AI.ChatAI.Providers[0].Models[0].Endpoint = "https://model.example.com"
 			},
 			expectErr: "",
 		},
 		"provider endpoint used when model endpoint is empty": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0].Endpoint = "https://provider.example.com"
-				conf.ChatAI.Providers[0].Models[0].Endpoint = ""
+				conf.AI.ChatAI.Providers[0].Endpoint = "https://provider.example.com"
+				conf.AI.ChatAI.Providers[0].Models[0].Endpoint = ""
 			},
 			expectErr: "",
 		},
@@ -952,7 +953,7 @@ func TestValidateAI(t *testing.T) {
 		// ── LightSpeed-specific cases ──────────────────────────────────────────
 		"lightspeed valid with endpoint and no models": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -963,7 +964,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"lightspeed missing endpoint errors": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:    "provider-1",
 					Type:    LightSpeedProvider,
 					Enabled: true,
@@ -974,7 +975,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"lightspeed config empty defaults to DefaultProviderConfigType": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -984,12 +985,12 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "",
 			postValidate: func(t *testing.T, conf *Config) {
-				assert.Equal(t, DefaultProviderConfigType, conf.ChatAI.Providers[0].Config)
+				assert.Equal(t, DefaultProviderConfigType, conf.AI.ChatAI.Providers[0].Config)
 			},
 		},
 		"lightspeed invalid config type errors": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Config:   ProviderConfigType("not-supported"),
@@ -1001,7 +1002,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"lightspeed does not require default_model": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:         "provider-1",
 					Type:         LightSpeedProvider,
 					Enabled:      true,
@@ -1015,7 +1016,7 @@ func TestValidateAI(t *testing.T) {
 			// LightSpeed authenticates via the Kiali user's Kubernetes bearer
 			// token at request time, so no static API key is needed in the config.
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -1029,7 +1030,7 @@ func TestValidateAI(t *testing.T) {
 			// Even if someone defines models (which is optional), neither model
 			// nor provider key is validated for LightSpeed.
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -1044,7 +1045,7 @@ func TestValidateAI(t *testing.T) {
 		},
 		"lightspeed does not require models list": {
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -1058,7 +1059,7 @@ func TestValidateAI(t *testing.T) {
 			// Models that would fail key/endpoint checks for other provider types
 			// are accepted for LightSpeed because model-level validation is skipped.
 			mutate: func(conf *Config) {
-				conf.ChatAI.Providers[0] = ProviderConfig{
+				conf.AI.ChatAI.Providers[0] = ProviderConfig{
 					Name:     "provider-1",
 					Type:     LightSpeedProvider,
 					Enabled:  true,
@@ -1097,6 +1098,111 @@ func TestValidateAI(t *testing.T) {
 			assert.Contains(t, err.Error(), tc.expectErr)
 		})
 	}
+}
+
+// TestUnmarshal_ChatAIMigration verifies that the deprecated top-level "chat_ai" yaml
+// setting is migrated into the new "ai.chat_ai" location, and that the new location
+// always wins when both are present.
+func TestUnmarshal_ChatAIMigration(t *testing.T) {
+	deprecatedChatAIYAML := `
+chat_ai:
+  enabled: true
+  default_provider: openai
+  max_tool_iterations: 7
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    key: deprecated-key
+`
+
+	newAIYAML := `
+ai:
+  enabled: true
+  chat_ai:
+    enabled: true
+    default_provider: openai
+    max_tool_iterations: 9
+    providers:
+    - name: openai
+      type: openai
+      config: default
+      enabled: true
+      key: new-key
+`
+
+	t.Run("only deprecated chat_ai is migrated to ai.chat_ai", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal(deprecatedChatAIYAML)
+		require.NoError(t, err)
+
+		// The content was moved to the new location...
+		assert.True(t, conf.AI.Enabled, "AI.Enabled should be turned on when the deprecated chat_ai.enabled was true")
+		assert.True(t, conf.AI.ChatAI.Enabled)
+		assert.Equal(t, "openai", conf.AI.ChatAI.DefaultProvider)
+		assert.Equal(t, 7, conf.AI.ChatAI.MaxToolIterations)
+		require.Len(t, conf.AI.ChatAI.Providers, 1)
+		assert.Equal(t, Credential("deprecated-key"), conf.AI.ChatAI.Providers[0].Key)
+
+		// ...and the deprecated field was cleared so there is a single source of truth.
+		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
+
+		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat_ai'")
+	})
+
+	t.Run("only ai.chat_ai present requires no migration", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal(newAIYAML)
+		require.NoError(t, err)
+
+		assert.True(t, conf.AI.Enabled)
+		assert.Equal(t, 9, conf.AI.ChatAI.MaxToolIterations)
+		require.Len(t, conf.AI.ChatAI.Providers, 1)
+		assert.Equal(t, Credential("new-key"), conf.AI.ChatAI.Providers[0].Key)
+
+		// Nothing was deprecated in the input, so no migration should have happened
+		// and no deprecation notice should have been logged.
+		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
+		assert.NotContains(t, buf.String(), "DEPRECATION NOTICE")
+	})
+
+	t.Run("neither chat_ai nor ai.chat_ai present leaves defaults untouched", func(t *testing.T) {
+		conf, err := Unmarshal("server:\n  port: 20001\n")
+		require.NoError(t, err)
+
+		defaults := NewConfig()
+		assert.Equal(t, defaults.AI, conf.AI)
+		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
+	})
+
+	t.Run("both present: ai.chat_ai wins and deprecated chat_ai is discarded", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal(deprecatedChatAIYAML + newAIYAML)
+		require.NoError(t, err)
+
+		// The new "ai.chat_ai" content must win...
+		assert.Equal(t, 9, conf.AI.ChatAI.MaxToolIterations)
+		require.Len(t, conf.AI.ChatAI.Providers, 1)
+		assert.Equal(t, Credential("new-key"), conf.AI.ChatAI.Providers[0].Key)
+
+		// ...and the deprecated field must be discarded, not merged.
+		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
+
+		assert.Contains(t, buf.String(), "Both the deprecated 'chat_ai' setting and the new 'ai.chat_ai' setting are configured")
+	})
 }
 
 func TestIsRBACDisabled(t *testing.T) {

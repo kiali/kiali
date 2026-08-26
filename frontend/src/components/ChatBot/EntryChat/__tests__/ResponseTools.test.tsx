@@ -146,8 +146,8 @@ describe('ResponseTools', () => {
       fireEvent.click(button);
 
       const state = store.getState();
-      expect(state.aiChat.openTool.get('id')).toBe('t1');
-      expect(state.aiChat.openTool.get('chatEntryIndex')).toBe(0);
+      expect(state.ai.chatAI.openTool.get('id')).toBe('t1');
+      expect(state.ai.chatAI.openTool.get('chatEntryIndex')).toBe(0);
     });
   });
 });

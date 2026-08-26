@@ -87,6 +87,7 @@ export interface ClusterConfig {
 }
 
 export interface ChatbotAI {
+  allowed?: boolean;
   defaultProvider?: string;
   enabled?: boolean;
   providers?: {
