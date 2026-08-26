@@ -10,7 +10,7 @@ import type { DurationInSeconds, Password, TimeInSeconds, UserName } from '../ty
 import { HTTP_VERBS } from '../types/Common';
 import type { DashboardModel } from 'types/Dashboards';
 import type { GrafanaInfo } from '../types/GrafanaInfo';
-import type { ChatSessionUsageMetric } from '../types/Chatbot';
+import type { AIUsageResponse, ChatSessionUsageMetric } from '../types/Chatbot';
 import type { GraphDefinition, GraphElementsQuery, NodeParamsType } from '../types/Graph';
 import { NodeType } from '../types/Graph';
 import type {
@@ -1577,6 +1577,24 @@ export const deleteChatConversations = (conversationIDs: string): Promise<ApiRes
 
 export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
   return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
+};
+
+export const getAIUsage = (
+  windowSecs?: number,
+  step?: number,
+  provider?: string
+): Promise<ApiResponse<AIUsageResponse>> => {
+  const params: { [key: string]: string } = {};
+  if (windowSecs) {
+    params.window = windowSecs.toString();
+  }
+  if (step) {
+    params.step = step.toString();
+  }
+  if (provider) {
+    params.provider = provider;
+  }
+  return newRequest<AIUsageResponse>(HTTP_VERBS.GET, urls.chatAIUsage, params, {});
 };
 
 export const getOverviewAppRates = (): Promise<

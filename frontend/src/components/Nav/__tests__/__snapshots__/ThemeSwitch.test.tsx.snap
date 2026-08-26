@@ -5,7 +5,6 @@ exports[`ThemeSwitch renders > dark theme 1`] = `
   <div
     aria-label="Theme switch"
     class="pf-v6-c-toggle-group"
-    data-test="theme-switch"
     role="group"
   >
     <div
@@ -89,7 +88,6 @@ exports[`ThemeSwitch renders > light theme 1`] = `
   <div
     aria-label="Theme switch"
     class="pf-v6-c-toggle-group"
-    data-test="theme-switch"
     role="group"
   >
     <div

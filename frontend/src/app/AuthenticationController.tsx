@@ -2,39 +2,37 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { authenticationConfig, isAuthStrategyOAuth } from '../config/AuthenticationConfig';
-import type { KialiAppState } from '../store/Store';
-import { LoginStatus } from '../store/Store';
+import { KialiAppState, LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { MessageType } from '../types/NotificationCenter';
-import type { KialiDispatch } from '../types/Redux';
+import { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
-import { getKioskMode } from '../utils/SearchParamUtils';
+import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
 import { addError, addInfo, addWarning } from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
-import type { TracingInfo } from '../types/TracingInfo';
+import { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
 import { location, router } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
-import type { Namespace } from 'types/Namespace';
+import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import type { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toAmbientRate, toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
-import type { StatusState } from 'types/StatusState';
-import { StatusKey } from 'types/StatusState';
+import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
-import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
+import { getKialiTheme } from 'utils/ThemeUtils';
 import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import type { ChatAIConfig } from 'types/Chatbot';
+import { ChatAIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -238,7 +236,7 @@ class AuthenticationControllerComponent extends React.Component<
 
     if (uiDefaults) {
       // Set I18n language
-      const language = store.getState().globalState.language || uiDefaults.i18n.language;
+      let language = store.getState().globalState.language || uiDefaults.i18n.language;
 
       // Set language to default English value to force React re-render on language change
       store.dispatch(GlobalActions.setLanguage('en'));
@@ -336,24 +334,19 @@ class AuthenticationControllerComponent extends React.Component<
   };
 
   private setDocLayout = (): void => {
-    const kiosk = getKioskMode();
-
-    // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
-    // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
-    // do not overwrite console classes.
-    if (isParentOwnedTheme()) {
-      syncReduxThemeFromDocument();
-    } else {
-      const theme = getKialiTheme();
-      applyDocumentTheme(theme);
-      store.dispatch(GlobalActions.setTheme(theme));
+    // Set theme
+    const theme = getKialiTheme();
+    if (theme === Theme.DARK) {
+      document.documentElement.classList.add(PF_THEME_DARK);
     }
+    store.dispatch(GlobalActions.setTheme(theme));
 
     // Set Kiosk mode
-    if (kiosk) {
+    const isKiosk = isKioskMode();
+    if (isKiosk) {
       document.body.classList.add('kiosk');
     }
-    store.dispatch(GlobalActions.setKiosk(kiosk));
+    store.dispatch(GlobalActions.setKiosk(getKioskMode()));
   };
 
   private processServerStatus = (status: StatusState): void => {
