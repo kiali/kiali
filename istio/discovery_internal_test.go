@@ -514,6 +514,7 @@ func TestShouldLoadMeshConfigFile(t *testing.T) {
 				ManagesExternal: true,
 				MeshConfigFile:  &models.MeshConfigFileReference{ConfigMapKey: "mesh", ConfigMapName: "istio"},
 			},
+			expected: true,
 		},
 		"non-standard ConfigMap key": {
 			controlPlane: &models.ControlPlane{
@@ -543,6 +544,49 @@ func TestShouldLoadMeshConfigFile(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			assert.Equal(t, tt.expected, shouldLoadMeshConfigFile(tt.controlPlane, "istio"))
+		})
+	}
+}
+
+func TestCleanContainerPath(t *testing.T) {
+	tests := map[string]struct {
+		input    string
+		expected string
+	}{
+		"absolute path": {
+			input:    "/etc/istio/config",
+			expected: "/etc/istio/config",
+		},
+		"relative path": {
+			input:    "etc/istio/config",
+			expected: "/etc/istio/config",
+		},
+		"path with dot prefix": {
+			input:    "./etc/istio/config",
+			expected: "/etc/istio/config",
+		},
+		"path with redundant slashes": {
+			input:    "/etc//istio///config",
+			expected: "/etc/istio/config",
+		},
+		"path with traversal - should reject": {
+			input:    "/etc/istio/../../../etc/passwd",
+			expected: "", // Rejected due to .. in cleaned path
+		},
+		"path that cleans to root": {
+			input:    "/",
+			expected: "/",
+		},
+		"path with dot segments": {
+			input:    "/etc/./istio/./config",
+			expected: "/etc/istio/config",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			result := cleanContainerPath(tt.input)
+			assert.Equal(t, tt.expected, result, "cleanContainerPath(%q) = %q, expected %q", tt.input, result, tt.expected)
 		})
 	}
 }

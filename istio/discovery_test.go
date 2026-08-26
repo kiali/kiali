@@ -2687,6 +2687,17 @@ func TestMountedStandardMeshConfigRemainsStandard(t *testing.T) {
 	require.Equal("cluster.local", mesh.ControlPlanes[0].MeshConfig.TrustDomain)
 }
 
+// TestMountedMeshConfigFallsBackToStandardConfig verifies that when file-based mesh
+// configuration fails to load (ConfigMap missing, key missing, or parse error), Kiali
+// falls back to the standard ConfigMap and displays a warning to the user.
+//
+// This is important because the config precedence order is:
+//  1. File config (mounted via --meshConfig flag) - HIGHEST priority
+//  2. Standard ConfigMap (istio ConfigMap in control plane namespace)
+//  3. Shared ConfigMap (from SHARED_MESH_CONFIG env var) - LOWEST priority
+//
+// When file config is attempted but fails, we don't want to show empty config - we fall
+// back to the next level (standard ConfigMap) and warn the user about the failure.
 func TestMountedMeshConfigFallsBackToStandardConfig(t *testing.T) {
 	cases := map[string]struct {
 		customConfig *core_v1.ConfigMap

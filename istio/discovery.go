@@ -203,7 +203,8 @@ func shouldLoadMeshConfigFile(controlPlane *models.ControlPlane, standardConfigM
 	if controlPlane.MeshConfigFile == nil {
 		return false
 	}
-	return controlPlane.MeshConfigFile.ConfigMapName != standardConfigMapName ||
+	return controlPlane.ID != controlPlane.Cluster.Name ||
+		controlPlane.MeshConfigFile.ConfigMapName != standardConfigMapName ||
 		controlPlane.MeshConfigFile.ConfigMapKey != "mesh"
 }
 
@@ -377,13 +378,25 @@ func isValidContainerPath(filePath string) bool {
 }
 
 func cleanContainerPath(filePath string) string {
+	// Reject paths with traversal sequences before cleaning
+	if strings.Contains(filePath, "..") {
+		return ""
+	}
+
 	if strings.HasPrefix(filePath, "./") {
 		filePath = strings.TrimPrefix(filePath, ".")
 	}
 	if !path.IsAbs(filePath) {
 		filePath = "/" + filePath
 	}
-	return path.Clean(filePath)
+	cleaned := path.Clean(filePath)
+
+	// Validate the cleaned path is absolute
+	if !path.IsAbs(cleaned) {
+		return ""
+	}
+
+	return cleaned
 }
 
 func deepMerge(dst, src map[string]interface{}) {
