@@ -82,7 +82,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
       {
         id: 'filterKiali',
         isChecked: showKiali,
-        labelText: t('Kiali'),
+        labelText: 'Kiali',
         onChange: toggleKiali,
         tooltip: <div>{t('When enabled, include Kiali in the mesh topology.')}</div>
       }
