@@ -46,24 +46,36 @@ Feature: Kiali Mesh page
   @lpinterop
   # TODO: offline - no grafana.
   Scenario: Grafana Infra
-    When user selects mesh node with label "Grafana"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
 
   @perses
   Scenario: Perses Infra
-    When user selects mesh node with label "Perses"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Perses"
     Then user sees "Perses" node side panel
 
   @core-caching
   # TODO: offline - no tracing.
   Scenario: Tracing Infra
-    When user selects tracing mesh node
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects tracing mesh node
     Then user sees tracing node side panel
 
   @core-caching
   @lpinterop
   Scenario: Prometheus Infra
-    When user selects mesh node with label "Prometheus"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
   @core-caching
@@ -156,7 +168,10 @@ Feature: Kiali Mesh page
   @component-health-upscale
   @core-2
   Scenario: Grafana Infra unreachable
-    When user scales to "0" the "grafana" in namespace "istio-system"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user scales to "0" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
@@ -184,7 +199,10 @@ Feature: Kiali Mesh page
   @core-caching
   # TODO: offline - no tracing
   Scenario: User opens and interacts with the Trace Configuration modal
-    When user selects tracing mesh node
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects tracing mesh node
     And user opens the Trace Configuration modal
     Then user sees the Trace Configuration modal
     And user sees the Discovery and Tester tabs

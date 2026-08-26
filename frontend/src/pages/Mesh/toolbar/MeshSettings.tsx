@@ -84,7 +84,9 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         isChecked: showKiali,
         labelText: 'Kiali',
         onChange: toggleKiali,
-        tooltip: <div>{t('When enabled, include Kiali in the mesh topology.')}</div>
+        tooltip: (
+          <div>{t('When enabled, include Kiali and the external observability services in the mesh topology.')}</div>
+        )
       }
     ];
 
