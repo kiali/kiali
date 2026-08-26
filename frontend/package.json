@@ -191,6 +191,7 @@
   },
   "resolutions": {
     "dompurify": "^3.4.7",
+    "fflate": "^0.8.3",
     "js-cookie": "^3.0.8",
     "lodash": "^4.18.1",
     "protobufjs": "^7.6.5",
