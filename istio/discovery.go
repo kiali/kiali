@@ -413,7 +413,46 @@ func deepMerge(dst, src map[string]interface{}) {
 	}
 }
 
+func mergeExtensionProviders(shared, local []*istiov1alpha1.MeshConfig_ExtensionProvider) []*istiov1alpha1.MeshConfig_ExtensionProvider {
+	merged := make([]*istiov1alpha1.MeshConfig_ExtensionProvider, len(shared))
+	copy(merged, shared)
+
+	providerIndexes := make(map[string]int, len(merged))
+	for i, provider := range merged {
+		providerIndexes[provider.Name] = i
+	}
+	for _, provider := range local {
+		if i, found := providerIndexes[provider.Name]; found {
+			merged[i] = provider
+			continue
+		}
+		providerIndexes[provider.Name] = len(merged)
+		merged = append(merged, provider)
+	}
+	return merged
+}
+
+func mergeTrustDomainAliases(shared, local []string) []string {
+	aliases := make(map[string]struct{}, len(shared)+len(local))
+	for _, alias := range shared {
+		aliases[alias] = struct{}{}
+	}
+	for _, alias := range local {
+		aliases[alias] = struct{}{}
+	}
+
+	merged := make([]string, 0, len(aliases))
+	for alias := range aliases {
+		merged = append(merged, alias)
+	}
+	slices.Sort(merged)
+	return merged
+}
+
 func fusionMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
+	mergedExtensionProviders := mergeExtensionProviders(mesh.ExtensionProviders, into.ExtensionProviders)
+	mergedTrustDomainAliases := mergeTrustDomainAliases(mesh.TrustDomainAliases, into.TrustDomainAliases)
+
 	a, err := into.MarshalJSON()
 	if err != nil {
 		return err
@@ -435,7 +474,12 @@ func fusionMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(mergedJSON, &into)
+	if err := json.Unmarshal(mergedJSON, &into); err != nil {
+		return err
+	}
+	into.ExtensionProviders = mergedExtensionProviders
+	into.TrustDomainAliases = mergedTrustDomainAliases
+	return nil
 }
 
 func mergeMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {

@@ -2653,6 +2653,193 @@ trustDomain: remote.local
 	require.True(controlPlane.MeshConfig.EnableTracing)
 }
 
+func TestExternalControlPlaneSharedAndFileConfigMerging(t *testing.T) {
+	tests := map[string]struct {
+		expectedAliases   []string
+		expectedProviders map[string]string
+		localMesh         string
+		sharedMesh        string
+	}{
+		"file lists are used when shared lists are absent": {
+			expectedAliases: []string{"file.example.com"},
+			expectedProviders: map[string]string{
+				"file-otel": "file-collector.istio-system.svc.cluster.local",
+			},
+			localMesh: `
+extensionProviders:
+- name: file-otel
+  opentelemetry:
+    port: 4317
+    service: file-collector.istio-system.svc.cluster.local
+trustDomainAliases:
+- file.example.com
+`,
+			sharedMesh: "",
+		},
+		"shared lists are inherited when file lists are absent": {
+			expectedAliases: []string{"shared.example.com"},
+			expectedProviders: map[string]string{
+				"shared-otel": "shared-collector.istio-system.svc.cluster.local",
+			},
+			localMesh: "rootNamespace: external-istiod",
+			sharedMesh: `
+extensionProviders:
+- name: shared-otel
+  opentelemetry:
+    port: 4317
+    service: shared-collector.istio-system.svc.cluster.local
+trustDomainAliases:
+- shared.example.com
+`,
+		},
+		"shared and file trust domain aliases are combined": {
+			expectedAliases:   []string{"file.example.com", "shared.example.com", "used-by-both.example.com"},
+			expectedProviders: map[string]string{},
+			localMesh: `
+trustDomainAliases:
+- file.example.com
+- used-by-both.example.com
+`,
+			sharedMesh: `
+trustDomainAliases:
+- shared.example.com
+- used-by-both.example.com
+`,
+		},
+		"shared and file extension providers are merged by name": {
+			expectedAliases: []string{},
+			expectedProviders: map[string]string{
+				"file-otel":        "file-collector.istio-system.svc.cluster.local",
+				"shared-only-otel": "shared-only-collector.istio-system.svc.cluster.local",
+				"shared-otel":      "file-override.istio-system.svc.cluster.local",
+			},
+			localMesh: `
+extensionProviders:
+- name: file-otel
+  opentelemetry:
+    port: 4317
+    service: file-collector.istio-system.svc.cluster.local
+- name: shared-otel
+  opentelemetry:
+    port: 4317
+    service: file-override.istio-system.svc.cluster.local
+`,
+			sharedMesh: `
+extensionProviders:
+- name: shared-only-otel
+  opentelemetry:
+    port: 4317
+    service: shared-only-collector.istio-system.svc.cluster.local
+- name: shared-otel
+  opentelemetry:
+    port: 4317
+    service: shared-collector.istio-system.svc.cluster.local
+`,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "external"
+
+			istiod := fakeIstiodDeployment("remote", true)
+			istiod.Namespace = "external-istiod"
+			istiod.Spec.Template.Spec.Containers[0].Env = append(istiod.Spec.Template.Spec.Containers[0].Env, core_v1.EnvVar{
+				Name:  "SHARED_MESH_CONFIG",
+				Value: "istio",
+			})
+			istiod.Spec.Template.Spec.Containers[0].VolumeMounts = []core_v1.VolumeMount{{
+				MountPath: "/etc/istio/config",
+				Name:      "config-volume",
+			}}
+			istiod.Spec.Template.Spec.Volumes = []core_v1.Volume{{
+				Name: "config-volume",
+				VolumeSource: core_v1.VolumeSource{ConfigMap: &core_v1.ConfigMapVolumeSource{
+					LocalObjectReference: core_v1.LocalObjectReference{Name: "istio-custom"},
+				}},
+			}}
+
+			clients := map[string]kubernetes.ClientInterface{
+				"external": kubetest.NewFakeK8sClient(
+					&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
+					istiod,
+					&core_v1.ConfigMap{
+						ObjectMeta: v1.ObjectMeta{Name: "istio-custom", Namespace: "external-istiod"},
+						Data: map[string]string{
+							"mesh": `
+defaultConfig:
+  holdApplicationUntilProxyStarts: true
+  proxyMetadata:
+    FILE_ONLY: file
+    OVERRIDDEN: file
+trustDomain: file.example
+` + tc.localMesh,
+							"meshNetworks": `
+networks:
+  network1:
+    endpoints:
+    - fromRegistry: remote
+  network2:
+    gateways:
+    - address: 192.0.2.1
+      port: 15443
+`,
+						},
+					},
+					certtest.FakeIstioCertificateConfigMap("external-istiod"),
+				),
+				"remote": kubetest.NewFakeK8sClient(
+					&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "external-istiod"}},
+					&core_v1.ConfigMap{
+						ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "external-istiod"},
+						Data: map[string]string{"mesh": `
+defaultConfig:
+  discoveryAddress: istiod.remote.svc:15012
+  proxyMetadata:
+    OVERRIDDEN: shared
+    SHARED_ONLY: shared
+enableTracing: true
+trustDomain: shared.example
+` + tc.sharedMesh},
+					},
+				),
+			}
+			kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+			discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+			mesh, err := discovery.Mesh(context.Background())
+			require.NoError(err)
+			require.Len(mesh.ControlPlanes, 1)
+
+			effectiveMesh := mesh.ControlPlanes[0].Config.EffectiveConfig.ConfigMap.Mesh
+			require.Equal("file.example", effectiveMesh.TrustDomain)
+			require.True(effectiveMesh.EnableTracing)
+			require.Equal("istiod.remote.svc:15012", effectiveMesh.DefaultConfig.DiscoveryAddress)
+			require.True(effectiveMesh.DefaultConfig.HoldApplicationUntilProxyStarts.Value)
+			require.Equal(map[string]string{
+				"FILE_ONLY":   "file",
+				"OVERRIDDEN":  "file",
+				"SHARED_ONLY": "shared",
+			}, effectiveMesh.DefaultConfig.ProxyMetadata)
+			require.ElementsMatch(tc.expectedAliases, effectiveMesh.TrustDomainAliases)
+
+			effectiveNetworks := mesh.ControlPlanes[0].Config.EffectiveConfig.ConfigMap.MeshNetworks.Networks
+			require.ElementsMatch([]string{"network1", "network2"}, maps.Keys(effectiveNetworks))
+			require.Equal("remote", effectiveNetworks["network1"].Endpoints[0].GetFromRegistry())
+			require.Equal("192.0.2.1", effectiveNetworks["network2"].Gateways[0].GetAddress())
+			require.Equal(uint32(15443), effectiveNetworks["network2"].Gateways[0].Port)
+
+			providers := map[string]string{}
+			for _, provider := range effectiveMesh.ExtensionProviders {
+				providers[provider.Name] = provider.GetOpentelemetry().Service
+			}
+			require.Equal(tc.expectedProviders, providers)
+		})
+	}
+}
+
 func TestMountedStandardMeshConfigRemainsStandard(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
