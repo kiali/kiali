@@ -1014,28 +1014,29 @@ const (
 
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
-	AI                       AIConfig                            `yaml:"ai,omitempty"`
-	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"` // Deprecated: use AI.ChatAI instead (yaml: "ai.chat"). See migrateDeprecatedChatAI.
-	Clustering               Clustering                          `yaml:"clustering,omitempty"`
-	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
-	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
-	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
-	Identity                 security.Identity                   `yaml:",omitempty"`
-	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
-	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
-	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
-	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
-	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
-	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
-	ResolvedTLSPolicy        TLSPolicy                           `yaml:"-" json:"-"`
-	Server                   Server                              `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem `yaml:"additional_display_details,omitempty"`
+	AI                       AIConfig                `yaml:"ai,omitempty"`
+	Auth                     AuthConfig              `yaml:"auth,omitempty"`
+	// TODO remove this ChatAI when we no longer provide backward-compat support for the old chat_ai top-level setting
+	ChatAI            ChatAIConfig                        `yaml:"chat_ai,omitempty"` // Deprecated: use AI.ChatAI instead (yaml: "ai.chat"). See migrateDeprecatedChatAI.
+	Clustering        Clustering                          `yaml:"clustering,omitempty"`
+	Credentials       *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
+	CustomDashboards  dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
+	Deployment        DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions        []ExtensionConfig                   `yaml:"extensions,omitempty"`
+	ExternalServices  ExternalServices                    `yaml:"external_services,omitempty"`
+	HealthConfig      HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
+	Identity          security.Identity                   `yaml:",omitempty"`
+	InstallationTag   string                              `yaml:"installation_tag,omitempty"`
+	IstioLabels       IstioLabels                         `yaml:"istio_labels,omitempty"`
+	KialiFeatureFlags KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiInternal     KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
+	KubernetesConfig  KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken        LoginToken                          `yaml:"login_token,omitempty"`
+	RunConfig         *OfflineManifest                    `yaml:"runConfig,omitempty"`
+	RunMode           RunMode                             `yaml:"runMode,omitempty"`
+	ResolvedTLSPolicy TLSPolicy                           `yaml:"-" json:"-"`
+	Server            Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
