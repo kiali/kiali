@@ -55,6 +55,10 @@ hack/*.local.sh
 # Cursor — ignore all .cursor files
 .cursor/
 
+# OpenAI / Codex / ChatGPT Desktop
+.codex/
+.agents/
+
 # E2E testing files
 tests/integration/junit-rest-report.xml
 tests/integration/int-test.log
