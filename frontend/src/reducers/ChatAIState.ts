@@ -1,4 +1,5 @@
-import type { ChatAIState } from '../store/Store';
+import { combineReducers } from 'redux';
+import type { AIState, ChatAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
@@ -7,6 +8,7 @@ import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
+  allowed: false,
   alwaysNavigate: false,
   chatHistory: ImmutableList(),
   conversationID: '',
@@ -22,19 +24,22 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   selectedProvider: ''
 };
 
-// This Reducer allows changes to the 'globalState' portion of Redux Store
+// This Reducer manages the 'ai.chat' portion of Redux Store
 export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, action: KialiAppAction): ChatAIState => {
   switch (action.type) {
-    case getType(ChatAIActions.setChatAI):
+    case getType(ChatAIActions.setChatAI): {
+      // The backend may send "providers: null" (e.g. when ChatAI is disabled or unconfigured).
+      const providers = action.payload.providers ?? [];
+      const defaultProvider = providers.find(provider => provider.name === action.payload.defaultProvider);
       return updateState(state, {
+        allowed: action.payload.allowed,
         enabled: action.payload.enabled,
-        providers: action.payload.providers,
+        providers,
         defaultProvider: action.payload.defaultProvider,
         selectedProvider: action.payload.defaultProvider,
-        selectedModel:
-          action.payload.providers.find(provider => provider.name === action.payload.defaultProvider)?.defaultModel ||
-          action.payload.providers.find(provider => provider.name === action.payload.defaultProvider)?.models[0].name
+        selectedModel: defaultProvider?.defaultModel || defaultProvider?.models[0]?.name
       });
+    }
     case getType(ChatAIActions.setConversationID): {
       return updateState(state, { conversationID: action.payload.id ?? '' });
     }
@@ -96,3 +101,22 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return state;
   }
 };
+
+const INITIAL_AI_ENABLED_STATE = false;
+
+// The overall "AI" feature master switch. Today ChatAI is the only AI feature, so it mirrors
+// the ChatAI "enabled" flag, but it is kept separate so other AI features can toggle it independently.
+const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: KialiAppAction): boolean => {
+  switch (action.type) {
+    case getType(ChatAIActions.setChatAI):
+      return action.payload.enabled;
+    default:
+      return state;
+  }
+};
+
+// This Reducer allows changes to the 'ai' portion of Redux Store
+export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
+  chat: ChatAiStateReducer,
+  enabled: AiEnabledReducer
+});

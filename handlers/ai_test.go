@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -471,7 +472,7 @@ func setupChatAIHandlerForTest(t *testing.T, conf *config.Config) (http.Handler,
 
 func TestChatAI_DisabledReturnsError(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
 
@@ -491,7 +492,7 @@ func TestChatAI_DisabledReturnsError(t *testing.T) {
 
 func TestChatAI_InvalidRequestBody(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -516,7 +517,7 @@ func TestChatAI_InvalidRequestBody(t *testing.T) {
 
 func TestChatAI_ProviderNotFound(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -541,7 +542,7 @@ func TestChatAI_ProviderNotFound(t *testing.T) {
 
 func TestChatAI_AuthInfoMissingClusterName(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyToken
 	conf.KubernetesConfig.ClusterName = "primary-cluster"
 
@@ -619,7 +620,7 @@ func aiRequestsCounterValue(provider, model string) float64 {
 
 func TestChatAI_MetricsNotIncrementedOnProviderFailure(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -645,7 +646,7 @@ func TestChatAI_MetricsNotIncrementedOnProviderFailure(t *testing.T) {
 
 func TestChatAI_MetricsNotIncrementedOnDisabled(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
 
@@ -668,7 +669,7 @@ func TestChatAI_MetricsNotIncrementedOnDisabled(t *testing.T) {
 
 func TestChatAI_MetricsNotIncrementedOnBadRequest(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 
 	handler, _, _ := setupChatAIHandlerForTest(t, conf)
@@ -709,10 +710,10 @@ func openaiSSEResponse(content string) string {
 // chatAIConfWithFakeProvider builds a config that points the AI provider to the given endpoint.
 func chatAIConfWithFakeProvider(endpoint string) *config.Config {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
-	conf.ChatAI.DefaultProvider = "test-openai"
-	conf.ChatAI.Providers = []config.ProviderConfig{{
+	conf.AI.ChatAI.DefaultProvider = "test-openai"
+	conf.AI.ChatAI.Providers = []config.ProviderConfig{{
 		Name:         "test-openai",
 		Type:         config.OpenAIProvider,
 		Config:       config.DefaultProviderConfigType,
@@ -861,6 +862,104 @@ func TestChatAI_StreamingNotSupported(t *testing.T) {
 }
 
 // ========================================================================
+// ChatAI AllowedUsers tests
+// ========================================================================
+
+// TestChatAI_AllowedUsersBlocksUserNotInList covers the case where AllowedUsers is
+// non-empty and the requesting user is not part of it: the request must be rejected
+// with 403 before the AI provider is ever contacted.
+func TestChatAI_AllowedUsersBlocksUserNotInList(t *testing.T) {
+	var providerCalled int32
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&providerCalled, 1)
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("should not be reached"))
+	}))
+	defer fakeAI.Close()
+
+	// chatAIConfWithFakeProvider sets Auth.Strategy to anonymous, so the effective
+	// user for the AllowedUsers check is "anonymous" (see resolveChatAIUsageUserID/fallbackUserID).
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = []string{"someone-else"}
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "user not in AllowedUsers should be forbidden")
+	assert.Equal(t, int32(0), atomic.LoadInt32(&providerCalled), "AI provider must not be contacted when the user is blocked")
+
+	var payload map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&payload))
+	assert.Equal(t, "You are not allowed to use the ChatAI feature", payload["error"])
+}
+
+// TestChatAI_AllowedUsersEmptyListAllowsAnyUser covers the "no restriction" convention:
+// an empty/unset AllowedUsers list must allow every user through.
+func TestChatAI_AllowedUsersEmptyListAllowsAnyUser(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = nil // explicitly empty: no restriction
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "empty AllowedUsers should not restrict access")
+}
+
+// TestChatAI_AllowedUsersAllowsUserInList covers the case where AllowedUsers is
+// non-empty and the requesting user is part of it: the request must proceed normally.
+func TestChatAI_AllowedUsersAllowsUserInList(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = []string{"someone-else", "anonymous"}
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "user in AllowedUsers should be allowed")
+}
+
+// ========================================================================
 // DeleteConversations handler tests
 // ========================================================================
 
@@ -873,7 +972,7 @@ func withSessionID(sessionID string, hf http.HandlerFunc) http.HandlerFunc {
 
 func TestDeleteConversations_Success(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -905,7 +1004,7 @@ func TestDeleteConversations_Success(t *testing.T) {
 
 func TestDeleteConversations_MultipleIDs(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	for _, id := range []string{"conv-1", "conv-2", "conv-3"} {
@@ -942,7 +1041,7 @@ func TestDeleteConversations_MultipleIDs(t *testing.T) {
 
 func TestDeleteConversations_MissingParam(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
@@ -1002,7 +1101,7 @@ func TestDeleteConversations_NilStore(t *testing.T) {
 
 func TestDeleteConversations_NonexistentID(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	handler := withSessionID("test-session", DeleteConversations(conf, aiStore))
@@ -1023,7 +1122,7 @@ func TestDeleteConversations_NonexistentID(t *testing.T) {
 
 func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -1063,7 +1162,7 @@ func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
 
 func TestDeleteConversations_SessionScoping(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	aiStore := ai.NewAIStore(context.Background(), nil)
 
 	conv := &aiTypes.Conversation{
@@ -1100,7 +1199,7 @@ func TestDeleteConversations_SessionScoping(t *testing.T) {
 
 func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1130,7 +1229,7 @@ func TestChatPrompts_ReturnsAllPrompts(t *testing.T) {
 
 func TestChatPrompts_FilterByCategory(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1157,7 +1256,7 @@ func TestChatPrompts_FilterByCategory(t *testing.T) {
 
 func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 
@@ -1180,7 +1279,7 @@ func TestChatPrompts_FilterByCategory_NoResults(t *testing.T) {
 
 func TestChatPrompts_DisabledWhenChatAIOff(t *testing.T) {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, kubetest.NewFakeK8sClient())
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 

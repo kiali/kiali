@@ -95,7 +95,7 @@ describe('Prompt error handling', () => {
     });
 
     await waitFor(() => {
-      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      const lastEntry = store.getState().ai.chat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
       expect(lastEntry?.get('isStreaming')).toBe(false);
       const error = lastEntry?.get('error') as { message: string } | undefined;
       expect(error).toBeDefined();
@@ -118,7 +118,7 @@ describe('Prompt error handling', () => {
     });
 
     await waitFor(() => {
-      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      const lastEntry = store.getState().ai.chat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
       expect(lastEntry?.get('isStreaming')).toBe(false);
       expect(lastEntry?.get('error')).toBeDefined();
       expect(lastEntry?.get('who')).toBe('ai');
@@ -141,7 +141,7 @@ describe('Prompt error handling', () => {
     // AbortError is silently ignored — the AI entry keeps its state from the cancel action,
     // and no additional error field is set by the catch handler.
     await waitFor(() => {
-      const lastEntry = store.getState().aiChat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
+      const lastEntry = store.getState().ai.chat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
       expect(lastEntry?.get('error')).toBeUndefined();
     });
   });

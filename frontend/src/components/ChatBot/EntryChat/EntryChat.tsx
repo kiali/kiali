@@ -20,7 +20,7 @@ type EntryChatProps = {
 };
 
 export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
-  const entryObject = useSelector((state: KialiAppState) => state.aiChat.chatHistory.getIn([entryIndex])) as any;
+  const entryObject = useSelector((state: KialiAppState) => state.ai.chat.chatHistory.getIn([entryIndex])) as any;
   const entry = entryObject.toJS() as ChatEntry;
   const isDarkTheme = useKialiTheme() === Theme.DARK;
 

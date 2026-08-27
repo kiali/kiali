@@ -58,9 +58,9 @@ func ResolveUsageMetadata(conf *config.Config, providerName string, modelName st
 }
 
 func getProvider(conf *config.Config, providerName string) (*config.ProviderConfig, error) {
-	for i := range conf.ChatAI.Providers {
-		if conf.ChatAI.Providers[i].Name == providerName && conf.ChatAI.Providers[i].Enabled {
-			return &conf.ChatAI.Providers[i], nil
+	for i := range conf.AI.ChatAI.Providers {
+		if conf.AI.ChatAI.Providers[i].Name == providerName && conf.AI.ChatAI.Providers[i].Enabled {
+			return &conf.AI.ChatAI.Providers[i], nil
 		}
 	}
 	return nil, fmt.Errorf("provider %q not found or disabled", providerName)

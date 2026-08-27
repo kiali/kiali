@@ -12,11 +12,11 @@ export type MockScenario =
 export type ApiEndpoint = 'applications' | 'clusters' | 'controlPlanes' | 'istioConfig' | 'namespaces' | 'workloads';
 
 export interface ScenarioConfig {
+  // AI configuration
+  ai?: AIConfig;
+
   // Feature flags
   ambientEnabled: boolean;
-
-  // Chat AI configuration
-  chatAI?: ChatbotAI;
 
   // Cluster configuration
   clusters: ClusterConfig[];
@@ -86,7 +86,13 @@ export interface ClusterConfig {
   validationWarnings?: number;
 }
 
-export interface ChatbotAI {
+export interface AIConfig {
+  enabled?: boolean;
+  chat?: ChatAIConfig;
+}
+
+export interface ChatAIConfig {
+  allowed?: boolean;
   defaultProvider?: string;
   enabled?: boolean;
   providers?: {
@@ -106,33 +112,36 @@ export interface ChatbotAI {
 // Scenario definitions
 const scenarios: Record<MockScenario, ScenarioConfig> = {
   healthy: {
-    chatAI: {
+    ai: {
       enabled: true,
-      defaultProvider: 'openai',
-      providers: [
-        {
-          name: 'openai',
-          description: 'OpenAI API Provider',
-          defaultModel: 'gemini',
-          models: [
-            {
-              name: 'gemini',
-              description: 'Model provided by Google with OpenAI API Support',
-              model: 'gemini-2.5-pro'
-            },
-            {
-              name: 'gpt-5-nano-2025-08-07',
-              description: 'Model provided by OpenAI',
-              model: 'gpt-5-nano-2025-08-07'
-            },
-            {
-              name: 'gpt-failure-endpoint',
-              description: 'GPT-4o',
-              model: 'gpt-4o'
-            }
-          ]
-        }
-      ]
+      chat: {
+        enabled: true,
+        defaultProvider: 'openai',
+        providers: [
+          {
+            name: 'openai',
+            description: 'OpenAI API Provider',
+            defaultModel: 'gemini',
+            models: [
+              {
+                name: 'gemini',
+                description: 'Model provided by Google with OpenAI API Support',
+                model: 'gemini-2.5-pro'
+              },
+              {
+                name: 'gpt-5-nano-2025-08-07',
+                description: 'Model provided by OpenAI',
+                model: 'gpt-5-nano-2025-08-07'
+              },
+              {
+                name: 'gpt-failure-endpoint',
+                description: 'GPT-4o',
+                model: 'gpt-4o'
+              }
+            ]
+          }
+        ]
+      }
     },
     clusters: [
       {
@@ -162,33 +171,36 @@ const scenarios: Record<MockScenario, ScenarioConfig> = {
   },
 
   ai: {
-    chatAI: {
+    ai: {
       enabled: true,
-      defaultProvider: 'openai',
-      providers: [
-        {
-          name: 'openai',
-          description: 'OpenAI API Provider',
-          defaultModel: 'gemini',
-          models: [
-            {
-              name: 'gemini',
-              description: 'Model provided by Google with OpenAI API Support',
-              model: 'gemini-2.5-pro'
-            },
-            {
-              name: 'gpt-5-nano-2025-08-07',
-              description: 'Model provided by OpenAI',
-              model: 'gpt-5-nano-2025-08-07'
-            },
-            {
-              name: 'gpt-failure-endpoint',
-              description: 'GPT-4o',
-              model: 'gpt-4o'
-            }
-          ]
-        }
-      ]
+      chat: {
+        enabled: true,
+        defaultProvider: 'openai',
+        providers: [
+          {
+            name: 'openai',
+            description: 'OpenAI API Provider',
+            defaultModel: 'gemini',
+            models: [
+              {
+                name: 'gemini',
+                description: 'Model provided by Google with OpenAI API Support',
+                model: 'gemini-2.5-pro'
+              },
+              {
+                name: 'gpt-5-nano-2025-08-07',
+                description: 'Model provided by OpenAI',
+                model: 'gpt-5-nano-2025-08-07'
+              },
+              {
+                name: 'gpt-failure-endpoint',
+                description: 'GPT-4o',
+                model: 'gpt-4o'
+              }
+            ]
+          }
+        ]
+      }
     },
     clusters: [
       {

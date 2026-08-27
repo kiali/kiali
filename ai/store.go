@@ -374,23 +374,23 @@ func (s *AIStoreImpl) totalConversationsLocked() int {
 
 // LoadAIStoreConfig loads AI store configuration from Kiali config
 func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration strings from config
-	inactivityTimeout, err := cfg.ChatAI.StoreConfig.InactivityTimeout.ToDuration()
+	inactivityTimeout, err := cfg.AI.ChatAI.StoreConfig.InactivityTimeout.ToDuration()
 	if err != nil || inactivityTimeout <= 0 {
-		log.Warningf("Invalid chat_ai.store_config.inactivity_timeout %q, using default 30m", cfg.ChatAI.StoreConfig.InactivityTimeout)
+		log.Warningf("Invalid chat_ai.store_config.inactivity_timeout %q, using default 30m", cfg.AI.ChatAI.StoreConfig.InactivityTimeout)
 		inactivityTimeout = 30 * time.Minute
 	}
-	maxMemory := cfg.ChatAI.StoreConfig.MaxCacheMemoryMB
+	maxMemory := cfg.AI.ChatAI.StoreConfig.MaxCacheMemoryMB
 	if maxMemory <= 0 {
 		log.Warningf("Invalid chat_ai.store_config.max_cache_memory_mb %d, using default 1024", maxMemory)
 		maxMemory = 1024
 	}
 
 	return &AiStoreConfig{
-		Enabled:           cfg.ChatAI.Enabled && cfg.ChatAI.StoreConfig.Enabled,
+		Enabled:           cfg.AI.ChatAI.Enabled && cfg.AI.ChatAI.StoreConfig.Enabled,
 		InactivityTimeout: inactivityTimeout,
 		MaxCacheMemoryMB:  maxMemory,
-		ReduceWithAI:      cfg.ChatAI.StoreConfig.ReduceWithAI,
-		ReduceThreshold:   cfg.ChatAI.StoreConfig.ReduceThreshold,
+		ReduceWithAI:      cfg.AI.ChatAI.StoreConfig.ReduceWithAI,
+		ReduceThreshold:   cfg.AI.ChatAI.StoreConfig.ReduceThreshold,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -142,7 +143,7 @@ func accessibleClusterNames(clientFactory kubernetes.ClientFactory) []string {
 
 func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
+		if !conf.AI.Enabled && !conf.AI.ChatAI.Enabled {
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
 			return
 		}
@@ -187,7 +188,7 @@ func ChatAI(
 		providerName := params["provider"]
 		modelName := params["model"]
 
-		if !conf.ChatAI.Enabled {
+		if !conf.AI.Enabled && !conf.AI.ChatAI.Enabled {
 			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
 			return
 		}
@@ -212,6 +213,12 @@ func ChatAI(
 		} else {
 			fallbackUserID = "anonymous"
 		}
+
+		if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, fallbackUserID) {
+			RespondWithError(w, http.StatusForbidden, "You are not allowed to use the ChatAI feature")
+			return
+		}
+
 		userID := resolveChatAIUsageUserID(r, conf, fallbackUserID)
 
 		provider, err := ai.NewAIProvider(conf, providerName, modelName)
@@ -325,7 +332,7 @@ func ChatSessionUsage(
 	aiStore aiTypes.AIStore,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.ChatAI.Enabled {
+		if !conf.AI.Enabled && !conf.AI.ChatAI.Enabled {
 			RespondWithError(w, http.StatusInternalServerError, "ChatAI is not enabled")
 			return
 		}

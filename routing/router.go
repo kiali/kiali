@@ -186,7 +186,7 @@ func NewRouter(
 	// Initialize AI store
 	aiStoreConfig := ai.LoadAIStoreConfig(conf)
 	aiStore := ai.NewAIStore(ctx, aiStoreConfig)
-	if !conf.ChatAI.Enabled {
+	if !conf.AI.ChatAI.Enabled {
 		zl.Info().Msg("[ChatAI] DISABLED")
 	} else {
 		zl.Info().Msg("[ChatAI] ENABLED")
@@ -195,7 +195,7 @@ func NewRouter(
 		} else {
 			zl.Info().Msg("[ChatAI Store] DISABLED")
 		}
-		for _, provider := range conf.ChatAI.Providers {
+		for _, provider := range conf.AI.ChatAI.Providers {
 			if !provider.Enabled {
 				zl.Info().Msgf("[ChatAI Provider] %q is disabled", provider.Name)
 				continue

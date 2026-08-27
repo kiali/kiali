@@ -444,12 +444,12 @@ chat_ai:
 	require.NotNil(t, conf)
 
 	// Verify that provider Key was set to the file path
-	require.Len(t, conf.ChatAI.Providers, 1)
-	assert.Equal(t, Credential(secretFile), conf.ChatAI.Providers[0].Key,
+	require.Len(t, conf.AI.ChatAI.Providers, 1)
+	assert.Equal(t, Credential(secretFile), conf.AI.ChatAI.Providers[0].Key,
 		"Expected provider Key to be set to the secret file path")
 
 	// Verify we can read the key from the file
-	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	key, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-openai-api-key", key)
 }
@@ -501,13 +501,13 @@ chat_ai:
 	require.NotNil(t, conf)
 
 	// Verify that model Key was set to the file path
-	require.Len(t, conf.ChatAI.Providers, 1)
-	require.Len(t, conf.ChatAI.Providers[0].Models, 1)
-	assert.Equal(t, Credential(secretFile), conf.ChatAI.Providers[0].Models[0].Key,
+	require.Len(t, conf.AI.ChatAI.Providers, 1)
+	require.Len(t, conf.AI.ChatAI.Providers[0].Models, 1)
+	assert.Equal(t, Credential(secretFile), conf.AI.ChatAI.Providers[0].Models[0].Key,
 		"Expected model Key to be set to the secret file path")
 
 	// Verify we can read the key from the file
-	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[0].Key)
+	key, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Models[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-gpt4-model-key", key)
 }
@@ -581,19 +581,19 @@ chat_ai:
 	require.NotNil(t, conf)
 
 	// Verify openai provider key
-	require.Len(t, conf.ChatAI.Providers, 2)
-	openaiKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	require.Len(t, conf.AI.ChatAI.Providers, 2)
+	openaiKey, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "openai-provider-key", openaiKey)
 
 	// Verify gpt35 model key (model-level override)
-	require.Len(t, conf.ChatAI.Providers[0].Models, 2)
-	gpt35Key, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[1].Key)
+	require.Len(t, conf.AI.ChatAI.Providers[0].Models, 2)
+	gpt35Key, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Models[1].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "gpt35-model-key", gpt35Key)
 
 	// Verify azure provider key
-	azureKey, err := conf.GetCredential(conf.ChatAI.Providers[1].Key)
+	azureKey, err := conf.GetCredential(conf.AI.ChatAI.Providers[1].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "azure-provider-key", azureKey)
 }
@@ -631,22 +631,22 @@ chat_ai:
 	require.NotNil(t, conf)
 
 	// Verify that provider Key still has the inline value (not overridden)
-	require.Len(t, conf.ChatAI.Providers, 1)
-	assert.Equal(t, Credential("my-inline-provider-key"), conf.ChatAI.Providers[0].Key,
+	require.Len(t, conf.AI.ChatAI.Providers, 1)
+	assert.Equal(t, Credential("my-inline-provider-key"), conf.AI.ChatAI.Providers[0].Key,
 		"Expected provider Key to remain as inline value when no secret is mounted")
 
 	// Verify we can read the inline provider key
-	providerKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	providerKey, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-inline-provider-key", providerKey)
 
 	// Verify that model Key still has the inline value (not overridden)
-	require.Len(t, conf.ChatAI.Providers[0].Models, 1)
-	assert.Equal(t, Credential("my-inline-model-key"), conf.ChatAI.Providers[0].Models[0].Key,
+	require.Len(t, conf.AI.ChatAI.Providers[0].Models, 1)
+	assert.Equal(t, Credential("my-inline-model-key"), conf.AI.ChatAI.Providers[0].Models[0].Key,
 		"Expected model Key to remain as inline value when no secret is mounted")
 
 	// Verify we can read the inline model key
-	modelKey, err := conf.GetCredential(conf.ChatAI.Providers[0].Models[0].Key)
+	modelKey, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Models[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "my-inline-model-key", modelKey)
 }
@@ -708,8 +708,8 @@ chat_ai:
 	require.NotNil(t, conf)
 
 	// Verify that provider Key was set to the file path with sanitized name
-	require.Len(t, conf.ChatAI.Providers, 1)
-	key, err := conf.GetCredential(conf.ChatAI.Providers[0].Key)
+	require.Len(t, conf.AI.ChatAI.Providers, 1)
+	key, err := conf.GetCredential(conf.AI.ChatAI.Providers[0].Key)
 	assert.NoError(t, err)
 	assert.Equal(t, "sanitized-key", key)
 }

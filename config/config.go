@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"slices"
 	"sort"
@@ -860,6 +861,12 @@ type ProviderConfig struct {
 	Type               ProviderType       `yaml:"type" json:"type"`
 }
 
+// AIConfig defines configuration for the AI subsystem
+type AIConfig struct {
+	Enabled bool         `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	ChatAI  ChatAIConfig `yaml:"chat,omitempty" json:"chat,omitempty"`
+}
+
 // ChatAIConfig defines configuration for the ChatAI subsystem
 type ChatAIConfig struct {
 	DefaultProvider   string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
@@ -868,6 +875,7 @@ type ChatAIConfig struct {
 	Providers         []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
 	StoreConfig       AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
 	Tools             ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
+	AllowedUsers      []string         `yaml:"allowed_users,omitempty" json:"allowed_users,omitempty"`
 }
 
 // Clustering defines configuration around multi-cluster functionality.
@@ -1006,32 +1014,51 @@ const (
 
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
-	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
-	Clustering               Clustering                          `yaml:"clustering,omitempty"`
-	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
-	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
-	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
-	Identity                 security.Identity                   `yaml:",omitempty"`
-	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
-	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
-	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
-	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
-	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
-	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
-	ResolvedTLSPolicy        TLSPolicy                           `yaml:"-" json:"-"`
-	Server                   Server                              `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem `yaml:"additional_display_details,omitempty"`
+	AI                       AIConfig                `yaml:"ai,omitempty"`
+	Auth                     AuthConfig              `yaml:"auth,omitempty"`
+	// TODO remove this ChatAI when we no longer provide backward-compat support for the old chat_ai top-level setting
+	ChatAI            ChatAIConfig                        `yaml:"chat_ai,omitempty"` // Deprecated: use AI.ChatAI instead (yaml: "ai.chat"). See migrateDeprecatedChatAI.
+	Clustering        Clustering                          `yaml:"clustering,omitempty"`
+	Credentials       *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
+	CustomDashboards  dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
+	Deployment        DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions        []ExtensionConfig                   `yaml:"extensions,omitempty"`
+	ExternalServices  ExternalServices                    `yaml:"external_services,omitempty"`
+	HealthConfig      HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
+	Identity          security.Identity                   `yaml:",omitempty"`
+	InstallationTag   string                              `yaml:"installation_tag,omitempty"`
+	IstioLabels       IstioLabels                         `yaml:"istio_labels,omitempty"`
+	KialiFeatureFlags KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiInternal     KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
+	KubernetesConfig  KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken        LoginToken                          `yaml:"login_token,omitempty"`
+	RunConfig         *OfflineManifest                    `yaml:"runConfig,omitempty"`
+	RunMode           RunMode                             `yaml:"runMode,omitempty"`
+	ResolvedTLSPolicy TLSPolicy                           `yaml:"-" json:"-"`
+	Server            Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
+		AI: AIConfig{
+			ChatAI: ChatAIConfig{
+				Enabled:           false,
+				DefaultProvider:   "",
+				MaxToolIterations: 5,
+				Providers:         []ProviderConfig{},
+				StoreConfig: AiStoreConfig{
+					Enabled:                 true,
+					InactivityTimeout:       "30m",
+					MaxCacheMemoryMB:        1024,
+					HistoryTokenBudgetRatio: 0.85,
+					ReduceWithAI:            false,
+					ReduceThreshold:         15,
+				},
+			},
+			Enabled: false,
+		},
 		Auth: AuthConfig{
 			Strategy: AuthStrategyToken,
 			OpenId: OpenIdConfig{
@@ -1061,20 +1088,6 @@ func NewConfig() (c *Config) {
 			OpenShift: OpenShiftConfig{
 				Impersonation:         ImpersonationConfig{Enabled: false, AllowedGroups: []string{}, AllowedUsers: []string{}},
 				InsecureSkipVerifyTLS: false,
-			},
-		},
-		ChatAI: ChatAIConfig{
-			Enabled:           false,
-			DefaultProvider:   "",
-			MaxToolIterations: 5,
-			Providers:         []ProviderConfig{},
-			StoreConfig: AiStoreConfig{
-				Enabled:                 true,
-				InactivityTimeout:       "30m",
-				MaxCacheMemoryMB:        1024,
-				HistoryTokenBudgetRatio: 0.85,
-				ReduceWithAI:            false,
-				ReduceThreshold:         15,
 			},
 		},
 		Clustering: Clustering{
@@ -1394,19 +1407,54 @@ func (conf *Config) AddHealthDefault() {
 }
 
 func (conf *Config) ValidateAI() error {
-	if !conf.ChatAI.Enabled {
+	if conf.AI.Enabled {
+		return conf.AI.ChatAI.ValidateChatAI()
+	}
+	return nil
+}
+
+// migrateDeprecatedChatAI moves settings from the deprecated top-level "chat_ai" yaml
+// setting into the new "ai.chat" location. "defaultChatAI" is the zero-config default
+// for "ai.chat" (i.e. what it looked like before the yaml was parsed) so we can tell
+// whether the yaml itself set "ai.chat" or if it is still just sitting at the default.
+//
+// TODO: Remove this migration once the deprecated "chat_ai" top-level setting is no longer supported.
+func (conf *Config) migrateDeprecatedChatAI(defaultChatAI ChatAIConfig) {
+	if reflect.DeepEqual(conf.ChatAI, ChatAIConfig{}) {
+		// The deprecated "chat_ai" setting was not present in the yaml - nothing to migrate.
+		return
+	}
+
+	if !reflect.DeepEqual(conf.AI.ChatAI, defaultChatAI) {
+		// The new "ai.chat" setting was also explicitly configured - it wins, and the
+		// deprecated setting is discarded so there is only ever one source of truth.
+		log.Warning("Both the deprecated 'chat_ai' setting and the new 'ai.chat' setting are configured - 'ai.chat' will be used. Remove 'chat_ai' from your configuration.")
+		conf.ChatAI = ChatAIConfig{}
+		return
+	}
+
+	log.Info("DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat'")
+	conf.AI.ChatAI = conf.ChatAI
+	if conf.ChatAI.Enabled {
+		conf.AI.Enabled = true
+	}
+	conf.ChatAI = ChatAIConfig{}
+}
+
+func (chatAI *ChatAIConfig) ValidateChatAI() error {
+	if !chatAI.Enabled {
 		return nil
 	}
 
-	if conf.ChatAI.MaxToolIterations < 1 || conf.ChatAI.MaxToolIterations > 20 {
-		return fmt.Errorf("chat_ai.max_tool_iterations must be between 1 and 20, got %d", conf.ChatAI.MaxToolIterations)
+	if chatAI.MaxToolIterations < 1 || chatAI.MaxToolIterations > 20 {
+		return fmt.Errorf("chat_ai.max_tool_iterations must be between 1 and 20, got %d", chatAI.MaxToolIterations)
 	}
 
-	if err := normalizeAndValidateToolFilter("chat_ai.tools", &conf.ChatAI.Tools); err != nil {
+	if err := normalizeAndValidateToolFilter("chat_ai.tools", &chatAI.Tools); err != nil {
 		return err
 	}
 
-	if conf.ChatAI.DefaultProvider == "" {
+	if chatAI.DefaultProvider == "" {
 		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
 	}
 
@@ -1420,8 +1468,8 @@ func (conf *Config) ValidateAI() error {
 
 	seenNames := make(map[string]struct{})
 
-	for i := range conf.ChatAI.Providers {
-		p := &conf.ChatAI.Providers[i]
+	for i := range chatAI.Providers {
+		p := &chatAI.Providers[i]
 		if !p.Enabled {
 			continue
 		}
@@ -1433,10 +1481,10 @@ func (conf *Config) ValidateAI() error {
 		}
 		seenNames[p.Name] = struct{}{}
 
-		if p.Name == conf.ChatAI.DefaultProvider {
+		if p.Name == chatAI.DefaultProvider {
 			defaultProviderFound = true
 			if !p.Enabled {
-				return fmt.Errorf("chat_ai.default_provider %q must be enabled", conf.ChatAI.DefaultProvider)
+				return fmt.Errorf("chat_ai.default_provider %q must be enabled", chatAI.DefaultProvider)
 			}
 		}
 
@@ -1513,7 +1561,7 @@ func (conf *Config) ValidateAI() error {
 	}
 
 	if !defaultProviderFound {
-		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
+		return fmt.Errorf("chat_ai.default_provider %q not found in providers", chatAI.DefaultProvider)
 	}
 
 	return nil
@@ -1635,9 +1683,9 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
-	if len(obf.ChatAI.Providers) > 0 {
-		providers := make([]ProviderConfig, len(obf.ChatAI.Providers))
-		copy(providers, obf.ChatAI.Providers)
+	if len(obf.AI.ChatAI.Providers) > 0 {
+		providers := make([]ProviderConfig, len(obf.AI.ChatAI.Providers))
+		copy(providers, obf.AI.ChatAI.Providers)
 		for i := range providers {
 			providers[i].Key = "xxx"
 			if len(providers[i].Models) == 0 {
@@ -1650,7 +1698,7 @@ func (conf Config) Obfuscate() (obf Config) {
 			}
 			providers[i].Models = models
 		}
-		obf.ChatAI.Providers = providers
+		obf.AI.ChatAI.Providers = providers
 	}
 	return
 }
@@ -1696,6 +1744,9 @@ func (conf *Config) prepareDashboards() {
 // pool, including additional CAs from the kiali-cabundle ConfigMap.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
+	// Capture the default "ai.chat" settings before parsing so migrateDeprecatedChatAI
+	// can later tell whether the yaml actually set "ai.chat" or left it untouched.
+	defaultChatAI := conf.AI.ChatAI
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%w", err)
@@ -1743,6 +1794,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
+	conf.migrateDeprecatedChatAI(defaultChatAI)
 
 	// Validate tracing min and max values
 	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {
@@ -1887,8 +1939,8 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		},
 	}
 
-	for i := range conf.ChatAI.Providers {
-		provider := &conf.ChatAI.Providers[i]
+	for i := range conf.AI.ChatAI.Providers {
+		provider := &conf.AI.ChatAI.Providers[i]
 		if provider.Enabled {
 			overrides = append(overrides, overridesType{
 				configValue: &provider.Key,

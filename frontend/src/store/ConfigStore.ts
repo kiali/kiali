@@ -104,7 +104,10 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
 // (instead of having things be undefined until they are populated by query)
 // Redux 4.0 actually required this
 const initialStore: KialiAppState = {
-  aiChat: INITIAL_CHAT_AI_STATE,
+  ai: {
+    chat: INITIAL_CHAT_AI_STATE,
+    enabled: false
+  },
   authentication: INITIAL_LOGIN_STATE,
   clusters: INITIAL_CLUSTER_STATE,
   globalState: INITIAL_GLOBAL_STATE,

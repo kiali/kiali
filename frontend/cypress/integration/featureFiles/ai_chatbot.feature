@@ -37,6 +37,12 @@ Feature: Kiali AI Chatbot
   Scenario: The AI chatbot toggle button is visible
     Then the AI chatbot toggle button should be visible
 
+  Scenario: The AI chatbot toggle is disabled and warns the user when they are not allowed to use it
+    Given the user is not allowed to use the AI chatbot
+    Then the AI chatbot toggle tooltip should say "Chatbot is not allowed for this user"
+    When user clicks the AI chatbot toggle
+    Then the AI chatbot window should be closed
+
   Scenario: The AI chatbot can be opened
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
