@@ -99,6 +99,7 @@
   "Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.": "여기서의 변경 사항은 Kiali CR에 저장되지 않습니다. 변경 사항이 만족스럽다면 표준 변경 워크플로를 사용하여 Kiali CR을 업데이트하세요.",
   "Changing the AI provider requires starting a new chat. Are you sure you want to continue? This action cannot be undone.": "AI 공급자를 변경하려면 새 채팅을 시작해야 합니다. 계속하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "Chat with AI": "AI와 채팅",
+  "Chatbot is not allowed for this user": "이 사용자에게는 챗봇 사용이 허용되지 않습니다",
   "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.": "트레이싱 서비스의 일반적인 포트를 확인하고 external_services.tracing에서 발견된 트레이싱 서비스를 기반으로 트레이싱 설정의 일부를 제공합니다.",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "그래프를 생성하는 데 사용할 트래픽 비율을 선택하세요. 지원되는 각 프로토콜은 하나 이상의 옵션을 제공합니다. 사용하지 않는 프로토콜은 생략할 수 있습니다.",
   "Circuit Breaker": "서킷 브레이커",
