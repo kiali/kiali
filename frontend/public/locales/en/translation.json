@@ -99,6 +99,7 @@
   "Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.": "Changes here are not saved to the Kiali CR. If happy with changes, update the Kiali CR using your standard change workflow.",
   "Changing the AI provider requires starting a new chat. Are you sure you want to continue? This action cannot be undone.": "Changing the AI provider requires starting a new chat. Are you sure you want to continue? This action cannot be undone.",
   "Chat with AI": "Chat with AI",
+  "Chatbot is not allowed for this user": "Chatbot is not allowed for this user",
   "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.": "Check the usual ports for the tracing service and provide a subset of the tracing configuration based on the tracing services found for external_services.tracing.",
   "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.": "Choose the traffic rates used to generate the graph. Each supported protocol offers one or more options. Unused protocols can be omitted.",
   "Circuit Breaker": "Circuit Breaker",
