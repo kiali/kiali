@@ -128,6 +128,9 @@ type ControlPlane struct {
 	// Config
 	Config ControlPlaneConfiguration `json:"config"`
 
+	// ConfigWarning describes configuration sources that Kiali could not load.
+	ConfigWarning string `json:"configWarning,omitempty"`
+
 	// ExternalControlPlane indicates if the controlplane is managing an external cluster.
 	ExternalControlPlane bool `json:"externalControlPlane"`
 
@@ -166,6 +169,18 @@ type ControlPlane struct {
 	// config that is the result of merging the various config sources together, e.g. standard configmap
 	// and user configmap. This field is just for the backend to use. The frontend should use the Config field.
 	MeshConfig *MeshConfig `json:"-"`
+
+	// MeshConfigFile describes a ConfigMap-backed mesh configuration file mounted into istiod.
+	MeshConfigFile *MeshConfigFileReference `json:"-"`
+
+	// MeshConfigFilePath is the mesh configuration file path used by istiod.
+	MeshConfigFilePath string `json:"-"`
+
+	// MeshNetworksConfigFile describes a ConfigMap-backed mesh networks file mounted into istiod.
+	MeshNetworksConfigFile *MeshConfigFileReference `json:"-"`
+
+	// MeshNetworksConfigFilePath is the mesh networks file path used by istiod.
+	MeshNetworksConfigFilePath string `json:"-"`
 
 	// MonitoringPort is the port used for monitoring metrics, parsed from the --monitoringAddr argument.
 	// Defaults to 15014 if not specified or in invalid format.
@@ -275,6 +290,13 @@ type MeshConfigMap struct {
 	MeshNetworks *istiov1alpha1.MeshNetworks `json:"meshNetworks,omitempty"`
 }
 
+// MeshConfigFileReference identifies a mesh configuration file mounted from a ConfigMap.
+type MeshConfigFileReference struct {
+	ConfigMapKey  string
+	ConfigMapName string
+	Path          string
+}
+
 // MeshConfigSource includes some information about the configuration source.
 type MeshConfigSource struct {
 	// Cluster of the configmap.
@@ -284,6 +306,8 @@ type MeshConfigSource struct {
 	Name string `json:"name,omitempty"`
 	// Namespace of the configmap.
 	Namespace string `json:"namespace,omitempty"`
+	// Path is set when the configuration is loaded from a file mounted into istiod.
+	Path string `json:"path,omitempty"`
 }
 
 // ControlPlaneConfiguration is the configuration for the controlPlane and any associated dataPlane.
@@ -294,17 +318,19 @@ type ControlPlaneConfiguration struct {
 	Certificates []Certificate `json:"certificates,omitempty"`
 
 	// EffectiveConfig is the effective configuration from combining the various configmaps.
-	// TODO: Support config file.
 	EffectiveConfig *MeshConfigSource `json:"effectiveConfig,omitempty"`
+
+	// FileConfig is the mesh configuration loaded from a file mounted into istiod.
+	FileConfig *MeshConfigSource `json:"fileConfig,omitempty"`
 
 	// Network is the name of the network that the controlplane is using.
 	Network string `json:"network,omitempty"`
 
-	// StandardConfigMap raw data from the standard configmap
-	StandardConfig *MeshConfigSource `json:"standardConfig,omitempty"`
-
 	// SharedConfig raw data from the shared configmap.
 	SharedConfig *MeshConfigSource `json:"sharedConfig,omitempty"`
+
+	// StandardConfigMap raw data from the standard configmap
+	StandardConfig *MeshConfigSource `json:"standardConfig,omitempty"`
 }
 
 type Certificate struct {

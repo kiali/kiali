@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"path"
 	"slices"
 	"strconv"
 	"strings"
@@ -49,19 +50,43 @@ func parseIstioConfigMap(istioConfig *corev1.ConfigMap, into *models.MeshConfigM
 		return err
 	}
 
+	return parseMeshNetworks(istioConfig, into)
+}
+
+func parseMeshNetworks(istioConfig *corev1.ConfigMap, into *models.MeshConfigMap) error {
 	meshNetworksYAML, ok := istioConfig.Data["meshNetworks"]
 	if !ok {
 		log.Debugf("parseIstioConfigMap: Cannot find Istio mesh networks [%v]", istioConfig)
-	} else {
-		if into.MeshNetworks == nil {
-			into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
-		}
-		if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
-			log.Warningf("parseIstioConfigMap: Cannot read Istio mesh configuration.")
-			return err
-		}
+		return nil
+	}
+	if into.MeshNetworks == nil {
+		into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
+		log.Warningf("parseIstioConfigMap: Cannot read Istio mesh networks configuration.")
+		return err
 	}
 
+	return nil
+}
+
+func parseMeshConfigFile(meshConfigYAML string, into *models.MeshConfigMap) error {
+	if into.Mesh == nil {
+		into.Mesh = &models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{}}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshConfigYAML), into.Mesh); err != nil {
+		return fmt.Errorf("unable to parse Istio mesh configuration file: %w", err)
+	}
+	return nil
+}
+
+func parseMeshNetworksFile(meshNetworksYAML string, into *models.MeshConfigMap) error {
+	if into.MeshNetworks == nil {
+		into.MeshNetworks = &istiov1alpha1.MeshNetworks{}
+	}
+	if err := k8syaml.Unmarshal([]byte(meshNetworksYAML), into.MeshNetworks); err != nil {
+		return fmt.Errorf("unable to parse Istio mesh networks file: %w", err)
+	}
 	return nil
 }
 
@@ -91,37 +116,56 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	// This prevents nil pointer dereferences in the frontend when accessing config fields.
 	defer func() { controlPlane.Config = *controlPlaneConf }()
 
-	// First take the shared user configmap if the env var is set.
-	// Then unmarshal the standard configmap over the shared user
-	// config since the standard one takes precedence. When you unmarshal
-	// one config into another, you override the values that are present
-	// and the ones that aren't present remain unchanged.
-	// TODO: Skipping external controlplane for now (ID != cluster).
-	// For this to work with external controlplane,
-	// we would need to pass in the controlplane.ClusterID kubecache and to merge
-	// with the local /etc/istio/config file.
-	if controlPlane.SharedMeshConfig != "" && controlPlane.ID == controlPlane.Cluster.Name {
+	// Istiod loads shared configuration from the config cluster before applying its local
+	// standard ConfigMap or mounted mesh file, which takes precedence.
+	if controlPlane.SharedMeshConfig != "" {
 		log.Tracef("Shared mesh config '%s' is present", controlPlane.SharedMeshConfig)
-		if err := setSharedConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
-			log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
+		sharedConfigCluster := controlPlane.Cluster.Name
+		sharedConfigCache := kubeCache
+		if controlPlane.ManagesExternal && controlPlane.ID != controlPlane.Cluster.Name {
+			sharedConfigCluster = controlPlane.ID
+			var err error
+			sharedConfigCache, err = in.kialiCache.GetKubeCache(sharedConfigCluster)
+			if err != nil {
+				log.Errorf("Unable to access Shared Mesh ConfigMap cluster [%s]: %s", sharedConfigCluster, err)
+				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration from cluster [%s]: %s", sharedConfigCluster, err))
+				sharedConfigCache = nil
+			}
+		}
+		if sharedConfigCache != nil {
+			if err := setSharedConfig(controlPlane, controlPlaneConf, sharedConfigCache, sharedConfigCluster); err != nil {
+				log.Errorf("There was a problem with the Shared Mesh ConfigMap. istio configuration may not be accurate: %s", err)
+				appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load shared mesh configuration: %s", err))
+			}
 		}
 	}
 
-	standardConfigMap, err := in.kialiSAClients[controlPlane.Cluster.Name].GetConfigMap(controlPlane.IstiodNamespace, configMapName)
-	if err != nil {
-		return err
+	loadedFileConfig := false
+	if shouldLoadMeshConfigFile(controlPlane, configMapName) {
+		if err := setFileConfig(controlPlane, controlPlaneConf, kubeCache); err != nil {
+			log.Warningf("Unable to load mounted mesh configuration file; falling back to the standard ConfigMap: %s", err)
+			appendConfigWarning(controlPlane, fmt.Sprintf("Unable to load mounted mesh configuration file; displaying the standard ConfigMap instead: %s", err))
+		} else {
+			loadedFileConfig = true
+		}
+	}
+	if !loadedFileConfig {
+		standardConfigMap, err := in.kialiSAClients[controlPlane.Cluster.Name].GetConfigMap(controlPlane.IstiodNamespace, configMapName)
+		if err != nil {
+			return err
+		}
+
+		if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.StandardConfig.ConfigMap); err != nil {
+			return err
+		}
+
+		// Unmarshal again into effective.
+		if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+			return err
+		}
 	}
 
-	if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.StandardConfig.ConfigMap); err != nil {
-		return err
-	}
-
-	// Unmarshal again into effective.
-	if err := parseIstioConfigMap(standardConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
-		return err
-	}
-
-	// When using the SHARED_MESH_CONFIG env var, istio merges the ProxyConfig unlike the other settings that are overridden
+	// When using the SHARED_MESH_CONFIG env var, istio merges the ProxyConfig unlike the other settings that are overridden.
 	if controlPlaneConf.SharedConfig != nil && controlPlane.SharedMeshConfig != "" {
 		if err := fusionMeshConfigs(controlPlaneConf.SharedConfig.ConfigMap.Mesh, controlPlaneConf.EffectiveConfig.ConfigMap.Mesh); err != nil {
 			return err
@@ -147,9 +191,95 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	return nil
 }
 
-func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
-	sharedConfig := &models.MeshConfigSource{
+func appendConfigWarning(controlPlane *models.ControlPlane, warning string) {
+	if controlPlane.ConfigWarning == "" {
+		controlPlane.ConfigWarning = warning
+		return
+	}
+	controlPlane.ConfigWarning += "\n" + warning
+}
+
+func shouldLoadMeshConfigFile(controlPlane *models.ControlPlane, standardConfigMapName string) bool {
+	if controlPlane.MeshConfigFile == nil {
+		return false
+	}
+	return controlPlane.ID != controlPlane.Cluster.Name ||
+		controlPlane.MeshConfigFile.ConfigMapName != standardConfigMapName ||
+		controlPlane.MeshConfigFile.ConfigMapKey != "mesh"
+}
+
+func setFileConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader) error {
+	fileRef := controlPlane.MeshConfigFile
+	fileConfig := &models.MeshConfigSource{
 		Cluster:   controlPlane.Cluster.Name,
+		ConfigMap: &models.MeshConfigMap{},
+		Name:      fileRef.ConfigMapName,
+		Namespace: controlPlane.IstiodNamespace,
+		Path:      fileRef.Path,
+	}
+
+	configMap := &corev1.ConfigMap{}
+	if err := kubeCache.Get(
+		context.Background(),
+		ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
+		configMap,
+	); err != nil {
+		return fmt.Errorf("unable to get mesh configuration file ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", fileRef.ConfigMapName, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+	}
+
+	meshConfigYAML, ok := configMap.Data[fileRef.ConfigMapKey]
+	if !ok {
+		return fmt.Errorf("unable to find key [%s] for mesh configuration file [%s] in ConfigMap [%s/%s] on cluster [%s]", fileRef.ConfigMapKey, fileRef.Path, controlPlane.IstiodNamespace, fileRef.ConfigMapName, controlPlane.Cluster.Name)
+	}
+	if err := parseMeshConfigFile(meshConfigYAML, fileConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh configuration file [%s] from ConfigMap [%s/%s] on cluster [%s]: %w", fileRef.Path, controlPlane.IstiodNamespace, fileRef.ConfigMapName, controlPlane.Cluster.Name, err)
+	}
+	if err := parseMeshConfigFile(meshConfigYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh configuration file [%s] into EffectiveConfig: %w", fileRef.Path, err)
+	}
+	if err := setFileMeshNetworks(controlPlane, controlPlaneConf, fileConfig, kubeCache, configMap); err != nil {
+		return err
+	}
+
+	controlPlaneConf.FileConfig = fileConfig
+	controlPlaneConf.StandardConfig = nil
+	return nil
+}
+
+func setFileMeshNetworks(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, fileConfig *models.MeshConfigSource, kubeCache ctrlclient.Reader, meshConfigMap *corev1.ConfigMap) error {
+	fileRef := controlPlane.MeshNetworksConfigFile
+	if fileRef == nil {
+		return nil
+	}
+
+	networksConfigMap := meshConfigMap
+	if fileRef.ConfigMapName != meshConfigMap.Name {
+		networksConfigMap = &corev1.ConfigMap{}
+		if err := kubeCache.Get(
+			context.Background(),
+			ctrlclient.ObjectKey{Name: fileRef.ConfigMapName, Namespace: controlPlane.IstiodNamespace},
+			networksConfigMap,
+		); err != nil {
+			return fmt.Errorf("unable to get mesh networks file ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", fileRef.ConfigMapName, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		}
+	}
+
+	meshNetworksYAML, ok := networksConfigMap.Data[fileRef.ConfigMapKey]
+	if !ok {
+		return nil
+	}
+	if err := parseMeshNetworksFile(meshNetworksYAML, fileConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh networks file [%s] from ConfigMap [%s/%s] on cluster [%s]: %w", fileRef.Path, controlPlane.IstiodNamespace, fileRef.ConfigMapName, controlPlane.Cluster.Name, err)
+	}
+	if err := parseMeshNetworksFile(meshNetworksYAML, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
+		return fmt.Errorf("unable to parse mesh networks file [%s] into EffectiveConfig: %w", fileRef.Path, err)
+	}
+	return nil
+}
+
+func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models.ControlPlaneConfiguration, kubeCache ctrlclient.Reader, cluster string) error {
+	sharedConfig := &models.MeshConfigSource{
+		Cluster:   cluster,
 		ConfigMap: &models.MeshConfigMap{},
 		Name:      controlPlane.SharedMeshConfig,
 		Namespace: controlPlane.IstiodNamespace,
@@ -161,20 +291,112 @@ func setSharedConfig(controlPlane *models.ControlPlane, controlPlaneConf *models
 		ctrlclient.ObjectKey{Name: controlPlane.SharedMeshConfig, Namespace: controlPlane.IstiodNamespace},
 		sharedUserConfigMap,
 	); err != nil {
-		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to get Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	if err := parseIstioConfigMap(sharedUserConfigMap, sharedConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s]: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	// Unmarshal again into effective.
 	if err := parseIstioConfigMap(sharedUserConfigMap, controlPlaneConf.EffectiveConfig.ConfigMap); err != nil {
-		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %s", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, controlPlane.Cluster.Name, err)
+		return fmt.Errorf("unable to parse Shared User ConfigMap [%s] in namespace [%s] on cluster [%s] into EffectiveConfig: %w", controlPlane.SharedMeshConfig, controlPlane.IstiodNamespace, cluster, err)
 	}
 
 	controlPlaneConf.SharedConfig = sharedConfig
 	return nil
+}
+
+func findMeshConfigFile(container corev1.Container, volumes []corev1.Volume, meshConfigPath string) *models.MeshConfigFileReference {
+	if !isValidContainerPath(meshConfigPath) {
+		return nil
+	}
+	cleanConfigPath := cleanContainerPath(meshConfigPath)
+	var configFile *models.MeshConfigFileReference
+	longestMountPath := -1
+	for _, mount := range container.VolumeMounts {
+		cleanMountPath := cleanContainerPath(mount.MountPath)
+		relativePath := ""
+		switch {
+		case cleanConfigPath == cleanMountPath:
+			relativePath = path.Base(cleanConfigPath)
+		case cleanMountPath == "/" && strings.HasPrefix(cleanConfigPath, "/"):
+			relativePath = strings.TrimPrefix(cleanConfigPath, "/")
+		case strings.HasPrefix(cleanConfigPath, cleanMountPath+"/"):
+			relativePath = strings.TrimPrefix(cleanConfigPath, cleanMountPath+"/")
+		default:
+			continue
+		}
+
+		if mount.SubPath != "" {
+			if cleanConfigPath != cleanMountPath {
+				continue
+			}
+			relativePath = mount.SubPath
+		}
+
+		for _, volume := range volumes {
+			if volume.Name != mount.Name || volume.ConfigMap == nil {
+				continue
+			}
+			configMapKey := relativePath
+			if len(volume.ConfigMap.Items) > 0 {
+				configMapKey = ""
+				for _, item := range volume.ConfigMap.Items {
+					if path.Clean(item.Path) == path.Clean(relativePath) {
+						configMapKey = item.Key
+						break
+					}
+				}
+				if configMapKey == "" {
+					continue
+				}
+			}
+			if len(cleanMountPath) > longestMountPath {
+				configFile = &models.MeshConfigFileReference{
+					ConfigMapKey:  configMapKey,
+					ConfigMapName: volume.ConfigMap.Name,
+					Path:          cleanConfigPath,
+				}
+				longestMountPath = len(cleanMountPath)
+			}
+		}
+	}
+	return configFile
+}
+
+func isValidContainerPath(filePath string) bool {
+	if !path.IsAbs(filePath) && !strings.HasPrefix(filePath, "./") {
+		return false
+	}
+	for _, segment := range strings.Split(filePath, "/") {
+		if segment == ".." {
+			return false
+		}
+	}
+	return true
+}
+
+func cleanContainerPath(filePath string) string {
+	// Reject paths with traversal sequences before cleaning
+	if strings.Contains(filePath, "..") {
+		return ""
+	}
+
+	if strings.HasPrefix(filePath, "./") {
+		filePath = strings.TrimPrefix(filePath, ".")
+	}
+	if !path.IsAbs(filePath) {
+		filePath = "/" + filePath
+	}
+	cleaned := path.Clean(filePath)
+
+	// Validate the cleaned path is absolute
+	if !path.IsAbs(cleaned) {
+		return ""
+	}
+
+	return cleaned
 }
 
 func deepMerge(dst, src map[string]interface{}) {
@@ -191,7 +413,46 @@ func deepMerge(dst, src map[string]interface{}) {
 	}
 }
 
+func mergeExtensionProviders(shared, local []*istiov1alpha1.MeshConfig_ExtensionProvider) []*istiov1alpha1.MeshConfig_ExtensionProvider {
+	merged := make([]*istiov1alpha1.MeshConfig_ExtensionProvider, len(shared))
+	copy(merged, shared)
+
+	providerIndexes := make(map[string]int, len(merged))
+	for i, provider := range merged {
+		providerIndexes[provider.Name] = i
+	}
+	for _, provider := range local {
+		if i, found := providerIndexes[provider.Name]; found {
+			merged[i] = provider
+			continue
+		}
+		providerIndexes[provider.Name] = len(merged)
+		merged = append(merged, provider)
+	}
+	return merged
+}
+
+func mergeTrustDomainAliases(shared, local []string) []string {
+	aliases := make(map[string]struct{}, len(shared)+len(local))
+	for _, alias := range shared {
+		aliases[alias] = struct{}{}
+	}
+	for _, alias := range local {
+		aliases[alias] = struct{}{}
+	}
+
+	merged := make([]string, 0, len(aliases))
+	for alias := range aliases {
+		merged = append(merged, alias)
+	}
+	slices.Sort(merged)
+	return merged
+}
+
 func fusionMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
+	mergedExtensionProviders := mergeExtensionProviders(mesh.ExtensionProviders, into.ExtensionProviders)
+	mergedTrustDomainAliases := mergeTrustDomainAliases(mesh.TrustDomainAliases, into.TrustDomainAliases)
+
 	a, err := into.MarshalJSON()
 	if err != nil {
 		return err
@@ -213,7 +474,12 @@ func fusionMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(mergedJSON, &into)
+	if err := json.Unmarshal(mergedJSON, &into); err != nil {
+		return err
+	}
+	into.ExtensionProviders = mergedExtensionProviders
+	into.TrustDomainAliases = mergedTrustDomainAliases
+	return nil
 }
 
 func mergeMeshConfigs(mesh *models.MeshConfig, into *models.MeshConfig) error {
@@ -558,6 +824,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 				// Parse the deployment args and set fields on the control plane
 				parseArgsInto(containers[0].Args, &controlPlane)
+				controlPlane.MeshConfigFile = findMeshConfigFile(containers[0], istiod.Spec.Template.Spec.Volumes, controlPlane.MeshConfigFilePath)
+				controlPlane.MeshNetworksConfigFile = findMeshConfigFile(containers[0], istiod.Spec.Template.Spec.Volumes, controlPlane.MeshNetworksConfigFilePath)
 
 				controlPlane.Resources = containers[0].Resources
 				if memoryLimit := controlPlane.Resources.Limits.Memory(); memoryLimit != nil {
@@ -870,13 +1138,15 @@ func (in *Discovery) namespaceMapKey(cluster, namespace string) string {
 
 func newControlPlane(istiod appsv1.Deployment, cluster *models.KubeCluster) models.ControlPlane {
 	return models.ControlPlane{
-		Cluster:         cluster,
-		Labels:          istiod.Labels,
-		MeshConfig:      models.NewMeshConfig(),
-		MonitoringPort:  defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
-		IstiodName:      istiod.Name,
-		IstiodNamespace: istiod.Namespace,
-		Revision:        istiod.Labels[config.IstioRevisionLabel],
+		Cluster:                    cluster,
+		IstiodName:                 istiod.Name,
+		IstiodNamespace:            istiod.Namespace,
+		Labels:                     istiod.Labels,
+		MeshConfig:                 models.NewMeshConfig(),
+		MeshConfigFilePath:         defaultMeshConfigPath,
+		MeshNetworksConfigFilePath: defaultMeshNetworksConfigPath,
+		MonitoringPort:             defaultMonitoringPort, // Default monitoring port, will be overridden by parseArgsInto if --monitoringAddr is found
+		Revision:                   istiod.Labels[config.IstioRevisionLabel],
 	}
 }
 
@@ -1186,6 +1456,8 @@ func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
 	flagSet.ParseErrorsAllowlist.UnknownFlags = true
 
 	monitoringAddr := flagSet.String("monitoringAddr", "", "Monitoring address in format :port")
+	meshConfigPath := flagSet.String("meshConfig", defaultMeshConfigPath, "File name for Istio mesh configuration")
+	meshNetworksConfigPath := flagSet.String("networksConfigFile", defaultMeshNetworksConfigPath, "File name for Istio mesh networks configuration")
 
 	if err := flagSet.Parse(args); err != nil {
 		log.Debugf("Unable to parse args from control plane: %s", err)
@@ -1202,5 +1474,17 @@ func parseArgsInto(args []string, controlPlane *models.ControlPlane) {
 		} else {
 			log.Debugf("Invalid --monitoringAddr format '%s', expected 'host:port' or ':port'. Using default port %d: %s", *monitoringAddr, defaultMonitoringPort, err)
 		}
+	}
+	if isValidContainerPath(*meshConfigPath) {
+		controlPlane.MeshConfigFilePath = cleanContainerPath(*meshConfigPath)
+	} else {
+		log.Debugf("Invalid --meshConfig path '%s'. Using default path %s", *meshConfigPath, defaultMeshConfigPath)
+		controlPlane.MeshConfigFilePath = defaultMeshConfigPath
+	}
+	if isValidContainerPath(*meshNetworksConfigPath) {
+		controlPlane.MeshNetworksConfigFilePath = cleanContainerPath(*meshNetworksConfigPath)
+	} else {
+		log.Debugf("Invalid --networksConfigFile path '%s'. Using default path %s", *meshNetworksConfigPath, defaultMeshNetworksConfigPath)
+		controlPlane.MeshNetworksConfigFilePath = defaultMeshNetworksConfigPath
 	}
 }
