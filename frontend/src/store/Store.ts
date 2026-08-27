@@ -199,7 +199,7 @@ export interface TourState {
 
 export interface AIState {
   enabled: boolean;
-  chatAI: ChatAIState;
+  chat: ChatAIState;
 }
 
 export interface ChatAIState {

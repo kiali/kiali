@@ -41,13 +41,13 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const dispatch = useDispatch();
   const [validated, setValidated] = React.useState<'default' | 'error'>('default');
 
-  const chatHistory = useSelector((s: KialiAppState) => s.ai.chatAI.chatHistory);
-  const query: string = useSelector((s: KialiAppState) => s.ai.chatAI.query);
-  const conversationID: string = useSelector((s: KialiAppState) => s.ai.chatAI.conversationID);
-  const selectedProvider: string = useSelector((s: KialiAppState) => s.ai.chatAI.selectedProvider);
-  const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chatAI.selectedModel);
-  const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chatAI.alwaysNavigate);
-  const interactionMode = useSelector((s: KialiAppState) => s.ai.chatAI.interactionMode);
+  const chatHistory = useSelector((s: KialiAppState) => s.ai.chat.chatHistory);
+  const query: string = useSelector((s: KialiAppState) => s.ai.chat.query);
+  const conversationID: string = useSelector((s: KialiAppState) => s.ai.chat.conversationID);
+  const selectedProvider: string = useSelector((s: KialiAppState) => s.ai.chat.selectedProvider);
+  const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chat.selectedModel);
+  const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chat.alwaysNavigate);
+  const interactionMode = useSelector((s: KialiAppState) => s.ai.chat.interactionMode);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 

@@ -1101,7 +1101,7 @@ func TestValidateAI(t *testing.T) {
 }
 
 // TestUnmarshal_ChatAIMigration verifies that the deprecated top-level "chat_ai" yaml
-// setting is migrated into the new "ai.chat_ai" location, and that the new location
+// setting is migrated into the new "ai.chat" location, and that the new location
 // always wins when both are present.
 func TestUnmarshal_ChatAIMigration(t *testing.T) {
 	deprecatedChatAIYAML := `
@@ -1120,7 +1120,7 @@ chat_ai:
 	newAIYAML := `
 ai:
   enabled: true
-  chat_ai:
+  chat:
     enabled: true
     default_provider: openai
     max_tool_iterations: 9
@@ -1132,7 +1132,7 @@ ai:
       key: new-key
 `
 
-	t.Run("only deprecated chat_ai is migrated to ai.chat_ai", func(t *testing.T) {
+	t.Run("only deprecated chat_ai is migrated to ai.chat", func(t *testing.T) {
 		var buf bytes.Buffer
 		origLogger := zerolog_log.Logger
 		zerolog_log.Logger = zerolog.New(&buf)
@@ -1152,10 +1152,10 @@ ai:
 		// ...and the deprecated field was cleared so there is a single source of truth.
 		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
 
-		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat_ai'")
+		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat'")
 	})
 
-	t.Run("only ai.chat_ai present requires no migration", func(t *testing.T) {
+	t.Run("only ai.chat present requires no migration", func(t *testing.T) {
 		var buf bytes.Buffer
 		origLogger := zerolog_log.Logger
 		zerolog_log.Logger = zerolog.New(&buf)
@@ -1175,7 +1175,7 @@ ai:
 		assert.NotContains(t, buf.String(), "DEPRECATION NOTICE")
 	})
 
-	t.Run("neither chat_ai nor ai.chat_ai present leaves defaults untouched", func(t *testing.T) {
+	t.Run("neither chat_ai nor ai.chat present leaves defaults untouched", func(t *testing.T) {
 		conf, err := Unmarshal("server:\n  port: 20001\n")
 		require.NoError(t, err)
 
@@ -1184,7 +1184,7 @@ ai:
 		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
 	})
 
-	t.Run("both present: ai.chat_ai wins and deprecated chat_ai is discarded", func(t *testing.T) {
+	t.Run("both present: ai.chat wins and deprecated chat_ai is discarded", func(t *testing.T) {
 		var buf bytes.Buffer
 		origLogger := zerolog_log.Logger
 		zerolog_log.Logger = zerolog.New(&buf)
@@ -1193,7 +1193,7 @@ ai:
 		conf, err := Unmarshal(deprecatedChatAIYAML + newAIYAML)
 		require.NoError(t, err)
 
-		// The new "ai.chat_ai" content must win...
+		// The new "ai.chat" content must win...
 		assert.Equal(t, 9, conf.AI.ChatAI.MaxToolIterations)
 		require.Len(t, conf.AI.ChatAI.Providers, 1)
 		assert.Equal(t, Credential("new-key"), conf.AI.ChatAI.Providers[0].Key)
@@ -1201,7 +1201,7 @@ ai:
 		// ...and the deprecated field must be discarded, not merged.
 		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
 
-		assert.Contains(t, buf.String(), "Both the deprecated 'chat_ai' setting and the new 'ai.chat_ai' setting are configured")
+		assert.Contains(t, buf.String(), "Both the deprecated 'chat_ai' setting and the new 'ai.chat' setting are configured")
 	})
 }
 

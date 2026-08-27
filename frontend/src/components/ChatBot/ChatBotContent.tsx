@@ -15,7 +15,7 @@ type ChatBotContentProps = {
 export const ChatBotContent: React.FC<ChatBotContentProps> = ({ chatHistoryEndRef }) => {
   const dispatch = useDispatch();
   const chatHistory: ImmutableList<ImmutableMap<string, unknown>> = useSelector(
-    (s: KialiAppState) => s.ai.chatAI.chatHistory
+    (s: KialiAppState) => s.ai.chat.chatHistory
   );
   const username = useSelector((state: KialiAppState) => state.authentication.session?.username ?? '');
   const welcomePrompts = React.useMemo<WelcomePrompt[]>(

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -858,6 +859,104 @@ func TestChatAI_StreamingNotSupported(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, w.code)
 	assert.Contains(t, w.body.String(), "Streaming unsupported")
+}
+
+// ========================================================================
+// ChatAI AllowedUsers tests
+// ========================================================================
+
+// TestChatAI_AllowedUsersBlocksUserNotInList covers the case where AllowedUsers is
+// non-empty and the requesting user is not part of it: the request must be rejected
+// with 403 before the AI provider is ever contacted.
+func TestChatAI_AllowedUsersBlocksUserNotInList(t *testing.T) {
+	var providerCalled int32
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&providerCalled, 1)
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("should not be reached"))
+	}))
+	defer fakeAI.Close()
+
+	// chatAIConfWithFakeProvider sets Auth.Strategy to anonymous, so the effective
+	// user for the AllowedUsers check is "anonymous" (see resolveChatAIUsageUserID/fallbackUserID).
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = []string{"someone-else"}
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode, "user not in AllowedUsers should be forbidden")
+	assert.Equal(t, int32(0), atomic.LoadInt32(&providerCalled), "AI provider must not be contacted when the user is blocked")
+
+	var payload map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&payload))
+	assert.Equal(t, "You are not allowed to use the ChatAI feature", payload["error"])
+}
+
+// TestChatAI_AllowedUsersEmptyListAllowsAnyUser covers the "no restriction" convention:
+// an empty/unset AllowedUsers list must allow every user through.
+func TestChatAI_AllowedUsersEmptyListAllowsAnyUser(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = nil // explicitly empty: no restriction
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "empty AllowedUsers should not restrict access")
+}
+
+// TestChatAI_AllowedUsersAllowsUserInList covers the case where AllowedUsers is
+// non-empty and the requesting user is part of it: the request must proceed normally.
+func TestChatAI_AllowedUsersAllowsUserInList(t *testing.T) {
+	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprint(w, openaiSSEResponse("Hello from the AI"))
+	}))
+	defer fakeAI.Close()
+
+	conf := chatAIConfWithFakeProvider(fakeAI.URL)
+	conf.AI.ChatAI.AllowedUsers = []string{"someone-else", "anonymous"}
+
+	handler, _, _ := setupChatAIHandlerForTest(t, conf)
+
+	mr := mux.NewRouter()
+	mr.Handle("/api/chat/{provider}/{model}/ai", handler)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	body := bytes.NewBufferString(`{"query":"hello","conversation_id":"c1"}`)
+	resp, err := http.Post(ts.URL+"/api/chat/test-openai/gpt-4o/ai", "application/json", body)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "user in AllowedUsers should be allowed")
 }
 
 // ========================================================================

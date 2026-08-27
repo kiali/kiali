@@ -169,7 +169,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
-  chatbotEnabled: state.ai.enabled && state.ai.chatAI.enabled,
+  chatbotEnabled: state.ai.enabled && state.ai.chat.enabled,
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,

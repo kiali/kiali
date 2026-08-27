@@ -28,8 +28,8 @@ export const ToolModal: React.FC = () => {
   const dispatch = useDispatch();
 
   const tool: ImmutableMap<string, unknown> = useSelector((state: KialiAppState) => {
-    const openTool = state.ai.chatAI.openTool as any;
-    return state.ai.chatAI.chatHistory.getIn([openTool.get('chatEntryIndex'), 'tools', openTool.get('id')]);
+    const openTool = state.ai.chat.openTool as any;
+    return state.ai.chat.chatHistory.getIn([openTool.get('chatEntryIndex'), 'tools', openTool.get('id')]);
   }) as ImmutableMap<string, unknown>;
 
   const onClose = React.useCallback(() => {

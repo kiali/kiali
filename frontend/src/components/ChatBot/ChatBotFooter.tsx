@@ -30,7 +30,7 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({
   onConfirm
 }) => {
   const dispatch = useKialiDispatch();
-  const alwaysNavigate = useSelector((state: KialiAppState) => state.ai.chatAI.alwaysNavigate);
+  const alwaysNavigate = useSelector((state: KialiAppState) => state.ai.chat.alwaysNavigate);
 
   const handleAlwaysNavigateChange = (_event: React.FormEvent<HTMLInputElement>, checked: boolean): void => {
     dispatch(ChatAIActions.setAlwaysNavigate({ alwaysNavigate: checked }));

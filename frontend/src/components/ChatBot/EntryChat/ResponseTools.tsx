@@ -15,9 +15,7 @@ type ToolProps = {
 const ToolLabel: React.FC<ToolProps> = ({ entryIndex, toolID }) => {
   const dispatch = useDispatch();
 
-  const toolMap = useSelector((s: KialiAppState) =>
-    s.ai.chatAI.chatHistory.getIn([entryIndex, 'tools', toolID])
-  ) as any;
+  const toolMap = useSelector((s: KialiAppState) => s.ai.chat.chatHistory.getIn([entryIndex, 'tools', toolID])) as any;
 
   const tool: Tool | undefined = React.useMemo(() => toolMap?.toJS() as Tool, [toolMap]);
 
@@ -75,7 +73,7 @@ type ResponseToolsProps = {
 
 const ResponseTools: React.FC<ResponseToolsProps> = ({ entryIndex }) => {
   const tools: ImmutableMap<string, ImmutableMap<string, unknown>> = useSelector((s: KialiAppState) =>
-    s.ai.chatAI.chatHistory.getIn([entryIndex, 'tools'])
+    s.ai.chat.chatHistory.getIn([entryIndex, 'tools'])
   ) as ImmutableMap<string, ImmutableMap<string, unknown>>;
 
   const completedTools = tools.filter(

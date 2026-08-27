@@ -224,8 +224,8 @@ describe('ToolModal', () => {
       fireEvent.click(closeButton);
 
       const state = store.getState();
-      expect(state.ai.chatAI.openTool.get('id')).toBeNull();
-      expect(state.ai.chatAI.openTool.get('chatEntryIndex')).toBeNull();
+      expect(state.ai.chat.openTool.get('id')).toBeNull();
+      expect(state.ai.chat.openTool.get('chatEntryIndex')).toBeNull();
     });
   });
 });

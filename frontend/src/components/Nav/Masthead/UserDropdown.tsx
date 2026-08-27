@@ -152,7 +152,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
   render(): React.ReactNode {
     const { isDropdownOpen, isSessionTokenStatsOpen } = this.state;
-    const showSessionTokenStats = serverConfig.ai.chatAI.enabled && serverConfig.ai.chatAI.store.enabled;
+    const showSessionTokenStats = serverConfig.ai.chat.enabled && serverConfig.ai.chat.store.enabled;
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
       this.props.session?.clusterInfo?.[cluster] !== undefined;

@@ -59,7 +59,7 @@ type ChatAIStoreConfig struct {
 
 type AIConfig struct {
 	Enabled bool         `json:"enabled"`
-	ChatAI  ChatAIConfig `json:"chatAI,omitempty"`
+	ChatAI  ChatAIConfig `json:"chat,omitempty"`
 }
 
 type ChatAIConfig struct {

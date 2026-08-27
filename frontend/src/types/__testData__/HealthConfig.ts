@@ -6,7 +6,7 @@ export const healthConfig = {
   ambientEnabled: false,
   ai: {
     enabled: false,
-    chatAI: {
+    chat: {
       allowed: false,
       enabled: false,
       providers: [],

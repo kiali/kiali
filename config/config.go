@@ -864,7 +864,7 @@ type ProviderConfig struct {
 // AIConfig defines configuration for the AI subsystem
 type AIConfig struct {
 	Enabled bool         `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	ChatAI  ChatAIConfig `yaml:"chat_ai,omitempty" json:"chat_ai,omitempty"`
+	ChatAI  ChatAIConfig `yaml:"chat,omitempty" json:"chat,omitempty"`
 }
 
 // ChatAIConfig defines configuration for the ChatAI subsystem
@@ -1017,7 +1017,7 @@ type Config struct {
 	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
 	AI                       AIConfig                            `yaml:"ai,omitempty"`
 	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
+	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"` // Deprecated: use AI.ChatAI instead (yaml: "ai.chat"). See migrateDeprecatedChatAI.
 	Clustering               Clustering                          `yaml:"clustering,omitempty"`
 	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
 	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
@@ -1413,9 +1413,9 @@ func (conf *Config) ValidateAI() error {
 }
 
 // migrateDeprecatedChatAI moves settings from the deprecated top-level "chat_ai" yaml
-// setting into the new "ai.chat_ai" location. "defaultChatAI" is the zero-config default
-// for "ai.chat_ai" (i.e. what it looked like before the yaml was parsed) so we can tell
-// whether the yaml itself set "ai.chat_ai" or if it is still just sitting at the default.
+// setting into the new "ai.chat" location. "defaultChatAI" is the zero-config default
+// for "ai.chat" (i.e. what it looked like before the yaml was parsed) so we can tell
+// whether the yaml itself set "ai.chat" or if it is still just sitting at the default.
 //
 // TODO: Remove this migration once the deprecated "chat_ai" top-level setting is no longer supported.
 func (conf *Config) migrateDeprecatedChatAI(defaultChatAI ChatAIConfig) {
@@ -1425,14 +1425,14 @@ func (conf *Config) migrateDeprecatedChatAI(defaultChatAI ChatAIConfig) {
 	}
 
 	if !reflect.DeepEqual(conf.AI.ChatAI, defaultChatAI) {
-		// The new "ai.chat_ai" setting was also explicitly configured - it wins, and the
+		// The new "ai.chat" setting was also explicitly configured - it wins, and the
 		// deprecated setting is discarded so there is only ever one source of truth.
-		log.Warning("Both the deprecated 'chat_ai' setting and the new 'ai.chat_ai' setting are configured - 'ai.chat_ai' will be used. Remove 'chat_ai' from your configuration.")
+		log.Warning("Both the deprecated 'chat_ai' setting and the new 'ai.chat' setting are configured - 'ai.chat' will be used. Remove 'chat_ai' from your configuration.")
 		conf.ChatAI = ChatAIConfig{}
 		return
 	}
 
-	log.Info("DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat_ai'")
+	log.Info("DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat'")
 	conf.AI.ChatAI = conf.ChatAI
 	if conf.ChatAI.Enabled {
 		conf.AI.Enabled = true
@@ -1743,8 +1743,8 @@ func (conf *Config) prepareDashboards() {
 // pool, including additional CAs from the kiali-cabundle ConfigMap.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
-	// Capture the default "ai.chat_ai" settings before parsing so migrateDeprecatedChatAI
-	// can later tell whether the yaml actually set "ai.chat_ai" or left it untouched.
+	// Capture the default "ai.chat" settings before parsing so migrateDeprecatedChatAI
+	// can later tell whether the yaml actually set "ai.chat" or left it untouched.
 	defaultChatAI := conf.AI.ChatAI
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {

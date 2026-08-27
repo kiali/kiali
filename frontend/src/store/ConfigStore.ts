@@ -105,7 +105,7 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
 // Redux 4.0 actually required this
 const initialStore: KialiAppState = {
   ai: {
-    chatAI: INITIAL_CHAT_AI_STATE,
+    chat: INITIAL_CHAT_AI_STATE,
     enabled: false
   },
   authentication: INITIAL_LOGIN_STATE,

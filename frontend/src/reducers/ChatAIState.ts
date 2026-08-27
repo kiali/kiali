@@ -24,7 +24,7 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   selectedProvider: ''
 };
 
-// This Reducer manages the 'ai.chatAI' portion of Redux Store
+// This Reducer manages the 'ai.chat' portion of Redux Store
 export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, action: KialiAppAction): ChatAIState => {
   switch (action.type) {
     case getType(ChatAIActions.setChatAI): {
@@ -117,6 +117,6 @@ const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: Kia
 
 // This Reducer allows changes to the 'ai' portion of Redux Store
 export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
-  chatAI: ChatAiStateReducer,
+  chat: ChatAiStateReducer,
   enabled: AiEnabledReducer
 });

@@ -22,7 +22,7 @@ const serviceDetailContext: PromptContext = {
 const buildState = (resourceHealth?: ChatResourceHealth): KialiAppState =>
   ({
     ai: {
-      chatAI: {
+      chat: {
         resourceHealth
       }
     }

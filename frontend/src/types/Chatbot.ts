@@ -94,7 +94,7 @@ export type ModelAI = {
 
 export type AIConfig = {
   enabled: boolean;
-  chatAI: ChatAIConfig;
+  chat: ChatAIConfig;
 };
 
 export type ChatAIConfig = {

@@ -63,7 +63,7 @@ const generateControlPlanes = (): Record<string, string> => {
 
 const generateChatAIConfig = (): ChatAIConfig => {
   const scenarioConfig = getScenarioConfig();
-  if (!scenarioConfig.chatAI) {
+  if (!scenarioConfig.ai?.chat) {
     return {
       allowed: true,
       enabled: false,
@@ -75,10 +75,10 @@ const generateChatAIConfig = (): ChatAIConfig => {
     };
   }
   return {
-    allowed: scenarioConfig.chatAI.allowed ?? true,
-    enabled: scenarioConfig.chatAI.enabled ?? false,
+    allowed: scenarioConfig.ai?.chat.allowed ?? true,
+    enabled: scenarioConfig.ai?.chat.enabled ?? false,
     providers:
-      scenarioConfig.chatAI.providers?.map(provider => ({
+      scenarioConfig.ai?.chat.providers?.map(provider => ({
         name: provider.name,
         description: provider.description ?? '',
         defaultModel: provider.defaultModel ?? '',
@@ -89,9 +89,9 @@ const generateChatAIConfig = (): ChatAIConfig => {
             model: model.model ?? ''
           })) ?? []
       })) ?? [],
-    defaultProvider: scenarioConfig.chatAI.defaultProvider ?? '',
+    defaultProvider: scenarioConfig.ai?.chat.defaultProvider ?? '',
     store: {
-      enabled: scenarioConfig.chatAI.store?.enabled ?? scenarioConfig.chatAI.enabled ?? false
+      enabled: scenarioConfig.ai?.chat.store?.enabled ?? scenarioConfig.ai?.chat.enabled ?? false
     }
   };
 };
@@ -103,8 +103,8 @@ const generateServerConfig = (): ServerConfig => {
     ambientEnabled: scenarioConfig.ambientEnabled,
     authStrategy: 'anonymous',
     ai: {
-      enabled: scenarioConfig.chatAI?.enabled ?? false,
-      chatAI: generateChatAIConfig()
+      enabled: scenarioConfig.ai?.enabled ?? false,
+      chat: generateChatAIConfig()
     },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
