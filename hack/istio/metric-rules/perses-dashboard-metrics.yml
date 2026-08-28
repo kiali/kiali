@@ -1,0 +1,91 @@
+# Optional Prometheus metrics for Kiali Perses Istio dashboards.
+#
+# NOT required for Kiali core features (traffic graph, health, list pages).
+# See kiali-required-metrics.yml for the core federation tier.
+#
+# Dashboard definitions:
+#   https://github.com/perses/community-mixins/tree/main/examples/dashboards/perses/istio
+# Kiali sync: hack/istio/perses/sync-dashboards.sh
+#
+# Enable federation for these metrics with:
+#   ./install.sh --with-dashboards
+# or merge federation-match-dashboards.yml into your production Prometheus config.
+
+reference_dashboards:
+  istio-mesh-dashboard:
+    status: covered_by_core
+    notes: Uses only Kiali FAQ traffic metrics.
+
+  istio-service-dashboard:
+    status: mostly_covered_by_core
+    notes: >
+      Primary panels use istio_request_duration_milliseconds_* from core tier.
+      Legacy fallback istio_request_duration_seconds_bucket is optional (empty on Istio 1.17+).
+
+  istio-workload-dashboard:
+    status: mostly_covered_by_core
+    notes: Same legacy seconds histogram fallback as service dashboard.
+
+  istio-control-plane:
+    status: requires_dashboard_tier
+    additional_metrics:
+    - pilot_k8s_reg_events
+    - pilot_k8s_cfg_events
+    - pilot_push_triggers
+    - pilot_total_xds_rejects
+    - pilot_total_xds_internal_errors
+    - pilot_xds_push_time_bucket
+    - pilot_xds_config_size_bytes_bucket
+    - go_goroutines
+    - go_memstats_alloc_bytes_total
+    - go_memstats_heap_alloc_bytes
+    - go_memstats_heap_inuse_bytes
+    - go_memstats_mallocs_total
+    - go_memstats_stack_inuse_bytes
+
+  istio-performance:
+    status: requires_dashboard_tier
+    additional_metrics:
+    - container_fs_usage_bytes
+    - go_goroutines
+    - go_memstats_alloc_bytes
+    - go_memstats_heap_alloc_bytes
+    - go_memstats_heap_inuse_bytes
+    - go_memstats_heap_sys_bytes
+    - go_memstats_stack_inuse_bytes
+    - process_open_fds
+    - process_virtual_memory_bytes
+
+  istio-ztunnel-dashboard:
+    status: requires_dashboard_tier
+    notes: Relevant in ambient mode only.
+    additional_metrics:
+    - istio_dns_requests_total
+    - istio_tcp_sockets_open
+    - istio_xds_connection_terminations_total
+    - istio_xds_message_total
+    - process_open_fds
+    - workload_manager_pending_proxy_count
+
+  istio-extension-dashboard:
+    status: requires_dashboard_tier
+    notes: Relevant only when WASM extensions are in use.
+    additional_metrics:
+    - envoy_wasm_envoy_wasm_runtime_null_active
+    - envoy_wasm_envoy_wasm_runtime_null_created
+    - envoy_wasm_envoy_wasm_runtime_v8_active
+    - envoy_wasm_envoy_wasm_runtime_v8_created
+    - envoy_wasm_remote_load_cache_entries
+    - envoy_wasm_remote_load_cache_hits
+    - envoy_wasm_remote_load_cache_misses
+    - envoy_wasm_remote_load_cache_negative_hits
+    - envoy_wasm_remote_load_fetch_failures
+    - envoy_wasm_remote_load_fetch_successes
+
+  legacy_istio_histogram:
+    status: optional
+    notes: >
+      istio_request_duration_seconds_bucket fallback for pre-1.17 Istio.
+      Not emitted on modern Istio; safe to omit unless supporting old meshes.
+    additional_metrics:
+    - istio_request_duration_seconds_bucket
