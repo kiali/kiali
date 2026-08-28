@@ -139,7 +139,10 @@
         "caching",
         "performance",
         "tuning",
-        "scrape interval"
+        "scrape interval",
+        "recording rules",
+        "federation",
+        "workload aggregation"
       ],
       "url": "https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/",
       "title": "Kiali Prometheus Configuration"

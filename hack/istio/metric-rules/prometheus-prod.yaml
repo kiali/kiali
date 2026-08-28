@@ -1,0 +1,136 @@
+# Production Prometheus: core (Kiali) federation tier from edge Prometheus.
+# https://kiali.io/docs/faq/general/#requiredmetrics
+#
+# - Istio traffic metrics: workload:* recording rules, relabeled to istio_*
+# - All other core metrics: federated directly by name
+#
+# Optional Perses dashboard metrics: federation-match-dashboards.yml
+# Enable with: install.sh --with-dashboards (or render-prometheus-prod.py)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-prod
+  namespace: istio-system
+  labels:
+    app: prometheus-prod
+data:
+  prometheus.yml: |
+    global:
+      evaluation_interval: 1m
+      scrape_interval: 30s
+      scrape_timeout: 25s
+    scrape_configs:
+    - job_name: istio-prometheus-federate
+      honor_labels: true
+      metrics_path: /federate
+      scrape_interval: 30s
+      scrape_timeout: 25s
+      params:
+        match[]:
+          # Istio traffic (pod-aggregated on edge via recording rules)
+          - '{__name__=~"workload:istio_requests_total"}'
+          - '{__name__=~"workload:istio_request_bytes_(bucket|count|sum)"}'
+          - '{__name__=~"workload:istio_request_duration_milliseconds_(bucket|count|sum)"}'
+          - '{__name__=~"workload:istio_request_messages_total"}'
+          - '{__name__=~"workload:istio_response_bytes_(bucket|count|sum)"}'
+          - '{__name__=~"workload:istio_response_messages_total"}'
+          - '{__name__=~"workload:istio_tcp_connections_(opened|closed)_total"}'
+          - '{__name__=~"workload:istio_tcp_(received|sent)_bytes_total"}'
+          # Istio info (not aggregated)
+          - '{__name__=~"istio_build"}'
+          # Control plane overview (Kiali mesh page)
+          - '{__name__=~"container_cpu_usage_seconds_total"}'
+          - '{__name__=~"container_memory_working_set_bytes"}'
+          - '{__name__=~"process_cpu_seconds_total"}'
+          - '{__name__=~"process_resident_memory_bytes"}'
+          - '{__name__=~"pilot_info"}'
+          - '{__name__=~"pilot_proxy_convergence_time_(sum|count)"}'
+          - '{__name__=~"pilot_services"}'
+          - '{__name__=~"pilot_xds$"}'
+          - '{__name__=~"pilot_xds_pushes"}'
+          - '{__name__=~"workload_manager_active_proxy_count"}'
+          # Envoy workload details
+          - '{__name__=~"envoy_cluster_upstream_cx_active"}'
+          - '{__name__=~"envoy_cluster_upstream_rq_total"}'
+          - '{__name__=~"envoy_listener_downstream_cx_active"}'
+          - '{__name__=~"envoy_listener_http_downstream_rq"}'
+          - '{__name__=~"envoy_server_memory_allocated"}'
+          - '{__name__=~"envoy_server_memory_heap_size"}'
+          - '{__name__=~"envoy_server_uptime"}'
+      metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'workload:(.*)'
+        target_label: __name__
+        action: replace
+      static_configs:
+      - targets:
+        - prometheus.istio-system.svc.cluster.local:9090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-prod
+  namespace: istio-system
+  labels:
+    app: prometheus-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-prod
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prometheus-prod
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus:v3.10.0
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/data
+        - --storage.tsdb.retention.time=15d
+        - --web.enable-lifecycle
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: data
+          mountPath: /data
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-prod
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-prod
+  namespace: istio-system
+  labels:
+    app: prometheus-prod
+spec:
+  selector:
+    app: prometheus-prod
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090
