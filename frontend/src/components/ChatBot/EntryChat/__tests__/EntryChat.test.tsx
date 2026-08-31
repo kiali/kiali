@@ -223,6 +223,25 @@ describe('EntryChat', () => {
     });
   });
 
+  describe('truncated state', () => {
+    it('renders a warning alert when the response was truncated', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-truncated',
+            who: 'ai',
+            text: 'Partial answer',
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: true
+          }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.getByText('Response truncated due to output length limit.')).toBeInTheDocument();
+    });
+  });
+
   // ── Sources / references ─────────────────────────────────────────────────────
 
   describe('referenced documentation sources', () => {

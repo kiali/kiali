@@ -1,8 +1,8 @@
-import { Message, SourcesCardProps } from '@patternfly/chatbot';
+import { Message, type SourcesCardProps } from '@patternfly/chatbot';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { ChatEntry, ReferencedDoc } from 'types/Chatbot';
+import type { KialiAppState } from 'store/Store';
+import type { ChatEntry, ReferencedDoc } from 'types/Chatbot';
 import { copyToClipboard } from './clipboard';
 import { Alert } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
@@ -89,6 +89,9 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
                 </Alert>
               )}
               {entry.isCancelled && <Alert isInline isPlain title={t('Cancelled')} variant="info" />}
+              {entry.isTruncated && (
+                <Alert isInline isPlain title={t('Response truncated due to output length limit.')} variant="warning" />
+              )}
               {entry.tools && <ResponseTools entryIndex={entryIndex} />}
               {hasActions && <Actions entryIndex={entryIndex} />}
             </>
