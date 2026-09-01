@@ -215,6 +215,8 @@ if [ -z "${ISTIO_VERSION}" ]; then
     ISTIO_VERSION="1.27.5"
   elif [ "${TARGET_BRANCH}" == "v2.22" ]; then
     ISTIO_VERSION="1.28.3"
+  elif [ "${TARGET_BRANCH}" == "v2.27" ]; then
+    ISTIO_VERSION="1.29.1"
   fi
 fi
 
