@@ -46,6 +46,8 @@ SPIRE_ENABLED="false"
 SPIRE_TRUST_DOMAIN="example.org"
 SPIRE_NAMESPACE="spire"
 
+INSTALL_MAX_RETRIES=30
+
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source ${SCRIPT_DIR}/functions.sh
@@ -657,15 +659,25 @@ else
   # If we are not installing in istio-system, we cannot use 'install' but must generate the yaml and apply it ourselves.
   # See https://github.com/istio/istio/issues/30897#issuecomment-781141490
   if [ "${NAMESPACE}" == "istio-system" ]; then
-    while ! (${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY})
-    do
-      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+    retry_count=0
+    while ! (${ISTIOCTL} manifest install --skip-confirmation=true --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY}); do
+      retry_count=$((retry_count + 1))
+      if [ "${retry_count}" -ge "${INSTALL_MAX_RETRIES}" ]; then
+        echo "Failed to install Istio with profile [${CONFIG_PROFILE}] after ${INSTALL_MAX_RETRIES} attempts"
+        exit 1
+      fi
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}] (attempt ${retry_count}/${INSTALL_MAX_RETRIES}). Will retry in 10 seconds..."
       sleep 10
     done
   else
-    while ! (${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} apply -f -)
-    do
-      echo "Failed to install Istio with profile [${CONFIG_PROFILE}]. Will retry in 10 seconds..."
+    retry_count=0
+    while ! (${ISTIOCTL} manifest generate --set profile=${CONFIG_PROFILE} ${MANIFEST_CONFIG_SETTINGS_TO_APPLY} | ${CLIENT_EXE} apply -f -); do
+      retry_count=$((retry_count + 1))
+      if [ "${retry_count}" -ge "${INSTALL_MAX_RETRIES}" ]; then
+        echo "Failed to install Istio with profile [${CONFIG_PROFILE}] after ${INSTALL_MAX_RETRIES} attempts"
+        exit 1
+      fi
+      echo "Failed to install Istio with profile [${CONFIG_PROFILE}] (attempt ${retry_count}/${INSTALL_MAX_RETRIES}). Will retry in 10 seconds..."
       sleep 10
     done
   fi
@@ -772,9 +784,14 @@ else
   echo "Installing Addons: [${ADDONS}]"
   for addon in ${ADDONS}; do
     echo "Installing addon: [${addon}]"
-    while ! (cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -)
-    do
-      echo "Failed to install addon [${addon}] - will retry in 10 seconds..."
+    retry_count=0
+    while ! (cat ${ISTIO_DIR}/samples/addons/${addon}.yaml | sed "s/istio-system/${NAMESPACE}/g" | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -); do
+      retry_count=$((retry_count + 1))
+      if [ "${retry_count}" -ge "${INSTALL_MAX_RETRIES}" ]; then
+        echo "Failed to install addon [${addon}] after ${INSTALL_MAX_RETRIES} attempts"
+        exit 1
+      fi
+      echo "Failed to install addon [${addon}] (attempt ${retry_count}/${INSTALL_MAX_RETRIES}) - will retry in 10 seconds..."
       sleep 10
     done
   done

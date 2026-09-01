@@ -624,7 +624,7 @@ setup_kind_singlecluster() {
   else
     # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
     kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+    kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=5m
   fi
 }
 
@@ -711,7 +711,7 @@ setup_kind_tempo() {
 
   # Helm chart doesn't support passing in service opts so patch them after the helm deploy.
   kubectl patch service kiali -n istio-system --type=json -p='[{"op": "replace", "path": "/spec/ports/0/port", "value":80}]'
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=5m
 }
 
 setup_kind_multicluster() {
