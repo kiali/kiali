@@ -71,295 +71,308 @@ jobs:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   # ---------------------------------------------------------------------------
-  # TEMPORARY: Non-essential jobs commented out while validating multi-mesh CI
-  # hardening. Re-enable when the multi-mesh job is stable.
+  # Wave 1: Always runs on every PR.
   # ---------------------------------------------------------------------------
 
-  # integration_tests_backend:
-  #   name: Run backend integration tests
-  #   uses: ./.github/workflows/integration-tests-backend.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_backend_mcp:
-  #   name: Run backend MCP integration tests
-  #   uses: ./.github/workflows/integration-tests-backend-mcp.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_core_1:
-  #   name: Run frontend core-1 integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-core-1.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_core_2:
-  #   name: Run frontend core-2 integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-core-2.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_core_caching:
-  #   name: Run frontend core-caching integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-core-caching.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_core_optional:
-  #   name: Run frontend core-optional integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_ambient:
-  #   name: Run Ambient frontend integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-ambient.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_ambient_multi_primary:
-  #   name: Run frontend Ambient Multi-Primary integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
-  #   needs: [initialize, build_backend]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # wave2_gate:
-  #   name: Wave 2 gate
-  #   if: contains(github.event.pull_request.labels.*.name, 'ci-full')
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   needs:
-  #   - integration_tests_backend
-  #   - integration_tests_backend_mcp
-  #   - integration_tests_frontend_core_1
-  #   - integration_tests_frontend_core_2
-  #   - integration_tests_frontend_core_caching
-  #   - integration_tests_frontend_core_optional
-  #   - integration_tests_frontend_ambient
-  #   - integration_tests_frontend_ambient_multi_primary
-  #   steps:
-  #   - run: echo "Wave 1 complete – starting wave 2"
-
-  # integration_tests_frontend_chat:
-  #   name: Run frontend AI integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-chat.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_local_offline:
-  #   name: Run frontend local and offline mode integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_tempo:
-  #   name: Run tracing frontend integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_multicluster_primary_remote:
-  #   name: Run frontend multicluster primary-remote integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_multicluster_multi_primary:
-  #   name: Run frontend multicluster multi-primary integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  # integration_tests_frontend_multicluster_external_kiali:
-  #   name: Run frontend multicluster external-kiali integration tests
-  #   uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
-
-  integration_tests_frontend_multi_mesh:
-    name: Run frontend multi mesh integration tests
-    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
+  integration_tests_backend:
+    name: Run backend integration tests
+    uses: ./.github/workflows/integration-tests-backend.yml
     needs: [initialize, build_backend]
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  # integration_tests_backend_multicluster_external_controlplane:
-  #   name: Run backend multicluster external-controlplane integration tests
-  #   uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-  #   needs: [initialize, build_backend, wave2_gate]
-  #   with:
-  #     target_branch: ${{ needs.initialize.outputs.target-branch }}
-  #     build_branch: ${{ needs.initialize.outputs.build-branch }}
+  integration_tests_backend_mcp:
+    name: Run backend MCP integration tests
+    uses: ./.github/workflows/integration-tests-backend-mcp.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  # store_pr_metadata:
-  #   permissions:
-  #     contents: read
-  #   name: Store PR metadata
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   needs: [initialize]
-  #   steps:
-  #   - name: Check out code
-  #     uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-  #
-  #   - name: Store PR number, target branch, and Kiali version
-  #     run: |
-  #       mkdir -p pr-metadata
-  #       echo "${{ github.event.number }}" > pr-metadata/pr_number.txt
-  #       echo "${{ github.base_ref || github.ref_name }}" > pr-metadata/target_branch.txt
-  #       VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
-  #       echo "${VERSION}" > pr-metadata/kiali_version.txt
-  #       cat pr-metadata/pr_number.txt
-  #       cat pr-metadata/target_branch.txt
-  #       cat pr-metadata/kiali_version.txt
-  #
-  #   - name: Upload PR metadata
-  #     uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-  #     with:
-  #       name: pr-metadata
-  #       path: pr-metadata/
-  #       retention-days: 1
+  integration_tests_frontend_core_1:
+    name: Run frontend core-1 integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-1.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  # codecov_upload_pr_base:
-  #   if: |
-  #     github.event.pull_request.head.repo.full_name == github.repository &&
-  #     (github.event.action != 'labeled' || github.event.label.name == 'ci-full')
-  #   name: Upload PR base coverage to Codecov
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 30
-  #   permissions:
-  #     contents: read
-  #   steps:
-  #   - name: Checkout PR base commit
-  #     uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-  #     with:
-  #       fetch-depth: 1
-  #       ref: ${{ github.event.pull_request.base.sha }}
-  #
-  #   - name: Set up Go
-  #     uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-  #     with:
-  #       cache: true
-  #       cache-dependency-path: go.sum
-  #       go-version-file: go.mod
-  #
-  #   - name: Run unit tests with coverage
-  #     run: make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
-  #
-  #   - name: Upload PR base coverage to Codecov
-  #     uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
-  #     with:
-  #       disable_search: true
-  #       fail_ci_if_error: true
-  #       files: coverage-unit.out
-  #       flags: integration
-  #       override_branch: ${{ github.event.pull_request.base.ref }}
-  #       override_commit: ${{ github.event.pull_request.base.sha }}
-  #       slug: kiali/kiali
-  #       token: ${{ secrets.CODECOV_TOKEN }}
-  #       use_pypi: true
+  integration_tests_frontend_core_2:
+    name: Run frontend core-2 integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-2.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  #   if: |
-  #     always() &&
-  #     needs.integration_tests_backend.result == 'success' &&
-  #     needs.test_backend.result == 'success' &&
-  #     (needs.codecov_upload_pr_base.result == 'success' || needs.codecov_upload_pr_base.result == 'skipped') &&
-  #     (needs.integration_tests_backend_multicluster_external_controlplane.result == 'success' || needs.integration_tests_backend_multicluster_external_controlplane.result == 'skipped')
-  #   name: Merge & Upload Coverage to Codecov
-  #   needs:
-  #   - codecov_upload_pr_base
-  #   - integration_tests_backend
-  #   - integration_tests_backend_multicluster_external_controlplane
-  #   - test_backend
-  #   permissions:
-  #     contents: read
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 15
-  #   steps:
-  #   - name: Checkout repo
-  #     uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-  #     with:
-  #       fetch-depth: 0
-  #       ref: ${{ github.event.pull_request.head.sha }}
-  #
-  #   - name: Download unit coverage
-  #     uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-  #     with:
-  #       name: coverage-unit
-  #       path: coverage
-  #
-  #   - name: Download backend coverage
-  #     uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-  #     with:
-  #       name: coverage-backend
-  #       path: coverage
-  #
-  #   - name: Download multicluster coverage
-  #     if: needs.integration_tests_backend_multicluster_external_controlplane.result == 'success'
-  #     uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-  #     with:
-  #       name: coverage-multicluster
-  #       path: coverage
-  #
-  #   - name: Merge coverage files
-  #     run: |
-  #       echo "mode: set" > coverage.out
-  #       grep -h -v "^mode:" coverage/coverage-unit.out >> coverage.out
-  #       grep -h -v "^mode:" coverage/coverage-backend.out >> coverage.out
-  #       if [ -f coverage/coverage-multicluster.out ]; then
-  #         grep -h -v "^mode:" coverage/coverage-multicluster.out >> coverage.out
-  #       fi
-  #
-  #   - name: Select Codecov PR base commit
-  #     if: github.event.pull_request.head.repo.full_name == github.repository
-  #     uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
-  #     with:
-  #       base_sha: ${{ github.event.pull_request.base.sha }}
-  #       run_command: pr-base-picking
-  #       slug: kiali/kiali
-  #       token: ${{ secrets.CODECOV_TOKEN }}
-  #       use_pypi: true
-  #
-  #   - name: Upload coverage to Codecov
-  #     if: github.event.pull_request.head.repo.full_name == github.repository
-  #     uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
-  #     with:
-  #       disable_search: true
-  #       fail_ci_if_error: true
-  #       files: coverage.out
-  #       flags: integration
-  #       override_branch: ${{ github.head_ref }}
-  #       override_commit: ${{ github.event.pull_request.head.sha }}
-  #       override_pr: ${{ github.event.pull_request.number }}
-  #       slug: kiali/kiali
-  #       token: ${{ secrets.CODECOV_TOKEN }}
-  #       use_pypi: true
+  integration_tests_frontend_core_caching:
+    name: Run frontend core-caching integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-caching.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_core_optional:
+    name: Run frontend core-optional integration tests
+    uses: ./.github/workflows/integration-tests-frontend-core-optional.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_ambient:
+    name: Run Ambient frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_ambient_multi_primary:
+    name: Run frontend Ambient Multi-Primary integration tests
+    uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  # ---------------------------------------------------------------------------
+  # Wave 2 gate: Waits for wave 1 to finish, only runs when 'ci-full' label
+  # is present on the PR. When skipped, all wave 2 jobs are skipped too.
+  # ---------------------------------------------------------------------------
+
+  wave2_gate:
+    name: Wave 2 gate
+    if: contains(github.event.pull_request.labels.*.name, 'ci-full')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+    - integration_tests_backend
+    - integration_tests_backend_mcp
+    - integration_tests_frontend_core_1
+    - integration_tests_frontend_core_2
+    - integration_tests_frontend_core_caching
+    - integration_tests_frontend_core_optional
+    - integration_tests_frontend_ambient
+    - integration_tests_frontend_ambient_multi_primary
+    steps:
+    - run: echo "Wave 1 complete – starting wave 2"
+
+  # ---------------------------------------------------------------------------
+  # Wave 2: Requires the 'ci-full' label and wave 1 completion.
+  # ---------------------------------------------------------------------------
+
+  integration_tests_frontend_chat:
+    name: Run frontend AI integration tests
+    uses: ./.github/workflows/integration-tests-frontend-chat.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_local_offline:
+    name: Run frontend local and offline mode integration tests
+    uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_tempo:
+    name: Run tracing frontend integration tests
+    uses: ./.github/workflows/integration-tests-frontend-tempo.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_primary_remote:
+    name: Run frontend multicluster primary-remote integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_multi_primary:
+    name: Run frontend multicluster multi-primary integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multicluster_external_kiali:
+    name: Run frontend multicluster external-kiali integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_multi_mesh:
+    name: Run frontend multi mesh integration tests
+    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_backend_multicluster_external_controlplane:
+    name: Run backend multicluster external-controlplane integration tests
+    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
+    needs: [initialize, build_backend, wave2_gate]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  store_pr_metadata:
+    permissions:
+      contents: read
+    name: Store PR metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [initialize]
+    steps:
+    - name: Check out code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+    - name: Store PR number, target branch, and Kiali version
+      run: |
+        mkdir -p pr-metadata
+        echo "${{ github.event.number }}" > pr-metadata/pr_number.txt
+        echo "${{ github.base_ref || github.ref_name }}" > pr-metadata/target_branch.txt
+        # Extract VERSION from Makefile and get major.minor (e.g., v2.21.0-SNAPSHOT -> 2.21)
+        VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
+        echo "${VERSION}" > pr-metadata/kiali_version.txt
+        cat pr-metadata/pr_number.txt
+        cat pr-metadata/target_branch.txt
+        cat pr-metadata/kiali_version.txt
+
+    # Upload PR metadata as artifact because workflow_run events triggered by PRs from forks
+    # don't have access to PR information in github.event.workflow_run.pull_requests
+    # See: https://github.com/orgs/community/discussions/25220
+    - name: Upload PR metadata
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: pr-metadata
+        path: pr-metadata/
+        retention-days: 1
+
+  codecov_upload_pr_base:
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ci-full')
+    name: Upload PR base coverage to Codecov
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+    - name: Checkout PR base commit
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 1
+        ref: ${{ github.event.pull_request.base.sha }}
+
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        cache: true
+        cache-dependency-path: go.sum
+        go-version-file: go.mod
+
+    - name: Run unit tests with coverage
+      run: make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
+
+    - name: Upload PR base coverage to Codecov
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage-unit.out
+        flags: integration
+        override_branch: ${{ github.event.pull_request.base.ref }}
+        override_commit: ${{ github.event.pull_request.base.sha }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
+
+  codecov_merge_upload:
+    if: |
+      always() &&
+      needs.integration_tests_backend.result == 'success' &&
+      needs.test_backend.result == 'success' &&
+      (needs.codecov_upload_pr_base.result == 'success' || needs.codecov_upload_pr_base.result == 'skipped') &&
+      (needs.integration_tests_backend_multicluster_external_controlplane.result == 'success' || needs.integration_tests_backend_multicluster_external_controlplane.result == 'skipped')
+    name: Merge & Upload Coverage to Codecov
+    needs:
+    - codecov_upload_pr_base
+    - integration_tests_backend
+    - integration_tests_backend_multicluster_external_controlplane
+    - test_backend
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Download unit coverage
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-unit
+        path: coverage
+
+    - name: Download backend coverage
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-backend
+        path: coverage
+
+    - name: Download multicluster coverage
+      if: needs.integration_tests_backend_multicluster_external_controlplane.result == 'success'
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: coverage-multicluster
+        path: coverage
+
+    - name: Merge coverage files
+      run: |
+        echo "mode: set" > coverage.out
+        grep -h -v "^mode:" coverage/coverage-unit.out >> coverage.out
+        grep -h -v "^mode:" coverage/coverage-backend.out >> coverage.out
+        if [ -f coverage/coverage-multicluster.out ]; then
+          grep -h -v "^mode:" coverage/coverage-multicluster.out >> coverage.out
+        fi
+
+    - name: Select Codecov PR base commit
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      with:
+        base_sha: ${{ github.event.pull_request.base.sha }}
+        run_command: pr-base-picking
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
+
+    - name: Upload coverage to Codecov
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      with:
+        disable_search: true
+        fail_ci_if_error: true
+        files: coverage.out
+        flags: integration
+        override_branch: ${{ github.head_ref }}
+        override_commit: ${{ github.event.pull_request.head.sha }}
+        override_pr: ${{ github.event.pull_request.number }}
+        slug: kiali/kiali
+        token: ${{ secrets.CODECOV_TOKEN }}
+        use_pypi: true
