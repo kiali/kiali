@@ -1,16 +1,16 @@
-import { Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
+import { Checkbox, Dropdown, DropdownList, type MenuToggleElement, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
-import { KialiAppState, MeshToolbarState } from '../../../store/Store';
+import type { KialiAppState, MeshToolbarState } from '../../../store/Store';
 import {
   BoundingClientAwareComponent,
   PropertyType
 } from 'components/BoundingClientAwareComponent/BoundingClientAwareComponent';
 import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
 import { containerStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { serverConfig } from '../../../config';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
@@ -18,11 +18,13 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   showGateways: boolean;
+  showKiali: boolean;
   showWaypoints: boolean;
 };
 
 type ReduxDispatchProps = {
   toggleGateways(): void;
+  toggleKiali(): void;
   toggleWaypoints(): void;
 };
 
@@ -64,10 +66,10 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
 
   const getMenuOptions = (): React.ReactNode => {
     // map our attributes from redux
-    const { showGateways, showWaypoints } = props;
+    const { showGateways, showKiali, showWaypoints } = props;
 
     // map our dispatchers for redux
-    const { toggleGateways, toggleWaypoints } = props;
+    const { toggleGateways, toggleKiali, toggleWaypoints } = props;
 
     const visibilityOptions: DisplayOptionType[] = [
       {
@@ -76,6 +78,15 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
         labelText: t('Gateways'),
         onChange: toggleGateways,
         tooltip: <div>{t('When enabled, include gateways in the mesh topology.')}</div>
+      },
+      {
+        id: 'filterKiali',
+        isChecked: showKiali,
+        labelText: 'Kiali',
+        onChange: toggleKiali,
+        tooltip: (
+          <div>{t('When enabled, include Kiali and the external observability services in the mesh topology.')}</div>
+        )
       }
     ];
 
@@ -100,7 +111,7 @@ const MeshSettingsComponent: React.FC<MeshSettingsProps> = (props: MeshSettingsP
           {visibilityOptions.map((item: DisplayOptionType) =>
             renderDisplayMenuRow(
               `visibility-${item.id}`,
-              <label key={item.id} className={itemStyleWithoutInfo}>
+              <label key={item.id} htmlFor={item.id} className={itemStyleWithoutInfo}>
                 <Checkbox
                   id={item.id}
                   isChecked={item.isChecked}
@@ -155,11 +166,43 @@ const withURLAwareness = (
       );
 
       this.handleURLBool(
+        URLParam.MESH_KIALI,
+        INITIAL_MESH_STATE.toolbarState.showKiali,
+        props.showKiali,
+        props.toggleKiali
+      );
+
+      this.handleURLBool(
         URLParam.MESH_WAYPOINTS,
         INITIAL_MESH_STATE.toolbarState.showWaypoints,
         props.showWaypoints,
         props.toggleWaypoints
       );
+    }
+
+    componentDidUpdate(prev: MeshSettingsProps): void {
+      this.alignURLBool(
+        URLParam.MESH_GATEWAYS,
+        INITIAL_MESH_STATE.toolbarState.showGateways,
+        prev.showGateways,
+        this.props.showGateways
+      );
+      this.alignURLBool(
+        URLParam.MESH_KIALI,
+        INITIAL_MESH_STATE.toolbarState.showKiali,
+        prev.showKiali,
+        this.props.showKiali
+      );
+      this.alignURLBool(
+        URLParam.MESH_WAYPOINTS,
+        INITIAL_MESH_STATE.toolbarState.showWaypoints,
+        prev.showWaypoints,
+        this.props.showWaypoints
+      );
+    }
+
+    render(): React.ReactNode {
+      return <MeshSettingsComponent {...this.props} />;
     }
 
     private handleURLBool = (
@@ -190,31 +233,13 @@ const withURLAwareness = (
         HistoryManager.setParam(param, String(curr));
       }
     };
-
-    componentDidUpdate(prev: MeshSettingsProps): void {
-      this.alignURLBool(
-        URLParam.MESH_GATEWAYS,
-        INITIAL_MESH_STATE.toolbarState.showGateways,
-        prev.showGateways,
-        this.props.showGateways
-      );
-      this.alignURLBool(
-        URLParam.MESH_WAYPOINTS,
-        INITIAL_MESH_STATE.toolbarState.showWaypoints,
-        prev.showWaypoints,
-        this.props.showWaypoints
-      );
-    }
-
-    render(): React.ReactNode {
-      return <MeshSettingsComponent {...this.props} />;
-    }
   };
 };
 
 // Allow Redux to map sections of our global app state to our props
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   showGateways: state.mesh.toolbarState.showGateways,
+  showKiali: state.mesh.toolbarState.showKiali,
   showWaypoints: state.mesh.toolbarState.showWaypoints
 });
 
@@ -222,6 +247,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     toggleGateways: bindActionCreators(MeshToolbarActions.toggleGateways, dispatch),
+    toggleKiali: bindActionCreators(MeshToolbarActions.toggleKiali, dispatch),
     toggleWaypoints: bindActionCreators(MeshToolbarActions.toggleWaypoints, dispatch)
   };
 };

@@ -157,24 +157,26 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			}
 		}
 
-		// add any Kiali instances
-		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
-			mesh.CheckError(err)
+		// add any Kiali instances and their observability dependencies
+		if o.IncludeKiali {
+			for _, ki := range cp.Cluster.KialiInstances {
+				kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
+				mesh.CheckError(err)
 
-			if es.Istio.IstioAPIEnabled {
-				kiali.AddEdge(istiod)
+				if es.Istio.IstioAPIEnabled {
+					kiali.AddEdge(istiod)
+				}
+
+				// add the Kiali external services...
+				extServicesHasExternal, err := addKialiExternalServices(ctx, kiali, false, meshMap, conf, esVersions, healthData, gi)
+				mesh.CheckError(err)
+				hasExternalServices = hasExternalServices || extServicesHasExternal
 			}
 
-			// add the Kiali external services...
-			extServicesHasExternal, err := addKialiExternalServices(ctx, kiali, false, meshMap, conf, esVersions, healthData, gi)
-			mesh.CheckError(err)
-			hasExternalServices = hasExternalServices || extServicesHasExternal
-		}
-
-		if hasExternalServices {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
-			mesh.CheckError(err)
+			if hasExternalServices {
+				_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
+				mesh.CheckError(err)
+			}
 		}
 
 		// if ambient, add ztunnel
@@ -342,7 +344,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	}
 
 	// In local mode, add Kiali as a local infrastructure node since it's not deployed in the cluster
-	if gi.Conf.RunMode == config.RunModeLocal {
+	if o.IncludeKiali && gi.Conf.RunMode == config.RunModeLocal {
 		// Check if Kiali hasn't been added yet from any cluster
 		kialiExists := false
 		for _, node := range meshMap {
@@ -400,7 +402,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 	}
 
-	if meshDef.ExternalKiali != nil {
+	if o.IncludeKiali && meshDef.ExternalKiali != nil {
 		cluster := meshDef.ExternalKiali.Cluster.Name
 
 		// add external cluster if not already added

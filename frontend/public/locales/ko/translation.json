@@ -798,6 +798,7 @@
   "When": "When",
   "When enabled in an Ambient environment, include waypoints in the mesh topology.": "Ambient 환경에서 활성화하면 메시 토폴로지에 Waypoint를 포함합니다.",
   "When enabled, include gateways in the mesh topology.": "활성화하면 메시 토폴로지에 Gateway를 포함합니다.",
+  "When enabled, include Kiali and the external observability services in the mesh topology.": "When enabled, include Kiali and the external observability services in the mesh topology.",
   "When List": "When 목록",
   "While the health check is simple and checks only for an HTTP 200 response for the URL, this check is more comprehensive and attempts to validate the returned trace data. It will typically use the internal_url to perform the checks. If Kiali is running outside of the cluster, the external_url will be used.": "헬스 체크는 단순히 URL에 대해 HTTP 200 응답만 확인하지만, 이 검사는 더 포괄적이며 반환된 트레이스 데이터를 검증하려고 시도합니다. 일반적으로 검사를 수행할 때 internal_url을 사용합니다. Kiali가 클러스터 외부에서 실행 중인 경우 external_url이 사용됩니다.",
   "Workload": "워크로드",
