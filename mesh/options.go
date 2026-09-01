@@ -24,7 +24,7 @@ const (
 	BoxByCluster            string = "cluster"
 	BoxByNamespace          string = "namespace"
 	defaultIncludeGateways  bool   = false
-	defaultIncludeKiali     bool   = false
+	defaultIncludeKiali     bool   = true
 	defaultIncludeWaypoints bool   = false
 )
 

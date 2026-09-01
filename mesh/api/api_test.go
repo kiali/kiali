@@ -361,7 +361,7 @@ func TestMeshGraph(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 }
 
-func TestMeshGraphHidesKialiByDefault(t *testing.T) {
+func TestMeshGraphHidesKialiWhenRequested(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
@@ -378,7 +378,7 @@ func TestMeshGraphHidesKialiByDefault(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/mesh/graph?queryTime=1523364075")
+	resp, err := http.Get(ts.URL + "/api/mesh/graph?queryTime=1523364075&includeKiali=false")
 	require.NoError(err)
 	require.Equal(http.StatusOK, resp.StatusCode)
 
@@ -405,6 +405,6 @@ func TestMeshGraphHidesKialiByDefault(t *testing.T) {
 		}
 	}
 
-	assert.Zero(kialiCount, "Kiali nodes should be hidden by default")
-	assert.Zero(observCount, "Kiali observability components should be hidden when Kiali is hidden")
+	assert.Zero(kialiCount, "Kiali nodes should be hidden when includeKiali=false")
+	assert.Zero(observCount, "Kiali observability components should be hidden when includeKiali=false")
 }

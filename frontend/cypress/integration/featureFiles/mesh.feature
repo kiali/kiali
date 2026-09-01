@@ -109,8 +109,12 @@ Feature: Kiali Mesh page
     Then user sees "kiali" node side panel
 
   @core-2
-  Scenario: Kiali is hidden by default
+  Scenario: Kiali and observability are hidden by default
     Then user does not see a "kiali" mesh node
+    And user does not see a "grafana" mesh node
+    And user does not see a "metricStore" mesh node
+    And user does not see a "traceStore" mesh node
+    And user does not see a "perses" mesh node
 
   # TODO: offline - must gather does not collect gateway-api resources which are what the integration tests use to create gateways.
   @bookinfo-app
