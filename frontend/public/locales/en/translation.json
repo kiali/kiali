@@ -173,8 +173,6 @@
   "Could not update workload {{workload}} {{field}}": "Could not update workload {{workload}} {{field}}",
   "Could not update workload {{workload}} annotations": "Could not update workload {{workload}} annotations",
   "CP": "CP",
-  "CP ({{count}})_one": "CP ({{count}})",
-  "CP ({{count}})_other": "CP ({{count}})",
   "CPU": "CPU",
   "Create": "Create",
   "Create Gateway": "Create Gateway",

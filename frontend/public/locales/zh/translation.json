@@ -166,7 +166,6 @@
   "Could not update workload {{workload}} {{field}}": "Could not update workload {{workload}} {{field}}",
   "Could not update workload {{workload}} annotations": "Could not update workload {{workload}} annotations",
   "CP": "CP",
-  "CP ({{count}})_other": "CP ({{count}})",
   "CPU": "CPU",
   "Create": "创建",
   "Create Gateway": "网关主机",

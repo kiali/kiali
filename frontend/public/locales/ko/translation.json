@@ -173,7 +173,6 @@
   "Could not update workload {{workload}} {{field}}": "워크로드 {{workload}}의 {{field}}을(를) 업데이트할 수 없습니다",
   "Could not update workload {{workload}} annotations": "Could not update workload {{workload}} annotations",
   "CP": "CP",
-  "CP ({{count}})_other": "CP ({{count}})",
   "CPU": "CPU",
   "Create": "생성",
   "Create Gateway": "Gateway 생성",
