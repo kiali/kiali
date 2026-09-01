@@ -2,6 +2,8 @@
 # See kiali-required-metrics.yml and https://kiali.io/docs/faq/general/#requiredmetrics
 #
 # Produces workload:<metric> series on the edge Prometheus for federation.
+# Rule group interval should be >= edge scrape_interval, up to 2x scrape_interval.
+# With 30s scrape, use interval: 30s (see kiali.io Prometheus tuning docs).
 # Control plane, container, process, envoy, and istio_build metrics are NOT
 # recorded here — they are federated directly from the edge Prometheus.
 
