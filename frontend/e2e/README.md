@@ -1,4 +1,4 @@
-# Playwright e2e — Migration Guide & Tracking
+# Playwright e2e — Running Guide & Contribution
 
 Single source of truth for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)).
 Covers conventions, architecture, gotchas, tracking checklists, and lessons from Phase 0–2 (PRs [#10174](https://github.com/kiali/kiali/pull/10174), [#10195](https://github.com/kiali/kiali/pull/10195), [#10217](https://github.com/kiali/kiali/pull/10217), [#10220](https://github.com/kiali/kiali/pull/10220)).
