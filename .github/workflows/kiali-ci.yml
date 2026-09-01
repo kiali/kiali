@@ -13,12 +13,16 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Non-CI labels (e.g. backport needed) must not cancel an in-progress run.
+  cancel-in-progress: ${{ github.event.action != 'labeled' || github.event.label.name == 'ci-full' }}
 
 permissions: read-all
 
 jobs:
   initialize:
+    # Only the ci-full label should trigger CI on labeled events; process labels
+    # (e.g. backport needed) are ignored without cancelling an in-progress run.
+    if: github.event.action != 'labeled' || github.event.label.name == 'ci-full'
     permissions:
       contents: read
     name: Initialize
@@ -258,7 +262,9 @@ jobs:
         retention-days: 1
 
   codecov_upload_pr_base:
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'labeled' || github.event.label.name == 'ci-full')
     name: Upload PR base coverage to Codecov
     runs-on: ubuntu-latest
     timeout-minutes: 30
