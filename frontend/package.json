@@ -86,7 +86,7 @@
     "eventemitter3": "4.0.7",
     "i18next": "^23.10.1",
     "i18next-http-backend": "^2.5.0",
-    "js-yaml": "^4.3.0",
+    "js-yaml": "^4.3.2",
     "lodash-es": "^4.18.0",
     "micro-memoize": "4.0.9",
     "moment": "^2.29.4",
@@ -155,7 +155,8 @@
   },
   "resolutions": {
     "esbuild": "^0.25.2",
-    "js-yaml@npm:3.14.0": "npm:3.15.0",
+    "immutable": "^4.3.9",
+    "js-yaml@npm:3.14.0": "npm:3.15.2",
     "nth-check": "^2.0.1",
     "postcss": "^8.4.31",
     "workbox-webpack-plugin": "^7.1.0"
