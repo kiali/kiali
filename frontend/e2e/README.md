@@ -108,6 +108,7 @@ cd frontend
 yarn playwright:install chromium   # once, after yarn install
 yarn playwright:run:smoke
 yarn playwright:run:core1
+yarn playwright:run:core2
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -116,7 +117,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke` and `playwright-core-1` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, and `playwright-core-2` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
