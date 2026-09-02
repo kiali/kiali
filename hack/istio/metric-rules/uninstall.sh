@@ -18,6 +18,9 @@ done
 echo "Removing prometheus-prod..."
 ${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-prod.yaml" --ignore-not-found
 
+echo "Removing prometheus-kiali-edge..."
+${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-kiali-edge.yaml" --ignore-not-found
+
 echo "Clearing edge recording rules..."
 ${CLIENT_EXE} patch configmap prometheus -n "${ISTIO_NAMESPACE}" --type merge -p '{"data":{"recording_rules.yml":"{}\n"}}'
 

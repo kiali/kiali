@@ -1,0 +1,101 @@
+# Dedicated Kiali edge Prometheus (Option 2 in KEP / kiali.io docs).
+# Scrapes Kiali only, evaluates kiali-recording-rules.yml, short retention.
+# Production Prometheus federates kiali:* series via federation-match-kiali.yml.
+#
+# Render with recording rules embedded:
+#   python3 render-prometheus-kiali-edge.py | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-kiali-edge
+  namespace: istio-system
+  labels:
+    app: prometheus-kiali-edge
+data:
+  prometheus.yml: |
+    global:
+      evaluation_interval: 30s
+      scrape_interval: 30s
+      scrape_timeout: 25s
+    rule_files:
+    - /etc/prometheus/recording_rules.yml
+    scrape_configs:
+    - job_name: kiali
+      honor_labels: true
+      metrics_path: /metrics
+      scrape_interval: 30s
+      scrape_timeout: 25s
+      static_configs:
+      - targets:
+        - kiali.istio-system.svc.cluster.local:9090
+  recording_rules.yml: |
+    {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-kiali-edge
+  namespace: istio-system
+  labels:
+    app: prometheus-kiali-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-kiali-edge
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prometheus-kiali-edge
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+      - name: prometheus
+        image: docker.io/prom/prometheus:v3.10.0
+        args:
+        - --config.file=/etc/prometheus/prometheus.yml
+        - --storage.tsdb.path=/data
+        - --storage.tsdb.retention.time=6h
+        - --web.enable-lifecycle
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: data
+          mountPath: /data
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-kiali-edge
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-kiali-edge
+  namespace: istio-system
+  labels:
+    app: prometheus-kiali-edge
+spec:
+  selector:
+    app: prometheus-kiali-edge
+  ports:
+  - name: http
+    port: 9090
+    targetPort: 9090

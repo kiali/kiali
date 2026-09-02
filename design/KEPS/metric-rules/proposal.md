@@ -24,7 +24,7 @@
    1. [Metric Names](#metric-names)
    2. [Affected Code Paths](#affected-code-paths)
    3. [Feature Detection](#feature-detection)
-   4. [Metrics Out of Scope](#metrics-out-of-scope)
+   4. [Kiali Self-Monitoring Metrics](#kiali-self-monitoring-metrics)
 8. [Validation](#validation)
 9. [Design Decisions](#design-decisions)
 10. [Alternatives Considered](#alternatives-considered)
@@ -306,6 +306,9 @@ footprint small:
 | **Core (Kiali)** | Traffic graph, health, lists, mesh overview | `kiali-required-metrics.yml`, `prometheus-prod.yaml` |
 | **Dashboards (Perses)** | Kiali Perses Istio dashboards | `perses-dashboard-metrics.yml`, `federation-match-dashboards.yml` |
 
+`kiali_*` self-monitoring metrics are **not** part of the Istio tiers above. See
+[Kiali Self-Monitoring Metrics](#kiali-self-monitoring-metrics) for deployment options.
+
 Core tier matches the [Kiali FAQ required metrics](https://kiali.io/docs/faq/general/#requiredmetrics).
 Mesh, service, and workload Perses dashboards work on the core tier alone.
 
@@ -392,11 +395,122 @@ Prometheus. Kiali core features use the **core tier** only. Perses dashboard
 panels that need the **dashboard tier** will be empty unless operators opt in
 (see [Metric tiers](#metric-tiers)).
 
-## Metrics Out of Scope
+## Kiali Self-Monitoring Metrics
 
-These are **not** federated in either tier by default:
+Kiali exports optional Prometheus metrics (`kiali_*`) from `server.observability.metrics`
+(port default `9090`). These are **not** Istio/Envoy telemetry and are **not** covered by
+the Istio recording rules or core/dashboard federation tiers.
 
-- Kiali-exported metrics (`kiali_health_status`, etc.)
+| Setting | Default | Purpose |
+| ------- | ------- | ------- |
+| `server.observability.metrics.enabled` | `true` | Operational metrics (API, graph, cache, validation, etc.) |
+| `server.observability.metrics.health_status.enabled` | `false` | `kiali_health_status` gauge per mesh entity (opt-in) |
+
+The metrics listener starts when **either** flag is true. In all deployment options below,
+**`external_services.prometheus.url` targets production Prometheus** (federated mesh data).
+The question is only where `kiali_*` series are scraped and whether they are aggregated
+before reaching production.
+
+### HA and `kiali_health_status`
+
+With multiple Kiali replicas, each pod exports `kiali_health_status` for the **same**
+entities with the **same** values (all replicas run the same health cache refresh).
+This is **duplicate series**, not partition-of-work like Envoy counters.
+
+| Metric family | Multi-replica edge rule | Rationale |
+| ------------- | ---------------------- | --------- |
+| Counters / histograms (`kiali_api_*`, `kiali_graph_*`, …) | `sum without (pod, instance, …)` | Each replica handles different requests; combine totals |
+| `kiali_health_status` (gauge) | `max without (pod, instance, …)` | **Deduplicate** identical copies; do **not** `sum` gauge values |
+
+When replicas agree, `max` and `min` return the same status. When they briefly diverge,
+`max` selects the worst status (higher value = worse health), which is appropriate for
+alerting. Option 3 (direct to prod) must apply the same dedup in **queries or recording
+rules** on production, because raw scrape retains per-replica duplicates.
+
+### Option 1: Scrape Kiali on the Istio edge Prometheus
+
+Kiali metrics are scraped by the **same** edge Prometheus that collects Istio/Envoy
+telemetry. Recording rules on that edge aggregate `kiali_*` (with the dedup rule above
+for `kiali_health_status`). Production Prometheus federates both `workload:istio_*` and
+aggregated `kiali_*` (or a chosen prefix), with relabel restoring original metric names.
+
+```
+Kiali pods ──scrape──┐
+                     ├──► Istio edge Prom ──rules──► workload:* / kiali:*
+Istio/Envoy ──scrape─┘              │                        │
+                                    └── federate ────────────┼──► Prod Prom ◄── Kiali queries
+```
+
+**When to use:** Operators already run an Istio edge scraper and want a single edge
+pipeline for mesh and Kiali self-monitoring.
+
+**Pros:** One edge TSDB; same federation job pattern as Istio; production stays
+low-cardinality.
+
+**Cons:** Couples Kiali scrape configuration to the Istio edge Prometheus lifecycle.
+
+**Reference bundle:** `hack/istio/metric-rules/kiali-recording-rules.yml` merged into the
+Istio edge rules; `federation-match-kiali.yml` appended to the Istio federation job in
+`render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge istio`).
+
+### Option 2: Dedicated Kiali edge Prometheus
+
+Kiali metrics are scraped by a **separate** edge Prometheus used only for Kiali (or
+platform components). That edge evaluates `kiali_*` recording rules and federates to the
+**same** production Prometheus that receives Istio federated metrics.
+
+```
+Kiali pods ──scrape──► Kiali edge Prom ──rules──► kiali:* ──federate──┐
+                                                                       ├──► Prod Prom ◄── Kiali
+Istio/Envoy ──scrape──► Istio edge Prom ──rules──► workload:* ──federate──┘
+```
+
+**When to use:** Istio edge and Kiali monitoring are owned by different teams, live in
+different namespaces/clusters, or must not share scrape configuration.
+
+**Pros:** Isolation; same production query URL for Kiali; production still receives
+aggregated series only.
+
+**Cons:** Additional Prometheus instance to operate on the Kiali side.
+
+**Reference bundle:** `hack/istio/metric-rules/prometheus-kiali-edge.yaml` (dedicated edge
+scraper + `kiali-recording-rules.yml`); separate federation job in
+`render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge dedicated`).
+
+### Option 3: Scrape Kiali directly into production Prometheus
+
+Kiali metrics are scraped **directly** into production Prometheus with no edge
+aggregation step. Istio mesh metrics still follow the edge → rules → federation path.
+
+```
+Kiali pods ──scrape──► Prod Prom ◄──query── Kiali
+                         ▲
+Istio edge ──federate───┘
+```
+
+**When to use:** Single-replica Kiali deployments, demos, or environments where
+operational simplicity outweighs cardinality on production.
+
+**Pros:** Simplest `kiali_*` pipeline; no extra edge Prom or federation `match[]` for Kiali.
+
+**Cons:** Production retains **raw per-replica** `kiali_*` series when Kiali scales out;
+histogram and counter queries must account for multiple targets. **`kiali_health_status`
+queries must deduplicate** (for example `max by (cluster, namespace, health_type, name)
+(kiali_health_status)`) even on production, because raw scrape does not remove replica
+duplicates.
+
+### Comparison
+
+| | Option 1 (Istio edge) | Option 2 (Kiali edge) | Option 3 (direct prod) |
+| --- | --- | --- | --- |
+| Kiali scrape target | Istio edge Prom | Dedicated Kiali edge Prom | Production Prom |
+| `kiali_*` aggregation before prod | Yes (recording rules) | Yes (recording rules) | No |
+| Istio federation unchanged | Yes | Yes | Yes |
+| `kiali_health_status` dedup | Edge rule (`max without …`) | Edge rule (`max without …`) | Query-time or prod rule |
+| Production cardinality | Low | Low | Higher with HA |
+
+Reference recording rules and federation snippets for Options 1 and 2 are **future work**
+in `hack/istio/metric-rules/` (not yet bundled; Istio tiers are implemented first).
 
 Dashboard-tier files document optional additions for ztunnel, WASM, and detailed
 control-plane panels. Legacy `istio_request_duration_seconds_*` is listed only
@@ -470,6 +584,8 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 4. How do multicluster deployments handle federation — per-cluster production Prom, or central federator? Kiali already queries per-cluster Prometheus today.
 5. Is a minimum duration of `4×` (vs `2×`) aggregation interval worth enforcing for rate quality on federated data?
 6. Which non-traffic metrics (ztunnel, `istio_build`) should be documented as optional `match[]` extensions?
+7. ~~Which `kiali_*` deployment option should the reference bundle implement first?~~ Options 1–2 are in `hack/istio/metric-rules/`; Option 3 remains documentation-only.
+8. Should `kiali_health_status` dedup use `max` or `min` when replicas briefly disagree during rollout?
 
 # Phased Roadmap
 
@@ -478,4 +594,5 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 - [ ] **Phase 2**: Frontend/backend minimum duration enforcement using `metric_aggregation_interval`
 - [ ] **Phase 3**: Reference recording-rules + federation bundle (`hack/istio/metric-rules/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation)
 - [ ] **Phase 4**: Documentation — operator guide (prometheus.url → production Prom), equivalence validation, Istio version compatibility
+- [x] **Phase 5**: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-recording-rules.yml`, `federation-match-kiali.yml`, `prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
 - [ ] **Phase 5** (optional): Query optimization — skip redundant `sum by` on pre-aggregated series
