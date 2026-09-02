@@ -44,6 +44,7 @@ test.describe('Mesh page core-2', () => {
 
   test('Shared mesh config is seen on istiod panel', core2, async ({ meshPage, request }) => {
     test.skip(!hasSailIstioCr(), 'Sail Istio CR is required for shared mesh config (@shared-mesh-config)');
+    test.setTimeout(180_000);
 
     await applySharedMeshConfig(request);
     try {

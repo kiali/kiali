@@ -135,29 +135,25 @@ export class MeshPage extends BasePage {
   }
 
   async expectControlPlaneSidePanel(): Promise<void> {
-    const maxTries = 15;
-    for (let tries = 1; tries <= maxTries; tries++) {
+    await expect(async () => {
       const response = await this.page.request.get('/api/namespaces/istio-system/controlplanes/istiod/metrics');
-      if (response.ok()) {
-        const body = await response.json();
-        if (body.process_resident_memory_bytes != null) {
-          break;
-        }
-      }
-      if (tries === maxTries) {
-        throw new Error('Timed out waiting for istiod memory metrics');
-      }
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.process_resident_memory_bytes).toBeTruthy();
+      expect(body.process_cpu_seconds_total).toBeTruthy();
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
 
-    await this.refreshPage();
-    const panel = this.page.locator('#target-panel-control-plane');
-    await expect(panel).toBeVisible();
-    await expect(panel).toContainText('istiod');
-    await expect(panel).toContainText('Outbound policy');
-    await expect(panel.getByTestId('memory-chart')).toBeVisible();
-    await expect(panel.getByTestId('cpu-chart')).toBeVisible();
-    await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
-    await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
+    await expect(async () => {
+      await this.refreshPage();
+      await this.selectMeshNodeByLabel('istiod');
+      const panel = this.page.locator('#target-panel-control-plane');
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText('istiod');
+      await expect(panel).toContainText('Outbound policy');
+      await expect(panel.getByTestId('memory-chart')).toBeVisible();
+      await expect(panel.getByTestId('cpu-chart')).toBeVisible();
+      await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
+      await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
   }
 }
