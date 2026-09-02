@@ -4,7 +4,13 @@ import { kubectlScaleDeployment } from '../../utils/kubectl';
 import { applySharedMeshConfig, restoreSharedMeshConfig } from '../../utils/sharedMeshConfig';
 import { core2 } from '../../utils/suite-tags';
 
+/**
+ * Grafana scale and shared-mesh Sail patches both touch istio-system; run serially so
+ * parallel workers do not race on control-plane state (Jenkins OSSM).
+ */
 test.describe('Mesh page core-2', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test.afterEach(() => {
     try {
       kubectlScaleDeployment('istio-system', 'grafana', 1);
@@ -14,6 +20,7 @@ test.describe('Mesh page core-2', () => {
   });
 
   test('Grafana Infra unreachable', core2, async ({ meshPage }) => {
+    test.setTimeout(180_000);
     test.skip(!hasGrafanaDeployment(), 'Grafana deployment is not installed in istio-system');
 
     await meshPage.open();

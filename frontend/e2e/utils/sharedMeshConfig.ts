@@ -58,7 +58,7 @@ export async function applySharedMeshConfig(request: APIRequestContext): Promise
   kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`, true);
   kubectlExec(`kubectl patch istio default --type='merge' -p '${applyPatch}'`, true);
   await waitForSharedMeshConfig(request);
-  kubectlExec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=60s`, true);
+  kubectlExec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=180s`, true);
 }
 
 export function restoreSharedMeshConfig(): void {
