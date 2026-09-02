@@ -1,0 +1,159 @@
+# Recording rules for Kiali self-monitoring metrics (kiali_*).
+# See kiali-export-metrics.yml and design/KEPS/metric-rules/proposal.md
+#
+# Produces kiali:<metric> series on the edge Prometheus for federation.
+# Rule group interval should be >= edge scrape_interval, up to 2x scrape_interval.
+# With 30s scrape, use interval: 30s.
+#
+# HA aggregation:
+#   - Counters / histograms: sum without (pod, instance, ...) — partition of work
+#   - kiali_health_status: max without (pod, instance, ...) — deduplicate replicas
+#   - Other gauges: see per-rule comments
+
+groups:
+- name: kiali.aggregation
+  interval: 30s
+  rules:
+  # Counters
+  - record: kiali:kiali_ai_requests_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_requests_total)
+
+  - record: kiali:kiali_ai_store_evictions_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_store_evictions_total)
+
+  - record: kiali:kiali_api_failures_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_api_failures_total)
+
+  - record: kiali:kiali_cache_hits_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_cache_hits_total)
+
+  - record: kiali:kiali_cache_requests_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_cache_requests_total)
+
+  - record: kiali:kiali_graph_cache_evictions_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_cache_evictions_total)
+
+  - record: kiali:kiali_graph_cache_hits_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_cache_hits_total)
+
+  - record: kiali:kiali_graph_cache_misses_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_cache_misses_total)
+
+  - record: kiali:kiali_health_cache_hits_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_health_cache_hits_total)
+
+  - record: kiali:kiali_health_cache_misses_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_health_cache_misses_total)
+
+  # Gauges
+  - record: kiali:kiali_ai_store_conversations_total
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_store_conversations_total)
+
+  - record: kiali:kiali_graph_nodes
+    expr: max without (pod, instance, namespace, job, node) (kiali_graph_nodes)
+
+  - record: kiali:kiali_kubernetes_clients
+    expr: max without (pod, instance, namespace, job, node) (kiali_kubernetes_clients)
+
+  - record: kiali:kiali_health_status
+    expr: max without (pod, instance, namespace, job, node) (kiali_health_status)
+
+  # Histograms
+  - record: kiali:kiali_ai_request_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_request_duration_seconds_bucket)
+
+  - record: kiali:kiali_ai_request_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_request_duration_seconds_sum)
+
+  - record: kiali:kiali_ai_request_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_ai_request_duration_seconds_count)
+
+  - record: kiali:kiali_api_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_api_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_api_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_api_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_api_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_api_processing_duration_seconds_count)
+
+  - record: kiali:kiali_checker_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_checker_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_checker_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_checker_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_checker_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_checker_processing_duration_seconds_count)
+
+  - record: kiali:kiali_graph_appender_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_appender_duration_seconds_bucket)
+
+  - record: kiali:kiali_graph_appender_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_appender_duration_seconds_sum)
+
+  - record: kiali:kiali_graph_appender_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_appender_duration_seconds_count)
+
+  - record: kiali:kiali_graph_generation_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_generation_duration_seconds_bucket)
+
+  - record: kiali:kiali_graph_generation_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_generation_duration_seconds_sum)
+
+  - record: kiali:kiali_graph_generation_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_generation_duration_seconds_count)
+
+  - record: kiali:kiali_graph_marshal_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_marshal_duration_seconds_bucket)
+
+  - record: kiali:kiali_graph_marshal_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_marshal_duration_seconds_sum)
+
+  - record: kiali:kiali_graph_marshal_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_graph_marshal_duration_seconds_count)
+
+  - record: kiali:kiali_health_refresh_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_health_refresh_duration_seconds_bucket)
+
+  - record: kiali:kiali_health_refresh_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_health_refresh_duration_seconds_sum)
+
+  - record: kiali:kiali_health_refresh_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_health_refresh_duration_seconds_count)
+
+  - record: kiali:kiali_prometheus_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_prometheus_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_prometheus_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_prometheus_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_prometheus_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_prometheus_processing_duration_seconds_count)
+
+  - record: kiali:kiali_single_validation_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_single_validation_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_single_validation_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_single_validation_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_single_validation_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_single_validation_processing_duration_seconds_count)
+
+  - record: kiali:kiali_tracing_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_tracing_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_tracing_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_tracing_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_tracing_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_tracing_processing_duration_seconds_count)
+
+  - record: kiali:kiali_validation_processing_duration_seconds_bucket
+    expr: sum without (pod, instance, namespace, job, node) (kiali_validation_processing_duration_seconds_bucket)
+
+  - record: kiali:kiali_validation_processing_duration_seconds_sum
+    expr: sum without (pod, instance, namespace, job, node) (kiali_validation_processing_duration_seconds_sum)
+
+  - record: kiali:kiali_validation_processing_duration_seconds_count
+    expr: sum without (pod, instance, namespace, job, node) (kiali_validation_processing_duration_seconds_count)
