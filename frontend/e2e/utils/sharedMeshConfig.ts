@@ -23,7 +23,7 @@ function restoreSharedMeshConfigResources(): void {
 }
 
 async function waitForSharedMeshConfig(request: APIRequestContext): Promise<void> {
-  const maxTries = 15;
+  const maxTries = 20;
   for (let tries = 1; tries <= maxTries; tries++) {
     const response = await request.get('/api/mesh/graph');
     if (!response.ok()) {

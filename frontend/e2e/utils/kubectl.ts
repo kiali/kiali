@@ -33,6 +33,12 @@ export function kubectlScale(namespace: string, deployment: string, replicas: nu
   kubectlExec(`kubectl scale -n ${namespace} --replicas=${replicas} deployment/${deployment}`, true);
 }
 
+/** Matches Cypress `user scales to …` (scale + rollout status, no restart). */
+export function kubectlScaleDeployment(namespace: string, deployment: string, replicas: number): void {
+  kubectlScale(namespace, deployment, replicas);
+  kubectlExec(`kubectl rollout status deployment ${deployment} -n ${namespace} --timeout=120s`, true);
+}
+
 export function kubectlRolloutRestart(namespace: string, deployment: string): void {
   kubectlExec(`kubectl rollout restart deployment ${deployment} -n ${namespace}`, true);
 }

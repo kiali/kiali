@@ -1,6 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { waitForServiceHealthStatus } from '../../utils/health';
-import { hasYServerDegradedHealthConfig } from '../../utils/kialiConfig';
 import { core2 } from '../../utils/suite-tags';
 
 test.describe('Services list health statuses', () => {
@@ -27,12 +26,6 @@ test.describe('Services list error-rates health statuses', () => {
     'The degraded status of a service is reported in the list of services',
     core2,
     async ({ servicesPage, request }) => {
-      if (!(await hasYServerDegradedHealthConfig(request))) {
-        test.skip(
-          true,
-          'Requires health_config.rate for alpha/y-server (CI/Jenkins set this via Helm; default local config reports Failure)'
-        );
-      }
       await waitForServiceHealthStatus(request, 'alpha', 'y-server', 'Degraded');
       await servicesPage.openListWithNamespace('alpha');
       await servicesPage.expectServiceListedAs('alpha', 'y-server', 'degraded');

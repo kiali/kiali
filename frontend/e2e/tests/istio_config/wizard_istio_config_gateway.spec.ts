@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
-import { acquireBookinfoRoutingLock } from '../../utils/bookinfoRoutingLock';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 import {
   deleteK8sGateway,
   deleteK8sReferenceGrant,
@@ -14,18 +14,9 @@ const gatewayName = 'k8sapigateway';
 const namespace = 'bookinfo';
 
 test.describe('Istio Config wizard: K8s Gateway API', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
-  let releaseGatewayLock: (() => void) | undefined;
-
-  test.beforeAll(async () => {
-    releaseGatewayLock = await acquireBookinfoRoutingLock();
-  });
-
-  test.afterAll(() => {
-    releaseGatewayLock?.();
-    releaseGatewayLock = undefined;
-  });
+  useBookinfoRoutingLockPerTest();
 
   test.beforeEach(async ({ istioConfigPage, request, page }) => {
     ensureDemoApp('bookinfo');

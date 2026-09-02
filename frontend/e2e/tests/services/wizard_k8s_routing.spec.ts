@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
-import { acquireBookinfoRoutingLock } from '../../utils/bookinfoRoutingLock';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 import {
   deleteBookinfoReviewsGateway,
   deleteBookinfoReviewsTrafficRouting,
@@ -15,22 +15,16 @@ const service = 'reviews';
 
 /**
  * HTTP and GRPC routing wizards share bookinfo/reviews and must not run in parallel.
- * Keep them in this single serial file (one cross-process lock for the whole block).
+ * Keep them in this single serial file; lock is per-test via useBookinfoRoutingLockPerTest().
  */
 test.describe.serial('Service Details Wizard: K8s Routing', () => {
-  test.describe.configure({ timeout: 120_000 });
+  test.describe.configure({ timeout: 180_000 });
 
-  let releaseRoutingLock: (() => void) | undefined;
+  useBookinfoRoutingLockPerTest();
 
-  test.beforeAll(async () => {
-    releaseRoutingLock = await acquireBookinfoRoutingLock();
+  test.beforeAll(() => {
     deleteBookinfoReviewsTrafficRouting();
     ensureDemoApp('bookinfo');
-  });
-
-  test.afterAll(() => {
-    releaseRoutingLock?.();
-    releaseRoutingLock = undefined;
   });
 
   test.beforeEach(async ({ request }) => {

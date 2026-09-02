@@ -1,3 +1,4 @@
+import { test } from '@playwright/test';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -73,4 +74,22 @@ export async function withBookinfoRoutingLock<T>(fn: () => Promise<T>): Promise<
   } finally {
     release();
   }
+}
+
+let activeBookinfoRoutingLockRelease: (() => void) | undefined;
+
+/**
+ * Hold the bookinfo routing lock per test (not for the whole describe).
+ * Lets gateway and routing spec files interleave across Playwright workers without
+ * one file blocking the other for minutes via beforeAll.
+ */
+export function useBookinfoRoutingLockPerTest(): void {
+  test.beforeEach(async () => {
+    activeBookinfoRoutingLockRelease = await acquireBookinfoRoutingLock();
+  });
+
+  test.afterEach(() => {
+    activeBookinfoRoutingLockRelease?.();
+    activeBookinfoRoutingLockRelease = undefined;
+  });
 }

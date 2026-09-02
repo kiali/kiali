@@ -1,3 +1,12 @@
+health_config:
+  rate:
+  - kind: service
+    name: y-server
+    namespace: alpha
+    tolerance:
+    - code: 5xx
+      degraded: 2
+      failure: 100
 kiali_internal:
   graph_cache:
     enabled: false

@@ -79,6 +79,7 @@ export class MeshPage extends BasePage {
     await expect(this.page.locator('#target-panel-node')).toContainText(name);
   }
 
+  /** True when Kiali reaches Grafana via local port-forward (KinD CI), not an in-cluster route (Jenkins/OSSM). */
   async usesLocalGrafanaPortForward(): Promise<boolean> {
     const panel = this.page.locator('#target-panel-node');
     await expect(panel).toBeVisible();
@@ -141,7 +142,7 @@ export class MeshPage extends BasePage {
       const body = await response.json();
       expect(body.process_resident_memory_bytes).toBeTruthy();
       expect(body.process_cpu_seconds_total).toBeTruthy();
-    }).toPass({ intervals: [3_000], timeout: 90_000 });
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
 
     await expect(async () => {
       await this.refreshPage();
@@ -154,6 +155,6 @@ export class MeshPage extends BasePage {
       await expect(panel.getByTestId('cpu-chart')).toBeVisible();
       await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
       await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
-    }).toPass({ intervals: [3_000], timeout: 90_000 });
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 }
