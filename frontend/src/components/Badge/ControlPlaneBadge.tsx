@@ -8,9 +8,6 @@ import { Theme } from 'types/Common';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
-// Toggle for comparing count presentation: 'inside' | 'inline'
-const COUNT_LAYOUT = 'inside' as 'inside' | 'inline';
-
 const badgeTooltipLinkStyle = kialiStyle({
   display: 'flex',
   justifyContent: 'center',
@@ -22,13 +19,6 @@ const badgeTooltipLinkStyle = kialiStyle({
   }
 });
 
-const badgeWrapperStyle = kialiStyle({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '0.25rem'
-});
-
-// Makes the outer CP label a full oval when the count badge is nested inside.
 const cpOvalLabelStyle = kialiStyle({
   $nest: {
     '& .pf-v6-c-label__content': {
@@ -55,18 +45,14 @@ const countBadgeColorStyle: React.CSSProperties = {
 
 const countBadgeStyle = kialiStyle({
   margin: 0,
-  minWidth: '1.5em',
-  padding: '0 0.5em',
-  borderRadius: '9999px'
-});
-
-// Additional overrides when the count badge is nested inside the CP label.
-const countBadgeInsideStyle = kialiStyle({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   boxSizing: 'border-box',
   height: '1em',
+  minWidth: '1.5em',
+  padding: '0 0.5em',
+  borderRadius: '9999px',
   fontSize: 'inherit',
   lineHeight: 1
 });
@@ -84,28 +70,19 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ revisions 
 
   const count = revisions ? revisions.length : 1;
   const hasMultiple = count > 1;
-  const isInside = hasMultiple && COUNT_LAYOUT === 'inside';
 
-  const countBadge = hasMultiple && (
-    <Badge
-      className={`${countBadgeStyle} ${isInside ? countBadgeInsideStyle : ''}`}
-      data-test="control-plane-count-pill"
-      style={countBadgeColorStyle}
-    >
-      {count}
-    </Badge>
-  );
-
-  const cpLabel = (
-    <Label className={isInside ? cpOvalLabelStyle : undefined} color="green" isCompact data-test="control-plane-badge">
-      {isInside ? (
-        <span className={cpLabelContentStyle}>
-          {t('CP')}
-          {countBadge}
-        </span>
-      ) : (
-        t('CP')
-      )}
+  const badge = hasMultiple ? (
+    <Label className={cpOvalLabelStyle} color="green" isCompact data-test="control-plane-badge">
+      <span className={cpLabelContentStyle}>
+        {t('CP')}
+        <Badge className={countBadgeStyle} data-test="control-plane-count-pill" style={countBadgeColorStyle}>
+          {count}
+        </Badge>
+      </span>
+    </Label>
+  ) : (
+    <Label color="green" isCompact data-test="control-plane-badge">
+      {t('CP')}
     </Label>
   );
 
@@ -117,7 +94,7 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ revisions 
             <div style={{ textAlign: 'left' }}>
               <div>{t('Istio control planes ({{count}}):', { count })}</div>
               <div style={{ marginTop: '0.5rem' }}>
-                {revisions!.map(rev => (
+                {(revisions ?? []).map(rev => (
                   <div key={rev}>{t('Revision: {{revision}}', { revision: rev })}</div>
                 ))}
               </div>
@@ -136,10 +113,7 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ revisions 
         </>
       }
     >
-      <span className={badgeWrapperStyle}>
-        {cpLabel}
-        {!isInside && countBadge}
-      </span>
+      {badge}
     </Tooltip>
   );
 };

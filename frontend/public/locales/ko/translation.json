@@ -601,6 +601,7 @@
   "Revision": "리비전",
   "revision: {{revision}}": "리비전: {{revision}}",
   "Revision: {{revision}}": "Revision: {{revision}}",
+  "Revisions ({{count}})_other": "Revisions ({{count}})",
   "Right click": "마우스 오른쪽 클릭",
   "Right-click or click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.": "노드 레이블을 마우스 오른쪽 버튼으로 클릭하거나 케밥 메뉴를 클릭하면 상세 정보, 트래픽, 인바운드/아웃바운드 메트릭 및 노드 그래프로 이동하는 링크를 볼 수 있습니다.",
   "Route Rules": "라우팅 규칙",

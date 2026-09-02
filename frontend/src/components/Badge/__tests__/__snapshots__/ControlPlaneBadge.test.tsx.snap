@@ -6,20 +6,16 @@ exports[`ControlPlaneBadge > renders the control plane badge 1`] = `
     style="display: contents;"
   >
     <span
-      class="kiali_f1ynn6nc"
+      class="pf-v6-c-label pf-m-green pf-m-filled pf-m-compact"
+      data-test="control-plane-badge"
     >
       <span
-        class="pf-v6-c-label pf-m-green pf-m-filled pf-m-compact"
-        data-test="control-plane-badge"
+        class="pf-v6-c-label__content"
       >
         <span
-          class="pf-v6-c-label__content"
+          class="pf-v6-c-label__text"
         >
-          <span
-            class="pf-v6-c-label__text"
-          >
-            CP
-          </span>
+          CP
         </span>
       </span>
     </span>

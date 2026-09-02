@@ -602,6 +602,8 @@
   "Revision": "Revision",
   "revision: {{revision}}": "revision: {{revision}}",
   "Revision: {{revision}}": "Revision: {{revision}}",
+  "Revisions ({{count}})_one": "Revisions ({{count}})",
+  "Revisions ({{count}})_other": "Revisions ({{count}})",
   "Right click": "Right click",
   "Right-click or click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.": "Right-click or click kebab menu on a node label for links to details, traffic, inbound/outbound metrics and node graph.",
   "Route Rules": "Route Rules",
