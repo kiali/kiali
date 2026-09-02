@@ -81,8 +81,21 @@ jobs:
       working-directory: ./frontend
       run: yarn install --immutable
 
-    - name: Run frontend integration tests for multi mesh
-      run: hack/run-integration-tests.sh --test-suite frontend-multi-mesh --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Set up multi-mesh cluster
+      run: |
+        ISTIO_VERSION_ARG=""
+        if [ -n "${{ inputs.istio_version }}" ]; then
+          ISTIO_VERSION_ARG="--istio-version ${{ inputs.istio_version }}"
+        fi
+        timeout 45m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --setup-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG}
+
+    - name: Run Cypress multi-mesh tests
+      run: |
+        ISTIO_VERSION_ARG=""
+        if [ -n "${{ inputs.istio_version }}" ]; then
+          ISTIO_VERSION_ARG="--istio-version ${{ inputs.istio_version }}"
+        fi
+        timeout 15m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --tests-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG}
 
     - name: Stop resource sampler
       if: always()
