@@ -1,11 +1,15 @@
 # Playwright e2e
 
-Living guide for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)). Supplements the epic plan on the issue with **review feedback and lessons from Phase 0–2** (PRs [#10174](https://github.com/kiali/kiali/pull/10174), [#10195](https://github.com/kiali/kiali/pull/10195)).
+Living guide for the Cypress → Playwright migration ([#9712](https://github.com/kiali/kiali/issues/9712)).
+
+> **Companion files (temporary):** Detailed porting conventions live in [`AGENTS.md`](AGENTS.md);
+> progress tracking and checklists in [`MIGRATION-PLAN.md`](MIGRATION-PLAN.md). Both are deleted
+> before merging to `master`.
 
 ## Quick reference
 
 - Native Playwright Test (not `playwright-bdd`)
-- Suite tags: `e2e/utils/suite-tags.ts` (`smokeAndCoreCaching`, `core1`, …) — use Playwright’s native `tag` option, not tags in titles
+- Suite tags: `e2e/utils/suite-tags.ts` (`smokeAndCoreCaching`, `core1`, …) — use Playwright's native `tag` option, not tags in titles
 - `testIdAttribute: 'data-test'` in `playwright.config.ts`
 - Auth: `storageState` from `e2e/global-setup/auth.setup.ts`; strategy via `getAuthStrategy(page)` (`/api/auth/info`)
 - Page objects extend `BasePage` (`getBySel`, `waitForLoad`) — no custom click/retry helpers
@@ -16,7 +20,7 @@ Living guide for the Cypress → Playwright migration ([#9712](https://github.co
 
 ## Migration conventions (required)
 
-These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) plan and **ScriptingShrimp’s review on #10174**. Do not re-introduce Cypress patterns when porting.
+These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) plan and review feedback on PRs #10174, #10195, #10217, #10220. Do not re-introduce Cypress patterns when porting.
 
 ### Playwright mechanics — trust auto-wait
 
@@ -46,18 +50,18 @@ These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) pl
 - **Exact option names** — e.g. `Present` vs `Not Present`, `Valid` vs `Not Validated` (`exact: true` on `getByRole('option')`).
 - **Open once, assert all, close once** — do not loop open/close per option (Cypress `optionCheck` anti-pattern).
 - **Apply filters by name**, not by nth-child index in dropdown lists.
-- Overflow “+N more” chips: `filterSelection().getByRole('button', { name: /\+\d+/ })` scoped to the toolbar — not PF overflow classes.
+- **LabelGroup overflow:** PF renders overflow text as `"${n} more"` (no `+` prefix). Use `filterSelection().getByRole('button', { name: /\d+ more/ })` — not PF overflow classes.
 
 ### Assertions — positive over negative lists
 
 - Do not assert validity by listing what a value is **not** (`not.toEqual('unknown')`, `not.toContainText('undefined')`, etc.).
-- Use **positive** checks: `toHaveText(/^\d+\.\d+\.\d+/)` for semver fields, `toMatch(…)` for structured text, `toBeGreaterThan(n)` for counts.
+- Use **positive** checks: `toHaveText(/^v?\d+\.\d+\.\d+/)` for semver fields, `toMatch(…)` for structured text, `toBeGreaterThan(n)` for counts.
 
 ### Suite tags and projects
 
 - Put suite membership in the Playwright **`tag` option** via exports in `e2e/utils/suite-tags.ts` (e.g. `test('…', core1, async () => { … })`).
 - **Do not** embed `@smoke` / `@core-1` only in the title string — reports stay clean and tags stay typed.
-- A tag in the title with **no matching project `grep`** is a no-op (e.g. use `annotation` for cluster preconditions like “Prometheus disabled”, not a fake `@prometheus-disabled` project tag).
+- A tag in the title with **no matching project `grep`** is a no-op (e.g. use `annotation` for cluster preconditions like "Prometheus disabled", not a fake `@prometheus-disabled` project tag).
 - Run suites with **`--project=`** / `yarn playwright:run:smoke` / `yarn playwright:run:core1`. If using `PLAYWRIGHT_GREP` (Jenkins `TEST_TAGS`), run auth setup first — `authenticate` has no suite tag. `yarn playwright:run:test-group:junit` handles that.
 
 ### Auth
@@ -73,7 +77,7 @@ Cypress hovers the first-column icon and checks tooltip text. Playwright equival
 
 1. Hover **`row.locator('td[data-label="Health"] .pf-v6-c-icon__content')`** (PF6 does not put `aria-label` on a row descendant for the trigger).
 2. Assert **`await expect(page.getByRole('tooltip')).toContainText(healthStatus)`** — not `tooltip.locator('strong')` alone: failure/degraded tooltips include multiple `<strong>` nodes (status + traffic legend).
-3. Bulk “all healthy” checks: scope to `tbody td[data-label="Health"]`, not unscoped icons.
+3. Bulk "all healthy" checks: scope to `tbody td[data-label="Health"]`, not unscoped icons.
 4. Retry via refresh + `waitForLoadingComplete`, not long hover timeouts only.
 
 ### Sidebar
@@ -89,15 +93,21 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### PR slicing (incremental migration)
 
-- Port **one feature area** (or one `.feature` file’s tag scope) per PR; state deferred tags in the PR body (e.g. `@multi-cluster` / `@core-caching` apps scenarios left in Cypress until their phase).
+- Port **one feature area** (or one `.feature` file's tag scope) per PR; state deferred tags in the PR body (e.g. `@multi-cluster` / `@core-caching` apps scenarios left in Cypress until their phase).
 - `@core-1` across the repo is **much larger** than apps + column management — graph, istio config details, etc. remain Cypress until ported.
 - Coexistence: Cypress stays until cutover gate (2+ green full Playwright runs on all suites).
 
 ---
 
-## Smoke coverage
+## Coverage
 
-`yarn playwright:run:smoke` runs the Playwright ports of all Cypress `@smoke` scenarios (about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters). On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session).
+### Smoke (`yarn playwright:run:smoke`)
+
+Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters. On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session).
+
+### Core-1 (`yarn playwright:run:core1`)
+
+Ports all Cypress `@core-1` scenarios (145 tests): graph display, toolbar, legend, find/hide, context menu, side panel, replay; istio config list; apps list, health, app details graph; column management.
 
 ## Local run
 
@@ -125,7 +135,7 @@ Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwrigh
 ## Follow-ups (from review / not done yet)
 
 - Add `data-test` on `StatefulFilters` (`filter-type-toggle`, `filter-value-toggle`, `filter-toolbar`, `filter-type-input`) and migrate `IstioConfigPage` off `#filter_select_*` IDs.
-- Replace negative version assertions in `kiali_about.spec.ts` with `toHaveText(/^\d+\.\d+\.\d+/)`.
+- Replace negative version assertions in `kiali_about.spec.ts` with `toHaveText(/^v?\d+\.\d+\.\d+/)`.
 - `cleanup` fixture (`cleanup.trackNamespace()`) instead of ad-hoc `afterEach` / kubectl for demo mutations.
 - `page.routeWebSocket()` wherever graph live updates are mocked.
 - `token` / `openid` auth in `auth.setup.ts`.
