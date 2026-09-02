@@ -415,7 +415,7 @@ When('the user clicks the {string} header button', (label: string) => {
 
 /**
  * Verifies the Chatbot component class, which is driven by the displayMode value
- * stored in Redux (state.aiChat.displayMode). Pattern: pf-chatbot--{mode}.
+ * stored in Redux (state.ai.chat.displayMode). Pattern: pf-chatbot--{mode}.
  */
 Then('the chatbot should be in {string} display mode', (mode: string) => {
   cy.get(`.pf-chatbot.pf-chatbot--${mode}`).should('exist');
@@ -562,7 +562,7 @@ Given('two AI providers are configured', () => {
       );
     }
 
-    const aiState = store.getState().ai.chatAI;
+    const aiState = store.getState().ai.chat;
     const realProviders: any[] = (aiState.providers ?? []).filter((p: any) => p.name !== SECOND_PROVIDER_NAME);
 
     if (realProviders.length === 0) {
@@ -619,7 +619,7 @@ Given('the user is not allowed to use the AI chatbot', () => {
       );
     }
 
-    const aiState = store.getState().ai.chatAI;
+    const aiState = store.getState().ai.chat;
     store.dispatch({
       type: 'CHAT_AI_SET_CHAT_AI',
       payload: {
