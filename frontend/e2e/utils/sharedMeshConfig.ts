@@ -40,10 +40,11 @@ async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName
       continue;
     }
 
-    // Cypress @shared-mesh-config: only after Kiali sees sharedConfig, wait for the pre-patch pod to go away.
+    // Cypress @shared-mesh-config else branch: wait for pre-patch pod delete when possible.
+    // On OSSM/Sail the pod may keep running while Kiali already reports sharedConfig — do not fail setup.
     const podStillExists = kubectlExec(`kubectl get pod/${istiodPodName} -n istio-system`, false).exitCode === 0;
     if (podStillExists) {
-      kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, true);
+      kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, false);
     }
     return;
   }
