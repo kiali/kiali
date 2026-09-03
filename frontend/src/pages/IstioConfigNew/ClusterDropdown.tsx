@@ -25,17 +25,19 @@ import type { KialiDispatch } from '../../types/Redux';
 import { serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
 
-type ReduxProps = {
+type ReduxStateProps = {
   activeClusters: MeshCluster[];
   clusters: MeshCluster[];
   filter: string;
+};
+
+type ReduxDispatchProps = {
+  clearAll: () => void;
   setActiveClusters: (clusters: MeshCluster[]) => void;
   setFilter: (filter: string) => void;
 };
 
-type ClusterDropdownProps = ReduxProps & {
-  clearAll: () => void;
-};
+type ClusterDropdownProps = ReduxStateProps & ReduxDispatchProps;
 
 type ClusterDropdownState = {
   isBulkSelectorOpen: boolean;
@@ -270,7 +272,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
   };
 }
 
-const mapStateToProps = (state: KialiAppState): Pick<ReduxProps, 'activeClusters' | 'clusters' | 'filter'> => {
+const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     clusters: Object.values(serverConfig.clusters),
     activeClusters: activeClustersSelector(state),
@@ -278,9 +280,7 @@ const mapStateToProps = (state: KialiAppState): Pick<ReduxProps, 'activeClusters
   };
 };
 
-const mapDispatchToProps = (
-  dispatch: KialiDispatch
-): Pick<ReduxProps, 'clearAll' | 'setActiveClusters' | 'setFilter'> => {
+const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
   return {
     clearAll: () => {
       dispatch(ClusterActions.setActiveClusters([]));
