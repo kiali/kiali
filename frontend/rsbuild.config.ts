@@ -62,6 +62,14 @@ export default defineConfig({
         __dirname,
         'node_modules/monaco-editor/esm/vs/editor/editor.api.js'
       );
+      // PatternFly 6.5+ imports useId from React for SSR-safe IDs; React 17 does not
+      // export useId but PF handles that at runtime. Disable static export checks.
+      config.module = config.module || {};
+      config.module.parser = config.module.parser || {};
+      config.module.parser.javascript = {
+        ...config.module.parser.javascript,
+        importExportsPresence: false
+      };
     }
   },
   server: {
