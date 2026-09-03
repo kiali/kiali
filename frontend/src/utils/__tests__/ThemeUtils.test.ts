@@ -1,8 +1,10 @@
-import { PF_THEME_DARK, Theme } from 'types/Common';
+import { ContrastMode, PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST, Theme } from 'types/Common';
 import {
+  applyDocumentContrastMode,
   applyDocumentTheme,
   isParentOwnedTheme,
   observeDocumentTheme,
+  readDocumentContrastMode,
   readDocumentTheme,
   syncReduxThemeFromDocument
 } from 'utils/ThemeUtils';
@@ -22,10 +24,42 @@ describe('applyDocumentTheme', () => {
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
   });
 
-  it('does not apply glass or high-contrast classes', () => {
+  it('applies glass contrast mode when provided', () => {
+    applyDocumentTheme(Theme.LIGHT, ContrastMode.GLASS);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
+  });
+
+  it('applies high contrast mode when provided', () => {
+    applyDocumentTheme(Theme.LIGHT, ContrastMode.HIGH_CONTRAST);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
+  });
+
+  it('removes contrast classes for default mode', () => {
+    document.documentElement.classList.add(PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST);
+    applyDocumentTheme(Theme.LIGHT, ContrastMode.DEFAULT);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
+  });
+
+  it('does not change contrast classes when contrast mode is omitted', () => {
+    document.documentElement.classList.add(PF_THEME_GLASS);
     applyDocumentTheme(Theme.DARK);
-    expect(document.documentElement.classList.contains('pf-v6-theme-glass')).toBe(false);
-    expect(document.documentElement.classList.contains('pf-v6-theme-high-contrast')).toBe(false);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
+  });
+});
+
+describe('applyDocumentContrastMode', () => {
+  afterEach(() => {
+    document.documentElement.className = '';
+  });
+
+  it('never applies glass and high contrast together', () => {
+    applyDocumentContrastMode(ContrastMode.GLASS);
+    applyDocumentContrastMode(ContrastMode.HIGH_CONTRAST);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
   });
 });
 
@@ -44,20 +78,43 @@ describe('readDocumentTheme', () => {
   });
 });
 
+describe('readDocumentContrastMode', () => {
+  afterEach(() => {
+    document.documentElement.className = '';
+  });
+
+  it('reads default when no contrast classes are present', () => {
+    expect(readDocumentContrastMode()).toBe(ContrastMode.DEFAULT);
+  });
+
+  it('prefers high contrast over glass when both are present', () => {
+    document.documentElement.classList.add(PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST);
+    expect(readDocumentContrastMode()).toBe(ContrastMode.HIGH_CONTRAST);
+  });
+
+  it('reads glass from document classes', () => {
+    document.documentElement.classList.add(PF_THEME_GLASS);
+    expect(readDocumentContrastMode()).toBe(ContrastMode.GLASS);
+  });
+});
+
 describe('syncReduxThemeFromDocument', () => {
   afterEach(() => {
     document.documentElement.className = '';
     store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+    store.dispatch(GlobalActions.setContrastMode(ContrastMode.DEFAULT));
   });
 
-  it('dispatches theme without mutating document classes', () => {
-    document.documentElement.classList.add(PF_THEME_DARK, 'pf-v6-theme-glass');
+  it('dispatches theme and contrast without mutating document classes', () => {
+    document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS);
     const classesBefore = document.documentElement.className;
 
-    const theme = syncReduxThemeFromDocument();
+    const result = syncReduxThemeFromDocument();
 
-    expect(theme).toBe(Theme.DARK);
+    expect(result.theme).toBe(Theme.DARK);
+    expect(result.contrastMode).toBe(ContrastMode.GLASS);
     expect(store.getState().globalState.theme).toBe(Theme.DARK);
+    expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
     expect(document.documentElement.className).toBe(classesBefore);
   });
 });
@@ -72,6 +129,17 @@ describe('observeDocumentTheme', () => {
     const unsubscribe = observeDocumentTheme(onChange);
 
     document.documentElement.classList.add(PF_THEME_DARK);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(onChange).toHaveBeenCalled();
+    unsubscribe();
+  });
+
+  it('notifies when contrast class changes', async () => {
+    const onChange = rstest.fn();
+    const unsubscribe = observeDocumentTheme(onChange);
+
+    document.documentElement.classList.add(PF_THEME_GLASS);
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(onChange).toHaveBeenCalled();
