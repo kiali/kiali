@@ -1,6 +1,6 @@
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { NestedCSSProperties } from 'typestyle/lib/types';
+import type { NestedCSSProperties } from 'typestyle/lib/types';
 import { PFFontSize } from './PfTypography';
 
 export const containerStyle = kialiStyle({
@@ -25,7 +25,7 @@ export const menuEntryStyle = kialiStyle({
 
 // this emulates Select component .pf-v6-c-select__menu-group-title but with less bottom padding to conserve space
 export const titleStyle = kialiStyle({
-  padding: '0.5rem 1rem 0 1rem',
+  padding: '0.5rem 0.75rem 0 0.75rem',
   fontWeight: 700,
   color: PFColors.Color200
 });
@@ -34,7 +34,7 @@ const itemStyle: NestedCSSProperties = {
   alignItems: 'center',
   whiteSpace: 'nowrap',
   margin: 0,
-  padding: '0.375rem 1rem',
+  padding: '0.375rem 0.75rem',
   display: 'inline-block'
 };
 
@@ -44,7 +44,7 @@ export const itemStyleWithoutInfo = kialiStyle(itemStyle);
 // this emulates Select component .pf-v6-c-select__menu-item but with less vertical padding to conserve space
 export const itemStyleWithInfo = kialiStyle({
   ...itemStyle,
-  padding: '0.375rem 0 0.375rem 1rem'
+  padding: '0.375rem 0 0.375rem 0.75rem'
 });
 
 export const groupMenuStyle = kialiStyle({

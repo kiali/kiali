@@ -1,9 +1,10 @@
-import { Radio, Checkbox, Dropdown, DropdownList, MenuToggleElement, MenuToggle } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Radio, Checkbox, Dropdown, DropdownList, MenuToggle } from '@patternfly/react-core';
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { HistoryManager, URLParam } from '../../../app/History';
-import { GraphToolbarState, KialiAppState } from '../../../store/Store';
+import type { GraphToolbarState, KialiAppState } from '../../../store/Store';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphType, EdgeLabelMode, isResponseTimeMode, isThroughputMode, RankMode } from '../../../types/Graph';
 import { startCase } from 'lodash-es';
@@ -15,8 +16,8 @@ import {
 import { ToolbarDropdownHelpRow } from 'components/ToolbarDropdown/ToolbarDropdownHelpRow';
 import { containerStyle, itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { INITIAL_GRAPH_STATE } from 'reducers/GraphDataState';
-import { KialiDispatch } from 'types/Redux';
-import { KialiDisabledFeatures } from 'types/ServerConfig';
+import type { KialiDispatch } from 'types/Redux';
+import type { KialiDisabledFeatures } from 'types/ServerConfig';
 import { getDisabledFeatures } from 'services/Api';
 import { serverConfig } from '../../../config';
 import { t } from 'utils/I18nUtils';
@@ -284,6 +285,28 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
     );
   }
 
+  render(): React.ReactNode {
+    return (
+      <Dropdown
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            ref={toggleRef}
+            id="display-settings"
+            onClick={() => this.onToggle(!this.state.isOpen)}
+            isExpanded={this.state.isOpen}
+            isDisabled={this.props.disabled}
+          >
+            {t('Display')}
+          </MenuToggle>
+        )}
+        isOpen={this.state.isOpen}
+        onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
+      >
+        <DropdownList>{this.getMenuOptions()}</DropdownList>
+      </Dropdown>
+    );
+  }
+
   private handleURLBool = (
     param: URLParam,
     paramDefault: boolean,
@@ -312,28 +335,6 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
       HistoryManager.setParam(param, String(curr));
     }
   };
-
-  render(): React.ReactNode {
-    return (
-      <Dropdown
-        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-          <MenuToggle
-            ref={toggleRef}
-            id="display-settings"
-            onClick={() => this.onToggle(!this.state.isOpen)}
-            isExpanded={this.state.isOpen}
-            isDisabled={this.props.disabled}
-          >
-            Display
-          </MenuToggle>
-        )}
-        isOpen={this.state.isOpen}
-        onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
-      >
-        <DropdownList>{this.getMenuOptions()}</DropdownList>
-      </Dropdown>
-    );
-  }
 
   private onToggle = (isOpen: boolean): void => {
     this.setState({ isOpen });
@@ -765,31 +766,32 @@ class GraphSettingsComponent extends React.PureComponent<GraphSettingsProps, Gra
                 edgeLabelOption.labelText
               )}
 
-              {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP && responseTimeOptions.some(o => o.isChecked) && (
-                <div>
-                  {responseTimeOptions.map((rtOption: DisplayOptionType) =>
-                    this.renderDisplayMenuRow(
-                      `rt-${rtOption.id}`,
-                      <label key={rtOption.id} className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
-                        <Radio
-                          id={rtOption.id}
-                          isChecked={rtOption.isChecked}
-                          isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
-                          label={rtOption.labelText}
-                          name="rtOptions"
-                          onChange={(event: React.FormEvent, _checked: boolean) =>
-                            this.toggleEdgeLabelResponseTimeMode(event)
-                          }
-                          style={{ paddingLeft: '0.25rem' }}
-                          value={rtOption.id}
-                        />
-                      </label>,
-                      rtOption.tooltip || undefined,
-                      rtOption.labelText
-                    )
-                  )}
-                </div>
-              )}
+              {edgeLabelOption.id === EdgeLabelMode.RESPONSE_TIME_GROUP &&
+                responseTimeOptions.some(o => o.isChecked) && (
+                  <div>
+                    {responseTimeOptions.map((rtOption: DisplayOptionType) =>
+                      this.renderDisplayMenuRow(
+                        `rt-${rtOption.id}`,
+                        <label key={rtOption.id} className={itemStyleWithoutInfo} style={{ paddingLeft: '2rem' }}>
+                          <Radio
+                            id={rtOption.id}
+                            isChecked={rtOption.isChecked}
+                            isDisabled={this.props.disabled || edgeLabelOption.isDisabled || rtOption.isDisabled}
+                            label={rtOption.labelText}
+                            name="rtOptions"
+                            onChange={(event: React.FormEvent, _checked: boolean) =>
+                              this.toggleEdgeLabelResponseTimeMode(event)
+                            }
+                            style={{ paddingLeft: '0.25rem' }}
+                            value={rtOption.id}
+                          />
+                        </label>,
+                        rtOption.tooltip || undefined,
+                        rtOption.labelText
+                      )
+                    )}
+                  </div>
+                )}
 
               {edgeLabelOption.id === EdgeLabelMode.THROUGHPUT_GROUP && throughputOptions.some(o => o.isChecked) && (
                 <div>
