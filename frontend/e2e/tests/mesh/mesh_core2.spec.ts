@@ -33,7 +33,7 @@ test.describe('Mesh page core-2', () => {
 
     kubectlScaleDeployment('istio-system', 'grafana', 0);
     await meshPage.refreshPage();
-    await meshPage.waitForInfraHealth('Grafana', health => health !== 'Healthy');
+    await meshPage.syncInfraHealthToUi('Grafana', health => health !== 'Healthy');
     await meshPage.selectMeshNodeByLabel('Grafana');
     await meshPage.expectNodeSidePanel('Grafana');
     await meshPage.expectSidePanelContains('Version: unknown');
@@ -41,7 +41,7 @@ test.describe('Mesh page core-2', () => {
 
     kubectlScaleDeployment('istio-system', 'grafana', 1);
     await meshPage.refreshPage();
-    await meshPage.waitForInfraHealth('Grafana', health => health === 'Healthy');
+    await meshPage.syncInfraHealthToUi('Grafana', health => health === 'Healthy');
     await meshPage.selectMeshNodeByLabel('Grafana');
     await meshPage.expectNodeSidePanel('Grafana');
     await meshPage.expectSidePanelIcon('correct');

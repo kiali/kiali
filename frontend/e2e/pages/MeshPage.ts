@@ -99,6 +99,15 @@ export class MeshPage extends BasePage {
     }).toPass({ intervals: [3_000], timeout: 60_000 });
   }
 
+  /**
+   * Poll /api/mesh/graph for health, then refresh the mesh page so cytoscape node data
+   * (and the side-panel health icon) match the API before selecting the node.
+   */
+  async syncInfraHealthToUi(infraName: string, predicate: (health: string) => boolean): Promise<void> {
+    await this.waitForInfraHealth(infraName, predicate);
+    await this.refreshPage();
+  }
+
   async expectSidePanelIcon(type: string): Promise<void> {
     const panel = this.page.locator('#target-panel-node');
     await expect(async () => {
