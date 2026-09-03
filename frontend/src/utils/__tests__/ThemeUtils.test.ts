@@ -8,6 +8,7 @@ import {
 } from 'utils/ThemeUtils';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
+import * as SearchParamUtils from 'utils/SearchParamUtils';
 
 describe('applyDocumentTheme', () => {
   afterEach(() => {
@@ -91,21 +92,27 @@ describe('observeDocumentTheme', () => {
 });
 
 describe('isParentOwnedTheme', () => {
+  let getKioskModeSpy: jest.SpyInstance;
+
   afterEach(() => {
+    getKioskModeSpy?.mockRestore();
     store.dispatch(GlobalActions.setKiosk(''));
   });
 
   it('is false in standalone mode', () => {
+    getKioskModeSpy = jest.spyOn(SearchParamUtils, 'getKioskMode').mockReturnValue('');
     store.dispatch(GlobalActions.setKiosk(''));
     expect(isParentOwnedTheme()).toBe(false);
   });
 
   it('is true for same-window parent kiosk (OSSMC)', () => {
+    getKioskModeSpy = jest.spyOn(SearchParamUtils, 'getKioskMode').mockReturnValue('/');
     store.dispatch(GlobalActions.setKiosk('/'));
     expect(isParentOwnedTheme()).toBe(true);
   });
 
   it('is false for standalone kiosk flag', () => {
+    getKioskModeSpy = jest.spyOn(SearchParamUtils, 'getKioskMode').mockReturnValue('true');
     store.dispatch(GlobalActions.setKiosk('true'));
     expect(isParentOwnedTheme()).toBe(false);
   });

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Button } from '@patternfly/react-core';
 import { shallow } from 'enzyme';
 
 import { GraphLegend } from '../../GraphLegend';
@@ -9,7 +10,7 @@ describe('GraphLegend test', () => {
     const wrapper = shallow(<GraphLegend closeLegend={closeLegend} />);
 
     expect(wrapper.find('[data-test="graph-legend"]').exists()).toBe(true);
-    wrapper.find('button').simulate('click');
+    wrapper.find(Button).simulate('click');
     expect(closeLegend).toHaveBeenCalledTimes(1);
   });
 });

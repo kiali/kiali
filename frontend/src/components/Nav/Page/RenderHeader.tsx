@@ -12,7 +12,7 @@ const containerStyle = kialiStyle({
   paddingBottom: '1.5rem',
   $nest: contrastContentNest({
     highContrast: {
-      borderBottom: `1px solid ${PFColors.BorderColor100}`
+      borderBottom: `1px solid ${PFColors.BorderDefault}`
     }
   })
 });

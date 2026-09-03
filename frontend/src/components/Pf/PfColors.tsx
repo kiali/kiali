@@ -89,6 +89,7 @@ export enum PFColors {
   BorderColor200 = 'var(--pf-t--global--border--color--200)',
   BorderColor300 = 'var(--pf-t--global--border--color--300)',
   BorderColorLight100 = 'var(--pf-t--global--border--color--50)',
+  BorderDefault = 'var(--pf-t--global--border--color--default)',
 
   // PF colors suitable for dark backgrounds (don't change in Dark mode)
   Color300 = 'var(--pf-t--global--dark--background--color--300)',
