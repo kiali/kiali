@@ -31,12 +31,12 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   FaultInjectionAbort: {
     badge: 'FI',
     tt: 'Fault Injection: Abort',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   FaultInjectionDelay: {
     badge: 'FI',
     tt: 'Fault Injection: Delay',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
 
   GRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute' } as PFBadgeType,
@@ -62,7 +62,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   MirroredWorkload: {
     badge: 'MI',
     tt: 'Mirrored Workload',
-    style: { backgroundColor: PFColors.Purple200 }
+    style: { backgroundColor: PFColors.Purple20 }
   } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
   NetworkTraffic: {
@@ -80,12 +80,12 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   RequestRetry: {
     badge: 'RR',
     tt: 'Request Retry',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   RequestTimeout: {
     badge: 'RT',
     tt: 'Request Timeout',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   Rule: { badge: 'R', tt: 'Rule' } as PFBadgeType,
   Service: { badge: 'S', tt: 'Service', style: { backgroundColor: PFColors.LightGreen500 } } as PFBadgeType,
