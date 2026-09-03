@@ -19,4 +19,4 @@ spec:
         image: ${CURL_IMAGE}
         command: ["/bin/sh", "-c"]
         args:
-        - while true; do echo "Calling echo-service..."; curl -s http://echo-service sleep 5; done;
+        - while true; do echo "Calling echo-service..."; curl -s http://echo-service; sleep 5; done;

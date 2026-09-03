@@ -1,5 +1,5 @@
 import { i18n } from 'i18n';
-import { TOptions } from 'i18next';
+import type { TOptions } from 'i18next';
 import { UseTranslationResponse, useTranslation } from 'react-i18next';
 
 const I18N_NAMESPACE = process.env.I18N_NAMESPACE;

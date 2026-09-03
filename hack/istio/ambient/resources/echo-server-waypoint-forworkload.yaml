@@ -1,0 +1,37 @@
+# Echo workload for waypoint-forworkload only: enrollment is on the pod template so it survives
+# pod restarts (unlike kubectl label pod). For waypoint-for: workload, generators must call the pod
+# IP (not echo-service); see https://istio.io/latest/docs/ambient/usage/waypoint/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: echo-server
+  name: echo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+  template:
+    metadata:
+      labels:
+        app: echo-server
+        istio.io/use-waypoint: bwaypoint
+    spec:
+      containers:
+      - name: echo-server
+        image: mirror.gcr.io/ealen/echo-server
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: echo-server
