@@ -1,5 +1,6 @@
 import { PF_THEME_GLASS } from 'types/Common';
 
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -103,6 +104,18 @@ export const globalStyle = kialiStyle({
       backgroundColor: 'transparent',
       borderBlockEndWidth: 0
     },
+
+    /**
+     * Under glass, PF sets primary/control backgrounds to translucent fills (e.g. alpha 0.6).
+     * Scope the opaque sticky token to interactive controls so buttons stay solid.
+     */
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-button, html.${PF_THEME_GLASS} & .pf-v6-c-menu-toggle, html.${PF_THEME_GLASS} & .pf-v6-c-toggle-group__button`]:
+      {
+        backdropFilter: 'none',
+        ...({
+          '--pf-t--global--background--color--control--default': PFColors.BackgroundColorSticky
+        } as Record<string, string>)
+      },
 
     /**
      * ChatBot docked mode should fit within the page drawer height
