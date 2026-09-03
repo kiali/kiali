@@ -4,7 +4,13 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
 import { Theme } from 'types/Common';
-import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme, readDocumentTheme } from 'utils/ThemeUtils';
+import {
+  applyDocumentTheme,
+  getKialiContrastMode,
+  getKialiTheme,
+  isParentOwnedTheme,
+  readDocumentTheme
+} from 'utils/ThemeUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
 type initializingScreenProps = {
@@ -64,7 +70,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
   // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
   const theme = isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme();
   if (!isParentOwnedTheme()) {
-    applyDocumentTheme(theme);
+    applyDocumentTheme(theme, getKialiContrastMode());
   }
 
   return (

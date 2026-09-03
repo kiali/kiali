@@ -2,13 +2,14 @@ import { render } from '@testing-library/react';
 import { ParentThemeSync } from '../ParentThemeSync';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
-import { PF_THEME_DARK, Theme } from 'types/Common';
+import { ContrastMode, PF_THEME_DARK, Theme } from 'types/Common';
 
 describe('ParentThemeSync', () => {
   beforeEach(() => {
     document.documentElement.className = '';
     store.dispatch(GlobalActions.setKiosk(''));
     store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+    store.dispatch(GlobalActions.setContrastMode(ContrastMode.DEFAULT));
   });
 
   it('does nothing when not in parent-owned theme mode', () => {
@@ -18,6 +19,7 @@ describe('ParentThemeSync', () => {
 
     // Standalone: kiosk empty — should not sync from document
     expect(store.getState().globalState.theme).toBe(Theme.LIGHT);
+    expect(store.getState().globalState.contrastMode).toBe(ContrastMode.DEFAULT);
   });
 
   it('syncs redux from document when parent kiosk owns the window', () => {
@@ -27,5 +29,6 @@ describe('ParentThemeSync', () => {
     render(<ParentThemeSync />);
 
     expect(store.getState().globalState.theme).toBe(Theme.DARK);
+    expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
   });
 });
