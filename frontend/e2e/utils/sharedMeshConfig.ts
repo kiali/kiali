@@ -22,8 +22,8 @@ function restoreSharedMeshConfigResources(): void {
   kubectlExec(`kubectl patch istio default --type='merge' -p '${restorePatch}'`, false);
 }
 
-async function waitForSharedMeshConfig(request: APIRequestContext): Promise<void> {
-  const maxTries = 20;
+async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName: string): Promise<void> {
+  const maxTries = 15;
   for (let tries = 1; tries <= maxTries; tries++) {
     const response = await request.get('/api/mesh/graph');
     if (!response.ok()) {
@@ -35,10 +35,17 @@ async function waitForSharedMeshConfig(request: APIRequestContext): Promise<void
       (node: { data?: { infraType?: string; infraData?: { config?: { sharedConfig?: unknown } } } }) =>
         node.data?.infraType === 'istiod'
     );
-    if (istiodNode?.data?.infraData?.config?.sharedConfig !== undefined) {
-      return;
+    if (istiodNode?.data?.infraData?.config?.sharedConfig === undefined) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      continue;
     }
-    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // Cypress @shared-mesh-config: only after Kiali sees sharedConfig, wait for the pre-patch pod to go away.
+    const podStillExists = kubectlExec(`kubectl get pod/${istiodPodName} -n istio-system`, false).exitCode === 0;
+    if (podStillExists) {
+      kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, true);
+    }
+    return;
   }
   restoreSharedMeshConfigResources();
   throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
@@ -57,8 +64,7 @@ export async function applySharedMeshConfig(request: APIRequestContext): Promise
 
   kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`, true);
   kubectlExec(`kubectl patch istio default --type='merge' -p '${applyPatch}'`, true);
-  await waitForSharedMeshConfig(request);
-  kubectlExec(`kubectl wait --for=delete pod/${podName} -n istio-system --timeout=180s`, true);
+  await waitForSharedMeshConfig(request, podName);
 }
 
 export function restoreSharedMeshConfig(): void {
