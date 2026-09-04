@@ -251,12 +251,15 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         />
       );
     });
+    // Row actions (Overview list) scroll with the OSSMC page shell, not InnerScrollContainer.
+    // Sticky headers need scroll-aware opaque fills; disable stickiness when actions are present.
+    const isStickyHeader = !this.props.actions;
     const table = (
       <Table
         className={tableContrastStyle}
         gridBreakPoint={TableGridBreakpoint.none}
         role="presentation"
-        isStickyHeader
+        isStickyHeader={isStickyHeader}
       >
         {conf.caption && <Caption>{conf.caption}</Caption>}
         <Thead>
@@ -310,12 +313,12 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        {this.props.actions ? (
-          table
-        ) : (
+        {isStickyHeader ? (
           <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows.length}>
             {table}
           </StickyTableScrollContainer>
+        ) : (
+          table
         )}
       </div>
     );
