@@ -1,7 +1,8 @@
 import * as React from 'react';
 import type { IAction, IRow, IRowData, ISortBy, OnSort, TableVariant, ThProps } from '@patternfly/react-table';
-import { ActionsColumn, InnerScrollContainer, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { ActionsColumn, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
+import { StickyTableScrollContainer } from './StickyTableScrollContainer';
 
 const stickyWrapperStyle = kialiStyle({
   display: 'flex',
@@ -141,7 +142,9 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     table
   ) : (
     <div className={stickyWrapperStyle}>
-      <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+      <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={props.rows.length}>
+        {table}
+      </StickyTableScrollContainer>
     </div>
   );
 };

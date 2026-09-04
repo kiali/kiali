@@ -1,16 +1,6 @@
 import * as React from 'react';
 import type { IRow, ISortBy, OnSort, SortByDirection, ThProps } from '@patternfly/react-table';
-import {
-  Caption,
-  InnerScrollContainer,
-  Table,
-  TableGridBreakpoint,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr
-} from '@patternfly/react-table';
+import { Caption, Table, TableGridBreakpoint, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
 import type { RenderResource, Resource, ResourceType } from './Config';
 import { config } from './Config';
@@ -29,6 +19,7 @@ import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { SortableTh } from 'components/Table/SimpleTable';
+import { StickyTableScrollContainer } from 'components/Table/StickyTableScrollContainer';
 import { classes } from 'typestyle';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
 import { t } from 'utils/I18nUtils';
@@ -251,7 +242,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         {isManualRefresh ? (
           <ManualRefreshEmptyState />
         ) : (
-          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+          <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows.length}>
+            {table}
+          </StickyTableScrollContainer>
         )}
       </div>
     );

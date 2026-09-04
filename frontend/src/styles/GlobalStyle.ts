@@ -1,5 +1,8 @@
-import { PF_THEME_GLASS } from 'types/Common';
+import { PF_THEME_FELT, PF_THEME_GLASS } from 'types/Common';
 
+import { TABLE_SCROLLED } from 'components/Table/StickyTableScrollContainer';
+
+import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -83,25 +86,42 @@ export const globalStyle = kialiStyle({
         '&.pf-m-compact tr > *': {
           padding: '0.5rem'
         },
+        '&.pf-m-compact thead tr > *': {
+          paddingTop: 0
+        },
         '& tr > *': {
-          paddingBottom: '0.5rem',
-          paddingTop: '0.5rem'
+          paddingTop: '0.5rem',
+          paddingBottom: '0.5rem'
+        },
+        '& thead tr > *': {
+          paddingTop: 0
         }
       }
     },
 
     /**
-     * Under OpenShift glass, clear PF sticky-header elevation/fill on all tables
-     * (thead::after = shadow/radius; th::after = fill + bottom border).
+     * Under OpenShift glass, clear PF sticky-header elevation (thead::after). Header
+     * cells stay transparent at rest; StickyTableScrollContainer adds
+     * TABLE_SCROLLED while scrolling to apply an opaque sticky fill.
      */
     [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
-      boxShadow: 'none',
-      borderRadius: 0,
-      borderBlockEndWidth: 0
+      boxShadow: 'none'
     },
     [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
-      backgroundColor: 'transparent',
-      borderBlockEndWidth: 0
+      backgroundColor: 'transparent'
+    },
+    [`html.${PF_THEME_GLASS} & .${TABLE_SCROLLED} .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: PFColors.BackgroundColorSticky
+    },
+
+    /**
+     * Project Felt uses brand-accent (red). PF hides the nav accent bar on the current
+     * link; restore it so the active sidebar item shows the felt accent color.
+     */
+    [`html.${PF_THEME_FELT} & .pf-v6-c-nav__link.pf-m-current`]: {
+      ...({
+        '--pf-v6-c-nav__item--accent--content': '""'
+      } as Record<string, string>)
     },
 
     /**

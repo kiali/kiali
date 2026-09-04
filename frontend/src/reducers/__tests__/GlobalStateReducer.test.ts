@@ -1,6 +1,6 @@
 import { GlobalStateReducer } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { Language, Theme } from 'types/Common';
+import { ContrastMode, Language, Theme } from 'types/Common';
 
 describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
@@ -22,12 +22,14 @@ describe('GlobalStateReducer reducer', () => {
 
   it('should return the initial state', () => {
     expect(GlobalStateReducer(undefined, GlobalActions.unknown())).toEqual({
-      loadingCounter: 0,
+      contrastMode: '',
       isPageVisible: true,
       kiosk: '',
       kioskData: undefined,
       language: '',
-      theme: ''
+      loadingCounter: 0,
+      theme: '',
+      themeFelt: false
     });
   });
 
@@ -35,6 +37,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -45,6 +48,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
@@ -58,6 +62,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
@@ -68,6 +73,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
@@ -81,6 +87,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 1,
           isPageVisible: true,
           kiosk: '',
@@ -91,6 +98,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 2,
       isPageVisible: true,
       kiosk: '',
@@ -104,6 +112,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 2,
           isPageVisible: true,
           kiosk: '',
@@ -114,6 +123,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 1,
       isPageVisible: true,
       kiosk: '',
@@ -127,6 +137,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: false,
           kiosk: '',
@@ -137,6 +148,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setPageVisibilityVisible()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
@@ -150,6 +162,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -160,6 +173,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setPageVisibilityHidden()
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: false,
       kiosk: '',
@@ -173,6 +187,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -183,6 +198,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setKiosk('test')
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: 'test',
@@ -196,6 +212,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -206,6 +223,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setKioskData({ hasExternalTracing: false, hasNetobserv: false })
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
@@ -219,6 +237,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -229,6 +248,7 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setLanguage(Language.ENGLISH)
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
@@ -242,6 +262,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
+          contrastMode: '',
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -252,12 +273,65 @@ describe('GlobalStateReducer reducer', () => {
         GlobalActions.setTheme(Theme.DARK)
       )
     ).toEqual({
+      contrastMode: '',
       loadingCounter: 0,
       isPageVisible: true,
       kiosk: '',
       kioskData: undefined,
       language: '',
       theme: Theme.DARK
+    });
+  });
+
+  it('should set contrast mode', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          contrastMode: ContrastMode.TRADITIONAL,
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          kioskData: undefined,
+          language: '',
+          theme: Theme.LIGHT
+        },
+        GlobalActions.setContrastMode(ContrastMode.GLASS)
+      )
+    ).toEqual({
+      contrastMode: ContrastMode.GLASS,
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      kioskData: undefined,
+      language: '',
+      theme: Theme.LIGHT
+    });
+  });
+
+  it('should set theme felt', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          contrastMode: ContrastMode.TRADITIONAL,
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          kioskData: undefined,
+          language: '',
+          theme: Theme.LIGHT,
+          themeFelt: false
+        },
+        GlobalActions.setThemeFelt(true)
+      )
+    ).toEqual({
+      contrastMode: ContrastMode.TRADITIONAL,
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      kioskData: undefined,
+      language: '',
+      theme: Theme.LIGHT,
+      themeFelt: true
     });
   });
 });
