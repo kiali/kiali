@@ -86,8 +86,9 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`): KinD cluster + local `kiali` binary with `hack/ci-yaml/ci-test-config-no-cache.yaml`. One parallel job per suite.
+- **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
-- GitHub **Playwright CI**: separate parallel jobs for smoke and core-1 (each with its own KinD cluster). Jenkins default `playwright:run:all` runs smoke + core-1 in one invocation.
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
 - Local `kiali run --port-forward-grafana` without `external_services.grafana` in config: **WARN** on `/api/status` (`grafana URL is not set`) is expected and does not fail tests.
 
@@ -118,6 +119,7 @@ cd frontend
 yarn playwright:install chromium   # once, after yarn install
 yarn playwright:run:smoke
 yarn playwright:run:core1
+yarn playwright:run:core2
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -126,7 +128,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke` and `playwright-core-1` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, and `playwright-core-2` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 

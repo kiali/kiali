@@ -15,5 +15,8 @@ export const coreCachingOnly = { tag: '@core-caching' as const };
 /** @core-1 — frontend-core-1 Playwright / Cypress suite */
 export const core1 = { tag: '@core-1' as const };
 
+/** @core-2 — frontend-core-2 Playwright / Cypress suite */
+export const core2 = { tag: '@core-2' as const };
+
 /** @smoke + @prometheus-disabled */
 export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disabled'] as const };
