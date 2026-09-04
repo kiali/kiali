@@ -3,7 +3,7 @@ import { MenuToggle, Select, SelectList, SelectOption, ToggleGroup, ToggleGroupI
 import type { MenuToggleElement } from '@patternfly/react-core';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { ContrastMode, KIALI_CONTRAST_MODE, KIALI_THEME, Theme } from 'types/Common';
+import { ContrastMode, KIALI_CONTRAST_MODE, KIALI_THEME, KIALI_THEME_FELT, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { KialiIcon } from 'config/KialiIcon';
@@ -15,6 +15,7 @@ import { PFSpacer } from 'styles/PfSpacer';
 type ThemeSwitchProps = {
   contrastMode: string;
   theme: string;
+  themeFelt: boolean;
 };
 
 const themeSwitchStyle = kialiStyle({
@@ -25,10 +26,10 @@ const themeSwitchStyle = kialiStyle({
 
 const getContrastModeLabel = (contrastMode: ContrastMode, t: (key: string) => string): string => {
   switch (contrastMode) {
-    case ContrastMode.DEFAULT:
-      return t('Default contrast');
+    case ContrastMode.TRADITIONAL:
+      return t('Traditional');
     case ContrastMode.GLASS:
-      return t('Glass contrast');
+      return t('Glass');
     case ContrastMode.HIGH_CONTRAST:
       return t('High contrast');
   }
@@ -40,19 +41,28 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   const darkTheme = props.theme === Theme.DARK;
   const contrastMode = props.contrastMode as ContrastMode;
 
+  const applyTheme = (theme: Theme, mode: ContrastMode, themeFelt: boolean): void => {
+    applyDocumentTheme(theme, mode, themeFelt);
+    store.dispatch(GlobalActions.setTheme(theme));
+    store.dispatch(GlobalActions.setContrastMode(mode));
+    store.dispatch(GlobalActions.setThemeFelt(themeFelt));
+    localStorage.setItem(KIALI_THEME, theme);
+    localStorage.setItem(KIALI_CONTRAST_MODE, mode);
+    localStorage.setItem(KIALI_THEME_FELT, String(themeFelt));
+  };
+
   const handleTheme = (): void => {
     const theme = darkTheme ? Theme.LIGHT : Theme.DARK;
-
-    applyDocumentTheme(theme, contrastMode);
-    store.dispatch(GlobalActions.setTheme(theme));
-    localStorage.setItem(KIALI_THEME, theme);
+    applyTheme(theme, contrastMode, props.themeFelt);
   };
 
   const handleContrastSelect = (mode: ContrastMode): void => {
-    applyDocumentTheme(props.theme as Theme, mode);
-    store.dispatch(GlobalActions.setContrastMode(mode));
-    localStorage.setItem(KIALI_CONTRAST_MODE, mode);
+    applyTheme(props.theme as Theme, mode, props.themeFelt);
     setIsContrastOpen(false);
+  };
+
+  const handleFeltToggle = (): void => {
+    applyTheme(props.theme as Theme, contrastMode, !props.themeFelt);
   };
 
   return (
@@ -69,6 +79,15 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
           icon={<KialiIcon.Moon isInline />}
           isSelected={darkTheme}
           onClick={handleTheme}
+        />
+      </ToggleGroup>
+
+      <ToggleGroup aria-label={t('Felt')} data-test="theme-felt-switch">
+        <ToggleGroupItem
+          aria-label={t('Felt')}
+          isSelected={props.themeFelt}
+          onClick={handleFeltToggle}
+          text={t('Felt')}
         />
       </ToggleGroup>
 
@@ -91,14 +110,14 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
         )}
       >
         <SelectList>
-          <SelectOption isSelected={contrastMode === ContrastMode.DEFAULT} value={ContrastMode.DEFAULT}>
-            {getContrastModeLabel(ContrastMode.DEFAULT, t)}
+          <SelectOption isSelected={contrastMode === ContrastMode.TRADITIONAL} value={ContrastMode.TRADITIONAL}>
+            {t('Traditional')}
           </SelectOption>
           <SelectOption isSelected={contrastMode === ContrastMode.GLASS} value={ContrastMode.GLASS}>
-            {getContrastModeLabel(ContrastMode.GLASS, t)}
+            {t('Glass')}
           </SelectOption>
           <SelectOption isSelected={contrastMode === ContrastMode.HIGH_CONTRAST} value={ContrastMode.HIGH_CONTRAST}>
-            {getContrastModeLabel(ContrastMode.HIGH_CONTRAST, t)}
+            {t('High contrast')}
           </SelectOption>
         </SelectList>
       </Select>
@@ -109,7 +128,8 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
 const mapStateToProps = (state: KialiAppState): ThemeSwitchProps => {
   return {
     contrastMode: state.globalState.contrastMode,
-    theme: state.globalState.theme
+    theme: state.globalState.theme,
+    themeFelt: state.globalState.themeFelt
   };
 };
 

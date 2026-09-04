@@ -25,14 +25,19 @@ export enum HTTP_VERBS {
 }
 
 export const PF_THEME_DARK = 'pf-v6-theme-dark';
+export const PF_THEME_FELT = 'pf-v6-theme-felt';
 export const PF_THEME_GLASS = 'pf-v6-theme-glass';
 export const PF_THEME_HIGH_CONTRAST = 'pf-v6-theme-high-contrast';
 
+/** Applied to sticky table scroll containers under glass contrast mode while scrolled. */
+export const KIALI_GLASS_TABLE_SCROLLED = 'kiali-glass-table-scrolled';
+
 export const KIALI_CONTRAST_MODE = 'KIALI_CONTRAST_MODE';
 export const KIALI_THEME = 'KIALI_THEME';
+export const KIALI_THEME_FELT = 'KIALI_THEME_FELT';
 
 export const enum ContrastMode {
-  DEFAULT = 'Default',
+  TRADITIONAL = 'Traditional',
   GLASS = 'Glass',
   HIGH_CONTRAST = 'High contrast'
 }

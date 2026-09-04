@@ -28,7 +28,8 @@ describe('GlobalStateReducer reducer', () => {
       kioskData: undefined,
       language: '',
       loadingCounter: 0,
-      theme: ''
+      theme: '',
+      themeFelt: false
     });
   });
 
@@ -286,7 +287,7 @@ describe('GlobalStateReducer reducer', () => {
     expect(
       GlobalStateReducer(
         {
-          contrastMode: ContrastMode.DEFAULT,
+          contrastMode: ContrastMode.TRADITIONAL,
           loadingCounter: 0,
           isPageVisible: true,
           kiosk: '',
@@ -304,6 +305,33 @@ describe('GlobalStateReducer reducer', () => {
       kioskData: undefined,
       language: '',
       theme: Theme.LIGHT
+    });
+  });
+
+  it('should set theme felt', () => {
+    expect(
+      GlobalStateReducer(
+        {
+          contrastMode: ContrastMode.TRADITIONAL,
+          loadingCounter: 0,
+          isPageVisible: true,
+          kiosk: '',
+          kioskData: undefined,
+          language: '',
+          theme: Theme.LIGHT,
+          themeFelt: false
+        },
+        GlobalActions.setThemeFelt(true)
+      )
+    ).toEqual({
+      contrastMode: ContrastMode.TRADITIONAL,
+      loadingCounter: 0,
+      isPageVisible: true,
+      kiosk: '',
+      kioskData: undefined,
+      language: '',
+      theme: Theme.LIGHT,
+      themeFelt: true
     });
   });
 });

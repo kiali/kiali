@@ -7,11 +7,18 @@ import {
   ContrastMode,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
+  KIALI_THEME_FELT,
   PF_THEME_DARK,
+  PF_THEME_FELT,
   PF_THEME_GLASS,
   PF_THEME_HIGH_CONTRAST,
   Theme
 } from 'types/Common';
+
+export type DocumentThemeClasses = {
+  contrastMode: ContrastMode;
+  themeFelt: boolean;
+};
 
 export const getKialiTheme = (): Theme => {
   return (
@@ -27,6 +34,16 @@ export const getKialiContrastMode = (): ContrastMode => {
   );
 };
 
+export const getKialiThemeFelt = (): boolean => {
+  const stored = localStorage.getItem(KIALI_THEME_FELT);
+
+  if (stored !== null) {
+    return stored === 'true';
+  }
+
+  return store.getState().globalState.themeFelt;
+};
+
 export const useKialiTheme = (): string => {
   return useKialiSelector(state => state.globalState.theme) || getDefaultTheme();
 };
@@ -35,9 +52,18 @@ export const useKialiContrastMode = (): string => {
   return useKialiSelector(state => state.globalState.contrastMode) || getDefaultContrastMode();
 };
 
+export const useKialiThemeFelt = (): boolean => {
+  return useKialiSelector(state => state.globalState.themeFelt);
+};
+
 /** Read color scheme from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
 export const readDocumentTheme = (): Theme => {
   return document.documentElement.classList.contains(PF_THEME_DARK) ? Theme.DARK : Theme.LIGHT;
+};
+
+/** Read felt variant from PatternFly classes on <html>. */
+export const readDocumentThemeFelt = (): boolean => {
+  return document.documentElement.classList.contains(PF_THEME_FELT);
 };
 
 /** Read contrast mode from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
@@ -50,7 +76,14 @@ export const readDocumentContrastMode = (): ContrastMode => {
     return ContrastMode.GLASS;
   }
 
-  return ContrastMode.DEFAULT;
+  return ContrastMode.TRADITIONAL;
+};
+
+export const readDocumentThemeClasses = (): DocumentThemeClasses => {
+  return {
+    contrastMode: readDocumentContrastMode(),
+    themeFelt: readDocumentThemeFelt()
+  };
 };
 
 /**
@@ -63,37 +96,41 @@ export const isParentOwnedTheme = (): boolean => {
 };
 
 /** Update Redux from current <html> theme classes without modifying the document. */
-export const syncReduxThemeFromDocument = (): { contrastMode: ContrastMode; theme: Theme } => {
+export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { theme: Theme } => {
   const theme = readDocumentTheme();
-  const contrastMode = readDocumentContrastMode();
+  const { contrastMode, themeFelt } = readDocumentThemeClasses();
   store.dispatch(GlobalActions.setTheme(theme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
+  store.dispatch(GlobalActions.setThemeFelt(themeFelt));
 
-  return { contrastMode, theme };
+  return { contrastMode, theme, themeFelt };
 };
 
 /**
- * Applies PatternFly contrast mode classes on <html>.
- * High contrast disables glass (never both classes active).
+ * Applies PatternFly contrast mode and felt classes on <html>.
+ * High contrast disables glass (never both active). Felt stacks with any contrast mode.
  * Do not call this when isParentOwnedTheme() is true.
  */
-export const applyDocumentContrastMode = (contrastMode: ContrastMode): void => {
+export const applyDocumentContrastMode = (contrastMode: ContrastMode, themeFelt: boolean): void => {
   const glass = contrastMode === ContrastMode.GLASS;
   const highContrast = contrastMode === ContrastMode.HIGH_CONTRAST;
 
+  document.documentElement.classList.toggle(PF_THEME_FELT, themeFelt);
   document.documentElement.classList.toggle(PF_THEME_GLASS, glass);
   document.documentElement.classList.toggle(PF_THEME_HIGH_CONTRAST, highContrast);
 };
 
 /**
- * Applies PatternFly light/dark and optional contrast mode classes on <html>.
+ * Applies PatternFly light/dark and optional contrast/felt classes on <html>.
  * Do not call this when isParentOwnedTheme() is true (OSSMC / OpenShift Console owns classes).
  */
-export const applyDocumentTheme = (theme: Theme, contrastMode?: ContrastMode): void => {
+export const applyDocumentTheme = (theme: Theme, contrastMode?: ContrastMode, themeFelt?: boolean): void => {
   document.documentElement.classList.toggle(PF_THEME_DARK, theme === Theme.DARK);
 
   if (contrastMode !== undefined) {
-    applyDocumentContrastMode(contrastMode);
+    applyDocumentContrastMode(contrastMode, themeFelt ?? false);
+  } else if (themeFelt !== undefined) {
+    document.documentElement.classList.toggle(PF_THEME_FELT, themeFelt);
   }
 };
 
@@ -103,16 +140,20 @@ export const applyDocumentTheme = (theme: Theme, contrastMode?: ContrastMode): v
  */
 export const observeDocumentTheme = (onChange: () => void): (() => void) => {
   const root = document.documentElement;
-  let lastContrastMode = readDocumentContrastMode();
+  let lastClasses = readDocumentThemeClasses();
   let lastTheme = readDocumentTheme();
 
   const notifyIfChanged = (): void => {
     const theme = readDocumentTheme();
-    const contrastMode = readDocumentContrastMode();
+    const classes = readDocumentThemeClasses();
 
-    if (theme !== lastTheme || contrastMode !== lastContrastMode) {
+    if (
+      theme !== lastTheme ||
+      classes.contrastMode !== lastClasses.contrastMode ||
+      classes.themeFelt !== lastClasses.themeFelt
+    ) {
       lastTheme = theme;
-      lastContrastMode = contrastMode;
+      lastClasses = classes;
       onChange();
     }
   };
@@ -137,5 +178,5 @@ const getDefaultContrastMode = (): ContrastMode => {
     return ContrastMode.HIGH_CONTRAST;
   }
 
-  return ContrastMode.DEFAULT;
+  return ContrastMode.TRADITIONAL;
 };

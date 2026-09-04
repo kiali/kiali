@@ -84,6 +84,29 @@ exports[`ThemeSwitch renders > dark theme 1`] = `
         </button>
       </div>
     </div>
+    <div
+      aria-label="Felt"
+      class="pf-v6-c-toggle-group"
+      data-test="theme-felt-switch"
+      role="group"
+    >
+      <div
+        class="pf-v6-c-toggle-group__item"
+      >
+        <button
+          aria-label="Felt"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__text"
+          >
+            Felt
+          </span>
+        </button>
+      </div>
+    </div>
     <button
       aria-expanded="false"
       aria-label="Contrast mode"
@@ -96,7 +119,7 @@ exports[`ThemeSwitch renders > dark theme 1`] = `
       <span
         class="pf-v6-c-menu-toggle__text"
       >
-        Default contrast
+        Traditional
       </span>
       <span
         class="pf-v6-c-menu-toggle__controls"
@@ -208,6 +231,29 @@ exports[`ThemeSwitch renders > light theme 1`] = `
         </button>
       </div>
     </div>
+    <div
+      aria-label="Felt"
+      class="pf-v6-c-toggle-group"
+      data-test="theme-felt-switch"
+      role="group"
+    >
+      <div
+        class="pf-v6-c-toggle-group__item"
+      >
+        <button
+          aria-label="Felt"
+          aria-pressed="false"
+          class="pf-v6-c-toggle-group__button"
+          type="button"
+        >
+          <span
+            class="pf-v6-c-toggle-group__text"
+          >
+            Felt
+          </span>
+        </button>
+      </div>
+    </div>
     <button
       aria-expanded="false"
       aria-label="Contrast mode"
@@ -220,7 +266,7 @@ exports[`ThemeSwitch renders > light theme 1`] = `
       <span
         class="pf-v6-c-menu-toggle__text"
       >
-        Default contrast
+        Traditional
       </span>
       <span
         class="pf-v6-c-menu-toggle__controls"

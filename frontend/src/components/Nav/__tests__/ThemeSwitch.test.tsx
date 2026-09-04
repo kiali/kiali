@@ -1,17 +1,28 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
-import { ContrastMode, PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST, Theme } from 'types/Common';
+import {
+  ContrastMode,
+  PF_THEME_DARK,
+  PF_THEME_FELT,
+  PF_THEME_GLASS,
+  PF_THEME_HIGH_CONTRAST,
+  Theme
+} from 'types/Common';
 import { store } from 'store/ConfigStore';
 
 describe('ThemeSwitch renders', () => {
   it('light theme', () => {
-    const { container } = render(<ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} theme={Theme.LIGHT} />);
+    const { container } = render(
+      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />
+    );
     expect(container).toMatchSnapshot();
   });
 
   it('dark theme', () => {
-    const { container } = render(<ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} theme={Theme.DARK} />);
+    const { container } = render(
+      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />
+    );
     expect(container).toMatchSnapshot();
   });
 });
@@ -22,7 +33,7 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to dark theme', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} theme={Theme.LIGHT} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
 
     const buttons = screen.getAllByRole('button');
     await userEvent.click(buttons[1]);
@@ -32,7 +43,7 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to light theme', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} theme={Theme.DARK} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />);
 
     const buttons = screen.getAllByRole('button');
     await userEvent.click(buttons[0]);
@@ -42,18 +53,27 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to glass contrast mode', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} theme={Theme.LIGHT} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
 
     await userEvent.click(screen.getByLabelText('Contrast mode'));
-    await userEvent.click(screen.getByRole('option', { name: 'Glass contrast' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Glass' }));
 
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
-    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
   });
 
+  it('to felt with glass contrast mode', async () => {
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={false} />);
+
+    await userEvent.click(screen.getByTestId('theme-felt-switch').querySelector('button')!);
+
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
+    expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
+    expect(store.getState().globalState.themeFelt).toBe(true);
+  });
+
   it('to high contrast mode', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={false} />);
 
     await userEvent.click(screen.getByLabelText('Contrast mode'));
     await userEvent.click(screen.getByRole('option', { name: 'High contrast' }));

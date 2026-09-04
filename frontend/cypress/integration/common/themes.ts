@@ -22,7 +22,7 @@ Given('the theme is explicitly set to light', () => {
     win.localStorage.removeItem('KIALI_CONTRAST_MODE');
   });
   cy.get(CONTRAST_MODE_SWITCH).click();
-  cy.contains('[role="option"]', 'Default contrast').click();
+  cy.contains('[role="option"]', 'Traditional').click();
   cy.get('html').should('not.have.class', 'pf-v6-theme-glass');
   cy.get('html').should('not.have.class', 'pf-v6-theme-high-contrast');
 });
@@ -39,7 +39,7 @@ When('the user switches to light theme', () => {
 
 When('the user selects glass contrast mode', () => {
   cy.get(CONTRAST_MODE_SWITCH).click();
-  cy.contains('[role="option"]', 'Glass contrast').click();
+  cy.contains('[role="option"]', 'Glass').click();
 });
 
 When('the user selects high contrast mode', () => {
@@ -49,7 +49,7 @@ When('the user selects high contrast mode', () => {
 
 When('the user selects default contrast mode', () => {
   cy.get(CONTRAST_MODE_SWITCH).click();
-  cy.contains('[role="option"]', 'Default contrast').click();
+  cy.contains('[role="option"]', 'Traditional').click();
 });
 
 Then('the document should use light theme', () => {
