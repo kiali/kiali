@@ -49,8 +49,8 @@ export enum PFColors {
   Red500 = 'var(--pf-t--color--red--50)',
   White = 'var(--pf-t--color--white)',
 
-  // semantic kiali colors
-  Active = 'var(--pf-t--color--blue--50)',
+  // semantic kiali colors — use brand accent so Felt theme picks up Red Hat red
+  Active = 'var(--pf-t--global--color--brand--accent--default)',
   Badge = 'var(--pf-t--color--blue--30)',
   Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',

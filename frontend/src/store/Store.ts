@@ -44,6 +44,7 @@ export interface GlobalState {
   readonly language: string;
   readonly loadingCounter: number;
   readonly theme: string;
+  readonly themeFelt: boolean;
 }
 
 export interface ClusterState {

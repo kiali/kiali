@@ -65,7 +65,7 @@ const namespacePersistFilter = whitelistInputWithInitialState(
 
 const globalStateFilter = whitelistInputWithInitialState(
   'globalState',
-  ['contrastMode', 'language', 'theme'],
+  ['contrastMode', 'language', 'theme', 'themeFelt'],
   INITIAL_GLOBAL_STATE
 );
 

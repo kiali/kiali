@@ -8,6 +8,7 @@ import {
   applyDocumentTheme,
   getKialiContrastMode,
   getKialiTheme,
+  getKialiThemeFelt,
   isParentOwnedTheme,
   readDocumentTheme
 } from 'utils/ThemeUtils';
@@ -70,7 +71,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
   // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
   const theme = isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme();
   if (!isParentOwnedTheme()) {
-    applyDocumentTheme(theme, getKialiContrastMode());
+    applyDocumentTheme(theme, getKialiContrastMode(), getKialiThemeFelt());
   }
 
   return (

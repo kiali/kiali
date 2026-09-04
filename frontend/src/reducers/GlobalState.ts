@@ -11,7 +11,8 @@ export const INITIAL_GLOBAL_STATE: GlobalState = {
   kioskData: undefined,
   language: '',
   loadingCounter: 0,
-  theme: ''
+  theme: '',
+  themeFelt: false
 };
 
 // This Reducer allows changes to the 'globalState' portion of Redux Store
@@ -44,6 +45,10 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
     case getType(GlobalActions.setTheme): {
       const theme = action.payload;
       return updateState(state, { theme: theme });
+    }
+    case getType(GlobalActions.setThemeFelt): {
+      const themeFelt = action.payload;
+      return updateState(state, { themeFelt: themeFelt });
     }
     default:
       return state;

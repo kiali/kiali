@@ -34,6 +34,7 @@ import { GlobalActions } from '../actions/GlobalActions';
 import {
   applyDocumentTheme,
   getKialiContrastMode,
+  getKialiThemeFelt,
   getKialiTheme,
   isParentOwnedTheme,
   syncReduxThemeFromDocument
@@ -352,9 +353,11 @@ class AuthenticationControllerComponent extends React.Component<
     } else {
       const theme = getKialiTheme();
       const contrastMode = getKialiContrastMode();
-      applyDocumentTheme(theme, contrastMode);
+      const themeFelt = getKialiThemeFelt();
+      applyDocumentTheme(theme, contrastMode, themeFelt);
       store.dispatch(GlobalActions.setTheme(theme));
       store.dispatch(GlobalActions.setContrastMode(contrastMode));
+      store.dispatch(GlobalActions.setThemeFelt(themeFelt));
     }
 
     // Set Kiosk mode
