@@ -120,11 +120,11 @@ func computeHealthSummary(
 						Name:      appName,
 						Status:    status,
 						Issue:     issue,
-						ErrorRate: calculateErrorRate(app.Requests),
+						ErrorRate: entityErrorRate(app.Status),
 					})
 				}
 
-				nsSummary.ErrorRate += calculateErrorRate(app.Requests)
+				nsSummary.ErrorRate += entityErrorRate(app.Status)
 			}
 		}
 
@@ -157,11 +157,11 @@ func computeHealthSummary(
 						Name:      svcName,
 						Status:    status,
 						Issue:     issue,
-						ErrorRate: calculateErrorRate(svc.Requests),
+						ErrorRate: entityErrorRate(svc.Status),
 					})
 				}
 
-				nsSummary.ErrorRate += calculateErrorRate(svc.Requests)
+				nsSummary.ErrorRate += entityErrorRate(svc.Status)
 			}
 		}
 
@@ -194,11 +194,11 @@ func computeHealthSummary(
 						Name:      wlName,
 						Status:    status,
 						Issue:     issue,
-						ErrorRate: calculateErrorRate(wl.Requests),
+						ErrorRate: entityErrorRate(wl.Status),
 					})
 				}
 
-				nsSummary.ErrorRate += calculateErrorRate(wl.Requests)
+				nsSummary.ErrorRate += entityErrorRate(wl.Status)
 			}
 		}
 
@@ -222,312 +222,83 @@ func computeHealthSummary(
 	return summary
 }
 
-// evaluateAppHealth determines app health status
+// evaluateAppHealth uses the backend-calculated status, same as Kiali list pages.
 func evaluateAppHealth(app *models.AppHealth) (status string, issue string) {
-	// Check workload statuses
-	totalWorkloads := len(app.WorkloadStatuses)
-	if totalWorkloads == 0 {
-		return "UNKNOWN", "no workloads found"
+	return statusFromCachedHealth(app.Status, app.WorkloadStatuses)
+}
+
+// evaluateServiceHealth uses the backend-calculated status, same as Kiali list pages.
+func evaluateServiceHealth(svc *models.ServiceHealth) (status string, issue string) {
+	return statusFromCachedHealth(svc.Status, nil)
+}
+
+// evaluateWorkloadHealth uses the backend-calculated status, same as Kiali list pages.
+func evaluateWorkloadHealth(wl *models.WorkloadHealth) (status string, issue string) {
+	if wl == nil {
+		return "UNKNOWN", ""
 	}
 
-	workloadStatus := "HEALTHY"
-	unhealthyCount := 0
-	for _, ws := range app.WorkloadStatuses {
-		// User has scaled down a workload, then desired replicas will be 0 and it's not an error condition
-		// This matches Kiali frontend logic: return NOT_READY when desiredReplicas === 0
-		if ws.DesiredReplicas == 0 {
-			workloadStatus = "NOT_READY"
-			issue = "scaled to 0 replicas"
+	var workloadStatuses []*models.WorkloadStatus
+	if wl.WorkloadStatus != nil {
+		workloadStatuses = []*models.WorkloadStatus{wl.WorkloadStatus}
+	}
+	return statusFromCachedHealth(wl.Status, workloadStatuses)
+}
+
+// statusFromCachedHealth maps backend CalculatedHealthStatus to mesh summary strings.
+// Health is computed once in business.HealthCalculator; this only aggregates for AI output.
+func statusFromCachedHealth(cached *models.CalculatedHealthStatus, workloadStatuses []*models.WorkloadStatus) (status string, issue string) {
+	if cached == nil {
+		return "UNKNOWN", ""
+	}
+
+	return modelsHealthStatusToSummary(cached.Status), issueFromCachedStatus(cached, workloadStatuses)
+}
+
+// modelsHealthStatusToSummary maps backend health status to mesh summary strings.
+func modelsHealthStatusToSummary(status models.HealthStatus) string {
+	switch status {
+	case models.HealthStatusHealthy:
+		return "HEALTHY"
+	case models.HealthStatusDegraded:
+		return "DEGRADED"
+	case models.HealthStatusFailure:
+		return "UNHEALTHY"
+	case models.HealthStatusNotReady:
+		return "NOT_READY"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+func issueFromCachedStatus(cached *models.CalculatedHealthStatus, workloadStatuses []*models.WorkloadStatus) string {
+	for _, ws := range workloadStatuses {
+		if ws == nil {
 			continue
 		}
-
-		if ws.AvailableReplicas < ws.DesiredReplicas {
-			unhealthyCount++
-			issue = fmt.Sprintf("%d/%d replicas available", ws.AvailableReplicas, ws.DesiredReplicas)
-			if ws.AvailableReplicas == 0 {
-				workloadStatus = "UNHEALTHY"
-			} else if workloadStatus != "UNHEALTHY" {
-				workloadStatus = "DEGRADED"
-			}
-		}
-		if ws.SyncedProxies >= 0 && ws.SyncedProxies < ws.AvailableReplicas {
-			if issue == "" {
-				issue = fmt.Sprintf("%d/%d proxies synced", ws.SyncedProxies, ws.AvailableReplicas)
-			}
-			if workloadStatus == "HEALTHY" {
-				workloadStatus = "DEGRADED"
-			}
-		}
-	}
-
-	// Evaluate request health using tolerance-based logic (Kiali tolerances)
-	requestStatus, errorRate := evaluateRequestHealth(app.Requests)
-	if errorRate > 0 && issue == "" {
-		issue = fmt.Sprintf("error rate: %.2f%%", errorRate*100)
-	}
-
-	// Merge workload and request statuses (worst wins)
-	finalStatus := mergeHealthStatus(workloadStatus, requestStatus)
-	return finalStatus, issue
-}
-
-// evaluateServiceHealth determines service health status
-func evaluateServiceHealth(svc *models.ServiceHealth) (status string, issue string) {
-	// If there is no inbound or outbound traffic data, service health is UNKNOWN
-	if !hasAnyRequests(svc.Requests) {
-		return "UNKNOWN", ""
-	}
-
-	// Evaluate request health using tolerance-based logic (Kiali tolerances)
-	status, errorRate := evaluateRequestHealth(svc.Requests)
-
-	if errorRate > 0 && issue == "" {
-		issue = fmt.Sprintf("error rate: %.2f%%", errorRate*100)
-	}
-	return status, issue
-}
-
-// hasAnyRequests returns true if there is any non-zero request count in inbound or outbound
-func hasAnyRequests(req models.RequestHealth) bool {
-	// Check inbound
-	for _, codes := range req.Inbound {
-		for _, count := range codes {
-			if count > 0 {
-				return true
-			}
-		}
-	}
-	// Check outbound
-	for _, codes := range req.Outbound {
-		for _, count := range codes {
-			if count > 0 {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// evaluateWorkloadHealth determines workload health status
-func evaluateWorkloadHealth(wl *models.WorkloadHealth) (status string, issue string) {
-	workloadStatus := "HEALTHY"
-
-	if wl.WorkloadStatus != nil {
-		ws := wl.WorkloadStatus
-		// User has scaled down a workload, then desired replicas will be 0 and it's not an error condition
-		// This matches Kiali frontend logic: return NOT_READY when desiredReplicas === 0
 		if ws.DesiredReplicas == 0 {
-			workloadStatus = "NOT_READY"
-			issue = "scaled to 0 replicas"
-		} else if ws.AvailableReplicas < ws.DesiredReplicas {
-			issue = fmt.Sprintf("%d/%d replicas available", ws.AvailableReplicas, ws.DesiredReplicas)
-			if ws.AvailableReplicas == 0 {
-				workloadStatus = "UNHEALTHY"
-			} else {
-				workloadStatus = "DEGRADED"
-			}
+			return "scaled to 0 replicas"
+		}
+		if ws.AvailableReplicas < ws.DesiredReplicas {
+			return fmt.Sprintf("%d/%d replicas available", ws.AvailableReplicas, ws.DesiredReplicas)
 		}
 		if ws.SyncedProxies >= 0 && ws.SyncedProxies < ws.AvailableReplicas {
-			if issue == "" {
-				issue = fmt.Sprintf("%d/%d proxies synced", ws.SyncedProxies, ws.AvailableReplicas)
-			}
-			if workloadStatus == "HEALTHY" {
-				workloadStatus = "DEGRADED"
-			}
+			return fmt.Sprintf("%d/%d proxies synced", ws.SyncedProxies, ws.AvailableReplicas)
 		}
 	}
 
-	// Evaluate request health using tolerance-based logic (Kiali tolerances)
-	requestStatus, errorRate := evaluateRequestHealth(wl.Requests)
-
-	// If there is no inbound or outbound traffic data and no workload status info, mark UNKNOWN
-	if !hasAnyRequests(wl.Requests) && wl.WorkloadStatus == nil {
-		return "UNKNOWN", ""
+	if cached != nil && cached.ErrorRatio > 0 {
+		return fmt.Sprintf("error rate: %.2f%%", cached.ErrorRatio)
 	}
-	if errorRate > 0 && issue == "" {
-		issue = fmt.Sprintf("error rate: %.2f%%", errorRate*100)
-	}
-
-	// Merge workload and request statuses (worst wins)
-	finalStatus := mergeHealthStatus(workloadStatus, requestStatus)
-	return finalStatus, issue
+	return ""
 }
 
-// mergeHealthStatus returns the worst of two health statuses
-// Priority matches Kiali frontend: UNHEALTHY(4) > DEGRADED(3) > NOT_READY(2) > HEALTHY(1) > UNKNOWN(0)
-func mergeHealthStatus(s1, s2 string) string {
-	priority := map[string]int{
-		"UNHEALTHY": 4,
-		"DEGRADED":  3,
-		"NOT_READY": 2,
-		"HEALTHY":   1,
-		"UNKNOWN":   0,
-	}
-
-	if priority[s1] > priority[s2] {
-		return s1
-	}
-	return s2
-}
-
-// calculateErrorRate computes error percentage from request health
-// This uses a simplified approach - for each protocol/code combination,
-// it checks against tolerance thresholds to determine if it's an error
-func calculateErrorRate(req models.RequestHealth) float64 {
-	totalRequests := 0.0
-	errorRequests := 0.0
-
-	// Count inbound
-	for protocol, codes := range req.Inbound {
-		for code, count := range codes {
-			totalRequests += count
-			if isErrorCode(protocol, code) {
-				errorRequests += count
-			}
-		}
-	}
-
-	// Count outbound
-	for protocol, codes := range req.Outbound {
-		for code, count := range codes {
-			totalRequests += count
-			if isErrorCode(protocol, code) {
-				errorRequests += count
-			}
-		}
-	}
-
-	if totalRequests == 0 {
+// entityErrorRate returns the error ratio (0-1) from backend-calculated status.
+func entityErrorRate(cached *models.CalculatedHealthStatus) float64 {
+	if cached == nil || cached.ErrorRatio < 0 {
 		return 0.0
 	}
-	return errorRequests / totalRequests
-}
-
-// isErrorCode checks if a status code represents an error
-// Based on Kiali's default tolerance configuration
-func isErrorCode(protocol, code string) bool {
-	switch protocol {
-	case "http":
-		// "-" represents aborted/fault-injected requests (always an error)
-		if code == "-" {
-			return true
-		}
-		// 4xx client errors
-		if len(code) == 3 && code[0] == '4' {
-			return true
-		}
-		// 5xx server errors
-		if len(code) == 3 && code[0] == '5' {
-			return true
-		}
-	case "grpc":
-		// "-" represents aborted requests
-		if code == "-" {
-			return true
-		}
-		// gRPC error codes (1-16, non-zero)
-		if code != "0" {
-			return true
-		}
-	}
-	return false
-}
-
-// evaluateRequestHealth evaluates health status based on request metrics
-// Returns status and worst error ratio found
-func evaluateRequestHealth(req models.RequestHealth) (status string, worstRatio float64) {
-	status = "HEALTHY"
-	worstRatio = 0.0
-
-	// Helper to process requests (inbound or outbound)
-	processRequests := func(requests map[string]map[string]float64) {
-		for protocol, codes := range requests {
-			totalForProtocol := 0.0
-
-			// Calculate totals
-			for _, count := range codes {
-				totalForProtocol += count
-			}
-
-			if totalForProtocol == 0 {
-				continue
-			}
-
-			// Calculate error ratios for each code
-			for code, count := range codes {
-				if isErrorCode(protocol, code) {
-					ratio := count / totalForProtocol
-
-					// Track worst ratio
-					if ratio > worstRatio {
-						worstRatio = ratio
-					}
-
-					// Evaluate against tolerance thresholds
-					// Based on Kiali defaults:
-					// - Code "-": degraded=0%, failure=10%
-					// - 5xx: degraded=0%, failure=10%
-					// - 4xx: degraded=10%, failure=20%
-					// - grpc errors: degraded=0%, failure=10%
-
-					codeStatus := getStatusForCodeRatio(protocol, code, ratio)
-					if codeStatus == "UNHEALTHY" {
-						status = "UNHEALTHY"
-					} else if codeStatus == "DEGRADED" && status == "HEALTHY" {
-						status = "DEGRADED"
-					}
-				}
-			}
-		}
-	}
-
-	processRequests(req.Inbound)
-	processRequests(req.Outbound)
-
-	return status, worstRatio
-}
-
-// getStatusForCodeRatio determines health status based on error code and ratio
-// Implements Kiali's default tolerance configuration
-func getStatusForCodeRatio(protocol, code string, ratio float64) string {
-	percentage := ratio * 100
-
-	switch protocol {
-	case "http":
-		if code == "-" {
-			// Aborted/fault-injected: degraded=0%, failure=10%
-			if percentage >= 10 {
-				return "UNHEALTHY"
-			} else if percentage > 0 {
-				return "DEGRADED"
-			}
-		} else if len(code) == 3 && code[0] == '5' {
-			// 5xx errors: degraded=0%, failure=10%
-			if percentage >= 10 {
-				return "UNHEALTHY"
-			} else if percentage > 0 {
-				return "DEGRADED"
-			}
-		} else if len(code) == 3 && code[0] == '4' {
-			// 4xx errors: degraded=10%, failure=20%
-			if percentage >= 20 {
-				return "UNHEALTHY"
-			} else if percentage >= 10 {
-				return "DEGRADED"
-			}
-		}
-	case "grpc":
-		// gRPC errors (including "-"): degraded=0%, failure=10%
-		if code != "0" {
-			if percentage >= 10 {
-				return "UNHEALTHY"
-			} else if percentage > 0 {
-				return "DEGRADED"
-			}
-		}
-	}
-
-	return "HEALTHY"
+	return cached.ErrorRatio / 100.0
 }
 
 // computeNamespaceStatus determines namespace overall status
