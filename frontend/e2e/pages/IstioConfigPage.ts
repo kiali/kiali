@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext, type Locator } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoListPage } from '../utils/navigation';
 import { selectNamespace } from '../utils/namespace';
@@ -6,6 +6,7 @@ import { waitForLoadingComplete } from '../utils/transition';
 import { linkSelector } from '../utils/linkSelector';
 import { colExists, expectOnlyRow, expectRowCount, getColWithRowText } from '../utils/table';
 import { collectAmbientL7Warnings } from '../utils/ambientValidation';
+import { editIstioConfigYaml } from '../utils/monacoEditor';
 
 const TYPE_FILTERS = [
   'AuthorizationPolicy',
@@ -326,13 +327,86 @@ export class IstioConfigPage extends BasePage {
       await expect(row).toContainText(statusText);
     }).toPass({ intervals: [10_000], timeout: 60_000 });
   }
+
+  async openConfigByName(name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await getColWithRowText(this.page, name, 'Name').locator(linkSelector()).first().click();
+  }
+
+  async expectEditorVisible(): Promise<void> {
+    await expect(this.page.locator('[data-test="istio-config-editor"] .monaco-editor')).toBeVisible();
+  }
+
+  async editYaml(): Promise<void> {
+    await editIstioConfigYaml(this.page);
+  }
+
+  async clickReload(): Promise<void> {
+    await this.getBySel('reload-istio-config').click();
+  }
+
+  async clickCancel(): Promise<void> {
+    await this.getBySel('cancel-istio-config').click();
+  }
+
+  async expectUnsavedModal(action: string): Promise<void> {
+    await expect(this.getBySel('unsaved-changes-modal')).toBeVisible();
+    await expect(this.getBySel('confirm-unsaved')).toContainText(action);
+  }
+
+  async cancelUnsavedModal(): Promise<void> {
+    await this.getBySel('cancel-unsaved').click();
+  }
+
+  async expectNoUnsavedModal(): Promise<void> {
+    await expect(this.getBySel('unsaved-changes-modal')).toHaveCount(0);
+  }
+
+  async clickCreateIstioConfigAction(type: string): Promise<void> {
+    await this.getBySel('istio-actions-toggle').click();
+    await waitForLoadingComplete(this.page);
+    await this.page.locator(`li[data-test="create_${type}"]`).locator('button').click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectConfigWizard(title: string): Promise<void> {
+    await expect(this.page.locator('h1')).toContainText(title);
+  }
+
+  async typesInInput(id: string, value: string): Promise<void> {
+    await this.page.locator(`input[id="${id}"]`).fill(value);
+  }
+
+  async chooseModeFromSelect(option: string, id: string): Promise<void> {
+    const select = this.page.locator(`select[id="${id}"]`);
+    if ((await select.count()) > 0) {
+      await select.selectOption(option);
+      return;
+    }
+    await this.page.locator(`button[id="${id}-toggle"]`).click();
+    const optionLocator = this.page.getByRole('option', { name: new RegExp(option, 'i') });
+    if ((await optionLocator.count()) > 0) {
+      await optionLocator.first().click();
+      return;
+    }
+    await this.page
+      .locator('.pf-v6-c-menu__list-item')
+      .filter({ hasText: new RegExp(option, 'i') })
+      .first()
+      .click();
+  }
+
+  async expectObjectListed(type: string, name: string, namespace: string): Promise<void> {
+    const row = this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`);
+    await expect(async () => {
+      await this.refreshList();
+      await expect(row.locator('svg')).toBeVisible();
+    }).toPass({ intervals: [5_000], timeout: 60_000 });
+  }
+
+  async expectObjectNotListed(type: string, name: string, namespace: string): Promise<void> {
+    await expect(this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
+  }
 }
 
-export async function expectGatewayApiEnabled(request: APIRequestContext): Promise<boolean> {
-  const response = await request.get('/api/config');
-  if (!response.ok()) {
-    return false;
-  }
-  const body = await response.json();
-  return Boolean(body.gatewayAPIEnabled);
-}
+export { isGatewayApiEnabled, isGatewayApiEnabled as expectGatewayApiEnabled } from '../utils/kialiConfig';

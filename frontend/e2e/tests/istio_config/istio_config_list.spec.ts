@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { selectNamespace } from '../../utils/namespace';
-import { expectGatewayApiEnabled } from '../../pages/IstioConfigPage';
+import { isGatewayApiEnabled } from '../../utils/kialiConfig';
 import {
   applyMinimalK8sInferencePool,
   deleteK8sInferencePool,
@@ -61,7 +61,7 @@ test.describe('Istio Config list', () => {
   });
 
   test('Ability to create a K8sGateway object', core1, async ({ page, istioConfigPage }) => {
-    const enabled = await expectGatewayApiEnabled(page.request);
+    const enabled = await isGatewayApiEnabled(page.request);
     test.skip(!enabled, 'gateway API not enabled on cluster');
     await istioConfigPage.expectCanCreateK8sIstioObject('gateway.networking.k8s.io', 'v1', 'Gateway');
   });
