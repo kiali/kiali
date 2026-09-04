@@ -1,4 +1,6 @@
-import { KIALI_GLASS_TABLE_SCROLLED, PF_THEME_FELT, PF_THEME_GLASS } from 'types/Common';
+import { PF_THEME_FELT, PF_THEME_GLASS } from 'types/Common';
+
+import { TABLE_SCROLLED } from 'components/Table/StickyTableScrollContainer';
 
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from './StyleUtils';
@@ -100,7 +102,7 @@ export const globalStyle = kialiStyle({
     /**
      * Under OpenShift glass, clear PF sticky-header elevation (thead::after). Header
      * cells stay transparent at rest; StickyTableScrollContainer adds
-     * KIALI_GLASS_TABLE_SCROLLED while scrolling to apply an opaque sticky fill.
+     * TABLE_SCROLLED while scrolling to apply an opaque sticky fill.
      */
     [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
       boxShadow: 'none'
@@ -108,22 +110,9 @@ export const globalStyle = kialiStyle({
     [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
       backgroundColor: 'transparent'
     },
-    [`html.${PF_THEME_GLASS} & .${KIALI_GLASS_TABLE_SCROLLED} .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]:
-      {
-        backgroundColor: PFColors.BackgroundColorSticky
-      },
-
-    /**
-     * Under glass, PF sets primary/control backgrounds to translucent fills (e.g. alpha 0.6).
-     * Scope the opaque sticky token to interactive controls so buttons stay solid.
-     */
-    [`html.${PF_THEME_GLASS} & .pf-v6-c-button, html.${PF_THEME_GLASS} & .pf-v6-c-menu-toggle, html.${PF_THEME_GLASS} & .pf-v6-c-toggle-group__button`]:
-      {
-        backdropFilter: 'none',
-        ...({
-          '--pf-t--global--background--color--control--default': PFColors.BackgroundColorSticky
-        } as Record<string, string>)
-      },
+    [`html.${PF_THEME_GLASS} & .${TABLE_SCROLLED} .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: PFColors.BackgroundColorSticky
+    },
 
     /**
      * Project Felt uses brand-accent (red). PF hides the nav accent bar on the current
