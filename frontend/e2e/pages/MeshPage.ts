@@ -1,10 +1,13 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { selectMeshNodeByLabel } from '../utils/meshTopology';
 
 type MeshGraphNode = {
   data?: {
+    healthData?: string;
     id?: string;
+    infraName?: string;
     infraType?: string;
   };
 };
@@ -62,5 +65,105 @@ export class MeshPage extends BasePage {
     });
 
     expect(connected.length, `Expected ${edgeCount} kiali↔istiod edge(s), got ${connected.length}`).toBe(edgeCount);
+  }
+
+  async selectMeshNodeByLabel(label: string): Promise<void> {
+    await this.waitForLoad();
+    await selectMeshNodeByLabel(this.page, label);
+    await this.waitForLoad();
+  }
+
+  async expectNodeSidePanel(name: string): Promise<void> {
+    await this.waitForLoad();
+    await expect(this.page.locator('#target-panel-node')).toBeVisible();
+    await expect(this.page.locator('#target-panel-node')).toContainText(name);
+  }
+
+  /** True when Kiali reaches Grafana via local port-forward (KinD CI), not an in-cluster route (Jenkins/OSSM). */
+  async usesLocalGrafanaPortForward(): Promise<boolean> {
+    const panel = this.page.locator('#target-panel-node');
+    await expect(panel).toBeVisible();
+    const text = await panel.textContent();
+    return Boolean(text?.includes('localhost:') || text?.includes('127.0.0.1'));
+  }
+
+  async waitForInfraHealth(infraName: string, predicate: (health: string) => boolean): Promise<void> {
+    await expect(async () => {
+      const response = await this.page.request.get('/api/mesh/graph');
+      expect(response.ok()).toBeTruthy();
+      const body = (await response.json()) as MeshGraphResponse;
+      const node = (body.elements?.nodes ?? []).find(n => n.data?.infraName?.toLowerCase() === infraName.toLowerCase());
+      const health = node?.data?.healthData;
+      expect(health, `Expected health data for ${infraName}`).toBeTruthy();
+      expect(predicate(health!)).toBe(true);
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
+  /**
+   * Poll /api/mesh/graph for health, then refresh the mesh page so cytoscape node data
+   * (and the side-panel health icon) match the API before selecting the node.
+   */
+  async syncInfraHealthToUi(infraName: string, predicate: (health: string) => boolean): Promise<void> {
+    await this.waitForInfraHealth(infraName, predicate);
+    await this.refreshPage();
+  }
+
+  async expectSidePanelIcon(type: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-node');
+    await expect(async () => {
+      await expect(panel.getByTestId(`icon-${type}-validation`)).toBeVisible();
+    }).toPass({ intervals: [3_000], timeout: 60_000 });
+  }
+
+  async expectNoSidePanelIcon(type: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-node').getByTestId(`icon-${type}-validation`)).toHaveCount(0);
+  }
+
+  async expectSidePanelContains(text: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-node')).toContainText(text);
+  }
+
+  async expectConfigTabs(tabs: string): Promise<void> {
+    for (const tab of tabs.split(',')) {
+      await expect(this.getBySel(`config-tab-${tab.trim()}`)).toBeVisible();
+    }
+  }
+
+  async expectConfigTabContains(tab: string, text: string): Promise<void> {
+    await this.getBySel(`config-tab-${tab}`).click();
+    await expect(this.getBySel(`${tab}-config-editor`)).toContainText(text);
+  }
+
+  async expectConfigTabNotContains(tab: string, text: string): Promise<void> {
+    await this.getBySel(`config-tab-${tab}`).click();
+    await expect(this.getBySel(`${tab}-config-editor`)).not.toContainText(text);
+  }
+
+  async refreshPage(): Promise<void> {
+    await this.getBySel('refresh-button').click();
+    await this.waitForLoad();
+  }
+
+  async expectControlPlaneSidePanel(): Promise<void> {
+    await expect(async () => {
+      const response = await this.page.request.get('/api/namespaces/istio-system/controlplanes/istiod/metrics');
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.process_resident_memory_bytes).toBeTruthy();
+      expect(body.process_cpu_seconds_total).toBeTruthy();
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+
+    await expect(async () => {
+      await this.refreshPage();
+      await this.selectMeshNodeByLabel('istiod');
+      const panel = this.page.locator('#target-panel-control-plane');
+      await expect(panel).toBeVisible();
+      await expect(panel).toContainText('istiod');
+      await expect(panel).toContainText('Outbound policy');
+      await expect(panel.getByTestId('memory-chart')).toBeVisible();
+      await expect(panel.getByTestId('cpu-chart')).toBeVisible();
+      await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
+      await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 }

@@ -67,6 +67,39 @@ function getNodeArchitecture(): string | undefined {
   }
 }
 
+function hasKialiCr(): boolean {
+  try {
+    execSync('kubectl get crd kialis.kiali.io', { stdio: 'ignore' });
+    const names = execSync('kubectl get kiali --all-namespaces -o name', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+    return names.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function waitForDemoNamespaces(namespaces: string): void {
+  if (hasKialiCr()) {
+    execSync(path.join(HACK_ISTIO, 'wait-for-namespace.sh') + ` -n ${namespaces}`, {
+      cwd: REPO_ROOT,
+      stdio: 'inherit',
+      timeout: 400000
+    });
+    return;
+  }
+
+  // Local Kiali (make run-backend): no Kiali CR / operator — wait for pods only.
+  for (const namespace of namespaces.split(/\s+/)) {
+    execSync(`kubectl wait pods -n ${namespace} --for condition=Ready --timeout=120s --all`, {
+      cwd: REPO_ROOT,
+      stdio: 'inherit',
+      timeout: 130000
+    });
+  }
+}
+
 function installDemoApp(demoapp: DemoApp): void {
   const config = DEMO_APP_CONFIG[demoapp];
   const arch = getNodeArchitecture();
@@ -90,11 +123,7 @@ function installDemoApp(demoapp: DemoApp): void {
     stdio: 'inherit',
     timeout: 300000
   });
-  execSync(path.join(HACK_ISTIO, 'wait-for-namespace.sh') + ` -n ${config.namespaces}`, {
-    cwd: REPO_ROOT,
-    stdio: 'inherit',
-    timeout: 400000
-  });
+  waitForDemoNamespaces(config.namespaces);
 }
 
 /**
