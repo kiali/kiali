@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Caption,
-  InnerScrollContainer,
   IRow,
   ISortBy,
   OnSort,
@@ -30,9 +29,11 @@ import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
+import { StickyTableScrollContainer } from 'components/Table/StickyTableScrollContainer';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
+import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 const emptyStyle = kialiStyle({
   borderBottom: 0
@@ -57,6 +58,10 @@ const innerScrollContainerStyle = kialiStyle({
   flex: 1,
   overflow: 'auto',
   paddingRight: '0.5rem'
+});
+
+const tableContrastStyle = kialiStyle({
+  $nest: contrastContentNest()
 });
 
 // ******************************
@@ -246,8 +251,16 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         />
       );
     });
+    // Row actions (Overview list) scroll with the OSSMC page shell, not InnerScrollContainer.
+    // Sticky headers need scroll-aware opaque fills; disable stickiness when actions are present.
+    const isStickyHeader = !this.props.actions;
     const table = (
-      <Table gridBreakPoint={TableGridBreakpoint.none} role="presentation" isStickyHeader>
+      <Table
+        className={tableContrastStyle}
+        gridBreakPoint={TableGridBreakpoint.none}
+        role="presentation"
+        isStickyHeader={isStickyHeader}
+      >
         {conf.caption && <Caption>{conf.caption}</Caption>}
         <Thead>
           <Tr>
@@ -300,10 +313,12 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     return (
       <div className={classes(this.state.scrollStyle, this.props.className)}>
         {childrenWithProps}
-        {this.props.actions ? (
-          table
+        {isStickyHeader ? (
+          <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows.length}>
+            {table}
+          </StickyTableScrollContainer>
         ) : (
-          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+          table
         )}
       </div>
     );

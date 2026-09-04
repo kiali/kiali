@@ -30,15 +30,16 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
 import { ChatBot } from 'components/ChatBot/ChatBot';
+import { ParentThemeSync } from 'components/Kiosk/ParentThemeSync';
 
 type ReduxStateProps = {
+  chatbotEnabled: boolean;
   externalServices: ExternalServiceInfo[];
   kiosk: string;
   navCollapsed: boolean;
   showNotificationCenter: boolean;
   theme: string;
   tracingUrl?: string;
-  chatbotEnabled: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -138,6 +139,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       isNotificationDrawerExpanded={props.showNotificationCenter}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
+      {kioskMode && <ParentThemeSync />}
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
         <RenderPage isGraph={isGraph()} />
       </PageSection>
@@ -147,13 +149,13 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
+  chatbotEnabled: state.chatAi.enabled,
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
   showNotificationCenter: state.notificationCenter.expanded,
   theme: state.globalState.theme,
-  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined,
-  chatbotEnabled: state.chatAi.enabled
+  tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({

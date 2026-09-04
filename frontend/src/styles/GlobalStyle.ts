@@ -1,3 +1,7 @@
+import { PF_THEME_GLASS } from 'types/Common';
+
+import { PFColors } from 'components/Pf/PfColors';
+import { TABLE_SCROLLED } from 'components/Table/StickyTableScrollContainer';
 import { kialiStyle } from './StyleUtils';
 
 export const globalStyle = kialiStyle({
@@ -55,12 +59,34 @@ export const globalStyle = kialiStyle({
         '&.pf-m-compact tr > *': {
           padding: '0.5rem'
         },
+        '&.pf-m-compact thead tr > *': {
+          paddingTop: 0
+        },
         '& tr > *': {
-          paddingBottom: '0.5rem',
-          paddingTop: '0.5rem'
+          paddingTop: '0.5rem',
+          paddingBottom: '0.5rem'
+        },
+        '& thead tr > *': {
+          paddingTop: 0
         }
       }
     },
+
+    /**
+     * Under OpenShift glass, clear PF sticky-header elevation (thead::after). Header
+     * cells stay transparent at rest; StickyTableScrollContainer adds
+     * TABLE_SCROLLED while scrolling to apply an opaque sticky fill.
+     */
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead::after`]: {
+      boxShadow: 'none'
+    },
+    [`html.${PF_THEME_GLASS} & .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: 'transparent'
+    },
+    [`html.${PF_THEME_GLASS} & .${TABLE_SCROLLED} .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
+      backgroundColor: PFColors.BackgroundColorSticky
+    },
+
     /**
      * ChatBot docked mode should fit within the page drawer height
      */
