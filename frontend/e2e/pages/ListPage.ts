@@ -1,7 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoListPage } from '../utils/navigation';
-import { selectNamespace } from '../utils/namespace';
 import { colExists, expectColumnHeaderVisible, expectColumnHeaderHidden } from '../utils/table';
 import { waitForLoadingComplete } from '../utils/transition';
 
@@ -28,8 +27,7 @@ export class ListPage extends BasePage {
   }
 
   async openListWithNamespace(namespace: string, query: Record<string, string> = {}): Promise<void> {
-    await this.openList(query);
-    await selectNamespace(this.page, namespace);
+    await this.openList({ namespaces: namespace, ...query });
   }
 
   async visitWithUrlParams(urlParams: string): Promise<void> {
