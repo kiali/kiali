@@ -1,7 +1,6 @@
 import * as React from 'react';
 import {
   Caption,
-  InnerScrollContainer,
   IRow,
   ISortBy,
   OnSort,
@@ -30,6 +29,7 @@ import * as Sorts from '../../pages/Overview/Sorts';
 import { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
+import { StickyTableScrollContainer } from 'components/Table/StickyTableScrollContainer';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 import { classes } from 'typestyle';
@@ -313,7 +313,9 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         {this.props.actions ? (
           table
         ) : (
-          <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+          <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows.length}>
+            {table}
+          </StickyTableScrollContainer>
         )}
       </div>
     );
