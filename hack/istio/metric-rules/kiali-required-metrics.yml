@@ -1,0 +1,58 @@
+# Core federation tier: metrics required by Kiali (not Perses dashboards).
+# https://kiali.io/docs/faq/general/#requiredmetrics
+#
+# Used for:
+#   - recording-rules.yml  (istio traffic counters/histograms → workload: prefix)
+#   - prometheus-prod.yaml (federation match[] selectors)
+#
+# Optional Perses dashboard metrics are documented separately in:
+#   - perses-dashboard-metrics.yml
+#   - federation-match-dashboards.yml  (enable via install.sh --with-dashboards)
+#
+# Control plane, container, process, envoy, and info metrics are federated
+# directly from the edge Prometheus (no workload: recording rule).
+
+istio_traffic_recording:
+# Aggregated via recording rules on edge Prometheus; federated as workload:*
+- istio_requests_total
+- istio_request_bytes_bucket
+- istio_request_bytes_count
+- istio_request_bytes_sum
+- istio_request_duration_milliseconds_bucket
+- istio_request_duration_milliseconds_count
+- istio_request_duration_milliseconds_sum
+- istio_request_messages_total
+- istio_response_bytes_bucket
+- istio_response_bytes_count
+- istio_response_bytes_sum
+- istio_response_messages_total
+- istio_tcp_connections_closed_total
+- istio_tcp_connections_opened_total
+- istio_tcp_received_bytes_total
+- istio_tcp_sent_bytes_total
+
+istio_direct_federate:
+# Federated as-is from edge Prometheus (not pod-aggregated)
+- istio_build
+
+control_plane_federate:
+- container_cpu_usage_seconds_total
+- container_memory_working_set_bytes
+- process_cpu_seconds_total
+- process_resident_memory_bytes
+- pilot_info
+- pilot_proxy_convergence_time_sum
+- pilot_proxy_convergence_time_count
+- pilot_services
+- pilot_xds
+- pilot_xds_pushes
+- workload_manager_active_proxy_count
+
+envoy_federate:
+- envoy_cluster_upstream_cx_active
+- envoy_cluster_upstream_rq_total
+- envoy_listener_downstream_cx_active
+- envoy_listener_http_downstream_rq
+- envoy_server_memory_allocated
+- envoy_server_memory_heap_size
+- envoy_server_uptime

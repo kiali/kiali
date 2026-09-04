@@ -1,0 +1,45 @@
+# Kiali self-monitoring metrics exported from server.observability.metrics (port 9090).
+# These are NOT Istio/Envoy telemetry and are NOT in kiali-required-metrics.yml.
+#
+# Aggregation for HA edge recording rules (kiali-recording-rules.yml):
+#   sum  — counters, histograms, kiali_ai_store_conversations_total
+#   max  — kiali_health_status, kiali_graph_nodes, kiali_kubernetes_clients
+#
+# See design/KEPS/metric-rules/proposal.md#kiali-self-monitoring-metrics
+
+metrics:
+  counters:
+  - kiali_ai_requests_total
+  - kiali_ai_store_evictions_total
+  - kiali_api_failures_total
+  - kiali_cache_hits_total
+  - kiali_cache_requests_total
+  - kiali_graph_cache_evictions_total
+  - kiali_graph_cache_hits_total
+  - kiali_graph_cache_misses_total
+  - kiali_health_cache_hits_total
+  - kiali_health_cache_misses_total
+
+  gauges:
+  - name: kiali_ai_store_conversations_total
+    aggregation: sum
+  - name: kiali_graph_nodes
+    aggregation: max
+  - name: kiali_kubernetes_clients
+    aggregation: max
+  - name: kiali_health_status
+    aggregation: max
+    note: opt-in via server.observability.metrics.health_status.enabled
+
+  histograms:
+  - kiali_ai_request_duration_seconds
+  - kiali_api_processing_duration_seconds
+  - kiali_checker_processing_duration_seconds
+  - kiali_graph_appender_duration_seconds
+  - kiali_graph_generation_duration_seconds
+  - kiali_graph_marshal_duration_seconds
+  - kiali_health_refresh_duration_seconds
+  - kiali_prometheus_processing_duration_seconds
+  - kiali_single_validation_processing_duration_seconds
+  - kiali_tracing_processing_duration_seconds
+  - kiali_validation_processing_duration_seconds

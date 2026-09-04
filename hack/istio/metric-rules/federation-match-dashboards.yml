@@ -1,0 +1,34 @@
+# Federation match[] selectors for the Perses dashboard tier (optional).
+#
+# Merged into prometheus-prod only when install.sh --with-dashboards is used,
+# or when operators manually add federation-match-dashboards.yml to their config.
+#
+# Metric-to-dashboard mapping: perses-dashboard-metrics.yml
+
+match:
+# istio-control-plane + istio-performance (Istiod runtime)
+- '{__name__=~"pilot_k8s_(reg|cfg)_events"}'
+- '{__name__=~"pilot_push_triggers"}'
+- '{__name__=~"pilot_total_xds_(rejects|internal_errors)"}'
+- '{__name__=~"pilot_xds_push_time_bucket"}'
+- '{__name__=~"pilot_xds_config_size_bytes_bucket"}'
+- '{__name__=~"go_goroutines"}'
+- '{__name__=~"go_memstats_(alloc_bytes|alloc_bytes_total|heap_alloc_bytes|heap_inuse_bytes|heap_sys_bytes|mallocs_total|stack_inuse_bytes)"}'
+
+# istio-performance (container/process detail)
+- '{__name__=~"container_fs_usage_bytes"}'
+- '{__name__=~"process_open_fds"}'
+- '{__name__=~"process_virtual_memory_bytes"}'
+
+# istio-ztunnel-dashboard (ambient)
+- '{__name__=~"istio_dns_requests_total"}'
+- '{__name__=~"istio_tcp_sockets_open"}'
+- '{__name__=~"istio_xds_connection_terminations_total"}'
+- '{__name__=~"istio_xds_message_total"}'
+- '{__name__=~"workload_manager_pending_proxy_count"}'
+
+# istio-extension-dashboard (WASM)
+- '{__name__=~"envoy_wasm_.*"}'
+
+# Legacy Istio histogram fallback (service/workload dashboards)
+- '{__name__=~"istio_request_duration_seconds_bucket"}'
