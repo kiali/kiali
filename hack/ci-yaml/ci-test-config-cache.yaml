@@ -1,5 +1,14 @@
+additional_display_details:
+- title: API Documentation
+  annotation: kiali.io/api-spec
+  icon_annotation: kiali.io/api-type
 kiali_internal:
   graph_cache:
     enabled: true
   health_cache:
     enabled: true
+server:
+  observability:
+    metrics:
+      health_status:
+        enabled: true

@@ -86,7 +86,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`): KinD cluster + local `kiali` binary with `hack/ci-yaml/ci-test-config-no-cache.yaml`. One parallel job per suite.
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`): KinD cluster + local `kiali` binary. Smoke/core-1/core-2 use `hack/ci-yaml/ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. One parallel job per suite.
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -110,6 +110,24 @@ Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout,
 
 Ports all Cypress `@core-1` scenarios (145 tests): graph display, toolbar, legend, find/hide, context menu, side panel, replay; istio config list; apps list, health, app details graph; column management.
 
+### Core-2 (`yarn playwright:run:core2`)
+
+Ports all Cypress `@core-2` scenarios (~240 tests): mesh, shared mesh, sidecar injection, istio config editor/actions, workload logs, wizards, and related list/detail flows (PR #10269).
+
+### Core-caching (`yarn playwright:run:core-caching`)
+
+Ports Cypress `@core-caching` scenarios: overview health/cache metrics, namespaces/services/workloads/apps list caching, mesh infra, manual refresh, details pages (app/service/workload/namespace), graph cache metrics, istio config wizards/editor, request routing wizard, workload logs. Includes smoke scenarios tagged `smokeAndCoreCaching`. Run with **cache enabled** locally:
+
+```bash
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-cache.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-tracing --enable-tracing \
+  --port-forward-prom --port-forward-grafana --no-browser
+```
+
+Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-caching`.
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -120,6 +138,7 @@ yarn playwright:install chromium   # once, after yarn install
 yarn playwright:run:smoke
 yarn playwright:run:core1
 yarn playwright:run:core2
+yarn playwright:run:core-caching
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -128,7 +147,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, and `playwright-core-2` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, and `playwright-core-caching` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 

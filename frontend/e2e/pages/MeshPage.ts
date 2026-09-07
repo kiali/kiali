@@ -1,7 +1,8 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
-import { selectMeshNodeByLabel } from '../utils/meshTopology';
+import { selectClusterMeshNode, selectMeshNodeByLabel, selectTracingMeshNode } from '../utils/meshTopology';
+import { waitForLoadingComplete } from '../utils/transition';
 
 type MeshGraphNode = {
   data?: {
@@ -165,5 +166,223 @@ export class MeshPage extends BasePage {
       await expect(panel.getByTestId('control-plane-certificate')).toBeVisible();
       await expect(panel.getByTestId('label-TLS')).toContainText('TLSV1_2');
     }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }
+
+  async openMeshTour(): Promise<void> {
+    await this.page.locator('button#mesh-tour').click();
+  }
+
+  async closeMeshTour(): Promise<void> {
+    await this.page.locator('div[role="dialog"]').getByRole('button', { name: 'Close' }).click();
+  }
+
+  async expectMeshTourVisible(visible: boolean): Promise<void> {
+    const popover = this.page.locator('.pf-v6-c-popover').filter({ hasText: 'Shortcuts' });
+    if (visible) {
+      await expect(popover).toBeVisible();
+    } else {
+      await expect(popover).toHaveCount(0);
+    }
+  }
+
+  async selectClusterNode(): Promise<void> {
+    await this.waitForLoad();
+    await selectClusterMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async selectTracingNode(): Promise<void> {
+    await this.waitForLoad();
+    await selectTracingMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async expectMeshSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-mesh')).toBeVisible();
+    const response = await this.page.request.get('/api/mesh/graph');
+    expect(response.ok()).toBeTruthy();
+    const body = await response.json();
+    const meshNames = body.meshNames as string[];
+    expect(meshNames?.length).toBeGreaterThan(0);
+    for (const meshName of meshNames) {
+      await expect(this.page.locator('#target-panel-mesh')).toContainText(`Mesh: ${meshName}`);
+    }
+  }
+
+  async expectExpectedMeshInfra(): Promise<void> {
+    const response = await this.page.request.get('/api/mesh/graph');
+    expect(response.ok()).toBeTruthy();
+    const body = await response.json();
+    const nodes = body.elements?.nodes ?? [];
+    const nodeNames = nodes.map((n: { data?: { infraName?: string; infraType?: string } }) =>
+      (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase()
+    );
+    expect(nodeNames.some((n: string) => n.includes('data plane') || n === 'dataplane')).toBeTruthy();
+    expect(nodeNames.some((n: string) => n.includes('grafana'))).toBeTruthy();
+    expect(nodeNames.some((n: string) => n.startsWith('istiod') || n.includes('istiod'))).toBeTruthy();
+    expect(nodeNames.some((n: string) => n.includes('jaeger') || n.includes('tempo'))).toBeTruthy();
+    expect(nodeNames.some((n: string) => n.includes('kiali'))).toBeTruthy();
+    expect(nodeNames.some((n: string) => n.includes('prometheus'))).toBeTruthy();
+  }
+
+  async expectDataPlaneSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-data-plane')).toBeVisible();
+    await expect(this.page.locator('#target-panel-data-plane')).toContainText('Data Plane');
+  }
+
+  async expandDataPlaneNamespace(): Promise<void> {
+    const panel = this.page.locator('#target-panel-data-plane');
+    await panel.locator('button[id^="ns-bookinfo"]').first().click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectConfigValidationInfo(): Promise<void> {
+    const panel = this.page.locator('#target-panel-data-plane');
+    await expect(panel.getByText('Istio config', { exact: true })).toBeVisible();
+    await expect(panel.getByText('Istio config').locator('..')).not.toContainText('N/A');
+  }
+
+  async expectClusterSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-cluster')).toBeVisible();
+  }
+
+  async expectNamespaceSidePanel(name: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-namespace')).toBeVisible();
+    await expect(this.page.locator('#target-panel-namespace')).toContainText(name);
+  }
+
+  async expectMeshBodyNotContains(text: string): Promise<void> {
+    await expect(this.page.locator('#target-panel-mesh-body')).not.toContainText(text);
+  }
+
+  async expectTracingSidePanel(): Promise<void> {
+    await expect(this.page.locator('#target-panel-node')).toContainText(/jaeger|Jaeger|tempo|Tempo/);
+  }
+
+  async toggleMeshDisplayMenu(open: boolean): Promise<void> {
+    const button = this.page.locator('button#display-settings');
+    if (open) {
+      await button.click();
+      await expect(this.page.locator('div#mesh-display-menu')).toBeVisible();
+    } else {
+      await button.click();
+      await expect(this.page.locator('div#mesh-display-menu')).toHaveCount(0);
+    }
+  }
+
+  async setMeshDisplayOption(option: string, enabled: boolean): Promise<void> {
+    const optionId = option.toLowerCase() === 'gateways' ? 'filterGateways' : option;
+    const input = this.page.locator(`div#mesh-display-menu input#${optionId}`);
+    if (enabled) {
+      await input.check();
+    } else {
+      await input.uncheck();
+    }
+  }
+
+  async openTraceConfigurationModal(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Configuration Tester' }).click();
+  }
+
+  async expectTraceConfigurationModal(): Promise<void> {
+    await expect(this.page.locator('.pf-v6-c-modal-box')).toBeVisible();
+    await expect(this.page.getByRole('heading', { name: 'Configuration Tester' })).toBeVisible();
+  }
+
+  async expectTraceConfigTabs(): Promise<void> {
+    await expect(this.page.getByRole('tab', { name: 'Discovery' })).toBeVisible();
+    await expect(this.page.getByRole('tab', { name: 'Tester' })).toBeVisible();
+  }
+
+  async expectTraceConfigFooterActions(): Promise<void> {
+    await expect(this.page.locator('.pf-v6-c-modal-box__footer')).toBeVisible();
+    await expect(this.page.locator('.pf-v6-c-modal-box__footer').getByRole('button', { name: 'Close' })).toBeVisible();
+  }
+
+  async expectDiscoveryInformation(): Promise<void> {
+    const discovery = this.page.locator('#discovery-tab-content');
+    await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
+    await expect(discovery).toContainText('Possible configuration(s) found');
+    await expect(discovery.locator('#valid-configurations')).toContainText('Provider:');
+    await expect(discovery).toContainText('Logs');
+    await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
+    await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
+  }
+
+  async clickRediscover(): Promise<void> {
+    await this.page.locator('.pf-v6-c-modal-box').getByRole('button', { name: 'Rediscover' }).click();
+  }
+
+  async switchToTesterTab(): Promise<void> {
+    await this.page.getByRole('tab', { name: 'Tester' }).click();
+  }
+
+  async toggleTracingProviderInTester(): Promise<void> {
+    await expect(this.getBySel('tracing-config-editor').locator('.monaco-editor')).toBeVisible();
+    await this.page.evaluate(() => {
+      const win = window as Window & {
+        tracingConfigEditor?: {
+          getModel: () => { getFullModelRange: () => unknown };
+          getValue: () => string;
+          executeEdits: (s: string, e: unknown[]) => void;
+        };
+      };
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
+      let replacer = 'tempo';
+      let provider = 'jaeger';
+      if (editorText.includes('tempo')) {
+        replacer = 'jaeger';
+        provider = 'tempo';
+      }
+      const newText = editorText.replace(`provider: ${provider}`, `provider: ${replacer}`);
+      const model = editor.getModel();
+      const fullRange = model.getFullModelRange();
+      editor.executeEdits('playwright', [{ range: fullRange, text: newText }]);
+    });
+  }
+
+  async toggleUseGrpcInTester(): Promise<void> {
+    await this.page.evaluate(() => {
+      const win = window as Window & {
+        tracingConfigEditor?: {
+          getModel: () => { getFullModelRange: () => unknown };
+          getValue: () => string;
+          executeEdits: (s: string, e: unknown[]) => void;
+        };
+      };
+      const editor = win.tracingConfigEditor;
+      if (!editor) {
+        throw new Error('Tracing config Monaco editor not found');
+      }
+      const editorText = editor.getValue();
+      let currentValue: string | null = null;
+      let targetValue = 'true';
+      if (/useGRPC\s*:\s*true/i.test(editorText)) {
+        currentValue = 'true';
+        targetValue = 'false';
+      } else if (/useGRPC\s*:\s*false/i.test(editorText)) {
+        currentValue = 'false';
+        targetValue = 'true';
+      }
+      if (currentValue !== null) {
+        const newText = editorText.replace(new RegExp(`(useGRPC\\s*:\\s*)${currentValue}`, 'gi'), `$1${targetValue}`);
+        const model = editor.getModel();
+        const fullRange = model.getFullModelRange();
+        editor.executeEdits('playwright', [{ range: fullRange, text: newText }]);
+      }
+    });
+  }
+
+  async clickTestConfiguration(): Promise<void> {
+    await this.getBySel('modal-configuration-tester').getByText('Test Configuration').click();
+  }
+
+  async expectTesterResult(result: 'correct' | 'incorrect'): Promise<void> {
+    const icon = result === 'incorrect' ? 'icon-error-validation' : 'icon-correct-validation';
+    await expect(this.getBySel('modal-configuration-tester').getByTestId(icon)).toBeVisible();
   }
 }

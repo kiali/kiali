@@ -37,4 +37,8 @@ export class SidebarPage extends BasePage {
   async expectSidebarHidden(): Promise<void> {
     await expect(this.sidebar).not.toBeVisible();
   }
+
+  async expectMeshMenuVisible(): Promise<void> {
+    await expect(this.sidebar.locator('#mesh')).toBeVisible();
+  }
 }
