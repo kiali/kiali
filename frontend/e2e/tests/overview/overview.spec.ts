@@ -20,18 +20,22 @@ import {
 } from '../../utils/overviewMocks';
 
 test.describe('Overview cards @core-caching', () => {
-  test('View all warning Istio configs includes namespaces and filters', coreCachingOnly, async ({ overviewPage }) => {
-    await mockIstioConfigsWarnings(page);
-    await overviewPage.open();
-    await overviewPage.openIstioConfigsWarningsPopover();
-    await overviewPage.clickPopoverAction('View warning Istio configs');
-    await overviewPage.expectIstioConfigListWithWarningFilters();
-  });
+  test(
+    'View all warning Istio configs includes namespaces and filters',
+    coreCachingOnly,
+    async ({ page, overviewPage }) => {
+      await mockIstioConfigsWarnings(page);
+      await overviewPage.open();
+      await overviewPage.openIstioConfigsWarningsPopover();
+      await overviewPage.clickPopoverAction('View warning Istio configs');
+      await overviewPage.expectIstioConfigListWithWarningFilters();
+    }
+  );
 
   test(
     'All overview cards show loading state without count or footer link',
     coreCachingOnly,
-    async ({ overviewPage }) => {
+    async ({ page, overviewPage }) => {
       await mockAllOverviewApisSlow(page);
       await overviewPage.openPending();
       await overviewPage.expectControlPlanesLoadingState();
@@ -42,7 +46,7 @@ test.describe('Overview cards @core-caching', () => {
   test(
     'All overview cards show error state with Try Again without count or footer link',
     coreCachingOnly,
-    async ({ overviewPage }) => {
+    async ({ page, overviewPage }) => {
       await mockAllOverviewApisFail(page);
       await overviewPage.open();
       await overviewPage.expectControlPlanesErrorState();
@@ -62,7 +66,7 @@ test.describe('Overview cards @core-caching', () => {
   test(
     'Control plane links in popover navigate to Mesh page with cluster filter',
     coreCachingOnly,
-    async ({ overviewPage }) => {
+    async ({ page, overviewPage }) => {
       await mockControlPlanesUnhealthy(page, 'Kubernetes');
       await overviewPage.open();
       await overviewPage.openControlPlanesIssuesPopover();
@@ -110,7 +114,7 @@ test.describe('Overview cards @core-caching', () => {
   test(
     'Service insights card shows loading state without tables or footer link',
     coreCachingOnly,
-    async ({ overviewPage }) => {
+    async ({ page, overviewPage }) => {
       await mockServiceInsightsSlow(page);
       await overviewPage.openPending();
       await overviewPage.expectServiceInsightsLoadingState();
@@ -120,7 +124,7 @@ test.describe('Overview cards @core-caching', () => {
   test(
     'Service insights card shows error state without tables or footer link',
     coreCachingOnly,
-    async ({ overviewPage }) => {
+    async ({ page, overviewPage }) => {
       await mockServiceInsightsFail(page);
       await overviewPage.open();
       await overviewPage.expectServiceInsightsErrorState();

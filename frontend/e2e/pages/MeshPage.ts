@@ -281,7 +281,12 @@ export class MeshPage extends BasePage {
   }
 
   async openTraceConfigurationModal(): Promise<void> {
+    const diagnosePromise = this.page
+      .waitForResponse(response => response.url().includes('/api/tracing/diagnose') && response.ok())
+      .catch(() => undefined);
     await this.page.getByRole('button', { name: 'Configuration Tester' }).click();
+    await expect(this.page.locator('.pf-v6-c-modal-box')).toBeVisible();
+    await diagnosePromise;
   }
 
   async expectTraceConfigurationModal(): Promise<void> {
@@ -299,18 +304,37 @@ export class MeshPage extends BasePage {
     await expect(this.page.locator('.pf-v6-c-modal-box__footer').getByRole('button', { name: 'Close' })).toBeVisible();
   }
 
-  async expectDiscoveryInformation(): Promise<void> {
-    const discovery = this.page.locator('#discovery-tab-content');
+  async clickRediscover(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      response => response.url().includes('/api/tracing/diagnose') && response.ok()
+    );
+    await this.page.locator('.pf-v6-c-modal-box').getByRole('button', { name: 'Rediscover' }).click();
+    await responsePromise;
     await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
-    await expect(discovery).toContainText('Possible configuration(s) found');
-    await expect(discovery.locator('#valid-configurations')).toContainText('Provider:');
-    await expect(discovery).toContainText('Logs');
-    await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
-    await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
   }
 
-  async clickRediscover(): Promise<void> {
-    await this.page.locator('.pf-v6-c-modal-box').getByRole('button', { name: 'Rediscover' }).click();
+  async expectDiscoveryInformation(): Promise<void> {
+    const discovery = this.page.locator('#discovery-tab-content');
+    const modal = this.page.locator('.pf-v6-c-modal-box');
+
+    await expect(async () => {
+      await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
+      const validConfigurations = discovery.locator('#valid-configurations');
+      const providerText = await validConfigurations.textContent();
+      if (!providerText?.includes('Provider:')) {
+        const responsePromise = this.page.waitForResponse(
+          response => response.url().includes('/api/tracing/diagnose') && response.ok()
+        );
+        await modal.getByRole('button', { name: 'Rediscover' }).click();
+        await responsePromise;
+        await expect(this.page.locator('#discover-spinner')).toHaveCount(0);
+      }
+      await expect(discovery).toContainText('Possible configuration(s) found');
+      await expect(validConfigurations).toContainText('Provider:');
+      await expect(discovery).toContainText('Logs');
+      await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
+      await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
+    }).toPass({ intervals: [2_000], timeout: 120_000 });
   }
 
   async switchToTesterTab(): Promise<void> {
