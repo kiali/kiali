@@ -25,17 +25,18 @@ export class AppDetailsPage extends BasePage {
   async expectTrafficInformation(): Promise<void> {
     await openDetailsTab(this.page, 'Traffic');
     await expect(async () => {
-      await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
-      if ((await this.page.getByText('No Inbound Traffic').count()) > 0) {
+      await expect(this.page.getByRole('heading', { name: 'Inbound Traffic', exact: true })).toBeVisible();
+      await expect(this.page.getByRole('heading', { name: 'No Inbound Traffic', exact: true })).toHaveCount(0);
+      const inboundGrid = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
+      await expect(inboundGrid).toBeVisible();
+      if ((await inboundGrid.getByRole('row').count()) <= 1) {
         await this.getBySel('refresh-button').click();
         await waitForLoadingComplete(this.page);
         await openDetailsTab(this.page, 'Traffic');
         throw new Error('Inbound traffic not populated yet');
       }
-      await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
-      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-      await expect(this.page.getByText('No Outbound Traffic')).toHaveCount(0);
     }).toPass({ intervals: [10_000], timeout: 120_000 });
+    await expect(this.page.getByRole('heading', { name: 'No Outbound Traffic', exact: true })).toBeVisible();
     await expectClusterColumnHidden(this.page);
   }
 
