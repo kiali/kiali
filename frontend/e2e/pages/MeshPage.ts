@@ -334,7 +334,7 @@ export class MeshPage extends BasePage {
       await expect(discovery).toContainText('Logs');
       await expect(discovery.locator('#configuration-logs')).toContainText('Parsed url');
       await expect(discovery.locator('#configuration-logs')).toContainText('Checking open ports');
-    }).toPass({ intervals: [2_000], timeout: 120_000 });
+    }).toPass({ intervals: [5_000], timeout: 90_000 });
   }
 
   async switchToTesterTab(): Promise<void> {

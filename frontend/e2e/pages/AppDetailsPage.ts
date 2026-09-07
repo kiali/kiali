@@ -3,6 +3,7 @@ import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage';
 import { expectMiniGraphReady } from '../utils/graphTopology';
+import { waitForLoadingComplete } from '../utils/transition';
 
 export class AppDetailsPage extends BasePage {
   async openApp(namespace: string, name: string): Promise<void> {
@@ -23,9 +24,18 @@ export class AppDetailsPage extends BasePage {
 
   async expectTrafficInformation(): Promise<void> {
     await openDetailsTab(this.page, 'Traffic');
-    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
-    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
-    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
+    await expect(async () => {
+      await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
+      if ((await this.page.getByText('No Inbound Traffic').count()) > 0) {
+        await this.getBySel('refresh-button').click();
+        await waitForLoadingComplete(this.page);
+        await openDetailsTab(this.page, 'Traffic');
+        throw new Error('Inbound traffic not populated yet');
+      }
+      await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
+      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
+      await expect(this.page.getByText('No Outbound Traffic')).toHaveCount(0);
+    }).toPass({ intervals: [10_000], timeout: 120_000 });
     await expectClusterColumnHidden(this.page);
   }
 

@@ -24,6 +24,7 @@ test.describe('Service details core-caching', () => {
   });
 
   test('See service Traffic information', coreCachingOnly, async ({ serviceDetailsPage }) => {
+    test.setTimeout(180_000);
     skipUnlessBookinfoTrafficUsesIngress();
     await serviceDetailsPage.expectTrafficInformation();
   });

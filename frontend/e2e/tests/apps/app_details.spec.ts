@@ -14,6 +14,7 @@ test.describe('App details core-caching', () => {
   });
 
   test('See app Traffic information', coreCachingOnly, async ({ appDetailsPage }) => {
+    test.setTimeout(180_000);
     await appDetailsPage.expectTrafficInformation();
   });
 
