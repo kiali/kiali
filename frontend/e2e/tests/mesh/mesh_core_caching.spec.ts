@@ -88,7 +88,6 @@ test.describe('Mesh page core-caching', () => {
   });
 
   test('User opens and interacts with the Trace Configuration modal', coreCachingOnly, async ({ meshPage }) => {
-    test.setTimeout(180_000);
     await meshPage.selectTracingNode();
     await meshPage.openTraceConfigurationModal();
     await meshPage.expectTraceConfigurationModal();
