@@ -16,6 +16,20 @@ describe('ControlPlaneBadge', () => {
     );
 
     expect(screen.getByText('CP')).toBeInTheDocument();
+    expect(screen.queryByTestId('control-plane-count-pill')).not.toBeInTheDocument();
     expect(container).toMatchSnapshot();
+  });
+
+  it('renders count pill when multiple revisions exist', () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <ControlPlaneBadge revisions={['default', '1-28-10']} />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(screen.getByText('CP')).toBeInTheDocument();
+    expect(screen.getByTestId('control-plane-count-pill')).toHaveTextContent('2');
   });
 });

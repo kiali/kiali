@@ -38,7 +38,7 @@ export const sliderMirroredStyle = kialiStyle({
     '& .slider': {
       $nest: {
         '& .slider-handle, & .slider-track .slider-selection': {
-          backgroundColor: PFColors.Purple200
+          backgroundColor: PFColors.Purple20
         }
       }
     }

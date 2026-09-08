@@ -333,7 +333,9 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                 </DescriptionListGroup>
                 {(revisions.length > 0 || !nsInfo.isControlPlane) && (
                   <DescriptionListGroup data-test="details-revision">
-                    <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
+                    <DescriptionListTerm>
+                      {revisions.length > 1 ? t('Revisions ({{count}})', { count: revisions.length }) : t('Revision')}
+                    </DescriptionListTerm>
                     <DescriptionListDescription>
                       <NamespaceRevisionLabels ns={nsInfo} />
                     </DescriptionListDescription>

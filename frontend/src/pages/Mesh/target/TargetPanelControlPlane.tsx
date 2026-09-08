@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Node, NodeModel } from '@patternfly/react-topology';
+import type { Node, NodeModel } from '@patternfly/react-topology';
+import type { TargetPanelCommonProps } from './TargetPanelCommon';
 import {
-  TargetPanelCommonProps,
   nodeStyle,
   renderNodeHeader,
   shouldRefreshData,
@@ -13,17 +13,19 @@ import {
 } from './TargetPanelCommon';
 import { Popover, Tab, TabAction, Title, TitleSizes } from '@patternfly/react-core';
 import { serverConfig } from 'config';
-import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
-import { DirectionType } from 'types/Common';
+import type { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
+import type { DirectionType } from 'types/Common';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { TLSInfo } from 'components/Overview/TLSInfo';
 import * as API from '../../../services/Api';
 import { IstioMetricsOptions } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
-import { ApiError } from 'types/Api';
-import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
-import { TLSStatus, nsWideMTLSStatus } from 'types/TLSStatus';
-import { ControlPlaneMetricsMap } from 'types/Metrics';
+import type { ApiError } from 'types/Api';
+import type { Health } from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
+import type { TLSStatus } from 'types/TLSStatus';
+import { nsWideMTLSStatus } from 'types/TLSStatus';
+import type { ControlPlaneMetricsMap } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { MeshMTLSStatus } from 'components/MTls/MeshMTLSStatus';
@@ -33,10 +35,10 @@ import { TargetPanelEditor } from './TargetPanelEditor';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
-import { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
+import type { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
-import { OutboundTrafficPolicy } from 'types/IstioObjects';
+import type { OutboundTrafficPolicy } from 'types/IstioObjects';
 import { isIstioNamespace } from 'config/ServerConfig';
 import { addDanger } from '../../../utils/AlertUtils';
 
@@ -157,7 +159,7 @@ export class TargetPanelControlPlane extends React.Component<
     }
 
     const nsInfo = this.state.nsInfo;
-    const data = this.state.controlPlaneNode?.getData()!;
+    const data = this.state.controlPlaneNode!.getData()!;
 
     const controlPlane: ControlPlane = data.infraData;
 
@@ -203,7 +205,8 @@ export class TargetPanelControlPlane extends React.Component<
           <TargetPanelControlPlaneStatus
             controlPlaneMetrics={this.state.controlPlaneMetrics}
             outboundTrafficPolicy={
-              controlPlane.config.effectiveConfig?.configMap.mesh.outboundTrafficPolicy || defaultOutboundTrafficPolicy
+              controlPlane.config.effectiveConfig?.configMap?.mesh?.outboundTrafficPolicy ||
+              defaultOutboundTrafficPolicy
             }
           />
 

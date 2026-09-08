@@ -90,7 +90,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
-  const ColorSpan = PFColors.Purple500;
+  const ColorSpan = PFColors.Purple40;
   const OverlayOpacity = 0.35;
   const OverlayWidth = 40;
 
