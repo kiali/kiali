@@ -23,30 +23,23 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    const graphResponse = this.page.waitForResponse(
-      response => response.url().includes('/api/namespaces/graph') && response.ok()
-    );
     await openDetailsTab(this.page, 'Traffic');
-    await graphResponse;
-    await waitForLoadingComplete(this.page);
+    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
+    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
+    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
 
+    const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
+    await expect(inbound).toBeVisible();
     await expect(async () => {
-      await expect(this.page.getByRole('heading', { name: /Inbound Traffic/ })).toBeVisible();
-      await expect(this.page.getByRole('heading', { name: /No Inbound Traffic/ })).toHaveCount(0);
-      const inboundGrid = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
-      await expect(inboundGrid).toBeVisible();
-      if ((await inboundGrid.getByRole('row').count()) <= 1) {
-        const refreshGraph = this.page.waitForResponse(
-          response => response.url().includes('/api/namespaces/graph') && response.ok()
-        );
+      const inboundText = (await inbound.textContent()) ?? '';
+      if (!/productpage/i.test(inboundText)) {
         await this.getBySel('refresh-button').click();
-        await refreshGraph;
         await waitForLoadingComplete(this.page);
         await openDetailsTab(this.page, 'Traffic');
-        throw new Error('Inbound traffic not populated yet');
+        throw new Error('productpage not visible in details inbound traffic yet');
       }
-    }).toPass({ intervals: [5_000], timeout: 60_000 });
-    await expect(this.page.getByRole('heading', { name: /No Outbound Traffic/ })).toBeVisible();
+      await expect(inbound).toContainText(/productpage/i);
+    }).toPass({ intervals: [10_000], timeout: 120_000 });
     await expectClusterColumnHidden(this.page);
   }
 

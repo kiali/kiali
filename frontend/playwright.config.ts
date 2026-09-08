@@ -33,6 +33,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
+  failOnFlakyTests: isCI,
   // Jenkins shared runners have limited CPU/memory; cap at 2 to avoid OOM and
   // flaky timeouts under contention. Local runs use Playwright's cpu/2 default.
   workers: isCI ? 2 : undefined,
