@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Remove production Prometheus and restore edge Prometheus recording rules to empty.
+# Remove demo Federated Prometheus and restore Edge Prometheus recording rules to empty.
 
 set -euo pipefail
 
@@ -15,8 +15,8 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Removing prometheus-prod..."
-${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-prod.yaml" --ignore-not-found
+echo "Removing prometheus-federated..."
+${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-federated.yaml" --ignore-not-found
 
 echo "Removing prometheus-kiali-edge..."
 ${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-kiali-edge.yaml" --ignore-not-found
@@ -29,5 +29,5 @@ ${CLIENT_EXE} patch deployment prometheus -n "${ISTIO_NAMESPACE}" --type='json' 
   -p='[{"op": "replace", "path": "/spec/template/spec/containers/1/args/0", "value": "--storage.tsdb.retention.time=15d"}]' \
   2>/dev/null || true
 
-echo "Done. Switch Kiali back to edge Prometheus if needed:"
+echo "Done. Switch Kiali back to Edge Prometheus if needed:"
 echo "  $(dirname "$0")/switch-kiali-prometheus.sh prometheus"

@@ -1,15 +1,15 @@
-# Demo lab: production Prometheus federator deployment.
+# Demo lab: Federated Prometheus deployment (long-retention TSDB Kiali queries).
 # Federation match[] selectors are merged at render time from core-federation-match.yml
 # (always) and optional *-federation-match.yml tiers.
 #
-# Render with: demo/render-prometheus-prod.py (or demo/install.sh)
+# Render with: demo/render-prometheus-federated.py (or demo/install.sh)
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: prometheus-prod
+  name: prometheus-federated
   namespace: istio-system
   labels:
-    app: prometheus-prod
+    app: prometheus-federated
 data:
   prometheus.yml: |
     global:
@@ -36,21 +36,21 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus-prod
+  name: prometheus-federated
   namespace: istio-system
   labels:
-    app: prometheus-prod
+    app: prometheus-federated
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: prometheus-prod
+      app: prometheus-federated
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: prometheus-prod
+        app: prometheus-federated
         sidecar.istio.io/inject: "false"
     spec:
       containers:
@@ -83,20 +83,20 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: prometheus-prod
+          name: prometheus-federated
       - name: data
         emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus-prod
+  name: prometheus-federated
   namespace: istio-system
   labels:
-    app: prometheus-prod
+    app: prometheus-federated
 spec:
   selector:
-    app: prometheus-prod
+    app: prometheus-federated
   ports:
   - name: http
     port: 9090

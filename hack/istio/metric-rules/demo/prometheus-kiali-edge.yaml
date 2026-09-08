@@ -1,6 +1,6 @@
 # Dedicated Kiali edge Prometheus (Option 2 in KEP / kiali.io docs).
 # Scrapes Kiali only, evaluates kiali-metrics-recording-rules.yml, short retention.
-# Production Prometheus federates kiali:* series via kiali-metrics-federation-match.yml.
+# Federated Prometheus federates kiali:* series via kiali-metrics-federation-match.yml.
 #
 # Render with recording rules embedded:
 #   python3 demo/render-prometheus-kiali-edge.py | kubectl apply -f -

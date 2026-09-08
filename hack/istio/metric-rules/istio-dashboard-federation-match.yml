@@ -1,6 +1,6 @@
 # Istio dashboard tier federation match[] selectors (optional).
 #
-# Merged into prometheus-prod only when demo/install.sh --with-dashboards is used,
+# Merged into prometheus-federated only when demo/install.sh --with-dashboards is used,
 # or when operators manually add istio-dashboard-federation-match.yml to their config.
 #
 # Metric-to-dashboard mapping: istio-dashboard-metrics.yml

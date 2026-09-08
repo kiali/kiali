@@ -1,20 +1,21 @@
 #!/bin/bash
 
-# Switch Kiali prometheus.url between edge and production Prometheus instances.
+# Switch Kiali prometheus.url between Edge and Federated Prometheus instances.
 
 set -euo pipefail
 
 CLIENT_EXE="${CLIENT_EXE:-kubectl}"
 ISTIO_NAMESPACE="${ISTIO_NAMESPACE:-istio-system}"
-TARGET="prometheus-prod"
+TARGET="prometheus-federated"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -c) CLIENT_EXE="$2"; shift 2 ;;
     -n) ISTIO_NAMESPACE="$2"; shift 2 ;;
-    prometheus|prometheus-prod|edge|prod) TARGET="$1"; shift ;;
+    prometheus|edge) TARGET="prometheus"; shift ;;
+    prometheus-federated|federated) TARGET="prometheus-federated"; shift ;;
     -h|--help)
-      echo "Usage: $0 [-c kubectl] [-n istio-system] [prometheus|prometheus-prod]"
+      echo "Usage: $0 [-c kubectl] [-n istio-system] [prometheus|prometheus-federated]"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -22,8 +23,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${TARGET}" in
-  prometheus|edge) SERVICE="prometheus" ;;
-  prometheus-prod|prod) SERVICE="prometheus-prod" ;;
+  prometheus) SERVICE="prometheus" ;;
+  prometheus-federated) SERVICE="prometheus-federated" ;;
   *) echo "Unknown target: ${TARGET}"; exit 1 ;;
 esac
 

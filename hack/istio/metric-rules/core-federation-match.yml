@@ -1,9 +1,9 @@
 # Core tier federation match[] selectors.
 #
-# Merged into prometheus-prod by default (demo/render-prometheus-prod.py / demo/install.sh).
+# Merged into prometheus-federated by default (demo/render-prometheus-federated.py / demo/install.sh).
 # Metric list and grouping: core-metrics.yml
 #
-# - Istio traffic: workload:* recording rules on the edge, relabeled to istio_* in production
+# - Istio traffic: workload:* recording rules on the edge, relabeled to istio_* on Federated Prometheus
 # - All other core metrics: federated directly by name from the edge Prometheus
 
 match:

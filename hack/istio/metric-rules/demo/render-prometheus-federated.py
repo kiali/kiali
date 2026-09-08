@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render prometheus-prod.yaml with core and optional federation tiers."""
+"""Render prometheus-federated.yaml with core and optional federation tiers."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def render(
     demo_dir: Path,
     rules_dir: Path,
 ) -> str:
-    manifest = load_manifest(demo_dir / "prometheus-prod.yaml")
+    manifest = load_manifest(demo_dir / "prometheus-federated.yaml")
     kiali_match = load_match_file(rules_dir, KIALI_MATCH_FILE)
 
     for item in manifest:
@@ -120,7 +120,7 @@ def main() -> None:
         "--demo-dir",
         type=Path,
         default=DEMO_DIR,
-        help="Directory containing prometheus-prod.yaml (default: demo/)",
+        help="Directory containing prometheus-federated.yaml (default: demo/)",
     )
     parser.add_argument(
         "--rules-dir",

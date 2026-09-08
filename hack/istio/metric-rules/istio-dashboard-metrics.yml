@@ -9,7 +9,7 @@
 #
 # Enable federation for these metrics with:
 #   ./demo/install.sh --with-dashboards
-# or merge istio-dashboard-federation-match.yml into your production Prometheus config.
+# or merge istio-dashboard-federation-match.yml into your Federated Prometheus config.
 
 reference_dashboards:
   istio-mesh-dashboard:
