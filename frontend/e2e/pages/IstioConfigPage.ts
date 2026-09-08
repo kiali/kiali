@@ -29,6 +29,13 @@ const VALIDATION_FILTERS = ['Valid', 'Not Valid', 'Not Validated', 'Warning'] as
 
 const GATEWAY_GVK = 'networking.istio.io/v1, Kind=Gateway';
 
+const VALIDATION_ICON: Record<string, string> = {
+  danger: 'icon-error-validation',
+  error: 'icon-error-validation',
+  success: 'icon-correct-validation',
+  warning: 'icon-warning-validation'
+};
+
 export class IstioConfigPage extends BasePage {
   private filterOption(name: string) {
     // Exact match avoids Gateway⊂K8sGateway and Valid⊂Not Valid / Not Validated.
@@ -314,6 +321,38 @@ export class IstioConfigPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
+  async ensureConfigurationValidationEnabled(): Promise<void> {
+    const toggle = this.getBySel('toggle-configuration');
+    if (!(await toggle.isChecked())) {
+      await toggle.check();
+      await waitForLoadingComplete(this.page);
+    }
+  }
+
+  async expectValidationStatus(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    healthStatus: string
+  ): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+
+    const row = this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`);
+    const expectedIcon = VALIDATION_ICON[healthStatus];
+
+    await expect(async () => {
+      await this.page.request.get(`/api/istio/config?validate=true&_=${Date.now()}`);
+      await this.refreshList();
+      await expect(row).toBeVisible({ timeout: 5_000 });
+      await expect(row.locator(`[data-test="${expectedIcon}"]`)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
+  }
+
+  async openConfigByName(name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await getColWithRowText(this.page, name, 'Name').locator(linkSelector()).first().click();
+  }
+
   async expectObjectConfigurationStatus(
     namespace: string,
     typeName: string,
@@ -326,11 +365,6 @@ export class IstioConfigPage extends BasePage {
       await this.refreshList();
       await expect(row).toContainText(statusText);
     }).toPass({ intervals: [10_000], timeout: 60_000 });
-  }
-
-  async openConfigByName(name: string): Promise<void> {
-    await waitForLoadingComplete(this.page);
-    await getColWithRowText(this.page, name, 'Name').locator(linkSelector()).first().click();
   }
 
   async expectEditorVisible(): Promise<void> {
@@ -410,6 +444,19 @@ export class IstioConfigPage extends BasePage {
 
   async expectObjectNotListed(type: string, name: string, namespace: string): Promise<void> {
     await expect(this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
+  }
+
+  async openConfigByRow(namespace: string, typeName: string, name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${name}`).locator(linkSelector()).first().click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectGroupedValidationMessage(code: string, count: number): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    // Heading sits in a StackItem; validation rows are sibling StackItems in the same Stack.
+    const analysisSection = this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
+    await expect(analysisSection.getByText(new RegExp(`${code}.*\\(${count}\\)`))).toBeVisible();
   }
 }
 
