@@ -63,6 +63,11 @@ export default defineConfig({
       testDir: './e2e/global-setup'
     },
     {
+      name: 'caching-setup',
+      testMatch: /caching\.setup\.ts/,
+      testDir: './e2e/global-setup'
+    },
+    {
       name: 'smoke',
       grep: /@smoke/,
       dependencies: ['setup'],
@@ -86,7 +91,7 @@ export default defineConfig({
     {
       name: 'core-caching',
       grep: /@core-caching/,
-      dependencies: ['setup'],
+      dependencies: ['setup', 'caching-setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {
