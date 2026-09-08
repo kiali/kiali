@@ -23,20 +23,30 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
+    const graphResponse = this.page.waitForResponse(
+      response => response.url().includes('/api/namespaces/graph') && response.ok()
+    );
     await openDetailsTab(this.page, 'Traffic');
+    await graphResponse;
+    await waitForLoadingComplete(this.page);
+
     await expect(async () => {
-      await expect(this.page.getByRole('heading', { name: 'Inbound Traffic', exact: true })).toBeVisible();
-      await expect(this.page.getByRole('heading', { name: 'No Inbound Traffic', exact: true })).toHaveCount(0);
+      await expect(this.page.getByRole('heading', { name: /Inbound Traffic/ })).toBeVisible();
+      await expect(this.page.getByRole('heading', { name: /No Inbound Traffic/ })).toHaveCount(0);
       const inboundGrid = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
       await expect(inboundGrid).toBeVisible();
       if ((await inboundGrid.getByRole('row').count()) <= 1) {
+        const refreshGraph = this.page.waitForResponse(
+          response => response.url().includes('/api/namespaces/graph') && response.ok()
+        );
         await this.getBySel('refresh-button').click();
+        await refreshGraph;
         await waitForLoadingComplete(this.page);
         await openDetailsTab(this.page, 'Traffic');
         throw new Error('Inbound traffic not populated yet');
       }
-    }).toPass({ intervals: [10_000], timeout: 120_000 });
-    await expect(this.page.getByRole('heading', { name: 'No Outbound Traffic', exact: true })).toBeVisible();
+    }).toPass({ intervals: [5_000], timeout: 60_000 });
+    await expect(this.page.getByRole('heading', { name: /No Outbound Traffic/ })).toBeVisible();
     await expectClusterColumnHidden(this.page);
   }
 
