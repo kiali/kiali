@@ -1,13 +1,9 @@
-# Core federation tier: metrics required by Kiali (not Perses dashboards).
+# Core federation tier: metrics required by Kiali.
 # https://kiali.io/docs/faq/general/#requiredmetrics
 #
 # Used for:
-#   - recording-rules.yml  (istio traffic counters/histograms → workload: prefix)
-#   - prometheus-prod.yaml (federation match[] selectors)
-#
-# Optional Perses dashboard metrics are documented separately in:
-#   - perses-dashboard-metrics.yml
-#   - federation-match-dashboards.yml  (enable via install.sh --with-dashboards)
+#   - core-recording-rules.yml  (istio traffic counters/histograms → workload: prefix)
+#   - core-federation-match.yml (federation match[] selectors)
 #
 # Control plane, container, process, envoy, and info metrics are federated
 # directly from the edge Prometheus (no workload: recording rule).

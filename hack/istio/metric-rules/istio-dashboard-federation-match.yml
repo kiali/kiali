@@ -1,9 +1,9 @@
-# Federation match[] selectors for the Perses dashboard tier (optional).
+# Istio dashboard tier federation match[] selectors (optional).
 #
-# Merged into prometheus-prod only when install.sh --with-dashboards is used,
-# or when operators manually add federation-match-dashboards.yml to their config.
+# Merged into prometheus-prod only when demo/install.sh --with-dashboards is used,
+# or when operators manually add istio-dashboard-federation-match.yml to their config.
 #
-# Metric-to-dashboard mapping: perses-dashboard-metrics.yml
+# Metric-to-dashboard mapping: istio-dashboard-metrics.yml
 
 match:
 # istio-control-plane + istio-performance (Istiod runtime)
@@ -30,5 +30,3 @@ match:
 # istio-extension-dashboard (WASM)
 - '{__name__=~"envoy_wasm_.*"}'
 
-# Legacy Istio histogram fallback (service/workload dashboards)
-- '{__name__=~"istio_request_duration_seconds_bucket"}'

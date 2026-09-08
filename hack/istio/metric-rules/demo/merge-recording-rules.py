@@ -9,11 +9,16 @@ from pathlib import Path
 
 import yaml
 
+DEMO_DIR = Path(__file__).resolve().parent
+RULES_DIR = DEMO_DIR.parent
 
-def merge_rules(script_dir: Path, with_kiali: bool) -> dict:
-    rules = yaml.safe_load((script_dir / "recording-rules.yml").open())
+
+def merge_rules(rules_dir: Path, with_kiali: bool) -> dict:
+    rules = yaml.safe_load((rules_dir / "core-recording-rules.yml").open())
     if with_kiali:
-        kiali_rules = yaml.safe_load((script_dir / "kiali-recording-rules.yml").open())
+        kiali_rules = yaml.safe_load(
+            (rules_dir / "kiali-metrics-recording-rules.yml").open()
+        )
         rules["groups"].extend(kiali_rules["groups"])
     return rules
 
@@ -23,17 +28,17 @@ def main() -> None:
     parser.add_argument(
         "--with-kiali",
         action="store_true",
-        help="Include kiali-recording-rules.yml groups",
+        help="Include kiali-metrics-recording-rules.yml groups",
     )
     parser.add_argument(
-        "--script-dir",
+        "--rules-dir",
         type=Path,
-        default=Path(__file__).resolve().parent,
-        help="Directory containing recording-rules.yml (default: script location)",
+        default=RULES_DIR,
+        help="Directory containing core-recording-rules.yml (default: parent of demo/)",
     )
     args = parser.parse_args()
     yaml.dump(
-        merge_rules(args.script_dir, args.with_kiali),
+        merge_rules(args.rules_dir, args.with_kiali),
         sys.stdout,
         default_flow_style=False,
         sort_keys=False,

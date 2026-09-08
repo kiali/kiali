@@ -1,5 +1,5 @@
 # Recording rules for Istio traffic metrics required by Kiali.
-# See kiali-required-metrics.yml and https://kiali.io/docs/faq/general/#requiredmetrics
+# See core-metrics.yml and https://kiali.io/docs/faq/general/#requiredmetrics
 #
 # Produces workload:<metric> series on the edge Prometheus for federation.
 # Rule group interval should be >= edge scrape_interval, up to 2x scrape_interval.

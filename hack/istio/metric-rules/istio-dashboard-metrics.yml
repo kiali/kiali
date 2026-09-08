@@ -1,15 +1,15 @@
-# Optional Prometheus metrics for Kiali Perses Istio dashboards.
+# Optional Prometheus metrics for Istio Dashboards (Perses/Grafana).
 #
 # NOT required for Kiali core features (traffic graph, health, list pages).
-# See kiali-required-metrics.yml for the core federation tier.
+# See core-metrics.yml for the core federation tier.
 #
 # Dashboard definitions:
 #   https://github.com/perses/community-mixins/tree/main/examples/dashboards/perses/istio
 # Kiali sync: hack/istio/perses/sync-dashboards.sh
 #
 # Enable federation for these metrics with:
-#   ./install.sh --with-dashboards
-# or merge federation-match-dashboards.yml into your production Prometheus config.
+#   ./demo/install.sh --with-dashboards
+# or merge istio-dashboard-federation-match.yml into your production Prometheus config.
 
 reference_dashboards:
   istio-mesh-dashboard:

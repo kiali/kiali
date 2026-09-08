@@ -1,5 +1,5 @@
 # Recording rules for Kiali self-monitoring metrics (kiali_*).
-# See kiali-export-metrics.yml and design/KEPS/metric-rules/proposal.md
+# See kiali-metrics.yml and design/KEPS/metric-rules/proposal.md
 #
 # Produces kiali:<metric> series on the edge Prometheus for federation.
 # Rule group interval should be >= edge scrape_interval, up to 2x scrape_interval.

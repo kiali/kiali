@@ -1,0 +1,5 @@
+# Kiali self-monitoring tier federation match[] selectors.
+# Federate from the edge Prometheus that evaluates kiali-metrics-recording-rules.yml.
+# Production relabel strips the kiali: prefix (see demo/prometheus-prod.yaml / demo/render-prometheus-prod.py).
+match:
+- '{__name__=~"kiali:kiali_.*"}'

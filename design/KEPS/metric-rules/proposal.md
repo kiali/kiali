@@ -303,8 +303,8 @@ footprint small:
 
 | Tier | Audience | Source in `hack/istio/metric-rules/` |
 | ---- | -------- | ------------------------------------ |
-| **Core (Kiali)** | Traffic graph, health, lists, mesh overview | `kiali-required-metrics.yml`, `prometheus-prod.yaml` |
-| **Dashboards (Perses)** | Kiali Perses Istio dashboards | `perses-dashboard-metrics.yml`, `federation-match-dashboards.yml` |
+| **Core (Kiali)** | Traffic graph, health, lists, mesh overview | `core-metrics.yml`, `core-federation-match.yml` |
+| **Dashboards (Perses)** | Kiali Perses Istio dashboards | `istio-dashboard-metrics.yml`, `istio-dashboard-federation-match.yml` |
 
 `kiali_*` self-monitoring metrics are **not** part of the Istio tiers above. See
 [Kiali Self-Monitoring Metrics](#kiali-self-monitoring-metrics) for deployment options.
@@ -317,11 +317,11 @@ Dashboard tier adds metrics for control-plane detail, performance, ztunnel
 dashboards are in use:
 
 ```bash
-./hack/istio/metric-rules/install.sh --with-dashboards
+./hack/istio/metric-rules/demo/install.sh --with-dashboards
 ```
 
 Operators integrating federation into their own Prometheus should merge
-`federation-match-dashboards.yml` selectors into production `match[]` only for
+`istio-dashboard-federation-match.yml` selectors into production `match[]` only for
 dashboard users. Perses must query the same production Prometheus URL as Kiali.
 
 Reference configuration from Istio docs:
@@ -449,9 +449,9 @@ low-cardinality.
 
 **Cons:** Couples Kiali scrape configuration to the Istio edge Prometheus lifecycle.
 
-**Reference bundle:** `hack/istio/metric-rules/kiali-recording-rules.yml` merged into the
-Istio edge rules; `federation-match-kiali.yml` appended to the Istio federation job in
-`render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge istio`).
+**Reference bundle:** `hack/istio/metric-rules/kiali-metrics-recording-rules.yml` merged into the
+Istio edge rules; `kiali-metrics-federation-match.yml` appended to the Istio federation job in
+`demo/render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge istio`).
 
 ### Option 2: Dedicated Kiali edge Prometheus
 
@@ -473,9 +473,9 @@ aggregated series only.
 
 **Cons:** Additional Prometheus instance to operate on the Kiali side.
 
-**Reference bundle:** `hack/istio/metric-rules/prometheus-kiali-edge.yaml` (dedicated edge
-scraper + `kiali-recording-rules.yml`); separate federation job in
-`render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge dedicated`).
+**Reference bundle:** `hack/istio/metric-rules/demo/prometheus-kiali-edge.yaml` (dedicated edge
+scraper + `kiali-metrics-recording-rules.yml`); separate federation job in
+`demo/render-prometheus-prod.py` (`--with-kiali-metrics --kiali-edge dedicated`).
 
 ### Option 3: Scrape Kiali directly into production Prometheus
 
@@ -594,5 +594,5 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 - [ ] **Phase 2**: Frontend/backend minimum duration enforcement using `metric_aggregation_interval`
 - [ ] **Phase 3**: Reference recording-rules + federation bundle (`hack/istio/metric-rules/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation)
 - [ ] **Phase 4**: Documentation — operator guide (prometheus.url → production Prom), equivalence validation, Istio version compatibility
-- [x] **Phase 5**: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-recording-rules.yml`, `federation-match-kiali.yml`, `prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
+- [x] **Phase 5**: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-metrics-recording-rules.yml`, `kiali-metrics-federation-match.yml`, `demo/prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
 - [ ] **Phase 5** (optional): Query optimization — skip redundant `sum by` on pre-aggregated series

@@ -9,7 +9,7 @@
 # a sample prometheus-prod for learning/CI — not for real clusters.
 #
 # Usage:
-#   ./hack/istio/metric-rules/install.sh [options]
+#   ./hack/istio/metric-rules/demo/install.sh [options]
 #
 # Options:
 #   -c CLIENT     kubectl client (default: kubectl)

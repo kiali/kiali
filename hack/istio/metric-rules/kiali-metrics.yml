@@ -1,7 +1,7 @@
 # Kiali self-monitoring metrics exported from server.observability.metrics (port 9090).
-# These are NOT Istio/Envoy telemetry and are NOT in kiali-required-metrics.yml.
+# These are NOT Istio/Envoy telemetry and are NOT in core-metrics.yml.
 #
-# Aggregation for HA edge recording rules (kiali-recording-rules.yml):
+# Aggregation for HA edge recording rules (kiali-metrics-recording-rules.yml):
 #   sum  — counters, histograms, kiali_ai_store_conversations_total
 #   max  — kiali_health_status, kiali_graph_nodes, kiali_kubernetes_clients
 #
