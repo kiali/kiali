@@ -66,7 +66,7 @@ func DiagnoseTracingConfig(ctx context.Context, conf *config.Config, token strin
 		auth.Token = config.Credential(token)
 	}
 
-	ports, ll := discoverPortsWithDial(zl, parsedURL.Host, net.DialTimeout)
+	ports, ll := discoverPortsWithDial(zl, parsedURL.Host, net.DialTimeout, parsedURL.Port)
 	logs = append(logs, ll...)
 
 	validConfig, ll := discoverUrl(ctx, zl, *parsedURL, ports, &auth, cfgTracing)
@@ -97,8 +97,20 @@ func parseUrl(urlToParse string) (*model.ParsedUrl, []model.LogLine, error) {
 
 // discoverPorts try to discover open ports
 // dial is just to make it testable
-func discoverPortsWithDial(zl *zerolog.Logger, host string, dial DialFunc) ([]string, []model.LogLine) {
+func discoverPortsWithDial(zl *zerolog.Logger, host string, dial DialFunc, urlPort string) ([]string, []model.LogLine) {
 	portsToScan := []string{"16686", "16685", "80", "3200", "3100", "8080", "9095", "443"}
+	if urlPort != "" {
+		alreadyListed := false
+		for _, port := range portsToScan {
+			if port == urlPort {
+				alreadyListed = true
+				break
+			}
+		}
+		if !alreadyListed {
+			portsToScan = append([]string{urlPort}, portsToScan...)
+		}
+	}
 	openPorts := []string{}
 	logLines := []model.LogLine{}
 
@@ -209,6 +221,18 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 						logs = append(logs, model.LogLine{Time: time.Now(), Test: fmt.Sprintf("GetServices gRPC Tempo Client port [%s]", port), Result: fmt.Sprintf("error getting gRPC Services: [%s]", err.Error())})
 					}
 				}
+			}
+		default:
+			{
+				vc, ll := validateJaegerHTTP(ctx, client, zl, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+				vc, ll = validateTempoHTTP(ctx, client, zl, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
+				vc, ll = validateSimpleTempoHTTP(ctx, client, zl, parsedUrl, port)
+				validConfigs = append(validConfigs, vc...)
+				logs = append(logs, ll...)
 			}
 		}
 	}
