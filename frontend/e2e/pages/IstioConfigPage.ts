@@ -362,6 +362,10 @@ export class IstioConfigPage extends BasePage {
     await expect(this.getBySel('unsaved-changes-modal')).toHaveCount(0);
   }
 
+  async expectNoClusterBadge(): Promise<void> {
+    await expect(this.page.locator('#pfbadge-C')).toHaveCount(0);
+  }
+
   async clickCreateIstioConfigAction(type: string): Promise<void> {
     await this.getBySel('istio-actions-toggle').click();
     await waitForLoadingComplete(this.page);

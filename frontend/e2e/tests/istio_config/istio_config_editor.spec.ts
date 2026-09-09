@@ -1,7 +1,7 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { selectNamespace } from '../../utils/namespace';
-import { core2 } from '../../utils/suite-tags';
+import { core2, coreCachingOnly } from '../../utils/suite-tags';
 
 const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
@@ -10,6 +10,14 @@ test.describe('Istio Config editor', () => {
     ensureDemoApp('bookinfo');
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
+  });
+
+  test('Filter Istio Config editor objects by Valid configuration', coreCachingOnly, async ({ istioConfigPage }) => {
+    await istioConfigPage.filterBy('Config', 'Valid');
+    await istioConfigPage.expectRowsVisible('bookinfo-gateway', 'bookinfo');
+    await istioConfigPage.openConfigByName('bookinfo');
+    await istioConfigPage.expectEditorVisible();
+    await istioConfigPage.expectNoClusterBadge();
   });
 
   test('Unsaved YAML edits show reload confirmation', core2, async ({ istioConfigPage }) => {

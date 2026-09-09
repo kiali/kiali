@@ -52,7 +52,18 @@ export class ListPage extends BasePage {
       .filter({ hasText: new RegExp(`^${filter}$`) })
       .click();
 
-    if (filter === 'Istio Name' || filter === 'App Name') {
+    const nameFilters = ['App Name', 'Istio Name', 'Namespace', 'Service Name', 'Workload Name'];
+    const dropdownFilters = [
+      'App Label',
+      'Health',
+      'Istio Sidecar',
+      'Service Type',
+      'Type',
+      'Version Label',
+      'Workload Type'
+    ];
+
+    if (nameFilters.includes(filter)) {
       await this.page.locator('input#filter_input_value').fill(filterValue);
       await this.page.locator('input#filter_input_value').press('Enter');
     } else if (filter === 'Istio Config Type') {
@@ -60,8 +71,11 @@ export class ListPage extends BasePage {
       await input.fill(filterValue);
       await input.press('Enter');
       await this.page.locator(`li[label="${filterValue}"] button`).click();
-    } else if (filter === 'Istio Sidecar' || filter === 'Health') {
-      await this.page.locator('button#filter_select_value-toggle').click();
+    } else if (dropdownFilters.includes(filter)) {
+      const valueToggle = this.page
+        .locator('button#filter_select_value-toggle, div#filter_select_value-toggle button')
+        .first();
+      await valueToggle.click();
       await this.page
         .locator('div#filter_select_value')
         .getByRole('option', { name: filterValue, exact: true })

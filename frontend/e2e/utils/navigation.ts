@@ -1,18 +1,31 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { waitForLoadingComplete } from './transition';
+
+/** Cypress uses `cy.location('pathname')` — Playwright `toHaveURL` matches the full URL including query params. */
+export const expectPathname = async (page: Page, pattern: RegExp): Promise<void> => {
+  await expect.poll(() => new URL(page.url()).pathname).toMatch(pattern);
+};
+
+export type GotoConsolePageOptions = {
+  /** When false, navigate only — use before asserting loading states with mocked/slow APIs. */
+  waitForLoad?: boolean;
+};
 
 /**
  * Navigate to a Kiali console page.
- * Uses `?refresh=0` (Pause) to avoid background refresh promises during tests.
+ * Default `refresh=0` (Pause) avoids background refresh during tests; pass `refresh` in `query` to override.
  */
 export const gotoConsolePage = async (
   page: Page,
   pagePath: string,
-  query: Record<string, string> = {}
+  query: Record<string, string> = {},
+  options: GotoConsolePageOptions = {}
 ): Promise<void> => {
   const params = new URLSearchParams({ refresh: '0', ...query });
   await page.goto(`/console/${pagePath}?${params.toString()}`);
-  await waitForLoadingComplete(page);
+  if (options.waitForLoad !== false) {
+    await waitForLoadingComplete(page);
+  }
 };
 
 /**

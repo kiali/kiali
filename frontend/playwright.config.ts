@@ -33,6 +33,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
+  failOnFlakyTests: isCI,
   // Jenkins shared runners have limited CPU/memory; cap at 2 to avoid OOM and
   // flaky timeouts under contention. Local runs use Playwright's cpu/2 default.
   workers: isCI ? 2 : undefined,
@@ -63,6 +64,11 @@ export default defineConfig({
       testDir: './e2e/global-setup'
     },
     {
+      name: 'caching-setup',
+      testMatch: /caching\.setup\.ts/,
+      testDir: './e2e/global-setup'
+    },
+    {
       name: 'smoke',
       grep: /@smoke/,
       dependencies: ['setup'],
@@ -86,7 +92,7 @@ export default defineConfig({
     {
       name: 'core-caching',
       grep: /@core-caching/,
-      dependencies: ['setup'],
+      dependencies: ['setup', 'caching-setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {

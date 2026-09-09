@@ -1,6 +1,8 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { expectMiniGraphReady } from '../utils/graphTopology';
+import { linkSelector } from '../utils/linkSelector';
 import { waitForLoadingComplete } from '../utils/transition';
 
 const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
@@ -18,6 +20,43 @@ export class NamespaceDetailPage extends BasePage {
       await this.page.waitForResponse(response => response.url().includes('/api/namespaces/graph'));
     }
     await waitForLoadingComplete(this.page);
+  }
+
+  async expectOverview(namespace: string): Promise<void> {
+    await expect(this.getBySel(`namespace-detail-overview-${namespace}`)).toBeVisible();
+  }
+
+  async expectTitle(name: string): Promise<void> {
+    if (isOssmc()) {
+      await expect(this.page.getByText(name, { exact: true })).toBeVisible();
+    } else {
+      await expect(this.getBySel('namespace-detail-title-row')).toContainText(name);
+    }
+  }
+
+  async expectDetailsCardEntry(term: string): Promise<void> {
+    await expect(this.getBySel('namespace-details-card')).toContainText(term);
+  }
+
+  async expectCard(title: 'Annotations' | 'Labels' | 'Resources'): Promise<void> {
+    const testId =
+      title === 'Resources'
+        ? 'namespace-resources-card'
+        : title === 'Labels'
+          ? 'namespace-labels-card'
+          : 'namespace-annotations-card';
+    await expect(this.getBySel(testId)).toBeVisible();
+  }
+
+  async expectResourceLink(resource: string): Promise<void> {
+    await expect(
+      this.getBySel('namespace-resources-card').locator(linkSelector()).filter({ hasText: resource }).first()
+    ).toBeVisible();
+  }
+
+  async expectMinigraphVisible(): Promise<void> {
+    await expect(this.page.locator('#MiniGraphCard')).toBeVisible();
+    await expectMiniGraphReady(this.page);
   }
 
   async openActionsMenu(): Promise<void> {

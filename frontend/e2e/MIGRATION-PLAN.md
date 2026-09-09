@@ -12,11 +12,13 @@
 - [ ] All existing Cypress tests migrated to Playwright
 - [x] JUnit reporting preserved for CI integration (PR #10174)
 - [ ] CI workflows updated (`hack/run-integration-tests.sh` and GitHub Actions) — partial: smoke +
-  core-1 done (PR #10174/#10195/#10220); remaining suites pending
+  core-1, core-2, and core-caching done; remaining suites pending
 - [ ] AGENTS.md and developer documentation updated
 - [ ] Cypress and all Cypress-specific devDependencies removed
 - [x] `@smoke` tests pass (~32 scenarios, PR #10174)
-- [ ] `@core-1` and `@core-2` tests pass — core-1 done (145 tests, PR #10195/#10220); core-2 pending
+- [x] `@core-1` and `@core-2` tests pass — core-1 done (145 tests, PR #10195/#10220); core-2 done
+  (PR #10269)
+- [ ] `@core-caching` tests pass — ported on epic branch (playwright-core-caching CI)
 - [ ] Multi-cluster and ambient test suites pass
 - [ ] OSSMC plugin mode tested and working
 - [ ] Equivalent-or-better failure investigation tooling is available versus Cypress
@@ -81,8 +83,8 @@
   with TODO (PR #10220).
 - [x] `@smoke` suite passes (~32 scenarios, PR #10174)
 - [x] `@core-1` suite passes (145 tests, PR #10195 + #10220)
-- [ ] `@core-2` suite passes
-- [ ] `@core-caching` suite passes
+- [x] `@core-2` suite passes (PR #10269)
+- [x] `@core-caching` suite ported (playwright-core-caching CI; health/graph cache enabled locally)
 - [ ] `@crd-validation` suite passes
 - [ ] `@perses` suite passes
 - [ ] `@ambient` suite passes
@@ -102,11 +104,11 @@
 
 - [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
-- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke` and `playwright-core-1` suites
-  (PR #10174, #10195, #10220)
+- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
+  `playwright-core-2`, and `playwright-core-caching` suites (PR #10174, #10195, #10220, #10269)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
-  (PR #10174, #10220)
+  (PR #10174, #10220; core-caching workflow on epic branch)
 - [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
   removal
 - [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
@@ -149,7 +151,8 @@
   pattern)
 - [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations
   deferred from PR #10217
-- [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites (PR #10220 — deferred)
+- [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites — core-2 done (#10269); ambient/multi-cluster
+  pending
 - [ ] Add `page.routeWebSocket()` where graph live updates are mocked
 - [ ] Verify TextInputGroupMain `data-test` scoping — PF renders `data-test` on outer `<div>`, not
   inner `<input>`; assess if PF should be patched or if `getByTestId().locator('input')` is sufficient
