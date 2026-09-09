@@ -45,7 +45,7 @@ The recommended architecture follows [Istio Observability Best Practices](https:
 
 Both Prometheus instances are production components; Federated Prometheus is Kiali's query target.
 
-Kiali-side work focuses on `metric_aggregation_interval` (rule eval + federation scrape) to constrain minimum user-facing rate windows, and documentation for pointing `external_services.prometheus.url` at Federated Prometheus.
+Kiali-side work focuses on documentation for pointing `external_services.prometheus.url` at Federated Prometheus. No new Kiali configuration is required: the existing `globalScrapeInterval` auto-detection provides the correct minimum duration floor when the federated Prometheus `global.scrape_interval` matches the federation job interval.
 
 # Motivation
 
@@ -63,7 +63,7 @@ Recording rules that sum away scrape-level labels (primarily `pod`, `pod_templat
 
 - Document a recording-rules + federation approach compatible with Kiali's traffic graph, health, and metrics features
 - Align with Istio's recommended production monitoring architecture
-- Define Kiali configuration for `metric_aggregation_interval` used to constrain minimum user-facing rate windows
+- Document how Kiali's existing `globalScrapeInterval` auto-detection works correctly with federation (no new config needed)
 - Preserve acceptable freshness for operational use (~1 minute latency budget)
 - Maintain backward compatibility: default config preserves current behavior (raw `istio_*` on a single Prometheus)
 - Provide validation queries and a reference recording-rules + federation bundle (future work)
@@ -184,71 +184,46 @@ A single-TSDB approach where raw is dropped but aggregates are kept is only prac
 
 Primary change: document that `external_services.prometheus.url` should point at the federated Prometheus when using this pattern.
 
-New setting under `external_services.prometheus`:
+No new Kiali configuration setting is required. Kiali already reads `globalScrapeInterval` from the Prometheus it queries and filters the duration dropdown to `>= 2 × globalScrapeInterval`. When the federated Prometheus `global.scrape_interval` matches the federation job's `scrape_interval` (both 30s in the recommended setup), Kiali auto-detects the correct minimum duration of 60s (1m). Operators should ensure the federated Prometheus `global.scrape_interval` matches or exceeds the federation job interval.
 
-```yaml
-external_services:
-  prometheus:
-    # Interval at which aggregated metrics receive new samples on the
-    # Prometheus instance Kiali queries. Used to compute minimum valid
-    # rate/duration windows in the UI.
-    #
-    # When using Istio's federation model, this is typically:
-    #   rule_evaluation_interval + federation_scrape_interval
-    # e.g. 5s rules + 30s federation = 35s, or 30s + 30s = 60s
-    #
-    # Default: 2 × globalScrapeInterval when unset (current behavior).
-    metric_aggregation_interval: 35s
-```
-
-Exposed via `/api/config` for frontend duration filtering. No `istio_metric_prefix` is needed when Kiali queries the federated Prometheus (names are relabeled upstream).
-
-| Setting                       | Default      | Purpose                                        |
-| ----------------------------- | ------------ | ---------------------------------------------- |
-| `metric_aggregation_interval` | `2 × scrape` | Minimum duration floor; rule eval + federation |
+No `istio_metric_prefix` is needed when Kiali queries the federated Prometheus (names are relabeled upstream).
 
 ## Minimum Duration Sensitivity
 
 When Kiali queries federated aggregated metrics, minimum offered duration must satisfy:
 
 ```
-duration >= 2 × metric_aggregation_interval
+duration >= 2 × federation_scrape_interval
 ```
 
-(ideally `>= 4 ×` for smoother rates at the floor)
+Each federation scrape produces exactly one data point in the federated TSDB. Prometheus `rate()` requires at least two data points in the range window, so the minimum useful window is `2 × federation_scrape_interval`. The recording rule interval affects the freshness of each counter snapshot but does not change the spacing of data points in the federated TSDB.
 
-`metric_aggregation_interval` should reflect the coarsest sampling of the data Kiali queries — typically federation scrape interval plus rule evaluation lag, not Envoy scrape interval.
+| Federation scrape | Min duration (2×) | Notes |
+| ----------------- | ----------------- | ----- |
+| 15s               | 30s               | High federation load; rarely needed |
+| 30s (recommended) | 60s               | Matches Kiali's smallest dropdown (1m) |
+| 1m                | 2m                | Acceptable for large-scale, less-interactive use |
 
-| Rule eval | Federation scrape | Aggregation interval | Required min duration |
-| --------- | ----------------- | -------------------- | --------------------- |
-| 5s        | 30s               | 35s                  | 70s (→ 120s offered)  |
-| 30s       | 30s               | 60s                  | 120s                  |
-
-Changes needed:
-
-- Frontend: `computeValidDurations()` uses `metric_aggregation_interval` when configured
-- Backend: `graph/options.go` clamps/rejects durations below the minimum (URL params currently bypass UI)
-- Metrics charts: `computePrometheusRateParams()` uses aggregation interval for `minStep`
+No new Kiali configuration is required. Kiali reads `globalScrapeInterval` from the federated Prometheus and computes the duration floor as `2 × globalScrapeInterval`. With 30s federation and federated Prometheus `global.scrape_interval: 30s`, Kiali auto-detects the correct floor of 60s (1m). Operators should ensure the federated Prometheus `global.scrape_interval` matches or exceeds the federation job interval.
 
 ## Latency Budget
 
-Federation adds latency versus querying the edge Prometheus directly, but is efficient at scale and acceptable for Kiali's typical use:
+Federation adds latency versus querying the edge Prometheus directly. With the recommended 30s/30s/30s intervals (edge scrape, rule evaluation, federation scrape), all three run on independent, unsynchronized clocks. Worst-case staleness of a single counter snapshot:
 
 ```
 T+0s    Envoy emits counter
-T+15s   Edge Prometheus scrapes raw
-T+20s   Recording rule updates workload:* (5s eval per Istio docs)
-T+30s   Federated Prometheus federates (30s interval per Istio docs)
-T+30s   Kiali queries federated Prom: rate(istio_requests_total[duration])
+T+30s   Edge Prometheus scrapes raw (worst case, next scrape cycle)
+T+60s   Recording rule evaluates (worst case, next rule cycle)
+T+90s   Federated Prometheus federates (worst case, next federation cycle)
 ```
 
-Worst-case staleness: ~50s (up to ~75s with 30s rule eval).
+Worst-case staleness of the most recent data point is ~90s (three unsynchronized 30s intervals). Average staleness is ~45s. This staleness applies to each individual counter snapshot; rate accuracy between consecutive federation data points is unaffected because `rate()` computes the slope between pairs of correctly ordered samples regardless of their absolute delay.
 
-| Kiali feature | Typical window | Acceptable?                       |
-| ------------- | -------------- | --------------------------------- |
-| Traffic graph | 60s–10m        | Yes                               |
-| Health        | 5m             | Yes                               |
-| Auto-refresh  | 15s–60s        | May lag 2–4 refresh cycles at 15s |
+| Kiali feature | Typical window | Acceptable?                                        |
+| ------------- | -------------- | -------------------------------------------------- |
+| Traffic graph | 60s–10m        | Yes                                                |
+| Health        | 5m             | Yes                                                |
+| Auto-refresh  | 15s–60s        | Graph advances each cycle; lags reality by ~30–90s |
 
 Federation is efficient for data transfer and query cost (pre-aggregated series only) but trades freshness for storage savings. This is the intended Istio production tradeoff.
 
@@ -290,13 +265,15 @@ Use `sum without (...)` rather than `sum by (...)` to avoid accidentally droppin
 
 ## Evaluation Interval
 
-Istio docs use 5s rule evaluation. A practical range is 5s–30s (up to 2× scrape interval).
+Set the recording rule group `interval` equal to the edge `scrape_interval` (both 30s in the recommended configuration). Evaluating rules faster than the scrape interval wastes CPU — the rule re-sums the same raw data with no new input. Evaluating slower means `workload:*` updates less often than new raw data arrives, adding unnecessary staleness.
 
-| Factor              | 5s rules (Istio) | 30s rules |
-| ------------------- | ---------------- | --------- |
-| Freshness on edge   | Best             | Good      |
-| Rule eval CPU       | Higher           | Lower     |
-| Federation lag dom. | Yes              | Yes       |
+Istio's own examples use `interval: 5s` with a 15s scrape. That was designed for their quick-start addon where the same Prometheus serves direct queries; 5s eval keeps `workload:*` fresh for local consumers. In a federation architecture where no one queries the edge directly, this benefit disappears — the federation scrape interval (not the rule eval interval) determines the sampling rate Kiali sees.
+
+| Rule interval vs scrape | Effect |
+| ----------------------- | ------ |
+| Equal (recommended)     | One rule eval per scrape cycle; simple, efficient |
+| Faster than scrape      | Extra evals re-sum unchanged data; wasted CPU |
+| Slower than scrape      | `workload:*` updates lag behind available raw data |
 
 Do not pre-compute `rate()` in rules; Kiali uses variable windows (`[60s]`–`[600s]`+).
 
@@ -396,9 +373,8 @@ An `istio_metric_prefix` config is not planned for the federation path. It would
 | `prometheus/metrics.go`               | None                                                        |
 | `business/metrics_definitions.go`     | None                                                        |
 | `handlers/config.go`                  | Disabled-features probes use same names (on federated Prom) |
-| `config/` + `handlers/config.go`      | Add `metric_aggregation_interval`                           |
-| `frontend/src/config/ServerConfig.ts` | Duration floor from aggregation interval                    |
-| `graph/options.go`                    | Backend duration validation                                 |
+| `frontend/src/config/ServerConfig.ts` | None (existing `globalScrapeInterval` provides correct floor) |
+| `graph/options.go`                    | None                                                        |
 | Documentation                         | Federation deployment guide, prometheus.url targeting       |
 
 ## Feature Detection
@@ -570,9 +546,9 @@ Federation relabel restores original `istio_*` names on the federated Prometheus
 
 Recording rules sum counter snapshots on the edge. Kiali applies `rate()` at query time with user-selected duration on the federated Prometheus.
 
-## Duration Floor Follows Aggregation Interval
+## Duration Floor Follows Federation Scrape Interval
 
-Minimum duration tracks `metric_aggregation_interval` (rule eval + federation scrape), not Envoy scrape interval.
+Minimum duration is `2 × federation_scrape_interval`, not Envoy scrape interval. Kiali's existing `globalScrapeInterval` auto-detection provides the correct floor when the federated Prometheus `global.scrape_interval` matches the federation job interval.
 
 ## VictoriaMetrics Out of Scope
 
@@ -591,11 +567,11 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 
 # Open Questions
 
-1. Should `metric_aggregation_interval` be auto-derived from Prometheus config (scrape + federation job interval) or config-only?
+1. ~~Should `metric_aggregation_interval` be auto-derived from Prometheus config or config-only?~~ Resolved: no new setting needed. Kiali's existing `globalScrapeInterval` auto-detection works correctly when the federated Prometheus `global.scrape_interval` matches the federation job interval.
 2. Do we ship a reference recording-rules + federation bundle in `hack/istio/` for CI/local testing?
 3. Should the outer `sum by (...)` in graph queries be elided when reading pre-aggregated series (optimization only)?
 4. ~~How do multicluster deployments handle federation?~~ Typical pattern: each mesh cluster runs its own Edge Prometheus (local scrape + recording rules); each Edge federates into that cluster's Federated Prometheus, or into a shared central Federated Prometheus if the organization consolidates metrics. Kiali multicluster config already supports per-cluster `external_services.prometheus.url`—point each at the Federated Prometheus holding that cluster's federated series (not the Edge scraper). Whether to use per-cluster Federated Prometheus vs one central federator remains an organizational/storage decision; both fit this KEP.
-5. Is a minimum duration of `4×` (vs `2×`) aggregation interval worth enforcing for rate quality on federated data?
+5. ~~Is a minimum duration of `4×` (vs `2×`) aggregation interval worth enforcing for rate quality on federated data?~~ Resolved: `2 × federation_scrape_interval` is sufficient; this matches the existing `2 × globalScrapeInterval` behavior.
 6. Which non-traffic metrics (ztunnel, `istio_build`) should be documented as optional `match[]` extensions?
 7. ~~Which `kiali_*` deployment option should the reference bundle implement first?~~ Options 1–2 are in `hack/istio/metric-rules/`; Option 3 remains documentation-only.
 8. Should `kiali_health_status` dedup use `max` or `min` when replicas briefly disagree during rollout?
@@ -603,9 +579,7 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 # Phased Roadmap
 
 - [ ] Phase 0: KEP review and consensus (this document)
-- [ ] Phase 1: Kiali config schema — `metric_aggregation_interval`; CRD/operator/helm updates
-- [ ] Phase 2: Frontend/backend minimum duration enforcement using `metric_aggregation_interval`
-- [ ] Phase 3: Reference recording-rules + federation bundle (`hack/istio/metric-rules/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation)
-- [ ] Phase 4: Documentation — operator guide (prometheus.url → federated Prom), equivalence validation, Istio version compatibility
-- [x] Phase 5: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-metrics-recording-rules.yml`, `kiali-metrics-federation-match.yml`, `demo/prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
-- [ ] Phase 5 (optional): Query optimization — skip redundant `sum by` on pre-aggregated series
+- [ ] Phase 1: Reference recording-rules + federation bundle (`hack/istio/metric-rules/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation)
+- [ ] Phase 2: Documentation — operator guide (prometheus.url → federated Prom), equivalence validation, Istio version compatibility
+- [x] Phase 3: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-metrics-recording-rules.yml`, `kiali-metrics-federation-match.yml`, `demo/prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
+- [ ] Phase 4 (optional): Query optimization — skip redundant `sum by` on pre-aggregated series

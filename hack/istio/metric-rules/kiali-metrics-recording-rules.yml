@@ -2,8 +2,8 @@
 # See kiali-metrics.yml and design/KEPS/metric-rules/proposal.md
 #
 # Produces kiali:<metric> series on the edge Prometheus for federation.
-# Rule group interval should be >= edge scrape_interval, up to 2x scrape_interval.
-# With 30s scrape, use interval: 30s.
+# Rule group interval should match edge scrape_interval (30s recommended).
+# Evaluating faster wastes CPU; evaluating slower adds unnecessary staleness.
 #
 # Scrape-level labels dropped in without (...):
 #   pod, pod_template_hash, instance, namespace, job, node
