@@ -38,7 +38,12 @@ import { selectNamespace, selectNamespaces } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
 test.describe('Istio Config CRD validation', () => {
-  test.describe.configure({ timeout: 180_000 });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
+
+  test.afterAll(() => {
+    cleanSleepMtlsTestResources();
+    cleanIstioSystemTestResources();
+  });
 
   test.describe('parallel', () => {
     test.describe.configure({ mode: 'parallel' });
@@ -428,6 +433,10 @@ test.describe('Istio Config CRD validation', () => {
       cleanSleepMtlsTestResources();
     });
 
+    test.afterEach(() => {
+      cleanSleepMtlsTestResources();
+    });
+
     test('KIA0207 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
@@ -476,6 +485,10 @@ test.describe('Istio Config CRD validation', () => {
   // Contend for istio-system default PeerAuthentication / Sidecar — run one at a time.
   test.describe('istio-system', () => {
     test.describe.configure({ mode: 'serial' });
+
+    test.afterEach(() => {
+      cleanIstioSystemTestResources();
+    });
 
     test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');

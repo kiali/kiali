@@ -406,10 +406,5 @@ export function restoreBookinfoNetworking(): void {
     'sh -c \'ISTIO_DIR=$(ls -dt1 ../_output/istio-* 2>/dev/null | head -n1); [ -z "$ISTIO_DIR" ] && exit 0; NET="$ISTIO_DIR/samples/bookinfo/networking/bookinfo-gateway.yaml"; [ -f "$NET" ] || exit 0; kubectl apply -n bookinfo -f "$NET"\'',
     false
   );
-  waitForResourceDeleted('kubectl get PeerAuthentication default -n istio-system');
-  waitForResourceDeleted('kubectl get Sidecar default -n istio-system');
-  kubectlExec('kubectl rollout restart deployment -n alpha', false);
-  kubectlExec('kubectl rollout restart deployment -n beta', false);
-  kubectlExec('kubectl rollout status deployment -n alpha --timeout=60s', false);
-  kubectlExec('kubectl rollout status deployment -n beta --timeout=60s', false);
+  cleanIstioSystemTestResources();
 }
