@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import { test } from '@playwright/test';
 import { kubectlExec } from './kubectl';
 
 type KialiConfig = {
@@ -8,6 +9,11 @@ type KialiConfig = {
     istioInjectionAction?: boolean;
     istioUpgradeAction?: boolean;
   };
+};
+
+type ServiceListItem = {
+  additionalDetailSample?: { icon?: string } | null;
+  name: string;
 };
 
 export async function getKialiConfig(request: APIRequestContext): Promise<KialiConfig> {
@@ -40,3 +46,24 @@ export function hasSailIstioCr(): boolean {
 export function hasLoggersNamespace(): boolean {
   return kubectlExec('kubectl get namespace loggers').exitCode === 0;
 }
+
+/** Skip when Kiali is not configured with additional_display_details (operator/CI default). */
+export const skipUnlessApiDocumentationConfigured = async (
+  request: APIRequestContext,
+  namespace: string,
+  serviceName: string
+): Promise<void> => {
+  const response = await request.get(`/api/clusters/services?namespaces=${namespace}&health=true`);
+  if (!response.ok()) {
+    test.skip(true, 'Could not fetch services list to verify API documentation config');
+    return;
+  }
+  const body = (await response.json()) as { services?: ServiceListItem[] };
+  const service = body.services?.find(item => item.name === serviceName);
+  if (!service?.additionalDetailSample?.icon) {
+    test.skip(
+      true,
+      'API Documentation requires additional_display_details in Kiali config (restart with hack/ci-yaml/ci-test-config-*.yaml)'
+    );
+  }
+};

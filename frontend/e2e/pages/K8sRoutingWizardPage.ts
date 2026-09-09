@@ -115,6 +115,11 @@ export class K8sRoutingWizardPage extends BasePage {
     await expect(this.page.locator('#createGateway')).toBeChecked();
   }
 
+  async selectCreateIstioGateway(): Promise<void> {
+    await this.page.locator('#createGateway').click();
+    await expect(this.page.locator('#createGateway')).toBeChecked();
+  }
+
   async expectReference(namespace: string, name: string, type: string): Promise<void> {
     await expect(this.getBySel(`${type}-${namespace}-${name}`)).toBeVisible();
   }
@@ -122,6 +127,8 @@ export class K8sRoutingWizardPage extends BasePage {
   async clickReference(namespace: string, name: string, type: string): Promise<void> {
     await this.getBySel(`${type}-${namespace}-${name}`).click();
     const pathByType: Record<string, string> = {
+      DestinationRule: `/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${name}`,
+      VirtualService: `/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${name}`,
       destinationrule: `/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule/${name}`,
       service: `/namespaces/${namespace}/services/${name}`,
       virtualservice: `/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService/${name}`

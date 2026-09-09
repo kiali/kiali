@@ -93,7 +93,7 @@ func TestDiscoverPortsWithDial(t *testing.T) {
 		return nil, errors.New("connection refused")
 	}
 	zl := log.WithGroup(log.TracingLogName)
-	openPorts, logs := discoverPortsWithDial(zl, "localhost", mockDial)
+	openPorts, logs := discoverPortsWithDial(zl, "localhost", mockDial, "")
 
 	expectedPorts := map[string]bool{
 		"80":  true,
@@ -108,6 +108,21 @@ func TestDiscoverPortsWithDial(t *testing.T) {
 		assert.True(t, expectedPorts[port])
 	}
 	assert.Equal(t, len(logs), 2)
+}
+
+func TestDiscoverPortsWithDial_IncludesConfiguredUrlPort(t *testing.T) {
+	mockDial := func(network, address string, timeout time.Duration) (net.Conn, error) {
+		if address == "127.0.0.1:14001" {
+			return &mockConn{}, nil
+		}
+		return nil, errors.New("connection refused")
+	}
+	zl := log.WithGroup(log.TracingLogName)
+	openPorts, logs := discoverPortsWithDial(zl, "127.0.0.1", mockDial, "14001")
+
+	assert.Equal(t, []string{"14001"}, openPorts)
+	assert.Len(t, logs, 1)
+	assert.Contains(t, logs[0].Result, "Port 14001 is open")
 }
 
 func mockMakeRequest(ctx context.Context, client http.Client, endpoint string, body io.Reader) ([]byte, int, error) {

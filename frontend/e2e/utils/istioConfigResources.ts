@@ -67,3 +67,21 @@ export function deleteBookinfoReviewsTrafficRouting(): void {
   kubectlDelete('grpcroutes.gateway.networking.k8s.io reviews -n bookinfo');
   deleteBookinfoReviewsGateway();
 }
+
+export function deleteIstioGateway(name: string, namespace = 'bookinfo'): void {
+  kubectlDelete(`gateway.networking.istio.io ${name} -n ${namespace}`);
+}
+
+export function deleteSidecar(name: string, namespace = 'bookinfo'): void {
+  kubectlDelete(`sidecar ${name} -n ${namespace}`);
+}
+
+export function deleteServiceEntry(name: string, namespace = 'bookinfo'): void {
+  kubectlDelete(`serviceentries ${name} -n ${namespace}`);
+}
+
+export function deleteBookinfoReviewsIstioRouting(): void {
+  kubectlDelete('destinationrules.networking.istio.io reviews -n bookinfo');
+  kubectlDelete('virtualservices.networking.istio.io reviews -n bookinfo');
+  kubectlDelete('gateway.networking.istio.io reviews-gateway -n bookinfo');
+}
