@@ -18,9 +18,7 @@ reference_dashboards:
 
   istio-service-dashboard:
     status: mostly_covered_by_core
-    notes: >
-      Primary panels use istio_request_duration_milliseconds_* from core tier.
-      Legacy fallback istio_request_duration_seconds_bucket is optional (empty on Istio 1.17+).
+    notes: Primary panels use istio_request_duration_milliseconds_* from core tier.
 
   istio-workload-dashboard:
     status: mostly_covered_by_core
@@ -81,11 +79,3 @@ reference_dashboards:
     - envoy_wasm_remote_load_cache_negative_hits
     - envoy_wasm_remote_load_fetch_failures
     - envoy_wasm_remote_load_fetch_successes
-
-  legacy_istio_histogram:
-    status: optional
-    notes: >
-      istio_request_duration_seconds_bucket fallback for pre-1.17 Istio.
-      Not emitted on modern Istio; safe to omit unless supporting old meshes.
-    additional_metrics:
-    - istio_request_duration_seconds_bucket

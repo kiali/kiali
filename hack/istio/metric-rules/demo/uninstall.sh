@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Remove demo Federated Prometheus and restore Edge Prometheus recording rules to empty.
+#
+# Deletes demo deployments by label (not static YAML paths) because install.sh renders
+# ConfigMap data dynamically via render-prometheus-federated.py.
 
 set -euo pipefail
 
@@ -15,11 +18,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-echo "Removing prometheus-federated..."
-${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-federated.yaml" --ignore-not-found
+delete_demo_stack() {
+  local app_label="$1"
+  echo "Removing ${app_label} (deployment, service, configmap)..."
+  ${CLIENT_EXE} delete deployment,service,configmap \
+    -n "${ISTIO_NAMESPACE}" \
+    -l "app=${app_label}" \
+    --ignore-not-found
+}
 
-echo "Removing prometheus-kiali-edge..."
-${CLIENT_EXE} delete -f "$(dirname "$0")/prometheus-kiali-edge.yaml" --ignore-not-found
+delete_demo_stack prometheus-federated
+delete_demo_stack prometheus-kiali-edge
+
+echo "Removing legacy prometheus-recording-rules configmap (unused by current install)..."
+${CLIENT_EXE} delete configmap prometheus-recording-rules -n "${ISTIO_NAMESPACE}" --ignore-not-found
 
 echo "Clearing edge recording rules..."
 ${CLIENT_EXE} patch configmap prometheus -n "${ISTIO_NAMESPACE}" --type merge -p '{"data":{"recording_rules.yml":"{}\n"}}'

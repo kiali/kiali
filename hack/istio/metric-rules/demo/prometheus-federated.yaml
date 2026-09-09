@@ -18,6 +18,7 @@ data:
       scrape_timeout: 25s
     scrape_configs:
     - job_name: istio-prometheus-federate
+      # Required: preserve Istio labels from edge (avoid exported_* renames on conflict)
       honor_labels: true
       metrics_path: /federate
       scrape_interval: 30s

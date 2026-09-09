@@ -21,7 +21,10 @@
 #   --edge-retention  Edge Prometheus retention (default: 6h)
 #
 # Prerequisites:
-#   - Edge Prometheus deployment named "prometheus" in istio-system
+#   - Istio Prometheus add-on: deployment and configmap named "prometheus" in istio-system
+#   - prometheus.yml must include rule_files referencing recording_rules.yml (the add-on
+#     ships with rule_files: [/etc/config/recording_rules.yml]; other Prometheus layouts
+#     are not supported by this script — merge rules manually for production)
 #   - bookinfo or other demo apps generating istio_* metrics
 
 set -euo pipefail
@@ -52,7 +55,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --edge-retention) EDGE_RETENTION="$2"; shift 2 ;;
     -h|--help)
-      sed -n '3,22p' "$0"
+      sed -n '3,26p' "$0"
       exit 0
       ;;
     *) echo "Unknown option: $1"; exit 1 ;;
@@ -65,6 +68,44 @@ if [[ "${KIALI_EDGE}" == "dedicated" && "${WITH_KIALI_METRICS}" != "true" ]]; th
 fi
 
 inf() { echo "[$(date +'%H:%M:%S')] $*"; }
+err() { echo "Error: $*" >&2; exit 1; }
+
+inf "Checking Edge Prometheus prerequisites..."
+if ! ${CLIENT_EXE} get deployment prometheus -n "${ISTIO_NAMESPACE}" &>/dev/null; then
+  err "deployment/prometheus not found in ${ISTIO_NAMESPACE}. This script requires the Istio Prometheus add-on."
+fi
+if ! ${CLIENT_EXE} get configmap prometheus -n "${ISTIO_NAMESPACE}" &>/dev/null; then
+  err "configmap/prometheus not found in ${ISTIO_NAMESPACE}."
+fi
+
+PROMETHEUS_YML="$(${CLIENT_EXE} get configmap prometheus -n "${ISTIO_NAMESPACE}" \
+  -o jsonpath='{.data.prometheus\.yml}' 2>/dev/null || true)"
+if [[ -z "${PROMETHEUS_YML}" ]]; then
+  err "configmap/prometheus has no prometheus.yml data key."
+fi
+if ! printf '%s' "${PROMETHEUS_YML}" | python3 -c "
+import sys
+text = sys.stdin.read()
+if 'rule_files' not in text:
+    raise SystemExit('missing rule_files')
+if 'recording_rules' not in text:
+    raise SystemExit('missing recording_rules reference')
+"; then
+  err "$(cat <<EOF
+Edge Prometheus prometheus.yml must include rule_files referencing recording_rules.yml.
+The Istio add-on ships with:
+  rule_files:
+  - /etc/config/recording_rules.yml
+This script patches configmap/prometheus data.recording_rules.yml only.
+For other Prometheus layouts, merge core-recording-rules.yml manually — see README.md.
+EOF
+)"
+fi
+if [[ "$(${CLIENT_EXE} get configmap prometheus -n "${ISTIO_NAMESPACE}" \
+  -o go-template='{{if index .data "recording_rules.yml"}}yes{{end}}')" != "yes" ]]; then
+  err "configmap/prometheus has no recording_rules.yml data key (required for the add-on mount at /etc/config/recording_rules.yml)."
+fi
+inf "Edge Prometheus prerequisites OK (rule_files references recording_rules.yml)."
 
 MERGE_ARGS=()
 if [[ "${WITH_KIALI_METRICS}" == "true" && "${KIALI_EDGE}" == "istio" ]]; then
@@ -76,12 +117,7 @@ fi
 
 RECORDING_RULES_CONTENT="$(python3 "${SCRIPT_DIR}/merge-recording-rules.py" "${MERGE_ARGS[@]}")"
 
-inf "Patching edge Prometheus configmap..."
-${CLIENT_EXE} create configmap prometheus-recording-rules \
-  --from-file=recording_rules.yml=<(printf '%s\n' "${RECORDING_RULES_CONTENT}") \
-  -n "${ISTIO_NAMESPACE}" \
-  --dry-run=client -o yaml | ${CLIENT_EXE} apply -f -
-
+inf "Patching edge Prometheus configmap (data.recording_rules.yml)..."
 ${CLIENT_EXE} patch configmap prometheus -n "${ISTIO_NAMESPACE}" --type merge -p "$(python3 -c "
 import json, sys
 print(json.dumps({'data': {'recording_rules.yml': sys.stdin.read()}}))
