@@ -6,7 +6,7 @@ if ! which goimports &> /dev/null; then
     echo "You do not have 'go' in your PATH - please install it. Aborting."
     exit 1
   fi
-  go install golang.org/x/tools/cmd/goimports@latest
+  go install golang.org/x/tools/cmd/goimports@v0.47.0
 fi
 
 FILES=`find . -path './vendor' -prune -o -path './frontend' -prune -o -type f -iname '*.go' -print`
