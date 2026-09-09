@@ -379,12 +379,13 @@ const SLEEP_MTLS_TEST_DR_NAMES = ['disable-mtls-kia0207', 'enable-mtls-kia0505']
 
 /** KIA0207 and KIA0505 share PeerAuthentication/default and ns-wide DRs on sleep — clean between serial runs. */
 export function cleanSleepMtlsTestResources(): void {
+  const cleanupTimeoutMs = 10_000;
   for (const drName of SLEEP_MTLS_TEST_DR_NAMES) {
     kubectlDelete(`DestinationRule ${drName} -n sleep`);
-    waitForResourceDeleted(`kubectl get DestinationRule ${drName} -n sleep`);
+    waitForResourceDeleted(`kubectl get DestinationRule ${drName} -n sleep`, cleanupTimeoutMs);
   }
   kubectlDelete('PeerAuthentication default -n sleep');
-  waitForResourceDeleted('kubectl get PeerAuthentication default -n sleep');
+  waitForResourceDeleted('kubectl get PeerAuthentication default -n sleep', cleanupTimeoutMs);
 }
 
 /** Mirrors Cypress `@clean-istio-namespace-resources-after` hook. */

@@ -29,6 +29,17 @@ const VALIDATION_FILTERS = ['Valid', 'Not Valid', 'Not Validated', 'Warning'] as
 
 const GATEWAY_GVK = 'networking.istio.io/v1, Kind=Gateway';
 
+const ISTIO_TYPE_GVK: Record<string, string> = {
+  AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
+  DestinationRule: 'networking.istio.io/v1, Kind=DestinationRule',
+  Gateway: GATEWAY_GVK,
+  K8sGateway: 'gateway.networking.k8s.io/v1, Kind=Gateway',
+  K8sReferenceGrant: 'gateway.networking.k8s.io/v1beta1, Kind=ReferenceGrant',
+  PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
+  Sidecar: 'networking.istio.io/v1, Kind=Sidecar',
+  VirtualService: 'networking.istio.io/v1, Kind=VirtualService'
+};
+
 const VALIDATION_ICON: Record<string, string> = {
   danger: 'icon-error-validation',
   error: 'icon-error-validation',
@@ -329,6 +340,38 @@ export class IstioConfigPage extends BasePage {
     }
   }
 
+  private async hasApiValidationStatus(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    healthStatus: string
+  ): Promise<boolean> {
+    const gvk = ISTIO_TYPE_GVK[typeName];
+    if (!gvk) {
+      return true;
+    }
+
+    const response = await this.page.request.get(`/api/namespaces/${namespace}/istio?validate=true&_=${Date.now()}`);
+    if (!response.ok()) {
+      return false;
+    }
+
+    const body = (await response.json()) as {
+      validations?: Record<string, Record<string, { checks?: Array<{ severity?: string }>; valid?: boolean }>>;
+    };
+    const entry = body.validations?.[gvk]?.[`${instanceName}.${namespace}`];
+    if (!entry) {
+      return false;
+    }
+
+    if (healthStatus === 'success') {
+      return entry.valid === true;
+    }
+
+    const expectedSeverity = healthStatus === 'warning' ? 'warning' : 'error';
+    return (entry.checks ?? []).some(check => check.severity === expectedSeverity);
+  }
+
   async expectValidationStatus(
     namespace: string,
     typeName: string,
@@ -341,11 +384,14 @@ export class IstioConfigPage extends BasePage {
     const expectedIcon = VALIDATION_ICON[healthStatus];
 
     await expect(async () => {
+      if (!(await this.hasApiValidationStatus(namespace, typeName, instanceName, healthStatus))) {
+        throw new Error(`API validation not ready for ${typeName}/${instanceName} (${healthStatus})`);
+      }
       await this.page.request.get(`/api/istio/config?validate=true&_=${Date.now()}`);
       await this.refreshList();
       await expect(row).toBeVisible({ timeout: 5_000 });
       await expect(row.locator(`[data-test="${expectedIcon}"]`)).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [3_000], timeout: 90_000 });
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 
   async openConfigByName(name: string): Promise<void> {

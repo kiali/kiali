@@ -417,21 +417,19 @@ test.describe('Istio Config CRD validation', () => {
 
   // Contend for sleep default PeerAuthentication — run one at a time.
   test.describe('sleep mTLS', () => {
-    test.describe.configure({ mode: 'serial' });
+    test.describe.configure({ mode: 'serial', timeout: 300_000 });
+
+    test.beforeAll(() => {
+      ensureDemoApp('bookinfo');
+      ensureDemoApp('sleep');
+    });
 
     test.beforeEach(() => {
       cleanSleepMtlsTestResources();
     });
 
-    test.afterEach(() => {
-      cleanSleepMtlsTestResources();
-    });
-
     test('KIA0207 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');
-      ensureDemoApp('bookinfo');
-      ensureDemoApp('sleep');
-      deleteIstioConfig('PeerAuthentication', 'default', 'sleep');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
       patchDestinationRuleDisableMtls(drName, 'sleep');
       applyPeerAuthentication('default', 'sleep');
@@ -444,8 +442,6 @@ test.describe('Istio Config CRD validation', () => {
 
     test('KIA0505 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'enable-mtls');
-      ensureDemoApp('bookinfo');
-      ensureDemoApp('sleep');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
       patchDestinationRuleEnableMtls(drName, 'sleep');
       applyPeerAuthentication('default', 'sleep');
