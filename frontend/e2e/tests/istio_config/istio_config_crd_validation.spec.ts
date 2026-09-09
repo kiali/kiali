@@ -449,7 +449,7 @@ test.describe('Istio Config CRD validation', () => {
 
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationStatus('sleep', 'PeerAuthentication', 'default', 'danger');
+      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'PeerAuthentication', 'default', 'KIA0505');
     });
   });
 
@@ -504,7 +504,7 @@ test.describe('Istio Config CRD validation', () => {
 
       await istioConfigPage.open();
       await selectNamespace(page, 'istio-system');
-      await istioConfigPage.expectValidationStatus('istio-system', 'PeerAuthentication', 'default', 'danger');
+      await istioConfigPage.expectValidationOnDetailsPage('istio-system', 'PeerAuthentication', 'default', 'KIA0506');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
       cleanIstioSystemTestResources();
     });

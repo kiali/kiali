@@ -40,6 +40,10 @@ const ISTIO_TYPE_GVK: Record<string, string> = {
   VirtualService: 'networking.istio.io/v1, Kind=VirtualService'
 };
 
+const ISTIO_DETAIL_API_PATH: Record<string, string> = {
+  PeerAuthentication: 'security.istio.io/v1/PeerAuthentication'
+};
+
 const VALIDATION_ICON: Record<string, string> = {
   danger: 'icon-error-validation',
   error: 'icon-error-validation',
@@ -498,11 +502,61 @@ export class IstioConfigPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
+  private configurationAnalysisSection(): Locator {
+    return this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
+  }
+
+  private async hasDetailsApiValidationCode(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    validationCode: string
+  ): Promise<boolean> {
+    const detailPath = ISTIO_DETAIL_API_PATH[typeName];
+    if (!detailPath) {
+      return true;
+    }
+
+    const response = await this.page.request.get(
+      `/api/namespaces/${namespace}/istio/${detailPath}/${instanceName}?validate=true&_=${Date.now()}`
+    );
+    if (!response.ok()) {
+      return false;
+    }
+
+    const body = (await response.json()) as { validation?: { checks?: Array<{ code?: string }> } };
+    return (body.validation?.checks ?? []).some(check => check.code === validationCode);
+  }
+
+  /** PeerAuthentication list rows show N/A until the details page is loaded with validate=true. */
+  async expectValidationOnDetailsPage(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    validationCode: string
+  ): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+    await this.openConfigByRow(namespace, typeName, instanceName);
+
+    const analysisSection = this.configurationAnalysisSection();
+    await expect(async () => {
+      if (!(await this.hasDetailsApiValidationCode(namespace, typeName, instanceName, validationCode))) {
+        throw new Error(`Detail API validation missing ${validationCode} for ${typeName}/${instanceName}`);
+      }
+      await waitForLoadingComplete(this.page);
+      await expect(analysisSection.getByText(validationCode)).toBeVisible({ timeout: 5_000 });
+      await expect(analysisSection.locator('[data-test="icon-error-validation"]')).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }
+
   async expectGroupedValidationMessage(code: string, count: number): Promise<void> {
-    await waitForLoadingComplete(this.page);
-    // Heading sits in a StackItem; validation rows are sibling StackItems in the same Stack.
-    const analysisSection = this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
-    await expect(analysisSection.getByText(new RegExp(`${code}.*\\(${count}\\)`))).toBeVisible();
+    const messagePattern = count > 1 ? new RegExp(`${code}.*\\(${count}\\)`) : new RegExp(code);
+    const analysisSection = this.configurationAnalysisSection();
+
+    await expect(async () => {
+      await waitForLoadingComplete(this.page);
+      await expect(analysisSection.getByText(messagePattern)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 }
 
