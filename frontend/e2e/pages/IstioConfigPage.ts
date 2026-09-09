@@ -29,21 +29,6 @@ const VALIDATION_FILTERS = ['Valid', 'Not Valid', 'Not Validated', 'Warning'] as
 
 const GATEWAY_GVK = 'networking.istio.io/v1, Kind=Gateway';
 
-const ISTIO_TYPE_GVK: Record<string, string> = {
-  AuthorizationPolicy: 'security.istio.io/v1, Kind=AuthorizationPolicy',
-  DestinationRule: 'networking.istio.io/v1, Kind=DestinationRule',
-  Gateway: GATEWAY_GVK,
-  K8sGateway: 'gateway.networking.k8s.io/v1, Kind=Gateway',
-  K8sReferenceGrant: 'gateway.networking.k8s.io/v1beta1, Kind=ReferenceGrant',
-  PeerAuthentication: 'security.istio.io/v1, Kind=PeerAuthentication',
-  Sidecar: 'networking.istio.io/v1, Kind=Sidecar',
-  VirtualService: 'networking.istio.io/v1, Kind=VirtualService'
-};
-
-const ISTIO_DETAIL_API_PATH: Record<string, string> = {
-  PeerAuthentication: 'security.istio.io/v1/PeerAuthentication'
-};
-
 const VALIDATION_ICON: Record<string, string> = {
   danger: 'icon-error-validation',
   error: 'icon-error-validation',
@@ -344,38 +329,6 @@ export class IstioConfigPage extends BasePage {
     }
   }
 
-  private async hasApiValidationStatus(
-    namespace: string,
-    typeName: string,
-    instanceName: string,
-    healthStatus: string
-  ): Promise<boolean> {
-    const gvk = ISTIO_TYPE_GVK[typeName];
-    if (!gvk) {
-      return true;
-    }
-
-    const response = await this.page.request.get(`/api/namespaces/${namespace}/istio?validate=true&_=${Date.now()}`);
-    if (!response.ok()) {
-      return false;
-    }
-
-    const body = (await response.json()) as {
-      validations?: Record<string, Record<string, { checks?: Array<{ severity?: string }>; valid?: boolean }>>;
-    };
-    const entry = body.validations?.[gvk]?.[`${instanceName}.${namespace}`];
-    if (!entry) {
-      return false;
-    }
-
-    if (healthStatus === 'success') {
-      return entry.valid === true;
-    }
-
-    const expectedSeverity = healthStatus === 'warning' ? 'warning' : 'error';
-    return (entry.checks ?? []).some(check => check.severity === expectedSeverity);
-  }
-
   async expectValidationStatus(
     namespace: string,
     typeName: string,
@@ -388,14 +341,10 @@ export class IstioConfigPage extends BasePage {
     const expectedIcon = VALIDATION_ICON[healthStatus];
 
     await expect(async () => {
-      if (!(await this.hasApiValidationStatus(namespace, typeName, instanceName, healthStatus))) {
-        throw new Error(`API validation not ready for ${typeName}/${instanceName} (${healthStatus})`);
-      }
-      await this.page.request.get(`/api/istio/config?validate=true&_=${Date.now()}`);
       await this.refreshList();
       await expect(row).toBeVisible({ timeout: 5_000 });
       await expect(row.locator(`[data-test="${expectedIcon}"]`)).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
   }
 
   async openConfigByName(name: string): Promise<void> {
@@ -506,28 +455,6 @@ export class IstioConfigPage extends BasePage {
     return this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
   }
 
-  private async hasDetailsApiValidationCode(
-    namespace: string,
-    typeName: string,
-    instanceName: string,
-    validationCode: string
-  ): Promise<boolean> {
-    const detailPath = ISTIO_DETAIL_API_PATH[typeName];
-    if (!detailPath) {
-      return true;
-    }
-
-    const response = await this.page.request.get(
-      `/api/namespaces/${namespace}/istio/${detailPath}/${instanceName}?validate=true&_=${Date.now()}`
-    );
-    if (!response.ok()) {
-      return false;
-    }
-
-    const body = (await response.json()) as { validation?: { checks?: Array<{ code?: string }> } };
-    return (body.validation?.checks ?? []).some(check => check.code === validationCode);
-  }
-
   /** PeerAuthentication list rows show N/A until the details page is loaded with validate=true. */
   async expectValidationOnDetailsPage(
     namespace: string,
@@ -536,27 +463,42 @@ export class IstioConfigPage extends BasePage {
     validationCode: string
   ): Promise<void> {
     await this.ensureConfigurationValidationEnabled();
-    await this.openConfigByRow(namespace, typeName, instanceName);
+    await waitForLoadingComplete(this.page);
 
-    const analysisSection = this.configurationAnalysisSection();
-    await expect(async () => {
-      if (!(await this.hasDetailsApiValidationCode(namespace, typeName, instanceName, validationCode))) {
-        throw new Error(`Detail API validation missing ${validationCode} for ${typeName}/${instanceName}`);
-      }
-      await waitForLoadingComplete(this.page);
-      await expect(analysisSection.getByText(validationCode)).toBeVisible({ timeout: 5_000 });
-      await expect(analysisSection.locator('[data-test="icon-error-validation"]')).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
+    const validateResponse = this.page.waitForResponse(
+      response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/istio/') &&
+        response.url().includes(`/${instanceName}`) &&
+        response.url().includes('validate=true') &&
+        response.ok(),
+      { timeout: 60_000 }
+    );
+
+    await this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`)
+      .locator(linkSelector())
+      .first()
+      .click();
+    await validateResponse;
+    await waitForLoadingComplete(this.page);
+    await this.expectGroupedValidationMessage(validationCode, 1, 'danger');
   }
 
-  async expectGroupedValidationMessage(code: string, count: number): Promise<void> {
+  async expectGroupedValidationMessage(
+    code: string,
+    count: number,
+    severity: 'danger' | 'warning' = 'warning'
+  ): Promise<void> {
     const messagePattern = count > 1 ? new RegExp(`${code}.*\\(${count}\\)`) : new RegExp(code);
+    const iconTestId = severity === 'danger' ? 'icon-error-validation' : 'icon-warning-validation';
     const analysisSection = this.configurationAnalysisSection();
 
     await expect(async () => {
       await waitForLoadingComplete(this.page);
-      await expect(analysisSection.getByText(messagePattern)).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
+      const validationRow = analysisSection.locator('div').filter({ hasText: messagePattern });
+      await expect(validationRow.first()).toBeVisible({ timeout: 5_000 });
+      await expect(validationRow.first().getByTestId(iconTestId)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
   }
 }
 
