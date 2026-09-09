@@ -37,12 +37,16 @@ export class IstioConfigWizardPage extends BasePage {
     await expect(this.page.locator(`input[id="${id}"]`)).toHaveAttribute('aria-invalid', hasWarning ? 'true' : 'false');
   }
 
-  async createIstioConfig(): Promise<void> {
+  async clickCreate(): Promise<void> {
     const create = this.getBySel('create');
     await expect(create).toBeVisible();
     await expect(create).toBeEnabled();
     await create.click();
-    await expect(this.page).not.toHaveURL(/\/istio\/new\//);
+  }
+
+  async createIstioConfig(): Promise<void> {
+    await this.clickCreate();
+    await expect(this.page).not.toHaveURL(/\/istio\/new\//, { timeout: 60_000 });
     await waitForLoadingComplete(this.page);
   }
 
@@ -105,6 +109,24 @@ export class IstioConfigWizardPage extends BasePage {
     await this.page
       .locator('[aria-label^="Close Success alert: alert: Istio networking.istio.io/v1, Kind=Gateway created"]')
       .click();
+  }
+
+  async expectNoClusterDropdown(): Promise<void> {
+    await expect(this.getBySel('cluster-dropdown')).toHaveCount(0);
+  }
+
+  async editLabels(key: string, value: string): Promise<void> {
+    await this.getBySel('edit-labels').click();
+    await this.page.locator('input[id="labelInputForKey_0"]').fill(key);
+    await this.page.locator('input[id="labelInputForValue_0"]').fill(value);
+    await this.getBySel('save-button').click();
+  }
+
+  async editAnnotations(key: string, value: string): Promise<void> {
+    await this.getBySel('edit-annotations').click();
+    await this.page.locator('input[id="labelInputForKey_0"]').fill(key);
+    await this.page.locator('input[id="labelInputForValue_0"]').fill(value);
+    await this.getBySel('save-button').click();
   }
 
   async expectPreviewContains(value: string): Promise<void> {

@@ -369,6 +369,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-smoke` | Playwright smoke suite (KinD + local Kiali) |
 | `playwright-core-1` | Playwright core test group 1 (KinD + local Kiali) |
 | `playwright-core-2` | Playwright core test group 2 (KinD + local Kiali) |
+| `playwright-core-caching` | Playwright core-caching suite (KinD + local Kiali with cache enabled) |
 
 #### The `local` Suite (Recommended for Local Development)
 
@@ -477,9 +478,11 @@ yarn playwright:install chromium
 yarn playwright:run:smoke
 yarn playwright:run:core1
 yarn playwright:run:core2
+yarn playwright:run:core-caching
 hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + local Kiali
 hack/run-integration-tests.sh --test-suite playwright-core-1
 hack/run-integration-tests.sh --test-suite playwright-core-2
+hack/run-integration-tests.sh --test-suite playwright-core-caching
 ```
 
 **Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`. Cypress remains in `frontend/cypress/` until cutover.

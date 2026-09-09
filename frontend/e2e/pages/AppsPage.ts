@@ -83,4 +83,79 @@ export class AppsPage extends ListPage {
   async expectOnlyRow(name: string): Promise<void> {
     await expectOnlyRow(this.page, name);
   }
+
+  async visitListForNamespace(namespace: string): Promise<void> {
+    const appsRequest = this.page.waitForResponse(response => response.url().includes('/api/clusters/apps'));
+    await this.openList({ namespaces: namespace });
+    await appsRequest;
+  }
+
+  async expectHealthCacheEnabled(): Promise<void> {
+    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    expect(response.ok()).toBeTruthy();
+  }
+
+  async recordHealthCacheMetrics(): Promise<HealthCacheMetrics> {
+    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()) as HealthCacheMetrics;
+  }
+
+  async expectHealthCacheHitsIncreased(before: HealthCacheMetrics, minHits = 1): Promise<void> {
+    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    expect(response.ok()).toBeTruthy();
+    const after = (await response.json()) as HealthCacheMetrics;
+    expect(after.healthCacheHits).toBeGreaterThanOrEqual(before.healthCacheHits + minHits);
+  }
+
+  async expectHealthStatusMetricsNotEmpty(): Promise<void> {
+    const metrics = await this.fetchHealthStatusMetrics();
+    expect(metrics.length).toBeGreaterThan(0);
+  }
+
+  async expectHealthStatusMetricForApp(namespace: string, appName: string, healthStatus: string): Promise<void> {
+    const metrics = await this.fetchHealthStatusMetrics();
+    const appMetric = metrics.find(
+      metric => metric.healthType === 'app' && metric.name === appName && metric.namespace === namespace
+    );
+    expect(appMetric).toBeDefined();
+    expect(healthStatusValueToString(appMetric!.value)).toBe(healthStatus);
+  }
+
+  private async fetchHealthStatusMetrics(): Promise<HealthStatusMetricItem[]> {
+    const response = await this.page.request.get('/api/test/metrics/health/status');
+    if (!response.ok()) {
+      return [];
+    }
+    const body = (await response.json()) as { metrics?: HealthStatusMetricItem[] };
+    return body.metrics ?? [];
+  }
 }
+
+type HealthCacheMetrics = {
+  healthCacheHits: number;
+  healthCacheMisses: number;
+};
+
+type HealthStatusMetricItem = {
+  cluster: string;
+  healthType: string;
+  name: string;
+  namespace: string;
+  value: number;
+};
+
+const healthStatusValueToString = (value: number): string => {
+  switch (value) {
+    case 0:
+      return 'Healthy';
+    case 1:
+      return 'Not Ready';
+    case 2:
+      return 'Degraded';
+    case 3:
+      return 'Failure';
+    default:
+      return 'Unknown';
+  }
+};

@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { gotoConsolePage } from '../utils/navigation';
 import { waitForLoadingComplete } from '../utils/transition';
 import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
@@ -44,6 +45,12 @@ const TOOLBAR_BUTTON_NAMES: Record<string, string> = {
   toolbar_layout_concentric: 'Concentric - non-boxing layout',
   toolbar_layout_dagre: 'Dagre - boxing layout',
   toolbar_layout_grid: 'Grid - non-boxing layout'
+};
+
+type GraphCacheMetrics = {
+  graphCacheEvictions: number;
+  graphCacheHits: number;
+  graphCacheMisses: number;
 };
 
 export class GraphPage extends BasePage {
@@ -864,5 +871,64 @@ export class GraphPage extends BasePage {
 
   async expectSummaryPanelContains(text: string): Promise<void> {
     await expect(this.page.locator('#graph-side-panel')).toContainText(text);
+  }
+
+  async expectGraphCacheEnabled(): Promise<void> {
+    const response = await this.page.request.get('/api/test/metrics/graph/cache');
+    expect(response.ok()).toBeTruthy();
+  }
+
+  async readGraphCacheMetrics(): Promise<GraphCacheMetrics> {
+    const response = await this.page.request.get('/api/test/metrics/graph/cache');
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()) as GraphCacheMetrics;
+  }
+
+  async openGraphWithRefresh(namespace: string, refreshMs: number): Promise<void> {
+    const graphResponse = this.page.waitForResponse(
+      response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
+    );
+    await gotoConsolePage(
+      this.page,
+      'graph/namespaces',
+      {
+        duration: '60s',
+        edges: 'noEdgeLabels',
+        graphType: 'app',
+        namespaces: namespace,
+        refresh: String(refreshMs)
+      },
+      { waitForLoad: false }
+    );
+    const url = this.page.url();
+    if (!url.includes('/ossmconsole/')) {
+      await graphResponse;
+    }
+    await waitForLoadingComplete(this.page);
+  }
+
+  async refreshGraphTimes(times: number): Promise<void> {
+    for (let i = 0; i < times; i++) {
+      const graphResponse = this.page
+        .waitForResponse(
+          response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET',
+          { timeout: 60_000 }
+        )
+        .catch(() => undefined);
+      await this.getBySel('refresh-button').first().click();
+      const url = this.page.url();
+      if (!url.includes('/ossmconsole/')) {
+        await graphResponse;
+      }
+      await waitForLoadingComplete(this.page);
+      // PF refresh button debounce (matches Cypress cy.wait(600) between graph refreshes).
+      await this.page.waitForTimeout(600);
+    }
+  }
+
+  async expectGraphCacheMetricsIncreased(before: GraphCacheMetrics, minMisses: number, minHits: number): Promise<void> {
+    const after = await this.readGraphCacheMetrics();
+    expect(after.graphCacheMisses).toBeGreaterThanOrEqual(before.graphCacheMisses + minMisses);
+    expect(after.graphCacheHits).toBeGreaterThanOrEqual(before.graphCacheHits + minHits);
   }
 }

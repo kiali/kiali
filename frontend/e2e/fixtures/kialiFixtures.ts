@@ -7,6 +7,7 @@ import { IstioConfigWizardPage } from '../pages/IstioConfigWizardPage';
 import { K8sRoutingWizardPage } from '../pages/K8sRoutingWizardPage';
 import { MeshPage } from '../pages/MeshPage';
 import { NamespaceDetailPage } from '../pages/NamespaceDetailPage';
+import { NamespacesPage } from '../pages/NamespacesPage';
 import { OverviewPage } from '../pages/OverviewPage';
 import { ServiceDetailsPage } from '../pages/ServiceDetailsPage';
 import { ServicesPage } from '../pages/ServicesPage';
@@ -23,6 +24,7 @@ type KialiFixtures = {
   k8sRoutingWizardPage: K8sRoutingWizardPage;
   meshPage: MeshPage;
   namespaceDetailPage: NamespaceDetailPage;
+  namespacesPage: NamespacesPage;
   overviewPage: OverviewPage;
   serviceDetailsPage: ServiceDetailsPage;
   servicesPage: ServicesPage;
@@ -58,6 +60,9 @@ export const test = base.extend<KialiFixtures>({
   },
   namespaceDetailPage: async ({ page }, use) => {
     await use(new NamespaceDetailPage(page));
+  },
+  namespacesPage: async ({ page }, use) => {
+    await use(new NamespacesPage(page));
   },
   overviewPage: async ({ page }, use) => {
     await use(new OverviewPage(page));
