@@ -2,6 +2,7 @@ package get_mesh_traffic_graph
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -272,7 +273,21 @@ func modelsHealthStatusToSummary(status models.HealthStatus) string {
 }
 
 func issueFromCachedStatus(cached *models.CalculatedHealthStatus, workloadStatuses []*models.WorkloadStatus) string {
-	for _, ws := range workloadStatuses {
+	sorted := slices.Clone(workloadStatuses)
+	slices.SortFunc(sorted, func(a, b *models.WorkloadStatus) int {
+		if a == nil && b == nil {
+			return 0
+		}
+		if a == nil {
+			return 1
+		}
+		if b == nil {
+			return -1
+		}
+		return strings.Compare(a.Name, b.Name)
+	})
+
+	for _, ws := range sorted {
 		if ws == nil {
 			continue
 		}

@@ -104,6 +104,7 @@ func TestIssueFromCachedStatus_PrefersWorkloadIssueOverErrorRate(t *testing.T) {
 	}
 	workloadStatuses := []*models.WorkloadStatus{
 		{
+			Name:              "reviews-v1",
 			AvailableReplicas: 1,
 			DesiredReplicas:   3,
 		},
@@ -112,6 +113,28 @@ func TestIssueFromCachedStatus_PrefersWorkloadIssueOverErrorRate(t *testing.T) {
 	issue := issueFromCachedStatus(cached, workloadStatuses)
 
 	assert.Equal(t, "1/3 replicas available", issue)
+}
+
+func TestIssueFromCachedStatus_SortsWorkloadsByName(t *testing.T) {
+	workloads := []*models.WorkloadStatus{
+		{
+			Name:              "reviews-v2",
+			AvailableReplicas: 0,
+			DesiredReplicas:   2,
+		},
+		{
+			Name:              "productpage-v1",
+			AvailableReplicas: 1,
+			DesiredReplicas:   3,
+		},
+	}
+	reversed := []*models.WorkloadStatus{workloads[1], workloads[0]}
+
+	issue := issueFromCachedStatus(nil, workloads)
+	reversedIssue := issueFromCachedStatus(nil, reversed)
+
+	assert.Equal(t, "1/3 replicas available", issue)
+	assert.Equal(t, issue, reversedIssue)
 }
 
 func TestEvaluateWorkloadHealth_NilWorkload(t *testing.T) {
