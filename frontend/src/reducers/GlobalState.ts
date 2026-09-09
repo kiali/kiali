@@ -1,7 +1,7 @@
-import { GlobalState } from '../store/Store';
+import type { GlobalState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import { GlobalActions } from '../actions/GlobalActions';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {

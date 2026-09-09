@@ -3,8 +3,8 @@ import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
-import { PF_THEME_DARK, Theme } from 'types/Common';
-import { getKialiTheme } from 'utils/ThemeUtils';
+import { Theme } from 'types/Common';
+import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme, readDocumentTheme } from 'utils/ThemeUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
 type initializingScreenProps = {
@@ -60,9 +60,11 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     document.body.classList.add('kiosk');
   }
 
-  const theme = getKialiTheme();
-  if (theme === Theme.DARK) {
-    document.documentElement.classList.add(PF_THEME_DARK);
+  // OSSMC: Console owns <html> classes — read theme from the document so the logo
+  // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
+  const theme = isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme();
+  if (!isParentOwnedTheme()) {
+    applyDocumentTheme(theme);
   }
 
   return (
