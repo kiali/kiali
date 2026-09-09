@@ -111,6 +111,7 @@ export function applyDestinationRule(name: string, namespace: string, host: stri
       "host": "${host}"
     }
 }`);
+  waitForIstioConfig('DestinationRule', name, namespace);
 }
 
 export function patchDestinationRuleSubset(name: string, namespace: string, subset: string, labels: string): void {
@@ -125,6 +126,7 @@ export function patchDestinationRuleEnableMtls(name: string, namespace: string):
     `kubectl patch DestinationRule ${name} -n ${namespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "ISTIO_MUTUAL"}} }}'`,
     true
   );
+  waitForIstioConfig('DestinationRule', name, namespace);
 }
 
 export function patchDestinationRuleDisableMtls(name: string, namespace: string): void {
@@ -132,6 +134,7 @@ export function patchDestinationRuleDisableMtls(name: string, namespace: string)
     `kubectl patch DestinationRule ${name} -n ${namespace} --type=merge -p '{"spec":{"trafficPolicy":{"tls": {"mode": "DISABLE"}} }}'`,
     true
   );
+  waitForIstioConfig('DestinationRule', name, namespace);
 }
 
 export function applyVirtualService(name: string, namespace: string, routeName: string, routeHost: string): void {
@@ -222,6 +225,7 @@ export function applyPeerAuthentication(name: string, namespace: string): void {
         "namespace": "${namespace}"
     }
 }`);
+  waitForIstioConfig('PeerAuthentication', name, namespace);
 }
 
 export function patchPeerAuthenticationMtlsMode(name: string, namespace: string, mtlsMode: string): void {
@@ -229,6 +233,7 @@ export function patchPeerAuthenticationMtlsMode(name: string, namespace: string,
     `kubectl patch PeerAuthentication ${name} -n ${namespace} --type=merge -p '{"spec":{"mtls":{"mode": "${mtlsMode}"}}}'`,
     true
   );
+  waitForIstioConfig('PeerAuthentication', name, namespace);
 }
 
 export function applyIstioGateway(
@@ -368,6 +373,18 @@ export function applyK8sReferenceGrant(name: string, namespace: string, fromName
     ]
   }
 }`);
+}
+
+const SLEEP_MTLS_TEST_DR_NAMES = ['disable-mtls-kia0207', 'enable-mtls-kia0505'];
+
+/** KIA0207 and KIA0505 share PeerAuthentication/default and ns-wide DRs on sleep — clean between serial runs. */
+export function cleanSleepMtlsTestResources(): void {
+  for (const drName of SLEEP_MTLS_TEST_DR_NAMES) {
+    kubectlDelete(`DestinationRule ${drName} -n sleep`);
+    waitForResourceDeleted(`kubectl get DestinationRule ${drName} -n sleep`);
+  }
+  kubectlDelete('PeerAuthentication default -n sleep');
+  waitForResourceDeleted('kubectl get PeerAuthentication default -n sleep');
 }
 
 /** Mirrors Cypress `@clean-istio-namespace-resources-after` hook. */

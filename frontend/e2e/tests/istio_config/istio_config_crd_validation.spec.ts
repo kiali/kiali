@@ -14,6 +14,7 @@ import {
   applyVirtualService,
   applyVirtualServiceWithSubset,
   cleanIstioSystemTestResources,
+  cleanSleepMtlsTestResources,
   deleteIstioConfig,
   deleteIstioGateway,
   patchAuthorizationPolicyFromSourceNamespace,
@@ -418,6 +419,14 @@ test.describe('Istio Config CRD validation', () => {
   test.describe('sleep mTLS', () => {
     test.describe.configure({ mode: 'serial' });
 
+    test.beforeEach(() => {
+      cleanSleepMtlsTestResources();
+    });
+
+    test.afterEach(() => {
+      cleanSleepMtlsTestResources();
+    });
+
     test('KIA0207 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');
       ensureDemoApp('bookinfo');
@@ -431,15 +440,12 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
-      deleteIstioConfig('DestinationRule', drName, 'sleep');
-      deleteIstioConfig('PeerAuthentication', 'default', 'sleep');
     });
 
     test('KIA0505 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'enable-mtls');
       ensureDemoApp('bookinfo');
       ensureDemoApp('sleep');
-      deleteIstioConfig('PeerAuthentication', 'default', 'sleep');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
       patchDestinationRuleEnableMtls(drName, 'sleep');
       applyPeerAuthentication('default', 'sleep');
@@ -448,8 +454,6 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationStatus('sleep', 'PeerAuthentication', 'default', 'danger');
-      deleteIstioConfig('DestinationRule', drName, 'sleep');
-      deleteIstioConfig('PeerAuthentication', 'default', 'sleep');
     });
   });
 
