@@ -38,7 +38,7 @@ import { selectNamespace, selectNamespaces } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
 test.describe('Istio Config CRD validation', () => {
-  test.describe.configure({ mode: 'serial', timeout: 180_000 });
+  test.describe.configure({ timeout: 180_000 });
 
   test.afterAll(() => {
     cleanSleepMtlsTestResources();
