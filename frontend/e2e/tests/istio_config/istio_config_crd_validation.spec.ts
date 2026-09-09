@@ -417,7 +417,7 @@ test.describe('Istio Config CRD validation', () => {
 
   // Contend for sleep default PeerAuthentication — run one at a time.
   test.describe('sleep mTLS', () => {
-    test.describe.configure({ mode: 'serial', timeout: 300_000 });
+    test.describe.configure({ mode: 'serial' });
 
     test.beforeAll(() => {
       ensureDemoApp('bookinfo');
