@@ -13,10 +13,10 @@ import {
   IRowData,
   ISortBy,
   OnSort,
-  ThProps,
-  InnerScrollContainer
+  ThProps
 } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
+import { StickyTableScrollContainer } from './StickyTableScrollContainer';
 import { isKiosk } from 'components/Kiosk/KioskActions';
 import { store } from 'store/ConfigStore';
 
@@ -178,7 +178,9 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     table
   ) : (
     <div className={scrollStyle}>
-      <InnerScrollContainer className={innerScrollContainerStyle}>{table}</InnerScrollContainer>
+      <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={props.rows.length}>
+        {table}
+      </StickyTableScrollContainer>
     </div>
   );
 };

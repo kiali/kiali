@@ -72,7 +72,10 @@ export enum PFColors {
   BackgroundColor100 = 'var(--pf-t--global--background--color--primary--default)',
   BackgroundColor150 = 'var(--pf-t--global--background--color--tertiary--default)',
   BackgroundColor200 = 'var(--pf-t--global--background--color--secondary--default)',
+  BackgroundColorGlass = 'var(--pf-t--global--background--color--glass--primary--default)',
   BackgroundColorLight300 = 'var(--pf-t--global--background--color--secondary--default)',
+  // Solid fill for non-glass content over glass pages; stays opaque when primary turns translucent.
+  BackgroundColorSticky = 'var(--pf-t--global--background--color--sticky--default)',
 
   // PF standard colors (compatible with dark mode)
   Color100 = 'var(--pf-t--color--black)',
@@ -86,6 +89,7 @@ export enum PFColors {
   BorderColor200 = 'var(--pf-t--global--border--color--200)',
   BorderColor300 = 'var(--pf-t--global--border--color--300)',
   BorderColorLight100 = 'var(--pf-t--global--border--color--50)',
+  BorderDefault = 'var(--pf-t--global--border--color--default)',
 
   // PF colors suitable for dark backgrounds (don't change in Dark mode)
   Color300 = 'var(--pf-t--global--dark--background--color--300)',

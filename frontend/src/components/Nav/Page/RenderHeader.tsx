@@ -5,10 +5,16 @@ import { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isKiosk } from '../../Kiosk/KioskActions';
 import { PFColors } from 'components/Pf/PfColors';
+import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 const containerStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
-  paddingBottom: '1.5rem'
+  paddingBottom: '1.5rem',
+  $nest: contrastContentNest({
+    highContrast: {
+      borderBottom: `1px solid ${PFColors.BorderDefault}`
+    }
+  })
 });
 
 const headerRowStyle = kialiStyle({

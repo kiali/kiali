@@ -21,7 +21,7 @@ import { location, router } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
 import { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
+import { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toAmbientRate, toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
@@ -29,7 +29,7 @@ import { GraphToolbarActions } from 'actions/GraphToolbarActions';
 import { StatusState, StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
-import { getKialiTheme } from 'utils/ThemeUtils';
+import { applyDocumentTheme, getKialiTheme, isParentOwnedTheme, syncReduxThemeFromDocument } from 'utils/ThemeUtils';
 import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { ChatAIConfig } from 'types/Chatbot';
@@ -44,6 +44,7 @@ interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
+  setChatAI: (chatAI: ChatAIConfig) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -51,7 +52,6 @@ interface ReduxDispatchProps {
   setTracingInfo: (tracingInfo: TracingInfo | null) => void;
   setTrafficRates: (rates: TrafficRate[]) => void;
   statusRefresh: (statusState: StatusState) => void;
-  setChatAI: (chatAI: ChatAIConfig) => void;
 }
 
 type AuthenticationControllerReduxProps = ReduxStateProps & ReduxDispatchProps;
@@ -321,19 +321,24 @@ class AuthenticationControllerComponent extends React.Component<
   };
 
   private setDocLayout = (): void => {
-    // Set theme
-    const theme = getKialiTheme();
-    if (theme === Theme.DARK) {
-      document.documentElement.classList.add(PF_THEME_DARK);
+    const kiosk = getKioskMode();
+
+    // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
+    // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
+    // do not overwrite console classes.
+    if (isParentOwnedTheme()) {
+      syncReduxThemeFromDocument();
+    } else {
+      const theme = getKialiTheme();
+      applyDocumentTheme(theme);
+      store.dispatch(GlobalActions.setTheme(theme));
     }
-    store.dispatch(GlobalActions.setTheme(theme));
 
     // Set Kiosk mode
-    const isKiosk = isKioskMode();
-    if (isKiosk) {
+    if (isKioskMode()) {
       document.body.classList.add('kiosk');
     }
-    store.dispatch(GlobalActions.setKiosk(getKioskMode()));
+    store.dispatch(GlobalActions.setKiosk(kiosk));
   };
 
   private processServerStatus = (status: StatusState): void => {

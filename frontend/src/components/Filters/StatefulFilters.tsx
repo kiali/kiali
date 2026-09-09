@@ -45,11 +45,13 @@ import { connect } from 'react-redux';
 import { KialiAppState } from 'store/Store';
 import { languageSelector } from 'store/Selectors';
 import { classes } from 'typestyle';
+import { contrastContentNest } from 'styles/ThemeSurfaces';
 
 const toolbarStyle = kialiStyle({
   padding: 0,
   rowGap: 'var(--pf-t--global--spacer--md)',
   $nest: {
+    ...contrastContentNest(),
     '& > .pf-v6-c-toolbar__content': {
       paddingLeft: 0
     }
@@ -62,7 +64,8 @@ const bottomPadding = kialiStyle({
 
 const formSelectStyle = kialiStyle({
   borderColor: PFColors.BorderColorLight100,
-  backgroundColor: PFColors.BackgroundColor200,
+  // Opaque control fill (sticky stays solid under glass; secondary/primary go translucent).
+  backgroundColor: PFColors.BackgroundColorSticky,
   minWidth: '170px',
   maxWidth: '170px'
 });
