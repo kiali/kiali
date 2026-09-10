@@ -75,6 +75,9 @@
 #   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
 #   uninstall-acm        - Remove all ACM components cleanly
 #   status-acm           - Check the status of ACM installation
+#   install-mcoa-federation - Configure ACM MCOA recording rules and federation for Kiali (requires ACM 2.17 or later)
+#   uninstall-mcoa-federation - Remove the Kiali MCOA federation resources
+#   status-mcoa-federation - Show the Kiali MCOA federation resources
 #   install-kiali        - Install Kiali configured for ACM observability (supports 3 methods: helm-server, olm-operator, helm-operator)
 #   uninstall-kiali      - Remove Kiali installation
 #   status-kiali         - Check the status of Kiali installation
@@ -153,12 +156,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
 # Default values
 DEFAULT_ACM_NAMESPACE="open-cluster-management"
-DEFAULT_ACM_CHANNEL="release-2.15"
+DEFAULT_ACM_CHANNEL="release-2.17"
 DEFAULT_OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
 DEFAULT_MINIO_ACCESS_KEY="minio"
 DEFAULT_MINIO_SECRET_KEY="minio123"
 DEFAULT_CLIENT_EXE="oc"
 DEFAULT_TIMEOUT="1200"
+DEFAULT_MCOA_HUB_CONTEXT=""
+DEFAULT_MCOA_TARGET_NAMESPACES="istio-system"
+DEFAULT_MCOA_RULE_NAMESPACE="istio-system"
+DEFAULT_METRICS_COLLECTION_MODE="mcoa"
 
 # Kiali defaults
 DEFAULT_KIALI_NAMESPACE="istio-system"
@@ -166,6 +173,8 @@ DEFAULT_KIALI_REPO_DIR="$(cd "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
 DEFAULT_KIALI_OPERATOR_REPO_DIR="$(cd "${SCRIPT_DIR}/../../kiali-operator" &> /dev/null && pwd || echo "$(cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd)/kiali-operator")"
 DEFAULT_HELM_CHARTS_DIR="$(cd "${SCRIPT_DIR}/../../helm-charts" &> /dev/null && pwd || echo "$(cd "${SCRIPT_DIR}/../.." &> /dev/null && pwd)/helm-charts")"
 DEFAULT_KIALI_INSTALL_TYPE="helm-server"
+DEFAULT_KIALI_EXTERNAL="false"
+DEFAULT_KIALI_CLUSTER_NAME="cluster-default"
 KIALI_OLM_OPERATOR_NAMESPACE="openshift-operators"
 KIALI_HELM_OPERATOR_NAMESPACE="kiali-operator"
 
@@ -177,6 +186,7 @@ DEFAULT_TRAFFIC_INTERVAL="1"
 
 # Istio mode defaults
 DEFAULT_AMBIENT_MODE="true"
+DEFAULT_ISTIO_CLUSTER_NAME=""
 
 # Build defaults
 DEFAULT_SKIP_BUILD="false"
@@ -317,8 +327,8 @@ EOF
   return 0
 }
 
-check_prerequisites() {
-  debug "Checking prerequisites..."
+check_access_prerequisites() {
+  debug "Checking cluster access prerequisites..."
 
   # Check if client executable exists
   if ! which ${CLIENT_EXE} &>/dev/null; then
@@ -340,6 +350,14 @@ check_prerequisites() {
     return 1
   fi
   debug "Cluster-admin privileges confirmed"
+
+  return 0
+}
+
+check_prerequisites() {
+  debug "Checking installation prerequisites..."
+
+  check_access_prerequisites || return 1
 
   # Check for OpenShift cluster monitoring Prometheus (required for ACM observability)
   if ! ${CLIENT_EXE} get service prometheus-k8s -n openshift-monitoring &>/dev/null 2>&1; then
@@ -744,10 +762,15 @@ spec:
 EOF
 }
 
-# Helper function to create metrics allowlist ConfigMap in a namespace for user workload metrics.
-# Per ACM docs, user workload metrics need ConfigMaps in the SOURCE namespace with key "uwl_metrics_list.yaml"
+# Create a legacy ACM collector allowlist in the metrics source namespace.
+# ACM MCOA uses ScrapeConfig and PrometheusRule resources instead.
 create_namespace_metrics_allowlist() {
   local namespace="$1"
+
+  if [ "${METRICS_COLLECTION_MODE}" != "legacy" ]; then
+    debug "Skipping legacy metrics allowlist for ${namespace}; metrics collection mode is ${METRICS_COLLECTION_MODE}"
+    return 0
+  fi
 
   if [ -z "${namespace}" ]; then
     errormsg "Namespace parameter required for create_namespace_metrics_allowlist"
@@ -965,24 +988,24 @@ wait_for_observability() {
 install_acm() {
   infomsg "Starting ACM installation..."
 
-  # Check if already installed
   if check_acm_installed; then
-    infomsg "ACM is already installed in namespace ${ACM_NAMESPACE}"
-    infomsg "Run 'uninstall' first if you want to reinstall."
-    return 0
+    infomsg "ACM is already installed; reconciling observability resources"
+    # A previous run can leave the MultiClusterHub present but still
+    # installing. Do not apply dependent observability resources until the hub
+    # is actually ready.
+    wait_for_multiclusterhub
+  else
+    # Install ACM operator and hub when they are not already present.
+    create_acm_namespace
+    create_operator_group
+    create_subscription
+    wait_for_operator
+    create_multiclusterhub
+    wait_for_multiclusterhub
   fi
 
-  # Install ACM operator
-  create_acm_namespace
-  create_operator_group
-  create_subscription
-  wait_for_operator
-
-  # Create MultiClusterHub
-  create_multiclusterhub
-  wait_for_multiclusterhub
-
-  # Install observability
+  # Always reconcile observability. This also completes a hub that was installed
+  # manually or by an earlier partial run.
   create_observability_namespace
   install_minio
   create_thanos_secret
@@ -1059,9 +1082,9 @@ delete_multiclusterhub() {
 
 delete_acm_operator() {
   # Delete Subscription
-  if ${CLIENT_EXE} get subscription advanced-cluster-management -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
+  if ${CLIENT_EXE} get subscription.operators.coreos.com advanced-cluster-management -n ${ACM_NAMESPACE} &>/dev/null 2>&1; then
     infomsg "Deleting ACM Subscription..."
-    ${CLIENT_EXE} delete subscription advanced-cluster-management -n ${ACM_NAMESPACE} || true
+    ${CLIENT_EXE} delete subscription.operators.coreos.com advanced-cluster-management -n ${ACM_NAMESPACE} || true
   fi
 
   # Delete CSV
@@ -1087,6 +1110,11 @@ delete_acm_namespace() {
   fi
 }
 
+hive_has_live_workloads() {
+  ${CLIENT_EXE} get namespace hive >/dev/null 2>&1 && \
+    [ -n "$(${CLIENT_EXE} get deploy,statefulset,daemonset,pod -n hive -o name 2>/dev/null || true)" ]
+}
+
 delete_acm_crds() {
   infomsg "Deleting ACM CRDs..."
   local crds=$(${CLIENT_EXE} get crd -l operators.coreos.com/advanced-cluster-management.${ACM_NAMESPACE} -o name 2>/dev/null || true)
@@ -1102,6 +1130,78 @@ delete_acm_crds() {
     infomsg "Deleting ACM Observability CRDs..."
     echo "${obs_crds}" | xargs ${CLIENT_EXE} delete --timeout=${TIMEOUT}s || true
   fi
+
+  # OLM labels are not a reliable inventory after the ACM CSV and namespaces
+  # have been removed. ACM and MCE install many CRDs through operands, and
+  # those CRDs may never carry the subscription label used above. Remove the
+  # remaining product API groups explicitly so a later install does not find a
+  # partially installed hub.
+  local residual_crds
+  residual_crds=$(${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E \
+    '\.(open-cluster-management\.io|multicluster\.openshift\.io|multicluster\.x-k8s\.io|observatorium\.io)$' || true)
+  if [ -n "${residual_crds}" ]; then
+    infomsg "Deleting residual ACM, MCE, and Observatorium CRDs..."
+    echo "${residual_crds}" | xargs ${CLIENT_EXE} delete --timeout=${TIMEOUT}s || true
+  fi
+
+  # Hive CRDs installed by ACM do not consistently carry an ACM ownership
+  # label. Remove them only when there is no active Hive installation to
+  # preserve.
+  if hive_has_live_workloads; then
+    warnmsg "Preserving Hive CRDs because the hive namespace has live workloads"
+  else
+    residual_crds=$(${CLIENT_EXE} get crd -o name 2>/dev/null | grep -E \
+      '\.(hive\.openshift\.io|hiveinternal\.openshift\.io)$' || true)
+    if [ -n "${residual_crds}" ]; then
+      infomsg "Deleting residual ACM-installed Hive CRDs..."
+      echo "${residual_crds}" | xargs ${CLIENT_EXE} delete --timeout=${TIMEOUT}s || true
+    fi
+  fi
+}
+
+delete_acm_cluster_scoped_residue() {
+  local resources
+
+  # Operand teardown can leave aggregate roles, endpoint bindings, admission
+  # registrations, and local APIService discovery entries after the MCH is
+  # gone. These names are product-scoped and should not survive a complete ACM
+  # lab uninstall.
+  resources=$(${CLIENT_EXE} get clusterrole,clusterrolebinding -o name 2>/dev/null | grep -E \
+    '/(ocm:|.*open-cluster-management|.*multiclusterengine|.*multicluster-observability|.*observability.*mco)' || true)
+  if [ -n "${resources}" ]; then
+    infomsg "Deleting residual ACM cluster RBAC..."
+    echo "${resources}" | xargs ${CLIENT_EXE} delete --ignore-not-found || true
+  fi
+
+  resources=$(${CLIENT_EXE} get validatingwebhookconfiguration,mutatingwebhookconfiguration \
+    -o name 2>/dev/null | grep -E '/.*(open-cluster-management|multicluster|observability)' || true)
+  if [ -n "${resources}" ]; then
+    infomsg "Deleting residual ACM admission registrations..."
+    echo "${resources}" | xargs ${CLIENT_EXE} delete --ignore-not-found || true
+  fi
+
+  resources=$(${CLIENT_EXE} get apiservice -o name 2>/dev/null | grep -E \
+    '\.(open-cluster-management\.io|multicluster\.openshift\.io|multicluster\.x-k8s\.io|observatorium\.io)$' || true)
+  if [ -n "${resources}" ]; then
+    infomsg "Deleting residual ACM APIService registrations..."
+    echo "${resources}" | xargs ${CLIENT_EXE} delete --ignore-not-found || true
+  fi
+
+  if ! hive_has_live_workloads; then
+    resources=$(${CLIENT_EXE} get apiservice -o name 2>/dev/null | grep -E \
+      '\.(hive\.openshift\.io|hiveinternal\.openshift\.io)$' || true)
+    if [ -n "${resources}" ]; then
+      infomsg "Deleting residual ACM-installed Hive APIService registrations..."
+      echo "${resources}" | xargs ${CLIENT_EXE} delete --ignore-not-found || true
+    fi
+  fi
+
+  # Hive is installed as an ACM operand. Only remove the namespace when no
+  # workload remains; this protects a separately managed Hive installation.
+  if ${CLIENT_EXE} get namespace hive >/dev/null 2>&1 && ! hive_has_live_workloads; then
+    infomsg "Deleting empty ACM-created Hive namespace..."
+    ${CLIENT_EXE} delete namespace hive --ignore-not-found --timeout=${TIMEOUT}s || true
+  fi
 }
 
 uninstall_acm() {
@@ -1115,6 +1215,7 @@ uninstall_acm() {
   delete_acm_operator
   delete_acm_namespace
   delete_acm_crds
+  delete_acm_cluster_scoped_residue
 
   infomsg "======================================"
   infomsg "ACM uninstallation complete!"
@@ -1353,12 +1454,7 @@ setup_kiali_ca_bundle() {
   # Kiali (via Helm chart or operator) will create kiali-cabundle-openshift for the OpenShift service CA,
   # and use a projected volume to automatically combine both ConfigMaps.
   # Key MUST be 'additional-ca-bundle.pem' as per Kiali documentation.
-  if ${CLIENT_EXE} get configmap "${configmap_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Updating existing ${configmap_name} ConfigMap..."
-    ${CLIENT_EXE} delete configmap "${configmap_name}" -n ${KIALI_NAMESPACE}
-  fi
-
-  infomsg "Creating ${configmap_name} ConfigMap with ACM observability CA..."
+  infomsg "Reconciling ${configmap_name} ConfigMap with ACM observability CA..."
   cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: v1
 kind: ConfigMap
@@ -1393,17 +1489,13 @@ create_kiali_mtls_secret() {
     return 1
   fi
 
-  # Create or update the secret
-  # Only include tls.crt and tls.key - the CA bundle is in a separate ConfigMap
-  if ${CLIENT_EXE} get secret "${secret_name}" -n ${KIALI_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Updating existing ${secret_name} secret..."
-    ${CLIENT_EXE} delete secret "${secret_name}" -n ${KIALI_NAMESPACE}
-  fi
-
+  # Create or update the secret declaratively. Only include tls.crt and tls.key;
+  # the CA bundle is in a separate ConfigMap.
   ${CLIENT_EXE} create secret generic "${secret_name}" \
     -n ${KIALI_NAMESPACE} \
     --from-file=tls.crt="${cert_dir}/tls.crt" \
-    --from-file=tls.key="${cert_dir}/tls.key"
+    --from-file=tls.key="${cert_dir}/tls.key" \
+    --dry-run=client -o yaml | ${CLIENT_EXE} apply -f -
 
   debug "mTLS secret created: ${secret_name}"
 }
@@ -1602,6 +1694,8 @@ install_kiali_via_helm_server() {
     --set external_services.prometheus.thanos_proxy.enabled="true" \
     --set external_services.prometheus.thanos_proxy.retention_period="14d" \
     --set external_services.prometheus.thanos_proxy.scrape_interval="5m" \
+    --set clustering.ignore_home_cluster="${KIALI_EXTERNAL}" \
+    --set kubernetes_config.cluster_name="${KIALI_CLUSTER_NAME}" \
     --set deployment.logger.log_level="debug"
 
   wait_for_kiali_ready
@@ -1806,6 +1900,8 @@ metadata:
   name: kiali
   namespace: ${KIALI_NAMESPACE}
 spec:
+  clustering:
+    ignore_home_cluster: ${KIALI_EXTERNAL}
 ${deployment_spec}
   external_services:
     prometheus:
@@ -1818,6 +1914,8 @@ ${deployment_spec}
         enabled: true
         retention_period: "14d"
         scrape_interval: "5m"
+  kubernetes_config:
+    cluster_name: "${KIALI_CLUSTER_NAME}"
 EOF
 
   # Wait for operator to finish reconciliation
@@ -2194,12 +2292,13 @@ install_istio() {
     return 1
   fi
 
-  local istio_args=""
+  local -a istio_args=()
   if [ "${AMBIENT_MODE}" == "true" ]; then
-    istio_args="${istio_args} --config-profile ambient"
+    istio_args+=(--config-profile ambient)
   fi
+  [ -z "${ISTIO_CLUSTER_NAME}" ] || istio_args+=(--cluster-name "${ISTIO_CLUSTER_NAME}")
 
-  "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" ${istio_args}
+  "${SCRIPT_DIR}/istio/install-istio-via-sail.sh" "${istio_args[@]}"
   if [ $? -ne 0 ]; then
     errormsg "Istio installation failed"
     return 1
@@ -2233,10 +2332,12 @@ EOF
   infomsg "Creating PodMonitor for istio-system..."
   create_istio_podmonitor "istio-system"
 
-  infomsg "Creating ACM metrics allowlist for istio-system..."
-  create_namespace_metrics_allowlist "istio-system"
+  if [ "${METRICS_COLLECTION_MODE}" = "legacy" ]; then
+    infomsg "Configuring legacy ACM metrics allowlist for istio-system..."
+    create_namespace_metrics_allowlist "istio-system"
+  fi
 
-  # If Ambient mode is enabled, also create PodMonitor and allowlist for ztunnel namespace
+  # If Ambient mode is enabled, also create the PodMonitor and optional legacy allowlist.
   # This ensures ztunnel L4 metrics are scraped immediately when Ambient mode is installed
   if [ "${AMBIENT_MODE}" == "true" ]; then
     local ztunnel_namespace=""
@@ -2249,10 +2350,31 @@ EOF
     if [ -n "${ztunnel_namespace}" ]; then
       infomsg "Creating PodMonitor for ztunnel in namespace: ${ztunnel_namespace}..."
       create_istio_podmonitor "${ztunnel_namespace}"
-      infomsg "Creating ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
-      create_namespace_metrics_allowlist "${ztunnel_namespace}"
+      if [ "${METRICS_COLLECTION_MODE}" = "legacy" ]; then
+        infomsg "Configuring legacy ACM metrics allowlist for ztunnel namespace: ${ztunnel_namespace}..."
+        create_namespace_metrics_allowlist "${ztunnel_namespace}"
+      fi
     else
-      warnmsg "Could not find ztunnel daemonset - skipping ztunnel PodMonitor and allowlist creation"
+      warnmsg "Could not find ztunnel daemonset - skipping ztunnel PodMonitor and legacy allowlist configuration"
+    fi
+  fi
+
+  if [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] && \
+    [ "${SKIP_MCOA_RECONCILE}" != "true" ]; then
+    local hub_context="${MCOA_HUB_CONTEXT}"
+    [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
+    if command oc --context="${hub_context}" get mco observability >/dev/null 2>&1; then
+      local federation_namespaces="${MCOA_TARGET_NAMESPACES}"
+      if [ -n "${ztunnel_namespace:-}" ]; then
+        federation_namespaces=$(append_mcoa_namespace \
+          "${ztunnel_namespace}" "${federation_namespaces}")
+      fi
+      # Reconcile hub MCOA resources after monitors exist. Safe to repeat; may
+      # extend platform federation when ambient adds the ztunnel namespace.
+      run_mcoa_federation install "${federation_namespaces}"
+    else
+      warnmsg "MCOA federation was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
+      warnmsg "After ACM observability is ready, run install-mcoa-federation with --mcoa-hub-context."
     fi
   fi
 
@@ -2528,6 +2650,26 @@ init_openshift() {
 # Test App Functions
 ##############################################################################
 
+reconcile_app_mcoa_federation() {
+  local app_namespace=$1
+  [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] || return 0
+  [ "${SKIP_MCOA_RECONCILE}" != "true" ] || return 0
+
+  local hub_context="${MCOA_HUB_CONTEXT}"
+  local target_namespaces
+  [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
+  target_namespaces=$(append_mcoa_namespace \
+    "${app_namespace}" "${MCOA_TARGET_NAMESPACES}")
+
+  if command oc --context="${hub_context}" get mco observability >/dev/null 2>&1; then
+    infomsg "Reconciling ACM MCOA federation for ${app_namespace}..."
+    run_mcoa_federation install "${target_namespaces}"
+  else
+    warnmsg "MCOA federation for ${app_namespace} was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
+    warnmsg "After ACM observability is ready, run: $0 --mcoa-hub-context '${hub_context}' --mcoa-target-namespaces '${target_namespaces}' install-mcoa-federation"
+  fi
+}
+
 install_sidecar_app() {
   infomsg "Installing sidecar test application (frontend -> backend topology)..."
 
@@ -2738,9 +2880,13 @@ EOF
   infomsg "Creating PodMonitor for ${SIDECAR_APP_NAMESPACE}..."
   create_istio_podmonitor "${SIDECAR_APP_NAMESPACE}"
 
-  # Create metrics allowlist for this app namespace
-  infomsg "Creating ACM metrics allowlist for ${SIDECAR_APP_NAMESPACE}..."
-  create_namespace_metrics_allowlist "${SIDECAR_APP_NAMESPACE}"
+  # Create a metrics allowlist only when the legacy collector mode is selected.
+  if [ "${METRICS_COLLECTION_MODE}" = "legacy" ]; then
+    infomsg "Configuring legacy ACM metrics allowlist for ${SIDECAR_APP_NAMESPACE}..."
+    create_namespace_metrics_allowlist "${SIDECAR_APP_NAMESPACE}"
+  fi
+
+  reconcile_app_mcoa_federation "${SIDECAR_APP_NAMESPACE}"
 
   infomsg "======================================"
   infomsg "Sidecar test application installation complete!"
@@ -3209,8 +3355,13 @@ EOF
   # Create PodMonitor for waypoint proxies in this namespace (uses istio-proxy container)
   create_istio_podmonitor "${AMBIENT_APP_NAMESPACE}"
 
-  # Create metrics allowlist for ACM observability in app namespace
-  create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
+  # Create a metrics allowlist only when the legacy collector mode is selected.
+  if [ "${METRICS_COLLECTION_MODE}" = "legacy" ]; then
+    infomsg "Configuring legacy ACM metrics allowlist for ${AMBIENT_APP_NAMESPACE}..."
+    create_namespace_metrics_allowlist "${AMBIENT_APP_NAMESPACE}"
+  fi
+
+  reconcile_app_mcoa_federation "${AMBIENT_APP_NAMESPACE}"
 
   infomsg "======================================"
   infomsg "Ambient test application installation complete!"
@@ -3492,6 +3643,67 @@ generate_ambient_traffic() {
 # Create All Function
 ##############################################################################
 
+full_setup_mcoa_namespaces() {
+  local namespace namespace_list
+  local -a namespaces
+  local -a requested=("${MCOA_TARGET_NAMESPACES}" "${SIDECAR_APP_NAMESPACE}")
+  if [ "${AMBIENT_MODE}" = "true" ]; then
+    requested+=("${AMBIENT_APP_NAMESPACE}")
+    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel >/dev/null 2>&1; then
+      requested+=("ztunnel")
+    fi
+  fi
+
+  local result=""
+  declare -A seen=()
+  for namespace_list in "${requested[@]}"; do
+    IFS=',' read -ra namespaces <<< "${namespace_list}"
+    for namespace in "${namespaces[@]}"; do
+      namespace="${namespace// /}"
+      [ -n "${namespace}" ] || continue
+      [ -z "${seen[${namespace}]:-}" ] || continue
+      seen[${namespace}]=1
+      result="${result:+${result},}${namespace}"
+    done
+  done
+  printf '%s' "${result}"
+}
+
+append_mcoa_namespace() {
+  local namespace=$1 namespace_list=$2 candidate
+  local -a namespaces
+  IFS=',' read -ra namespaces <<< "${namespace_list}"
+  for candidate in "${namespaces[@]}"; do
+    candidate=${candidate// /}
+    if [ "${candidate}" = "${namespace}" ]; then
+      printf '%s' "${namespace_list}"
+      return
+    fi
+  done
+  printf '%s' "${namespace_list:+${namespace_list},}${namespace}"
+}
+
+run_mcoa_federation() {
+  local command=$1
+  local target_namespaces=$2
+  local hub_context="${MCOA_HUB_CONTEXT}"
+  [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
+
+  local args=("${command}" --hub-context "${hub_context}" \
+    --target-namespaces "${target_namespaces}" --rule-namespace "${MCOA_RULE_NAMESPACE}" \
+    --observability-namespace "${OBSERVABILITY_NAMESPACE}" --timeout "${TIMEOUT}")
+  [ "${MCOA_WITH_DASHBOARDS}" != "true" ] || args+=(--with-dashboards)
+  [ -z "${MCOA_PLACEMENT_NAME}" ] || args+=(--placement-name "${MCOA_PLACEMENT_NAME}")
+  [ -z "${MCOA_PLACEMENT_NAMESPACE}" ] || args+=(--placement-namespace "${MCOA_PLACEMENT_NAMESPACE}")
+  "${SCRIPT_DIR}/configure-acm-mcoa.sh" "${args[@]}"
+}
+
+configure_full_setup_mcoa() {
+  [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] || return 0
+  infomsg "Configuring ACM MCOA federation..."
+  run_mcoa_federation install "$(full_setup_mcoa_namespaces)"
+}
+
 create_all() {
   infomsg "======================================"
   infomsg "Creating complete ACM + Kiali environment"
@@ -3507,16 +3719,18 @@ create_all() {
   infomsg "  5. install-sidecar-app (Install sidecar test mesh application)"
   if [ "${AMBIENT_MODE}" == "true" ]; then
     infomsg "  6. install-ambient-app (Install Ambient test mesh application)"
-    infomsg "  7. traffic-sidecar/traffic-ambient (Generate traffic to both apps)"
-  else
-    infomsg "  6. traffic-sidecar (Generate initial traffic)"
   fi
+  [ "${METRICS_COLLECTION_MODE}" != "mcoa" ] || infomsg "  next. configure MCOA federation"
+  infomsg "  final. generate initial traffic"
   infomsg ""
 
   # Calculate total steps upfront so all step messages are consistent
   local total_steps=6
   if [ "${AMBIENT_MODE}" == "true" ]; then
     total_steps=7
+  fi
+  if [ "${METRICS_COLLECTION_MODE}" = "mcoa" ]; then
+    total_steps=$((total_steps + 1))
   fi
 
   # Step 1: Initialize OpenShift
@@ -3593,6 +3807,19 @@ create_all() {
     fi
   fi
 
+  if [ "${METRICS_COLLECTION_MODE}" = "mcoa" ]; then
+    local federation_step=6
+    [ "${AMBIENT_MODE}" != "true" ] || federation_step=7
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step ${federation_step}/${total_steps}: Configuring MCOA federation"
+    infomsg "======================================"
+    configure_full_setup_mcoa || {
+      errormsg "Failed to configure MCOA federation"
+      return 1
+    }
+  fi
+
   # Final step: Generate initial traffic (always the last step)
   infomsg ""
   infomsg "======================================"
@@ -3645,20 +3872,18 @@ install_components() {
   if [ "${AMBIENT_MODE}" == "true" ]; then
     total_steps=6
   fi
+  if [ "${METRICS_COLLECTION_MODE}" = "mcoa" ]; then
+    total_steps=$((total_steps + 1))
+  fi
 
   # Step 1: Conditionally install ACM
   infomsg "======================================"
   infomsg "Step ${current_step}/${total_steps}: Checking/Installing ACM"
   infomsg "======================================"
-  if check_acm_installed; then
-    infomsg "ACM is already installed - skipping"
-  else
-    infomsg "ACM not found - installing..."
-    install_acm
-    if [ $? -ne 0 ]; then
-      errormsg "Failed to install ACM"
-      return 1
-    fi
+  install_acm
+  if [ $? -ne 0 ]; then
+    errormsg "Failed to install or reconcile ACM observability"
+    return 1
   fi
   current_step=$((current_step + 1))
 
@@ -3733,6 +3958,18 @@ install_components() {
     current_step=$((current_step + 1))
   fi
 
+  if [ "${METRICS_COLLECTION_MODE}" = "mcoa" ]; then
+    infomsg ""
+    infomsg "======================================"
+    infomsg "Step ${current_step}/${total_steps}: Configuring MCOA federation"
+    infomsg "======================================"
+    configure_full_setup_mcoa || {
+      errormsg "Failed to configure MCOA federation"
+      return 1
+    }
+    current_step=$((current_step + 1))
+  fi
+
   # Final step: Generate initial traffic
   infomsg ""
   infomsg "======================================"
@@ -3798,6 +4035,9 @@ while [[ $# -gt 0 ]]; do
     uninstall-ambient-app) _CMD="uninstall-ambient-app"; shift ;;
     status-ambient-app) _CMD="status-ambient-app"; shift ;;
     traffic-ambient) _CMD="traffic-ambient"; shift ;;
+    install-mcoa-federation) _CMD="install-mcoa-federation"; shift ;;
+    uninstall-mcoa-federation) _CMD="uninstall-mcoa-federation"; shift ;;
+    status-mcoa-federation) _CMD="status-mcoa-federation"; shift ;;
     -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
     -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
     -on|--observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
@@ -3807,6 +4047,8 @@ while [[ $# -gt 0 ]]; do
     -t|--timeout) TIMEOUT="$2"; shift; shift ;;
     -kn|--kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
     -kit|--kiali-install-type) KIALI_INSTALL_TYPE="$2"; shift; shift ;;
+    --kiali-external) KIALI_EXTERNAL="$2"; shift; shift ;;
+    --kiali-cluster-name) KIALI_CLUSTER_NAME="$2"; shift; shift ;;
     -krd|--kiali-repo-dir) KIALI_REPO_DIR="$2"; shift; shift ;;
     -kord|--kiali-operator-repo-dir) KIALI_OPERATOR_REPO_DIR="$2"; shift; shift ;;
     -hcd|--helm-charts-dir) HELM_CHARTS_DIR="$2"; shift; shift ;;
@@ -3819,8 +4061,17 @@ while [[ $# -gt 0 ]]; do
     -ti|--traffic-interval) TRAFFIC_INTERVAL="$2"; shift; shift ;;
     -cont|--traffic-continuous) TRAFFIC_CONTINUOUS="true"; shift ;;
     --ambient) AMBIENT_MODE="$2"; shift; shift ;;
+    --istio-cluster-name) ISTIO_CLUSTER_NAME="$2"; shift; shift ;;
     -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
     -sb|--skip-build) SKIP_BUILD="true"; shift ;;
+    --mcoa-hub-context) MCOA_HUB_CONTEXT="$2"; shift; shift ;;
+    --mcoa-target-namespaces) MCOA_TARGET_NAMESPACES="$2"; shift; shift ;;
+    --mcoa-rule-namespace) MCOA_RULE_NAMESPACE="$2"; shift; shift ;;
+    --mcoa-placement-name) MCOA_PLACEMENT_NAME="$2"; shift; shift ;;
+    --mcoa-placement-namespace) MCOA_PLACEMENT_NAMESPACE="$2"; shift; shift ;;
+    --mcoa-with-dashboards) MCOA_WITH_DASHBOARDS="true"; shift ;;
+    --metrics-collection-mode) METRICS_COLLECTION_MODE="$2"; shift; shift ;;
+    --skip-mcoa-reconcile) SKIP_MCOA_RECONCILE="true"; shift ;;
     -v|--verbose) _VERBOSE="true"; shift ;;
     -h|--help)
       cat <<HELPMSG
@@ -3836,7 +4087,7 @@ Valid options:
       The namespace where ACM will be installed.
       Default: ${DEFAULT_ACM_NAMESPACE}
   -c|--channel <channel>
-      The ACM operator channel (e.g., release-2.14, release-2.15).
+      The ACM operator channel (e.g., release-2.16, release-2.17).
       Default: ${DEFAULT_ACM_CHANNEL}
   -on|--observability-namespace <namespace>
       The namespace for observability components (MinIO, Thanos).
@@ -3862,6 +4113,16 @@ Valid options:
         olm-operator    - Use OLM-installed operator with stock images
         helm-operator   - Build from source, install via kiali-operator helm chart
       Default: ${DEFAULT_KIALI_INSTALL_TYPE}
+  --kiali-external <true|false>
+      Ignore the cluster where Kiali runs. Use true when Kiali runs on an
+      external management cluster rather than a mesh cluster.
+      Default: ${DEFAULT_KIALI_EXTERNAL}
+  --kiali-cluster-name <name>
+      Kiali name for the cluster where it runs.
+      Default: ${DEFAULT_KIALI_CLUSTER_NAME}
+  --istio-cluster-name <name>
+      Istio multi-cluster name passed to Sail when installing Istio. If unset,
+      Sail uses its own default.
   -krd|--kiali-repo-dir <path>
       Path to the Kiali server git repository (for building images).
       Default: ${DEFAULT_KIALI_REPO_DIR}
@@ -3909,6 +4170,29 @@ Valid options:
       Images will still be pushed to the cluster if they already exist.
       Use this after you've built once and only need to test configuration changes.
       Default: ${DEFAULT_SKIP_BUILD}
+  --mcoa-hub-context <context>
+      Kubeconfig context for the ACM hub. Required by the MCOA federation commands.
+  --mcoa-target-namespaces <ns[,ns...]>
+      Namespaces that receive an edge PrometheusRule and whose platform pod
+      CPU and memory metrics are federated for Kiali.
+      Default: ${DEFAULT_MCOA_TARGET_NAMESPACES}
+  --mcoa-rule-namespace <namespace>
+      Control-plane namespace that must also appear in
+      --mcoa-target-namespaces. This ensures platform CPU and memory
+      federation for istiod.
+      Default: ${DEFAULT_MCOA_RULE_NAMESPACE}
+  --mcoa-with-dashboards
+      Also federate the optional Istio dashboard metric tier.
+  --mcoa-placement-name <name>
+      Existing MCOA placement to configure. Required when more than one exists.
+  --mcoa-placement-namespace <namespace>
+      Namespace of --mcoa-placement-name when placement names are ambiguous.
+  --metrics-collection-mode <mcoa|legacy>
+      Select ACM MCOA (requires ACM 2.17 or later) or the older ConfigMap allowlist collector path.
+      Default: ${DEFAULT_METRICS_COLLECTION_MODE}
+  --skip-mcoa-reconcile
+      Keep MCOA mode but leave federation reconciliation to an outer
+      orchestration script.
   -v|--verbose
       Enable verbose/debug output.
   -h|--help
@@ -3935,6 +4219,9 @@ The command must be one of:
   uninstall-ambient-app: Remove the Ambient test application
   status-ambient-app:   Check the status of the Ambient test application
   traffic-ambient:      Generate HTTP traffic to the Ambient test application
+  install-mcoa-federation:   Configure ACM MCOA recording rules and federation (requires ACM 2.17 or later)
+  uninstall-mcoa-federation: Remove Kiali MCOA federation resources
+  status-mcoa-federation:    Show Kiali MCOA federation resources
 
 Examples:
   # Standard installation (Ambient mode enabled by default)
@@ -3968,6 +4255,8 @@ Examples:
   $0 --kiali-install-type helm-operator install-kiali # Build operator and server from source
   $0 status-kiali                           # Check Kiali installation status (auto-detects method)
   $0 uninstall-kiali                        # Remove Kiali (auto-detects method)
+  $0 --mcoa-hub-context <hub-context> \
+    --mcoa-target-namespaces istio-system,my-app install-mcoa-federation
 
   # Sidecar test app (frontend -> backend topology, auto-generates traffic)
   $0 install-sidecar-app                    # Install sidecar test mesh application
@@ -4000,6 +4289,8 @@ done
 : ${TIMEOUT:=${DEFAULT_TIMEOUT}}
 : ${KIALI_NAMESPACE:=${DEFAULT_KIALI_NAMESPACE}}
 : ${KIALI_INSTALL_TYPE:=${DEFAULT_KIALI_INSTALL_TYPE}}
+: ${KIALI_EXTERNAL:=${DEFAULT_KIALI_EXTERNAL}}
+: ${KIALI_CLUSTER_NAME:=${DEFAULT_KIALI_CLUSTER_NAME}}
 : ${KIALI_REPO_DIR:=${DEFAULT_KIALI_REPO_DIR}}
 : ${KIALI_OPERATOR_REPO_DIR:=${DEFAULT_KIALI_OPERATOR_REPO_DIR}}
 : ${HELM_CHARTS_DIR:=${DEFAULT_HELM_CHARTS_DIR}}
@@ -4012,8 +4303,25 @@ done
 : ${TRAFFIC_INTERVAL:=${DEFAULT_TRAFFIC_INTERVAL}}
 : ${TRAFFIC_CONTINUOUS:=false}
 : ${AMBIENT_MODE:=${DEFAULT_AMBIENT_MODE}}
+: ${ISTIO_CLUSTER_NAME:=${DEFAULT_ISTIO_CLUSTER_NAME}}
 : ${AMBIENT_APP_NAMESPACE:=${DEFAULT_AMBIENT_APP_NAMESPACE}}
 : ${SKIP_BUILD:=${DEFAULT_SKIP_BUILD}}
+: ${MCOA_HUB_CONTEXT:=${DEFAULT_MCOA_HUB_CONTEXT}}
+: ${MCOA_TARGET_NAMESPACES:=${DEFAULT_MCOA_TARGET_NAMESPACES}}
+: ${MCOA_RULE_NAMESPACE:=${DEFAULT_MCOA_RULE_NAMESPACE}}
+: ${MCOA_WITH_DASHBOARDS:=false}
+: ${MCOA_PLACEMENT_NAME:=}
+: ${MCOA_PLACEMENT_NAMESPACE:=}
+: ${METRICS_COLLECTION_MODE:=${DEFAULT_METRICS_COLLECTION_MODE}}
+: ${SKIP_MCOA_RECONCILE:=false}
+
+case "${METRICS_COLLECTION_MODE}" in
+  legacy|mcoa) ;;
+  *)
+    errormsg "--metrics-collection-mode must be mcoa or legacy"
+    exit 1
+    ;;
+esac
 
 # Debug output
 debug "ACM_NAMESPACE=${ACM_NAMESPACE}"
@@ -4023,6 +4331,8 @@ debug "CLIENT_EXE=${CLIENT_EXE}"
 debug "TIMEOUT=${TIMEOUT}"
 debug "KIALI_NAMESPACE=${KIALI_NAMESPACE}"
 debug "KIALI_INSTALL_TYPE=${KIALI_INSTALL_TYPE}"
+debug "KIALI_EXTERNAL=${KIALI_EXTERNAL}"
+debug "KIALI_CLUSTER_NAME=${KIALI_CLUSTER_NAME}"
 debug "KIALI_REPO_DIR=${KIALI_REPO_DIR}"
 debug "KIALI_OPERATOR_REPO_DIR=${KIALI_OPERATOR_REPO_DIR}"
 debug "HELM_CHARTS_DIR=${HELM_CHARTS_DIR}"
@@ -4031,6 +4341,11 @@ debug "OPENSHIFT_VERSION=${OPENSHIFT_VERSION:-<default from crc-openshift.sh>}"
 debug "AMBIENT_MODE=${AMBIENT_MODE}"
 debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 debug "SKIP_BUILD=${SKIP_BUILD}"
+debug "MCOA_HUB_CONTEXT=${MCOA_HUB_CONTEXT}"
+debug "MCOA_TARGET_NAMESPACES=${MCOA_TARGET_NAMESPACES}"
+debug "MCOA_RULE_NAMESPACE=${MCOA_RULE_NAMESPACE}"
+debug "METRICS_COLLECTION_MODE=${METRICS_COLLECTION_MODE}"
+debug "SKIP_MCOA_RECONCILE=${SKIP_MCOA_RECONCILE}"
 
 ##############################################################################
 # Main
@@ -4053,12 +4368,29 @@ if [ "${_CMD}" == "install-kiali" ]; then
       exit 1
       ;;
   esac
+  case "${KIALI_EXTERNAL}" in
+    true|false) ;;
+    *)
+      errormsg "--kiali-external must be true or false"
+      exit 1
+      ;;
+  esac
 fi
 
-# Check prerequisites (skip for init-openshift and create-all since cluster may not exist yet)
-if [ "${_CMD}" != "init-openshift" ] && [ "${_CMD}" != "create-all" ]; then
-  check_prerequisites || exit 2
-fi
+# Installation commands may reconcile required cluster services such as UWM.
+# Uninstall and status commands must remain non-mutating, so they only verify
+# client availability, cluster connectivity, and permissions. MCOA federation
+# commands perform their own checks because they can target another context.
+case "${_CMD}" in
+  init-openshift|create-all|*mcoa-federation)
+    ;;
+  uninstall-*|status-*)
+    check_access_prerequisites || exit 2
+    ;;
+  *)
+    check_prerequisites || exit 2
+    ;;
+esac
 
 # Execute command
 case ${_CMD} in
@@ -4121,6 +4453,15 @@ case ${_CMD} in
     ;;
   traffic-ambient)
     generate_ambient_traffic
+    ;;
+  install-mcoa-federation|uninstall-mcoa-federation|status-mcoa-federation)
+    if [ -z "${MCOA_HUB_CONTEXT}" ]; then
+      errormsg "--mcoa-hub-context is required for ${_CMD}"
+      exit 1
+    fi
+    mcoa_command="${_CMD%%-mcoa-federation}"
+    [ "${mcoa_command}" = "status" ] && mcoa_command="verify"
+    run_mcoa_federation "${mcoa_command}" "${MCOA_TARGET_NAMESPACES}"
     ;;
   *)
     errormsg "Unknown command: ${_CMD}"
