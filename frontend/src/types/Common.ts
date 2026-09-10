@@ -34,9 +34,9 @@ export const KIALI_THEME = 'KIALI_THEME';
 export const KIALI_THEME_FELT = 'KIALI_THEME_FELT';
 
 export const enum ContrastMode {
-  TRADITIONAL = 'Traditional',
   GLASS = 'Glass',
-  HIGH_CONTRAST = 'High contrast'
+  HIGH_CONTRAST = 'High contrast',
+  TRADITIONAL = 'Traditional'
 }
 
 export const enum Theme {

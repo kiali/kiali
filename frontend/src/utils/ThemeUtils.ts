@@ -20,18 +20,40 @@ export type DocumentThemeClasses = {
   themeFelt: boolean;
 };
 
-export const getKialiTheme = (): Theme => {
+const isValidTheme = (theme: string | null | undefined): theme is Theme => {
+  return theme === Theme.LIGHT || theme === Theme.DARK;
+};
+
+const isValidContrastMode = (contrastMode: string | null | undefined): contrastMode is ContrastMode => {
   return (
-    (localStorage.getItem(KIALI_THEME) as Theme) || (store.getState().globalState.theme as Theme) || getDefaultTheme()
+    contrastMode === ContrastMode.TRADITIONAL ||
+    contrastMode === ContrastMode.GLASS ||
+    contrastMode === ContrastMode.HIGH_CONTRAST
   );
 };
 
+export const getKialiTheme = (): Theme => {
+  const stored =
+    (localStorage.getItem(KIALI_THEME) as Theme) || (store.getState().globalState.theme as Theme) || undefined;
+
+  if (isValidTheme(stored)) {
+    return stored;
+  }
+
+  return getDefaultTheme();
+};
+
 export const getKialiContrastMode = (): ContrastMode => {
-  return (
+  const stored =
     (localStorage.getItem(KIALI_CONTRAST_MODE) as ContrastMode) ||
     (store.getState().globalState.contrastMode as ContrastMode) ||
-    getDefaultContrastMode()
-  );
+    undefined;
+
+  if (isValidContrastMode(stored)) {
+    return stored;
+  }
+
+  return getDefaultContrastMode();
 };
 
 export const getKialiThemeFelt = (): boolean => {
@@ -164,9 +186,8 @@ export const observeDocumentTheme = (onChange: () => void): (() => void) => {
   return () => observer.disconnect();
 };
 
-// Get default theme from system settings
 const getDefaultTheme = (): Theme => {
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
     return Theme.DARK;
   }
 

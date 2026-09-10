@@ -111,7 +111,8 @@ export const globalStyle = kialiStyle({
       backgroundColor: 'transparent'
     },
     [`html.${PF_THEME_GLASS} & .${TABLE_SCROLLED} .pf-v6-c-table > .pf-v6-c-table__thead .pf-v6-c-table__th::after`]: {
-      backgroundColor: PFColors.BackgroundColorSticky
+      backgroundColor: PFColors.BackgroundColorSticky,
+      opacity: 1
     },
 
     /**
