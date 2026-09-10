@@ -420,8 +420,8 @@ test.describe('Istio Config CRD validation', () => {
     });
   });
 
-  // Contend for sleep default PeerAuthentication — run one at a time.
-  test.describe('sleep mTLS', () => {
+  // sleep + istio-system mTLS tests contend on PeerAuthentication/default — one worker, in order.
+  test.describe('mTLS contention', () => {
     test.describe.configure({ mode: 'serial' });
 
     test.beforeAll(() => {
@@ -431,10 +431,12 @@ test.describe('Istio Config CRD validation', () => {
 
     test.beforeEach(() => {
       cleanSleepMtlsTestResources();
+      cleanIstioSystemTestResources();
     });
 
     test.afterEach(() => {
       cleanSleepMtlsTestResources();
+      cleanIstioSystemTestResources();
     });
 
     test('KIA0207 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
@@ -462,6 +464,42 @@ test.describe('Istio Config CRD validation', () => {
       await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'PeerAuthentication', 'default', 'KIA0505');
     });
+
+    test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
+      const drName = crdResourceName(testInfo, 'disable-mtls');
+      applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
+      patchDestinationRuleDisableMtls(drName, 'sleep');
+      applyPeerAuthentication('default', 'istio-system');
+      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
+
+      await istioConfigPage.open();
+      await selectNamespace(page, 'sleep');
+      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
+      deleteIstioConfig('DestinationRule', drName, 'sleep');
+    });
+
+    test('KIA0506 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
+      const drName = crdResourceName(testInfo, 'enable-mtls');
+      applyDestinationRule(drName, 'sleep', '*.local');
+      patchDestinationRuleEnableMtls(drName, 'sleep');
+      applyPeerAuthentication('default', 'istio-system');
+      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'DISABLE');
+
+      await istioConfigPage.open();
+      await selectNamespace(page, 'istio-system');
+      await istioConfigPage.expectValidationOnDetailsPage('istio-system', 'PeerAuthentication', 'default', 'KIA0506');
+      deleteIstioConfig('DestinationRule', drName, 'sleep');
+    });
+
+    test('KIA1006 validation', crdValidationOnly, async ({ istioConfigPage, page }) => {
+      applySidecar('default', 'istio-system', 'default/sleep.sleep.svc.cluster.local');
+      patchSidecarWorkloadSelector('default', 'istio-system', 'app=grafana');
+
+      await istioConfigPage.open();
+      await selectNamespace(page, 'istio-system');
+      await istioConfigPage.expectValidationStatus('istio-system', 'Sidecar', 'default', 'warning');
+      deleteIstioConfig('Sidecar', 'default', 'istio-system');
+    });
   });
 
   // Deletes the bookinfo demo VirtualService — must not run concurrently with other bookinfo tests.
@@ -481,67 +519,6 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.expectValidationStatus('bookinfo', 'AuthorizationPolicy', name, 'warning');
       deleteIstioConfig('AuthorizationPolicy', name, 'bookinfo');
       restoreBookinfoNetworking();
-    });
-  });
-
-  // Contend for istio-system default PeerAuthentication / Sidecar — run one at a time.
-  test.describe('istio-system', () => {
-    test.describe.configure({ mode: 'serial' });
-
-    test.beforeEach(() => {
-      // KIA0505 leaves PeerAuthentication/default DISABLE in sleep, which suppresses KIA0208 mesh checks.
-      cleanSleepMtlsTestResources();
-      cleanIstioSystemTestResources();
-    });
-
-    test.afterEach(() => {
-      cleanSleepMtlsTestResources();
-      cleanIstioSystemTestResources();
-    });
-
-    test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
-      const drName = crdResourceName(testInfo, 'disable-mtls');
-      ensureDemoApp('bookinfo');
-      ensureDemoApp('sleep');
-      applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
-      patchDestinationRuleDisableMtls(drName, 'sleep');
-      applyPeerAuthentication('default', 'istio-system');
-      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
-
-      await istioConfigPage.open();
-      await selectNamespace(page, 'istio-system');
-      await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
-      await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
-      deleteIstioConfig('DestinationRule', drName, 'sleep');
-    });
-
-    test('KIA0506 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
-      const drName = crdResourceName(testInfo, 'enable-mtls');
-      ensureDemoApp('bookinfo');
-      ensureDemoApp('sleep');
-      applyDestinationRule(drName, 'sleep', '*.local');
-      patchDestinationRuleEnableMtls(drName, 'sleep');
-      applyPeerAuthentication('default', 'istio-system');
-      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'DISABLE');
-
-      await istioConfigPage.open();
-      await selectNamespace(page, 'istio-system');
-      await istioConfigPage.expectValidationOnDetailsPage('istio-system', 'PeerAuthentication', 'default', 'KIA0506');
-      deleteIstioConfig('DestinationRule', drName, 'sleep');
-      cleanIstioSystemTestResources();
-    });
-
-    test('KIA1006 validation', crdValidationOnly, async ({ istioConfigPage, page }) => {
-      ensureDemoApp('bookinfo');
-      applySidecar('default', 'istio-system', 'default/sleep.sleep.svc.cluster.local');
-      patchSidecarWorkloadSelector('default', 'istio-system', 'app=grafana');
-
-      await istioConfigPage.open();
-      await selectNamespace(page, 'istio-system');
-      await istioConfigPage.expectValidationStatus('istio-system', 'Sidecar', 'default', 'warning');
-      deleteIstioConfig('Sidecar', 'default', 'istio-system');
-      cleanIstioSystemTestResources();
     });
   });
 });
