@@ -9,6 +9,8 @@ import {
 import {
   applyDocumentContrastMode,
   applyDocumentTheme,
+  getKialiContrastMode,
+  getKialiTheme,
   isParentOwnedTheme,
   observeDocumentTheme,
   readDocumentContrastMode,
@@ -88,6 +90,52 @@ describe('applyDocumentContrastMode', () => {
     applyDocumentContrastMode(ContrastMode.GLASS, true);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
+  });
+});
+
+describe('getKialiTheme', () => {
+  afterEach(() => {
+    localStorage.clear();
+    store.dispatch(GlobalActions.setTheme(''));
+  });
+
+  it('defaults to dark when prefers-color-scheme is dark', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
+    expect(getKialiTheme()).toBe(Theme.DARK);
+  });
+
+  it('defaults to light when prefers-color-scheme is light', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+    expect(getKialiTheme()).toBe(Theme.LIGHT);
+  });
+
+  it('ignores legacy System value and falls back to OS preference', () => {
+    localStorage.setItem('KIALI_THEME', 'System');
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
+    expect(getKialiTheme()).toBe(Theme.DARK);
+  });
+});
+
+describe('getKialiContrastMode', () => {
+  afterEach(() => {
+    localStorage.clear();
+    store.dispatch(GlobalActions.setContrastMode(''));
+  });
+
+  it('defaults to high contrast when prefers-contrast is more', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
+    expect(getKialiContrastMode()).toBe(ContrastMode.HIGH_CONTRAST);
+  });
+
+  it('defaults to traditional when prefers-contrast is not more', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+    expect(getKialiContrastMode()).toBe(ContrastMode.TRADITIONAL);
+  });
+
+  it('ignores legacy System value and falls back to OS preference', () => {
+    localStorage.setItem('KIALI_CONTRAST_MODE', 'System');
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+    expect(getKialiContrastMode()).toBe(ContrastMode.TRADITIONAL);
   });
 });
 

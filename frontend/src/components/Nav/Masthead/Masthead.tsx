@@ -42,6 +42,12 @@ export const MastheadItems: React.FC = () => {
             <ThemeSwitch />
           </ToolbarItem>
 
+          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+            <ToolbarItem>
+              <LanguageSwitch />
+            </ToolbarItem>
+          )}
+
           <ToolbarItem>
             <NotificationCenterBadge />
           </ToolbarItem>
@@ -49,12 +55,6 @@ export const MastheadItems: React.FC = () => {
           <ToolbarItem>
             <HelpDropdown />
           </ToolbarItem>
-
-          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-            <ToolbarItem>
-              <LanguageSwitch />
-            </ToolbarItem>
-          )}
 
           <ToolbarItem className={centerItemStyle} data-test="user-dropdown">
             <UserDropdown />
