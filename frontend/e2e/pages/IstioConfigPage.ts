@@ -455,16 +455,39 @@ export class IstioConfigPage extends BasePage {
     return this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
   }
 
-  /** PeerAuthentication list rows show N/A until the details page is loaded with validate=true. */
+  /**
+   * List rows for some types (notably PeerAuthentication) show N/A until the details API runs with
+   * validate=true. Open details and wait for that response so downstream validations are computed.
+   */
+  async primeValidationFromDetails(namespace: string, typeName: string, instanceName: string): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+    await this.refreshList();
+    await waitForLoadingComplete(this.page);
+    await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
+    await this.open();
+    await waitForLoadingComplete(this.page);
+  }
+
+  /** Assert a validation code on the config details page (list icon may stay N/A on OSSMC). */
   async expectValidationOnDetailsPage(
     namespace: string,
     typeName: string,
     instanceName: string,
-    validationCode: string
+    validationCode: string,
+    severity: 'danger' | 'warning' = 'danger'
   ): Promise<void> {
     await this.ensureConfigurationValidationEnabled();
+    await this.refreshList();
     await waitForLoadingComplete(this.page);
+    await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
+    await this.expectGroupedValidationMessage(validationCode, 1, severity);
+  }
 
+  private async openConfigDetailsAndWaitForValidation(
+    namespace: string,
+    typeName: string,
+    instanceName: string
+  ): Promise<void> {
     const validateResponse = this.page.waitForResponse(
       response =>
         response.request().method() === 'GET' &&
@@ -481,7 +504,6 @@ export class IstioConfigPage extends BasePage {
       .click();
     await validateResponse;
     await waitForLoadingComplete(this.page);
-    await this.expectGroupedValidationMessage(validationCode, 1, 'danger');
   }
 
   async expectGroupedValidationMessage(
