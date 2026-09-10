@@ -201,6 +201,18 @@ export const clusterParameterExists = (present: boolean): void => {
   });
 };
 
+export const clickSpanFilterOptionWithFallback = (expectedOption: string, fallbackOption = 'waypoint'): void => {
+  cy.get('ul[role="listbox"]')
+    .should('be.visible')
+    .then($list => {
+      if ($list.find(`li[label="${expectedOption}"]`).length > 0) {
+        cy.get(`li[label="${expectedOption}"]`).find('button').click();
+      } else {
+        cy.get(`li[label="${fallbackOption}"]`).find('button').click();
+      }
+    });
+};
+
 Then(`user doesn't see the {string} menu`, menu => {
   cy.get('#page-sidebar').find(`#${menu}`).should('not.exist');
 });

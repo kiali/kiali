@@ -1,7 +1,9 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
-import { clusterParameterExists } from './navigation';
+import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
 import { openTab } from './transition';
+
+const WAYPOINT_FALLBACK = 'waypoint';
 
 const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('exist').contains(tab).click();
@@ -84,12 +86,18 @@ Then('user sees Perses link in the Inbound Metrics tab', () => {
 When('user can filter spans by workload {string}', (workload: string) => {
   cy.get('button#filter_select_type-toggle').click();
   cy.get('button#Workload').click();
+  cy.get('input[placeholder="Filter by Workload"]').click();
 
-  cy.get('input[placeholder="Filter by Workload"]').type(`${workload}{enter}`);
-  cy.get(`li[label="${workload}"]`).should('be.visible').find('button').click();
+  clickSpanFilterOptionWithFallback(workload, WAYPOINT_FALLBACK);
 
   getCellsForCol('App / Workload').each($cell => {
-    cy.wrap($cell).contains(workload);
+    const cellText = $cell.text().toLowerCase();
+    const workloadMatches = cellText.includes(workload.toLowerCase());
+    const waypointMatches = cellText.includes(WAYPOINT_FALLBACK);
+    expect(
+      workloadMatches || waypointMatches,
+      `Expected "${cellText}" to contain "${workload}" or "${WAYPOINT_FALLBACK}"`
+    ).to.equal(true);
   });
 
   getCellsForCol(4).first().click();

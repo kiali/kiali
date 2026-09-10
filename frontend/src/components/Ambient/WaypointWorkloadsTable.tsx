@@ -12,7 +12,7 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 import { SortableCompareTh } from './ZtunnelConfig';
 import { WaypointInfo, WorkloadInfo } from '../../types/Workload';
 import { isMultiCluster } from '../../config';

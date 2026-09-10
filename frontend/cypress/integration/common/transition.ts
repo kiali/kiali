@@ -34,5 +34,11 @@ export const waitForKialiApiReady = (timeoutMs = KIALI_API_READY_TIMEOUT_MS): vo
 };
 
 export const openTab = (tab: string): void => {
-  cy.get('#basic-tabs', { timeout: 60000 }).should('exist').contains(tab).click(); // Can be very slow for OpenShift, specially in the UI
+  // In OSSMC the console header can push tabs below the viewport; scroll before click.
+  cy.get('#basic-tabs', { timeout: 60000 })
+    .should('exist')
+    .contains(tab)
+    .scrollIntoView()
+    .should('be.visible')
+    .click();
 };
