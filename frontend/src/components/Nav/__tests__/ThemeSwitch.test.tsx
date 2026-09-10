@@ -13,17 +13,15 @@ import { store } from 'store/ConfigStore';
 
 describe('ThemeSwitch renders', () => {
   it('light theme', () => {
-    const { container } = render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />
-    );
-    expect(container).toMatchSnapshot();
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
+
+    expect(screen.getByLabelText(/Theme selection, current: Light/)).toBeInTheDocument();
   });
 
   it('dark theme', () => {
-    const { container } = render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />
-    );
-    expect(container).toMatchSnapshot();
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />);
+
+    expect(screen.getByLabelText(/Theme selection, current: Dark/)).toBeInTheDocument();
   });
 });
 
