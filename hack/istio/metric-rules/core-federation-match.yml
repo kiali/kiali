@@ -1,0 +1,39 @@
+# Core tier federation match[] selectors.
+#
+# Merged into prometheus-federated by default (demo/render-prometheus-federated.py / demo/install.sh).
+# Metric list and grouping: core-metrics.yml
+#
+# - Istio traffic: workload:* recording rules on the edge, relabeled to istio_* on Federated Prometheus
+# - All other core metrics: federated directly by name from the edge Prometheus
+
+match:
+# Istio traffic (pod-aggregated on edge via recording rules)
+- '{__name__=~"workload:istio_requests_total"}'
+- '{__name__=~"workload:istio_request_bytes_(bucket|count|sum)"}'
+- '{__name__=~"workload:istio_request_duration_milliseconds_(bucket|count|sum)"}'
+- '{__name__=~"workload:istio_request_messages_total"}'
+- '{__name__=~"workload:istio_response_bytes_(bucket|count|sum)"}'
+- '{__name__=~"workload:istio_response_messages_total"}'
+- '{__name__=~"workload:istio_tcp_connections_(opened|closed)_total"}'
+- '{__name__=~"workload:istio_tcp_(received|sent)_bytes_total"}'
+# Istio info (not aggregated)
+- '{__name__=~"istio_build"}'
+# Control plane overview (Kiali mesh page)
+- '{__name__=~"container_cpu_usage_seconds_total"}'
+- '{__name__=~"container_memory_working_set_bytes"}'
+- '{__name__=~"process_cpu_seconds_total"}'
+- '{__name__=~"process_resident_memory_bytes"}'
+- '{__name__=~"pilot_info"}'
+- '{__name__=~"pilot_proxy_convergence_time_(sum|count)"}'
+- '{__name__=~"pilot_services"}'
+- '{__name__=~"pilot_xds$"}'
+- '{__name__=~"pilot_xds_pushes"}'
+- '{__name__=~"workload_manager_active_proxy_count"}'
+# Envoy workload details
+- '{__name__=~"envoy_cluster_upstream_cx_active"}'
+- '{__name__=~"envoy_cluster_upstream_rq_total"}'
+- '{__name__=~"envoy_listener_downstream_cx_active"}'
+- '{__name__=~"envoy_listener_http_downstream_rq"}'
+- '{__name__=~"envoy_server_memory_allocated"}'
+- '{__name__=~"envoy_server_memory_heap_size"}'
+- '{__name__=~"envoy_server_uptime"}'
