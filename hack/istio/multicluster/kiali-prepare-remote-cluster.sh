@@ -28,6 +28,7 @@ DEFAULT_HELM="helm"
 DEFAULT_HELM_CHARTS="kiali-server"
 DEFAULT_KIALI_CLUSTER_CONTEXT="east"
 DEFAULT_KIALI_CLUSTER_NAMESPACE="istio-system"
+DEFAULT_KIALI_ROUTE_URL=""
 DEFAULT_KIALI_VERSION="latest"
 DEFAULT_PROCESS_KIALI_SECRET="true"
 DEFAULT_PROCESS_REMOTE_RESOURCES="true"
@@ -47,6 +48,7 @@ DEFAULT_USE_IMPERSONATION="false"
 : ${HELM:=${DEFAULT_HELM}}
 : ${KIALI_CLUSTER_CONTEXT:=${DEFAULT_KIALI_CLUSTER_CONTEXT}}
 : ${KIALI_CLUSTER_NAMESPACE:=${DEFAULT_KIALI_CLUSTER_NAMESPACE}}
+: ${KIALI_ROUTE_URL:=${DEFAULT_KIALI_ROUTE_URL}}
 : ${KIALI_RESOURCE_NAME:=${DEFAULT_RESOURCE_NAME}}
 : ${KIALI_SERVER_HELM_CHARTS:=${DEFAULT_HELM_CHARTS}}
 : ${KIALI_VERSION:=${DEFAULT_KIALI_VERSION}}
@@ -109,7 +111,7 @@ create_resources_in_remote_cluster() {
   fi
 
   local helm_repo_arg="--repo https://kiali.org/helm-charts"
-  if [ -f "${KIALI_SERVER_HELM_CHARTS}" ]; then
+  if [ -e "${KIALI_SERVER_HELM_CHARTS}" ]; then
     helm_repo_arg=""
   fi
 
@@ -119,6 +121,15 @@ create_resources_in_remote_cluster() {
       error "--use-impersonation is only supported on OpenShift clusters (requires OpenShift auth strategy)"
     fi
     auth_helm_args="--set auth.strategy=openshift --set auth.openshift.impersonation.enabled=true"
+  elif [ "${IS_OPENSHIFT}" == "true" ] && [ -n "${KIALI_ROUTE_URL}" ]; then
+    # A remote-resources-only installation has no local Kiali Route from which
+    # the chart can derive its OpenShift OAuth callback URI.
+    auth_helm_args="--set auth.strategy=openshift"
+  fi
+
+  local kiali_route_helm_arg=""
+  if [ -n "${KIALI_ROUTE_URL}" ]; then
+    kiali_route_helm_arg="--set-string auth.openshift.redirect_uris[0]=${KIALI_ROUTE_URL}/api/auth/callback/${REMOTE_CLUSTER_NAME}"
   fi
 
   local helm_template_output="$(${HELM} template            \
@@ -129,6 +140,7 @@ create_resources_in_remote_cluster() {
       --set deployment.instance_name=${KIALI_RESOURCE_NAME} \
       --set deployment.cluster_wide_access=true             \
       --set deployment.view_only_mode=${VIEW_ONLY}          \
+      ${kiali_route_helm_arg}                                \
       ${auth_helm_args}                                     \
       ${helm_repo_arg}                                      \
       kiali-server                                          \
@@ -303,6 +315,35 @@ EOF
     local user_auth="token: ${TOKEN}"
   fi
 
+  # Use `data`, rather than `stringData`, so server-side apply can reconcile the
+  # Secret without a client-side last-applied annotation containing the token.
+  # The encoded value remains protected by the Secret API; base64 is not a
+  # security boundary.
+  local remote_cluster_kubeconfig
+  remote_cluster_kubeconfig=$(cat <<EOF
+apiVersion: v1
+kind: Config
+preferences: {}
+current-context: ${REMOTE_CLUSTER_NAME}
+contexts:
+- name: ${REMOTE_CLUSTER_NAME}
+  context:
+    cluster: ${REMOTE_CLUSTER_NAME}
+    user: ${REMOTE_CLUSTER_NAME}
+users:
+- name: ${REMOTE_CLUSTER_NAME}
+  user:
+$(echo "${user_auth}" | sed "s/^/    /g")
+clusters:
+- name: ${REMOTE_CLUSTER_NAME}
+  cluster:
+    server: ${remote_cluster_server_url}
+    ${cert_auth_yaml}
+EOF
+)
+  local remote_cluster_kubeconfig_data
+  remote_cluster_kubeconfig_data=$(printf '%s' "${remote_cluster_kubeconfig}" | base64 --wrap=0)
+
   KIALI_SECRET_YAML=$(cat <<EOF
 ---
 apiVersion: v1
@@ -314,26 +355,8 @@ metadata:
     ${KIALI_SECRET_LABEL_NAME_MULTICLUSTER}: "true"
   annotations:
     ${KIALI_SECRET_ANNOTATION_NAME_CLUSTER}: ${REMOTE_CLUSTER_NAME}
-stringData:
-  ${REMOTE_CLUSTER_NAME}: |
-    apiVersion: v1
-    kind: Config
-    preferences: {}
-    current-context: ${REMOTE_CLUSTER_NAME}
-    contexts:
-    - name: ${REMOTE_CLUSTER_NAME}
-      context:
-        cluster: ${REMOTE_CLUSTER_NAME}
-        user: ${REMOTE_CLUSTER_NAME}
-    users:
-    - name: ${REMOTE_CLUSTER_NAME}
-      user:
-$(echo "${user_auth}" | sed "s/^/        /g")
-    clusters:
-    - name: ${REMOTE_CLUSTER_NAME}
-      cluster:
-        server: ${remote_cluster_server_url}
-        ${cert_auth_yaml}
+data:
+  ${REMOTE_CLUSTER_NAME}: ${remote_cluster_kubeconfig_data}
 ...
 EOF
 )
@@ -341,7 +364,8 @@ EOF
   if [ "${DRY_RUN}" == "true" ]; then
     echo "${KIALI_SECRET_YAML}"
   else
-    echo "${KIALI_SECRET_YAML}" | ${CLIENT_EXE_KIALI_CLUSTER} apply ${DRY_RUN_ARG} -f -
+    echo "${KIALI_SECRET_YAML}" | ${CLIENT_EXE_KIALI_CLUSTER} apply --server-side \
+      --field-manager=kiali-remote-cluster-secret ${DRY_RUN_ARG} -f -
   fi
 
   info "A remote cluster secret named [${KIALI_SECRET_FULL_NAME}] has been created in the Kiali cluster namespace [${KIALI_CLUSTER_NAMESPACE}]. It can be used by Kiali to access the remote cluster."
@@ -388,6 +412,10 @@ while [ $# -gt 0 ]; do
       ;;
     -kcn|--kiali-cluster-namespace)
       KIALI_CLUSTER_NAMESPACE="$2"
+      shift;shift
+      ;;
+    -kru|--kiali-route-url)
+      KIALI_ROUTE_URL="$2"
       shift;shift
       ;;
     -krn|--kiali-resource-name)
@@ -499,6 +527,11 @@ Valid command line arguments:
                                   in the cluster defined by the Kiali cluster
                                   context (see --kiali-cluster-context).
                                   Default: "${DEFAULT_KIALI_CLUSTER_NAMESPACE}"
+  -kru|--kiali-route-url: public URL of Kiali on its home cluster. On OpenShift,
+                          this creates a matching OAuthClient on the remote
+                          cluster with a cluster-specific callback URI unless
+                          --use-impersonation true is selected.
+                          Example: https://kiali-istio-system.apps.example.com
   -krn|--kiali-resource-name: used to name all the resources on the remote cluster.
                               Default: "${DEFAULT_RESOURCE_NAME}"
   -kshc|--kiali-server-helm-charts <path>: If specified, must be the path to a Kiali server helm charts tarball. If not
