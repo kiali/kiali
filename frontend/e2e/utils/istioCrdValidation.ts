@@ -376,11 +376,12 @@ export function applyK8sReferenceGrant(name: string, namespace: string, fromName
 }
 
 const SLEEP_MTLS_TEST_DR_NAMES = ['disable-mtls-kia0207', 'enable-mtls-kia0505'];
+const ISTIO_SYSTEM_MTLS_TEST_DR_NAMES = ['disable-mtls-kia0208', 'enable-mtls-kia0506'];
 
 /** KIA0207 and KIA0505 share PeerAuthentication/default and ns-wide DRs on sleep — clean between serial runs. */
 export function cleanSleepMtlsTestResources(): void {
   const cleanupTimeoutMs = 10_000;
-  for (const drName of SLEEP_MTLS_TEST_DR_NAMES) {
+  for (const drName of [...SLEEP_MTLS_TEST_DR_NAMES, ...ISTIO_SYSTEM_MTLS_TEST_DR_NAMES]) {
     kubectlDelete(`DestinationRule ${drName} -n sleep`);
     waitForResourceDeleted(`kubectl get DestinationRule ${drName} -n sleep`, cleanupTimeoutMs);
   }

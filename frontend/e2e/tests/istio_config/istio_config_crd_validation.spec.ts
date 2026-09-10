@@ -488,7 +488,14 @@ test.describe('Istio Config CRD validation', () => {
   test.describe('istio-system', () => {
     test.describe.configure({ mode: 'serial' });
 
+    test.beforeEach(() => {
+      // KIA0505 leaves PeerAuthentication/default DISABLE in sleep, which suppresses KIA0208 mesh checks.
+      cleanSleepMtlsTestResources();
+      cleanIstioSystemTestResources();
+    });
+
     test.afterEach(() => {
+      cleanSleepMtlsTestResources();
       cleanIstioSystemTestResources();
     });
 
@@ -507,7 +514,6 @@ test.describe('Istio Config CRD validation', () => {
       await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
-      cleanIstioSystemTestResources();
     });
 
     test('KIA0506 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
