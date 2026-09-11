@@ -90,6 +90,7 @@
     "playwright:run:core2": "playwright test --project=core-2 --pass-with-no-tests",
     "playwright:run:core-caching": "playwright test --project=core-caching --pass-with-no-tests",
     "playwright:run:crd-validation": "playwright test --project=crd-validation --pass-with-no-tests",
+    "playwright:run:core-optional": "playwright test --project=crd-validation --project=perses --pass-with-no-tests",
     "playwright:run:junit": "playwright test --project=crd-validation --project=core-1 --project=core-2 --project=core-caching --pass-with-no-tests",
     "playwright:run:all": "playwright test --project=smoke --project=core-1 --project=core-2 --project=core-caching --project=crd-validation --project=perses --project=ai-chatbot --pass-with-no-tests",
     "playwright:run:ambient:junit": "playwright test --project=ambient --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
