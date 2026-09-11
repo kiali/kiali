@@ -29,10 +29,15 @@ rstest.mock('@patternfly/chatbot', () => ({
   }) => (
     <article data-test={dataTest}>
       {name && <span className="message-name">{name}</span>}
-      {content && <span className="message-content">{content}</span>}
-      {extraContent?.beforeMainContent}
-      {extraContent?.afterMainContent}
-      {isLoading && <span aria-label="loading" role="progressbar" />}
+      {isLoading ? (
+        <span aria-label="loading" role="progressbar" />
+      ) : (
+        <>
+          {content && <span className="message-content">{content}</span>}
+          {extraContent?.beforeMainContent}
+          {extraContent?.afterMainContent}
+        </>
+      )}
     </article>
   )
 }));
@@ -104,13 +109,13 @@ describe('EntryChat', () => {
       expect(screen.getByTestId('kiali__chat-entry-ai')).toBeInTheDocument();
     });
 
-    it('renders a loading spinner while the message is streaming', () => {
+    it('renders a loading spinner while the message is streaming and no text has arrived yet', () => {
       store.dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {
             id: 'ai-stream',
             who: 'ai',
-            text: 'Thinking...',
+            text: '',
             isStreaming: true,
             isCancelled: false,
             isTruncated: false
@@ -224,7 +229,7 @@ describe('EntryChat', () => {
   });
 
   describe('truncated state', () => {
-    it('renders a warning alert when the response was truncated', () => {
+    it('renders partial response text before the truncation warning', () => {
       store.dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {
@@ -238,7 +243,27 @@ describe('EntryChat', () => {
         })
       );
       renderEntryChat(0);
-      expect(screen.getByText('Response truncated due to output length limit.')).toBeInTheDocument();
+      const partialAnswer = screen.getByText('Partial answer');
+      const warning = screen.getByText('Response truncated due to output length limit.');
+      expect(partialAnswer.compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows streamed text while the response is still loading once tokens arrive', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-stream-truncated',
+            who: 'ai',
+            text: 'Partial answer so far',
+            isCancelled: false,
+            isStreaming: true,
+            isTruncated: false
+          }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.getByText('Partial answer so far')).toBeInTheDocument();
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
   });
 
