@@ -1,11 +1,17 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
-import { hasPersesDeployment, hasPersesExternalLinks } from '../../utils/kialiConfig';
+import { hasPersesExternalLinks, hasPersesInCluster, isPersesEnabledInKiali } from '../../utils/kialiConfig';
 import { persesOnly } from '../../utils/suite-tags';
 
 test.describe('Perses integration', () => {
-  test.beforeEach(() => {
-    test.skip(!hasPersesDeployment(), 'Perses deployment is not installed in istio-system');
+  test.beforeEach(async ({ request }) => {
+    if (await isPersesEnabledInKiali(request)) {
+      return;
+    }
+    const reason = hasPersesInCluster()
+      ? 'Perses is running in istio-system but Kiali external_services.perses is not enabled'
+      : 'Perses is not installed in istio-system (see hack/setup-kind-in-ci.sh --install-perses true)';
+    test.skip(true, reason);
   });
 
   test('Perses Infra', persesOnly, async ({ meshPage }) => {

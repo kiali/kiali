@@ -140,11 +140,27 @@ hack/run-integration-tests.sh --test-suite playwright-core-optional
 
 Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
 
-Requires Perses installed and configured (`hack/setup-kind-in-ci.sh --install-perses true` or Jenkins with Perses in the mesh). Tests skip when the Perses deployment or `/api/perses` external links are missing.
+Requires Perses in the cluster **and** `external_services.perses` in the Kiali config. Port-forwarding Perses alone is not enough — tests call Kiali `/api/perses` (204 means disabled).
 
 ```bash
+# 1. Perses in cluster (StatefulSet + svc/perses in istio-system)
+kubectl get svc perses -n istio-system
+
+# 2. Start Kiali with Perses config (separate terminal)
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-perses.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-prom --port-forward-grafana --no-browser
+
+# 3. Port-forward Perses for external_url links (separate terminal)
+kubectl port-forward -n istio-system svc/perses 4000:8080
+
+# 4. Verify Kiali sees Perses (must be HTTP 200, not 204)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:20001/kiali/api/perses
+
+# 5. Run tests against local Kiali
 cd frontend
-yarn playwright:run:perses
+PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
 ```
 
 ## Local run
