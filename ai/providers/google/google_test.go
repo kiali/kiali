@@ -323,7 +323,11 @@ func TestGoogle_GetProviderOptions_UnsupportedConfig(t *testing.T) {
 
 // googleSSEResponse returns one Gemini SSE event (data: {...}\n\n) containing text.
 func googleSSEResponse(text string) string {
-	return fmt.Sprintf("data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":%q}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"candidatesTokenCount\":1,\"promptTokenCount\":5,\"totalTokenCount\":6}}\n\n", text)
+	return googleSSEResponseWithFinishReason(text, "STOP")
+}
+
+func googleSSEResponseWithFinishReason(text, finishReason string) string {
+	return fmt.Sprintf("data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":%q}],\"role\":\"model\"},\"finishReason\":%q,\"index\":0}],\"usageMetadata\":{\"candidatesTokenCount\":1,\"promptTokenCount\":5,\"totalTokenCount\":6}}\n\n", text, finishReason)
 }
 
 // googleJSONResponse returns a non-streaming Gemini API response body.
@@ -467,6 +471,39 @@ func TestGoogle_SendChat_StoresConversation(t *testing.T) {
 	require.GreaterOrEqual(t, len(stored.Conversation), 2)
 	assert.Equal(t, "user", stored.Conversation[1].Role)
 	assert.Equal(t, "hello", stored.Conversation[1].Content)
+}
+
+func TestGoogle_SendChat_MaxTokens_SetsTruncatedEndEvent(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	server := newGoogleFakeServer(t, googleSSEResponseWithFinishReason("Partial answer", "MAX_TOKENS"), "")
+	defer server.Close()
+
+	p := &GoogleAIProvider{
+		client: newGoogleTestClientForServer(t, server.URL),
+		conf:   config.NewConfig(),
+		model:  "gemini-1.5-pro",
+	}
+	store := &googleTestStore{enabled: true}
+	ki := newGoogleTestKialiInterface("session-1")
+
+	var chunks []string
+	p.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		ki.Request,
+		types.AIRequest{ConversationID: "conv-trunc", Query: "hello"},
+		ki, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
+	assert.Contains(t, allChunks, "Partial answer")
+
+	stored := store.conversations["session-1:conv-trunc"]
+	require.NotNil(t, stored)
+	// Truncated turns are not persisted so Gemini cannot continue them on the next query.
+	require.Len(t, stored.Conversation, 1)
+	assert.Equal(t, "system", stored.Conversation[0].Role)
 }
 
 // --- ProviderToConversation positive case ---

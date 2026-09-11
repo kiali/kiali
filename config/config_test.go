@@ -1184,6 +1184,23 @@ ai:
 		assert.Equal(t, ChatAIConfig{}, conf.ChatAI)
 	})
 
+	t.Run("deprecated chat_ai without max_tool_iterations keeps default", func(t *testing.T) {
+		yaml := `
+chat_ai:
+  enabled: true
+  default_provider: openai
+  providers:
+  - name: openai
+    type: openai
+    config: default
+    enabled: true
+    key: deprecated-key
+`
+		conf, err := Unmarshal(yaml)
+		require.NoError(t, err)
+		assert.Equal(t, 5, conf.AI.ChatAI.MaxToolIterations)
+	})
+
 	t.Run("both present: ai.chat wins and deprecated chat_ai is discarded", func(t *testing.T) {
 		var buf bytes.Buffer
 		origLogger := zerolog_log.Logger

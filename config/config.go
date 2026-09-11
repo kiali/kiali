@@ -1435,6 +1435,9 @@ func (conf *Config) migrateDeprecatedChatAI(defaultChatAI ChatAIConfig) {
 
 	log.Info("DEPRECATION NOTICE: 'chat_ai' has been deprecated - switch to 'ai.chat'")
 	conf.AI.ChatAI = conf.ChatAI
+	if conf.AI.ChatAI.MaxToolIterations == 0 {
+		conf.AI.ChatAI.MaxToolIterations = defaultChatAI.MaxToolIterations
+	}
 	if conf.ChatAI.Enabled {
 		conf.AI.Enabled = true
 	}

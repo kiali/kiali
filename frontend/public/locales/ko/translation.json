@@ -596,6 +596,7 @@
   "Reset to graph defaults": "그래프 기본값으로 재설정",
   "Reset to mesh defaults": "메시 기본값으로 재설정",
   "Resources": "리소스",
+  "Response truncated due to output length limit.": "Response truncated due to output length limit.",
   "Restricted / External": "제한됨 / 외부",
   "Return to last page": "이전 페이지로 돌아가기",
   "Revision": "리비전",
