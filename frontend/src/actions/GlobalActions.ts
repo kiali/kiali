@@ -9,10 +9,12 @@ export const GlobalActions = {
   incrementLoadingCounter: createAction(ActionKeys.INCREMENT_LOADING_COUNTER),
   setKiosk: createStandardAction(ActionKeys.SET_KIOSK)<KioskMode>(),
   setKioskData: createStandardAction(ActionKeys.SET_KIOSK_DATA)<KioskData>(),
+  setContrastMode: createStandardAction(ActionKeys.SET_CONTRAST_MODE)<string>(),
   setLanguage: createStandardAction(ActionKeys.SET_LANGUAGE)<string>(),
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
   setTheme: createStandardAction(ActionKeys.SET_THEME)<string>(),
+  setThemeFelt: createStandardAction(ActionKeys.SET_THEME_FELT)<boolean>(),
   unknown: createAction('KIALI_UNKNOWN') // helper for testing
 };
 

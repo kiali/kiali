@@ -4,9 +4,8 @@
 
 Feature: Kiali light and dark themes
 
-  Users can switch color scheme (light/dark) from the masthead.
-  Glass / high-contrast modes are owned by OpenShift Console on OCP 5.0
-  and are not exposed in standalone Kiali (PatternFly 6.4).
+  Users can switch color scheme (light/dark) and contrast mode (default/glass/high contrast)
+  from the masthead in standalone Kiali. OSSMC continues to own theme classes on <html>.
 
   Background:
     Given user is at administrator perspective
@@ -21,3 +20,14 @@ Feature: Kiali light and dark themes
     Then the document should use dark theme
     When the user switches to light theme
     Then the document should use light theme
+
+  @smoke
+  @core-1
+  Scenario: User can switch contrast modes
+    Given the theme is explicitly set to light
+    When the user selects glass contrast mode
+    Then the document should use glass contrast mode
+    When the user selects high contrast mode
+    Then the document should use high contrast mode
+    When the user selects default contrast mode
+    Then the document should use default contrast mode
