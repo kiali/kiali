@@ -290,7 +290,15 @@ export async function readMiniGraphTopology(page: Page): Promise<GraphTopology> 
 }
 
 export async function expectMiniGraphReady(page: Page): Promise<void> {
-  await expect(page.locator('#MiniGraphCard[data-ready="true"]')).toBeVisible();
+  const miniGraph = page.locator('#MiniGraphCard');
+  await expect(miniGraph).toBeVisible();
+
+  // Cypress assertMiniGraphReady polls until MiniGraphCardComponent is ready and has nodes.
+  await expect(async () => {
+    await expect(page.locator('#MiniGraphCard[data-ready="true"]')).toBeVisible({ timeout: 5_000 });
+    const topology = await readMiniGraphTopology(page);
+    expect(topology.nodes.length).toBeGreaterThan(0);
+  }).toPass({ intervals: [3_000], timeout: 120_000 });
 }
 
 export async function expectGraphTopology(page: Page, assertFn: (topology: GraphTopology) => void): Promise<void> {
