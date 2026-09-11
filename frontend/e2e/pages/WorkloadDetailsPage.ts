@@ -170,6 +170,18 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(this.page.getByTestId('metrics-chart').first()).toBeVisible();
   }
 
+  async expectPersesLinkInInboundMetrics(): Promise<void> {
+    await openDetailsTab(this.page, 'Inbound Metrics');
+    const cardBody = this.page.locator('.pf-v6-c-card__body');
+    const link = cardBody.locator('#perses_link_0');
+    await expect(link).toBeVisible();
+    await expect(link).toHaveAttribute('title', 'Istio Mesh Dashboard');
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    await expect(link).toContainText('View in Perses');
+    await expect(link).toHaveAttribute('href', /istio-mesh-dashboard/);
+  }
+
   async expectOutboundMetrics(): Promise<void> {
     const responsePromise = this.page.waitForResponse(response =>
       response.url().includes('/api/namespaces/bookinfo/workloads/details-v1/dashboard')

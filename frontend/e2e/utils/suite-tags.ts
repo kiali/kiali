@@ -20,3 +20,9 @@ export const core2 = { tag: '@core-2' as const };
 
 /** @smoke + @prometheus-disabled */
 export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disabled'] as const };
+
+/** @crd-validation — frontend-core-optional Playwright / Cypress suite */
+export const crdValidationOnly = { tag: '@crd-validation' as const };
+
+/** @perses — frontend-core-optional Playwright / Cypress suite */
+export const persesOnly = { tag: '@perses' as const };

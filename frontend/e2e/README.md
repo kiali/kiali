@@ -86,7 +86,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`): KinD cluster + local `kiali` binary. Smoke/core-1/core-2 use `hack/ci-yaml/ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. One parallel job per suite.
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`): KinD cluster + local `kiali` binary. Smoke/core-1/core-2/core-optional use `hack/ci-yaml/ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses (same cluster setup as Cypress `frontend-core-optional`). One parallel job per suite.
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -128,6 +128,41 @@ $(go env GOPATH)/bin/kiali \
 
 Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-caching`.
 
+### Core-optional (`yarn playwright:run:core-optional`)
+
+Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`). The script port-forwards Perses to `localhost:4000` and starts local Kiali with `hack/ci-yaml/ci-test-config-perses.yaml`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-core-optional
+```
+
+### Perses (`yarn playwright:run:perses`)
+
+Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
+
+Requires Perses in the cluster **and** `external_services.perses` in the Kiali config. Port-forwarding Perses alone is not enough — tests call Kiali `/api/perses` (204 means disabled).
+
+```bash
+# 1. Perses in cluster (StatefulSet + svc/perses in istio-system)
+kubectl get svc perses -n istio-system
+
+# 2. Start Kiali with Perses config (separate terminal)
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-perses.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-prom --port-forward-grafana --no-browser
+
+# 3. Port-forward Perses (separate terminal; both external_url and internal_url use localhost:4000)
+kubectl port-forward -n istio-system svc/perses 4000:8080
+
+# 4. Verify Kiali sees Perses (must be HTTP 200, not 204)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:20001/kiali/api/perses
+
+# 5. Run tests against local Kiali
+cd frontend
+PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -139,6 +174,8 @@ yarn playwright:run:smoke
 yarn playwright:run:core1
 yarn playwright:run:core2
 yarn playwright:run:core-caching
+yarn playwright:run:core-optional
+yarn playwright:run:perses
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -147,7 +184,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, and `playwright-core-caching` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, and `playwright-core-optional` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
