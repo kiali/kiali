@@ -39,6 +39,28 @@ export function hasGrafanaDeployment(): boolean {
   return kubectlExec('kubectl get deployment grafana -n istio-system').exitCode === 0;
 }
 
+export function hasPersesDeployment(): boolean {
+  return kubectlExec('kubectl get deployment perses -n istio-system').exitCode === 0;
+}
+
+export async function hasPersesExternalLinks(request: APIRequestContext): Promise<boolean> {
+  const response = await request.get('/api/perses');
+  // Disabled Perses returns 204 No Content with an empty body.
+  if (!response.ok() || response.status() === 204) {
+    return false;
+  }
+  const text = await response.text();
+  if (!text.trim()) {
+    return false;
+  }
+  try {
+    const body = JSON.parse(text) as { externalLinks?: unknown[] };
+    return (body.externalLinks?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function hasSailIstioCr(): boolean {
   return kubectlExec('kubectl get istio default -n istio-system').exitCode === 0;
 }
