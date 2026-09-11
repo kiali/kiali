@@ -21,7 +21,7 @@ external_services:
         workload: var-workload
     enabled: true
     external_url: http://localhost:4000
-    internal_url: http://perses.istio-system:8080
+    internal_url: http://localhost:4000
 kiali_internal:
   graph_cache:
     enabled: false

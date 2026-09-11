@@ -130,7 +130,7 @@ Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-cac
 
 ### Core-optional (`yarn playwright:run:core-optional`)
 
-Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`).
+Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`). The script port-forwards Perses to `localhost:4000` and starts local Kiali with `hack/ci-yaml/ci-test-config-perses.yaml`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-core-optional
@@ -152,7 +152,7 @@ $(go env GOPATH)/bin/kiali \
   --cluster-name-overrides kind-ci=cluster-default \
   --port-forward-prom --port-forward-grafana --no-browser
 
-# 3. Port-forward Perses for external_url links (separate terminal)
+# 3. Port-forward Perses (separate terminal; both external_url and internal_url use localhost:4000)
 kubectl port-forward -n istio-system svc/perses 4000:8080
 
 # 4. Verify Kiali sees Perses (must be HTTP 200, not 204)

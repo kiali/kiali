@@ -60,6 +60,9 @@ cleanup_offline_seeded_traffic_routing() {
 
 cleanup_kiali() {
   cleanup_offline_seeded_traffic_routing
+  if [ -n "${PERSES_PF_PID}" ]; then
+    kill "${PERSES_PF_PID}" 2>/dev/null || true
+  fi
   if [ -n "${KIALI_PID}" ]; then
     kill "${KIALI_PID}" 2>/dev/null || true
   fi
@@ -1422,8 +1425,31 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
     exit 0
   fi
 
+  infomsg "Port-forwarding Perses to localhost:4000 for local Kiali"
+  kubectl port-forward -n istio-system svc/perses 4000:8080 >/dev/null 2>&1 &
+  PERSES_PF_PID=$!
+
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 60))
+  while true; do
+    if ! ps -p ${PERSES_PF_PID} > /dev/null; then
+      echo "Perses port-forward process is not running. An error must have occurred."
+      exit 1
+    fi
+    if curl -s --fail "http://localhost:4000/api/v1/projects/istio/dashboards" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Perses to respond at http://localhost:4000"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Perses is reachable via port-forward"
+
   infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
+  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-perses.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
   KIALI_PID=$!
 
   KIALI_URL="http://localhost:20001"
