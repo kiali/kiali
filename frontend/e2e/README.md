@@ -136,6 +136,17 @@ Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Pl
 hack/run-integration-tests.sh --test-suite playwright-core-optional
 ```
 
+### Perses (`yarn playwright:run:perses`)
+
+Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
+
+Requires Perses installed and configured (`hack/setup-kind-in-ci.sh --install-perses true` or Jenkins with Perses in the mesh). Tests skip when the Perses deployment or `/api/perses` external links are missing.
+
+```bash
+cd frontend
+yarn playwright:run:perses
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -148,6 +159,7 @@ yarn playwright:run:core1
 yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
+yarn playwright:run:perses
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
