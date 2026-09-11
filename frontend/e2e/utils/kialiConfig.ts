@@ -39,13 +39,19 @@ export function hasGrafanaDeployment(): boolean {
   return kubectlExec('kubectl get deployment grafana -n istio-system').exitCode === 0;
 }
 
-export function hasPersesDeployment(): boolean {
-  return kubectlExec('kubectl get deployment perses -n istio-system').exitCode === 0;
+/** Perses Helm chart exposes svc/perses in istio-system (workload is a StatefulSet, not a Deployment). */
+export function hasPersesInCluster(): boolean {
+  return kubectlExec('kubectl get svc perses -n istio-system').exitCode === 0;
+}
+
+/** True when Kiali has external_services.perses enabled (204 from /api/perses means disabled). */
+export async function isPersesEnabledInKiali(request: APIRequestContext): Promise<boolean> {
+  const response = await request.get('/api/perses');
+  return response.ok() && response.status() !== 204;
 }
 
 export async function hasPersesExternalLinks(request: APIRequestContext): Promise<boolean> {
   const response = await request.get('/api/perses');
-  // Disabled Perses returns 204 No Content with an empty body.
   if (!response.ok() || response.status() === 204) {
     return false;
   }
