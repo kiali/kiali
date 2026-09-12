@@ -18,7 +18,6 @@ The script installs and configures:
 - The ACM 2.17 operator and `MultiClusterHub` on the hub.
 - Development MinIO storage and `MultiClusterObservability` on the hub.
 - The spoke `ManagedCluster`, auto-import secret, and `KlusterletAddonConfig`.
-- The Cluster Observability Operator (COO) and its `ScrapeConfig` API on both clusters.
 - MCOA platform and user-workload metrics capabilities.
 - Kiali's MCOA `ScrapeConfig` resources, namespace-scoped edge `PrometheusRule` resources, and their placement references.
 
@@ -39,7 +38,7 @@ configuration.
 - For `--full`, `helm`, `kubectl`, `yq`, `curl`, and `openssl` in `PATH`, plus
   the source repositories and build tools (`make`, `podman`) needed by the
   selected Kiali installation method.
-- Red Hat catalogs containing ACM `release-2.17` and COO `stable`.
+- Red Hat catalogs containing ACM `release-2.17`.
 - Network connectivity from the spoke to the ACM hub.
 
 Context names and the ACM `ManagedCluster` name are independent. Because ACM
@@ -165,15 +164,14 @@ spoke context. It waits for `ManagedClusterJoined=True` and
 On a repeated run, an available managed cluster does not receive a new import
 secret.
 
-### 4. Install the MCOA monitoring prerequisite
+### 4. Prepare MCOA target namespaces
 
-The script installs COO on the hub and spoke, or reuses an existing COO
-subscription. It waits for its CSV, operator deployment, and the
-`scrapeconfigs.monitoring.rhobs` CRD.
-
-It also ensures that every target namespace exists on the spoke, giving MCOA
+The script ensures that every target namespace exists on the spoke, giving MCOA
 valid destinations for the propagated recording rules. This does not otherwise
 configure those namespaces for a mesh.
+
+MCOA supplies the `ScrapeConfig` API and its managed-cluster metrics component;
+the full Cluster Observability Operator is not required for federation.
 
 ### 5. Configure federation
 
@@ -345,8 +343,8 @@ Remove the complete environment:
 
 Uninstall runs in dependency-safe reverse order: demo applications, Kiali
 remote access and Kiali, Istio, Kiali MCOA resources, the managed-cluster
-import and its spoke namespaces, ACM/Observatorium, COO and its operator-owned
-CRDs, and wrapper-owned UWM configuration. It also removes residual
+import and its spoke namespaces, ACM/Observatorium, and wrapper-owned UWM
+configuration. It also removes residual
 `AppliedManifestWork` objects on the spoke and ACM/MCE CRDs, cluster RBAC,
 admission registrations, APIService registrations, and ACM platform recording
 rules that can remain after the operators and Klusterlet have stopped. This
@@ -358,6 +356,9 @@ waiting for the managed cluster namespace. An empty ACM-created `hive`
 namespace and its APIs are removed; a Hive namespace with live workloads and
 its APIs are preserved. It uses the same namespace and placement options as
 installation.
+
+Federation cleanup removes the specifically named Kiali `ScrapeConfig` and
+`PrometheusRule` objects. It preserves the shared CRDs that provide those APIs.
 
 Pre-existing UWM configuration is preserved by default. To explicitly remove
 `cluster-monitoring-config` from both clusters even when the wrapper did not
@@ -457,4 +458,3 @@ oc --context="<hub-kubecontext>" get managedclusteraddon \
 ## Additional resources
 
 - [ACM 2.17 observability documentation](https://docs.redhat.com/en/documentation/red_hat_advanced_cluster_management_for_kubernetes/2.17/html/observability/index)
-- [Installing the Red Hat OpenShift Cluster Observability Operator](https://docs.redhat.com/en/documentation/red_hat_openshift_cluster_observability_operator/1-latest/observability/installing_red_hat_openshift_cluster_observability_operator/installing-cluster-observability-operators)

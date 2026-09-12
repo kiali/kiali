@@ -22,8 +22,6 @@ SPOKE_NAME=""
 ACM_CHANNEL="release-2.17"
 ACM_NAMESPACE="open-cluster-management"
 OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
-COO_CHANNEL="stable"
-COO_NAMESPACE="openshift-cluster-observability-operator"
 TARGET_NAMESPACES="istio-system"
 RULE_NAMESPACE="istio-system"
 PLACEMENT_NAME=""
@@ -88,8 +86,6 @@ Options:
   --acm-channel CHANNEL          ACM subscription channel (default: release-2.17).
   --acm-namespace NS             ACM operator namespace.
   --observability-namespace NS   ACM observability namespace.
-  --coo-channel CHANNEL          Cluster Observability Operator channel (default: stable).
-  --coo-namespace NS             Cluster Observability Operator namespace.
   --target-namespaces NS[,NS...] Namespaces for platform CPU/memory federation.
                                  List every mesh/control-plane namespace whose
                                  CPU/memory Kiali must show. Must include
@@ -131,7 +127,7 @@ Options:
   -v, --verbose                  Print additional progress details.
   -h, --help                     Show this help.
 
-The base install is idempotent: it enables UWM, ACM/Observatorium, COO, and the
+The base install is idempotent: it enables UWM, ACM/Observatorium, and the
 MCOA federation path so raw Istio metrics stay on the spoke UWM Prometheus while
 Kiali (when installed) reads federated series from hub Observatorium. Add --full
 for an Istio spoke, centralized Kiali, and continuously generating demo apps.
@@ -218,8 +214,6 @@ parse_args() {
       --acm-channel) require_value "$1" "${2-}"; ACM_CHANNEL=$2; shift 2 ;;
       --acm-namespace) require_value "$1" "${2-}"; ACM_NAMESPACE=$2; shift 2 ;;
       --observability-namespace) require_value "$1" "${2-}"; OBSERVABILITY_NAMESPACE=$2; shift 2 ;;
-      --coo-channel) require_value "$1" "${2-}"; COO_CHANNEL=$2; shift 2 ;;
-      --coo-namespace) require_value "$1" "${2-}"; COO_NAMESPACE=$2; shift 2 ;;
       --target-namespaces) require_value "$1" "${2-}"; TARGET_NAMESPACES=$2; shift 2 ;;
       --rule-namespace) require_value "$1" "${2-}"; RULE_NAMESPACE=$2; shift 2 ;;
       --placement-name) require_value "$1" "${2-}"; PLACEMENT_NAME=$2; shift 2 ;;
@@ -389,7 +383,6 @@ validate_args() {
   validate_namespace "${SPOKE_NAME}"
   validate_namespace "${ACM_NAMESPACE}"
   validate_namespace "${OBSERVABILITY_NAMESPACE}"
-  validate_namespace "${COO_NAMESPACE}"
   validate_namespace "${KIALI_NAMESPACE}"
   validate_namespace "${RULE_NAMESPACE}"
   validate_namespace "${SIDECAR_APP_NAMESPACE}"
@@ -542,98 +535,6 @@ EOF
   oc_hub create secret generic auto-import-secret -n "${SPOKE_NAME}" \
     --from-file=kubeconfig="${SPOKE_KUBECONFIG}" --dry-run=client -o yaml | oc_hub apply -f -
   wait_until "ManagedCluster ${SPOKE_NAME} to join and become available" managed_cluster_ready "${SPOKE_NAME}"
-}
-
-coo_ready() {
-  local context=$1 subscription csv namespace deployment deployments desired ready
-  oc --context="${context}" get crd scrapeconfigs.monitoring.rhobs >/dev/null 2>&1 || return 1
-  subscription=$(oc --context="${context}" get subscriptions.operators.coreos.com -A -o json 2>/dev/null | \
-    jq -r '[.items[] | select(.spec.name == "cluster-observability-operator")][0] |
-      select(. != null) | [.metadata.namespace, .status.installedCSV] | @tsv')
-  [ -n "${subscription}" ] || return 1
-  IFS=$'\t' read -r namespace csv <<< "${subscription}"
-  [ -n "${namespace}" ] && [ -n "${csv}" ] || return 1
-  [ "$(oc --context="${context}" get csv "${csv}" -n "${namespace}" \
-    -o jsonpath='{.status.phase}' 2>/dev/null)" = Succeeded ] || return 1
-
-  deployments=$(oc --context="${context}" get csv "${csv}" -n "${namespace}" -o json 2>/dev/null | \
-    jq -r '.spec.install.spec.deployments[]?.name') || return 1
-  [ -n "${deployments}" ] || return 1
-  while read -r deployment; do
-    desired=$(oc --context="${context}" get deployment "${deployment}" -n "${namespace}" \
-      -o jsonpath='{.spec.replicas}' 2>/dev/null) || return 1
-    ready=$(oc --context="${context}" get deployment "${deployment}" -n "${namespace}" \
-      -o jsonpath='{.status.readyReplicas}' 2>/dev/null) || return 1
-    [ "${ready:-0}" = "${desired}" ] || return 1
-  done <<< "${deployments}"
-}
-
-coo_subscription_ready() {
-  local context=$1 namespace=$2 name=$3 csv phase
-  csv=$(oc --context="${context}" get subscription.operators.coreos.com "${name}" -n "${namespace}" \
-    -o jsonpath='{.status.installedCSV}' 2>/dev/null) || return 1
-  [ -n "${csv}" ] || return 1
-  phase=$(oc --context="${context}" get csv "${csv}" -n "${namespace}" \
-    -o jsonpath='{.status.phase}' 2>/dev/null) || return 1
-  [ "${phase}" = Succeeded ]
-}
-
-coo_channel_available() {
-  local context=$1
-  oc --context="${context}" get packagemanifest cluster-observability-operator \
-    -n openshift-marketplace -o json 2>/dev/null | jq -e \
-    --arg channel "${COO_CHANNEL}" '.status.channels[]? | select(.name == $channel)' >/dev/null
-}
-
-install_coo() {
-  local role=$1 context=$2 subscription subscription_namespace subscription_name
-  if coo_ready "${context}"; then
-    info "Cluster Observability Operator is already ready on ${role}"
-    return
-  fi
-
-  subscription=$(oc --context="${context}" get subscriptions.operators.coreos.com -A -o json 2>/dev/null | \
-    jq -r '[.items[] | select(.spec.name == "cluster-observability-operator")][0] |
-      select(. != null) | [.metadata.namespace, .metadata.name] | @tsv')
-  if [ -n "${subscription}" ]; then
-    IFS=$'\t' read -r subscription_namespace subscription_name <<< "${subscription}"
-    info "Using existing COO subscription ${subscription_namespace}/${subscription_name} on ${role}"
-  else
-    wait_until "COO ${COO_CHANNEL} catalog channel on ${role}" coo_channel_available "${context}"
-    cat <<EOF | oc --context="${context}" apply -f -
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    openshift.io/cluster-monitoring: "true"
-  name: ${COO_NAMESPACE}
----
-apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: cluster-observability-operator
-  namespace: ${COO_NAMESPACE}
-spec: {}
----
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: cluster-observability-operator
-  namespace: ${COO_NAMESPACE}
-spec:
-  channel: ${COO_CHANNEL}
-  installPlanApproval: Automatic
-  name: cluster-observability-operator
-  source: redhat-operators
-  sourceNamespace: openshift-marketplace
-EOF
-    subscription_namespace=${COO_NAMESPACE}
-    subscription_name="cluster-observability-operator"
-  fi
-
-  wait_until "COO CSV on ${role}" coo_subscription_ready \
-    "${context}" "${subscription_namespace}" "${subscription_name}"
-  wait_until "COO and ScrapeConfig API on ${role}" coo_ready "${context}"
 }
 
 ensure_target_namespaces() {
@@ -967,8 +868,8 @@ verify_all() {
   mco_ready || die "MultiClusterObservability/observability is not Ready"
   uwm_ready "${HUB_CONTEXT}" || die "UWM is not ready on the hub"
   uwm_ready "${SPOKE_CONTEXT}" || die "UWM is not ready on the spoke"
-  coo_ready "${HUB_CONTEXT}" || die "COO or the ScrapeConfig API is not ready on the hub"
-  coo_ready "${SPOKE_CONTEXT}" || die "COO or the ScrapeConfig API is not ready on the spoke"
+  oc_hub get crd scrapeconfigs.monitoring.rhobs >/dev/null 2>&1 || \
+    die "MCOA ScrapeConfig API is not ready on the hub"
   verify_federation_config
   mcoa_addon_ready "${SPOKE_NAME}" || die "MCOA is not Available on ${SPOKE_NAME}"
   propagated_rules_ready "${SPOKE_CONTEXT}" || die "Not all Kiali recording rules have propagated to the spoke"
@@ -1004,8 +905,6 @@ install_all() {
   install_hub
   wait_until "hub self-management" managed_cluster_ready local-cluster
   import_spoke
-  install_coo hub "${HUB_CONTEXT}"
-  install_coo spoke "${SPOKE_CONTEXT}"
   ensure_target_namespaces
   configure_federation
   wait_until "MCOA on ${SPOKE_NAME}" mcoa_addon_ready "${SPOKE_NAME}"
@@ -1103,36 +1002,6 @@ context_has_live_hive_workloads() {
   oc --context="${context}" get namespace hive >/dev/null 2>&1 && \
     [ -n "$(oc --context="${context}" get deploy,statefulset,daemonset,pod \
       -n hive -o name 2>/dev/null || true)" ]
-}
-
-uninstall_coo() {
-  local role=$1 context=$2 subscription namespace name csv residual_crds
-  subscription=$(oc --context="${context}" get subscriptions.operators.coreos.com -A -o json 2>/dev/null | \
-    jq -r '[.items[] | select(.spec.name == "cluster-observability-operator")][0] |
-      select(. != null) | [.metadata.namespace, .metadata.name, .status.installedCSV] | @tsv')
-  if [ -z "${subscription}" ]; then
-    info "COO is already absent on ${role}"
-  else
-    IFS=$'\t' read -r namespace name csv <<< "${subscription}"
-    info "Removing COO from ${role}"
-    oc --context="${context}" delete subscription.operators.coreos.com "${name}" \
-      -n "${namespace}" --ignore-not-found
-    [ -z "${csv}" ] || oc --context="${context}" delete csv "${csv}" \
-      -n "${namespace}" --ignore-not-found
-    oc --context="${context}" delete namespace "${namespace}" --ignore-not-found --wait=false
-    wait_until "COO namespace removal on ${role}" namespace_absent "${context}" "${namespace}"
-  fi
-
-  # OLM intentionally leaves operator-owned CRDs behind.
-  oc --context="${context}" delete crd \
-    -l operators.coreos.com/cluster-observability-operator.openshift-cluster-observability \
-    --ignore-not-found >/dev/null 2>&1 || true
-  residual_crds=$(oc --context="${context}" get crd -o name 2>/dev/null | \
-    grep -E '\.monitoring\.rhobs$' || true)
-  if [ -n "${residual_crds}" ]; then
-    info "Removing residual COO ScrapeConfig APIs from ${role}"
-    echo "${residual_crds}" | xargs oc --context="${context}" delete --ignore-not-found
-  fi
 }
 
 managed_cluster_absent() {
@@ -1304,7 +1173,7 @@ uninstall_residue_for_context() {
   local context=$1 role=$2 namespace
 
   oc --context="${context}" get crd -o name 2>/dev/null | grep -E \
-    '\.(open-cluster-management\.io|multicluster\.openshift\.io|multicluster\.x-k8s\.io|monitoring\.rhobs|observatorium\.io)$' || true
+    '\.(open-cluster-management\.io|multicluster\.openshift\.io|multicluster\.x-k8s\.io|observatorium\.io)$' || true
   if ! context_has_live_hive_workloads "${context}"; then
     oc --context="${context}" get crd -o name 2>/dev/null | grep -E \
       '\.(hive\.openshift\.io|hiveinternal\.openshift\.io)$' || true
@@ -1320,7 +1189,7 @@ uninstall_residue_for_context() {
       '\.(hive\.openshift\.io|hiveinternal\.openshift\.io)$' || true
   fi
 
-  for namespace in "${ACM_NAMESPACE}" "${OBSERVABILITY_NAMESPACE}" "${COO_NAMESPACE}" \
+  for namespace in "${ACM_NAMESPACE}" "${OBSERVABILITY_NAMESPACE}" \
     open-cluster-management-agent open-cluster-management-agent-addon \
     open-cluster-management-policies; do
     if oc --context="${context}" get namespace "${namespace}" >/dev/null 2>&1; then
@@ -1358,7 +1227,7 @@ verify_complete_uninstall() {
     fi
   done
   [ "${failed}" = false ] || die "ACM hub/spoke uninstall left managed resources behind"
-  info "Verified that ACM, MCOA, COO, and managed-cluster resources are absent"
+  info "Verified that ACM, MCOA, and managed-cluster resources are absent"
 }
 
 uninstall_all() {
@@ -1372,8 +1241,6 @@ uninstall_all() {
   remove_spoke_import
   cleanup_spoke_acm_residue
   uninstall_hub_acm
-  uninstall_coo spoke "${SPOKE_CONTEXT}"
-  uninstall_coo hub "${HUB_CONTEXT}"
   remove_owned_uwm_config spoke "${SPOKE_CONTEXT}"
   remove_owned_uwm_config hub "${HUB_CONTEXT}"
   verify_complete_uninstall
@@ -1400,8 +1267,6 @@ status_all() {
   resource_state "${SPOKE_CONTEXT}" "Spoke Istio" deployment istiod -n istio-system
   resource_state "${SPOKE_CONTEXT}" "Spoke sidecar demo" deployment test-sidecar-frontend -n "${SIDECAR_APP_NAMESPACE}"
   resource_state "${SPOKE_CONTEXT}" "Spoke Ambient demo" deployment test-ambient-frontend -n "${AMBIENT_APP_NAMESPACE}"
-  resource_state "${HUB_CONTEXT}" "Hub COO" subscription.operators.coreos.com cluster-observability-operator -n "${COO_NAMESPACE}"
-  resource_state "${SPOKE_CONTEXT}" "Spoke COO" subscription.operators.coreos.com cluster-observability-operator -n "${COO_NAMESPACE}"
 }
 
 parse_args "$@"
