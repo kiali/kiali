@@ -424,6 +424,76 @@ traffic, and Kiali are already installed. Wait for the five-minute MCOA
 collection interval and then inspect the graphs. If you add other applications
 later, rerun the wrapper with their namespaces in `--target-namespaces`.
 
+The following will validate each stage of the traffic-metrics pipeline
+directly. The first query confirms that spoke UWM scrapes raw Istio counters.
+The second confirms that the recording rules produce the lower-cardinality
+`workload:*` series. The final query confirms that MCOA federates those series
+to hub Thanos and removes the `workload:` prefix. Generate traffic before
+running these commands and replace the placeholder values:
+
+```bash
+HUB_CONTEXT="<hub-kubecontext>"
+SPOKE_CONTEXT="<spoke-kubecontext>"
+MANAGED_CLUSTER_NAME="<acm-managed-cluster-name>" # get list from: oc --context=${HUB_CONTEXT} get managedcluster -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
+
+PROM_POD=$(oc --context="${SPOKE_CONTEXT}" \
+  -n openshift-user-workload-monitoring \
+  get pods -l app.kubernetes.io/name=prometheus \
+  -o jsonpath='{.items[0].metadata.name}')
+
+# Edge UWM: raw counters scraped from Istio proxies
+oc --context="${SPOKE_CONTEXT}" \
+  -n openshift-user-workload-monitoring \
+  exec -c prometheus "${PROM_POD}" -- \
+  wget -qO- \
+  'http://localhost:9090/api/v1/query?query=sum%28istio_requests_total%29' \
+  | jq '.data.result'
+
+# Edge UWM: aggregates produced by the recording rules
+oc --context="${SPOKE_CONTEXT}" \
+  -n openshift-user-workload-monitoring \
+  exec -c prometheus "${PROM_POD}" -- \
+  wget -qO- \
+  'http://localhost:9090/api/v1/query?query=sum%28workload%3Aistio_requests_total%29' \
+  | jq '.data.result'
+
+# Hub Thanos: federated aggregates, relabeled back to istio_requests_total
+oc --context="${HUB_CONTEXT}" get --raw \
+  "/api/v1/namespaces/open-cluster-management-observability/services/http:observability-thanos-query-frontend:9090/proxy/api/v1/query?query=sum%28istio_requests_total%7Bcluster%3D%22${MANAGED_CLUSTER_NAME}%22%7D%29" \
+  | jq '.data.result'
+```
+
+All three queries should return a non-empty result. Hub Thanos is updated on
+the MCOA collection interval, so its value can lag the edge values by about
+five minutes. Compare presence and approximately corresponding counter values;
+do not expect exact point-in-time equality.
+
+You can see the metrics in the edge Prometheus, which include the "workload:" metrics:
+
+```bash
+oc --context="${SPOKE_CONTEXT}" \
+  -n openshift-user-workload-monitoring \
+  exec -c prometheus "${PROM_POD}" -- \
+  wget -qO- \
+  'http://localhost:9090/api/v1/label/__name__/values' \
+  | jq -r '
+  [.data[] | select(test("istio|envoy"; "i"))] | unique
+  | .[] ,
+  "===\nTOTAL COUNT OF istio_ AND envoy_ METRICS: \(length)"'
+```
+
+and the metrics aggregated in the hub Thanos (notice there are no "workload:" metrics
+and the number of metrics are much less):
+
+```bash
+oc --context="${HUB_CONTEXT}" get --raw \
+  "/api/v1/namespaces/open-cluster-management-observability/services/http:observability-thanos-query-frontend:9090/proxy/api/v1/label/__name__/values" \
+  | jq -r '
+  [.data[] | select(test("istio|envoy|pilot"; "i"))] | unique
+  | .[] ,
+  "===\nTOTAL COUNT OF istio_ AND envoy_ METRICS: \(length)"'
+```
+
 The MCOA path does not use the legacy
 `observability-metrics-custom-allowlist` ConfigMap. The hub allowlist remains
 valid for ACM's legacy collectors, but MCOA replaces those collectors here.
