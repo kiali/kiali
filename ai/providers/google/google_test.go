@@ -506,6 +506,32 @@ func TestGoogle_SendChat_MaxTokens_SetsTruncatedEndEvent(t *testing.T) {
 	assert.Equal(t, "system", stored.Conversation[0].Role)
 }
 
+func TestGoogle_SendChat_MaxTokensWithoutText_DoesNotSetTruncatedEndEvent(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	server := newGoogleFakeServer(t, googleSSEResponseWithFinishReason("", "MAX_TOKENS"), "")
+	defer server.Close()
+
+	p := &GoogleAIProvider{
+		client: newGoogleTestClientForServer(t, server.URL),
+		conf:   config.NewConfig(),
+		model:  "gemini-1.5-pro",
+	}
+	store := &googleTestStore{enabled: true}
+	ki := newGoogleTestKialiInterface("session-1")
+
+	var chunks []string
+	p.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		ki.Request,
+		types.AIRequest{ConversationID: "conv-trunc-empty", Query: "hello"},
+		ki, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.NotContains(t, allChunks, `"truncated":true`)
+}
+
 // --- ProviderToConversation positive case ---
 
 func TestGoogle_ProviderToConversation_ValidResponse(t *testing.T) {

@@ -104,8 +104,8 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	nextParts = append(nextParts, genai.Part{Text: req.Query})
 	var lastFunctionCalls []*genai.FunctionCall // raw Gemini calls, needed for FunctionCall echo in prepareNextTurn
 	responseTruncated := false
-	markTruncatedFromChunk := func(chunk *genai.GenerateContentResponse) {
-		if googleStreamTruncated(chunk) {
+	markTruncatedFromChunk := func(chunk *genai.GenerateContentResponse, streamedText string) {
+		if googleStreamTruncated(chunk) && strings.TrimSpace(streamedText) != "" {
 			responseTruncated = true
 		}
 	}
@@ -127,7 +127,6 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				}
 				return text, nil, err
 			}
-			markTruncatedFromChunk(chunk)
 			functionCalls = append(functionCalls, chunk.FunctionCalls()...)
 			if chunk.UsageMetadata != nil {
 				turnUsage = usageFromGenerateContentResponse(chunk)
@@ -139,6 +138,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				text += t
 				tokenID++
 			}
+			markTruncatedFromChunk(chunk, text)
 		}
 		if sawTurnUsage {
 			usage.Add(turnUsage)
@@ -217,7 +217,6 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				providers.StreamError(onChunk, err.Error())
 				return false, extraText
 			}
-			markTruncatedFromChunk(chunk)
 			if chunk.UsageMetadata != nil {
 				extraUsage = usageFromGenerateContentResponse(chunk)
 				sawExtraUsage = extraUsage.HasTokens()
@@ -228,6 +227,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				extraText += t
 				tokenID++
 			}
+			markTruncatedFromChunk(chunk, extraText)
 		}
 		if sawExtraUsage {
 			usage.Add(extraUsage)

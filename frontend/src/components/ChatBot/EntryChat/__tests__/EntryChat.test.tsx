@@ -244,8 +244,26 @@ describe('EntryChat', () => {
       );
       renderEntryChat(0);
       const partialAnswer = screen.getByText('Partial answer');
-      const warning = screen.getByText('Response truncated due to output length limit.');
-      expect(partialAnswer.compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const warnings = screen.getAllByText('Response truncated due to output length limit.');
+      expect(warnings).toHaveLength(1);
+      expect(partialAnswer.compareDocumentPosition(warnings[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('does not render a truncation warning when there is no response text', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-truncated-empty',
+            who: 'ai',
+            text: '',
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: true
+          }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.queryByText('Response truncated due to output length limit.')).not.toBeInTheDocument();
     });
 
     it('shows streamed text while the response is still loading once tokens arrive', () => {

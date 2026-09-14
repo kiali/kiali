@@ -61,9 +61,10 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         openLinkInNewTab={true}
       />
     ) : null;
-    const truncatedAlert = entry.isTruncated ? (
-      <Alert isInline isPlain title={t('Response truncated due to output length limit.')} variant="warning" />
-    ) : null;
+    const truncatedAlert =
+      entry.isTruncated && safeContent ? (
+        <Alert isInline isPlain title={t('Response truncated due to output length limit.')} variant="warning" />
+      ) : null;
 
     return (
       <Message
@@ -74,16 +75,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         content={markdownContent ? undefined : safeContent}
         data-test="kiali__chat-entry-ai"
         extraContent={{
-          ...(markdownContent || truncatedAlert
-            ? {
-                beforeMainContent: (
-                  <>
-                    {markdownContent}
-                    {truncatedAlert}
-                  </>
-                )
-              }
-            : {}),
+          ...(markdownContent ? { beforeMainContent: markdownContent } : {}),
           afterMainContent: (
             <>
               {entry.error && (
@@ -97,7 +89,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
                 </Alert>
               )}
               {entry.isCancelled && <Alert isInline isPlain title={t('Cancelled')} variant="info" />}
-              {!markdownContent && truncatedAlert}
+              {truncatedAlert}
               {entry.tools && <ResponseTools entryIndex={entryIndex} />}
               {hasActions && <Actions entryIndex={entryIndex} />}
             </>
