@@ -1042,6 +1042,13 @@ type Config struct {
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
+		AdditionalDisplayDetails: []AdditionalDisplayItem{
+			{
+				Annotation:     "kiali.io/api-spec",
+				IconAnnotation: "kiali.io/api-type",
+				Title:          "API Documentation",
+			},
+		},
 		AI: AIConfig{
 			ChatAI: ChatAIConfig{
 				Enabled:           false,

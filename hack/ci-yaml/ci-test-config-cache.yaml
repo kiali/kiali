@@ -7,3 +7,8 @@ kiali_internal:
     enabled: true
   health_cache:
     enabled: true
+server:
+  observability:
+    metrics:
+      health_status:
+        enabled: true
