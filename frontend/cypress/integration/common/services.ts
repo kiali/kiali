@@ -68,6 +68,29 @@ When('user filters for label {string}', (label: string) => {
   ensureKialiFinishedLoading();
 });
 
+const waitForServiceApiDocumentationIcon = (apiType: string, attemptsLeft: number): void => {
+  const pollIntervalMs = 5000;
+
+  cy.request({
+    url: '/api/clusters/services',
+    qs: { namespaces: 'bookinfo', health: true, istioResources: true }
+  }).then(resp => {
+    const productpage = resp.body.services?.find((service: { name: string }) => service.name === 'productpage');
+
+    if (productpage?.additionalDetailSample?.icon === apiType) {
+      return;
+    }
+
+    if (attemptsLeft <= 0) {
+      expect(productpage?.additionalDetailSample?.icon, 'productpage additionalDetailSample.icon').to.equal(apiType);
+      return;
+    }
+
+    cy.wait(pollIntervalMs);
+    waitForServiceApiDocumentationIcon(apiType, attemptsLeft - 1);
+  });
+};
+
 When('user applies kiali api {string} annotations', (type: string) => {
   cy.exec(`kubectl annotate service productpage -n bookinfo kiali.io/api-type=${type} --overwrite`, {
     failOnNonZeroExit: false
@@ -81,6 +104,7 @@ When('user applies kiali api {string} annotations', (type: string) => {
       expect(result.stdout.trim()).to.equal(type);
     }
   );
+  waitForServiceApiDocumentationIcon(type, 12);
 });
 
 Then('the service should be listed as {string}', function (healthStatus: string) {
