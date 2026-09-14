@@ -90,3 +90,11 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_core_optional:
+    name: Run Playwright core optional tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-core-optional.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
