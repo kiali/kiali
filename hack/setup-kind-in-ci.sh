@@ -599,6 +599,7 @@ setup_kind_singlecluster() {
     --set kiali_internal.cache_expiration.waypoint="2m" \
     --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
     --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
+    --set server.observability.metrics.health_status.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 
@@ -706,6 +707,7 @@ setup_kind_tempo() {
     --set kiali_internal.cache_expiration.waypoint="2m" \
     --set kiali_internal.graph_cache.enabled="${ENABLE_CACHE}" \
     --set kiali_internal.health_cache.enabled="${ENABLE_CACHE}" \
+    --set server.observability.metrics.health_status.enabled="${ENABLE_CACHE}" \
     kiali-server \
     "${HELM_CHARTS_DIR}"/_output/charts/kiali-server-*.tgz
 

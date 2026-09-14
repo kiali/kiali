@@ -16,6 +16,7 @@ Feature: Kiali Services page
     And user is at the "services" page
     When user applies kiali api "rest" annotations
     When user selects the "bookinfo" namespace
+    And the user refreshes the page
     Then user sees a table with headings
       | Health | Name | Namespace | Labels | Configuration | Details |
     And the "productpage" row is visible
