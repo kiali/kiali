@@ -29,6 +29,13 @@ const VALIDATION_FILTERS = ['Valid', 'Not Valid', 'Not Validated', 'Warning'] as
 
 const GATEWAY_GVK = 'networking.istio.io/v1, Kind=Gateway';
 
+const VALIDATION_ICON: Record<string, string> = {
+  danger: 'icon-error-validation',
+  error: 'icon-error-validation',
+  success: 'icon-correct-validation',
+  warning: 'icon-warning-validation'
+};
+
 export class IstioConfigPage extends BasePage {
   private filterOption(name: string) {
     // Exact match avoids Gateway⊂K8sGateway and Valid⊂Not Valid / Not Validated.
@@ -314,6 +321,37 @@ export class IstioConfigPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
+  async ensureConfigurationValidationEnabled(): Promise<void> {
+    const toggle = this.getBySel('toggle-configuration');
+    if (!(await toggle.isChecked())) {
+      await toggle.check();
+      await waitForLoadingComplete(this.page);
+    }
+  }
+
+  async expectValidationStatus(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    healthStatus: string
+  ): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+
+    const row = this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`);
+    const expectedIcon = VALIDATION_ICON[healthStatus];
+
+    await expect(async () => {
+      await this.refreshList();
+      await expect(row).toBeVisible({ timeout: 5_000 });
+      await expect(row.locator(`[data-test="${expectedIcon}"]`)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
+  }
+
+  async openConfigByName(name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await getColWithRowText(this.page, name, 'Name').locator(linkSelector()).first().click();
+  }
+
   async expectObjectConfigurationStatus(
     namespace: string,
     typeName: string,
@@ -326,11 +364,6 @@ export class IstioConfigPage extends BasePage {
       await this.refreshList();
       await expect(row).toContainText(statusText);
     }).toPass({ intervals: [10_000], timeout: 60_000 });
-  }
-
-  async openConfigByName(name: string): Promise<void> {
-    await waitForLoadingComplete(this.page);
-    await getColWithRowText(this.page, name, 'Name').locator(linkSelector()).first().click();
   }
 
   async expectEditorVisible(): Promise<void> {
@@ -410,6 +443,84 @@ export class IstioConfigPage extends BasePage {
 
   async expectObjectNotListed(type: string, name: string, namespace: string): Promise<void> {
     await expect(this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
+  }
+
+  async openConfigByRow(namespace: string, typeName: string, name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${name}`).locator(linkSelector()).first().click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  private configurationAnalysisSection(): Locator {
+    return this.page.getByRole('heading', { name: 'Configuration Analysis' }).locator('../..');
+  }
+
+  /**
+   * List rows for some types (notably PeerAuthentication) show N/A until the details API runs with
+   * validate=true. Open details and wait for that response so downstream validations are computed.
+   */
+  async primeValidationFromDetails(namespace: string, typeName: string, instanceName: string): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+    await this.refreshList();
+    await waitForLoadingComplete(this.page);
+    await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
+    await this.open();
+    await waitForLoadingComplete(this.page);
+  }
+
+  /** Assert a validation code on the config details page (list icon may stay N/A on OSSMC). */
+  async expectValidationOnDetailsPage(
+    namespace: string,
+    typeName: string,
+    instanceName: string,
+    validationCode: string,
+    severity: 'danger' | 'warning' = 'danger'
+  ): Promise<void> {
+    await this.ensureConfigurationValidationEnabled();
+    await this.refreshList();
+    await waitForLoadingComplete(this.page);
+    await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
+    await this.expectGroupedValidationMessage(validationCode, 1, severity);
+  }
+
+  private async openConfigDetailsAndWaitForValidation(
+    namespace: string,
+    typeName: string,
+    instanceName: string
+  ): Promise<void> {
+    const validateResponse = this.page.waitForResponse(
+      response =>
+        response.request().method() === 'GET' &&
+        response.url().includes('/istio/') &&
+        response.url().includes(`/${instanceName}`) &&
+        response.url().includes('validate=true') &&
+        response.ok(),
+      { timeout: 60_000 }
+    );
+
+    await this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`)
+      .locator(linkSelector())
+      .first()
+      .click();
+    await validateResponse;
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectGroupedValidationMessage(
+    code: string,
+    count: number,
+    severity: 'danger' | 'warning' = 'warning'
+  ): Promise<void> {
+    const messagePattern = count > 1 ? new RegExp(`${code}.*\\(${count}\\)`) : new RegExp(code);
+    const iconTestId = severity === 'danger' ? 'icon-error-validation' : 'icon-warning-validation';
+    const analysisSection = this.configurationAnalysisSection();
+
+    await expect(async () => {
+      await waitForLoadingComplete(this.page);
+      const validationRow = analysisSection.locator('div').filter({ hasText: messagePattern });
+      await expect(validationRow.first()).toBeVisible({ timeout: 5_000 });
+      await expect(validationRow.first().getByTestId(iconTestId)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [3_000], timeout: 90_000 });
   }
 }
 
