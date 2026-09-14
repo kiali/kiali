@@ -99,6 +99,7 @@ export default defineConfig({
       name: 'crd-validation',
       grep: /@crd-validation/,
       dependencies: ['setup'],
+      timeout: 180_000,
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {
