@@ -70,7 +70,6 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
 
   return (
     <Select
-      data-test="theme-switch"
       id="theme-selector"
       isOpen={isOpen}
       onOpenChange={setIsOpen}
@@ -84,6 +83,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
         <MenuToggle
           ref={toggleRef}
           aria-label={`${t('Theme selection')}, ${t('current')}: ${getThemeDisplayText(theme, t)}`}
+          data-test="theme-switch"
           icon={
             <Icon size="lg">
               <AdjustIcon />
