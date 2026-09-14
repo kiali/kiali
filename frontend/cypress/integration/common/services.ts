@@ -76,6 +76,11 @@ When('user applies kiali api {string} annotations', (type: string) => {
     'kubectl annotate service productpage -n bookinfo kiali.io/api-spec=https://petstore.swagger.io/v2/swagger.json',
     { failOnNonZeroExit: false }
   );
+  cy.exec('kubectl get service productpage -n bookinfo -o jsonpath="{.metadata.annotations.kiali\\.io/api-type}"').then(
+    result => {
+      expect(result.stdout.trim()).to.equal(type);
+    }
+  );
 });
 
 Then('the service should be listed as {string}', function (healthStatus: string) {

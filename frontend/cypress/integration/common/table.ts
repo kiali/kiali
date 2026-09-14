@@ -32,9 +32,31 @@ Then(
 Then(
   'the {string} column on the {string} row has a icon with title {string}',
   (column: string, rowText: string, title: string) => {
-    getColWithRowText(rowText, column).within(() => {
-      cy.get(`img[title="${title}"]`).should('be.visible');
-    });
+    const maxRetries = 3;
+
+    const checkIcon = (retriesLeft: number): void => {
+      getColWithRowText(rowText, column).then($col => {
+        const found = $col.find(`img[title="${title}"]`).length > 0;
+
+        if (found) {
+          getColWithRowText(rowText, column).within(() => {
+            cy.get(`img[title="${title}"]`).should('be.visible');
+          });
+        } else if (retriesLeft > 0) {
+          cy.intercept('GET', '**/api/clusters/services*').as('servicesRefresh');
+          cy.getBySel('refresh-button').click();
+          cy.wait('@servicesRefresh');
+          ensureKialiFinishedLoading();
+          checkIcon(retriesLeft - 1);
+        } else {
+          getColWithRowText(rowText, column).within(() => {
+            cy.get(`img[title="${title}"]`, { timeout: 60000 }).should('be.visible');
+          });
+        }
+      });
+    };
+
+    checkIcon(maxRetries);
   }
 );
 
