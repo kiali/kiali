@@ -44,7 +44,7 @@ test.describe('Istio Config CRD validation', () => {
 
   test.afterAll(() => {
     cleanSleepMtlsTestResources();
-    cleanIstioSystemTestResources();
+    cleanIstioSystemTestResources(true);
   });
 
   test.describe('parallel', () => {
