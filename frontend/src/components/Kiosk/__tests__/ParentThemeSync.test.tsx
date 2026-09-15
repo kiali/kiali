@@ -9,7 +9,7 @@ describe('ParentThemeSync', () => {
     document.documentElement.className = '';
     sessionStorage.clear();
     store.dispatch(GlobalActions.setKiosk(''));
-    store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+    store.dispatch(GlobalActions.setColorScheme(Theme.LIGHT));
     store.dispatch(GlobalActions.setContrastMode(ContrastMode.TRADITIONAL));
     store.dispatch(GlobalActions.setThemeFelt(false));
     window.history.replaceState({}, '', '/');
@@ -25,7 +25,7 @@ describe('ParentThemeSync', () => {
 
     render(<ParentThemeSync />);
 
-    expect(store.getState().globalState.theme).toBe(Theme.LIGHT);
+    expect(store.getState().globalState.colorScheme).toBe(Theme.LIGHT);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.TRADITIONAL);
     expect(store.getState().globalState.themeFelt).toBe(false);
   });
@@ -36,7 +36,7 @@ describe('ParentThemeSync', () => {
 
     render(<ParentThemeSync />);
 
-    expect(store.getState().globalState.theme).toBe(Theme.DARK);
+    expect(store.getState().globalState.colorScheme).toBe(Theme.DARK);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
     expect(store.getState().globalState.themeFelt).toBe(true);
   });

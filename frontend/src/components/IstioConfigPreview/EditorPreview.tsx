@@ -14,7 +14,7 @@ import { connect } from 'react-redux';
 export type PolicyItem = AuthorizationPolicy | Sidecar;
 
 type ReduxProps = {
-  theme: string;
+  colorScheme: string;
 };
 
 type Props = ReduxProps & {
@@ -77,7 +77,7 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
       <Editor
         value={yaml}
         language="yaml"
-        theme={props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+        theme={props.colorScheme === Theme.DARK ? 'vs-dark' : 'light'}
         height="275px"
         onMount={onEditorDidMount}
         options={{ readOnly: props.readOnly, wordWrap: 'on', scrollBeyondLastLine: false, glyphMargin: true }}
@@ -88,7 +88,7 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
-    theme: state.globalState.theme
+    colorScheme: state.globalState.colorScheme
   };
 };
 

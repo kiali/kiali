@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { NavigationComponent } from '../Navigation';
-import { ExternalServiceInfo } from '../../../types/StatusState';
+import type { ExternalServiceInfo } from '../../../types/StatusState';
 import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
 import { pathRoutes } from 'routes';
 import { Provider } from 'react-redux';
@@ -39,7 +39,7 @@ const router = createMemoryRouter([
         tracingUrl={''}
         externalServices={externalServicesInfo}
         kiosk={''}
-        theme={Theme.LIGHT}
+        colorScheme={Theme.LIGHT}
         showNotificationCenter={false}
         chatbotEnabled={false}
       />

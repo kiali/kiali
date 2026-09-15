@@ -1,6 +1,6 @@
 import type { Store } from 'redux';
 import { createStore, applyMiddleware, compose } from 'redux';
-import type { KialiAppState } from './Store';
+import type { GlobalState, KialiAppState } from './Store';
 import type { Transform } from 'redux-persist';
 import { persistStore, persistReducer } from 'redux-persist';
 import { persistFilter } from 'redux-persist-transform-filter';
@@ -63,10 +63,21 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
-const globalStateFilter = whitelistInputWithInitialState(
-  'globalState',
-  ['contrastMode', 'language', 'theme', 'themeFelt'],
-  INITIAL_GLOBAL_STATE
+const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'themeFelt'];
+
+const globalStateFilter = createTransform(
+  inboundState => persistFilter(inboundState, globalStatePersistPaths, 'whitelist'),
+  outboundState => {
+    const persisted = outboundState as Partial<GlobalState> & { theme?: string };
+    const colorScheme = persisted.colorScheme || persisted.theme || INITIAL_GLOBAL_STATE.colorScheme;
+
+    return {
+      ...INITIAL_GLOBAL_STATE,
+      ...persisted,
+      colorScheme
+    };
+  },
+  { whitelist: ['globalState'] }
 );
 
 const graphPersistFilter = whitelistInputWithInitialState('graph', ['filterState', 'layout'], INITIAL_GRAPH_STATE);

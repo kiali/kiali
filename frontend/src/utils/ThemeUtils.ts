@@ -4,6 +4,7 @@ import { GlobalActions } from 'actions/GlobalActions';
 import { isParentKiosk } from 'components/Kiosk/KioskActions';
 import {
   ContrastMode,
+  KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
   KIALI_THEME_FELT,
@@ -19,8 +20,8 @@ export type DocumentThemeClasses = {
   themeFelt: boolean;
 };
 
-const isValidTheme = (theme: string | null | undefined): theme is Theme => {
-  return theme === Theme.LIGHT || theme === Theme.DARK;
+const isValidColorScheme = (colorScheme: string | null | undefined): colorScheme is Theme => {
+  return colorScheme === Theme.LIGHT || colorScheme === Theme.DARK;
 };
 
 const isValidContrastMode = (contrastMode: string | null | undefined): contrastMode is ContrastMode => {
@@ -31,15 +32,21 @@ const isValidContrastMode = (contrastMode: string | null | undefined): contrastM
   );
 };
 
-export const getKialiTheme = (): Theme => {
+const getStoredColorScheme = (): Theme | undefined => {
   const stored =
-    (localStorage.getItem(KIALI_THEME) as Theme) || (store.getState().globalState.theme as Theme) || undefined;
+    (localStorage.getItem(KIALI_COLOR_SCHEME) as Theme) || (localStorage.getItem(KIALI_THEME) as Theme) || undefined;
 
-  if (isValidTheme(stored)) {
+  return isValidColorScheme(stored) ? stored : undefined;
+};
+
+export const getKialiColorScheme = (): Theme => {
+  const stored = getStoredColorScheme() || (store.getState().globalState.colorScheme as Theme) || undefined;
+
+  if (isValidColorScheme(stored)) {
     return stored;
   }
 
-  return getDefaultTheme();
+  return getDefaultColorScheme();
 };
 
 export const getKialiContrastMode = (): ContrastMode => {
@@ -65,8 +72,8 @@ export const getKialiThemeFelt = (): boolean => {
   return store.getState().globalState.themeFelt;
 };
 
-export const useKialiTheme = (): string => {
-  return useKialiSelector(state => state.globalState.theme) || getDefaultTheme();
+export const useKialiColorScheme = (): string => {
+  return useKialiSelector(state => state.globalState.colorScheme) || getDefaultColorScheme();
 };
 
 export const useKialiContrastMode = (): string => {
@@ -114,8 +121,13 @@ export const readDocumentThemeClasses = (): DocumentThemeClasses => {
  */
 const PARENT_KIOSK_SESSION_KEY = 'KIALI_PARENT_KIOSK';
 
-export const persistKialiThemePreferences = (theme: Theme, contrastMode: ContrastMode, themeFelt: boolean): void => {
-  localStorage.setItem(KIALI_THEME, theme);
+export const persistKialiThemePreferences = (
+  colorScheme: Theme,
+  contrastMode: ContrastMode,
+  themeFelt: boolean
+): void => {
+  localStorage.setItem(KIALI_COLOR_SCHEME, colorScheme);
+  localStorage.removeItem(KIALI_THEME);
   localStorage.setItem(KIALI_CONTRAST_MODE, contrastMode);
   localStorage.setItem(KIALI_THEME_FELT, String(themeFelt));
 };
@@ -143,15 +155,15 @@ export const isParentOwnedTheme = (): boolean => {
 };
 
 /** Update Redux from current <html> theme classes without modifying the document. */
-export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { theme: Theme } => {
-  const theme = readDocumentTheme();
+export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { colorScheme: Theme } => {
+  const colorScheme = readDocumentTheme();
   const { contrastMode, themeFelt } = readDocumentThemeClasses();
-  store.dispatch(GlobalActions.setTheme(theme));
+  store.dispatch(GlobalActions.setColorScheme(colorScheme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
   store.dispatch(GlobalActions.setThemeFelt(themeFelt));
-  persistKialiThemePreferences(theme, contrastMode, themeFelt);
+  persistKialiThemePreferences(colorScheme, contrastMode, themeFelt);
 
-  return { contrastMode, theme, themeFelt };
+  return { colorScheme, contrastMode, themeFelt };
 };
 
 /**
@@ -172,8 +184,8 @@ export const applyDocumentContrastMode = (contrastMode: ContrastMode, themeFelt:
  * Applies PatternFly light/dark and optional contrast/felt classes on <html>.
  * Do not call this when isParentOwnedTheme() is true (OSSMC / OpenShift Console owns classes).
  */
-export const applyDocumentTheme = (theme: Theme, contrastMode?: ContrastMode, themeFelt?: boolean): void => {
-  document.documentElement.classList.toggle(PF_THEME_DARK, theme === Theme.DARK);
+export const applyDocumentTheme = (colorScheme: Theme, contrastMode?: ContrastMode, themeFelt?: boolean): void => {
+  document.documentElement.classList.toggle(PF_THEME_DARK, colorScheme === Theme.DARK);
 
   if (contrastMode !== undefined) {
     applyDocumentContrastMode(contrastMode, themeFelt ?? false);
@@ -212,7 +224,7 @@ export const observeDocumentTheme = (onChange: () => void): (() => void) => {
   return () => observer.disconnect();
 };
 
-const getDefaultTheme = (): Theme => {
+const getDefaultColorScheme = (): Theme => {
   if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
     return Theme.DARK;
   }

@@ -1,14 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { WorkloadPodLogsComponent, WorkloadPodLogsProps } from '../WorkloadPodLogs';
+import type { WorkloadPodLogsProps } from '../WorkloadPodLogs';
+import { WorkloadPodLogsComponent } from '../WorkloadPodLogs';
 import { store } from '../../../store/ConfigStore';
 import axios from 'axios';
 import axiosMockAdapter from 'axios-mock-adapter';
-import MockAdapter from 'axios-mock-adapter';
+import type MockAdapter from 'axios-mock-adapter';
 
 const defaultProps = (): WorkloadPodLogsProps => ({
-  theme: '',
+  colorScheme: '',
   kiosk: '',
   lastRefreshAt: 200,
   timeRange: {},

@@ -1,5 +1,6 @@
 import {
   ContrastMode,
+  KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
   KIALI_THEME_FELT,
@@ -13,7 +14,7 @@ import {
   applyDocumentContrastMode,
   applyDocumentTheme,
   getKialiContrastMode,
-  getKialiTheme,
+  getKialiColorScheme,
   getKialiThemeFelt,
   isParentOwnedTheme,
   observeDocumentTheme,
@@ -104,31 +105,36 @@ describe('applyDocumentContrastMode', () => {
   });
 });
 
-describe('getKialiTheme', () => {
+describe('getKialiColorScheme', () => {
   afterEach(() => {
     localStorage.clear();
-    store.dispatch(GlobalActions.setTheme(''));
+    store.dispatch(GlobalActions.setColorScheme(''));
   });
 
   it('defaults to dark when prefers-color-scheme is dark', () => {
     window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
-    expect(getKialiTheme()).toBe(Theme.DARK);
+    expect(getKialiColorScheme()).toBe(Theme.DARK);
   });
 
   it('defaults to light when prefers-color-scheme is light', () => {
     window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
-    expect(getKialiTheme()).toBe(Theme.LIGHT);
+    expect(getKialiColorScheme()).toBe(Theme.LIGHT);
   });
 
   it('ignores legacy System value and falls back to OS preference', () => {
     localStorage.setItem('KIALI_THEME', 'System');
     window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
-    expect(getKialiTheme()).toBe(Theme.DARK);
+    expect(getKialiColorScheme()).toBe(Theme.DARK);
   });
 
-  it('returns stored theme from localStorage', () => {
+  it('returns stored color scheme from localStorage', () => {
+    localStorage.setItem(KIALI_COLOR_SCHEME, Theme.DARK);
+    expect(getKialiColorScheme()).toBe(Theme.DARK);
+  });
+
+  it('falls back to legacy KIALI_THEME localStorage key', () => {
     localStorage.setItem(KIALI_THEME, Theme.DARK);
-    expect(getKialiTheme()).toBe(Theme.DARK);
+    expect(getKialiColorScheme()).toBe(Theme.DARK);
   });
 });
 
@@ -236,7 +242,7 @@ describe('syncReduxThemeFromDocument', () => {
   afterEach(() => {
     document.documentElement.className = '';
     localStorage.clear();
-    store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
+    store.dispatch(GlobalActions.setColorScheme(Theme.LIGHT));
     store.dispatch(GlobalActions.setContrastMode(ContrastMode.TRADITIONAL));
     store.dispatch(GlobalActions.setThemeFelt(false));
   });
@@ -247,10 +253,10 @@ describe('syncReduxThemeFromDocument', () => {
 
     const result = syncReduxThemeFromDocument();
 
-    expect(result.theme).toBe(Theme.DARK);
+    expect(result.colorScheme).toBe(Theme.DARK);
     expect(result.contrastMode).toBe(ContrastMode.GLASS);
     expect(result.themeFelt).toBe(true);
-    expect(store.getState().globalState.theme).toBe(Theme.DARK);
+    expect(store.getState().globalState.colorScheme).toBe(Theme.DARK);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
     expect(store.getState().globalState.themeFelt).toBe(true);
     expect(document.documentElement.className).toBe(classesBefore);
@@ -261,7 +267,8 @@ describe('syncReduxThemeFromDocument', () => {
 
     syncReduxThemeFromDocument();
 
-    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.DARK);
+    expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(Theme.DARK);
+    expect(localStorage.getItem(KIALI_THEME)).toBeNull();
     expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.GLASS);
     expect(localStorage.getItem(KIALI_THEME_FELT)).toBe('true');
   });

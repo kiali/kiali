@@ -7,7 +7,7 @@ import { Theme } from 'types/Common';
 import {
   applyDocumentTheme,
   getKialiContrastMode,
-  getKialiTheme,
+  getKialiColorScheme,
   getKialiThemeFelt,
   isParentOwnedTheme,
   readDocumentTheme
@@ -62,7 +62,9 @@ const centerVerticalHorizontalStyle = kialiStyle({
 
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
-  const [theme, setTheme] = React.useState<Theme>(() => (isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme()));
+  const [colorScheme, setColorScheme] = React.useState<Theme>(() =>
+    isParentOwnedTheme() ? readDocumentTheme() : getKialiColorScheme()
+  );
 
   React.useEffect(() => {
     if (isKioskMode()) {
@@ -72,18 +74,18 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     // OSSMC: Console owns <html> classes — read theme from the document so the logo
     // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
     if (isParentOwnedTheme()) {
-      setTheme(readDocumentTheme());
+      setColorScheme(readDocumentTheme());
       return;
     }
 
-    const resolvedTheme = getKialiTheme();
-    applyDocumentTheme(resolvedTheme, getKialiContrastMode(), getKialiThemeFelt());
-    setTheme(resolvedTheme);
+    const resolvedColorScheme = getKialiColorScheme();
+    applyDocumentTheme(resolvedColorScheme, getKialiContrastMode(), getKialiThemeFelt());
+    setColorScheme(resolvedColorScheme);
   }, []);
 
   return (
     <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>
-      <img alt="Kiali Logo" src={theme === Theme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
+      <img alt="Kiali Logo" src={colorScheme === Theme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
           <Alert variant="danger" isInline={true} title={props.errorMsg} />

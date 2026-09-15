@@ -26,139 +26,145 @@ describe('GlobalStateReducer reducer', () => {
 
   it('should turn Loading spinner On', () => {
     expect(
-      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT }, GlobalActions.incrementLoadingCounter())
+      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT }, GlobalActions.incrementLoadingCounter())
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       loadingCounter: 1,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should turn Loading spinner off', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, loadingCounter: 1, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, loadingCounter: 1, colorScheme: Theme.LIGHT },
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should increment counter', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, loadingCounter: 1, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, loadingCounter: 1, colorScheme: Theme.LIGHT },
         GlobalActions.incrementLoadingCounter()
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       loadingCounter: 2,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should decrement counter', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, loadingCounter: 2, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, loadingCounter: 2, colorScheme: Theme.LIGHT },
         GlobalActions.decrementLoadingCounter()
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       loadingCounter: 1,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should turn on page visibility status', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, isPageVisible: false, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, isPageVisible: false, colorScheme: Theme.LIGHT },
         GlobalActions.setPageVisibilityVisible()
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should turn off page visibility status', () => {
     expect(
-      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT }, GlobalActions.setPageVisibilityHidden())
+      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT }, GlobalActions.setPageVisibilityHidden())
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       isPageVisible: false,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should turn on kiosk status', () => {
-    expect(GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT }, GlobalActions.setKiosk('test'))).toEqual(
-      {
-        ...INITIAL_GLOBAL_STATE,
-        kiosk: 'test',
-        theme: Theme.LIGHT
-      }
-    );
+    expect(
+      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT }, GlobalActions.setKiosk('test'))
+    ).toEqual({
+      ...INITIAL_GLOBAL_STATE,
+      kiosk: 'test',
+      colorScheme: Theme.LIGHT
+    });
   });
 
   it('should set kiosk data', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT },
         GlobalActions.setKioskData({ hasExternalTracing: false, hasNetobserv: false })
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       kioskData: { hasExternalTracing: false, hasNetobserv: false },
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should switch to english language', () => {
     expect(
-      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT }, GlobalActions.setLanguage(Language.ENGLISH))
+      GlobalStateReducer(
+        { ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT },
+        GlobalActions.setLanguage(Language.ENGLISH)
+      )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       language: Language.ENGLISH,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should turn on dark theme', () => {
     expect(
-      GlobalStateReducer({ ...INITIAL_GLOBAL_STATE, theme: Theme.LIGHT }, GlobalActions.setTheme(Theme.DARK))
+      GlobalStateReducer(
+        { ...INITIAL_GLOBAL_STATE, colorScheme: Theme.LIGHT },
+        GlobalActions.setColorScheme(Theme.DARK)
+      )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
-      theme: Theme.DARK
+      colorScheme: Theme.DARK
     });
   });
 
   it('should set contrast mode', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, contrastMode: ContrastMode.TRADITIONAL, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, contrastMode: ContrastMode.TRADITIONAL, colorScheme: Theme.LIGHT },
         GlobalActions.setContrastMode(ContrastMode.GLASS)
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       contrastMode: ContrastMode.GLASS,
-      theme: Theme.LIGHT
+      colorScheme: Theme.LIGHT
     });
   });
 
   it('should set theme felt', () => {
     expect(
       GlobalStateReducer(
-        { ...INITIAL_GLOBAL_STATE, contrastMode: ContrastMode.TRADITIONAL, theme: Theme.LIGHT },
+        { ...INITIAL_GLOBAL_STATE, contrastMode: ContrastMode.TRADITIONAL, colorScheme: Theme.LIGHT },
         GlobalActions.setThemeFelt(true)
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       contrastMode: ContrastMode.TRADITIONAL,
-      theme: Theme.LIGHT,
+      colorScheme: Theme.LIGHT,
       themeFelt: true
     });
   });

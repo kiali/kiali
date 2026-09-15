@@ -5,13 +5,13 @@ import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
+  colorScheme: '',
   contrastMode: '',
   isPageVisible: true,
   kiosk: '',
   kioskData: undefined,
   language: '',
   loadingCounter: 0,
-  theme: '',
   themeFelt: false
 };
 
@@ -42,9 +42,9 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
       const language = action.payload;
       return updateState(state, { language: language });
     }
-    case getType(GlobalActions.setTheme): {
-      const theme = action.payload;
-      return updateState(state, { theme: theme });
+    case getType(GlobalActions.setColorScheme): {
+      const colorScheme = action.payload;
+      return updateState(state, { colorScheme: colorScheme });
     }
     case getType(GlobalActions.setThemeFelt): {
       const themeFelt = action.payload;

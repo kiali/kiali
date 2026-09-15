@@ -34,11 +34,11 @@ import { ParentThemeSync } from 'components/Kiosk/ParentThemeSync';
 
 type ReduxStateProps = {
   chatbotEnabled: boolean;
+  colorScheme: string;
   externalServices: ExternalServiceInfo[];
   kiosk: string;
   navCollapsed: boolean;
   showNotificationCenter: boolean;
-  theme: string;
   tracingUrl?: string;
 };
 
@@ -116,7 +116,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
-  const darkTheme = props.theme === Theme.DARK;
+  const darkTheme = props.colorScheme === Theme.DARK;
   const kioskMode = isKiosk(props.kiosk);
 
   const masthead = kioskMode ? undefined : (
@@ -174,7 +174,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,
   showNotificationCenter: state.notificationCenter.expanded,
-  theme: state.globalState.theme,
+  colorScheme: state.globalState.colorScheme,
   tracingUrl: state.tracingState.info && state.tracingState.info.url ? state.tracingState.info.url : undefined
 });
 

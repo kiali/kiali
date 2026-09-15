@@ -34,8 +34,8 @@ import { GlobalActions } from '../actions/GlobalActions';
 import {
   applyDocumentTheme,
   getKialiContrastMode,
+  getKialiColorScheme,
   getKialiThemeFelt,
-  getKialiTheme,
   isParentOwnedTheme,
   syncReduxThemeFromDocument
 } from 'utils/ThemeUtils';
@@ -351,11 +351,11 @@ class AuthenticationControllerComponent extends React.Component<
     if (isParentOwnedTheme()) {
       syncReduxThemeFromDocument();
     } else {
-      const theme = getKialiTheme();
+      const colorScheme = getKialiColorScheme();
       const contrastMode = getKialiContrastMode();
       const themeFelt = getKialiThemeFelt();
-      applyDocumentTheme(theme, contrastMode, themeFelt);
-      store.dispatch(GlobalActions.setTheme(theme));
+      applyDocumentTheme(colorScheme, contrastMode, themeFelt);
+      store.dispatch(GlobalActions.setColorScheme(colorScheme));
       store.dispatch(GlobalActions.setContrastMode(contrastMode));
       store.dispatch(GlobalActions.setThemeFelt(themeFelt));
     }

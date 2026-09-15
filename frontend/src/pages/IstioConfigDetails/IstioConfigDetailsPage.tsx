@@ -112,8 +112,8 @@ const IDLE_BLOCKER: { location: undefined; proceed: undefined; reset: undefined;
 };
 
 interface ReduxProps {
+  colorScheme: string;
   kiosk: string;
-  theme: string;
 }
 
 type IstioConfigDetailsProps = ReduxProps & {
@@ -177,7 +177,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
     yamlModifiedRef.current = '';
   }, []);
 
-  const { kiosk, theme, istioConfigId } = props;
+  const { kiosk, colorScheme, istioConfigId } = props;
   // Parent kiosk (e.g. OSSMC): no in-app leave/reload modals — only beforeunload for tab close/refresh.
   const parentKiosk = isParentKiosk(kiosk);
 
@@ -795,7 +795,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
             key={editorRevision}
             defaultValue={editorDefaultValue}
             language="yaml"
-            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={colorScheme === Theme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             onChange={handleEditorChange}
             onMount={handleEditorDidMount}
@@ -932,7 +932,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
-  theme: state.globalState.theme
+  colorScheme: state.globalState.colorScheme
 });
 
 export { IstioConfigDetailsPageComponent };

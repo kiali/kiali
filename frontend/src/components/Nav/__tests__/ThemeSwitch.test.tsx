@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
 import {
   ContrastMode,
+  KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
-  KIALI_THEME,
   KIALI_THEME_FELT,
   PF_THEME_DARK,
   PF_THEME_FELT,
@@ -16,13 +16,15 @@ import { store } from 'store/ConfigStore';
 
 describe('ThemeSwitch renders', () => {
   it('light theme', () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
+    render(
+      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} colorScheme={Theme.LIGHT} themeFelt={false} />
+    );
 
     expect(screen.getByLabelText(/Theme selection, current: Light/)).toBeInTheDocument();
   });
 
   it('dark theme', () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} colorScheme={Theme.DARK} themeFelt={false} />);
 
     expect(screen.getByLabelText(/Theme selection, current: Dark/)).toBeInTheDocument();
   });
@@ -35,28 +37,32 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to dark theme', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
+    render(
+      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} colorScheme={Theme.LIGHT} themeFelt={false} />
+    );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     await userEvent.click(screen.getByRole('button', { name: 'Dark' }));
 
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
-    expect(store.getState().globalState.theme).toBe(Theme.DARK);
-    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.DARK);
+    expect(store.getState().globalState.colorScheme).toBe(Theme.DARK);
+    expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(Theme.DARK);
   });
 
   it('to light theme', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.DARK} themeFelt={false} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} colorScheme={Theme.DARK} themeFelt={false} />);
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     await userEvent.click(screen.getByRole('button', { name: 'Light' }));
 
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
-    expect(store.getState().globalState.theme).toBe(Theme.LIGHT);
+    expect(store.getState().globalState.colorScheme).toBe(Theme.LIGHT);
   });
 
   it('to glass contrast mode', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} theme={Theme.LIGHT} themeFelt={false} />);
+    render(
+      <ThemeSwitchComponent contrastMode={ContrastMode.TRADITIONAL} colorScheme={Theme.LIGHT} themeFelt={false} />
+    );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     await userEvent.click(screen.getByRole('button', { name: 'Glass' }));
@@ -66,7 +72,7 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to felt with glass contrast mode', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={false} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={Theme.LIGHT} themeFelt={false} />);
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     await userEvent.click(screen.getByRole('button', { name: 'Project Felt' }));
@@ -78,7 +84,7 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('off felt theme', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={true} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={Theme.LIGHT} themeFelt={true} />);
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     const feltSwitch = document.querySelector('[data-test="theme-felt-switch"]') as HTMLElement;
@@ -90,7 +96,7 @@ describe('ThemeSwitch changes', () => {
   });
 
   it('to high contrast mode', async () => {
-    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={false} />);
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={Theme.LIGHT} themeFelt={false} />);
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
     await userEvent.click(screen.getByRole('button', { name: 'High contrast' }));

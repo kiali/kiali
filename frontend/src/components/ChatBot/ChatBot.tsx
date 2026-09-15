@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { t } from 'utils/I18nUtils';
-import { Chatbot, ChatbotToggle, Conversation } from '@patternfly/chatbot';
+import type { Conversation } from '@patternfly/chatbot';
+import { Chatbot, ChatbotToggle } from '@patternfly/chatbot';
 import '@patternfly/chatbot/dist/css/main.css';
 import { Theme } from 'types/Common';
-import { useKialiTheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/ThemeUtils';
 import { ChatBotHeader } from './ChatBotHeader';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { ChatBotFooter } from './ChatBotFooter';
 import { ChatBotMock } from './ChatBotMock';
-import { ExtendedMessage } from 'types/Chatbot';
+import type { ExtendedMessage } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-lightbkg.svg';
@@ -30,8 +31,8 @@ const resetConversationState = (): void => {
 
 export const ChatBot: React.FC = () => {
   const dispatch = useDispatch();
-  const theme = useKialiTheme();
-  const isDarkTheme = theme === Theme.DARK;
+  const colorScheme = useKialiColorScheme();
+  const isDarkTheme = colorScheme === Theme.DARK;
   const ClosedToggleIcon = isDarkTheme ? KialiIconDark : KialiIconLight;
   const allowedToUseChatbot = useSelector((state: KialiAppState) => state.ai.chat.allowed);
   const displayMode = useSelector((state: KialiAppState) => state.ai.chat.displayMode);

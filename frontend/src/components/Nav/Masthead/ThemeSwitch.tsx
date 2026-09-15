@@ -20,9 +20,9 @@ import { store } from 'store/ConfigStore';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { applyDocumentTheme, isParentOwnedTheme, persistKialiThemePreferences } from 'utils/ThemeUtils';
 
-type ThemeSwitchProps = {
+type ReduxProps = {
+  colorScheme: string;
   contrastMode: string;
-  theme: string;
   themeFelt: boolean;
 };
 
@@ -68,27 +68,27 @@ const getAppearanceAriaLabel = (
   return `${t('Theme selection')}, ${t('current')}: ${parts.join(', ')}`;
 };
 
-export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
+export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) => {
   const { t } = useKialiTranslation();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-  const theme = props.theme as Theme;
+  const colorScheme = props.colorScheme as Theme;
   const contrastMode = props.contrastMode as ContrastMode;
 
-  const applyTheme = (nextTheme: Theme, nextContrastMode: ContrastMode, themeFelt: boolean): void => {
+  const applyTheme = (nextColorScheme: Theme, nextContrastMode: ContrastMode, themeFelt: boolean): void => {
     if (isParentOwnedTheme()) {
       return;
     }
 
-    applyDocumentTheme(nextTheme, nextContrastMode, themeFelt);
-    store.dispatch(GlobalActions.setTheme(nextTheme));
+    applyDocumentTheme(nextColorScheme, nextContrastMode, themeFelt);
+    store.dispatch(GlobalActions.setColorScheme(nextColorScheme));
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
     store.dispatch(GlobalActions.setThemeFelt(themeFelt));
-    persistKialiThemePreferences(nextTheme, nextContrastMode, themeFelt);
+    persistKialiThemePreferences(nextColorScheme, nextContrastMode, themeFelt);
   };
 
   const handleThemeVariantChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
     const themeFelt = (event.currentTarget as HTMLElement).id === THEME_VARIANT_FELT;
-    applyTheme(theme, contrastMode, themeFelt);
+    applyTheme(colorScheme, contrastMode, themeFelt);
   };
 
   const handleThemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
@@ -96,7 +96,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   };
 
   const handleContrastModeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    applyTheme(theme, (event.currentTarget as HTMLElement).id as ContrastMode, props.themeFelt);
+    applyTheme(colorScheme, (event.currentTarget as HTMLElement).id as ContrastMode, props.themeFelt);
   };
 
   return (
@@ -113,7 +113,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
-          aria-label={getAppearanceAriaLabel(theme, contrastMode, props.themeFelt, t)}
+          aria-label={getAppearanceAriaLabel(colorScheme, contrastMode, props.themeFelt, t)}
           data-test="theme-switch"
           icon={
             <Icon size="lg">
@@ -131,13 +131,13 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
             <ToggleGroup aria-labelledby="theme-selector-color-scheme-title" data-test="theme-color-scheme-switch">
               <ToggleGroupItem
                 buttonId={Theme.LIGHT}
-                isSelected={theme === Theme.LIGHT}
+                isSelected={colorScheme === Theme.LIGHT}
                 onChange={handleThemeChange}
                 text={t('Light')}
               />
               <ToggleGroupItem
                 buttonId={Theme.DARK}
-                isSelected={theme === Theme.DARK}
+                isSelected={colorScheme === Theme.DARK}
                 onChange={handleThemeChange}
                 text={t('Dark')}
               />
@@ -197,10 +197,10 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   );
 };
 
-const mapStateToProps = (state: KialiAppState): ThemeSwitchProps => {
+const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
+    colorScheme: state.globalState.colorScheme,
     contrastMode: state.globalState.contrastMode,
-    theme: state.globalState.theme,
     themeFelt: state.globalState.themeFelt
   };
 };
