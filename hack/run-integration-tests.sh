@@ -32,6 +32,7 @@ PLAYWRIGHT_CORE_1="playwright-core-1"
 PLAYWRIGHT_CORE_2="playwright-core-2"
 PLAYWRIGHT_CORE_CACHING="playwright-core-caching"
 PLAYWRIGHT_CORE_OPTIONAL="playwright-core-optional"
+PLAYWRIGHT_OFFLINE="playwright-offline"
 PLAYWRIGHT_SMOKE="playwright-smoke"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
@@ -179,8 +180,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}' or '${PLAYWRIGHT_SMOKE}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_OFFLINE}' or '${PLAYWRIGHT_SMOKE}'"
         exit 1
       fi
       shift;shift
@@ -262,7 +263,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_SMOKE}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_OFFLINE}|${PLAYWRIGHT_SMOKE}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -1395,7 +1396,6 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
   ensurePlaywrightReady
 
   GOPATH=$(go env GOPATH)
-
   if [ -z "${GOPATH}" ]; then
     echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
     exit 1
@@ -1455,6 +1455,91 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   set +e
   yarn run playwright:run:core-optional
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_OFFLINE}" ]; then
+  ensurePlaywrightReady
+
+  GOPATH=$(go env GOPATH)
+  if [ -z "${GOPATH}" ]; then
+    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
+    exit 1
+  fi
+
+  if [ ! -f "${GOPATH}/bin/kiali" ]; then
+    echo "ERROR: Kiali binary not found at ${GOPATH}/bin/kiali. Please build the kiali binary first."
+    exit 1
+  fi
+
+  infomsg "Found kiali binary at ${GOPATH}/bin/kiali"
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
+
+    ensureKialiServerReady
+  fi
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET="${SCRIPT_DIR}/../tests/integration/assets/bookinfo-offline-fault-injection-reviews.yaml"
+  infomsg "Seeding offline fault injection config for reviews"
+  kubectl apply -n bookinfo -f "${OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET}"
+
+  # Make a temp dir for the must-gather data
+  MUST_GATHER_DIR=$(mktemp -d)
+
+  # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
+  # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
+  docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+
+  "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
+  cleanup_offline_seeded_traffic_routing
+  OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
+
+  # Start kiali in offline mode in the background
+  infomsg "Starting kiali in offline mode with must-gather data on port ${KIALI_PORT}"
+  "${GOPATH}/bin/kiali" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run offline --log-level debug --data-path "${MUST_GATHER_DIR}" --without-browser &
+  KIALI_PID=$!
+
+  # Trap to ensure we clean up the Kiali process on exit
+  trap cleanup_kiali EXIT
+
+  # Wait for the Kiali server to become ready by polling its health endpoint.
+  # Offline mode can take a while to parse all must-gather data before the HTTP server starts.
+  KIALI_OFFLINE_URL="http://localhost:20001"
+  infomsg "Waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}"
+  WAIT_START=$(date +%s)
+  WAIT_END=$((WAIT_START + 120))
+  while true; do
+    if ! ps -p ${KIALI_PID} > /dev/null; then
+      echo "Kiali process is not running. An error must have occurred. Check the logs above."
+      exit 1
+    fi
+    if curl -s --fail "${KIALI_OFFLINE_URL}/healthz" > /dev/null 2>&1; then
+      break
+    fi
+    WAIT_NOW=$(date +%s)
+    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
+      echo "Timed out waiting for Kiali offline server to respond at ${KIALI_OFFLINE_URL}/healthz"
+      exit 1
+    fi
+    sleep 2
+  done
+  infomsg "Kiali offline server is healthy"
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_OFFLINE_URL}"
+
+  infomsg "Running Playwright tests for offline mode"
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:offline
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
