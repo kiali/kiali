@@ -15,7 +15,7 @@ rstest.mock('@monaco-editor/react', () => {
     height: string;
     onMount: (ed: { getContentHeight: () => number; onDidContentSizeChange: (cb: () => void) => void }) => void;
     options?: Record<string, unknown>;
-  }): React.JSX.Element => {
+  }): JSX.Element => {
     React.useEffect(() => {
       onMount({
         getContentHeight: mockGetContentHeight,
