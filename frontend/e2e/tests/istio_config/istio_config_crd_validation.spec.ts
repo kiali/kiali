@@ -453,6 +453,24 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0207');
     });
 
+    // Keep before KIA0505 (Cypress order): sleep PeerAuthentication DISABLE blocks KIA0208 mesh validation.
+    test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
+      const drName = crdResourceName(testInfo, 'disable-mtls');
+      applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
+      patchDestinationRuleDisableMtls(drName, 'sleep');
+      applyPeerAuthentication('default', 'istio-system');
+      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
+
+      await istioConfigPage.open();
+      await selectNamespace(page, 'istio-system');
+      await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
+      await selectNamespace(page, 'sleep');
+      await istioConfigPage.primeValidationFromDetails('sleep', 'DestinationRule', drName);
+      await selectNamespace(page, 'sleep');
+      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
+      deleteIstioConfig('DestinationRule', drName, 'sleep');
+    });
+
     test('KIA0505 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'enable-mtls');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
@@ -463,19 +481,6 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'PeerAuthentication', 'default', 'KIA0505');
-    });
-
-    test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
-      const drName = crdResourceName(testInfo, 'disable-mtls');
-      applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
-      patchDestinationRuleDisableMtls(drName, 'sleep');
-      applyPeerAuthentication('default', 'istio-system');
-      patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
-
-      await istioConfigPage.open();
-      await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
-      deleteIstioConfig('DestinationRule', drName, 'sleep');
     });
 
     test('KIA0506 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
