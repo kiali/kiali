@@ -3,6 +3,7 @@ import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 const THEME_SWITCH = '[data-test="theme-switch"]';
 const COLOR_SCHEME_SWITCH = '[data-test="theme-color-scheme-switch"]';
 const CONTRAST_MODE_SWITCH = '[data-test="contrast-mode-switch"]';
+const THEME_FELT_SWITCH = '[data-test="theme-felt-switch"]';
 
 const openThemeMenu = (): void => {
   cy.get(THEME_SWITCH).then($toggle => {
@@ -28,15 +29,26 @@ Given('the theme is explicitly set to light', () => {
   cy.window().then(win => {
     win.localStorage.removeItem('KIALI_THEME');
     win.localStorage.removeItem('KIALI_CONTRAST_MODE');
+    win.localStorage.removeItem('KIALI_THEME_FELT');
   });
   cy.get('html').then($html => {
-    if ($html.hasClass('pf-v6-theme-glass') || $html.hasClass('pf-v6-theme-high-contrast')) {
+    if (
+      $html.hasClass('pf-v6-theme-glass') ||
+      $html.hasClass('pf-v6-theme-high-contrast') ||
+      $html.hasClass('pf-v6-theme-felt')
+    ) {
       openThemeMenu();
-      cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
+      if ($html.hasClass('pf-v6-theme-felt')) {
+        cy.get(THEME_FELT_SWITCH).contains('button', 'Default').click();
+      }
+      if ($html.hasClass('pf-v6-theme-glass') || $html.hasClass('pf-v6-theme-high-contrast')) {
+        cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
+      }
     }
   });
   cy.get('html').should('not.have.class', 'pf-v6-theme-glass');
   cy.get('html').should('not.have.class', 'pf-v6-theme-high-contrast');
+  cy.get('html').should('not.have.class', 'pf-v6-theme-felt');
 });
 
 When('the user switches to dark theme', () => {
@@ -66,6 +78,11 @@ When('the user selects default contrast mode', () => {
   cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
 });
 
+When('the user selects project felt theme', () => {
+  openThemeMenu();
+  cy.get(THEME_FELT_SWITCH).contains('button', 'Project Felt').click();
+});
+
 Then('the document should use light theme', () => {
   cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
@@ -87,4 +104,8 @@ Then('the document should use high contrast mode', () => {
 Then('the document should use default contrast mode', () => {
   cy.get('html').should('not.have.class', 'pf-v6-theme-glass');
   cy.get('html').should('not.have.class', 'pf-v6-theme-high-contrast');
+});
+
+Then('the document should use project felt theme', () => {
+  cy.get('html').should('have.class', 'pf-v6-theme-felt');
 });

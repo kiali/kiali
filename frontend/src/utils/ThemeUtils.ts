@@ -2,7 +2,6 @@ import { useKialiSelector } from 'hooks/redux';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
 import { isParentKiosk } from 'components/Kiosk/KioskActions';
-import { getKioskMode } from 'utils/SearchParamUtils';
 import {
   ContrastMode,
   KIALI_CONTRAST_MODE,
@@ -113,8 +112,34 @@ export const readDocumentThemeClasses = (): DocumentThemeClasses => {
  * In that case Kiali must sync Redux from the document and must not overwrite classes
  * (including glass / high-contrast classes applied by OCP Console).
  */
+const PARENT_KIOSK_SESSION_KEY = 'KIALI_PARENT_KIOSK';
+
+export const persistKialiThemePreferences = (theme: Theme, contrastMode: ContrastMode, themeFelt: boolean): void => {
+  localStorage.setItem(KIALI_THEME, theme);
+  localStorage.setItem(KIALI_CONTRAST_MODE, contrastMode);
+  localStorage.setItem(KIALI_THEME_FELT, String(themeFelt));
+};
+
+/**
+ * True when an embedder (e.g. OSSMC) shares this window and owns theme classes on <html>.
+ * Uses the live URL kiosk param when present; otherwise sessionStorage from the initial
+ * OSSMC load (SPA navigations drop the param). Does not use redux-persist alone, so a
+ * prior OSSMC session cannot make standalone Kiali think the parent owns the theme.
+ */
 export const isParentOwnedTheme = (): boolean => {
-  return isParentKiosk(getKioskMode()) && window.top === window.self;
+  if (window.top !== window.self) {
+    return false;
+  }
+
+  const urlKiosk = new URLSearchParams(window.location.search).get('kiosk') ?? '';
+
+  if (isParentKiosk(urlKiosk)) {
+    sessionStorage.setItem(PARENT_KIOSK_SESSION_KEY, urlKiosk);
+    return true;
+  }
+
+  const sessionKiosk = sessionStorage.getItem(PARENT_KIOSK_SESSION_KEY) ?? '';
+  return isParentKiosk(sessionKiosk);
 };
 
 /** Update Redux from current <html> theme classes without modifying the document. */
@@ -124,6 +149,7 @@ export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { theme: Th
   store.dispatch(GlobalActions.setTheme(theme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
   store.dispatch(GlobalActions.setThemeFelt(themeFelt));
+  persistKialiThemePreferences(theme, contrastMode, themeFelt);
 
   return { contrastMode, theme, themeFelt };
 };

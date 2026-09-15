@@ -62,17 +62,24 @@ const centerVerticalHorizontalStyle = kialiStyle({
 
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
+  const [theme, setTheme] = React.useState<Theme>(() => (isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme()));
 
-  if (isKioskMode()) {
-    document.body.classList.add('kiosk');
-  }
+  React.useEffect(() => {
+    if (isKioskMode()) {
+      document.body.classList.add('kiosk');
+    }
 
-  // OSSMC: Console owns <html> classes — read theme from the document so the logo
-  // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
-  const theme = isParentOwnedTheme() ? readDocumentTheme() : getKialiTheme();
-  if (!isParentOwnedTheme()) {
-    applyDocumentTheme(theme, getKialiContrastMode(), getKialiThemeFelt());
-  }
+    // OSSMC: Console owns <html> classes — read theme from the document so the logo
+    // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
+    if (isParentOwnedTheme()) {
+      setTheme(readDocumentTheme());
+      return;
+    }
+
+    const resolvedTheme = getKialiTheme();
+    applyDocumentTheme(resolvedTheme, getKialiContrastMode(), getKialiThemeFelt());
+    setTheme(resolvedTheme);
+  }, []);
 
   return (
     <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>

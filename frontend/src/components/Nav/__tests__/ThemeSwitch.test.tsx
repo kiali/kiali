@@ -1,8 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
 import {
   ContrastMode,
+  KIALI_CONTRAST_MODE,
+  KIALI_THEME,
+  KIALI_THEME_FELT,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
@@ -28,6 +31,7 @@ describe('ThemeSwitch renders', () => {
 describe('ThemeSwitch changes', () => {
   afterEach(() => {
     document.documentElement.className = '';
+    localStorage.clear();
   });
 
   it('to dark theme', async () => {
@@ -38,6 +42,7 @@ describe('ThemeSwitch changes', () => {
 
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
     expect(store.getState().globalState.theme).toBe(Theme.DARK);
+    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.DARK);
   });
 
   it('to light theme', async () => {
@@ -69,6 +74,19 @@ describe('ThemeSwitch changes', () => {
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
     expect(store.getState().globalState.themeFelt).toBe(true);
+    expect(localStorage.getItem(KIALI_THEME_FELT)).toBe('true');
+  });
+
+  it('off felt theme', async () => {
+    render(<ThemeSwitchComponent contrastMode={ContrastMode.GLASS} theme={Theme.LIGHT} themeFelt={true} />);
+
+    await userEvent.click(screen.getByLabelText(/Theme selection/));
+    const feltSwitch = document.querySelector('[data-test="theme-felt-switch"]') as HTMLElement;
+    await userEvent.click(within(feltSwitch).getByRole('button', { name: 'Default' }));
+
+    expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(false);
+    expect(store.getState().globalState.themeFelt).toBe(false);
+    expect(localStorage.getItem(KIALI_THEME_FELT)).toBe('false');
   });
 
   it('to high contrast mode', async () => {
@@ -80,5 +98,6 @@ describe('ThemeSwitch changes', () => {
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.HIGH_CONTRAST);
+    expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.HIGH_CONTRAST);
   });
 });

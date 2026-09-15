@@ -142,7 +142,7 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
     table
   ) : (
     <div className={stickyWrapperStyle}>
-      <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={props.rows.length}>
+      <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={props.rows}>
         {table}
       </StickyTableScrollContainer>
     </div>

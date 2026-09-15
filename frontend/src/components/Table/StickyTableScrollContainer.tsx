@@ -8,8 +8,8 @@ export const TABLE_SCROLLED = 'table-scrolled';
 type StickyTableScrollContainerProps = {
   children: React.ReactNode;
   className?: string;
-  // Bumps when table body content changes (e.g. row count) to re-sync the scroll class.
-  contentVersion?: number | string;
+  // Bumps when table body content changes to re-sync the scroll class.
+  contentVersion?: unknown;
 };
 
 export const StickyTableScrollContainer: React.FC<StickyTableScrollContainerProps> = ({
@@ -27,7 +27,7 @@ export const StickyTableScrollContainer: React.FC<StickyTableScrollContainerProp
     setTableScrolled(prev => (prev === scrolled ? prev : scrolled));
   }, []);
 
-  const onTableScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
+  const handleTableScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
     const scrolled = event.currentTarget.scrollTop > 0;
 
     setTableScrolled(prev => (prev === scrolled ? prev : scrolled));
@@ -41,7 +41,7 @@ export const StickyTableScrollContainer: React.FC<StickyTableScrollContainerProp
     <InnerScrollContainer
       ref={scrollContainerRef}
       className={classes(className, tableScrolled && TABLE_SCROLLED)}
-      onScroll={onTableScroll}
+      onScroll={handleTableScroll}
     >
       {children}
     </InnerScrollContainer>

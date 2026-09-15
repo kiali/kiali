@@ -31,3 +31,10 @@ Feature: Kiali light and dark themes
     Then the document should use high contrast mode
     When the user selects default contrast mode
     Then the document should use default contrast mode
+
+  @smoke
+  @core-1
+  Scenario: User can enable project felt theme
+    Given the theme is explicitly set to light
+    When the user selects project felt theme
+    Then the document should use project felt theme

@@ -1,5 +1,8 @@
 import {
   ContrastMode,
+  KIALI_CONTRAST_MODE,
+  KIALI_THEME,
+  KIALI_THEME_FELT,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
@@ -11,6 +14,7 @@ import {
   applyDocumentTheme,
   getKialiContrastMode,
   getKialiTheme,
+  getKialiThemeFelt,
   isParentOwnedTheme,
   observeDocumentTheme,
   readDocumentContrastMode,
@@ -91,6 +95,13 @@ describe('applyDocumentContrastMode', () => {
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
   });
+
+  it('keeps felt enabled with high contrast', () => {
+    applyDocumentContrastMode(ContrastMode.HIGH_CONTRAST, true);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
+    expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
+    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
+  });
 });
 
 describe('getKialiTheme', () => {
@@ -112,6 +123,11 @@ describe('getKialiTheme', () => {
   it('ignores legacy System value and falls back to OS preference', () => {
     localStorage.setItem('KIALI_THEME', 'System');
     window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
+    expect(getKialiTheme()).toBe(Theme.DARK);
+  });
+
+  it('returns stored theme from localStorage', () => {
+    localStorage.setItem(KIALI_THEME, Theme.DARK);
     expect(getKialiTheme()).toBe(Theme.DARK);
   });
 });
@@ -136,6 +152,33 @@ describe('getKialiContrastMode', () => {
     localStorage.setItem('KIALI_CONTRAST_MODE', 'System');
     window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
     expect(getKialiContrastMode()).toBe(ContrastMode.TRADITIONAL);
+  });
+
+  it('returns stored contrast mode from localStorage', () => {
+    localStorage.setItem(KIALI_CONTRAST_MODE, ContrastMode.GLASS);
+    expect(getKialiContrastMode()).toBe(ContrastMode.GLASS);
+  });
+});
+
+describe('getKialiThemeFelt', () => {
+  afterEach(() => {
+    localStorage.clear();
+    store.dispatch(GlobalActions.setThemeFelt(false));
+  });
+
+  it('returns true when localStorage is true', () => {
+    localStorage.setItem(KIALI_THEME_FELT, 'true');
+    expect(getKialiThemeFelt()).toBe(true);
+  });
+
+  it('returns false when localStorage is false', () => {
+    localStorage.setItem(KIALI_THEME_FELT, 'false');
+    expect(getKialiThemeFelt()).toBe(false);
+  });
+
+  it('falls back to redux when localStorage is absent', () => {
+    store.dispatch(GlobalActions.setThemeFelt(true));
+    expect(getKialiThemeFelt()).toBe(true);
   });
 });
 
@@ -183,11 +226,16 @@ describe('readDocumentThemeFelt', () => {
     document.documentElement.classList.add(PF_THEME_FELT);
     expect(readDocumentThemeFelt()).toBe(true);
   });
+
+  it('returns false when felt class is absent', () => {
+    expect(readDocumentThemeFelt()).toBe(false);
+  });
 });
 
 describe('syncReduxThemeFromDocument', () => {
   afterEach(() => {
     document.documentElement.className = '';
+    localStorage.clear();
     store.dispatch(GlobalActions.setTheme(Theme.LIGHT));
     store.dispatch(GlobalActions.setContrastMode(ContrastMode.TRADITIONAL));
     store.dispatch(GlobalActions.setThemeFelt(false));
@@ -206,6 +254,16 @@ describe('syncReduxThemeFromDocument', () => {
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
     expect(store.getState().globalState.themeFelt).toBe(true);
     expect(document.documentElement.className).toBe(classesBefore);
+  });
+
+  it('persists synced preferences to localStorage', () => {
+    document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_FELT);
+
+    syncReduxThemeFromDocument();
+
+    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.DARK);
+    expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.GLASS);
+    expect(localStorage.getItem(KIALI_THEME_FELT)).toBe('true');
   });
 });
 
@@ -260,22 +318,40 @@ describe('observeDocumentTheme', () => {
 });
 
 describe('isParentOwnedTheme', () => {
+  const originalTop = window.top;
+
   afterEach(() => {
+    sessionStorage.clear();
     store.dispatch(GlobalActions.setKiosk(''));
+    Object.defineProperty(window, 'top', { configurable: true, value: originalTop });
+    window.history.replaceState({}, '', '/');
   });
 
   it('is false in standalone mode', () => {
-    store.dispatch(GlobalActions.setKiosk(''));
+    store.dispatch(GlobalActions.setKiosk('/'));
     expect(isParentOwnedTheme()).toBe(false);
   });
 
-  it('is true for same-window parent kiosk (OSSMC)', () => {
-    store.dispatch(GlobalActions.setKiosk('/'));
+  it('is true for same-window parent kiosk URL (OSSMC)', () => {
+    window.history.replaceState({}, '', '/?kiosk=/');
+    expect(isParentOwnedTheme()).toBe(true);
+  });
+
+  it('is true after OSSMC SPA navigation when session kiosk is set', () => {
+    window.history.replaceState({}, '', '/?kiosk=/');
+    isParentOwnedTheme();
+    window.history.replaceState({}, '', '/');
     expect(isParentOwnedTheme()).toBe(true);
   });
 
   it('is false for standalone kiosk flag', () => {
-    store.dispatch(GlobalActions.setKiosk('true'));
+    window.history.replaceState({}, '', '/?kiosk=true');
+    expect(isParentOwnedTheme()).toBe(false);
+  });
+
+  it('is false when embedded in an iframe', () => {
+    window.history.replaceState({}, '', '/?kiosk=/');
+    Object.defineProperty(window, 'top', { configurable: true, value: {} });
     expect(isParentOwnedTheme()).toBe(false);
   });
 });

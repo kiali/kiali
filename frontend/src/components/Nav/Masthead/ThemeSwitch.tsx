@@ -14,11 +14,11 @@ import type { MenuToggleElement } from '@patternfly/react-core';
 import { AdjustIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { ContrastMode, KIALI_CONTRAST_MODE, KIALI_THEME, KIALI_THEME_FELT, Theme } from 'types/Common';
+import { ContrastMode, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { applyDocumentTheme } from 'utils/ThemeUtils';
+import { applyDocumentTheme, isParentOwnedTheme, persistKialiThemePreferences } from 'utils/ThemeUtils';
 
 type ThemeSwitchProps = {
   contrastMode: string;
@@ -39,6 +39,35 @@ const getThemeDisplayText = (theme: Theme, t: (key: string) => string): string =
   return theme === Theme.DARK ? t('Dark') : t('Light');
 };
 
+const getContrastModeDisplayText = (contrastMode: ContrastMode, t: (key: string) => string): string => {
+  if (contrastMode === ContrastMode.GLASS) {
+    return t('Glass');
+  }
+
+  if (contrastMode === ContrastMode.HIGH_CONTRAST) {
+    return t('High contrast');
+  }
+
+  return t('Default');
+};
+
+const getAppearanceAriaLabel = (
+  theme: Theme,
+  contrastMode: ContrastMode,
+  themeFelt: boolean,
+  t: (key: string) => string
+): string => {
+  const parts = [getThemeDisplayText(theme, t)];
+
+  if (themeFelt) {
+    parts.push(t('Project Felt'));
+  }
+
+  parts.push(getContrastModeDisplayText(contrastMode, t));
+
+  return `${t('Theme selection')}, ${t('current')}: ${parts.join(', ')}`;
+};
+
 export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwitchProps) => {
   const { t } = useKialiTranslation();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
@@ -46,13 +75,16 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
   const contrastMode = props.contrastMode as ContrastMode;
 
   const applyTheme = (nextTheme: Theme, nextContrastMode: ContrastMode, themeFelt: boolean): void => {
+    if (isParentOwnedTheme()) {
+      return;
+    }
+
     applyDocumentTheme(nextTheme, nextContrastMode, themeFelt);
     store.dispatch(GlobalActions.setTheme(nextTheme));
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
     store.dispatch(GlobalActions.setThemeFelt(themeFelt));
-    localStorage.setItem(KIALI_THEME, nextTheme);
-    localStorage.setItem(KIALI_CONTRAST_MODE, nextContrastMode);
-    localStorage.setItem(KIALI_THEME_FELT, String(themeFelt));
+    persistKialiThemePreferences(nextTheme, nextContrastMode, themeFelt);
+    setIsOpen(false);
   };
 
   const handleThemeVariantChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
@@ -82,7 +114,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
-          aria-label={`${t('Theme selection')}, ${t('current')}: ${getThemeDisplayText(theme, t)}`}
+          aria-label={getAppearanceAriaLabel(theme, contrastMode, props.themeFelt, t)}
           data-test="theme-switch"
           icon={
             <Icon size="lg">
