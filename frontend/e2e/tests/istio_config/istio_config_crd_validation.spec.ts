@@ -473,8 +473,10 @@ test.describe('Istio Config CRD validation', () => {
       patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
 
       await istioConfigPage.open();
+      await selectNamespace(page, 'istio-system');
+      await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
       await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
+      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
     });
 
