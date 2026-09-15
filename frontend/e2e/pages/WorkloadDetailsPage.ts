@@ -276,6 +276,12 @@ export class WorkloadDetailsPage extends BasePage {
     await expectMiniGraphReady(this.page);
   }
 
+  async expectMinigraphOffline(): Promise<void> {
+    const offline = this.getBySel('minigraph-offline');
+    await expect(offline).toBeVisible();
+    await expect(offline).toContainText('offline');
+  }
+
   private async openEnvoyTab(tab: string): Promise<void> {
     await this.page.locator('#envoy-details').getByText(tab, { exact: true }).click();
   }
