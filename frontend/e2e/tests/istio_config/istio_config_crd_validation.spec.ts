@@ -461,13 +461,19 @@ test.describe('Istio Config CRD validation', () => {
       applyPeerAuthentication('default', 'istio-system');
       patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
 
+      await istioConfigPage.waitForValidationCode(
+        'sleep',
+        'networking.istio.io',
+        'v1',
+        'DestinationRule',
+        drName,
+        'KIA0208'
+      );
+      await istioConfigPage.waitForIstioObjectInList('sleep', 'networking.istio.io/v1, Kind=DestinationRule', drName);
+
       await istioConfigPage.open();
-      await selectNamespace(page, 'istio-system');
-      await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
       await selectNamespace(page, 'sleep');
-      await istioConfigPage.primeValidationFromDetails('sleep', 'DestinationRule', drName);
-      await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
+      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
     });
 
