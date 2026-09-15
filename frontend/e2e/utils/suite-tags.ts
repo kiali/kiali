@@ -35,3 +35,6 @@ export const waypointOnly = { tag: '@waypoint' as const };
 
 /** @waypoint-tracing — frontend-ambient Playwright / Cypress suite */
 export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };
+
+/** @offline — offline mode Playwright / Cypress suite */
+export const offlineOnly = { tag: '@offline' as const };

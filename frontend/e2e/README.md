@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`), matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-offline`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -156,6 +156,16 @@ Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP e
 hack/run-integration-tests.sh --test-suite playwright-ambient
 ```
 
+### Offline (`yarn playwright:run:offline`)
+
+Ports Cypress `@offline` scenarios from `offline_status.feature` (2 tests): offline status icon on overview, and minigraph offline state on workload details.
+
+Requires must-gather data and Kiali running in offline mode (no live cluster during tests):
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-offline
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -170,6 +180,7 @@ yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:perses
 yarn playwright:run:ambient
+yarn playwright:run:offline
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -178,7 +189,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, and local+offline (`playwright-smoke` + `playwright-offline`) integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
