@@ -9,12 +9,18 @@ test.describe('App details graph', () => {
     await appDetailsPage.expectMinigraphVisible();
   });
 
-  test('Application detail URL stays under applications after mini graph loads', core1, async ({ appDetailsPage }) => {
-    ensureDemoApp('error-rates');
-    await appDetailsPage.openApp('alpha', 'a-client');
-    await appDetailsPage.expectMinigraphVisible();
-    await appDetailsPage.expectUrlIncludes('a-client');
-    await appDetailsPage.expectUrlIncludes('/applications/');
-    await appDetailsPage.expectUrlExcludes('/workloads/');
-  });
+  test(
+    'Application detail URL stays under applications after mini graph loads',
+    core1,
+    async ({ appDetailsPage }, testInfo) => {
+      // expectMiniGraphReady toPass runs up to 120s; keep test timeout above that.
+      testInfo.setTimeout(120_000);
+      ensureDemoApp('error-rates');
+      await appDetailsPage.openApp('alpha', 'a-client');
+      await appDetailsPage.expectMinigraphVisible();
+      await appDetailsPage.expectUrlIncludes('a-client');
+      await appDetailsPage.expectUrlIncludes('/applications/');
+      await appDetailsPage.expectUrlExcludes('/workloads/');
+    }
+  );
 });
