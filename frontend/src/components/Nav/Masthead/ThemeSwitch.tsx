@@ -84,7 +84,6 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
     store.dispatch(GlobalActions.setThemeFelt(themeFelt));
     persistKialiThemePreferences(nextTheme, nextContrastMode, themeFelt);
-    setIsOpen(false);
   };
 
   const handleThemeVariantChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
@@ -110,7 +109,7 @@ export const ThemeSwitchComponent: React.FC<ThemeSwitchProps> = (props: ThemeSwi
         position: 'right',
         preventOverflow: true
       }}
-      shouldFocusToggleOnSelect
+      shouldFocusToggleOnSelect={false}
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
