@@ -28,6 +28,9 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 
 	ctx := kialiInterface.Request.Context()
 	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
+	// Index before the user message added for this request; used to roll back the
+	// turn when the model stops with finish_reason=length so the next query does not continue it.
+	turnBaseLen := len(ptr.Conversation) - 1
 	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "OpenAI provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 
@@ -42,6 +45,16 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 	// We keep OpenAI-native messages for the iterative tool loop.
 	// The persisted conversation will include only the user prompts and final assistant answer.
 	usage := types.TokenUsage{}
+	responseTruncated := false
+	checkStreamTruncated := func(finishReason string, streamedText string) {
+		if finishReason != "length" {
+			return
+		}
+		if strings.TrimSpace(streamedText) == "" {
+			providers.Log(p, providers.LogLevelWarn, "Content", "OpenAI response hit length limit with no streamed text")
+		}
+		responseTruncated = true
+	}
 	params := openai.ChatCompletionNewParams{
 		Model:    p.model,
 		Messages: p.ConversationToProvider(ptr.Conversation).([]openai.ChatCompletionMessageParamUnion),
@@ -67,6 +80,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 		tokenID := 0
 		turnUsage := types.TokenUsage{}
 		sawTurnUsage := false
+		lastFinishReason := ""
 
 		for stream.Next() {
 			chunk := stream.Current()
@@ -76,6 +90,9 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			}
 			if len(chunk.Choices) == 0 {
 				continue
+			}
+			if chunk.Choices[0].FinishReason != "" {
+				lastFinishReason = chunk.Choices[0].FinishReason
 			}
 			delta := chunk.Choices[0].Delta
 			if delta.Content != "" {
@@ -106,6 +123,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 				return text, nil, enrichAPIError(err)
 			}
 		}
+		checkStreamTruncated(lastFinishReason, text)
 		if text != "" {
 			textPreview := text
 			if len(textPreview) > 400 {
@@ -181,7 +199,11 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 		return types.TokenUsage{}
 	}
 
-	if responseContent != "" {
+	if responseTruncated {
+		ptr.Mu.Lock()
+		ptr.Conversation = ptr.Conversation[:turnBaseLen]
+		ptr.Mu.Unlock()
+	} else if responseContent != "" {
 		ptr.Mu.Lock()
 		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: responseContent, Name: "", Param: nil, Role: "assistant",
@@ -194,7 +216,7 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
 		Actions:             actions,
 		ReferencedDocuments: referencedDocs,
-		Truncated:           false,
+		Truncated:           responseTruncated,
 	})
 	return usage
 }

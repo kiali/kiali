@@ -2,6 +2,7 @@ package google_provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -330,6 +331,14 @@ func googleSSEResponseWithFinishReason(text, finishReason string) string {
 	return fmt.Sprintf("data: {\"candidates\":[{\"content\":{\"parts\":[{\"text\":%q}],\"role\":\"model\"},\"finishReason\":%q,\"index\":0}],\"usageMetadata\":{\"candidatesTokenCount\":1,\"promptTokenCount\":5,\"totalTokenCount\":6}}\n\n", text, finishReason)
 }
 
+func googleSSEFunctionCallResponse(name string, args map[string]any) string {
+	argsJSON, err := json.Marshal(args)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("data: {\"candidates\":[{\"content\":{\"parts\":[{\"functionCall\":{\"name\":%q,\"args\":%s}}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"candidatesTokenCount\":1,\"promptTokenCount\":5,\"totalTokenCount\":6}}\n\n", name, string(argsJSON))
+}
+
 // googleJSONResponse returns a non-streaming Gemini API response body.
 func googleJSONResponse(text string) string {
 	return fmt.Sprintf("{\"candidates\":[{\"content\":{\"parts\":[{\"text\":%q}],\"role\":\"model\"},\"finishReason\":\"STOP\",\"index\":0}],\"usageMetadata\":{\"candidatesTokenCount\":1,\"promptTokenCount\":5,\"totalTokenCount\":6}}", text)
@@ -340,14 +349,27 @@ func googleJSONResponse(text string) string {
 //   - everything else (generateContent) → JSON
 func newGoogleFakeServer(t *testing.T, sseBody, jsonBody string) *httptest.Server {
 	t.Helper()
+	return newGoogleSequenceFakeServer(t, []string{sseBody}, jsonBody)
+}
+
+// newGoogleSequenceFakeServer returns different SSE bodies on successive streamGenerateContent calls.
+func newGoogleSequenceFakeServer(t *testing.T, sseBodies []string, jsonBody string) *httptest.Server {
+	t.Helper()
+	streamCall := 0
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "streamGenerateContent") {
 			w.Header().Set("Content-Type", "text/event-stream")
-			fmt.Fprint(w, sseBody)
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, jsonBody)
+			if streamCall >= len(sseBodies) {
+				t.Errorf("unexpected streamGenerateContent call #%d", streamCall+1)
+				fmt.Fprint(w, googleSSEResponse("unexpected stream response"))
+			} else {
+				fmt.Fprint(w, sseBodies[streamCall])
+				streamCall++
+			}
+			return
 		}
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, jsonBody)
 	}))
 }
 
@@ -506,7 +528,7 @@ func TestGoogle_SendChat_MaxTokens_SetsTruncatedEndEvent(t *testing.T) {
 	assert.Equal(t, "system", stored.Conversation[0].Role)
 }
 
-func TestGoogle_SendChat_MaxTokensWithoutText_DoesNotSetTruncatedEndEvent(t *testing.T) {
+func TestGoogle_SendChat_MaxTokensWithoutText_SetsTruncatedEndEvent(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
 	server := newGoogleFakeServer(t, googleSSEResponseWithFinishReason("", "MAX_TOKENS"), "")
@@ -529,7 +551,42 @@ func TestGoogle_SendChat_MaxTokensWithoutText_DoesNotSetTruncatedEndEvent(t *tes
 	)
 
 	allChunks := strings.Join(chunks, "")
-	assert.NotContains(t, allChunks, `"truncated":true`)
+	assert.Contains(t, allChunks, `"truncated":true`)
+}
+
+func TestGoogle_SendChat_ToolCallThenMaxTokens_RollsBackConversation(t *testing.T) {
+	require.NoError(t, mcp.LoadTools())
+
+	server := newGoogleSequenceFakeServer(t, []string{
+		googleSSEFunctionCallResponse("get_referenced_docs", map[string]any{"keywords": "istio"}),
+		googleSSEResponseWithFinishReason("Partial answer after tools", "MAX_TOKENS"),
+	}, "")
+	defer server.Close()
+
+	p := &GoogleAIProvider{
+		client: newGoogleTestClientForServer(t, server.URL),
+		conf:   config.NewConfig(),
+		model:  "gemini-1.5-pro",
+	}
+	store := &googleTestStore{enabled: true}
+	ki := newGoogleTestKialiInterface("session-1")
+
+	var chunks []string
+	p.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		ki.Request,
+		types.AIRequest{ConversationID: "conv-tools-trunc", Query: "show me istio docs"},
+		ki, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
+	assert.Contains(t, allChunks, "Partial answer after tools")
+
+	stored := store.conversations["session-1:conv-tools-trunc"]
+	require.NotNil(t, stored)
+	require.Len(t, stored.Conversation, 1)
+	assert.Equal(t, "system", stored.Conversation[0].Role)
 }
 
 // --- ProviderToConversation positive case ---

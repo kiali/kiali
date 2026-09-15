@@ -61,10 +61,18 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         openLinkInNewTab={true}
       />
     ) : null;
-    const truncatedAlert =
-      entry.isTruncated && safeContent ? (
-        <Alert isInline isPlain title={t('Response truncated due to output length limit.')} variant="warning" />
-      ) : null;
+    const truncatedAlert = entry.isTruncated ? (
+      <Alert
+        isInline
+        isPlain
+        title={
+          safeContent
+            ? t('Response truncated due to output length limit.')
+            : t('Response could not be generated within the output length limit.')
+        }
+        variant="warning"
+      />
+    ) : null;
 
     return (
       <Message

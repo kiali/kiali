@@ -104,10 +104,14 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	nextParts = append(nextParts, genai.Part{Text: req.Query})
 	var lastFunctionCalls []*genai.FunctionCall // raw Gemini calls, needed for FunctionCall echo in prepareNextTurn
 	responseTruncated := false
-	markTruncatedFromChunk := func(chunk *genai.GenerateContentResponse, streamedText string) {
-		if googleStreamTruncated(chunk) && strings.TrimSpace(streamedText) != "" {
-			responseTruncated = true
+	checkStreamTruncated := func(lastChunk *genai.GenerateContentResponse, streamedText string) {
+		if !googleStreamTruncated(lastChunk) {
+			return
 		}
+		if strings.TrimSpace(streamedText) == "" {
+			providers.Log(p, providers.LogLevelWarn, "Content", "Google response hit MAX_TOKENS with no streamed text")
+		}
+		responseTruncated = true
 	}
 
 	// streamTurn executes one Gemini streaming turn using the current nextParts.
@@ -118,6 +122,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		tokenID := 0
 		turnUsage := types.TokenUsage{}
 		sawTurnUsage := false
+		var lastChunk *genai.GenerateContentResponse
 
 		for chunk, err := range chat.SendMessageStream(ctx, nextParts...) {
 			if err != nil {
@@ -127,6 +132,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				}
 				return text, nil, err
 			}
+			lastChunk = chunk
 			functionCalls = append(functionCalls, chunk.FunctionCalls()...)
 			if chunk.UsageMetadata != nil {
 				turnUsage = usageFromGenerateContentResponse(chunk)
@@ -138,8 +144,8 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				text += t
 				tokenID++
 			}
-			markTruncatedFromChunk(chunk, text)
 		}
+		checkStreamTruncated(lastChunk, text)
 		if sawTurnUsage {
 			usage.Add(turnUsage)
 		}
@@ -211,12 +217,14 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		tokenID := 0
 		extraUsage := types.TokenUsage{}
 		sawExtraUsage := false
+		var lastChunk *genai.GenerateContentResponse
 		for chunk, err := range chat.SendMessageStream(ctx, parts...) {
 			if err != nil {
 				providers.Log(p, providers.LogLevelError, "Error", "Error sending final message for excluded tools: %v", err)
 				providers.StreamError(onChunk, err.Error())
 				return false, extraText
 			}
+			lastChunk = chunk
 			if chunk.UsageMetadata != nil {
 				extraUsage = usageFromGenerateContentResponse(chunk)
 				sawExtraUsage = extraUsage.HasTokens()
@@ -227,8 +235,8 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				extraText += t
 				tokenID++
 			}
-			markTruncatedFromChunk(chunk, extraText)
 		}
+		checkStreamTruncated(lastChunk, extraText)
 		if sawExtraUsage {
 			usage.Add(extraUsage)
 		}

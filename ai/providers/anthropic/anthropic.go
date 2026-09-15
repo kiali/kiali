@@ -31,9 +31,22 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 
 	ctx := kialiInterface.Request.Context()
 	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
+	// Index before the user message added for this request; used to roll back the
+	// turn when Anthropic stops with max_tokens so the next query does not continue it.
+	turnBaseLen := len(ptr.Conversation) - 1
 	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Anthropic provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 	usage := types.TokenUsage{}
+	responseTruncated := false
+	checkStreamTruncated := func(stopReason anthropic.StopReason, streamedText string) {
+		if stopReason != anthropic.StopReasonMaxTokens {
+			return
+		}
+		if strings.TrimSpace(streamedText) == "" {
+			providers.Log(p, providers.LogLevelWarn, "Content", "Anthropic response hit max_tokens with no streamed text")
+		}
+		responseTruncated = true
+	}
 
 	modelConversation := p.ConversationToProvider(ptr.Conversation).(anthropicConversation)
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Conversation sent to Anthropic (system=%d, messages=%d):", len(modelConversation.System), len(modelConversation.Messages))
@@ -113,6 +126,7 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 			}
 
 			text := anthropicTextContent(message.Content)
+			checkStreamTruncated(message.StopReason, text)
 			if !anthropicHasToolUse(message.Content) {
 				return text, nil, nil // no tool calls → shared loop applies ParseMarkdownResponse
 			}
@@ -154,7 +168,11 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 		return types.TokenUsage{}
 	}
 
-	if responseContent != "" {
+	if responseTruncated {
+		ptr.Mu.Lock()
+		ptr.Conversation = ptr.Conversation[:turnBaseLen]
+		ptr.Mu.Unlock()
+	} else if responseContent != "" {
 		ptr.Mu.Lock()
 		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: responseContent, Name: "", Param: nil, Role: "assistant",
@@ -167,7 +185,7 @@ func (p *AnthropicProvider) SendChat(onChunk func(chunk string), r *http.Request
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
 		Actions:             actions,
 		ReferencedDocuments: referencedDocs,
-		Truncated:           false,
+		Truncated:           responseTruncated,
 	})
 	return usage
 }
