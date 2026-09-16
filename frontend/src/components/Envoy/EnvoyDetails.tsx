@@ -1,25 +1,25 @@
 import * as React from 'react';
 import { classes } from 'typestyle';
 import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { namespaceItemsSelector } from 'store/Selectors';
-import { ISortBy, SortByDirection } from '@patternfly/react-table';
-import { Workload } from 'types/Workload';
-import { EnvoyProxyDump, Pod } from 'types/IstioObjects';
+import type { ISortBy, SortByDirection } from '@patternfly/react-table';
+import type { Workload } from 'types/Workload';
+import type { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
-import { Namespace } from 'types/Namespace';
+import type { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
 import Editor from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
+import type { editor } from 'monaco-editor';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
 import { KialiIcon } from 'config/KialiIcon';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { DashboardRef } from 'types/Runtimes';
+import type { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { location, router } from '../../app/History';
@@ -37,7 +37,8 @@ import {
   scrollableContentStyle
 } from 'styles/FlexStyles';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
-import { Theme, TimeInMilliseconds } from '../../types/Common';
+import { Theme } from '../../types/Common';
+import type { TimeInMilliseconds } from '../../types/Common';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
@@ -245,7 +246,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   onSort = (tab: string, index: number, direction: SortByDirection): void => {
     if (this.state.tableSortBy[tab].index !== index || this.state.tableSortBy[tab].direction !== direction) {
-      let tableSortBy = this.state.tableSortBy;
+      const tableSortBy = this.state.tableSortBy;
       tableSortBy[tab].index = index;
       tableSortBy[tab].direction = direction;
       this.setState({
@@ -285,10 +286,6 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       });
     });
     return envoyDashboardRef;
-  };
-
-  isLoadingConfig = (): boolean => {
-    return Object.keys(this.state.config).length < 1;
   };
 
   onRouteLinkClick = (): void => {
@@ -390,6 +387,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                     namespace={this.props.namespace}
                     template={envoyMetricsDashboardRef.template}
                     version={version}
+                    versionLabelName={verLabelName}
                     workload={this.props.workload!.name}
                   />
                 </div>
