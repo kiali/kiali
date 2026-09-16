@@ -639,6 +639,12 @@ type OpenIdConfig struct {
 	UsernameClaim         string                  `yaml:"username_claim,omitempty"`
 }
 
+// DeploymentLoggerConfig configures Kiali server logging behavior that is read from
+// config.yaml (pod log format/level are still driven by deployment env vars).
+type DeploymentLoggerConfig struct {
+	LogPrometheusQueries bool `yaml:"log_prometheus_queries,omitempty"`
+}
+
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
@@ -646,6 +652,7 @@ type DeploymentConfig struct {
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
+	Logger               DeploymentLoggerConfig   `yaml:"logger,omitempty"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	TLSConfig            DeploymentTLSConfig      `yaml:"tls_config,omitempty" json:"tlsConfig,omitempty"`
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
