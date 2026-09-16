@@ -3,7 +3,7 @@ import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 const THEME_SWITCH = '[data-test="theme-switch"]';
 const COLOR_SCHEME_SWITCH = '[data-test="theme-color-scheme-switch"]';
 const CONTRAST_MODE_SWITCH = '[data-test="contrast-mode-switch"]';
-const THEME_FELT_SWITCH = '[data-test="theme-felt-switch"]';
+const THEME_VARIANT_SWITCH = '[data-test="theme-variant-switch"]';
 
 const openThemeMenu = (): void => {
   cy.get(THEME_SWITCH).then($toggle => {
@@ -39,7 +39,7 @@ Given('the theme is explicitly set to light', () => {
     ) {
       openThemeMenu();
       if ($html.hasClass('pf-v6-theme-felt')) {
-        cy.get(THEME_FELT_SWITCH).contains('button', 'Default').click();
+        cy.get(THEME_VARIANT_SWITCH).contains('button', 'Default').click();
       }
       if ($html.hasClass('pf-v6-theme-glass') || $html.hasClass('pf-v6-theme-high-contrast')) {
         cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
@@ -80,7 +80,7 @@ When('the user selects default contrast mode', () => {
 
 When('the user selects project felt theme', () => {
   openThemeMenu();
-  cy.get(THEME_FELT_SWITCH).contains('button', 'Project Felt').click();
+  cy.get(THEME_VARIANT_SWITCH).contains('button', 'Project Felt').click();
 });
 
 Then('the document should use light theme', () => {

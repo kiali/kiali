@@ -151,7 +151,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
       <SelectGroup label={<ThemeGroupLabel id="theme-selector-variant-title" label={t('Theme')} />}>
         <MenuSearch>
           <MenuSearchInput>
-            <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-felt-switch">
+            <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-variant-switch">
               <ToggleGroupItem
                 buttonId={THEME_VARIANT_DEFAULT}
                 isSelected={theme === ThemeVariant.DEFAULT}
