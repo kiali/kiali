@@ -79,8 +79,8 @@ Then('the AI chatbot toggle button should be visible', () => {
 });
 
 // ============================================================
-// Theme-aware toggle icon
-// Theme switch steps live in themes.ts (shared with themes.feature).
+// Color-scheme-aware toggle icon
+// Appearance steps live in themes.ts (shared with themes.feature).
 // ============================================================
 
 /**
@@ -88,12 +88,12 @@ Then('the AI chatbot toggle button should be visible', () => {
  * The Background always starts at the overview page with the chatbot closed,
  * so no extra setup is needed.
  */
-Then('the AI chatbot toggle should show the light theme icon', () => {
+Then('the AI chatbot toggle should show the light color scheme icon', () => {
   cy.get(CHATBOT_TOGGLE_ICON_LIGHT, { timeout: 5000 }).should('exist');
   cy.get(CHATBOT_TOGGLE_ICON_DARK).should('not.exist');
 });
 
-Then('the AI chatbot toggle should show the dark theme icon', () => {
+Then('the AI chatbot toggle should show the dark color scheme icon', () => {
   cy.get(CHATBOT_TOGGLE_ICON_DARK, { timeout: 5000 }).should('exist');
   cy.get(CHATBOT_TOGGLE_ICON_LIGHT).should('not.exist');
 });
