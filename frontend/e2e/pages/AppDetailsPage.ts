@@ -30,8 +30,8 @@ export class AppDetailsPage extends BasePage {
       await openDetailsTab(this.page, 'Traffic');
       await expect(trafficCard.getByText('Inbound Traffic')).toBeVisible();
       await expect(trafficCard.getByText('No Inbound Traffic')).toHaveCount(0);
+      // Cypress only asserts the Outbound Traffic section heading; details may have no outbound rows.
       await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-      await expect(this.page.getByText('No Outbound Traffic')).toHaveCount(0);
       await expect(inbound).toBeVisible();
 
       const inboundText = (await inbound.textContent()) ?? '';
