@@ -33,7 +33,10 @@ Feature: Kiali appearance settings
     Then the document should use default contrast mode
 
   @core-1
-  Scenario: User can enable project felt theme
+  Scenario: User can switch between default and project felt themes
     Given the color scheme is explicitly set to light
+    Then the document should use default theme
     When the user selects project felt theme
     Then the document should use project felt theme
+    When the user selects default theme
+    Then the document should use default theme

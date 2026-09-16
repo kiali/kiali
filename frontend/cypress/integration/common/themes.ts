@@ -86,6 +86,11 @@ When('the user selects project felt theme', () => {
   cy.get(THEME_TOGGLE).find(THEME_FELT).click();
 });
 
+When('the user selects default theme', () => {
+  openAppearanceMenu();
+  cy.get(THEME_TOGGLE).find(THEME_DEFAULT).click();
+});
+
 Then('the document should use light color scheme', () => {
   cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
@@ -107,6 +112,10 @@ Then('the document should use high contrast mode', () => {
 Then('the document should use default contrast mode', () => {
   cy.get('html').should('not.have.class', 'pf-v6-theme-glass');
   cy.get('html').should('not.have.class', 'pf-v6-theme-high-contrast');
+});
+
+Then('the document should use default theme', () => {
+  cy.get('html').should('not.have.class', 'pf-v6-theme-felt');
 });
 
 Then('the document should use project felt theme', () => {
