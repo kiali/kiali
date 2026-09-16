@@ -73,7 +73,7 @@ import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import type { ApiError } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
@@ -795,7 +795,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
             key={editorRevision}
             defaultValue={editorDefaultValue}
             language="yaml"
-            theme={colorScheme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             onChange={handleEditorChange}
             onMount={handleEditorDidMount}

@@ -13,7 +13,7 @@ import type { AuthConfig } from '../../types/Auth';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { basicTabStyle } from 'styles/TabStyles';
 import { editorStyle } from 'styles/EditorStyle';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import { kialiStyle } from 'styles/StyleUtils';
 import { classes } from 'typestyle';
 import { usePreviousValue } from 'utils/ReactUtils';
@@ -226,7 +226,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
 
   const copyText = copyTextMap[currentTab];
 
-  const isDarkTheme = props.appState.globalState.colorScheme === Theme.DARK;
+  const isDarkTheme = props.appState.globalState.colorScheme === ColorScheme.DARK;
 
   const renderTabs = (): React.ReactNode[] => {
     const kialiConfig = (

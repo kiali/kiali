@@ -2,7 +2,7 @@ import * as React from 'react';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useKialiColorScheme } from '../../../utils/ThemeUtils';
-import { Theme } from '../../../types/Common';
+import { ColorScheme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -44,7 +44,7 @@ const editorOptions: editor.IStandaloneEditorConstructionOptions = {
 };
 
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = ({ configData, includeTitle, targetName }) => {
-  const darkTheme = useKialiColorScheme() === Theme.DARK;
+  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
   const [editorHeight, setEditorHeight] = React.useState<string>('200px');
 
   const yaml = ((): string => {

@@ -35,7 +35,7 @@ describe('StickyTableScrollContainer', () => {
 
   it('re-syncs scroll state when contentVersion changes', () => {
     const { container, rerender } = render(
-      <StickyTableScrollContainer contentVersion={[]}>
+      <StickyTableScrollContainer contentVersion={0}>
         <div style={{ height: '200px' }} />
       </StickyTableScrollContainer>
     );
@@ -46,7 +46,7 @@ describe('StickyTableScrollContainer', () => {
     expect(scrollContainer.className).toContain(TABLE_SCROLLED);
 
     rerender(
-      <StickyTableScrollContainer contentVersion={[{ cells: ['row'] }]}>
+      <StickyTableScrollContainer contentVersion={1}>
         <div style={{ height: '200px' }} />
       </StickyTableScrollContainer>
     );

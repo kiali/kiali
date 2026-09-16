@@ -22,7 +22,6 @@ Feature: Kiali appearance settings
     When the user switches to light color scheme
     Then the document should use light color scheme
 
-  @smoke
   @core-1
   Scenario: User can switch contrast modes
     Given the color scheme is explicitly set to light
@@ -33,7 +32,6 @@ Feature: Kiali appearance settings
     When the user selects default contrast mode
     Then the document should use default contrast mode
 
-  @smoke
   @core-1
   Scenario: User can enable project felt theme
     Given the color scheme is explicitly set to light

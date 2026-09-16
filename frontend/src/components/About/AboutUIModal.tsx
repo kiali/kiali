@@ -12,7 +12,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { useKialiColorScheme } from 'utils/ThemeUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 
 type AboutUIModalProps = {
   isOpen: boolean;
@@ -63,7 +63,7 @@ const externalLinksTitleStyle = kialiStyle({
 
 export const AboutUIModal: React.FC<AboutUIModalProps> = (props: AboutUIModalProps) => {
   const { t } = useKialiTranslation();
-  const darkTheme = useKialiColorScheme() === Theme.DARK;
+  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
 
   const renderMeshLink = (): React.ReactNode => {
     if (config?.about?.mesh) {

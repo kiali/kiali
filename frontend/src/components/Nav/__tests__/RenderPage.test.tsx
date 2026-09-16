@@ -6,7 +6,7 @@ import { pathRoutes } from 'routes';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { LoginActions } from 'actions/LoginActions';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 
 rstest.mock('../RenderPage', () => {
   const React = require('react');
@@ -39,7 +39,7 @@ const router = createMemoryRouter([
         tracingUrl={''}
         externalServices={externalServicesInfo}
         kiosk={''}
-        colorScheme={Theme.LIGHT}
+        colorScheme={ColorScheme.LIGHT}
         showNotificationCenter={false}
         chatbotEnabled={false}
       />

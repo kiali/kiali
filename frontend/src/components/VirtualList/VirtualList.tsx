@@ -242,7 +242,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         {isManualRefresh ? (
           <ManualRefreshEmptyState />
         ) : (
-          <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows}>
+          <StickyTableScrollContainer className={innerScrollContainerStyle} contentVersion={this.props.rows.length}>
             {table}
           </StickyTableScrollContainer>
         )}

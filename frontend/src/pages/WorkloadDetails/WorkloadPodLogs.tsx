@@ -38,7 +38,7 @@ import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../se
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
-import { evalTimeRange, isEqualTimeRange, Theme } from '../../types/Common';
+import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
@@ -1087,7 +1087,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           <Editor
             value={this.state.jsonModalContent}
             language="yaml"
-            theme={colorScheme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             options={{ readOnly: true, scrollBeyondLastLine: false, tabSize: 2, folding: true }}
           />

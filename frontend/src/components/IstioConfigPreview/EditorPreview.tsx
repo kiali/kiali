@@ -7,7 +7,7 @@ import type { editor } from 'monaco-editor';
 import { MarkerSeverity } from 'monaco-editor';
 import { YAMLException, loadAll } from 'js-yaml';
 import { editorStyle } from 'styles/EditorStyle';
-import { Theme } from '../../types/Common';
+import { ColorScheme } from '../../types/Common';
 import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 
@@ -77,7 +77,7 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
       <Editor
         value={yaml}
         language="yaml"
-        theme={props.colorScheme === Theme.DARK ? 'vs-dark' : 'light'}
+        theme={props.colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
         height="275px"
         onMount={onEditorDidMount}
         options={{ readOnly: props.readOnly, wordWrap: 'on', scrollBeyondLastLine: false, glyphMargin: true }}

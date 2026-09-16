@@ -3,14 +3,14 @@ import { Alert, Button, ButtonVariant } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { isKioskMode } from '../utils/SearchParamUtils';
 
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import {
   applyDocumentTheme,
   getKialiContrastMode,
   getKialiColorScheme,
   getKialiTheme,
   isParentOwnedTheme,
-  readDocumentTheme
+  readDocumentColorScheme
 } from 'utils/ThemeUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
@@ -62,8 +62,8 @@ const centerVerticalHorizontalStyle = kialiStyle({
 
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
-  const [colorScheme, setColorScheme] = React.useState<Theme>(() =>
-    isParentOwnedTheme() ? readDocumentTheme() : getKialiColorScheme()
+  const [colorScheme, setColorScheme] = React.useState<ColorScheme>(() =>
+    isParentOwnedTheme() ? readDocumentColorScheme() : getKialiColorScheme()
   );
 
   React.useEffect(() => {
@@ -74,7 +74,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     // OSSMC: Console owns <html> classes — read theme from the document so the logo
     // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
     if (isParentOwnedTheme()) {
-      setColorScheme(readDocumentTheme());
+      setColorScheme(readDocumentColorScheme());
       return;
     }
 
@@ -85,7 +85,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
 
   return (
     <div data-test="loading-screen" className={centerVerticalHorizontalStyle}>
-      <img alt="Kiali Logo" src={colorScheme === Theme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
+      <img alt="Kiali Logo" src={colorScheme === ColorScheme.DARK ? kialiLogoDark : kialiLogoLight} width="200" />
       {props.errorMsg ? (
         <div ref={errorDiv} className={defaultErrorStyle}>
           <Alert variant="danger" isInline={true} title={props.errorMsg} />

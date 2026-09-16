@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { KialiLink } from '../Link/KialiLink';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { useKialiColorScheme } from 'utils/ThemeUtils';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
@@ -65,7 +65,7 @@ export const ControlPlaneBadge: React.FC<ControlPlaneBadgeProps> = ({ revisions 
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
 
-  const darkTheme = useKialiColorScheme() === Theme.DARK;
+  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
   const linkColor = darkTheme ? PFColors.LinkTooltipDarkTheme : PFColors.LinkTooltipLightTheme;
 
   const count = revisions ? revisions.length : 1;

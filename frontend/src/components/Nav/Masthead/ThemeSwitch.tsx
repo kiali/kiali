@@ -14,11 +14,19 @@ import type { MenuToggleElement } from '@patternfly/react-core';
 import { AdjustIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { ContrastMode, Theme, ThemeVariant } from 'types/Common';
+import { ColorScheme, ContrastMode, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { applyDocumentTheme, isFeltTheme, isParentOwnedTheme, persistKialiThemePreferences } from 'utils/ThemeUtils';
+import {
+  applyDocumentTheme,
+  getKialiColorScheme,
+  getKialiContrastMode,
+  getKialiTheme,
+  isFeltTheme,
+  isParentOwnedTheme,
+  persistKialiThemePreferences
+} from 'utils/ThemeUtils';
 
 type ReduxProps = {
   colorScheme: string;
@@ -26,8 +34,29 @@ type ReduxProps = {
   theme: string;
 };
 
-const THEME_VARIANT_DEFAULT = 'theme-default';
-const THEME_VARIANT_FELT = 'theme-felt';
+const COLOR_SCHEME_DARK = 'color-scheme-dark';
+const COLOR_SCHEME_LIGHT = 'color-scheme-light';
+const THEME_DEFAULT = 'theme-default';
+const THEME_FELT = 'theme-felt';
+const CONTRAST_MODE_DEFAULT = 'contrast-mode-default';
+const CONTRAST_MODE_GLASS = 'contrast-mode-glass';
+const CONTRAST_MODE_HIGH_CONTRAST = 'contrast-mode-high-contrast';
+
+const isValidColorScheme = (colorScheme: string): colorScheme is ColorScheme => {
+  return colorScheme === ColorScheme.LIGHT || colorScheme === ColorScheme.DARK;
+};
+
+const isValidContrastMode = (contrastMode: string): contrastMode is ContrastMode => {
+  return (
+    contrastMode === ContrastMode.DEFAULT ||
+    contrastMode === ContrastMode.GLASS ||
+    contrastMode === ContrastMode.HIGH_CONTRAST
+  );
+};
+
+const isValidTheme = (theme: string): theme is Theme => {
+  return theme === Theme.DEFAULT || theme === Theme.FELT;
+};
 
 const ThemeGroupLabel: React.FC<{ id: string; label: string }> = ({ id, label }) => (
   <div className="pf-v6-c-menu__group-title" id={id}>
@@ -35,8 +64,8 @@ const ThemeGroupLabel: React.FC<{ id: string; label: string }> = ({ id, label })
   </div>
 );
 
-const getThemeDisplayText = (theme: Theme, t: (key: string) => string): string => {
-  return theme === Theme.DARK ? t('Dark') : t('Light');
+const getColorSchemeDisplayText = (colorScheme: ColorScheme, t: (key: string) => string): string => {
+  return colorScheme === ColorScheme.DARK ? t('Dark') : t('Light');
 };
 
 const getContrastModeDisplayText = (contrastMode: ContrastMode, t: (key: string) => string): string => {
@@ -52,12 +81,12 @@ const getContrastModeDisplayText = (contrastMode: ContrastMode, t: (key: string)
 };
 
 const getAppearanceAriaLabel = (
-  colorScheme: Theme,
+  colorScheme: ColorScheme,
   contrastMode: ContrastMode,
-  theme: ThemeVariant,
+  theme: Theme,
   t: (key: string) => string
 ): string => {
-  const parts = [getThemeDisplayText(colorScheme, t)];
+  const parts = [getColorSchemeDisplayText(colorScheme, t)];
 
   if (isFeltTheme(theme)) {
     parts.push(t('Project Felt'));
@@ -71,15 +100,15 @@ const getAppearanceAriaLabel = (
 export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) => {
   const { t } = useKialiTranslation();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-  const colorScheme = props.colorScheme as Theme;
-  const contrastMode = props.contrastMode as ContrastMode;
-  const theme = props.theme as ThemeVariant;
+  const colorScheme = isValidColorScheme(props.colorScheme) ? props.colorScheme : getKialiColorScheme();
+  const contrastMode = isValidContrastMode(props.contrastMode) ? props.contrastMode : getKialiContrastMode();
+  const theme = isValidTheme(props.theme) ? props.theme : getKialiTheme();
 
-  const applyTheme = (nextColorScheme: Theme, nextContrastMode: ContrastMode, nextTheme: ThemeVariant): void => {
-    if (isParentOwnedTheme()) {
-      return;
-    }
+  if (isParentOwnedTheme()) {
+    return null;
+  }
 
+  const applyTheme = (nextColorScheme: ColorScheme, nextContrastMode: ContrastMode, nextTheme: Theme): void => {
     applyDocumentTheme(nextColorScheme, nextContrastMode, nextTheme);
     store.dispatch(GlobalActions.setColorScheme(nextColorScheme));
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
@@ -87,18 +116,37 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
     persistKialiThemePreferences(nextColorScheme, nextContrastMode, nextTheme);
   };
 
-  const handleThemeVariantChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    const nextTheme =
-      (event.currentTarget as HTMLElement).id === THEME_VARIANT_FELT ? ThemeVariant.FELT : ThemeVariant.DEFAULT;
-    applyTheme(colorScheme, contrastMode, nextTheme);
+  const handleMenuToggleClick = (): void => {
+    setIsOpen(open => !open);
+  };
+
+  const handleColorSchemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
+    const buttonId = (event.currentTarget as HTMLElement).id;
+    const nextColorScheme = buttonId === COLOR_SCHEME_DARK ? ColorScheme.DARK : ColorScheme.LIGHT;
+    applyTheme(nextColorScheme, contrastMode, theme);
   };
 
   const handleThemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    applyTheme((event.currentTarget as HTMLElement).id as Theme, contrastMode, theme);
+    const buttonId = (event.currentTarget as HTMLElement).id;
+    const nextTheme = buttonId === THEME_FELT ? Theme.FELT : Theme.DEFAULT;
+    applyTheme(colorScheme, contrastMode, nextTheme);
   };
 
   const handleContrastModeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    applyTheme(colorScheme, (event.currentTarget as HTMLElement).id as ContrastMode, theme);
+    const buttonId = (event.currentTarget as HTMLElement).id;
+    let nextContrastMode: ContrastMode | undefined;
+
+    if (buttonId === CONTRAST_MODE_GLASS) {
+      nextContrastMode = ContrastMode.GLASS;
+    } else if (buttonId === CONTRAST_MODE_HIGH_CONTRAST) {
+      nextContrastMode = ContrastMode.HIGH_CONTRAST;
+    } else if (buttonId === CONTRAST_MODE_DEFAULT) {
+      nextContrastMode = ContrastMode.DEFAULT;
+    }
+
+    if (nextContrastMode) {
+      applyTheme(colorScheme, nextContrastMode, theme);
+    }
   };
 
   return (
@@ -123,7 +171,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
             </Icon>
           }
           isExpanded={isOpen}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleMenuToggleClick}
         />
       )}
     >
@@ -132,15 +180,15 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-color-scheme-title" data-test="color-scheme-toggle">
               <ToggleGroupItem
-                buttonId={Theme.LIGHT}
-                isSelected={colorScheme === Theme.LIGHT}
-                onChange={handleThemeChange}
+                buttonId={COLOR_SCHEME_LIGHT}
+                isSelected={colorScheme === ColorScheme.LIGHT}
+                onChange={handleColorSchemeChange}
                 text={t('Light')}
               />
               <ToggleGroupItem
-                buttonId={Theme.DARK}
-                isSelected={colorScheme === Theme.DARK}
-                onChange={handleThemeChange}
+                buttonId={COLOR_SCHEME_DARK}
+                isSelected={colorScheme === ColorScheme.DARK}
+                onChange={handleColorSchemeChange}
                 text={t('Dark')}
               />
             </ToggleGroup>
@@ -153,15 +201,15 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-toggle">
               <ToggleGroupItem
-                buttonId={THEME_VARIANT_DEFAULT}
-                isSelected={theme === ThemeVariant.DEFAULT}
-                onChange={handleThemeVariantChange}
+                buttonId={THEME_DEFAULT}
+                isSelected={theme === Theme.DEFAULT}
+                onChange={handleThemeChange}
                 text={t('Default')}
               />
               <ToggleGroupItem
-                buttonId={THEME_VARIANT_FELT}
-                isSelected={theme === ThemeVariant.FELT}
-                onChange={handleThemeVariantChange}
+                buttonId={THEME_FELT}
+                isSelected={theme === Theme.FELT}
+                onChange={handleThemeChange}
                 text={t('Project Felt')}
               />
             </ToggleGroup>
@@ -174,19 +222,19 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-contrast-title" data-test="contrast-mode-toggle">
               <ToggleGroupItem
-                buttonId={ContrastMode.TRADITIONAL}
-                isSelected={contrastMode === ContrastMode.TRADITIONAL}
+                buttonId={CONTRAST_MODE_DEFAULT}
+                isSelected={contrastMode === ContrastMode.DEFAULT}
                 onChange={handleContrastModeChange}
                 text={t('Default')}
               />
               <ToggleGroupItem
-                buttonId={ContrastMode.GLASS}
+                buttonId={CONTRAST_MODE_GLASS}
                 isSelected={contrastMode === ContrastMode.GLASS}
                 onChange={handleContrastModeChange}
                 text={t('Glass')}
               />
               <ToggleGroupItem
-                buttonId={ContrastMode.HIGH_CONTRAST}
+                buttonId={CONTRAST_MODE_HIGH_CONTRAST}
                 isSelected={contrastMode === ContrastMode.HIGH_CONTRAST}
                 onChange={handleContrastModeChange}
                 text={t('High contrast')}

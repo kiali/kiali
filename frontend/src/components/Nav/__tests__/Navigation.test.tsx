@@ -5,7 +5,7 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from 'store/ConfigStore';
 import { Provider } from 'react-redux';
 import { LoginActions } from 'actions/LoginActions';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 
 rstest.mock('app/History', async () => {
   const actual = await rstest.importActual('app/History');
@@ -42,7 +42,7 @@ describe('Masthead Navigation', () => {
             tracingUrl={''}
             externalServices={externalServicesInfo}
             kiosk={''}
-            colorScheme={Theme.LIGHT}
+            colorScheme={ColorScheme.LIGHT}
             showNotificationCenter={false}
             chatbotEnabled={false}
           />
@@ -63,7 +63,7 @@ describe('Masthead Navigation', () => {
             tracingUrl={''}
             externalServices={externalServicesInfo}
             kiosk={'true'}
-            colorScheme={Theme.LIGHT}
+            colorScheme={ColorScheme.LIGHT}
             showNotificationCenter={false}
             chatbotEnabled={false}
           />

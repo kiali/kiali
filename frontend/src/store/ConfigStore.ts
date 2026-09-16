@@ -65,22 +65,40 @@ const namespacePersistFilter = whitelistInputWithInitialState(
 
 const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'theme'];
 
+const LEGACY_CONTRAST_MODE_VALUES: Record<string, string> = {
+  Glass: 'glass',
+  'High contrast': 'high-contrast',
+  Traditional: 'default'
+};
+
+export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> & { theme?: string }): GlobalState => {
+  const isLegacyColorSchemeTheme = outboundState.theme === 'Light' || outboundState.theme === 'Dark';
+  const legacyColorScheme = isLegacyColorSchemeTheme ? outboundState.theme : undefined;
+  const colorScheme = outboundState.colorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
+  const theme = isLegacyColorSchemeTheme
+    ? 'default'
+    : outboundState.theme === 'default' || outboundState.theme === 'felt'
+      ? outboundState.theme
+      : INITIAL_GLOBAL_STATE.theme;
+  const rawContrastMode = outboundState.contrastMode;
+  const contrastMode =
+    rawContrastMode === 'glass' || rawContrastMode === 'high-contrast' || rawContrastMode === 'default'
+      ? rawContrastMode
+      : (rawContrastMode ? LEGACY_CONTRAST_MODE_VALUES[rawContrastMode] : undefined) ||
+        INITIAL_GLOBAL_STATE.contrastMode;
+
+  return {
+    ...INITIAL_GLOBAL_STATE,
+    ...outboundState,
+    colorScheme,
+    contrastMode,
+    theme
+  };
+};
+
 const globalStateFilter = createTransform(
   inboundState => persistFilter(inboundState, globalStatePersistPaths, 'whitelist'),
-  outboundState => {
-    const persisted = outboundState as Partial<GlobalState> & { theme?: string };
-    const legacyColorScheme = persisted.theme === 'Light' || persisted.theme === 'Dark' ? persisted.theme : undefined;
-    const colorScheme = persisted.colorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
-    const theme =
-      persisted.theme === 'default' || persisted.theme === 'felt' ? persisted.theme : INITIAL_GLOBAL_STATE.theme;
-
-    return {
-      ...INITIAL_GLOBAL_STATE,
-      ...persisted,
-      colorScheme,
-      theme
-    };
-  },
+  outboundState => migratePersistedGlobalState(outboundState as Partial<GlobalState> & { theme?: string }),
   { whitelist: ['globalState'] }
 );
 

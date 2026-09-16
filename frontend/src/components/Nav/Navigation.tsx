@@ -25,7 +25,7 @@ import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions
 import { Menu } from './Menu';
 import { Link, useLocation } from 'react-router-dom-v5-compat';
 import type { ExternalServiceInfo } from '../../types/StatusState';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
@@ -116,7 +116,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
-  const darkTheme = props.colorScheme === Theme.DARK;
+  const darkTheme = props.colorScheme === ColorScheme.DARK;
   const kioskMode = isKiosk(props.kiosk);
 
   const masthead = kioskMode ? undefined : (

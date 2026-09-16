@@ -5,7 +5,7 @@ import { Button, Stack, StackItem } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { t } from 'utils/I18nUtils';
 import type { Action } from 'types/Chatbot';
-import { Theme } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import { useKialiColorScheme } from 'utils/ThemeUtils';
 import { load } from 'js-yaml';
 import * as API from 'services/Api';
@@ -30,7 +30,7 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
   const colorScheme = useKialiColorScheme();
-  const isDarkTheme = colorScheme === Theme.DARK;
+  const isDarkTheme = colorScheme === ColorScheme.DARK;
 
   React.useEffect(() => {
     setYamlText(action.payload ?? '');
