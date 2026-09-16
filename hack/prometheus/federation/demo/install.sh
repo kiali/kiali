@@ -9,7 +9,7 @@
 # a sample prometheus-federated for learning/CI — not for real clusters.
 #
 # Usage:
-#   ./hack/istio/metric-rules/demo/install.sh [options]
+#   ./hack/prometheus/federation/demo/install.sh [options]
 #
 # Options:
 #   -c CLIENT     kubectl client (default: kubectl)

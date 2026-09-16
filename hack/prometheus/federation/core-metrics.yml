@@ -5,6 +5,9 @@
 #   - core-recording-rules.yml  (istio traffic counters/histograms → workload: prefix)
 #   - core-federation-match.yml (federation match[] selectors)
 #
+# Recording rules retain the Prometheus scrape namespace label (same policy as
+# kiali-metrics-recording-rules.yml) for consistency across tiers.
+#
 # Control plane, container, process, envoy, and info metrics are federated
 # directly from the edge Prometheus (no workload: recording rule).
 
