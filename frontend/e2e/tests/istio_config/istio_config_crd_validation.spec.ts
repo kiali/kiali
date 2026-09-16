@@ -437,7 +437,8 @@ test.describe('Istio Config CRD validation', () => {
     });
 
     // Cypress `@clean-istio-namespace-resources-after`: alpha/beta rollout only after KIA0208/KIA0506/KIA1006.
-    test.afterEach((_fixtures, testInfo) => {
+    test.afterEach(({ page }, testInfo) => {
+      void page;
       cleanSleepMtlsTestResources();
       cleanIstioSystemMeshResources();
       if (/KIA0208|KIA0506|KIA1006/.test(testInfo.title)) {
