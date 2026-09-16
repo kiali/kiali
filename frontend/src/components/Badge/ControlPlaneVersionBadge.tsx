@@ -3,7 +3,7 @@ import { Label, Tooltip } from '@patternfly/react-core';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { KialiLink } from '../Link/KialiLink';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { useKialiColorScheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { ColorScheme } from 'types/Common';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';

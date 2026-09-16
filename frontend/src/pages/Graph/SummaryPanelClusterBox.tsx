@@ -21,7 +21,7 @@ import { descendents } from 'helpers/GraphHelpers';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { kialiIconDark, kialiIconLight, serverConfig } from '../../config';
 import type { KialiInstance } from '../../types/Mesh';
-import { getKialiColorScheme } from 'utils/ThemeUtils';
+import { getKialiColorScheme } from 'utils/AppearanceUtils';
 import { ColorScheme } from '../../types/Common';
 
 type SummaryPanelClusterBoxState = {

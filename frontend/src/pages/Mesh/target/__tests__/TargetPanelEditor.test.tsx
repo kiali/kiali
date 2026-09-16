@@ -38,7 +38,7 @@ rstest.mock('@monaco-editor/react', () => {
   return { default: MonacoEditorMock };
 });
 
-rstest.mock('utils/ThemeUtils', () => ({
+rstest.mock('utils/AppearanceUtils', () => ({
   useKialiColorScheme: () => 'Light'
 }));
 

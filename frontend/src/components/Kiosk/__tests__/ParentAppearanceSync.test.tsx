@@ -1,5 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
-import { ParentThemeSync } from '../ParentThemeSync';
+import { ParentAppearanceSync } from '../ParentAppearanceSync';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import {
@@ -12,7 +12,7 @@ import {
   Theme
 } from 'types/Common';
 
-describe('ParentThemeSync', () => {
+describe('ParentAppearanceSync', () => {
   beforeEach(() => {
     document.documentElement.className = '';
     sessionStorage.clear();
@@ -31,7 +31,7 @@ describe('ParentThemeSync', () => {
   it('does nothing when not in parent-owned theme mode', () => {
     document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS);
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     expect(store.getState().globalState.colorScheme).toBe(ColorScheme.LIGHT);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.DEFAULT);
@@ -42,7 +42,7 @@ describe('ParentThemeSync', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
     document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_FELT);
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     expect(store.getState().globalState.colorScheme).toBe(ColorScheme.DARK);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
@@ -52,7 +52,7 @@ describe('ParentThemeSync', () => {
   it('syncs redux when parent theme classes change after mount', async () => {
     window.history.replaceState({}, '', '/?kiosk=/');
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     expect(store.getState().globalState.theme).toBe(Theme.DEFAULT);
 
@@ -66,7 +66,7 @@ describe('ParentThemeSync', () => {
   it('syncs color scheme when parent dark class changes after mount', async () => {
     window.history.replaceState({}, '', '/?kiosk=/');
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     document.documentElement.classList.add(PF_THEME_DARK);
 
@@ -78,7 +78,7 @@ describe('ParentThemeSync', () => {
   it('syncs contrast mode when parent glass class changes after mount', async () => {
     window.history.replaceState({}, '', '/?kiosk=/');
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     document.documentElement.classList.add(PF_THEME_GLASS);
 
@@ -90,7 +90,7 @@ describe('ParentThemeSync', () => {
   it('syncs high contrast when parent class changes after mount', async () => {
     window.history.replaceState({}, '', '/?kiosk=/');
 
-    render(<ParentThemeSync />);
+    render(<ParentAppearanceSync />);
 
     document.documentElement.classList.add(PF_THEME_HIGH_CONTRAST);
 

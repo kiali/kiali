@@ -5,7 +5,7 @@ import type { Conversation } from '@patternfly/chatbot';
 import { Chatbot, ChatbotToggle } from '@patternfly/chatbot';
 import '@patternfly/chatbot/dist/css/main.css';
 import { ColorScheme } from 'types/Common';
-import { useKialiColorScheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { ChatBotHeader } from './ChatBotHeader';
 import type { KialiAppState } from 'store/Store';
 import { ChatBotFooter } from './ChatBotFooter';

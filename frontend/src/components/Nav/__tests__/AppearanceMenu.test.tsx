@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ThemeSwitchComponent } from '../Masthead/ThemeSwitch';
+import { AppearanceMenuComponent } from '../Masthead/AppearanceMenu';
 import {
   ColorScheme,
   ContrastMode,
@@ -27,14 +27,18 @@ const resetAppearanceState = (): void => {
   store.dispatch(GlobalActions.setKiosk(''));
 };
 
-describe('ThemeSwitch renders', () => {
+describe('AppearanceMenu renders', () => {
   beforeEach(() => {
     resetAppearanceState();
   });
 
   it('light theme', () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     expect(screen.getByLabelText(/Theme selection, current: Light/)).toBeInTheDocument();
@@ -42,7 +46,11 @@ describe('ThemeSwitch renders', () => {
 
   it('dark theme', () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.DARK} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.DARK}
+        theme={Theme.DEFAULT}
+      />
     );
 
     expect(screen.getByLabelText(/Theme selection, current: Dark/)).toBeInTheDocument();
@@ -50,7 +58,7 @@ describe('ThemeSwitch renders', () => {
 
   it('felt with glass contrast in aria label', () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.FELT} />
+      <AppearanceMenuComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.FELT} />
     );
 
     expect(screen.getByLabelText(/Theme selection, current: Light, Project Felt, Glass/)).toBeInTheDocument();
@@ -58,7 +66,7 @@ describe('ThemeSwitch renders', () => {
 
   it('high contrast in aria label', () => {
     render(
-      <ThemeSwitchComponent
+      <AppearanceMenuComponent
         contrastMode={ContrastMode.HIGH_CONTRAST}
         colorScheme={ColorScheme.DARK}
         theme={Theme.DEFAULT}
@@ -71,21 +79,29 @@ describe('ThemeSwitch renders', () => {
   it('is hidden when parent owns theme', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
     const { container } = render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     expect(container).toBeEmptyDOMElement();
   });
 });
 
-describe('ThemeSwitch changes', () => {
+describe('AppearanceMenu changes', () => {
   beforeEach(() => {
     resetAppearanceState();
   });
 
   it('to dark theme', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -98,7 +114,11 @@ describe('ThemeSwitch changes', () => {
 
   it('to light theme', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.DARK} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.DARK}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -111,7 +131,11 @@ describe('ThemeSwitch changes', () => {
 
   it('to glass contrast mode', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -123,7 +147,11 @@ describe('ThemeSwitch changes', () => {
 
   it('to default contrast mode', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.GLASS}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -137,7 +165,11 @@ describe('ThemeSwitch changes', () => {
 
   it('to felt with glass contrast mode', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.GLASS}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -151,7 +183,7 @@ describe('ThemeSwitch changes', () => {
 
   it('off felt theme', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.FELT} />
+      <AppearanceMenuComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.FELT} />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -165,7 +197,11 @@ describe('ThemeSwitch changes', () => {
 
   it('to high contrast mode', async () => {
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.GLASS} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.GLASS}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
@@ -181,7 +217,11 @@ describe('ThemeSwitch changes', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
 
     render(
-      <ThemeSwitchComponent contrastMode={ContrastMode.DEFAULT} colorScheme={ColorScheme.LIGHT} theme={Theme.DEFAULT} />
+      <AppearanceMenuComponent
+        contrastMode={ContrastMode.DEFAULT}
+        colorScheme={ColorScheme.LIGHT}
+        theme={Theme.DEFAULT}
+      />
     );
 
     expect(screen.queryByLabelText(/Theme selection/)).not.toBeInTheDocument();

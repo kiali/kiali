@@ -17,12 +17,6 @@ describe('migratePersistedGlobalState', () => {
     expect(migrated.colorScheme).toBe(INITIAL_GLOBAL_STATE.colorScheme);
   });
 
-  it('migrates legacy contrast mode labels', () => {
-    const migrated = migratePersistedGlobalState({ contrastMode: 'Glass' });
-
-    expect(migrated.contrastMode).toBe(ContrastMode.GLASS);
-  });
-
   it('keeps stable contrast mode values', () => {
     const migrated = migratePersistedGlobalState({ contrastMode: ContrastMode.HIGH_CONTRAST });
 

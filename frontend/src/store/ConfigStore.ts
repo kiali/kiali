@@ -65,12 +65,17 @@ const namespacePersistFilter = whitelistInputWithInitialState(
 
 const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'theme'];
 
-const LEGACY_CONTRAST_MODE_VALUES: Record<string, string> = {
-  Glass: 'glass',
-  'High contrast': 'high-contrast',
-  Traditional: 'default'
-};
-
+/**
+ * Normalizes globalState read from redux-persist on rehydrate.
+ *
+ * Older builds stored light/dark preference in `theme`; current builds use `colorScheme`
+ * for that and reserve `theme` for the PF variant (default|felt). When `theme` is Light
+ * or Dark, promote it to `colorScheme` and reset `theme` to default.
+ *
+ * Also validates contrast mode and theme variant against known values, falling back to
+ * defaults for anything missing or invalid. Spreads INITIAL_GLOBAL_STATE so new fields
+ * added to GlobalState get sane defaults without breaking existing persisted sessions.
+ */
 export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> & { theme?: string }): GlobalState => {
   const isLegacyColorSchemeTheme = outboundState.theme === 'Light' || outboundState.theme === 'Dark';
   const legacyColorScheme = isLegacyColorSchemeTheme ? outboundState.theme : undefined;
@@ -84,8 +89,7 @@ export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> 
   const contrastMode =
     rawContrastMode === 'glass' || rawContrastMode === 'high-contrast' || rawContrastMode === 'default'
       ? rawContrastMode
-      : (rawContrastMode ? LEGACY_CONTRAST_MODE_VALUES[rawContrastMode] : undefined) ||
-        INITIAL_GLOBAL_STATE.contrastMode;
+      : INITIAL_GLOBAL_STATE.contrastMode;
 
   return {
     ...INITIAL_GLOBAL_STATE,

@@ -32,13 +32,13 @@ import { StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import {
-  applyDocumentTheme,
+  applyDocumentAppearance,
   getKialiContrastMode,
   getKialiColorScheme,
   getKialiTheme,
-  isParentOwnedTheme,
-  syncReduxThemeFromDocument
-} from 'utils/ThemeUtils';
+  isParentOwnedAppearance,
+  syncReduxAppearanceFromDocument
+} from 'utils/AppearanceUtils';
 import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import type { ChatAIConfig } from 'types/Chatbot';
@@ -348,13 +348,13 @@ class AuthenticationControllerComponent extends React.Component<
     // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
     // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
     // do not overwrite console classes.
-    if (isParentOwnedTheme()) {
-      syncReduxThemeFromDocument();
+    if (isParentOwnedAppearance()) {
+      syncReduxAppearanceFromDocument();
     } else {
       const colorScheme = getKialiColorScheme();
       const contrastMode = getKialiContrastMode();
       const theme = getKialiTheme();
-      applyDocumentTheme(colorScheme, contrastMode, theme);
+      applyDocumentAppearance(colorScheme, contrastMode, theme);
       store.dispatch(GlobalActions.setColorScheme(colorScheme));
       store.dispatch(GlobalActions.setContrastMode(contrastMode));
       store.dispatch(GlobalActions.setTheme(theme));

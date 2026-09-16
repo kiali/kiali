@@ -6,7 +6,7 @@ import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { t } from 'utils/I18nUtils';
 import type { Action } from 'types/Chatbot';
 import { ColorScheme } from 'types/Common';
-import { useKialiColorScheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { load } from 'js-yaml';
 import * as API from 'services/Api';
 import axios from 'axios';

@@ -19,14 +19,14 @@ import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import {
-  applyDocumentTheme,
+  applyDocumentAppearance,
   getKialiColorScheme,
   getKialiContrastMode,
   getKialiTheme,
   isFeltTheme,
-  isParentOwnedTheme,
-  persistKialiThemePreferences
-} from 'utils/ThemeUtils';
+  isParentOwnedAppearance,
+  persistKialiAppearancePreferences
+} from 'utils/AppearanceUtils';
 
 type ReduxProps = {
   colorScheme: string;
@@ -58,7 +58,7 @@ const isValidTheme = (theme: string): theme is Theme => {
   return theme === Theme.DEFAULT || theme === Theme.FELT;
 };
 
-const ThemeGroupLabel: React.FC<{ id: string; label: string }> = ({ id, label }) => (
+const AppearanceGroupLabel: React.FC<{ id: string; label: string }> = ({ id, label }) => (
   <div className="pf-v6-c-menu__group-title" id={id}>
     {label}
   </div>
@@ -97,23 +97,23 @@ const getAppearanceAriaLabel = (
   return `${t('Theme selection')}, ${t('current')}: ${parts.join(', ')}`;
 };
 
-export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) => {
+export const AppearanceMenuComponent: React.FC<ReduxProps> = (props: ReduxProps) => {
   const { t } = useKialiTranslation();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const colorScheme = isValidColorScheme(props.colorScheme) ? props.colorScheme : getKialiColorScheme();
   const contrastMode = isValidContrastMode(props.contrastMode) ? props.contrastMode : getKialiContrastMode();
   const theme = isValidTheme(props.theme) ? props.theme : getKialiTheme();
 
-  if (isParentOwnedTheme()) {
+  if (isParentOwnedAppearance()) {
     return null;
   }
 
-  const applyTheme = (nextColorScheme: ColorScheme, nextContrastMode: ContrastMode, nextTheme: Theme): void => {
-    applyDocumentTheme(nextColorScheme, nextContrastMode, nextTheme);
+  const applyAppearance = (nextColorScheme: ColorScheme, nextContrastMode: ContrastMode, nextTheme: Theme): void => {
+    applyDocumentAppearance(nextColorScheme, nextContrastMode, nextTheme);
     store.dispatch(GlobalActions.setColorScheme(nextColorScheme));
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
     store.dispatch(GlobalActions.setTheme(nextTheme));
-    persistKialiThemePreferences(nextColorScheme, nextContrastMode, nextTheme);
+    persistKialiAppearancePreferences(nextColorScheme, nextContrastMode, nextTheme);
   };
 
   const handleMenuToggleClick = (): void => {
@@ -123,13 +123,13 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
   const handleColorSchemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
     const buttonId = (event.currentTarget as HTMLElement).id;
     const nextColorScheme = buttonId === COLOR_SCHEME_DARK ? ColorScheme.DARK : ColorScheme.LIGHT;
-    applyTheme(nextColorScheme, contrastMode, theme);
+    applyAppearance(nextColorScheme, contrastMode, theme);
   };
 
   const handleThemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
     const buttonId = (event.currentTarget as HTMLElement).id;
     const nextTheme = buttonId === THEME_FELT ? Theme.FELT : Theme.DEFAULT;
-    applyTheme(colorScheme, contrastMode, nextTheme);
+    applyAppearance(colorScheme, contrastMode, nextTheme);
   };
 
   const handleContrastModeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
@@ -145,7 +145,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
     }
 
     if (nextContrastMode) {
-      applyTheme(colorScheme, nextContrastMode, theme);
+      applyAppearance(colorScheme, nextContrastMode, theme);
     }
   };
 
@@ -175,7 +175,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
         />
       )}
     >
-      <SelectGroup label={<ThemeGroupLabel id="theme-selector-color-scheme-title" label={t('Color scheme')} />}>
+      <SelectGroup label={<AppearanceGroupLabel id="theme-selector-color-scheme-title" label={t('Color scheme')} />}>
         <MenuSearch>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-color-scheme-title" data-test="color-scheme-toggle">
@@ -196,7 +196,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
         </MenuSearch>
       </SelectGroup>
       <Divider />
-      <SelectGroup label={<ThemeGroupLabel id="theme-selector-variant-title" label={t('Theme')} />}>
+      <SelectGroup label={<AppearanceGroupLabel id="theme-selector-variant-title" label={t('Theme')} />}>
         <MenuSearch>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-toggle">
@@ -217,7 +217,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
         </MenuSearch>
       </SelectGroup>
       <Divider />
-      <SelectGroup label={<ThemeGroupLabel id="theme-selector-contrast-title" label={t('Contrast mode')} />}>
+      <SelectGroup label={<AppearanceGroupLabel id="theme-selector-contrast-title" label={t('Contrast mode')} />}>
         <MenuSearch>
           <MenuSearchInput>
             <ToggleGroup aria-labelledby="theme-selector-contrast-title" data-test="contrast-mode-toggle">
@@ -255,4 +255,4 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   };
 };
 
-export const ThemeSwitch = connect(mapStateToProps)(ThemeSwitchComponent);
+export const AppearanceMenu = connect(mapStateToProps)(AppearanceMenuComponent);

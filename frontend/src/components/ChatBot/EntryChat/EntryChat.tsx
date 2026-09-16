@@ -10,7 +10,7 @@ import { ResponseTools } from './ResponseTools';
 import userAvatar from '../../../assets/img/kiali/ai/img_avatar-light.svg';
 import aiAvatar from '../../../assets/img/kiali/ai/img-ai-lightbkg.svg';
 import aiAvatarDark from '../../../assets/img/kiali/ai/img-ai-darkbkg.svg';
-import { useKialiColorScheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { ColorScheme } from 'types/Common';
 import { Actions } from './Actions';
 import { ChatMessageMarkdown } from './ChatMessageMarkdown';

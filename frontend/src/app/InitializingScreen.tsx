@@ -5,13 +5,13 @@ import { isKioskMode } from '../utils/SearchParamUtils';
 
 import { ColorScheme } from 'types/Common';
 import {
-  applyDocumentTheme,
+  applyDocumentAppearance,
   getKialiContrastMode,
   getKialiColorScheme,
   getKialiTheme,
-  isParentOwnedTheme,
+  isParentOwnedAppearance,
   readDocumentColorScheme
-} from 'utils/ThemeUtils';
+} from 'utils/AppearanceUtils';
 import { kialiLogoDark, kialiLogoLight } from 'config';
 
 type initializingScreenProps = {
@@ -63,7 +63,7 @@ const centerVerticalHorizontalStyle = kialiStyle({
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
   const [colorScheme, setColorScheme] = React.useState<ColorScheme>(() =>
-    isParentOwnedTheme() ? readDocumentColorScheme() : getKialiColorScheme()
+    isParentOwnedAppearance() ? readDocumentColorScheme() : getKialiColorScheme()
   );
 
   React.useEffect(() => {
@@ -71,16 +71,13 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
       document.body.classList.add('kiosk');
     }
 
-    // OSSMC: Console owns <html> classes — read theme from the document so the logo
-    // matches before ParentThemeSync mounts. Standalone: use stored theme and apply it.
-    if (isParentOwnedTheme()) {
-      setColorScheme(readDocumentColorScheme());
-      return;
+    // OSSMC: Console owns <html> classes — logo color scheme comes from useState above.
+    // Standalone: apply stored appearance (color scheme, contrast mode, and theme) to <html>.
+    if (!isParentOwnedAppearance()) {
+      const resolvedColorScheme = getKialiColorScheme();
+      applyDocumentAppearance(resolvedColorScheme, getKialiContrastMode(), getKialiTheme());
+      setColorScheme(resolvedColorScheme);
     }
-
-    const resolvedColorScheme = getKialiColorScheme();
-    applyDocumentTheme(resolvedColorScheme, getKialiContrastMode(), getKialiTheme());
-    setColorScheme(resolvedColorScheme);
   }, []);
 
   return (

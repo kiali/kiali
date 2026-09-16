@@ -10,7 +10,7 @@ import { ReactComponent as IstioLogo } from '../../assets/img/mesh/istio.svg';
 import { KialiLink } from '../Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
-import { useKialiColorScheme } from 'utils/ThemeUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { ColorScheme } from 'types/Common';
 

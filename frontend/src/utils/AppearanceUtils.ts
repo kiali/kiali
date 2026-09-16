@@ -15,17 +15,9 @@ import {
   Theme
 } from 'types/Common';
 
-export type DocumentThemeClasses = {
+export type DocumentAppearanceClasses = {
   contrastMode: ContrastMode;
   theme: Theme;
-};
-
-const LEGACY_COLOR_SCHEME_SYSTEM = 'System';
-
-const LEGACY_CONTRAST_MODE_VALUES: Record<string, ContrastMode> = {
-  Glass: ContrastMode.GLASS,
-  'High contrast': ContrastMode.HIGH_CONTRAST,
-  Traditional: ContrastMode.DEFAULT
 };
 
 const isValidColorScheme = (colorScheme: string | null | undefined): colorScheme is ColorScheme => {
@@ -52,25 +44,16 @@ const migrateLegacyAppearanceStorage = (): void => {
       localStorage.setItem(KIALI_COLOR_SCHEME, legacyTheme);
     }
     localStorage.removeItem(KIALI_THEME);
-  } else if (legacyTheme === LEGACY_COLOR_SCHEME_SYSTEM) {
-    localStorage.removeItem(KIALI_THEME);
-  }
-
-  const legacyContrast = localStorage.getItem(KIALI_CONTRAST_MODE);
-  const migratedContrast = legacyContrast ? LEGACY_CONTRAST_MODE_VALUES[legacyContrast] : undefined;
-
-  if (migratedContrast) {
-    localStorage.setItem(KIALI_CONTRAST_MODE, migratedContrast);
   }
 };
 
 migrateLegacyAppearanceStorage();
 
 /**
- * True when an embedder (e.g. OSSMC) shares this window and owns theme classes on <html>.
+ * True when an embedder (e.g. OSSMC) shares this window and owns appearance classes on <html>.
  * Uses the live URL kiosk param when present; otherwise sessionStorage from the initial
  * OSSMC load (SPA navigations drop the param). Cleared on full page loads without a parent
- * kiosk URL so a prior OSSMC visit cannot block standalone theme control in the same tab.
+ * kiosk URL so a prior OSSMC visit cannot block standalone appearance control in the same tab.
  */
 export const PARENT_KIOSK_SESSION_KEY = 'KIALI_PARENT_KIOSK';
 
@@ -95,11 +78,7 @@ const getStoredContrastMode = (): ContrastMode | undefined => {
   migrateLegacyAppearanceStorage();
   const stored = localStorage.getItem(KIALI_CONTRAST_MODE);
 
-  if (isValidContrastMode(stored)) {
-    return stored;
-  }
-
-  return stored ? LEGACY_CONTRAST_MODE_VALUES[stored] : undefined;
+  return isValidContrastMode(stored) ? stored : undefined;
 };
 
 const getStoredTheme = (): Theme | undefined => {
@@ -196,14 +175,14 @@ export const readDocumentContrastMode = (): ContrastMode => {
   return ContrastMode.DEFAULT;
 };
 
-export const readDocumentThemeClasses = (): DocumentThemeClasses => {
+export const readDocumentAppearanceClasses = (): DocumentAppearanceClasses => {
   return {
     contrastMode: readDocumentContrastMode(),
     theme: readDocumentTheme()
   };
 };
 
-export const persistKialiThemePreferences = (
+export const persistKialiAppearancePreferences = (
   colorScheme: ColorScheme,
   contrastMode: ContrastMode,
   theme: Theme
@@ -213,7 +192,7 @@ export const persistKialiThemePreferences = (
   localStorage.setItem(KIALI_THEME, theme);
 };
 
-export const isParentOwnedTheme = (): boolean => {
+export const isParentOwnedAppearance = (): boolean => {
   if (window.top !== window.self) {
     return false;
   }
@@ -229,14 +208,14 @@ export const isParentOwnedTheme = (): boolean => {
   return isParentKiosk(sessionKiosk);
 };
 
-/** Update Redux from current <html> theme classes without modifying the document. */
-export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { colorScheme: ColorScheme } => {
+/** Update Redux from current <html> appearance classes without modifying the document. */
+export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & { colorScheme: ColorScheme } => {
   const colorScheme = readDocumentColorScheme();
-  const { contrastMode, theme } = readDocumentThemeClasses();
+  const { contrastMode, theme } = readDocumentAppearanceClasses();
   store.dispatch(GlobalActions.setColorScheme(colorScheme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
   store.dispatch(GlobalActions.setTheme(theme));
-  persistKialiThemePreferences(colorScheme, contrastMode, theme);
+  persistKialiAppearancePreferences(colorScheme, contrastMode, theme);
 
   return { colorScheme, contrastMode, theme };
 };
@@ -244,7 +223,7 @@ export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { colorSche
 /**
  * Applies PatternFly contrast mode and theme classes on <html>.
  * High contrast disables glass (never both active). Felt stacks with any contrast mode.
- * Do not call this when isParentOwnedTheme() is true.
+ * Do not call this when isParentOwnedAppearance() is true.
  */
 export const applyDocumentContrastMode = (contrastMode: ContrastMode, theme: Theme): void => {
   const glass = contrastMode === ContrastMode.GLASS;
@@ -256,26 +235,26 @@ export const applyDocumentContrastMode = (contrastMode: ContrastMode, theme: The
 };
 
 /**
- * Applies PatternFly light/dark, contrast mode, and theme classes on <html>.
- * Do not call this when isParentOwnedTheme() is true (OSSMC / OpenShift Console owns classes).
+ * Applies PatternFly color scheme, contrast mode, and theme classes on <html>.
+ * Do not call this when isParentOwnedAppearance() is true (OSSMC / OpenShift Console owns classes).
  */
-export const applyDocumentTheme = (colorScheme: ColorScheme, contrastMode: ContrastMode, theme: Theme): void => {
+export const applyDocumentAppearance = (colorScheme: ColorScheme, contrastMode: ContrastMode, theme: Theme): void => {
   document.documentElement.classList.toggle(PF_THEME_DARK, colorScheme === ColorScheme.DARK);
   applyDocumentContrastMode(contrastMode, theme);
 };
 
 /**
- * Watch <html> class changes (OpenShift Console theme switcher) and invoke callback.
+ * Watch <html> class changes (OpenShift Console appearance switcher) and invoke callback.
  * Returns an unsubscribe function.
  */
-export const observeDocumentTheme = (onChange: () => void): (() => void) => {
+export const observeDocumentAppearance = (onChange: () => void): (() => void) => {
   const root = document.documentElement;
-  let lastClasses = readDocumentThemeClasses();
+  let lastClasses = readDocumentAppearanceClasses();
   let lastColorScheme = readDocumentColorScheme();
 
   const notifyIfChanged = (): void => {
     const colorScheme = readDocumentColorScheme();
-    const classes = readDocumentThemeClasses();
+    const classes = readDocumentAppearanceClasses();
 
     if (
       colorScheme !== lastColorScheme ||

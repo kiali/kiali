@@ -12,58 +12,58 @@ import {
 } from 'types/Common';
 import {
   applyDocumentContrastMode,
-  applyDocumentTheme,
+  applyDocumentAppearance,
   clearStaleParentKioskSession,
   getKialiContrastMode,
   getKialiColorScheme,
   getKialiTheme,
-  isParentOwnedTheme,
-  observeDocumentTheme,
+  isParentOwnedAppearance,
+  observeDocumentAppearance,
   PARENT_KIOSK_SESSION_KEY,
   readDocumentColorScheme,
   readDocumentContrastMode,
   readDocumentTheme,
-  syncReduxThemeFromDocument
-} from 'utils/ThemeUtils';
+  syncReduxAppearanceFromDocument
+} from 'utils/AppearanceUtils';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
 
-describe('applyDocumentTheme', () => {
+describe('applyDocumentAppearance', () => {
   afterEach(() => {
     document.documentElement.className = '';
   });
 
   it('toggles dark class for color scheme', () => {
-    applyDocumentTheme(ColorScheme.DARK, ContrastMode.DEFAULT, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.DARK, ContrastMode.DEFAULT, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
 
-    applyDocumentTheme(ColorScheme.LIGHT, ContrastMode.DEFAULT, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.DEFAULT, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(false);
   });
 
   it('applies glass contrast mode when provided', () => {
-    applyDocumentTheme(ColorScheme.LIGHT, ContrastMode.GLASS, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.GLASS, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(false);
   });
 
   it('applies felt with glass contrast mode', () => {
-    applyDocumentTheme(ColorScheme.LIGHT, ContrastMode.GLASS, Theme.FELT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.GLASS, Theme.FELT);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
   });
 
   it('applies high contrast mode when provided', () => {
-    applyDocumentTheme(ColorScheme.LIGHT, ContrastMode.HIGH_CONTRAST, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.HIGH_CONTRAST, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
   });
 
   it('removes contrast classes for default mode', () => {
     document.documentElement.classList.add(PF_THEME_GLASS, PF_THEME_HIGH_CONTRAST, PF_THEME_FELT);
-    applyDocumentTheme(ColorScheme.LIGHT, ContrastMode.DEFAULT, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.DEFAULT, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(false);
@@ -112,12 +112,6 @@ describe('getKialiColorScheme', () => {
     expect(getKialiColorScheme()).toBe(ColorScheme.LIGHT);
   });
 
-  it('ignores legacy System value and falls back to OS preference', () => {
-    localStorage.setItem('KIALI_THEME', 'System');
-    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
-    expect(getKialiColorScheme()).toBe(ColorScheme.DARK);
-  });
-
   it('returns stored color scheme from localStorage', () => {
     localStorage.setItem(KIALI_COLOR_SCHEME, ColorScheme.DARK);
     expect(getKialiColorScheme()).toBe(ColorScheme.DARK);
@@ -154,12 +148,6 @@ describe('getKialiContrastMode', () => {
   it('returns stored contrast mode from localStorage', () => {
     localStorage.setItem(KIALI_CONTRAST_MODE, ContrastMode.GLASS);
     expect(getKialiContrastMode()).toBe(ContrastMode.GLASS);
-  });
-
-  it('migrates legacy contrast mode labels in localStorage', () => {
-    localStorage.setItem(KIALI_CONTRAST_MODE, 'Glass');
-    expect(getKialiContrastMode()).toBe(ContrastMode.GLASS);
-    expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.GLASS);
   });
 
   it('falls back to redux when localStorage is absent', () => {
@@ -240,7 +228,7 @@ describe('readDocumentTheme', () => {
   });
 });
 
-describe('syncReduxThemeFromDocument', () => {
+describe('syncReduxAppearanceFromDocument', () => {
   afterEach(() => {
     document.documentElement.className = '';
     localStorage.clear();
@@ -253,7 +241,7 @@ describe('syncReduxThemeFromDocument', () => {
     document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_FELT);
     const classesBefore = document.documentElement.className;
 
-    const result = syncReduxThemeFromDocument();
+    const result = syncReduxAppearanceFromDocument();
 
     expect(result.colorScheme).toBe(ColorScheme.DARK);
     expect(result.contrastMode).toBe(ContrastMode.GLASS);
@@ -267,7 +255,7 @@ describe('syncReduxThemeFromDocument', () => {
   it('persists synced preferences to localStorage', () => {
     document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_FELT);
 
-    syncReduxThemeFromDocument();
+    syncReduxAppearanceFromDocument();
 
     expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(ColorScheme.DARK);
     expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.FELT);
@@ -275,14 +263,14 @@ describe('syncReduxThemeFromDocument', () => {
   });
 });
 
-describe('observeDocumentTheme', () => {
+describe('observeDocumentAppearance', () => {
   afterEach(() => {
     document.documentElement.className = '';
   });
 
   it('notifies when theme class changes', async () => {
     const onChange = rstest.fn();
-    const unsubscribe = observeDocumentTheme(onChange);
+    const unsubscribe = observeDocumentAppearance(onChange);
 
     document.documentElement.classList.add(PF_THEME_DARK);
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -293,7 +281,7 @@ describe('observeDocumentTheme', () => {
 
   it('notifies when contrast class changes', async () => {
     const onChange = rstest.fn();
-    const unsubscribe = observeDocumentTheme(onChange);
+    const unsubscribe = observeDocumentAppearance(onChange);
 
     document.documentElement.classList.add(PF_THEME_GLASS);
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -304,7 +292,7 @@ describe('observeDocumentTheme', () => {
 
   it('notifies when felt class changes', async () => {
     const onChange = rstest.fn();
-    const unsubscribe = observeDocumentTheme(onChange);
+    const unsubscribe = observeDocumentAppearance(onChange);
 
     document.documentElement.classList.add(PF_THEME_FELT);
     await new Promise(resolve => setTimeout(resolve, 0));
@@ -315,7 +303,7 @@ describe('observeDocumentTheme', () => {
 
   it('does not notify after unsubscribe', async () => {
     const onChange = rstest.fn();
-    const unsubscribe = observeDocumentTheme(onChange);
+    const unsubscribe = observeDocumentAppearance(onChange);
     unsubscribe();
 
     document.documentElement.classList.add(PF_THEME_DARK);
@@ -325,7 +313,7 @@ describe('observeDocumentTheme', () => {
   });
 });
 
-describe('isParentOwnedTheme', () => {
+describe('isParentOwnedAppearance', () => {
   const originalTop = window.top;
 
   afterEach(() => {
@@ -337,36 +325,36 @@ describe('isParentOwnedTheme', () => {
 
   it('is false in standalone mode', () => {
     store.dispatch(GlobalActions.setKiosk('/'));
-    expect(isParentOwnedTheme()).toBe(false);
+    expect(isParentOwnedAppearance()).toBe(false);
   });
 
   it('is true for same-window parent kiosk URL (OSSMC)', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
-    expect(isParentOwnedTheme()).toBe(true);
+    expect(isParentOwnedAppearance()).toBe(true);
   });
 
   it('is true after OSSMC SPA navigation when session kiosk is set', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
-    isParentOwnedTheme();
+    isParentOwnedAppearance();
     window.history.replaceState({}, '', '/');
-    expect(isParentOwnedTheme()).toBe(true);
+    expect(isParentOwnedAppearance()).toBe(true);
   });
 
   it('is false after standalone full page load clears stale session', () => {
     sessionStorage.setItem(PARENT_KIOSK_SESSION_KEY, '/');
     window.history.replaceState({}, '', '/');
     clearStaleParentKioskSession();
-    expect(isParentOwnedTheme()).toBe(false);
+    expect(isParentOwnedAppearance()).toBe(false);
   });
 
   it('is false for standalone kiosk flag', () => {
     window.history.replaceState({}, '', '/?kiosk=true');
-    expect(isParentOwnedTheme()).toBe(false);
+    expect(isParentOwnedAppearance()).toBe(false);
   });
 
   it('is false when embedded in an iframe', () => {
     window.history.replaceState({}, '', '/?kiosk=/');
     Object.defineProperty(window, 'top', { configurable: true, value: {} });
-    expect(isParentOwnedTheme()).toBe(false);
+    expect(isParentOwnedAppearance()).toBe(false);
   });
 });

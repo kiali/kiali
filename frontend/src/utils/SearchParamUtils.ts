@@ -1,6 +1,6 @@
 import { HistoryManager, URLParam } from '../app/History';
 import { isParentKiosk } from 'components/Kiosk/KioskActions';
-import { PARENT_KIOSK_SESSION_KEY } from 'utils/ThemeUtils';
+import { PARENT_KIOSK_SESSION_KEY } from 'utils/AppearanceUtils';
 
 // In OSSMC the kiosk URL parameter is set once during the initial load and
 // subsequent SPA navigations lose it. sessionStorage preserves parent kiosk

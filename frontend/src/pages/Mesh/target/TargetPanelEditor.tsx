@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Editor from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import { useKialiColorScheme } from '../../../utils/ThemeUtils';
+import { useKialiColorScheme } from '../../../utils/AppearanceUtils';
 import { ColorScheme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
 import { kialiStyle } from 'styles/StyleUtils';

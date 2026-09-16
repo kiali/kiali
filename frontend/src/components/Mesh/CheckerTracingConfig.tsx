@@ -5,7 +5,7 @@ import Editor from '@monaco-editor/react';
 import { ColorScheme } from '../../types/Common';
 import { editorStyle } from '../../styles/EditorStyle';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
-import { getKialiColorScheme } from '../../utils/ThemeUtils';
+import { getKialiColorScheme } from '../../utils/AppearanceUtils';
 import { dump, loadAll, YAMLException } from 'js-yaml';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';

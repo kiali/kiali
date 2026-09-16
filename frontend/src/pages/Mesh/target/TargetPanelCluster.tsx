@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { getKialiColorScheme } from 'utils/ThemeUtils';
+import { getKialiColorScheme } from 'utils/AppearanceUtils';
 import type { TargetPanelCommonProps } from './TargetPanelCommon';
 import { renderInfraSummary, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
