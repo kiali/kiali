@@ -38,7 +38,7 @@ NETWORK=""
 REDUCE_RESOURCES="false"
 REQUIRE_SCC="false"
 REVISION=""
-IMAGE_HUB="gcr.io/istio-release"
+IMAGE_HUB="docker.io/istio"
 IMAGE_TAG="default"
 
 # SPIRE configuration
@@ -289,7 +289,7 @@ Valid command line arguments:
        The hub where the Istio images will be pulled from.
        You can set this to "default" in order to use the default hub that the Istio charts use but
        this may be using Docker Hub, and Docker Hub rate limiting may cause the installation to fail.
-       Default: gcr.io/istio-release
+       Default: docker.io/istio
   -it|--image-tag <tag>
        The tag of the Istio images. Leave this as "default" (which means the default images are pulled)
        unless you know the image tag you are pulling is compatible with the charts in the istioctl installer.
