@@ -31,6 +31,11 @@ export function istioConfigDetailsApiPath(namespace: string, typeName: string, n
   return `/api/namespaces/${namespace}/istio/${gvk.group}/${gvk.version}/${gvk.kind}/${name}`;
 }
 
+/** Console route for Istio config details (no `/api` prefix). */
+export function istioConfigDetailsConsolePath(namespace: string, typeName: string, name: string): string {
+  return istioConfigDetailsApiPath(namespace, typeName, name).replace(/^\/api\//, '');
+}
+
 async function bustIstioConfigCache(page: Page): Promise<void> {
   await page.request.get(`/api/istio/config?_=${Date.now()}`);
 }
@@ -49,9 +54,13 @@ export async function waitForIstioObjectDetails(
 
   await expect(async () => {
     await bustIstioConfigCache(page);
-    const response = await page.request.get(`${path}?validate=true&_=${Date.now()}`);
+    // Details API allows only cluster, help, and validate query params (no `_` cache-bust).
+    const response = await page.request.get(`${path}?validate=true`);
+    if (response.status() === 404) {
+      throw new Error('istio object not available yet (HTTP 404)');
+    }
     if (!response.ok()) {
-      throw new Error(`istio object not available yet (HTTP ${response.status()})`);
+      throw new Error(`unexpected istio details response (HTTP ${response.status()})`);
     }
   }).toPass({ intervals: [3_000], timeout: 120_000 });
 }

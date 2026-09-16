@@ -1,13 +1,16 @@
 import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { gotoListPage } from '../utils/navigation';
-import { selectNamespace } from '../utils/namespace';
+import { gotoConsolePage, gotoListPage } from '../utils/navigation';
+import { selectNamespace, selectOnlyNamespaces } from '../utils/namespace';
 import { waitForLoadingComplete } from '../utils/transition';
 import { linkSelector } from '../utils/linkSelector';
 import { colExists, expectOnlyRow, expectRowCount, getColWithRowText } from '../utils/table';
 import { collectAmbientL7Warnings } from '../utils/ambientValidation';
 import { editIstioConfigYaml } from '../utils/monacoEditor';
-import { waitForIstioObjectDetails as waitForIstioObjectDetailsApi } from '../utils/istioConfigApi';
+import {
+  istioConfigDetailsConsolePath,
+  waitForIstioObjectDetails as waitForIstioObjectDetailsApi
+} from '../utils/istioConfigApi';
 
 const TYPE_FILTERS = [
   'AuthorizationPolicy',
@@ -348,6 +351,8 @@ export class IstioConfigPage extends BasePage {
     healthStatus: string
   ): Promise<void> {
     await this.ensureConfigurationValidationEnabled();
+    await this.open();
+    await selectOnlyNamespaces(this.page, [namespace]);
 
     const row = this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`);
     const expectedIcon = VALIDATION_ICON[healthStatus];
@@ -473,8 +478,6 @@ export class IstioConfigPage extends BasePage {
    */
   async primeValidationFromDetails(namespace: string, typeName: string, instanceName: string): Promise<void> {
     await this.ensureConfigurationValidationEnabled();
-    await this.refreshList();
-    await waitForLoadingComplete(this.page);
     await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
     await this.open();
     await waitForLoadingComplete(this.page);
@@ -489,6 +492,8 @@ export class IstioConfigPage extends BasePage {
     severity: 'danger' | 'warning' = 'danger'
   ): Promise<void> {
     await this.ensureConfigurationValidationEnabled();
+    await this.open();
+    await selectOnlyNamespaces(this.page, [namespace]);
     await this.refreshList();
     await waitForLoadingComplete(this.page);
     await this.openConfigDetailsAndWaitForValidation(namespace, typeName, instanceName);
@@ -510,10 +515,7 @@ export class IstioConfigPage extends BasePage {
       { timeout: 60_000 }
     );
 
-    await this.getBySel(`VirtualItem_Ns${namespace}_${typeName}_${instanceName}`)
-      .locator(linkSelector())
-      .first()
-      .click();
+    await gotoConsolePage(this.page, istioConfigDetailsConsolePath(namespace, typeName, instanceName));
     await validateResponse;
     await waitForLoadingComplete(this.page);
   }
