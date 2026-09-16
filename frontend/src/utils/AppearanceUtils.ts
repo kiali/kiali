@@ -221,26 +221,18 @@ export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & {
 };
 
 /**
- * Applies PatternFly contrast mode and theme classes on <html>.
- * High contrast disables glass (never both active). Felt stacks with any contrast mode.
- * Do not call this when isParentOwnedAppearance() is true.
- */
-export const applyDocumentContrastMode = (contrastMode: ContrastMode, theme: Theme): void => {
-  const glass = contrastMode === ContrastMode.GLASS;
-  const highContrast = contrastMode === ContrastMode.HIGH_CONTRAST;
-
-  document.documentElement.classList.toggle(PF_THEME_FELT, isFeltTheme(theme));
-  document.documentElement.classList.toggle(PF_THEME_GLASS, glass);
-  document.documentElement.classList.toggle(PF_THEME_HIGH_CONTRAST, highContrast);
-};
-
-/**
  * Applies PatternFly color scheme, contrast mode, and theme classes on <html>.
+ * High contrast and glass are mutually exclusive; felt stacks with any contrast mode.
  * Do not call this when isParentOwnedAppearance() is true (OSSMC / OpenShift Console owns classes).
  */
 export const applyDocumentAppearance = (colorScheme: ColorScheme, contrastMode: ContrastMode, theme: Theme): void => {
+  const glass = contrastMode === ContrastMode.GLASS;
+  const highContrast = contrastMode === ContrastMode.HIGH_CONTRAST;
+
   document.documentElement.classList.toggle(PF_THEME_DARK, colorScheme === ColorScheme.DARK);
-  applyDocumentContrastMode(contrastMode, theme);
+  document.documentElement.classList.toggle(PF_THEME_FELT, isFeltTheme(theme));
+  document.documentElement.classList.toggle(PF_THEME_GLASS, glass);
+  document.documentElement.classList.toggle(PF_THEME_HIGH_CONTRAST, highContrast);
 };
 
 /**

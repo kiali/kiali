@@ -11,7 +11,6 @@ import {
   Theme
 } from 'types/Common';
 import {
-  applyDocumentContrastMode,
   applyDocumentAppearance,
   clearStaleParentKioskSession,
   getKialiContrastMode,
@@ -68,28 +67,16 @@ describe('applyDocumentAppearance', () => {
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(false);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(false);
   });
-});
-
-describe('applyDocumentContrastMode', () => {
-  afterEach(() => {
-    document.documentElement.className = '';
-  });
 
   it('never applies glass and high contrast together', () => {
-    applyDocumentContrastMode(ContrastMode.GLASS, Theme.DEFAULT);
-    applyDocumentContrastMode(ContrastMode.HIGH_CONTRAST, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.GLASS, Theme.DEFAULT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.HIGH_CONTRAST, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
   });
 
-  it('keeps felt enabled with glass', () => {
-    applyDocumentContrastMode(ContrastMode.GLASS, Theme.FELT);
-    expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(true);
-    expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
-  });
-
   it('keeps felt enabled with high contrast', () => {
-    applyDocumentContrastMode(ContrastMode.HIGH_CONTRAST, Theme.FELT);
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.HIGH_CONTRAST, Theme.FELT);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
