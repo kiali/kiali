@@ -23,26 +23,28 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    await expect(async () => {
-      const graphResponse = this.page.waitForResponse(
+    const waitForAppGraph = (): ReturnType<typeof this.page.waitForResponse> =>
+      this.page.waitForResponse(
         response =>
-          response.url().includes('/api/namespaces/graph') &&
-          response.url().includes('graphType=app') &&
+          /\/api\/namespaces\/[^/]+\/applications\/[^/]+\/graph/.test(response.url()) &&
           response.request().method() === 'GET' &&
           response.ok()
       );
-      await openDetailsTab(this.page, 'Traffic');
-      await graphResponse;
+
+    await expect(async () => {
+      const trafficTab = this.page.getByRole('tab', { name: 'Traffic', exact: true });
+      if ((await trafficTab.getAttribute('aria-selected')) !== 'true') {
+        await Promise.all([waitForAppGraph(), openDetailsTab(this.page, 'Traffic')]);
+      }
       await waitForLoadingComplete(this.page);
 
       const noInbound = this.page.getByText('No Inbound Traffic');
       if ((await noInbound.count()) > 0) {
-        await this.getBySel('refresh-button').click();
+        await Promise.all([waitForAppGraph(), this.getBySel('refresh-button').click()]);
         await waitForLoadingComplete(this.page);
         throw new Error('inbound traffic not ready');
       }
 
-      await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
       await expect(noInbound).toHaveCount(0);
       await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
     }).toPass({ intervals: [10_000], timeout: 120_000 });
