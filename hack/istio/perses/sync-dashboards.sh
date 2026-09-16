@@ -148,20 +148,15 @@ output_file = Path(sys.argv[2])
 dry_run = sys.argv[3] == "true"
 
 # ConfigMap data keys used by Kiali CI. Order is stable for readable diffs.
+# Dashboard IDs must match Kiali slugified display names (see perses/perses.go).
 DASHBOARD_KEYS = {
-    "istio-control-plane": "dashboard-control-plane",
-    "istio-mesh": "dashboard-mesh",
-    "istio-performance": "dashboard-performance",
+    "istio-control-plane-dashboard": "dashboard-control-plane",
+    "istio-mesh-dashboard": "dashboard-mesh",
+    "istio-performance-dashboard": "dashboard-performance",
     "istio-service-dashboard": "dashboard-service",
     "istio-workload-dashboard": "dashboard-workload",
     "istio-ztunnel-dashboard": "dashboard-ztunnel",
-    "istio-extension-dashboard": "dashboard-extension",
-}
-
-# Kiali slugifies dashboard display names from config (e.g. "Istio Mesh Dashboard"
-# -> "istio-mesh-dashboard"). community-dashboards uses "istio-mesh" for the mesh ID.
-DASHBOARD_ID_OVERRIDES = {
-    "istio-mesh": "istio-mesh-dashboard",
+    "istio-wasm-extension-dashboard": "dashboard-extension",
 }
 
 ORDER = list(DASHBOARD_KEYS.keys())
@@ -204,10 +199,6 @@ lines = [
 for name in ORDER:
     key = DASHBOARD_KEYS[name]
     dashboard = dashboards[name]
-    provisioned_name = DASHBOARD_ID_OVERRIDES.get(name, name)
-    if provisioned_name != name:
-        dashboard = json.loads(json.dumps(dashboard))
-        dashboard["metadata"]["name"] = provisioned_name
     compact = json.dumps(dashboard, separators=(",", ":"))
     lines.append(f"  {key}.json: |")
     lines.append(f"    {compact}")
@@ -220,8 +211,7 @@ else:
     output_file.write_text(content, encoding="utf-8")
 
 for name in ORDER:
-    suffix = f" (provisioned as {DASHBOARD_ID_OVERRIDES[name]})" if name in DASHBOARD_ID_OVERRIDES else ""
-    print(f"  {DASHBOARD_KEYS[name]}.json <- {name}{suffix}")
+    print(f"  {DASHBOARD_KEYS[name]}.json <- {name}")
 PYEOF
 
 if [ "${DRY_RUN}" = "true" ]; then
