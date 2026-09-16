@@ -7,6 +7,7 @@ import { linkSelector } from '../utils/linkSelector';
 import { colExists, expectOnlyRow, expectRowCount, getColWithRowText } from '../utils/table';
 import { collectAmbientL7Warnings } from '../utils/ambientValidation';
 import { editIstioConfigYaml } from '../utils/monacoEditor';
+import { waitForIstioObjectDetails as waitForIstioObjectDetailsApi } from '../utils/istioConfigApi';
 
 const TYPE_FILTERS = [
   'AuthorizationPolicy',
@@ -326,6 +327,10 @@ export class IstioConfigPage extends BasePage {
   private async bustIstioConfigCache(): Promise<void> {
     const response = await this.page.request.get(`/api/istio/config?_=${Date.now()}`);
     expect(response.ok()).toBeTruthy();
+  }
+
+  async waitForIstioObjectDetails(namespace: string, typeName: string, name: string): Promise<void> {
+    await waitForIstioObjectDetailsApi(this.page, namespace, typeName, name);
   }
 
   async ensureConfigurationValidationEnabled(): Promise<void> {

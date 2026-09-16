@@ -461,6 +461,9 @@ test.describe('Istio Config CRD validation', () => {
       applyPeerAuthentication('default', 'istio-system');
       patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
 
+      await istioConfigPage.waitForIstioObjectDetails('istio-system', 'PeerAuthentication', 'default');
+      await istioConfigPage.waitForIstioObjectDetails('sleep', 'DestinationRule', drName);
+
       await istioConfigPage.open();
       await selectNamespace(page, 'istio-system');
       await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
