@@ -43,19 +43,19 @@ Scripts and sample Prometheus deployments live under `demo/`. `demo/install.sh` 
 
 ```bash
 # Core Kiali federation only
-./hack/istio/metric-rules/demo/install.sh
+./hack/prometheus/federation/demo/install.sh
 
 # Core + Perses dashboard metrics
-./hack/istio/metric-rules/demo/install.sh --with-dashboards
+./hack/prometheus/federation/demo/install.sh --with-dashboards
 
 # Core + Kiali self-monitoring (shared Istio edge Prometheus)
-./hack/istio/metric-rules/demo/install.sh --with-kiali-metrics
+./hack/prometheus/federation/demo/install.sh --with-kiali-metrics
 
 # Core + Kiali self-monitoring (dedicated Kiali edge Prometheus)
-./hack/istio/metric-rules/demo/install.sh --with-kiali-metrics --kiali-edge dedicated
+./hack/prometheus/federation/demo/install.sh --with-kiali-metrics --kiali-edge dedicated
 
 # Point Kiali at the demo federated Prometheus
-./hack/istio/metric-rules/demo/install.sh --switch-kiali
+./hack/prometheus/federation/demo/install.sh --switch-kiali
 ```
 
 For production, follow the [kiali.io checklist](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#integration-checklist) and apply `core-recording-rules.yml` plus federation `match[]` to your own Prometheus instances.

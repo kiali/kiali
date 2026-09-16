@@ -5,6 +5,9 @@
 #   sum  — counters, histograms, kiali_ai_store_conversations_total
 #   max  — kiali_health_status, kiali_graph_nodes, kiali_kubernetes_clients
 #
+# Recording rules retain the Prometheus scrape namespace label (see kiali-metrics-recording-rules.yml;
+# same policy as core-recording-rules.yml) for consistency and custom-dashboard queries.
+#
 # See design/KEPS/metric-rules/proposal.md#kiali-self-monitoring-metrics
 
 metrics:
