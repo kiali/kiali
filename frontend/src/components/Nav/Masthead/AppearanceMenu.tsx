@@ -11,7 +11,7 @@ import {
   ToggleGroupItem
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
-import { AdjustIcon } from '@patternfly/react-icons';
+import { PaletteIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
 import { ColorScheme, ContrastMode, Theme } from 'types/Common';
@@ -167,7 +167,7 @@ export const AppearanceMenuComponent: React.FC<ReduxProps> = (props: ReduxProps)
           data-test="theme-dropdown"
           icon={
             <Icon size="lg">
-              <AdjustIcon />
+              <PaletteIcon />
             </Icon>
           }
           isExpanded={isOpen}
