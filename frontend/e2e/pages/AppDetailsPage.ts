@@ -23,19 +23,21 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    await openDetailsTab(this.page, 'Traffic');
-    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
-    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
-    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-
+    const trafficCard = this.page.locator('.pf-v6-c-card__body').filter({ hasText: 'Inbound Traffic' });
     const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
-    await expect(inbound).toBeVisible();
+
     await expect(async () => {
+      await openDetailsTab(this.page, 'Traffic');
+      await expect(trafficCard.getByText('Inbound Traffic')).toBeVisible();
+      await expect(trafficCard.getByText('No Inbound Traffic')).toHaveCount(0);
+      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
+      await expect(this.page.getByText('No Outbound Traffic')).toHaveCount(0);
+      await expect(inbound).toBeVisible();
+
       const inboundText = (await inbound.textContent()) ?? '';
       if (!/productpage/i.test(inboundText)) {
         await this.getBySel('refresh-button').click();
         await waitForLoadingComplete(this.page);
-        await openDetailsTab(this.page, 'Traffic');
         throw new Error('productpage not visible in details inbound traffic yet');
       }
       await expect(inbound).toContainText(/productpage/i);
