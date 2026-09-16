@@ -322,38 +322,10 @@ export class IstioConfigPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
-  /** Mirrors Cypress waitUntilConfigIsVisible — forces Kiali to drop cached istio config before refresh. */
+  /** Forces Kiali to drop cached istio config before list refresh. */
   private async bustIstioConfigCache(): Promise<void> {
     const response = await this.page.request.get(`/api/istio/config?_=${Date.now()}`);
     expect(response.ok()).toBeTruthy();
-  }
-
-  async waitForIstioObjectInList(namespace: string, resourceKey: string, name: string): Promise<void> {
-    await expect(async () => {
-      const response = await this.page.request.get(`/api/namespaces/${namespace}/istio?validate=true&_=${Date.now()}`);
-      expect(response.ok()).toBeTruthy();
-      const body = await response.json();
-      const resources = body.resources?.[resourceKey] as Array<{ name?: string }> | undefined;
-      expect(resources?.some(resource => resource.name === name)).toBe(true);
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
-  }
-
-  async waitForValidationCode(
-    namespace: string,
-    group: string,
-    version: string,
-    kind: string,
-    name: string,
-    code: string
-  ): Promise<void> {
-    const path = `/api/namespaces/${namespace}/istio/${group}/${version}/${kind}/${name}`;
-    await expect(async () => {
-      const response = await this.page.request.get(`${path}?validate=true&_=${Date.now()}`);
-      expect(response.ok()).toBeTruthy();
-      const body = await response.json();
-      const checks = (body.validation as { checks?: Array<{ code?: string }> })?.checks ?? [];
-      expect(checks.some(check => check.code === code)).toBe(true);
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 
   async ensureConfigurationValidationEnabled(): Promise<void> {

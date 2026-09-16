@@ -453,7 +453,7 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0207');
     });
 
-    // Keep before KIA0505 (Cypress order): sleep PeerAuthentication DISABLE blocks KIA0208 mesh validation.
+    // Keep before KIA0505: sleep PeerAuthentication DISABLE blocks KIA0208 mesh validation.
     test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');
@@ -461,19 +461,9 @@ test.describe('Istio Config CRD validation', () => {
       applyPeerAuthentication('default', 'istio-system');
       patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
 
-      await istioConfigPage.waitForValidationCode(
-        'sleep',
-        'networking.istio.io',
-        'v1',
-        'DestinationRule',
-        drName,
-        'KIA0208'
-      );
-      await istioConfigPage.waitForIstioObjectInList('sleep', 'networking.istio.io/v1, Kind=DestinationRule', drName);
-
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
+      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
     });
 

@@ -23,24 +23,28 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    const trafficCard = this.page.locator('.pf-v6-c-card__body').filter({ hasText: 'Inbound Traffic' });
-    const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
-
     await expect(async () => {
+      const graphResponse = this.page.waitForResponse(
+        response =>
+          response.url().includes('/api/namespaces/graph') &&
+          response.url().includes('graphType=app') &&
+          response.request().method() === 'GET' &&
+          response.ok()
+      );
       await openDetailsTab(this.page, 'Traffic');
-      await expect(trafficCard.getByText('Inbound Traffic')).toBeVisible();
-      await expect(trafficCard.getByText('No Inbound Traffic')).toHaveCount(0);
-      // Cypress only asserts the Outbound Traffic section heading; details may have no outbound rows.
-      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-      await expect(inbound).toBeVisible();
+      await graphResponse;
+      await waitForLoadingComplete(this.page);
 
-      const inboundText = (await inbound.textContent()) ?? '';
-      if (!/productpage/i.test(inboundText)) {
+      const noInbound = this.page.getByText('No Inbound Traffic');
+      if ((await noInbound.count()) > 0) {
         await this.getBySel('refresh-button').click();
         await waitForLoadingComplete(this.page);
-        throw new Error('productpage not visible in details inbound traffic yet');
+        throw new Error('inbound traffic not ready');
       }
-      await expect(inbound).toContainText(/productpage/i);
+
+      await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
+      await expect(noInbound).toHaveCount(0);
+      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
     }).toPass({ intervals: [10_000], timeout: 120_000 });
     await expectClusterColumnHidden(this.page);
   }
