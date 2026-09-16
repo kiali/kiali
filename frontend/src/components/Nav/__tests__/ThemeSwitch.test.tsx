@@ -116,8 +116,8 @@ describe('ThemeSwitch changes', () => {
     );
 
     await userEvent.click(screen.getByLabelText(/Theme selection/));
-    const themeSwitch = document.querySelector('[data-test="theme-switch"]') as HTMLElement;
-    await userEvent.click(within(themeSwitch).getByRole('button', { name: 'Default' }));
+    const themeToggle = document.querySelector('[data-test="theme-toggle"]') as HTMLElement;
+    await userEvent.click(within(themeToggle).getByRole('button', { name: 'Default' }));
 
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(false);
     expect(store.getState().globalState.theme).toBe(ThemeVariant.DEFAULT);

@@ -1,9 +1,9 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
 const THEME_DROPDOWN = '[data-test="theme-dropdown"]';
-const COLOR_SCHEME_SWITCH = '[data-test="theme-color-scheme-switch"]';
-const CONTRAST_MODE_SWITCH = '[data-test="contrast-mode-switch"]';
-const THEME_SWITCH = '[data-test="theme-switch"]';
+const COLOR_SCHEME_TOGGLE = '[data-test="color-scheme-toggle"]';
+const CONTRAST_MODE_TOGGLE = '[data-test="contrast-mode-toggle"]';
+const THEME_TOGGLE = '[data-test="theme-toggle"]';
 
 const openThemeMenu = (): void => {
   cy.get(THEME_DROPDOWN).then($toggle => {
@@ -22,7 +22,7 @@ Given('the theme is explicitly set to light', () => {
   cy.get('html').then($html => {
     if ($html.hasClass('pf-v6-theme-dark')) {
       openThemeMenu();
-      cy.get(COLOR_SCHEME_SWITCH).contains('button', 'Light').click();
+      cy.get(COLOR_SCHEME_TOGGLE).contains('button', 'Light').click();
       cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
     }
   });
@@ -39,10 +39,10 @@ Given('the theme is explicitly set to light', () => {
     ) {
       openThemeMenu();
       if ($html.hasClass('pf-v6-theme-felt')) {
-        cy.get(THEME_SWITCH).contains('button', 'Default').click();
+        cy.get(THEME_TOGGLE).contains('button', 'Default').click();
       }
       if ($html.hasClass('pf-v6-theme-glass') || $html.hasClass('pf-v6-theme-high-contrast')) {
-        cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
+        cy.get(CONTRAST_MODE_TOGGLE).contains('button', 'Default').click();
       }
     }
   });
@@ -53,34 +53,34 @@ Given('the theme is explicitly set to light', () => {
 
 When('the user switches to dark theme', () => {
   openThemeMenu();
-  cy.get(COLOR_SCHEME_SWITCH).contains('button', 'Dark').click();
+  cy.get(COLOR_SCHEME_TOGGLE).contains('button', 'Dark').click();
   cy.get('html').should('have.class', 'pf-v6-theme-dark');
 });
 
 When('the user switches to light theme', () => {
   openThemeMenu();
-  cy.get(COLOR_SCHEME_SWITCH).contains('button', 'Light').click();
+  cy.get(COLOR_SCHEME_TOGGLE).contains('button', 'Light').click();
   cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
 
 When('the user selects glass contrast mode', () => {
   openThemeMenu();
-  cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Glass').click();
+  cy.get(CONTRAST_MODE_TOGGLE).contains('button', 'Glass').click();
 });
 
 When('the user selects high contrast mode', () => {
   openThemeMenu();
-  cy.get(CONTRAST_MODE_SWITCH).contains('button', 'High contrast').click();
+  cy.get(CONTRAST_MODE_TOGGLE).contains('button', 'High contrast').click();
 });
 
 When('the user selects default contrast mode', () => {
   openThemeMenu();
-  cy.get(CONTRAST_MODE_SWITCH).contains('button', 'Default').click();
+  cy.get(CONTRAST_MODE_TOGGLE).contains('button', 'Default').click();
 });
 
 When('the user selects project felt theme', () => {
   openThemeMenu();
-  cy.get(THEME_SWITCH).contains('button', 'Project Felt').click();
+  cy.get(THEME_TOGGLE).contains('button', 'Project Felt').click();
 });
 
 Then('the document should use light theme', () => {

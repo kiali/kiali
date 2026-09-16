@@ -130,7 +130,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
       <SelectGroup label={<ThemeGroupLabel id="theme-selector-color-scheme-title" label={t('Color scheme')} />}>
         <MenuSearch>
           <MenuSearchInput>
-            <ToggleGroup aria-labelledby="theme-selector-color-scheme-title" data-test="theme-color-scheme-switch">
+            <ToggleGroup aria-labelledby="theme-selector-color-scheme-title" data-test="color-scheme-toggle">
               <ToggleGroupItem
                 buttonId={Theme.LIGHT}
                 isSelected={colorScheme === Theme.LIGHT}
@@ -151,7 +151,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
       <SelectGroup label={<ThemeGroupLabel id="theme-selector-variant-title" label={t('Theme')} />}>
         <MenuSearch>
           <MenuSearchInput>
-            <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-switch">
+            <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-toggle">
               <ToggleGroupItem
                 buttonId={THEME_VARIANT_DEFAULT}
                 isSelected={theme === ThemeVariant.DEFAULT}
@@ -172,7 +172,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
       <SelectGroup label={<ThemeGroupLabel id="theme-selector-contrast-title" label={t('Contrast mode')} />}>
         <MenuSearch>
           <MenuSearchInput>
-            <ToggleGroup aria-labelledby="theme-selector-contrast-title" data-test="contrast-mode-switch">
+            <ToggleGroup aria-labelledby="theme-selector-contrast-title" data-test="contrast-mode-toggle">
               <ToggleGroupItem
                 buttonId={ContrastMode.TRADITIONAL}
                 isSelected={contrastMode === ContrastMode.TRADITIONAL}
