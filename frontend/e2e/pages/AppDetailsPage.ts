@@ -23,30 +23,22 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    const waitForAppGraph = (): ReturnType<typeof this.page.waitForResponse> =>
-      this.page.waitForResponse(
-        response =>
-          /\/api\/namespaces\/[^/]+\/applications\/[^/]+\/graph/.test(response.url()) &&
-          response.request().method() === 'GET' &&
-          response.ok()
-      );
+    await openDetailsTab(this.page, 'Traffic');
+    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
+    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
+    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
 
+    const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
+    await expect(inbound).toBeVisible();
     await expect(async () => {
-      const trafficTab = this.page.getByRole('tab', { name: 'Traffic', exact: true });
-      if ((await trafficTab.getAttribute('aria-selected')) !== 'true') {
-        await Promise.all([waitForAppGraph(), openDetailsTab(this.page, 'Traffic')]);
-      }
-      await waitForLoadingComplete(this.page);
-
-      const noInbound = this.page.getByText('No Inbound Traffic');
-      if ((await noInbound.count()) > 0) {
-        await Promise.all([waitForAppGraph(), this.getBySel('refresh-button').click()]);
+      const inboundText = (await inbound.textContent()) ?? '';
+      if (!/productpage/i.test(inboundText)) {
+        await this.getBySel('refresh-button').click();
         await waitForLoadingComplete(this.page);
-        throw new Error('inbound traffic not ready');
+        await openDetailsTab(this.page, 'Traffic');
+        throw new Error('productpage not visible in details inbound traffic yet');
       }
-
-      await expect(noInbound).toHaveCount(0);
-      await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
+      await expect(inbound).toContainText(/productpage/i);
     }).toPass({ intervals: [10_000], timeout: 120_000 });
     await expectClusterColumnHidden(this.page);
   }

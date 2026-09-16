@@ -15,15 +15,15 @@ test.describe('App details core-caching', () => {
     await appDetailsPage.expectResourcesCard();
   });
 
-  test('See app Traffic information', coreCachingOnly, async ({ appDetailsPage }) => {
-    await appDetailsPage.expectTrafficInformation();
-  });
-
   test('See Inbound Metrics', coreCachingOnly, async ({ appDetailsPage }) => {
     await appDetailsPage.expectInboundMetrics();
   });
 
   test('See Outbound Metrics', coreCachingOnly, async ({ appDetailsPage }) => {
     await appDetailsPage.expectOutboundMetrics();
+  });
+
+  test('See app Traffic information', coreCachingOnly, async ({ appDetailsPage }) => {
+    await appDetailsPage.expectTrafficInformation();
   });
 });
