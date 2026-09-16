@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { ParentThemeSync } from '../ParentThemeSync';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
-import { ContrastMode, PF_THEME_DARK, PF_THEME_FELT, PF_THEME_GLASS, Theme } from 'types/Common';
+import { ContrastMode, PF_THEME_DARK, PF_THEME_FELT, PF_THEME_GLASS, Theme, ThemeVariant } from 'types/Common';
 
 describe('ParentThemeSync', () => {
   beforeEach(() => {
@@ -11,7 +11,7 @@ describe('ParentThemeSync', () => {
     store.dispatch(GlobalActions.setKiosk(''));
     store.dispatch(GlobalActions.setColorScheme(Theme.LIGHT));
     store.dispatch(GlobalActions.setContrastMode(ContrastMode.TRADITIONAL));
-    store.dispatch(GlobalActions.setThemeFelt(false));
+    store.dispatch(GlobalActions.setTheme(ThemeVariant.DEFAULT));
     window.history.replaceState({}, '', '/');
   });
 
@@ -27,7 +27,7 @@ describe('ParentThemeSync', () => {
 
     expect(store.getState().globalState.colorScheme).toBe(Theme.LIGHT);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.TRADITIONAL);
-    expect(store.getState().globalState.themeFelt).toBe(false);
+    expect(store.getState().globalState.theme).toBe(ThemeVariant.DEFAULT);
   });
 
   it('syncs redux from document when parent kiosk owns the window', () => {
@@ -38,7 +38,7 @@ describe('ParentThemeSync', () => {
 
     expect(store.getState().globalState.colorScheme).toBe(Theme.DARK);
     expect(store.getState().globalState.contrastMode).toBe(ContrastMode.GLASS);
-    expect(store.getState().globalState.themeFelt).toBe(true);
+    expect(store.getState().globalState.theme).toBe(ThemeVariant.FELT);
   });
 
   it('syncs redux when parent theme classes change after mount', async () => {
@@ -46,11 +46,11 @@ describe('ParentThemeSync', () => {
 
     render(<ParentThemeSync />);
 
-    expect(store.getState().globalState.themeFelt).toBe(false);
+    expect(store.getState().globalState.theme).toBe(ThemeVariant.DEFAULT);
 
     document.documentElement.classList.add(PF_THEME_FELT);
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    expect(store.getState().globalState.themeFelt).toBe(true);
+    expect(store.getState().globalState.theme).toBe(ThemeVariant.FELT);
   });
 });

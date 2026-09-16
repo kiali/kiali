@@ -14,7 +14,7 @@ export const GlobalActions = {
   setLanguage: createStandardAction(ActionKeys.SET_LANGUAGE)<string>(),
   setPageVisibilityHidden: createAction(ActionKeys.SET_PAGE_VISIBILITY_HIDDEN),
   setPageVisibilityVisible: createAction(ActionKeys.SET_PAGE_VISIBILITY_VISIBLE),
-  setThemeFelt: createStandardAction(ActionKeys.SET_THEME_FELT)<boolean>(),
+  setTheme: createStandardAction(ActionKeys.SET_THEME)<string>(),
   unknown: createAction('KIALI_UNKNOWN') // helper for testing
 };
 

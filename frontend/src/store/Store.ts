@@ -44,7 +44,7 @@ export interface GlobalState {
   readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
-  readonly themeFelt: boolean;
+  readonly theme: string;
 }
 
 export interface ClusterState {

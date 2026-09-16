@@ -14,16 +14,16 @@ import type { MenuToggleElement } from '@patternfly/react-core';
 import { AdjustIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { ContrastMode, Theme } from 'types/Common';
+import { ContrastMode, Theme, ThemeVariant } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { applyDocumentTheme, isParentOwnedTheme, persistKialiThemePreferences } from 'utils/ThemeUtils';
+import { applyDocumentTheme, isFeltTheme, isParentOwnedTheme, persistKialiThemePreferences } from 'utils/ThemeUtils';
 
 type ReduxProps = {
   colorScheme: string;
   contrastMode: string;
-  themeFelt: boolean;
+  theme: string;
 };
 
 const THEME_VARIANT_DEFAULT = 'theme-default';
@@ -52,14 +52,14 @@ const getContrastModeDisplayText = (contrastMode: ContrastMode, t: (key: string)
 };
 
 const getAppearanceAriaLabel = (
-  theme: Theme,
+  colorScheme: Theme,
   contrastMode: ContrastMode,
-  themeFelt: boolean,
+  theme: ThemeVariant,
   t: (key: string) => string
 ): string => {
-  const parts = [getThemeDisplayText(theme, t)];
+  const parts = [getThemeDisplayText(colorScheme, t)];
 
-  if (themeFelt) {
+  if (isFeltTheme(theme)) {
     parts.push(t('Project Felt'));
   }
 
@@ -73,30 +73,32 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const colorScheme = props.colorScheme as Theme;
   const contrastMode = props.contrastMode as ContrastMode;
+  const theme = props.theme as ThemeVariant;
 
-  const applyTheme = (nextColorScheme: Theme, nextContrastMode: ContrastMode, themeFelt: boolean): void => {
+  const applyTheme = (nextColorScheme: Theme, nextContrastMode: ContrastMode, nextTheme: ThemeVariant): void => {
     if (isParentOwnedTheme()) {
       return;
     }
 
-    applyDocumentTheme(nextColorScheme, nextContrastMode, themeFelt);
+    applyDocumentTheme(nextColorScheme, nextContrastMode, nextTheme);
     store.dispatch(GlobalActions.setColorScheme(nextColorScheme));
     store.dispatch(GlobalActions.setContrastMode(nextContrastMode));
-    store.dispatch(GlobalActions.setThemeFelt(themeFelt));
-    persistKialiThemePreferences(nextColorScheme, nextContrastMode, themeFelt);
+    store.dispatch(GlobalActions.setTheme(nextTheme));
+    persistKialiThemePreferences(nextColorScheme, nextContrastMode, nextTheme);
   };
 
   const handleThemeVariantChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    const themeFelt = (event.currentTarget as HTMLElement).id === THEME_VARIANT_FELT;
-    applyTheme(colorScheme, contrastMode, themeFelt);
+    const nextTheme =
+      (event.currentTarget as HTMLElement).id === THEME_VARIANT_FELT ? ThemeVariant.FELT : ThemeVariant.DEFAULT;
+    applyTheme(colorScheme, contrastMode, nextTheme);
   };
 
   const handleThemeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    applyTheme((event.currentTarget as HTMLElement).id as Theme, contrastMode, props.themeFelt);
+    applyTheme((event.currentTarget as HTMLElement).id as Theme, contrastMode, theme);
   };
 
   const handleContrastModeChange = (event: React.MouseEvent | React.KeyboardEvent | MouseEvent): void => {
-    applyTheme(colorScheme, (event.currentTarget as HTMLElement).id as ContrastMode, props.themeFelt);
+    applyTheme(colorScheme, (event.currentTarget as HTMLElement).id as ContrastMode, theme);
   };
 
   return (
@@ -113,7 +115,7 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
       toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
         <MenuToggle
           ref={toggleRef}
-          aria-label={getAppearanceAriaLabel(colorScheme, contrastMode, props.themeFelt, t)}
+          aria-label={getAppearanceAriaLabel(colorScheme, contrastMode, theme, t)}
           data-test="theme-switch"
           icon={
             <Icon size="lg">
@@ -152,13 +154,13 @@ export const ThemeSwitchComponent: React.FC<ReduxProps> = (props: ReduxProps) =>
             <ToggleGroup aria-labelledby="theme-selector-variant-title" data-test="theme-felt-switch">
               <ToggleGroupItem
                 buttonId={THEME_VARIANT_DEFAULT}
-                isSelected={!props.themeFelt}
+                isSelected={theme === ThemeVariant.DEFAULT}
                 onChange={handleThemeVariantChange}
                 text={t('Default')}
               />
               <ToggleGroupItem
                 buttonId={THEME_VARIANT_FELT}
-                isSelected={props.themeFelt}
+                isSelected={theme === ThemeVariant.FELT}
                 onChange={handleThemeVariantChange}
                 text={t('Project Felt')}
               />
@@ -201,7 +203,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     colorScheme: state.globalState.colorScheme,
     contrastMode: state.globalState.contrastMode,
-    themeFelt: state.globalState.themeFelt
+    theme: state.globalState.theme
   };
 };
 

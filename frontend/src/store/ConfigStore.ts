@@ -63,18 +63,28 @@ const namespacePersistFilter = whitelistInputWithInitialState(
   INITIAL_NAMESPACE_STATE
 );
 
-const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'themeFelt'];
+const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'theme'];
 
 const globalStateFilter = createTransform(
   inboundState => persistFilter(inboundState, globalStatePersistPaths, 'whitelist'),
   outboundState => {
-    const persisted = outboundState as Partial<GlobalState> & { theme?: string };
-    const colorScheme = persisted.colorScheme || persisted.theme || INITIAL_GLOBAL_STATE.colorScheme;
+    const persisted = outboundState as Partial<GlobalState> & { theme?: string; themeFelt?: boolean };
+    const legacyColorScheme = persisted.theme === 'Light' || persisted.theme === 'Dark' ? persisted.theme : undefined;
+    const colorScheme = persisted.colorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
+    const theme =
+      persisted.theme === 'default' || persisted.theme === 'felt'
+        ? persisted.theme
+        : persisted.themeFelt === true
+          ? 'felt'
+          : persisted.themeFelt === false
+            ? 'default'
+            : INITIAL_GLOBAL_STATE.theme;
 
     return {
       ...INITIAL_GLOBAL_STATE,
       ...persisted,
-      colorScheme
+      colorScheme,
+      theme
     };
   },
   { whitelist: ['globalState'] }

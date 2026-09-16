@@ -12,13 +12,16 @@ import {
   PF_THEME_FELT,
   PF_THEME_GLASS,
   PF_THEME_HIGH_CONTRAST,
-  Theme
+  Theme,
+  ThemeVariant
 } from 'types/Common';
 
 export type DocumentThemeClasses = {
   contrastMode: ContrastMode;
-  themeFelt: boolean;
+  theme: ThemeVariant;
 };
+
+const LEGACY_COLOR_SCHEME_SYSTEM = 'System';
 
 const isValidColorScheme = (colorScheme: string | null | undefined): colorScheme is Theme => {
   return colorScheme === Theme.LIGHT || colorScheme === Theme.DARK;
@@ -32,11 +35,44 @@ const isValidContrastMode = (contrastMode: string | null | undefined): contrastM
   );
 };
 
+const isValidThemeVariant = (theme: string | null | undefined): theme is ThemeVariant => {
+  return theme === ThemeVariant.DEFAULT || theme === ThemeVariant.FELT;
+};
+
+const migrateLegacyAppearanceStorage = (): void => {
+  const legacyTheme = localStorage.getItem(KIALI_THEME);
+
+  if (legacyTheme === Theme.LIGHT || legacyTheme === Theme.DARK) {
+    if (!localStorage.getItem(KIALI_COLOR_SCHEME)) {
+      localStorage.setItem(KIALI_COLOR_SCHEME, legacyTheme);
+    }
+    localStorage.removeItem(KIALI_THEME);
+  } else if (legacyTheme === LEGACY_COLOR_SCHEME_SYSTEM) {
+    localStorage.removeItem(KIALI_THEME);
+  }
+
+  const legacyFelt = localStorage.getItem(KIALI_THEME_FELT);
+
+  if (legacyFelt !== null && !isValidThemeVariant(localStorage.getItem(KIALI_THEME))) {
+    localStorage.setItem(KIALI_THEME, legacyFelt === 'true' ? ThemeVariant.FELT : ThemeVariant.DEFAULT);
+    localStorage.removeItem(KIALI_THEME_FELT);
+  }
+};
+
+migrateLegacyAppearanceStorage();
+
 const getStoredColorScheme = (): Theme | undefined => {
-  const stored =
-    (localStorage.getItem(KIALI_COLOR_SCHEME) as Theme) || (localStorage.getItem(KIALI_THEME) as Theme) || undefined;
+  migrateLegacyAppearanceStorage();
+  const stored = localStorage.getItem(KIALI_COLOR_SCHEME) as Theme | null;
 
   return isValidColorScheme(stored) ? stored : undefined;
+};
+
+const getStoredTheme = (): ThemeVariant | undefined => {
+  migrateLegacyAppearanceStorage();
+  const stored = localStorage.getItem(KIALI_THEME);
+
+  return isValidThemeVariant(stored) ? stored : undefined;
 };
 
 export const getKialiColorScheme = (): Theme => {
@@ -62,14 +98,18 @@ export const getKialiContrastMode = (): ContrastMode => {
   return getDefaultContrastMode();
 };
 
-export const getKialiThemeFelt = (): boolean => {
-  const stored = localStorage.getItem(KIALI_THEME_FELT);
+export const getKialiTheme = (): ThemeVariant => {
+  const stored = getStoredTheme() || (store.getState().globalState.theme as ThemeVariant) || undefined;
 
-  if (stored !== null) {
-    return stored === 'true';
+  if (isValidThemeVariant(stored)) {
+    return stored;
   }
 
-  return store.getState().globalState.themeFelt;
+  return ThemeVariant.DEFAULT;
+};
+
+export const isFeltTheme = (theme: ThemeVariant): boolean => {
+  return theme === ThemeVariant.FELT;
 };
 
 export const useKialiColorScheme = (): string => {
@@ -80,8 +120,8 @@ export const useKialiContrastMode = (): string => {
   return useKialiSelector(state => state.globalState.contrastMode) || getDefaultContrastMode();
 };
 
-export const useKialiThemeFelt = (): boolean => {
-  return useKialiSelector(state => state.globalState.themeFelt);
+export const useKialiTheme = (): string => {
+  return useKialiSelector(state => state.globalState.theme) || ThemeVariant.DEFAULT;
 };
 
 /** Read color scheme from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
@@ -89,9 +129,9 @@ export const readDocumentTheme = (): Theme => {
   return document.documentElement.classList.contains(PF_THEME_DARK) ? Theme.DARK : Theme.LIGHT;
 };
 
-/** Read felt variant from PatternFly classes on <html>. */
-export const readDocumentThemeFelt = (): boolean => {
-  return document.documentElement.classList.contains(PF_THEME_FELT);
+/** Read theme variant from PatternFly classes on <html>. */
+export const readDocumentThemeVariant = (): ThemeVariant => {
+  return document.documentElement.classList.contains(PF_THEME_FELT) ? ThemeVariant.FELT : ThemeVariant.DEFAULT;
 };
 
 /** Read contrast mode from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
@@ -110,7 +150,7 @@ export const readDocumentContrastMode = (): ContrastMode => {
 export const readDocumentThemeClasses = (): DocumentThemeClasses => {
   return {
     contrastMode: readDocumentContrastMode(),
-    themeFelt: readDocumentThemeFelt()
+    theme: readDocumentThemeVariant()
   };
 };
 
@@ -124,12 +164,12 @@ const PARENT_KIOSK_SESSION_KEY = 'KIALI_PARENT_KIOSK';
 export const persistKialiThemePreferences = (
   colorScheme: Theme,
   contrastMode: ContrastMode,
-  themeFelt: boolean
+  theme: ThemeVariant
 ): void => {
   localStorage.setItem(KIALI_COLOR_SCHEME, colorScheme);
-  localStorage.removeItem(KIALI_THEME);
   localStorage.setItem(KIALI_CONTRAST_MODE, contrastMode);
-  localStorage.setItem(KIALI_THEME_FELT, String(themeFelt));
+  localStorage.setItem(KIALI_THEME, theme);
+  localStorage.removeItem(KIALI_THEME_FELT);
 };
 
 /**
@@ -157,40 +197,40 @@ export const isParentOwnedTheme = (): boolean => {
 /** Update Redux from current <html> theme classes without modifying the document. */
 export const syncReduxThemeFromDocument = (): DocumentThemeClasses & { colorScheme: Theme } => {
   const colorScheme = readDocumentTheme();
-  const { contrastMode, themeFelt } = readDocumentThemeClasses();
+  const { contrastMode, theme } = readDocumentThemeClasses();
   store.dispatch(GlobalActions.setColorScheme(colorScheme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
-  store.dispatch(GlobalActions.setThemeFelt(themeFelt));
-  persistKialiThemePreferences(colorScheme, contrastMode, themeFelt);
+  store.dispatch(GlobalActions.setTheme(theme));
+  persistKialiThemePreferences(colorScheme, contrastMode, theme);
 
-  return { colorScheme, contrastMode, themeFelt };
+  return { colorScheme, contrastMode, theme };
 };
 
 /**
- * Applies PatternFly contrast mode and felt classes on <html>.
+ * Applies PatternFly contrast mode and theme variant classes on <html>.
  * High contrast disables glass (never both active). Felt stacks with any contrast mode.
  * Do not call this when isParentOwnedTheme() is true.
  */
-export const applyDocumentContrastMode = (contrastMode: ContrastMode, themeFelt: boolean): void => {
+export const applyDocumentContrastMode = (contrastMode: ContrastMode, theme: ThemeVariant): void => {
   const glass = contrastMode === ContrastMode.GLASS;
   const highContrast = contrastMode === ContrastMode.HIGH_CONTRAST;
 
-  document.documentElement.classList.toggle(PF_THEME_FELT, themeFelt);
+  document.documentElement.classList.toggle(PF_THEME_FELT, isFeltTheme(theme));
   document.documentElement.classList.toggle(PF_THEME_GLASS, glass);
   document.documentElement.classList.toggle(PF_THEME_HIGH_CONTRAST, highContrast);
 };
 
 /**
- * Applies PatternFly light/dark and optional contrast/felt classes on <html>.
+ * Applies PatternFly light/dark and optional contrast/theme classes on <html>.
  * Do not call this when isParentOwnedTheme() is true (OSSMC / OpenShift Console owns classes).
  */
-export const applyDocumentTheme = (colorScheme: Theme, contrastMode?: ContrastMode, themeFelt?: boolean): void => {
+export const applyDocumentTheme = (colorScheme: Theme, contrastMode?: ContrastMode, theme?: ThemeVariant): void => {
   document.documentElement.classList.toggle(PF_THEME_DARK, colorScheme === Theme.DARK);
 
   if (contrastMode !== undefined) {
-    applyDocumentContrastMode(contrastMode, themeFelt ?? false);
-  } else if (themeFelt !== undefined) {
-    document.documentElement.classList.toggle(PF_THEME_FELT, themeFelt);
+    applyDocumentContrastMode(contrastMode, theme ?? ThemeVariant.DEFAULT);
+  } else if (theme !== undefined) {
+    document.documentElement.classList.toggle(PF_THEME_FELT, isFeltTheme(theme));
   }
 };
 
@@ -204,15 +244,15 @@ export const observeDocumentTheme = (onChange: () => void): (() => void) => {
   let lastTheme = readDocumentTheme();
 
   const notifyIfChanged = (): void => {
-    const theme = readDocumentTheme();
+    const colorScheme = readDocumentTheme();
     const classes = readDocumentThemeClasses();
 
     if (
-      theme !== lastTheme ||
+      colorScheme !== lastTheme ||
       classes.contrastMode !== lastClasses.contrastMode ||
-      classes.themeFelt !== lastClasses.themeFelt
+      classes.theme !== lastClasses.theme
     ) {
-      lastTheme = theme;
+      lastTheme = colorScheme;
       lastClasses = classes;
       onChange();
     }

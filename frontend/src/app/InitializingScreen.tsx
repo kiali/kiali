@@ -8,7 +8,7 @@ import {
   applyDocumentTheme,
   getKialiContrastMode,
   getKialiColorScheme,
-  getKialiThemeFelt,
+  getKialiTheme,
   isParentOwnedTheme,
   readDocumentTheme
 } from 'utils/ThemeUtils';
@@ -79,7 +79,7 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     }
 
     const resolvedColorScheme = getKialiColorScheme();
-    applyDocumentTheme(resolvedColorScheme, getKialiContrastMode(), getKialiThemeFelt());
+    applyDocumentTheme(resolvedColorScheme, getKialiContrastMode(), getKialiTheme());
     setColorScheme(resolvedColorScheme);
   }, []);
 

@@ -1,6 +1,6 @@
 import { GlobalStateReducer, INITIAL_GLOBAL_STATE } from '../GlobalState';
 import { GlobalActions } from '../../actions/GlobalActions';
-import { ContrastMode, Language, Theme } from 'types/Common';
+import { ContrastMode, Language, Theme, ThemeVariant } from 'types/Common';
 
 describe('GlobalStateReducer reducer', () => {
   const RealDate = Date.now;
@@ -155,17 +155,17 @@ describe('GlobalStateReducer reducer', () => {
     });
   });
 
-  it('should set theme felt', () => {
+  it('should set theme variant', () => {
     expect(
       GlobalStateReducer(
         { ...INITIAL_GLOBAL_STATE, contrastMode: ContrastMode.TRADITIONAL, colorScheme: Theme.LIGHT },
-        GlobalActions.setThemeFelt(true)
+        GlobalActions.setTheme(ThemeVariant.FELT)
       )
     ).toEqual({
       ...INITIAL_GLOBAL_STATE,
       contrastMode: ContrastMode.TRADITIONAL,
       colorScheme: Theme.LIGHT,
-      themeFelt: true
+      theme: ThemeVariant.FELT
     });
   });
 });
