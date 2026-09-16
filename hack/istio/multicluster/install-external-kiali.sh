@@ -46,7 +46,7 @@ create_crossnetwork_gateway() {
   local network="${2}"
 
   # create the gateway
-  local image_hub_arg="--set hub=gcr.io/istio-release"
+  local image_hub_arg="--set hub=docker.io/istio"
   if [ -n "${ISTIO_HUB}" ] && [ "${ISTIO_HUB}" != "default" ]; then
     image_hub_arg="--set hub=${ISTIO_HUB}"
   fi
