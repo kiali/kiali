@@ -43,6 +43,9 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		p.client = client
 	}
 	ptr, sessionID := providers.GetStoreConversation(kialiInterface.Request, &req, aiStore, p.InitializeConversation)
+	// Index before the user message added for this request; used to roll back the
+	// turn when Gemini stops with MAX_TOKENS so the next query does not continue it.
+	turnBaseLen := len(ptr.Conversation) - 1
 	providers.SendStreamEvent(onChunk, providers.LLM_START_EVENT, types.StreamStartData{ConversationID: req.ConversationID})
 	providers.Log(p, providers.LogLevelDebug, "Conversation", "Google provider conversation ID: %s with model: %s and session ID: %s", req.ConversationID, p.model, sessionID)
 	usage := types.TokenUsage{}
@@ -100,6 +103,16 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	var nextParts []genai.Part
 	nextParts = append(nextParts, genai.Part{Text: req.Query})
 	var lastFunctionCalls []*genai.FunctionCall // raw Gemini calls, needed for FunctionCall echo in prepareNextTurn
+	responseTruncated := false
+	checkStreamTruncated := func(lastChunk *genai.GenerateContentResponse, streamedText string) {
+		if !googleStreamTruncated(lastChunk) {
+			return
+		}
+		if strings.TrimSpace(streamedText) == "" {
+			providers.Log(p, providers.LogLevelWarn, "Content", "Google response hit MAX_TOKENS with no streamed text")
+		}
+		responseTruncated = true
+	}
 
 	// streamTurn executes one Gemini streaming turn using the current nextParts.
 	// ParseMarkdownResponse is NOT applied — the shared RunChatLoop does it.
@@ -109,6 +122,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		tokenID := 0
 		turnUsage := types.TokenUsage{}
 		sawTurnUsage := false
+		var lastChunk *genai.GenerateContentResponse
 
 		for chunk, err := range chat.SendMessageStream(ctx, nextParts...) {
 			if err != nil {
@@ -118,6 +132,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				}
 				return text, nil, err
 			}
+			lastChunk = chunk
 			functionCalls = append(functionCalls, chunk.FunctionCalls()...)
 			if chunk.UsageMetadata != nil {
 				turnUsage = usageFromGenerateContentResponse(chunk)
@@ -130,6 +145,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				tokenID++
 			}
 		}
+		checkStreamTruncated(lastChunk, text)
 		if sawTurnUsage {
 			usage.Add(turnUsage)
 		}
@@ -201,12 +217,14 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		tokenID := 0
 		extraUsage := types.TokenUsage{}
 		sawExtraUsage := false
+		var lastChunk *genai.GenerateContentResponse
 		for chunk, err := range chat.SendMessageStream(ctx, parts...) {
 			if err != nil {
 				providers.Log(p, providers.LogLevelError, "Error", "Error sending final message for excluded tools: %v", err)
 				providers.StreamError(onChunk, err.Error())
 				return false, extraText
 			}
+			lastChunk = chunk
 			if chunk.UsageMetadata != nil {
 				extraUsage = usageFromGenerateContentResponse(chunk)
 				sawExtraUsage = extraUsage.HasTokens()
@@ -218,6 +236,7 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 				tokenID++
 			}
 		}
+		checkStreamTruncated(lastChunk, extraText)
 		if sawExtraUsage {
 			usage.Add(extraUsage)
 		}
@@ -229,7 +248,11 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 		return types.TokenUsage{}
 	}
 
-	if responseContent != "" {
+	if responseTruncated {
+		ptr.Mu.Lock()
+		ptr.Conversation = ptr.Conversation[:turnBaseLen]
+		ptr.Mu.Unlock()
+	} else if responseContent != "" {
 		ptr.Mu.Lock()
 		ptr.Conversation = append(ptr.Conversation, types.ConversationMessage{
 			Content: responseContent, Name: "", Param: nil, Role: "assistant",
@@ -242,9 +265,16 @@ func (p *GoogleAIProvider) SendChat(onChunk func(chunk string), r *http.Request,
 	providers.SendStreamEvent(onChunk, providers.LLM_END_EVENT, types.StreamEndData{
 		Actions:             actions,
 		ReferencedDocuments: referencedDocs,
-		Truncated:           false,
+		Truncated:           responseTruncated,
 	})
 	return usage
+}
+
+func googleStreamTruncated(chunk *genai.GenerateContentResponse) bool {
+	if chunk == nil || len(chunk.Candidates) == 0 {
+		return false
+	}
+	return chunk.Candidates[0].FinishReason == genai.FinishReasonMaxTokens
 }
 
 func (p *GoogleAIProvider) TransformToolCallToToolsProcessor(toolCall any) ([]types.StreamToolCallData, []string, error) {

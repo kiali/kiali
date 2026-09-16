@@ -291,6 +291,56 @@ func TestSendChat_ContinuesPausedTurnUntilFinalAnswer(t *testing.T) {
 	assert.Equal(t, "All set now.", stored.Conversation[2].Content)
 }
 
+func TestSendChat_MaxTokens_SetsTruncatedEndEvent(t *testing.T) {
+	server, _ := newAnthropicSequenceServer(t, []string{
+		anthropicTextResponse(t, "msg_trunc", anthropic.StopReasonMaxTokens, "Partial answer"),
+	})
+	defer server.Close()
+
+	provider := newAnthropicTestProvider(server.URL)
+	store := &anthropicTestStore{enabled: true}
+	kialiInterface := newAnthropicTestKialiInterface("session-1")
+
+	var chunks []string
+	provider.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		kialiInterface.Request,
+		types.AIRequest{ConversationID: "conv-trunc", Query: "hello"},
+		kialiInterface, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
+	assert.Contains(t, allChunks, "Partial answer")
+
+	stored := store.conversations["session-1:conv-trunc"]
+	require.NotNil(t, stored)
+	require.Len(t, stored.Conversation, 1)
+	assert.Equal(t, "system", stored.Conversation[0].Role)
+}
+
+func TestSendChat_MaxTokensWithoutText_SetsTruncatedEndEvent(t *testing.T) {
+	server, _ := newAnthropicSequenceServer(t, []string{
+		anthropicTextResponse(t, "msg_trunc_empty", anthropic.StopReasonMaxTokens, ""),
+	})
+	defer server.Close()
+
+	provider := newAnthropicTestProvider(server.URL)
+	store := &anthropicTestStore{enabled: true}
+	kialiInterface := newAnthropicTestKialiInterface("session-1")
+
+	var chunks []string
+	provider.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		kialiInterface.Request,
+		types.AIRequest{ConversationID: "conv-trunc-empty", Query: "hello"},
+		kialiInterface, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
+}
+
 // ========================================================================
 // GetName, InitializeConversation, ConversationToProvider, ProviderToConversation
 // ========================================================================
