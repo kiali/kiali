@@ -343,6 +343,13 @@ func initPromCache(ctx context.Context) {
 	}
 }
 
+func wrapPrometheusAPIIfConfigured(conf config.Config, base prom_v1.API) prom_v1.API {
+	if conf.Deployment.Logger.LogPrometheusQueries {
+		return NewPromQueryTraceAPI(base)
+	}
+	return base
+}
+
 // NewClient creates a new client to the Prometheus API. It delegates to
 // NewClientFromPrometheusConfig with the main Prometheus configuration so
 // existing callers don't need to specify a PrometheusConfig explicitly.
@@ -406,7 +413,7 @@ func NewClientFromPrometheusConfig(conf config.Config, promCfg config.Prometheus
 		return nil, errors.NewServiceUnavailable(err.Error())
 	}
 
-	api := prom_v1.NewAPI(p8s)
+	api := wrapPrometheusAPIIfConfigured(conf, prom_v1.NewAPI(p8s))
 
 	client := Client{
 		conf: &conf,
