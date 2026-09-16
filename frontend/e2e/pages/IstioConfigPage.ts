@@ -328,6 +328,16 @@ export class IstioConfigPage extends BasePage {
     expect(response.ok()).toBeTruthy();
   }
 
+  async waitForIstioObjectInList(namespace: string, resourceKey: string, name: string): Promise<void> {
+    await expect(async () => {
+      const response = await this.page.request.get(`/api/namespaces/${namespace}/istio?validate=true&_=${Date.now()}`);
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      const resources = body.resources?.[resourceKey] as Array<{ name?: string }> | undefined;
+      expect(resources?.some(resource => resource.name === name)).toBe(true);
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }
+
   async ensureConfigurationValidationEnabled(): Promise<void> {
     const toggle = this.getBySel('toggle-configuration');
     if (!(await toggle.isChecked())) {
