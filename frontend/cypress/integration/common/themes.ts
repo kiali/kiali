@@ -30,7 +30,6 @@ Given('the theme is explicitly set to light', () => {
     win.localStorage.removeItem('KIALI_COLOR_SCHEME');
     win.localStorage.removeItem('KIALI_CONTRAST_MODE');
     win.localStorage.removeItem('KIALI_THEME');
-    win.localStorage.removeItem('KIALI_THEME_FELT');
   });
   cy.get('html').then($html => {
     if (

@@ -7,7 +7,6 @@ import {
   KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
-  KIALI_THEME_FELT,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
@@ -49,13 +48,6 @@ const migrateLegacyAppearanceStorage = (): void => {
     localStorage.removeItem(KIALI_THEME);
   } else if (legacyTheme === LEGACY_COLOR_SCHEME_SYSTEM) {
     localStorage.removeItem(KIALI_THEME);
-  }
-
-  const legacyFelt = localStorage.getItem(KIALI_THEME_FELT);
-
-  if (legacyFelt !== null && !isValidThemeVariant(localStorage.getItem(KIALI_THEME))) {
-    localStorage.setItem(KIALI_THEME, legacyFelt === 'true' ? ThemeVariant.FELT : ThemeVariant.DEFAULT);
-    localStorage.removeItem(KIALI_THEME_FELT);
   }
 };
 
@@ -169,7 +161,6 @@ export const persistKialiThemePreferences = (
   localStorage.setItem(KIALI_COLOR_SCHEME, colorScheme);
   localStorage.setItem(KIALI_CONTRAST_MODE, contrastMode);
   localStorage.setItem(KIALI_THEME, theme);
-  localStorage.removeItem(KIALI_THEME_FELT);
 };
 
 /**

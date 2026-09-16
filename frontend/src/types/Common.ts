@@ -32,8 +32,6 @@ export const PF_THEME_HIGH_CONTRAST = 'pf-v6-theme-high-contrast';
 export const KIALI_COLOR_SCHEME = 'KIALI_COLOR_SCHEME';
 export const KIALI_CONTRAST_MODE = 'KIALI_CONTRAST_MODE';
 export const KIALI_THEME = 'KIALI_THEME';
-/** Legacy localStorage key for felt on/off (migrated to {@link KIALI_THEME}). */
-export const KIALI_THEME_FELT = 'KIALI_THEME_FELT';
 
 export const enum ContrastMode {
   GLASS = 'Glass',

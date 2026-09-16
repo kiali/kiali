@@ -68,17 +68,11 @@ const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'the
 const globalStateFilter = createTransform(
   inboundState => persistFilter(inboundState, globalStatePersistPaths, 'whitelist'),
   outboundState => {
-    const persisted = outboundState as Partial<GlobalState> & { theme?: string; themeFelt?: boolean };
+    const persisted = outboundState as Partial<GlobalState> & { theme?: string };
     const legacyColorScheme = persisted.theme === 'Light' || persisted.theme === 'Dark' ? persisted.theme : undefined;
     const colorScheme = persisted.colorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
     const theme =
-      persisted.theme === 'default' || persisted.theme === 'felt'
-        ? persisted.theme
-        : persisted.themeFelt === true
-          ? 'felt'
-          : persisted.themeFelt === false
-            ? 'default'
-            : INITIAL_GLOBAL_STATE.theme;
+      persisted.theme === 'default' || persisted.theme === 'felt' ? persisted.theme : INITIAL_GLOBAL_STATE.theme;
 
     return {
       ...INITIAL_GLOBAL_STATE,

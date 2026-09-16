@@ -3,7 +3,6 @@ import {
   KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
-  KIALI_THEME_FELT,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
@@ -183,13 +182,6 @@ describe('getKialiTheme', () => {
     expect(getKialiTheme()).toBe(ThemeVariant.DEFAULT);
   });
 
-  it('migrates legacy KIALI_THEME_FELT true to felt', () => {
-    localStorage.setItem(KIALI_THEME_FELT, 'true');
-    expect(getKialiTheme()).toBe(ThemeVariant.FELT);
-    expect(localStorage.getItem(KIALI_THEME)).toBe(ThemeVariant.FELT);
-    expect(localStorage.getItem(KIALI_THEME_FELT)).toBeNull();
-  });
-
   it('falls back to redux when localStorage is absent', () => {
     store.dispatch(GlobalActions.setTheme(ThemeVariant.FELT));
     expect(getKialiTheme()).toBe(ThemeVariant.FELT);
@@ -278,7 +270,6 @@ describe('syncReduxThemeFromDocument', () => {
     expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(Theme.DARK);
     expect(localStorage.getItem(KIALI_THEME)).toBe(ThemeVariant.FELT);
     expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.GLASS);
-    expect(localStorage.getItem(KIALI_THEME_FELT)).toBeNull();
   });
 });
 
