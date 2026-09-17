@@ -22,6 +22,10 @@ Living guide for the Cypress → Playwright migration ([#9712](https://github.co
 
 These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) plan and review feedback on PRs #10174, #10195, #10217, #10220. Do not re-introduce Cypress patterns when porting.
 
+### Comments — no Cypress references in Playwright code
+
+Do **not** add comments in `frontend/e2e/` that mention Cypress (e.g. “matches Cypress”, “Cypress only asserts”). When porting, mirror Cypress behavior in the test, but keep comments and assertions self-contained. Migration notes belong here or in `AGENTS.md`, not inline in specs or page objects.
+
 ### Playwright mechanics — trust auto-wait
 
 - **No `page.waitForTimeout()`** — Playwright auto-waits on every action (`actionTimeout: 40_000` in config).

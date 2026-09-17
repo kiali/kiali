@@ -469,6 +469,7 @@ make cypress-selected   # Runs @selected tagged tests (tag a scenario with @sele
 6. **Health table tooltips** — hover `td[data-label="Health"] .pf-v6-c-icon__content`; assert `getByRole('tooltip').toContainText(status)` (failure/degraded tooltips have multiple `<strong>` nodes).
 7. **Filters** — `getByRole('option', { name, exact: true })`; open dropdown once to assert all options; do not loop open/close per option.
 8. **CI** — do not run `playwright test --last-failed` before blob merge (Jenkins JUnit under-reports). Copy patterns from existing `frontend/e2e/` specs and page objects before inventing new helpers.
+9. **No Cypress in Playwright comments** — do not add comments in `frontend/e2e/` that mention Cypress (e.g. “matches Cypress”, “Cypress only asserts”). Port behavior from Cypress when needed, but comments and test code should stand on their own; migration context belongs in `AGENTS.md` / `e2e/README.md`, not inline.
 
 **Commands:**
 
