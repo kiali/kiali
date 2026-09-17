@@ -19,7 +19,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RULES_DIR="${SCRIPT_DIR}/istio/metric-rules"
+RULES_DIR="${SCRIPT_DIR}/prometheus/federation"
 
 COMMAND=""
 HUB_CONTEXT=""
