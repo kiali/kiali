@@ -23,3 +23,12 @@ export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disable
 
 /** @crd-validation — frontend-core-optional Playwright / Cypress suite */
 export const crdValidationOnly = { tag: '@crd-validation' as const };
+
+/** @ambient — frontend-ambient Playwright / Cypress suite */
+export const ambientOnly = { tag: '@ambient' as const };
+
+/** @waypoint — frontend-ambient Playwright / Cypress suite */
+export const waypointOnly = { tag: '@waypoint' as const };
+
+/** @waypoint-tracing — frontend-ambient Playwright / Cypress suite */
+export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };

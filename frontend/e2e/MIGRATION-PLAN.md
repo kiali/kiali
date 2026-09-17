@@ -87,7 +87,7 @@
 - [x] `@core-caching` suite ported (playwright-core-caching CI; health/graph cache enabled locally)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes
-- [ ] `@ambient` suite passes
+- [x] `@ambient` suite ported (`playwright-ambient` CI; `@waypoint` / `@waypoint-tracing` follow-up)
 - [ ] `@waypoint` suite passes
 - [ ] `@waypoint-tracing` suite passes
 - [ ] `@ambient-multi-primary` suite passes
@@ -105,8 +105,8 @@
 - [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
-  `playwright-core-2`, `playwright-core-caching`, and `playwright-core-optional` suites
-  (PR #10174, #10195, #10220, #10269, #10292)
+  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient`
+  suites (PR #10174, #10195, #10220, #10269, #10292)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
   (PR #10174, #10220; core-caching workflow on epic branch)
