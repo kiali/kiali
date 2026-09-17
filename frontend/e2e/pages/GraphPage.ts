@@ -126,7 +126,8 @@ export class GraphPage extends BasePage {
 
   async expectSummaryPanelTrafficRate(protocol: 'HTTP' | 'TCP'): Promise<void> {
     const panel = this.page.locator('#summary-panel-graph');
-    await expect(panel.getByText(new RegExp(`${protocol} Traffic`))).toBeVisible();
+    const labelPattern = protocol === 'HTTP' ? /HTTP \(requests per second\)/ : /TCP Traffic \(bytes per second\)/;
+    await expect(panel.getByText(labelPattern)).toBeVisible();
     await expect(panel.getByRole('gridcell').filter({ hasText: /^\d/ }).first()).toBeVisible();
   }
 
