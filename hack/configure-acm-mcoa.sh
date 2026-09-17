@@ -9,8 +9,8 @@
 #      namespace's traffic into workload:istio_*.
 #   3. MCOA's user-workload collector federates selected UWM series via /federate,
 #      relabels workload:istio_* back to istio_*, and remote-writes to hub Thanos.
-#   4. Per-target-namespace platform federation jobs collect container CPU/memory
-#      for Kiali's control-plane overview from platform monitoring.
+#   4. A cluster-wide platform federation job collects container CPU/memory for
+#      Kiali's control-plane and workload overviews from platform monitoring.
 #
 # This script only creates hub-side source objects and placement references. MCOA
 # propagates them to selected managed clusters. Install and uninstall are safe to
@@ -40,11 +40,10 @@ Usage:
 
 Options:
   --hub-context CONTEXT          Kubeconfig context for the ACM hub.
-  --target-namespaces NS[,NS...] Namespaces for platform container CPU/memory
-                                 federation jobs and namespace-scoped edge
-                                 recording rules. Must include --rule-namespace.
-  --rule-namespace NS            Compatibility/default namespace that must be
-                                 included in the target set (default: first).
+  --target-namespaces NS[,NS...] Namespaces for namespace-scoped edge recording
+                                 rules. Must include --rule-namespace.
+  --rule-namespace NS            Namespace for the control-plane recording rule
+                                 that must be included in the target set (default: first).
   --observability-namespace NS   ACM observability namespace.
   --placement-name NAME          Existing MCOA placement to update. Optional only
                                  when the add-on has exactly one placement.
@@ -269,14 +268,8 @@ EOF
   add_resource_ref monitoring.rhobs scrapeconfigs kiali-istio-federation
 }
 
-platform_scrape_name_for_namespace() {
-  printf 'kiali-istio-platform-federation-%s' "$1" | tr -c 'a-z0-9-' '-'
-}
-
 install_platform_scrape_config() {
-  local namespace=$1 name
-  [[ "${namespace}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid Kubernetes namespace: ${namespace}"
-  name=$(platform_scrape_name_for_namespace "${namespace}")
+  local name=kiali-istio-platform-federation
   cat <<EOF | oc_hub apply -f -
 apiVersion: monitoring.rhobs/v1alpha1
 kind: ScrapeConfig
@@ -291,7 +284,7 @@ spec:
   metricsPath: /federate
   params:
     match[]:
-    - '{__name__=~"container_cpu_usage_seconds_total|container_memory_working_set_bytes",namespace="${namespace}"}'
+    - '{__name__=~"container_cpu_usage_seconds_total|container_memory_working_set_bytes"}'
 EOF
   add_resource_ref monitoring.rhobs scrapeconfigs "${name}"
 }
@@ -345,20 +338,16 @@ install_all() {
   fi
   [[ "${RULE_NAMESPACE}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid rule namespace: ${RULE_NAMESPACE}"
   target_namespace_list_contains "${RULE_NAMESPACE}" || \
-    die "--rule-namespace (${RULE_NAMESPACE}) must appear in --target-namespaces so the platform federation job for istiod CPU/memory is created"
+    die "--rule-namespace (${RULE_NAMESPACE}) must appear in --target-namespaces so its edge recording rule is created"
   enable_mcoa
   load_and_select_placement
   install_scrape_config
 
+  install_platform_scrape_config
+
   local namespace
   local -a namespaces
   IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    if [ -n "${namespace}" ]; then
-      install_platform_scrape_config "${namespace}"
-    fi
-  done
   # OpenShift enforces user-workload rule tenancy by injecting the rule object's
   # target namespace into every selector and recorded series. Each namespace
   # therefore needs its own rule; the enforced matchers prevent duplicates.
@@ -416,19 +405,19 @@ verify_all() {
     failed=1
   fi
 
+  name=kiali-istio-platform-federation
+  if ! oc_hub get scrapeconfig "${name}" -n "${OBSERVABILITY_NAMESPACE}" >/dev/null 2>&1; then
+    echo "[ERROR] ScrapeConfig/${name} is missing" >&2
+    failed=1
+  elif ! verify_resource_ref monitoring.rhobs scrapeconfigs "${name}"; then
+    failed=1
+  fi
+
   local -a namespaces
   IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
   for namespace in "${namespaces[@]}"; do
     namespace="${namespace// /}"
     [ -n "${namespace}" ] || continue
-    name=$(platform_scrape_name_for_namespace "${namespace}")
-    if ! oc_hub get scrapeconfig "${name}" -n "${OBSERVABILITY_NAMESPACE}" >/dev/null 2>&1; then
-      echo "[ERROR] ScrapeConfig/${name} is missing" >&2
-      failed=1
-    elif ! verify_resource_ref monitoring.rhobs scrapeconfigs "${name}"; then
-      failed=1
-    fi
-
     rule_name=$(rule_name_for_namespace "${namespace}")
     if ! oc_hub get prometheusrule "${rule_name}" -n "${OBSERVABILITY_NAMESPACE}" >/dev/null 2>&1; then
       echo "[ERROR] PrometheusRule/${rule_name} is missing" >&2
@@ -458,19 +447,18 @@ uninstall_all() {
     RULE_NAMESPACE="${TARGET_NAMESPACES%%,*}"
     RULE_NAMESPACE="${RULE_NAMESPACE// /}"
   fi
-  local namespace name platform_name rule_name
+  local namespace name rule_name
   local -a namespaces
   IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
+  name=kiali-istio-platform-federation
+  remove_resource_ref monitoring.rhobs scrapeconfigs "${name}"
+  if hub_has_crd scrapeconfigs.monitoring.rhobs && \
+    [ "$(resource_ref_count monitoring.rhobs scrapeconfigs "${name}")" -eq 0 ]; then
+    oc_hub delete scrapeconfig "${name}" -n "${OBSERVABILITY_NAMESPACE}" --ignore-not-found
+  fi
   for namespace in "${namespaces[@]}"; do
     namespace="${namespace// /}"
     [ -n "${namespace}" ] || continue
-    platform_name=$(platform_scrape_name_for_namespace "${namespace}")
-    remove_resource_ref monitoring.rhobs scrapeconfigs "${platform_name}"
-    if hub_has_crd scrapeconfigs.monitoring.rhobs && \
-      [ "$(resource_ref_count monitoring.rhobs scrapeconfigs "${platform_name}")" -eq 0 ]; then
-      oc_hub delete scrapeconfig "${platform_name}" -n "${OBSERVABILITY_NAMESPACE}" --ignore-not-found
-    fi
-
     rule_name=$(rule_name_for_namespace "${namespace}")
     remove_resource_ref monitoring.coreos.com prometheusrules "${rule_name}"
     if hub_has_crd prometheusrules.monitoring.coreos.com && \

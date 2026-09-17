@@ -86,13 +86,13 @@ Options:
   --acm-channel CHANNEL          ACM subscription channel (default: release-2.17).
   --acm-namespace NS             ACM operator namespace.
   --observability-namespace NS   ACM observability namespace.
-  --target-namespaces NS[,NS...] Namespaces for platform CPU/memory federation.
+  --target-namespaces NS[,NS...] Namespaces that receive edge PrometheusRules.
                                  List every mesh/control-plane namespace whose
-                                 CPU/memory Kiali must show. Must include
+                                 Istio traffic Kiali must show. Must include
                                  --rule-namespace. Ambient Istio installation
                                  automatically adds ztunnel.
-  --rule-namespace NS            Compatibility/default recording-rule namespace
-                                 that must be in the target set (default: istio-system).
+  --rule-namespace NS            Control-plane recording-rule namespace that must
+                                 be in the target set (default: istio-system).
   --placement-name NAME          MCOA placement to configure. Required if MCOA has
                                  more than one placement.
   --placement-namespace NS       Namespace of --placement-name.
@@ -299,8 +299,8 @@ normalize_target_namespaces() {
   done
   TARGET_NAMESPACES=${result}
 
-  # Platform CPU/memory federation is namespace-filtered. Include the namespace
-  # that the Ambient installation will create on the first MCOA pass.
+  # Edge recording rules are namespace-scoped. Include namespaces that the
+  # Ambient installation will create before the first MCOA pass.
   if [ "${INSTALL_DEMO_APPS}" = true ]; then
     append_target_namespace "${SIDECAR_APP_NAMESPACE}"
     if [ "${AMBIENT}" = true ]; then
@@ -313,7 +313,7 @@ normalize_target_namespaces() {
     if [ -n "${ztunnel_namespace}" ] && \
       ! target_namespace_list_contains "${ztunnel_namespace}"; then
       append_target_namespace "${ztunnel_namespace}"
-      info "Adding ${ztunnel_namespace} to platform metrics target namespaces for Ambient Istio"
+      info "Adding ${ztunnel_namespace} to recording-rule target namespaces for Ambient Istio"
     elif [ -z "${ztunnel_namespace}" ] && [ "${INSTALL_ISTIO}" = true ]; then
       debug "Deferring ztunnel namespace federation until Istio is installed"
     fi

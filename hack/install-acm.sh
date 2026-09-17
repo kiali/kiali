@@ -2380,7 +2380,7 @@ EOF
           "${ztunnel_namespace}" "${federation_namespaces}")
       fi
       # Reconcile hub MCOA resources after monitors exist. Safe to repeat; may
-      # extend platform federation when ambient adds the ztunnel namespace.
+      # extend edge recording rules when ambient adds the ztunnel namespace.
       run_mcoa_federation install "${federation_namespaces}"
     else
       warnmsg "MCOA federation was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
@@ -4183,13 +4183,13 @@ Valid options:
   --mcoa-hub-context <context>
       Kubeconfig context for the ACM hub. Required by the MCOA federation commands.
   --mcoa-target-namespaces <ns[,ns...]>
-      Namespaces that receive an edge PrometheusRule and whose platform pod
-      CPU and memory metrics are federated for Kiali.
+      Namespaces that receive an edge PrometheusRule. Platform pod CPU and
+      memory metrics are federated cluster-wide for Kiali.
       Default: ${DEFAULT_MCOA_TARGET_NAMESPACES}
   --mcoa-rule-namespace <namespace>
       Control-plane namespace that must also appear in
-      --mcoa-target-namespaces. This ensures platform CPU and memory
-      federation for istiod.
+      --mcoa-target-namespaces. This ensures an edge recording rule for
+      istiod.
       Default: ${DEFAULT_MCOA_RULE_NAMESPACE}
   --mcoa-with-dashboards
       Also federate the optional Istio dashboard metric tier.

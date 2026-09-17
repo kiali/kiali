@@ -69,9 +69,10 @@ Run this from the Kiali repository:
 
 If `--spoke-name` is omitted, it defaults to `--spoke-context`. The default
 target and rule namespace is `istio-system`. `--rule-namespace` must also appear
-in `--target-namespaces` so the platform federation job for istiod CPU/memory is
-created. List every namespace whose pod CPU and memory Kiali must display,
-normally `istio-system` plus every application namespace. OpenShift enforces
+in `--target-namespaces` so the edge recording rule for istiod is created. List
+every namespace whose Istio traffic Kiali must display, normally `istio-system`
+plus every application namespace. Platform CPU and memory metrics are collected
+cluster-wide. OpenShift enforces
 UWM rule tenancy by injecting the rule object's namespace into its PromQL and
 recorded series. The wrapper therefore creates one aggregation rule per target
 namespace; those injected matchers keep evaluation disjoint rather than
@@ -181,8 +182,8 @@ The script invokes `configure-acm-mcoa.sh` internally. The helper:
 2. Waits for the MCOA `ClusterManagementAddOn` placement.
 3. Creates a UWM `/federate` `ScrapeConfig` for aggregated
    `workload:istio_*` series.
-4. Creates one namespace-filtered platform `ScrapeConfig` per `--target-namespaces`
-   entry for Kiali's pod CPU and memory queries.
+4. Creates one cluster-wide platform `ScrapeConfig` for Kiali's pod CPU and
+   memory queries. It federates those metrics from all namespaces.
 5. Creates one edge `PrometheusRule` per target namespace to aggregate that
    namespace's high-cardinality Istio traffic series in spoke UWM Prometheus.
 6. Adds those objects to the selected placement.
