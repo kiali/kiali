@@ -87,7 +87,7 @@
 - [x] `@core-caching` suite ported (playwright-core-caching CI; health/graph cache enabled locally)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes
-- [x] `@ambient` suite ported (`playwright-ambient` CI; services health filter deferred to `@core-caching`; `@waypoint` / `@waypoint-tracing` follow-up)
+- [x] `@ambient` suite ported (`playwright-ambient` CI; services health filter uses API wait for Healthy; `@waypoint` / `@waypoint-tracing` follow-up)
 - [ ] `@waypoint` suite passes
 - [ ] `@waypoint-tracing` suite passes
 - [ ] `@ambient-multi-primary` suite passes

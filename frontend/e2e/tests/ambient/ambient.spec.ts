@@ -1,4 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
+import { waitForServiceHealthStatus } from '../../utils/health';
 import { selectNamespace } from '../../utils/namespace';
 import { ambientOnly } from '../../utils/suite-tags';
 
@@ -44,6 +45,17 @@ test.describe('Ambient mesh', () => {
     await graphPage.expectTrafficVisible('http');
     await graphPage.expectTrafficProtocol('tcp', false);
     await graphPage.expectSummaryPanelTrafficRate('HTTP');
+  });
+
+  test('Filter services table by health', ambientOnly, async ({ page, request, servicesPage }) => {
+    test.setTimeout(240_000);
+    // Ambient KinD needs Prometheus request-rate metrics before bookinfo health leaves N/A.
+    await waitForServiceHealthStatus(request, 'bookinfo', 'productpage', 'Healthy', 180_000);
+    await servicesPage.openList();
+    await selectNamespace(page, 'bookinfo');
+    await servicesPage.filterBy('Health', 'Healthy');
+    await servicesPage.expectServicesInTable('something');
+    await servicesPage.expectOnlyHealthyServices();
   });
 
   test('Out of mesh', ambientOnly, async ({ page, workloadsPage }) => {

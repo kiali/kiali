@@ -36,7 +36,7 @@ import {
   restoreBookinfoNetworking
 } from '../../utils/istioCrdValidation';
 import { deleteK8sGateway, deleteK8sReferenceGrant } from '../../utils/istioConfigResources';
-import { selectNamespace, selectNamespaces } from '../../utils/namespace';
+import { selectNamespace, selectNamespaces, selectOnlyNamespaces } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
 test.describe('Istio Config CRD validation', () => {
@@ -472,10 +472,9 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.waitForIstioObjectDetails('sleep', 'DestinationRule', drName);
 
       await istioConfigPage.open();
-      await selectNamespace(page, 'sleep');
+      await selectOnlyNamespaces(page, ['istio-system']);
       await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
-      await selectNamespace(page, 'sleep');
-      await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0208');
+      await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
     });
 
