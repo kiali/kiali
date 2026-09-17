@@ -400,6 +400,74 @@ func PodLogs(
 	}
 }
 
+// WorkloadEnvoyMemory is the API handler to fetch Envoy memory diagnostics for a workload.
+func WorkloadEnvoyMemory(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	cpm business.ControlPlaneMonitor,
+	prom prometheus.ClientInterface,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	discovery istio.MeshDiscovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		workloadName := vars["workload"]
+		if !validK8sNameRe.MatchString(workloadName) {
+			RespondWithError(w, http.StatusBadRequest, "Invalid workload name")
+			return
+		}
+
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
+		namespaceInfo, err := checkNamespaceAccess(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster)
+		if err != nil {
+			return
+		}
+
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespace, Workload: workloadName}
+		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Workload initialization error: "+err.Error())
+			return
+		}
+
+		workloadDetails, err := businessLayer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{
+			Cluster:               cluster,
+			Namespace:             namespace,
+			WorkloadName:          workloadName,
+			IncludeServices:       false,
+			IncludeIstioResources: false,
+			IncludeHealth:         false,
+		})
+		if err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
+
+		if !business.HasEnvoyProxyWorkload(workloadDetails) {
+			RespondWithError(w, http.StatusNotFound, "Workload does not have an Envoy proxy")
+			return
+		}
+
+		dashboardsService := business.NewDashboardsService(conf, grafana, prom, namespaceInfo, workloadDetails)
+		envoyMemoryService := business.NewEnvoyMemoryService(dashboardsService.PrometheusClient(), conf)
+		summary, err := envoyMemoryService.GetSummary(r.Context(), workloadDetails, &params.RangeQuery)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, summary)
+	}
+}
+
 func ConfigDumpZtunnel(
 	conf *config.Config,
 	kialiCache cache.KialiCache,

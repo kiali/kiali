@@ -77,6 +77,7 @@ import type {
   WorkloadQuery,
   WorkloadUpdateQuery
 } from '../types/Workload';
+import type { EnvoyMemorySummary } from '../types/EnvoyMemory';
 import type { ApiError, ApiResponse } from 'types/Api';
 import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
@@ -666,6 +667,21 @@ export const getAppDashboard = (
   }
 
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), queryParams, {});
+};
+
+export const getWorkloadEnvoyMemory = (
+  namespace: string,
+  workload: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<EnvoyMemorySummary>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<EnvoyMemorySummary>(HTTP_VERBS.GET, urls.workloadEnvoyMemory(namespace, workload), queryParams, {});
 };
 
 export const getWorkloadMetrics = (

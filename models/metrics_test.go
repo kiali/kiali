@@ -6,6 +6,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestEnsureDisplayNameMetricsAddsMissingSeries(t *testing.T) {
+	upstream := Metric{
+		Name: "Upstream",
+		Datapoints: []Datapoint{
+			{Timestamp: 1000, Value: 1.5},
+			{Timestamp: 2000, Value: 2.5},
+		},
+	}
+
+	series := EnsureDisplayNameMetrics([]Metric{upstream}, []string{"Upstream", "Downstream"})
+	assert.Len(t, series, 2)
+
+	var downstream Metric
+	for _, metric := range series {
+		if metric.Name == "Downstream" {
+			downstream = metric
+		}
+	}
+	assert.Equal(t, "Downstream", downstream.Name)
+	assert.Len(t, downstream.Datapoints, 2)
+	assert.Equal(t, float64(0), downstream.Datapoints[0].Value)
+	assert.Equal(t, int64(1000), downstream.Datapoints[0].Timestamp)
+}
+
 func TestValidateReporter(t *testing.T) {
 	cases := []struct {
 		input   string

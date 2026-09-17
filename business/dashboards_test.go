@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
@@ -93,6 +94,88 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		Namespace: namespace.Name,
 		LabelsFilters: map[string]string{
 			"APP": "my-app",
+		},
+	}
+	query.FillDefaults()
+	prom.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
+
+	assert.Nil(err)
+	assert.Equal("Dashboard 1", dashboard.Title)
+}
+
+func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
+	assert := assert.New(t)
+
+	dashboardDef := &dashboards.MonitoringDashboard{
+		Name:  "envoy-memory",
+		Title: "Envoy Memory",
+		Items: []dashboards.MonitoringDashboardItem{
+			{
+				Chart: dashboards.MonitoringDashboardChart{
+					Name:     "Request rate",
+					Spans:    6,
+					Unit:     "rps",
+					DataType: dashboards.Rate,
+					Metrics: []dashboards.MonitoringDashboardMetric{
+						{DisplayName: "Upstream", MetricName: "envoy_cluster_upstream_rq_total"},
+						{DisplayName: "Downstream", MetricName: "envoy_listener_http_downstream_rq"},
+					},
+				},
+			},
+		},
+	}
+
+	service, prom := setupService(t, config.NewConfig(), "bookinfo", []dashboards.MonitoringDashboard{*dashboardDef})
+	expectedLabels := `{namespace="bookinfo",app="productpage"}`
+	query := models.DashboardQuery{
+		Namespace: "bookinfo",
+		LabelsFilters: map[string]string{
+			"app": "productpage",
+		},
+	}
+	query.FillDefaults()
+	prom.MockMetric(context.Background(), "envoy_cluster_upstream_rq_total", expectedLabels, &query.RangeQuery, 2.5)
+	prom.On("FetchRateRange", mock.Anything, "envoy_listener_http_downstream_rq", []string{expectedLabels}, "", &query.RangeQuery).
+		Return(prometheus.Metric{})
+	prom.On("FetchRateRange", mock.Anything, "envoy_listener_http_downstream_rq_total", []string{expectedLabels}, "", &query.RangeQuery).
+		Return(prometheus.Metric{})
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "envoy-memory")
+
+	assert.NoError(err)
+	assert.Len(dashboard.Charts, 1)
+	assert.Len(dashboard.Charts[0].Metrics, 2)
+
+	names := []string{dashboard.Charts[0].Metrics[0].Name, dashboard.Charts[0].Metrics[1].Name}
+	assert.Contains(names, "Upstream")
+	assert.Contains(names, "Downstream")
+}
+
+func TestGetDashboardUsesWorkloadLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.CustomDashboards = append(conf.CustomDashboards, *fakeDashboard("1"))
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"gateway.networking.k8s.io/gateway-name": "waypoint"},
+		},
+	}
+	prom := new(pmock.PromClientMock)
+	ns := models.Namespace{Name: "bookinfo"}
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, workload)
+
+	expectedLabels := `{namespace="bookinfo",gateway_networking_k8s_io_gateway_name="waypoint"}`
+	query := models.DashboardQuery{
+		Namespace: "bookinfo",
+		LabelsFilters: map[string]string{
+			"app": "ignored-app-label",
 		},
 	}
 	query.FillDefaults()

@@ -83,6 +83,45 @@ const DEFAULT_DASHBOARDS_YAML = `
       metricName: "envoy_listener_http_downstream_rq"
       unit: "rps"
       dataType: "rate"
+
+- name: envoy-memory
+  title: Envoy Memory
+  rows: 2
+  items:
+  - chart:
+      name: "Allocated memory"
+      unit: "bytes"
+      spans: 6
+      metricName: "envoy_server_memory_allocated"
+      dataType: "raw"
+      min: 0
+      aggregator: "max"
+  - chart:
+      name: "Active clusters"
+      spans: 6
+      metricName: "envoy_cluster_manager_active_clusters"
+      dataType: "raw"
+      min: 0
+      aggregator: "max"
+  - chart:
+      name: "Request rate"
+      spans: 6
+      unit: "rps"
+      dataType: "rate"
+      metrics:
+      - metricName: "envoy_cluster_upstream_rq_total"
+        displayName: "Upstream"
+      - metricName: "envoy_listener_http_downstream_rq"
+        displayName: "Downstream"
+  - chart:
+      name: "Active connections"
+      spans: 6
+      dataType: "raw"
+      metrics:
+      - metricName: "envoy_cluster_upstream_cx_active"
+        displayName: "Upstream"
+      - metricName: "envoy_listener_downstream_cx_active"
+        displayName: "Downstream"
 - name: go
   title: Go Metrics
   runtime: Go

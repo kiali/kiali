@@ -23,7 +23,10 @@ import type { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
 import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
-import type { DurationInSeconds } from 'types/Common';
+import type { DurationInSeconds, TimeInMilliseconds, TimeRange } from 'types/Common';
+import { isPrometheusAvailable } from 'config';
+import { EnvoyMemoryStatus } from 'components/Envoy/EnvoyMemoryStatus';
+import { hasEnvoyMemoryWorkload } from 'utils/EnvoyMemoryUtils';
 import {
   isIstioNamespace,
   serverConfig,
@@ -69,8 +72,10 @@ import { addError, addSuccess } from '../../utils/AlertUtils';
 type WorkloadInfoProps = {
   duration: DurationInSeconds;
   health?: WorkloadHealth;
+  lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   refreshWorkload: () => void;
+  timeRange: TimeRange;
   workload?: Workload;
 };
 
@@ -119,6 +124,83 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
     if (prev.duration !== this.props.duration || this.props.workload !== prev.workload) {
       this.fetchBackend();
     }
+  }
+
+  render(): React.ReactNode {
+    const workload = this.props.workload;
+    const pods = workload?.pods ?? [];
+    const workloadEntries = workload?.workloadEntries ?? [];
+
+    const istioConfigItems = skipUnrelatedK8sGateways(
+      this.state.workloadIstioConfig
+        ? toIstioItems(
+            {
+              ...this.state.workloadIstioConfig,
+              validations: workload?.validations ?? this.state.workloadIstioConfig.validations ?? {}
+            },
+            workload?.cluster || ''
+          )
+        : [],
+      this.props.workload?.labels[AMBIENT_WAYPOINT_GATEWAY_LABEL]
+    );
+
+    const miniGraphSpan = 8;
+
+    return (
+      <>
+        <div className={flexFillStyle}>
+          <Grid hasGutter={true} className={detailGridStyle}>
+            <GridItem span={4} className={detailLeftColumnStyle}>
+              <Stack className={detailCardStackStyle}>
+                {workload && this.renderDetailsCard(workload)}
+                {workload && this.renderResourcesCard(workload)}
+                {workload && this.renderLabelsCard(workload)}
+                {workload && this.renderAnnotationsCard(workload)}
+
+                {workload && workload?.spireInfo?.isSpireManaged && (
+                  <StackItem>
+                    <Spire object={workload} objectType="workload" />
+                  </StackItem>
+                )}
+
+                <StackItem>
+                  {this.props.workload?.gvk.Kind === gvkType.WorkloadGroup ? (
+                    <WorkloadEntries
+                      namespace={this.props.namespace}
+                      workload={this.props.workload?.name || ''}
+                      entries={workloadEntries}
+                    />
+                  ) : (
+                    <WorkloadPods
+                      namespace={this.props.namespace}
+                      workload={this.props.workload?.name || ''}
+                      pods={pods}
+                      validations={this.state.validations?.pod || {}}
+                    />
+                  )}
+                </StackItem>
+
+                <StackItem style={{ paddingBottom: '20px' }}>
+                  <IstioConfigCard
+                    name={this.props.workload ? this.props.workload.name : ''}
+                    items={istioConfigItems}
+                  />
+                </StackItem>
+              </Stack>
+            </GridItem>
+
+            <GridItem span={miniGraphSpan}>
+              <MiniGraphCard
+                dataSource={this.graphDataSource}
+                namespace={this.props.namespace}
+                workload={this.props.workload}
+                refreshWorkload={this.props.refreshWorkload}
+              />
+            </GridItem>
+          </Grid>
+        </div>
+      </>
+    );
   }
 
   private fetchBackend = (): void => {
@@ -322,6 +404,20 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </DescriptionListDescription>
               </DescriptionListGroup>
 
+              {isPrometheusAvailable() && hasEnvoyMemoryWorkload(workload) && (
+                <DescriptionListGroup data-test="details-envoy-memory">
+                  <DescriptionListTerm>{t('Envoy memory')}</DescriptionListTerm>
+                  <DescriptionListDescription>
+                    <EnvoyMemoryStatus
+                      lastRefreshAt={this.props.lastRefreshAt}
+                      namespace={this.props.namespace}
+                      timeRange={this.props.timeRange}
+                      workload={workload}
+                    />
+                  </DescriptionListDescription>
+                </DescriptionListGroup>
+              )}
+
               <DescriptionListGroup data-test="details-type">
                 <DescriptionListTerm>{t('Type')}</DescriptionListTerm>
                 <DescriptionListDescription>{workload.gvk.Kind || 'N/A'}</DescriptionListDescription>
@@ -381,11 +477,16 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </DescriptionListGroup>
               )}
 
-              {workload.additionalDetails.map((additionalItem, idx) => (
-                <DescriptionListGroup key={`additional-${idx}`}>
+              {workload.additionalDetails.map(additionalItem => (
+                <DescriptionListGroup key={`additional-${additionalItem.title}-${additionalItem.value}`}>
                   <DescriptionListTerm>
                     {additionalItem.title}
-                    {additionalItem.icon && renderAPILogo(additionalItem.icon, undefined, idx)}
+                    {additionalItem.icon &&
+                      renderAPILogo(
+                        additionalItem.icon,
+                        undefined,
+                        additionalItem.title.split('').reduce((n, c) => n + c.charCodeAt(0), 0)
+                      )}
                   </DescriptionListTerm>
                   <DescriptionListDescription>
                     <TextOrLink text={additionalItem.value} urlTruncate={64} />
@@ -625,84 +726,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
           />
         )}
       </StackItem>
-    );
-  }
-
-  /* eslint-disable-next-line @typescript-eslint/member-ordering -- render follows existing private helper layout */
-  render(): React.ReactNode {
-    const workload = this.props.workload;
-    const pods = workload?.pods ?? [];
-    const workloadEntries = workload?.workloadEntries ?? [];
-
-    const istioConfigItems = skipUnrelatedK8sGateways(
-      this.state.workloadIstioConfig
-        ? toIstioItems(
-            {
-              ...this.state.workloadIstioConfig,
-              validations: workload?.validations ?? this.state.workloadIstioConfig.validations ?? {}
-            },
-            workload?.cluster || ''
-          )
-        : [],
-      this.props.workload?.labels[AMBIENT_WAYPOINT_GATEWAY_LABEL]
-    );
-
-    const miniGraphSpan = 8;
-
-    return (
-      <>
-        <div className={flexFillStyle}>
-          <Grid hasGutter={true} className={detailGridStyle}>
-            <GridItem span={4} className={detailLeftColumnStyle}>
-              <Stack className={detailCardStackStyle}>
-                {workload && this.renderDetailsCard(workload)}
-                {workload && this.renderResourcesCard(workload)}
-                {workload && this.renderLabelsCard(workload)}
-                {workload && this.renderAnnotationsCard(workload)}
-
-                {workload && workload?.spireInfo?.isSpireManaged && (
-                  <StackItem>
-                    <Spire object={workload} objectType="workload" />
-                  </StackItem>
-                )}
-
-                <StackItem>
-                  {this.props.workload?.gvk.Kind === gvkType.WorkloadGroup ? (
-                    <WorkloadEntries
-                      namespace={this.props.namespace}
-                      workload={this.props.workload?.name || ''}
-                      entries={workloadEntries}
-                    />
-                  ) : (
-                    <WorkloadPods
-                      namespace={this.props.namespace}
-                      workload={this.props.workload?.name || ''}
-                      pods={pods}
-                      validations={this.state.validations?.pod || {}}
-                    />
-                  )}
-                </StackItem>
-
-                <StackItem style={{ paddingBottom: '20px' }}>
-                  <IstioConfigCard
-                    name={this.props.workload ? this.props.workload.name : ''}
-                    items={istioConfigItems}
-                  />
-                </StackItem>
-              </Stack>
-            </GridItem>
-
-            <GridItem span={miniGraphSpan}>
-              <MiniGraphCard
-                dataSource={this.graphDataSource}
-                namespace={this.props.namespace}
-                workload={this.props.workload}
-                refreshWorkload={this.props.refreshWorkload}
-              />
-            </GridItem>
-          </Grid>
-        </div>
-      </>
     );
   }
 }

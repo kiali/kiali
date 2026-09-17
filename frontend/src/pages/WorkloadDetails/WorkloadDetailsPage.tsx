@@ -29,6 +29,7 @@ import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
+import { hasEnvoyMemoryWorkload } from 'utils/EnvoyMemoryUtils';
 import { WorkloadHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
@@ -253,11 +254,13 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     const overTab = (
       <Tab title={t('Overview')} eventKey={0} key="Overview">
         <WorkloadInfo
-          workload={this.state.workload}
           duration={this.props.duration}
           health={this.state.health}
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           refreshWorkload={this.fetchWorkload}
+          timeRange={this.props.rangeDuration}
+          workload={this.state.workload}
         />
       </Tab>
     );
@@ -349,13 +352,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       }
     }
 
-    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || this.state.workload.isWaypoint)) {
+    if (this.state.workload && hasEnvoyMemoryWorkload(this.state.workload)) {
       const envoyTab = (
         <Tab title={t('Envoy')} eventKey={10} key="Envoy">
           {this.state.workload && (
             <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
+              rangeDuration={this.props.rangeDuration}
               workload={this.state.workload}
             />
           )}
@@ -396,27 +400,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     nextTabIndex = tabsArray.length + 1;
 
     return tabsArray;
-  }
-
-  private hasIstioSidecars(workload: Workload): boolean {
-    let hasIstioSidecars = false;
-
-    if (workload.pods.length > 0) {
-      workload.pods.forEach(pod => {
-        if (pod.istioContainers && pod.istioContainers.length > 0) {
-          hasIstioSidecars = true;
-        } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === istioProxyName)) {
-          hasIstioSidecars = true;
-        } else {
-          // Ztunnel doesn't have Envoy
-          hasIstioSidecars =
-            hasIstioSidecars ||
-            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && !workload.isZtunnel));
-        }
-      });
-    }
-
-    return hasIstioSidecars;
   }
 
   private runtimeTabs(): React.ReactNode[] {

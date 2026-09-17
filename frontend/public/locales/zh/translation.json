@@ -1303,5 +1303,15 @@
   "Ztunnel": "Ztunnel",
   "ztunnel Access Log Entry": "ztunnel Access Log Entry",
   "Ztunnel services config": "Ztunnel services config",
-  "Ztunnel workloads config": "Ztunnel workloads config"
+  "Ztunnel workloads config": "Ztunnel workloads config",
+  "Allocated memory (max)": "Allocated memory (max)",
+  "Envoy memory": "Envoy memory",
+  "Envoy memory can be high because of traffic or because of a large configuration pushed to the proxy. When memory is high with little traffic and many clusters, configuration scoping may help.": "Envoy memory can be high because of traffic or because of a large configuration pushed to the proxy. When memory is high with little traffic and many clusters, configuration scoping may help.",
+  "Envoy memory tab": "Envoy memory tab",
+  "Envoy proxy memory is within the expected range for this workload type.": "Envoy proxy memory is within the expected range for this workload type.",
+  "High memory, cause unclear": "High memory, cause unclear",
+  "Proxy memory is elevated while the workload is handling active connections or requests.": "Proxy memory is elevated while the workload is handling active connections or requests.",
+  "Proxy memory is elevated without active traffic. Memory may not have been released yet, or another factor is involved.": "Proxy memory is elevated without active traffic. Memory may not have been released yet, or another factor is involved.",
+  "This workload has high proxy memory with little traffic and many active clusters. Consider applying configuration scoping.": "This workload has high proxy memory with little traffic and many active clusters. Consider applying configuration scoping.",
+  "Warning threshold": "Warning threshold"
 }

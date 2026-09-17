@@ -22,12 +22,12 @@ import {
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
 import type { KialiAppState } from '../../store/Store';
-import type { TimeRange, TimeInMilliseconds } from '../../types/Common';
+import type { TimeInMilliseconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange } from '../../types/Common';
 import { addError } from '../../utils/AlertUtils';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
-import type { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
+import type { LabelsSettings, MetricsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import { MetricsRawAggregation } from '../MetricsOptions/MetricsRawAggregation';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
@@ -64,7 +64,9 @@ type MetricsState = {
 type CustomMetricsProps = {
   app: string;
   appLabelName?: string;
+  chartsPerRow?: number;
   embedded?: boolean;
+  hideTraceSpans?: boolean;
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   template: string;
@@ -162,6 +164,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const dashboard = this.state.dashboard && (
       <Dashboard
         key={this.props.language}
+        chartsPerRow={this.props.chartsPerRow}
         dashboard={this.state.dashboard}
         customMetric={true}
         template={this.props.template}
@@ -169,7 +172,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         maximizedChart={expandedChart}
         onExpand={this.handleExpand}
         onClick={this.onClickDataPoint}
-        showSpans={this.state.showSpans}
+        showSpans={!this.props.hideTraceSpans && this.state.showSpans}
         overlay={this.state.spanOverlay}
         timeWindow={evalTimeRange(this.props.timeRange)}
         brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
@@ -210,7 +213,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
   private refresh = (): void => {
     this.fetchMetrics();
 
-    if (this.state.showSpans) {
+    if (this.state.showSpans && !this.props.hideTraceSpans) {
       this.spanOverlay.fetch({
         cluster: this.state.cluster,
         limit: this.state.traceLimit,
@@ -304,6 +307,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 
     return options;
   };
+
   private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
@@ -345,7 +349,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
               <MetricsRawAggregation onChanged={this.onRawAggregationChanged} />
             </ToolbarItem>
 
-            {this.props.tracingIntegration && (
+            {this.props.tracingIntegration && !this.props.hideTraceSpans && (
               <ToolbarItem>
                 <TraceSpansLimit
                   label={t('Spans')}
