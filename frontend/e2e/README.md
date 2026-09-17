@@ -169,7 +169,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
 
 ### Ambient (`yarn playwright:run:ambient`)
 
-Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edges, services health filter, workloads out-of-mesh, workload ambient badge). The ambient health-filter test polls the service health API until `productpage` is Healthy before opening the list (ambient KinD can report N/A until Prometheus metrics arrive). KinD setup matches Cypress `frontend-ambient` (ambient Sail, bookinfo ambient + travel-agency + sleep via `install-testing-demos`). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
+Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edges, services health filter, workloads out-of-mesh, workload ambient badge). The ambient health-filter test polls the service health API: when `productpage` is Healthy it matches Cypress (filter Healthy); ambient KinD CI often stays N/A for service request-rate health despite graph traffic, so the test then filters by `n/a` and asserts only N/A rows. KinD setup matches Cypress `frontend-ambient` (ambient Sail, bookinfo ambient + travel-agency + sleep via `install-testing-demos`). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient
