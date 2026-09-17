@@ -6,9 +6,10 @@ import { isKioskMode } from '../utils/SearchParamUtils';
 import { ColorScheme } from 'types/Common';
 import {
   applyDocumentAppearance,
-  getKialiContrastMode,
   getKialiColorScheme,
+  getKialiContrastMode,
   getKialiTheme,
+  resolveColorScheme,
   isParentOwnedAppearance,
   readDocumentColorScheme
 } from 'utils/AppearanceUtils';
@@ -62,8 +63,8 @@ const centerVerticalHorizontalStyle = kialiStyle({
 
 export const InitializingScreen: React.FC<initializingScreenProps> = (props: initializingScreenProps) => {
   const errorDiv = React.createRef<HTMLDivElement>();
-  const [colorScheme, setColorScheme] = React.useState<ColorScheme>(() =>
-    isParentOwnedAppearance() ? readDocumentColorScheme() : getKialiColorScheme()
+  const [colorScheme, setColorScheme] = React.useState(() =>
+    isParentOwnedAppearance() ? readDocumentColorScheme() : resolveColorScheme(getKialiColorScheme())
   );
 
   React.useEffect(() => {
@@ -74,9 +75,8 @@ export const InitializingScreen: React.FC<initializingScreenProps> = (props: ini
     // OSSMC: Console owns <html> classes — logo color scheme comes from useState above.
     // Standalone: apply stored appearance (color scheme, contrast mode, and theme) to <html>.
     if (!isParentOwnedAppearance()) {
-      const resolvedColorScheme = getKialiColorScheme();
-      applyDocumentAppearance(resolvedColorScheme, getKialiContrastMode(), getKialiTheme());
-      setColorScheme(resolvedColorScheme);
+      applyDocumentAppearance(getKialiColorScheme(), getKialiContrastMode(), getKialiTheme());
+      setColorScheme(resolveColorScheme(getKialiColorScheme()));
     }
   }, []);
 

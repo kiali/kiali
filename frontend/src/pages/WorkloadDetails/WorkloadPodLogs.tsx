@@ -39,6 +39,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
+import { resolveColorScheme } from '../../utils/AppearanceUtils';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
@@ -1080,7 +1081,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private renderTabs = (): React.ReactNode[] => {
-    const colorScheme = this.props.colorScheme;
+    const colorScheme = resolveColorScheme(this.props.colorScheme);
     const jsonTab = (
       <Tab eventKey={0} title={t('JSON')} key="json">
         <div className={editorStyle} data-test="json-details-viewer">

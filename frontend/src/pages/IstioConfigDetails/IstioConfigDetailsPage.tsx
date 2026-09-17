@@ -74,6 +74,7 @@ import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
 import { ColorScheme } from 'types/Common';
+import { resolveColorScheme } from 'utils/AppearanceUtils';
 import type { ApiError } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
@@ -795,7 +796,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
             key={editorRevision}
             defaultValue={editorDefaultValue}
             language="yaml"
-            theme={colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
+            theme={resolveColorScheme(colorScheme) === ColorScheme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             onChange={handleEditorChange}
             onMount={handleEditorDidMount}

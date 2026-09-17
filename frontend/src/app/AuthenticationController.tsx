@@ -33,8 +33,8 @@ import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
 import {
   applyDocumentAppearance,
-  getKialiContrastMode,
   getKialiColorScheme,
+  getKialiContrastMode,
   getKialiTheme,
   isParentOwnedAppearance,
   syncReduxAppearanceFromDocument

@@ -25,6 +25,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { ColorScheme } from '../../../types/Common';
+import { resolveColorScheme } from '../../../utils/AppearanceUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
@@ -224,7 +225,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private buildRow = (item: RichSpanData): IRow => {
     const isExpanded = this.isExpanded(item.spanID);
     const isSpan = item.spanID === getSpanId();
-    const darkTheme = this.props.colorScheme === ColorScheme.DARK;
+    const darkTheme = resolveColorScheme(this.props.colorScheme) === ColorScheme.DARK;
     return {
       cells: [
         <>

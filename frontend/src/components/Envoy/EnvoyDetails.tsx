@@ -39,6 +39,7 @@ import {
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import type { TimeInMilliseconds } from '../../types/Common';
 import { ColorScheme } from '../../types/Common';
+import { resolveColorScheme } from '../../utils/AppearanceUtils';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
@@ -362,7 +363,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       <Editor
                         value={this.editorContent()}
                         language="yaml"
-                        theme={this.props.colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
+                        theme={resolveColorScheme(this.props.colorScheme) === ColorScheme.DARK ? 'vs-dark' : 'light'}
                         height="100%"
                         onMount={ed => {
                           (this.monacoEditorRef as any).current = ed;

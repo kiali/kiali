@@ -27,6 +27,7 @@ import { Link, useLocation } from 'react-router-dom-v5-compat';
 import type { ExternalServiceInfo } from '../../types/StatusState';
 import { ColorScheme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
 import { ChatBot } from 'components/ChatBot/ChatBot';
@@ -116,7 +117,8 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const isNavOpen = isMobileView ? isNavOpenMobile : isNavOpenDesktop || !props.navCollapsed;
 
-  const darkTheme = props.colorScheme === ColorScheme.DARK;
+  const colorScheme = useKialiColorScheme();
+  const darkTheme = colorScheme === ColorScheme.DARK;
   const kioskMode = isKiosk(props.kiosk);
 
   const masthead = kioskMode ? undefined : (

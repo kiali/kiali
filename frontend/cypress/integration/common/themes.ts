@@ -1,39 +1,32 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 
-const THEME_DROPDOWN = '[data-test="theme-dropdown"]';
-const COLOR_SCHEME_TOGGLE = '[data-test="color-scheme-toggle"]';
-const CONTRAST_MODE_TOGGLE = '[data-test="contrast-mode-toggle"]';
-const THEME_TOGGLE = '[data-test="theme-toggle"]';
+const USER_DROPDOWN = '[data-test="user-dropdown"]';
 
-const COLOR_SCHEME_DARK = '#color-scheme-dark';
-const COLOR_SCHEME_LIGHT = '#color-scheme-light';
-const CONTRAST_MODE_DEFAULT = '#contrast-mode-default';
-const CONTRAST_MODE_GLASS = '#contrast-mode-glass';
-const CONTRAST_MODE_HIGH_CONTRAST = '#contrast-mode-high-contrast';
-const THEME_DEFAULT = '#theme-default';
-const THEME_FELT = '#theme-felt';
+const openPreferences = (): void => {
+  cy.get(USER_DROPDOWN).click();
+  cy.getBySel('preferences').click();
+  cy.getBySel('preferences-modal').should('be.visible');
+};
 
-const openAppearanceMenu = (): void => {
-  cy.get(THEME_DROPDOWN).then($toggle => {
-    if ($toggle.attr('aria-expanded') !== 'true') {
-      cy.wrap($toggle).click();
-    }
-  });
+const selectPreferenceOption = (selectId: string, optionLabel: string): void => {
+  cy.getBySel(selectId).click();
+  cy.contains('[role="option"]', optionLabel).click();
 };
 
 const resetAppearanceToDefaults = (): void => {
-  openAppearanceMenu();
+  openPreferences();
   cy.get('html').then($html => {
     if ($html.hasClass('pf-v6-theme-dark')) {
-      cy.get(COLOR_SCHEME_TOGGLE).find(COLOR_SCHEME_LIGHT).click();
+      selectPreferenceOption('color-scheme-select', 'Light');
     }
     if ($html.hasClass('pf-v6-theme-felt')) {
-      cy.get(THEME_TOGGLE).find(THEME_DEFAULT).click();
+      selectPreferenceOption('theme-select', 'Default');
     }
     if ($html.hasClass('pf-v6-theme-glass') || $html.hasClass('pf-v6-theme-high-contrast')) {
-      cy.get(CONTRAST_MODE_TOGGLE).find(CONTRAST_MODE_DEFAULT).click();
+      selectPreferenceOption('contrast-mode-select', 'Default');
     }
   });
+  cy.getBySel('preferences-close').click();
 };
 
 /**
@@ -41,7 +34,7 @@ const resetAppearanceToDefaults = (): void => {
  * Clears persisted appearance preferences so prior runs do not leak state.
  */
 Given('the color scheme is explicitly set to light', () => {
-  cy.get(THEME_DROPDOWN).should('be.visible');
+  cy.get(USER_DROPDOWN).should('be.visible');
   cy.window().then(win => {
     win.localStorage.removeItem('KIALI_COLOR_SCHEME');
     win.localStorage.removeItem('KIALI_CONTRAST_MODE');
@@ -55,40 +48,40 @@ Given('the color scheme is explicitly set to light', () => {
 });
 
 When('the user switches to dark color scheme', () => {
-  openAppearanceMenu();
-  cy.get(COLOR_SCHEME_TOGGLE).find(COLOR_SCHEME_DARK).click();
+  openPreferences();
+  selectPreferenceOption('color-scheme-select', 'Dark');
   cy.get('html').should('have.class', 'pf-v6-theme-dark');
 });
 
 When('the user switches to light color scheme', () => {
-  openAppearanceMenu();
-  cy.get(COLOR_SCHEME_TOGGLE).find(COLOR_SCHEME_LIGHT).click();
+  openPreferences();
+  selectPreferenceOption('color-scheme-select', 'Light');
   cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
 
 When('the user selects glass contrast mode', () => {
-  openAppearanceMenu();
-  cy.get(CONTRAST_MODE_TOGGLE).find(CONTRAST_MODE_GLASS).click();
+  openPreferences();
+  selectPreferenceOption('contrast-mode-select', 'Glass');
 });
 
 When('the user selects high contrast mode', () => {
-  openAppearanceMenu();
-  cy.get(CONTRAST_MODE_TOGGLE).find(CONTRAST_MODE_HIGH_CONTRAST).click();
+  openPreferences();
+  selectPreferenceOption('contrast-mode-select', 'High contrast');
 });
 
 When('the user selects default contrast mode', () => {
-  openAppearanceMenu();
-  cy.get(CONTRAST_MODE_TOGGLE).find(CONTRAST_MODE_DEFAULT).click();
+  openPreferences();
+  selectPreferenceOption('contrast-mode-select', 'Default');
 });
 
 When('the user selects project felt theme', () => {
-  openAppearanceMenu();
-  cy.get(THEME_TOGGLE).find(THEME_FELT).click();
+  openPreferences();
+  selectPreferenceOption('theme-select', 'Project Felt');
 });
 
 When('the user selects default theme', () => {
-  openAppearanceMenu();
-  cy.get(THEME_TOGGLE).find(THEME_DEFAULT).click();
+  openPreferences();
+  selectPreferenceOption('theme-select', 'Default');
 });
 
 Then('the document should use light color scheme', () => {

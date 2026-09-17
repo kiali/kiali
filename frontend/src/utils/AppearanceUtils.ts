@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useKialiSelector } from 'hooks/redux';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
@@ -20,15 +21,19 @@ export type DocumentAppearanceClasses = {
   theme: Theme;
 };
 
-const isValidColorScheme = (colorScheme: string | null | undefined): colorScheme is ColorScheme => {
-  return colorScheme === ColorScheme.LIGHT || colorScheme === ColorScheme.DARK;
+export type ResolvedColorScheme = ColorScheme.LIGHT | ColorScheme.DARK;
+export type ResolvedContrastMode = ContrastMode.DEFAULT | ContrastMode.GLASS | ContrastMode.HIGH_CONTRAST;
+
+export const isColorScheme = (colorScheme: string | null | undefined): colorScheme is ColorScheme => {
+  return colorScheme === ColorScheme.LIGHT || colorScheme === ColorScheme.DARK || colorScheme === ColorScheme.SYSTEM;
 };
 
-const isValidContrastMode = (contrastMode: string | null | undefined): contrastMode is ContrastMode => {
+export const isContrastMode = (contrastMode: string | null | undefined): contrastMode is ContrastMode => {
   return (
     contrastMode === ContrastMode.DEFAULT ||
     contrastMode === ContrastMode.GLASS ||
-    contrastMode === ContrastMode.HIGH_CONTRAST
+    contrastMode === ContrastMode.HIGH_CONTRAST ||
+    contrastMode === ContrastMode.SYSTEM
   );
 };
 
@@ -67,18 +72,54 @@ export const clearStaleParentKioskSession = (): void => {
 
 clearStaleParentKioskSession();
 
+const getSystemColorScheme = (): ResolvedColorScheme => {
+  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+    return ColorScheme.DARK;
+  }
+
+  return ColorScheme.LIGHT;
+};
+
+const getSystemContrastMode = (): ResolvedContrastMode => {
+  if (window.matchMedia?.('(prefers-contrast: more)').matches) {
+    return ContrastMode.HIGH_CONTRAST;
+  }
+
+  return ContrastMode.DEFAULT;
+};
+
+export const resolveColorScheme = (colorScheme: string | null | undefined): ResolvedColorScheme => {
+  if (colorScheme === ColorScheme.DARK || colorScheme === ColorScheme.LIGHT) {
+    return colorScheme;
+  }
+
+  return getSystemColorScheme();
+};
+
+export const resolveContrastMode = (contrastMode: string | null | undefined): ResolvedContrastMode => {
+  if (
+    contrastMode === ContrastMode.DEFAULT ||
+    contrastMode === ContrastMode.GLASS ||
+    contrastMode === ContrastMode.HIGH_CONTRAST
+  ) {
+    return contrastMode;
+  }
+
+  return getSystemContrastMode();
+};
+
 const getStoredColorScheme = (): ColorScheme | undefined => {
   migrateLegacyAppearanceStorage();
-  const stored = localStorage.getItem(KIALI_COLOR_SCHEME) as ColorScheme | null;
+  const stored = localStorage.getItem(KIALI_COLOR_SCHEME);
 
-  return isValidColorScheme(stored) ? stored : undefined;
+  return isColorScheme(stored) ? stored : undefined;
 };
 
 const getStoredContrastMode = (): ContrastMode | undefined => {
   migrateLegacyAppearanceStorage();
   const stored = localStorage.getItem(KIALI_CONTRAST_MODE);
 
-  return isValidContrastMode(stored) ? stored : undefined;
+  return isContrastMode(stored) ? stored : undefined;
 };
 
 const getStoredTheme = (): Theme | undefined => {
@@ -91,21 +132,21 @@ const getStoredTheme = (): Theme | undefined => {
 export const getKialiColorScheme = (): ColorScheme => {
   const stored = getStoredColorScheme() || (store.getState().globalState.colorScheme as ColorScheme) || undefined;
 
-  if (isValidColorScheme(stored)) {
+  if (isColorScheme(stored)) {
     return stored;
   }
 
-  return getDefaultColorScheme();
+  return ColorScheme.SYSTEM;
 };
 
 export const getKialiContrastMode = (): ContrastMode => {
   const stored = getStoredContrastMode() || (store.getState().globalState.contrastMode as ContrastMode) || undefined;
 
-  if (isValidContrastMode(stored)) {
+  if (isContrastMode(stored)) {
     return stored;
   }
 
-  return getDefaultContrastMode();
+  return ContrastMode.SYSTEM;
 };
 
 export const getKialiTheme = (): Theme => {
@@ -122,24 +163,76 @@ export const isFeltTheme = (theme: Theme): boolean => {
   return theme === Theme.FELT;
 };
 
-export const useKialiColorScheme = (): string => {
-  const reduxColorScheme = useKialiSelector(state => state.globalState.colorScheme);
-
-  if (isValidColorScheme(reduxColorScheme)) {
-    return reduxColorScheme;
+export const registerSystemAppearanceListener = (onChange: () => void): (() => void) => {
+  if (!window.matchMedia) {
+    return () => {};
   }
 
-  return getKialiColorScheme();
+  const handler = (): void => {
+    const colorScheme = getKialiColorScheme();
+    const contrastMode = getKialiContrastMode();
+
+    if (colorScheme === ColorScheme.SYSTEM || contrastMode === ContrastMode.SYSTEM) {
+      if (!isParentOwnedAppearance()) {
+        applyDocumentAppearance(colorScheme, contrastMode, getKialiTheme());
+      }
+      onChange();
+    }
+  };
+
+  const colorSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const contrastMediaQuery = window.matchMedia('(prefers-contrast: more)');
+  colorSchemeMediaQuery.addEventListener('change', handler);
+  contrastMediaQuery.addEventListener('change', handler);
+
+  return () => {
+    colorSchemeMediaQuery.removeEventListener('change', handler);
+    contrastMediaQuery.removeEventListener('change', handler);
+  };
 };
 
-export const useKialiContrastMode = (): string => {
-  const reduxContrastMode = useKialiSelector(state => state.globalState.contrastMode);
+export const useKialiColorScheme = (): ResolvedColorScheme => {
+  const preference = useKialiSelector(state => state.globalState.colorScheme);
+  const colorScheme = isColorScheme(preference) ? preference : getKialiColorScheme();
+  const [resolvedColorScheme, setResolvedColorScheme] = React.useState(() => resolveColorScheme(colorScheme));
 
-  if (isValidContrastMode(reduxContrastMode)) {
-    return reduxContrastMode;
-  }
+  React.useEffect(() => {
+    const update = (): void => {
+      setResolvedColorScheme(resolveColorScheme(colorScheme));
+    };
 
-  return getKialiContrastMode();
+    update();
+
+    if (colorScheme === ColorScheme.SYSTEM) {
+      return registerSystemAppearanceListener(update);
+    }
+
+    return undefined;
+  }, [colorScheme]);
+
+  return resolvedColorScheme;
+};
+
+export const useKialiContrastMode = (): ResolvedContrastMode => {
+  const preference = useKialiSelector(state => state.globalState.contrastMode);
+  const contrastMode = isContrastMode(preference) ? preference : getKialiContrastMode();
+  const [resolvedContrastMode, setResolvedContrastMode] = React.useState(() => resolveContrastMode(contrastMode));
+
+  React.useEffect(() => {
+    const update = (): void => {
+      setResolvedContrastMode(resolveContrastMode(contrastMode));
+    };
+
+    update();
+
+    if (contrastMode === ContrastMode.SYSTEM) {
+      return registerSystemAppearanceListener(update);
+    }
+
+    return undefined;
+  }, [contrastMode]);
+
+  return resolvedContrastMode;
 };
 
 export const useKialiTheme = (): string => {
@@ -153,7 +246,7 @@ export const useKialiTheme = (): string => {
 };
 
 /** Read color scheme from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
-export const readDocumentColorScheme = (): ColorScheme => {
+export const readDocumentColorScheme = (): ResolvedColorScheme => {
   return document.documentElement.classList.contains(PF_THEME_DARK) ? ColorScheme.DARK : ColorScheme.LIGHT;
 };
 
@@ -163,7 +256,7 @@ export const readDocumentTheme = (): Theme => {
 };
 
 /** Read contrast mode from PatternFly classes on <html> (set by OpenShift Console in OSSMC). */
-export const readDocumentContrastMode = (): ContrastMode => {
+export const readDocumentContrastMode = (): ResolvedContrastMode => {
   if (document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)) {
     return ContrastMode.HIGH_CONTRAST;
   }
@@ -209,7 +302,9 @@ export const isParentOwnedAppearance = (): boolean => {
 };
 
 /** Update Redux from current <html> appearance classes without modifying the document. */
-export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & { colorScheme: ColorScheme } => {
+export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & {
+  colorScheme: ResolvedColorScheme;
+} => {
   const colorScheme = readDocumentColorScheme();
   const { contrastMode, theme } = readDocumentAppearanceClasses();
   store.dispatch(GlobalActions.setColorScheme(colorScheme));
@@ -226,10 +321,12 @@ export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & {
  * Do not call this when isParentOwnedAppearance() is true (OSSMC / OpenShift Console owns classes).
  */
 export const applyDocumentAppearance = (colorScheme: ColorScheme, contrastMode: ContrastMode, theme: Theme): void => {
-  const glass = contrastMode === ContrastMode.GLASS;
-  const highContrast = contrastMode === ContrastMode.HIGH_CONTRAST;
+  const resolvedColorScheme = resolveColorScheme(colorScheme);
+  const resolvedContrastMode = resolveContrastMode(contrastMode);
+  const glass = resolvedContrastMode === ContrastMode.GLASS;
+  const highContrast = resolvedContrastMode === ContrastMode.HIGH_CONTRAST;
 
-  document.documentElement.classList.toggle(PF_THEME_DARK, colorScheme === ColorScheme.DARK);
+  document.documentElement.classList.toggle(PF_THEME_DARK, resolvedColorScheme === ColorScheme.DARK);
   document.documentElement.classList.toggle(PF_THEME_FELT, isFeltTheme(theme));
   document.documentElement.classList.toggle(PF_THEME_GLASS, glass);
   document.documentElement.classList.toggle(PF_THEME_HIGH_CONTRAST, highContrast);
@@ -263,16 +360,4 @@ export const observeDocumentAppearance = (onChange: () => void): (() => void) =>
   observer.observe(root, { attributes: true, attributeFilter: ['class'] });
 
   return () => observer.disconnect();
-};
-
-const getDefaultColorScheme = (): ColorScheme => {
-  if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-    return ColorScheme.DARK;
-  }
-
-  return ColorScheme.LIGHT;
-};
-
-const getDefaultContrastMode = (): ContrastMode => {
-  return ContrastMode.DEFAULT;
 };

@@ -28,6 +28,7 @@ import type { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
 import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
+import { ColorScheme, ContrastMode } from 'types/Common';
 
 declare const window;
 
@@ -79,15 +80,23 @@ const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'the
 export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> & { theme?: string }): GlobalState => {
   const isLegacyColorSchemeTheme = outboundState.theme === 'Light' || outboundState.theme === 'Dark';
   const legacyColorScheme = isLegacyColorSchemeTheme ? outboundState.theme : undefined;
-  const colorScheme = outboundState.colorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
   const theme = isLegacyColorSchemeTheme
     ? 'default'
     : outboundState.theme === 'default' || outboundState.theme === 'felt'
       ? outboundState.theme
       : INITIAL_GLOBAL_STATE.theme;
+  const rawColorScheme = outboundState.colorScheme;
+  const normalizedColorScheme =
+    rawColorScheme === ColorScheme.LIGHT || rawColorScheme === ColorScheme.DARK || rawColorScheme === ColorScheme.SYSTEM
+      ? rawColorScheme
+      : undefined;
+  const colorScheme = normalizedColorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
   const rawContrastMode = outboundState.contrastMode;
   const contrastMode =
-    rawContrastMode === 'glass' || rawContrastMode === 'high-contrast' || rawContrastMode === 'default'
+    rawContrastMode === ContrastMode.GLASS ||
+    rawContrastMode === ContrastMode.HIGH_CONTRAST ||
+    rawContrastMode === ContrastMode.DEFAULT ||
+    rawContrastMode === ContrastMode.SYSTEM
       ? rawContrastMode
       : INITIAL_GLOBAL_STATE.contrastMode;
 

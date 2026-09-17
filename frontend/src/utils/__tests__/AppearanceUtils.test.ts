@@ -22,6 +22,8 @@ import {
   readDocumentColorScheme,
   readDocumentContrastMode,
   readDocumentTheme,
+  resolveColorScheme,
+  resolveContrastMode,
   syncReduxAppearanceFromDocument
 } from 'utils/AppearanceUtils';
 import { store } from 'store/ConfigStore';
@@ -81,6 +83,48 @@ describe('applyDocumentAppearance', () => {
     expect(document.documentElement.classList.contains(PF_THEME_FELT)).toBe(true);
     expect(document.documentElement.classList.contains(PF_THEME_GLASS)).toBe(false);
   });
+
+  it('resolves system color scheme from prefers-color-scheme', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
+    applyDocumentAppearance(ColorScheme.SYSTEM, ContrastMode.DEFAULT, Theme.DEFAULT);
+    expect(document.documentElement.classList.contains(PF_THEME_DARK)).toBe(true);
+  });
+
+  it('resolves system contrast mode from prefers-contrast', () => {
+    window.matchMedia = rstest.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-contrast: more)',
+      addEventListener: rstest.fn(),
+      removeEventListener: rstest.fn()
+    })) as typeof window.matchMedia;
+    applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.SYSTEM, Theme.DEFAULT);
+    expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
+  });
+});
+
+describe('resolveColorScheme', () => {
+  it('returns explicit light and dark values', () => {
+    expect(resolveColorScheme(ColorScheme.LIGHT)).toBe(ColorScheme.LIGHT);
+    expect(resolveColorScheme(ColorScheme.DARK)).toBe(ColorScheme.DARK);
+  });
+
+  it('follows prefers-color-scheme when system is selected', () => {
+    window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
+    expect(resolveColorScheme(ColorScheme.SYSTEM)).toBe(ColorScheme.LIGHT);
+  });
+});
+
+describe('resolveContrastMode', () => {
+  it('returns explicit contrast modes', () => {
+    expect(resolveContrastMode(ContrastMode.GLASS)).toBe(ContrastMode.GLASS);
+    expect(resolveContrastMode(ContrastMode.HIGH_CONTRAST)).toBe(ContrastMode.HIGH_CONTRAST);
+  });
+
+  it('follows prefers-contrast when system is selected', () => {
+    window.matchMedia = rstest.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-contrast: more)'
+    })) as typeof window.matchMedia;
+    expect(resolveContrastMode(ContrastMode.SYSTEM)).toBe(ContrastMode.HIGH_CONTRAST);
+  });
 });
 
 describe('getKialiColorScheme', () => {
@@ -89,14 +133,8 @@ describe('getKialiColorScheme', () => {
     store.dispatch(GlobalActions.setColorScheme(''));
   });
 
-  it('defaults to dark when prefers-color-scheme is dark', () => {
-    window.matchMedia = rstest.fn().mockReturnValue({ matches: true }) as typeof window.matchMedia;
-    expect(getKialiColorScheme()).toBe(ColorScheme.DARK);
-  });
-
-  it('defaults to light when prefers-color-scheme is light', () => {
-    window.matchMedia = rstest.fn().mockReturnValue({ matches: false }) as typeof window.matchMedia;
-    expect(getKialiColorScheme()).toBe(ColorScheme.LIGHT);
+  it('defaults to system when unset', () => {
+    expect(getKialiColorScheme()).toBe(ColorScheme.SYSTEM);
   });
 
   it('returns stored color scheme from localStorage', () => {
@@ -123,13 +161,13 @@ describe('getKialiContrastMode', () => {
     store.dispatch(GlobalActions.setContrastMode(''));
   });
 
-  it('defaults to default contrast mode', () => {
-    expect(getKialiContrastMode()).toBe(ContrastMode.DEFAULT);
+  it('defaults to system when unset', () => {
+    expect(getKialiContrastMode()).toBe(ContrastMode.SYSTEM);
   });
 
-  it('ignores invalid stored values and falls back to default', () => {
+  it('ignores invalid stored values and falls back to system', () => {
     localStorage.setItem(KIALI_CONTRAST_MODE, 'bogus');
-    expect(getKialiContrastMode()).toBe(ContrastMode.DEFAULT);
+    expect(getKialiContrastMode()).toBe(ContrastMode.SYSTEM);
   });
 
   it('returns stored contrast mode from localStorage', () => {

@@ -22,4 +22,16 @@ describe('migratePersistedGlobalState', () => {
 
     expect(migrated.contrastMode).toBe(ContrastMode.HIGH_CONTRAST);
   });
+
+  it('preserves system color scheme preference', () => {
+    const migrated = migratePersistedGlobalState({ colorScheme: ColorScheme.SYSTEM });
+
+    expect(migrated.colorScheme).toBe(ColorScheme.SYSTEM);
+  });
+
+  it('preserves system contrast mode preference', () => {
+    const migrated = migratePersistedGlobalState({ contrastMode: ContrastMode.SYSTEM });
+
+    expect(migrated.contrastMode).toBe(ContrastMode.SYSTEM);
+  });
 });

@@ -7,7 +7,6 @@ import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
-import { AppearanceMenu } from './AppearanceMenu';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
@@ -38,10 +37,6 @@ export const MastheadItems: React.FC = () => {
         </ToolbarGroup>
 
         <ToolbarGroup align={{ default: 'alignEnd' }}>
-          <ToolbarItem>
-            <AppearanceMenu />
-          </ToolbarItem>
-
           {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
             <ToolbarItem>
               <LanguageSwitch />

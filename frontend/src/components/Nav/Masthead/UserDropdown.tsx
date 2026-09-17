@@ -2,26 +2,21 @@ import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
 import { config, isMultiCluster, serverConfig } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
-import { KialiAppState, LoginSession } from '../../../store/Store';
+import type { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
 import { AuthStrategy } from '../../../types/Auth';
 import moment from 'moment';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { LoginThunkActions } from '../../../actions/LoginThunkActions';
 import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { namespacesPerClusterSelector } from 'store/Selectors';
 import { ChatSessionUsageModal } from 'components/ChatSessionUsage/ChatSessionUsageModal';
-import {
-  Divider,
-  Dropdown,
-  DropdownGroup,
-  DropdownItem,
-  DropdownList,
-  MenuToggle,
-  MenuToggleElement
-} from '@patternfly/react-core';
+import { PreferencesModal } from './PreferencesModal';
+import { isParentOwnedAppearance } from 'utils/AppearanceUtils';
+import { Divider, Dropdown, DropdownGroup, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
@@ -39,6 +34,7 @@ type UserProps = ReduxStateProps & ReduxDispatchProps;
 type UserState = {
   checkSessionTimerId?: ReturnType<typeof setInterval>;
   isDropdownOpen: boolean;
+  isPreferencesOpen: boolean;
   isSessionTimeoutDismissed: boolean;
   isSessionTokenStatsOpen: boolean;
   showSessionTimeOut: boolean;
@@ -59,6 +55,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
       isDropdownOpen: false,
+      isPreferencesOpen: false,
       isSessionTokenStatsOpen: false
     };
   }
@@ -150,9 +147,23 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     });
   };
 
+  openPreferences = (): void => {
+    this.setState({
+      isDropdownOpen: false,
+      isPreferencesOpen: true
+    });
+  };
+
+  closePreferences = (): void => {
+    this.setState({
+      isPreferencesOpen: false
+    });
+  };
+
   render(): React.ReactNode {
-    const { isDropdownOpen, isSessionTokenStatsOpen } = this.state;
+    const { isDropdownOpen, isPreferencesOpen, isSessionTokenStatsOpen } = this.state;
     const showSessionTokenStats = serverConfig.ai.chat.enabled && serverConfig.ai.chat.store.enabled;
+    const showPreferences = !isParentOwnedAppearance();
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
       this.props.session?.clusterInfo?.[cluster] !== undefined;
@@ -165,8 +176,8 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     // the clusters are in authenticationConfig.authorizationEndpointPerCluster.
     // So the clusters you are not logged into is authenticationConfig.authorizationEndpointPerCluster - session.clusterInfo.
     // Two groups of clusters: those you are logged into and those you are not.
-    let loggedInClusters: { cluster: string; endpoint: string }[] = [];
-    let loggedOutClusters: { cluster: string; endpoint: string }[] = [];
+    const loggedInClusters: { cluster: string; endpoint: string }[] = [];
+    const loggedOutClusters: { cluster: string; endpoint: string }[] = [];
     if (authenticationConfig.authorizationEndpointPerCluster !== undefined) {
       Object.entries(authenticationConfig.authorizationEndpointPerCluster).forEach(([cluster, endpoint]) => {
         clusterIsInSessionInfo(cluster)
@@ -175,7 +186,11 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       });
     }
     const hasDropdownActions =
-      showSessionTokenStats || canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
+      showPreferences ||
+      showSessionTokenStats ||
+      canLogout ||
+      loggedInClusters.length > 0 ||
+      loggedOutClusters.length > 0;
 
     return (
       <>
@@ -248,7 +263,12 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
                 {t('Session Token Stats')}
               </DropdownItem>
             )}
-            {showSessionTokenStats && canLogout && <Divider component="li" />}
+            {showPreferences && (
+              <DropdownItem data-test="preferences" key={'preferences_option'} onClick={this.openPreferences}>
+                {t('Preferences')}
+              </DropdownItem>
+            )}
+            {(showSessionTokenStats || showPreferences) && canLogout && <Divider component="li" />}
             {canLogout && (
               <DropdownItem data-test="user-logout" key={'user_logout_option'} onClick={this.handleLogout}>
                 {t('Logout')}
@@ -258,6 +278,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
         )}
 
         <ChatSessionUsageModal isOpen={isSessionTokenStatsOpen} onClose={this.closeSessionTokenStats} />
+        <PreferencesModal isOpen={isPreferencesOpen} onClose={this.closePreferences} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
           <form id="openshiftlogout" action={authenticationConfig.logoutEndpoint} method="post">

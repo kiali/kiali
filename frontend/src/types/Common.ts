@@ -36,12 +36,14 @@ export const KIALI_THEME = 'KIALI_THEME';
 export const enum ContrastMode {
   DEFAULT = 'default',
   GLASS = 'glass',
-  HIGH_CONTRAST = 'high-contrast'
+  HIGH_CONTRAST = 'high-contrast',
+  SYSTEM = 'system'
 }
 
 export const enum ColorScheme {
   DARK = 'Dark',
-  LIGHT = 'Light'
+  LIGHT = 'Light',
+  SYSTEM = 'System'
 }
 
 export const enum Theme {
