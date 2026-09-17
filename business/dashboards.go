@@ -47,8 +47,14 @@ type DashboardsService struct {
 	namespaceLabel  string
 	promClient      prometheus.ClientInterface
 	promConfig      config.PrometheusConfig
+	workload        *models.Workload
 
 	CustomEnabled bool
+}
+
+// PrometheusClient returns the Prometheus client used for dashboard queries.
+func (in *DashboardsService) PrometheusClient() prometheus.ClientInterface {
+	return in.promClient
 }
 
 // NewDashboardsService initializes this business service
@@ -102,6 +108,7 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promCli
 		globalNamespace: conf.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
 		dashboards:      builtInDashboards.OrganizeByName(),
+		workload:        workload,
 	}
 }
 
@@ -170,7 +177,13 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 		return nil, err
 	}
 
-	filters := in.buildLabelsQueryString(params.Namespace, params.LabelsFilters)
+	filters := ""
+	if in.workload != nil {
+		filters = BuildWorkloadMetricLabels(in.conf, in.workload)
+	}
+	if filters == "" {
+		filters = in.buildLabelsQueryString(params.Namespace, params.LabelsFilters)
+	}
 	aggLabels := append(params.AdditionalLabels, models.ConvertAggregations(*dashboard)...)
 	if len(aggLabels) == 0 {
 		// Prevent null in json
@@ -209,7 +222,11 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 
 			filledCharts[idx] = models.ConvertChart(chart)
 			metrics := chart.GetMetrics()
+			displayNames := make([]string, 0, len(metrics))
 			for _, ref := range metrics {
+				if ref.DisplayName != "" {
+					displayNames = append(displayNames, ref.DisplayName)
+				}
 				var converted []models.Metric
 				var err error
 				switch chart.DataType {
@@ -221,8 +238,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					metric := promClient.FetchRange(ctx, ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				case dashboards.Rate:
-					metric := promClient.FetchRateRange(ctx, ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
-					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
+					converted, err = fetchDashboardRateMetric(ctx, promClient, ref, filters, grouping, &params.RangeQuery, conversionParams)
 				default:
 					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, filters, grouping, &params.RangeQuery)
 					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
@@ -235,6 +251,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					filledCharts[idx].Metrics = append(filledCharts[idx].Metrics, converted...)
 				}
 			}
+			filledCharts[idx].Metrics = models.EnsureDisplayNameMetrics(filledCharts[idx].Metrics, displayNames)
 		}(i, item.Chart)
 	}
 
@@ -717,4 +734,39 @@ func extractDashboardsFromAnnotation(pod models.Pod, annotation string) []string
 		}
 	}
 	return dashboards
+}
+
+func fetchDashboardRateMetric(
+	ctx context.Context,
+	promClient prometheus.ClientInterface,
+	ref dashboards.MonitoringDashboardMetric,
+	filters, grouping string,
+	q *prometheus.RangeQuery,
+	conversionParams models.ConversionParams,
+) ([]models.Metric, error) {
+	metricNames := rateMetricNameCandidates(ref.MetricName)
+	for i, metricName := range metricNames {
+		metric := promClient.FetchRateRange(ctx, metricName, []string{filters}, grouping, q)
+		converted, err := models.ConvertMetric(ref.DisplayName, metric, conversionParams)
+		if err != nil {
+			return nil, err
+		}
+		if len(converted) > 0 || i == len(metricNames)-1 {
+			return converted, nil
+		}
+	}
+	return nil, nil
+}
+
+func rateMetricNameCandidates(metricName string) []string {
+	if metricName == "" {
+		return nil
+	}
+	if strings.HasSuffix(metricName, "_total") {
+		return []string{metricName}
+	}
+	if strings.HasSuffix(metricName, "_rq") {
+		return []string{metricName, metricName + "_total"}
+	}
+	return []string{metricName}
 }

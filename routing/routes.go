@@ -998,6 +998,14 @@ func NewRoutes(
 			handlers.WorkloadMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
+		{
+			"WorkloadEnvoyMemory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/envoymemory",
+			handlers.WorkloadEnvoyMemory(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single control plane

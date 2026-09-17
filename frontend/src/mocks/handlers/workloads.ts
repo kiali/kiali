@@ -359,5 +359,19 @@ export const workloadHandlers = [
     const url = new URL(request.url);
     const direction = url.searchParams.get('direction') || 'inbound';
     return HttpResponse.json(generateMockDashboard('Workload', direction));
+  }),
+
+  http.get('*/api/namespaces/:namespace/workloads/:workload/envoymemory', () => {
+    return HttpResponse.json({
+      activeClustersMax: 12,
+      activeConnections: 0,
+      cause: 'ok',
+      memoryLimitBytes: 1073741824,
+      memoryMaxBytes: 67108864,
+      memoryThresholdBytes: 751619277,
+      memoryUsedPercent: 6.25,
+      proxyType: 'sidecar',
+      requestRate: 0
+    });
   })
 ];
