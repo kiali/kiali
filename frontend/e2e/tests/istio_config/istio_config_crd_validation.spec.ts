@@ -13,8 +13,10 @@ import {
   applySidecar,
   applyVirtualService,
   applyVirtualServiceWithSubset,
+  cleanIstioSystemMeshResources,
   cleanIstioSystemTestResources,
   cleanSleepMtlsTestResources,
+  restartAlphaBetaEnvoyConfig,
   deleteIstioConfig,
   deleteIstioGateway,
   patchAuthorizationPolicyFromSourceNamespace,
@@ -34,7 +36,7 @@ import {
   restoreBookinfoNetworking
 } from '../../utils/istioCrdValidation';
 import { deleteK8sGateway, deleteK8sReferenceGrant } from '../../utils/istioConfigResources';
-import { selectNamespace, selectNamespaces } from '../../utils/namespace';
+import { selectNamespace, selectNamespaces, selectOnlyNamespaces } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
 test.describe('Istio Config CRD validation', () => {
@@ -431,12 +433,17 @@ test.describe('Istio Config CRD validation', () => {
 
     test.beforeEach(() => {
       cleanSleepMtlsTestResources();
-      cleanIstioSystemTestResources();
+      cleanIstioSystemMeshResources();
     });
 
-    test.afterEach(() => {
+    // Cypress `@clean-istio-namespace-resources-after`: alpha/beta rollout only after KIA0208/KIA0506/KIA1006.
+    test.afterEach(({ page }, testInfo) => {
+      void page;
       cleanSleepMtlsTestResources();
-      cleanIstioSystemTestResources();
+      cleanIstioSystemMeshResources();
+      if (/KIA0208|KIA0506|KIA1006/.test(testInfo.title)) {
+        restartAlphaBetaEnvoyConfig();
+      }
     });
 
     test('KIA0207 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
@@ -461,12 +468,12 @@ test.describe('Istio Config CRD validation', () => {
       applyPeerAuthentication('default', 'istio-system');
       patchPeerAuthenticationMtlsMode('default', 'istio-system', 'STRICT');
 
+      await istioConfigPage.waitForIstioObjectDetails('istio-system', 'PeerAuthentication', 'default');
+      await istioConfigPage.waitForIstioObjectDetails('sleep', 'DestinationRule', drName);
+
       await istioConfigPage.open();
-      await selectNamespace(page, 'istio-system');
+      await selectOnlyNamespaces(page, ['istio-system']);
       await istioConfigPage.primeValidationFromDetails('istio-system', 'PeerAuthentication', 'default');
-      await selectNamespace(page, 'sleep');
-      await istioConfigPage.primeValidationFromDetails('sleep', 'DestinationRule', drName);
-      await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationStatus('sleep', 'DestinationRule', drName, 'danger');
       deleteIstioConfig('DestinationRule', drName, 'sleep');
     });

@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 
-import { kubectlDelete, kubectlExec } from './kubectl';
+import { kubectlDelete, kubectlExec, kubectlNamespaceExists } from './kubectl';
 
 function labelsStringToJson(labelsString: string): string {
   if (labelsString.length === 0) {
@@ -389,16 +389,34 @@ export function cleanSleepMtlsTestResources(): void {
   waitForResourceDeleted('kubectl get PeerAuthentication default -n sleep', cleanupTimeoutMs);
 }
 
-/** Mirrors Cypress `@clean-istio-namespace-resources-after` hook. */
-export function cleanIstioSystemTestResources(): void {
+const ISTIO_SYSTEM_MESH_CLEANUP_TIMEOUT_MS = 10_000;
+
+/** Delete istio-system mesh resources left by mTLS / Sidecar scenarios (no alpha/beta rollout). */
+export function cleanIstioSystemMeshResources(): void {
   kubectlDelete('PeerAuthentication default -n istio-system');
   kubectlDelete('Sidecar default -n istio-system');
-  waitForResourceDeleted('kubectl get PeerAuthentication default -n istio-system');
-  waitForResourceDeleted('kubectl get Sidecar default -n istio-system');
-  kubectlExec('kubectl rollout restart deployment -n alpha', false);
-  kubectlExec('kubectl rollout restart deployment -n beta', false);
-  kubectlExec('kubectl rollout status deployment -n alpha --timeout=60s', false);
-  kubectlExec('kubectl rollout status deployment -n beta --timeout=60s', false);
+  waitForResourceDeleted(
+    'kubectl get PeerAuthentication default -n istio-system',
+    ISTIO_SYSTEM_MESH_CLEANUP_TIMEOUT_MS
+  );
+  waitForResourceDeleted('kubectl get Sidecar default -n istio-system', ISTIO_SYSTEM_MESH_CLEANUP_TIMEOUT_MS);
+}
+
+/** Mirrors Cypress `@clean-istio-namespace-resources-after` alpha/beta Envoy reload. */
+export function restartAlphaBetaEnvoyConfig(): void {
+  for (const namespace of ['alpha', 'beta']) {
+    if (!kubectlNamespaceExists(namespace)) {
+      continue;
+    }
+    kubectlExec(`kubectl rollout restart deployment -n ${namespace}`, false);
+    kubectlExec(`kubectl rollout status deployment -n ${namespace} --timeout=60s`, false);
+  }
+}
+
+/** Full istio-system cleanup including alpha/beta rollout (Cypress `@clean-istio-namespace-resources-after`). */
+export function cleanIstioSystemTestResources(): void {
+  cleanIstioSystemMeshResources();
+  restartAlphaBetaEnvoyConfig();
 }
 
 /** KIA0104 and similar scenarios delete VirtualService/bookinfo; restore sample networking once. */

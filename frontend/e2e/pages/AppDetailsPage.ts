@@ -2,8 +2,8 @@ import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage';
+import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
-import { waitForLoadingComplete } from '../utils/transition';
 
 export class AppDetailsPage extends BasePage {
   async openApp(namespace: string, name: string): Promise<void> {
@@ -23,23 +23,7 @@ export class AppDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    await openDetailsTab(this.page, 'Traffic');
-    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
-    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
-    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-
-    const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
-    await expect(inbound).toBeVisible();
-    await expect(async () => {
-      const inboundText = (await inbound.textContent()) ?? '';
-      if (!/productpage/i.test(inboundText)) {
-        await this.getBySel('refresh-button').click();
-        await waitForLoadingComplete(this.page);
-        await openDetailsTab(this.page, 'Traffic');
-        throw new Error('productpage not visible in details inbound traffic yet');
-      }
-      await expect(inbound).toContainText(/productpage/i);
-    }).toPass({ intervals: [10_000], timeout: 120_000 });
+    await expectDetailsTrafficTab(this.page, { inboundListContent: /productpage/i });
     await expectClusterColumnHidden(this.page);
   }
 
