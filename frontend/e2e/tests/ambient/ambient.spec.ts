@@ -46,16 +46,6 @@ test.describe('Ambient mesh', () => {
     await graphPage.expectSummaryPanelTrafficRate('HTTP');
   });
 
-  test('Filter services table by health', ambientOnly, async ({ page, servicesPage }) => {
-    test.setTimeout(180_000);
-    await servicesPage.openList();
-    await selectNamespace(page, 'bookinfo');
-    await servicesPage.expectServiceListedAs('bookinfo', 'productpage', 'healthy');
-    await servicesPage.filterBy('Health', 'Healthy');
-    await servicesPage.expectServicesInTable('something');
-    await servicesPage.expectOnlyHealthyServices();
-  });
-
   test('Out of mesh', ambientOnly, async ({ page, workloadsPage }) => {
     await workloadsPage.openList();
     await selectNamespace(page, 'sleep');

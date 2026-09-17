@@ -1507,10 +1507,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   if [ "${TESTS_ONLY}" == "false" ]; then
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --ambient true --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
-    # Same demos as Cypress frontend-ambient (ambient bookinfo + travel agency + sleep).
+    # Same demos as Cypress frontend-ambient (ambient bookinfo + travel agency; sleep via install-testing-demos).
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
     "${SCRIPT_DIR}"/istio/install-travel-agency-demo.sh -c kubectl -ai false -di travel-control,travel-agency,travel-portal -w true
-    kubectl rollout status deployment/sleep -n sleep --timeout=120s
   fi
 
   infomsg "Setup complete."
