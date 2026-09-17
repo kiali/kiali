@@ -272,6 +272,22 @@ export const expectOnlyHealthyInTable = async (page: Page): Promise<void> => {
   ).toHaveCount(0);
 };
 
+export const expectOnlyNaInTable = async (page: Page): Promise<void> => {
+  const icons = page.locator('tbody td[data-label="Health"] span.pf-v6-c-icon');
+  const count = await icons.count();
+  expect(count).toBeGreaterThan(0);
+  for (let i = 0; i < count; i++) {
+    const className = await icons.nth(i).getAttribute('class');
+    expect(className).toBeTruthy();
+    expect(className!.includes('icon-na')).toBeTruthy();
+  }
+  await expect(
+    page.locator(
+      'tbody span[class*="icon-unhealthy"], tbody span[class*="icon-degraded"], tbody span[class*="icon-healthy"]'
+    )
+  ).toHaveCount(0);
+};
+
 export const expectServicesInTable = async (page: Page, result: 'nothing' | 'something' | string): Promise<void> => {
   if (result === 'nothing') {
     await expect(page.locator('tbody')).toContainText('No services found');

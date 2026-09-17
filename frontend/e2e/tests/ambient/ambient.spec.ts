@@ -1,0 +1,81 @@
+import { test } from '../../fixtures/kialiFixtures';
+import { pollServiceHealthStatus } from '../../utils/health';
+import { selectNamespace } from '../../utils/namespace';
+import { ambientOnly } from '../../utils/suite-tags';
+
+test.describe('Ambient mesh', () => {
+  test('Ambient badge is visible on namespaces list', ambientOnly, async ({ namespacesPage }) => {
+    await namespacesPage.openList();
+    await namespacesPage.expectNamespaceVisible('istio-system');
+    await namespacesPage.expectBadgeOnNamespace('istio-system', 'Ambient');
+  });
+
+  test('Open traffic dropdown for ambient', ambientOnly, async ({ graphPage }) => {
+    await graphPage.graphNamespaces('');
+    await graphPage.openTrafficMenu();
+    await graphPage.expectTrafficMenuVisible();
+  });
+
+  test('Close traffic dropdown for ambient', ambientOnly, async ({ graphPage }) => {
+    await graphPage.graphNamespaces('');
+    await graphPage.openTrafficMenu();
+    await graphPage.closeTrafficMenu();
+    await graphPage.expectTrafficMenuHidden();
+  });
+
+  test('User sees tcp traffic', ambientOnly, async ({ graphPage }) => {
+    test.setTimeout(180_000);
+    await graphPage.graphNamespaces('bookinfo', '0', '600s');
+    await graphPage.expectNamespaceInSummaryPanel('bookinfo');
+    await graphPage.openTrafficMenu();
+    await graphPage.setTrafficOption('http', false);
+    await graphPage.closeTrafficMenu();
+    await graphPage.expectTrafficVisible('tcp');
+    await graphPage.expectTrafficProtocol('http', false);
+    await graphPage.expectSummaryPanelTrafficRate('TCP');
+  });
+
+  test('User sees http traffic', ambientOnly, async ({ graphPage }) => {
+    test.setTimeout(180_000);
+    await graphPage.graphNamespaces('bookinfo', '0', '600s');
+    await graphPage.expectNamespaceInSummaryPanel('bookinfo');
+    await graphPage.openTrafficMenu();
+    await graphPage.setTrafficOption('tcp', false);
+    await graphPage.closeTrafficMenu();
+    await graphPage.expectTrafficVisible('http');
+    await graphPage.expectTrafficProtocol('tcp', false);
+    await graphPage.expectSummaryPanelTrafficRate('HTTP');
+  });
+
+  test('Filter services table by health', ambientOnly, async ({ page, request, servicesPage }) => {
+    test.setTimeout(120_000);
+    // Ambient KinD often keeps service request-rate health at NA despite graph traffic (istio_requests_total).
+    const apiHealth = await pollServiceHealthStatus(request, 'bookinfo', 'productpage', 30_000);
+    await servicesPage.openList();
+    await selectNamespace(page, 'bookinfo');
+
+    if (apiHealth === 'Healthy') {
+      await servicesPage.filterBy('Health', 'Healthy');
+      await servicesPage.expectServicesInTable('something');
+      await servicesPage.expectOnlyHealthyServices();
+      return;
+    }
+
+    await servicesPage.filterBy('Health', 'n/a');
+    await servicesPage.expectServicesInTable('something');
+    await servicesPage.expectOnlyNaServices();
+    await servicesPage.expectServiceListedAs('bookinfo', 'productpage', 'na');
+  });
+
+  test('Out of mesh', ambientOnly, async ({ page, workloadsPage }) => {
+    await workloadsPage.openList();
+    await selectNamespace(page, 'sleep');
+    await workloadsPage.expectTextInTable('Out of mesh');
+  });
+
+  test('See ambient label for workload', ambientOnly, async ({ workloadDetailsPage }) => {
+    await workloadDetailsPage.open('bookinfo', 'details-v1');
+    await workloadDetailsPage.expectAmbientBadge();
+    await workloadDetailsPage.expectMissingSidecarBadge(false, 'bookinfo', 'details-v1');
+  });
+});

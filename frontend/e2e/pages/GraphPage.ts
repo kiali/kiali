@@ -124,6 +124,13 @@ export class GraphPage extends BasePage {
     await expect(this.page.locator(`div#summary-panel-graph div#ns-${namespace}`)).toBeVisible();
   }
 
+  async expectSummaryPanelTrafficRate(protocol: 'HTTP' | 'TCP'): Promise<void> {
+    const panel = this.page.locator('#summary-panel-graph');
+    const labelPattern = protocol === 'HTTP' ? /HTTP \(requests per second\)/ : /TCP Traffic \(bytes per second\)/;
+    await expect(panel.getByText(labelPattern)).toBeVisible();
+    await expect(panel.getByRole('gridcell').filter({ hasText: /^\d/ }).first()).toBeVisible();
+  }
+
   async openDisplayMenu(): Promise<void> {
     await waitForLoadingComplete(this.page);
     const button = this.page.locator('button#display-settings');

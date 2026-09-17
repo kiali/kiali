@@ -275,6 +275,10 @@ export class WorkloadDetailsPage extends BasePage {
     await waitForLoadingComplete(this.page);
   }
 
+  async expectAmbientBadge(): Promise<void> {
+    await expect(this.getBySel('workload-details-card').locator('.pf-v6-c-label__content')).toContainText('Ambient');
+  }
+
   async expectMissingSidecarBadge(exists: boolean, namespace: string, workload: string): Promise<void> {
     const badge = this.getBySel(`missing-sidecar-badge-for-${workload}-workload-in-${namespace}-namespace`);
     if (exists) {
