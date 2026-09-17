@@ -188,6 +188,18 @@ The script invokes `configure-acm-mcoa.sh` internally. The helper:
    UWM Prometheus, including optional Kiali self-metrics.
 6. Adds those objects to the selected placement.
 
+The generated interval fields are explicit rather than inherited from defaults:
+the Istio `ServiceMonitor` and `PodMonitor` endpoints use `30s`, the propagated
+`PrometheusRule` group uses `30s`, and both MCOA `ScrapeConfig` jobs use `5m`.
+When Kiali is configured for hub Observatorium, its
+`thanos_proxy.scrape_interval` is also set to `5m`. The UWM ConfigMap is used
+only for the namespace exemption here; this setup does not set its global
+`prometheus.scrapeInterval` or `prometheus.evaluationInterval` values.
+
+For the relationship between these intervals, expected hub latency, and the
+query-window requirements, see the [Scrape Intervals](https://kiali.io/docs/configuration/multi-cluster/acm-observability/#scrape-intervals)
+guidance.
+
 The dedicated aggregation namespace is deliberately exempt from UWM label
 enforcement. Without that exemption, OpenShift would inject the rule namespace
 into selectors and recorded output, preventing a single rule from aggregating
@@ -420,8 +432,8 @@ If you ran the base infrastructure-only command without `--full`:
    control-plane, and workload resource metrics.
 
 With `--full`, Istio, the demo applications and their monitors, continuous
-traffic, and Kiali are already installed. Wait for the five-minute MCOA
-collection interval and then inspect the graphs. If you add other applications
+traffic, and Kiali are already installed. Review the [Scrape Intervals](https://kiali.io/docs/configuration/multi-cluster/acm-observability/#scrape-intervals)
+guidance before expecting the graphs to populate. If you add other applications
 later, create their monitors and rerun the wrapper with their namespaces in
 `--target-namespaces`; the shared aggregation rule does not change.
 
@@ -465,9 +477,9 @@ oc --context="${HUB_CONTEXT}" get --raw \
 ```
 
 All three queries should return a non-empty result. Hub Thanos is updated on
-the MCOA collection interval, so its value can lag the edge values by about
-five minutes. Compare presence and approximately corresponding counter values;
-do not expect exact point-in-time equality.
+the MCOA collection interval. Review the [Scrape Intervals](https://kiali.io/docs/configuration/multi-cluster/acm-observability/#scrape-intervals)
+guidance for the expected delay, and compare presence and approximately
+corresponding counter values rather than expecting exact point-in-time equality.
 
 You can see the metrics in the edge Prometheus, which include the "workload:" metrics:
 

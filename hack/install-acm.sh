@@ -799,8 +799,8 @@ spec:
     - key: istio-prometheus-ignore
       operator: DoesNotExist
   podMetricsEndpoints:
-  - path: /stats/prometheus
-    interval: 30s
+  - interval: 30s
+    path: /stats/prometheus
     relabelings:
     - action: keep
       sourceLabels: ["__meta_kubernetes_pod_container_name"]
@@ -2411,8 +2411,8 @@ spec:
     matchLabels:
       istio: pilot
   endpoints:
-  - port: http-monitoring
-    interval: 30s
+  - interval: 30s
+    port: http-monitoring
 EOF
 
   infomsg "Creating PodMonitor for istio-system..."

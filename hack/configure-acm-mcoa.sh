@@ -254,6 +254,7 @@ spec:
   params:
     match[]:
 $(scrape_matches)
+  scrapeInterval: 5m
 EOF
   add_resource_ref monitoring.rhobs scrapeconfigs kiali-istio-federation
 }
@@ -275,6 +276,7 @@ spec:
   params:
     match[]:
     - '{__name__=~"container_cpu_usage_seconds_total|container_memory_working_set_bytes"}'
+  scrapeInterval: 5m
 EOF
   add_resource_ref monitoring.rhobs scrapeconfigs "${name}"
 }
