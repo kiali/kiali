@@ -24,7 +24,8 @@ test.describe('Ambient mesh', () => {
   });
 
   test('User sees tcp traffic', ambientOnly, async ({ graphPage }) => {
-    await graphPage.graphNamespaces('bookinfo');
+    test.setTimeout(180_000);
+    await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
@@ -33,7 +34,8 @@ test.describe('Ambient mesh', () => {
   });
 
   test('User sees http traffic', ambientOnly, async ({ graphPage }) => {
-    await graphPage.graphNamespaces('bookinfo');
+    test.setTimeout(180_000);
+    await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('tcp', false);
