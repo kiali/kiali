@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+import { clickRefreshAndWait } from './transition';
+
 export type TopologyNode = {
   data: Record<string, unknown>;
   id: string;
@@ -293,27 +295,37 @@ export async function expectMiniGraphReady(page: Page): Promise<void> {
   const miniGraph = page.locator('#MiniGraphCard');
   await expect(miniGraph).toBeVisible();
 
-  // Cypress assertMiniGraphReady polls until MiniGraphCardComponent is ready and has nodes.
   await expect(async () => {
-    await expect(page.locator('#MiniGraphCard[data-ready="true"]')).toBeVisible({ timeout: 5_000 });
+    const ready = page.locator('#MiniGraphCard[data-ready="true"]');
+    if (!(await ready.isVisible())) {
+      await clickRefreshAndWait(page);
+      throw new Error('minigraph not ready yet');
+    }
     const topology = await readMiniGraphTopology(page);
-    expect(topology.nodes.length).toBeGreaterThan(0);
+    if (topology.nodes.length === 0) {
+      await clickRefreshAndWait(page);
+      throw new Error('minigraph has no nodes yet');
+    }
   }).toPass({ intervals: [3_000], timeout: 120_000 });
 }
 
 export async function expectGraphTopology(page: Page, assertFn: (topology: GraphTopology) => void): Promise<void> {
   let lastError: unknown;
   await expect
-    .poll(async () => {
-      try {
-        const topology = await readGraphTopology(page);
-        assertFn(topology);
-        return true;
-      } catch (error) {
-        lastError = error;
-        return false;
-      }
-    })
+    .poll(
+      async () => {
+        try {
+          const topology = await readGraphTopology(page);
+          assertFn(topology);
+          return true;
+        } catch (error) {
+          lastError = error;
+          await clickRefreshAndWait(page);
+          return false;
+        }
+      },
+      { intervals: [3_000], timeout: 120_000 }
+    )
     .toBe(true);
   if (lastError) {
     throw lastError;

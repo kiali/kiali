@@ -15,3 +15,22 @@ export const selectNamespaces = async (page: Page, namespaces: string[]): Promis
 export const selectNamespace = async (page: Page, namespace: string): Promise<void> => {
   await selectNamespaces(page, [namespace]);
 };
+
+/** Select exactly the given namespaces (unchecks all others). */
+export const selectOnlyNamespaces = async (page: Page, namespaces: string[]): Promise<void> => {
+  const selected = new Set(namespaces);
+  await page.getByTestId('namespace-dropdown').click();
+  const checkboxes = page.getByTestId('namespace-dropdown-list').getByRole('checkbox');
+  const count = await checkboxes.count();
+  for (let i = 0; i < count; i++) {
+    const checkbox = checkboxes.nth(i);
+    const label = (await checkbox.getAttribute('aria-label')) ?? '';
+    if (selected.has(label)) {
+      await checkbox.check();
+    } else {
+      await checkbox.uncheck();
+    }
+  }
+  await page.getByTestId('namespace-dropdown').click();
+  await waitForLoadingComplete(page);
+};
