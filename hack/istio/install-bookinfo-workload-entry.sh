@@ -60,7 +60,7 @@ function inject_sidecar {
         --volume ${DATA_DIR}/mesh.yaml:/etc/istio/config/mesh:Z \
         --volume ${DATA_DIR}/istio-token:/var/run/secrets/tokens/istio-token:Z \
         --add-host istiod.istio-system.svc:$EXTERNAL_IP \
-        gcr.io/istio-release/proxyv2:1.9.5 istio-iptables -p "15001" -z "15006" -u "1337" -m REDIRECT -i '*' -x "" -b '*' -d 15090,15021,15020
+        docker.io/istio/proxyv2:1.9.5 istio-iptables -p "15001" -z "15006" -u "1337" -m REDIRECT -i '*' -x "" -b '*' -d 15090,15021,15020
     sudo podman wait ${WORKLOAD_NAME}-istio-init
     
     # 1337 is the istio-proxy uid/gid. The container needs to run as this user in part
@@ -74,7 +74,7 @@ function inject_sidecar {
         --volume ${DATA_DIR}/mesh.yaml:/etc/istio/config/mesh:Z \
         --volume ${DATA_DIR}/istio-token:/var/run/secrets/tokens/istio-token:Z \
         --add-host istiod.istio-system.svc:$EXTERNAL_IP \
-        gcr.io/istio-release/proxyv2:1.9.5 proxy sidecar \
+        docker.io/istio/proxyv2:1.9.5 proxy sidecar \
         --log_output_level all:debug
 }
 
@@ -100,4 +100,3 @@ function create_workload_pod {
 
 create_ingress_and_wait_till_ready
 create_workload_pod ratings-v1
-
