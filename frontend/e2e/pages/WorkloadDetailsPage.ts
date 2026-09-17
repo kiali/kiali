@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage';
+import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { restartWorkload } from '../utils/sidecarInjection';
 import { waitForLoadingComplete } from '../utils/transition';
@@ -154,10 +155,7 @@ export class WorkloadDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    await openDetailsTab(this.page, 'Traffic');
-    await expect(this.page.getByText('Inbound Traffic')).toBeVisible();
-    await expect(this.page.getByText('No Inbound Traffic')).toHaveCount(0);
-    await expect(this.page.getByText('No Outbound Traffic')).toBeVisible();
+    await expectDetailsTrafficTab(this.page, { expectEmptyOutbound: true });
     await expectClusterColumnHidden(this.page);
   }
 

@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage';
+import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { waitForLoadingComplete } from '../utils/transition';
 
@@ -105,26 +106,12 @@ export class ServiceDetailsPage extends BasePage {
   }
 
   async expectTrafficInformation(): Promise<void> {
-    await openDetailsTab(this.page, 'Traffic');
-    const trafficCard = this.page.locator('.pf-v6-c-card__body').filter({ hasText: 'Inbound Traffic' });
-    await expect(trafficCard.getByText('Inbound Traffic')).toBeVisible();
-    await expect(trafficCard.getByText('No Inbound Traffic')).toHaveCount(0);
-    await expect(this.page.getByText('Outbound Traffic')).toBeVisible();
-    await expect(this.page.getByText('No Outbound Traffic')).toHaveCount(0);
-    const inbound = this.page.getByRole('grid', { name: 'Inbound Traffic List' });
-    const outbound = this.page.getByRole('grid', { name: 'Outbound Traffic List' });
-    await expect(inbound).toBeVisible();
-    await expect(outbound).toBeVisible();
-    await expect(async () => {
-      const inboundText = (await inbound.textContent()) ?? '';
-      if (!/ingressgateway/i.test(inboundText)) {
-        await this.getBySel('refresh-button').click();
-        await waitForLoadingComplete(this.page);
-        await openDetailsTab(this.page, 'Traffic');
-        throw new Error('istio-ingressgateway not visible in inbound traffic yet');
-      }
-      await expect(inbound).toContainText(/ingressgateway/i);
-    }).toPass({ intervals: [10_000], timeout: 120_000 });
+    await expectDetailsTrafficTab(this.page, {
+      inboundListContent: /ingressgateway/i,
+      requireBothTrafficGrids: true,
+      requireOutboundRows: true,
+      scopeInboundToTrafficCard: true
+    });
     await expectClusterColumnHidden(this.page);
   }
 
