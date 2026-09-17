@@ -14,7 +14,6 @@ import {
   expectTableHeadings,
   sortListByColumn
 } from '../utils/table';
-import { getClusterForSingleCluster } from '../utils/cluster';
 import { waitForLoadingComplete } from '../utils/transition';
 
 const COLUMN_MANAGEMENT_MODAL = '[data-ouia-component-id="ColumnManagementModal"]';
@@ -39,8 +38,7 @@ export class NamespacesPage extends BasePage {
   }
 
   async expectBadgeOnNamespace(namespace: string, badge: string): Promise<void> {
-    const cluster = await getClusterForSingleCluster(this.page.request);
-    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}`)).toContainText(badge);
+    await expectColumnTextOnRow(this.page, namespace, 'Mode', badge);
   }
 
   async clickNamespaceDetailLink(namespace: string): Promise<void> {
