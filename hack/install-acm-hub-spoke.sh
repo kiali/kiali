@@ -6,8 +6,8 @@
 #   - Spoke: Istio mesh workloads and UWM scrape raw istio_* into edge Prometheus.
 #   - Hub: ACM Observatorium/Thanos stores federated metrics; optional Kiali UI.
 #
-# MCOA on the spoke edge aggregates traffic with namespace-scoped recording
-# rules, federates selected metrics to the hub, and Kiali (when installed)
+# MCOA on the spoke edge aggregates traffic in one dedicated namespace,
+# federates selected metrics to the hub, and Kiali (when installed)
 # queries Observatorium there.
 # The caller's current kubeconfig context is never changed.
 
@@ -23,7 +23,7 @@ ACM_CHANNEL="release-2.17"
 ACM_NAMESPACE="open-cluster-management"
 OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
 TARGET_NAMESPACES="istio-system"
-RULE_NAMESPACE="istio-system"
+RULE_NAMESPACE="mesh-observability"
 PLACEMENT_NAME=""
 PLACEMENT_NAMESPACE=""
 MINIO_ACCESS_KEY="minio"
@@ -86,13 +86,12 @@ Options:
   --acm-channel CHANNEL          ACM subscription channel (default: release-2.17).
   --acm-namespace NS             ACM operator namespace.
   --observability-namespace NS   ACM observability namespace.
-  --target-namespaces NS[,NS...] Namespaces that receive edge PrometheusRules.
-                                 List every mesh/control-plane namespace whose
-                                 Istio traffic Kiali must show. Must include
-                                 --rule-namespace. Ambient Istio installation
+  --target-namespaces NS[,NS...] Application/control-plane namespaces used for
+                                 mesh monitors. Ambient Istio installation
                                  automatically adds ztunnel.
-  --rule-namespace NS            Control-plane recording-rule namespace that must
-                                 be in the target set (default: istio-system).
+  --rule-namespace NS            Dedicated UWM-exempt namespace receiving the
+                                 single cross-namespace recording rule
+                                 (default: mesh-observability).
   --placement-name NAME          MCOA placement to configure. Required if MCOA has
                                  more than one placement.
   --placement-namespace NS       Namespace of --placement-name.
@@ -388,8 +387,6 @@ validate_args() {
   validate_namespace "${SIDECAR_APP_NAMESPACE}"
   validate_namespace "${AMBIENT_APP_NAMESPACE}"
   normalize_target_namespaces
-  target_namespace_list_contains "${RULE_NAMESPACE}" || \
-    die "--rule-namespace (${RULE_NAMESPACE}) must appear in --target-namespaces"
 
   oc config get-contexts "${HUB_CONTEXT}" -o name 2>/dev/null | grep -Fxq "${HUB_CONTEXT}" || \
     die "Kubeconfig context not found: ${HUB_CONTEXT}"
@@ -443,9 +440,14 @@ enable_uwm() {
   if oc --context="${context}" get configmap cluster-monitoring-config \
     -n openshift-monitoring >/dev/null 2>&1; then
     config=$(oc --context="${context}" get configmap cluster-monitoring-config \
-      -n openshift-monitoring -o jsonpath='{.data.config\.yaml}')
-    printf '%s\n' "${config}" | grep -Eq '^[[:space:]]*enableUserWorkload:[[:space:]]*true([[:space:]]|$)' || \
-      die "cluster-monitoring-config already exists on ${role} without enableUserWorkload: true; enable it without discarding the existing monitoring configuration, then rerun"
+      -n openshift-monitoring -o json)
+    printf '%s\n' "${config}" | jq '.data //= {} |
+      .data["config.yaml"] = ((.data["config.yaml"] // "") |
+        if test("(^|\\n)[[:space:]]*enableUserWorkload:") then
+          gsub("enableUserWorkload:[[:space:]]*[^\\n]*";
+               "enableUserWorkload: true")
+        else . + "\\nenableUserWorkload: true\\n" end)' | \
+      oc --context="${context}" apply -f - >/dev/null
   else
     info "Enabling User Workload Monitoring on ${role}"
     cat <<'EOF' | oc --context="${context}" apply -f -
@@ -462,6 +464,75 @@ metadata:
 EOF
   fi
   wait_until "UWM on ${role}" uwm_ready "${context}"
+}
+
+configure_mcoa_uwm_namespace() {
+  local context=$1 namespace=${RULE_NAMESPACE} existing updated
+  info "Ensuring MCOA aggregation namespace ${namespace} is exempt from UWM label enforcement"
+  oc --context="${context}" create namespace "${namespace}" \
+    --dry-run=client -o yaml | oc --context="${context}" apply -f - >/dev/null
+
+  if ! oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring >/dev/null 2>&1; then
+    cat <<EOF | oc --context="${context}" apply -f - >/dev/null
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+  annotations:
+    kiali.io/mcoa-rule-namespace: ${namespace}
+data:
+  config.yaml: |
+    namespacesWithoutLabelEnforcement:
+    - ${namespace}
+EOF
+    return
+  fi
+
+  existing=$(oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null || true)
+  if printf '%s\n' "${existing}" | grep -Eq \
+    "^[[:space:]]*-[[:space:]]*['\"]?${namespace}['\"]?[[:space:]]*$|namespacesWithoutLabelEnforcement:.*${namespace}"; then
+    return
+  fi
+  if [ -z "${existing}" ]; then
+    updated=$(printf 'namespacesWithoutLabelEnforcement:\n- %s\n' "${namespace}")
+  elif printf '%s\n' "${existing}" | grep -Eq \
+    '^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\['; then
+    updated=$(printf '%s\n' "${existing}" | sed -E \
+      "s#^([[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\[)([[:space:]]*)\](.*)$#\\1\"${namespace}\"\\3#; s#^([[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\[)([^]]+)(\].*)$#\\1\\2, \"${namespace}\"\\3#")
+  elif printf '%s\n' "${existing}" | grep -Eq \
+    '^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*$'; then
+    updated=$(printf '%s\n' "${existing}" | awk -v ns="${namespace}" \
+      '/^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*$/ {print; print "- " ns; added=1; next} {print} END {if (!added) print "namespacesWithoutLabelEnforcement:\n- " ns}')
+  else
+    updated=$(printf '%s\nnamespacesWithoutLabelEnforcement:\n- %s\n' "${existing}" "${namespace}")
+  fi
+  oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o json | \
+    jq --arg cfg "${updated}" --arg ns "${namespace}" \
+      '(.data //= {}) | (.data["config.yaml"]=$cfg) | (.metadata.annotations //= {}) |
+       .metadata.annotations["kiali.io/mcoa-rule-namespace"]=$ns' | \
+    oc --context="${context}" apply -f - >/dev/null
+}
+
+remove_mcoa_uwm_namespace() {
+  local context=$1 namespace=${RULE_NAMESPACE} owner existing updated
+  owner=$(oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring \
+    -o jsonpath='{.metadata.annotations.kiali\.io/mcoa-rule-namespace}' 2>/dev/null || true)
+  [ "${owner}" = "${namespace}" ] || return 0
+  existing=$(oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null || true)
+  updated=$(printf '%s\n' "${existing}" | awk -v ns="${namespace}" \
+    '$0 !~ "^[[:space:]]*-[[:space:]]*[\\\"'"'"']?" ns "[\\\"'"'"']?[[:space:]]*$" {print}')
+  oc --context="${context}" get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o json | \
+    jq --arg cfg "${updated}" \
+      '(.data //= {}) | (.data["config.yaml"]=$cfg) | (.metadata.annotations //= {}) |
+       del(.metadata.annotations["kiali.io/mcoa-rule-namespace"])' | \
+    oc --context="${context}" apply -f - >/dev/null
 }
 
 install_hub() {
@@ -540,6 +611,8 @@ EOF
 ensure_target_namespaces() {
   local namespace
   local -a namespaces
+  info "Ensuring MCOA aggregation namespace ${RULE_NAMESPACE} exists on the spoke"
+  oc_spoke create namespace "${RULE_NAMESPACE}" --dry-run=client -o yaml | oc_spoke apply -f -
   IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
   for namespace in "${namespaces[@]}"; do
     # MCOA needs each target namespace to exist before it can propagate the
@@ -555,7 +628,6 @@ configure_federation() {
     install
     --hub-context "${HUB_CONTEXT}"
     --observability-namespace "${OBSERVABILITY_NAMESPACE}"
-    --target-namespaces "${TARGET_NAMESPACES}"
     --rule-namespace "${RULE_NAMESPACE}"
     --timeout "${TIMEOUT}"
   )
@@ -577,7 +649,6 @@ verify_federation_config() {
     verify
     --hub-context "${HUB_CONTEXT}"
     --observability-namespace "${OBSERVABILITY_NAMESPACE}"
-    --target-namespaces "${TARGET_NAMESPACES}"
     --rule-namespace "${RULE_NAMESPACE}"
     --timeout "${TIMEOUT}"
   )
@@ -605,22 +676,18 @@ mco_ready() {
 }
 
 rule_name() {
-  printf 'kiali-istio-aggregation-%s' "$1" | tr -c 'a-z0-9-' '-'
+  printf 'kiali-istio-aggregation'
 }
 
 propagated_rule_ready() {
-  local context=$1 namespace=$2
-  oc --context="${context}" get prometheusrule "$(rule_name "${namespace}")" \
-    -n "${namespace}" >/dev/null 2>&1
+  local context=$1
+  oc --context="${context}" get prometheusrule "$(rule_name)" \
+    -n "${RULE_NAMESPACE}" >/dev/null 2>&1
 }
 
 propagated_rules_ready() {
-  local context=$1 namespace
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  for namespace in "${namespaces[@]}"; do
-    propagated_rule_ready "${context}" "${namespace}" || return 1
-  done
+  local context=$1
+  propagated_rule_ready "${context}"
 }
 
 istiod_ready() {
@@ -656,7 +723,6 @@ install_spoke_istio() {
     --istio-cluster-name "${SPOKE_NAME}"
     --metrics-collection-mode mcoa
     --mcoa-hub-context "${HUB_CONTEXT}"
-    --mcoa-target-namespaces "${TARGET_NAMESPACES}"
     --mcoa-rule-namespace "${RULE_NAMESPACE}"
     --observability-namespace "${OBSERVABILITY_NAMESPACE}"
     --skip-mcoa-reconcile
@@ -677,8 +743,8 @@ install_spoke_istio() {
       append_target_namespace "${ztunnel_namespace}"
       info "Extending MCOA federation for ztunnel in ${ztunnel_namespace}"
       configure_federation
-      wait_until "${ztunnel_namespace} recording rule propagation to the spoke" \
-        propagated_rule_ready "${SPOKE_CONTEXT}" "${ztunnel_namespace}"
+      wait_until "recording rule propagation to the spoke" \
+        propagated_rule_ready "${SPOKE_CONTEXT}"
     fi
   fi
 }
@@ -902,6 +968,7 @@ install_all() {
   prepare_temporary_kubeconfigs
   enable_uwm hub "${HUB_CONTEXT}"
   enable_uwm spoke "${SPOKE_CONTEXT}"
+  configure_mcoa_uwm_namespace "${SPOKE_CONTEXT}"
   install_hub
   wait_until "hub self-management" managed_cluster_ready local-cluster
   import_spoke
@@ -926,6 +993,7 @@ install_demo_apps_only() {
   check_cluster_access spoke "${SPOKE_CONTEXT}"
   prepare_temporary_kubeconfigs
   ensure_target_namespaces
+  configure_mcoa_uwm_namespace "${SPOKE_CONTEXT}"
   configure_federation
   wait_until "MCOA on ${SPOKE_NAME}" mcoa_addon_ready "${SPOKE_NAME}"
   wait_until "recording rule propagation to the spoke" propagated_rules_ready "${SPOKE_CONTEXT}"
@@ -954,7 +1022,6 @@ uninstall_federation() {
     uninstall
     --hub-context "${HUB_CONTEXT}"
     --observability-namespace "${OBSERVABILITY_NAMESPACE}"
-    --target-namespaces "${TARGET_NAMESPACES}"
     --rule-namespace "${RULE_NAMESPACE}"
     --timeout "${TIMEOUT}"
   )
@@ -1238,6 +1305,7 @@ uninstall_all() {
   uninstall_hub_kiali
   uninstall_spoke_istio
   uninstall_federation
+  remove_mcoa_uwm_namespace "${SPOKE_CONTEXT}"
   remove_spoke_import
   cleanup_spoke_acm_residue
   uninstall_hub_acm

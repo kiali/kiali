@@ -19,7 +19,8 @@ The script installs and configures:
 - Development MinIO storage and `MultiClusterObservability` on the hub.
 - The spoke `ManagedCluster`, auto-import secret, and `KlusterletAddonConfig`.
 - MCOA platform and user-workload metrics capabilities.
-- Kiali's MCOA `ScrapeConfig` resources, namespace-scoped edge `PrometheusRule` resources, and their placement references.
+- Kiali's MCOA `ScrapeConfig` resources, one shared edge `PrometheusRule` in
+  `mesh-observability`, and their placement references.
 
 With `--full`, it also installs Istio and the Istio metrics monitors on the
 spoke, installs continuously generating sidecar and Ambient demo applications,
@@ -55,7 +56,7 @@ Run this from the Kiali repository:
   --spoke-context "<spoke-kubecontext>" \
   --full \
   --target-namespaces "istio-system,<application-namespace-1>,<application-namespace-2>" \
-  --rule-namespace "istio-system"
+  --rule-namespace "mesh-observability"
 ```
 
 `install` is the default command. This is equivalent:
@@ -67,18 +68,14 @@ Run this from the Kiali repository:
   --full
 ```
 
-If `--spoke-name` is omitted, it defaults to `--spoke-context`. The default
-target and rule namespace is `istio-system`. `--rule-namespace` must also appear
-in `--target-namespaces` so the edge recording rule for istiod is created. List
-every namespace whose Istio traffic Kiali must display, normally `istio-system`
-plus every application namespace. Platform CPU and memory metrics are collected
-cluster-wide. OpenShift enforces
-UWM rule tenancy by injecting the rule object's namespace into its PromQL and
-recorded series. The wrapper therefore creates one aggregation rule per target
-namespace; those injected matchers keep evaluation disjoint rather than
-duplicating series. For Ambient Istio, the wrapper discovers whether the
-ztunnel daemon set runs in `ztunnel` or `istio-system` and federates only that
-namespace.
+If `--spoke-name` is omitted, it defaults to `--spoke-context`. The default rule
+namespace is `mesh-observability`; it is exempted from UWM label enforcement so
+one cross-namespace recording rule can aggregate all scraped mesh namespaces.
+List application and control-plane namespaces in `--target-namespaces` only so
+the wrapper can create the required monitors. Platform CPU and memory metrics
+are collected cluster-wide. For Ambient Istio, the wrapper discovers whether
+the ztunnel daemon set runs in `ztunnel` or `istio-system` and configures its
+monitor there.
 
 Use `--with-dashboards` to add the full Istio dashboard metric tier. Run the
 script with `--help` for all channel, namespace, MinIO, placement, and timeout
@@ -165,11 +162,13 @@ spoke context. It waits for `ManagedClusterJoined=True` and
 On a repeated run, an available managed cluster does not receive a new import
 secret.
 
-### 4. Prepare MCOA target namespaces
+### 4. Prepare MCOA aggregation namespace and mesh monitor namespaces
 
-The script ensures that every target namespace exists on the spoke, giving MCOA
-valid destinations for the propagated recording rules. This does not otherwise
-configure those namespaces for a mesh.
+The script creates the dedicated `mesh-observability` namespace and adds it to
+UWM's `namespacesWithoutLabelEnforcement` configuration. It also ensures the
+application and control-plane namespaces listed in `--target-namespaces` exist
+so their `ServiceMonitor`/`PodMonitor` resources can be installed. Application
+namespaces are not MCOA rule destinations.
 
 MCOA supplies the `ScrapeConfig` API and its managed-cluster metrics component;
 the full Cluster Observability Operator is not required for federation.
@@ -184,15 +183,15 @@ The script invokes `configure-acm-mcoa.sh` internally. The helper:
    `workload:istio_*` series.
 4. Creates one cluster-wide platform `ScrapeConfig` for Kiali's pod CPU and
    memory queries. It federates those metrics from all namespaces.
-5. Creates one edge `PrometheusRule` per target namespace to aggregate that
-   namespace's high-cardinality Istio traffic series in spoke UWM Prometheus.
+5. Creates one edge `PrometheusRule` in `mesh-observability` to aggregate
+   high-cardinality Istio traffic series from all scraped namespaces in spoke
+   UWM Prometheus, including optional Kiali self-metrics.
 6. Adds those objects to the selected placement.
 
-OpenShift rewrites each user-workload rule selector with its target namespace
-and adds that namespace to the recorded output. Consequently, a rule in
-`istio-system` cannot aggregate application telemetry in another namespace;
-each telemetry-producing namespace needs its own copy. The enforced matchers
-make the outputs disjoint and prevent duplicate `workload:istio_*` series.
+The dedicated aggregation namespace is deliberately exempt from UWM label
+enforcement. Without that exemption, OpenShift would inject the rule namespace
+into selectors and recorded output, preventing a single rule from aggregating
+application telemetry across namespaces.
 
 If MCOA has exactly one placement, it is selected automatically. If it has
 more than one, the script aborts and lists the choices. Rerun with:
@@ -207,7 +206,7 @@ This avoids sending namespace-specific resources to an unrelated cluster set.
 ### 6. Verify propagation
 
 The script waits for the MCOA managed-cluster add-on on the named spoke and for
-a Kiali recording rule in each target namespace. It then checks MCOA
+the shared Kiali recording rule in `mesh-observability`. It then checks MCOA
 capabilities, hub source resources, and every selected placement reference.
 Any failed check exits nonzero. The management hub is not required to receive
 the edge rule or run the managed-cluster add-on because it does not host the
@@ -394,7 +393,7 @@ Run this after installation or while diagnosing a partial setup:
   --spoke-context "<spoke-kubecontext>" \
   --full \
   --target-namespaces "istio-system,<application-namespace-1>,<application-namespace-2>" \
-  --rule-namespace "istio-system" \
+  --rule-namespace "mesh-observability" \
   --placement-name "<placement-name>" \
   --placement-namespace "<placement-namespace>"
 ```
@@ -423,7 +422,8 @@ If you ran the base infrastructure-only command without `--full`:
 With `--full`, Istio, the demo applications and their monitors, continuous
 traffic, and Kiali are already installed. Wait for the five-minute MCOA
 collection interval and then inspect the graphs. If you add other applications
-later, rerun the wrapper with their namespaces in `--target-namespaces`.
+later, create their monitors and rerun the wrapper with their namespaces in
+`--target-namespaces`; the shared aggregation rule does not change.
 
 The following will validate each stage of the traffic-metrics pipeline
 directly. The first query confirms that spoke UWM scrapes raw Istio counters.

@@ -5,8 +5,9 @@
 #
 # Metrics flow on each managed cluster:
 #   1. UWM scrapes raw istio_* series from ServiceMonitor/PodMonitor targets.
-#   2. A propagated PrometheusRule in each target namespace aggregates that
-#      namespace's traffic into workload:istio_*.
+#   2. A propagated PrometheusRule in the exempt mesh-observability namespace
+#      aggregates traffic from all namespaces into workload:istio_* and Kiali
+#      self-metrics into kiali:* series.
 #   3. MCOA's user-workload collector federates selected UWM series via /federate,
 #      relabels workload:istio_* back to istio_*, and remote-writes to hub Thanos.
 #   4. A cluster-wide platform federation job collects container CPU/memory for
@@ -24,8 +25,7 @@ RULES_DIR="${SCRIPT_DIR}/prometheus/federation"
 COMMAND=""
 HUB_CONTEXT=""
 OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
-TARGET_NAMESPACES=""
-RULE_NAMESPACE=""
+RULE_NAMESPACE="mesh-observability"
 WITH_DASHBOARDS=false
 PLACEMENT_NAME=""
 PLACEMENT_NAMESPACE=""
@@ -34,16 +34,14 @@ WAIT_TIMEOUT=600
 usage() {
   cat <<'EOF'
 Usage:
-  configure-acm-mcoa.sh install --hub-context CONTEXT --target-namespaces NS[,NS...]
-  configure-acm-mcoa.sh verify --hub-context CONTEXT --target-namespaces NS[,NS...]
-  configure-acm-mcoa.sh uninstall --hub-context CONTEXT --target-namespaces NS[,NS...]
+  configure-acm-mcoa.sh install --hub-context CONTEXT [--rule-namespace NAMESPACE]
+  configure-acm-mcoa.sh verify --hub-context CONTEXT [--rule-namespace NAMESPACE]
+  configure-acm-mcoa.sh uninstall --hub-context CONTEXT [--rule-namespace NAMESPACE]
 
 Options:
   --hub-context CONTEXT          Kubeconfig context for the ACM hub.
-  --target-namespaces NS[,NS...] Namespaces for namespace-scoped edge recording
-                                 rules. Must include --rule-namespace.
-  --rule-namespace NS            Namespace for the control-plane recording rule
-                                 that must be included in the target set (default: first).
+  --rule-namespace NS            Exempt namespace receiving the single cross-namespace
+                                 edge recording rule (default: mesh-observability).
   --observability-namespace NS   ACM observability namespace.
   --placement-name NAME          Existing MCOA placement to update. Optional only
                                  when the add-on has exactly one placement.
@@ -81,7 +79,6 @@ parse_args() {
       --placement-name) PLACEMENT_NAME="$2"; shift 2 ;;
       --placement-namespace) PLACEMENT_NAMESPACE="$2"; shift 2 ;;
       --rule-namespace) RULE_NAMESPACE="$2"; shift 2 ;;
-      --target-namespaces) TARGET_NAMESPACES="$2"; shift 2 ;;
       --timeout) WAIT_TIMEOUT="$2"; shift 2 ;;
       --with-dashboards) WITH_DASHBOARDS=true; shift ;;
       -h|--help) usage; exit 0 ;;
@@ -91,7 +88,7 @@ parse_args() {
 
   case "${COMMAND}" in install|uninstall|verify) ;; *) die "Unknown command: ${COMMAND}" ;; esac
   [ -n "${HUB_CONTEXT}" ] || die "--hub-context is required"
-  [ -n "${TARGET_NAMESPACES}" ] || die "--target-namespaces is required"
+  [[ "${RULE_NAMESPACE}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid rule namespace: ${RULE_NAMESPACE}"
   [ -z "${PLACEMENT_NAMESPACE}" ] || [ -n "${PLACEMENT_NAME}" ] || die "--placement-namespace requires --placement-name"
   [[ "${WAIT_TIMEOUT}" =~ ^[0-9]+$ ]] || die "--timeout must be a non-negative integer"
 }
@@ -226,19 +223,7 @@ scrape_matches() {
   if [ "${WITH_DASHBOARDS}" = true ]; then
     sed -n 's/^- /        - /p' "${RULES_DIR}/istio-dashboard-federation-match.yml"
   fi
-}
-
-namespace_regex() {
-  local namespace separator=""
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    [ -n "${namespace}" ] || continue
-    [[ "${namespace}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid Kubernetes namespace: ${namespace}"
-    printf '%s%s' "${separator}" "${namespace}"
-    separator="|"
-  done
+  sed -n 's/^- /        - /p' "${RULES_DIR}/kiali-metrics-federation-match.yml"
 }
 
 install_scrape_config() {
@@ -257,6 +242,11 @@ spec:
   metricRelabelings:
   - action: replace
     regex: 'workload:(.*)'
+    replacement: '\${1}'
+    sourceLabels: [__name__]
+    targetLabel: __name__
+  - action: replace
+    regex: 'kiali:(.*)'
     replacement: '\${1}'
     sourceLabels: [__name__]
     targetLabel: __name__
@@ -289,32 +279,15 @@ EOF
   add_resource_ref monitoring.rhobs scrapeconfigs "${name}"
 }
 
-rule_name_for_namespace() {
-  printf 'kiali-istio-aggregation-%s' "$1" | tr -c 'a-z0-9-' '-'
-}
-
-target_namespace_list_contains() {
-  local needle=$1 namespace
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    [ "${namespace}" = "${needle}" ] && return 0
-  done
-  return 1
-}
-
 install_rule() {
-  local namespace=$1 name
-  [[ "${namespace}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid Kubernetes namespace: ${namespace}"
-  name=$(rule_name_for_namespace "${namespace}")
+  local name=kiali-istio-aggregation
   {
     cat <<EOF
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   annotations:
-    observability.open-cluster-management.io/target-namespace: ${namespace}
+    observability.open-cluster-management.io/target-namespace: ${RULE_NAMESPACE}
   labels:
     app.kubernetes.io/component: user-workload-metrics-collector
     app.kubernetes.io/managed-by: kiali-mcoa-federation
@@ -324,6 +297,8 @@ metadata:
 spec:
 EOF
     sed 's/^/  /' "${RULES_DIR}/core-recording-rules.yml"
+    awk 'BEGIN {groups=0} /^groups:$/ {groups++; if (groups == 1) next} groups > 0 {print}' \
+      "${RULES_DIR}/kiali-metrics-recording-rules.yml" | sed 's/^/  /'
   } | oc_hub apply -f -
   add_resource_ref monitoring.coreos.com prometheusrules "${name}"
 }
@@ -331,31 +306,15 @@ EOF
 install_all() {
   command -v jq >/dev/null || die "jq is required"
   [ -f "${RULES_DIR}/core-recording-rules.yml" ] || die "Metric rule references not found in ${RULES_DIR}"
-  [ -n "$(namespace_regex)" ] || die "--target-namespaces must contain at least one namespace"
-  if [ -z "${RULE_NAMESPACE}" ]; then
-    RULE_NAMESPACE="${TARGET_NAMESPACES%%,*}"
-    RULE_NAMESPACE="${RULE_NAMESPACE// /}"
-  fi
   [[ "${RULE_NAMESPACE}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid rule namespace: ${RULE_NAMESPACE}"
-  target_namespace_list_contains "${RULE_NAMESPACE}" || \
-    die "--rule-namespace (${RULE_NAMESPACE}) must appear in --target-namespaces so its edge recording rule is created"
   enable_mcoa
   load_and_select_placement
   install_scrape_config
 
   install_platform_scrape_config
-
-  local namespace
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  # OpenShift enforces user-workload rule tenancy by injecting the rule object's
-  # target namespace into every selector and recorded series. Each namespace
-  # therefore needs its own rule; the enforced matchers prevent duplicates.
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    [ -n "${namespace}" ] || continue
-    install_rule "${namespace}"
-  done
+  # UWM label enforcement is deliberately disabled in RULE_NAMESPACE by the
+  # edge-cluster setup. This lets one rule aggregate all scraped mesh namespaces.
+  install_rule
 }
 
 verify_resource_ref() {
@@ -376,14 +335,8 @@ verify_resource_ref() {
 
 verify_all() {
   command -v jq >/dev/null || die "jq is required"
-  local failed=0 namespace name rule_name rule_target capabilities
-  [ -n "$(namespace_regex)" ] || die "--target-namespaces must contain at least one namespace"
-  if [ -z "${RULE_NAMESPACE}" ]; then
-    RULE_NAMESPACE="${TARGET_NAMESPACES%%,*}"
-    RULE_NAMESPACE="${RULE_NAMESPACE// /}"
-  fi
-  target_namespace_list_contains "${RULE_NAMESPACE}" || \
-    die "--rule-namespace (${RULE_NAMESPACE}) must appear in --target-namespaces"
+  local failed=0 name rule_target capabilities
+  [[ "${RULE_NAMESPACE}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || die "Invalid rule namespace: ${RULE_NAMESPACE}"
 
   capabilities=$(oc_hub get mco observability -o json 2>/dev/null | jq -r \
     '[.spec.capabilities.platform.metrics.default.enabled,
@@ -413,25 +366,19 @@ verify_all() {
     failed=1
   fi
 
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    [ -n "${namespace}" ] || continue
-    rule_name=$(rule_name_for_namespace "${namespace}")
-    if ! oc_hub get prometheusrule "${rule_name}" -n "${OBSERVABILITY_NAMESPACE}" >/dev/null 2>&1; then
-      echo "[ERROR] PrometheusRule/${rule_name} is missing" >&2
+  name=kiali-istio-aggregation
+  if ! oc_hub get prometheusrule "${name}" -n "${OBSERVABILITY_NAMESPACE}" >/dev/null 2>&1; then
+    echo "[ERROR] PrometheusRule/${name} is missing" >&2
+    failed=1
+  else
+    rule_target=$(oc_hub get prometheusrule "${name}" -n "${OBSERVABILITY_NAMESPACE}" \
+      -o jsonpath='{.metadata.annotations.observability\.open-cluster-management\.io/target-namespace}' 2>/dev/null || true)
+    [ "${rule_target}" = "${RULE_NAMESPACE}" ] || {
+      echo "[ERROR] PrometheusRule/${name} targets '${rule_target}', expected '${RULE_NAMESPACE}'" >&2
       failed=1
-    else
-      rule_target=$(oc_hub get prometheusrule "${rule_name}" -n "${OBSERVABILITY_NAMESPACE}" \
-        -o jsonpath='{.metadata.annotations.observability\.open-cluster-management\.io/target-namespace}' 2>/dev/null || true)
-      [ "${rule_target}" = "${namespace}" ] || {
-        echo "[ERROR] PrometheusRule/${rule_name} targets '${rule_target}', expected '${namespace}'" >&2
-        failed=1
-      }
-      verify_resource_ref monitoring.coreos.com prometheusrules "${rule_name}" || failed=1
-    fi
-  done
+    }
+    verify_resource_ref monitoring.coreos.com prometheusrules "${name}" || failed=1
+  fi
 
   [ "${failed}" -eq 0 ] || die "MCOA federation verification failed"
   echo "MCOA federation resources are configured for ${PLACEMENT_NAMESPACE}/${PLACEMENT_NAME}"
@@ -443,32 +390,20 @@ uninstall_all() {
     jq '(.spec.installStrategy.placements // []) | length' 2>/dev/null || echo 0)" -gt 0 ]; then
     load_and_select_placement
   fi
-  if [ -z "${RULE_NAMESPACE}" ]; then
-    RULE_NAMESPACE="${TARGET_NAMESPACES%%,*}"
-    RULE_NAMESPACE="${RULE_NAMESPACE// /}"
-  fi
-  local namespace name rule_name
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${TARGET_NAMESPACES}"
-  name=kiali-istio-platform-federation
+  local name=kiali-istio-platform-federation
   remove_resource_ref monitoring.rhobs scrapeconfigs "${name}"
   if hub_has_crd scrapeconfigs.monitoring.rhobs && \
     [ "$(resource_ref_count monitoring.rhobs scrapeconfigs "${name}")" -eq 0 ]; then
     oc_hub delete scrapeconfig "${name}" -n "${OBSERVABILITY_NAMESPACE}" --ignore-not-found
   fi
-  for namespace in "${namespaces[@]}"; do
-    namespace="${namespace// /}"
-    [ -n "${namespace}" ] || continue
-    rule_name=$(rule_name_for_namespace "${namespace}")
-    remove_resource_ref monitoring.coreos.com prometheusrules "${rule_name}"
-    if hub_has_crd prometheusrules.monitoring.coreos.com && \
-      [ "$(resource_ref_count monitoring.coreos.com prometheusrules "${rule_name}")" -eq 0 ]; then
-      oc_hub delete prometheusrule "${rule_name}" -n "${OBSERVABILITY_NAMESPACE}" --ignore-not-found
-    fi
-  done
+  name=kiali-istio-aggregation
+  remove_resource_ref monitoring.coreos.com prometheusrules "${name}"
+  if hub_has_crd prometheusrules.monitoring.coreos.com && \
+    [ "$(resource_ref_count monitoring.coreos.com prometheusrules "${name}")" -eq 0 ]; then
+    oc_hub delete prometheusrule "${name}" -n "${OBSERVABILITY_NAMESPACE}" --ignore-not-found
+  fi
 
-  # The user-workload ScrapeConfig is shared by every target namespace. Keep it
-  # registered until the final Kiali-managed aggregation rule has been removed.
+  # The user-workload ScrapeConfig is shared by the single aggregation rule.
   if ! hub_has_crd prometheusrules.monitoring.coreos.com || \
     ! oc_hub get prometheusrule -n "${OBSERVABILITY_NAMESPACE}" \
       -l app.kubernetes.io/managed-by=kiali-mcoa-federation -o name 2>/dev/null | grep -q .; then

@@ -163,8 +163,7 @@ DEFAULT_MINIO_SECRET_KEY="minio123"
 DEFAULT_CLIENT_EXE="oc"
 DEFAULT_TIMEOUT="1200"
 DEFAULT_MCOA_HUB_CONTEXT=""
-DEFAULT_MCOA_TARGET_NAMESPACES="istio-system"
-DEFAULT_MCOA_RULE_NAMESPACE="istio-system"
+DEFAULT_MCOA_RULE_NAMESPACE="mesh-observability"
 DEFAULT_METRICS_COLLECTION_MODE="mcoa"
 
 # Kiali defaults
@@ -293,16 +292,15 @@ data:
 EOF
   else
     infomsg "Updating cluster-monitoring-config ConfigMap..."
-    # Get existing config, add enableUserWorkload if not present
-    local existing_config=$(${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null)
-
-    if echo "${existing_config}" | grep -q "enableUserWorkload"; then
-      # Already has the setting, just update it to true
-      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
-    else
-      # Doesn't have the setting, add it
-      ${CLIENT_EXE} patch configmap cluster-monitoring-config -n openshift-monitoring --type merge -p '{"data":{"config.yaml":"enableUserWorkload: true\n"}}'
-    fi
+    # Preserve all existing monitoring settings while changing only this key.
+    ${CLIENT_EXE} get configmap cluster-monitoring-config -n openshift-monitoring -o json | \
+      jq '.data //= {} |
+          .data["config.yaml"] = ((.data["config.yaml"] // "") |
+            if test("(^|\\n)[[:space:]]*enableUserWorkload:") then
+              gsub("enableUserWorkload:[[:space:]]*[^\\n]*";
+                   "enableUserWorkload: true")
+            else . + "\\nenableUserWorkload: true\\n" end)' | \
+      ${CLIENT_EXE} apply -f -
   fi
 
   # Wait for User Workload Monitoring pods to be created
@@ -325,6 +323,84 @@ EOF
 
   infomsg "User Workload Monitoring enabled successfully"
   return 0
+}
+
+configure_mcoa_uwm_namespace() {
+  [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] || return 0
+  local namespace=$1 existing updated
+  [[ "${namespace}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] || {
+    errormsg "Invalid MCOA rule namespace: ${namespace}"
+    return 1
+  }
+  ${CLIENT_EXE} create namespace "${namespace}" --dry-run=client -o yaml | \
+    ${CLIENT_EXE} apply -f - >/dev/null
+
+  if ! ${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring >/dev/null 2>&1; then
+    cat <<EOF | ${CLIENT_EXE} apply -f - >/dev/null
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-workload-monitoring-config
+  namespace: openshift-user-workload-monitoring
+  annotations:
+    kiali.io/mcoa-rule-namespace: ${namespace}
+data:
+  config.yaml: |
+    namespacesWithoutLabelEnforcement:
+    - ${namespace}
+EOF
+    infomsg "Configured UWM cross-namespace rule exemption in ${namespace}"
+    return 0
+  fi
+  existing=$(${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null || true)
+  if printf '%s\n' "${existing}" | grep -Eq "^[[:space:]]*-[[:space:]]*['\"]?${namespace}['\"]?[[:space:]]*$|namespacesWithoutLabelEnforcement:.*${namespace}"; then
+    return 0
+  fi
+  if [ -z "${existing}" ]; then
+    updated=$(printf 'namespacesWithoutLabelEnforcement:\n- %s\n' "${namespace}")
+  elif printf '%s\n' "${existing}" | grep -Eq '^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\['; then
+    updated=$(printf '%s\n' "${existing}" | sed -E \
+      "s#^([[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\[)([[:space:]]*)\](.*)$#\\1\"${namespace}\"\\3#; s#^([[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\[)([^]]+)(\].*)$#\\1\\2, \"${namespace}\"\\3#")
+  elif printf '%s\n' "${existing}" | grep -Eq '^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*$'; then
+    updated=$(printf '%s\n' "${existing}" | awk -v ns="${namespace}" \
+      '/^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*$/ {print; print "- " ns; added=1; next} {print} END {if (!added) print "namespacesWithoutLabelEnforcement:\n- " ns}')
+  else
+    updated=$(printf '%s\nnamespacesWithoutLabelEnforcement:\n- %s\n' "${existing}" "${namespace}")
+  fi
+    ${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o json 2>/dev/null | \
+    jq --arg cfg "${updated}" --arg ns "${namespace}" \
+      '(.data //= {}) | (.data["config.yaml"]=$cfg) | (.metadata.annotations //= {}) |
+       .metadata.annotations["kiali.io/mcoa-rule-namespace"]=$ns' | \
+    ${CLIENT_EXE} apply -f - >/dev/null
+  infomsg "Configured UWM cross-namespace rule exemption in ${namespace}"
+}
+
+remove_mcoa_uwm_namespace() {
+  local namespace="${MCOA_RULE_NAMESPACE}" owner existing updated
+  owner=$(${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring \
+    -o jsonpath='{.metadata.annotations.kiali\.io/mcoa-rule-namespace}' 2>/dev/null || true)
+  [ "${owner}" = "${namespace}" ] || return 0
+  existing=$(${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o jsonpath='{.data.config\.yaml}' 2>/dev/null || true)
+  if printf '%s\n' "${existing}" | grep -Eq '^[[:space:]]*namespacesWithoutLabelEnforcement:[[:space:]]*\['; then
+    updated=$(printf '%s\n' "${existing}" | sed -E \
+      "s/,?[[:space:]]*\"?${namespace}\"?[[:space:]]*//")
+  else
+    updated=$(printf '%s\n' "${existing}" | awk -v ns="${namespace}" \
+      '$0 !~ "^[[:space:]]*-[[:space:]]*[\\\"'"'"']?" ns "[\\\"'"'"']?[[:space:]]*$" {print}')
+  fi
+  ${CLIENT_EXE} get configmap user-workload-monitoring-config \
+    -n openshift-user-workload-monitoring -o json | \
+    jq --arg cfg "${updated}" \
+      '(.data //= {}) | (.data["config.yaml"]=$cfg) |
+       (.metadata.annotations //= {}) |
+       del(.metadata.annotations["kiali.io/mcoa-rule-namespace"])' | \
+    ${CLIENT_EXE} apply -f - >/dev/null
+  infomsg "Removed Kiali-owned UWM cross-namespace rule exemption from ${namespace}"
 }
 
 check_access_prerequisites() {
@@ -2374,14 +2450,8 @@ EOF
     local hub_context="${MCOA_HUB_CONTEXT}"
     [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
     if command oc --context="${hub_context}" get mco observability >/dev/null 2>&1; then
-      local federation_namespaces="${MCOA_TARGET_NAMESPACES}"
-      if [ -n "${ztunnel_namespace:-}" ]; then
-        federation_namespaces=$(append_mcoa_namespace \
-          "${ztunnel_namespace}" "${federation_namespaces}")
-      fi
-      # Reconcile hub MCOA resources after monitors exist. Safe to repeat; may
-      # extend edge recording rules when ambient adds the ztunnel namespace.
-      run_mcoa_federation install "${federation_namespaces}"
+      # Reconcile one cross-namespace edge rule after monitors exist.
+      run_mcoa_federation install
     else
       warnmsg "MCOA federation was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
       warnmsg "After ACM observability is ready, run install-mcoa-federation with --mcoa-hub-context."
@@ -2661,22 +2731,18 @@ init_openshift() {
 ##############################################################################
 
 reconcile_app_mcoa_federation() {
-  local app_namespace=$1
   [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] || return 0
   [ "${SKIP_MCOA_RECONCILE}" != "true" ] || return 0
 
   local hub_context="${MCOA_HUB_CONTEXT}"
-  local target_namespaces
   [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
-  target_namespaces=$(append_mcoa_namespace \
-    "${app_namespace}" "${MCOA_TARGET_NAMESPACES}")
 
   if command oc --context="${hub_context}" get mco observability >/dev/null 2>&1; then
-    infomsg "Reconciling ACM MCOA federation for ${app_namespace}..."
-    run_mcoa_federation install "${target_namespaces}"
+    infomsg "Reconciling ACM MCOA federation for the shared mesh rule..."
+    run_mcoa_federation install
   else
-    warnmsg "MCOA federation for ${app_namespace} was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
-    warnmsg "After ACM observability is ready, run: $0 --mcoa-hub-context '${hub_context}' --mcoa-target-namespaces '${target_namespaces}' install-mcoa-federation"
+    warnmsg "MCOA federation was not configured because MCO/observability is unavailable on hub context '${hub_context}'."
+    warnmsg "After ACM observability is ready, run: $0 --mcoa-hub-context '${hub_context}' install-mcoa-federation"
   fi
 }
 
@@ -3653,65 +3719,26 @@ generate_ambient_traffic() {
 # Create All Function
 ##############################################################################
 
-full_setup_mcoa_namespaces() {
-  local namespace namespace_list
-  local -a namespaces
-  local -a requested=("${MCOA_TARGET_NAMESPACES}" "${SIDECAR_APP_NAMESPACE}")
-  if [ "${AMBIENT_MODE}" = "true" ]; then
-    requested+=("${AMBIENT_APP_NAMESPACE}")
-    if ${CLIENT_EXE} get daemonset ztunnel -n ztunnel >/dev/null 2>&1; then
-      requested+=("ztunnel")
-    fi
-  fi
-
-  local result=""
-  declare -A seen=()
-  for namespace_list in "${requested[@]}"; do
-    IFS=',' read -ra namespaces <<< "${namespace_list}"
-    for namespace in "${namespaces[@]}"; do
-      namespace="${namespace// /}"
-      [ -n "${namespace}" ] || continue
-      [ -z "${seen[${namespace}]:-}" ] || continue
-      seen[${namespace}]=1
-      result="${result:+${result},}${namespace}"
-    done
-  done
-  printf '%s' "${result}"
-}
-
-append_mcoa_namespace() {
-  local namespace=$1 namespace_list=$2 candidate
-  local -a namespaces
-  IFS=',' read -ra namespaces <<< "${namespace_list}"
-  for candidate in "${namespaces[@]}"; do
-    candidate=${candidate// /}
-    if [ "${candidate}" = "${namespace}" ]; then
-      printf '%s' "${namespace_list}"
-      return
-    fi
-  done
-  printf '%s' "${namespace_list:+${namespace_list},}${namespace}"
-}
-
 run_mcoa_federation() {
   local command=$1
-  local target_namespaces=$2
   local hub_context="${MCOA_HUB_CONTEXT}"
   [ -n "${hub_context}" ] || hub_context=$(${CLIENT_EXE} config current-context)
+  [ "${command}" = uninstall ] || configure_mcoa_uwm_namespace "${MCOA_RULE_NAMESPACE}"
 
   local args=("${command}" --hub-context "${hub_context}" \
-    --target-namespaces "${target_namespaces}" --rule-namespace "${MCOA_RULE_NAMESPACE}" \
+    --rule-namespace "${MCOA_RULE_NAMESPACE}" \
     --observability-namespace "${OBSERVABILITY_NAMESPACE}" --timeout "${TIMEOUT}")
   [ "${MCOA_WITH_DASHBOARDS}" != "true" ] || args+=(--with-dashboards)
   [ -z "${MCOA_PLACEMENT_NAME}" ] || args+=(--placement-name "${MCOA_PLACEMENT_NAME}")
   [ -z "${MCOA_PLACEMENT_NAMESPACE}" ] || args+=(--placement-namespace "${MCOA_PLACEMENT_NAMESPACE}")
   "${SCRIPT_DIR}/configure-acm-mcoa.sh" "${args[@]}"
+  [ "${command}" != uninstall ] || remove_mcoa_uwm_namespace
 }
 
 configure_full_setup_mcoa() {
   [ "${METRICS_COLLECTION_MODE}" = "mcoa" ] || return 0
   infomsg "Configuring ACM MCOA federation..."
-  run_mcoa_federation install "$(full_setup_mcoa_namespaces)"
+  run_mcoa_federation install
 }
 
 create_all() {
@@ -4075,7 +4102,6 @@ while [[ $# -gt 0 ]]; do
     -aan|--ambient-app-namespace) AMBIENT_APP_NAMESPACE="$2"; shift; shift ;;
     -sb|--skip-build) SKIP_BUILD="true"; shift ;;
     --mcoa-hub-context) MCOA_HUB_CONTEXT="$2"; shift; shift ;;
-    --mcoa-target-namespaces) MCOA_TARGET_NAMESPACES="$2"; shift; shift ;;
     --mcoa-rule-namespace) MCOA_RULE_NAMESPACE="$2"; shift; shift ;;
     --mcoa-placement-name) MCOA_PLACEMENT_NAME="$2"; shift; shift ;;
     --mcoa-placement-namespace) MCOA_PLACEMENT_NAMESPACE="$2"; shift; shift ;;
@@ -4182,15 +4208,9 @@ Valid options:
       Default: ${DEFAULT_SKIP_BUILD}
   --mcoa-hub-context <context>
       Kubeconfig context for the ACM hub. Required by the MCOA federation commands.
-  --mcoa-target-namespaces <ns[,ns...]>
-      Namespaces that receive an edge PrometheusRule. Platform pod CPU and
-      memory metrics are federated cluster-wide for Kiali.
-      Default: ${DEFAULT_MCOA_TARGET_NAMESPACES}
   --mcoa-rule-namespace <namespace>
-      Control-plane namespace that must also appear in
-      --mcoa-target-namespaces. This ensures an edge recording rule for
-      istiod.
-      Default: ${DEFAULT_MCOA_RULE_NAMESPACE}
+      Dedicated UWM-exempt namespace receiving the single cross-namespace
+      edge recording rule. Default: ${DEFAULT_MCOA_RULE_NAMESPACE}
   --mcoa-with-dashboards
       Also federate the optional Istio dashboard metric tier.
   --mcoa-placement-name <name>
@@ -4266,7 +4286,7 @@ Examples:
   $0 status-kiali                           # Check Kiali installation status (auto-detects method)
   $0 uninstall-kiali                        # Remove Kiali (auto-detects method)
   $0 --mcoa-hub-context <hub-context> \
-    --mcoa-target-namespaces istio-system,my-app install-mcoa-federation
+    --mcoa-rule-namespace mesh-observability install-mcoa-federation
 
   # Sidecar test app (frontend -> backend topology, auto-generates traffic)
   $0 install-sidecar-app                    # Install sidecar test mesh application
@@ -4317,7 +4337,6 @@ done
 : ${AMBIENT_APP_NAMESPACE:=${DEFAULT_AMBIENT_APP_NAMESPACE}}
 : ${SKIP_BUILD:=${DEFAULT_SKIP_BUILD}}
 : ${MCOA_HUB_CONTEXT:=${DEFAULT_MCOA_HUB_CONTEXT}}
-: ${MCOA_TARGET_NAMESPACES:=${DEFAULT_MCOA_TARGET_NAMESPACES}}
 : ${MCOA_RULE_NAMESPACE:=${DEFAULT_MCOA_RULE_NAMESPACE}}
 : ${MCOA_WITH_DASHBOARDS:=false}
 : ${MCOA_PLACEMENT_NAME:=}
@@ -4352,7 +4371,6 @@ debug "AMBIENT_MODE=${AMBIENT_MODE}"
 debug "AMBIENT_APP_NAMESPACE=${AMBIENT_APP_NAMESPACE}"
 debug "SKIP_BUILD=${SKIP_BUILD}"
 debug "MCOA_HUB_CONTEXT=${MCOA_HUB_CONTEXT}"
-debug "MCOA_TARGET_NAMESPACES=${MCOA_TARGET_NAMESPACES}"
 debug "MCOA_RULE_NAMESPACE=${MCOA_RULE_NAMESPACE}"
 debug "METRICS_COLLECTION_MODE=${METRICS_COLLECTION_MODE}"
 debug "SKIP_MCOA_RECONCILE=${SKIP_MCOA_RECONCILE}"
@@ -4471,7 +4489,7 @@ case ${_CMD} in
     fi
     mcoa_command="${_CMD%%-mcoa-federation}"
     [ "${mcoa_command}" = "status" ] && mcoa_command="verify"
-    run_mcoa_federation "${mcoa_command}" "${MCOA_TARGET_NAMESPACES}"
+    run_mcoa_federation "${mcoa_command}"
     ;;
   *)
     errormsg "Unknown command: ${_CMD}"
