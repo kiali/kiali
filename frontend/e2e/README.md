@@ -169,7 +169,7 @@ PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
 
 ### Ambient (`yarn playwright:run:ambient`)
 
-Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edges, services health filter, workloads out-of-mesh, workload ambient badge). KinD setup matches Cypress `frontend-ambient` (ambient Sail, bookinfo ambient + travel-agency + sleep). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
+Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edges, workloads out-of-mesh, workload ambient badge). Service health filter is covered by `playwright-core-caching` (`services_caching.spec.ts`) where bookinfo reports Healthy. Ambient CI keeps bookinfo service health at N/A (no pre-healthy wait in Cypress `@ambient` either, but sidecar core-caching is the reliable home for that scenario). KinD setup matches Cypress `frontend-ambient` (ambient Sail, bookinfo ambient + travel-agency + sleep via `install-testing-demos`). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient
