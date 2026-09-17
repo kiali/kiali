@@ -124,6 +124,12 @@ export class GraphPage extends BasePage {
     await expect(this.page.locator(`div#summary-panel-graph div#ns-${namespace}`)).toBeVisible();
   }
 
+  async expectSummaryPanelTrafficRate(protocol: 'HTTP' | 'TCP'): Promise<void> {
+    const panel = this.page.locator('#summary-panel-graph');
+    await expect(panel.getByText(new RegExp(`${protocol} Traffic`))).toBeVisible();
+    await expect(panel.getByRole('gridcell').filter({ hasText: /^\d/ }).first()).toBeVisible();
+  }
+
   async openDisplayMenu(): Promise<void> {
     await waitForLoadingComplete(this.page);
     const button = this.page.locator('button#display-settings');
@@ -501,16 +507,6 @@ export class GraphPage extends BasePage {
 
   async expectNoTraffic(): Promise<void> {
     await expect(this.page.locator('#empty-graph')).toBeVisible();
-  }
-
-  async expectTrafficEdgesAtLeast(edgeCount: number): Promise<void> {
-    await expectGraphTopology(this.page, ({ edges }) => {
-      const trafficEdges = select(
-        edges.map(edge => ({ data: edge.data })),
-        { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }
-      );
-      expect(trafficEdges.length).toBeGreaterThanOrEqual(edgeCount);
-    });
   }
 
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {

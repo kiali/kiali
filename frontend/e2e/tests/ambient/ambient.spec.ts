@@ -30,7 +30,9 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
-    await graphPage.expectTrafficEdgesAtLeast(6);
+    await graphPage.expectTrafficVisible('tcp');
+    await graphPage.expectTrafficProtocol('http', false);
+    await graphPage.expectSummaryPanelTrafficRate('TCP');
   });
 
   test('User sees http traffic', ambientOnly, async ({ graphPage }) => {
@@ -40,7 +42,9 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('tcp', false);
     await graphPage.closeTrafficMenu();
-    await graphPage.expectTrafficEdgesAtLeast(2);
+    await graphPage.expectTrafficVisible('http');
+    await graphPage.expectTrafficProtocol('tcp', false);
+    await graphPage.expectSummaryPanelTrafficRate('HTTP');
   });
 
   test('Filter services table by health', ambientOnly, async ({ page, servicesPage }) => {
