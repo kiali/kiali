@@ -98,3 +98,11 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_ambient:
+    name: Run Playwright ambient tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ambient.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}

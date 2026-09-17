@@ -503,6 +503,16 @@ export class GraphPage extends BasePage {
     await expect(this.page.locator('#empty-graph')).toBeVisible();
   }
 
+  async expectTrafficEdgesAtLeast(edgeCount: number): Promise<void> {
+    await expectGraphTopology(this.page, ({ edges }) => {
+      const trafficEdges = select(
+        edges.map(edge => ({ data: edge.data })),
+        { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }
+      );
+      expect(trafficEdges.length).toBeGreaterThanOrEqual(edgeCount);
+    });
+  }
+
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {
     await expectGraphTopology(this.page, ({ edges }) => {
       const edgeElems = edges.map(e => ({ data: e.data }));
