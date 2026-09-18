@@ -665,9 +665,19 @@ verify_federation_config() {
 }
 
 mcoa_addon_ready() {
-  local cluster=$1
-  [ "$(oc_hub get managedclusteraddon multicluster-observability-addon -n "${cluster}" \
-    -o jsonpath='{.status.conditions[?(@.type=="Available")].status}' 2>/dev/null)" = True ]
+  local cluster=$1 addon
+  addon=$(oc_hub get managedclusteraddon multicluster-observability-addon -n "${cluster}" \
+    -o json 2>/dev/null) || return 1
+
+  # MCOA's Available probe also checks PrometheusAgent status. On clusters
+  # where MCOA owns the managed-cluster metrics component, that status can
+  # remain unset even though MCOA has successfully applied all manifests and
+  # the agent pods are running. Do not wait for the stricter health probe here.
+  printf '%s' "${addon}" | jq -e '
+    any(.status.conditions[]?; .type == "Configured" and .status == "True") and
+    any(.status.conditions[]?; .type == "ManifestApplied" and .status == "True") and
+    any(.status.conditions[]?; .type == "Progressing" and .status == "False")
+  ' >/dev/null
 }
 
 mco_ready() {
