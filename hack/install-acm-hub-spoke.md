@@ -1025,6 +1025,35 @@ The hub collection interval is five minutes. New workloads commonly need two
 collection intervals before rate-based panels become useful. Compare presence
 and approximate values rather than exact point-in-time equality.
 
+### Verify Waypoint Metrics in Kiali
+
+For ambient traffic that is routed through a waypoint, Kiali displays the
+waypoint's HTTP/L7 metrics on the application workloads and services involved
+in the request. It does not generally display application traffic on the
+waypoint workload's own inbound and outbound metric tabs. Those tabs are mainly
+useful for checking the waypoint status, enrolled services and workloads, and
+Envoy details.
+
+After generating traffic through the waypoint, use these Kiali views:
+
+1. **Destination workload → Inbound Metrics**: shows HTTP/L7 traffic received
+   by the destination workload through the waypoint. For example, open
+   `test-ambient-backend` → **Inbound Metrics**.
+2. **Source workload → Outbound Metrics**: shows HTTP/L7 traffic sent from the
+   source workload through the waypoint. For example, open
+   `test-ambient-frontend` → **Outbound Metrics**.
+3. **Destination service → Inbound Metrics**: shows inbound traffic for the
+   destination Service, for example `test-ambient-backend` → **Inbound Metrics**.
+4. **Traffic Graph → Traffic → Waypoint**: filters the graph to the waypoint's
+   L7 HTTP edges. Select **Ztunnel** to see the separate L4/TCP edges, or
+   **Total** to see both.
+
+Seeing both a waypoint edge and a ztunnel edge is expected in ambient mode.
+The waypoint provides HTTP details such as response codes and latency, while
+ztunnel provides L4/TCP telemetry. If the Kiali views are empty, confirm that
+the hub query for `istio_requests_total{reporter="waypoint"}` returns a result,
+then allow another ACM collection cycle for the metrics to reach hub Thanos.
+
 ## Troubleshooting
 
 For a spoke that does not join:
