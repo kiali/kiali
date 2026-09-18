@@ -48,7 +48,6 @@ spec:
           mountPath: "/storage"
       containers:
       - name: minio
-        # Pulls the default Minio image from Docker Hub
         image: quay.io/minio/minio:latest
         args:
         - server
