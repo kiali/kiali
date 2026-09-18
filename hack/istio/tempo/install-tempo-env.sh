@@ -725,6 +725,8 @@ install_tempo_single_attempt() {
 
     echo -e "Installing minio and create secret \n"
     ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${MINIO_FILE}
+    echo -e "Waiting for minio deployment to be ready... \n"
+    ${CLIENT_EXE} rollout status deployment/minio -n ${TEMPO_NS} --timeout=5m
 
     # Create secret for minio
     # Use full service name for multi-tenant mode in OpenShift
