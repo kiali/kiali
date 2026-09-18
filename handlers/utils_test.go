@@ -131,10 +131,10 @@ func TestCheckNamespaceAccessMultiCluster(t *testing.T) {
 			expectedCode:     http.StatusForbidden,
 			expectedClusters: nil,
 		},
-		"returns no namespaces when missing on all clusters": {
+		"returns not found when missing on all clusters": {
 			hubClient:        kubetest.NewFakeK8sClient(),
 			spokeClient:      kubetest.NewFakeK8sClient(),
-			expectedCode:     http.StatusOK,
+			expectedCode:     http.StatusNotFound,
 			expectedClusters: nil,
 		},
 	}

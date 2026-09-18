@@ -63,8 +63,9 @@ func checkNamespaceAccessWithService(
 	return ns, nil
 }
 
-// checkNamespaceAccessMultiCluster is used when the service will query across all clusters for the namespace.
-// It will return an error if the user does not have access to the namespace on all of the clusters.
+// checkNamespaceAccessMultiCluster returns namespace metadata from every cluster where the
+// namespace exists and the user can access it. Missing namespaces on a cluster are skipped.
+// It writes 403 when access is denied, 404 when the namespace is absent on all clusters.
 func checkNamespaceAccessMultiCluster(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -97,6 +98,11 @@ func checkNamespaceAccessMultiCluster(
 			return nil, nil
 		}
 		nsInfo = append(nsInfo, *ns)
+	}
+
+	if len(nsInfo) == 0 {
+		RespondWithError(w, http.StatusNotFound, "Namespace ["+namespace+"] was not found in any cluster")
+		return nil, nil
 	}
 
 	return nsInfo, nil
