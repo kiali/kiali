@@ -59,16 +59,16 @@ community-dashboards `metadata.name` → ConfigMap key:
 
 | Dashboard ID | ConfigMap key |
 |---|---|
-| `istio-control-plane` | `dashboard-control-plane.json` |
-| `istio-mesh` | `dashboard-mesh.json` |
-| `istio-performance` | `dashboard-performance.json` |
+| `istio-control-plane-dashboard` | `dashboard-control-plane.json` |
+| `istio-mesh-dashboard` | `dashboard-mesh.json` |
+| `istio-performance-dashboard` | `dashboard-performance.json` |
 | `istio-service-dashboard` | `dashboard-service.json` |
 | `istio-workload-dashboard` | `dashboard-workload.json` |
 | `istio-ztunnel-dashboard` | `dashboard-ztunnel.json` |
-| `istio-extension-dashboard` | `dashboard-extension.json` |
+| `istio-wasm-extension-dashboard` | `dashboard-extension.json` |
 
 Kiali links use the **display name** (for example `Istio Mesh Dashboard`), but
-Perses URLs use the **dashboard ID** (for example `istio-mesh`).
+Perses URLs use the **dashboard ID** (for example `istio-mesh-dashboard`).
 
 If community-dashboards adds a new Istio dashboard, update `DASHBOARD_KEYS` in
 `sync-dashboards.sh`.
@@ -145,7 +145,7 @@ kubectl port-forward -n istio-system svc/perses 4000:8080
 
 Then open, for example:
 
-`http://localhost:4000/projects/istio/dashboards/istio-mesh`
+`http://localhost:4000/projects/istio/dashboards/istio-mesh-dashboard`
 
 ## Suggested workflow
 
