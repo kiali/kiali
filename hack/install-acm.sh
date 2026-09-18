@@ -3414,7 +3414,7 @@ EOF
   # Deploy waypoint proxy for L7 metrics (optional but recommended for full Kiali functionality)
   infomsg "Deploying waypoint proxy for L7 metrics..."
   if command -v istioctl &>/dev/null; then
-    istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --enroll-namespace
+    istioctl waypoint apply -n ${AMBIENT_APP_NAMESPACE} --for all --enroll-namespace
     if [ $? -eq 0 ]; then
       infomsg "Waypoint proxy deployed - L7 metrics (HTTP/gRPC) will be available"
       # Wait for waypoint to be ready
