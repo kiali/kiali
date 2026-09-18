@@ -1520,8 +1520,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   done
   infomsg "Kiali server is healthy"
 
-  ensureBookinfoGraphReadyAnonymous
-
+  # Same as other local Playwright suites: tests wait for traces via API themselves.
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
 
   trap cleanup_kiali EXIT
