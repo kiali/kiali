@@ -2,10 +2,10 @@ import * as React from 'react';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Spinner, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import Editor from '@monaco-editor/react';
-import { Theme } from '../../types/Common';
+import { ColorScheme } from '../../types/Common';
 import { editorStyle } from '../../styles/EditorStyle';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
-import { getKialiTheme } from '../../utils/ThemeUtils';
+import { getKialiColorScheme, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { dump, loadAll, YAMLException } from 'js-yaml';
 import { ValidationTypes } from 'types/IstioObjects';
 import { kialiStyle } from '../../styles/StyleUtils';
@@ -27,7 +27,7 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
   const [isModified, setIsModified] = React.useState(false);
   const [source, setSource] = React.useState<string>(dump(props.configData, yamlDumpOptions));
 
-  const theme = getKialiTheme();
+  const colorScheme = resolveColorScheme(getKialiColorScheme());
   const [configResult, setConfigResult] = React.useState<string | null>(null);
 
   const parseYamlDocumentsSync = (yamlText: string): any => {
@@ -110,7 +110,7 @@ export const CheckerTracingConfig: React.FC<CheckerTracingConfigProps> = (props:
           <Editor
             value={source}
             language="yaml"
-            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             onChange={onEditorChange}
             onMount={(ed, monaco) => {

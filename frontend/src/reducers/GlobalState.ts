@@ -5,11 +5,14 @@ import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 
 export const INITIAL_GLOBAL_STATE: GlobalState = {
-  loadingCounter: 0,
+  colorScheme: '',
+  contrastMode: '',
   isPageVisible: true,
   kiosk: '',
   kioskData: undefined,
   language: '',
+  loadingCounter: 0,
+  systemAppearanceRevision: 0,
   theme: ''
 };
 
@@ -24,18 +27,32 @@ export const GlobalStateReducer = (state: GlobalState = INITIAL_GLOBAL_STATE, ac
       return updateState(state, { isPageVisible: false });
     case getType(GlobalActions.setPageVisibilityVisible):
       return updateState(state, { isPageVisible: true });
-    case getType(GlobalActions.setKiosk):
+    case getType(GlobalActions.setKiosk): {
       const kiosk = action.payload;
       return updateState(state, { kiosk: kiosk });
-    case getType(GlobalActions.setKioskData):
+    }
+    case getType(GlobalActions.setKioskData): {
       const kioskData = action.payload;
       return updateState(state, { kioskData: kioskData });
-    case getType(GlobalActions.setLanguage):
+    }
+    case getType(GlobalActions.setContrastMode): {
+      const contrastMode = action.payload;
+      return updateState(state, { contrastMode: contrastMode });
+    }
+    case getType(GlobalActions.setLanguage): {
       const language = action.payload;
       return updateState(state, { language: language });
-    case getType(GlobalActions.setTheme):
+    }
+    case getType(GlobalActions.setColorScheme): {
+      const colorScheme = action.payload;
+      return updateState(state, { colorScheme: colorScheme });
+    }
+    case getType(GlobalActions.setTheme): {
       const theme = action.payload;
       return updateState(state, { theme: theme });
+    }
+    case getType(GlobalActions.systemAppearanceChanged):
+      return updateState(state, { systemAppearanceRevision: state.systemAppearanceRevision + 1 });
     default:
       return state;
   }

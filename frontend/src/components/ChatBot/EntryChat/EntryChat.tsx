@@ -10,8 +10,8 @@ import { ResponseTools } from './ResponseTools';
 import userAvatar from '../../../assets/img/kiali/ai/img_avatar-light.svg';
 import aiAvatar from '../../../assets/img/kiali/ai/img-ai-lightbkg.svg';
 import aiAvatarDark from '../../../assets/img/kiali/ai/img-ai-darkbkg.svg';
-import { useKialiTheme } from 'utils/ThemeUtils';
-import { Theme } from 'types/Common';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
+import { ColorScheme } from 'types/Common';
 import { Actions } from './Actions';
 import { ChatMessageMarkdown } from './ChatMessageMarkdown';
 
@@ -22,7 +22,7 @@ type EntryChatProps = {
 export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
   const entryObject = useSelector((state: KialiAppState) => state.ai.chat.chatHistory.getIn([entryIndex])) as any;
   const entry = entryObject.toJS() as ChatEntry;
-  const isDarkTheme = useKialiTheme() === Theme.DARK;
+  const isDarkTheme = useKialiColorScheme() === ColorScheme.DARK;
 
   if (entry.who === 'user' && entry.hidden) {
     return null;

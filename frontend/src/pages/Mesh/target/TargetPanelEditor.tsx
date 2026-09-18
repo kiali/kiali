@@ -1,8 +1,8 @@
 import * as React from 'react';
 import Editor from '@monaco-editor/react';
-import { editor } from 'monaco-editor';
-import { useKialiTheme } from '../../../utils/ThemeUtils';
-import { Theme } from '../../../types/Common';
+import type { editor } from 'monaco-editor';
+import { useKialiColorScheme } from '../../../utils/AppearanceUtils';
+import { ColorScheme } from '../../../types/Common';
 import { ConfigButtonsTargetPanel } from '../../../components/Mesh/ConfigButtonsTargetPanel';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -44,15 +44,16 @@ const editorOptions: editor.IStandaloneEditorConstructionOptions = {
 };
 
 export const TargetPanelEditor: React.FC<TargetPanelEditorProps> = ({ configData, includeTitle, targetName }) => {
-  const darkTheme = useKialiTheme() === Theme.DARK;
+  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
   const [editorHeight, setEditorHeight] = React.useState<string>('200px');
 
-  let yaml = '';
-  try {
-    yaml = dump(configData || 'N/A', yamlDumpOptions);
-  } catch {
-    yaml = 'N/A';
-  }
+  const yaml = ((): string => {
+    try {
+      return dump(configData || 'N/A', yamlDumpOptions);
+    } catch {
+      return 'N/A';
+    }
+  })();
 
   const updateEditorHeight = (ed: editor.IStandaloneCodeEditor): void => {
     setEditorHeight(`${ed.getContentHeight()}px`);

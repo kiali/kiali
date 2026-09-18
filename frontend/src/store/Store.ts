@@ -37,11 +37,14 @@ import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 // Store is the Redux Data store
 
 export interface GlobalState {
+  readonly colorScheme: string;
+  readonly contrastMode: string;
   readonly isPageVisible: boolean;
   readonly kiosk: KioskMode;
   readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
+  readonly systemAppearanceRevision: number;
   readonly theme: string;
 }
 
@@ -199,8 +202,8 @@ export interface TourState {
 }
 
 export interface AIState {
-  enabled: boolean;
   chat: ChatAIState;
+  enabled: boolean;
 }
 
 export interface ChatAIState {

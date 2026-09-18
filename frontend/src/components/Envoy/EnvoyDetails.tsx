@@ -37,8 +37,9 @@ import {
   scrollableContentStyle
 } from 'styles/FlexStyles';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
-import { Theme } from '../../types/Common';
 import type { TimeInMilliseconds } from '../../types/Common';
+import { ColorScheme } from '../../types/Common';
+import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
@@ -67,8 +68,9 @@ const defaultTab = 'clusters';
 export type ResourceSorts = { [resource: string]: ISortBy };
 
 type ReduxProps = {
+  colorScheme: string;
   namespaces: Namespace[];
-  theme: string;
+  systemAppearanceRevision: number;
 };
 
 type EnvoyDetailsProps = ReduxProps & {
@@ -362,7 +364,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       <Editor
                         value={this.editorContent()}
                         language="yaml"
-                        theme={this.props.theme === Theme.DARK ? 'vs-dark' : 'light'}
+                        theme={resolveColorScheme(this.props.colorScheme) === ColorScheme.DARK ? 'vs-dark' : 'light'}
                         height="100%"
                         onMount={ed => {
                           (this.monacoEditorRef as any).current = ed;
@@ -431,7 +433,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   namespaces: namespaceItemsSelector(state)!,
-  theme: state.globalState.theme
+  ...mapAppearanceFromState(state)
 });
 
 export const EnvoyDetails = connect(mapStateToProps)(EnvoyDetailsComponent);

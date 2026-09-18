@@ -38,7 +38,8 @@ import { getPodLogs, getWorkloadSpans, setPodEnvoyProxyLogLevel } from '../../se
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
-import { evalTimeRange, isEqualTimeRange, Theme } from '../../types/Common';
+import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
+import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
@@ -78,8 +79,9 @@ const waypointContainerColor = PFColors.Gold500;
 const spanColor = PFColors.Cyan300;
 
 type ReduxProps = {
+  colorScheme: string;
   kiosk: string;
-  theme: string;
+  systemAppearanceRevision: number;
   timeRange: TimeRange;
   tracingIntegration: boolean;
 };
@@ -1080,14 +1082,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   };
 
   private renderTabs = (): React.ReactNode[] => {
-    const theme = this.props.theme;
+    const colorScheme = resolveColorScheme(this.props.colorScheme);
     const jsonTab = (
       <Tab eventKey={0} title={t('JSON')} key="json">
         <div className={editorStyle} data-test="json-details-viewer">
           <Editor
             value={this.state.jsonModalContent}
             language="yaml"
-            theme={theme === Theme.DARK ? 'vs-dark' : 'light'}
+            theme={colorScheme === ColorScheme.DARK ? 'vs-dark' : 'light'}
             height="100%"
             options={{ readOnly: true, scrollBeyondLastLine: false, tabSize: 2, folding: true }}
           />
@@ -1625,7 +1627,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     tracingIntegration: state.tracingState.info?.integration ?? false,
-    theme: state.globalState.theme
+    ...mapAppearanceFromState(state)
   };
 };
 

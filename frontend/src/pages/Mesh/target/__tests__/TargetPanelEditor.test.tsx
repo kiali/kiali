@@ -15,7 +15,7 @@ rstest.mock('@monaco-editor/react', () => {
     height: string;
     onMount: (ed: { getContentHeight: () => number; onDidContentSizeChange: (cb: () => void) => void }) => void;
     options?: Record<string, unknown>;
-  }) => {
+  }): JSX.Element => {
     React.useEffect(() => {
       onMount({
         getContentHeight: mockGetContentHeight,
@@ -38,8 +38,8 @@ rstest.mock('@monaco-editor/react', () => {
   return { default: MonacoEditorMock };
 });
 
-rstest.mock('utils/ThemeUtils', () => ({
-  useKialiTheme: () => 'Light'
+rstest.mock('utils/AppearanceUtils', () => ({
+  useKialiColorScheme: () => 'Light'
 }));
 
 rstest.mock('components/Mesh/ConfigButtonsTargetPanel', () => ({

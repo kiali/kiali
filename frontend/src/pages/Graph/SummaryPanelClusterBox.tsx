@@ -1,29 +1,28 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Edge, GraphElement, Node } from '@patternfly/react-topology';
+import type { GraphElement, Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { summaryFont, summaryBodyTabs, summaryPanelWidth, getTitle, noTrafficStyle } from './SummaryPanelCommon';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { SummaryPanelPropType, NodeType, TrafficRate, NodeAttr } from 'types/Graph';
+import type { SummaryPanelPropType } from 'types/Graph';
+import { NodeType, TrafficRate, NodeAttr } from 'types/Graph';
+import type { TrafficRateGrpc, TrafficRateHttp, TrafficRateTcp } from 'utils/TrafficRate';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
-  getAccumulatedTrafficRateTcp,
-  TrafficRateGrpc,
-  TrafficRateHttp,
-  TrafficRateTcp
+  getAccumulatedTrafficRateTcp
 } from 'utils/TrafficRate';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesInOut, edgesOut, elems, select } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { kialiIconDark, kialiIconLight, serverConfig } from '../../config';
-import { KialiInstance } from '../../types/Mesh';
-import { getKialiTheme } from 'utils/ThemeUtils';
-import { Theme } from '../../types/Common';
+import type { KialiInstance } from '../../types/Mesh';
+import { getKialiColorScheme, resolveColorScheme } from 'utils/AppearanceUtils';
+import { ColorScheme } from '../../types/Common';
 
 type SummaryPanelClusterBoxState = {
   clusterBox: any;
@@ -75,18 +74,8 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const kialiInstances: KialiInstance[] = serverConfig.clusters?.[cluster]?.kialiInstances ?? [];
 
     const { numApps, numVersions } = this.countApps(boxed);
-    const {
-      grpcIn,
-      grpcOut,
-      grpcTotal,
-      httpIn,
-      httpOut,
-      httpTotal,
-      isGrpcRequests,
-      tcpIn,
-      tcpOut,
-      tcpTotal
-    } = this.getBoxTraffic(boxed);
+    const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+      this.getBoxTraffic(boxed);
 
     const numSvc = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
     const numWorkloads = select(boxed, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
@@ -249,20 +238,18 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
     const data = clusterBox.getData();
     const cluster = data[NodeAttr.cluster];
 
-    let inboundEdges: Edge[] | any;
-    let outboundEdges: Edge[] | any;
-    let totalEdges: Edge[] | any;
-
     const controller = (clusterBox as Node).getController();
     const { nodes } = elems(controller);
     const outsideNodes = select(nodes, { prop: NodeAttr.cluster, op: '!=', val: cluster }) as Node[];
     // inbound edges are from a different cluster
-    inboundEdges = edgesOut(outsideNodes, boxed);
+    const inboundEdges = edgesOut(outsideNodes, boxed);
     // outbound edges are to a different different cluster
-    outboundEdges = edgesIn(outsideNodes, boxed);
+    const outboundEdges = edgesIn(outsideNodes, boxed);
     // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    totalEdges = [...inboundEdges];
-    totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
+    const totalEdges = [
+      ...inboundEdges,
+      ...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[])
+    ];
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
@@ -311,7 +298,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
   };
 
   private renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
-    const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
+    const kialiIcon = resolveColorScheme(getKialiColorScheme()) === ColorScheme.DARK ? kialiIconDark : kialiIconLight;
 
     return kialiInstances.map(instance => {
       if (instance.url.length !== 0) {

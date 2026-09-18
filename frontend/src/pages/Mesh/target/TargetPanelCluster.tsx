@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { getKialiTheme } from 'utils/ThemeUtils';
-import { TargetPanelCommonProps, renderInfraSummary, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
+import { getKialiColorScheme, resolveColorScheme } from 'utils/AppearanceUtils';
+import type { TargetPanelCommonProps } from './TargetPanelCommon';
+import { renderInfraSummary, targetBodyStyle, targetPanelStyle } from './TargetPanelCommon';
 import { kialiIconDark, kialiIconLight } from 'config';
-import { BoxTarget, ClusterNodeData, KialiInstance, isExternal } from 'types/Mesh';
-import { Theme } from 'types/Common';
+import type { BoxTarget, ClusterNodeData, KialiInstance } from 'types/Mesh';
+import { isExternal } from 'types/Mesh';
+import { ColorScheme } from 'types/Common';
 import { KialiIcon } from 'config/KialiIcon';
 import { Title, TitleSizes, Tooltip } from '@patternfly/react-core';
 import { classes } from 'typestyle';
@@ -26,7 +28,7 @@ export const TargetPanelCluster: React.FC<TargetPanelClusterProps> = (props: Tar
   const { t } = useKialiTranslation();
 
   const renderKialiLinks = (kialiInstances: KialiInstance[]): React.ReactNode => {
-    const kialiIcon = getKialiTheme() === Theme.DARK ? kialiIconDark : kialiIconLight;
+    const kialiIcon = resolveColorScheme(getKialiColorScheme()) === ColorScheme.DARK ? kialiIconDark : kialiIconLight;
     return kialiInstances?.map(instance => {
       if (instance.url.length !== 0) {
         return (

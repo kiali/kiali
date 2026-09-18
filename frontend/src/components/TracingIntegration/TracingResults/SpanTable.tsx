@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
-import { SortByDirection, IRow, IRowData, IAction, TableVariant, ISortBy, OnSort } from '@patternfly/react-table';
+import type { IRow, IRowData, IAction, ISortBy, OnSort } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
 import { compareNullable } from 'components/FilterList/FilterHelper';
-import { MetricsStats } from 'types/Metrics';
-import { KialiAppState } from 'store/Store';
-import { MetricsStatsQuery } from 'types/MetricsOptions';
+import type { MetricsStats } from 'types/Metrics';
+import type { KialiAppState } from 'store/Store';
+import type { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
-import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
+import type { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
 import { isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
@@ -19,20 +20,23 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { router } from 'app/History';
 import { isParentKiosk, kioskNavigateAction, kioskTracingAction } from '../../Kiosk/KioskActions';
-import { TracingUrlProvider } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
-import { Theme } from '../../../types/Common';
+import type { SortableTh } from 'components/Table/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
+import { ColorScheme } from '../../../types/Common';
+import { mapAppearanceFromState, resolveColorScheme } from '../../../utils/AppearanceUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
 };
 
 type StateProps = {
+  colorScheme: string;
   kiosk: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
-  theme: string;
+  systemAppearanceRevision: number;
 };
 
 type Props = ReduxProps &
@@ -123,12 +127,12 @@ const getClassName = (
       ? selectedErrorStyle
       : selectedStyle
     : isError
-    ? highlight
-      ? highlightErrorStyle
-      : dangerErrorStyle
-    : highlight
-    ? highlightStyle
-    : undefined;
+      ? highlight
+        ? highlightErrorStyle
+        : dangerErrorStyle
+      : highlight
+        ? highlightStyle
+        : undefined;
 };
 
 const columns: SortableCompareTh<RichSpanData>[] = [
@@ -222,7 +226,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private buildRow = (item: RichSpanData): IRow => {
     const isExpanded = this.isExpanded(item.spanID);
     const isSpan = item.spanID === getSpanId();
-    const darkTheme = this.props.theme === Theme.DARK;
+    const darkTheme = resolveColorScheme(this.props.colorScheme) === ColorScheme.DARK;
     return {
       cells: [
         <>
@@ -571,7 +575,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
   provider: state.tracingState.info?.provider,
-  theme: state.globalState.theme
+  ...mapAppearanceFromState(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({

@@ -7,7 +7,6 @@ import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
-import { ThemeSwitch } from './ThemeSwitch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
@@ -38,9 +37,11 @@ export const MastheadItems: React.FC = () => {
         </ToolbarGroup>
 
         <ToolbarGroup align={{ default: 'alignEnd' }}>
-          <ToolbarItem>
-            <ThemeSwitch />
-          </ToolbarItem>
+          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
+            <ToolbarItem>
+              <LanguageSwitch />
+            </ToolbarItem>
+          )}
 
           <ToolbarItem>
             <NotificationCenterBadge />
@@ -49,12 +50,6 @@ export const MastheadItems: React.FC = () => {
           <ToolbarItem>
             <HelpDropdown />
           </ToolbarItem>
-
-          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-            <ToolbarItem>
-              <LanguageSwitch />
-            </ToolbarItem>
-          )}
 
           <ToolbarItem className={centerItemStyle} data-test="user-dropdown">
             <UserDropdown />
