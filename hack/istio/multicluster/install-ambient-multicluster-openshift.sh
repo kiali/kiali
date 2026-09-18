@@ -610,6 +610,16 @@ spec:
       action: replace
       regex: "(.+);.*|.*;(.+)"
       replacement: \${1}\${2}
+    - action: replace
+      regex: ".+"
+      replacement: \${1}
+      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+      targetLabel: app_kubernetes_io_name
+    - action: replace
+      regex: ".+"
+      replacement: \${1}
+      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_version]
+      targetLabel: app_kubernetes_io_version
     - sourceLabels: [__meta_kubernetes_namespace]
       action: replace
       targetLabel: namespace
