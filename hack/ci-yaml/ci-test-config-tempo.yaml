@@ -1,0 +1,27 @@
+# Local Kiali config for Playwright @tracing / Tempo CI (mirrors frontend-tempo Helm values).
+health_config:
+  rate:
+  - kind: service
+    name: y-server
+    namespace: alpha
+    tolerance:
+    - code: 5xx
+      degraded: 2
+      failure: 100
+additional_display_details:
+- title: API Documentation
+  annotation: kiali.io/api-spec
+  icon_annotation: kiali.io/api-type
+external_services:
+  tracing:
+    enabled: true
+    provider: tempo
+    use_grpc: false
+    # InternalURL is overwritten by --port-forward-tracing to the local Tempo frontend port.
+    internal_url: http://tempo-cr-query-frontend.tempo:3200
+    external_url: http://tempo-cr-query-frontend.tempo:3200
+kiali_internal:
+  graph_cache:
+    enabled: false
+  health_cache:
+    enabled: false
