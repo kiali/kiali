@@ -22,6 +22,7 @@ import {
   readDocumentColorScheme,
   readDocumentContrastMode,
   readDocumentTheme,
+  registerSystemAppearanceListener,
   resolveColorScheme,
   resolveContrastMode,
   syncReduxAppearanceFromDocument
@@ -98,6 +99,33 @@ describe('applyDocumentAppearance', () => {
     })) as typeof window.matchMedia;
     applyDocumentAppearance(ColorScheme.LIGHT, ContrastMode.SYSTEM, Theme.DEFAULT);
     expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
+  });
+});
+
+describe('registerSystemAppearanceListener', () => {
+  afterEach(() => {
+    store.dispatch(GlobalActions.setColorScheme(''));
+    store.dispatch(GlobalActions.setContrastMode(''));
+  });
+
+  it('dispatches systemAppearanceChanged when system color scheme media query changes', () => {
+    const listeners: Record<string, () => void> = {};
+    window.matchMedia = rstest.fn().mockImplementation((query: string) => ({
+      matches: false,
+      addEventListener: (_event: string, handler: () => void) => {
+        listeners[query] = handler;
+      },
+      removeEventListener: rstest.fn()
+    })) as typeof window.matchMedia;
+    localStorage.setItem(KIALI_COLOR_SCHEME, ColorScheme.SYSTEM);
+    const revisionBefore = store.getState().globalState.systemAppearanceRevision;
+    const onChange = rstest.fn();
+
+    registerSystemAppearanceListener(onChange);
+    listeners['(prefers-color-scheme: dark)']?.();
+
+    expect(store.getState().globalState.systemAppearanceRevision).toBe(revisionBefore + 1);
+    expect(onChange).toHaveBeenCalled();
   });
 });
 
@@ -277,14 +305,17 @@ describe('syncReduxAppearanceFromDocument', () => {
     expect(document.documentElement.className).toBe(classesBefore);
   });
 
-  it('persists synced preferences to localStorage', () => {
+  it('does not persist synced preferences to localStorage', () => {
+    localStorage.setItem(KIALI_COLOR_SCHEME, ColorScheme.LIGHT);
+    localStorage.setItem(KIALI_CONTRAST_MODE, ContrastMode.DEFAULT);
+    localStorage.setItem(KIALI_THEME, Theme.DEFAULT);
     document.documentElement.classList.add(PF_THEME_DARK, PF_THEME_GLASS, PF_THEME_FELT);
 
     syncReduxAppearanceFromDocument();
 
-    expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(ColorScheme.DARK);
-    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.FELT);
-    expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.GLASS);
+    expect(localStorage.getItem(KIALI_COLOR_SCHEME)).toBe(ColorScheme.LIGHT);
+    expect(localStorage.getItem(KIALI_THEME)).toBe(Theme.DEFAULT);
+    expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.DEFAULT);
   });
 });
 

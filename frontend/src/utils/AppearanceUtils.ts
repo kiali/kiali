@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useKialiSelector } from 'hooks/redux';
 import { store } from 'store/ConfigStore';
+import type { KialiAppState } from 'store/Store';
 import { GlobalActions } from 'actions/GlobalActions';
 import { isParentKiosk } from 'components/Kiosk/KioskActions';
 import {
@@ -176,6 +177,8 @@ export const registerSystemAppearanceListener = (onChange: () => void): (() => v
       if (!isParentOwnedAppearance()) {
         applyDocumentAppearance(colorScheme, contrastMode, getKialiTheme());
       }
+      // Bump revision so legacy connect() consumers re-resolve System preference on OS changes.
+      store.dispatch(GlobalActions.systemAppearanceChanged());
       onChange();
     }
   };
@@ -275,11 +278,7 @@ export const readDocumentAppearanceClasses = (): DocumentAppearanceClasses => {
   };
 };
 
-export const persistKialiAppearancePreferences = (
-  colorScheme: ColorScheme,
-  contrastMode: ContrastMode,
-  theme: Theme
-): void => {
+export const persistKialiAppearance = (colorScheme: ColorScheme, contrastMode: ContrastMode, theme: Theme): void => {
   localStorage.setItem(KIALI_COLOR_SCHEME, colorScheme);
   localStorage.setItem(KIALI_CONTRAST_MODE, contrastMode);
   localStorage.setItem(KIALI_THEME, theme);
@@ -301,7 +300,11 @@ export const isParentOwnedAppearance = (): boolean => {
   return isParentKiosk(sessionKiosk);
 };
 
-/** Update Redux from current <html> appearance classes without modifying the document. */
+/**
+ * Update Redux from current <html> appearance classes without modifying the document.
+ * Does not persist to localStorage: parent-owned (OSSMC) values must not overwrite
+ * standalone preferences loaded on the next full-page visit.
+ */
 export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & {
   colorScheme: ResolvedColorScheme;
 } => {
@@ -310,10 +313,17 @@ export const syncReduxAppearanceFromDocument = (): DocumentAppearanceClasses & {
   store.dispatch(GlobalActions.setColorScheme(colorScheme));
   store.dispatch(GlobalActions.setContrastMode(contrastMode));
   store.dispatch(GlobalActions.setTheme(theme));
-  persistKialiAppearancePreferences(colorScheme, contrastMode, theme);
 
   return { colorScheme, contrastMode, theme };
 };
+
+/** Redux props for connect() consumers that resolve color scheme at render time. */
+export const mapAppearanceFromState = (
+  state: KialiAppState
+): { colorScheme: string; systemAppearanceRevision: number } => ({
+  colorScheme: state.globalState.colorScheme,
+  systemAppearanceRevision: state.globalState.systemAppearanceRevision
+});
 
 /**
  * Applies PatternFly color scheme, contrast mode, and theme classes on <html>.

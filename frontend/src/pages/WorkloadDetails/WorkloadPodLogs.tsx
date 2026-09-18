@@ -39,7 +39,7 @@ import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
-import { resolveColorScheme } from '../../utils/AppearanceUtils';
+import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
@@ -81,6 +81,7 @@ const spanColor = PFColors.Cyan300;
 type ReduxProps = {
   colorScheme: string;
   kiosk: string;
+  systemAppearanceRevision: number;
   timeRange: TimeRange;
   tracingIntegration: boolean;
 };
@@ -1626,7 +1627,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
     kiosk: state.globalState.kiosk,
     timeRange: timeRangeSelector(state),
     tracingIntegration: state.tracingState.info?.integration ?? false,
-    colorScheme: state.globalState.colorScheme
+    ...mapAppearanceFromState(state)
   };
 };
 

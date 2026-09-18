@@ -39,7 +39,7 @@ import {
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import type { TimeInMilliseconds } from '../../types/Common';
 import { ColorScheme } from '../../types/Common';
-import { resolveColorScheme } from '../../utils/AppearanceUtils';
+import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 
@@ -70,6 +70,7 @@ export type ResourceSorts = { [resource: string]: ISortBy };
 type ReduxProps = {
   colorScheme: string;
   namespaces: Namespace[];
+  systemAppearanceRevision: number;
 };
 
 type EnvoyDetailsProps = ReduxProps & {
@@ -432,7 +433,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   namespaces: namespaceItemsSelector(state)!,
-  colorScheme: state.globalState.colorScheme
+  ...mapAppearanceFromState(state)
 });
 
 export const EnvoyDetails = connect(mapStateToProps)(EnvoyDetailsComponent);

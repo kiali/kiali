@@ -1,11 +1,21 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { ensureKialiFinishedLoading } from './transition';
 
 const USER_DROPDOWN = '[data-test="user-dropdown"]';
+const PREFERENCES_MODAL = '[data-test="preferences-modal"]';
 
 const openPreferences = (): void => {
-  cy.get(USER_DROPDOWN).click();
-  cy.getBySel('preferences').click();
-  cy.getBySel('preferences-modal').should('be.visible');
+  cy.get('body').then($body => {
+    if ($body.find(PREFERENCES_MODAL).length > 0) {
+      cy.getBySel('preferences-modal').should('be.visible');
+      return;
+    }
+
+    ensureKialiFinishedLoading();
+    cy.get(USER_DROPDOWN).should('be.visible').click();
+    cy.getBySel('preferences').click();
+    cy.getBySel('preferences-modal').should('be.visible');
+  });
 };
 
 const selectPreferenceOption = (selectId: string, optionLabel: string): void => {
@@ -27,6 +37,7 @@ const resetAppearanceToDefaults = (): void => {
     }
   });
   cy.getBySel('preferences-close').click();
+  cy.get(PREFERENCES_MODAL).should('not.exist');
 };
 
 /**

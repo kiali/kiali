@@ -74,7 +74,7 @@ import { connect } from 'react-redux';
 import { basicTabStyle } from 'styles/TabStyles';
 import { drawerPanelStyle, editorStyle } from 'styles/EditorStyle';
 import { ColorScheme } from 'types/Common';
-import { resolveColorScheme } from 'utils/AppearanceUtils';
+import { mapAppearanceFromState, resolveColorScheme } from 'utils/AppearanceUtils';
 import type { ApiError } from 'types/Api';
 import { dump, loadAll } from 'js-yaml';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
@@ -115,6 +115,7 @@ const IDLE_BLOCKER: { location: undefined; proceed: undefined; reset: undefined;
 interface ReduxProps {
   colorScheme: string;
   kiosk: string;
+  systemAppearanceRevision: number;
 }
 
 type IstioConfigDetailsProps = ReduxProps & {
@@ -933,7 +934,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
-  colorScheme: state.globalState.colorScheme
+  ...mapAppearanceFromState(state)
 });
 
 export { IstioConfigDetailsPageComponent };

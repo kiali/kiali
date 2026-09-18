@@ -11,6 +11,7 @@ import type MockAdapter from 'axios-mock-adapter';
 const defaultProps = (): WorkloadPodLogsProps => ({
   colorScheme: '',
   kiosk: '',
+  systemAppearanceRevision: 0,
   lastRefreshAt: 200,
   timeRange: {},
   tracingIntegration: false,

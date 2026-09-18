@@ -44,6 +44,7 @@ export interface GlobalState {
   readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
+  readonly systemAppearanceRevision: number;
   readonly theme: string;
 }
 

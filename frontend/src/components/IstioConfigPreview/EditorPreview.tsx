@@ -8,7 +8,7 @@ import { MarkerSeverity } from 'monaco-editor';
 import { YAMLException, loadAll } from 'js-yaml';
 import { editorStyle } from 'styles/EditorStyle';
 import { ColorScheme } from '../../types/Common';
-import { resolveColorScheme } from '../../utils/AppearanceUtils';
+import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
 
@@ -16,6 +16,7 @@ export type PolicyItem = AuthorizationPolicy | Sidecar;
 
 type ReduxProps = {
   colorScheme: string;
+  systemAppearanceRevision: number;
 };
 
 type Props = ReduxProps & {
@@ -87,10 +88,6 @@ export const EditorPreviewComponent: React.FC<Props> = (props: Props) => {
   );
 };
 
-const mapStateToProps = (state: KialiAppState): ReduxProps => {
-  return {
-    colorScheme: state.globalState.colorScheme
-  };
-};
+const mapStateToProps = (state: KialiAppState): ReduxProps => mapAppearanceFromState(state);
 
 export const EditorPreview = connect(mapStateToProps)(EditorPreviewComponent);

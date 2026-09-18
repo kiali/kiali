@@ -80,7 +80,7 @@ Then('the AI chatbot toggle button should be visible', () => {
 
 // ============================================================
 // Color-scheme-aware toggle icon
-// Appearance steps live in themes.ts (shared with themes.feature).
+// Appearance steps live in appearance.ts (shared with appearance.feature).
 // ============================================================
 
 /**

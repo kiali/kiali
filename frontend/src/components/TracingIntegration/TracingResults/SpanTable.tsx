@@ -25,7 +25,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { ColorScheme } from '../../../types/Common';
-import { resolveColorScheme } from '../../../utils/AppearanceUtils';
+import { mapAppearanceFromState, resolveColorScheme } from '../../../utils/AppearanceUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
@@ -36,6 +36,7 @@ type StateProps = {
   kiosk: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
+  systemAppearanceRevision: number;
 };
 
 type Props = ReduxProps &
@@ -574,7 +575,7 @@ const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
   metricsStats: state.metricsStats.data,
   provider: state.tracingState.info?.provider,
-  colorScheme: state.globalState.colorScheme
+  ...mapAppearanceFromState(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({

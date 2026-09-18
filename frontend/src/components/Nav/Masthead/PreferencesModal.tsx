@@ -29,7 +29,7 @@ import {
   getKialiTheme,
   isColorScheme,
   isContrastMode,
-  persistKialiAppearancePreferences
+  persistKialiAppearance
 } from 'utils/AppearanceUtils';
 
 type ReduxProps = {
@@ -189,7 +189,7 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
     store.dispatch(GlobalActions.setColorScheme(nextPreferences.colorScheme));
     store.dispatch(GlobalActions.setContrastMode(nextPreferences.contrastMode));
     store.dispatch(GlobalActions.setTheme(nextPreferences.theme));
-    persistKialiAppearancePreferences(nextPreferences.colorScheme, nextPreferences.contrastMode, nextPreferences.theme);
+    persistKialiAppearance(nextPreferences.colorScheme, nextPreferences.contrastMode, nextPreferences.theme);
   };
 
   const updatePreference = (update: Partial<AppearancePreferences>): void => {
