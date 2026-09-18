@@ -857,6 +857,15 @@ kiali_metrics_monitor_ready() {
     ' >/dev/null
 }
 
+kiali_hub_recording_rule_ready() {
+  oc_hub get prometheusrule kiali-hub-aggregation -n "${KIALI_NAMESPACE}" \
+    -o json 2>/dev/null | jq -e '
+      .metadata.labels["app.kubernetes.io/managed-by"] == "kiali-acm-hub-spoke" and
+      .metadata.labels["openshift.io/prometheus-rule-evaluation-scope"] == "leaf-prometheus" and
+      any(.spec.groups[]?.rules[]?; .record == "kiali:kiali_graph_nodes")
+    ' >/dev/null
+}
+
 prepare_kiali_spoke_access() {
   local delete=${1:-false}
   local chart=""
@@ -946,6 +955,7 @@ EOF
   fi
   wait_until "Kiali on the hub" kiali_ready
   create_kiali_metrics_monitor
+  create_kiali_hub_recording_rule
 }
 
 create_kiali_metrics_monitor() {
@@ -1007,6 +1017,22 @@ spec:
 EOF
 }
 
+create_kiali_hub_recording_rule() {
+  info "Creating hub-local Kiali metrics recording rule"
+  cat <<EOF | oc_hub apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kiali-acm-hub-spoke
+    openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
+  name: kiali-hub-aggregation
+  namespace: ${KIALI_NAMESPACE}
+spec:
+$(sed 's/^/  /' "${SCRIPT_DIR}/prometheus/federation/kiali-metrics-recording-rules.yml")
+EOF
+}
+
 verify_all() {
   info "Verifying hub, spoke, and federation"
   managed_cluster_ready local-cluster || die "Hub managed cluster local-cluster is not joined and available"
@@ -1034,6 +1060,8 @@ verify_all() {
       die "Kiali spoke OAuthClient kiali-${KIALI_NAMESPACE} is missing"
     kiali_metrics_monitor_ready || \
       die "Kiali metrics ServiceMonitor is missing the app/version relabeling"
+    kiali_hub_recording_rule_ready || \
+      die "Hub-local Kiali metrics recording rule is missing"
   fi
   if [ "${INSTALL_DEMO_APPS}" = true ]; then
     sidecar_demo_ready || die "The sidecar demo application is not ready"
@@ -1113,7 +1141,7 @@ uninstall_federation() {
 }
 
 uninstall_hub_kiali() {
-  local managed_by metrics_monitor_managed_by
+  local managed_by metrics_monitor_managed_by recording_rule_managed_by
   info "Removing Kiali remote-cluster access resources"
   prepare_kiali_spoke_access true
   oc_spoke delete clusterrolebinding \
@@ -1124,6 +1152,14 @@ uninstall_hub_kiali() {
   if [ "${metrics_monitor_managed_by}" = kiali-acm-hub-spoke ]; then
     info "Removing wrapper-owned Kiali metrics ServiceMonitor"
     oc_hub delete servicemonitor kiali -n "${KIALI_NAMESPACE}" --ignore-not-found
+  fi
+  recording_rule_managed_by=$(oc_hub get prometheusrule kiali-hub-aggregation \
+    -n "${KIALI_NAMESPACE}" \
+    -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)
+  if [ "${recording_rule_managed_by}" = kiali-acm-hub-spoke ]; then
+    info "Removing wrapper-owned hub-local Kiali metrics recording rule"
+    oc_hub delete prometheusrule kiali-hub-aggregation \
+      -n "${KIALI_NAMESPACE}" --ignore-not-found
   fi
   select_temporary_context "${HUB_CONTEXT}"
   KUBECONFIG="${MULTICLUSTER_KUBECONFIG}" \

@@ -461,10 +461,12 @@ spec:
 ```
 
 Add the remaining request/response byte and message histogram rules from
-prometheus/federation/core-recording-rules.yml. Add the rules from
-prometheus/federation/kiali-metrics-recording-rules.yml when Kiali self-metrics
-are needed. The workload: prefix prevents raw per-pod series from being
-federated and keeps edge cardinality manageable.
+prometheus/federation/core-recording-rules.yml. If Kiali is installed on a
+selected managed cluster, add the rules from
+prometheus/federation/kiali-metrics-recording-rules.yml to this edge rule as
+well. For centralized Kiali on the hub, create the namespace-local rule in
+section 8 instead. The workload: prefix prevents raw per-pod series from
+being federated and keeps edge cardinality manageable.
 
 Create the user-workload ScrapeConfig:
 
@@ -890,6 +892,100 @@ The `app` and `version` relabelings use the legacy service labels as a
 fallback. The `app_kubernetes_io_name` and `app_kubernetes_io_version`
 relabelings copy only the corresponding Kubernetes service labels.
 
+Create a namespace-local recording rule on the hub for Kiali's self-metrics.
+The ServiceMonitor stores raw `kiali_*` samples in hub UWM Prometheus, but the
+MCOA federation ScrapeConfig selects the prefixed `kiali:kiali_*` recording
+series. The recording rule is therefore the bridge between the Kiali scrape
+and the existing federation path.
+
+Use the Kiali namespace for the rule so that its namespace selector matches
+the namespace where the Kiali ServiceMonitor discovers the service. The
+`leaf-prometheus` label is required by the hub UWM Prometheus rule selector;
+without it, Kubernetes accepts the object but UWM does not load the rule.
+The `kiali:` prefix is an edge-only name. The federation ScrapeConfig removes
+that prefix before storing the series in Thanos, where Kiali queries names
+such as `kiali_graph_nodes`.
+
+Create `kiali-hub-aggregation.yaml` with the Kiali self-metric rules. Include
+the complete set of rules from
+`prometheus/federation/kiali-metrics-recording-rules.yml`; these examples show
+the aggregation shape for counters, gauges, and histogram components:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: kiali-hub-aggregation
+  namespace: <kiali-namespace>
+  labels:
+    app.kubernetes.io/component: user-workload-metrics-collector
+    openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus
+spec:
+  groups:
+  - name: kiali.aggregation
+    interval: 30s
+    rules:
+    # Counters are additive when Kiali has multiple replicas.
+    - record: kiali:kiali_api_failures_total
+      expr: sum without (pod, pod_template_hash, instance, job, node) (kiali_api_failures_total)
+    - record: kiali:kiali_cache_hits_total
+      expr: sum without (pod, pod_template_hash, instance, job, node) (kiali_cache_hits_total)
+    # Gauges are deduplicated across Kiali replicas.
+    - record: kiali:kiali_graph_nodes
+      expr: max without (pod, pod_template_hash, instance, job, node) (kiali_graph_nodes)
+    - record: kiali:kiali_health_status
+      expr: max without (pod, pod_template_hash, instance, job, node) (kiali_health_status)
+    # Keep all histogram bucket, sum, and count components.
+    - record: kiali:kiali_api_processing_duration_seconds_bucket
+      expr: sum without (pod, pod_template_hash, instance, job, node) (kiali_api_processing_duration_seconds_bucket)
+    - record: kiali:kiali_api_processing_duration_seconds_sum
+      expr: sum without (pod, pod_template_hash, instance, job, node) (kiali_api_processing_duration_seconds_sum)
+    - record: kiali:kiali_api_processing_duration_seconds_count
+      expr: sum without (pod, pod_template_hash, instance, job, node) (kiali_api_processing_duration_seconds_count)
+```
+
+For each additional Kiali counter or gauge, preserve the same recording-name
+prefix and aggregation labels. For histogram metrics, record `_bucket`,
+`_sum`, and `_count` separately. Use `sum without (...)` for counters and
+histogram components, and `max without (...)` for gauges that represent one
+current Kiali state. The full rule file contains the remaining Kiali metrics.
+
+Apply the rule on the hub and confirm that UWM has loaded it:
+
+```bash
+oc --context="$HUB_CONTEXT" apply -f kiali-hub-aggregation.yaml
+oc --context="$HUB_CONTEXT" get prometheusrule kiali-hub-aggregation \
+  -n "$KIALI_NAMESPACE"
+
+PROM_POD=$(oc --context="$HUB_CONTEXT" \
+  -n openshift-user-workload-monitoring get pods \
+  -l app.kubernetes.io/name=prometheus -o jsonpath='{.items[0].metadata.name}')
+oc --context="$HUB_CONTEXT" -n openshift-user-workload-monitoring \
+  exec -c prometheus "$PROM_POD" -- curl -sG \
+  --data-urlencode 'query=count({__name__=~"kiali:kiali_.*"})' \
+  http://localhost:9090/api/v1/query | jq '.data.result'
+```
+
+The count should be non-zero. If it is zero, check that the rule has the
+`openshift.io/prometheus-rule-evaluation-scope: leaf-prometheus` label and
+that the raw Kiali metrics are present:
+
+```bash
+oc --context="$HUB_CONTEXT" -n openshift-user-workload-monitoring \
+  exec -c prometheus "$PROM_POD" -- curl -sG \
+  --data-urlencode 'query=kiali_graph_nodes' \
+  http://localhost:9090/api/v1/query | jq '.data.result'
+```
+
+After the next MCOA collection interval, verify the unprefixed series in
+Thanos:
+
+```bash
+oc --context="$HUB_CONTEXT" get --raw \
+  "/api/v1/namespaces/${OBSERVABILITY_NAMESPACE}/services/http:observability-thanos-query-frontend:9090/proxy/api/v1/query?query=kiali_graph_nodes%7Bcluster%3D%22local-cluster%22%7D" \
+  | jq '.data.result'
+```
+
 ## 9. Validate the metrics path
 
 ```bash
@@ -964,7 +1060,7 @@ Remove components in reverse dependency order:
 
 1. Stop traffic and remove demo applications.
 2. Remove Kiali's remote-cluster Secret, spoke permissions, OAuth client,
-   Kiali, and its hub ServiceMonitor.
+   Kiali, its hub ServiceMonitor, and the hub Kiali PrometheusRule.
 3. Remove Istio monitors and Istio from the spoke.
 4. Remove the three MCOA source objects and their placement configs entries.
 5. Delete the spoke Klusterlet, wait for ACM agent namespaces to disappear,
