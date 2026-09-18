@@ -344,15 +344,22 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric
+	// Ztunnel metrics may come directly from Prometheus or from federated
+	// workload: recording rules. Use stable app and namespace labels and do
+	// not group by pod so the dashboard works with either series shape. The
+	// metrics must have app="ztunnel" in the IstioMetricsQuery namespace to be
+	// included.
+	ztunnelLabels := fmt.Sprintf(`{app="ztunnel",namespace=%q}`, q.Namespace)
+	ztunnelContainerLabels := fmt.Sprintf(`{namespace=%q,container="istio-proxy"}`, q.Namespace)
 
 	// ZTunnel connections
-	metric := in.prom.FetchRateRange(ctx, "istio_tcp_connections_opened_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric := in.prom.FetchRateRange(ctx, "istio_tcp_connections_opened_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_opened_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_connections"] = converted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_connections_closed_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_connections_closed_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_closed_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -368,7 +375,7 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_versions"] = converted
 
 	// Ztunnel memory usage ztunnel_memory_usage
-	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", ztunnelContainerLabels, "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -376,8 +383,8 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_memory_usage"] = converted
 
 	// Ztunnel ztunnel_cpu_usage
-	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
-	metric = in.prom.FetchRange(ctx, metricName, "", "pod", "sum", &q.RangeQuery)
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total%s[%s])", ztunnelContainerLabels, q.RateInterval)
+	metric = in.prom.FetchRange(ctx, metricName, "", "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -385,13 +392,13 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_cpu_usage"] = converted
 
 	// ztunnel_bytes_transmitted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Received"})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_bytes_transmitted"] = converted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Sent"})
 	if err != nil {
 		return nil, err
@@ -399,7 +406,7 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
 
 	// ztunnel_workload_manager
-	metric = in.prom.FetchRange(ctx, "workload_manager_active_proxy_count", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "workload_manager_active_proxy_count", ztunnelLabels, "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_workload_manager", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err

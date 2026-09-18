@@ -85,7 +85,10 @@ func checkNamespaceAccessMultiCluster(
 	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
 
 	for _, cluster := range namespaceService.GetClusterList() {
-		ns, err := checkNamespaceAccessWithService(w, r, &namespaceService, namespace, cluster)
+		// Do not use checkNamespaceAccessWithService here because it writes a
+		// forbidden response before we can ignore a namespace that is simply
+		// absent from this cluster.
+		ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
 		if err != nil {
 			if k8serrors.IsNotFound(err) {
 				continue
