@@ -96,7 +96,7 @@
 - [ ] `@multi-primary` suite passes
 - [ ] `@multi-mesh` suite passes
 - [ ] `@external-kiali` suite passes
-- [ ] `@tracing` suite passes
+- [ ] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
 - [ ] `@offline` suite passes
 - [ ] `@ai-chatbot` suite passes
 
