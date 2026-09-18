@@ -605,6 +605,38 @@ spec:
     - action: keep
       sourceLabels: [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
     - action: replace
+      regex: (\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
+      replacement: '[$2]:$1'
+      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
+      targetLabel: __address__
+    - action: replace
+      regex: (\d+);((([0-9]+?)(\.|$)){4})
+      replacement: '$2:$1'
+      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
+      targetLabel: __address__
+    - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name, __meta_kubernetes_pod_label_app]
+      separator: ";"
+      targetLabel: app
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "${1}${2}"
+    - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_version, __meta_kubernetes_pod_label_version]
+      separator: ";"
+      targetLabel: version
+      action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "${1}${2}"
+    - action: replace
+      regex: "(.+)"
+      replacement: "${1}"
+      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+      targetLabel: app_kubernetes_io_name
+    - action: replace
+      regex: "(.+)"
+      replacement: "${1}"
+      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_version]
+      targetLabel: app_kubernetes_io_version
+    - action: replace
       sourceLabels: [__meta_kubernetes_namespace]
       targetLabel: namespace
     - action: replace
@@ -612,9 +644,11 @@ spec:
       targetLabel: mesh_id
 ```
 
-Use the actual mesh ID for `<mesh-id>`. Preserve the standard app/version
-relabelings for Kiali UI to support custom dashboards and Kiali internal
-metrics graphs.
+Use the actual mesh ID for `<mesh-id>`. The `app` and `version` relabelings
+fall back to the legacy pod labels when the Kubernetes-style labels are not
+present. The `app_kubernetes_io_name` and `app_kubernetes_io_version`
+relabelings copy only the corresponding Kubernetes pod labels; they do not
+derive those labels from `app` or `version`.
 
 In Ambient mode, create the same PodMonitor in the namespace containing
 ztunnel; that namespace is usually ztunnel or istio-system.
@@ -815,6 +849,35 @@ spec:
   - port: tcp-metrics
     scheme: https
     interval: 30s
+    relabelings:
+    - action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "${1}${2}"
+      separator: ";"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_name
+      - __meta_kubernetes_service_label_app
+      targetLabel: app
+    - action: replace
+      regex: "(.+)"
+      replacement: "${1}"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_name
+      targetLabel: app_kubernetes_io_name
+    - action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "${1}${2}"
+      separator: ";"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_version
+      - __meta_kubernetes_service_label_version
+      targetLabel: version
+    - action: replace
+      regex: "(.+)"
+      replacement: "${1}"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_version
+      targetLabel: app_kubernetes_io_version
     tlsConfig:
       ca:
         configMap:
@@ -823,8 +886,9 @@ spec:
       serverName: kiali.istio-system.svc
 ```
 
-Preserve app/version relabelings so Kiali metrics retain `app`, `version`,
-`app_kubernetes_io_name`, and `app_kubernetes_io_version` labels.
+The `app` and `version` relabelings use the legacy service labels as a
+fallback. The `app_kubernetes_io_name` and `app_kubernetes_io_version`
+relabelings copy only the corresponding Kubernetes service labels.
 
 ## 9. Validate the metrics path
 
