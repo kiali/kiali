@@ -898,6 +898,10 @@ prepare_kiali_spoke_access() {
   fi
   KUBECONFIG="${MULTICLUSTER_KUBECONFIG}" \
     "${SCRIPT_DIR}/istio/multicluster/kiali-prepare-remote-cluster.sh" "${args[@]}"
+  if [ "${delete}" = true ]; then
+    info "Removing Kiali spoke OAuthClient kiali-${KIALI_NAMESPACE}"
+    oc_spoke delete oauthclient "kiali-${KIALI_NAMESPACE}" --ignore-not-found
+  fi
 }
 
 install_hub_kiali() {

@@ -1088,8 +1088,9 @@ placement references and both ScrapeConfig resources.
 Remove components in reverse dependency order:
 
 1. Stop traffic and remove demo applications.
-2. Remove Kiali's remote-cluster Secret, spoke permissions, OAuth client,
-   Kiali, its hub ServiceMonitor, and the hub Kiali PrometheusRule.
+2. Remove Kiali's remote-cluster Secret, spoke permissions,
+   `OAuthClient/kiali-<kiali-namespace>` on the spoke, Kiali, its hub
+   ServiceMonitor, and the hub Kiali PrometheusRule.
 3. Remove Istio monitors and Istio from the spoke.
 4. Remove the three MCOA source objects and their placement configs entries.
 5. Delete the spoke Klusterlet, wait for ACM agent namespaces to disappear,
@@ -1101,6 +1102,18 @@ Remove components in reverse dependency order:
 Do not delete a pre-existing cluster-monitoring-config or
 user-workload-monitoring-config wholesale. Remove only settings and namespaces
 added for this topology, preserving unrelated monitoring configuration.
+
+The spoke OAuthClient is cluster-scoped. The remote-access helper uses
+`helm template` to generate the Kiali chart's remote-cluster YAML and then
+applies that YAML with `oc`; it does not create a Helm release on the spoke.
+Therefore, `helm uninstall kiali -n <kiali-namespace>` does not remove the
+OAuthClient. The wrapper's `uninstall` command deletes it explicitly. If
+cleanup is performed manually, run:
+
+```bash
+oc --context="$SPOKE_CONTEXT" delete oauthclient \
+  "kiali-${KIALI_NAMESPACE}" --ignore-not-found
+```
 
 ## Additional resources
 
