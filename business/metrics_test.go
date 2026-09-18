@@ -493,17 +493,19 @@ func TestGetZtunnelMetrics(t *testing.T) {
 
 	q := models.IstioMetricsQuery{}
 	q.FillDefaults()
+	q.Namespace = "ztunnel"
 	q.RateInterval = "5m"
 
-	ztunnelLabels := `{pod=~"ztunnel-.*"}`
-	api.MockRange("sum(rate(istio_tcp_connections_opened_total"+ztunnelLabels+"[5m])) by (pod)", 1.0)
-	api.MockRange("sum(rate(istio_tcp_connections_closed_total"+ztunnelLabels+"[5m])) by (pod)", 2.0)
+	ztunnelLabels := `{app="ztunnel",namespace="ztunnel"}`
+	ztunnelContainerLabels := `{namespace="ztunnel",container="istio-proxy"}`
+	api.MockRange("sum(rate(istio_tcp_connections_opened_total"+ztunnelLabels+"[5m]))", 1.0)
+	api.MockRange("sum(rate(istio_tcp_connections_closed_total"+ztunnelLabels+"[5m]))", 2.0)
 	api.MockRange(`sum(istio_build{component="ztunnel"}) by (tag)`, 1.0)
-	api.MockRange("sum(container_memory_working_set_bytes"+ztunnelLabels+") by (pod)", 100.0)
-	api.MockRange("sum(irate(container_cpu_usage_seconds_total"+ztunnelLabels+"[5m])) by (pod)", 0.5)
-	api.MockRange("sum(rate(istio_tcp_received_bytes_total"+ztunnelLabels+"[5m])) by (pod)", 10.0)
-	api.MockRange("sum(rate(istio_tcp_sent_bytes_total"+ztunnelLabels+"[5m])) by (pod)", 20.0)
-	api.MockRange("sum(workload_manager_active_proxy_count"+ztunnelLabels+") by (pod)", 3.0)
+	api.MockRange("sum(container_memory_working_set_bytes"+ztunnelContainerLabels+")", 100.0)
+	api.MockRange("sum(irate(container_cpu_usage_seconds_total"+ztunnelContainerLabels+"[5m]))", 0.5)
+	api.MockRange("sum(rate(istio_tcp_received_bytes_total"+ztunnelLabels+"[5m]))", 10.0)
+	api.MockRange("sum(rate(istio_tcp_sent_bytes_total"+ztunnelLabels+"[5m]))", 20.0)
+	api.MockRange("sum(workload_manager_active_proxy_count"+ztunnelLabels+")", 3.0)
 
 	metrics, err := srv.GetZtunnelMetrics(context.Background(), q)
 	assert.NoError(err)
