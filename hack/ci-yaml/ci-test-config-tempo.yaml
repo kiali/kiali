@@ -1,4 +1,23 @@
 # Local Kiali config for Playwright @tracing / Tempo CI (mirrors frontend-tempo Helm values).
+additional_display_details:
+- annotation: kiali.io/api-spec
+  icon_annotation: kiali.io/api-type
+  title: API Documentation
+external_services:
+  grafana:
+    enabled: true
+    # Required for Tempo "View in Tracing" (default url_format uses Grafana).
+    # Matches setup_kind_tempo Helm: external_services.grafana.external_url.
+    external_url: http://grafana.istio-system:3000
+    # Overwritten by --port-forward-grafana to a local port.
+    internal_url: http://grafana.istio-system:3000
+  tracing:
+    enabled: true
+    # InternalURL is overwritten by --port-forward-tracing to the local Tempo frontend port.
+    external_url: http://tempo-cr-query-frontend.tempo:3200
+    internal_url: http://tempo-cr-query-frontend.tempo:3200
+    provider: tempo
+    use_grpc: false
 health_config:
   rate:
   - kind: service
@@ -8,18 +27,6 @@ health_config:
     - code: 5xx
       degraded: 2
       failure: 100
-additional_display_details:
-- title: API Documentation
-  annotation: kiali.io/api-spec
-  icon_annotation: kiali.io/api-type
-external_services:
-  tracing:
-    enabled: true
-    provider: tempo
-    use_grpc: false
-    # InternalURL is overwritten by --port-forward-tracing to the local Tempo frontend port.
-    internal_url: http://tempo-cr-query-frontend.tempo:3200
-    external_url: http://tempo-cr-query-frontend.tempo:3200
 kiali_internal:
   graph_cache:
     enabled: false
