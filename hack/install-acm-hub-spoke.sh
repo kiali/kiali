@@ -847,6 +847,16 @@ kiali_spoke_oauth_client_exists() {
   oc_spoke get oauthclient "kiali-${KIALI_NAMESPACE}" >/dev/null 2>&1
 }
 
+kiali_metrics_monitor_ready() {
+  oc_hub get servicemonitor kiali -n "${KIALI_NAMESPACE}" -o json 2>/dev/null | \
+    jq -e '
+      any(.spec.endpoints[]?.relabelings[]?;
+        .targetLabel == "app_kubernetes_io_name") and
+      any(.spec.endpoints[]?.relabelings[]?;
+        .targetLabel == "app_kubernetes_io_version")
+    ' >/dev/null
+}
+
 prepare_kiali_spoke_access() {
   local delete=${1:-false}
   local chart=""
@@ -935,6 +945,66 @@ EOF
     info "Kiali was rolled out by the Helm install/upgrade; no additional restart is needed"
   fi
   wait_until "Kiali on the hub" kiali_ready
+  create_kiali_metrics_monitor
+}
+
+create_kiali_metrics_monitor() {
+  info "Creating Kiali metrics ServiceMonitor on the hub"
+  cat <<EOF | oc_hub apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kiali-acm-hub-spoke
+  name: kiali
+  namespace: ${KIALI_NAMESPACE}
+spec:
+  endpoints:
+  - interval: 30s
+    port: tcp-metrics
+    relabelings:
+    - action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+      separator: ";"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_name
+      - __meta_kubernetes_service_label_app
+      targetLabel: app
+    - action: replace
+      regex: "(.+)"
+      replacement: "\${1}"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_name
+      targetLabel: app_kubernetes_io_name
+    - action: replace
+      regex: "(.+);.*|.*;(.+)"
+      replacement: "\${1}\${2}"
+      separator: ";"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_version
+      - __meta_kubernetes_service_label_version
+      targetLabel: version
+    - action: replace
+      regex: "(.+)"
+      replacement: "\${1}"
+      sourceLabels:
+      - __meta_kubernetes_service_label_app_kubernetes_io_version
+      targetLabel: app_kubernetes_io_version
+    scheme: https
+    tlsConfig:
+      ca:
+        configMap:
+          key: service-ca.crt
+          name: kiali-cabundle-openshift
+      serverName: kiali.${KIALI_NAMESPACE}.svc
+  namespaceSelector:
+    matchNames:
+    - ${KIALI_NAMESPACE}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kiali
+EOF
 }
 
 verify_all() {
@@ -962,6 +1032,8 @@ verify_all() {
       die "Kiali does not mount the remote-cluster Secret for ${SPOKE_NAME}"
     kiali_spoke_oauth_client_exists || \
       die "Kiali spoke OAuthClient kiali-${KIALI_NAMESPACE} is missing"
+    kiali_metrics_monitor_ready || \
+      die "Kiali metrics ServiceMonitor is missing the app/version relabeling"
   fi
   if [ "${INSTALL_DEMO_APPS}" = true ]; then
     sidecar_demo_ready || die "The sidecar demo application is not ready"
@@ -1041,11 +1113,18 @@ uninstall_federation() {
 }
 
 uninstall_hub_kiali() {
-  local managed_by
+  local managed_by metrics_monitor_managed_by
   info "Removing Kiali remote-cluster access resources"
   prepare_kiali_spoke_access true
   oc_spoke delete clusterrolebinding \
     -l app.kubernetes.io/instance=kiali --ignore-not-found 2>/dev/null || true
+  metrics_monitor_managed_by=$(oc_hub get servicemonitor kiali \
+    -n "${KIALI_NAMESPACE}" \
+    -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}' 2>/dev/null || true)
+  if [ "${metrics_monitor_managed_by}" = kiali-acm-hub-spoke ]; then
+    info "Removing wrapper-owned Kiali metrics ServiceMonitor"
+    oc_hub delete servicemonitor kiali -n "${KIALI_NAMESPACE}" --ignore-not-found
+  fi
   select_temporary_context "${HUB_CONTEXT}"
   KUBECONFIG="${MULTICLUSTER_KUBECONFIG}" \
     "${SCRIPT_DIR}/install-acm.sh" \

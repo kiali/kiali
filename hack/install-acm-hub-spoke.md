@@ -282,6 +282,21 @@ default. This is Kiali's external home-cluster identity; it is neither the ACM
 among the Kiali clusters being configured. Use `--kiali-cluster-name` to set a
 different unique value.
 
+After Kiali is ready, the wrapper creates a hub-side `ServiceMonitor` named
+`kiali` for the `tcp-metrics` HTTPS endpoint. It uses the OpenShift service CA
+from `kiali-cabundle-openshift` and relabels the service's Kubernetes labels
+onto every sample:
+
+- `app.kubernetes.io/name` (falling back to `app`) becomes both `app` and
+  `app_kubernetes_io_name`.
+- `app.kubernetes.io/version` (falling back to `version`) becomes both
+  `version` and `app_kubernetes_io_version`.
+
+The explicit `app_kubernetes_io_name` and `app_kubernetes_io_version` labels
+are preserved through the recording-rule and federation pipeline, allowing
+Kiali's Internal Metrics and Go metrics views to identify the Kiali workload.
+The monitor is labeled as wrapper-owned and is removed during uninstall.
+
 The remote cluster uses `--spoke-name`, matching the `cluster` label that ACM
 adds to the spoke's centralized metrics. The wrapper also passes this value to
 Sail as Istio's `global.multiCluster.clusterName`; therefore, it is the one
