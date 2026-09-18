@@ -13,8 +13,8 @@ test.describe('App details graph', () => {
     'Application detail URL stays under applications after mini graph loads',
     core1,
     async ({ appDetailsPage }, testInfo) => {
-      // expectMiniGraphReady toPass runs up to 120s; keep test timeout above that.
-      testInfo.setTimeout(120_000);
+      // expectMiniGraphReady toPass runs up to 120s; leave room for openApp as well.
+      testInfo.setTimeout(150_000);
       ensureDemoApp('error-rates');
       await appDetailsPage.openApp('alpha', 'a-client');
       await appDetailsPage.expectMinigraphVisible();
