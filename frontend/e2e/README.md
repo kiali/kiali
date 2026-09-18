@@ -134,10 +134,37 @@ Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-cac
 
 ### Core-optional (`yarn playwright:run:core-optional`)
 
-Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`).
+Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`). The script port-forwards Perses to `localhost:4000` and starts local Kiali with `hack/ci-yaml/ci-test-config-perses.yaml`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-core-optional
+```
+
+### Perses (`yarn playwright:run:perses`)
+
+Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
+
+Requires Perses in the cluster **and** `external_services.perses` in the Kiali config. Port-forwarding Perses alone is not enough — tests call Kiali `/api/perses` (204 means disabled).
+
+```bash
+# 1. Perses in cluster (StatefulSet + svc/perses in istio-system)
+kubectl get svc perses -n istio-system
+
+# 2. Start Kiali with Perses config (separate terminal)
+$(go env GOPATH)/bin/kiali \
+  -c hack/ci-yaml/ci-test-config-perses.yaml run \
+  --cluster-name-overrides kind-ci=cluster-default \
+  --port-forward-prom --port-forward-grafana --no-browser
+
+# 3. Port-forward Perses (separate terminal; both external_url and internal_url use localhost:4000)
+kubectl port-forward -n istio-system svc/perses 4000:8080
+
+# 4. Verify Kiali sees Perses (must be HTTP 200, not 204)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:20001/kiali/api/perses
+
+# 5. Run tests against local Kiali
+cd frontend
+PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
 ```
 
 ## Local run
@@ -152,6 +179,7 @@ yarn playwright:run:core1
 yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
+yarn playwright:run:perses
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
