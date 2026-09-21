@@ -31,7 +31,7 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { workloadsListColumnsPreset } from '../../hooks/useManagedListColumns';
+import { workloadsListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import type { KialiDispatch } from 'types/Redux';
 import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 
@@ -80,6 +80,12 @@ class WorkloadListPageComponent extends FilterComponent.Component<
   }
 
   componentDidMount(): void {
+    syncManagedListColumnsFromURL({
+      ...workloadsListColumnsPreset,
+      columnOrder: this.props.columnOrder,
+      dispatch: this.props.dispatch,
+      hiddenColumnIds: this.props.hiddenColumnIds
+    });
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.updateListItems();
     }

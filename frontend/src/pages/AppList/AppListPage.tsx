@@ -28,7 +28,7 @@ import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { applicationsListColumnsPreset } from '../../hooks/useManagedListColumns';
+import { applicationsListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import type { KialiDispatch } from 'types/Redux';
 import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 
@@ -78,6 +78,12 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   componentDidMount(): void {
+    syncManagedListColumnsFromURL({
+      ...applicationsListColumnsPreset,
+      columnOrder: this.props.columnOrder,
+      dispatch: this.props.dispatch,
+      hiddenColumnIds: this.props.hiddenColumnIds
+    });
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.updateListItems();
     }

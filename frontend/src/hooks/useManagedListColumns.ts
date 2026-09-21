@@ -52,6 +52,52 @@ const getDefaultManagedColumns = (listType: ManagedListPageType, untoggleableCol
     });
 };
 
+export const syncManagedListColumnsFromURL = ({
+  actions,
+  columnOrder,
+  columnOrderUrlParam,
+  dispatch,
+  hiddenColumnIds,
+  hiddenColumnsUrlParam,
+  listType,
+  untoggleableColumnId
+}: ManagedListColumnsConfig): void => {
+  const defaultIds = getDefaultManagedColumns(listType, untoggleableColumnId).map(c => c.id);
+  const validIds = defaultIds.filter(id => id !== untoggleableColumnId);
+
+  const urlParam = HistoryManager.getParam(hiddenColumnsUrlParam);
+  if (urlParam !== undefined) {
+    const ids = urlParam
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+    const filtered = ids.filter(id => validIds.includes(id));
+    if (filtered.length > 0 && !arrayEquals(filtered, hiddenColumnIds, (a, b) => a === b)) {
+      dispatch(actions.setHiddenColumns(filtered));
+    } else if (filtered.length === 0 && hiddenColumnIds.length > 0) {
+      dispatch(actions.setHiddenColumns([]));
+    }
+  } else if (hiddenColumnIds.length > 0) {
+    HistoryManager.setParam(hiddenColumnsUrlParam, hiddenColumnIds.join(','));
+  }
+
+  const orderParam = HistoryManager.getParam(columnOrderUrlParam);
+  if (orderParam !== undefined) {
+    const orderIds = orderParam
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+    const validOrder = orderIds.filter(id => defaultIds.includes(id));
+    if (validOrder.length > 0 && !arrayEquals(validOrder, columnOrder, (a, b) => a === b)) {
+      dispatch(actions.setColumnOrder(validOrder));
+    } else if (validOrder.length === 0 && columnOrder.length > 0) {
+      dispatch(actions.setColumnOrder([]));
+    }
+  } else if (columnOrder.length > 0) {
+    HistoryManager.setParam(columnOrderUrlParam, columnOrder.join(','));
+  }
+};
+
 const getManagedColumns = (
   listType: ManagedListPageType,
   untoggleableColumnId: string,
@@ -87,40 +133,16 @@ export const useManagedListColumns = ({
   untoggleableColumnId
 }: ManagedListColumnsConfig): UseManagedListColumnsResult => {
   const syncColumnsFromURL = useCallback((): void => {
-    const defaultIds = getDefaultManagedColumns(listType, untoggleableColumnId).map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== untoggleableColumnId);
-
-    const urlParam = HistoryManager.getParam(hiddenColumnsUrlParam);
-    if (urlParam !== undefined) {
-      const ids = urlParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const filtered = ids.filter(id => validIds.includes(id));
-      if (filtered.length > 0 && !arrayEquals(filtered, hiddenColumnIds, (a, b) => a === b)) {
-        dispatch(actions.setHiddenColumns(filtered));
-      } else if (filtered.length === 0 && hiddenColumnIds.length > 0) {
-        dispatch(actions.setHiddenColumns([]));
-      }
-    } else if (hiddenColumnIds.length > 0) {
-      HistoryManager.setParam(hiddenColumnsUrlParam, hiddenColumnIds.join(','));
-    }
-
-    const orderParam = HistoryManager.getParam(columnOrderUrlParam);
-    if (orderParam !== undefined) {
-      const orderIds = orderParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const validOrder = orderIds.filter(id => defaultIds.includes(id));
-      if (validOrder.length > 0 && !arrayEquals(validOrder, columnOrder, (a, b) => a === b)) {
-        dispatch(actions.setColumnOrder(validOrder));
-      } else if (validOrder.length === 0 && columnOrder.length > 0) {
-        dispatch(actions.setColumnOrder([]));
-      }
-    } else if (columnOrder.length > 0) {
-      HistoryManager.setParam(columnOrderUrlParam, columnOrder.join(','));
-    }
+    syncManagedListColumnsFromURL({
+      actions,
+      columnOrder,
+      columnOrderUrlParam,
+      dispatch,
+      hiddenColumnIds,
+      hiddenColumnsUrlParam,
+      listType,
+      untoggleableColumnId
+    });
   }, [
     actions,
     columnOrder,

@@ -41,7 +41,7 @@ import type { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { namespacesListColumnsPreset } from '../../hooks/useManagedListColumns';
+import { namespacesListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
 
 // Maximum number of namespaces to include in a single backend API call
@@ -104,6 +104,12 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   }
 
   componentDidMount(): void {
+    syncManagedListColumnsFromURL({
+      ...namespacesListColumnsPreset,
+      columnOrder: this.props.columnOrder,
+      dispatch: this.props.dispatch,
+      hiddenColumnIds: this.props.hiddenColumnIds
+    });
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
