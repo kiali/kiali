@@ -106,3 +106,11 @@ jobs:
     with:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
+
+  integration_tests_frontend_playwright_ai_chatbot:
+    name: Run Playwright AI chatbot tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ai-chatbot.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}

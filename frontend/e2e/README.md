@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster. Smoke/core-1/core-2/core-caching/core-optional run a local `kiali` binary (`hack/ci-yaml/ci-test-config-*.yaml`). **ambient** deploys Kiali **in-cluster** (MetalLB), matching Cypress `frontend-ambient`. Smoke/core-1/core-2/core-optional use `ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite.
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-ai-chatbot`): KinD cluster. Smoke/core-1/core-2/core-caching/core-optional/ai-chatbot run a local `kiali` binary (`hack/ci-yaml/ci-test-config-*.yaml`). **ambient** deploys Kiali **in-cluster** (MetalLB), matching Cypress `frontend-ambient`. Smoke/core-1/core-2/core-optional use `ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses. **ai-chatbot** uses `ci-test-config-ai.yaml` (`chat_ai` enabled) and demos with `--install-errorrates-beta false`. One parallel job per suite.
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -175,6 +175,18 @@ Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP e
 hack/run-integration-tests.sh --test-suite playwright-ambient
 ```
 
+### AI chatbot (`yarn playwright:run:ai-chatbot`)
+
+Covers toggle/theme, messaging, navigation actions, new chat/provider, tools, YAML attachments, and
+errors/interaction modes. Chat SSE is mocked via `page.route`; YAML create/patch/delete hit real
+Istio APIs against bookinfo. Local Kiali uses `hack/ci-yaml/ci-test-config-ai.yaml`
+(`chat_ai.enabled` + dummy provider) because `--deploy-kiali false` skips in-cluster Helm
+`--enable-ai`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -189,6 +201,7 @@ yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:perses
 yarn playwright:run:ambient
+yarn playwright:run:ai-chatbot
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -197,7 +210,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, and `playwright-ai-chatbot` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
