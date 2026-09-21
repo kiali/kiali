@@ -188,7 +188,7 @@
   "Current time range": "현재 시간 범위",
   "custom": "사용자 지정",
   "Custom": "사용자 지정",
-  "Customize how Kiali looks on your device. These settings are saved in your browser.": "장치에서 Kiali의 모양을 사용자 지정합니다. 이 설정은 브라우저에 저장됩니다.",
+  "Customize how Kiali looks and reads on your device. These settings are saved in your browser.": "장치에서 Kiali의 모양과 언어를 사용자 지정합니다. 이 설정은 브라우저에 저장됩니다.",
   "Dagre": "Dagre",
   "Dark": "다크",
   "Dark colors for the interface.": "인터페이스에 어두운 색을 사용합니다.",

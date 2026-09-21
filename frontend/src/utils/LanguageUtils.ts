@@ -114,6 +114,7 @@ export const getSystemLanguage = (): ResolvedLanguage => {
   return getServerFallbackLanguage();
 };
 
+/** When the server does not set a language, new users follow the OS/browser locale. */
 export const getDefaultLanguagePreference = (): Language => {
   const serverLanguage = serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.language;
 
@@ -148,13 +149,19 @@ export const getKialiLanguagePreference = (): Language => {
 
 export const applyLanguagePreference = (preference: Language): Promise<void> => {
   const resolved = resolveLanguage(preference);
+  const previousPreference = getKialiLanguagePreference();
 
   // Set language to default English value to force React re-render on language change.
   store.dispatch(GlobalActions.setLanguage(Language.ENGLISH));
 
-  return i18n.changeLanguage(resolved).then(() => {
-    store.dispatch(GlobalActions.setLanguage(preference));
-  });
+  return i18n
+    .changeLanguage(resolved)
+    .then(() => {
+      store.dispatch(GlobalActions.setLanguage(preference));
+    })
+    .catch(() => {
+      store.dispatch(GlobalActions.setLanguage(previousPreference));
+    });
 };
 
 export const initializeLanguage = (): Promise<void> => {
@@ -164,9 +171,14 @@ export const initializeLanguage = (): Promise<void> => {
   // Set language to default English value to force React re-render on language change.
   store.dispatch(GlobalActions.setLanguage(Language.ENGLISH));
 
-  return i18n.changeLanguage(resolved).then(() => {
-    store.dispatch(GlobalActions.setLanguage(preference));
-  });
+  return i18n
+    .changeLanguage(resolved)
+    .then(() => {
+      store.dispatch(GlobalActions.setLanguage(preference));
+    })
+    .catch(() => {
+      store.dispatch(GlobalActions.setLanguage(preference));
+    });
 };
 
 export const registerSystemLanguageListener = (): (() => void) => {

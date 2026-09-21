@@ -16,10 +16,25 @@ import {
   Theme
 } from 'types/Common';
 import { serverConfig, setServerConfig } from 'config/ServerConfig';
+import { i18n } from 'i18n';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
 
 const preferencesServerConfig = Object.assign({}, serverConfig);
+
+const languageSelectorServerConfig = {
+  ...preferencesServerConfig,
+  kialiFeatureFlags: {
+    ...preferencesServerConfig.kialiFeatureFlags,
+    uiDefaults: {
+      ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+      i18n: {
+        ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+        showSelector: true
+      }
+    }
+  }
+};
 
 const resetAppearanceState = (): void => {
   document.documentElement.className = '';
@@ -197,25 +212,21 @@ describe('PreferencesModal changes', () => {
 });
 
 describe('PreferencesModal language', () => {
+  let changeLanguageSpy: ReturnType<typeof rstest.spyOn>;
+
   beforeAll(() => {
-    setServerConfig({
-      ...preferencesServerConfig,
-      kialiFeatureFlags: {
-        ...preferencesServerConfig.kialiFeatureFlags,
-        uiDefaults: {
-          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
-          i18n: {
-            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
-            showSelector: true
-          }
-        }
-      }
-    });
+    setServerConfig(languageSelectorServerConfig);
   });
 
   beforeEach(() => {
     resetAppearanceState();
     store.dispatch(GlobalActions.setLanguage(Language.ENGLISH));
+    changeLanguageSpy = rstest.spyOn(i18n, 'changeLanguage').mockResolvedValue(undefined as never);
+  });
+
+  afterEach(() => {
+    changeLanguageSpy.mockRestore();
+    setServerConfig(languageSelectorServerConfig);
   });
 
   it('hides language selector when showSelector is false', () => {
@@ -235,49 +246,25 @@ describe('PreferencesModal language', () => {
     renderPreferences();
 
     expect(screen.queryByTestId('language-select')).not.toBeInTheDocument();
-
-    setServerConfig({
-      ...preferencesServerConfig,
-      kialiFeatureFlags: {
-        ...preferencesServerConfig.kialiFeatureFlags,
-        uiDefaults: {
-          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
-          i18n: {
-            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
-            showSelector: true
-          }
-        }
-      }
-    });
   });
 
-  it('changes to spanish language', async () => {
-    renderPreferences();
+  const languageChangeCases = [
+    { expectedLanguage: Language.ENGLISH, label: 'English', startLanguage: Language.CHINESE },
+    { expectedLanguage: Language.SPANISH, label: 'Español', startLanguage: Language.ENGLISH },
+    { expectedLanguage: Language.CHINESE, label: '中文', startLanguage: Language.ENGLISH },
+    { expectedLanguage: Language.KOREAN, label: '한국어', startLanguage: Language.ENGLISH }
+  ];
 
-    await selectPreferenceOption('language-select', 'Español');
+  languageChangeCases.forEach(({ expectedLanguage, label, startLanguage }) => {
+    it(`changes to ${label} language`, async () => {
+      renderPreferences({ language: startLanguage });
 
-    await waitFor(() => {
-      expect(store.getState().globalState.language).toBe(Language.SPANISH);
-    });
-  });
+      await selectPreferenceOption('language-select', label);
 
-  it('changes to chinese language', async () => {
-    renderPreferences();
-
-    await selectPreferenceOption('language-select', '中文');
-
-    await waitFor(() => {
-      expect(store.getState().globalState.language).toBe(Language.CHINESE);
-    });
-  });
-
-  it('changes to korean language', async () => {
-    renderPreferences();
-
-    await selectPreferenceOption('language-select', '한국어');
-
-    await waitFor(() => {
-      expect(store.getState().globalState.language).toBe(Language.KOREAN);
+      await waitFor(() => {
+        expect(store.getState().globalState.language).toBe(expectedLanguage);
+        expect(changeLanguageSpy).toHaveBeenCalledWith(expectedLanguage);
+      });
     });
   });
 
@@ -288,6 +275,7 @@ describe('PreferencesModal language', () => {
 
     await waitFor(() => {
       expect(store.getState().globalState.language).toBe(Language.SYSTEM);
+      expect(changeLanguageSpy).toHaveBeenCalled();
     });
   });
 });

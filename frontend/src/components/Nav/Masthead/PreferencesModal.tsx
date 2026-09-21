@@ -313,7 +313,7 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
       <ModalBody>
         <Form className={formStyle}>
           <p className={introStyle}>
-            {t('Customize how Kiali looks on your device. These settings are saved in your browser.')}
+            {t('Customize how Kiali looks and reads on your device. These settings are saved in your browser.')}
           </p>
           <PreferenceSelect
             id="color-scheme-select"

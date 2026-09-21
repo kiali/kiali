@@ -181,7 +181,7 @@
   "Current time range": "当前时间范围",
   "custom": "自定义",
   "Custom": "自定义",
-  "Customize how Kiali looks on your device. These settings are saved in your browser.": "自定义 Kiali 在您设备上的外观。这些设置会保存在您的浏览器中。",
+  "Customize how Kiali looks and reads on your device. These settings are saved in your browser.": "自定义 Kiali 在您设备上的外观和语言。这些设置会保存在您的浏览器中。",
   "Dagre": "Dagre",
   "Dark": "深色",
   "Dark colors for the interface.": "界面使用深色。",

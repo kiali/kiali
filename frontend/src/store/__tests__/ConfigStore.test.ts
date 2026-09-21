@@ -40,4 +40,10 @@ describe('migratePersistedGlobalState', () => {
 
     expect(migrated.language).toBe(Language.SYSTEM);
   });
+
+  it('resets invalid persisted language to the initial value', () => {
+    const migrated = migratePersistedGlobalState({ language: 'fr' });
+
+    expect(migrated.language).toBe(INITIAL_GLOBAL_STATE.language);
+  });
 });

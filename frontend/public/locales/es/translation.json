@@ -195,7 +195,7 @@
   "Current time range": "Rango de tiempo actual",
   "custom": "personalizado",
   "Custom": "Personalizado",
-  "Customize how Kiali looks on your device. These settings are saved in your browser.": "Personalice la apariencia de Kiali en su dispositivo. Estos ajustes se guardan en su navegador.",
+  "Customize how Kiali looks and reads on your device. These settings are saved in your browser.": "Personalice la apariencia y el idioma de Kiali en su dispositivo. Estos ajustes se guardan en su navegador.",
   "Dagre": "Dagre",
   "Dark": "Oscuro",
   "Dark colors for the interface.": "Colores oscuros para la interfaz.",
