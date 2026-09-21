@@ -1,4 +1,4 @@
-import { ColorScheme, ContrastMode, Theme } from 'types/Common';
+import { ColorScheme, ContrastMode, Language, Theme } from 'types/Common';
 import { migratePersistedGlobalState } from '../ConfigStore';
 import { INITIAL_GLOBAL_STATE } from '../../reducers/GlobalState';
 
@@ -33,5 +33,11 @@ describe('migratePersistedGlobalState', () => {
     const migrated = migratePersistedGlobalState({ contrastMode: ContrastMode.SYSTEM });
 
     expect(migrated.contrastMode).toBe(ContrastMode.SYSTEM);
+  });
+
+  it('preserves system language preference', () => {
+    const migrated = migratePersistedGlobalState({ language: Language.SYSTEM });
+
+    expect(migrated.language).toBe(Language.SYSTEM);
   });
 });

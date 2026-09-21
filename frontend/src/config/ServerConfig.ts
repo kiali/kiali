@@ -1,7 +1,7 @@
 import { isEmpty, mapValues, reject } from 'lodash-es';
-import { RunMode, ServerConfig } from '../types/ServerConfig';
+import { RunMode, type ServerConfig } from '../types/ServerConfig';
 import { parseHealthConfig } from './HealthConfig';
-import { MeshCluster } from '../types/Mesh';
+import type { MeshCluster } from '../types/Mesh';
 
 export type Durations = { [key: number]: string };
 
@@ -132,7 +132,7 @@ const defaultServerConfig: ComputedServerConfig = {
         }
       },
       i18n: {
-        language: 'en',
+        language: '',
         showSelector: false
       },
       list: {

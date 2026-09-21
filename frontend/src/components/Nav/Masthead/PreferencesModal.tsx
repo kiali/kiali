@@ -17,10 +17,18 @@ import {
 import type { MenuToggleElement } from '@patternfly/react-core';
 import type { KialiAppState } from 'store/Store';
 import { connect } from 'react-redux';
-import { ColorScheme, ContrastMode, Theme } from 'types/Common';
+import { ColorScheme, ContrastMode, Language, Theme } from 'types/Common';
 import { GlobalActions } from 'actions/GlobalActions';
 import { store } from 'store/ConfigStore';
+import { serverConfig } from 'config';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import {
+  applyLanguagePreference,
+  getDefaultLanguagePreference,
+  getLanguageDescription,
+  getLanguageLabel,
+  isLanguagePreference
+} from 'utils/LanguageUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import {
   applyDocumentAppearance,
@@ -35,6 +43,7 @@ import {
 type ReduxProps = {
   colorScheme: string;
   contrastMode: string;
+  language: string;
   theme: string;
 };
 
@@ -145,12 +154,15 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
   colorScheme: colorSchemeProp,
   contrastMode: contrastModeProp,
   isOpen,
+  language: languageProp,
   onClose,
   theme: themeProp
 }: PreferencesModalProps) => {
   const { t } = useKialiTranslation();
   const colorScheme = isColorScheme(colorSchemeProp) ? colorSchemeProp : getKialiColorScheme();
   const contrastMode = isContrastMode(contrastModeProp) ? contrastModeProp : getKialiContrastMode();
+  const language = isLanguagePreference(languageProp) ? languageProp : getDefaultLanguagePreference();
+  const showLanguageSelector = serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector ?? false;
   const theme = isValidTheme(themeProp) ? themeProp : getKialiTheme();
 
   const [preferences, setPreferences] = React.useState<AppearancePreferences>({
@@ -202,6 +214,40 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
       applyAppearance(preferencesRef.current);
     }, PREFERENCE_APPLY_DELAY_MS);
   };
+
+  const handleLanguageChange = (nextLanguage: Language): void => {
+    if (nextLanguage !== language) {
+      applyLanguagePreference(nextLanguage);
+    }
+  };
+
+  const languageOptions: PreferenceOption<Language>[] = [
+    {
+      description: t("Matches your operating system's language setting."),
+      label: t('System'),
+      value: Language.SYSTEM
+    },
+    {
+      description: getLanguageDescription(Language.ENGLISH),
+      label: getLanguageLabel(Language.ENGLISH),
+      value: Language.ENGLISH
+    },
+    {
+      description: getLanguageDescription(Language.SPANISH),
+      label: getLanguageLabel(Language.SPANISH),
+      value: Language.SPANISH
+    },
+    {
+      description: getLanguageDescription(Language.CHINESE),
+      label: getLanguageLabel(Language.CHINESE),
+      value: Language.CHINESE
+    },
+    {
+      description: getLanguageDescription(Language.KOREAN),
+      label: getLanguageLabel(Language.KOREAN),
+      value: Language.KOREAN
+    }
+  ];
 
   const colorSchemeOptions: PreferenceOption<ColorScheme>[] = [
     {
@@ -290,6 +336,15 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
             options={themeOptions}
             selected={preferences.theme}
           />
+          {showLanguageSelector && (
+            <PreferenceSelect
+              id="language-select"
+              label={t('Language')}
+              onChange={handleLanguageChange}
+              options={languageOptions}
+              selected={language}
+            />
+          )}
         </Form>
       </ModalBody>
       <ModalFooter>
@@ -305,6 +360,7 @@ const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     colorScheme: state.globalState.colorScheme,
     contrastMode: state.globalState.contrastMode,
+    language: state.globalState.language,
     theme: state.globalState.theme
   };
 };

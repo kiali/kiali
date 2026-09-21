@@ -215,17 +215,18 @@ export const enum Language {
 }
 ----
 
-2. Add a new select entry for the new language in the component link:https://github.com/kiali/kiali/blob/master/frontend/src/components/Nav/Masthead/LanguageSwitch.tsx[`LanguageSwitch.tsx`]
+2. Add browser locale matching in link:https://github.com/kiali/kiali/blob/master/frontend/src/utils/LanguageUtils.ts[`LanguageUtils.ts`] (`matchBrowserLanguage`) and a new select entry in link:https://github.com/kiali/kiali/blob/master/frontend/src/components/Nav/Masthead/PreferencesModal.tsx[`PreferencesModal.tsx`] (`languageOptions` array).
 
 [source, typescript]
 ----
-<DropdownItem key="Chinese" onClick={() => switchLanguage(Language.CHINESE)}>
-  <span>中文</span>
-  {language === Language.CHINESE && <KialiIcon.Check className={checkStyle} />}
-</DropdownItem>
+{
+  description: getLanguageDescription(Language.CHINESE),
+  label: getLanguageLabel(Language.CHINESE),
+  value: Language.CHINESE
+}
 ----
 
-If possible, include a new language test case scenario in the language selector unit test `LanguageSwitch.test.tsx`.
+If possible, include a new language test case scenario in the language selector unit test `PreferencesModal.test.tsx`.
 
 3. Add the new language in the link:https://github.com/kiali/kiali/blob/master/frontend/i18next-parser.config.ts[`i18next-parser.config.ts`] file so that the `i18n-parser` generates the locale file for the new language.
 

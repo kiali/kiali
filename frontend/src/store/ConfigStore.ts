@@ -28,7 +28,7 @@ import type { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
 import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
-import { ColorScheme, ContrastMode } from 'types/Common';
+import { ColorScheme, ContrastMode, Language } from 'types/Common';
 
 declare const window;
 
@@ -99,12 +99,22 @@ export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> 
     rawContrastMode === ContrastMode.SYSTEM
       ? rawContrastMode
       : INITIAL_GLOBAL_STATE.contrastMode;
+  const rawLanguage = outboundState.language;
+  const language =
+    rawLanguage === Language.CHINESE ||
+    rawLanguage === Language.ENGLISH ||
+    rawLanguage === Language.KOREAN ||
+    rawLanguage === Language.SPANISH ||
+    rawLanguage === Language.SYSTEM
+      ? rawLanguage
+      : INITIAL_GLOBAL_STATE.language;
 
   return {
     ...INITIAL_GLOBAL_STATE,
     ...outboundState,
     colorScheme,
     contrastMode,
+    language,
     theme
   };
 };

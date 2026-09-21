@@ -1274,7 +1274,7 @@ func NewConfig() (c *Config) {
 					},
 				},
 				I18n: I18nUIDefaults{
-					Language:     "en",
+					Language:     "",
 					ShowSelector: false,
 				},
 				List: ListUIDefaults{

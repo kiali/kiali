@@ -8,14 +8,18 @@ import {
   KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
+  Language,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
   PF_THEME_HIGH_CONTRAST,
   Theme
 } from 'types/Common';
+import { serverConfig, setServerConfig } from 'config/ServerConfig';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
+
+const preferencesServerConfig = Object.assign({}, serverConfig);
 
 const resetAppearanceState = (): void => {
   document.documentElement.className = '';
@@ -36,6 +40,7 @@ const renderPreferences = (
       colorScheme={ColorScheme.LIGHT}
       contrastMode={ContrastMode.DEFAULT}
       isOpen={true}
+      language={Language.ENGLISH}
       onClose={() => {}}
       theme={Theme.DEFAULT}
       {...props}
@@ -187,6 +192,102 @@ describe('PreferencesModal changes', () => {
       expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
       expect(store.getState().globalState.contrastMode).toBe(ContrastMode.SYSTEM);
       expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.SYSTEM);
+    });
+  });
+});
+
+describe('PreferencesModal language', () => {
+  beforeAll(() => {
+    setServerConfig({
+      ...preferencesServerConfig,
+      kialiFeatureFlags: {
+        ...preferencesServerConfig.kialiFeatureFlags,
+        uiDefaults: {
+          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+          i18n: {
+            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+            showSelector: true
+          }
+        }
+      }
+    });
+  });
+
+  beforeEach(() => {
+    resetAppearanceState();
+    store.dispatch(GlobalActions.setLanguage(Language.ENGLISH));
+  });
+
+  it('hides language selector when showSelector is false', () => {
+    setServerConfig({
+      ...preferencesServerConfig,
+      kialiFeatureFlags: {
+        ...preferencesServerConfig.kialiFeatureFlags,
+        uiDefaults: {
+          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+          i18n: {
+            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+            showSelector: false
+          }
+        }
+      }
+    });
+    renderPreferences();
+
+    expect(screen.queryByTestId('language-select')).not.toBeInTheDocument();
+
+    setServerConfig({
+      ...preferencesServerConfig,
+      kialiFeatureFlags: {
+        ...preferencesServerConfig.kialiFeatureFlags,
+        uiDefaults: {
+          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+          i18n: {
+            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+            showSelector: true
+          }
+        }
+      }
+    });
+  });
+
+  it('changes to spanish language', async () => {
+    renderPreferences();
+
+    await selectPreferenceOption('language-select', 'Español');
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.SPANISH);
+    });
+  });
+
+  it('changes to chinese language', async () => {
+    renderPreferences();
+
+    await selectPreferenceOption('language-select', '中文');
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.CHINESE);
+    });
+  });
+
+  it('changes to korean language', async () => {
+    renderPreferences();
+
+    await selectPreferenceOption('language-select', '한국어');
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.KOREAN);
+    });
+  });
+
+  it('changes to system language', async () => {
+    renderPreferences({ language: Language.SPANISH });
+
+    await selectPreferenceOption('language-select', 'System');
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.SYSTEM);
     });
   });
 });
