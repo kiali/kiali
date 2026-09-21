@@ -68,6 +68,12 @@ export class WorkloadDetailsPage extends BasePage {
     await containers.locator(`input#container-${containerName}`).check();
   }
 
+  /** Check a logs-tab container by input id (e.g. ztunnel-ratings, container-ratings). */
+  async selectContainer(containerId: string): Promise<void> {
+    await this.getBySel('workload-logs-pod-containers').locator(`input#${containerId}`).check();
+    await waitForLoadingComplete(this.page);
+  }
+
   async expectLogLineCountAtMost(maxPerContainer: number): Promise<void> {
     const checkedCount = await this.getBySel('workload-logs-pod-containers').locator('[type=checkbox]:checked').count();
     const lineCount = await this.page.locator('#logsText p').count();
@@ -102,6 +108,11 @@ export class WorkloadDetailsPage extends BasePage {
     for (let i = 0; i < count; i++) {
       await expect(lines.nth(i)).toContainText(text);
     }
+  }
+
+  /** At least one log line contains text (Cypress "show log lines containing"). */
+  async expectSomeLogLinesContain(text: string): Promise<void> {
+    await expect(this.page.locator('#logsText p').filter({ hasText: text }).first()).toBeVisible();
   }
 
   async expectLogLinesNotContain(text: string): Promise<void> {

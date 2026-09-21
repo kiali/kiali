@@ -7,7 +7,6 @@ import {
   checkHealthStatusInTable,
   expectHealthIconInRow,
   expectOnlyHealthyInTable,
-  expectOnlyNaInTable,
   expectOnlyRow,
   expectRowCount,
   expectServicesInTable,
@@ -91,10 +90,6 @@ export class ServicesPage extends ListPage {
 
   async expectOnlyHealthyServices(): Promise<void> {
     await expectOnlyHealthyInTable(this.page);
-  }
-
-  async expectOnlyNaServices(): Promise<void> {
-    await expectOnlyNaInTable(this.page);
   }
 
   async clickLabel(label: string): Promise<void> {

@@ -1,6 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { pollServiceHealthStatus } from '../../utils/health';
-import { selectNamespace } from '../../utils/namespace';
+import { waitForServiceHealthStatus } from '../../utils/health';
 import { ambientOnly } from '../../utils/suite-tags';
 
 test.describe('Ambient mesh', () => {
@@ -30,7 +29,8 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
-    await graphPage.expectTrafficVisible('tcp');
+    // Match Cypress @ambient: at least 6 edges with traffic when HTTP is disabled.
+    await graphPage.expectTrafficEdgesAtLeast(6);
     await graphPage.expectTrafficProtocol('http', false);
     await graphPage.expectSummaryPanelTrafficRate('TCP');
   });
@@ -42,34 +42,24 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('tcp', false);
     await graphPage.closeTrafficMenu();
-    await graphPage.expectTrafficVisible('http');
+    // Match Cypress @ambient: at least 2 edges with traffic when TCP is disabled.
+    await graphPage.expectTrafficEdgesAtLeast(2);
     await graphPage.expectTrafficProtocol('tcp', false);
     await graphPage.expectSummaryPanelTrafficRate('HTTP');
   });
 
-  test('Filter services table by health', ambientOnly, async ({ page, request, servicesPage }) => {
-    test.setTimeout(120_000);
-    // Ambient KinD often keeps service request-rate health at NA despite graph traffic (istio_requests_total).
-    const apiHealth = await pollServiceHealthStatus(request, 'bookinfo', 'productpage', 30_000);
-    await servicesPage.openList();
-    await selectNamespace(page, 'bookinfo');
-
-    if (apiHealth === 'Healthy') {
-      await servicesPage.filterBy('Health', 'Healthy');
-      await servicesPage.expectServicesInTable('something');
-      await servicesPage.expectOnlyHealthyServices();
-      return;
-    }
-
-    await servicesPage.filterBy('Health', 'n/a');
+  test('Filter services table by health', ambientOnly, async ({ request, servicesPage }) => {
+    test.setTimeout(240_000);
+    // Match Cypress @ambient: wait until productpage reports Healthy, then filter Healthy.
+    await waitForServiceHealthStatus(request, 'bookinfo', 'productpage', 'Healthy', 180_000);
+    await servicesPage.openListWithNamespace('bookinfo');
+    await servicesPage.filterBy('Health', 'Healthy');
     await servicesPage.expectServicesInTable('something');
-    await servicesPage.expectOnlyNaServices();
-    await servicesPage.expectServiceListedAs('bookinfo', 'productpage', 'na');
+    await servicesPage.expectOnlyHealthyServices();
   });
 
-  test('Out of mesh', ambientOnly, async ({ page, workloadsPage }) => {
-    await workloadsPage.openList();
-    await selectNamespace(page, 'sleep');
+  test('Out of mesh', ambientOnly, async ({ workloadsPage }) => {
+    await workloadsPage.openListWithNamespace('sleep');
     await workloadsPage.expectTextInTable('Out of mesh');
   });
 
@@ -77,5 +67,17 @@ test.describe('Ambient mesh', () => {
     await workloadDetailsPage.open('bookinfo', 'details-v1');
     await workloadDetailsPage.expectAmbientBadge();
     await workloadDetailsPage.expectMissingSidecarBadge(false, 'bookinfo', 'details-v1');
+  });
+
+  test('The logs tab should show the ztunnel logs for a pod', ambientOnly, async ({ workloadDetailsPage }) => {
+    await workloadDetailsPage.open('bookinfo', 'ratings-v1');
+    await workloadDetailsPage.goToLogsTab();
+    await workloadDetailsPage.expectContainerListed('ztunnel');
+    await workloadDetailsPage.expectContainerListed('ratings');
+    await workloadDetailsPage.selectContainer('ztunnel-ratings');
+    await workloadDetailsPage.expectContainerChecked('ztunnel-ratings');
+    await workloadDetailsPage.expectContainerChecked('container-ratings');
+    await workloadDetailsPage.expectPodSelected('ratings-v1');
+    await workloadDetailsPage.expectSomeLogLinesContain('ztunnel');
   });
 });

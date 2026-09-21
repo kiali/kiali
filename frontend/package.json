@@ -95,7 +95,7 @@
     "playwright:run:junit": "playwright test --project=crd-validation --project=core-1 --project=core-2 --project=core-caching --pass-with-no-tests",
     "playwright:run:all": "playwright test --project=smoke --project=core-1 --project=core-2 --project=core-caching --project=crd-validation --project=perses --project=ai-chatbot --pass-with-no-tests",
     "playwright:run:ambient": "playwright test --project=ambient --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
-    "playwright:run:ambient:junit": "playwright test --project=ambient --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
+    "playwright:run:ambient:junit": "yarn run playwright:run:ambient",
     "playwright:run:multi-cluster:junit": "playwright test --project=multi-cluster --pass-with-no-tests",
     "playwright:run:multi-primary:junit": "playwright test --project=multi-primary --pass-with-no-tests",
     "playwright:run:test-group:junit": "node scripts/playwright-test-group.mjs",

@@ -65,7 +65,11 @@ cleanup_kiali() {
     kill "${PERSES_PF_PID}" 2>/dev/null || true
   fi
   if [ -n "${KIALI_PID}" ]; then
+    # Kill port-forward / child processes first, then the local kiali binary.
+    pkill -P "${KIALI_PID}" 2>/dev/null || true
     kill "${KIALI_PID}" 2>/dev/null || true
+    wait "${KIALI_PID}" 2>/dev/null || true
+    KIALI_PID=""
   fi
 }
 
@@ -1517,21 +1521,10 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --ambient true --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster (MetalLB), same fidelity as Cypress frontend-ambient.
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --ambient true --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Same demos as Cypress frontend-ambient (ambient bookinfo + travel agency; sleep via install-testing-demos).
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -1544,37 +1537,10 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
     exit 0
   fi
 
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
-
+  ensureKialiServerReady
   ensureBookinfoGraphReadyAnonymous
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e

@@ -62,31 +62,6 @@ export const waitForAppHealthStatus = async (
   );
 };
 
-export const pollServiceHealthStatus = async (
-  request: APIRequestContext,
-  namespace: string,
-  service: string,
-  timeoutMs = 90_000
-): Promise<string | undefined> => {
-  const resourcePath = `/api/namespaces/${namespace}/services/${service}?health=true`;
-  const deadline = Date.now() + timeoutMs;
-  let lastStatus: string | undefined;
-
-  while (Date.now() < deadline) {
-    const response = await request.get(resourcePath);
-    if (response.ok()) {
-      const body = (await response.json()) as HealthResponse;
-      lastStatus = body.health?.status?.status;
-      if (lastStatus) {
-        return lastStatus;
-      }
-    }
-    await new Promise(resolve => setTimeout(resolve, 5_000));
-  }
-
-  return lastStatus;
-};
-
 export const waitForServiceHealthStatus = async (
   request: APIRequestContext,
   namespace: string,

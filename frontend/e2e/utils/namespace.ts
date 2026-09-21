@@ -5,7 +5,8 @@ import { waitForLoadingComplete } from './transition';
 export const selectNamespaces = async (page: Page, namespaces: string[]): Promise<void> => {
   await page.getByTestId('namespace-dropdown').click();
   for (const namespace of namespaces) {
-    await page.getByTestId('namespace-dropdown-list').getByRole('checkbox', { name: namespace, exact: true }).check();
+    // Match Cypress: value= is stable; accessible name via aria-label is not always exposed.
+    await page.locator(`input[type="checkbox"][value="${namespace}"]`).check();
   }
   await page.getByTestId('namespace-dropdown').click();
   await waitForLoadingComplete(page);
@@ -20,12 +21,12 @@ export const selectNamespace = async (page: Page, namespace: string): Promise<vo
 export const selectOnlyNamespaces = async (page: Page, namespaces: string[]): Promise<void> => {
   const selected = new Set(namespaces);
   await page.getByTestId('namespace-dropdown').click();
-  const checkboxes = page.getByTestId('namespace-dropdown-list').getByRole('checkbox');
+  const checkboxes = page.getByTestId('namespace-dropdown-list').locator('input[type="checkbox"][value]');
   const count = await checkboxes.count();
   for (let i = 0; i < count; i++) {
     const checkbox = checkboxes.nth(i);
-    const label = (await checkbox.getAttribute('aria-label')) ?? '';
-    if (selected.has(label)) {
+    const value = (await checkbox.getAttribute('value')) ?? '';
+    if (selected.has(value)) {
       await checkbox.check();
     } else {
       await checkbox.uncheck();
