@@ -1,22 +1,23 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import {
   languageSelector,
   meshWideMTLSStatusSelector,
   minTLSVersionSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
-import { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { SortField } from '../../types/SortFilters';
+import type { IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { SortField } from '../../types/SortFilters';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import { RenderContent } from '../../components/Nav/Page';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import { Refresh } from '../../components/Refresh/Refresh';
 import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComputeDurationMastheadToolbar';
 import { VirtualList } from '../../components/VirtualList/VirtualList';
-import { FilterSelected, StatefulFilters, StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
+import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
+import { FilterSelected, StatefulFilters } from '../../components/Filters/StatefulFilters';
 import { isCurrentSortAscending, currentSortField, runFilters } from '../../components/FilterList/FilterHelper';
 import { HistoryManager, URLParam } from '../../app/History';
 import * as API from '../../services/Api';
@@ -27,24 +28,23 @@ import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
 import { arrayEquals } from '../../utils/Common';
-import { MTLSStatuses, TLSStatus } from '../../types/TLSStatus';
-import { ValidationStatus } from '../../types/IstioObjects';
+import type { TLSStatus } from '../../types/TLSStatus';
+import { MTLSStatuses } from '../../types/TLSStatus';
+import type { ValidationStatus } from '../../types/IstioObjects';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { ApiError } from 'types/Api';
-import { KialiDispatch } from 'types/Redux';
+import type { ApiError } from 'types/Api';
+import type { KialiDispatch } from 'types/Redux';
 import { t } from 'utils/I18nUtils';
-import { ControlPlane } from '../../types/Mesh';
+import type { ControlPlane } from '../../types/Mesh';
 import { addError } from '../../utils/AlertUtils';
-import { IstioConfigList } from 'types/IstioConfigList';
+import type { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { config as virtualListConfig } from '../../components/VirtualList/Config';
-import {
-  ColumnManagementModalColumn,
-  ListColumnManagementModal
-} from '../../components/Filters/ListColumnManagementModal';
-import { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
+import { ColumnManagementModal } from '@patternfly/react-component-groups';
+import type { ColumnManagementModalColumn } from '@patternfly/react-component-groups';
+import type { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
 
@@ -127,93 +127,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       this.load();
     }
   }
-
-  private syncColumnsFromURL = (): void => {
-    const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'namespace');
-
-    const urlParam = HistoryManager.getParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
-    if (urlParam !== undefined) {
-      const ids = urlParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const filtered = ids.filter(id => validIds.includes(id));
-      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
-        this.props.dispatch(NamespacesListActions.setHiddenColumns(filtered));
-      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
-        this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
-      }
-    } else if (this.props.hiddenColumnIds.length > 0) {
-      HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
-    }
-
-    const orderParam = HistoryManager.getParam(URLParam.NAMESPACES_COLUMN_ORDER);
-    if (orderParam !== undefined) {
-      const orderIds = orderParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const validOrder = orderIds.filter(id => defaultIds.includes(id));
-      if (validOrder.length > 0 && !arrayEquals(validOrder, this.props.columnOrder, (a, b) => a === b)) {
-        this.props.dispatch(NamespacesListActions.setColumnOrder(validOrder));
-      } else if (validOrder.length === 0 && this.props.columnOrder.length > 0) {
-        this.props.dispatch(NamespacesListActions.setColumnOrder([]));
-      }
-    } else if (this.props.columnOrder.length > 0) {
-      HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, this.props.columnOrder.join(','));
-    }
-  };
-
-  private getDefaultManagedColumns = (): ManagedColumn[] => {
-    return virtualListConfig.namespaces.columns
-      .filter(c => c.title && c.title.trim().length > 0)
-      .map(c => {
-        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
-        return {
-          id,
-          title: c.title,
-          isShown: true,
-          isDisabled: id === 'namespace'
-        } as ManagedColumn;
-      });
-  };
-
-  private getManagedColumns = (): ManagedColumn[] => {
-    const defaultCols = this.getDefaultManagedColumns();
-    const hiddenSet = new Set(this.props.hiddenColumnIds);
-    let ordered = defaultCols;
-    if (this.props.columnOrder && this.props.columnOrder.length > 0) {
-      const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
-      ordered = [...defaultCols].sort((a, b) => {
-        const ai = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bi = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return ai - bi;
-      });
-    }
-    return ordered.map(c => ({
-      ...c,
-      isShown: !hiddenSet.has(c.id) // isShown when not in hidden set
-    }));
-  };
-
-  private resetNamespaceColumnsToDefault = (): void => {
-    this.props.dispatch(NamespacesListActions.setColumnOrder([]));
-    this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
-    HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
-    HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
-  };
-
-  /** Columns in the format expected by {@link ListColumnManagementModal} */
-  private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns().map(c => ({
-      key: c.id,
-      title: c.title,
-      isShownByDefault: true,
-      isShown: c.isShown,
-      isUntoggleable: c.id === 'namespace'
-    }));
-  };
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
@@ -418,33 +331,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       .catch(err => this.handleApiError('Could not fetch TLS status', err));
   };
 
-  private resolveNamespaceTlsStatusForDisplay = (status: string): string => {
-    if (status !== MTLSStatuses.UNSET && status !== MTLSStatuses.NOT_ENABLED) {
-      return status;
-    }
-
-    const meshStatus = this.props.meshStatus;
-
-    if (
-      meshStatus === MTLSStatuses.ENABLED ||
-      meshStatus === MTLSStatuses.ENABLED_DEFAULT ||
-      meshStatus === MTLSStatuses.AUTO_DEFAULT
-    ) {
-      return MTLSStatuses.UNSET_INHERITED_STRICT;
-    }
-
-    if (meshStatus === MTLSStatuses.PARTIALLY || meshStatus === MTLSStatuses.PARTIALLY_DEFAULT) {
-      return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
-    }
-
-    if (meshStatus === MTLSStatuses.DISABLED) {
-      return MTLSStatuses.UNSET_INHERITED_DISABLED;
-    }
-
-    // Mesh-wide mTLS "not specified" effectively defaults to PERMISSIVE in Istio.
-    return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
-  };
-
   fetchValidations = (isAscending: boolean, sortField: SortField<NamespaceInfo>): void => {
     const uniqueClusters = new Set<string>();
 
@@ -551,18 +437,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
       .catch(err => this.handleApiError('Could not fetch validations status', err));
   };
 
-  private fetchControlPlanes = async (): Promise<void> => {
-    return API.getControlPlanes()
-      .then(response => {
-        const controlPlanes = response.data;
-        setControlPlaneRevisions(new Set(controlPlanes.map(cp => cp.revision)));
-        this.setState({ controlPlanes });
-      })
-      .catch(err => {
-        addError('Error fetching control planes.', err);
-      });
-  };
-
   handleApiError = (message: string, error: ApiError): void => {
     addDanger(message, API.getErrorString(error));
   };
@@ -648,7 +522,7 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           </VirtualList>
         </RenderContent>
 
-        <ListColumnManagementModal
+        <ColumnManagementModal
           appliedColumns={this.getAppliedColumnsForModal()}
           applyColumns={newColumns => {
             const hiddenIds = newColumns.filter(c => !c.isShown).map(c => c.key);
@@ -673,12 +547,138 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           enableDragDrop={true}
           isOpen={this.state.showColumnManagement}
           onClose={() => this.setState({ showColumnManagement: false })}
-          onResetToDefault={this.resetNamespaceColumnsToDefault}
+          onReset={this.resetNamespaceColumnsToDefault}
           title={t('Manage columns')}
         />
       </>
     );
   }
+
+  private syncColumnsFromURL = (): void => {
+    const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
+    const validIds = defaultIds.filter(id => id !== 'namespace');
+
+    const urlParam = HistoryManager.getParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
+    if (urlParam !== undefined) {
+      const ids = urlParam
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      const filtered = ids.filter(id => validIds.includes(id));
+      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
+        this.props.dispatch(NamespacesListActions.setHiddenColumns(filtered));
+      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
+        this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
+      }
+    } else if (this.props.hiddenColumnIds.length > 0) {
+      HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
+    }
+
+    const orderParam = HistoryManager.getParam(URLParam.NAMESPACES_COLUMN_ORDER);
+    if (orderParam !== undefined) {
+      const orderIds = orderParam
+        .split(',')
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+      const validOrder = orderIds.filter(id => defaultIds.includes(id));
+      if (validOrder.length > 0 && !arrayEquals(validOrder, this.props.columnOrder, (a, b) => a === b)) {
+        this.props.dispatch(NamespacesListActions.setColumnOrder(validOrder));
+      } else if (validOrder.length === 0 && this.props.columnOrder.length > 0) {
+        this.props.dispatch(NamespacesListActions.setColumnOrder([]));
+      }
+    } else if (this.props.columnOrder.length > 0) {
+      HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, this.props.columnOrder.join(','));
+    }
+  };
+
+  private getDefaultManagedColumns = (): ManagedColumn[] => {
+    return virtualListConfig.namespaces.columns
+      .filter(c => c.title && c.title.trim().length > 0)
+      .map(c => {
+        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
+        return {
+          id,
+          title: c.title,
+          isShown: true,
+          isDisabled: id === 'namespace'
+        } as ManagedColumn;
+      });
+  };
+
+  private getManagedColumns = (): ManagedColumn[] => {
+    const defaultCols = this.getDefaultManagedColumns();
+    const hiddenSet = new Set(this.props.hiddenColumnIds);
+    let ordered = defaultCols;
+    if (this.props.columnOrder && this.props.columnOrder.length > 0) {
+      const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
+      ordered = [...defaultCols].sort((a, b) => {
+        const ai = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bi = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+    }
+    return ordered.map(c => ({
+      ...c,
+      isShown: !hiddenSet.has(c.id) // isShown when not in hidden set
+    }));
+  };
+
+  private resetNamespaceColumnsToDefault = (): void => {
+    this.props.dispatch(NamespacesListActions.setColumnOrder([]));
+    this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
+    HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
+    HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
+  };
+
+  /** Columns in the format expected by {@link ColumnManagementModal} */
+  private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
+    return this.getManagedColumns().map(c => ({
+      key: c.id,
+      title: c.title,
+      isShownByDefault: true,
+      isShown: c.isShown,
+      isUntoggleable: c.id === 'namespace'
+    }));
+  };
+
+  private fetchControlPlanes = async (): Promise<void> => {
+    return API.getControlPlanes()
+      .then(response => {
+        const controlPlanes = response.data;
+        setControlPlaneRevisions(new Set(controlPlanes.map(cp => cp.revision)));
+        this.setState({ controlPlanes });
+      })
+      .catch(err => {
+        addError('Error fetching control planes.', err);
+      });
+  };
+
+  private resolveNamespaceTlsStatusForDisplay = (status: string): string => {
+    if (status !== MTLSStatuses.UNSET && status !== MTLSStatuses.NOT_ENABLED) {
+      return status;
+    }
+
+    const meshStatus = this.props.meshStatus;
+
+    if (
+      meshStatus === MTLSStatuses.ENABLED ||
+      meshStatus === MTLSStatuses.ENABLED_DEFAULT ||
+      meshStatus === MTLSStatuses.AUTO_DEFAULT
+    ) {
+      return MTLSStatuses.UNSET_INHERITED_STRICT;
+    }
+
+    if (meshStatus === MTLSStatuses.PARTIALLY || meshStatus === MTLSStatuses.PARTIALLY_DEFAULT) {
+      return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
+    }
+
+    if (meshStatus === MTLSStatuses.DISABLED) {
+      return MTLSStatuses.UNSET_INHERITED_DISABLED;
+    }
+
+    // Mesh-wide mTLS "not specified" effectively defaults to PERMISSIVE in Istio.
+    return MTLSStatuses.UNSET_INHERITED_PERMISSIVE;
+  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
