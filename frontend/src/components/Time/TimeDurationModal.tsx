@@ -154,6 +154,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
   };
 
   return (
+    // Intentionally omit onClose so PF6 does not render a header close button (replaces deprecated showClose={false}).
     <Modal
       id="time-duration-modal"
       aria-label={t('Time duration')}

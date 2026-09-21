@@ -100,7 +100,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
           </Content>
         </ModalBody>
         <ModalFooter>
-          <Button key="confirm" variant={ButtonVariant.danger} onClick={onDelete}>
+          <Button key="confirm" data-test="confirm-delete" variant={ButtonVariant.danger} onClick={onDelete}>
             Delete
           </Button>
           <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>

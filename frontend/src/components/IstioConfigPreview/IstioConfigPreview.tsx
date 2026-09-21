@@ -275,28 +275,28 @@ export class IstioConfigPreview extends React.Component<Props, State> {
           )}
         </ModalBody>
         <ModalFooter>
-          {this.props.actions
-            ? this.props.actions
-            : this.props.readOnly
-              ? [
-                  <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
-                    {t('Close')}
-                  </Button>
-                ]
-              : [
-                  <Button
-                    key={this.props.opTarget}
-                    variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
-                    isDisabled={this.props.disableAction}
-                    onClick={this.onConfirm}
-                    data-test={this.props.opTarget}
-                  >
-                    {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
-                  </Button>,
-                  <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
-                    {t('Cancel')}
-                  </Button>
-                ]}
+          {this.props.actions ? (
+            this.props.actions
+          ) : this.props.readOnly ? (
+            <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
+              {t('Close')}
+            </Button>
+          ) : (
+            <>
+              <Button
+                key={this.props.opTarget}
+                variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
+                isDisabled={this.props.disableAction}
+                onClick={this.onConfirm}
+                data-test={this.props.opTarget}
+              >
+                {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
+              </Button>
+              <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
+                {t('Cancel')}
+              </Button>
+            </>
+          )}
         </ModalFooter>
       </Modal>
     );

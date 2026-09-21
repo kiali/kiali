@@ -10,9 +10,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalVariant,
-  TextInput,
-  Title,
-  TitleSizes
+  TextInput
 } from '@patternfly/react-core';
 import type { IRow } from '@patternfly/react-table';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
@@ -179,13 +177,8 @@ export class WizardLabels extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
-    const header = (
-      <>
-        <Title id="modal-custom-header-label" headingLevel="h1" size={TitleSizes['2xl']}>
-          {this.props.type.charAt(0).toUpperCase() + this.props.type.slice(1)}
-        </Title>
-      </>
-    );
+    const titleId = 'modal-custom-header-label';
+    const title = this.props.type.charAt(0).toUpperCase() + this.props.type.slice(1);
 
     const footer = (
       <ActionGroup>
@@ -215,14 +208,8 @@ export class WizardLabels extends React.Component<Props, State> {
 
     return (
       <>
-        <Modal
-          variant={ModalVariant.large}
-          isOpen={this.props.showAnotationsWizard}
-          onClose={this.onClose}
-          aria-labelledby="modal-custom-header-label"
-          aria-describedby="modal-custom-header-description"
-        >
-          <ModalHeader>{header}</ModalHeader>
+        <Modal variant={ModalVariant.large} isOpen={this.props.showAnotationsWizard} onClose={this.onClose}>
+          <ModalHeader labelId={titleId} title={title} />
           <ModalBody>
             <Table variant={TableVariant.compact}>
               <Thead>

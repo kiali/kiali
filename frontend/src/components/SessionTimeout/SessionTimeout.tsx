@@ -15,10 +15,21 @@ type SessionTimeoutProps = {
   timeOutCountDown: number;
 };
 
-const sessionTimeoutStyle = kialiStyle({
-  marginBottom: '1.5rem',
+const sessionTimeoutContentStyle = kialiStyle({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: '1rem'
+});
+
+const sessionTimeoutIconStyle = kialiStyle({
+  flexShrink: 0
+});
+
+const sessionTimeoutTextStyle = kialiStyle({
+  flex: 1,
   fontSize: '18px',
-  lineHeight: 1.4
+  lineHeight: 1.4,
+  marginBottom: '1.5rem'
 });
 
 export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTimeoutProps) => {
@@ -57,14 +68,12 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   return (
     <Modal data-test="session-timeout-modal" isOpen={props.show} onClose={defaultAction} width="40%">
       <ModalHeader title="Session Timeout" />
-      <ModalBody>
-        <span>
+      <ModalBody className={sessionTimeoutContentStyle}>
+        <span className={sessionTimeoutIconStyle}>
           <KialiIcon.Warning size="xl" color={PFColors.Warning} />
         </span>
 
-        <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
-          {textForAuthStrategy(authenticationConfig.strategy)}
-        </span>
+        <span className={sessionTimeoutTextStyle}>{textForAuthStrategy(authenticationConfig.strategy)}</span>
       </ModalBody>
       <ModalFooter>{buttons}</ModalFooter>
     </Modal>

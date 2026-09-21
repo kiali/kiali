@@ -1125,6 +1125,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                 isExpanded={this.state.showAdvanced}
                 toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
                 contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+                toggleId="advanced-options-expandable"
                 onToggle={() => {
                   this.setState({
                     showAdvanced: !this.state.showAdvanced
