@@ -140,6 +140,13 @@ describe('LanguageUtils', () => {
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.SPANISH);
     });
 
+    it('resolves Japanese from browser locales', () => {
+      intlSpy = mockIntlLocale('ja-JP');
+      setNavigatorLocales(['ja-JP'], 'ja-JP');
+
+      expect(resolveLanguage(Language.SYSTEM)).toBe(Language.JAPANESE);
+    });
+
     it('falls back to server language for unsupported browser locales', () => {
       setI18nDefaults(Language.CHINESE);
       intlSpy = mockIntlLocale('fr-FR');
