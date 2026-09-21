@@ -6,7 +6,7 @@ import { Language } from 'types/Common';
 
 export type ResolvedLanguage = Language.CHINESE | Language.ENGLISH | Language.KOREAN | Language.SPANISH;
 
-export const isSupportedLanguage = (language: string): language is ResolvedLanguage => {
+export const isSupportedLanguage = (language: string | null | undefined): language is ResolvedLanguage => {
   return (
     language === Language.CHINESE ||
     language === Language.ENGLISH ||
@@ -15,7 +15,7 @@ export const isSupportedLanguage = (language: string): language is ResolvedLangu
   );
 };
 
-export const isLanguagePreference = (language: string): language is Language => {
+export const isLanguagePreference = (language: string | null | undefined): language is Language => {
   return isSupportedLanguage(language) || language === Language.SYSTEM;
 };
 
