@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { AUTH_FILE } from '../utils/auth';
 import { kialiUrl } from '../utils/kialiUrl';
+import { loginOpenId } from '../utils/openid-auth';
 import { loginOpenShift, playwrightCredentials } from '../utils/openshift-auth';
 
 type AuthInfo = {
@@ -13,8 +14,8 @@ type AuthInfo = {
  * Auth setup project — detects strategy from /api/auth/info and persists
  * storageState for suite projects.
  *
- * Supports anonymous (local) and openshift (Jenkins OCP htpasswd).
- * Token / OpenID remain for later phases.
+ * Supports anonymous (local), openshift (Jenkins OCP htpasswd), and openid (Keycloak).
+ * Token remains for later phases.
  */
 setup('authenticate', async ({ page, request }) => {
   fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
@@ -35,11 +36,14 @@ setup('authenticate', async ({ page, request }) => {
       password,
       username
     });
+  } else if (strategy === 'openid') {
+    const { username, password } = playwrightCredentials();
+    await loginOpenId(page, { password, username });
   } else {
     // Write empty storageState before failing so dependent projects produce JUnit
     // output (skipped) instead of crashing with zero results, which breaks Jenkins.
     fs.writeFileSync(AUTH_FILE, JSON.stringify({ cookies: [], origins: [] }));
-    const implemented = ['anonymous', 'openshift'];
+    const implemented = ['anonymous', 'openid', 'openshift'];
     expect(
       implemented,
       `Auth strategy "${strategy}" is not implemented in auth.setup.ts — add support or switch to: ${implemented.join(', ')}`
