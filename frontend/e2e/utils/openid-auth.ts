@@ -29,7 +29,12 @@ export async function loginOpenId(page: Page, { username, password }: OpenIdLogi
   const authorizationEndpoint = authInfo.authorizationEndpoint;
   expect(authorizationEndpoint, 'Expected authorizationEndpoint from /api/auth/info').toBeTruthy();
 
-  const loginPageRes = await page.request.get(authorizationEndpoint!, { maxRedirects: 10 });
+  // KinD Keycloak uses a self-signed cert. Kiali's base URL is HTTP, so the
+  // global ignoreHTTPSErrors flag stays off and Node rejects the Keycloak TLS handshake.
+  const loginPageRes = await page.request.get(authorizationEndpoint!, {
+    ignoreHTTPSErrors: true,
+    maxRedirects: 10
+  });
   expect(loginPageRes.ok(), `Expected Keycloak login page OK, got ${loginPageRes.status()}`).toBeTruthy();
   const html = await loginPageRes.text();
 
@@ -41,6 +46,7 @@ export async function loginOpenId(page: Page, { username, password }: OpenIdLogi
 
   const loginRes = await page.request.post(postUrl, {
     form: { password, username },
+    ignoreHTTPSErrors: true,
     maxRedirects: 10
   });
   expect(
