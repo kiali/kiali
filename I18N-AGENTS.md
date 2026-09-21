@@ -3,6 +3,7 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/ja/translation.json`
 - `frontend/public/locales/zh/translation.json`
 
 It is intentionally written in English so contributors, reviewers, and AI assistants can align on the same terminology.
@@ -110,6 +111,47 @@ These entries already match the preferred direction and are good references for 
 - Do not: `espacio de nombres`, `malla`, translated variants of `workload`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
+
+## Japanese conventions (`ja`)
+
+### Canonical term choices
+
+Use these consistently in Japanese UI strings:
+
+- `namespace` -> `ネームスペース`
+- `control plane` -> `コントロールプレーン`
+- `data plane` -> `データプレーン`
+- `mesh` -> `メッシュ`
+- `workload` -> `ワークロード`
+
+Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
+
+### Japanese UI style
+
+- Prefer short, neutral UI wording
+- Prefer polite `です` / `ます` for full sentences
+- Prefer concise labels without sentence-ending particles when space is tight
+- Use katakana for established cloud-native loanwords (`ネームスペース`, `ワークロード`, `メッシュ`)
+- Rephrase if a sentence becomes awkward after keeping a technical term in English
+
+### Existing examples from `frontend/public/locales/ja/translation.json`
+
+These entries match the preferred direction and are good references for future edits:
+
+- `"Namespace": "ネームスペース"`
+- `"Namespaces": "ネームスペース"`
+- `"Filter by Namespace": "ネームスペースでフィルター"`
+- `"Namespace Health": "ネームスペースのヘルス"`
+- `"Control plane": "コントロールプレーン"`
+- `"Data plane": "データプレーン"`
+- `"Mesh": "メッシュ"`
+- `"Waypoint": "Waypoint"`
+- `"{{count}} workload_other": "{{count}} ワークロード"`
+
+### Japanese do / do not
+
+- Do: `コントロールプレーン`, `データプレーン`, `ネームスペース`, `メッシュ`, `ワークロード`
+- Do not: alternate with `名前空間`, `網目`, or `負荷`
 
 ## Chinese conventions (`zh`, Simplified Chinese)
 
