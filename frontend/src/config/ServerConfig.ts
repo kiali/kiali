@@ -133,7 +133,7 @@ const defaultServerConfig: ComputedServerConfig = {
       },
       i18n: {
         language: '',
-        showSelector: false
+        showSelector: true
       },
       list: {
         includeHealth: true,

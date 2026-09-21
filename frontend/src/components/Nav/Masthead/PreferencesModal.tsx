@@ -162,7 +162,7 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
   const colorScheme = isColorScheme(colorSchemeProp) ? colorSchemeProp : getKialiColorScheme();
   const contrastMode = isContrastMode(contrastModeProp) ? contrastModeProp : getKialiContrastMode();
   const language = isLanguagePreference(languageProp) ? languageProp : getDefaultLanguagePreference();
-  const showLanguageSelector = serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector ?? false;
+  const showLanguageSelector = serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector ?? true;
   const theme = isValidTheme(themeProp) ? themeProp : getKialiTheme();
 
   const [preferences, setPreferences] = React.useState<AppearancePreferences>({

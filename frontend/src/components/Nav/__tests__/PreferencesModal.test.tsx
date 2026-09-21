@@ -229,6 +229,13 @@ describe('PreferencesModal language', () => {
     setServerConfig(languageSelectorServerConfig);
   });
 
+  it('shows language selector by default', () => {
+    setServerConfig(preferencesServerConfig);
+    renderPreferences();
+
+    expect(screen.getByTestId('language-select')).toBeInTheDocument();
+  });
+
   it('hides language selector when showSelector is false', () => {
     setServerConfig({
       ...preferencesServerConfig,

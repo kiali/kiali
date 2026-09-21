@@ -200,6 +200,8 @@ The `mockServiceWorker.js` file is auto-generated and not committed to the repos
 
 Kiali supports internationalization with the `react-i18next` library. String literals to be translated are added automatically to a locale file (stored in `public/locales/<language>/translation.json`), during the development phase, with `i18n-parser` (executed along with `yarn start` or `yarn build` command). At runtime, the i18n library will use these locale files to perform translation to a specific language.
 
+Users change language from *Preferences* in the user dropdown. Language selection is shown by default. The `ui_defaults.i18n.show_selector` setting is deprecated: setting it to `false` hides the language selector, but the setting will be removed in a future release.
+
 **Adding a new language**
 
 These are the steps to add a new language to Kiali:

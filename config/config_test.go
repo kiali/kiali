@@ -1886,3 +1886,36 @@ func TestObfuscate_OAuth2ClientSecret(t *testing.T) {
 	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Perses.Auth.OAuth2.ClientSecret))
 	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret))
 }
+
+func TestUnmarshal_I18nShowSelectorDeprecation(t *testing.T) {
+	hideLanguageSelectorYAML := `
+kiali_feature_flags:
+  ui_defaults:
+    i18n:
+      show_selector: false
+`
+
+	t.Run("defaults to showing the language selector", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal("")
+		require.NoError(t, err)
+		assert.True(t, conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector)
+		assert.NotContains(t, buf.String(), "DEPRECATION NOTICE")
+	})
+
+	t.Run("logs deprecation when show_selector is false", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal(hideLanguageSelectorYAML)
+		require.NoError(t, err)
+		assert.False(t, conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector)
+		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'kiali_feature_flags.ui_defaults.i18n.show_selector' has been deprecated")
+	})
+}
