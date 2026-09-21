@@ -288,7 +288,7 @@ jobs:
       run: make -e GO_TEST_FLAGS="-race -coverpkg=github.com/kiali/kiali/... -coverprofile=coverage-unit.out" test
 
     - name: Upload PR base coverage to Codecov
-      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         disable_search: true
         fail_ci_if_error: true
@@ -354,7 +354,7 @@ jobs:
 
     - name: Select Codecov PR base commit
       if: github.event.pull_request.head.repo.full_name == github.repository
-      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         base_sha: ${{ github.event.pull_request.base.sha }}
         run_command: pr-base-picking
@@ -364,7 +364,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: github.event.pull_request.head.repo.full_name == github.repository
-      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
       with:
         disable_search: true
         fail_ci_if_error: true
