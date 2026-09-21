@@ -27,8 +27,32 @@ const setI18nDefaults = (language: string): void => {
   });
 };
 
+const mockIntlLocale = (locale: string): ReturnType<typeof rstest.spyOn> => {
+  return rstest.spyOn(Intl, 'DateTimeFormat').mockImplementation(
+    () =>
+      ({
+        resolvedOptions: () => ({ locale })
+      }) as Intl.DateTimeFormat
+  );
+};
+
+const setNavigatorLocales = (languages: string[], language: string): void => {
+  Object.defineProperty(window.navigator, 'languages', {
+    configurable: true,
+    value: languages
+  });
+  Object.defineProperty(window.navigator, 'language', {
+    configurable: true,
+    value: language
+  });
+};
+
 describe('LanguageUtils', () => {
+  let intlSpy: ReturnType<typeof mockIntlLocale> | undefined;
+
   afterEach(() => {
+    intlSpy?.mockRestore();
+    intlSpy = undefined;
     setServerConfig(languageServerConfig);
     store.dispatch(GlobalActions.setLanguage(''));
   });
@@ -53,49 +77,23 @@ describe('LanguageUtils', () => {
     });
 
     it('resolves system preference from browser languages', () => {
-      Object.defineProperty(window.navigator, 'languages', {
-        configurable: true,
-        value: ['es-ES', 'en-US']
-      });
-      Object.defineProperty(window.navigator, 'language', {
-        configurable: true,
-        value: 'es-ES'
-      });
+      intlSpy = mockIntlLocale('fr-FR');
+      setNavigatorLocales(['es-ES', 'en-US'], 'es-ES');
 
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.SPANISH);
     });
 
     it('prefers the OS locale over browser language preferences', () => {
-      const dateTimeFormatSpy = rstest.spyOn(Intl, 'DateTimeFormat').mockImplementation(
-        () =>
-          ({
-            resolvedOptions: () => ({ locale: 'es-ES' })
-          }) as Intl.DateTimeFormat
-      );
-      Object.defineProperty(window.navigator, 'languages', {
-        configurable: true,
-        value: ['en-US']
-      });
-      Object.defineProperty(window.navigator, 'language', {
-        configurable: true,
-        value: 'en-US'
-      });
+      intlSpy = mockIntlLocale('es-ES');
+      setNavigatorLocales(['en-US'], 'en-US');
 
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.SPANISH);
-
-      dateTimeFormatSpy.mockRestore();
     });
 
     it('falls back to server language for unsupported browser locales', () => {
       setI18nDefaults(Language.CHINESE);
-      Object.defineProperty(window.navigator, 'languages', {
-        configurable: true,
-        value: ['fr-FR']
-      });
-      Object.defineProperty(window.navigator, 'language', {
-        configurable: true,
-        value: 'fr-FR'
-      });
+      intlSpy = mockIntlLocale('fr-FR');
+      setNavigatorLocales(['fr-FR'], 'fr-FR');
 
       expect(getSystemLanguage()).toBe(Language.CHINESE);
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.CHINESE);
