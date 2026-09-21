@@ -285,14 +285,16 @@ class ServiceListPageComponent extends FilterComponent.Component<
           </VirtualList>
         </RenderContent>
 
-        <ManagedListColumnsModal
-          {...servicesListColumnsPreset}
-          columnOrder={this.props.columnOrder}
-          dispatch={this.props.dispatch}
-          hiddenColumnIds={this.props.hiddenColumnIds}
-          isOpen={this.state.showColumnManagement}
-          onClose={() => this.setState({ showColumnManagement: false })}
-        />
+        {this.state.showColumnManagement && (
+          <ManagedListColumnsModal
+            {...servicesListColumnsPreset}
+            columnOrder={this.props.columnOrder}
+            dispatch={this.props.dispatch}
+            hiddenColumnIds={this.props.hiddenColumnIds}
+            isOpen={this.state.showColumnManagement}
+            onClose={() => this.setState({ showColumnManagement: false })}
+          />
+        )}
       </>
     );
   }

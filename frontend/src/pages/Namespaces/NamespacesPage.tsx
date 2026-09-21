@@ -524,14 +524,16 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           </VirtualList>
         </RenderContent>
 
-        <ManagedListColumnsModal
-          {...namespacesListColumnsPreset}
-          columnOrder={this.props.columnOrder}
-          dispatch={this.props.dispatch}
-          hiddenColumnIds={this.props.hiddenColumnIds}
-          isOpen={this.state.showColumnManagement}
-          onClose={() => this.setState({ showColumnManagement: false })}
-        />
+        {this.state.showColumnManagement && (
+          <ManagedListColumnsModal
+            {...namespacesListColumnsPreset}
+            columnOrder={this.props.columnOrder}
+            dispatch={this.props.dispatch}
+            hiddenColumnIds={this.props.hiddenColumnIds}
+            isOpen={this.state.showColumnManagement}
+            onClose={() => this.setState({ showColumnManagement: false })}
+          />
+        )}
       </>
     );
   }

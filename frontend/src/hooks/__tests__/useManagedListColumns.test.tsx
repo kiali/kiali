@@ -2,8 +2,9 @@ import * as React from 'react';
 import { render } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
 import { AppsListActions } from '../../actions/AppsListActions';
+import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { HistoryManager, URLParam } from 'app/History';
-import { applicationsListColumnsPreset } from '../managedListColumnsPresets';
+import { applicationsListColumnsPreset, namespacesListColumnsPreset } from '../managedListColumnsPresets';
 import { syncManagedListColumnsFromURL, useManagedListColumns } from '../useManagedListColumns';
 
 const mockDispatch = rstest.fn();
@@ -120,6 +121,63 @@ describe('syncManagedListColumnsFromURL', () => {
 
     expect(mockDispatch).toHaveBeenCalledWith(AppsListActions.setColumnOrder(['health', 'name', 'namespace']));
   });
+
+  it('ignores fully invalid column order URL params when Redux is empty', () => {
+    (HistoryManager.getParam as Mock).mockImplementation((param: URLParam) => {
+      if (param === URLParam.APPS_COLUMN_ORDER) {
+        return 'invalid,unknown';
+      }
+      return undefined;
+    });
+
+    syncManagedListColumnsFromURL(baseConfig);
+
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('clears column order when URL param has no valid ids but Redux has order', () => {
+    (HistoryManager.getParam as Mock).mockImplementation((param: URLParam) => {
+      if (param === URLParam.APPS_COLUMN_ORDER) {
+        return 'invalid';
+      }
+      return undefined;
+    });
+
+    syncManagedListColumnsFromURL({
+      ...baseConfig,
+      columnOrder: ['health', 'name']
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith(AppsListActions.setColumnOrder([]));
+  });
+
+  it('writes column order to URL when Redux has state but URL param is absent', () => {
+    syncManagedListColumnsFromURL({
+      ...baseConfig,
+      columnOrder: ['health', 'name', 'namespace']
+    });
+
+    expect(setParamSpy).toHaveBeenCalledWith(URLParam.APPS_COLUMN_ORDER, 'health,name,namespace');
+    expect(mockDispatch).not.toHaveBeenCalled();
+  });
+
+  it('filters untoggleable namespace column from hidden URL params', () => {
+    (HistoryManager.getParam as Mock).mockImplementation((param: URLParam) => {
+      if (param === URLParam.NAMESPACES_HIDDEN_COLUMNS) {
+        return 'namespace,mode';
+      }
+      return undefined;
+    });
+
+    syncManagedListColumnsFromURL({
+      ...namespacesListColumnsPreset,
+      columnOrder: [],
+      dispatch: mockDispatch,
+      hiddenColumnIds: []
+    });
+
+    expect(mockDispatch).toHaveBeenCalledWith(NamespacesListActions.setHiddenColumns(['mode']));
+  });
 });
 
 describe('useManagedListColumns', () => {
@@ -156,6 +214,28 @@ describe('useManagedListColumns', () => {
     expect(snapshot?.appliedColumns.some(column => column.key === 'name')).toBe(true);
   });
 
+  it('marks namespace as untoggleable in namespaces preset', () => {
+    let snapshot: HookSnapshot | undefined;
+
+    render(
+      <HookConsumer
+        config={{
+          ...namespacesListColumnsPreset,
+          columnOrder: [],
+          dispatch: mockDispatch,
+          hiddenColumnIds: []
+        }}
+        onResult={result => {
+          snapshot = result;
+        }}
+      />
+    );
+
+    const namespaceColumn = snapshot?.appliedColumns.find(column => column.key === 'namespace');
+    expect(namespaceColumn?.isUntoggleable).toBe(true);
+    expect(snapshot?.appliedColumns.some(column => column.key === 'cluster')).toBe(false);
+  });
+
   it('persists column changes to Redux and URL', () => {
     let snapshot: HookSnapshot | undefined;
 
@@ -178,6 +258,27 @@ describe('useManagedListColumns', () => {
     expect(mockDispatch).toHaveBeenCalledWith(AppsListActions.setHiddenColumns(['health']));
     expect(setParamSpy).toHaveBeenCalledWith(URLParam.APPS_COLUMN_ORDER, 'name,health,namespace');
     expect(setParamSpy).toHaveBeenCalledWith(URLParam.APPS_HIDDEN_COLUMNS, 'health');
+  });
+
+  it('removes hidden columns URL param when all columns are shown', () => {
+    let snapshot: HookSnapshot | undefined;
+
+    render(
+      <HookConsumer
+        config={baseConfig}
+        onResult={result => {
+          snapshot = result;
+        }}
+      />
+    );
+
+    snapshot?.applyColumns([
+      { isShown: true, isShownByDefault: true, isUntoggleable: true, key: 'name', title: 'Name' },
+      { isShown: true, isShownByDefault: true, key: 'health', title: 'Health' }
+    ]);
+
+    expect(mockDispatch).toHaveBeenCalledWith(AppsListActions.setHiddenColumns([]));
+    expect(deleteParamSpy).toHaveBeenCalledWith(URLParam.APPS_HIDDEN_COLUMNS);
   });
 
   it('resets columns to default in Redux and URL', () => {

@@ -32,7 +32,6 @@ export type UseManagedListColumnsResult = {
   appliedColumns: ColumnManagementModalColumn[];
   applyColumns: (newColumns: ColumnManagementModalColumn[]) => void;
   resetColumnsToDefault: () => void;
-  syncColumnsFromURL: () => void;
 };
 
 const getDefaultManagedColumns = (listType: ManagedListPageType, untoggleableColumnId: string): ManagedColumn[] => {
@@ -129,28 +128,6 @@ export const useManagedListColumns = ({
   listType,
   untoggleableColumnId
 }: ManagedListColumnsConfig): UseManagedListColumnsResult => {
-  const syncColumnsFromURL = useCallback((): void => {
-    syncManagedListColumnsFromURL({
-      actions,
-      columnOrder,
-      columnOrderUrlParam,
-      dispatch,
-      hiddenColumnIds,
-      hiddenColumnsUrlParam,
-      listType,
-      untoggleableColumnId
-    });
-  }, [
-    actions,
-    columnOrder,
-    columnOrderUrlParam,
-    dispatch,
-    hiddenColumnIds,
-    hiddenColumnsUrlParam,
-    listType,
-    untoggleableColumnId
-  ]);
-
   const resetColumnsToDefault = useCallback((): void => {
     dispatch(actions.setColumnOrder([]));
     dispatch(actions.setHiddenColumns([]));
@@ -197,7 +174,6 @@ export const useManagedListColumns = ({
   return {
     appliedColumns,
     applyColumns,
-    resetColumnsToDefault,
-    syncColumnsFromURL
+    resetColumnsToDefault
   };
 };

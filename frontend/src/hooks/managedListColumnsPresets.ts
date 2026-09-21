@@ -5,6 +5,8 @@ import { WorkloadsListActions } from '../actions/WorkloadsListActions';
 import type { URLParam } from 'app/History';
 import type { ManagedListPageType } from './useManagedListColumns';
 
+// URL param values match URLParam in app/History.tsx. String literals avoid eager enum
+// access at module load (routes → list pages → presets must not break History mocks).
 export const applicationsListColumnsPreset = {
   actions: AppsListActions,
   columnOrderUrlParam: 'apporder' as URLParam,
@@ -36,6 +38,7 @@ export const namespacesListColumnsPreset = {
   actions: NamespacesListActions,
   columnOrderUrlParam: 'nsorder' as URLParam,
   hiddenColumnsUrlParam: 'nshide' as URLParam,
+  hideClusterColumnInModal: true,
   listType: 'namespaces' as ManagedListPageType,
   untoggleableColumnId: 'namespace'
 };
