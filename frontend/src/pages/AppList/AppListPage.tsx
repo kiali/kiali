@@ -28,7 +28,8 @@ import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { applicationsListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
+import { applicationsListColumnsPreset } from '../../hooks/managedListColumnsPresets';
+import { syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import type { KialiDispatch } from 'types/Redux';
 import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 

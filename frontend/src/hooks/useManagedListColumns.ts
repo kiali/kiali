@@ -1,10 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { ColumnManagementModalColumn } from '@patternfly/react-component-groups';
-import { HistoryManager, URLParam } from 'app/History';
-import { AppsListActions } from '../actions/AppsListActions';
-import { NamespacesListActions } from '../actions/NamespacesListActions';
-import { ServicesListActions } from '../actions/ServicesListActions';
-import { WorkloadsListActions } from '../actions/WorkloadsListActions';
+import { HistoryManager } from 'app/History';
+import type { URLParam } from 'app/History';
 import { config as virtualListConfig } from '../components/VirtualList/Config';
 import type { ManagedColumn } from '../components/VirtualList/ManagedColumnTypes';
 import { isMultiCluster } from '../config';
@@ -203,39 +200,4 @@ export const useManagedListColumns = ({
     resetColumnsToDefault,
     syncColumnsFromURL
   };
-};
-
-export const applicationsListColumnsPreset = {
-  actions: AppsListActions,
-  columnOrderUrlParam: URLParam.APPS_COLUMN_ORDER,
-  hiddenColumnsUrlParam: URLParam.APPS_HIDDEN_COLUMNS,
-  hideClusterColumnInModal: true,
-  listType: 'applications' as ManagedListPageType,
-  untoggleableColumnId: 'name'
-};
-
-export const servicesListColumnsPreset = {
-  actions: ServicesListActions,
-  columnOrderUrlParam: URLParam.SERVICES_COLUMN_ORDER,
-  hiddenColumnsUrlParam: URLParam.SERVICES_HIDDEN_COLUMNS,
-  hideClusterColumnInModal: true,
-  listType: 'services' as ManagedListPageType,
-  untoggleableColumnId: 'name'
-};
-
-export const workloadsListColumnsPreset = {
-  actions: WorkloadsListActions,
-  columnOrderUrlParam: URLParam.WORKLOADS_COLUMN_ORDER,
-  hiddenColumnsUrlParam: URLParam.WORKLOADS_HIDDEN_COLUMNS,
-  hideClusterColumnInModal: true,
-  listType: 'workloads' as ManagedListPageType,
-  untoggleableColumnId: 'name'
-};
-
-export const namespacesListColumnsPreset = {
-  actions: NamespacesListActions,
-  columnOrderUrlParam: URLParam.NAMESPACES_COLUMN_ORDER,
-  hiddenColumnsUrlParam: URLParam.NAMESPACES_HIDDEN_COLUMNS,
-  listType: 'namespaces' as ManagedListPageType,
-  untoggleableColumnId: 'namespace'
 };

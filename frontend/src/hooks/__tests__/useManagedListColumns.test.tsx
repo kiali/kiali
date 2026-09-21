@@ -3,11 +3,8 @@ import { render } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
 import { AppsListActions } from '../../actions/AppsListActions';
 import { HistoryManager, URLParam } from 'app/History';
-import {
-  applicationsListColumnsPreset,
-  syncManagedListColumnsFromURL,
-  useManagedListColumns
-} from '../useManagedListColumns';
+import { applicationsListColumnsPreset } from '../managedListColumnsPresets';
+import { syncManagedListColumnsFromURL, useManagedListColumns } from '../useManagedListColumns';
 
 const mockDispatch = rstest.fn();
 

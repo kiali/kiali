@@ -32,7 +32,8 @@ import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { HistoryManager } from 'app/History';
 import { endPerfTimer, startPerfTimer } from '../../utils/PerformanceUtils';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { servicesListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
+import { servicesListColumnsPreset } from '../../hooks/managedListColumnsPresets';
+import { syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import type { KialiDispatch } from 'types/Redux';
 import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 

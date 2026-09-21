@@ -41,7 +41,8 @@ import type { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
 import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
-import { namespacesListColumnsPreset, syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
+import { namespacesListColumnsPreset } from '../../hooks/managedListColumnsPresets';
+import { syncManagedListColumnsFromURL } from '../../hooks/useManagedListColumns';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
 
 // Maximum number of namespaces to include in a single backend API call
