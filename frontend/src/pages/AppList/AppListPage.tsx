@@ -24,16 +24,11 @@ import { HealthComputeDurationMastheadToolbar } from 'components/Time/HealthComp
 import { isMultiCluster, serverConfig } from '../../config';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 import { connectRefresh } from 'components/Refresh/connectRefresh';
-import { HistoryManager, URLParam } from 'app/History';
+import { HistoryManager } from 'app/History';
 import { startPerfTimer, endPerfTimer } from '../../utils/PerformanceUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { arrayEquals } from '../../utils/Common';
-import { ColumnManagementModal } from '@patternfly/react-component-groups';
-import type { ColumnManagementModalColumn } from '@patternfly/react-component-groups';
-import type { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
-import { AppsListActions } from '../../actions/AppsListActions';
-import { config as virtualListConfig } from '../../components/VirtualList/Config';
-import { t } from 'utils/I18nUtils';
+import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
+import { applicationsListColumnsPreset } from '../../hooks/useManagedListColumns';
 import type { KialiDispatch } from 'types/Redux';
 import type { StatefulFiltersRef } from '../../components/Filters/StatefulFilters';
 
@@ -83,7 +78,6 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
   }
 
   componentDidMount(): void {
-    this.syncColumnsFromURL();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.updateListItems();
     }
@@ -235,125 +229,17 @@ class AppListPageComponent extends FilterComponent.Component<AppListPageProps, A
           </VirtualList>
         </RenderContent>
 
-        <ColumnManagementModal
-          appliedColumns={this.getAppliedColumnsForModal()}
-          applyColumns={newColumns => {
-            const hiddenIds = newColumns.filter(c => !c.isShown).map(c => c.key);
-            const orderedIds = newColumns.map(c => c.key);
-            this.props.dispatch(AppsListActions.setColumnOrder(orderedIds));
-            if (orderedIds.length > 0) {
-              HistoryManager.setParam(URLParam.APPS_COLUMN_ORDER, orderedIds.join(','));
-            } else {
-              HistoryManager.deleteParam(URLParam.APPS_COLUMN_ORDER);
-            }
-
-            this.props.dispatch(AppsListActions.setHiddenColumns(hiddenIds));
-            if (hiddenIds.length > 0) {
-              HistoryManager.setParam(URLParam.APPS_HIDDEN_COLUMNS, hiddenIds.join(','));
-            } else {
-              HistoryManager.deleteParam(URLParam.APPS_HIDDEN_COLUMNS);
-            }
-
-            this.setState({ showColumnManagement: false });
-          }}
-          description={t('Selected categories will be displayed in the table. Drag and drop to reorder columns.')}
-          enableDragDrop={true}
+        <ManagedListColumnsModal
+          {...applicationsListColumnsPreset}
+          columnOrder={this.props.columnOrder}
+          dispatch={this.props.dispatch}
+          hiddenColumnIds={this.props.hiddenColumnIds}
           isOpen={this.state.showColumnManagement}
           onClose={() => this.setState({ showColumnManagement: false })}
-          onReset={this.resetAppsColumnsToDefault}
-          title={t('Manage columns')}
         />
       </>
     );
   }
-
-  private syncColumnsFromURL = (): void => {
-    const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'name');
-
-    const urlParam = HistoryManager.getParam(URLParam.APPS_HIDDEN_COLUMNS);
-    if (urlParam !== undefined) {
-      const ids = urlParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const filtered = ids.filter(id => validIds.includes(id));
-      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
-        this.props.dispatch(AppsListActions.setHiddenColumns(filtered));
-      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
-        this.props.dispatch(AppsListActions.setHiddenColumns([]));
-      }
-    } else if (this.props.hiddenColumnIds.length > 0) {
-      HistoryManager.setParam(URLParam.APPS_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
-    }
-
-    const orderParam = HistoryManager.getParam(URLParam.APPS_COLUMN_ORDER);
-    if (orderParam !== undefined) {
-      const orderIds = orderParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const validOrder = orderIds.filter(id => defaultIds.includes(id));
-      if (validOrder.length > 0 && !arrayEquals(validOrder, this.props.columnOrder, (a, b) => a === b)) {
-        this.props.dispatch(AppsListActions.setColumnOrder(validOrder));
-      } else if (validOrder.length === 0 && this.props.columnOrder.length > 0) {
-        this.props.dispatch(AppsListActions.setColumnOrder([]));
-      }
-    } else if (this.props.columnOrder.length > 0) {
-      HistoryManager.setParam(URLParam.APPS_COLUMN_ORDER, this.props.columnOrder.join(','));
-    }
-  };
-
-  private getDefaultManagedColumns = (): ManagedColumn[] => {
-    return virtualListConfig.applications.columns
-      .filter(c => c.title && c.title.trim().length > 0)
-      .map(c => {
-        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
-        return {
-          id,
-          title: c.title,
-          isShown: true,
-          isDisabled: id === 'name'
-        } as ManagedColumn;
-      });
-  };
-
-  private getManagedColumns = (): ManagedColumn[] => {
-    const defaultCols = this.getDefaultManagedColumns();
-    const hiddenSet = new Set(this.props.hiddenColumnIds);
-    let ordered = defaultCols;
-    if (this.props.columnOrder && this.props.columnOrder.length > 0) {
-      const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
-      ordered = [...defaultCols].sort((a, b) => {
-        const ai = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bi = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return ai - bi;
-      });
-    }
-    return ordered.map(c => ({
-      ...c,
-      isShown: !hiddenSet.has(c.id)
-    }));
-  };
-
-  private resetAppsColumnsToDefault = (): void => {
-    this.props.dispatch(AppsListActions.setColumnOrder([]));
-    this.props.dispatch(AppsListActions.setHiddenColumns([]));
-    HistoryManager.deleteParam(URLParam.APPS_COLUMN_ORDER);
-    HistoryManager.deleteParam(URLParam.APPS_HIDDEN_COLUMNS);
-  };
-
-  private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns()
-      .filter(c => isMultiCluster || c.id !== 'cluster')
-      .map(c => ({
-        key: c.id,
-        title: c.title,
-        isShownByDefault: true,
-        isShown: c.isShown,
-        isUntoggleable: c.id === 'name'
-      }));
-  };
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({

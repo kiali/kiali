@@ -27,7 +27,6 @@ import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react
 import { CubesIcon, SearchIcon } from '@patternfly/react-icons';
 import { isMultiCluster } from '../../config';
 import { addDanger } from '../../utils/AlertUtils';
-import { arrayEquals } from '../../utils/Common';
 import type { TLSStatus } from '../../types/TLSStatus';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import type { ValidationStatus } from '../../types/IstioObjects';
@@ -41,11 +40,8 @@ import { addError } from '../../utils/AlertUtils';
 import type { IstioConfigList } from 'types/IstioConfigList';
 import { serverConfig } from '../../config';
 import { fetchClusterNamespacesHealth } from '../../services/NamespaceHealth';
-import { config as virtualListConfig } from '../../components/VirtualList/Config';
-import { ColumnManagementModal } from '@patternfly/react-component-groups';
-import type { ColumnManagementModalColumn } from '@patternfly/react-component-groups';
-import type { ManagedColumn } from '../../components/VirtualList/ManagedColumnTypes';
-import { NamespacesListActions } from '../../actions/NamespacesListActions';
+import { ManagedListColumnsModal } from '../../components/Filters/ManagedListColumnsModal';
+import { namespacesListColumnsPreset } from '../../hooks/useManagedListColumns';
 import { setControlPlaneRevisions } from './NamespaceRevisionUtils';
 
 // Maximum number of namespaces to include in a single backend API call
@@ -108,7 +104,6 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
   }
 
   componentDidMount(): void {
-    this.syncColumnsFromURL();
     if (this.props.refreshInterval !== RefreshIntervalManual && HistoryManager.getRefresh() !== RefreshIntervalManual) {
       this.load();
     }
@@ -522,124 +517,17 @@ export class NamespacesPageComponent extends React.Component<NamespacesProps, St
           </VirtualList>
         </RenderContent>
 
-        <ColumnManagementModal
-          appliedColumns={this.getAppliedColumnsForModal()}
-          applyColumns={newColumns => {
-            const hiddenIds = newColumns.filter(c => !c.isShown).map(c => c.key);
-            const orderedIds = newColumns.map(c => c.key);
-            this.props.dispatch(NamespacesListActions.setColumnOrder(orderedIds));
-            if (orderedIds.length > 0) {
-              HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, orderedIds.join(','));
-            } else {
-              HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
-            }
-
-            this.props.dispatch(NamespacesListActions.setHiddenColumns(hiddenIds));
-            if (hiddenIds.length > 0) {
-              HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, hiddenIds.join(','));
-            } else {
-              HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
-            }
-
-            this.setState({ showColumnManagement: false });
-          }}
-          description={t('Selected categories will be displayed in the table. Drag and drop to reorder columns.')}
-          enableDragDrop={true}
+        <ManagedListColumnsModal
+          {...namespacesListColumnsPreset}
+          columnOrder={this.props.columnOrder}
+          dispatch={this.props.dispatch}
+          hiddenColumnIds={this.props.hiddenColumnIds}
           isOpen={this.state.showColumnManagement}
           onClose={() => this.setState({ showColumnManagement: false })}
-          onReset={this.resetNamespaceColumnsToDefault}
-          title={t('Manage columns')}
         />
       </>
     );
   }
-
-  private syncColumnsFromURL = (): void => {
-    const defaultIds = this.getDefaultManagedColumns().map(c => c.id);
-    const validIds = defaultIds.filter(id => id !== 'namespace');
-
-    const urlParam = HistoryManager.getParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
-    if (urlParam !== undefined) {
-      const ids = urlParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const filtered = ids.filter(id => validIds.includes(id));
-      if (filtered.length > 0 && !arrayEquals(filtered, this.props.hiddenColumnIds, (a, b) => a === b)) {
-        this.props.dispatch(NamespacesListActions.setHiddenColumns(filtered));
-      } else if (filtered.length === 0 && this.props.hiddenColumnIds.length > 0) {
-        this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
-      }
-    } else if (this.props.hiddenColumnIds.length > 0) {
-      HistoryManager.setParam(URLParam.NAMESPACES_HIDDEN_COLUMNS, this.props.hiddenColumnIds.join(','));
-    }
-
-    const orderParam = HistoryManager.getParam(URLParam.NAMESPACES_COLUMN_ORDER);
-    if (orderParam !== undefined) {
-      const orderIds = orderParam
-        .split(',')
-        .map(s => s.trim().toLowerCase())
-        .filter(Boolean);
-      const validOrder = orderIds.filter(id => defaultIds.includes(id));
-      if (validOrder.length > 0 && !arrayEquals(validOrder, this.props.columnOrder, (a, b) => a === b)) {
-        this.props.dispatch(NamespacesListActions.setColumnOrder(validOrder));
-      } else if (validOrder.length === 0 && this.props.columnOrder.length > 0) {
-        this.props.dispatch(NamespacesListActions.setColumnOrder([]));
-      }
-    } else if (this.props.columnOrder.length > 0) {
-      HistoryManager.setParam(URLParam.NAMESPACES_COLUMN_ORDER, this.props.columnOrder.join(','));
-    }
-  };
-
-  private getDefaultManagedColumns = (): ManagedColumn[] => {
-    return virtualListConfig.namespaces.columns
-      .filter(c => c.title && c.title.trim().length > 0)
-      .map(c => {
-        const id = (c.id ?? c.name.toLowerCase()).toLowerCase();
-        return {
-          id,
-          title: c.title,
-          isShown: true,
-          isDisabled: id === 'namespace'
-        } as ManagedColumn;
-      });
-  };
-
-  private getManagedColumns = (): ManagedColumn[] => {
-    const defaultCols = this.getDefaultManagedColumns();
-    const hiddenSet = new Set(this.props.hiddenColumnIds);
-    let ordered = defaultCols;
-    if (this.props.columnOrder && this.props.columnOrder.length > 0) {
-      const orderMap = new Map(this.props.columnOrder.map((id, i) => [id, i]));
-      ordered = [...defaultCols].sort((a, b) => {
-        const ai = orderMap.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bi = orderMap.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return ai - bi;
-      });
-    }
-    return ordered.map(c => ({
-      ...c,
-      isShown: !hiddenSet.has(c.id) // isShown when not in hidden set
-    }));
-  };
-
-  private resetNamespaceColumnsToDefault = (): void => {
-    this.props.dispatch(NamespacesListActions.setColumnOrder([]));
-    this.props.dispatch(NamespacesListActions.setHiddenColumns([]));
-    HistoryManager.deleteParam(URLParam.NAMESPACES_COLUMN_ORDER);
-    HistoryManager.deleteParam(URLParam.NAMESPACES_HIDDEN_COLUMNS);
-  };
-
-  /** Columns in the format expected by {@link ColumnManagementModal} */
-  private getAppliedColumnsForModal = (): ColumnManagementModalColumn[] => {
-    return this.getManagedColumns().map(c => ({
-      key: c.id,
-      title: c.title,
-      isShownByDefault: true,
-      isShown: c.isShown,
-      isUntoggleable: c.id === 'namespace'
-    }));
-  };
 
   private fetchControlPlanes = async (): Promise<void> => {
     return API.getControlPlanes()
