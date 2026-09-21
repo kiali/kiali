@@ -5,6 +5,7 @@ import { AppsListActions } from '../../actions/AppsListActions';
 import { NamespacesListActions } from '../../actions/NamespacesListActions';
 import { HistoryManager, URLParam } from 'app/History';
 import { applicationsListColumnsPreset, namespacesListColumnsPreset } from '../managedListColumnsPresets';
+import type { ManagedListColumnsConfig } from '../useManagedListColumns';
 import { syncManagedListColumnsFromURL, useManagedListColumns } from '../useManagedListColumns';
 
 const mockDispatch = rstest.fn();
@@ -18,7 +19,7 @@ const baseConfig = {
 
 type HookSnapshot = ReturnType<typeof useManagedListColumns>;
 
-const HookConsumer: React.FC<{ config: typeof baseConfig; onResult: (result: HookSnapshot) => void }> = ({
+const HookConsumer: React.FC<{ config: ManagedListColumnsConfig; onResult: (result: HookSnapshot) => void }> = ({
   config,
   onResult
 }) => {
