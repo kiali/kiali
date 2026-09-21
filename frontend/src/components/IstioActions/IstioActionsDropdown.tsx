@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -6,12 +7,15 @@ import {
   DropdownItem,
   DropdownList,
   MenuToggle,
-  MenuToggleElement,
   Content,
   ContentVariants,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
   TooltipPosition
 } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { t } from 'utils/I18nUtils';
@@ -87,24 +91,22 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
         <DropdownList>{[deleteActionWrapper]}</DropdownList>
       </Dropdown>
 
-      <Modal
-        title="Confirm Delete"
-        variant={ModalVariant.small}
-        isOpen={showConfirmModal}
-        onClose={hideConfirmModal}
-        actions={[
+      <Modal variant={ModalVariant.small} isOpen={showConfirmModal} onClose={hideConfirmModal}>
+        <ModalHeader title="Confirm Delete" />
+        <ModalBody>
+          <Content component={ContentVariants.p}>
+            Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this
+            is something you really want to do!
+          </Content>
+        </ModalBody>
+        <ModalFooter>
           <Button key="confirm" variant={ButtonVariant.danger} onClick={onDelete}>
             Delete
-          </Button>,
+          </Button>
           <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>
             Cancel
           </Button>
-        ]}
-      >
-        <Content component={ContentVariants.p}>
-          Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this is
-          something you really want to do!
-        </Content>
+        </ModalFooter>
       </Modal>
     </>
   );

@@ -8,11 +8,15 @@ import {
   Popover,
   TextArea,
   TextInput,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
   Title,
   TitleSizes,
   Tooltip
 } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFSpacer } from 'styles/PfSpacer';
@@ -157,9 +161,7 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
     onVisibleChange?.(visible);
   };
 
-  const valueAriaLabel = entryKey
-    ? t('Annotation value for {{key}}', { key: entryKey })
-    : t('Value');
+  const valueAriaLabel = entryKey ? t('Annotation value for {{key}}', { key: entryKey }) : t('Value');
 
   const title = entryKey || t('Value');
 
@@ -392,16 +394,17 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
     onSave(toRecord(controllerEntries), toRecord(templateEntries));
   };
 
-  const makeChangeHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (
-    index: number,
-    entry: Entry
-  ): void => {
-    setter(prev => prev.map((e, i) => (i === index ? entry : e)));
-  };
+  const makeChangeHandler =
+    (setter: React.Dispatch<React.SetStateAction<Entry[]>>) =>
+    (index: number, entry: Entry): void => {
+      setter(prev => prev.map((e, i) => (i === index ? entry : e)));
+    };
 
-  const makeRemoveHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (index: number): void => {
-    setter(prev => prev.filter((_, i) => i !== index));
-  };
+  const makeRemoveHandler =
+    (setter: React.Dispatch<React.SetStateAction<Entry[]>>) =>
+    (index: number): void => {
+      setter(prev => prev.filter((_, i) => i !== index));
+    };
 
   const makeAddHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (): void => {
     setter(prev => [...prev, ['', '']]);
@@ -437,44 +440,46 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
       variant={ModalVariant.large}
       isOpen={isOpen}
       onClose={handleClose}
-      header={header}
       aria-labelledby="workload-annotations-wizard-title"
-      footer={footer}
     >
-      <div className={isEditingValue ? disabledEditorStyle : undefined}>
-        <AnnotationSection
-          canEdit={canEdit}
-          entries={controllerEntries}
-          isDisabled={isEditingValue}
-          onAdd={makeAddHandler(setControllerEntries)}
-          onChange={makeChangeHandler(setControllerEntries)}
-          onRemove={makeRemoveHandler(setControllerEntries)}
-          onValueEditVisibleChange={setIsEditingValue}
-          sectionId="controller"
-          title={t('Controller Annotations')}
-        />
-        <AnnotationSection
-          canEdit={canEdit}
-          entries={templateEntries}
-          isDisabled={isEditingValue}
-          onAdd={makeAddHandler(setTemplateEntries)}
-          onChange={makeChangeHandler(setTemplateEntries)}
-          onRemove={makeRemoveHandler(setTemplateEntries)}
-          onValueEditVisibleChange={setIsEditingValue}
-          sectionId="template"
-          title={t('Pod Template Annotations')}
-        />
+      <ModalHeader>{header}</ModalHeader>
+      <ModalBody>
+        <div className={isEditingValue ? disabledEditorStyle : undefined}>
+          <AnnotationSection
+            canEdit={canEdit}
+            entries={controllerEntries}
+            isDisabled={isEditingValue}
+            onAdd={makeAddHandler(setControllerEntries)}
+            onChange={makeChangeHandler(setControllerEntries)}
+            onRemove={makeRemoveHandler(setControllerEntries)}
+            onValueEditVisibleChange={setIsEditingValue}
+            sectionId="controller"
+            title={t('Controller Annotations')}
+          />
+          <AnnotationSection
+            canEdit={canEdit}
+            entries={templateEntries}
+            isDisabled={isEditingValue}
+            onAdd={makeAddHandler(setTemplateEntries)}
+            onChange={makeChangeHandler(setTemplateEntries)}
+            onRemove={makeRemoveHandler(setTemplateEntries)}
+            onValueEditVisibleChange={setIsEditingValue}
+            sectionId="template"
+            title={t('Pod Template Annotations')}
+          />
 
-        {validation.length > 0 && (
-          <Alert variant="danger" className={alertStyle} isInline isExpandable title={t('An error occurred')}>
-            <List isPlain>
-              {validation.map((message, i) => (
-                <ListItem key={`validation_${i}`}>{message}</ListItem>
-              ))}
-            </List>
-          </Alert>
-        )}
-      </div>
+          {validation.length > 0 && (
+            <Alert variant="danger" className={alertStyle} isInline isExpandable title={t('An error occurred')}>
+              <List isPlain>
+                {validation.map((message, i) => (
+                  <ListItem key={`validation_${i}`}>{message}</ListItem>
+                ))}
+              </List>
+            </Alert>
+          )}
+        </div>
+      </ModalBody>
+      <ModalFooter>{footer}</ModalFooter>
     </Modal>
   );
 };

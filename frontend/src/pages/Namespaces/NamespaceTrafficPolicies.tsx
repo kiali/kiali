@@ -1,12 +1,20 @@
 import * as React from 'react';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { ControlPlane } from '../../types/Mesh';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import {
+  Button,
+  ButtonVariant,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant
+} from '@patternfly/react-core';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { ControlPlane } from '../../types/Mesh';
+import type { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds } from 'types/Common';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { DurationInSeconds } from 'types/Common';
+import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
 import * as API from 'services/Api';
@@ -325,8 +333,8 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       this.props.kind === 'canary'
         ? 'Switch'
         : this.props.opTarget.length > 0
-        ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
-        : '';
+          ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
+          : '';
 
     const colorAction = ['enable', 'disable', 'create'].includes(this.props.opTarget)
       ? ButtonVariant.primary
@@ -336,10 +344,10 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       this.props.kind === 'policy'
         ? ' Traffic Policies'
         : this.props.kind === 'injection'
-        ? ' Auto Injection'
-        : this.props.kind === 'ambient'
-        ? ' Ambient'
-        : ` to ${canaryVersion}`
+          ? ' Auto Injection'
+          : this.props.kind === 'ambient'
+            ? ' Ambient'
+            : ` to ${canaryVersion}`
     }?`;
 
     return (
@@ -363,12 +371,31 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
           />
         )}
 
-        <Modal
-          variant={ModalVariant.small}
-          title={title}
-          isOpen={this.state.confirmationModal}
-          onClose={this.onHideConfirmModal}
-          actions={[
+        <Modal variant={ModalVariant.small} isOpen={this.state.confirmationModal} onClose={this.onHideConfirmModal}>
+          <ModalHeader title={title} />
+          <ModalBody>
+            {this.props.kind === 'injection' ? (
+              <>
+                You're going to {this.props.opTarget} Auto Injection in the namespace {this.props.nsTarget}. Are you
+                sure?
+              </>
+            ) : this.props.kind === 'canary' ? (
+              <>
+                You're going to switch to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}.
+                Are you sure?
+              </>
+            ) : this.props.kind === 'ambient' ? (
+              <>
+                You're going to {this.props.opTarget} Ambient in the namespace {this.props.nsTarget}. Are you sure?
+              </>
+            ) : (
+              <>
+                Namespace {this.props.nsTarget} {this.props.opTarget === 'create' ? 'has not ' : 'has'} existing traffic
+                policies objects. Do you want to {this.props.opTarget} them ?
+              </>
+            )}
+          </ModalBody>
+          <ModalFooter>
             <Button
               data-test="confirm-create"
               key="confirm"
@@ -377,32 +404,12 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
               onClick={this.onConfirm}
             >
               {modalAction}
-            </Button>,
+            </Button>
 
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.onHideConfirmModal}>
               Cancel
             </Button>
-          ]}
-        >
-          {this.props.kind === 'injection' ? (
-            <>
-              You're going to {this.props.opTarget} Auto Injection in the namespace {this.props.nsTarget}. Are you sure?
-            </>
-          ) : this.props.kind === 'canary' ? (
-            <>
-              You're going to switch to {this.state.selectedRevision} revision in the namespace {this.props.nsTarget}.
-              Are you sure?
-            </>
-          ) : this.props.kind === 'ambient' ? (
-            <>
-              You're going to {this.props.opTarget} Ambient in the namespace {this.props.nsTarget}. Are you sure?
-            </>
-          ) : (
-            <>
-              Namespace {this.props.nsTarget} {this.props.opTarget === 'create' ? 'has not ' : 'has'} existing traffic
-              policies objects. Do you want to {this.props.opTarget} them ?
-            </>
-          )}
+          </ModalFooter>
         </Modal>
       </>
     );

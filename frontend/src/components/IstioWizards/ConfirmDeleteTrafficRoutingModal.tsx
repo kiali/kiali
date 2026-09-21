@@ -1,7 +1,14 @@
 import * as React from 'react';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
+import {
+  Button,
+  ButtonVariant,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant
+} from '@patternfly/react-core';
+import type { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
@@ -23,38 +30,37 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
     const deleteMessage = t('Are you sure you want to delete ?');
     const deleteItems: JSX.Element[] = [];
 
-    let i = 0;
-    let vsMessage =
+    const vsMessage =
       props.virtualServices.length > 0
         ? `VirtualService${props.virtualServices.length > 1 ? 's' : ''}: '${props.virtualServices.map(
             vs => vs.metadata.name
           )}'`
         : '';
-    deleteItems.push(<div key={`delete_item_${++i}`}>{vsMessage}</div>);
+    deleteItems.push(<div key="delete_item_vs">{vsMessage}</div>);
 
-    let drMessage =
+    const drMessage =
       props.destinationRules.length > 0
         ? `DestinationRule${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
             dr => dr.metadata.name
           )}'`
         : '';
-    deleteItems.push(<div key={`delete_item_${++i}`}>{drMessage}</div>);
+    deleteItems.push(<div key="delete_item_dr">{drMessage}</div>);
 
-    let paMessage =
+    const paMessage =
       props.destinationRules.length > 0 && hasAnyPeerAuthn(props.destinationRules)
         ? `PeerAuthentication${props.destinationRules.length > 1 ? 's' : ''}: '${props.destinationRules.map(
             dr => dr.metadata.name
           )}'`
         : '';
-    deleteItems.push(<div key={`delete_item_${++i}`}>{paMessage}</div>);
+    deleteItems.push(<div key="delete_item_pa">{paMessage}</div>);
 
-    let k8sHTTPRouteMessage =
+    const k8sHTTPRouteMessage =
       props.k8sHTTPRoutes.length > 0
         ? `K8s HTTPRoute${props.k8sHTTPRoutes.length > 1 ? 's' : ''}: '${props.k8sHTTPRoutes.map(
             k8sr => k8sr.metadata.name
           )}'`
         : '';
-    deleteItems.push(<div key={`delete_item_${++i}`}>{k8sHTTPRouteMessage}</div>);
+    deleteItems.push(<div key="delete_item_k8s_http_route">{k8sHTTPRouteMessage}</div>);
 
     const k8sGRPCRouteMessage =
       props.k8sGRPCRoutes.length > 0
@@ -62,7 +68,7 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
             k8sr => k8sr.metadata.name
           )}'`
         : '';
-    deleteItems.push(<div key={`delete_item_${++i}`}>{k8sGRPCRouteMessage}</div>);
+    deleteItems.push(<div key="delete_item_k8s_grpc_route">{k8sGRPCRouteMessage}</div>);
 
     return (
       <>
@@ -77,20 +83,20 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
   return (
     <Modal
       variant={ModalVariant.small}
-      title={t('Confirm Delete Traffic Routing ?')}
       isOpen={props.isOpen}
       onClose={props.onCancel}
       data-test="delete-traffic-routing-modal"
-      actions={[
+    >
+      <ModalHeader title={t('Confirm Delete Traffic Routing ?')} />
+      <ModalBody>{getDeleteMessage()}</ModalBody>
+      <ModalFooter>
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
           {t('Delete')}
-        </Button>,
+        </Button>
         <Button key="cancel" variant={ButtonVariant.secondary} isInline onClick={props.onCancel}>
           {t('Cancel')}
         </Button>
-      ]}
-    >
-      {getDeleteMessage()}
+      </ModalFooter>
     </Modal>
   );
 };

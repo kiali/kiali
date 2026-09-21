@@ -1,17 +1,20 @@
 import * as React from 'react';
+import type { TabProps } from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
   Tab,
-  TabProps,
   Tabs,
   Toolbar,
   ToolbarGroup,
   ToolbarItem,
-  Tooltip
+  Tooltip,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader
 } from '@patternfly/react-core';
-import { Modal } from '@patternfly/react-core/deprecated';
-import {
+import type {
   AuthorizationPolicy,
   DestinationRule,
   Gateway,
@@ -207,90 +210,94 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     return (
       <Modal
         width={'75%'}
-        title={this.props.title}
         isOpen={this.state.modalOpen}
         onClose={this.props.onClose}
         onKeyDown={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
-        actions={
-          this.props.actions
-            ? this.props.actions
-            : this.props.readOnly
-            ? [
-                <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
-                  {t('Close')}
-                </Button>
-              ]
-            : [
-                <Button
-                  key={this.props.opTarget}
-                  variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
-                  isDisabled={this.props.disableAction}
-                  onClick={this.onConfirm}
-                  data-test={this.props.opTarget}
-                >
-                  {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
-                </Button>,
-                <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
-                  {t('Cancel')}
-                </Button>
-              ]
-        }
       >
-        <Toolbar>
-          <ToolbarGroup
-            className={kialiStyle({
-              marginLeft: 'auto'
-            })}
-          >
-            <ToolbarItem>
-              <Tooltip
-                content={<>{this.state.copied ? t('Copied') : t('Copy all resources')}</>}
-                onTooltipHidden={() => this.setState({ copied: false })}
-              >
-                <CopyToClipboard text={this.getPreviewYaml()}>
+        <ModalHeader title={this.props.title} />
+        <ModalBody>
+          <Toolbar>
+            <ToolbarGroup
+              className={kialiStyle({
+                marginLeft: 'auto'
+              })}
+            >
+              <ToolbarItem>
+                <Tooltip
+                  content={<>{this.state.copied ? t('Copied') : t('Copy all resources')}</>}
+                  onTooltipHidden={() => this.setState({ copied: false })}
+                >
+                  <CopyToClipboard text={this.getPreviewYaml()}>
+                    <Button
+                      variant={ButtonVariant.link}
+                      aria-label={t('Copy')}
+                      isInline
+                      onClick={() => this.setState({ copied: true })}
+                    >
+                      <KialiIcon.Copy />
+                      <span className={iconStyle}>{t('Copy')}</span>
+                    </Button>
+                  </CopyToClipboard>
+                </Tooltip>
+              </ToolbarItem>
+              <ToolbarItem>
+                <Tooltip content={<>{t('Download all resources in a file')}</>}>
                   <Button
                     variant={ButtonVariant.link}
-                    aria-label={t('Copy')}
                     isInline
-                    onClick={() => this.setState({ copied: true })}
+                    aria-label={t('Download')}
+                    className={downloadButtonStyle}
+                    onClick={() =>
+                      download(this.getPreviewYaml(), `${this.props.downloadPrefix}_${this.props.ns}.yaml`)
+                    }
                   >
-                    <KialiIcon.Copy />
-                    <span className={iconStyle}>{t('Copy')}</span>
+                    <KialiIcon.Download />
+                    <span className={iconStyle}>{t('Download')}</span>
                   </Button>
-                </CopyToClipboard>
-              </Tooltip>
-            </ToolbarItem>
-            <ToolbarItem>
-              <Tooltip content={<>{t('Download all resources in a file')}</>}>
-                <Button
-                  variant={ButtonVariant.link}
-                  isInline
-                  aria-label={t('Download')}
-                  className={downloadButtonStyle}
-                  onClick={() => download(this.getPreviewYaml(), `${this.props.downloadPrefix}_${this.props.ns}.yaml`)}
-                >
-                  <KialiIcon.Download />
-                  <span className={iconStyle}>{t('Download')}</span>
-                </Button>
-              </Tooltip>
-            </ToolbarItem>
-          </ToolbarGroup>
-        </Toolbar>
+                </Tooltip>
+              </ToolbarItem>
+            </ToolbarGroup>
+          </Toolbar>
 
-        {this.state.items.length > 0 && (
-          <Tabs
-            activeKey={this.state.mainTab}
-            onSelect={(_, tab) => this.setState({ mainTab: String(tab) })}
-            isFilled={true}
-          >
-            {(this.state.newIstioPage ? this.groupItems() : this.state.items).map(item => this.addResource(item))}
-          </Tabs>
-        )}
-        {this.props.disableAction && !this.props.readOnly && (
-          <div className={kialiStyle({ color: PFColors.Danger })}>
-            {t('No user permission or Kiali in view-only mode')}
-          </div>
-        )}
+          {this.state.items.length > 0 && (
+            <Tabs
+              activeKey={this.state.mainTab}
+              onSelect={(_, tab) => this.setState({ mainTab: String(tab) })}
+              isFilled={true}
+            >
+              {(this.state.newIstioPage ? this.groupItems() : this.state.items).map(item => this.addResource(item))}
+            </Tabs>
+          )}
+          {this.props.disableAction && !this.props.readOnly && (
+            <div className={kialiStyle({ color: PFColors.Danger })}>
+              {t('No user permission or Kiali in view-only mode')}
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          {this.props.actions
+            ? this.props.actions
+            : this.props.readOnly
+              ? [
+                  <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
+                    {t('Close')}
+                  </Button>
+                ]
+              : [
+                  <Button
+                    key={this.props.opTarget}
+                    variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
+                    isDisabled={this.props.disableAction}
+                    onClick={this.onConfirm}
+                    data-test={this.props.opTarget}
+                  >
+                    {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
+                  </Button>,
+                  <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
+                    {t('Cancel')}
+                  </Button>
+                ]}
+        </ModalFooter>
       </Modal>
     );
   }

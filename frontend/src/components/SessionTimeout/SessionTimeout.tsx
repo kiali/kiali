@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Modal } from '@patternfly/react-core/deprecated';
-import { AuthStrategy } from '../../types/Auth';
-import { LoginSession } from '../../store/Store';
+import { Button, ButtonVariant, Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core';
+import type { AuthStrategy } from '../../types/Auth';
+import type { LoginSession } from '../../store/Store';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -42,7 +41,7 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   const defaultAction = props.onDismiss;
 
   const buttons = [
-    <Button variant={ButtonVariant.primary} onClick={props.onDismiss}>
+    <Button key="ok" variant={ButtonVariant.primary} onClick={props.onDismiss}>
       OK
     </Button>,
     <Button
@@ -56,21 +55,18 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   ];
 
   return (
-    <Modal
-      data-test="session-timeout-modal"
-      isOpen={props.show}
-      onClose={defaultAction}
-      actions={buttons}
-      title="Session Timeout"
-      width="40%"
-    >
-      <span>
-        <KialiIcon.Warning size="xl" color={PFColors.Warning} />
-      </span>
+    <Modal data-test="session-timeout-modal" isOpen={props.show} onClose={defaultAction} width="40%">
+      <ModalHeader title="Session Timeout" />
+      <ModalBody>
+        <span>
+          <KialiIcon.Warning size="xl" color={PFColors.Warning} />
+        </span>
 
-      <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
-        {textForAuthStrategy(authenticationConfig.strategy)}
-      </span>
+        <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
+          {textForAuthStrategy(authenticationConfig.strategy)}
+        </span>
+      </ModalBody>
+      <ModalFooter>{buttons}</ModalFooter>
     </Modal>
   );
 };

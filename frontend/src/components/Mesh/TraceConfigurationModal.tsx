@@ -1,14 +1,23 @@
 import * as React from 'react';
-import { TracingCheck, TracingInfo } from '../../types/TracingInfo';
-import { Button, Tab, TabAction } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import type { TracingCheck, TracingInfo } from '../../types/TracingInfo';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  Tab,
+  TabAction
+} from '@patternfly/react-core';
 import { useKialiTranslation } from '../../utils/I18nUtils';
-import { ExternalServiceInfo, TempoUrlFormat } from '../../types/StatusState';
+import type { ExternalServiceInfo } from '../../types/StatusState';
+import { TempoUrlFormat } from '../../types/StatusState';
 import { isParentKiosk } from '../Kiosk/KioskActions';
 import { isTempoService, TempoUrlProvider } from '../../utils/tracing/UrlProviders/Tempo';
 import { isJaegerService, JaegerUrlProvider } from '../../utils/tracing/UrlProviders/Jaeger';
-import { KialiAppState } from '../../store/Store';
-import { KialiDispatch } from '../../types/Redux';
+import type { KialiAppState } from '../../store/Store';
+import type { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { TracingActions } from '../../actions/TracingActions';
 import { connect } from 'react-redux';
@@ -165,26 +174,28 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
       isOpen={props.isOpen}
       onClose={props.onClose}
       data-test="modal-configuration-tester"
-      title={t('Configuration Tester')}
-      actions={[
+    >
+      <ModalHeader title={t('Configuration Tester')} />
+      <ModalBody>
+        <ParameterizedTabs
+          id="basic-tabs"
+          onSelect={tabValue => {
+            setCurrentTab(tabValue);
+          }}
+          tabMap={tabIndex}
+          defaultTab={defaultTab}
+          activeTab={currentTab}
+          mountOnEnter={false}
+          unmountOnExit={false}
+        >
+          {renderTabs()}
+        </ParameterizedTabs>
+      </ModalBody>
+      <ModalFooter>
         <Button key="close" onClick={props.onClose}>
           {t('Close')}
         </Button>
-      ]}
-    >
-      <ParameterizedTabs
-        id="basic-tabs"
-        onSelect={tabValue => {
-          setCurrentTab(tabValue);
-        }}
-        tabMap={tabIndex}
-        defaultTab={defaultTab}
-        activeTab={currentTab}
-        mountOnEnter={false}
-        unmountOnExit={false}
-      >
-        {renderTabs()}
-      </ParameterizedTabs>
+      </ModalFooter>
     </Modal>
   );
 };
