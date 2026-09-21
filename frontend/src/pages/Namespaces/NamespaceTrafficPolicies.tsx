@@ -407,7 +407,7 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
             </Button>
 
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.onHideConfirmModal}>
-              Cancel
+              {t('Cancel')}
             </Button>
           </ModalFooter>
         </Modal>

@@ -939,8 +939,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
           <ModalHeader title={titleAction} />
           <ModalBody>
             <>
-              You're going to {this.props.update ? 'update' : 'create'} istio objects in Namespace{' '}
-              {this.props.namespace}. Are you sure?
+              {this.props.update
+                ? t("You're going to update istio objects in Namespace {{namespace}}. Are you sure?", {
+                    namespace: this.props.namespace
+                  })
+                : t("You're going to create istio objects in Namespace {{namespace}}. Are you sure?", {
+                    namespace: this.props.namespace
+                  })}
             </>
           </ModalBody>
           <ModalFooter>

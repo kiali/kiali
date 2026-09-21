@@ -52,11 +52,11 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
     props.onDelete();
   };
 
-  const objectName = props.objectKind ?? 'Istio object';
+  const objectKind = props.objectKind ?? t('Istio object');
 
   const deleteAction = (
     <DropdownItem key="delete" onClick={onClickDelete} isDisabled={!props.canDelete}>
-      Delete
+      {t('Delete')}
     </DropdownItem>
   );
 
@@ -80,7 +80,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
             onClick={() => onToggle(!dropdownOpen)}
             isExpanded={dropdownOpen}
           >
-            Actions
+            {t('Actions')}
           </MenuToggle>
         )}
         isOpen={dropdownOpen}
@@ -92,19 +92,21 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       </Dropdown>
 
       <Modal variant={ModalVariant.small} isOpen={showConfirmModal} onClose={hideConfirmModal}>
-        <ModalHeader title="Confirm Delete" />
+        <ModalHeader title={t('Confirm Delete')} />
         <ModalBody>
           <Content component={ContentVariants.p}>
-            Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this
-            is something you really want to do!
+            {t(
+              "Are you sure you want to delete the {{objectKind}} '{{objectName}}'? It cannot be undone. Make sure this is something you really want to do!",
+              { objectKind, objectName: props.objectName }
+            )}
           </Content>
         </ModalBody>
         <ModalFooter>
           <Button key="confirm" data-test="confirm-delete" variant={ButtonVariant.danger} onClick={onDelete}>
-            Delete
+            {t('Delete')}
           </Button>
           <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>
-            Cancel
+            {t('Cancel')}
           </Button>
         </ModalFooter>
       </Modal>

@@ -5,6 +5,7 @@ import type { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { t } from 'utils/I18nUtils';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -841,10 +842,10 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
       <ModalHeader
         title={
           props.isZtunnel
-            ? 'ztunnel Access Log Entry'
+            ? t('ztunnel Access Log Entry')
             : props.isWaypoint
-              ? 'Waypoint Access log Entry'
-              : 'Envoy Access Log Entry'
+              ? t('Waypoint Access log Entry')
+              : t('Envoy Access Log Entry')
         }
       />
       <ModalBody>

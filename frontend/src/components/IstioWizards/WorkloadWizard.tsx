@@ -55,7 +55,7 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
         >
           <ModalHeader title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''} />
           <ModalBody>
-            <>Workload Wizard Skeleton</>
+            <>{t('Workload Wizard Skeleton')}</>
           </ModalBody>
           <ModalFooter>
             <Button

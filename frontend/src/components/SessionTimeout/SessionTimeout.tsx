@@ -6,6 +6,7 @@ import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type SessionTimeoutProps = {
   onDismiss: () => void;
@@ -36,10 +37,10 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   const textForAuthStrategy = (_strategy: AuthStrategy): React.ReactNode => {
     const line1 =
       props.timeOutCountDown <= 0
-        ? 'Your session has expired.'
-        : `Your session will expire in ${props.timeOutCountDown.toFixed()} seconds.`;
+        ? t('Your session has expired.')
+        : t('Your session will expire in {{seconds}} seconds.', { seconds: props.timeOutCountDown.toFixed() });
 
-    const line2 = 'You will need to re-login. Please save your changes, if any.';
+    const line2 = t('You will need to re-login. Please save your changes, if any.');
 
     return (
       <>
@@ -53,7 +54,7 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
 
   const buttons = [
     <Button key="ok" variant={ButtonVariant.primary} onClick={props.onDismiss}>
-      OK
+      {t('OK')}
     </Button>,
     <Button
       data-test="session-timeout-logout-btn"
@@ -61,13 +62,13 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
       variant={ButtonVariant.secondary}
       onClick={props.onLogout}
     >
-      Log Out
+      {t('Log Out')}
     </Button>
   ];
 
   return (
     <Modal data-test="session-timeout-modal" isOpen={props.show} onClose={defaultAction} width="40%">
-      <ModalHeader title="Session Timeout" />
+      <ModalHeader title={t('Session Timeout')} />
       <ModalBody className={sessionTimeoutContentStyle}>
         <span className={sessionTimeoutIconStyle}>
           <KialiIcon.Warning size="xl" color={PFColors.Warning} />
