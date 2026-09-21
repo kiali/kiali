@@ -41,6 +41,18 @@ describe('Language switch', () => {
     });
   });
 
+  it('changes to french language', async () => {
+    const user = userEvent.setup();
+    render(<LanguageSwitchComponent language={Language.ENGLISH} />);
+
+    await user.click(screen.getByRole('button', { name: /switch language/i }));
+    await user.click(await screen.findByText('Français'));
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.FRENCH);
+    });
+  });
+
   it('changes to chinese language', async () => {
     const user = userEvent.setup();
     render(<LanguageSwitchComponent language={Language.ENGLISH} />);

@@ -18,6 +18,8 @@ const getLanguageLabel = (language: Language): string => {
       return 'English';
     case Language.SPANISH:
       return 'Español';
+    case Language.FRENCH:
+      return 'Français';
     case Language.CHINESE:
       return '中文';
     case Language.KOREAN:
@@ -67,6 +69,9 @@ export const LanguageSwitchComponent: React.FC<LanguageSwitchProps> = ({ languag
         </SelectOption>
         <SelectOption value={Language.SPANISH} isSelected={language === Language.SPANISH}>
           {getLanguageLabel(Language.SPANISH)}
+        </SelectOption>
+        <SelectOption value={Language.FRENCH} isSelected={language === Language.FRENCH}>
+          {getLanguageLabel(Language.FRENCH)}
         </SelectOption>
         <SelectOption value={Language.CHINESE} isSelected={language === Language.CHINESE}>
           {getLanguageLabel(Language.CHINESE)}

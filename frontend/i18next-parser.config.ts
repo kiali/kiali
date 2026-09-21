@@ -34,7 +34,7 @@ const i18nextParserConfig = {
     default: ['JavascriptLexer']
   },
 
-  locales: ['en', 'es', 'ko', 'zh'],
+  locales: ['en', 'es', 'fr', 'ko', 'zh'],
   // An array of the locales in your applications
 
   namespaceSeparator: '~',
