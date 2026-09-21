@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { kialiUrl } from '../utils/kialiUrl';
 import { waitForLoadingComplete } from '../utils/transition';
 import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
@@ -69,7 +70,7 @@ export class GraphPage extends BasePage {
       await route.fulfill({ response, json: body });
     });
 
-    await this.page.goto('/console/graph/namespaces?refresh=0');
+    await this.page.goto(kialiUrl('/console/graph/namespaces?refresh=0'));
     await waitForLoadingComplete(this.page);
   }
 
@@ -89,7 +90,7 @@ export class GraphPage extends BasePage {
           )
         : null;
 
-    await this.page.goto(`/console/graph/namespaces?${params.toString()}`);
+    await this.page.goto(kialiUrl(`/console/graph/namespaces?${params.toString()}`));
     if (graphResponse) {
       await graphResponse;
     }

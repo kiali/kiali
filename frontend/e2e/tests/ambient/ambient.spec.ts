@@ -29,7 +29,7 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
-    // Match Cypress @ambient: at least 6 edges with traffic when HTTP is disabled.
+    // At least 6 edges with traffic when HTTP is disabled.
     await graphPage.expectTrafficEdgesAtLeast(6);
     await graphPage.expectTrafficProtocol('http', false);
     await graphPage.expectSummaryPanelTrafficRate('TCP');
@@ -42,7 +42,7 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('tcp', false);
     await graphPage.closeTrafficMenu();
-    // Match Cypress @ambient: at least 2 edges with traffic when TCP is disabled.
+    // At least 2 edges with traffic when TCP is disabled.
     await graphPage.expectTrafficEdgesAtLeast(2);
     await graphPage.expectTrafficProtocol('tcp', false);
     await graphPage.expectSummaryPanelTrafficRate('HTTP');
@@ -50,7 +50,7 @@ test.describe('Ambient mesh', () => {
 
   test('Filter services table by health', ambientOnly, async ({ request, servicesPage }) => {
     test.setTimeout(240_000);
-    // Match Cypress @ambient: wait until productpage reports Healthy, then filter Healthy.
+    // Wait until productpage reports Healthy, then filter Healthy.
     await waitForServiceHealthStatus(request, 'bookinfo', 'productpage', 'Healthy', 180_000);
     await servicesPage.openListWithNamespace('bookinfo');
     await servicesPage.filterBy('Health', 'Healthy');
