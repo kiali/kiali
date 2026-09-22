@@ -26,3 +26,12 @@ export const crdValidationOnly = { tag: '@crd-validation' as const };
 
 /** @perses — frontend-core-optional Playwright / Cypress suite */
 export const persesOnly = { tag: '@perses' as const };
+
+/** @ambient — frontend-ambient Playwright / Cypress suite */
+export const ambientOnly = { tag: '@ambient' as const };
+
+/** @waypoint — frontend-ambient Playwright / Cypress suite */
+export const waypointOnly = { tag: '@waypoint' as const };
+
+/** @waypoint-tracing — frontend-ambient Playwright / Cypress suite */
+export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };

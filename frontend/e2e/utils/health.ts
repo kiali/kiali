@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 
 type HealthResponse = {
   health?: {
@@ -20,7 +21,7 @@ const waitForResourceHealthStatus = async (
 
   while (Date.now() < deadline) {
     try {
-      const response = await request.get(resourcePath);
+      const response = await request.get(kialiUrl(resourcePath));
       lastHttpStatus = response.status();
       if (response.ok()) {
         const body = (await response.json()) as HealthResponse;

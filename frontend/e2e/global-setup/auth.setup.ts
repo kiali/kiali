@@ -2,6 +2,7 @@ import { test as setup, expect } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 import { AUTH_FILE } from '../utils/auth';
+import { kialiUrl } from '../utils/kialiUrl';
 import { loginOpenShift, playwrightCredentials } from '../utils/openshift-auth';
 
 type AuthInfo = {
@@ -18,14 +19,14 @@ type AuthInfo = {
 setup('authenticate', async ({ page, request }) => {
   fs.mkdirSync(path.dirname(AUTH_FILE), { recursive: true });
 
-  const authResponse = await request.get('/api/auth/info');
+  const authResponse = await request.get(kialiUrl('/api/auth/info'));
   expect(authResponse.ok()).toBeTruthy();
   const authInfo = (await authResponse.json()) as AuthInfo;
   const strategy = authInfo.strategy ?? 'anonymous';
 
   if (strategy === 'anonymous') {
-    await page.goto('/console/overview?refresh=0');
-    const status = await request.get('/api/status');
+    await page.goto(kialiUrl('/console/overview?refresh=0'));
+    const status = await request.get(kialiUrl('/api/status'));
     expect(status.ok()).toBeTruthy();
   } else if (strategy === 'openshift') {
     const { username, password, authProvider } = playwrightCredentials();
