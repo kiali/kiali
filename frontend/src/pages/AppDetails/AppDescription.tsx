@@ -10,6 +10,7 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
 import { getAppLabelName } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 type AppDescriptionProps = {
   app?: App;
@@ -61,7 +62,7 @@ export const AppDescription: React.FC<AppDescriptionProps> = (props: AppDescript
           <Alert
             variant="info"
             isInline={true}
-            title="Limited info is supplied due to the referenced workload type"
+            title={t('Limited info is supplied due to the referenced workload type')}
             style={{ marginTop: '0.25rem' }}
           />
         )}

@@ -199,7 +199,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
       </div>
 
       <SimpleTable
-        label="Rules Created"
+        label={t('Rules Created')}
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}

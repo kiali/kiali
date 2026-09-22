@@ -24,6 +24,7 @@ import { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
@@ -139,7 +140,7 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           <span>Trace</span>
 
           <span className={closeBoxStyle}>
-            <Tooltip content="Close and clear trace selection">
+            <Tooltip content={t('Close and clear trace selection')}>
               <Button
                 icon={<KialiIcon.Close />}
                 id="close-trace"

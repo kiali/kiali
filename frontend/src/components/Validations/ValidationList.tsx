@@ -5,6 +5,7 @@ import { ValidationTypes } from '../../types/IstioObjects';
 import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 type ValidationListProps = {
   checks?: ObjectCheck[];
@@ -39,7 +40,7 @@ export const ValidationList: React.FC<ValidationListProps> = (props: ValidationL
 
   const tooltip = (
     <Tooltip
-      aria-label="Validations list"
+      aria-label={t('Validations list')}
       position={props.tooltipPosition ?? TooltipPosition.left}
       enableFlip={true}
       content={isValid ? 'Valid' : content}

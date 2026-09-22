@@ -44,6 +44,7 @@ import { MeshHelpFind } from '../MeshHelpFind';
 import { layoutMesh } from '../Mesh';
 import { MeshLayoutType, MeshLayout } from '../layouts/LayoutFactory';
 import { TimeInMilliseconds } from 'types/Common';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   findValue: string;
@@ -248,7 +249,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                   onChange={(_event, val) => this.updateFind(val)}
                   defaultValue={this.state.findInputValue}
                   onKeyDownCapture={this.checkSpecialKeyFind}
-                  placeholder="Find..."
+                  placeholder={t('Find...')}
                 />
                 {this.state.findError && (
                   <FormHelperText>
@@ -264,7 +265,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               <FormGroup className={meshFindStyle}>
                 <MeshFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
-                  <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
+                  <Tooltip key="ot_clear_find" position="top" content={t('Clear Find...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}
@@ -291,7 +292,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
                   onChange={(_event, val) => this.updateHide(val)}
                   defaultValue={this.state.hideInputValue}
                   onKeyDownCapture={this.checkSpecialKeyHide}
-                  placeholder="Hide..."
+                  placeholder={t('Hide...')}
                 />
                 {this.state.hideError && (
                   <FormHelperText>
@@ -307,7 +308,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
               <FormGroup className={meshHideStyle}>
                 <MeshFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
-                  <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                  <Tooltip key="ot_clear_hide" position="top" content={t('Clear Hide...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}

@@ -12,6 +12,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SortableTh } from 'components/Table/SimpleTable';
 import { dicTypeToGVK, gvkType } from '../../../types/IstioConfigList';
+import { t } from 'utils/I18nUtils';
 
 export class RouteTable implements SummaryTable {
   namespace: string;
@@ -62,7 +63,7 @@ export class RouteTable implements SummaryTable {
     return [
       {
         id: 'name',
-        title: 'Name',
+        title: t('Name'),
         isNumeric: false,
         param: 'name',
         compare: (a, b) => {
@@ -71,7 +72,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'domains',
-        title: 'Domains',
+        title: t('Domains'),
         isNumeric: false,
         param: 'doms',
         compare: (a, b) => {
@@ -82,7 +83,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'match',
-        title: 'Match',
+        title: t('Match'),
         isNumeric: false,
         param: 'match',
         compare: (a, b) => {
@@ -91,7 +92,7 @@ export class RouteTable implements SummaryTable {
       },
       {
         id: 'vs',
-        title: 'Virtual Service',
+        title: t('Virtual Service'),
         isNumeric: false,
         param: 'vs',
         compare: (a, b) => {
@@ -104,11 +105,11 @@ export class RouteTable implements SummaryTable {
   head(): SortableTh[] {
     return [
       {
-        title: 'Name',
+        title: t('Name'),
         sortable: true
       },
       {
-        title: 'Domains',
+        title: t('Domains'),
         sortable: true,
         info: {
           tooltip: (
@@ -119,7 +120,7 @@ export class RouteTable implements SummaryTable {
         }
       },
       {
-        title: 'Match',
+        title: t('Match'),
         sortable: true,
         info: {
           tooltip: (
@@ -130,7 +131,7 @@ export class RouteTable implements SummaryTable {
         }
       },
       {
-        title: 'Virtual Service',
+        title: t('Virtual Service'),
         sortable: true
       }
     ];

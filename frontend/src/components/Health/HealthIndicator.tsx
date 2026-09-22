@@ -4,6 +4,7 @@ import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon, createTooltipIcon } from '../../config/KialiIcon';
 import { healthIndicatorStyle } from '../../styles/HealthStyle';
+import { t } from 'utils/I18nUtils';
 
 interface HealthIndicatorProps {
   health?: H.Health;
@@ -19,7 +20,7 @@ export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthInd
 
     return (
       <Tooltip
-        aria-label="Health indicator"
+        aria-label={t('Health indicator')}
         content={
           <div>
             <strong>{globalStatus.name}</strong>

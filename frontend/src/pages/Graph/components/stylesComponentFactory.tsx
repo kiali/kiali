@@ -34,6 +34,7 @@ import { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
+import { t } from 'utils/I18nUtils';
 
 const graphNavHandler = (node: GraphElement, kiosk: string): void => {
   handleGraphNav(node, kiosk);
@@ -98,7 +99,7 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
   });
 
   if (menuOptions.length > 0) {
-    items.push(<DropdownGroup key={`group_show`} label={'Show'} children={menuOptions} />);
+    items.push(<DropdownGroup key={`group_show`} label={t('Show')} children={menuOptions} />);
   }
 
   if (nodeData.nodeType !== NodeType.SERVICE) {

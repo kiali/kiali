@@ -144,7 +144,7 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
   };
 
   return (
-    <Nav aria-label="Nav">
+    <Nav aria-label={t('Nav')}>
       <NavList className={navListStyle}>{renderMenuItems()}</NavList>
     </Nav>
   );

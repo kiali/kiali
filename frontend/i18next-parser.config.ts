@@ -35,7 +35,8 @@ const i18nextParserConfig = {
   },
 
   locales: ['en', 'es', 'ko', 'zh'],
-  // An array of the locales in your applications
+  // Locales whose catalogs are written by i18next-parser.
+  // `en` is generated locally for reference and is gitignored; commit translated catalogs only.
 
   namespaceSeparator: '~',
   // Namespace separator used in your translation keys

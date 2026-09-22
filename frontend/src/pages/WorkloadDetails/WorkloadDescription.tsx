@@ -22,6 +22,7 @@ import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 import { getAppLabelName } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -224,7 +225,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           <Alert
             variant="info"
             isInline={true}
-            title="Kiali can only supply limited information for this workload type"
+            title={t('Kiali can only supply limited information for this workload type')}
             style={{ marginTop: '0.25rem' }}
           />
         )}

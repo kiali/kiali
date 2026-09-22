@@ -17,6 +17,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { DateTimePicker } from './DateTimePicker';
 import { mapValues } from 'lodash-es';
 import { HistoryManager, URLParam, location } from 'app/History';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
@@ -255,7 +256,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     return (
       <div className={replayStyle}>
         {this.state.isCustomStartTime && (
-          <Tooltip content="Replay start time">
+          <Tooltip content={t('Replay start time')}>
             <DateTimePicker
               maxDate={maxTime}
               minDate={minTime}
@@ -272,7 +273,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
           value={String(this.state.replayWindow.interval)}
           label={dropdownOptions[this.state.replayWindow.interval]}
           options={dropdownOptions}
-          tooltip="Replay length"
+          tooltip={t('Replay length')}
         />
 
         <Tooltip
@@ -310,7 +311,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
 
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (
-              <Tooltip key="replay-pause" position="top" content="Pause" entryDelay={1000}>
+              <Tooltip key="replay-pause" position="top" content={t('Pause')} entryDelay={1000}>
                 <Button
                   data-test="graph-replay-pause-button"
                   className={controlButtonStyle}

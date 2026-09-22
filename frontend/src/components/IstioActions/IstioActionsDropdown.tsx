@@ -88,7 +88,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       </Dropdown>
 
       <Modal
-        title="Confirm Delete"
+        title={t('Confirm Delete')}
         variant={ModalVariant.small}
         isOpen={showConfirmModal}
         onClose={hideConfirmModal}

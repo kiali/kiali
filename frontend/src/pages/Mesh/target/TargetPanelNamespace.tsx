@@ -309,19 +309,19 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             isGroup: true,
             isSeparator: false,
             isDisabled: false,
-            title: 'Show',
+            title: t('Show'),
             children: [
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Graph',
+                title: t('Graph'),
                 action: (ns: string) =>
                   kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Istio Config',
+                title: t('Istio Config'),
                 action: (ns: string) =>
                   kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
               }
@@ -333,36 +333,36 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
             isGroup: true,
             isSeparator: false,
             isDisabled: false,
-            title: 'Show',
+            title: t('Show'),
             children: [
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Graph',
+                title: t('Graph'),
                 action: (ns: string) => this.show(Show.GRAPH, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Applications',
+                title: t('Applications'),
                 action: (ns: string) => this.show(Show.APPLICATIONS, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Workloads',
+                title: t('Workloads'),
                 action: (ns: string) => this.show(Show.WORKLOADS, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Services',
+                title: t('Services'),
                 action: (ns: string) => this.show(Show.SERVICES, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Istio Config',
+                title: t('Istio Config'),
                 action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, healthType)
               }
             ]
@@ -396,7 +396,7 @@ export class TargetPanelNamespace extends React.Component<TargetPanelNamespacePr
     const labelContent = ns.labels ? (
       <div style={{ color: PFColors.Link, textAlign: 'left', cursor: 'pointer' }}>
         <Tooltip
-          aria-label="Labels list"
+          aria-label={t('Labels list')}
           position={TooltipPosition.right}
           enableFlip={true}
           distance={5}

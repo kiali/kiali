@@ -15,6 +15,7 @@ import { ProxyStatusList } from './ProxyStatusList';
 import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
 import { ValidationStack } from '../../components/Validations/ValidationStack';
 import { createIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type PodStatusProps = {
   checks?: ObjectCheck[];
@@ -48,7 +49,7 @@ export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
     );
 
     return (
-      <Tooltip aria-label="Pod Status" position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
+      <Tooltip aria-label={t('Pod Status')} position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
         <span data-test="proxy-status">{createIcon(severityIcon())}</span>
       </Tooltip>
     );

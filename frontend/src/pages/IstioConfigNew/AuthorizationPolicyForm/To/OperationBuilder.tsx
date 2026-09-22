@@ -142,7 +142,7 @@ export const OperationBuilder: React.FC<Props> = (props: Props) => {
                   {newOperationField}
                 </MenuToggle>
               )}
-              aria-label="Operation Field Select"
+              aria-label={t('Operation Field Select')}
             >
               <SelectList>
                 {operationFields.map((option, index) => (

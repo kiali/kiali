@@ -462,7 +462,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 {this.state.mtlsMode}
               </MenuToggle>
             )}
-            aria-label="TLS Mode Select"
+            aria-label={t('TLS Mode Select')}
           >
             <SelectList>
               {mTLSMode.map(mode => (
@@ -530,7 +530,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
           <span>{wizardTooltip(PEER_AUTHENTICATION_TOOLTIP)}</span>
         </FormGroup>
         {this.state.peerAuthnSelector.addPeerAuthentication && (
-          <FormGroup fieldId="advanced-pa-mode" label="Mode">
+          <FormGroup fieldId="advanced-pa-mode" label={t('Mode')}>
             <Select
               id="trafficPolicy-pa-mode"
               isOpen={this.state.isPaModeSelectOpen}
@@ -551,7 +551,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                   {this.state.peerAuthnSelector.mode}
                 </MenuToggle>
               )}
-              aria-label="PeerAuthentication Mode Select"
+              aria-label={t('PeerAuthentication Mode Select')}
             >
               <SelectList>
                 {Object.keys(PeerAuthenticationMutualTLSMode).map(mode => (
@@ -578,7 +578,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <Radio
                 id="selectLBTypeSimple"
                 name="selectLBType"
-                label="Simple"
+                label={t('Simple')}
                 isDisabled={!this.state.addLoadBalancer}
                 isChecked={this.state.simpleLB}
                 onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'true')}
@@ -586,14 +586,14 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               <Radio
                 id="selectLBTypeConsistentHash"
                 name="selectLBType"
-                label="Consistent Hash"
+                label={t('Consistent Hash')}
                 isDisabled={!this.state.addLoadBalancer}
                 isChecked={!this.state.simpleLB}
                 onChange={() => this.onFormChange(TrafficPolicyForm.LB_SELECT, 'false')}
               />
             </FormGroup>
             {this.state.simpleLB && (
-              <FormGroup fieldId="advanced-loadbalancer" label="LoadBalancer">
+              <FormGroup fieldId="advanced-loadbalancer" label={t('LoadBalancer')}>
                 <Select
                   id="trafficPolicy-lb"
                   isOpen={this.state.isLbSelectOpen}
@@ -614,7 +614,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                       {this.state.loadBalancer.simple}
                     </MenuToggle>
                   )}
-                  aria-label="LoadBalancer Type Select"
+                  aria-label={t('LoadBalancer Type Select')}
                 >
                   <SelectList>
                     {loadBalancerSimple.map(simple => (
@@ -631,7 +631,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="httpHeaderName"
                   name="selectConsistentHashType"
-                  label="HTTP Header Name"
+                  label={t('HTTP Header Name')}
                   isDisabled={!this.state.addLoadBalancer}
                   isChecked={this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME}
                   onChange={() =>
@@ -641,7 +641,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="httpCookie"
                   name="selectConsistentHashType"
-                  label="HTTP Cookie"
+                  label={t('HTTP Cookie')}
                   isDisabled={!this.state.addLoadBalancer}
                   checked={this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE}
                   onChange={() =>
@@ -651,7 +651,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                 <Radio
                   id="sourceIp"
                   name="selectConsistentHashType"
-                  label="Source IP"
+                  label={t('Source IP')}
                   isDisabled={!this.state.addLoadBalancer}
                   isChecked={this.state.consistentHashType === ConsistentHashType.USE_SOURCE_IP}
                   onChange={() =>
@@ -661,7 +661,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
               </FormGroup>
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_HEADER_NAME && (
-              <FormGroup label="HTTP Header Name" fieldId="httpHeaderName" disabled={!this.state.addLoadBalancer}>
+              <FormGroup label={t('HTTP Header Name')} fieldId="httpHeaderName" disabled={!this.state.addLoadBalancer}>
                 <TextInput
                   value={
                     this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpHeaderName
@@ -684,7 +684,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
-                <FormGroup label="HTTP Cookie Name" fieldId="httpCookieName" disabled={!this.state.addLoadBalancer}>
+                <FormGroup label={t('HTTP Cookie Name')} fieldId="httpCookieName" disabled={!this.state.addLoadBalancer}>
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie
@@ -697,7 +697,7 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
                     validated={isValid(isValidLB)}
                   />
                 </FormGroup>
-                <FormGroup label="HTTP Cookie TTL" fieldId="httpCookieTtl" disabled={!this.state.addLoadBalancer}>
+                <FormGroup label={t('HTTP Cookie TTL')} fieldId="httpCookieTtl" disabled={!this.state.addLoadBalancer}>
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie

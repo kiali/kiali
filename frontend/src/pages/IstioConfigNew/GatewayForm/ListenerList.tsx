@@ -15,6 +15,7 @@ import {
   SELECTOR
 } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type ListenerListProps = {
   listeners: Listener[];
@@ -34,27 +35,27 @@ const addListenerStyle = kialiStyle({
 
 const columns: ThProps[] = [
   {
-    title: 'Name',
+    title: t('Name'),
     width: 20
   },
   {
-    title: 'Hostname',
+    title: t('Hostname'),
     width: 20
   },
   {
-    title: 'Port',
+    title: t('Port'),
     width: 10
   },
   {
-    title: 'Protocol',
+    title: t('Protocol'),
     width: 10
   },
   {
-    title: 'From Namespaces',
+    title: t('From Namespaces'),
     width: 10
   },
   {
-    title: 'Labels',
+    title: t('Labels'),
     width: 25
   },
   {
@@ -188,7 +189,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
 
   return (
     <>
-      <Table aria-label="Listener List">
+      <Table aria-label={t('Listener List')}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
@@ -214,7 +215,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
           ) : (
             <Tr>
               <Td colSpan={columns.length}>
-                <div className={noListenerStyle}>No Listeners defined</div>
+                <div className={noListenerStyle}>{t('No Listeners defined')}</div>
               </Td>
             </Tr>
           )}
@@ -228,7 +229,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
         onClick={onAddListener}
         className={addListenerStyle}
       >
-        Add Listener to Listener List
+        {t('Add Listener to Listener List')}
       </Button>
     </>
   );

@@ -20,6 +20,7 @@ import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
+import { t } from 'utils/I18nUtils';
 
 type WorkloadEntriesProps = {
   entries: WorkloadGroupEntry[];
@@ -48,7 +49,7 @@ const iconStyle = kialiStyle({
 });
 
 export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadEntriesProps) => {
-  const columns: ThProps[] = [{ title: 'Name' }];
+  const columns: ThProps[] = [{ title: t('Name') }];
 
   const noEntries: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
@@ -114,7 +115,7 @@ export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadE
 
       <CardBody>
         <SimpleTable
-          label="Workload Entries List"
+          label={t('Workload Entries List')}
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

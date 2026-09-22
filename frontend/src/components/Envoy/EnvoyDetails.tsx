@@ -42,6 +42,7 @@ import { ColorScheme } from '../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
 import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
+import { t } from 'utils/I18nUtils';
 
 const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 
@@ -342,14 +343,14 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
                     <ToolbarDropdown
                       id="envoy_pods_list"
-                      tooltip="Display envoy config for the selected pod"
+                      tooltip={t('Display envoy config for the selected pod')}
                       handleSelect={key => this.setPod(key)}
                       value={this.state.pod.name}
                       label={this.state.pod.name}
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
-                    <Tooltip key="copy_config" position="top" content="Copy config dump to clipboard">
+                    <Tooltip key="copy_config" position="top" content={t('Copy config dump to clipboard')}>
                       <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
                         <Button variant={ButtonVariant.link} className={copyButtonStyle} isInline>
                           <KialiIcon.Copy />

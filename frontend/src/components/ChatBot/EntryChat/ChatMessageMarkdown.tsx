@@ -19,6 +19,7 @@ import { CheckIcon } from '@patternfly/react-icons/dist/esm/icons/check-icon';
 import { CopyIcon } from '@patternfly/react-icons/dist/esm/icons/copy-icon';
 import { ExternalLinkSquareAltIcon } from '@patternfly/react-icons';
 import { MessageProps } from '@patternfly/chatbot';
+import { t } from 'utils/I18nUtils';
 
 type ChatMessageMarkdownProps = {
   codeBlockProps?: MessageProps['codeBlockProps'];
@@ -101,7 +102,7 @@ const CodeBlockMessage: React.FC<
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>
-      <Tooltip id={tooltipIdRef.current} content="Copy" position="top" triggerRef={buttonRef} />
+      <Tooltip id={tooltipIdRef.current} content={t('Copy')} position="top" triggerRef={buttonRef} />
     </CodeBlockAction>
   );
 

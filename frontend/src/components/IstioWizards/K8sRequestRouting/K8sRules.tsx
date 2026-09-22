@@ -7,6 +7,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 export enum MOVE_TYPE {
   UP,
@@ -55,17 +56,17 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
   const actionResolver = (_rowData: IRowData, rowIndex: number): IAction[] => {
     const removeAction = {
-      title: 'Remove Rule',
+      title: t('Remove Rule'),
       onClick: () => props.onRemoveRule(rowIndex)
     };
 
     const moveUpAction = {
-      title: 'Move Up',
+      title: t('Move Up'),
       onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.UP)
     };
 
     const moveDownAction = {
-      title: 'Move Down',
+      title: t('Move Down'),
       onClick: () => props.onMoveRule(rowIndex, MOVE_TYPE.DOWN)
     };
 
@@ -88,17 +89,17 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
 
   const columns: ThProps[] = [
     {
-      title: 'Rule order',
+      title: t('Rule order'),
       width: 10
     },
     {
-      title: 'Request Matching'
+      title: t('Request Matching')
     },
     {
-      title: 'Route Filtering'
+      title: t('Route Filtering')
     },
     {
-      title: 'Route To'
+      title: t('Route To')
     }
   ];
 
@@ -107,7 +108,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
   const matchAll: number = matchAllIndex(props.k8sRules);
 
   const noK8sRules: React.ReactNode = (
-    <EmptyState headingLevel="h5" titleText="No K8s Route Rules defined" variant={EmptyStateVariant.full}>
+    <EmptyState headingLevel="h5" titleText={t('No K8s Route Rules defined')} variant={EmptyStateVariant.full}>
       <EmptyStateBody className={noRulesStyle}>A Request Routing scenario needs at least a Route Rule</EmptyStateBody>
     </EmptyState>
   );
@@ -124,15 +125,15 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
             : rule.matches.map((match, i) => <div key={`match_${i}`}>{match}</div>)}
           {!isValid && (
             <div className={validationStyle}>
-              Match 'Any request' is defined in a previous rule.
+              {t("Match 'Any request' is defined in a previous rule.")}
               <br />
-              This rule is not accessible.
+              {t('This rule is not accessible.')}
             </div>
           )}
         </>,
         <>
           {!rule.filters || rule.filters.length === 0
-            ? 'No Request Filter'
+            ? t('No Request Filter')
             : rule.filters.map((filter, i) => <div key={`filter_${i}`}>{filter}</div>)}
         </>,
         <div key={`br_${order}`}>
@@ -158,7 +159,7 @@ export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
       </div>
 
       <SimpleTable
-        label="K8sRules Created"
+        label={t('K8sRules Created')}
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}

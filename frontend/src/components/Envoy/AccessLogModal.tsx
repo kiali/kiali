@@ -6,6 +6,7 @@ import { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { t } from 'utils/I18nUtils';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -640,11 +641,11 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
               <Table className={tableStyle}>
                 <Thead>
                   <Tr className="row-odd">
-                    <Th dataLabel="Specifier" width={30} className="head">
-                      <p>Specifier</p>
+                    <Th dataLabel={t('Specifier')} width={30} className="head">
+                      <p>{t('Specifier')}</p>
                     </Th>
-                    <Th dataLabel="Explanation" width={70} className="head">
-                      <p>Explanation</p>
+                    <Th dataLabel={t('Explanation')} width={70} className="head">
+                      <p>{t('Explanation')}</p>
                     </Th>
                   </Tr>
                 </Thead>
@@ -834,7 +835,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
           </>
         );
       default:
-        return <>No documentation available</>;
+        return <>{t('No documentation available')}</>;
     }
   };
   return (
@@ -843,10 +844,10 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
       disableFocusTrap={true}
       title={
         props.isZtunnel
-          ? 'ztunnel Access Log Entry'
+          ? t('ztunnel Access Log Entry')
           : props.isWaypoint
-          ? 'Waypoint Access log Entry'
-          : 'Envoy Access Log Entry'
+          ? t('Waypoint Access log Entry')
+          : t('Envoy Access Log Entry')
       }
       isOpen={true}
       onClose={props.onClose}

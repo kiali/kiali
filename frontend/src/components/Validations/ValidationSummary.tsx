@@ -4,6 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
 import { naTextStyle } from 'styles/HealthStyle';
+import { t } from 'utils/I18nUtils';
 
 interface ValidationSummaryProps {
   errors: number;
@@ -122,7 +123,7 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
     );
 
   return (
-    <Tooltip aria-label="Validations list" position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
+    <Tooltip aria-label={t('Validations list')} position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
       {tooltipBase}
     </Tooltip>
   );

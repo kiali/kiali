@@ -26,6 +26,7 @@ import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { ColorScheme } from '../../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../../utils/AppearanceUtils';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
@@ -137,21 +138,21 @@ const getClassName = (
 
 const columns: SortableCompareTh<RichSpanData>[] = [
   {
-    title: 'Timeline',
+    title: t('Timeline'),
     sortable: true,
     compare: (a, b) => a.startTime - b.startTime
   },
   {
-    title: 'App / Workload',
+    title: t('App / Workload'),
     sortable: true,
     compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
   },
   {
-    title: 'Summary',
+    title: t('Summary'),
     sortable: false
   },
   {
-    title: 'Statistics',
+    title: t('Statistics'),
     sortable: true,
     compare: (a, b) => a.duration - b.duration
   }
@@ -186,14 +187,14 @@ class SpanTableComponent extends React.Component<Props, State> {
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
     const noSpans: React.ReactNode = (
-      <EmptyState headingLevel="h5" titleText="No spans found" variant={EmptyStateVariant.full}>
-        <EmptyStateBody>No spans match the current filters</EmptyStateBody>
+      <EmptyState headingLevel="h5" titleText={t('No spans found')} variant={EmptyStateVariant.full}>
+        <EmptyStateBody>{t('No spans match the current filters')}</EmptyStateBody>
       </EmptyState>
     );
 
     return (
       <SimpleTable
-        label="Span List"
+        label={t('Span List')}
         className={tableStyle}
         columns={columns}
         rows={this.rows()}
@@ -258,7 +259,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         title: <h1 aria-hidden="true">{`Application (${item.app})`}</h1>
       },
       {
-        title: 'Inbound Metrics',
+        title: t('Inbound Metrics'),
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=in_metrics`;
           if (parentKiosk) {
@@ -269,7 +270,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         }
       },
       {
-        title: 'Outbound Metrics',
+        title: t('Outbound Metrics'),
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=out_metrics`;
           if (parentKiosk) {
@@ -290,7 +291,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           title: <h1 aria-hidden="true">{`Workload (${item.workload})`}</h1>
         },
         {
-          title: 'Logs',
+          title: t('Logs'),
           onClick: () => {
             const href = `${item.linkToWorkload}?tab=logs`;
             if (parentKiosk) {
@@ -301,7 +302,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Inbound Metrics',
+          title: t('Inbound Metrics'),
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=in_metrics`;
             if (parentKiosk) {
@@ -312,7 +313,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Outbound Metrics',
+          title: t('Outbound Metrics'),
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=out_metrics`;
             if (parentKiosk) {

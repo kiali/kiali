@@ -12,7 +12,7 @@ type Props = {
 
 export const NewChatModal: React.FC<Props> = ({ isOpen, onClose, onConfirm, providerChanged }) => {
   return (
-    <ChatModal isOpen={isOpen} onClose={onClose} title={'Confirm chat deletion'}>
+    <ChatModal isOpen={isOpen} onClose={onClose} title={t('Confirm chat deletion')}>
       <Content component="p">
         {providerChanged
           ? t(

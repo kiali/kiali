@@ -9,6 +9,7 @@ import type { KialiDispatch } from '../../types/Redux';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import { connect } from 'react-redux';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
+import { t } from 'utils/I18nUtils';
 
 export const FROM_KINDS = [
   dicTypeToGVK[gvkType.K8sHTTPRoute],
@@ -88,7 +89,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
   render(): React.ReactNode {
     return (
       <>
-        <FormGroup label="From Namespace" fieldId="FromNamespace">
+        <FormGroup label={t('From Namespace')} fieldId="FromNamespace">
           <Select
             id="ReferenceGrantFromNamespace"
             isOpen={this.state.isFromNamespaceSelectOpen}
@@ -116,7 +117,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                 {this.state.from[0].namespace}
               </MenuToggle>
             )}
-            aria-label="From Namespace Select"
+            aria-label={t('From Namespace Select')}
           >
             <SelectList>
               {this.props.namespaces.map((option, index) => (
@@ -127,7 +128,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
             </SelectList>
           </Select>
         </FormGroup>
-        <FormGroup label="From Kind" fieldId="FromKind">
+        <FormGroup label={t('From Kind')} fieldId="FromKind">
           <Select
             id="ReferenceGrantFromKind"
             isOpen={this.state.isFromKindSelectOpen}
@@ -159,7 +160,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                 {`K8s ${this.state.from[0].kind}`}
               </MenuToggle>
             )}
-            aria-label="From Kind Select"
+            aria-label={t('From Kind Select')}
           >
             <SelectList>
               {FROM_KINDS.map((fromKey: GroupVersionKind, index: number) => (
@@ -170,7 +171,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
             </SelectList>
           </Select>
         </FormGroup>
-        <FormGroup label="To Kind" fieldId="ToKind">
+        <FormGroup label={t('To Kind')} fieldId="ToKind">
           <Select
             id="ReferenceGrantToKind"
             isOpen={this.state.isToKindSelectOpen}
@@ -196,7 +197,7 @@ export class K8sReferenceGrantFormComponent extends React.Component<Props, K8sRe
                 {this.state.to[0].kind}
               </MenuToggle>
             )}
-            aria-label="To Kind Select"
+            aria-label={t('To Kind Select')}
           >
             <SelectList>
               {Object.keys(TO_KINDS).map((toKey: string, index: number) => (

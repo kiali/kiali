@@ -98,7 +98,7 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           id="header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onHeaderNameChange(value)}
-          placeholder="Header name..."
+          placeholder={t('Header name...')}
         />
       )}
 

@@ -7,6 +7,7 @@ import { formatJwtField } from './JwtRuleBuilder';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type JwtRuleListProps = {
   jwtRules: JWTRule[];
@@ -15,7 +16,7 @@ type JwtRuleListProps = {
 
 const columns: ThProps[] = [
   {
-    title: 'JWT Rules to be validated',
+    title: t('JWT Rules to be validated'),
     width: 100
   },
   {
@@ -93,7 +94,7 @@ export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps)
     };
   });
 
-  const noJWTRules = <div className={noJWTRulesStyle}>No JWT Rules Defined</div>;
+  const noJWTRules = <div className={noJWTRulesStyle}>{t('No JWT Rules Defined')}</div>;
 
-  return <SimpleTable label="JWT Rules List" columns={columns} rows={rows} emptyState={noJWTRules} />;
+  return <SimpleTable label={t('JWT Rules List')} columns={columns} rows={rows} emptyState={noJWTRules} />;
 };

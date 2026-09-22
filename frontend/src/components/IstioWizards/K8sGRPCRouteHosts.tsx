@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Form, FormGroup, FormHelperText, HelperText, HelperTextItem, TextInput } from '@patternfly/react-core';
 import { isValid } from 'utils/Common';
 import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   k8sRouteHosts: string[];
@@ -21,7 +22,7 @@ export const K8sGRPCRouteHosts: React.FC<Props> = (props: Props) => {
 
   return (
     <Form isHorizontal={true}>
-      <FormGroup label="K8s GRPCRoute Hosts" fieldId="advanced-k8sRouteHosts">
+      <FormGroup label={t('K8s GRPCRoute Hosts')} fieldId="advanced-k8sRouteHosts">
         <TextInput
           value={k8sRouteHosts}
           id="advanced-k8sRouteHosts"
@@ -37,7 +38,7 @@ export const K8sGRPCRouteHosts: React.FC<Props> = (props: Props) => {
           <HelperText>
             <HelperTextItem>
               {isValid(props.valid)
-                ? 'The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.'
+                ? t('The route hosts to which traffic is being sent. Enter one or multiple hosts separated by comma.')
                 : "K8s Route hosts should be specified using FQDN format or '*.' format. IPs are not allowed."}
             </HelperTextItem>
           </HelperText>

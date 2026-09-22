@@ -6,6 +6,7 @@ import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { ServerBuilder, protocols } from './ServerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type ServerListProps = {
   onChange: (server: Server[], serverForm: ServerForm[]) => void;
@@ -20,7 +21,7 @@ const noServerStyle = kialiStyle({
 
 const columns: ThProps[] = [
   {
-    title: 'Servers'
+    title: t('Servers')
   },
   {
     title: ''
@@ -111,7 +112,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
 
   return (
     <>
-      <Table aria-label="Server List">
+      <Table aria-label={t('Server List')}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
@@ -137,7 +138,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
           ) : (
             <Tr>
               <Td colSpan={columns.length}>
-                <div className={noServerStyle}>No Servers defined</div>
+                <div className={noServerStyle}>{t('No Servers defined')}</div>
               </Td>
             </Tr>
           )}
@@ -151,7 +152,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
         onClick={onAddServer}
         className={addServerStyle}
       >
-        Add Server to Servers List
+        {t('Add Server to Servers List')}
       </Button>
     </>
   );

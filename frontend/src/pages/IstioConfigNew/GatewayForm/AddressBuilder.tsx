@@ -14,6 +14,7 @@ import { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isGatewayHostValid, isValidIp } from '../../../utils/IstioConfigUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { t } from 'utils/I18nUtils';
 
 type AddressBuilderProps = {
   address: Address;
@@ -68,7 +69,7 @@ export const AddressBuilder: React.FC<AddressBuilderProps> = (props: AddressBuil
               {props.address.type}
             </MenuToggle>
           )}
-          aria-label="Address Type Select"
+          aria-label={t('Address Type Select')}
         >
           <SelectList>
             {addressTypes.map((option, index) => (

@@ -15,6 +15,7 @@ import { isMultiCluster } from 'config';
 import { getParamsSeparator } from '../../utils/SearchParamUtils';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { KialiLink } from '../Link/KialiLink';
+import { t } from 'utils/I18nUtils';
 
 export interface TrafficListItem {
   badge: PFBadgeType;
@@ -37,39 +38,39 @@ type TrafficListComponentState = FilterComponent.State<TrafficListItem>;
 const columns = (isMultiCluster: boolean): SortableTh[] => {
   const cols: SortableTh[] = [
     {
-      title: 'Status',
+      title: t('Status'),
       sortable: true,
       width: 15
     },
     {
-      title: 'Name',
+      title: t('Name'),
       sortable: true,
       width: 30
     },
     {
-      title: 'Rate',
+      title: t('Rate'),
       sortable: true,
       width: 10
     },
     {
-      title: 'Percent Success',
+      title: t('Percent Success'),
       sortable: true,
       width: 20
     },
     {
-      title: 'Protocol',
+      title: t('Protocol'),
       sortable: true,
       width: 15
     },
     {
-      title: 'Actions',
+      title: t('Actions'),
       sortable: false
     }
   ];
 
   if (isMultiCluster) {
     cols.splice(2, 0, {
-      title: 'Cluster',
+      title: t('Cluster'),
       sortable: true,
       width: 15
     });
@@ -147,7 +148,7 @@ class TrafficListComponent extends FilterComponent.Component<
 
           {hasInbound && (
             <SimpleTable
-              label="Inbound Traffic List"
+              label={t('Inbound Traffic List')}
               columns={cols}
               rows={inboundRows}
               sortBy={sortBy}
@@ -163,7 +164,7 @@ class TrafficListComponent extends FilterComponent.Component<
 
           {hasOutbound && (
             <SimpleTable
-              label="Outbound Traffic List"
+              label={t('Outbound Traffic List')}
               columns={cols}
               rows={outboundRows}
               sortBy={sortBy}

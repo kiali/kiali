@@ -41,7 +41,7 @@ export const isWaypointFor = (wk: Workload): string => {
 
 const showProxyStatus = (workload: Workload): React.ReactNode => {
   const cols: ThProps[] = [
-    { title: 'Pod Name' },
+    { title: t('Pod Name') },
     { title: 'CDS' },
     { title: 'LDS' },
     { title: 'EDS' },
@@ -59,7 +59,7 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
     };
   });
 
-  return <SimpleTable label={'Proxy Status'} columns={cols} rows={rows} />;
+  return <SimpleTable label={t('Proxy Status')} columns={cols} rows={rows} />;
 };
 
 export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointConfigProps) => {

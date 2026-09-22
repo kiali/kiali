@@ -7,6 +7,7 @@ import { ReactComponent as FullLockIcon } from '../../assets/img/mtls/mtls-statu
 import { ReactComponent as HollowLockIcon } from '../../assets/img/mtls/mtls-status-partial.svg';
 import { ReactComponent as InheritArrowIcon } from '../../assets/img/mtls/mtls-inherit-arrow.svg';
 import { LockOpenIcon } from '@patternfly/react-icons';
+import { t } from 'utils/I18nUtils';
 
 type MTLSIconProps = {
   backgroundColor?: string;
@@ -58,7 +59,7 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
     : {};
 
   return (
-    <Tooltip aria-label="mTLS status" position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
+    <Tooltip aria-label={t('mTLS status')} position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
       {IconComponent ? (
         useCircle ? (
           <span className={props.iconClassName} style={circleStyle}>
