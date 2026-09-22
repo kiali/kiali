@@ -70,7 +70,11 @@ export class WorkloadDetailsPage extends BasePage {
 
   /** Check a logs-tab container by input id (e.g. ztunnel-ratings, container-ratings). */
   async selectContainer(containerId: string): Promise<void> {
+    const logsResponse = this.page.waitForResponse(
+      response => /\/api\/namespaces\/[^/]+\/pods\/[^/]+\/logs/.test(response.url()) && response.ok()
+    );
     await this.getBySel('workload-logs-pod-containers').locator(`input#${containerId}`).check();
+    await logsResponse;
     await waitForLoadingComplete(this.page);
   }
 
@@ -110,7 +114,7 @@ export class WorkloadDetailsPage extends BasePage {
     }
   }
 
-  /** At least one log line contains text (Cypress "show log lines containing"). */
+  /** At least one log line contains text. */
   async expectSomeLogLinesContain(text: string): Promise<void> {
     await expect(this.page.locator('#logsText p').filter({ hasText: text }).first()).toBeVisible();
   }
