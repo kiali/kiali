@@ -16,6 +16,7 @@ Feature: Kiali Waypoint related features
     Then "bookinfo" namespace is labeled with the waypoint label
     And the graph page has enough data
     And the "bookinfo-gateway-istio" tracing data is ready in the "bookinfo" namespace
+    And use_waypoint_name is enabled if tracing services contain waypoint in "bookinfo"
 
   @skip-ossmc
   Scenario: [Workload list] See the workload list of bookinfo with the correct info
@@ -363,7 +364,7 @@ Feature: Kiali Waypoint related features
   Scenario: [Waypoint details] The waypoint details for a waypoint for workload are valid
     Given user is at the details page for the "workload" "waypoint-forworkload/echo-server" located in the "" cluster
     And the user sees the L7 "bwaypoint" link
-    And the link for the waypoint "waypoint" should redirect to a valid workload details
+    And the link for the waypoint "bwaypoint" should redirect to a valid workload details
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Workloads" subtab
     And validates Services data with "1" rows and "echo-server" workload, "waypoint-forworkload" namespace, "workload" label for, "pfbadge-W" badge

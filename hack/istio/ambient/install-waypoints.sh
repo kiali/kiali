@@ -159,12 +159,15 @@ sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yam
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint.yaml -n waypoint-forservice
 ${CLIENT_EXE} label ns waypoint-forservice istio.io/use-waypoint=waypoint
 
-# Create a waypoint for workload and send requests to pod b
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forworkload
-${CLIENT_EXE} wait --for=condition=Ready pod -l app=echo-server -n waypoint-forworkload --timeout=60s
-
-sleep 15
-# Update with echo-server IP
+# Waypoint-for-workload (istio.io/waypoint-for: workload): Istio only redirects traffic originally
+# addressed to pod (or VM) IPs—not to a Kubernetes Service—even if the workload uses a waypoint
+# (see https://istio.io/latest/docs/ambient/usage/waypoint/ ). So curl must target the echo pod IP.
+# Gateway first, then echo with istio.io/use-waypoint on the pod template (survives pod restarts),
+# then curl with that IP baked in. If echo restarts and gets a new IP, rollout-restart curl-client.
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-for-workload.yaml -n waypoint-forworkload
+${CLIENT_EXE} wait --for=condition=Ready pod -l gateway.networking.k8s.io/gateway-name=bwaypoint -n waypoint-forworkload --timeout=120s
+${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-server-waypoint-forworkload.yaml -n waypoint-forworkload
+${CLIENT_EXE} rollout status deployment/echo-server -n waypoint-forworkload --timeout=120s
 POD_IP=$($CLIENT_EXE get pod -l app=echo-server -n waypoint-forworkload -o jsonpath="{.items[0].status.podIP}")
 POD_HOST=$(format_http_host "${POD_IP}")
 echo "Creating client in ns waypoint-forworkload with echo pod IP ${POD_IP}"
@@ -199,8 +202,7 @@ spec:
                 sleep 5
               done
 NAD
-${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/waypoint-for-workload.yaml -n waypoint-forworkload
-${CLIENT_EXE} label pod -l app=echo-server istio.io/use-waypoint=bwaypoint -n waypoint-forworkload
+${CLIENT_EXE} rollout status deployment/curl-client -n waypoint-forworkload --timeout=120s
 
 # Create a waypoint for all
 ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-forall

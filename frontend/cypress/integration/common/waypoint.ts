@@ -1,7 +1,9 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { openTab } from './transition';
+import { openTab, waitForKialiApiReady } from './transition';
 import { getCellsForCol } from './table';
+import { confirmNamespaceTrafficPolicyModal, openNamespaceActionsMenu } from './namespace_actions';
 import { Pod } from 'types/IstioObjects';
+import { enableKialiFeature, USE_WAYPOINT_NAME_CONFIG } from './kiali-config';
 
 // waitForWorkloadEnrolled waits until Kiali returns the namespace labels updated
 // Adding the waypoint label into the bookinfo namespace
@@ -370,6 +372,92 @@ Then('the {string} tracing data is ready in the {string} namespace', (workload: 
   waitForWorkloadTracesInApi(namespace, workload);
 });
 
+const waitForWaypointNodeInGraph = (namespace: string, maxRetries = 30, retryCount = 0): void => {
+  if (retryCount >= maxRetries) {
+    throw new Error(`Waypoint node not found in graph after ${maxRetries} retries (namespace=${namespace})`);
+  }
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/graph`,
+    qs: {
+      duration: '300s',
+      graphType: 'versionedApp',
+      includeIdleEdges: false,
+      injectServiceNodes: true,
+      boxBy: 'cluster,namespace,app',
+      waypoints: true,
+      ambientTraffic: 'total',
+      appenders: 'deadNode,serviceEntry,meshCheck,workloadEntry,health,istio,ambient',
+      rateGrpc: 'requests',
+      rateHttp: 'requests',
+      rateTcp: 'sent',
+      namespaces: namespace
+    }
+  }).then(response => {
+    const nodes = response.body?.elements?.nodes ?? [];
+    const waypointNode = nodes.find(
+      (n: { data: Record<string, string> }) => n.data.workload === 'waypoint' && n.data.namespace === namespace
+    );
+
+    if (waypointNode) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `Waypoint node found in graph after ${retryCount} retries`
+      });
+      return;
+    }
+
+    if (retryCount % 5 === 0) {
+      Cypress.log({
+        name: 'waypoint-graph',
+        message: `retry=${retryCount}/${maxRetries} waiting for waypoint node in graph`
+      });
+    }
+
+    cy.wait(10000).then(() => waitForWaypointNodeInGraph(namespace, maxRetries, retryCount + 1));
+  });
+};
+
+Then('use_waypoint_name is enabled if tracing services contain waypoint in {string}', (namespace: string) => {
+  waitForWaypointNodeInGraph(namespace);
+
+  const nowMicros = Date.now() * 1000;
+  const qs: Record<string, any> = {
+    startMicros: nowMicros - 10 * 60 * 1000 * 1000,
+    endMicros: nowMicros,
+    tags: '{}',
+    limit: 20
+  };
+
+  cy.request({
+    method: 'GET',
+    url: `${Cypress.config('baseUrl')}/api/namespaces/${namespace}/workloads/bookinfo-gateway-istio/traces`,
+    qs,
+    failOnStatusCode: false
+  }).then(response => {
+    const traces = response.body?.data ?? [];
+    const serviceNames = new Set<string>();
+    for (const trace of traces) {
+      for (const proc of Object.values(trace.processes ?? {})) {
+        serviceNames.add((proc as { serviceName: string }).serviceName);
+      }
+    }
+
+    const hasWaypoint = [...serviceNames].some(name => name.startsWith('waypoint.'));
+
+    Cypress.log({
+      name: 'use_waypoint_name',
+      message: `Tracing services: [${[...serviceNames].join(', ')}] hasWaypoint=${hasWaypoint}`
+    });
+
+    if (hasWaypoint) {
+      enableKialiFeature(USE_WAYPOINT_NAME_CONFIG);
+      waitForKialiApiReady();
+    }
+  });
+});
+
 Then('the user hovers in the {string} label and sees {string} in the tooltip', (label: string, text: string) => {
   cy.get(`[data-test=workload-description-card]`).contains('span', label).trigger('mouseenter');
   cy.get('[role="tooltip"]').should('be.visible').and('contain', text);
@@ -391,22 +479,34 @@ Then('the user sees the L7 {string} link', (waypoint: string) => {
 });
 
 Then('the link for the waypoint {string} should redirect to a valid workload details', (waypoint: string) => {
-  cy.get(`[data-test=waypoint-link]`).contains('a', waypoint).click({ force: true });
-  cy.get(`[data-test=workload-description-card]`).contains('h5', waypoint);
+  const isOSSMC = Cypress.env('OSSMC');
+  cy.get('[data-test=waypoint-link]')
+    .contains('a,button', waypoint)
+    .then($el => {
+      // In kiosk mode KialiLink renders a button with data-href; in normal mode it renders an anchor.
+      const target = $el.prop('tagName')?.toLowerCase() === 'a' ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+      expect(target, 'standalone Kiali waypoint link target').to.include(`/workloads/${waypoint}`);
+      if (isOSSMC) {
+        // Even if the button exist, the click event doesn't work (Even with force).
+        const namespace = target.split('/')[2];
+        cy.visit({ url: `/k8s/ns/${namespace}/deployments/${waypoint}/ossmconsole` });
+      } else {
+        cy.wrap($el).click();
+      }
+    });
+  cy.get('#loading_kiali_spinner').should('not.exist');
 });
 
 Then('the waypoint link points to the {string} cluster', (cluster: string) => {
   cy.get(`[data-test=waypoint-link]`).should('exist');
 
   cy.get(`[data-test=waypoint-link]`).then($waypointLink => {
-    // Depending on the component, the data-test might be set on the <a> itself
-    // or on a container that contains the <a>.
-    const $anchor = $waypointLink.filter('a').add($waypointLink.find('a')).first();
+    // In kiosk mode the element is a button with data-href; otherwise it's an anchor with href.
+    const $el = $waypointLink.filter('a, button').add($waypointLink.find('a, button')).first();
+    expect($el.length, 'waypoint link element').to.be.greaterThan(0);
 
-    expect($anchor.length, 'waypoint link anchor').to.be.greaterThan(0);
-
-    const href = $anchor.attr('href') ?? '';
-    expect(href).to.include(`clusterName=${cluster}`);
+    const target = $el.is('a') ? $el.attr('href') ?? '' : $el.attr('data-href') ?? '';
+    expect(target).to.include(`clusterName=${cluster}`);
   });
 });
 
@@ -422,7 +522,7 @@ Then('the user sees the {string} badge', (name: string) => {
 });
 
 Then('the proxy status is {string}', (status: string) => {
-  cy.get('[data-label=Status]').get(`.icon-${status}`).should('exist');
+  cy.get('[data-test=workload-details-card]').find(`span[class*="icon-${status}"]`).should('be.visible');
 });
 
 Then(
@@ -464,10 +564,10 @@ Then("the {string} subtab doesn't exist", (subtab: string) => {
 
 Then('validates Services data', () => {
   cy.get('[data-test="enrolled-data-title"]').should('be.visible');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', 'productpage');
-  cy.get('[role="grid"]').should('be.visible').get('#pfbadge-S').should('exist');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', 'bookinfo');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', 'namespace');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', 'productpage');
+  cy.get('[role="grid"]').should('be.visible').find('#pfbadge-S').should('exist');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', 'namespace');
 });
 
 Then(
@@ -475,28 +575,28 @@ Then(
   (rows: number, workload: string, ns: string, label: string, badge: string) => {
     cy.get('[data-test="enrolled-data-title"]').should('be.visible');
     cy.get('table tbody tr').should('have.length', rows);
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Name"]').and('contain', workload);
-    cy.get('[role="grid"]').should('be.visible').get(`#${badge}`).should('exist');
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Namespace"]').and('contain', ns);
-    cy.get('[role="grid"]').should('be.visible').get('[data-label="Labeled by"]').and('contain', label);
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Name"]').should('contain', workload);
+    cy.get('[role="grid"]').should('be.visible').find(`#${badge}`).should('exist');
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', ns);
+    cy.get('[role="grid"]').should('be.visible').find('td[data-label="Labeled by"]').should('contain', label);
   }
 );
 
 Then('validates waypoint Info data for {string}', (type: string) => {
   cy.get('[data-test=waypointfor-title]').should('exist').and('contain', type);
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=RDS]').and('contain', 'IGNORED');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="RDS"]').should('contain', 'IGNORED');
 });
 
 When('the user validates the Ztunnel tab for the {string} namespace', (namespace: string) => {
   openTab('Ztunnel');
   cy.get('#ztunnel-details').should('be.visible').contains('Services').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Service VIP"]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Waypoint]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Service VIP"]').should('be.visible');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Waypoint"]');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
   cy.get('#ztunnel-details').should('be.visible').contains('Workloads').click();
-  cy.get('[role="grid"]').should('be.visible').get('[data-label="Pod Name"]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Node]');
-  cy.get('[role="grid"]').should('be.visible').get('[data-label=Namespace]').and('contain', 'bookinfo');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Pod Name"]').should('be.visible');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Node"]');
+  cy.get('[role="grid"]').should('be.visible').find('td[data-label="Namespace"]').should('contain', 'bookinfo');
   // Validate filters in the Namespace column
   cy.get('button#filter_select_type-toggle').click();
   cy.contains('div#filter_select_type button', 'Namespace').click();
@@ -514,7 +614,7 @@ Then('the user updates the log level to {string}', (level: string) => {
 });
 
 When('user opens the menu', () => {
-  cy.get('[aria-label="Actions"]').click();
+  openNamespaceActionsMenu();
 });
 
 When('the option {string} does not exist for {string} namespace', (option, namespace: string) => {
@@ -543,13 +643,48 @@ When('the user clicks on {string} for {string} namespace', (option, namespace: s
   }
   // Click the menu item button (the button inside the li element)
   cy.get(`[data-test=${selector}]`).find('button').click();
-  // Click outside the menu to close it before interacting with the modal
-  cy.get('body').click(0, 0);
-  // Wait for the modal to appear - check for modal content to ensure it's fully rendered
-  cy.contains('Are you sure?', { timeout: 10000 }).should('be.visible');
-  // Wait for modal confirm button to be visible and clickable
-  cy.get(`[data-test="confirm-create"]`).should('be.visible').should('not.be.disabled').click();
+  confirmNamespaceTrafficPolicyModal();
 });
+
+When('user clicks on {string} in namespace actions', (option: string) => {
+  cy.url().then(url => {
+    const namespace = url.match(/\/(projects|namespaces)\/([^/?]+)/)?.[2] ?? '';
+    let selector = '';
+    switch (option) {
+      case 'removes auto injection':
+        selector = `remove-${namespace}-namespace-sidecar-injection`;
+        break;
+      case 'Add to Ambient':
+        selector = `add-${namespace}-namespace-ambient`;
+        break;
+      case 'remove Ambient':
+        selector = `remove-${namespace}-namespace-ambient`;
+        break;
+      case 'enable sidecar':
+        selector = `enable-${namespace}-namespace-sidecar-injection`;
+        break;
+    }
+    cy.get(`[data-test="${selector}"]`).should('be.visible').click();
+    confirmNamespaceTrafficPolicyModal();
+  });
+});
+
+Then('the namespace {string} labels do not contain {string}', (namespace: string, labelKey: string) => {
+  cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+    expect(response.status).to.equal(200);
+    expect(response.body.labels).to.not.have.property(labelKey);
+  });
+});
+
+Then(
+  'the namespace {string} labels contain {string} with value {string}',
+  (namespace: string, labelKey: string, labelValue: string) => {
+    cy.request({ method: 'GET', url: `/api/namespaces/${namespace}/info` }).then(response => {
+      expect(response.status).to.equal(200);
+      expect(response.body.labels[labelKey]).to.equal(labelValue);
+    });
+  }
+);
 
 When('{string} badge {string}', (badge, option: string) => {
   let selector = 'not.exist';

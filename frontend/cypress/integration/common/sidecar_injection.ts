@@ -1,6 +1,6 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { MeshCluster } from 'types/Mesh';
+import { confirmNamespaceTrafficPolicyModal, openNamespaceActionsMenu } from './namespace_actions';
 
 // Most of these "Given" implementations are directly using the Kiali API
 // in order to reach a well known state in the environment before performing
@@ -285,88 +285,27 @@ When('I visit the overview page', () => {
   cy.contains('Inbound traffic', { matchCase: false }); // Make sure data finished loading, so avoid broken tests because of a re-render
 });
 
-// Only works for single cluster.
 When('I override the default automatic sidecar injection policy in the namespace to enabled', function () {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-    expect(response.status).to.equal(200);
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      cy.getBySel('overview-type-LIST').should('be.visible').click();
-
-      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-        .should('be.visible')
-        .click();
-
-      cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-create').should('be.visible').click();
-    });
-
-    ensureKialiFinishedLoading();
-  });
+  openNamespaceActionsMenu();
+  cy.getBySel(`enable-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+  confirmNamespaceTrafficPolicyModal();
 });
 
 When(
   'I change the override configuration for automatic sidecar injection policy in the namespace to {string} it',
   function (enabledOrDisabled: string) {
-    cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-      expect(response.status).to.equal(200);
-
-      cy.request({ url: '/api/config' }).then(response => {
-        cy.wrap(response.isOkStatusCode).should('be.true');
-
-        const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-        const clusterNames = Object.keys(clusters);
-        cy.wrap(clusterNames).should('have.length', 1);
-        const cluster = clusterNames[0];
-
-        cy.getBySel('overview-type-LIST').should('be.visible').click();
-
-        cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-          .should('be.visible')
-          .click();
-
-        cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
-          .should('be.visible')
-          .click();
-
-        cy.getBySel('confirm-create').should('be.visible').click();
-        ensureKialiFinishedLoading();
-      });
-    });
+    openNamespaceActionsMenu();
+    cy.getBySel(`${enabledOrDisabled}-${this.targetNamespace}-namespace-sidecar-injection`)
+      .should('be.visible')
+      .click();
+    confirmNamespaceTrafficPolicyModal();
   }
 );
 
 When('I remove override configuration for sidecar injection in the namespace', function () {
-  cy.request({ method: 'GET', url: '/api/status' }).then(response => {
-    expect(response.status).to.equal(200);
-
-    cy.request({ url: '/api/config' }).then(response => {
-      cy.wrap(response.isOkStatusCode).should('be.true');
-
-      const clusters: { [key: string]: MeshCluster } = response.body.clusters;
-      const clusterNames = Object.keys(clusters);
-      cy.wrap(clusterNames).should('have.length', 1);
-      const cluster = clusterNames[0];
-
-      cy.getBySel('overview-type-LIST').should('be.visible').click();
-
-      cy.get(`[data-test=VirtualItem_Cluster${cluster}_${this.targetNamespace}] button[aria-label=Actions]`)
-        .should('be.visible')
-        .click();
-
-      cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
-      cy.getBySel('confirm-create').should('be.visible').click();
-
-      ensureKialiFinishedLoading();
-    });
-  });
+  openNamespaceActionsMenu();
+  cy.getBySel(`remove-${this.targetNamespace}-namespace-sidecar-injection`).should('be.visible').click();
+  confirmNamespaceTrafficPolicyModal();
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
@@ -374,12 +313,9 @@ function switchWorkloadSidecarInjection(enableOrDisable: string): void {
 
   // In OSSMC, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
   if (Cypress.env('OSSMC')) {
-    cy.intercept(`**/api/**/workloads/**/graph*`).as('workloadMinigraph');
+    cy.intercept('**/api/**/workloads/**/graph*').as('workloadMinigraph');
     cy.wait('@workloadMinigraph');
-
-    cy.waitForReact();
-
-    cy.get('button#minigraph-toggle').should('be.visible').click();
+    cy.get('button#minigraph-toggle', { timeout: 40000 }).should('be.visible').click();
   } else {
     cy.get('button[data-test="workload-actions-toggle"]').should('be.visible').click();
   }

@@ -3,7 +3,7 @@ import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { infoStyle } from '../../styles/IconStyle';
-import { t } from 'i18next';
+import { t } from 'utils/I18nUtils';
 
 export const renderWaypointLabel = (bgsize?: string): React.ReactNode => {
   const badgeSize = bgsize === 'global' || bgsize === 'sm' ? bgsize : 'global';

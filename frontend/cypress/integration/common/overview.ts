@@ -45,6 +45,7 @@ When(`user filters {string} health`, (health: string) => {
 });
 
 When(`user selects Health for {string}`, (type: string) => {
+  ensureKialiFinishedLoading();
   cy.get('button#overview-type-toggle').click();
   cy.get('#loading_kiali_spinner').should('not.exist');
   cy.contains('div#overview-type button', type).click();
@@ -122,6 +123,7 @@ Then(`user sees a {string} {string} namespace`, (view, ns: string) => {
 });
 
 Then(`user sees the {string} namespace with {string}`, (ns: string, type: string) => {
+  ensureKialiFinishedLoading();
   let innerType = '';
 
   switch (type) {
