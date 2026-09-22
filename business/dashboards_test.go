@@ -642,3 +642,27 @@ func TestAppendPromLabels(t *testing.T) {
 		appendPromLabelMatchers(`{namespace="bookinfo"}`, nil, map[string]string{"reporter": "source|waypoint"}),
 	)
 }
+
+func TestBuildWorkloadPodMetricLabels(t *testing.T) {
+	conf := config.NewConfig()
+	ns := models.Namespace{Name: "bookinfo"}
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{Namespace: "bookinfo"},
+		Pods: models.Pods{
+			&models.Pod{Name: "details-v1-abc"},
+			&models.Pod{Name: "details-v1-def"},
+		},
+	}
+	svc := NewDashboardsService(conf, nil, nil, &ns, workload)
+
+	assert.Equal(t,
+		`{namespace="bookinfo",pod=~"details-v1-abc|details-v1-def",container="istio-proxy"}`,
+		svc.buildWorkloadPodMetricLabels("bookinfo", map[string]string{"container": "istio-proxy"}),
+	)
+
+	workload.Pods = models.Pods{&models.Pod{Name: "waypoint-xyz"}}
+	assert.Equal(t,
+		`{namespace="bookinfo",pod="waypoint-xyz",container="istio-proxy"}`,
+		svc.buildWorkloadPodMetricLabels("bookinfo", map[string]string{"container": "istio-proxy"}),
+	)
+}

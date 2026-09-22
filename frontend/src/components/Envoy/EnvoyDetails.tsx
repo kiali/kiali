@@ -67,7 +67,7 @@ const defaultTab = 'memory';
 
 const envoyTabTitle = (resource: string): string => {
   if (resource === 'memory') {
-    return 'Overview';
+    return 'Summary';
   }
 
   return `${resource.charAt(0).toUpperCase()}${resource.slice(1)}`;

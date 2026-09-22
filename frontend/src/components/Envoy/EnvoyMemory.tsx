@@ -11,9 +11,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { EnvoyMemoryOverlayChart } from 'components/Envoy/EnvoyMemoryOverlayChart';
-import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 import type { Workload } from 'types/Workload';
 import type { EnvoyConfigCounts, EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
@@ -23,7 +21,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { helpIconStyle } from 'styles/IconStyle';
 import { PFFontWeight } from 'styles/PfTypography';
 import { PFColors } from 'components/Pf/PfColors';
-import { inlineIconRowStyle, scrollableContentStyle, tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
+import { inlineIconRowStyle, tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
 import { classes } from 'typestyle';
 import {
   buildEnvoyMemoryQueryParams,
@@ -118,11 +116,7 @@ const tileHintStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: '1rem'
-});
-
-const chartsSectionStyle = kialiStyle({
-  marginTop: '1rem'
+  marginTop: '2.5rem'
 });
 
 const helpBodyStyle = kialiStyle({
@@ -157,10 +151,6 @@ const sortedPodName = (workload: Workload): string | undefined => {
 export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps) => {
   const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
   const [configCounts, setConfigCounts] = React.useState<{ counts: EnvoyConfigCounts; podName: string }>();
-  const appLabelName = getAppLabelName(props.workload.labels);
-  const verLabelName = getVersionLabelName(props.workload.labels);
-  const app = appLabelName ? props.workload.labels[appLabelName] : '';
-  const version = verLabelName ? props.workload.labels[verLabelName] : undefined;
   const podName = sortedPodName(props.workload);
   const effectiveConfigCounts = podName && configCounts?.podName === podName ? configCounts.counts : undefined;
 
@@ -425,27 +415,6 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
             namespace={props.namespace}
             timeRange={props.timeRange}
             workload={props.workload}
-          />
-        </div>
-
-        <div className={classes(scrollableContentStyle, chartsSectionStyle)}>
-          <Title headingLevel="h4" size={TitleSizes.md}>
-            {t('Related metrics')}
-          </Title>
-          <CustomMetrics
-            app={app}
-            appLabelName={appLabelName}
-            chartsPerRow={2}
-            data-test="envoy-memory-metrics"
-            embedded={true}
-            hideTraceSpans={true}
-            lastRefreshAt={props.lastRefreshAt}
-            namespace={props.namespace}
-            template="envoy-memory-related"
-            version={version}
-            versionLabelName={verLabelName}
-            workload={props.workload.name}
-            workloadType={props.workload.gvk.Kind}
           />
         </div>
       </CardBody>
