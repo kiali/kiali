@@ -99,6 +99,8 @@ export default defineConfig({
       name: 'crd-validation',
       grep: /@crd-validation/,
       dependencies: ['setup'],
+      // CRD tests mutate shared namespaces (sleep, istio-system, bookinfo); run sequentially.
+      fullyParallel: false,
       timeout: 180_000,
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },

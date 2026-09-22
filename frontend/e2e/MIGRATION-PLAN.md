@@ -86,7 +86,7 @@
 - [x] `@core-2` suite passes (PR #10269)
 - [x] `@core-caching` suite ported (playwright-core-caching CI; health/graph cache enabled locally)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
-- [ ] `@perses` suite passes
+- [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
 - [ ] `@ambient` suite passes
 - [ ] `@waypoint` suite passes
 - [ ] `@waypoint-tracing` suite passes
