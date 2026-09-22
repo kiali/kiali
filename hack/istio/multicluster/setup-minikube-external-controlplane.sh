@@ -103,7 +103,7 @@ switch_cluster "${CTX_EXTERNAL_CLUSTER}"
 install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -a "prometheus"
 kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/default --timeout=3m
 
-helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
+helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://blob.istio.io/istio-release/charts -f - <<EOF
 service:
   type: LoadBalancer
   ports:

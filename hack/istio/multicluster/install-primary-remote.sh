@@ -72,7 +72,7 @@ else
 fi
 
 helm install istio-eastwestgateway gateway \
-  --repo https://istio-release.storage.googleapis.com/charts \
+  --repo https://blob.istio.io/istio-release/charts \
   --wait \
   -n istio-system \
   --kube-context "${CLUSTER1_CONTEXT}" \
@@ -145,7 +145,7 @@ curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${addo
   kubectl apply --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" -f -
 
 helm install istio-eastwestgateway gateway \
-  --repo https://istio-release.storage.googleapis.com/charts \
+  --repo https://blob.istio.io/istio-release/charts \
   -n istio-system \
   --kube-context "${CLUSTER2_CONTEXT}" \
   --set name=istio-eastwestgateway \
