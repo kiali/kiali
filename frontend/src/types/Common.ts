@@ -55,7 +55,8 @@ export const enum Language {
   CHINESE = 'zh',
   ENGLISH = 'en',
   KOREAN = 'ko',
-  SPANISH = 'es'
+  SPANISH = 'es',
+  SYSTEM = 'system'
 }
 
 export type TargetKind = 'app' | 'service' | 'workload';

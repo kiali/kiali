@@ -587,7 +587,7 @@ VictoriaMetrics supports per-metric retention filters that could drop raw `istio
 # Phased Roadmap
 
 - [ ] Phase 0: KEP review and consensus (this document)
-- [ ] Phase 1: Reference recording-rules + federation bundle (`hack/prometheus/federation/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation)
+- [ ] Phase 1: Reference recording-rules + federation bundle (`hack/prometheus/federation/`); CI validation script; [kiali.io Prometheus tuning doc](https://kiali.io/docs/configuration/external-services/metrics/tuning/#option-1-recording-rules-and-federation-recommended)
 - [ ] Phase 2: Documentation — operator guide (prometheus.url → federated Prom), equivalence validation, Istio version compatibility
 - [x] Phase 3: Reference `kiali_*` recording rules and federation for Options 1–2 (`kiali-metrics-recording-rules.yml`, `kiali-metrics-federation-match.yml`, `demo/prometheus-kiali-edge.yaml`); dedup guidance for Option 3 in this KEP
 - [ ] Phase 4 (optional): Query optimization — skip redundant `sum by` on pre-aggregated series

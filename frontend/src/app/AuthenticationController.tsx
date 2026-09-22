@@ -39,8 +39,8 @@ import {
   isParentOwnedAppearance,
   syncReduxAppearanceFromDocument
 } from 'utils/AppearanceUtils';
-import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import { initializeLanguage, registerSystemLanguageListener } from 'utils/LanguageUtils';
 import type { ChatAIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
@@ -93,6 +93,7 @@ class AuthenticationControllerComponent extends React.Component<
   // before transitioning to the "Loading" page.
   private readonly postLoginMSTillTransition = 3000;
   private promises = new PromisesRegistry();
+  private unregisterSystemLanguageListener?: () => void;
 
   constructor(props: AuthenticationControllerProps) {
     super(props);
@@ -130,6 +131,7 @@ class AuthenticationControllerComponent extends React.Component<
       }
     }
 
+    this.unregisterSystemLanguageListener = registerSystemLanguageListener();
     this.setDocLayout();
   }
 
@@ -153,6 +155,7 @@ class AuthenticationControllerComponent extends React.Component<
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
+    this.unregisterSystemLanguageListener?.();
   }
 
   render(): React.ReactNode {
@@ -244,15 +247,7 @@ class AuthenticationControllerComponent extends React.Component<
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
 
     if (uiDefaults) {
-      // Set I18n language
-      const language = store.getState().globalState.language || uiDefaults.i18n.language;
-
-      // Set language to default English value to force React re-render on language change
-      store.dispatch(GlobalActions.setLanguage('en'));
-
-      i18n.changeLanguage(language).then(() => {
-        store.dispatch(GlobalActions.setLanguage(language));
-      });
+      initializeLanguage();
 
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {
