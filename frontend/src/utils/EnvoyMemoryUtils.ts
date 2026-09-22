@@ -114,7 +114,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
   switch (key) {
     case 'allocatedMemory':
       return t(
-        'Prometheus metric envoy_server_memory_allocated (max over the selected time range). The limit uses container_spec_memory_limit_bytes when available, otherwise the sidecar.istio.io/proxyMemoryLimit annotation.'
+        'Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). The limit uses container_spec_memory_limit_bytes when available, otherwise the sidecar.istio.io/proxyMemoryLimit annotation.'
       );
     case 'roughConfigMemory':
       return t(

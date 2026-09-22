@@ -227,7 +227,12 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 				if ref.DisplayName != "" {
 					displayNames = append(displayNames, ref.DisplayName)
 				}
-				metricFilters := appendPromLabelMatchers(filters, ref.Labels, ref.LabelRegexps)
+				metricFilters := filters
+				if ref.UsePodSelector {
+					metricFilters = in.buildWorkloadPodMetricLabels(params.Namespace, ref.Labels)
+				} else {
+					metricFilters = appendPromLabelMatchers(filters, ref.Labels, ref.LabelRegexps)
+				}
 				var converted []models.Metric
 				var err error
 				switch chart.DataType {
@@ -428,6 +433,47 @@ func (in *DashboardsService) buildLabelsQueryString(namespace string, labelsFilt
 
 	labels += "}"
 	return labels
+}
+
+// buildWorkloadPodMetricLabels builds a selector for cAdvisor-style metrics scoped to the
+// workload's pods (plus any extra exact label matchers such as container="istio-proxy").
+func (in *DashboardsService) buildWorkloadPodMetricLabels(namespace string, extraLabels map[string]string) string {
+	namespaceLabel := in.namespaceLabel
+	if namespaceLabel == "" {
+		namespaceLabel = defaultNamespaceLabel
+	}
+
+	podNames := make([]string, 0)
+	if in.workload != nil {
+		for _, pod := range in.workload.Pods {
+			if pod == nil || pod.Name == "" {
+				continue
+			}
+			podNames = append(podNames, escapePromLabelValue(pod.Name))
+		}
+		sort.Strings(podNames)
+	}
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf(`{%s="%s"`, namespaceLabel, namespace))
+	if len(podNames) == 1 {
+		b.WriteString(fmt.Sprintf(`,pod="%s"`, podNames[0]))
+	} else if len(podNames) > 1 {
+		b.WriteString(fmt.Sprintf(`,pod=~"%s"`, strings.Join(podNames, "|")))
+	}
+	keys := make([]string, 0, len(extraLabels))
+	for key := range extraLabels {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		b.WriteString(fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(extraLabels[key])))
+	}
+	for labelName, labelValue := range in.promConfig.QueryScope {
+		b.WriteString(fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue)))
+	}
+	b.WriteByte('}')
+	return b.String()
 }
 
 // escapePromLabelValue escapes backslashes and double-quotes in a PromQL label value

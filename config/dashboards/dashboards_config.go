@@ -69,6 +69,9 @@ type MonitoringDashboardMetric struct {
 	Labels map[string]string `yaml:"labels"`
 	// LabelRegexps are optional regex Prometheus label matchers (e.g. reporter=~"source|waypoint").
 	LabelRegexps map[string]string `yaml:"labelRegexps"`
+	// UsePodSelector scopes the query to the workload's pod names instead of app/version labels.
+	// Needed for cAdvisor metrics such as container_memory_working_set_bytes that lack app labels.
+	UsePodSelector bool `yaml:"usePodSelector"`
 }
 
 type MonitoringDashboardAggregation struct {

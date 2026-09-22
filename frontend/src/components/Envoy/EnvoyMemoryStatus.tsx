@@ -86,7 +86,7 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>
         <KialiLink to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())}>
-          {t('Envoy overview tab')}
+          {t('Envoy summary tab')}
         </KialiLink>
       </div>
     </div>

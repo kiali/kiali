@@ -40,11 +40,12 @@ describe('EnvoyMemory', () => {
         title: 'Envoy Memory',
         aggregations: [],
         charts: [
-          { name: 'Allocated memory', metrics: [], spans: 12, startCollapsed: false, unit: 'bytes' },
-          { name: 'Active connections', metrics: [], spans: 12, startCollapsed: false, unit: '' }
+          { name: 'Memory trends', metrics: [], spans: 12, startCollapsed: false, unit: 'bytes' },
+          { name: 'Active clusters', metrics: [], spans: 12, startCollapsed: false, unit: '' },
+          { name: 'Request rate', metrics: [], spans: 12, startCollapsed: false, unit: 'rps' }
         ],
         externalLinks: [],
-        rows: 3
+        rows: 1
       }
     } as any);
     rstest.spyOn(API, 'getPodEnvoyProxyResourceEntries').mockImplementation((_ns, _pod, resource) => {
@@ -118,7 +119,7 @@ describe('EnvoyMemory', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Summary' }));
 
     expect(await screen.findByTestId('envoy-memory-tab')).toBeInTheDocument();
   });
