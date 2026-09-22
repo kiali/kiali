@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { ServerConfig, RunMode } from '../../types/ServerConfig';
+import { RunMode, type ServerConfig } from '../../types/ServerConfig';
 import { getScenarioConfig } from '../scenarios';
-import { ChatAIConfig } from 'types/Chatbot';
+import type { ChatAIConfig } from 'types/Chatbot';
 
 // Cluster config type
 type ClusterConfigType = Record<
@@ -182,7 +182,7 @@ const generateServerConfig = (): ServerConfig => {
           }
         },
         i18n: {
-          language: 'en',
+          language: '',
           showSelector: true
         },
         list: {

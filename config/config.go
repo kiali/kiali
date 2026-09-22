@@ -1274,8 +1274,8 @@ func NewConfig() (c *Config) {
 					},
 				},
 				I18n: I18nUIDefaults{
-					Language:     "en",
-					ShowSelector: false,
+					Language:     "",
+					ShowSelector: true,
 				},
 				List: ListUIDefaults{
 					IncludeHealth:         true,
@@ -1456,6 +1456,17 @@ func (conf *Config) migrateDeprecatedChatAI(defaultChatAI ChatAIConfig) {
 		conf.AI.Enabled = true
 	}
 	conf.ChatAI = ChatAIConfig{}
+}
+
+// warnDeprecatedI18nShowSelector logs when the deprecated show_selector setting hides language selection.
+//
+// TODO: Remove this warning once ui_defaults.i18n.show_selector is no longer supported.
+func (conf *Config) warnDeprecatedI18nShowSelector() {
+	if conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector {
+		return
+	}
+
+	log.Info("DEPRECATION NOTICE: 'kiali_feature_flags.ui_defaults.i18n.show_selector' has been deprecated - language selection is available in Preferences by default. Setting this to false hides the language selector until the setting is removed in a future release.")
 }
 
 func (chatAI *ChatAIConfig) ValidateChatAI() error {
@@ -1812,6 +1823,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
 	conf.migrateDeprecatedChatAI(defaultChatAI)
+	conf.warnDeprecatedI18nShowSelector()
 
 	// Validate tracing min and max values
 	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {

@@ -8,14 +8,33 @@ import {
   KIALI_COLOR_SCHEME,
   KIALI_CONTRAST_MODE,
   KIALI_THEME,
+  Language,
   PF_THEME_DARK,
   PF_THEME_FELT,
   PF_THEME_GLASS,
   PF_THEME_HIGH_CONTRAST,
   Theme
 } from 'types/Common';
+import { serverConfig, setServerConfig } from 'config/ServerConfig';
+import { i18n } from 'i18n';
 import { store } from 'store/ConfigStore';
 import { GlobalActions } from 'actions/GlobalActions';
+
+const preferencesServerConfig = Object.assign({}, serverConfig);
+
+const languageSelectorServerConfig = {
+  ...preferencesServerConfig,
+  kialiFeatureFlags: {
+    ...preferencesServerConfig.kialiFeatureFlags,
+    uiDefaults: {
+      ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+      i18n: {
+        ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+        showSelector: true
+      }
+    }
+  }
+};
 
 const resetAppearanceState = (): void => {
   document.documentElement.className = '';
@@ -36,6 +55,7 @@ const renderPreferences = (
       colorScheme={ColorScheme.LIGHT}
       contrastMode={ContrastMode.DEFAULT}
       isOpen={true}
+      language={Language.ENGLISH}
       onClose={() => {}}
       theme={Theme.DEFAULT}
       {...props}
@@ -187,6 +207,82 @@ describe('PreferencesModal changes', () => {
       expect(document.documentElement.classList.contains(PF_THEME_HIGH_CONTRAST)).toBe(true);
       expect(store.getState().globalState.contrastMode).toBe(ContrastMode.SYSTEM);
       expect(localStorage.getItem(KIALI_CONTRAST_MODE)).toBe(ContrastMode.SYSTEM);
+    });
+  });
+});
+
+describe('PreferencesModal language', () => {
+  let changeLanguageSpy: ReturnType<typeof rstest.spyOn>;
+
+  beforeAll(() => {
+    setServerConfig(languageSelectorServerConfig);
+  });
+
+  beforeEach(() => {
+    resetAppearanceState();
+    store.dispatch(GlobalActions.setLanguage(Language.ENGLISH));
+    changeLanguageSpy = rstest.spyOn(i18n, 'changeLanguage').mockResolvedValue(undefined as never);
+  });
+
+  afterEach(() => {
+    changeLanguageSpy.mockRestore();
+    setServerConfig(languageSelectorServerConfig);
+  });
+
+  it('shows language selector by default', () => {
+    setServerConfig(preferencesServerConfig);
+    renderPreferences();
+
+    expect(screen.getByTestId('language-select')).toBeInTheDocument();
+  });
+
+  it('hides language selector when showSelector is false', () => {
+    setServerConfig({
+      ...preferencesServerConfig,
+      kialiFeatureFlags: {
+        ...preferencesServerConfig.kialiFeatureFlags,
+        uiDefaults: {
+          ...preferencesServerConfig.kialiFeatureFlags.uiDefaults,
+          i18n: {
+            ...preferencesServerConfig.kialiFeatureFlags.uiDefaults.i18n,
+            showSelector: false
+          }
+        }
+      }
+    });
+    renderPreferences();
+
+    expect(screen.queryByTestId('language-select')).not.toBeInTheDocument();
+  });
+
+  const languageChangeCases = [
+    { expectedLanguage: Language.ENGLISH, label: 'English', startLanguage: Language.CHINESE },
+    { expectedLanguage: Language.SPANISH, label: 'Español', startLanguage: Language.ENGLISH },
+    { expectedLanguage: Language.CHINESE, label: '中文', startLanguage: Language.ENGLISH },
+    { expectedLanguage: Language.KOREAN, label: '한국어', startLanguage: Language.ENGLISH }
+  ];
+
+  languageChangeCases.forEach(({ expectedLanguage, label, startLanguage }) => {
+    it(`changes to ${label} language`, async () => {
+      renderPreferences({ language: startLanguage });
+
+      await selectPreferenceOption('language-select', label);
+
+      await waitFor(() => {
+        expect(store.getState().globalState.language).toBe(expectedLanguage);
+        expect(changeLanguageSpy).toHaveBeenCalledWith(expectedLanguage);
+      });
+    });
+  });
+
+  it('changes to system language', async () => {
+    renderPreferences({ language: Language.SPANISH });
+
+    await selectPreferenceOption('language-select', 'System');
+
+    await waitFor(() => {
+      expect(store.getState().globalState.language).toBe(Language.SYSTEM);
+      expect(changeLanguageSpy).toHaveBeenCalled();
     });
   });
 });
