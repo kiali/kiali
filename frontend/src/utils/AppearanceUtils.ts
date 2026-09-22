@@ -16,6 +16,7 @@ import {
   PF_THEME_HIGH_CONTRAST,
   Theme
 } from 'types/Common';
+import { isColorScheme, isContrastMode, isTheme } from 'utils/PreferenceValidation';
 
 export type DocumentAppearanceClasses = {
   contrastMode: ContrastMode;
@@ -25,22 +26,7 @@ export type DocumentAppearanceClasses = {
 export type ResolvedColorScheme = ColorScheme.LIGHT | ColorScheme.DARK;
 export type ResolvedContrastMode = ContrastMode.DEFAULT | ContrastMode.GLASS | ContrastMode.HIGH_CONTRAST;
 
-export const isColorScheme = (colorScheme: string | null | undefined): colorScheme is ColorScheme => {
-  return colorScheme === ColorScheme.LIGHT || colorScheme === ColorScheme.DARK || colorScheme === ColorScheme.SYSTEM;
-};
-
-export const isContrastMode = (contrastMode: string | null | undefined): contrastMode is ContrastMode => {
-  return (
-    contrastMode === ContrastMode.DEFAULT ||
-    contrastMode === ContrastMode.GLASS ||
-    contrastMode === ContrastMode.HIGH_CONTRAST ||
-    contrastMode === ContrastMode.SYSTEM
-  );
-};
-
-const isValidTheme = (theme: string | null | undefined): theme is Theme => {
-  return theme === Theme.DEFAULT || theme === Theme.FELT;
-};
+export { isColorScheme, isContrastMode } from 'utils/PreferenceValidation';
 
 const migrateLegacyAppearanceStorage = (): void => {
   const legacyTheme = localStorage.getItem(KIALI_THEME);
@@ -127,7 +113,7 @@ const getStoredTheme = (): Theme | undefined => {
   migrateLegacyAppearanceStorage();
   const stored = localStorage.getItem(KIALI_THEME);
 
-  return isValidTheme(stored) ? stored : undefined;
+  return isTheme(stored) ? stored : undefined;
 };
 
 export const getKialiColorScheme = (): ColorScheme => {
@@ -153,7 +139,7 @@ export const getKialiContrastMode = (): ContrastMode => {
 export const getKialiTheme = (): Theme => {
   const stored = getStoredTheme() || (store.getState().globalState.theme as Theme) || undefined;
 
-  if (isValidTheme(stored)) {
+  if (isTheme(stored)) {
     return stored;
   }
 
@@ -241,7 +227,7 @@ export const useKialiContrastMode = (): ResolvedContrastMode => {
 export const useKialiTheme = (): string => {
   const reduxTheme = useKialiSelector(state => state.globalState.theme);
 
-  if (isValidTheme(reduxTheme)) {
+  if (isTheme(reduxTheme)) {
     return reduxTheme;
   }
 

@@ -3,21 +3,10 @@ import { serverConfig } from 'config';
 import { i18n } from 'i18n';
 import { store } from 'store/ConfigStore';
 import { Language } from 'types/Common';
+import { isLanguagePreference, isSupportedLanguage, type ResolvedLanguage } from 'utils/PreferenceValidation';
 
-export type ResolvedLanguage = Language.CHINESE | Language.ENGLISH | Language.KOREAN | Language.SPANISH;
-
-export const isSupportedLanguage = (language: string | null | undefined): language is ResolvedLanguage => {
-  return (
-    language === Language.CHINESE ||
-    language === Language.ENGLISH ||
-    language === Language.KOREAN ||
-    language === Language.SPANISH
-  );
-};
-
-export const isLanguagePreference = (language: string | null | undefined): language is Language => {
-  return isSupportedLanguage(language) || language === Language.SYSTEM;
-};
+export type { ResolvedLanguage } from 'utils/PreferenceValidation';
+export { isLanguagePreference, isSupportedLanguage } from 'utils/PreferenceValidation';
 
 export const getLanguageLabel = (language: ResolvedLanguage): string => {
   switch (language) {
