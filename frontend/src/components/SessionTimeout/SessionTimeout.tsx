@@ -28,8 +28,7 @@ const sessionTimeoutIconStyle = kialiStyle({
 
 const sessionTimeoutTextStyle = kialiStyle({
   flex: 1,
-  fontSize: '18px',
-  lineHeight: 1.4,
+  fontSize: '1rem',
   marginBottom: '1.5rem'
 });
 
