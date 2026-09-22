@@ -39,6 +39,34 @@ export function hasGrafanaDeployment(): boolean {
   return kubectlExec('kubectl get deployment grafana -n istio-system').exitCode === 0;
 }
 
+/** Perses Helm chart exposes svc/perses in istio-system (workload is a StatefulSet, not a Deployment). */
+export function hasPersesInCluster(): boolean {
+  return kubectlExec('kubectl get svc perses -n istio-system').exitCode === 0;
+}
+
+/** True when Kiali has external_services.perses enabled (204 from /api/perses means disabled). */
+export async function isPersesEnabledInKiali(request: APIRequestContext): Promise<boolean> {
+  const response = await request.get('/api/perses');
+  return response.ok() && response.status() !== 204;
+}
+
+export async function hasPersesExternalLinks(request: APIRequestContext): Promise<boolean> {
+  const response = await request.get('/api/perses');
+  if (!response.ok() || response.status() === 204) {
+    return false;
+  }
+  const text = await response.text();
+  if (!text.trim()) {
+    return false;
+  }
+  try {
+    const body = JSON.parse(text) as { externalLinks?: unknown[] };
+    return (body.externalLinks?.length ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function hasSailIstioCr(): boolean {
   return kubectlExec('kubectl get istio default -n istio-system').exitCode === 0;
 }

@@ -361,7 +361,7 @@ export class IstioConfigPage extends BasePage {
       await this.refreshList();
       await expect(row).toBeVisible({ timeout: 5_000 });
       await expect(row.locator(`[data-test="${expectedIcon}"]`)).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [3_000], timeout: 90_000 });
+    }).toPass({ intervals: [10_000], timeout: 90_000 });
   }
 
   async openConfigByName(name: string): Promise<void> {
