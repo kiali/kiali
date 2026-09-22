@@ -1,7 +1,8 @@
 import { expect, type Page } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 import { waitForLoadingComplete } from './transition';
 
-/** Cypress uses `cy.location('pathname')` — Playwright `toHaveURL` matches the full URL including query params. */
+/** Assert pathname (web_root-aware) — Playwright `toHaveURL` matches the full URL including query params. */
 export const expectPathname = async (page: Page, pattern: RegExp): Promise<void> => {
   await expect.poll(() => new URL(page.url()).pathname).toMatch(pattern);
 };
@@ -22,7 +23,7 @@ export const gotoConsolePage = async (
   options: GotoConsolePageOptions = {}
 ): Promise<void> => {
   const params = new URLSearchParams({ refresh: '0', ...query });
-  await page.goto(`/console/${pagePath}?${params.toString()}`);
+  await page.goto(kialiUrl(`/console/${pagePath}?${params.toString()}`));
   if (options.waitForLoad !== false) {
     await waitForLoadingComplete(page);
   }

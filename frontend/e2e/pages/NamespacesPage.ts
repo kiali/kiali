@@ -37,6 +37,10 @@ export class NamespacesPage extends BasePage {
     await expect(this.page.locator('tbody td[data-label="Namespace"]').filter({ hasText: namespace })).toBeVisible();
   }
 
+  async expectBadgeOnNamespace(namespace: string, badge: string): Promise<void> {
+    await expectColumnTextOnRow(this.page, namespace, 'Mode', badge);
+  }
+
   async clickNamespaceDetailLink(namespace: string): Promise<void> {
     await this.page
       .locator('tbody')

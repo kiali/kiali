@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`): KinD cluster + local `kiali` binary. Smoke/core-1/core-2/core-optional use `hack/ci-yaml/ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses (same cluster setup as Cypress `frontend-core-optional`). One parallel job per suite.
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster. Smoke/core-1/core-2/core-caching/core-optional run a local `kiali` binary (`hack/ci-yaml/ci-test-config-*.yaml`). **ambient** deploys Kiali **in-cluster** (MetalLB), matching Cypress `frontend-ambient`. Smoke/core-1/core-2/core-optional use `ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite.
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -167,6 +167,14 @@ cd frontend
 PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
 ```
 
+### Ambient (`yarn playwright:run:ambient`)
+
+Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edge counts, services Healthy filter, workloads out-of-mesh, workload ambient badge, ztunnel logs). Graph TCP/HTTP tests assert the same edge floors as Cypress (≥6 / ≥2). Health filter waits for `productpage` Healthy via API then filters Healthy. KinD setup matches Cypress `frontend-ambient` (ambient Sail, demos, **in-cluster Kiali** via MetalLB; anonymous auth for Playwright). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-ambient
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -180,6 +188,7 @@ yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:perses
+yarn playwright:run:ambient
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -188,7 +197,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, and `playwright-core-optional` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
