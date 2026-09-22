@@ -70,8 +70,8 @@ test.describe('Ambient mesh', () => {
   });
 
   test('The logs tab should show the ztunnel logs for a pod', ambientOnly, async ({ workloadDetailsPage }) => {
-    await workloadDetailsPage.open('bookinfo', 'ratings-v1');
-    await workloadDetailsPage.goToLogsTab();
+    // Wider duration so sparse ztunnel lines are present (default Last 1m is often empty).
+    await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
     await workloadDetailsPage.expectContainerListed('ztunnel');
     await workloadDetailsPage.expectContainerListed('ratings');
     await workloadDetailsPage.selectContainer('ztunnel-ratings');
