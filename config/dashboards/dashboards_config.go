@@ -64,6 +64,11 @@ type MonitoringDashboardChart struct {
 type MonitoringDashboardMetric struct {
 	MetricName  string `yaml:"metricName"`
 	DisplayName string `yaml:"displayName"`
+	// Labels are optional exact Prometheus label matchers merged into the chart filters
+	// (e.g. reporter=destination).
+	Labels map[string]string `yaml:"labels"`
+	// LabelRegexps are optional regex Prometheus label matchers (e.g. reporter=~"source|waypoint").
+	LabelRegexps map[string]string `yaml:"labelRegexps"`
 }
 
 type MonitoringDashboardAggregation struct {

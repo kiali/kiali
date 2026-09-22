@@ -227,6 +227,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 				if ref.DisplayName != "" {
 					displayNames = append(displayNames, ref.DisplayName)
 				}
+				metricFilters := appendPromLabelMatchers(filters, ref.Labels, ref.LabelRegexps)
 				var converted []models.Metric
 				var err error
 				switch chart.DataType {
@@ -235,12 +236,12 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					if chart.Aggregator != "" {
 						aggregator = chart.Aggregator
 					}
-					metric := promClient.FetchRange(ctx, ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
+					metric := promClient.FetchRange(ctx, ref.MetricName, metricFilters, grouping, aggregator, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				case dashboards.Rate:
-					converted, err = fetchDashboardRateMetric(ctx, promClient, ref, filters, grouping, &params.RangeQuery, conversionParams)
+					converted, err = fetchDashboardRateMetric(ctx, promClient, ref, metricFilters, grouping, &params.RangeQuery, conversionParams)
 				default:
-					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, filters, grouping, &params.RangeQuery)
+					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, metricFilters, grouping, &params.RangeQuery)
 					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
 				}
 
@@ -435,6 +436,45 @@ func escapePromLabelValue(v string) string {
 	v = strings.ReplaceAll(v, `\`, `\\`)
 	v = strings.ReplaceAll(v, `"`, `\"`)
 	return v
+}
+
+// appendPromLabels merges exact label matchers into an existing Prometheus label selector.
+func appendPromLabels(selector string, labels map[string]string) string {
+	return appendPromLabelMatchers(selector, labels, nil)
+}
+
+// appendPromLabelMatchers merges exact (=) and regex (=~) label matchers into a selector.
+func appendPromLabelMatchers(selector string, labels, labelRegexps map[string]string) string {
+	if len(labels) == 0 && len(labelRegexps) == 0 {
+		return selector
+	}
+
+	body := strings.TrimSpace(selector)
+	body = strings.TrimPrefix(body, "{")
+	body = strings.TrimSuffix(body, "}")
+
+	var b strings.Builder
+	b.WriteByte('{')
+	b.WriteString(body)
+
+	appendMatchers := func(matchers map[string]string, op string) {
+		keys := make([]string, 0, len(matchers))
+		for key := range matchers {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			if b.Len() > 1 {
+				b.WriteByte(',')
+			}
+			b.WriteString(fmt.Sprintf(`%s%s"%s"`, prometheus.SanitizeLabelName(key), op, escapePromLabelValue(matchers[key])))
+		}
+	}
+	appendMatchers(labels, "=")
+	appendMatchers(labelRegexps, "=~")
+
+	b.WriteByte('}')
+	return b.String()
 }
 
 type istioChart struct {

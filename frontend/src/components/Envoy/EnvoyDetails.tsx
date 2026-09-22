@@ -61,9 +61,17 @@ const copyButtonStyle = kialiStyle({
   }
 });
 
-const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics', 'memory'];
+const envoyTabs = ['memory', 'clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
 const tabName = 'envoyTab';
-const defaultTab = 'clusters';
+const defaultTab = 'memory';
+
+const envoyTabTitle = (resource: string): string => {
+  if (resource === 'memory') {
+    return 'Overview';
+  }
+
+  return `${resource.charAt(0).toUpperCase()}${resource.slice(1)}`;
+};
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -179,11 +187,21 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       return;
     }
 
+    this.selectEnvoyTab(targetResource, resourceIdx);
+  };
+
+  selectEnvoyTab = (targetResource: string, resourceIdx?: number): void => {
+    const activeKey = resourceIdx ?? this.tabIndexForResource(targetResource);
+
+    if (targetResource === this.state.resource && activeKey === this.state.activeKey) {
+      return;
+    }
+
     this.setState({
       config: {},
       fetch: true,
       resource: targetResource,
-      activeKey: resourceIdx
+      activeKey
     });
 
     const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
@@ -360,7 +378,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const filteredEnvoyTabs = this.getFilteredEnvoyTabs();
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
-      const title = `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+      const title = envoyTabTitle(value);
 
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
@@ -413,6 +431,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
             <EnvoyMemory
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.namespace}
+              onSelectEnvoyTab={resource => this.selectEnvoyTab(resource)}
               timeRange={this.props.rangeDuration}
               workload={this.props.workload}
             />

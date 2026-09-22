@@ -120,8 +120,16 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 					Unit:     "rps",
 					DataType: dashboards.Rate,
 					Metrics: []dashboards.MonitoringDashboardMetric{
-						{DisplayName: "Upstream", MetricName: "envoy_cluster_upstream_rq_total"},
-						{DisplayName: "Downstream", MetricName: "envoy_listener_http_downstream_rq"},
+						{
+							DisplayName:  "Upstream",
+							MetricName:   "istio_requests_total",
+							LabelRegexps: map[string]string{"reporter": "source|waypoint"},
+						},
+						{
+							DisplayName: "Downstream",
+							MetricName:  "istio_requests_total",
+							Labels:      map[string]string{"reporter": "destination"},
+						},
 					},
 				},
 			},
@@ -129,7 +137,8 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 	}
 
 	service, prom := setupService(t, config.NewConfig(), "bookinfo", []dashboards.MonitoringDashboard{*dashboardDef})
-	expectedLabels := `{namespace="bookinfo",app="productpage"}`
+	expectedLabelsUpstream := `{namespace="bookinfo",app="productpage",reporter=~"source|waypoint"}`
+	expectedLabelsDownstream := `{namespace="bookinfo",app="productpage",reporter="destination"}`
 	query := models.DashboardQuery{
 		Namespace: "bookinfo",
 		LabelsFilters: map[string]string{
@@ -137,10 +146,8 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 		},
 	}
 	query.FillDefaults()
-	prom.MockMetric(context.Background(), "envoy_cluster_upstream_rq_total", expectedLabels, &query.RangeQuery, 2.5)
-	prom.On("FetchRateRange", mock.Anything, "envoy_listener_http_downstream_rq", []string{expectedLabels}, "", &query.RangeQuery).
-		Return(prometheus.Metric{})
-	prom.On("FetchRateRange", mock.Anything, "envoy_listener_http_downstream_rq_total", []string{expectedLabels}, "", &query.RangeQuery).
+	prom.MockMetric(context.Background(), "istio_requests_total", expectedLabelsUpstream, &query.RangeQuery, 2.5)
+	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{expectedLabelsDownstream}, "", &query.RangeQuery).
 		Return(prometheus.Metric{})
 
 	dashboard, err := service.GetDashboard(context.Background(), query, "envoy-memory")
@@ -617,4 +624,21 @@ func TestCustomDashboardsPromClientFactoryCalledOnce(t *testing.T) {
 	if callCount != 1 {
 		t.Fatalf("expected factory to be called exactly once, got %d", callCount)
 	}
+}
+
+func TestAppendPromLabels(t *testing.T) {
+	assert.Equal(t, `{namespace="bookinfo"}`, appendPromLabels(`{namespace="bookinfo"}`, nil))
+	assert.Equal(t,
+		`{namespace="bookinfo",app="productpage",reporter="source"}`,
+		appendPromLabels(`{namespace="bookinfo",app="productpage"}`, map[string]string{"reporter": "source"}),
+	)
+	assert.Equal(t, `{reporter="destination"}`, appendPromLabels("", map[string]string{"reporter": "destination"}))
+	assert.Equal(t,
+		`{namespace="ns",a="1",b="2"}`,
+		appendPromLabels(`{namespace="ns"}`, map[string]string{"b": "2", "a": "1"}),
+	)
+	assert.Equal(t,
+		`{namespace="bookinfo",reporter=~"source|waypoint"}`,
+		appendPromLabelMatchers(`{namespace="bookinfo"}`, nil, map[string]string{"reporter": "source|waypoint"}),
+	)
 }

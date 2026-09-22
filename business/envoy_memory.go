@@ -22,6 +22,9 @@ const (
 	envoyMemoryLimitRatio      = 0.7
 	idleRequestRatePerSecond   = 0.1
 	idleActiveConnections      = 5
+	// Rough estimate of Envoy config memory contribution per active cluster.
+	// There is no explicit config-vs-traffic memory split; this is a ballpark for UI guidance.
+	roughConfigBytesPerCluster = 50 * 1024
 
 	istioProxyMemoryLimitAnnotation = "sidecar.istio.io/proxyMemoryLimit"
 )
@@ -61,18 +64,21 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	// Downstream listener stats are often absent on waypoints and newer gateways.
 	downstreamCx := in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", labels, "", "", q)
 	downstreamRq := fetchEnvoyDownstreamRequestRate(ctx, in.prom, labels, q)
+	// Default Istio stats omit app-level Envoy request counters (often only xds-grpc remains).
+	// istio_requests_total is the reliable traffic signal for the overview tile and classification.
+	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{labels}, "", q)
 
 	memoryMax := maxLatestValue(memoryMetric)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
 	activeConnections := sumEnvoyActiveConnections(upstreamCx, downstreamCx)
 	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
+	requestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
 
 	proxyType := envoyProxyType(workload)
-	trafficRequestRate := trafficRequestRateForClassification(envoyRequestRate, proxyType, in.prom, ctx, labels, q)
 	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
 	memoryLimit := resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, labels, q.End)
 	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
-	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, trafficRequestRate)
+	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate)
 
 	var memoryUsedPercent float64
 	if memoryLimit > 0 {
@@ -80,15 +86,17 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}
 
 	return &models.EnvoyMemorySummary{
-		ActiveClustersMax:    activeClustersMax,
-		ActiveConnections:    activeConnections,
-		Cause:                cause,
-		MemoryLimitBytes:     int64(memoryLimit),
-		MemoryMaxBytes:       int64(memoryMax),
-		MemoryThresholdBytes: int64(memoryThreshold),
-		MemoryUsedPercent:    memoryUsedPercent,
-		ProxyType:            proxyType,
-		RequestRate:          envoyRequestRate,
+		ActiveClustersMax:            activeClustersMax,
+		ActiveConnections:            activeConnections,
+		Cause:                        cause,
+		LargeConfigClustersThreshold: largeConfigClusters,
+		MemoryLimitBytes:             int64(memoryLimit),
+		MemoryMaxBytes:               int64(memoryMax),
+		MemoryThresholdBytes:         int64(memoryThreshold),
+		MemoryUsedPercent:            memoryUsedPercent,
+		ProxyType:                    proxyType,
+		RequestRate:                  requestRate,
+		RoughConfigMemoryBytes:       activeClustersMax * roughConfigBytesPerCluster,
 	}, nil
 }
 
@@ -111,22 +119,6 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 		return models.EnvoyProxyTypeWaypoint
 	}
 	return models.EnvoyProxyTypeSidecar
-}
-
-func trafficRequestRateForClassification(
-	envoyRequestRate float64,
-	proxyType models.EnvoyProxyType,
-	prom prometheus.ClientInterface,
-	ctx context.Context,
-	labels string,
-	q *prometheus.RangeQuery,
-) float64 {
-	if proxyType != models.EnvoyProxyTypeWaypoint && proxyType != models.EnvoyProxyTypeGateway {
-		return envoyRequestRate
-	}
-
-	istioRq := prom.FetchRateRange(ctx, "istio_requests_total", []string{labels}, "", q)
-	return maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
 }
 
 func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, requestRate float64) models.EnvoyMemoryCause {

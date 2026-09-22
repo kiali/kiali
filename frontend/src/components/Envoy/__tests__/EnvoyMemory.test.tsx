@@ -25,17 +25,37 @@ describe('EnvoyMemory', () => {
         activeClustersMax: 10,
         activeConnections: 5,
         cause: 'ok',
+        largeConfigClustersThreshold: 50,
         memoryLimitBytes: 1073741824,
         memoryMaxBytes: 1024,
         memoryThresholdBytes: 751619277,
         memoryUsedPercent: 0.0001,
         proxyType: 'sidecar',
-        requestRate: 1.5
+        requestRate: 1.5,
+        roughConfigMemoryBytes: 512000
       }
     } as any);
     rstest.spyOn(API, 'getCustomDashboard').mockResolvedValue({
-      data: { title: 'Envoy Memory', aggregations: [], charts: [], externalLinks: [], rows: 2 }
+      data: {
+        title: 'Envoy Memory',
+        aggregations: [],
+        charts: [
+          { name: 'Allocated memory', metrics: [], spans: 12, startCollapsed: false, unit: 'bytes' },
+          { name: 'Active connections', metrics: [], spans: 12, startCollapsed: false, unit: '' }
+        ],
+        externalLinks: [],
+        rows: 3
+      }
     } as any);
+    rstest.spyOn(API, 'getPodEnvoyProxyResourceEntries').mockImplementation((_ns, _pod, resource) => {
+      if (resource === 'clusters') {
+        return Promise.resolve({ data: { clusters: [{}, {}] } } as any);
+      }
+      if (resource === 'listeners') {
+        return Promise.resolve({ data: { listeners: [{}] } } as any);
+      }
+      return Promise.resolve({ data: { routes: [{}, {}, {}] } } as any);
+    });
   });
 
   afterEach(() => {
@@ -98,8 +118,38 @@ describe('EnvoyMemory', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Memory' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
 
     expect(await screen.findByTestId('envoy-memory-tab')).toBeInTheDocument();
+  });
+
+  it('navigates to envoy resource tabs from overview links', async () => {
+    const onSelectEnvoyTab = rstest.fn();
+    const workloadWithPods = {
+      ...workload,
+      pods: [{ name: 'details-v1-abc123' }]
+    };
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            onSelectEnvoyTab={onSelectEnvoyTab}
+            timeRange={{ from: 0, to: 1000 }}
+            workload={workloadWithPods}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    fireEvent.click(await screen.findByTestId('envoy-overview-clusters-link'));
+    fireEvent.click(await screen.findByTestId('envoy-overview-listeners-link'));
+    fireEvent.click(await screen.findByTestId('envoy-overview-routes-link'));
+
+    expect(onSelectEnvoyTab).toHaveBeenCalledWith('clusters');
+    expect(onSelectEnvoyTab).toHaveBeenCalledWith('listeners');
+    expect(onSelectEnvoyTab).toHaveBeenCalledWith('routes');
   });
 });
