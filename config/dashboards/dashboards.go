@@ -69,9 +69,14 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Upstream total requests"
       spans: 3
-      metricName: "envoy_cluster_upstream_rq_total"
+      metricName: "istio_requests_total"
       unit: "rps"
       dataType: "rate"
+      metrics:
+      - metricName: "istio_requests_total"
+        displayName: "Upstream total requests"
+        labelRegexps:
+          reporter: "source|waypoint"
   - chart:
       name: "Downstream active connections"
       spans: 3
@@ -80,22 +85,36 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Downstream HTTP requests"
       spans: 3
-      metricName: "envoy_listener_http_downstream_rq"
+      metricName: "istio_requests_total"
       unit: "rps"
       dataType: "rate"
+      metrics:
+      - metricName: "istio_requests_total"
+        displayName: "Downstream HTTP requests"
+        labels:
+          reporter: "destination"
 
 - name: envoy-memory
   title: Envoy Memory
-  rows: 2
+  rows: 3
   items:
   - chart:
       name: "Allocated memory"
       unit: "bytes"
-      spans: 6
+      spans: 12
       metricName: "envoy_server_memory_allocated"
       dataType: "raw"
       min: 0
       aggregator: "max"
+  - chart:
+      name: "Active connections"
+      spans: 12
+      dataType: "raw"
+      metrics:
+      - metricName: "envoy_cluster_upstream_cx_active"
+        displayName: "Upstream"
+      - metricName: "envoy_listener_downstream_cx_active"
+        displayName: "Downstream"
   - chart:
       name: "Active clusters"
       spans: 6
@@ -109,19 +128,41 @@ const DEFAULT_DASHBOARDS_YAML = `
       unit: "rps"
       dataType: "rate"
       metrics:
-      - metricName: "envoy_cluster_upstream_rq_total"
+      # Default Istio Envoy stats omit app request counters; use Istio telemetry instead.
+      # Waypoints report as reporter="waypoint" (same pattern as Kiali traffic metrics).
+      - metricName: "istio_requests_total"
         displayName: "Upstream"
-      - metricName: "envoy_listener_http_downstream_rq"
+        labelRegexps:
+          reporter: "source|waypoint"
+      - metricName: "istio_requests_total"
         displayName: "Downstream"
+        labels:
+          reporter: "destination"
+- name: envoy-memory-related
+  title: Envoy Memory Related
+  rows: 1
+  items:
   - chart:
-      name: "Active connections"
+      name: "Active clusters"
       spans: 6
+      metricName: "envoy_cluster_manager_active_clusters"
       dataType: "raw"
+      min: 0
+      aggregator: "max"
+  - chart:
+      name: "Request rate"
+      spans: 6
+      unit: "rps"
+      dataType: "rate"
       metrics:
-      - metricName: "envoy_cluster_upstream_cx_active"
+      - metricName: "istio_requests_total"
         displayName: "Upstream"
-      - metricName: "envoy_listener_downstream_cx_active"
+        labelRegexps:
+          reporter: "source|waypoint"
+      - metricName: "istio_requests_total"
         displayName: "Downstream"
+        labels:
+          reporter: "destination"
 - name: go
   title: Go Metrics
   runtime: Go

@@ -1,26 +1,41 @@
 import * as React from 'react';
-import { Alert, Button, ButtonVariant, Card, CardBody, Popover, Title, TitleSizes } from '@patternfly/react-core';
-import { OutlinedQuestionCircleIcon } from '@patternfly/react-icons';
+import {
+  Button,
+  ButtonVariant,
+  Card,
+  CardBody,
+  Popover,
+  PopoverPosition,
+  Title,
+  TitleSizes,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
+import { EnvoyMemoryOverlayChart } from 'components/Envoy/EnvoyMemoryOverlayChart';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 import type { Workload } from 'types/Workload';
-import type { EnvoyMemorySummary } from 'types/EnvoyMemory';
+import type { EnvoyConfigCounts, EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { helpIconStyle } from 'styles/IconStyle';
 import { PFFontWeight } from 'styles/PfTypography';
-import { scrollableContentStyle, tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
+import { PFColors } from 'components/Pf/PfColors';
+import { inlineIconRowStyle, scrollableContentStyle, tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
 import { classes } from 'typestyle';
 import {
   buildEnvoyMemoryQueryParams,
   envoyMemoryCauseDescription,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
+  envoyMemoryMetricHelp,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
-  istioConfigurationScopingUrl
+  istioConfigurationScopingUrl,
+  type EnvoyMemoryMetricHelpKey
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
@@ -28,15 +43,27 @@ import { createIcon, KialiIcon } from 'config/KialiIcon';
 type EnvoyMemoryProps = {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  onSelectEnvoyTab?: (resource: string) => void;
   timeRange: TimeRange;
   workload: Workload;
 };
 
 const summaryStyle = kialiStyle({
-  marginBottom: '1.25rem'
+  marginBottom: '0.75rem'
 });
 
-const helpIconStyle = kialiStyle({
+const titleRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  flexWrap: 'nowrap',
+  gap: '0.25rem'
+});
+
+const statusTooltipStyle = kialiStyle({
+  textAlign: 'left'
+});
+
+const externalLinkIconStyle = kialiStyle({
   marginLeft: '0.5rem',
   verticalAlign: 'middle'
 });
@@ -48,39 +75,94 @@ const linkRowStyle = kialiStyle({
   marginTop: '1rem'
 });
 
-const summaryMetricsStyle = kialiStyle({
-  display: 'flex',
-  flexWrap: 'nowrap',
-  gap: '2rem',
-  marginTop: '1rem',
-  overflowX: 'auto'
+const tilesStyle = kialiStyle({
+  display: 'grid',
+  gap: '1rem',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(11rem, 1fr))',
+  marginTop: '1rem'
 });
 
-const summaryMetricItemStyle = kialiStyle({
+const tileStyle = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100,
+  border: `1px solid ${PFColors.BorderColor100}`,
+  borderRadius: '0.25rem',
   display: 'flex',
   flexDirection: 'column',
-  flexShrink: 0,
-  minWidth: '8rem'
+  gap: '0.25rem',
+  minWidth: '11rem',
+  padding: '0.75rem 1rem'
 });
 
-const summaryMetricLabelStyle = kialiStyle({
+const tileLabelRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'nowrap',
+  whiteSpace: 'nowrap'
+});
+
+const tileLabelStyle = kialiStyle({
+  color: PFColors.Color200,
+  fontSize: '0.875rem',
   fontWeight: PFFontWeight.BodyBold
 });
 
-const summaryMetricValueStyle = kialiStyle({
-  fontVariantNumeric: 'tabular-nums'
+const tileValueStyle = kialiStyle({
+  fontSize: '1.25rem',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: PFFontWeight.BodyBold
+});
+
+const tileHintStyle = kialiStyle({
+  color: PFColors.Color200,
+  fontSize: '0.75rem'
+});
+
+const sectionStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 const chartsSectionStyle = kialiStyle({
-  marginTop: '1.25rem'
+  marginTop: '1rem'
 });
+
+const helpBodyStyle = kialiStyle({
+  maxWidth: '22rem',
+  textAlign: 'left'
+});
+
+const tileLinkStyle = kialiStyle({
+  fontSize: '1.25rem',
+  fontVariantNumeric: 'tabular-nums',
+  fontWeight: PFFontWeight.BodyBold,
+  padding: 0
+});
+
+const MetricHelpIcon: React.FC<{ helpKey: EnvoyMemoryMetricHelpKey; label: string }> = ({ helpKey, label }) => (
+  <Popover
+    aria-label={t('{{label}} information', { label })}
+    bodyContent={<div className={helpBodyStyle}>{envoyMemoryMetricHelp(helpKey)}</div>}
+    headerContent={<span>{label}</span>}
+    position={PopoverPosition.top}
+    triggerAction="hover"
+  >
+    <KialiIcon.Help className={helpIconStyle} />
+  </Popover>
+);
+
+const sortedPodName = (workload: Workload): string | undefined => {
+  const pods = [...(workload.pods ?? [])].sort((a, b) => (a.name >= b.name ? 1 : -1));
+  return pods[0]?.name;
+};
 
 export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps) => {
   const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
+  const [configCounts, setConfigCounts] = React.useState<{ counts: EnvoyConfigCounts; podName: string }>();
   const appLabelName = getAppLabelName(props.workload.labels);
   const verLabelName = getVersionLabelName(props.workload.labels);
   const app = appLabelName ? props.workload.labels[appLabelName] : '';
   const version = verLabelName ? props.workload.labels[verLabelName] : undefined;
+  const podName = sortedPodName(props.workload);
+  const effectiveConfigCounts = podName && configCounts?.podName === podName ? configCounts.counts : undefined;
 
   const fetchSummary = React.useCallback((): void => {
     API.getWorkloadEnvoyMemory(
@@ -101,11 +183,46 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
     fetchSummary();
   }, [fetchSummary]);
 
-  const helpBody = (
-    <div style={{ maxWidth: '24rem', textAlign: 'left' }}>
+  React.useEffect(() => {
+    if (!podName) {
+      return;
+    }
+
+    let cancelled = false;
+
+    Promise.all([
+      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'clusters', props.workload.cluster),
+      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'listeners', props.workload.cluster),
+      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'routes', props.workload.cluster)
+    ])
+      .then(([clusters, listeners, routes]) => {
+        if (cancelled) {
+          return;
+        }
+
+        setConfigCounts({
+          podName,
+          counts: {
+            clusters: clusters.data.clusters?.length ?? 0,
+            listeners: listeners.data.listeners?.length ?? 0,
+            routes: routes.data.routes?.length ?? 0
+          }
+        });
+      })
+      .catch(() => {
+        // Config dump counts are optional for the landing summary.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [podName, props.lastRefreshAt, props.namespace, props.workload.cluster]);
+
+  const overviewHelpBody = (
+    <div className={helpBodyStyle}>
       <p>
         {t(
-          'Envoy memory can be high because of traffic or because of a large configuration pushed to the proxy. When memory is high with little traffic and many clusters, configuration scoping may help.'
+          'This overview summarizes Envoy proxy config size and memory. High memory with little traffic and many clusters may indicate wasteful configuration that Sidecar scoping can reduce.'
         )}
       </p>
       <Button
@@ -115,60 +232,171 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
         rel="noopener noreferrer"
         variant={ButtonVariant.link}
         isInline
-        icon={<KialiIcon.ExternalLink className={helpIconStyle} />}
+        icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
       >
         {t('Istio configuration scoping')}
       </Button>
     </div>
   );
 
+  const clusterCount = effectiveConfigCounts?.clusters ?? summary?.activeClustersMax;
+  const roughConfigBytes = summary?.roughConfigMemoryBytes;
+  const memoryStatusLabel = t('Memory status');
+  const allocatedMemoryLabel = t('Allocated memory');
+  const roughConfigLabel = t('Est. config memory');
+  const activeClustersLabel = t('Active clusters');
+  const listenersLabel = t('Listeners');
+  const routesLabel = t('Routes');
+  const activeConnectionsLabel = t('Active connections');
+  const requestRateLabel = t('Request rate');
+
+  const memoryStatusTooltip = summary ? (
+    <div className={statusTooltipStyle}>
+      <div>
+        <strong>{memoryStatusLabel}:</strong> {envoyMemoryCauseLabel(summary.cause)}
+      </div>
+      <div>{envoyMemoryCauseDescription(summary.cause)}</div>
+      <div style={{ marginTop: '0.5rem' }}>{envoyMemoryMetricHelp('memoryStatus')}</div>
+    </div>
+  ) : null;
+
   return (
     <Card className={classes(flexCardStyle, tabCardStyle)} data-test="envoy-memory-tab">
       <CardBody>
         <div className={summaryStyle}>
           <Title headingLevel="h3" size={TitleSizes.md}>
-            {t('Envoy memory')}
-            <Popover bodyContent={helpBody}>
-              <OutlinedQuestionCircleIcon className={helpIconStyle} />
-            </Popover>
+            <span className={titleRowStyle}>
+              {t('Envoy overview')}
+              {summary && (
+                <Tooltip content={memoryStatusTooltip} position={TooltipPosition.right}>
+                  <span className={inlineIconRowStyle} data-test="envoy-memory-status-icon">
+                    {createIcon(envoyMemoryCauseStatus(summary.cause))}
+                  </span>
+                </Tooltip>
+              )}
+              <Popover
+                aria-label={t('Envoy overview information')}
+                bodyContent={overviewHelpBody}
+                headerContent={<span>{t('Envoy overview')}</span>}
+                position={PopoverPosition.top}
+                triggerAction="hover"
+              >
+                <KialiIcon.Help className={helpIconStyle} />
+              </Popover>
+            </span>
           </Title>
 
           {summary && (
             <>
-              <Alert
-                isInline
-                customIcon={createIcon(envoyMemoryCauseStatus(summary.cause))}
-                variant={summary.cause === 'ok' ? 'success' : 'warning'}
-                title={envoyMemoryCauseLabel(summary.cause)}
-                style={{ marginTop: '1rem' }}
-              >
-                {envoyMemoryCauseDescription(summary.cause)}
-              </Alert>
-
-              <div className={summaryMetricsStyle} data-test="envoy-memory-summary-metrics">
-                <div className={summaryMetricItemStyle}>
-                  <span className={summaryMetricLabelStyle}>{t('Allocated memory (max)')}</span>
-                  <span className={summaryMetricValueStyle}>{formatEnvoyMemoryUsage(summary)}</span>
-                </div>
-                {summary.memoryThresholdBytes > 0 && (
-                  <div className={summaryMetricItemStyle}>
-                    <span className={summaryMetricLabelStyle}>{t('Warning threshold')}</span>
-                    <span className={summaryMetricValueStyle}>
-                      {formatEnvoyMemoryBytes(summary.memoryThresholdBytes)}
+              <div className={tilesStyle} data-test="envoy-memory-summary-metrics">
+                <div className={tileStyle}>
+                  <span className={tileLabelRowStyle}>
+                    <span className={tileLabelStyle}>{allocatedMemoryLabel}</span>
+                    <MetricHelpIcon helpKey="allocatedMemory" label={allocatedMemoryLabel} />
+                  </span>
+                  <span className={tileValueStyle}>{formatEnvoyMemoryUsage(summary)}</span>
+                  {summary.memoryThresholdBytes > 0 && (
+                    <span className={tileHintStyle}>
+                      {t('Warning at {{threshold}}', {
+                        threshold: formatEnvoyMemoryBytes(summary.memoryThresholdBytes)
+                      })}
                     </span>
-                  </div>
+                  )}
+                </div>
+
+                <div className={tileStyle}>
+                  <span className={tileLabelRowStyle}>
+                    <span className={tileLabelStyle}>{roughConfigLabel}</span>
+                    <MetricHelpIcon helpKey="roughConfigMemory" label={roughConfigLabel} />
+                  </span>
+                  <span className={tileValueStyle}>{formatEnvoyMemoryBytes(roughConfigBytes ?? 0)}</span>
+                  <span className={tileHintStyle}>{t('Rough estimate from cluster count')}</span>
+                </div>
+
+                <div className={tileStyle}>
+                  <span className={tileLabelRowStyle}>
+                    <span className={tileLabelStyle}>{activeClustersLabel}</span>
+                    <MetricHelpIcon helpKey="activeClusters" label={activeClustersLabel} />
+                  </span>
+                  {props.onSelectEnvoyTab ? (
+                    <Button
+                      className={tileLinkStyle}
+                      data-test="envoy-overview-clusters-link"
+                      isInline
+                      onClick={() => props.onSelectEnvoyTab!('clusters')}
+                      variant={ButtonVariant.link}
+                    >
+                      {clusterCount ?? 0}
+                    </Button>
+                  ) : (
+                    <span className={tileValueStyle}>{clusterCount ?? 0}</span>
+                  )}
+                  {summary.largeConfigClustersThreshold > 0 && (
+                    <span className={tileHintStyle}>
+                      {t('Large config above {{threshold}}', {
+                        threshold: summary.largeConfigClustersThreshold
+                      })}
+                    </span>
+                  )}
+                </div>
+
+                {effectiveConfigCounts && (
+                  <>
+                    <div className={tileStyle}>
+                      <span className={tileLabelRowStyle}>
+                        <span className={tileLabelStyle}>{listenersLabel}</span>
+                        <MetricHelpIcon helpKey="listeners" label={listenersLabel} />
+                      </span>
+                      {props.onSelectEnvoyTab ? (
+                        <Button
+                          className={tileLinkStyle}
+                          data-test="envoy-overview-listeners-link"
+                          isInline
+                          onClick={() => props.onSelectEnvoyTab!('listeners')}
+                          variant={ButtonVariant.link}
+                        >
+                          {effectiveConfigCounts.listeners}
+                        </Button>
+                      ) : (
+                        <span className={tileValueStyle}>{effectiveConfigCounts.listeners}</span>
+                      )}
+                    </div>
+                    <div className={tileStyle}>
+                      <span className={tileLabelRowStyle}>
+                        <span className={tileLabelStyle}>{routesLabel}</span>
+                        <MetricHelpIcon helpKey="routes" label={routesLabel} />
+                      </span>
+                      {props.onSelectEnvoyTab ? (
+                        <Button
+                          className={tileLinkStyle}
+                          data-test="envoy-overview-routes-link"
+                          isInline
+                          onClick={() => props.onSelectEnvoyTab!('routes')}
+                          variant={ButtonVariant.link}
+                        >
+                          {effectiveConfigCounts.routes}
+                        </Button>
+                      ) : (
+                        <span className={tileValueStyle}>{effectiveConfigCounts.routes}</span>
+                      )}
+                    </div>
+                  </>
                 )}
-                <div className={summaryMetricItemStyle}>
-                  <span className={summaryMetricLabelStyle}>{t('Active clusters (max)')}</span>
-                  <span className={summaryMetricValueStyle}>{summary.activeClustersMax}</span>
+
+                <div className={tileStyle}>
+                  <span className={tileLabelRowStyle}>
+                    <span className={tileLabelStyle}>{activeConnectionsLabel}</span>
+                    <MetricHelpIcon helpKey="activeConnections" label={activeConnectionsLabel} />
+                  </span>
+                  <span className={tileValueStyle}>{summary.activeConnections}</span>
                 </div>
-                <div className={summaryMetricItemStyle}>
-                  <span className={summaryMetricLabelStyle}>{t('Request rate')}</span>
-                  <span className={summaryMetricValueStyle}>{formatEnvoyRequestRate(summary)}</span>
-                </div>
-                <div className={summaryMetricItemStyle}>
-                  <span className={summaryMetricLabelStyle}>{t('Active connections')}</span>
-                  <span className={summaryMetricValueStyle}>{summary.activeConnections}</span>
+
+                <div className={tileStyle}>
+                  <span className={tileLabelRowStyle}>
+                    <span className={tileLabelStyle}>{requestRateLabel}</span>
+                    <MetricHelpIcon helpKey="requestRate" label={requestRateLabel} />
+                  </span>
+                  <span className={tileValueStyle}>{formatEnvoyRequestRate(summary)}</span>
                 </div>
               </div>
 
@@ -181,7 +409,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                     rel="noopener noreferrer"
                     variant={ButtonVariant.link}
                     isInline
-                    icon={<KialiIcon.ExternalLink className={helpIconStyle} />}
+                    icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
                   >
                     {t('Learn about configuration scoping')}
                   </Button>
@@ -191,7 +419,19 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
           )}
         </div>
 
+        <div className={sectionStyle}>
+          <EnvoyMemoryOverlayChart
+            lastRefreshAt={props.lastRefreshAt}
+            namespace={props.namespace}
+            timeRange={props.timeRange}
+            workload={props.workload}
+          />
+        </div>
+
         <div className={classes(scrollableContentStyle, chartsSectionStyle)}>
+          <Title headingLevel="h4" size={TitleSizes.md}>
+            {t('Related metrics')}
+          </Title>
           <CustomMetrics
             app={app}
             appLabelName={appLabelName}
@@ -201,7 +441,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
             hideTraceSpans={true}
             lastRefreshAt={props.lastRefreshAt}
             namespace={props.namespace}
-            template="envoy-memory"
+            template="envoy-memory-related"
             version={version}
             versionLabelName={verLabelName}
             workload={props.workload.name}

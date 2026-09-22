@@ -62,18 +62,19 @@ const copyButtonStyle = kialiStyle({
   }
 });
 
-const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics', 'memory'];
+const envoyTabs = ['memory', 'clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
+const tabName = 'envoyTab';
+const defaultTab = 'memory';
+
 const envoyTabTitles: Record<string, string> = {
   bootstrap: 'Bootstrap',
   clusters: 'Clusters',
   config: 'Config',
   listeners: 'Listeners',
-  memory: 'Memory',
+  memory: 'Overview',
   metrics: 'Metrics',
   routes: 'Routes'
 };
-const tabName = 'envoyTab';
-const defaultTab = 'clusters';
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -190,11 +191,21 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
       return;
     }
 
+    this.selectEnvoyTab(targetResource, resourceIdx);
+  };
+
+  selectEnvoyTab = (targetResource: string, resourceIdx?: number): void => {
+    const activeKey = resourceIdx ?? this.tabIndexForResource(targetResource);
+
+    if (targetResource === this.state.resource && activeKey === this.state.activeKey) {
+      return;
+    }
+
     this.setState({
       config: {},
       fetch: true,
       resource: targetResource,
-      activeKey: resourceIdx
+      activeKey
     });
 
     const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
@@ -424,6 +435,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
             <EnvoyMemory
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.namespace}
+              onSelectEnvoyTab={resource => this.selectEnvoyTab(resource)}
               timeRange={this.props.rangeDuration}
               workload={this.props.workload}
             />

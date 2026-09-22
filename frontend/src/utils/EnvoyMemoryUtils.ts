@@ -100,6 +100,51 @@ export const envoyMemoryCauseDescription = (cause: EnvoyMemoryCause): string => 
 
 export const istioConfigurationScopingUrl = (): string => ISTIO_CONFIGURATION_SCOPING_URL;
 
+export type EnvoyMemoryMetricHelpKey =
+  | 'allocatedMemory'
+  | 'roughConfigMemory'
+  | 'activeClusters'
+  | 'listeners'
+  | 'routes'
+  | 'activeConnections'
+  | 'requestRate'
+  | 'memoryStatus';
+
+export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => {
+  switch (key) {
+    case 'allocatedMemory':
+      return t(
+        'Prometheus metric envoy_server_memory_allocated (max over the selected time range). The limit uses container_spec_memory_limit_bytes when available, otherwise the sidecar.istio.io/proxyMemoryLimit annotation.'
+      );
+    case 'roughConfigMemory':
+      return t(
+        'Rough estimate, not a Prometheus metric: active clusters × 50 KiB. Used as a ballpark for configuration footprint because Envoy does not expose config vs traffic memory separately.'
+      );
+    case 'activeClusters':
+      return t(
+        'Prefer the Envoy config dump cluster count for the selected pod when available; otherwise Prometheus metric envoy_cluster_manager_active_clusters (max over the time range).'
+      );
+    case 'listeners':
+      return t('Count of listeners from the Envoy config dump of the selected pod (not a Prometheus metric).');
+    case 'routes':
+      return t('Count of routes from the Envoy config dump of the selected pod (not a Prometheus metric).');
+    case 'activeConnections':
+      return t(
+        'Sum of Prometheus metrics envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active (latest values).'
+      );
+    case 'requestRate':
+      return t(
+        'Rate of Prometheus metric istio_requests_total for this proxy (Upstream = reporter=~"source|waypoint", Downstream = reporter=destination). Envoy request counters are usually absent with default Istio stats, so they are only used when present.'
+      );
+    case 'memoryStatus':
+      return t(
+        'Heuristic classification from allocated memory, request rate, active connections, and active clusters. High memory with idle traffic and many clusters is labeled as configuration; high memory with active traffic is labeled as traffic.'
+      );
+    default:
+      return '';
+  }
+};
+
 export const buildEnvoyMemoryQueryParams = (
   timeRange: TimeRange,
   lastRefreshAt: TimeInMilliseconds
@@ -122,9 +167,13 @@ export const buildEnvoyMemoryQueryParams = (
   return opts;
 };
 
-export const buildEnvoyMemoryTabUrl = (pathname: string, search: string): string => {
+export const buildEnvoyTabUrl = (pathname: string, search: string, envoyTab: string): string => {
   const urlParams = new URLSearchParams(search);
   urlParams.set('tab', 'envoy');
-  urlParams.set('envoyTab', 'memory');
+  urlParams.set('envoyTab', envoyTab);
   return `${pathname}?${urlParams.toString()}`;
+};
+
+export const buildEnvoyMemoryTabUrl = (pathname: string, search: string): string => {
+  return buildEnvoyTabUrl(pathname, search, 'memory');
 };

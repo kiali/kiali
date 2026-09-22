@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
+import type { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
 import {
   ChartAxis,
   Chart,
@@ -13,12 +13,13 @@ import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
 import { format as d3Format } from 'd3-format';
 import { getFormatter, getUnit } from 'utils/Formatter';
-import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
-import { Overlay } from 'types/Overlay';
-import { BrushHandlers, getVoronoiContainerProps } from './Container';
+import type { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
+import type { Overlay } from 'types/Overlay';
+import type { BrushHandlers } from './Container';
+import { getVoronoiContainerProps } from './Container';
 import { toBuckets } from 'utils/VictoryChartsUtils';
-import { VCEvent } from 'utils/VictoryEvents';
-import { XAxisType } from 'types/Dashboards';
+import type { VCEvent } from 'utils/VictoryEvents';
+import type { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
 import { INTERPOLATION_STRATEGY } from './SparklineChart';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -42,6 +43,8 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   onTooltipClose?: (datum: RawOrBucket<O>) => void;
   onTooltipOpen?: (datum: RawOrBucket<O>) => void;
   overlay?: Overlay<O>;
+  // Extra right padding when an overlay axis is shown (default 15).
+  overlayRightPadding?: number;
   overrideSeriesComponentStyle?: boolean;
   // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
   // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
@@ -152,46 +155,12 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     window.removeEventListener('resize', this.handleResize);
   }
 
-  private checkLegendOverflow = (): void => {
-    if (this.legendRef && !this.state.legendExpanded) {
-      const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
-
-      if (overflows !== this.state.legendOverflows) {
-        this.setState({ legendOverflows: overflows });
-      }
-    }
-  };
-
-  private onTooltipClose = (): void => {
-    if (this.props.onTooltipClose) {
-      this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
-    }
-
-    this.hoveredItem = undefined;
-  };
-
-  private onTooltipOpen = (points?: VCDataPoint[]): void => {
-    if (points && points.length > 0) {
-      this.hoveredItem = points[0];
-    } else {
-      this.hoveredItem = undefined;
-    }
-
-    if (this.props.onTooltipOpen) {
-      this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
-    }
-  };
-
-  private handleToggleLegendExpanded = (): void => {
-    this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
-  };
-
   render(): React.ReactNode {
     const scaleInfo = this.scaledAxisInfo(this.props.data);
     const fullLegendData = this.buildFullLegendData();
     const chartHeight = this.props.chartHeight ?? 300;
     const showOverlay = (this.props.overlay && this.props.showSpans) ?? false;
-    const overlayRightPadding = showOverlay ? 15 : 0;
+    const overlayRightPadding = showOverlay ? (this.props.overlayRightPadding ?? 15) : 0;
 
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
@@ -475,6 +444,40 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     );
   }
 
+  private checkLegendOverflow = (): void => {
+    if (this.legendRef && !this.state.legendExpanded) {
+      const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
+
+      if (overflows !== this.state.legendOverflows) {
+        this.setState({ legendOverflows: overflows });
+      }
+    }
+  };
+
+  private onTooltipClose = (): void => {
+    if (this.props.onTooltipClose) {
+      this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
+    }
+
+    this.hoveredItem = undefined;
+  };
+
+  private onTooltipOpen = (points?: VCDataPoint[]): void => {
+    if (points && points.length > 0) {
+      this.hoveredItem = points[0];
+    } else {
+      this.hoveredItem = undefined;
+    }
+
+    if (this.props.onTooltipOpen) {
+      this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
+    }
+  };
+
+  private handleToggleLegendExpanded = (): void => {
+    this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
+  };
+
   private renderTimeSeries = (height: number): React.ReactNode => {
     const groupOffset = this.props.groupOffset ?? 0;
 
@@ -504,7 +507,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
 
               const datapoints = serie.datapoints.map(d => {
-                let t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
+                const t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
                 let trendPoint = parseFloat(d.y.toString());
 
                 if (d.y0) {
@@ -520,7 +523,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
               const linearRegression = regression.linear(datapoints, { precision: 10 });
 
-              let regressionDatapoints = serie.datapoints.map(d => ({
+              const regressionDatapoints = serie.datapoints.map(d => ({
                 ...d,
                 name: `${d.name} (trendline)`,
                 y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],

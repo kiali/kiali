@@ -366,12 +366,14 @@ export const workloadHandlers = [
       activeClustersMax: 12,
       activeConnections: 0,
       cause: 'ok',
+      largeConfigClustersThreshold: 50,
       memoryLimitBytes: 1073741824,
       memoryMaxBytes: 67108864,
       memoryThresholdBytes: 751619277,
       memoryUsedPercent: 6.25,
       proxyType: 'sidecar',
-      requestRate: 0
+      requestRate: 0,
+      roughConfigMemoryBytes: 614400
     });
   })
 ];

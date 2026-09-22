@@ -121,6 +121,16 @@ func TestMaxRequestRate(t *testing.T) {
 	assert.Equal(t, 12.0, maxRequestRate(12.0, 3.0))
 }
 
+func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {
+	envoyOnly := envoyRequestRateFromMetrics(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{})
+	istio := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(1.25)}}},
+		},
+	}
+	assert.Equal(t, 1.25, maxRequestRate(envoyOnly, sumLatestValues(istio)))
+}
+
 func TestFetchEnvoyDownstreamRequestRateUsesTotalSuffixFallback(t *testing.T) {
 	prom := new(pmock.PromClientMock)
 	labels := `{namespace="bookinfo",app="productpage"}`
