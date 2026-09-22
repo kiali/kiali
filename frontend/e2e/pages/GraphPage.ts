@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { kialiUrl } from '../utils/kialiUrl';
 import { waitForLoadingComplete } from '../utils/transition';
 import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
@@ -69,7 +70,7 @@ export class GraphPage extends BasePage {
       await route.fulfill({ response, json: body });
     });
 
-    await this.page.goto('/console/graph/namespaces?refresh=0');
+    await this.page.goto(kialiUrl('/console/graph/namespaces?refresh=0'));
     await waitForLoadingComplete(this.page);
   }
 
@@ -89,7 +90,7 @@ export class GraphPage extends BasePage {
           )
         : null;
 
-    await this.page.goto(`/console/graph/namespaces?${params.toString()}`);
+    await this.page.goto(kialiUrl(`/console/graph/namespaces?${params.toString()}`));
     if (graphResponse) {
       await graphResponse;
     }
@@ -122,6 +123,13 @@ export class GraphPage extends BasePage {
   async expectNamespaceInSummaryPanel(namespace: string): Promise<void> {
     await expectGraphTopology(this.page, () => {});
     await expect(this.page.locator(`div#summary-panel-graph div#ns-${namespace}`)).toBeVisible();
+  }
+
+  async expectSummaryPanelTrafficRate(protocol: 'HTTP' | 'TCP'): Promise<void> {
+    const panel = this.page.locator('#summary-panel-graph');
+    const labelPattern = protocol === 'HTTP' ? /HTTP \(requests per second\)/ : /TCP Traffic \(bytes per second\)/;
+    await expect(panel.getByText(labelPattern)).toBeVisible();
+    await expect(panel.getByRole('gridcell').filter({ hasText: /^\d/ }).first()).toBeVisible();
   }
 
   async openDisplayMenu(): Promise<void> {
@@ -501,6 +509,16 @@ export class GraphPage extends BasePage {
 
   async expectNoTraffic(): Promise<void> {
     await expect(this.page.locator('#empty-graph')).toBeVisible();
+  }
+
+  async expectTrafficEdgesAtLeast(edgeCount: number): Promise<void> {
+    await expectGraphTopology(this.page, ({ edges }) => {
+      const trafficEdges = select(
+        edges.map(edge => ({ data: edge.data })),
+        { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }
+      );
+      expect(trafficEdges.length).toBeGreaterThanOrEqual(edgeCount);
+    });
   }
 
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {

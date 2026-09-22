@@ -73,6 +73,10 @@ export class WorkloadsPage extends ListPage {
     await expectOnlyHealthyInTable(this.page);
   }
 
+  async expectTextInTable(text: string): Promise<void> {
+    await expect(this.page.locator('tbody')).toContainText(text);
+  }
+
   async expectOnlyWorkloadsWithAppLabel(): Promise<void> {
     const regex = /app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=/;
     const rows = this.page.locator('tbody tr');
