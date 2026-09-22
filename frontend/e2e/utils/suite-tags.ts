@@ -35,3 +35,6 @@ export const waypointOnly = { tag: '@waypoint' as const };
 
 /** @waypoint-tracing — frontend-ambient Playwright / Cypress suite */
 export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };
+
+/** @ai-chatbot — AI chatbot Playwright suite */
+export const aiChatbotOnly = { tag: '@ai-chatbot' as const };

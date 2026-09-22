@@ -98,18 +98,20 @@
 - [ ] `@external-kiali` suite passes
 - [ ] `@tracing` suite passes
 - [ ] `@offline` suite passes
-- [ ] `@ai-chatbot` suite passes
+- [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
 
 ## CI / pipelines
 
 - [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
-  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient`
-  suites (PR #10174, #10195, #10220, #10269, #10292)
+- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
+  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
+  `playwright-ambient`, and `playwright-ai-chatbot` suites
+  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; AI chatbot on epic branch)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
-  (PR #10174, #10220; core-caching workflow on epic branch)
+  (PR #10174, #10220; core-caching + AI chatbot workflows on epic branch)
 - [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
   removal
 - [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is

@@ -372,6 +372,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-core-caching` | Playwright core-caching suite (KinD + local Kiali with cache enabled) |
 | `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + local Kiali) |
 | `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
+| `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + local Kiali with chat_ai config) |
 
 #### The `local` Suite (Recommended for Local Development)
 
