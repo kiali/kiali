@@ -1483,7 +1483,7 @@ copy_acm_mtls_certs() {
 # uses a projected volume to automatically combine it with kiali-cabundle (custom CAs).
 # This function creates kiali-cabundle with only the ACM CA - the projected volume will
 # merge it with OpenShift's service CA automatically.
-# Per Kiali docs: https://kiali.io/docs/configuration/p8s-jaeger-grafana/tls-configuration/
+# Per Kiali docs: https://kiali.io/docs/configuration/external-services/tls-configuration/
 # Per Red Hat blog: https://www.redhat.com/en/blog/how-your-grafana-can-fetch-metrics-from-red-hat-advanced-cluster-management-observability-observatorium-and-thanos
 setup_kiali_ca_bundle() {
   local configmap_name="kiali-cabundle"
