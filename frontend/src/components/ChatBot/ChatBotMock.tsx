@@ -1,7 +1,7 @@
 import React from 'react';
 import { FormSelect, FormSelectOption, FormSelectOptionGroup } from '@patternfly/react-core';
 import { conversationEntryIds } from '../../mocks/handlers/chatbot/conversations';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ChatBotMockProps = {
   handleSelectMockConversation: (conversation: string) => void;
@@ -9,6 +9,7 @@ type ChatBotMockProps = {
 };
 
 export const ChatBotMock: React.FC<ChatBotMockProps> = ({ handleSelectMockConversation, selectedMockConversation }) => {
+  const { t } = useKialiTranslation();
   const normalizeConversationId = (conversationId: string): string =>
     conversationId
       .replace(/([a-z0-9])([A-Z])/g, '$1 $2')

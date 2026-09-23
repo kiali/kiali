@@ -21,7 +21,7 @@ import { isValidPort } from './ListenerBuilder';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ServerBuilderProps = {
   index: number;
@@ -29,21 +29,6 @@ type ServerBuilderProps = {
   onRemoveServer: (i: number) => void;
   server: ServerForm;
 };
-
-const columns: ThProps[] = [
-  {
-    title: t('Port Number'),
-    width: 20
-  },
-  {
-    title: t('Port Name'),
-    width: 20
-  },
-  {
-    title: t('Protocol'),
-    width: 20
-  }
-];
 
 export const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL', 'OPTIONAL_MUTUAL'];
@@ -84,8 +69,24 @@ const deleteButtonStyle = kialiStyle({
 });
 
 export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isProtocolSelectOpen, setIsProtocolSelectOpen] = React.useState<boolean>(false);
   const [isTlsModeSelectOpen, setIsTlsModeSelectOpen] = React.useState<boolean>(false);
+
+  const columns: ThProps[] = [
+    {
+      title: t('Port Number'),
+      width: 20
+    },
+    {
+      title: t('Port Name'),
+      width: 20
+    },
+    {
+      title: t('Protocol'),
+      width: 20
+    }
+  ];
 
   const onAddHosts = (_event: React.FormEvent, value: string): void => {
     props.onChange(

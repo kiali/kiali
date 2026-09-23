@@ -6,7 +6,7 @@ import { Button, ButtonVariant } from '@patternfly/react-core';
 import { AddressBuilder } from './AddressBuilder';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type AddressListProps = {
   addressList: Address[];
@@ -35,6 +35,7 @@ const columns: ThProps[] = [
 ];
 
 export const AddressList: React.FC<AddressListProps> = (props: AddressListProps) => {
+  const { t } = useKialiTranslation();
   const onAddAddress = (): void => {
     const newAddress: Address = {
       type: 'IPAddress',

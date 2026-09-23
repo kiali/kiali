@@ -15,7 +15,7 @@ import { ProxyStatusList } from './ProxyStatusList';
 import { highestSeverity, validationToHealth } from '../../types/ServiceInfo';
 import { ValidationStack } from '../../components/Validations/ValidationStack';
 import { createIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type PodStatusProps = {
   checks?: ObjectCheck[];
@@ -23,6 +23,7 @@ type PodStatusProps = {
 };
 
 export const PodStatus: React.FC<PodStatusProps> = (props: PodStatusProps) => {
+  const { t } = useKialiTranslation();
   const proxyStatusSeverity: Status =
     props.proxyStatus && hasProxyStatusInfoSeverity(props.proxyStatus)
       ? INFO

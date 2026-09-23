@@ -15,7 +15,7 @@ import {
   SELECTOR
 } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ListenerListProps = {
   listeners: Listener[];
@@ -32,37 +32,6 @@ const addListenerStyle = kialiStyle({
   marginLeft: '0.5rem',
   marginTop: '0.25rem'
 });
-
-const columns: ThProps[] = [
-  {
-    title: t('Name'),
-    width: 20
-  },
-  {
-    title: t('Hostname'),
-    width: 20
-  },
-  {
-    title: t('Port'),
-    width: 10
-  },
-  {
-    title: t('Protocol'),
-    width: 10
-  },
-  {
-    title: t('From Namespaces'),
-    width: 10
-  },
-  {
-    title: t('Labels'),
-    width: 25
-  },
-  {
-    title: '',
-    width: 10
-  }
-];
 
 export const addSelectorLabels = (value: string): [boolean, Record<string, string>] => {
   if (value.length === 0) {
@@ -101,6 +70,39 @@ export const addSelectorLabels = (value: string): [boolean, Record<string, strin
 };
 
 export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListProps) => {
+  const { t } = useKialiTranslation();
+
+  const columns: ThProps[] = [
+    {
+      title: t('Name'),
+      width: 20
+    },
+    {
+      title: t('Hostname'),
+      width: 20
+    },
+    {
+      title: t('Port'),
+      width: 10
+    },
+    {
+      title: t('Protocol'),
+      width: 10
+    },
+    {
+      title: t('From Namespaces'),
+      width: 10
+    },
+    {
+      title: t('Labels'),
+      width: 25
+    },
+    {
+      title: '',
+      width: 10
+    }
+  ];
+
   const onAddListener = (): void => {
     const newListener: ListenerForm = {
       hostname: '',

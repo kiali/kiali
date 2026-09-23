@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Form, FormGroup, FormHelperText, HelperText, HelperTextItem, TextInput } from '@patternfly/react-core';
 import { isValid } from 'utils/Common';
 import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   k8sRouteHosts: string[];
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export const K8sGRPCRouteHosts: React.FC<Props> = (props: Props) => {
+  const { t } = useKialiTranslation();
   const isK8sRouteHostsValid = (k8sRouteHosts: string[]): boolean => {
     // All k8s route hosts must be valid
     return k8sRouteHosts.every(host => {

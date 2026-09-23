@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { ActionGroup, Button, Content, Form } from '@patternfly/react-core';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { ChatModal } from './ChatModal';
 
 type Props = {
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export const NewChatModal: React.FC<Props> = ({ isOpen, onClose, onConfirm, providerChanged }) => {
+  const { t } = useKialiTranslation();
   return (
     <ChatModal isOpen={isOpen} onClose={onClose} title={t('Confirm chat deletion')}>
       <Content component="p">

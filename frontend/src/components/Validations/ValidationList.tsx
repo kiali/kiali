@@ -5,7 +5,7 @@ import { ValidationTypes } from '../../types/IstioObjects';
 import { Validation } from './Validation';
 import { highestSeverity } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ValidationListProps = {
   checks?: ObjectCheck[];
@@ -21,6 +21,7 @@ const tooltipContentStyle = kialiStyle({
 });
 
 export const ValidationList: React.FC<ValidationListProps> = (props: ValidationListProps) => {
+  const { t } = useKialiTranslation();
   const content = (
     <div className={tooltipContentStyle}>
       {(props.checks ?? []).map(check => {

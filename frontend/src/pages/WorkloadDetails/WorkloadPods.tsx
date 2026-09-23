@@ -28,7 +28,7 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
 import { INJECTION_LABEL_REV } from 'config/ServerConfig';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -74,6 +74,7 @@ const podNameStyle = kialiStyle({
 });
 
 export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsProps) => {
+  const { t } = useKialiTranslation();
   const [sortIndex, setSortIndex] = React.useState<number>(0);
   const [sortDirection, setSortDirection] = React.useState<SortByDirection>(SortByDirection.asc);
 

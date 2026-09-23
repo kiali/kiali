@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, ButtonVariant, Popover, PopoverPosition, TextInput } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 interface LabelFiltersProps {
   filterAdd: (value: string) => void;
@@ -17,6 +17,7 @@ const infoIconStyle = kialiStyle({
 });
 
 export const LabelFilters: React.FC<LabelFiltersProps> = (props: LabelFiltersProps) => {
+  const { t } = useKialiTranslation();
   const onKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === 'Enter') {
       if (props.value && props.value.length > 0) {

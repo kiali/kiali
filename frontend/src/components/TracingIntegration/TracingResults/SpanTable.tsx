@@ -26,6 +26,7 @@ import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { ColorScheme } from '../../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../../utils/AppearanceUtils';
+import { languageSelector } from 'store/Selectors';
 import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
@@ -35,6 +36,7 @@ type ReduxProps = {
 type StateProps = {
   colorScheme: string;
   kiosk: string;
+  language: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
   systemAppearanceRevision: number;
@@ -136,28 +138,6 @@ const getClassName = (
         : undefined;
 };
 
-const columns: SortableCompareTh<RichSpanData>[] = [
-  {
-    title: t('Timeline'),
-    sortable: true,
-    compare: (a, b) => a.startTime - b.startTime
-  },
-  {
-    title: t('App / Workload'),
-    sortable: true,
-    compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
-  },
-  {
-    title: t('Summary'),
-    sortable: false
-  },
-  {
-    title: t('Statistics'),
-    sortable: true,
-    compare: (a, b) => a.duration - b.duration
-  }
-];
-
 class SpanTableComponent extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -196,7 +176,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       <SimpleTable
         label={t('Span List')}
         className={tableStyle}
-        columns={columns}
+        columns={this.getColumns()}
         rows={this.rows()}
         emptyState={noSpans}
         onSort={onSort}
@@ -207,6 +187,28 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   }
 
+  private getColumns = (): SortableCompareTh<RichSpanData>[] => [
+    {
+      title: t('Timeline'),
+      sortable: true,
+      compare: (a, b) => a.startTime - b.startTime
+    },
+    {
+      title: t('App / Workload'),
+      sortable: true,
+      compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
+    },
+    {
+      title: t('Summary'),
+      sortable: false
+    },
+    {
+      title: t('Statistics'),
+      sortable: true,
+      compare: (a, b) => a.duration - b.duration
+    }
+  ];
+
   private fetchComparisonMetrics(items: RichSpanData[]): void {
     const queries = buildQueriesFromSpans(items, false, this.shouldIncludeWaypoint());
     this.props.loadMetricsStats(queries, false);
@@ -216,7 +218,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     !!this.props.includeWaypoint || this.props.items.some(item => isWaypointProxySpan(item));
 
   private rows = (): IRow[] => {
-    const compare = columns[this.state.sortIndex].compare;
+    const compare = this.getColumns()[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
       : this.props.items;
@@ -574,6 +576,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
+  language: languageSelector(state),
   metricsStats: state.metricsStats.data,
   provider: state.tracingState.info?.provider,
   ...mapAppearanceFromState(state)

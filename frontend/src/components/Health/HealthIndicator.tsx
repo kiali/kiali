@@ -4,7 +4,7 @@ import { HealthDetails } from './HealthDetails';
 import * as H from '../../types/Health';
 import { createIcon, createTooltipIcon } from '../../config/KialiIcon';
 import { healthIndicatorStyle } from '../../styles/HealthStyle';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 interface HealthIndicatorProps {
   health?: H.Health;
@@ -13,6 +13,7 @@ interface HealthIndicatorProps {
 }
 
 export const HealthIndicator: React.FC<HealthIndicatorProps> = (props: HealthIndicatorProps) => {
+  const { t } = useKialiTranslation();
   const globalStatus = props.health ? props.health.getStatus() : H.NA;
 
   if (props.health) {

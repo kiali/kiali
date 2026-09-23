@@ -6,7 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export interface MeshHelpFindProps {
   children?: React.ReactNode;
@@ -48,6 +48,7 @@ const prefaceStyle = kialiStyle({
 });
 
 export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindProps) => {
+  const { t } = useKialiTranslation();
   // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 

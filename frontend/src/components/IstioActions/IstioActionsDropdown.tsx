@@ -14,7 +14,7 @@ import {
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type IstioActionDropdownProps = {
   canDelete: boolean;
@@ -24,6 +24,7 @@ type IstioActionDropdownProps = {
 };
 
 export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: IstioActionDropdownProps) => {
+  const { t } = useKialiTranslation();
   const [showConfirmModal, setShowConfirmModal] = React.useState<boolean>(false);
   const [dropdownOpen, setDropdownOpen] = React.useState<boolean>(false);
 

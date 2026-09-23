@@ -8,7 +8,7 @@ import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { healthIndicatorStyle } from 'styles/HealthStyle';
 import { createIcon } from 'config/KialiIcon';
 import { KialiLink } from 'components/Link/KialiLink';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type Props = {
   id: string;
@@ -19,6 +19,7 @@ type Props = {
 };
 
 export const MeshHealthIndicator: React.FC<Props> = (props: Props) => {
+  const { t } = useKialiTranslation();
   const setFilters = (): void => {
     const filters: ActiveFilter[] = [
       {

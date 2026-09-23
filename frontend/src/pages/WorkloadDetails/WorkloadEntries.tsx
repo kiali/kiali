@@ -20,7 +20,7 @@ import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadEntriesProps = {
   entries: WorkloadGroupEntry[];
@@ -49,6 +49,7 @@ const iconStyle = kialiStyle({
 });
 
 export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadEntriesProps) => {
+  const { t } = useKialiTranslation();
   const columns: ThProps[] = [{ title: t('Name') }];
 
   const noEntries: React.ReactNode = (

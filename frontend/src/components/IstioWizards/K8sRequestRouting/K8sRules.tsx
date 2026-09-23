@@ -7,7 +7,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { SimpleTable } from 'components/Table/SimpleTable';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export enum MOVE_TYPE {
   UP,
@@ -39,6 +39,7 @@ const noRulesStyle = kialiStyle({
 });
 
 export const K8sRules: React.FC<K8sRuleProps> = (props: K8sRuleProps) => {
+  const { t } = useKialiTranslation();
   const matchAllIndex = (k8sRules: K8sRule[]): number => {
     let matchAll = -1;
 

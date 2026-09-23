@@ -11,7 +11,7 @@ import {
   MenuToggleElement,
   MenuToggle
 } from '@patternfly/react-core';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type K8sMatchBuilderProps = {
   category: string;
@@ -64,16 +64,17 @@ const allOptions = {
   }
 };
 
-const placeholderText = {
-  [METHOD]: 'Method service...',
-  [PATH]: 'Path value...',
-  [HEADERS]: 'Header value...',
-  [QUERY_PARAMS]: t('Query param value...')
-};
-
 export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
   const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
+
+  const placeholderText = {
+    [METHOD]: t('Method service...'),
+    [PATH]: t('Path value...'),
+    [HEADERS]: t('Header value...'),
+    [QUERY_PARAMS]: t('Query param value...')
+  };
 
   const renderOpOptions: string[] = allOptions[props.protocol][props.category];
 

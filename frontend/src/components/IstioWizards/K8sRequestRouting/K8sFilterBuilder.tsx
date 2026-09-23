@@ -14,7 +14,7 @@ import {
 import { ServiceOverview } from '../../../types/ServiceList';
 import { getServicePort } from '../../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type K8sFilterBuilderProps = {
   filterType: string;
@@ -76,6 +76,7 @@ const addFilterStyle = kialiStyle({
 });
 
 export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilterBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isFilterDropdown, setIsFilterDropdown] = React.useState<boolean>(false);
   const [isHeaderDropdown, setIsHeaderDropdown] = React.useState<boolean>(false);
   const [isSchemeDropdown, setIsSchemeDropdown] = React.useState<boolean>(false);

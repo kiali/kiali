@@ -1,6 +1,24 @@
 import type { Prompt } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 
+// Title fields stay English so Prompt.tsx can t(title) at render after a language change.
+// These literals exist so i18next-parser keeps the catalog entries (README external-variable pattern).
+export const dataPromptTitleKeys = [
+  t('Application Health Analysis'),
+  t('Application Troubleshooting'),
+  t('Check Graph Status'),
+  t('Istio Config Review'),
+  t('Istio Object Review'),
+  t('Mesh Health Summary'),
+  t('Namespace Overview'),
+  t('Namespace Troubleshooting'),
+  t('Analyze Overview'),
+  t('Service Health Analysis'),
+  t('Service Troubleshooting'),
+  t('Workload Health Analysis'),
+  t('Workload Troubleshooting')
+];
+
 export const DataPrompts: { [key: string]: Prompt[] } = {
   applications: [
     {
@@ -8,7 +26,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Report applications that may need attention, including health issues or missing sidecars',
       query:
         'Analyze the applications in namespaces: {namespaces} and report only the ones that may need attention, including health issues, traffic anomalies, or missing sidecars.',
-      title: t('Application Health Analysis')
+      title: 'Application Health Analysis'
     }
   ],
   'application-details': [
@@ -17,7 +35,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Analyze the application for health issues, traffic anomalies, and missing sidecars',
       query:
         "Analyze the application '{application}' in namespace '{namespace}'{cluster}{health_context} and report health issues, traffic anomalies, missing sidecars, and the next troubleshooting steps.",
-      title: t('Application Troubleshooting')
+      title: 'Application Troubleshooting'
     }
   ],
   graph: [
@@ -25,7 +43,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Show me the current status of my service mesh graph',
       message: 'Show me the current status of my service mesh graph',
       query: 'Check my graph',
-      title: t('Check Graph Status')
+      title: 'Check Graph Status'
     }
   ],
   istio: [
@@ -34,7 +52,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Highlight Istio objects that may be misconfigured or likely to impact traffic',
       query:
         'Review the Istio configuration in namespaces: {namespaces} and highlight objects that may be misconfigured, ineffective, or likely to impact traffic.',
-      title: t('Istio Config Review')
+      title: 'Istio Config Review'
     }
   ],
   'istio-details': [
@@ -43,7 +61,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Review the Istio object for misconfiguration, ineffective rules, or traffic impact',
       query:
         "Analyze the Istio {istio_type} '{istio_object}' in namespace '{namespace}'{cluster} and report possible misconfigurations, ineffective rules, traffic impact, and the next troubleshooting steps.",
-      title: t('Istio Object Review')
+      title: 'Istio Object Review'
     }
   ],
   mesh: [
@@ -52,7 +70,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Summarize mesh health with control plane status, cluster connectivity, and any warnings',
       query:
         'Summarize the current mesh health. Include control plane status, cluster connectivity, and only the most important warnings or unhealthy components.',
-      title: t('Mesh Health Summary')
+      title: 'Mesh Health Summary'
     }
   ],
   namespaces: [
@@ -60,7 +78,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'List all namespaces with their sidecar injection status and Istio labels',
       message: 'List all namespaces and show their sidecar injection status and Istio labels',
       query: 'List all namespaces and show their sidecar injection status and Istio labels',
-      title: t('Namespace Overview')
+      title: 'Namespace Overview'
     }
   ],
   'namespace-details': [
@@ -69,7 +87,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Analyze the namespace for health issues, injection problems, and Istio config issues',
       query:
         "Analyze the namespace '{namespace}'{cluster}{health_context} and report health problems, missing sidecar injection, Istio configuration issues, and the next troubleshooting steps.",
-      title: t('Namespace Troubleshooting')
+      title: 'Namespace Troubleshooting'
     }
   ],
   overview: [
@@ -77,7 +95,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       description: 'Give me a summary of the overall health of my mesh from the overview page',
       message: 'Give me a summary of the overall health of my mesh from the overview page',
       query: 'Check my overview',
-      title: t('Analyze Overview')
+      title: 'Analyze Overview'
     }
   ],
   services: [
@@ -86,7 +104,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Highlight services with unhealthy behavior, unusual traffic patterns, or configuration issues',
       query:
         'Review the services in namespaces: {namespaces} and highlight only services with unhealthy behavior, unusual traffic patterns, or likely configuration issues.',
-      title: t('Service Health Analysis')
+      title: 'Service Health Analysis'
     }
   ],
   'service-details': [
@@ -95,7 +113,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Analyze the service for health issues, unusual traffic, and related workload problems',
       query:
         "Analyze the service '{service}' in namespace '{namespace}'{cluster}{health_context} and report unusual traffic patterns, health issues, related workload problems, and likely configuration issues.",
-      title: t('Service Troubleshooting')
+      title: 'Service Troubleshooting'
     }
   ],
   workloads: [
@@ -104,7 +122,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Report degraded workloads, missing sidecars, or other issues that may need troubleshooting',
       query:
         'Check the workloads in namespaces: {namespaces} and report degraded workloads, missing sidecars, or other issues that may need troubleshooting.',
-      title: t('Workload Health Analysis')
+      title: 'Workload Health Analysis'
     }
   ],
   'workload-details': [
@@ -113,7 +131,7 @@ export const DataPrompts: { [key: string]: Prompt[] } = {
       message: 'Analyze the workload for degraded status, traffic anomalies, and sidecar issues',
       query:
         "Analyze the workload '{workload}' in namespace '{namespace}'{cluster}{health_context} and report degraded status, traffic anomalies, sidecar issues, and the next troubleshooting steps.",
-      title: t('Workload Troubleshooting')
+      title: 'Workload Troubleshooting'
     }
   ]
 };

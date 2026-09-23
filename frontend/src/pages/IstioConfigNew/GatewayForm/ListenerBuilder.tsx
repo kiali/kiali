@@ -17,7 +17,7 @@ import { Td, Tr } from '@patternfly/react-table';
 import { addSelectorLabels } from './ListenerList';
 import { K8sGatewayTLS, MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ListenerBuilderProps = {
   index: number;
@@ -68,6 +68,7 @@ export const isValidSelector = (selector: string): boolean => {
 };
 
 export const ListenerBuilder: React.FC<ListenerBuilderProps> = (props: ListenerBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isProtocolSelectOpen, setIsProtocolSelectOpen] = React.useState<boolean>(false);
   const [isFromSelectOpen, setIsFromSelectOpen] = React.useState<boolean>(false);
   const [isTlsModeSelectOpen, setIsTlsModeSelectOpen] = React.useState<boolean>(false);

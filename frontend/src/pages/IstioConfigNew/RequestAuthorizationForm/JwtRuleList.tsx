@@ -7,22 +7,12 @@ import { formatJwtField } from './JwtRuleBuilder';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type JwtRuleListProps = {
   jwtRules: JWTRule[];
   onRemoveJwtRule: (index: number) => void;
 };
-
-const columns: ThProps[] = [
-  {
-    title: t('JWT Rules to be validated'),
-    width: 100
-  },
-  {
-    title: ''
-  }
-];
 
 const noJWTRulesStyle = kialiStyle({
   color: PFColors.Red500,
@@ -30,6 +20,18 @@ const noJWTRulesStyle = kialiStyle({
 });
 
 export const JwtRuleList: React.FC<JwtRuleListProps> = (props: JwtRuleListProps) => {
+  const { t } = useKialiTranslation();
+
+  const columns: ThProps[] = [
+    {
+      title: t('JWT Rules to be validated'),
+      width: 100
+    },
+    {
+      title: ''
+    }
+  ];
+
   const rows: IRow[] = props.jwtRules.map((jwtRule, i) => {
     return {
       key: `jwtRule_${i}`,

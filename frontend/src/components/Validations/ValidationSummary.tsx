@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
 import { naTextStyle } from 'styles/HealthStyle';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 interface ValidationSummaryProps {
   errors: number;
@@ -31,6 +31,7 @@ const tooltipSentenceStyle = kialiStyle({
 });
 
 export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: ValidationSummaryProps) => {
+  const { t } = useKialiTranslation();
   const getTypeMessage = (count: number, type: ValidationTypes): string => {
     return count > 1 ? `${count} ${type}s found` : `${count} ${type} found`;
   };

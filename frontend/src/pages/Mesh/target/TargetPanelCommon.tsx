@@ -8,7 +8,7 @@ import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
 import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
-import { t } from 'utils/I18nUtils';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
@@ -562,6 +562,7 @@ const MeshTabsComponent: React.FC<{
   observeNodes,
   forCluster
 }) => {
+  const { t } = useKialiTranslation();
   const [expanded, setExpanded] = React.useState<string[]>([]);
   const [filter, setFilter] = React.useState<string>('');
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
