@@ -1,6 +1,7 @@
 import type { APIRequestContext } from '@playwright/test';
 import { kubectlExec } from './kubectl';
 import { hasSailIstioCr } from './kialiConfig';
+import { kialiUrl } from './kialiUrl';
 
 const istioSharedMeshConfigMap = `
 apiVersion: v1
@@ -25,7 +26,7 @@ function restoreSharedMeshConfigResources(): void {
 async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName: string): Promise<void> {
   const maxTries = 15;
   for (let tries = 1; tries <= maxTries; tries++) {
-    const response = await request.get('/api/mesh/graph');
+    const response = await request.get(kialiUrl('/api/mesh/graph'));
     if (!response.ok()) {
       restoreSharedMeshConfigResources();
       throw new Error(`Expected 200 from /api/mesh/graph, got ${response.status()}`);

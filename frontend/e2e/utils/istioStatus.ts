@@ -1,5 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 import { test } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 
 type IstioComponentStatus = {
   name: string;
@@ -8,7 +9,7 @@ type IstioComponentStatus = {
 
 /** Skip when the cluster reports non-healthy Istio components (local clusters often show warnings). */
 export const skipUnlessHealthyIstioComponents = async (request: APIRequestContext): Promise<void> => {
-  const response = await request.get('/api/istio/status');
+  const response = await request.get(kialiUrl('/api/istio/status'));
   if (!response.ok()) {
     return;
   }

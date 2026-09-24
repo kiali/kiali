@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { waitForLoadingComplete } from './transition';
+import { kialiUrl } from './kialiUrl';
 
 export const colExists = async (page: Page, colName: string, exists: boolean): Promise<void> => {
   const header = page.locator(`th[data-label="${colName}"]`);
@@ -300,7 +301,7 @@ export const expectWorkloadsInTable = async (
 };
 
 export const expectAppsWithNameCount = async (page: Page, request: Page['request'], name: string): Promise<void> => {
-  const response = await request.get('/api/clusters/apps');
+  const response = await request.get(kialiUrl('/api/clusters/apps'));
   expect(response.ok()).toBeTruthy();
   const body = (await response.json()) as { applications: Array<{ name: string }> };
   const count = body.applications.filter(item => item.name.includes(name)).length;

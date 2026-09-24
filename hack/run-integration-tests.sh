@@ -1171,21 +1171,10 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_SMOKE}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster (MetalLB), same fidelity as Cypress frontend / ambient.
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
   fi
@@ -1196,57 +1185,18 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_SMOKE}" ]; then
     exit 0
   fi
 
-  # Start Kiali locally in the background
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   yarn run playwright:run:smoke
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Full demo apps (bookinfo, sleep, error-rates) — same as Cypress frontend-core-1
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
@@ -1258,35 +1208,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
     exit 0
   fi
 
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e
@@ -1298,21 +1222,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Demo apps without error-rates beta namespace — same as Cypress frontend-core-2
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
@@ -1324,35 +1236,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
     exit 0
   fi
 
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-no-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e
@@ -1364,24 +1250,24 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Set up the cluster and Istio but skip Kiali deployment so that demo
+    # apps are present before Kiali starts. This lets the health cache
+    # pre-compute bookinfo health on its first refresh (same as Cypress).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --deploy-kiali false
 
-    # Bookinfo only, before Kiali starts — health cache must warm on first refresh (Cypress frontend-core-caching).
+    # Bookinfo only — the only demo app needed by @core-caching scenarios
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
+
+    # Reuse the helm charts dir from the first setup invocation so we
+    # don't have to clone and build again.
+    if [ -z "${HELM_CHARTS_DIR_ARG}" ] && [ -f /tmp/kiali-helm-charts-dir ]; then
+      HELM_CHARTS_DIR_ARG="--helm-charts-dir $(cat /tmp/kiali-helm-charts-dir)"
+    fi
+
+    # Deploy Kiali in-cluster with caching enabled after demos are present.
+    # Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous ${HELM_CHARTS_DIR_ARG} --enable-cache "true" --kiali-only
   fi
 
   infomsg "Setup complete."
@@ -1390,35 +1276,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
     exit 0
   fi
 
-  infomsg "Starting Kiali locally with health/graph cache enabled: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-cache.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e
@@ -1430,21 +1290,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false --install-perses "true" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster with Perses (MetalLB). Anonymous auth for Playwright auth.setup.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Same demos as Cypress frontend-core-optional (crd-validation/perses; skip error-rates/loggers).
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
@@ -1458,58 +1306,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
     exit 0
   fi
 
-  infomsg "Port-forwarding Perses to localhost:4000 for local Kiali"
-  kubectl port-forward -n istio-system svc/perses 4000:8080 >/dev/null 2>&1 &
-  PERSES_PF_PID=$!
-
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${PERSES_PF_PID} > /dev/null; then
-      echo "Perses port-forward process is not running. An error must have occurred."
-      exit 1
-    fi
-    if curl -s --fail "http://localhost:4000/api/v1/projects/istio/dashboards" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Perses to respond at http://localhost:4000"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Perses is reachable via port-forward"
-
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-perses.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e
