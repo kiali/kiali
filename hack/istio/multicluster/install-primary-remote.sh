@@ -121,7 +121,7 @@ install_istio -a "" --patch-file "${MC_WEST_YAML}" --wait "false"
 # We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
 # also creates the RBAC and if that happens Sail can't take ownership of those resources.
-kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=1m
+kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=5m
 
 # For kind we need to use the container IP otherwise the unresolvable localhost will be used.
 SERVER_FLAG=""
