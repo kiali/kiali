@@ -20,8 +20,11 @@ When('user opens the context menu of the {string} service node', (svcName: strin
         { prop: NodeAttr.service, op: '=', val: svcName }
       ]);
 
-      cy.get(`[data-id=${node[0].getId()}]`).rightclick();
+      // OSSMC renders the plugin overlay (#root.ossmconsole__*) over the PF topology SVG.
+      // Force the right-click so Cypress does not fail the actionability check.
+      cy.get(`[data-id=${node[0].getId()}]`).rightclick({ force: true });
       cy.wrap(node[0]).as('contextNode');
+      cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
     });
 });
 
@@ -52,7 +55,8 @@ When(
 
         expect(node.length).to.equal(1);
 
-        cy.get(`[data-id=${node[0].getId()}]`).rightclick();
+        // OSSMC renders the plugin overlay (#root.ossmconsole__*) over the PF topology SVG.
+        cy.get(`[data-id=${node[0].getId()}]`).rightclick({ force: true });
         cy.wrap(node[0]).as('contextNode');
 
         cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
