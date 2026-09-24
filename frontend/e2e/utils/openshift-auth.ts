@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 
 type OpenShiftLoginOptions = {
   authProvider?: string;
@@ -30,7 +31,7 @@ export async function loginOpenShift(
 
   // Land back on Kiali console after OAuth redirect
   await expect(page).toHaveURL(/\/(console|kiali)/, { timeout: 120_000 });
-  const status = await page.request.get('/api/status');
+  const status = await page.request.get(kialiUrl('/api/status'));
   expect(status.ok(), `Expected /api/status OK after openshift login, got ${status.status()}`).toBeTruthy();
 }
 

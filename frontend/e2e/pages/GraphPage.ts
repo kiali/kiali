@@ -892,12 +892,12 @@ export class GraphPage extends BasePage {
   }
 
   async expectGraphCacheEnabled(): Promise<void> {
-    const response = await this.page.request.get('/api/test/metrics/graph/cache');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/graph/cache'));
     expect(response.ok()).toBeTruthy();
   }
 
   async readGraphCacheMetrics(): Promise<GraphCacheMetrics> {
-    const response = await this.page.request.get('/api/test/metrics/graph/cache');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/graph/cache'));
     expect(response.ok()).toBeTruthy();
     return (await response.json()) as GraphCacheMetrics;
   }

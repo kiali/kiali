@@ -2,6 +2,7 @@ import type { APIRequestContext } from '@playwright/test';
 import { test } from '@playwright/test';
 
 import { isCachingConfigured, readCachingState } from './cachingState';
+import { kialiUrl } from './kialiUrl';
 
 const skipUnlessCachingReady = (feature: string): void => {
   const state = readCachingState();
@@ -13,7 +14,7 @@ const skipUnlessCachingReady = (feature: string): void => {
 /** Skip when Kiali is not running with cache test metrics (e.g. ci-test-config-cache.yaml). */
 export const skipUnlessHealthTestMetrics = async (request: APIRequestContext): Promise<void> => {
   skipUnlessCachingReady('Health cache test metrics');
-  const cache = await request.get('/api/test/metrics/health/cache');
+  const cache = await request.get(kialiUrl('/api/test/metrics/health/cache'));
   if (!cache.ok()) {
     test.skip(true, 'Health cache test metrics endpoint is unavailable');
   }
@@ -25,7 +26,7 @@ export const skipUnlessHealthStatusTestMetrics = async (request: APIRequestConte
   if (state && !state.healthStatusMetricsEnabled) {
     test.skip(true, 'Health status test metrics require server.observability.metrics.health_status');
   }
-  const response = await request.get('/api/test/metrics/health/status');
+  const response = await request.get(kialiUrl('/api/test/metrics/health/status'));
   if (!response.ok()) {
     test.skip(true, 'Health status test metrics endpoint is unavailable');
     return;
@@ -38,7 +39,7 @@ export const skipUnlessHealthStatusTestMetrics = async (request: APIRequestConte
 
 export const skipUnlessGraphTestMetrics = async (request: APIRequestContext): Promise<void> => {
   skipUnlessCachingReady('Graph cache test metrics');
-  const response = await request.get('/api/test/metrics/graph/cache');
+  const response = await request.get(kialiUrl('/api/test/metrics/graph/cache'));
   if (!response.ok()) {
     test.skip(true, 'Graph cache test metrics endpoint is unavailable');
   }
