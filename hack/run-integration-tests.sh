@@ -1352,22 +1352,10 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # Same cluster shape as Cypress frontend-tempo, but run Kiali locally (anonymous) like other Playwright suites.
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy anonymous --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster with Tempo (MetalLB), same fidelity as Cypress frontend-tempo.
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
   fi
@@ -1378,41 +1366,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
     exit 0
   fi
 
-  infomsg "Starting Kiali locally with Tempo tracing using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-tempo.yaml" run \
-    --cluster-name-overrides kind-ci=cluster-default \
-    --port-forward-tracing --enable-tracing \
-    --tracing-selector "app.kubernetes.io/name=tempo,app.kubernetes.io/component=query-frontend" \
-    --tracing-port 3200 \
-    --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
+  ensureKialiServerReady
 
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
-
-  # Same as other local Playwright suites: tests wait for traces via API themselves.
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e

@@ -1,4 +1,5 @@
-# Local Kiali config for Playwright @tracing / Tempo CI (mirrors frontend-tempo Helm values).
+# Local Kiali config for Playwright @tracing / Tempo debugging (mirrors frontend-tempo Helm values).
+# CI uses in-cluster Kiali via setup_kind_tempo; keep this file for interactive `kiali run`.
 additional_display_details:
 - annotation: kiali.io/api-spec
   icon_annotation: kiali.io/api-type

@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-tempo`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **tempo** uses Sail Tempo + local `kiali` with `ci-test-config-tempo.yaml` and Tempo query-frontend port-forward (parity with Cypress `frontend-tempo`). One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-tempo`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`), matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **tempo** installs Sail Tempo and deploys in-cluster Kiali with Tempo provider URLs (parity with Cypress `frontend-tempo`). One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -158,7 +158,7 @@ hack/run-integration-tests.sh --test-suite playwright-ambient
 
 ### Tempo / tracing (`yarn playwright:run:tracing`)
 
-Ports Cypress `@tracing` scenarios (app/service/workload Traces tab, graph side panel traces list, workload logs spans). KinD setup matches Cypress `frontend-tempo` (Sail + Tempo); Kiali runs locally with Tempo provider and query-frontend port-forward.
+Ports Cypress `@tracing` scenarios (app/service/workload Traces tab, graph side panel traces list, workload logs spans). KinD setup matches Cypress `frontend-tempo` (Sail + Tempo + **in-cluster Kiali** via MetalLB with Tempo provider). For local binary debugging, use `hack/ci-yaml/ci-test-config-tempo.yaml` with `--port-forward-tracing`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-tempo

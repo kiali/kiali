@@ -2,6 +2,7 @@ import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { openDetailsTab } from './detailsPage';
+import { kialiUrl } from './kialiUrl';
 import { waitForLoadingComplete } from './transition';
 
 type TraceListItem = {
@@ -52,7 +53,7 @@ export const waitForTracesViaApi = async (
   while (Date.now() < deadline) {
     // Same window as Cypress waitForTargetTracesInApi — bare /traces uses start=0 and Tempo 400s.
     const nowMicros = Date.now() * 1000;
-    const response = await request.get(path, {
+    const response = await request.get(kialiUrl(path), {
       params: {
         endMicros: String(nowMicros),
         limit: '100',
