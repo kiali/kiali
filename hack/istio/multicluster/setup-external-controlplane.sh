@@ -111,7 +111,7 @@ kubectl get ns external-istiod --context="${CTX_EXTERNAL_CLUSTER}" || kubectl cr
 
 KIND_IP=$(docker inspect ${REMOTE_CLUSTER_NAME}-control-plane --format "{{ .NetworkSettings.Networks.kind.IPAddress }}")
 REMOTE_KUBE_API_SERVER_URL="https://${KIND_IP}:6443"
-[ "$(kubectl --context="${CTX_REMOTE_CLUSTER}" get istios external-istiod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ] || kubectl --context="${CTX_REMOTE_CLUSTER}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/external-istiod --timeout=5m
+wait_for_sail_remote_istiod_handoff "${CTX_REMOTE_CLUSTER}" external-istiod
 "${ISTIOCTL}" create-remote-secret \
   --context="${CTX_REMOTE_CLUSTER}" \
   --type=config \

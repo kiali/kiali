@@ -151,7 +151,7 @@ kubectl get ns external-istiod --context="${CTX_EXTERNAL_CLUSTER}" || kubectl cr
 
 REMOTE_IP=$(minikube ip -p ${REMOTE_CLUSTER_NAME})
 REMOTE_KUBE_API_SERVER_URL="https://${REMOTE_IP}:8443"
-[ "$(kubectl --context="${CTX_REMOTE_CLUSTER}" get istios external-istiod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ] || kubectl --context="${CTX_REMOTE_CLUSTER}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/external-istiod --timeout=5m
+wait_for_sail_remote_istiod_handoff "${CTX_REMOTE_CLUSTER}" external-istiod
 "${ISTIOCTL}" create-remote-secret \
   --context="${CTX_REMOTE_CLUSTER}" \
   --type=config \

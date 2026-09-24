@@ -62,6 +62,22 @@ install_istio() {
   fi
 }
 
+# Wait until Sail has reconciled remote RBAC/webhooks but the remote control plane is not
+# yet connected. This must complete before istioctl create-remote-secret runs.
+wait_for_sail_remote_istiod_handoff() {
+  local context="$1"
+  local istio_name="$2"
+  local timeout="${3:-5m}"
+
+  if [ "$(kubectl --context="${context}" get istios "${istio_name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ]; then
+    return 0
+  fi
+
+  kubectl --context="${context}" wait \
+    --for='jsonpath={.status.conditions[?(@.type=="Ready")].reason}=RemoteIstiodNotReady' \
+    "istios/${istio_name}" --timeout="${timeout}"
+}
+
 # Shared function to install Istio addons (used by multiple multicluster scripts)
 install_istio_addons() {
   local client_exe="${1:-kubectl}"
