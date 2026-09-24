@@ -1,3 +1,5 @@
+import { createRequire } from 'module';
+import { arch } from 'os';
 import { dirname, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { defineConfig, loadEnv } from '@rsbuild/core';
@@ -6,6 +8,10 @@ import { pluginSass } from '@rsbuild/plugin-sass';
 import { pluginSvgr } from '@rsbuild/plugin-svgr';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+// sass-embedded has no native bindings on ppc64le/s390x; use pure JS sass there.
+const usePureSass = ['ppc64', 's390x'].includes(arch());
 
 const { publicVars } = loadEnv({ prefixes: ['REACT_APP_'] });
 
@@ -25,7 +31,19 @@ const keepNames = {
 };
 
 export default defineConfig({
-  plugins: [pluginReact(), pluginSass(), pluginSvgr({ mixedImport: true })],
+  plugins: [
+    pluginReact(),
+    pluginSass(
+      usePureSass
+        ? {
+            sassLoaderOptions: {
+              implementation: require.resolve('sass')
+            }
+          }
+        : {}
+    ),
+    pluginSvgr({ mixedImport: true })
+  ],
   html: {
     template: './public/index.html'
   },
