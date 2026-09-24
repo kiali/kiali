@@ -5,7 +5,7 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
-import { buildNodeTree, findComponentsInTree, getReactFiber } from '../../support/react-utils';
+import { buildNodeTree, findComponentsInTree, getReactFiber } from './react-utils';
 
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
