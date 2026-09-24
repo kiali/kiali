@@ -101,7 +101,7 @@
 - [ ] `@multi-mesh` suite passes
 - [ ] `@external-kiali` suite passes
 - [ ] `@tracing` suite passes
-- [ ] `@offline` suite passes
+- [x] `@offline` suite passes (Playwright spec + `playwright-offline` CI; run `yarn playwright:run:offline`)
 - [ ] `@ai-chatbot` suite passes
 
 ## CI / pipelines
@@ -109,7 +109,7 @@
 - [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
-  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient`
+  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, and `playwright-offline`
   suites (PR #10174, #10195, #10220, #10269, #10292)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
