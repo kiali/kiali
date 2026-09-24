@@ -80,7 +80,7 @@ Then(
         nodeId = workloadNode[0]?.getId();
       })
       .then(() => {
-        cy.get(`[data-id=${nodeId}]`).click({ force: true });
+        clickGraphNode(nodeId);
         // graph-side-panel persists across context changes unlike summary-graph-panel
         cy.get('#graph-side-panel').contains(workload);
       });
@@ -124,6 +124,23 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
     nodes: elems.filter(e => isNode(e)) as Node[],
     edges: elems.filter(e => isEdge(e)) as Edge[]
   };
+};
+
+/**
+ * Click a PatternFly topology node. Force is required in OSSMC because the
+ * Console plugin overlay (#root.ossmconsole__*) covers the SVG and fails
+ * Cypress actionability. Do not force in standalone Kiali: force skips PF
+ * topology hit-testing, so the context menu and side panel never open.
+ */
+export const clickGraphNode = (nodeId: string, options?: { rightClick?: boolean }): void => {
+  cy.url().then(url => {
+    const force = url.includes('/ossmconsole/');
+    if (options?.rightClick) {
+      cy.get(`[data-id=${nodeId}]`).rightclick({ force });
+    } else {
+      cy.get(`[data-id=${nodeId}]`).click({ force });
+    }
+  });
 };
 
 /**

@@ -1,6 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Visualization } from '@patternfly/react-topology';
-import { elems, selectAnd } from './graph';
+import { clickGraphNode, elems, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
 // Single cluster only.
@@ -20,9 +20,7 @@ When('user opens the context menu of the {string} service node', (svcName: strin
         { prop: NodeAttr.service, op: '=', val: svcName }
       ]);
 
-      // OSSMC renders the plugin overlay (#root.ossmconsole__*) over the PF topology SVG.
-      // Force the right-click so Cypress does not fail the actionability check.
-      cy.get(`[data-id=${node[0].getId()}]`).rightclick({ force: true });
+      clickGraphNode(node[0].getId(), { rightClick: true });
       cy.wrap(node[0]).as('contextNode');
       cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
     });
@@ -55,8 +53,7 @@ When(
 
         expect(node.length).to.equal(1);
 
-        // OSSMC renders the plugin overlay (#root.ossmconsole__*) over the PF topology SVG.
-        cy.get(`[data-id=${node[0].getId()}]`).rightclick({ force: true });
+        clickGraphNode(node[0].getId(), { rightClick: true });
         cy.wrap(node[0]).as('contextNode');
 
         cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
