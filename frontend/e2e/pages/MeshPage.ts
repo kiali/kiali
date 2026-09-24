@@ -3,6 +3,7 @@ import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { selectClusterMeshNode, selectMeshNodeByLabel, selectTracingMeshNode } from '../utils/meshTopology';
 import { waitForLoadingComplete } from '../utils/transition';
+import { kialiUrl } from '../utils/kialiUrl';
 
 type MeshGraphNode = {
   data?: {
@@ -39,7 +40,7 @@ export class MeshPage extends BasePage {
   async expectKialiConnectedToIstiod(edgeCount = 1): Promise<void> {
     await this.waitForLoad();
 
-    const response = await this.page.request.get('/api/mesh/graph');
+    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
     expect(response.ok(), `Expected /api/mesh/graph OK, got ${response.status()}`).toBeTruthy();
     const body = (await response.json()) as MeshGraphResponse;
     const nodes = body.elements?.nodes ?? [];
@@ -90,7 +91,7 @@ export class MeshPage extends BasePage {
 
   async waitForInfraHealth(infraName: string, predicate: (health: string) => boolean): Promise<void> {
     await expect(async () => {
-      const response = await this.page.request.get('/api/mesh/graph');
+      const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
       expect(response.ok()).toBeTruthy();
       const body = (await response.json()) as MeshGraphResponse;
       const node = (body.elements?.nodes ?? []).find(n => n.data?.infraName?.toLowerCase() === infraName.toLowerCase());
@@ -147,7 +148,9 @@ export class MeshPage extends BasePage {
 
   async expectControlPlaneSidePanel(): Promise<void> {
     await expect(async () => {
-      const response = await this.page.request.get('/api/namespaces/istio-system/controlplanes/istiod/metrics');
+      const response = await this.page.request.get(
+        kialiUrl('/api/namespaces/istio-system/controlplanes/istiod/metrics')
+      );
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
       expect(body.process_resident_memory_bytes).toBeTruthy();
@@ -199,7 +202,7 @@ export class MeshPage extends BasePage {
 
   async expectMeshSidePanel(): Promise<void> {
     await expect(this.page.locator('#target-panel-mesh')).toBeVisible();
-    const response = await this.page.request.get('/api/mesh/graph');
+    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
     const meshNames = body.meshNames as string[];
@@ -210,7 +213,7 @@ export class MeshPage extends BasePage {
   }
 
   async expectExpectedMeshInfra(): Promise<void> {
-    const response = await this.page.request.get('/api/mesh/graph');
+    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
     const nodes = body.elements?.nodes ?? [];

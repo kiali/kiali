@@ -1,6 +1,7 @@
 import type { APIRequestContext } from '@playwright/test';
 import { test } from '@playwright/test';
 import { kubectlExec } from './kubectl';
+import { kialiUrl } from './kialiUrl';
 
 type KialiConfig = {
   ambientEnabled?: boolean;
@@ -17,7 +18,7 @@ type ServiceListItem = {
 };
 
 export async function getKialiConfig(request: APIRequestContext): Promise<KialiConfig> {
-  const response = await request.get('/api/config');
+  const response = await request.get(kialiUrl('/api/config'));
   if (!response.ok()) {
     return {};
   }
@@ -46,12 +47,12 @@ export function hasPersesInCluster(): boolean {
 
 /** True when Kiali has external_services.perses enabled (204 from /api/perses means disabled). */
 export async function isPersesEnabledInKiali(request: APIRequestContext): Promise<boolean> {
-  const response = await request.get('/api/perses');
+  const response = await request.get(kialiUrl('/api/perses'));
   return response.ok() && response.status() !== 204;
 }
 
 export async function hasPersesExternalLinks(request: APIRequestContext): Promise<boolean> {
-  const response = await request.get('/api/perses');
+  const response = await request.get(kialiUrl('/api/perses'));
   if (!response.ok() || response.status() === 204) {
     return false;
   }
@@ -81,7 +82,7 @@ export const skipUnlessApiDocumentationConfigured = async (
   namespace: string,
   serviceName: string
 ): Promise<void> => {
-  const response = await request.get(`/api/clusters/services?namespaces=${namespace}&health=true`);
+  const response = await request.get(kialiUrl(`/api/clusters/services?namespaces=${namespace}&health=true`));
   if (!response.ok()) {
     test.skip(true, 'Could not fetch services list to verify API documentation config');
     return;

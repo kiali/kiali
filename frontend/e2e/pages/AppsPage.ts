@@ -13,6 +13,7 @@ import {
 } from '../utils/table';
 import { getClusterForSingleCluster } from '../utils/cluster';
 import { ListPage } from './ListPage';
+import { kialiUrl } from '../utils/kialiUrl';
 
 const DETAILS_APP = 'details';
 
@@ -91,18 +92,18 @@ export class AppsPage extends ListPage {
   }
 
   async expectHealthCacheEnabled(): Promise<void> {
-    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/health/cache'));
     expect(response.ok()).toBeTruthy();
   }
 
   async recordHealthCacheMetrics(): Promise<HealthCacheMetrics> {
-    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/health/cache'));
     expect(response.ok()).toBeTruthy();
     return (await response.json()) as HealthCacheMetrics;
   }
 
   async expectHealthCacheHitsIncreased(before: HealthCacheMetrics, minHits = 1): Promise<void> {
-    const response = await this.page.request.get('/api/test/metrics/health/cache');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/health/cache'));
     expect(response.ok()).toBeTruthy();
     const after = (await response.json()) as HealthCacheMetrics;
     expect(after.healthCacheHits).toBeGreaterThanOrEqual(before.healthCacheHits + minHits);
@@ -123,7 +124,7 @@ export class AppsPage extends ListPage {
   }
 
   private async fetchHealthStatusMetrics(): Promise<HealthStatusMetricItem[]> {
-    const response = await this.page.request.get('/api/test/metrics/health/status');
+    const response = await this.page.request.get(kialiUrl('/api/test/metrics/health/status'));
     if (!response.ok()) {
       return [];
     }

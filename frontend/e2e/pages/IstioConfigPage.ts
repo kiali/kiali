@@ -11,6 +11,7 @@ import {
   istioConfigDetailsConsolePath,
   waitForIstioObjectDetails as waitForIstioObjectDetailsApi
 } from '../utils/istioConfigApi';
+import { kialiUrl } from '../utils/kialiUrl';
 
 const TYPE_FILTERS = [
   'AuthorizationPolicy',
@@ -273,7 +274,7 @@ export class IstioConfigPage extends BasePage {
           ? 'networking.istio.io/v1, Kind=VirtualService'
           : typeName;
     const response = await this.page.request.get(
-      `/api/namespaces/${namespace}/istio?objects=${encodeURIComponent(gvkKey)}&validate=true`
+      kialiUrl(`/api/namespaces/${namespace}/istio?objects=${encodeURIComponent(gvkKey)}&validate=true`)
     );
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
@@ -283,7 +284,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectNoAmbientL7WarningsInNamespace(namespace: string): Promise<void> {
-    const response = await this.page.request.get(`/api/namespaces/${namespace}/istio?validate=true`);
+    const response = await this.page.request.get(kialiUrl(`/api/namespaces/${namespace}/istio?validate=true`));
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
     const found = collectAmbientL7Warnings(body.validations as Record<string, unknown>);
@@ -292,7 +293,7 @@ export class IstioConfigPage extends BasePage {
 
   async expectNoAmbientL7WarningsForWorkload(namespace: string, workload: string): Promise<void> {
     const response = await this.page.request.get(
-      `/api/namespaces/${namespace}/workloads/${workload}?validate=true&rateInterval=60s&health=true`
+      kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}?validate=true&rateInterval=60s&health=true`)
     );
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
@@ -307,7 +308,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectCanCreateK8sIstioObject(group: string, version: string, kind: string): Promise<void> {
-    const configResponse = await this.page.request.get('/api/config');
+    const configResponse = await this.page.request.get(kialiUrl('/api/config'));
     expect(configResponse.ok()).toBeTruthy();
     const config = await configResponse.json();
     await this.getBySel('istio-actions-toggle').click();
@@ -328,7 +329,7 @@ export class IstioConfigPage extends BasePage {
 
   /** Forces Kiali to drop cached istio config before list refresh. */
   private async bustIstioConfigCache(): Promise<void> {
-    const response = await this.page.request.get(`/api/istio/config?_=${Date.now()}`);
+    const response = await this.page.request.get(kialiUrl(`/api/istio/config?_=${Date.now()}`));
     expect(response.ok()).toBeTruthy();
   }
 

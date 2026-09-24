@@ -1,10 +1,11 @@
 import type { Page } from '@playwright/test';
 import { kubectlScaleAndWait } from './kubectl';
+import { kialiUrl } from './kialiUrl';
 
 const workloadGvk = 'apps/v1, Kind=Deployment';
 
 const patchNamespace = async (page: Page, namespace: string, labels: Record<string, string | null>): Promise<void> => {
-  const response = await page.request.patch(`/api/namespaces/${namespace}`, {
+  const response = await page.request.patch(kialiUrl(`/api/namespaces/${namespace}`), {
     data: { metadata: { labels } }
   });
   if (!response.ok()) {
@@ -19,22 +20,25 @@ const patchWorkloadInjection = async (
   injectLabel: string | null,
   injectAnnotation: string | null = null
 ): Promise<void> => {
-  const response = await page.request.patch(`/api/namespaces/${namespace}/workloads/${workload}?gvk="${workloadGvk}"`, {
-    data: {
-      spec: {
-        template: {
-          metadata: {
-            annotations: {
-              'sidecar.istio.io/inject': injectAnnotation
-            },
-            labels: {
-              'sidecar.istio.io/inject': injectLabel
+  const response = await page.request.patch(
+    kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}?gvk="${workloadGvk}"`),
+    {
+      data: {
+        spec: {
+          template: {
+            metadata: {
+              annotations: {
+                'sidecar.istio.io/inject': injectAnnotation
+              },
+              labels: {
+                'sidecar.istio.io/inject': injectLabel
+              }
             }
           }
         }
       }
     }
-  });
+  );
   if (!response.ok()) {
     throw new Error(`Failed to patch workload ${namespace}/${workload}: ${response.status()}`);
   }

@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster. Smoke/core-1/core-2/core-caching/core-optional run a local `kiali` binary (`hack/ci-yaml/ci-test-config-*.yaml`). **ambient** deploys Kiali **in-cluster** (MetalLB), matching Cypress `frontend-ambient`. Smoke/core-1/core-2/core-optional use `ci-test-config-no-cache.yaml`; **core-caching** uses `ci-test-config-cache.yaml` (graph + health cache enabled) and installs **bookinfo only** before Kiali starts. **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite.
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`), matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -108,7 +108,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### Smoke (`yarn playwright:run:smoke`)
 
-Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters. On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session).
+Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout, sidebar, services toggles, graph prometheus-disabled, mesh local-kiali, istio config type + validation filters. On anonymous CI, **6 scenarios skip** (OpenShift login/cookie/logout/session). The mesh “Local-kiali” scenario **skips on in-cluster** CI (requires `kiali run` on localhost).
 
 ### Core-1 (`yarn playwright:run:core1`)
 
@@ -120,7 +120,9 @@ Ports all Cypress `@core-2` scenarios (~240 tests): mesh, shared mesh, sidecar i
 
 ### Core-caching (`yarn playwright:run:core-caching`)
 
-Ports Cypress `@core-caching` scenarios: overview health/cache metrics, namespaces/services/workloads/apps list caching, mesh infra, manual refresh, details pages (app/service/workload/namespace), graph cache metrics, istio config wizards/editor, request routing wizard, workload logs. Includes smoke scenarios tagged `smokeAndCoreCaching`. Run with **cache enabled** locally:
+Ports Cypress `@core-caching` scenarios: overview health/cache metrics, namespaces/services/workloads/apps list caching, mesh infra, manual refresh, details pages (app/service/workload/namespace), graph cache metrics, istio config wizards/editor, request routing wizard, workload logs. Includes smoke scenarios tagged `smokeAndCoreCaching`.
+
+CI deploys in-cluster Kiali with graph/health cache enabled (demos before Kiali, same order as Cypress). For local debugging against a cache-enabled binary:
 
 ```bash
 $(go env GOPATH)/bin/kiali \
@@ -134,7 +136,7 @@ Full KinD setup: `hack/run-integration-tests.sh --test-suite playwright-core-cac
 
 ### Core-optional (`yarn playwright:run:core-optional`)
 
-Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (bookinfo + sleep, Perses Helm chart in `istio-system`). The script port-forwards Perses to `localhost:4000` and starts local Kiali with `hack/ci-yaml/ci-test-config-perses.yaml`.
+Ports Cypress `frontend-core-optional` scope: `@crd-validation` and `@perses` Playwright projects. KinD setup matches Cypress (in-cluster Kiali, bookinfo + sleep, Perses Helm chart in `istio-system` with `external_services.perses` wired via setup).
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-core-optional
@@ -144,28 +146,7 @@ hack/run-integration-tests.sh --test-suite playwright-core-optional
 
 Ports Cypress `@perses` scenarios from `mesh.feature` and `workloads_details.feature` (2 tests): mesh Perses infra node side panel, and Perses dashboard link on workload Inbound Metrics.
 
-Requires Perses in the cluster **and** `external_services.perses` in the Kiali config. Port-forwarding Perses alone is not enough — tests call Kiali `/api/perses` (204 means disabled).
-
-```bash
-# 1. Perses in cluster (StatefulSet + svc/perses in istio-system)
-kubectl get svc perses -n istio-system
-
-# 2. Start Kiali with Perses config (separate terminal)
-$(go env GOPATH)/bin/kiali \
-  -c hack/ci-yaml/ci-test-config-perses.yaml run \
-  --cluster-name-overrides kind-ci=cluster-default \
-  --port-forward-prom --port-forward-grafana --no-browser
-
-# 3. Port-forward Perses (separate terminal; both external_url and internal_url use localhost:4000)
-kubectl port-forward -n istio-system svc/perses 4000:8080
-
-# 4. Verify Kiali sees Perses (must be HTTP 200, not 204)
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:20001/kiali/api/perses
-
-# 5. Run tests against local Kiali
-cd frontend
-PLAYWRIGHT_BASE_URL=http://localhost:20001/kiali yarn playwright:run:perses
-```
+Requires Perses in the cluster **and** `external_services.perses` in the Kiali config (CI: `hack/run-integration-tests.sh --test-suite playwright-core-optional`). For local binary debugging, use `hack/ci-yaml/ci-test-config-perses.yaml` and port-forward Perses to `localhost:4000` so both `external_url` and `internal_url` resolve.
 
 ### Ambient (`yarn playwright:run:ambient`)
 

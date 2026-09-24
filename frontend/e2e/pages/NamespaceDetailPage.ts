@@ -4,6 +4,7 @@ import { gotoConsolePage } from '../utils/navigation';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { linkSelector } from '../utils/linkSelector';
 import { waitForLoadingComplete } from '../utils/transition';
+import { kialiUrl } from '../utils/kialiUrl';
 
 const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
@@ -115,7 +116,7 @@ export class NamespaceDetailPage extends BasePage {
   }
 
   async expectNamespaceInjectionLabel(state: 'absent' | 'disabled' | 'enabled'): Promise<void> {
-    const response = await this.page.request.get(`/api/namespaces/${this.targetNamespace}/info`);
+    const response = await this.page.request.get(kialiUrl(`/api/namespaces/${this.targetNamespace}/info`));
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
     if (state === 'enabled') {
