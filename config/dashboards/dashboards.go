@@ -114,6 +114,15 @@ const DEFAULT_DASHBOARDS_YAML = `
           container: "istio-proxy"
         usePodSelector: true
   - chart:
+      name: "Active connections"
+      spans: 12
+      dataType: "raw"
+      metrics:
+      - metricName: "envoy_cluster_upstream_cx_active"
+        displayName: "Upstream"
+      - metricName: "envoy_listener_downstream_cx_active"
+        displayName: "Downstream"
+  - chart:
       name: "Active clusters"
       spans: 12
       metricName: "envoy_cluster_manager_active_clusters"

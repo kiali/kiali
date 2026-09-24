@@ -41,6 +41,7 @@ describe('EnvoyMemory', () => {
         aggregations: [],
         charts: [
           { name: 'Memory trends', metrics: [], spans: 12, startCollapsed: false, unit: 'bytes' },
+          { name: 'Active connections', metrics: [], spans: 12, startCollapsed: false, unit: '' },
           { name: 'Active clusters', metrics: [], spans: 12, startCollapsed: false, unit: '' },
           { name: 'Request rate', metrics: [], spans: 12, startCollapsed: false, unit: 'rps' }
         ],
@@ -63,7 +64,7 @@ describe('EnvoyMemory', () => {
     rstest.clearAllMocks();
   });
 
-  it('renders without invalid element type errors', () => {
+  it('renders without invalid element type errors', async () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
@@ -76,6 +77,9 @@ describe('EnvoyMemory', () => {
         </MemoryRouter>
       </Provider>
     );
+
+    expect(await screen.findByTestId('envoy-memory-status-alert')).toBeInTheDocument();
+    expect(screen.getByText('Within normal range')).toBeInTheDocument();
   });
 
   it('renders EnvoyDetails memory tab without invalid element type errors', () => {

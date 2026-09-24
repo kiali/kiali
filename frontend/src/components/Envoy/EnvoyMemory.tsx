@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  Alert,
   Button,
   ButtonVariant,
   Card,
@@ -7,9 +8,7 @@ import {
   Popover,
   PopoverPosition,
   Title,
-  TitleSizes,
-  Tooltip,
-  TooltipPosition
+  TitleSizes
 } from '@patternfly/react-core';
 import { EnvoyMemoryOverlayChart } from 'components/Envoy/EnvoyMemoryOverlayChart';
 import type { Workload } from 'types/Workload';
@@ -21,7 +20,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { helpIconStyle } from 'styles/IconStyle';
 import { PFFontWeight } from 'styles/PfTypography';
 import { PFColors } from 'components/Pf/PfColors';
-import { inlineIconRowStyle, tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
+import { tabCardStyle, flexCardStyle } from 'styles/FlexStyles';
 import { classes } from 'typestyle';
 import {
   buildEnvoyMemoryQueryParams,
@@ -57,8 +56,8 @@ const titleRowStyle = kialiStyle({
   gap: '0.25rem'
 });
 
-const statusTooltipStyle = kialiStyle({
-  textAlign: 'left'
+const statusAlertStyle = kialiStyle({
+  marginTop: '1rem'
 });
 
 const externalLinkIconStyle = kialiStyle({
@@ -116,7 +115,7 @@ const tileHintStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: '2.5rem'
+  marginTop: '1rem'
 });
 
 const helpBodyStyle = kialiStyle({
@@ -231,7 +230,6 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
 
   const clusterCount = effectiveConfigCounts?.clusters ?? summary?.activeClustersMax;
   const roughConfigBytes = summary?.roughConfigMemoryBytes;
-  const memoryStatusLabel = t('Memory status');
   const allocatedMemoryLabel = t('Allocated memory');
   const roughConfigLabel = t('Est. config memory');
   const activeClustersLabel = t('Active clusters');
@@ -240,16 +238,6 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   const activeConnectionsLabel = t('Active connections');
   const requestRateLabel = t('Request rate');
 
-  const memoryStatusTooltip = summary ? (
-    <div className={statusTooltipStyle}>
-      <div>
-        <strong>{memoryStatusLabel}:</strong> {envoyMemoryCauseLabel(summary.cause)}
-      </div>
-      <div>{envoyMemoryCauseDescription(summary.cause)}</div>
-      <div style={{ marginTop: '0.5rem' }}>{envoyMemoryMetricHelp('memoryStatus')}</div>
-    </div>
-  ) : null;
-
   return (
     <Card className={classes(flexCardStyle, tabCardStyle)} data-test="envoy-memory-tab">
       <CardBody>
@@ -257,13 +245,6 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
           <Title headingLevel="h3" size={TitleSizes.md}>
             <span className={titleRowStyle}>
               {t('Envoy overview')}
-              {summary && (
-                <Tooltip content={memoryStatusTooltip} position={TooltipPosition.right}>
-                  <span className={inlineIconRowStyle} data-test="envoy-memory-status-icon">
-                    {createIcon(envoyMemoryCauseStatus(summary.cause))}
-                  </span>
-                </Tooltip>
-              )}
               <Popover
                 aria-label={t('Envoy overview information')}
                 bodyContent={overviewHelpBody}
@@ -278,6 +259,17 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
 
           {summary && (
             <>
+              <Alert
+                className={statusAlertStyle}
+                customIcon={createIcon(envoyMemoryCauseStatus(summary.cause))}
+                data-test="envoy-memory-status-alert"
+                isInline
+                title={envoyMemoryCauseLabel(summary.cause)}
+                variant={summary.cause === 'ok' ? 'success' : 'warning'}
+              >
+                {envoyMemoryCauseDescription(summary.cause)}
+              </Alert>
+
               <div className={tilesStyle} data-test="envoy-memory-summary-metrics">
                 <div className={tileStyle}>
                   <span className={tileLabelRowStyle}>

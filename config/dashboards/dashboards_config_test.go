@@ -7,7 +7,7 @@ import (
 )
 
 func TestAddMonitoringDashboards(t *testing.T) {
-	builtInListSize := 21
+	builtInListSize := 22
 
 	list := GetBuiltInMonitoringDashboards()
 	assert.Equal(t, builtInListSize, len(list))
@@ -62,7 +62,7 @@ func TestAddMonitoringDashboards(t *testing.T) {
 }
 
 func TestGetBuiltInMonitoringDashboards(t *testing.T) {
-	builtInListSize := 21
+	builtInListSize := 22
 
 	list := GetBuiltInMonitoringDashboards()
 	assert.Equal(t, builtInListSize, len(list))
