@@ -114,16 +114,9 @@ export class WorkloadDetailsPage extends BasePage {
     }
   }
 
-  /** At least one log line contains text. Retries with refresh for sparse sources (e.g. ztunnel). */
+  /** At least one log line contains text. */
   async expectSomeLogLinesContain(text: string): Promise<void> {
-    await expect(async () => {
-      const match = this.page.locator('#logsText p').filter({ hasText: text }).first();
-      if (!(await match.isVisible().catch(() => false))) {
-        await this.getBySel('refresh-button').click();
-        await waitForLoadingComplete(this.page);
-      }
-      await expect(match).toBeVisible({ timeout: 5_000 });
-    }).toPass({ intervals: [2_000, 5_000], timeout: 90_000 });
+    await expect(this.page.locator('#logsText p').filter({ hasText: text }).first()).toBeVisible();
   }
 
   async expectLogLinesNotContain(text: string): Promise<void> {
