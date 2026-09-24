@@ -32,6 +32,10 @@
 
 ## Decisions & tracking
 
+- [x] Decision documented: GitHub Playwright smoke/core suites use **in-cluster** Kiali (MetalLB,
+  `web_root=/kiali`, anonymous until token auth.setup), matching Cypress frontend fidelity and
+  ambient; local `kiali run` remains for interactive debug / Cypress `local` suite. Offline stays on
+  `kiali run offline`.
 - [x] Decision documented: **Native Playwright Test** (not `playwright-bdd`) — self-contained
   `.spec.ts` + Page Object Models; no third-party Gherkin dependency. (PR #10174)
 - [x] React fiber policy documented: prefer `data-test` / DOM assertions; no new `page.evaluate()`
@@ -84,7 +88,7 @@
 - [x] `@smoke` suite passes (~32 scenarios, PR #10174)
 - [x] `@core-1` suite passes (145 tests, PR #10195 + #10220)
 - [x] `@core-2` suite passes (PR #10269)
-- [x] `@core-caching` suite ported (playwright-core-caching CI; health/graph cache enabled locally)
+- [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
 - [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs; `@waypoint` / `@waypoint-tracing` follow-up)

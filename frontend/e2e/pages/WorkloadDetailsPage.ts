@@ -68,14 +68,81 @@ export class WorkloadDetailsPage extends BasePage {
     await containers.locator(`input#container-${containerName}`).check();
   }
 
-  /** Check a logs-tab container by input id (e.g. ztunnel-ratings, container-ratings). */
-  async selectContainer(containerId: string): Promise<void> {
-    const logsResponse = this.page.waitForResponse(
-      response => /\/api\/namespaces\/[^/]+\/pods\/[^/]+\/logs/.test(response.url()) && response.ok()
-    );
-    await this.getBySel('workload-logs-pod-containers').locator(`input#${containerId}`).check();
-    await logsResponse;
-    await waitForLoadingComplete(this.page);
+  /**
+   * Check a logs-tab container by input id (e.g. `ztunnel-ratings`, `waypoint-ratings`, `container-ratings`).
+   *
+   * For sparse ambient/proxy logs, pass `bodyMustInclude` so we wait for a matching `/pods/.../logs`
+   * response that actually carries that text (not just HTTP 200). Retries re-toggle this checkbox
+   * to re-fetch — do not use a blind toolbar refresh.
+   *
+   * Reuse for:
+   * - ambient ztunnel: `selectContainer('ztunnel-ratings', { bodyMustInclude: 'ztunnel' })`
+   * - waypoint (when ported): `selectContainer('waypoint-ratings', { bodyMustInclude: '...' })`
+   *
+   * `logType` is inferred from the id prefix (`ztunnel-` / `waypoint-`) unless overridden.
+   */
+  async selectContainer(
+    containerId: string,
+    options?: {
+      /** Wait until a pod-logs response body (raw or entry message) includes this substring. */
+      bodyMustInclude?: string;
+      /** Override inferred `logType` query param filter (`ztunnel`, `waypoint`, `app`, `proxy`). */
+      logType?: string;
+    }
+  ): Promise<void> {
+    const checkbox = this.getBySel('workload-logs-pod-containers').locator(`input#${containerId}`);
+    const bodyMustInclude = options?.bodyMustInclude;
+    const logType =
+      options?.logType ??
+      (containerId.startsWith('ztunnel-') ? 'ztunnel' : containerId.startsWith('waypoint-') ? 'waypoint' : undefined);
+
+    const matchesLogsResponse = async (response: {
+      ok: () => boolean;
+      text: () => Promise<string>;
+      url: () => string;
+    }): Promise<boolean> => {
+      if (!/\/api\/namespaces\/[^/]+\/pods\/[^/]+\/logs/.test(response.url()) || !response.ok()) {
+        return false;
+      }
+      if (logType && !response.url().includes(`logType=${logType}`)) {
+        return false;
+      }
+      if (!bodyMustInclude) {
+        return true;
+      }
+      const body = await response.text();
+      if (body.includes(bodyMustInclude)) {
+        return true;
+      }
+      try {
+        const parsed = JSON.parse(body) as { entries?: { message?: string }[] };
+        return (parsed.entries ?? []).some(entry => (entry.message ?? '').includes(bodyMustInclude));
+      } catch {
+        return false;
+      }
+    };
+
+    const checkAndWaitForLogs = async (responseTimeoutMs?: number): Promise<void> => {
+      const logsResponse = responseTimeoutMs
+        ? this.page.waitForResponse(response => matchesLogsResponse(response), { timeout: responseTimeoutMs })
+        : this.page.waitForResponse(response => matchesLogsResponse(response));
+      await checkbox.check();
+      await logsResponse;
+      await waitForLoadingComplete(this.page);
+    };
+
+    if (!bodyMustInclude) {
+      await checkAndWaitForLogs();
+      return;
+    }
+
+    await expect(async () => {
+      if (await checkbox.isChecked()) {
+        await checkbox.uncheck();
+        await waitForLoadingComplete(this.page);
+      }
+      await checkAndWaitForLogs(30_000);
+    }).toPass({ intervals: [2_000, 5_000], timeout: 90_000 });
   }
 
   async expectLogLineCountAtMost(maxPerContainer: number): Promise<void> {

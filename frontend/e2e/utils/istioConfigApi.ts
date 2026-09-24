@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 
 type IstioConfigGvk = {
   group: string;
@@ -37,7 +38,7 @@ export function istioConfigDetailsConsolePath(namespace: string, typeName: strin
 }
 
 async function bustIstioConfigCache(page: Page): Promise<void> {
-  await page.request.get(`/api/istio/config?_=${Date.now()}`);
+  await page.request.get(kialiUrl(`/api/istio/config?_=${Date.now()}`));
 }
 
 /**
@@ -55,7 +56,7 @@ export async function waitForIstioObjectDetails(
   await expect(async () => {
     await bustIstioConfigCache(page);
     // Details API allows only cluster, help, and validate query params (no `_` cache-bust).
-    const response = await page.request.get(`${path}?validate=true`);
+    const response = await page.request.get(kialiUrl(`${path}?validate=true`));
     if (response.status() === 404) {
       throw new Error('istio object not available yet (HTTP 404)');
     }

@@ -265,7 +265,9 @@ Cypress hovers the first-column icon and checks tooltip text. Playwright equival
 - Avoid `sudo` / `--with-deps` in CI browser install (Jenkins blocks root); install Chromium binaries
   only.
 - Local `kiali run --port-forward-grafana` without `external_services.grafana` in config: a **WARN**
-  on `/api/status` (`grafana URL is not set`) is expected and does not fail tests.
+  on `/api/status` (`grafana URL is not set`) is expected and does not fail tests. GitHub Playwright
+  smoke/core suites use **in-cluster** Kiali (ingress `/kiali`); keep local `kiali run` for interactive
+  debugging.
 
 ---
 
