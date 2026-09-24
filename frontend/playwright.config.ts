@@ -66,7 +66,9 @@ export default defineConfig({
     {
       name: 'caching-setup',
       testMatch: /caching\.setup\.ts/,
-      testDir: './e2e/global-setup'
+      testDir: './e2e/global-setup',
+      // Must run after auth: enabling cache restarts in-cluster Kiali; parallel auth hits ECONNREFUSED.
+      dependencies: ['setup']
     },
     {
       name: 'smoke',
@@ -92,7 +94,7 @@ export default defineConfig({
     {
       name: 'core-caching',
       grep: /@core-caching/,
-      dependencies: ['setup', 'caching-setup'],
+      dependencies: ['caching-setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {

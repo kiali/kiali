@@ -4,6 +4,7 @@ import { BasePage } from './BasePage';
 import { linkSelector } from '../utils/linkSelector';
 import { expectPathname, gotoConsolePage } from '../utils/navigation';
 import { waitForLoadingComplete } from '../utils/transition';
+import { kialiUrl } from '../utils/kialiUrl';
 
 const normalizeKialiPath = (pathname: string): string => {
   if (pathname.includes('/ossmconsole') || pathname.startsWith('/k8s/ns/')) {
@@ -120,7 +121,7 @@ export class OverviewPage extends BasePage {
       )
     ).sort();
 
-    const response = await this.page.request.get('/api/namespaces');
+    const response = await this.page.request.get(kialiUrl('/api/namespaces'));
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as Array<{ name: string }>;
     const allNamespaces = Array.from(new Set(body.map(ns => ns.name))).sort();
@@ -325,7 +326,7 @@ export class OverviewPage extends BasePage {
     ).sort();
     expect(urlNamespaces.length).toBeGreaterThan(0);
 
-    const response = await this.page.request.get('/api/namespaces');
+    const response = await this.page.request.get(kialiUrl('/api/namespaces'));
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as Array<{ name: string }>;
     const allNamespaces = Array.from(new Set(body.map(ns => ns.name))).sort();
@@ -462,7 +463,7 @@ export class OverviewPage extends BasePage {
     ).sort();
     expect(urlNamespaces.length).toBeGreaterThan(0);
 
-    const response = await this.page.request.get('/api/namespaces');
+    const response = await this.page.request.get(kialiUrl('/api/namespaces'));
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as Array<{ name: string }>;
     const allNamespaces = Array.from(new Set(body.map(ns => ns.name))).sort();

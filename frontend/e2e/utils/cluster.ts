@@ -1,5 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 import { expect } from '@playwright/test';
+import { kialiUrl } from './kialiUrl';
 
 type ConfigResponse = {
   clusters?: Record<string, unknown>;
@@ -7,7 +8,7 @@ type ConfigResponse = {
 
 /** Returns the sole cluster name when Kiali is configured for single-cluster mode. */
 export const getClusterForSingleCluster = async (request: APIRequestContext): Promise<string> => {
-  const response = await request.get('/api/config');
+  const response = await request.get(kialiUrl('/api/config'));
   expect(response.ok()).toBeTruthy();
   const body = (await response.json()) as ConfigResponse;
   const clusterNames = Object.keys(body.clusters ?? {});

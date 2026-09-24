@@ -74,7 +74,7 @@ test.describe('Ambient mesh', () => {
     await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
     await workloadDetailsPage.expectContainerListed('ztunnel');
     await workloadDetailsPage.expectContainerListed('ratings');
-    await workloadDetailsPage.selectContainer('ztunnel-ratings');
+    await workloadDetailsPage.selectContainer('ztunnel-ratings', { bodyMustInclude: 'ztunnel' });
     await workloadDetailsPage.expectContainerChecked('ztunnel-ratings');
     await workloadDetailsPage.expectContainerChecked('container-ratings');
     await workloadDetailsPage.expectPodSelected('ratings-v1');

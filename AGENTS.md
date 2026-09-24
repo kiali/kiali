@@ -366,11 +366,11 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `frontend-tempo` | Frontend tracing tests with Tempo |
 | `local` | Runs Kiali locally (not in-cluster) with smoke Cypress tests |
 | `offline` | Runs Kiali in offline mode with must-gather data |
-| `playwright-smoke` | Playwright smoke suite (KinD + local Kiali) |
-| `playwright-core-1` | Playwright core test group 1 (KinD + local Kiali) |
-| `playwright-core-2` | Playwright core test group 2 (KinD + local Kiali) |
-| `playwright-core-caching` | Playwright core-caching suite (KinD + local Kiali with cache enabled) |
-| `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + local Kiali) |
+| `playwright-smoke` | Playwright smoke suite (KinD + in-cluster Kiali) |
+| `playwright-core-1` | Playwright core test group 1 (KinD + in-cluster Kiali) |
+| `playwright-core-2` | Playwright core test group 2 (KinD + in-cluster Kiali) |
+| `playwright-core-caching` | Playwright core-caching suite (KinD + in-cluster Kiali with cache enabled) |
+| `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
 | `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
 
 #### The `local` Suite (Recommended for Local Development)
@@ -484,7 +484,7 @@ yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:ambient
-hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + local Kiali
+hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
 hack/run-integration-tests.sh --test-suite playwright-core-1
 hack/run-integration-tests.sh --test-suite playwright-core-2
 hack/run-integration-tests.sh --test-suite playwright-core-caching

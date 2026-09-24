@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
 import { smokeAndCoreCaching } from '../../utils/suite-tags';
+import { kialiUrl } from '../../utils/kialiUrl';
 
 test.describe('Kiali help about', () => {
   test.beforeEach(async ({ overviewPage }) => {
@@ -20,7 +21,7 @@ test.describe('Kiali help about', () => {
     'Verify version information is displayed correctly',
     smokeAndCoreCaching,
     async ({ overviewPage, page, request }) => {
-      const statusResponse = await request.get('/api/status');
+      const statusResponse = await request.get(kialiUrl('/api/status'));
       if (statusResponse.ok()) {
         const body = (await statusResponse.json()) as { status?: Record<string, string> };
         const coreVersion = body.status?.['Kiali version'] ?? '';
