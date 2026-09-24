@@ -57,6 +57,8 @@ type GraphCacheMetrics = {
 export class GraphPage extends BasePage {
   /**
    * Visit graph with prometheus.enabled=false mocked via the config API route.
+   * Waits for the mocked /api/config response (same as Cypress intercept + cy.wait)
+   * so serverConfig is applied before asserting the empty state.
    */
   async openWithPrometheusDisabled(): Promise<void> {
     await this.page.route('**/api/config', async route => {
@@ -70,7 +72,11 @@ export class GraphPage extends BasePage {
       await route.fulfill({ response, json: body });
     });
 
+    const configResponse = this.page.waitForResponse(
+      response => response.url().includes('/api/config') && response.request().method() === 'GET' && response.ok()
+    );
     await this.page.goto(kialiUrl('/console/graph/namespaces?refresh=0'));
+    await configResponse;
     await waitForLoadingComplete(this.page);
   }
 
