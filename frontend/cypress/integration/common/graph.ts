@@ -127,20 +127,58 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
 };
 
 /**
- * Click a PatternFly topology node. Force is required in OSSMC because the
- * Console plugin overlay (#root.ossmconsole__*) covers the SVG and fails
- * Cypress actionability. Do not force in standalone Kiali: force skips PF
- * topology hit-testing, so the context menu and side panel never open.
+ * Click a PatternFly topology node.
+ *
+ * Do not use Cypress `{ force: true }` here: that skips PF topology
+ * hit-testing, so the context menu and side panel never open.
+ *
+ * In OSSMC, Console paints an overlay over the SVG. Temporarily disable
+ * pointer-events on covering layers so a real click reaches the node.
  */
-export const clickGraphNode = (nodeId: string, options?: { rightClick?: boolean }): void => {
-  cy.url().then(url => {
-    const force = url.includes('/ossmconsole/');
-    if (options?.rightClick) {
-      cy.get(`[data-id=${nodeId}]`).rightclick({ force });
-    } else {
-      cy.get(`[data-id=${nodeId}]`).click({ force });
+const isOssmcUrl = (url: string): boolean =>
+  url.includes('/ossmconsole/') || url.includes('openshift-console');
+
+const peelCoveringLayers = (node: Element, win: Window): HTMLElement[] => {
+  const peels: HTMLElement[] = [];
+  const rect = node.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  for (let i = 0; i < 8; i++) {
+    const top = win.document.elementFromPoint(x, y) as HTMLElement | null;
+    if (!top || top === node || node.contains(top)) {
+      break;
     }
-  });
+    peels.push(top);
+    top.style.setProperty('pointer-events', 'none');
+  }
+
+  return peels;
+};
+
+export const clickGraphNode = (nodeId: string, options?: { rightClick?: boolean }): void => {
+  const peels: HTMLElement[] = [];
+
+  cy.get(`[data-id="${nodeId}"]`)
+    .filter(':visible')
+    .should('have.length.at.least', 1)
+    .first()
+    .then($node => {
+      const win = $node[0].ownerDocument.defaultView as Window;
+      if (isOssmcUrl(win.location.href)) {
+        peels.push(...peelCoveringLayers($node[0], win));
+      }
+
+      if (options?.rightClick) {
+        cy.wrap($node).rightclick();
+      } else {
+        cy.wrap($node).click();
+      }
+
+      cy.then(() => {
+        peels.forEach(el => el.style.removeProperty('pointer-events'));
+      });
+    });
 };
 
 /**
