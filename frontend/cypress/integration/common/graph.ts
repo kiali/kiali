@@ -155,6 +155,36 @@ const freshFiber = (win: Window): any => {
 };
 
 /**
+ * Wait until a graph node matching `filter` is present. Re-reads React fiber
+ * on every Cypress retry so multi-cluster nodes that appear after the first
+ * graph payload are not missed by a stale `cy.getReact()` snapshot.
+ */
+export const findGraphNode = (filter: (nodes: Node[]) => GraphElement[], errorMsg: string): Cypress.Chainable<Node> => {
+  let found: Node | undefined;
+  cy.waitForReact();
+  return cy
+    .window({ log: false })
+    .should((win: Window) => {
+      const rootFiber = freshFiber(win);
+      assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+      const tree = buildNodeTree(rootFiber);
+      const results = findComponentsInTree(tree, 'GraphPageComponent', {
+        state: { graphData: { isLoading: false }, isReady: true }
+      });
+      assert.equal(results.length, 1, 'GraphPageComponent should be loaded and ready');
+
+      const { state } = results[0];
+      const controller = state.graphRefs.getController() as Visualization;
+      assert.isTrue(controller.hasGraph());
+      const matched = filter(elems(controller).nodes);
+      assert.equal(matched.length, 1, errorMsg);
+      found = matched[0] as Node;
+    })
+    .then(() => found as Node);
+};
+
+/**
  * Retryable assertion wrapper that re-reads the React fiber root from the
  * DOM on every `.should()` retry, ensuring Cypress always sees the latest
  * committed React state.
