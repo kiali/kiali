@@ -359,6 +359,41 @@ create_telemetry_resource() {
   replace_yaml_vars "$telemetry_file" "ISTIO_NAMESPACE" "$istio_namespace" | ${CLIENT_EXE} apply -f -
 }
 
+# Wait until TempoStack CR and pods are Ready (single-tenant KinD CI previously skipped this).
+wait_for_tempostack_ready() {
+  echo -e "Waiting for TempoStack/cr to be Ready...\n"
+  if ! ${CLIENT_EXE} wait --for=condition=Ready TempoStack/cr -n ${TEMPO_NS} --timeout=10m; then
+    echo "ERROR: TempoStack/cr not Ready"
+    ${CLIENT_EXE} get TempoStack/cr -n ${TEMPO_NS} -o yaml || true
+    ${CLIENT_EXE} get pods -n ${TEMPO_NS} -o wide || true
+    return 1
+  fi
+
+  echo -e "Waiting for TempoStack pods to be Ready...\n"
+  if ! ${CLIENT_EXE} wait pods --all -n ${TEMPO_NS} --for=condition=Ready --timeout=10m; then
+    echo "ERROR: TempoStack pods not Ready"
+    ${CLIENT_EXE} get pods -n ${TEMPO_NS} -o wide || true
+    return 1
+  fi
+
+  echo -e "Waiting for Tempo query-frontend service...\n"
+  local query_svc="tempo-cr-query-frontend"
+  for _ in $(seq 1 60); do
+    if ${CLIENT_EXE} get service "${query_svc}" -n ${TEMPO_NS} >/dev/null 2>&1; then
+      local endpoints
+      endpoints=$(${CLIENT_EXE} get endpoints "${query_svc}" -n ${TEMPO_NS} -o jsonpath='{.subsets[0].addresses[*].ip}' 2>/dev/null || true)
+      if [ -n "${endpoints}" ]; then
+        echo "Tempo query-frontend is ready (${query_svc})"
+        return 0
+      fi
+    fi
+    sleep 2
+  done
+  echo "ERROR: Tempo query-frontend service/endpoints not ready"
+  ${CLIENT_EXE} get svc,endpoints,pods -n ${TEMPO_NS} || true
+  return 1
+}
+
 install_tempo() {
   local max_retries="${1:-3}"
   local retry_interval="${2:-30}"
@@ -672,20 +707,47 @@ install_tempo_single_attempt() {
           echo -e "Cert-manager is already installed. Skipping cert-manager installation.\n"
         else
           ${CLIENT_EXE} apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+          echo -e "Waiting for cert-manager CRDs to be established...\n"
+          ${CLIENT_EXE} wait --for condition=established crd/certificates.cert-manager.io --timeout=5m
+          ${CLIENT_EXE} wait --for condition=established crd/issuers.cert-manager.io --timeout=5m
           echo -e "Waiting for cert-manager pods to be ready... \n"
-          $CLIENT_EXE wait pods --all -n cert-manager --for=condition=Ready --timeout=5m
+          if ! $CLIENT_EXE wait pods --all -n cert-manager --for=condition=Ready --timeout=5m; then
+            echo "ERROR: cert-manager pods not Ready"
+            ${CLIENT_EXE} get pods -n cert-manager -o wide || true
+            exit 1
+          fi
 
-          # There's some issue with the cert-manager webhook where it fails to add the https cert to the webhook
-          # before it is marked as ready. So we need to wait for a small period of time before installing the Tempo operator
-          # because the tempo manifests rely on the cert-manager webhook to be ready.
-          echo -e "Waiting for cert-manager webhook to be ready... \n"
+          # cert-manager marks pods Ready before the webhook serving cert is usable.
+          # Tempo operator manifests create Certificate/Issuer resources via that webhook.
+          echo -e "Waiting for cert-manager webhook endpoints...\n"
+          for _ in $(seq 1 60); do
+            endpoints=$(${CLIENT_EXE} get endpoints cert-manager-webhook -n cert-manager -o jsonpath='{.subsets[0].addresses[*].ip}' 2>/dev/null || true)
+            if [ -n "${endpoints}" ]; then
+              echo "cert-manager webhook has endpoints"
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "${endpoints:-}" ]; then
+            echo "ERROR: cert-manager webhook has no endpoints"
+            exit 1
+          fi
           sleep 10
         fi
         
         echo -e "Installing latest Tempo operator from GitHub...\n"
         ${CLIENT_EXE} apply -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
         echo -e "Waiting for Tempo operator to be ready... \n"
-        $CLIENT_EXE wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=5m
+        if ! $CLIENT_EXE wait pods --all -n ${TEMPO_OPERATOR_NS} --for=condition=Ready --timeout=5m; then
+          echo "ERROR: Tempo operator pods not Ready (often cert-manager webhook/certs not ready yet)"
+          ${CLIENT_EXE} get pods -n ${TEMPO_OPERATOR_NS} -o wide || true
+          ${CLIENT_EXE} describe pods -n ${TEMPO_OPERATOR_NS} || true
+          exit 1
+        fi
+        if ! wait_for_webhook_readiness "tempo-operator-webhook-service" "${TEMPO_OPERATOR_NS}" 36 5; then
+          echo "ERROR: Tempo operator webhook never became ready"
+          exit 1
+        fi
       fi
     fi
   fi
@@ -767,9 +829,14 @@ emailAddress=not@mail
     fi
     
     # Retry logic for TempoStack installation as it sometimes fails because the webhook isn't ready.
-    local max_retries=3
+    local max_retries=6
     local retry_count=0
     local success=false
+
+    if ! wait_for_webhook_readiness "tempo-operator-webhook-service" "${TEMPO_OPERATOR_NS:-tempo-operator-system}" 24 5; then
+      echo "ERROR: Tempo operator webhook not ready before TempoStack install"
+      exit 1
+    fi
     
     while [ $retry_count -lt $max_retries ] && [ "$success" = false ]; do
       retry_count=$((retry_count + 1))
@@ -827,9 +894,14 @@ emailAddress=not@mail
       fi
       
       # Retry logic for TempoStack installation as it sometimes fails because the webhook isn't ready.
-      local max_retries=3
+      local max_retries=6
       local retry_count=0
       local success=false
+
+      if ! wait_for_webhook_readiness "tempo-operator-webhook-service" "${TEMPO_OPERATOR_NS:-tempo-operator-system}" 24 5; then
+        echo "ERROR: Tempo operator webhook not ready before TempoStack install"
+        exit 1
+      fi
       
       while [ $retry_count -lt $max_retries ] && [ "$success" = false ]; do
         retry_count=$((retry_count + 1))
@@ -878,6 +950,13 @@ emailAddress=not@mail
         exit 1
       fi
     fi
+
+    # Always wait for TempoStack to be Ready before continuing (KinD/CI single-tenant
+    # previously only waited for the CR apply, then raced ahead while query-frontend
+    # was still coming up — leading to Kiali 503s / empty traces).
+    if ! wait_for_tempostack_ready; then
+      exit 1
+    fi
     
     # Create RBAC resources for multi-tenant mode
     if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
@@ -887,14 +966,7 @@ emailAddress=not@mail
       
       # Install COO UI Plugin for distributed tracing if requested
       if [ "${INSTALL_COO_PLUGIN}" == "true" ]; then
-        # Wait for TempoStack to be ready before installing UI Plugin
-        echo -e "Waiting for TempoStack to be ready...\n"
-        ${CLIENT_EXE} wait --for=condition=Ready TempoStack/cr -n ${TEMPO_NS} --timeout=10m 2>/dev/null || echo "Waiting for TempoStack pods to be ready..."
-        
-        # Wait for TempoStack pods to be ready
-        ${CLIENT_EXE} wait pods --all -n ${TEMPO_NS} --for=condition=Ready --timeout=10m
-        
-        # Install COO UI Plugin for distributed tracing
+        # TempoStack already waited above; install COO UI Plugin for distributed tracing
         echo -e "Installing Cluster Observability UI Plugin for distributed tracing...\n"
         install_coo_ui_plugin
       else

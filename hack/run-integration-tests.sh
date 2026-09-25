@@ -467,37 +467,60 @@ ensureKialiTracesReady() {
   local end_time
   local multicluster=$1
   local traces_date
+  local http_code
+  local body
+  local result
   start_time=$(date +%s)
-  end_time=$((start_time + 120))
+  # Fresh Tempo installs often need several minutes before query-frontend returns data.
+  end_time=$((start_time + 300))
 
-  # Get traces from the last 5m
-  traces_date=$((($(date +%s) - 300) * 1000))
-  local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
-  if [ "$multicluster" == "true" ]; then
-    echo "Multicluster request"
-    trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
-  fi
-  infomsg "Traces url: ${trace_url}"
   set +o pipefail
   while true; do
-    result=$(curl -k -s --fail "$trace_url" \
-        -H 'Accept: application/json, text/plain, */*' \
-        -H 'Content-Type: application/json' | jq -r '.data')
+    # Refresh the lookback window each attempt.
+    traces_date=$((($(date +%s) - 300) * 1000))
+    local trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/productpage-v1/traces?startMicros=${traces_date}&tags=&limit=100"
+    if [ "$multicluster" == "true" ]; then
+      echo "Multicluster request"
+      trace_url="${KIALI_URL}/api/namespaces/bookinfo/workloads/reviews-v2/traces?startMicros=${traces_date}&tags=&limit=100&clusterName=west"
+    fi
+    infomsg "Traces url: ${trace_url}"
 
-    if [ -z "$result" ] || [ "$result" == "[]" ]; then
-      local now
-      now=$(date +%s)
-      if [ "${now}" -gt "${end_time}" ]; then
-        echo "Timed out waiting for Kiali to get any trace. Examine open telemetry collector logs below:"
-        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=-1 --context kind-west -n istio-system
-        exit 1
-      fi
-      sleep 10
-    else
+    # Generate a little bookinfo traffic so Tempo has something to ingest.
+    kubectl exec -n bookinfo deploy/productpage-v1 -- \
+      curl -s -o /dev/null -w '' http://localhost:9080/productpage >/dev/null 2>&1 || true
+
+    body=$(mktemp)
+    http_code=$(curl -k -s -o "${body}" -w '%{http_code}' "$trace_url" \
+        -H 'Accept: application/json, text/plain, */*' \
+        -H 'Content-Type: application/json' || echo "000")
+    result=$(jq -r '.data // empty' "${body}" 2>/dev/null || true)
+
+    if [ "${http_code}" = "200" ] && [ -n "$result" ] && [ "$result" != "[]" ] && [ "$result" != "null" ]; then
+      rm -f "${body}"
       echo "Got traces."
       break
     fi
 
+    infomsg "Traces not ready yet (http=${http_code}, data=$(head -c 120 "${body}" | tr '\n' ' '))"
+    rm -f "${body}"
+
+    local now
+    now=$(date +%s)
+    if [ "${now}" -gt "${end_time}" ]; then
+      echo "Timed out waiting for Kiali to get any trace."
+      echo "Tempo pods:"
+      kubectl get pods -n tempo -o wide 2>/dev/null || true
+      echo "OpenTelemetry collector logs:"
+      if [ "$multicluster" == "true" ]; then
+        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=200 --context kind-west -n istio-system 2>/dev/null || true
+      else
+        kubectl logs -l app.kubernetes.io/name=opentelemetry-collector --tail=200 -n istio-system 2>/dev/null || true
+      fi
+      echo "Kiali logs (tail):"
+      kubectl logs -l app=kiali -n istio-system --tail=100 2>/dev/null || true
+      exit 1
+    fi
+    sleep 10
   done
   set -o pipefail
 }
