@@ -1,22 +1,31 @@
 import * as React from 'react';
-import { Button, ButtonVariant, ExpandableSection, Tab, Tabs } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { WorkloadOverview } from '../../types/ServiceInfo';
+import {
+  Button,
+  ButtonVariant,
+  ExpandableSection,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  Tab,
+  Tabs
+} from '@patternfly/react-core';
+import type { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
 import { K8sRequestRouting } from './K8sRequestRouting';
-import { TrafficShifting, WorkloadWeight } from './TrafficShifting';
-import {
-  TrafficPolicy,
-  ConsistentHashType,
-  TrafficPolicyState,
-  UNSET
-} from '../../components/IstioWizards/TrafficPolicy';
+import type { WorkloadWeight } from './TrafficShifting';
+import { TrafficShifting } from './TrafficShifting';
+import type { TrafficPolicyState } from '../../components/IstioWizards/TrafficPolicy';
+import { TrafficPolicy, ConsistentHashType, UNSET } from '../../components/IstioWizards/TrafficPolicy';
 import { ROUND_ROBIN } from './TrafficPolicy';
-import { FaultInjection, FaultInjectionRoute } from './FaultInjection';
-import { Rule } from './RequestRouting/Rules';
-import { K8sRule } from './K8sRequestRouting/K8sRules';
+import type { FaultInjectionRoute } from './FaultInjection';
+import { FaultInjection } from './FaultInjection';
+import type { Rule } from './RequestRouting/Rules';
+import type { K8sRule } from './K8sRequestRouting/K8sRules';
+import type { ServiceWizardProps, ServiceWizardState, WizardPreviews } from './WizardActions';
 import {
   buildIstioConfig,
   fqdnServiceName,
@@ -36,8 +45,6 @@ import {
   getInitWeights,
   hasGateway,
   hasK8sGateway,
-  ServiceWizardProps,
-  ServiceWizardState,
   WIZARD_FAULT_INJECTION,
   WIZARD_K8S_REQUEST_ROUTING,
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
@@ -46,31 +53,35 @@ import {
   WIZARD_TCP_TRAFFIC_SHIFTING,
   WIZARD_TITLES,
   WIZARD_TRAFFIC_SHIFTING,
-  WizardPreviews,
   getInitK8sGRPCRules
 } from './WizardActions';
-import { GatewaySelector, GatewaySelectorState } from './GatewaySelector';
-import { K8sGatewaySelector, K8sGatewaySelectorState } from './K8sGatewaySelector';
+import type { GatewaySelectorState } from './GatewaySelector';
+import { GatewaySelector } from './GatewaySelector';
+import type { K8sGatewaySelectorState } from './K8sGatewaySelector';
+import { K8sGatewaySelector } from './K8sGatewaySelector';
 import { VirtualServiceHosts } from './VirtualServiceHosts';
 import { K8sRouteHosts } from './K8sRouteHosts';
 import { K8sGRPCRouteHosts } from './K8sGRPCRouteHosts';
 import { HTTP, GRPC } from './K8sRequestRouting/K8sMatchBuilder';
-import {
+import type {
   DestinationRule,
   Gateway,
   K8sGateway,
   K8sGRPCRoute,
   K8sHTTPRoute,
   PeerAuthentication,
-  PeerAuthenticationMutualTLSMode,
   VirtualService
 } from '../../types/IstioObjects';
+import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
-import { RequestTimeouts, TimeoutRetryRoute } from './RequestTimeouts';
-import { CircuitBreaker, CircuitBreakerState } from './CircuitBreaker';
+import type { TimeoutRetryRoute } from './RequestTimeouts';
+import { RequestTimeouts } from './RequestTimeouts';
+import type { CircuitBreakerState } from './CircuitBreaker';
+import { CircuitBreaker } from './CircuitBreaker';
 import { isEqual } from 'lodash-es';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
-import { ApiResponse } from 'types/Api';
+import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
@@ -409,7 +420,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       case WIZARD_K8S_GRPC_REQUEST_ROUTING:
       case WIZARD_REQUEST_ROUTING:
       case WIZARD_FAULT_INJECTION:
-      case WIZARD_REQUEST_TIMEOUTS:
+      case WIZARD_REQUEST_TIMEOUTS: {
         const dr = this.state.previews!.dr;
         const vs = this.state.previews!.vs;
         const gw = this.state.previews!.gw;
@@ -552,6 +563,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         }
 
         break;
+      }
       default:
     }
 
@@ -901,8 +913,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         ? isViewOnly
           ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].title)}`
           : this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
+            ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].title)}`
+            : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].title)}`
         : 'View Modal';
 
     const titleModal =
@@ -910,8 +922,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         ? isViewOnly
           ? `${t('View')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
           : this.props.update
-          ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
-          : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+            ? `${t('Update')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
+            : `${t('Create')} ${t(WIZARD_TITLES[this.props.type].modalTitle)}`
         : 'View Modal';
 
     const isTrafficShifting =
@@ -923,12 +935,20 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
     return (
       <>
-        <Modal
-          variant={ModalVariant.small}
-          title={titleAction}
-          isOpen={this.state.confirmationModal}
-          onClose={() => this.onClose(false)}
-          actions={[
+        <Modal variant={ModalVariant.small} isOpen={this.state.confirmationModal} onClose={() => this.onClose(false)}>
+          <ModalHeader title={titleAction} />
+          <ModalBody>
+            <>
+              {this.props.update
+                ? t("You're going to update istio objects in Namespace {{namespace}}. Are you sure?", {
+                    namespace: this.props.namespace
+                  })
+                : t("You're going to create istio objects in Namespace {{namespace}}. Are you sure?", {
+                    namespace: this.props.namespace
+                  })}
+            </>
+          </ModalBody>
+          <ModalFooter>
             <Button
               key="confirm"
               variant={ButtonVariant.primary}
@@ -936,23 +956,16 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               data-test={`confirm-${this.props.update ? 'update' : 'create'}`}
             >
               {this.props.update ? t('Update') : t('Create')}
-            </Button>,
+            </Button>
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               {t('Cancel')}
             </Button>
-          ]}
-        >
-          <>
-            You're going to {this.props.update ? 'update' : 'create'} istio objects in Namespace {this.props.namespace}.
-            Are you sure?
-          </>
+          </ModalFooter>
         </Modal>
 
         <Modal
           maxWidth={'641px'}
           variant={ModalVariant.medium}
-          title={titleModal}
-          description={modalDescription}
           aria-label={titleModal}
           data-test={`${this.props.type}_modal`}
           isOpen={this.state.showWizard}
@@ -962,8 +975,209 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
               this.onPreview();
             }
           }}
-          actions={
-            isViewOnly
+        >
+          <ModalHeader title={titleModal} description={modalDescription} />
+          <ModalBody>
+            {this.props.type === WIZARD_REQUEST_ROUTING && (
+              <RequestRouting
+                serviceName={this.props.serviceName}
+                workloads={this.props.workloads}
+                initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
+                onChange={this.onRulesChange}
+              />
+            )}
+
+            {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+              <K8sRequestRouting
+                subServices={this.props.subServices}
+                initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
+                protocol={HTTP}
+                onChange={this.onK8sRulesChange}
+              />
+            )}
+
+            {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+              <K8sRequestRouting
+                subServices={this.props.subServices}
+                initRules={getInitK8sGRPCRules(this.props.k8sGRPCRoutes)}
+                protocol={GRPC}
+                onChange={this.onK8sRulesChange}
+              />
+            )}
+
+            {this.props.type === WIZARD_FAULT_INJECTION && (
+              <FaultInjection
+                initFaultInjectionRoute={getInitFaultInjectionRoute(
+                  this.props.workloads,
+                  this.props.virtualServices,
+                  this.props.destinationRules
+                )}
+                onChange={this.onFaultInjectionRouteChange}
+              />
+            )}
+
+            {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
+              <TrafficShifting
+                showValid={true}
+                workloads={this.props.workloads}
+                initWeights={getInitWeights(
+                  this.props.workloads,
+                  this.props.virtualServices,
+                  this.props.destinationRules
+                )}
+                showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
+                onChange={this.onWeightsChange}
+              />
+            )}
+
+            {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
+              <RequestTimeouts
+                initTimeoutRetry={getInitTimeoutRetryRoute(
+                  this.props.workloads,
+                  this.props.virtualServices,
+                  this.props.destinationRules
+                )}
+                onChange={this.onTimeoutRetryRouteChange}
+              />
+            )}
+
+            {(this.props.type === WIZARD_REQUEST_ROUTING ||
+              this.props.type === WIZARD_FAULT_INJECTION ||
+              this.props.type === WIZARD_TRAFFIC_SHIFTING ||
+              this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
+              this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
+              <ExpandableSection
+                className={advancedOptionsStyle}
+                isExpanded={this.state.showAdvanced}
+                toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
+                contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+                toggleId="advanced-options-expandable"
+                onToggle={() => {
+                  this.setState({
+                    showAdvanced: !this.state.showAdvanced
+                  });
+                }}
+              >
+                <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+                  <Tab eventKey={0} title={t('Destination Hosts')}>
+                    <div style={{ marginTop: '20px' }}>
+                      <VirtualServiceHosts
+                        vsHosts={this.state.vsHosts}
+                        gateway={this.state.gateway}
+                        onVsHostsChange={this.onVsHosts}
+                      />
+                    </div>
+                  </Tab>
+
+                  {serverConfig.istioGatewayInstalled && (
+                    <Tab eventKey={1} title={t('Gateways')} data-test={'Gateways'}>
+                      <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                        <GatewaySelector
+                          serviceName={this.props.serviceName}
+                          hasGateway={hasGateway(this.props.virtualServices)}
+                          gateway={gatewaySelected}
+                          isMesh={isMesh}
+                          gateways={this.props.gateways}
+                          vsHosts={this.state.vsHosts}
+                          onGatewayChange={this.onGateway}
+                        />
+                      </div>
+                    </Tab>
+                  )}
+
+                  <Tab eventKey={2} title={t('Traffic Policy')}>
+                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                      <TrafficPolicy
+                        mtlsMode={this.state.trafficPolicy.mtlsMode}
+                        clientCertificate={this.state.trafficPolicy.clientCertificate}
+                        privateKey={this.state.trafficPolicy.privateKey}
+                        caCertificates={this.state.trafficPolicy.caCertificates}
+                        hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
+                        loadBalancer={this.state.trafficPolicy.loadBalancer}
+                        nsWideStatus={this.props.tlsStatus}
+                        hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
+                        peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
+                        addConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                        connectionPool={this.state.trafficPolicy.connectionPool}
+                        addOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                        outlierDetection={this.state.trafficPolicy.outlierDetection}
+                        onTrafficPolicyChange={this.onTrafficPolicy}
+                      />
+                    </div>
+                  </Tab>
+
+                  {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
+                    <Tab eventKey={3} title={t('Circuit Breaker')}>
+                      <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                        <CircuitBreaker
+                          hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
+                          connectionPool={this.state.trafficPolicy.connectionPool}
+                          hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
+                          outlierDetection={this.state.trafficPolicy.outlierDetection}
+                          onCircuitBreakerChange={this.onCircuitBreaker}
+                        />
+                      </div>
+                    </Tab>
+                  )}
+                </Tabs>
+              </ExpandableSection>
+            )}
+
+            {(this.props.type === WIZARD_K8S_REQUEST_ROUTING ||
+              this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) && (
+              <ExpandableSection
+                className={advancedOptionsStyle}
+                isExpanded={this.state.showAdvanced}
+                toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
+                contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
+                toggleId="advanced-options-expandable"
+                onToggle={() => {
+                  this.setState({
+                    showAdvanced: !this.state.showAdvanced
+                  });
+                }}
+              >
+                <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
+                  {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
+                    <Tab eventKey={0} title={t('K8s HTTPRoute Hosts')}>
+                      <div style={{ marginTop: '20px' }}>
+                        <K8sRouteHosts
+                          valid={this.state.valid.k8sRouteHosts}
+                          k8sRouteHosts={this.state.k8sRouteHosts}
+                          onK8sRouteHostsChange={this.onK8sRouteHosts}
+                        />
+                      </div>
+                    </Tab>
+                  )}
+                  {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
+                    <Tab eventKey={0} title={t('K8s GRPCRoute Hosts')}>
+                      <div style={{ marginTop: '20px' }}>
+                        <K8sGRPCRouteHosts
+                          valid={this.state.valid.k8sRouteHosts}
+                          k8sRouteHosts={this.state.k8sRouteHosts}
+                          onK8sRouteHostsChange={this.onK8sRouteHosts}
+                        />
+                      </div>
+                    </Tab>
+                  )}
+                  <Tab eventKey={1} title={t('K8s Gateways')} data-test={'K8s Gateways'}>
+                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
+                      <K8sGatewaySelector
+                        serviceName={this.props.serviceName}
+                        hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)}
+                        gateway={k8sGatewaySelected}
+                        k8sGateways={this.props.k8sGateways}
+                        k8sRouteHosts={this.state.k8sRouteHosts}
+                        onGatewayChange={this.onK8sGateway}
+                      />
+                    </div>
+                  </Tab>
+                </Tabs>
+              </ExpandableSection>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            {isViewOnly
               ? [
                   <Button key="close" variant={ButtonVariant.primary} onClick={() => this.onClose(false)}>
                     {t('Close')}
@@ -982,204 +1196,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
                   <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
                     {t('Cancel')}
                   </Button>
-                ]
-          }
-        >
-          {this.props.type === WIZARD_REQUEST_ROUTING && (
-            <RequestRouting
-              serviceName={this.props.serviceName}
-              workloads={this.props.workloads}
-              initRules={getInitRules(this.props.workloads, this.props.virtualServices, this.props.destinationRules)}
-              onChange={this.onRulesChange}
-            />
-          )}
-
-          {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
-            <K8sRequestRouting
-              subServices={this.props.subServices}
-              initRules={getInitK8sRules(this.props.k8sHTTPRoutes)}
-              protocol={HTTP}
-              onChange={this.onK8sRulesChange}
-            />
-          )}
-
-          {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
-            <K8sRequestRouting
-              subServices={this.props.subServices}
-              initRules={getInitK8sGRPCRules(this.props.k8sGRPCRoutes)}
-              protocol={GRPC}
-              onChange={this.onK8sRulesChange}
-            />
-          )}
-
-          {this.props.type === WIZARD_FAULT_INJECTION && (
-            <FaultInjection
-              initFaultInjectionRoute={getInitFaultInjectionRoute(
-                this.props.workloads,
-                this.props.virtualServices,
-                this.props.destinationRules
-              )}
-              onChange={this.onFaultInjectionRouteChange}
-            />
-          )}
-
-          {(this.props.type === WIZARD_TRAFFIC_SHIFTING || this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING) && (
-            <TrafficShifting
-              showValid={true}
-              workloads={this.props.workloads}
-              initWeights={getInitWeights(
-                this.props.workloads,
-                this.props.virtualServices,
-                this.props.destinationRules
-              )}
-              showMirror={this.props.type === WIZARD_TRAFFIC_SHIFTING}
-              onChange={this.onWeightsChange}
-            />
-          )}
-
-          {this.props.type === WIZARD_REQUEST_TIMEOUTS && (
-            <RequestTimeouts
-              initTimeoutRetry={getInitTimeoutRetryRoute(
-                this.props.workloads,
-                this.props.virtualServices,
-                this.props.destinationRules
-              )}
-              onChange={this.onTimeoutRetryRouteChange}
-            />
-          )}
-
-          {(this.props.type === WIZARD_REQUEST_ROUTING ||
-            this.props.type === WIZARD_FAULT_INJECTION ||
-            this.props.type === WIZARD_TRAFFIC_SHIFTING ||
-            this.props.type === WIZARD_TCP_TRAFFIC_SHIFTING ||
-            this.props.type === WIZARD_REQUEST_TIMEOUTS) && (
-            <ExpandableSection
-              className={advancedOptionsStyle}
-              isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
-              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
-              toggleId="advanced-options-expandable"
-              onToggle={() => {
-                this.setState({
-                  showAdvanced: !this.state.showAdvanced
-                });
-              }}
-            >
-              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                <Tab eventKey={0} title={t('Destination Hosts')}>
-                  <div style={{ marginTop: '20px' }}>
-                    <VirtualServiceHosts
-                      vsHosts={this.state.vsHosts}
-                      gateway={this.state.gateway}
-                      onVsHostsChange={this.onVsHosts}
-                    />
-                  </div>
-                </Tab>
-
-                {serverConfig.istioGatewayInstalled && (
-                  <Tab eventKey={1} title={t('Gateways')} data-test={'Gateways'}>
-                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                      <GatewaySelector
-                        serviceName={this.props.serviceName}
-                        hasGateway={hasGateway(this.props.virtualServices)}
-                        gateway={gatewaySelected}
-                        isMesh={isMesh}
-                        gateways={this.props.gateways}
-                        vsHosts={this.state.vsHosts}
-                        onGatewayChange={this.onGateway}
-                      />
-                    </div>
-                  </Tab>
-                )}
-
-                <Tab eventKey={2} title={t('Traffic Policy')}>
-                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <TrafficPolicy
-                      mtlsMode={this.state.trafficPolicy.mtlsMode}
-                      clientCertificate={this.state.trafficPolicy.clientCertificate}
-                      privateKey={this.state.trafficPolicy.privateKey}
-                      caCertificates={this.state.trafficPolicy.caCertificates}
-                      hasLoadBalancer={this.state.trafficPolicy.addLoadBalancer}
-                      loadBalancer={this.state.trafficPolicy.loadBalancer}
-                      nsWideStatus={this.props.tlsStatus}
-                      hasPeerAuthentication={this.state.trafficPolicy.peerAuthnSelector.addPeerAuthentication}
-                      peerAuthenticationMode={this.state.trafficPolicy.peerAuthnSelector.mode}
-                      addConnectionPool={this.state.trafficPolicy.addConnectionPool}
-                      connectionPool={this.state.trafficPolicy.connectionPool}
-                      addOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
-                      outlierDetection={this.state.trafficPolicy.outlierDetection}
-                      onTrafficPolicyChange={this.onTrafficPolicy}
-                    />
-                  </div>
-                </Tab>
-
-                {this.props.type !== WIZARD_TCP_TRAFFIC_SHIFTING && (
-                  <Tab eventKey={3} title={t('Circuit Breaker')}>
-                    <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                      <CircuitBreaker
-                        hasConnectionPool={this.state.trafficPolicy.addConnectionPool}
-                        connectionPool={this.state.trafficPolicy.connectionPool}
-                        hasOutlierDetection={this.state.trafficPolicy.addOutlierDetection}
-                        outlierDetection={this.state.trafficPolicy.outlierDetection}
-                        onCircuitBreakerChange={this.onCircuitBreaker}
-                      />
-                    </div>
-                  </Tab>
-                )}
-              </Tabs>
-            </ExpandableSection>
-          )}
-
-          {(this.props.type === WIZARD_K8S_REQUEST_ROUTING || this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING) && (
-            <ExpandableSection
-              className={advancedOptionsStyle}
-              isExpanded={this.state.showAdvanced}
-              toggleText={`${this.state.showAdvanced ? t('Hide') : t('Show')} ${t('advanced options')}`}
-              contentId={`${this.state.showAdvanced ? 'hide' : 'show'}_advanced_options`}
-              onToggle={() => {
-                this.setState({
-                  showAdvanced: !this.state.showAdvanced
-                });
-              }}
-            >
-              <Tabs isFilled={true} activeKey={this.state.advancedTabKey} onSelect={this.advancedHandleTabClick}>
-                {this.props.type === WIZARD_K8S_REQUEST_ROUTING && (
-                  <Tab eventKey={0} title={t('K8s HTTPRoute Hosts')}>
-                    <div style={{ marginTop: '20px' }}>
-                      <K8sRouteHosts
-                        valid={this.state.valid.k8sRouteHosts}
-                        k8sRouteHosts={this.state.k8sRouteHosts}
-                        onK8sRouteHostsChange={this.onK8sRouteHosts}
-                      />
-                    </div>
-                  </Tab>
-                )}
-                {this.props.type === WIZARD_K8S_GRPC_REQUEST_ROUTING && (
-                  <Tab eventKey={0} title={t('K8s GRPCRoute Hosts')}>
-                    <div style={{ marginTop: '20px' }}>
-                      <K8sGRPCRouteHosts
-                        valid={this.state.valid.k8sRouteHosts}
-                        k8sRouteHosts={this.state.k8sRouteHosts}
-                        onK8sRouteHostsChange={this.onK8sRouteHosts}
-                      />
-                    </div>
-                  </Tab>
-                )}
-                <Tab eventKey={1} title={t('K8s Gateways')} data-test={'K8s Gateways'}>
-                  <div style={{ marginTop: '20px', marginBottom: '10px' }}>
-                    <K8sGatewaySelector
-                      serviceName={this.props.serviceName}
-                      hasGateway={hasK8sGateway(this.props.k8sHTTPRoutes, this.props.k8sGRPCRoutes)}
-                      gateway={k8sGatewaySelected}
-                      k8sGateways={this.props.k8sGateways}
-                      k8sRouteHosts={this.state.k8sRouteHosts}
-                      onGatewayChange={this.onK8sGateway}
-                    />
-                  </div>
-                </Tab>
-              </Tabs>
-            </ExpandableSection>
-          )}
+                ]}
+          </ModalFooter>
         </Modal>
 
         <IstioConfigPreview

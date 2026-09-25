@@ -11,11 +11,15 @@ import {
   FormGroup,
   Popover,
   PopoverPosition,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import type { TOptions } from 'i18next';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiLink } from 'components/Link/KialiLink';
@@ -689,11 +693,60 @@ export const ServiceInsights: React.FC = () => {
         id="service-insights-manage-columns-modal"
         data-test="service-insights-manage-columns-modal"
         aria-label={t('Manage metrics')}
-        title={t('Manage metrics')}
         variant={ModalVariant.small}
         isOpen={isManageColumnsOpen}
         onClose={onCancelManageColumns}
-        actions={[
+      >
+        <ModalHeader title={t('Manage metrics')} />
+        <ModalBody>
+          <p style={{ marginTop: 0 }}>
+            {t(
+              'Select the metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
+            )}
+          </p>
+
+          <Form style={{ marginTop: '1rem' }}>
+            <FormGroup fieldId="service-insights-metrics-checkboxes">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    const allSelected = draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp;
+                    if (allSelected) {
+                      setDraftMetrics({ errorRates: false, latency: false, tcp: false });
+                    } else {
+                      setDraftMetrics({ errorRates: true, latency: true, tcp: true });
+                    }
+                  }}
+                  style={{ padding: 0, marginBottom: '0.5rem', textAlign: 'left', textDecoration: 'underline' }}
+                >
+                  {draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp
+                    ? t('Unselect all')
+                    : t('Select all')}
+                </Button>
+                <Checkbox
+                  id="service-insights-metrics-error-rates"
+                  label={t('Error rates')}
+                  isChecked={draftMetrics.errorRates}
+                  onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, errorRates: checked }))}
+                />
+                <Checkbox
+                  id="service-insights-metrics-latency"
+                  label={t('Latency')}
+                  isChecked={draftMetrics.latency}
+                  onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, latency: checked }))}
+                />
+                <Checkbox
+                  id="service-insights-metrics-tcp"
+                  label={t('Throughput')}
+                  isChecked={draftMetrics.tcp}
+                  onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, tcp: checked }))}
+                />
+              </div>
+            </FormGroup>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
           <Button
             key="save"
             variant="primary"
@@ -701,58 +754,11 @@ export const ServiceInsights: React.FC = () => {
             isDisabled={!draftMetrics.errorRates && !draftMetrics.latency && !draftMetrics.tcp}
           >
             {t('Save')}
-          </Button>,
+          </Button>
           <Button key="cancel" variant="link" onClick={onCancelManageColumns}>
             {t('Cancel')}
           </Button>
-        ]}
-      >
-        <p style={{ marginTop: 0 }}>
-          {t(
-            'Select the metrics to display in the Service Insights overview to focus on the telemetry most relevant to your current environment.'
-          )}
-        </p>
-
-        <Form style={{ marginTop: '1rem' }}>
-          <FormGroup fieldId="service-insights-metrics-checkboxes">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
-              <Button
-                variant="link"
-                onClick={() => {
-                  const allSelected = draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp;
-                  if (allSelected) {
-                    setDraftMetrics({ errorRates: false, latency: false, tcp: false });
-                  } else {
-                    setDraftMetrics({ errorRates: true, latency: true, tcp: true });
-                  }
-                }}
-                style={{ padding: 0, marginBottom: '0.5rem', textAlign: 'left', textDecoration: 'underline' }}
-              >
-                {draftMetrics.errorRates && draftMetrics.latency && draftMetrics.tcp
-                  ? t('Unselect all')
-                  : t('Select all')}
-              </Button>
-              <Checkbox
-                id="service-insights-metrics-error-rates"
-                label={t('Error rates')}
-                isChecked={draftMetrics.errorRates}
-                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, errorRates: checked }))}
-              />
-              <Checkbox
-                id="service-insights-metrics-latency"
-                label={t('Latency')}
-                isChecked={draftMetrics.latency}
-                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, latency: checked }))}
-              />
-              <Checkbox
-                id="service-insights-metrics-tcp"
-                label={t('Throughput')}
-                isChecked={draftMetrics.tcp}
-                onChange={(_event, checked) => setDraftMetrics(prev => ({ ...prev, tcp: checked }))}
-              />
-            </div>
-          </FormGroup>
-        </Form>
+        </ModalFooter>
       </Modal>
     </Card>
   );

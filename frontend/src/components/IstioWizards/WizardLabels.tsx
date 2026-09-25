@@ -1,6 +1,17 @@
 import * as React from 'react';
-import { ActionGroup, Alert, Button, List, ListItem, TextInput, Title, TitleSizes } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import {
+  ActionGroup,
+  Alert,
+  Button,
+  List,
+  ListItem,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  TextInput
+} from '@patternfly/react-core';
 import type { IRow } from '@patternfly/react-table';
 import { Table, TableVariant, Tbody, Th, Thead, Tr } from '@patternfly/react-table';
 import { KialiIcon } from 'config/KialiIcon';
@@ -166,13 +177,8 @@ export class WizardLabels extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
-    const header = (
-      <>
-        <Title id="modal-custom-header-label" headingLevel="h1" size={TitleSizes['2xl']}>
-          {this.props.type.charAt(0).toUpperCase() + this.props.type.slice(1)}
-        </Title>
-      </>
-    );
+    const titleId = 'modal-custom-header-label';
+    const title = this.props.type.charAt(0).toUpperCase() + this.props.type.slice(1);
 
     const footer = (
       <ActionGroup>
@@ -202,50 +208,46 @@ export class WizardLabels extends React.Component<Props, State> {
 
     return (
       <>
-        <Modal
-          variant={ModalVariant.large}
-          isOpen={this.props.showAnotationsWizard}
-          onClose={this.onClose}
-          header={header}
-          aria-labelledby="modal-custom-header-label"
-          aria-describedby="modal-custom-header-description"
-          footer={footer}
-        >
-          <Table variant={TableVariant.compact}>
-            <Thead>
-              <Tr>
-                <Th dataLabel="Key">{t('Key')}</Th>
-                <Th dataLabel="Value">{t('Value')}</Th>
-                {this.props.canEdit && <Th></Th>}
-              </Tr>
-            </Thead>
-            <Tbody>{this.generateInput()}</Tbody>
-          </Table>
+        <Modal variant={ModalVariant.large} isOpen={this.props.showAnotationsWizard} onClose={this.onClose}>
+          <ModalHeader labelId={titleId} title={title} />
+          <ModalBody>
+            <Table variant={TableVariant.compact}>
+              <Thead>
+                <Tr>
+                  <Th dataLabel="Key">{t('Key')}</Th>
+                  <Th dataLabel="Value">{t('Value')}</Th>
+                  {this.props.canEdit && <Th></Th>}
+                </Tr>
+              </Thead>
+              <Tbody>{this.generateInput()}</Tbody>
+            </Table>
 
-          {this.props.canEdit && (
-            <Button
-              variant="link"
-              className={addMoreStyle}
-              data-test={'add-more'}
-              icon={<KialiIcon.AddMore />}
-              onClick={() => {
-                this.addMore();
-              }}
-              isInline
-            >
-              <span style={{ marginLeft: '0.25rem' }}>{t('Add more')}</span>
-            </Button>
-          )}
+            {this.props.canEdit && (
+              <Button
+                variant="link"
+                className={addMoreStyle}
+                data-test={'add-more'}
+                icon={<KialiIcon.AddMore />}
+                onClick={() => {
+                  this.addMore();
+                }}
+                isInline
+              >
+                <span style={{ marginLeft: '0.25rem' }}>{t('Add more')}</span>
+              </Button>
+            )}
 
-          {this.state.validation.length > 0 && (
-            <Alert variant="danger" className={alertStyle} isInline isExpandable title={t('An error occurred')}>
-              <List isPlain>
-                {this.state.validation.map((message, i) => (
-                  <ListItem key={`Message_${i}`}>{message}</ListItem>
-                ))}
-              </List>
-            </Alert>
-          )}
+            {this.state.validation.length > 0 && (
+              <Alert variant="danger" className={alertStyle} isInline isExpandable title={t('An error occurred')}>
+                <List isPlain>
+                  {this.state.validation.map((message, i) => (
+                    <ListItem key={`Message_${i}`}>{message}</ListItem>
+                  ))}
+                </List>
+              </Alert>
+            )}
+          </ModalBody>
+          <ModalFooter>{footer}</ModalFooter>
         </Modal>
       </>
     );

@@ -4,8 +4,19 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { serverConfig } from '../../config';
 import type { ComputedServerConfig } from '../../config/ServerConfig';
 import type { KialiAppState } from '../../store/Store';
-import { Alert, AlertActionCloseButton, AlertVariant, Button, ButtonVariant, Tab } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import {
+  Alert,
+  AlertActionCloseButton,
+  AlertVariant,
+  Button,
+  ButtonVariant,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  Tab
+} from '@patternfly/react-core';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
 import Editor from '@monaco-editor/react';
 import { ParameterizedTabs } from '../Tab/Tabs';
@@ -271,63 +282,60 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
   };
 
   return (
-    <Modal
-      className={modalStyle}
-      variant={ModalVariant.medium}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      title={t('Debug information')}
-      actions={[
+    <Modal className={modalStyle} variant={ModalVariant.medium} isOpen={props.isOpen} onClose={props.onClose}>
+      <ModalHeader title={t('Debug information')} />
+      <ModalBody>
+        {copyStatus === CopyStatus.COPIED && (
+          <Alert
+            style={{ marginBottom: '20px' }}
+            title={t('Debug information has been copied to your clipboard.')}
+            variant={AlertVariant.success}
+            isInline={true}
+            actionClose={<AlertActionCloseButton onClose={hideAlert} />}
+          />
+        )}
+
+        {copyStatus === CopyStatus.OLD_COPY && (
+          <Alert
+            style={{ marginBottom: '20px' }}
+            title={t(
+              'Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.'
+            )}
+            variant={AlertVariant.warning}
+            isInline={true}
+            actionClose={<AlertActionCloseButton onClose={hideAlert} />}
+          />
+        )}
+
+        <ParameterizedTabs
+          id="basic-tabs"
+          className={classes(basicTabStyle, tabStyle)}
+          onSelect={tabValue => {
+            setCurrentTab(tabValue);
+            hideAlert();
+          }}
+          tabMap={tabIndex}
+          defaultTab={defaultTab}
+          activeTab={currentTab}
+          mountOnEnter={true}
+          unmountOnExit={true}
+        >
+          {renderTabs()}
+        </ParameterizedTabs>
+      </ModalBody>
+      <ModalFooter>
         <Button key="close" onClick={props.onClose}>
           {t('Close')}
-        </Button>,
+        </Button>
 
         <CopyToClipboard key="copy" onCopy={copyCallback} text={copyText}>
           <Button variant={ButtonVariant.secondary}>{t('Copy')}</Button>
-        </CopyToClipboard>,
+        </CopyToClipboard>
 
         <Button key="download" variant={ButtonVariant.secondary} onClick={downloadFile}>
           {t('Download')}
         </Button>
-      ]}
-    >
-      {copyStatus === CopyStatus.COPIED && (
-        <Alert
-          style={{ marginBottom: '20px' }}
-          title={t('Debug information has been copied to your clipboard.')}
-          variant={AlertVariant.success}
-          isInline={true}
-          actionClose={<AlertActionCloseButton onClose={hideAlert} />}
-        />
-      )}
-
-      {copyStatus === CopyStatus.OLD_COPY && (
-        <Alert
-          style={{ marginBottom: '20px' }}
-          title={t(
-            'Debug information was copied to your clipboard, but is outdated now. It could be caused by new data received by auto refresh timers.'
-          )}
-          variant={AlertVariant.warning}
-          isInline={true}
-          actionClose={<AlertActionCloseButton onClose={hideAlert} />}
-        />
-      )}
-
-      <ParameterizedTabs
-        id="basic-tabs"
-        className={classes(basicTabStyle, tabStyle)}
-        onSelect={tabValue => {
-          setCurrentTab(tabValue);
-          hideAlert();
-        }}
-        tabMap={tabIndex}
-        defaultTab={defaultTab}
-        activeTab={currentTab}
-        mountOnEnter={true}
-        unmountOnExit={true}
-      >
-        {renderTabs()}
-      </ParameterizedTabs>
+      </ModalFooter>
     </Modal>
   );
 };

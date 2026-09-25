@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Button, ButtonVariant, Split, SplitItem } from '@patternfly/react-core';
-import { Modal } from '@patternfly/react-core/deprecated';
+import { Button, ButtonVariant, Modal, ModalBody, ModalHeader, Split, SplitItem } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AccessLog } from 'types/IstioObjects';
+import type { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { t } from 'utils/I18nUtils';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -838,26 +838,25 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     }
   };
   return (
-    <Modal
-      className={modalStyle}
-      disableFocusTrap={true}
-      title={
-        props.isZtunnel
-          ? 'ztunnel Access Log Entry'
-          : props.isWaypoint
-          ? 'Waypoint Access log Entry'
-          : 'Envoy Access Log Entry'
-      }
-      isOpen={true}
-      onClose={props.onClose}
-    >
-      <div style={{ height: '85%' }}>
-        <div className={prefaceStyle}>{props.accessLogMessage} </div>
-        <Split style={{ height: '100%' }}>
-          <SplitItem className={classes(splitStyle, contentStyle)}>{accessLogContent(props.accessLog)}</SplitItem>
-          <SplitItem className={classes(splitStyle, descriptionStyle)}>{description}</SplitItem>
-        </Split>
-      </div>
+    <Modal className={modalStyle} disableFocusTrap={true} isOpen={true} onClose={props.onClose}>
+      <ModalHeader
+        title={
+          props.isZtunnel
+            ? t('ztunnel Access Log Entry')
+            : props.isWaypoint
+              ? t('Waypoint Access log Entry')
+              : t('Envoy Access Log Entry')
+        }
+      />
+      <ModalBody>
+        <div style={{ height: '85%' }}>
+          <div className={prefaceStyle}>{props.accessLogMessage} </div>
+          <Split style={{ height: '100%' }}>
+            <SplitItem className={classes(splitStyle, contentStyle)}>{accessLogContent(props.accessLog)}</SplitItem>
+            <SplitItem className={classes(splitStyle, descriptionStyle)}>{description}</SplitItem>
+          </Split>
+        </div>
+      </ModalBody>
     </Modal>
   );
 };
