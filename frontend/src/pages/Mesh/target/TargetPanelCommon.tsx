@@ -8,7 +8,7 @@ import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
 import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
 import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
-import { t } from 'utils/I18nUtils';
+import { t, useKialiTranslation } from 'utils/I18nUtils';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../../components/Ambient/AmbientLabel';
@@ -562,6 +562,7 @@ const MeshTabsComponent: React.FC<{
   observeNodes,
   forCluster
 }) => {
+  const { t } = useKialiTranslation();
   const [expanded, setExpanded] = React.useState<string[]>([]);
   const [filter, setFilter] = React.useState<string>('');
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(0);
@@ -620,7 +621,7 @@ const MeshTabsComponent: React.FC<{
       <Tabs
         activeKey={activeTabKey}
         onSelect={(_event, tabIndex) => setActiveTabKey(tabIndex)}
-        aria-label="Mesh tabs"
+        aria-label={t('Mesh tabs')}
         data-test="mesh-tabs"
       >
         <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
@@ -631,12 +632,12 @@ const MeshTabsComponent: React.FC<{
           title={<TabTitleText>{t('Meshes ({{count}})', { count: meshesWithControlPlanes.length })}</TabTitleText>}
         >
           <SearchInput
-            placeholder="Filter meshes..."
+            placeholder={t('Filter meshes...')}
             value={filter}
             onChange={(_event, value) => setFilter(value)}
             onClear={() => setFilter('')}
           />
-          <Table aria-label="Mesh table" variant="compact">
+          <Table aria-label={t('Mesh table')} variant="compact">
             {meshesWithControlPlanes
               .filter(meshName => filter === '' || meshName.toLowerCase().includes(filter.toLowerCase()))
               .sort((a, b) => a.localeCompare(b))

@@ -15,6 +15,7 @@ import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit } from 'components/Metrics/TraceLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { serverConfig } from '../../config';
+import { t } from 'utils/I18nUtils';
 
 export interface QuerySettings {
   errorsOnly: boolean;
@@ -179,7 +180,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="errors-only"
               name="errors-only"
               isChecked={this.state.errorsOnly}
-              label="Show only traces with errors"
+              label={t('Show only traces with errors')}
               onChange={(_event, checked: boolean) => this.onErrorsOnlyChanged(checked)}
               value="errors-only"
             />
@@ -190,7 +191,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           asRadio={true}
           initialLimit={this.state.limit}
           onLimitChange={this.onLimitChanged}
-          title="Trace limit"
+          title={t('Trace limit')}
           titleClassName={titleStyle}
         />
 
@@ -201,7 +202,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="yaxis-full"
               name="yaxis-full"
               isChecked={!this.state.showSpansAverage}
-              label="Full trace duration"
+              label={t('Full trace duration')}
               onChange={() => this.onValueAxisChanged(false)}
               value="yaxis-full"
             />
@@ -213,7 +214,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="yaxis-avg"
               name="yaxis-avg"
               isChecked={this.state.showSpansAverage}
-              label="Spans average duration"
+              label={t('Spans average duration')}
               onChange={() => this.onValueAxisChanged(true)}
               value="yaxis-avg"
             />

@@ -6,6 +6,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export interface MeshHelpFindProps {
   children?: React.ReactNode;
@@ -47,6 +48,7 @@ const prefaceStyle = kialiStyle({
 });
 
 export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindProps) => {
+  const { t } = useKialiTranslation();
   // Incrementing mock counter to force a re-render in React hooks
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
@@ -61,11 +63,11 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
     'expressions using the language described below. Preset expressions are available via the dropdown. ' +
     'Hide takes precedence when using Find and Hide together.';
 
-  const edgeColumns: ThProps[] = [{ title: 'Expression' }, { title: 'Notes' }];
+  const edgeColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Notes') }];
 
   const edgeRows: IRow[] = [{ cells: ['N/A Currently no Edge expressions'] }];
 
-  const exampleColumns: ThProps[] = [{ title: 'Expression' }, { title: 'Description' }];
+  const exampleColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Description') }];
 
   const exampleRows: IRow[] = [
     {
@@ -101,7 +103,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
     }
   ];
 
-  const nodeColumns: ThProps[] = [{ title: 'Expression' }, { title: 'Notes' }];
+  const nodeColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Notes') }];
 
   const nodeRows: IRow[] = [
     { cells: ['cluster <op> <clusterName>', 'nodes within the matching clusters'] },
@@ -112,7 +114,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
     { cells: ['healthy', 'is not degraded or failing.'] }
   ];
 
-  const noteColumns: ThProps[] = [{ title: 'Usage Note', width: 10 }];
+  const noteColumns: ThProps[] = [{ title: t('Usage Note'), width: 10 }];
 
   const noteRows: IRow[] = [
     { cells: ['Press Tab key to autocomplete operands.'] },
@@ -125,7 +127,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
     { cells: ['Hiding "healthy" nodes may still leave valid, healthy edges in the mesh.'] }
   ];
 
-  const operatorColumns: ThProps[] = [{ title: 'Operator' }, { title: 'Description' }];
+  const operatorColumns: ThProps[] = [{ title: t('Operator') }, { title: t('Description') }];
 
   const operatorRows: IRow[] = [
     { cells: ['! | not <unary expression>', `negation`] },
@@ -173,23 +175,23 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
               <textarea className={`${prefaceStyle}`} readOnly={true} value={preface} />
 
               <SimpleTabs id="mesh_find_help_tabs" defaultTab={0} style={{ width: contentWidth }}>
-                <Tab style={tabFont} eventKey={0} title="Examples">
+                <Tab style={tabFont} eventKey={0} title={t('Examples')}>
                   {exampleTable}
                 </Tab>
 
-                <Tab style={tabFont} eventKey={1} title="Nodes">
+                <Tab style={tabFont} eventKey={1} title={t('Nodes')}>
                   {nodeTable}
                 </Tab>
 
-                <Tab style={tabFont} eventKey={2} title="Edges">
+                <Tab style={tabFont} eventKey={2} title={t('Edges')}>
                   {edgeTable}
                 </Tab>
 
-                <Tab style={tabFont} eventKey={3} title="Operators">
+                <Tab style={tabFont} eventKey={3} title={t('Operators')}>
                   {operatorTable}
                 </Tab>
 
-                <Tab style={tabFont} eventKey={4} title="Usage Notes">
+                <Tab style={tabFont} eventKey={4} title={t('Usage Notes')}>
                   {noteTable}
                 </Tab>
               </SimpleTabs>

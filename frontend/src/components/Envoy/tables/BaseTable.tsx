@@ -13,6 +13,7 @@ import { PFBadge, PFBadges } from '../../Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 export interface SummaryTable {
   availableFilters: () => FilterType[];
@@ -77,7 +78,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
 
               <ToolbarDropdown
                 id="envoy_pods_list"
-                tooltip="Display envoy config for the selected pod"
+                tooltip={t('Display envoy config for the selected pod')}
                 handleSelect={key => this.props.setPod(key)}
                 value={this.props.pod}
                 label={this.props.pod}
@@ -91,7 +92,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
           </StatefulFilters>
 
           <SimpleTable
-            label="Summary Table"
+            label={t('Summary Table')}
             columns={this.props.writer.head()}
             rows={this.props.writer.rows()}
             variant={TableVariant.compact}

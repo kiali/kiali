@@ -43,6 +43,7 @@ import { GrafanaLinks } from './GrafanaLinks';
 import { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from './PersesLinks';
 import { ExternalServiceInfo } from '../../types/StatusState';
+import { t } from 'utils/I18nUtils';
 
 type MetricsState = {
   dashboard?: DashboardModel;
@@ -438,7 +439,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
             {this.props.tracingIntegration && (
               <ToolbarItem>
                 <TraceSpansLimit
-                  label="Spans"
+                  label={t('Spans')}
                   onChange={this.onTraceSpansChange}
                   showSpans={this.state.showSpans}
                   traceLimit={this.state.traceLimit}
@@ -451,7 +452,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
                 id="trendlines-show-"
                 isChecked={this.state.showTrendlines}
                 key="trendlines-show-chart"
-                label="Trendlines"
+                label={t('Trendlines')}
                 onChange={(_event, checked) => this.onTrendlines(checked)}
               />
             </ToolbarItem>

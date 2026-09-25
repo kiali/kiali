@@ -38,6 +38,7 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { ApiResponse } from 'types/Api';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelGraphMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -213,30 +214,30 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
             <Tooltip
               id="tooltip-inbound"
-              content="Traffic entering from traffic sources."
+              content={t('Traffic entering from traffic sources.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
 
             <Tooltip
               id="tooltip-outbound"
-              content="Traffic exiting the requested namespaces."
+              content={t('Traffic exiting the requested namespaces.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
 
             <Tooltip
               id="tooltip-total"
-              content="All inbound, outbound and traffic within the requested namespaces."
+              content={t('All inbound, outbound and traffic within the requested namespaces.')}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
 
-            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+            <Tab style={summaryFont} title={t('Inbound')} eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No inbound traffic.
+                    <KialiIcon.Info /> {t('No inbound traffic.')}
                   </div>
                 )}
 
@@ -251,7 +252,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={t('HTTP (requests per second):')}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -267,11 +268,11 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+            <Tab style={summaryFont} title={t('Outbound')} eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No outbound traffic.
+                    <KialiIcon.Info /> {t('No outbound traffic.')}
                   </div>
                 )}
 
@@ -286,7 +287,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={t('HTTP (requests per second):')}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -302,7 +303,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
                 }
               </div>
             </Tab>
-            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+            <Tab style={summaryFont} title={t('Total')} eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <div className={noTrafficStyle}>
@@ -321,7 +322,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
 
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={t('HTTP (requests per second):')}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -506,13 +507,13 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {grpcTotal.rate > 0 && isGrpcRequests && (
           <>
             <RequestChart
-              label="gRPC - Inbound Request Traffic"
+              label={t('gRPC - Inbound Request Traffic')}
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
 
             <RequestChart
-              label="gRPC - Outbound Request Traffic"
+              label={t('gRPC - Outbound Request Traffic')}
               dataRps={this.state.grpcRequestOut}
               dataErrors={this.state.grpcRequestErrOut}
             />
@@ -522,14 +523,14 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {grpcTotal.rate > 0 && !isGrpcRequests && (
           <>
             <StreamChart
-              label="gRPC - Inbound Traffic"
+              label={t('gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
 
             <StreamChart
-              label="gRPC - Outbound Traffic"
+              label={t('gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               unit="messages"
@@ -540,13 +541,13 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {httpTotal.rate > 0 && (
           <>
             <RequestChart
-              label="HTTP - Inbound Request Traffic"
+              label={t('HTTP - Inbound Request Traffic')}
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
 
             <RequestChart
-              label="HTTP - Outbound Request Traffic"
+              label={t('HTTP - Outbound Request Traffic')}
               dataRps={this.state.httpRequestOut}
               dataErrors={this.state.httpRequestErrOut}
             />
@@ -556,14 +557,14 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         {tcpTotal.rate > 0 && (
           <>
             <StreamChart
-              label="TCP - Inbound Traffic"
+              label={t('TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
 
             <StreamChart
-              label="TCP - Outbound Traffic"
+              label={t('TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               unit="bytes"

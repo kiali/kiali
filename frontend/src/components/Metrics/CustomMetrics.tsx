@@ -46,6 +46,7 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaInfo } from '../../types/GrafanaInfo';
+import { t } from 'utils/I18nUtils';
 
 type MetricsState = {
   cluster?: string;
@@ -343,7 +344,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             {this.props.tracingIntegration && (
               <ToolbarItem>
                 <TraceSpansLimit
-                  label="Spans"
+                  label={t('Spans')}
                   onChange={this.onTraceSpansChange}
                   showSpans={this.state.showSpans}
                   traceLimit={this.state.traceLimit}
