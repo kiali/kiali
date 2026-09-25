@@ -16,6 +16,8 @@ source ${HACK_SCRIPT_DIR}/functions.sh
 
 # ISTIO_DIR is where the Istio download is installed and thus where the bookinfo demo files are found.
 # CLIENT_EXE_NAME is going to either be "oc" or "kubectl"
+AGENTGATEWAY_INGRESS="false" # use istio-agentgateway for bookinfo ingress Gateway
+AGENTGATEWAY_WAYPOINT="false" # use istio-agentgateway-waypoint when deploying the ambient waypoint
 AMBIENT_ENABLED="false" # the script will set this to true only if Ambient is enabled and no sidecars are injected
 ARCH="amd64"
 AUTO_INJECTION="true"
@@ -45,6 +47,24 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -a|--arch)
       ARCH="$2"
+      shift;shift
+      ;;
+    -agi|--agentgateway-ingress)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        AGENTGATEWAY_INGRESS="$2"
+      else
+        echo "ERROR: The --agentgateway-ingress flag must be 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
+    -agw|--agentgateway-waypoint)
+      if [ "${2}" == "true" ] || [ "${2}" == "false" ]; then
+        AGENTGATEWAY_WAYPOINT="$2"
+      else
+        echo "ERROR: The --agentgateway-waypoint flag must be 'true' or 'false'"
+        exit 1
+      fi
       shift;shift
       ;;
     -ai|--auto-injection)
@@ -127,6 +147,8 @@ while [[ $# -gt 0 ]]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x|arm64>: Images for given arch will be used (default: amd64). Custom bookinfo yaml file provided via '-b' argument is ignored when using different arch than the default.
+  -agi|--agentgateway-ingress <true|false>: Use agentgateway for the bookinfo ingress Gateway (gatewayClassName: istio-agentgateway). Requires Istio with PILOT_ENABLE_AGENTGATEWAY=true. (default: false).
+  -agw|--agentgateway-waypoint <true|false>: When ambient waypoint is enabled (-w true), use agentgateway for the waypoint (gatewayClassName: istio-agentgateway-waypoint) instead of Envoy istio-waypoint. Requires Istio with PILOT_ENABLE_AGENTGATEWAY=true. (default: false).
   -ai|--auto-injection <true|false>: If you want sidecars to be auto-injected (default: true).
   -ail|--auto-injection-label <name=value>: If auto-injection is enabled, this is the label added to the namespace. For revision-based installs, you can use something like "istio.io/rev=default-v1-23-0". default: istio-injection=enabled).
   -db|--delete-bookinfo <true|false>: If true, uninstall bookinfo. If false, install bookinfo. (default: false).
@@ -225,7 +247,34 @@ fi
 
 echo "IS_OPENSHIFT=${IS_OPENSHIFT}"
 echo "AMBIENT_ENABLED=${AMBIENT_ENABLED}"
+echo "AGENTGATEWAY_INGRESS=${AGENTGATEWAY_INGRESS}"
+echo "AGENTGATEWAY_WAYPOINT=${AGENTGATEWAY_WAYPOINT}"
 echo "SERVICE_VERSIONS=${SERVICE_VERSIONS}"
+
+AGENTGATEWAY_INSTALL_HINT="./hack/istio/install-istio-via-istioctl.sh --client-exe ${CLIENT_EXE_NAME} --config-profile ambient --set values.pilot.env.PILOT_ENABLE_AGENTGATEWAY=true"
+
+if [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+  if ! ${CLIENT_EXE} get gatewayclass istio-agentgateway >/dev/null 2>&1; then
+    echo "ERROR: GatewayClass 'istio-agentgateway' not found."
+    echo "Install Istio with agentgateway enabled, for example:"
+    echo "  ${AGENTGATEWAY_INSTALL_HINT}"
+    exit 1
+  fi
+  ensure_gateway_api_crds
+fi
+
+if [ "${AGENTGATEWAY_WAYPOINT}" == "true" ]; then
+  if [ "${WAYPOINT}" != "true" ]; then
+    echo "ERROR: --agentgateway-waypoint true requires --waypoint true."
+    exit 1
+  fi
+  if ! ${CLIENT_EXE} get gatewayclass istio-agentgateway-waypoint >/dev/null 2>&1; then
+    echo "ERROR: GatewayClass 'istio-agentgateway-waypoint' not found."
+    echo "Install Istio with ambient profile and agentgateway enabled, for example:"
+    echo "  ${AGENTGATEWAY_INSTALL_HINT}"
+    exit 1
+  fi
+fi
 
 # check arch values and prepare new bookinfo-arch.yaml with matching images
 if [ "${ARCH}" == "ppc64le" ]; then
@@ -246,7 +295,7 @@ if [ -z "$BOOKINFO_YAML" ]; then
   BOOKINFO_YAML="${ISTIO_DIR}/samples/bookinfo/platform/kube/bookinfo.yaml"
 fi
 if [ -z "$GATEWAY_YAML" ]; then
-  if [ "${AMBIENT_ENABLED}" == "true" ]; then
+  if [ "${AMBIENT_ENABLED}" == "true" ] || [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
     GATEWAY_YAML="${ISTIO_DIR}/samples/bookinfo/gateway-api/bookinfo-gateway.yaml"
   else
     ${CLIENT_EXE} apply -n ${ISTIO_NAMESPACE} -f "${HACK_SCRIPT_DIR}/istio-gateway.yaml"
@@ -298,7 +347,12 @@ else
   fi
 fi
 
-$CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
+if [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+  echo "Applying bookinfo gateway with gatewayClassName=istio-agentgateway"
+  sed 's/gatewayClassName:[[:space:]]*istio[[:space:]]*$/gatewayClassName: istio-agentgateway/' "${GATEWAY_YAML}" | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+else
+  $CLIENT_EXE apply -n ${NAMESPACE} -f ${GATEWAY_YAML}
+fi
 
 if [ "${SERVICE_VERSIONS}" == "true" ]; then
   if [ "${GATEWAY_YAML}" == "${ISTIO_DIR}/samples/bookinfo/networking/bookinfo-gateway.yaml" ]; then
@@ -318,7 +372,7 @@ if [ "${SERVICE_VERSIONS}" == "true" ]; then
   fi
 fi
 
-if [ "${AMBIENT_ENABLED}" == "true" ]; then
+if [ "${AMBIENT_ENABLED}" == "true" ] || [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
   $CLIENT_EXE annotate gateway bookinfo-gateway networking.istio.io/service-type=ClusterIP --namespace=${NAMESPACE}
 fi
 
@@ -412,7 +466,12 @@ sleep 4
 if [ "${IS_OPENSHIFT}" == "true" ]; then
   $CLIENT_EXE expose svc/productpage -n ${NAMESPACE}
   $CLIENT_EXE expose svc/istio-ingressgateway --port http -n ${INGRESS_NAMESPACE} --name=istio-ingressgateway
-  $CLIENT_EXE expose svc/bookinfo-gateway-istio --port=http -n ${NAMESPACE} --name=bookinfo-gateway-istio
+  # Envoy Gateway API uses bookinfo-gateway-istio; agentgateway ingress uses bookinfo-gateway
+  if [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+    $CLIENT_EXE expose svc/bookinfo-gateway --port=http -n ${NAMESPACE} --name=bookinfo-gateway
+  else
+    $CLIENT_EXE expose svc/bookinfo-gateway-istio --port=http -n ${NAMESPACE} --name=bookinfo-gateway-istio
+  fi
 fi
 
 echo "Bookinfo Demo should be installed and starting up - here are the pods and services"
@@ -424,16 +483,36 @@ if [ "${AMBIENT_ENABLED}" == "true" ]; then
   ${CLIENT_EXE} label namespace ${NAMESPACE} istio.io/dataplane-mode=ambient istio.io/dataplane-mode=ambient
   # It could also be applied to service account
   if [ "${WAYPOINT}" == "true" ]; then
-    # Create Waypoint proxy
-    is_istio_version_eq_greater_than "1.23.0"
-    version_greater=$?
-
-    if [ "${version_greater}" == "1" ]; then
-      echo "Create Waypoint proxy"
-      ${ISTIOCTL} waypoint apply -n ${NAMESPACE} --enroll-namespace
+    if [ "${AGENTGATEWAY_WAYPOINT}" == "true" ]; then
+      # istioctl waypoint only supports the Envoy istio-waypoint class
+      echo "Create agentgateway Waypoint proxy"
+      cat <<EOF | ${CLIENT_EXE} apply -n ${NAMESPACE} -f -
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: waypoint
+  labels:
+    istio.io/waypoint-for: service
+spec:
+  gatewayClassName: istio-agentgateway-waypoint
+  listeners:
+  - name: mesh
+    port: 15008
+    protocol: HBONE
+EOF
+      ${CLIENT_EXE} label namespace ${NAMESPACE} "istio.io/use-waypoint=waypoint" --overwrite
     else
-      echo "Create -experimental- Waypoint proxy"
-      ${ISTIOCTL} x waypoint apply -n ${NAMESPACE} --enroll-namespace
+      # Create Envoy Waypoint proxy
+      is_istio_version_eq_greater_than "1.23.0"
+      version_greater=$?
+
+      if [ "${version_greater}" == "1" ]; then
+        echo "Create Waypoint proxy"
+        ${ISTIOCTL} waypoint apply -n ${NAMESPACE} --enroll-namespace
+      else
+        echo "Create -experimental- Waypoint proxy"
+        ${ISTIOCTL} x waypoint apply -n ${NAMESPACE} --enroll-namespace
+      fi
     fi
   fi
 else
@@ -475,8 +554,12 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     # Check your "minikube tunnel" and/or Istio mesh config i.e. meshConfig.outboundTrafficPolicy.mode=REGISTRY_ONLY
     # if you experiment some weird behaviour compared with the CI results
 
-    if [ "${AMBIENT_ENABLED}" == "true" ]; then
-      INGRESS_ROUTE="bookinfo-gateway-istio.${NAMESPACE}"
+    if [ "${AMBIENT_ENABLED}" == "true" ] || [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+      if [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+        INGRESS_ROUTE="bookinfo-gateway.${NAMESPACE}"
+      else
+        INGRESS_ROUTE="bookinfo-gateway-istio.${NAMESPACE}"
+      fi
     else
       # for now, we only support minikube k8s environments and maybe a good guess otherwise (e.g. for kind clusters)
       if minikube -p ${KUBE_CONTEXT} status > /dev/null 2>&1 ; then
