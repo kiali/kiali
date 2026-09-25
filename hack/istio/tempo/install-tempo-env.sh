@@ -145,7 +145,7 @@ HELPMSG
 done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-MINIO_FILE="${SCRIPT_DIR}/resources/minio.yaml"
+SEAWEEDFS_FILE="${SCRIPT_DIR}/resources/seaweedfs.yaml"
 
 set -e
 
@@ -495,8 +495,6 @@ EOF
 }
 
 install_tempo_single_attempt() {
-
-  local kiali_namespace="${1:-istio-system}"
   local tempo_query_service="tempo-cr-query-frontend"
   local tempo_zipkin_service="tempo-cr-distributor"
   TEMPO_PORT="3200"
@@ -785,24 +783,24 @@ install_tempo_single_attempt() {
     ${CLIENT_EXE} wait pod -n ${TEMPO_NS} -l app.kubernetes.io/name=tempo,app.kubernetes.io/instance=tempo-cr --for=condition=Ready --timeout=10m
   elif [ "${METHOD}" == "operator" ]; then
 
-    echo -e "Installing minio and create secret \n"
-    ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${MINIO_FILE}
-    echo -e "Waiting for minio deployment to be ready... \n"
-    ${CLIENT_EXE} rollout status deployment/minio -n ${TEMPO_NS} --timeout=5m
+    echo -e "Installing SeaweedFS and create secret \n"
+    ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SEAWEEDFS_FILE}
+    echo -e "Waiting for SeaweedFS deployment to be ready... \n"
+    ${CLIENT_EXE} rollout status deployment/seaweedfs -n ${TEMPO_NS} --timeout=5m
 
-    # Create secret for minio
+    # Create secret for SeaweedFS
     # Use full service name for multi-tenant mode in OpenShift
     if [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
-      MINIO_ENDPOINT="http://minio.${TEMPO_NS}.svc.cluster.local:9000"
+      SEAWEEDFS_ENDPOINT="http://seaweedfs.${TEMPO_NS}.svc.cluster.local:8333"
     else
-      MINIO_ENDPOINT="http://minio:9000"
+      SEAWEEDFS_ENDPOINT="http://seaweedfs:8333"
     fi
 
-    ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-minio \
+    ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-seaweedfs \
       --from-literal=bucket="tempo-data" \
-      --from-literal=endpoint="${MINIO_ENDPOINT}" \
-      --from-literal=access_key_id="minio" \
-      --from-literal=access_key_secret="minio123"
+      --from-literal=endpoint="${SEAWEEDFS_ENDPOINT}" \
+      --from-literal=access_key_id="seaweedfs" \
+      --from-literal=access_key_secret="seaweedfs123"
 
     echo -e "Installing Tempo with the operator \n"
 
@@ -975,6 +973,10 @@ emailAddress=not@mail
     fi
 
   else
+    echo -e "Installing SeaweedFS for Helm-based Tempo \n"
+    ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SEAWEEDFS_FILE}
+    ${CLIENT_EXE} rollout status deployment/seaweedfs -n ${TEMPO_NS} --timeout=5m
+
     echo -e "Installing Tempo with Helm Charts \n"
     helm repo add grafana https://grafana.github.io/helm-charts
     helm repo update
@@ -1011,7 +1013,8 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
   
   # Delete TempoStack resources first
   ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS} --ignore-not-found=true
-  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio --ignore-not-found=true
+  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-seaweedfs --ignore-not-found=true
+  ${CLIENT_EXE} delete -n ${TEMPO_NS} -f ${SEAWEEDFS_FILE} --ignore-not-found=true
   
   # Delete operators based on installation method
   if [ "${METHOD}" == "operator" ] && [ "${MULTI_TENANT}" == "true" ] && [ "${IS_OPENSHIFT}" == "true" ]; then
