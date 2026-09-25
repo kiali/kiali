@@ -15,7 +15,7 @@ Prometheus scrapes Istio metrics, records high-cardinality traffic metrics, and
 federates the resulting series to the hub.
 
 This is a development and test installation. The example object store uses a
-single MinIO pod with emptyDir storage, development credentials, and a
+single SeaweedFS pod with emptyDir storage, development credentials, and a
 fourteen-day retention period. Use durable, secured object storage and review
 the retention and resource settings before using this topology for anything
 other than a lab.
@@ -160,7 +160,10 @@ local-cluster ManagedCluster for the hub.
 
 ## 3. Configure development object storage and Observatorium
 
-Create the observability namespace and a lab MinIO instance:
+Create the observability namespace and a lab
+[SeaweedFS](https://github.com/seaweedfs/seaweedfs) instance. SeaweedFS `mini`
+mode runs its S3-compatible gateway and storage services in one process and
+creates the `thanos` bucket at startup:
 
 ```bash
 oc --context="$HUB_CONTEXT" create namespace "$OBSERVABILITY_NAMESPACE" \
@@ -171,36 +174,35 @@ oc --context="$HUB_CONTEXT" create namespace "$OBSERVABILITY_NAMESPACE" \
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: open-cluster-management-observability
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: minio
+      app: seaweedfs
   template:
     metadata:
       labels:
-        app: minio
+        app: seaweedfs
     spec:
       containers:
-      - name: minio
-        image: quay.io/minio/minio:latest
-        args: [server, /data, --console-address, ":9001"]
+      - name: seaweedfs
+        image: ghcr.io/chrislusf/seaweedfs:4.47
+        args: [mini, -dir=/data, -admin.port=12646, -master.telemetry=false]
         env:
-        - name: MINIO_ROOT_USER
-          value: minio
-        - name: MINIO_ROOT_PASSWORD
-          value: minio123
+        - name: AWS_ACCESS_KEY_ID
+          value: seaweedfs
+        - name: AWS_SECRET_ACCESS_KEY
+          value: seaweedfs123
+        - name: S3_BUCKET
+          value: thanos
         ports:
-        - name: api
-          containerPort: 9000
-        - name: console
-          containerPort: 9001
+        - name: s3
+          containerPort: 8333
         readinessProbe:
-          httpGet:
-            path: /minio/health/ready
-            port: 9000
+          tcpSocket:
+            port: 8333
           initialDelaySeconds: 10
           periodSeconds: 5
         volumeMounts:
@@ -213,28 +215,21 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: open-cluster-management-observability
 spec:
   selector:
-    app: minio
+    app: seaweedfs
   ports:
-  - name: api
-    port: 9000
-    targetPort: 9000
-  - name: console
-    port: 9001
-    targetPort: 9001
+  - name: s3
+    port: 8333
+    targetPort: 8333
 ```
 
 ```bash
-oc --context="$HUB_CONTEXT" apply -f minio.yaml
-oc --context="$HUB_CONTEXT" rollout status deployment/minio \
+oc --context="$HUB_CONTEXT" apply -f seaweedfs.yaml
+oc --context="$HUB_CONTEXT" rollout status deployment/seaweedfs \
   -n "$OBSERVABILITY_NAMESPACE" --timeout=10m
-MINIO_POD=$(oc --context="$HUB_CONTEXT" get pod -n "$OBSERVABILITY_NAMESPACE" \
-  -l app=minio -o jsonpath='{.items[0].metadata.name}')
-oc --context="$HUB_CONTEXT" exec -n "$OBSERVABILITY_NAMESPACE" "$MINIO_POD" -- \
-  mkdir -p /data/thanos
 ```
 
 Create the object-store Secret:
@@ -251,10 +246,10 @@ stringData:
     type: s3
     config:
       bucket: thanos
-      endpoint: minio.open-cluster-management-observability.svc:9000
+      endpoint: seaweedfs.open-cluster-management-observability.svc:8333
       insecure: true
-      access_key: minio
-      secret_key: minio123
+      access_key: seaweedfs
+      secret_key: seaweedfs123
 ```
 
 Create MultiClusterObservability. The fourteen-day 5m retention is above
@@ -1095,7 +1090,7 @@ Remove components in reverse dependency order:
 4. Remove the three MCOA source objects and their placement configs entries.
 5. Delete the spoke Klusterlet, wait for ACM agent namespaces to disappear,
    then delete the hub ManagedCluster and its namespace.
-6. Delete MultiClusterObservability, the Thanos Secret, MinIO, and the
+6. Delete MultiClusterObservability, the Thanos Secret, SeaweedFS, and the
    observability namespace.
 7. Delete MultiClusterHub and the ACM subscription after dependents terminate.
 

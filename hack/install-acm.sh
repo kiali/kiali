@@ -72,7 +72,7 @@
 #   install-istio        - Install Istio (Ambient mode enabled by default; use --ambient false to disable)
 #   uninstall-istio      - Remove Istio installation
 #   status-istio         - Check the status of Istio installation
-#   install-acm          - Install ACM operator, MultiClusterHub, MinIO, and observability
+#   install-acm          - Install ACM operator, MultiClusterHub, SeaweedFS, and observability
 #   uninstall-acm        - Remove all ACM components cleanly
 #   status-acm           - Check the status of ACM installation
 #   install-mcoa-federation - Configure ACM MCOA recording rules and federation for Kiali (requires ACM 2.17 or later)
@@ -158,8 +158,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 DEFAULT_ACM_NAMESPACE="open-cluster-management"
 DEFAULT_ACM_CHANNEL="release-2.17"
 DEFAULT_OBSERVABILITY_NAMESPACE="open-cluster-management-observability"
-DEFAULT_MINIO_ACCESS_KEY="minio"
-DEFAULT_MINIO_SECRET_KEY="minio123"
+DEFAULT_SEAWEEDFS_ACCESS_KEY="seaweedfs"
+DEFAULT_SEAWEEDFS_SECRET_KEY="seaweedfs123"
 DEFAULT_CLIENT_EXE="oc"
 DEFAULT_TIMEOUT="1200"
 DEFAULT_MCOA_HUB_CONTEXT=""
@@ -644,57 +644,55 @@ create_observability_namespace() {
   fi
 }
 
-install_minio() {
-  infomsg "Installing MinIO for object storage"
+install_seaweedfs() {
+  infomsg "Installing SeaweedFS for object storage"
 
-  # Create MinIO Deployment
+  # SeaweedFS mini mode provides a single-process S3-compatible object store.
   cat <<EOF | ${CLIENT_EXE} apply -f -
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: ${OBSERVABILITY_NAMESPACE}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: minio
+      app: seaweedfs
   template:
     metadata:
       labels:
-        app: minio
+        app: seaweedfs
     spec:
       containers:
-      - name: minio
-        image: quay.io/minio/minio:latest
+      - name: seaweedfs
+        image: ghcr.io/chrislusf/seaweedfs:4.47
         args:
-        - server
-        - /data
-        - --console-address
-        - ":9001"
+        - mini
+        - -dir=/data
+        - -admin.port=12646
+        - -master.telemetry=false
         env:
-        - name: MINIO_ROOT_USER
-          value: "${MINIO_ACCESS_KEY}"
-        - name: MINIO_ROOT_PASSWORD
-          value: "${MINIO_SECRET_KEY}"
+        - name: AWS_ACCESS_KEY_ID
+          value: "${SEAWEEDFS_ACCESS_KEY}"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "${SEAWEEDFS_SECRET_KEY}"
+        - name: S3_BUCKET
+          value: thanos
         ports:
-        - containerPort: 9000
-          name: api
-        - containerPort: 9001
-          name: console
+        - containerPort: 8333
+          name: s3
         volumeMounts:
         - name: data
           mountPath: /data
         readinessProbe:
-          httpGet:
-            path: /minio/health/ready
-            port: 9000
+          tcpSocket:
+            port: 8333
           initialDelaySeconds: 10
           periodSeconds: 5
         livenessProbe:
-          httpGet:
-            path: /minio/health/live
-            port: 9000
+          tcpSocket:
+            port: 8333
           initialDelaySeconds: 10
           periodSeconds: 5
       volumes:
@@ -704,28 +702,19 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio
+  name: seaweedfs
   namespace: ${OBSERVABILITY_NAMESPACE}
 spec:
   ports:
-  - port: 9000
-    name: api
-    targetPort: 9000
-  - port: 9001
-    name: console
-    targetPort: 9001
+  - port: 8333
+    name: s3
+    targetPort: 8333
   selector:
-    app: minio
+    app: seaweedfs
 EOF
 
-  # Wait for MinIO to be ready
-  infomsg "Waiting for MinIO to be ready..."
-  ${CLIENT_EXE} rollout status deployment/minio -n ${OBSERVABILITY_NAMESPACE} --timeout=${TIMEOUT}s
-
-  # Create the thanos bucket
-  infomsg "Creating thanos bucket in MinIO..."
-  local minio_pod=$(${CLIENT_EXE} get pods -n ${OBSERVABILITY_NAMESPACE} -l app=minio -o jsonpath='{.items[0].metadata.name}')
-  ${CLIENT_EXE} exec -n ${OBSERVABILITY_NAMESPACE} ${minio_pod} -- mkdir -p /data/thanos
+  infomsg "Waiting for SeaweedFS to be ready..."
+  ${CLIENT_EXE} rollout status deployment/seaweedfs -n ${OBSERVABILITY_NAMESPACE} --timeout=${TIMEOUT}s
 }
 
 create_thanos_secret() {
@@ -742,10 +731,10 @@ stringData:
     type: s3
     config:
       bucket: thanos
-      endpoint: minio.${OBSERVABILITY_NAMESPACE}.svc:9000
+      endpoint: seaweedfs.${OBSERVABILITY_NAMESPACE}.svc:8333
       insecure: true
-      access_key: ${MINIO_ACCESS_KEY}
-      secret_key: ${MINIO_SECRET_KEY}
+      access_key: ${SEAWEEDFS_ACCESS_KEY}
+      secret_key: ${SEAWEEDFS_SECRET_KEY}
 EOF
 }
 
@@ -1093,7 +1082,7 @@ install_acm() {
   # Always reconcile observability. This also completes a hub that was installed
   # manually or by an earlier partial run.
   create_observability_namespace
-  install_minio
+  install_seaweedfs
   create_thanos_secret
   create_multiclusterobservability
   wait_for_observability
@@ -1136,14 +1125,14 @@ delete_multiclusterobservability() {
   fi
 }
 
-delete_minio() {
-  if ${CLIENT_EXE} get deployment minio -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
-    infomsg "Deleting MinIO..."
-    ${CLIENT_EXE} delete deployment minio -n ${OBSERVABILITY_NAMESPACE} || true
-    ${CLIENT_EXE} delete service minio -n ${OBSERVABILITY_NAMESPACE} || true
+delete_seaweedfs() {
+  if ${CLIENT_EXE} get deployment seaweedfs -n ${OBSERVABILITY_NAMESPACE} &>/dev/null 2>&1; then
+    infomsg "Deleting SeaweedFS..."
+    ${CLIENT_EXE} delete deployment seaweedfs -n ${OBSERVABILITY_NAMESPACE} || true
+    ${CLIENT_EXE} delete service seaweedfs -n ${OBSERVABILITY_NAMESPACE} || true
     ${CLIENT_EXE} delete secret thanos-object-storage -n ${OBSERVABILITY_NAMESPACE} || true
   else
-    debug "MinIO not found, skipping"
+    debug "SeaweedFS not found, skipping"
   fi
 }
 
@@ -1295,7 +1284,7 @@ uninstall_acm() {
 
   # Delete in reverse order of installation
   delete_multiclusterobservability
-  delete_minio
+  delete_seaweedfs
   delete_observability_namespace
   delete_multiclusterhub
   delete_acm_operator
@@ -1347,9 +1336,9 @@ check_status() {
   if ${CLIENT_EXE} get namespace ${OBSERVABILITY_NAMESPACE} &>/dev/null; then
     echo "Observability Namespace: ${OBSERVABILITY_NAMESPACE} [EXISTS]"
 
-    # Check MinIO
-    local minio_ready=$(${CLIENT_EXE} get deployment minio -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
-    echo "MinIO: ${minio_ready}/1 ready"
+    # Check SeaweedFS
+    local seaweedfs_ready=$(${CLIENT_EXE} get deployment seaweedfs -n ${OBSERVABILITY_NAMESPACE} -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
+    echo "SeaweedFS: ${seaweedfs_ready}/1 ready"
 
     # Check MultiClusterObservability
     local mco_ready=$(${CLIENT_EXE} get mco observability -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || echo "Not Found")
@@ -4078,8 +4067,8 @@ while [[ $# -gt 0 ]]; do
     -n|--namespace) ACM_NAMESPACE="$2"; shift; shift ;;
     -c|--channel) ACM_CHANNEL="$2"; shift; shift ;;
     -on|--observability-namespace) OBSERVABILITY_NAMESPACE="$2"; shift; shift ;;
-    -mak|--minio-access-key) MINIO_ACCESS_KEY="$2"; shift; shift ;;
-    -msk|--minio-secret-key) MINIO_SECRET_KEY="$2"; shift; shift ;;
+    -sak|--seaweedfs-access-key) SEAWEEDFS_ACCESS_KEY="$2"; shift; shift ;;
+    -ssk|--seaweedfs-secret-key) SEAWEEDFS_SECRET_KEY="$2"; shift; shift ;;
     -ce|--client-exe) CLIENT_EXE="$2"; shift; shift ;;
     -t|--timeout) TIMEOUT="$2"; shift; shift ;;
     -kn|--kiali-namespace) KIALI_NAMESPACE="$2"; shift; shift ;;
@@ -4126,14 +4115,14 @@ Valid options:
       The ACM operator channel (e.g., release-2.16, release-2.17).
       Default: ${DEFAULT_ACM_CHANNEL}
   -on|--observability-namespace <namespace>
-      The namespace for observability components (MinIO, Thanos).
+      The namespace for observability components (SeaweedFS, Thanos).
       Default: ${DEFAULT_OBSERVABILITY_NAMESPACE}
-  -mak|--minio-access-key <key>
-      The MinIO access key (username).
-      Default: ${DEFAULT_MINIO_ACCESS_KEY}
-  -msk|--minio-secret-key <key>
-      The MinIO secret key (password).
-      Default: ${DEFAULT_MINIO_SECRET_KEY}
+  -sak|--seaweedfs-access-key <key>
+      The SeaweedFS S3 access key.
+      Default: ${DEFAULT_SEAWEEDFS_ACCESS_KEY}
+  -ssk|--seaweedfs-secret-key <key>
+      The SeaweedFS S3 secret key.
+      Default: ${DEFAULT_SEAWEEDFS_SECRET_KEY}
   -ce|--client-exe <path>
       The path to the oc or kubectl executable.
       Default: ${DEFAULT_CLIENT_EXE}
@@ -4235,7 +4224,7 @@ The command must be one of:
   install-istio:        Install Istio (use --ambient for Ambient mode)
   uninstall-istio:      Remove Istio installation
   status-istio:         Check the status of Istio installation
-  install-acm:          Install ACM operator, MultiClusterHub, MinIO, and observability
+  install-acm:          Install ACM operator, MultiClusterHub, SeaweedFS, and observability
   uninstall-acm:        Remove all ACM components
   status-acm:           Check the status of ACM installation
   install-kiali:        Install Kiali configured for ACM observability (supports 3 methods)
@@ -4313,8 +4302,8 @@ done
 : ${ACM_NAMESPACE:=${DEFAULT_ACM_NAMESPACE}}
 : ${ACM_CHANNEL:=${DEFAULT_ACM_CHANNEL}}
 : ${OBSERVABILITY_NAMESPACE:=${DEFAULT_OBSERVABILITY_NAMESPACE}}
-: ${MINIO_ACCESS_KEY:=${DEFAULT_MINIO_ACCESS_KEY}}
-: ${MINIO_SECRET_KEY:=${DEFAULT_MINIO_SECRET_KEY}}
+: ${SEAWEEDFS_ACCESS_KEY:=${DEFAULT_SEAWEEDFS_ACCESS_KEY}}
+: ${SEAWEEDFS_SECRET_KEY:=${DEFAULT_SEAWEEDFS_SECRET_KEY}}
 : ${CLIENT_EXE:=${DEFAULT_CLIENT_EXE}}
 : ${TIMEOUT:=${DEFAULT_TIMEOUT}}
 : ${KIALI_NAMESPACE:=${DEFAULT_KIALI_NAMESPACE}}
