@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seaweedfs-pv-claim
+  labels:
+    app: seaweedfs-storage-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs
+spec:
+  selector:
+    matchLabels:
+      app: seaweedfs
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: seaweedfs
+    spec:
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: seaweedfs-pv-claim
+      containers:
+      - name: seaweedfs
+        image: ghcr.io/chrislusf/seaweedfs:4.47
+        args:
+        - mini
+        - -dir=/data
+        - -admin.port=12646
+        - -master.telemetry=false
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "seaweedfs"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "seaweedfs123"
+        - name: S3_BUCKET
+          value: "tempo-data"
+        ports:
+        - containerPort: 8333
+          name: s3
+        readinessProbe:
+          tcpSocket:
+            port: 8333
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8333
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8333
+    targetPort: 8333
+    protocol: TCP
+    name: s3
+  selector:
+    app: seaweedfs
