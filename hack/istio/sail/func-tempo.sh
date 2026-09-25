@@ -12,7 +12,7 @@
 
 set -u
 
-source ${SCRIPT_ROOT}/func-minio.sh
+source ${SCRIPT_ROOT}/func-seaweedfs.sh
 
 determine_tempo_namespaces() {
   TEMPO_NAMESPACE="tempo"
@@ -139,8 +139,8 @@ install_tempo() {
     ${OC} create namespace ${TEMPO_NAMESPACE}
   fi
 
-  infomsg "Installing Minio..."
-  install_minio ${TEMPO_NAMESPACE}
+  infomsg "Installing SeaweedFS..."
+  install_seaweedfs ${TEMPO_NAMESPACE}
 
   infomsg "Installing TempoStack CR"
 
@@ -160,7 +160,7 @@ spec:
   storage:
     secret:
       type: s3
-      name: "${MINIO_SECRET_NAME}"
+      name: "${SEAWEEDFS_SECRET_NAME}"
   template:
     distributor:
       tls:
@@ -240,8 +240,8 @@ delete_tempo() {
     doomed_namespaces="$(echo ${res_namespace} ${doomed_namespaces} | tr ' ' '\n' | sort -u)"
   done
 
-  infomsg "Deleting Minio..."
-  delete_minio ${TEMPO_NAMESPACE}
+  infomsg "Deleting SeaweedFS..."
+  delete_seaweedfs ${TEMPO_NAMESPACE}
 
   infomsg "Deleting the Tempo namespaces"
   for ns in ${doomed_namespaces}
