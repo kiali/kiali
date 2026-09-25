@@ -135,10 +135,10 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
  * In OSSMC, Console paints an overlay over the SVG. Temporarily disable
  * pointer-events on covering layers so a real click reaches the node.
  */
-const isOssmcUrl = (url: string): boolean =>
+export const isOssmcUrl = (url: string): boolean =>
   url.includes('/ossmconsole/') || url.includes('openshift-console');
 
-const peelCoveringLayers = (node: Element, win: Window): HTMLElement[] => {
+export const peelCoveringLayers = (node: Element, win: Window): HTMLElement[] => {
   const peels: HTMLElement[] = [];
   const rect = node.getBoundingClientRect();
   const x = rect.left + rect.width / 2;
@@ -156,27 +156,43 @@ const peelCoveringLayers = (node: Element, win: Window): HTMLElement[] => {
   return peels;
 };
 
+/**
+ * SVG <g> topology nodes often have 0 offsetWidth/offsetHeight, so jQuery
+ * :visible is false even when the node is painted. Cypress click
+ * actionability uses getBoundingClientRect (same as v2.27's plain rightclick).
+ */
+const isPaintedElement = (el: Element): boolean => {
+  const r = el.getBoundingClientRect();
+  return r.width > 1 && r.height > 1;
+};
+
+const paintedGraphNodes = ($nodes: JQuery<HTMLElement>): HTMLElement[] =>
+  [...$nodes].filter(isPaintedElement) as HTMLElement[];
+
 export const clickGraphNode = (nodeId: string, options?: { rightClick?: boolean }): void => {
   const peels: HTMLElement[] = [];
 
   cy.get(`[data-id="${nodeId}"]`)
-    .filter(':visible')
-    .should('have.length.at.least', 1)
-    .first()
-    .then($node => {
-      const win = $node[0].ownerDocument.defaultView as Window;
+    .should($nodes => {
+      assert.isAtLeast(paintedGraphNodes($nodes as JQuery<HTMLElement>).length, 1, 'graph node should be painted');
+    })
+    .then($nodes => {
+      const painted = paintedGraphNodes($nodes as JQuery<HTMLElement>);
+      const el = painted.find(e => e.closest('[data-layer-id="nodes"]')) ?? painted[0];
+      const win = el.ownerDocument.defaultView as Window;
+
       if (isOssmcUrl(win.location.href)) {
-        peels.push(...peelCoveringLayers($node[0], win));
+        peels.push(...peelCoveringLayers(el, win));
       }
 
       if (options?.rightClick) {
-        cy.wrap($node).rightclick();
+        cy.wrap(el).rightclick();
       } else {
-        cy.wrap($node).click();
+        cy.wrap(el).click();
       }
 
       cy.then(() => {
-        peels.forEach(el => el.style.removeProperty('pointer-events'));
+        peels.forEach(p => p.style.removeProperty('pointer-events'));
       });
     });
 };
@@ -218,6 +234,9 @@ export const findGraphNode = (filter: (nodes: Node[]) => GraphElement[], errorMs
       const matched = filter(elems(controller).nodes);
       assert.equal(matched.length, 1, errorMsg);
       found = matched[0] as Node;
+
+      const nodeEls = win.document.querySelectorAll(`[data-id="${found.getId()}"]`);
+      assert.isAtLeast([...nodeEls].filter(isPaintedElement).length, 1, 'graph node should be painted in the SVG');
     })
     .then(() => found as Node);
 };
