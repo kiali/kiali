@@ -1,62 +1,40 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
-import { Visualization } from '@patternfly/react-topology';
-import { elems, selectAnd } from './graph';
+import { clickGraphNode, findGraphNode, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
+
+const openServiceContextMenu = (nodeFilter: Parameters<typeof findGraphNode>[0], errorMsg: string): void => {
+  findGraphNode(nodeFilter, errorMsg).then(node => {
+    clickGraphNode(node.getId(), { rightClick: true });
+    cy.wrap(node).as('contextNode');
+    cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
+  });
+};
 
 // Single cluster only.
 When('user opens the context menu of the {string} service node', (svcName: string) => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .then($graph => {
-      const { state } = $graph[0];
-
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      const { nodes } = elems(controller);
-
-      const node = selectAnd(nodes, [
+  openServiceContextMenu(
+    nodes =>
+      selectAnd(nodes, [
         { prop: NodeAttr.nodeType, op: '=', val: 'service' },
         { prop: NodeAttr.service, op: '=', val: svcName }
-      ]);
-
-      cy.get(`[data-id=${node[0].getId()}]`).rightclick();
-      cy.wrap(node[0]).as('contextNode');
-    });
+      ]),
+    `service Node ${svcName} not found`
+  );
 });
 
 When(
   'user opens the context menu of the {string} service node on the {string} cluster',
   (svcName: string, cluster: string) => {
-    cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-      .should('have.length', '1')
-      .then($graph => {
-        const { state } = $graph[0];
-
-        const controller = state.graphRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
-        const { nodes } = elems(controller);
-
-        const node = selectAnd(nodes, [
+    openServiceContextMenu(
+      nodes =>
+        selectAnd(nodes, [
           { prop: NodeAttr.nodeType, op: '=', val: 'service' },
           { prop: NodeAttr.service, op: '=', val: svcName },
           { prop: NodeAttr.cluster, op: '=', val: cluster },
           { prop: NodeAttr.namespace, op: '=', val: 'bookinfo' }
-        ]);
-
-        if (node.length === 0) {
-          Cypress.$('[data-test="refresh-button"]').trigger('click');
-          throw new Error(`service Node ${svcName} in namespace bookinfo in cluster ${cluster} not found`);
-        }
-
-        expect(node.length).to.equal(1);
-
-        cy.get(`[data-id=${node[0].getId()}]`).rightclick();
-        cy.wrap(node[0]).as('contextNode');
-
-        cy.get('.pf-topology-context-menu__c-dropdown__menu').should('be.visible');
-      });
+        ]),
+      `service Node ${svcName} in namespace bookinfo in cluster ${cluster} not found`
+    );
   }
 );
 

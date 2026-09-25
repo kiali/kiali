@@ -221,3 +221,27 @@ export const findComponentsInTree = (tree: ReactNode, selector: string, opts: Re
 
   return results;
 };
+
+/**
+ * Retryable assertion against a mounted React component's state. Re-reads the
+ * fiber tree on every Cypress retry instead of using a stale cy.getReact()
+ * snapshot (which often matches HOCs and returns undefined state in OSSMC).
+ */
+export const waitForComponentState = (
+  componentName: string,
+  opts: ReactOpts,
+  assertFn: (state: any) => void
+): void => {
+  cy.waitForReact();
+  cy.window({ log: false }).should((win: Window) => {
+    const rootSelector = Cypress.env('rootSelector') || 'body';
+    const rootEl = win.document.querySelector(rootSelector);
+    const rootFiber = rootEl ? getReactFiber(rootEl as Element) : null;
+    assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+    const results = findComponentsInTree(buildNodeTree(rootFiber), componentName, opts);
+    const match = results.find(c => c.name === componentName) ?? results[0];
+    assert.exists(match, `${componentName} should be mounted`);
+    assertFn(match.state);
+  });
+};
