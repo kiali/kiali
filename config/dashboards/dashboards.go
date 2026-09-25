@@ -69,9 +69,14 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Upstream total requests"
       spans: 3
-      metricName: "envoy_cluster_upstream_rq_total"
+      metricName: "istio_requests_total"
       unit: "rps"
       dataType: "rate"
+      metrics:
+      - metricName: "istio_requests_total"
+        displayName: "Upstream total requests"
+        labelRegexps:
+          reporter: "source|waypoint"
   - chart:
       name: "Downstream active connections"
       spans: 3
@@ -80,9 +85,57 @@ const DEFAULT_DASHBOARDS_YAML = `
   - chart:
       name: "Downstream HTTP requests"
       spans: 3
-      metricName: "envoy_listener_http_downstream_rq"
+      metricName: "istio_requests_total"
       unit: "rps"
       dataType: "rate"
+      metrics:
+      - metricName: "istio_requests_total"
+        displayName: "Downstream HTTP requests"
+        labels:
+          reporter: "destination"
+
+- name: envoy-memory
+  title: Envoy Memory
+  rows: 1
+  items:
+  - chart:
+      name: "Memory trends"
+      unit: "bytes"
+      spans: 12
+      dataType: "raw"
+      min: 0
+      aggregator: "max"
+      metrics:
+      - metricName: "envoy_server_memory_allocated"
+        displayName: "Envoy allocated"
+      - metricName: "container_memory_working_set_bytes"
+        displayName: "Container working set"
+        labels:
+          container: "istio-proxy"
+        usePodSelector: true
+  - chart:
+      name: "Active clusters"
+      spans: 12
+      metricName: "envoy_cluster_manager_active_clusters"
+      dataType: "raw"
+      min: 0
+      aggregator: "max"
+  - chart:
+      name: "Request rate"
+      spans: 12
+      unit: "rps"
+      dataType: "rate"
+      metrics:
+      # Default Istio Envoy stats omit app request counters; use Istio telemetry instead.
+      # Waypoints report as reporter="waypoint" (same pattern as Kiali traffic metrics).
+      - metricName: "istio_requests_total"
+        displayName: "Request Upstream"
+        labelRegexps:
+          reporter: "source|waypoint"
+      - metricName: "istio_requests_total"
+        displayName: "Request Downstream"
+        labels:
+          reporter: "destination"
 - name: go
   title: Go Metrics
   runtime: Go

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
@@ -93,6 +94,95 @@ func TestGetDashboardFromKialiNamespace(t *testing.T) {
 		Namespace: namespace.Name,
 		LabelsFilters: map[string]string{
 			"APP": "my-app",
+		},
+	}
+	query.FillDefaults()
+	prom.MockMetric(context.Background(), "my_metric_1_1", expectedLabels, &query.RangeQuery, 10)
+	prom.MockHistogram(context.Background(), "my_metric_1_2", expectedLabels, &query.RangeQuery, 11, 12)
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "dashboard1")
+
+	assert.Nil(err)
+	assert.Equal("Dashboard 1", dashboard.Title)
+}
+
+func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
+	assert := assert.New(t)
+
+	dashboardDef := &dashboards.MonitoringDashboard{
+		Name:  "envoy-memory",
+		Title: "Envoy Memory",
+		Items: []dashboards.MonitoringDashboardItem{
+			{
+				Chart: dashboards.MonitoringDashboardChart{
+					Name:     "Request rate",
+					Spans:    6,
+					Unit:     "rps",
+					DataType: dashboards.Rate,
+					Metrics: []dashboards.MonitoringDashboardMetric{
+						{
+							DisplayName:  "Upstream",
+							MetricName:   "istio_requests_total",
+							LabelRegexps: map[string]string{"reporter": "source|waypoint"},
+						},
+						{
+							DisplayName: "Downstream",
+							MetricName:  "istio_requests_total",
+							Labels:      map[string]string{"reporter": "destination"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	service, prom := setupService(t, config.NewConfig(), "bookinfo", []dashboards.MonitoringDashboard{*dashboardDef})
+	expectedLabelsUpstream := `{namespace="bookinfo",app="productpage",reporter=~"source|waypoint"}`
+	expectedLabelsDownstream := `{namespace="bookinfo",app="productpage",reporter="destination"}`
+	query := models.DashboardQuery{
+		Namespace: "bookinfo",
+		LabelsFilters: map[string]string{
+			"app": "productpage",
+		},
+	}
+	query.FillDefaults()
+	prom.MockMetric(context.Background(), "istio_requests_total", expectedLabelsUpstream, &query.RangeQuery, 2.5)
+	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{expectedLabelsDownstream}, "", &query.RangeQuery).
+		Return(prometheus.Metric{})
+
+	dashboard, err := service.GetDashboard(context.Background(), query, "envoy-memory")
+
+	assert.NoError(err)
+	assert.Len(dashboard.Charts, 1)
+	assert.Len(dashboard.Charts[0].Metrics, 2)
+
+	names := []string{dashboard.Charts[0].Metrics[0].Name, dashboard.Charts[0].Metrics[1].Name}
+	assert.Contains(names, "Upstream")
+	assert.Contains(names, "Downstream")
+}
+
+func TestGetDashboardUsesWorkloadLabels(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	conf.CustomDashboards = append(conf.CustomDashboards, *fakeDashboard("1"))
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"gateway.networking.k8s.io/gateway-name": "waypoint"},
+		},
+	}
+	prom := new(pmock.PromClientMock)
+	ns := models.Namespace{Name: "bookinfo"}
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, workload)
+
+	expectedLabels := `{namespace="bookinfo",gateway_networking_k8s_io_gateway_name="waypoint"}`
+	query := models.DashboardQuery{
+		Namespace: "bookinfo",
+		LabelsFilters: map[string]string{
+			"app": "ignored-app-label",
 		},
 	}
 	query.FillDefaults()
@@ -534,4 +624,45 @@ func TestCustomDashboardsPromClientFactoryCalledOnce(t *testing.T) {
 	if callCount != 1 {
 		t.Fatalf("expected factory to be called exactly once, got %d", callCount)
 	}
+}
+
+func TestAppendPromLabels(t *testing.T) {
+	assert.Equal(t, `{namespace="bookinfo"}`, appendPromLabels(`{namespace="bookinfo"}`, nil))
+	assert.Equal(t,
+		`{namespace="bookinfo",app="productpage",reporter="source"}`,
+		appendPromLabels(`{namespace="bookinfo",app="productpage"}`, map[string]string{"reporter": "source"}),
+	)
+	assert.Equal(t, `{reporter="destination"}`, appendPromLabels("", map[string]string{"reporter": "destination"}))
+	assert.Equal(t,
+		`{namespace="ns",a="1",b="2"}`,
+		appendPromLabels(`{namespace="ns"}`, map[string]string{"b": "2", "a": "1"}),
+	)
+	assert.Equal(t,
+		`{namespace="bookinfo",reporter=~"source|waypoint"}`,
+		appendPromLabelMatchers(`{namespace="bookinfo"}`, nil, map[string]string{"reporter": "source|waypoint"}),
+	)
+}
+
+func TestBuildWorkloadPodMetricLabels(t *testing.T) {
+	conf := config.NewConfig()
+	ns := models.Namespace{Name: "bookinfo"}
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{Namespace: "bookinfo"},
+		Pods: models.Pods{
+			&models.Pod{Name: "details-v1-abc"},
+			&models.Pod{Name: "details-v1-def"},
+		},
+	}
+	svc := NewDashboardsService(conf, nil, nil, &ns, workload)
+
+	assert.Equal(t,
+		`{namespace="bookinfo",pod=~"details-v1-abc|details-v1-def",container="istio-proxy"}`,
+		svc.buildWorkloadPodMetricLabels("bookinfo", map[string]string{"container": "istio-proxy"}),
+	)
+
+	workload.Pods = models.Pods{&models.Pod{Name: "waypoint-xyz"}}
+	assert.Equal(t,
+		`{namespace="bookinfo",pod="waypoint-xyz",container="istio-proxy"}`,
+		svc.buildWorkloadPodMetricLabels("bookinfo", map[string]string{"container": "istio-proxy"}),
+	)
 }
