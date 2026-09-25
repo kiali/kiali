@@ -26,8 +26,8 @@ TARGET_NAMESPACES="istio-system"
 RULE_NAMESPACE="mesh-observability"
 PLACEMENT_NAME=""
 PLACEMENT_NAMESPACE=""
-MINIO_ACCESS_KEY="minio"
-MINIO_SECRET_KEY="minio123"
+SEAWEEDFS_ACCESS_KEY="seaweedfs"
+SEAWEEDFS_SECRET_KEY="seaweedfs123"
 WITH_DASHBOARDS=false
 INSTALL_ISTIO=false
 INSTALL_KIALI=false
@@ -95,8 +95,8 @@ Options:
   --placement-name NAME          MCOA placement to configure. Required if MCOA has
                                  more than one placement.
   --placement-namespace NS       Namespace of --placement-name.
-  --minio-access-key KEY         Development MinIO access key (default: minio).
-  --minio-secret-key KEY         Development MinIO secret key (default: minio123).
+  --seaweedfs-access-key KEY     Development SeaweedFS S3 access key (default: seaweedfs).
+  --seaweedfs-secret-key KEY     Development SeaweedFS S3 secret key (default: seaweedfs123).
   --with-dashboards              Include the optional Istio dashboard metric tier.
   --install-istio                Install Istio and its metrics monitors on the spoke.
   --install-kiali                Install Kiali on the hub and grant it spoke access.
@@ -217,8 +217,8 @@ parse_args() {
       --rule-namespace) require_value "$1" "${2-}"; RULE_NAMESPACE=$2; shift 2 ;;
       --placement-name) require_value "$1" "${2-}"; PLACEMENT_NAME=$2; shift 2 ;;
       --placement-namespace) require_value "$1" "${2-}"; PLACEMENT_NAMESPACE=$2; shift 2 ;;
-      --minio-access-key) require_value "$1" "${2-}"; MINIO_ACCESS_KEY=$2; shift 2 ;;
-      --minio-secret-key) require_value "$1" "${2-}"; MINIO_SECRET_KEY=$2; shift 2 ;;
+      --seaweedfs-access-key) require_value "$1" "${2-}"; SEAWEEDFS_ACCESS_KEY=$2; shift 2 ;;
+      --seaweedfs-secret-key) require_value "$1" "${2-}"; SEAWEEDFS_SECRET_KEY=$2; shift 2 ;;
       --with-dashboards) WITH_DASHBOARDS=true; shift ;;
       --install-istio) INSTALL_ISTIO=true; shift ;;
       --install-kiali) INSTALL_KIALI=true; shift ;;
@@ -544,8 +544,8 @@ install_hub() {
     --channel "${ACM_CHANNEL}"
     --namespace "${ACM_NAMESPACE}"
     --observability-namespace "${OBSERVABILITY_NAMESPACE}"
-    --minio-access-key "${MINIO_ACCESS_KEY}"
-    --minio-secret-key "${MINIO_SECRET_KEY}"
+    --seaweedfs-access-key "${SEAWEEDFS_ACCESS_KEY}"
+    --seaweedfs-secret-key "${SEAWEEDFS_SECRET_KEY}"
     --timeout "${TIMEOUT}"
     install-acm
   )
