@@ -33,6 +33,7 @@ PLAYWRIGHT_CORE_2="playwright-core-2"
 PLAYWRIGHT_CORE_CACHING="playwright-core-caching"
 PLAYWRIGHT_CORE_OPTIONAL="playwright-core-optional"
 PLAYWRIGHT_AMBIENT="playwright-ambient"
+PLAYWRIGHT_EXTERNAL_KIALI="playwright-external-kiali"
 PLAYWRIGHT_SMOKE="playwright-smoke"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
@@ -187,8 +188,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_AMBIENT}' or '${PLAYWRIGHT_SMOKE}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_AMBIENT}', '${PLAYWRIGHT_EXTERNAL_KIALI}' or '${PLAYWRIGHT_SMOKE}'"
         exit 1
       fi
       shift;shift
@@ -270,7 +271,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_AMBIENT}|${PLAYWRIGHT_SMOKE}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_AMBIENT}|${PLAYWRIGHT_EXTERNAL_KIALI}|${PLAYWRIGHT_SMOKE}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -1347,6 +1348,44 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_EXTERNAL_KIALI}" ]; then
+  ensurePlaywrightReady
+
+  if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+      MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+  else
+      MEMORY_LIMIT_ARG=""
+  fi
+  if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+     MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+  else
+     MEMORY_REQUEST_ARG=""
+  fi
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --auth-strategy openid --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+  export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-mgmt"
+  export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-mesh"
+  export PLAYWRIGHT_USERNAME="kiali"
+  export PLAYWRIGHT_PASSWD="kiali"
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:external-kiali
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions ${PLAYWRIGHT_CLUSTER1_CONTEXT}
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   ensureCypressReady
