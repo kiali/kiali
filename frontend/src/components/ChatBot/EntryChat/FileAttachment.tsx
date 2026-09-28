@@ -1,8 +1,16 @@
 import React from 'react';
 import Editor from '@monaco-editor/react';
 import { FileDetailsLabel } from '@patternfly/chatbot';
-import { Button, Stack, StackItem } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  Stack,
+  StackItem
+} from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import type { Action } from 'types/Chatbot';
 import { ColorScheme } from 'types/Common';
@@ -177,37 +185,32 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
   return (
     <div key={fileName}>
       <FileDetailsLabel fileName={fileName} onClick={toggle} />
-      <Modal
-        ouiaId="chatbot-yaml-modal"
-        title={action.title || fileName}
-        variant={ModalVariant.large}
-        isOpen={isModalOpen}
-        onClose={toggle}
-        actions={
-          [
-            canApply ? (
-              <Button key="apply" variant="primary" onClick={onApply}>
-                {applyLabel}
-              </Button>
-            ) : null,
-            <Button key="close" variant="link" onClick={toggle}>
-              {t('Close')}
+      <Modal ouiaId="chatbot-yaml-modal" variant={ModalVariant.large} isOpen={isModalOpen} onClose={toggle}>
+        <ModalHeader title={action.title || fileName} />
+        <ModalBody>
+          <Stack hasGutter>
+            <StackItem>
+              <Editor
+                value={yamlText}
+                language="yaml"
+                theme={isDarkTheme ? 'vs-dark' : 'light'}
+                height="350px"
+                onChange={v => setYamlText(v || '')}
+                options={{ wordWrap: 'on', tabSize: 2, scrollBeyondLastLine: false }}
+              />
+            </StackItem>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          {canApply ? (
+            <Button key="apply" variant="primary" onClick={onApply}>
+              {applyLabel}
             </Button>
-          ].filter(Boolean) as any
-        }
-      >
-        <Stack hasGutter>
-          <StackItem>
-            <Editor
-              value={yamlText}
-              language="yaml"
-              theme={isDarkTheme ? 'vs-dark' : 'light'}
-              height="350px"
-              onChange={v => setYamlText(v || '')}
-              options={{ wordWrap: 'on', tabSize: 2, scrollBeyondLastLine: false }}
-            />
-          </StackItem>
-        </Stack>
+          ) : null}
+          <Button key="close" variant="link" onClick={toggle}>
+            {t('Close')}
+          </Button>
+        </ModalFooter>
       </Modal>
     </div>
   );
