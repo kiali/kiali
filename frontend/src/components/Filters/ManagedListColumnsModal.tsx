@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ColumnManagementModal } from '@patternfly/react-component-groups';
 import type { ManagedListColumnsConfig } from '../../hooks/useManagedListColumns';
 import { useManagedListColumns } from '../../hooks/useManagedListColumns';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ManagedListColumnsModalProps = ManagedListColumnsConfig & {
   isOpen: boolean;
@@ -10,6 +10,7 @@ type ManagedListColumnsModalProps = ManagedListColumnsConfig & {
 };
 
 export const ManagedListColumnsModal: React.FC<ManagedListColumnsModalProps> = ({ isOpen, onClose, ...config }) => {
+  const { t } = useKialiTranslation();
   const { appliedColumns, applyColumns, resetColumnsToDefault } = useManagedListColumns(config);
 
   return (

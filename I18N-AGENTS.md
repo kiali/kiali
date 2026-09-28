@@ -3,7 +3,10 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
+
+The English catalog (`frontend/public/locales/en/translation.json`) is generated locally by `yarn i18n` and is not committed. English UI text is the i18n key; runtime `fallbackLng: 'en'` displays the key when no English file is present. Commit only translated catalogs.
 
 It is intentionally written in English so contributors, reviewers, and AI assistants can align on the same terminology.
 

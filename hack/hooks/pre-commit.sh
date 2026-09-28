@@ -129,7 +129,9 @@ cd frontend || exit 1
 
 yarn i18n
 
-i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation.json')
+# English catalog is generated locally and gitignored (keys are the English source).
+# Require translated locale files only so new t() strings are not dropped from es/zh/ko/etc.
+i18n_files=$(git diff --name-only --diff-filter=M | grep -E 'translation\.json$' | grep -v '/locales/en/' || true)
 
 #### Git commit check ####
 if [ "${#yaml_unformatted[@]}" -gt 0 ] || [ -n "$go_unformatted" ]; then

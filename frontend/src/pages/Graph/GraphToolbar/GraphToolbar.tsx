@@ -213,7 +213,7 @@ class GraphToolbarComponent extends React.PureComponent<GraphToolbarProps> {
           onGraphTypeChange={this.props.setGraphType}
         />
         <Toolbar style={{ paddingTop: '1rem', width: '100%' }}>
-          <ToolbarGroup aria-label="graph settings" style={{ margin: 0, alignItems: 'flex-start' }}>
+          <ToolbarGroup aria-label={t('graph settings')} style={{ margin: 0, alignItems: 'flex-start' }}>
             {isNodeGraph && (
               <ToolbarItem style={{ margin: 0 }}>
                 <Tooltip key={'graph-tour-help-ot'} position={TooltipPosition.right} content={t('Back to full graph')}>

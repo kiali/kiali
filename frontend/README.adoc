@@ -244,6 +244,8 @@ locales: ['en', 'zh', /* add new language code here */],
 
 The locale files are stored in `public/locales/<language>/translation.json`. If you find a wrong translation or an English statement (default value when the label is generated), simply modify that file to include the correct language translation.
 
+The English catalog (`public/locales/en/translation.json`) is generated locally by `yarn i18n` for reference and is not committed. English UI text is the i18n key (`t('Traffic Graph')`); at runtime `fallbackLng: 'en'` displays that key when no English file is present. Commit only translated catalogs (`es`, `zh`, `ko`, and other supported languages).
+
 For shared glossary and style conventions used when editing Spanish and Chinese locale files, see link:../I18N-AGENTS.md[`I18N-AGENTS.md`].
 
 **Add i18n support to a React component**

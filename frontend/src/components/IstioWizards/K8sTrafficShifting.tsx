@@ -8,6 +8,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ServiceOverview } from '../../types/ServiceList';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   initRefs: K8sRouteBackendRef[];
@@ -98,11 +99,11 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
   render(): React.ReactNode {
     const columns: ThProps[] = [
       {
-        title: 'Destination Service',
+        title: t('Destination Service'),
         width: 30
       },
       {
-        title: 'Traffic Weight',
+        title: t('Traffic Weight'),
         width: 70
       }
     ];
@@ -141,7 +142,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
 
     return (
       <>
-        <SimpleTable label="Weighted Routing" columns={columns} rows={rows} verticalAlign="middle" />
+        <SimpleTable label={t('Weighted Routing')} columns={columns} rows={rows} verticalAlign="middle" />
 
         {this.props.subServices.length > 1 && (
           <div className={evenlyButtonStyle}>

@@ -24,6 +24,7 @@ import { KialiDispatch } from '../../types/Redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { webRoot } from 'app/History';
+import { t } from 'utils/I18nUtils';
 
 interface ReduxProps {
   message: string;
@@ -226,7 +227,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       loginPane = (
         <Form data-test="login-form">
           <FormHelperText>{messages}</FormHelperText>
-          <FormGroup fieldId="token" label="Token" isRequired={true}>
+          <FormGroup fieldId="token" label={t('Token')} isRequired={true}>
             <TextInput
               id="token"
               type="password"

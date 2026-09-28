@@ -69,11 +69,14 @@ const createProps = (
 };
 
 describe('SummaryPanelNodeTraffic', () => {
+  const noTrafficLogged = (protocol: string): string =>
+    `No {{protocol}} traffic logged. ${JSON.stringify({ protocol })}`;
+
   const protocols: [string, Partial<DecoratedGraphNodeData>, TrafficRate[], string][] = [
-    ['HTTP', { httpOut: 10 }, [TrafficRate.HTTP_REQUEST], 'No HTTP inbound traffic logged.'],
-    ['gRPC requests', { grpcOut: 10, httpOut: 0 }, [TrafficRate.GRPC_REQUEST], 'No gRPC inbound traffic logged.'],
-    ['gRPC streams', { grpcOut: 10, httpOut: 0 }, [TrafficRate.GRPC_SENT], 'No gRPC inbound traffic logged.'],
-    ['TCP', { httpOut: 0, tcpOut: 10 }, [TrafficRate.TCP_SENT], 'No TCP inbound traffic logged.']
+    ['HTTP', { httpOut: 10 }, [TrafficRate.HTTP_REQUEST], noTrafficLogged('HTTP inbound')],
+    ['gRPC requests', { grpcOut: 10, httpOut: 0 }, [TrafficRate.GRPC_REQUEST], noTrafficLogged('gRPC inbound')],
+    ['gRPC streams', { grpcOut: 10, httpOut: 0 }, [TrafficRate.GRPC_SENT], noTrafficLogged('gRPC inbound')],
+    ['TCP', { httpOut: 0, tcpOut: 10 }, [TrafficRate.TCP_SENT], noTrafficLogged('TCP inbound')]
   ];
 
   it.each(protocols)('hides missing inbound %s traffic for root nodes', (_, nodeOverrides, trafficRates, message) => {

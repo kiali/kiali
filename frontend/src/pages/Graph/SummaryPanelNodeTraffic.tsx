@@ -34,6 +34,7 @@ import { edgesOut, nodesIn, nodesOut, select } from 'helpers/GraphHelpers';
 import { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 import { Node } from '@patternfly/react-topology';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelNodeMetricsState = {
   grpcErrorCountIn: Datapoint[];
@@ -432,7 +433,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <InOutRateTableGrpc
         hideIn={nodeData.isRoot}
-        title="gRPC Traffic (requests per second):"
+        title={t('gRPC Traffic (requests per second):')}
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
         inRateNR={inbound.rateNoResponse}
@@ -452,7 +453,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <InOutRateTableHttp
         hideIn={nodeData.isRoot}
-        title="HTTP (requests per second):"
+        title={t('HTTP (requests per second):')}
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
         inRate4xx={inbound.rate4xx}
@@ -534,7 +535,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasGrpcIn(nodeData) && (
             <>
               <RequestChart
-                label="gRPC - Outbound Request Traffic"
+                label={t('gRPC - Outbound Request Traffic')}
                 dataRps={this.state.grpcRequestCountOut}
                 dataErrors={this.state.grpcErrorCountOut}
                 hide={isInOutSameNode}
@@ -561,7 +562,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
           {this.hasGrpcOut(nodeData) && (
             <StreamChart
-              label="gRPC - Outbound Traffic"
+              label={t('gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               hide={isInOutSameNode}
@@ -593,7 +594,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasHttpOut(nodeData) && (
             <>
               <RequestChart
-                label="HTTP - Outbound Request Traffic"
+                label={t('HTTP - Outbound Request Traffic')}
                 dataRps={this.state.httpRequestCountOut}
                 dataErrors={this.state.httpErrorCountOut}
                 hide={isInOutSameNode}
@@ -624,7 +625,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
 
           {this.hasTcpOut(nodeData) && (
             <StreamChart
-              label="TCP - Outbound Traffic"
+              label={t('TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               hide={isInOutSameNode}

@@ -45,6 +45,7 @@ import { KialiLink } from 'components/Link/KialiLink';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
 import { KioskData, KioskMode } from 'types/Common';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelNodeState = {
   isActionOpen: boolean;
@@ -237,7 +238,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
                       ref={toggleRef}
                       id="summary-node-kebab"
                       className={kebabToggleStyle}
-                      aria-label="Actions"
+                      aria-label={t('Actions')}
                       variant="plain"
                       onClick={() => this.onToggleActions(!this.state.isActionOpen)}
                       isExpanded={this.state.isActionOpen}
@@ -386,13 +387,13 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     return (
       <div className={summaryBodyTabs}>
         <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
-          <Tab style={summaryFont} title="Traffic" eventKey={0}>
+          <Tab style={summaryFont} title={t('Traffic')} eventKey={0}>
             <div style={summaryFont}>
               <SummaryPanelNodeTraffic {...this.props} />
             </div>
           </Tab>
 
-          <Tab style={summaryFont} title="Traces" eventKey={1}>
+          <Tab style={summaryFont} title={t('Traces')} eventKey={1}>
             <SummaryPanelNodeTraces
               kiosk={this.props.kiosk}
               nodeData={nodeData}

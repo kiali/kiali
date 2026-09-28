@@ -450,7 +450,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
     if (this.props.pods.length < 1) {
       this.state = {
         ...defaultState,
-        loadingLogsError: 'There are no logs to display because no pods are available.'
+        loadingLogsError: t('There are no logs to display because no pods are available.')
       };
       return;
     }
@@ -551,7 +551,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           <ToolbarItem style={{ alignSelf: 'center' }}>
                             <ToolbarDropdown
                               id="wpl_pods"
-                              tooltip="Display logs for the selected pod"
+                              tooltip={t('Display logs for the selected pod')}
                               handleSelect={key => this.setPod(key)}
                               value={this.state.podValue}
                               label={this.props.pods[this.state.podValue!].name}
@@ -570,12 +570,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               onKeyDown={this.checkSubmitShow}
                               onChange={(_event, val) => this.updateShow(val)}
                               defaultValue={this.state.showLogValue}
-                              aria-label="show log text"
-                              placeholder="Show..."
+                              aria-label={t('show log text')}
+                              placeholder={t('Show...')}
                             />
 
                             {this.state.showClearShowLogButton && (
-                              <Tooltip key="clear_show_log" position="top" content="Clear Show Log Entries...">
+                              <Tooltip key="clear_show_log" position="top" content={t('Clear Show Log Entries...')}>
                                 <Button variant={ButtonVariant.control} onClick={this.clearShow}>
                                   <KialiIcon.Close />
                                 </Button>
@@ -593,12 +593,12 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               onKeyDown={this.checkSubmitHide}
                               onChange={(_event, val) => this.updateHide(val)}
                               defaultValue={this.state.hideLogValue}
-                              aria-label="hide log text"
-                              placeholder="Hide..."
+                              aria-label={t('hide log text')}
+                              placeholder={t('Hide...')}
                             />
 
                             {this.state.showClearHideLogButton && (
-                              <Tooltip key="clear_hide_log" position="top" content="Clear Hide Log Entries...">
+                              <Tooltip key="clear_hide_log" position="top" content={t('Clear Hide Log Entries...')}>
                                 <Button variant={ButtonVariant.control} onClick={this.clearHide}>
                                   <KialiIcon.Close />
                                 </Button>
@@ -612,7 +612,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               <Tooltip
                                 key="show_hide_log_help"
                                 position="top"
-                                content="Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu)."
+                                content={t('Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).')}
                               >
                                 <KialiIcon.Info className={infoStyle} />
                               </Tooltip>
@@ -623,7 +623,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                             <ToolbarItem style={{ alignSelf: 'center' }}>
                               <TraceSpansLimit
                                 inputClassName={colorCheck(spanColor)}
-                                label="Spans"
+                                label={t('Spans')}
                                 labelClassName={spansLabelStyle}
                                 onChange={this.handleTraceSpansChange}
                                 showSpans={this.state.showSpans}
@@ -639,7 +639,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               value={this.state.maxLines}
                               label={MaxLinesOptions[this.state.maxLines]}
                               options={MaxLinesOptions}
-                              tooltip="Truncate after N log lines"
+                              tooltip={t('Truncate after N log lines')}
                               className={toolbarTail}
                             />
                           </ToolbarItem>
@@ -741,7 +741,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                       key={`al-tt-tl`}
                       position={TooltipPosition.auto}
                       entryDelay={1000}
-                      content="A filtered subset of log entries from the ztunnel's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                      content={t("A filtered subset of log entries from the ztunnel's (ambient node proxy) pod logs, relevant to the selected workload pod")}
                     >
                       <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
@@ -769,7 +769,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           key={`al-tt-tl`}
                           position={TooltipPosition.auto}
                           entryDelay={1000}
-                          content="A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                          content={t("A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod")}
                         >
                           <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={waypointContainerColor} />
                         </Tooltip>
@@ -836,7 +836,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             key={`al-tt-${index}`}
             position={TooltipPosition.auto}
             entryDelay={1000}
-            content="Click to navigate to span detail"
+            content={t('Click to navigate to span detail')}
           >
             <Button
               icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={spanColor} />}
@@ -866,7 +866,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             key={`jod-tt-${index}`}
             position={TooltipPosition.auto}
             entryDelay={1000}
-            content="Click for JSON object details"
+            content={t('Click for JSON object details')}
           >
             <Button
               data-test="json-log-info-button"
@@ -895,7 +895,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           key={`al-tt-${index}`}
           position={TooltipPosition.auto}
           entryDelay={1000}
-          content="Click for Envoy Access Log details"
+          content={t('Click for Envoy Access Log details')}
         >
           <Button
             icon={<KialiIcon.Info key={`al-i-${index}`} className={alInfoIcon} color={messageColor} />}
@@ -988,7 +988,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           <ToolbarGroup style={{ margin: 0 }}>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
             <ToolbarItem className={copyActionStyle}>
-              <Tooltip key="copy_logs" position="top" content="Copy logs to clipboard">
+              <Tooltip key="copy_logs" position="top" content={t('Copy logs to clipboard')}>
                 <CopyToClipboard text={this.entriesToString(this.state.entries)}>
                   <Button variant={ButtonVariant.link} isInline>
                     <KialiIcon.Copy />
@@ -999,7 +999,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             </ToolbarItem>
 
             <ToolbarItem className={expandActionStyle}>
-              <Tooltip key="fullscreen_logs" position="top" content="Expand logs full screen">
+              <Tooltip key="fullscreen_logs" position="top" content={t('Expand logs full screen')}>
                 <Button
                   variant={ButtonVariant.link}
                   onClick={this.handleToggleFullscreen}
@@ -1019,7 +1019,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                     ref={toggleRef}
                     data-test="log-actions-dropdown"
                     className={kebabToggleStyle}
-                    aria-label="Actions"
+                    aria-label={t('Actions')}
                     variant="plain"
                     onClick={() => this.setKebabOpen(!this.state.kebabOpen)}
                     isExpanded={this.state.kebabOpen}

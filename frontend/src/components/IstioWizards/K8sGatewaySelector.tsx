@@ -17,6 +17,7 @@ import { GATEWAY_TOOLTIP, wizardTooltip } from './WizardHelp';
 import { isValid } from 'utils/Common';
 import { isK8sGatewayHostValid } from '../../utils/IstioConfigUtils';
 import { serverConfig } from '../../config';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   gateway: string;
@@ -151,7 +152,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
   render(): React.ReactNode {
     return (
       <Form isHorizontal={true}>
-        <FormGroup label="Add K8s API Gateway" fieldId="gatewaySwitch">
+        <FormGroup label={t('Add K8s API Gateway')} fieldId="gatewaySwitch">
           <Switch
             id="advanced-gwSwitch"
             label={' '}
@@ -167,7 +168,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
               <Radio
                 id="existingGateway"
                 name="selectGateway"
-                label="Select K8s API Gateway"
+                label={t('Select K8s API Gateway')}
                 isDisabled={!this.state.addGateway || this.props.k8sGateways.length === 0}
                 isChecked={!this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'false')}
@@ -176,7 +177,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
               <Radio
                 id="createGateway"
                 name="selectGateway"
-                label="Create K8s API Gateway"
+                label={t('Create K8s API Gateway')}
                 isDisabled={!this.state.addGateway}
                 isChecked={this.state.newGateway}
                 onChange={() => this.onFormChange(K8sGatewayForm.SELECT, 'true')}
@@ -184,7 +185,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
             </FormGroup>
 
             {!this.state.newGateway && (
-              <FormGroup fieldId="selectGateway" label="K8sGateway">
+              <FormGroup fieldId="selectGateway" label={t('K8sGateway')}>
                 {this.props.k8sGateways.length > 0 && (
                   <Select
                     id="selectGateway"
@@ -221,7 +222,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
             {this.state.newGateway && (
               <>
                 {serverConfig.gatewayAPIClasses.length > 1 && (
-                  <FormGroup label="Gateway Class" fieldId="gatewayClass">
+                  <FormGroup label={t('Gateway Class')} fieldId="gatewayClass">
                     <Select
                       isOpen={this.state.isOpen}
                       selected={this.state.gatewayClass}
@@ -244,7 +245,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                   </FormGroup>
                 )}
 
-                <FormGroup fieldId="gwPort" label="Port">
+                <FormGroup fieldId="gwPort" label={t('Port')}>
                   <TextInput
                     id="gwPort"
                     name="gwPort"
@@ -255,7 +256,7 @@ export class K8sGatewaySelector extends React.Component<Props, K8sGatewaySelecto
                   />
                 </FormGroup>
 
-                <FormGroup fieldId="gwHosts" label="K8s API Gateway Hosts">
+                <FormGroup fieldId="gwHosts" label={t('K8s API Gateway Hosts')}>
                   <TextInput
                     id="gwHosts"
                     name="gwHosts"

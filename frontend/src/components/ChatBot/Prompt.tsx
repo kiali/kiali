@@ -23,7 +23,7 @@ import {
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
 import { CommentDotsIcon, HelpIcon, WrenchIcon } from '@patternfly/react-icons';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { namespacesToString } from 'types/Namespace';
@@ -38,6 +38,7 @@ type PromptProps = {
 };
 
 export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
+  const { t } = useKialiTranslation();
   const dispatch = useDispatch();
   const [validated, setValidated] = React.useState<'default' | 'error'>('default');
 
@@ -401,7 +402,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
               style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
               onClick={() => onPromptSelect(prompt.query)}
             >
-              {prompt.title}
+              {t(prompt.title)}
             </Button>
           ))}
         </div>

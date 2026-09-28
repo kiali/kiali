@@ -88,7 +88,7 @@ export class ClusterTable implements SummaryTable {
     return [
       {
         id: 'fqdn',
-        title: 'FQDN',
+        title: t('FQDN'),
         isNumeric: false,
         param: 'fqdn',
         compare: (a, b) => {
@@ -99,7 +99,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'port',
-        title: 'Port',
+        title: t('Port'),
         isNumeric: true,
         param: 'port',
         compare: (a, b) => {
@@ -108,7 +108,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'subset',
-        title: 'Subset',
+        title: t('Subset'),
         isNumeric: false,
         param: 'subset',
         compare: (a, b) => {
@@ -117,7 +117,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'direction',
-        title: 'Direction',
+        title: t('Direction'),
         isNumeric: false,
         param: 'direction',
         compare: (a, b) => {
@@ -126,7 +126,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'type',
-        title: 'Type',
+        title: t('Type'),
         isNumeric: false,
         param: 'type',
         compare: (a, b) => {
@@ -135,7 +135,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'dr',
-        title: 'Destination Rule',
+        title: t('Destination Rule'),
         isNumeric: true,
         param: 'dr',
         compare: (a, b) => {
@@ -176,20 +176,20 @@ export class ClusterTable implements SummaryTable {
   head = (): SortableTh[] => {
     return [
       {
-        title: 'Service FQDN',
+        title: t('Service FQDN'),
         sortable: true,
         info: { tooltip: <>Fully Qualified Domain Name</> }
       },
       {
-        title: 'Port',
+        title: t('Port'),
         sortable: true
       },
       {
-        title: 'Subset',
+        title: t('Subset'),
         sortable: true
       },
       {
-        title: 'Direction',
+        title: t('Direction'),
         sortable: true,
         info: {
           tooltip: (
@@ -207,12 +207,12 @@ export class ClusterTable implements SummaryTable {
         }
       },
       {
-        title: 'Type',
+        title: t('Type'),
         sortable: true,
         info: { tooltip: this.render_cluster_type() }
       },
       {
-        title: 'DestinationRule',
+        title: t('DestinationRule'),
         sortable: true
       }
     ];

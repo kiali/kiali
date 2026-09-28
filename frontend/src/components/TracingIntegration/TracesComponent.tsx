@@ -46,6 +46,7 @@ import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
 import { kialiStyle } from 'styles/StyleUtils';
 import { tabCardStyle } from 'styles/FlexStyles';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
@@ -374,7 +375,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                   activeKey={this.state.activeTab}
                   onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
                 >
-                  <Tab eventKey={traceDetailsTab} title="Trace Details">
+                  <Tab eventKey={traceDetailsTab} title={t('Trace Details')}>
                     <TraceDetails
                       namespace={this.props.namespace}
                       target={this.props.target}
@@ -386,7 +387,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
                       provider={this.props.provider}
                     />
                   </Tab>
-                  <Tab eventKey={spansDetailsTab} title="Span Details">
+                  <Tab eventKey={spansDetailsTab} title={t('Span Details')}>
                     <SpanDetails
                       namespace={this.props.namespace}
                       target={this.props.target}

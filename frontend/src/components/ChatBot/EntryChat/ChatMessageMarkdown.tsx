@@ -19,6 +19,7 @@ import { CheckIcon } from '@patternfly/react-icons/dist/esm/icons/check-icon';
 import { CopyIcon } from '@patternfly/react-icons/dist/esm/icons/copy-icon';
 import { ExternalLinkSquareAltIcon } from '@patternfly/react-icons';
 import { MessageProps } from '@patternfly/chatbot';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ChatMessageMarkdownProps = {
   codeBlockProps?: MessageProps['codeBlockProps'];
@@ -62,6 +63,7 @@ const CodeBlockMessage: React.FC<
     inline?: boolean;
   }
 > = ({ children, className, 'aria-label': ariaLabel, inline: _inline, ref: _ref, ...props }) => {
+  const { t } = useKialiTranslation();
   const [copied, setCopied] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
   const tooltipIdRef = React.useRef(`chatbot-copy-${Math.random().toString(16).slice(2)}`);
@@ -101,7 +103,7 @@ const CodeBlockMessage: React.FC<
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>
-      <Tooltip id={tooltipIdRef.current} content="Copy" position="top" triggerRef={buttonRef} />
+      <Tooltip id={tooltipIdRef.current} content={t('Copy')} position="top" triggerRef={buttonRef} />
     </CodeBlockAction>
   );
 

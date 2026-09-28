@@ -5,6 +5,7 @@ import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../..
 import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   gateway: GatewayState;
@@ -127,7 +128,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
   render(): React.ReactNode {
     return (
       <>
-        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label={t('Workload Selector')} fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
             label=" "
@@ -144,7 +145,7 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
         </FormGroup>
 
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -158,15 +159,15 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the Gateway is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? t('One or more labels to select a workload where the Gateway is applied.')
+                    : t('Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.')}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
 
-        <FormGroup label="Server List" fieldId="gwServerList" isRequired={true}>
+        <FormGroup label={t('Server List')} fieldId="gwServerList" isRequired={true}>
           <ServerList
             serverList={this.state.gatewayServers}
             serverForm={this.state.serversForm}

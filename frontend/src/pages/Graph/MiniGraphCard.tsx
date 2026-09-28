@@ -206,7 +206,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                         id="minigraph-toggle"
                         ref={toggleRef}
                         className={kebabToggleStyle}
-                        aria-label="Actions"
+                        aria-label={t('Actions')}
                         variant="plain"
                         onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
                         isExpanded={this.state.isKebabOpen}

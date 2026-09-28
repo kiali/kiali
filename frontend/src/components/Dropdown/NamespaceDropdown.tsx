@@ -28,6 +28,7 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import { TourStop } from '../Tour/TourStop';
 import { GraphTourStops } from '../../pages/Graph/GraphHelpTour';
+import { t } from 'utils/I18nUtils';
 
 interface ReduxStateProps {
   activeNamespaces: Namespace[];
@@ -196,7 +197,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         <Checkbox
           id="bulk-select-id"
           key="bulk-select-key"
-          aria-label="Select all"
+          aria-label={t('Select all')}
           isChecked={isChecked}
           onChange={() => {
             anySelected ? this.onBulkNone() : this.onBulkAll();
@@ -217,12 +218,12 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             aria-label="filter-namespace"
             type="text"
             name="namespace-filter"
-            placeholder="Filter by Name..."
+            placeholder={t('Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
-            <Tooltip key="ot_clear_namespace_filter" position="top" content="Clear Filter by Name">
+            <Tooltip key="ot_clear_namespace_filter" position="top" content={t('Clear Filter by Name')}>
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />
               </Button>

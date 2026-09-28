@@ -24,6 +24,7 @@ import type { KialiAppState } from '../../store/Store';
 import type { KialiDispatch } from '../../types/Redux';
 import { serverConfig } from '../../config';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   activeClusters: MeshCluster[];
@@ -155,7 +156,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
         <Checkbox
           id="bulk-select-id"
           key="bulk-select-key"
-          aria-label="Select all"
+          aria-label={t('Select all')}
           isChecked={isChecked}
           onChange={() => {
             anySelected ? this.onBulkNone() : this.onBulkAll();
@@ -176,12 +177,12 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
             aria-label="filter-cluster"
             type="text"
             name="cluster-filter"
-            placeholder="Filter by Name..."
+            placeholder={t('Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
-            <Tooltip key="ot_clear_cluster_filter" position="top" content="Clear Filter by Name">
+            <Tooltip key="ot_clear_cluster_filter" position="top" content={t('Clear Filter by Name')}>
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />
               </Button>
@@ -229,7 +230,7 @@ export class ClusterDropdownComponent extends React.PureComponent<ClusterDropdow
       );
     }
 
-    return <div className={optionStyle}>No clusters found</div>;
+    return <div className={optionStyle}>{t('No clusters found')}</div>;
   }
 
   private onToggle = (isOpen: boolean): void => {

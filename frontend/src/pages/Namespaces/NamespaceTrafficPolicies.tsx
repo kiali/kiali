@@ -289,11 +289,11 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       items.push({
         objectGVK: dicTypeToGVK[gvkType.AuthorizationPolicy],
         items: this.state.authorizationPolicies,
-        title: 'Authorization Policies'
+        title: t('Authorization Policies')
       });
 
     this.state.sidecars.length > 0 &&
-      items.push({ objectGVK: dicTypeToGVK[gvkType.Sidecar], items: this.state.sidecars, title: 'Sidecars' });
+      items.push({ objectGVK: dicTypeToGVK[gvkType.Sidecar], items: this.state.sidecars, title: t('Sidecars') });
 
     return items;
   };
@@ -352,7 +352,7 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
               this.props.opTarget !== 'delete' &&
               this.state.authorizationPolicies.length > 0
             }
-            title={'Preview Traffic Policies'}
+            title={t('Preview Traffic Policies')}
             downloadPrefix="trafficPolicies"
             disableAction={this.state.disableOp}
             onClose={this.onHideConfirmModal}

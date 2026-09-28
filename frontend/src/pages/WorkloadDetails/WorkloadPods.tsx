@@ -28,6 +28,7 @@ import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
 import { INJECTION_LABEL_REV } from 'config/ServerConfig';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadPodsProps = {
   namespace: string;
@@ -73,13 +74,14 @@ const podNameStyle = kialiStyle({
 });
 
 export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsProps) => {
+  const { t } = useKialiTranslation();
   const [sortIndex, setSortIndex] = React.useState<number>(0);
   const [sortDirection, setSortDirection] = React.useState<SortByDirection>(SortByDirection.asc);
 
   const columns: SortableTh[] = [
-    { title: 'Name', width: 50, sortable: true },
-    { title: 'Revision', width: 30, sortable: true },
-    { title: 'Health', width: 20, sortable: true }
+    { title: t('Name'), width: 50, sortable: true },
+    { title: t('Revision'), width: 30, sortable: true },
+    { title: t('Health'), width: 20, sortable: true }
   ];
 
   const sort: ISortBy = { index: sortIndex, direction: sortDirection };
@@ -176,7 +178,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
           </Tooltip>
 
           <Popover
-            aria-label="Pod details"
+            aria-label={t('Pod details')}
             className={podPopoverStyle}
             position={PopoverPosition.right}
             headerContent={
@@ -217,7 +219,7 @@ export const WorkloadPods: React.FC<WorkloadPodsProps> = (props: WorkloadPodsPro
       <CardBody>
         <SimpleTable
           className={fixedTableStyle}
-          label="Workload Pod List"
+          label={t('Workload Pod List')}
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

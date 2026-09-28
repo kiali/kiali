@@ -11,6 +11,7 @@ import {
   MenuToggleElement,
   MenuToggle
 } from '@patternfly/react-core';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type K8sMatchBuilderProps = {
   category: string;
@@ -63,16 +64,17 @@ const allOptions = {
   }
 };
 
-const placeholderText = {
-  [METHOD]: 'Method service...',
-  [PATH]: 'Path value...',
-  [HEADERS]: 'Header value...',
-  [QUERY_PARAMS]: 'Query param value...'
-};
-
 export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
   const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
+
+  const placeholderText = {
+    [METHOD]: t('Method service...'),
+    [PATH]: t('Path value...'),
+    [HEADERS]: t('Header value...'),
+    [QUERY_PARAMS]: t('Query param value...')
+  };
 
   const renderOpOptions: string[] = allOptions[props.protocol][props.category];
 
@@ -117,7 +119,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           id="header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onMatchHeaderNameChange(value)}
-          placeholder="Header name..."
+          placeholder={t('Header name...')}
         />
       )}
 
@@ -126,7 +128,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           id="method-name-id"
           value={props.methodName}
           onChange={(_, value) => props.onMatchMethodNameChange(value)}
-          placeholder="Method name..."
+          placeholder={t('Method name...')}
         />
       )}
 
@@ -135,7 +137,7 @@ export const K8sMatchBuilder: React.FC<K8sMatchBuilderProps> = (props: K8sMatchB
           id="query-param-id"
           value={props.queryParamName}
           onChange={(_, value) => props.onQueryParamNameChange(value)}
-          placeholder="Query param name..."
+          placeholder={t('Query param name...')}
         />
       )}
 

@@ -46,6 +46,7 @@ import {
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ApiResponse } from 'types/Api';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelAppBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -168,7 +169,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     const options = getOptions(nodeData);
     const items = [
-      <DropdownGroup key="show" label="Show">
+      <DropdownGroup key="show" label={t('Show')}>
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
@@ -222,7 +223,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
                     ref={toggleRef}
                     id="summary-appbox-kebab"
                     className={kebabToggleStyle}
-                    aria-label="Actions"
+                    aria-label={t('Actions')}
                     variant="plain"
                     onClick={() => this.onToggleActions(!this.state.isOpen)}
                     isExpanded={this.state.isOpen}
@@ -532,7 +533,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableGrpc
-        title="GRPC Traffic (requests per second):"
+        title={t('GRPC Traffic (requests per second):')}
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
         inRateNR={inbound.rateNoResponse}
@@ -557,7 +558,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableHttp
-        title="HTTP (requests per second):"
+        title={t('HTTP (requests per second):')}
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
         inRate4xx={inbound.rate4xx}
@@ -603,7 +604,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasGrpcIn && (
             <RequestChart
               key="grpc-inbound-request"
-              label="gRPC - Inbound Request Traffic"
+              label={t('gRPC - Inbound Request Traffic')}
               dataRps={this.state.grpcRequestIn!}
               dataErrors={this.state.grpcRequestErrIn}
             />
@@ -612,7 +613,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasGrpcOut && (
             <RequestChart
               key="grpc-outbound-request"
-              label="gRPC - Outbound Request Traffic"
+              label={t('gRPC - Outbound Request Traffic')}
               dataRps={this.state.grpcRequestOut}
               dataErrors={this.state.grpcRequestErrOut}
             />
@@ -622,7 +623,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         <>
           {hasGrpcIn && (
             <StreamChart
-              label="gRPC - Inbound Traffic"
+              label={t('gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
@@ -631,7 +632,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
           {hasGrpcOut && (
             <StreamChart
-              label="gRPC - Outbound Traffic"
+              label={t('gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               unit="messages"
@@ -647,7 +648,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasHttpIn && (
             <RequestChart
               key="http-inbound-request"
-              label="HTTP - Inbound Request Traffic"
+              label={t('HTTP - Inbound Request Traffic')}
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
@@ -656,7 +657,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasHttpOut && (
             <RequestChart
               key="http-outbound-request"
-              label="HTTP - Outbound Request Traffic"
+              label={t('HTTP - Outbound Request Traffic')}
               dataRps={this.state.httpRequestOut}
               dataErrors={this.state.httpRequestErrOut}
             />
@@ -671,7 +672,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasTcpIn && (
             <StreamChart
               key="tcp-inbound-request"
-              label="TCP - Inbound Traffic"
+              label={t('TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
@@ -681,7 +682,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
           {hasTcpOut && (
             <StreamChart
               key="tcp-outbound-request"
-              label="TCP - Outbound Traffic"
+              label={t('TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               unit="bytes"

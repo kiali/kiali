@@ -25,6 +25,7 @@ import { itemStyleWithoutInfo, titleStyle } from 'styles/DropdownStyles';
 import type { PromLabel } from 'types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   direction: string;
@@ -235,7 +236,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           <Checkbox
             id="bulk-select-id"
             key="bulk-select-key"
-            aria-label="Select all metric/label filters"
+            aria-label={t('Select all metric/label filters')}
             isChecked={this.state.allSelected}
             onChange={() => {
               if (this.state.allSelected) {
@@ -320,7 +321,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
             isDisabled={!this.props.hasHistogramsAverage}
             onChange={(_event, checked) => this.onHistogramAverageChanged(checked)}
-            label="Average"
+            label={t('Average')}
           />
         </label>
       </div>

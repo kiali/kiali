@@ -14,6 +14,7 @@ import {
 import { ServiceOverview } from '../../../types/ServiceList';
 import { getServicePort } from '../../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type K8sFilterBuilderProps = {
   filterType: string;
@@ -75,6 +76,7 @@ const addFilterStyle = kialiStyle({
 });
 
 export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilterBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isFilterDropdown, setIsFilterDropdown] = React.useState<boolean>(false);
   const [isHeaderDropdown, setIsHeaderDropdown] = React.useState<boolean>(false);
   const [isSchemeDropdown, setIsSchemeDropdown] = React.useState<boolean>(false);
@@ -158,7 +160,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="filter-header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onHeaderNameChange(value)}
-          placeholder="Header name..."
+          placeholder={t('Header name...')}
         />
       )}
 
@@ -167,7 +169,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="filter-header-value-id"
           value={props.headerValue}
           onChange={(_, value) => props.onHeaderValueChange(value)}
-          placeholder="Header Value..."
+          placeholder={t('Header Value...')}
         />
       )}
 
@@ -210,7 +212,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="hostname"
           value={props.hostName}
           onChange={(_, value) => props.onHostNameChange(value)}
-          placeholder="Hostname..."
+          placeholder={t('Hostname...')}
         />
       )}
 
@@ -219,7 +221,7 @@ export const K8sFilterBuilder: React.FC<K8sFilterBuilderProps> = (props: K8sFilt
           id="portValue"
           value={props.portValue}
           onChange={(_, value) => props.onPortValueChange(value)}
-          placeholder="Port..."
+          placeholder={t('Port...')}
         />
       )}
 

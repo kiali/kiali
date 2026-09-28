@@ -19,6 +19,7 @@ import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { getGVKTypeString, getIstioObjectGVK } from '../../utils/IstioConfigUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -31,7 +32,8 @@ const emtpytStyle = kialiStyle({
 });
 
 export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
-  const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
+  const { t } = useKialiTranslation();
+  const columns: ThProps[] = [{ title: t('Name') }, { title: t('Status'), width: 10 }];
 
   const noIstioConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
@@ -93,7 +95,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
 
       <CardBody>
         <SimpleTable
-          label="Istio Config List"
+          label={t('Istio Config List')}
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

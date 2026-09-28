@@ -226,7 +226,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           >
             {isMultiCluster && loggedInClusters.length > 0 && (
               <>
-                <DropdownGroup label="logged-in clusters" labelHeadingLevel="h3">
+                <DropdownGroup label={t('logged-in clusters')} labelHeadingLevel="h3">
                   <DropdownList>
                     {loggedInClusters.map(clusterInfo => {
                       return (
@@ -243,7 +243,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
 
             {isMultiCluster && loggedOutClusters.length > 0 && (
               <>
-                <DropdownGroup label="logged-out clusters" labelHeadingLevel="h3">
+                <DropdownGroup label={t('logged-out clusters')} labelHeadingLevel="h3">
                   <DropdownList>
                     {loggedOutClusters.map(clusterInfo => {
                       return (

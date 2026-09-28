@@ -7,6 +7,7 @@ import * as M from '../../types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from 'components/Pf/PfColors';
 import { ApiResponse } from 'types/Api';
+import { t } from 'utils/I18nUtils';
 
 export enum NodeMetricType {
   APP = 1,
@@ -193,7 +194,7 @@ export const getDatapoints = (
 export const renderNoTraffic = (protocol?: string): React.ReactNode => {
   return (
     <div className={noTrafficStyle}>
-      <KialiIcon.Info /> No {protocol ? protocol : ''} traffic logged.
+      <KialiIcon.Info /> {t('No {{protocol}} traffic logged.', { protocol: protocol ?? '' })}
     </div>
   );
 };
@@ -201,17 +202,33 @@ export const renderNoTraffic = (protocol?: string): React.ReactNode => {
 export const getTitle = (title: string): React.ReactNode => {
   switch (title) {
     case NodeType.AGGREGATE:
-      title = 'Operation';
+      title = t('Operation');
       break;
     case NodeType.APP:
-      title = 'Application';
+      title = t('Application');
       break;
     case NodeType.SERVICE:
-      title = 'Service';
+      title = t('Service');
       break;
     case NodeType.WORKLOAD:
-      title = 'Workload';
+      title = t('Workload');
       break;
+    case 'Cluster':
+      title = t('Cluster');
+      break;
+    case 'Current Graph':
+      title = t('Current Graph');
+      break;
+    case 'Namespace':
+      title = t('Namespace');
+      break;
+    default: {
+      const edgeMatch = /^Edge \((.+)\)$/.exec(title);
+      if (edgeMatch) {
+        title = t('Edge ({{protocol}})', { protocol: edgeMatch[1] });
+      }
+      break;
+    }
   }
   return <div className={summaryTitle}>{title}</div>;
 };

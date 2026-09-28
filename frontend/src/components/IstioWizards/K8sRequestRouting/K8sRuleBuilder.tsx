@@ -8,6 +8,7 @@ import { K8sTrafficShifting, K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { ServiceOverview } from '../../../types/ServiceList';
 import { K8sFilterBuilder } from './K8sFilterBuilder';
 import { K8sFilters } from './K8sFilters';
+import { t } from 'utils/I18nUtils';
 
 type Props = {
   // K8sRuleBuilder props
@@ -99,13 +100,13 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
     return (
       <>
         <Tabs isFilled={true} activeKey={this.state.ruleTabKey} onSelect={this.ruleHandleTabClick}>
-          <Tab eventKey={0} title={'Request Matching'} data-test={'Request Matching'}>
+          <Tab eventKey={0} title={t('Request Matching')} data-test={'Request Matching'}>
             <div style={{ marginTop: '20px' }}>
               <K8sMatchBuilder {...this.props} />
               <K8sMatches {...this.props} />
             </div>
           </Tab>
-          <Tab eventKey={1} title={'Route To'} data-test={'Route To'}>
+          <Tab eventKey={1} title={t('Route To')} data-test={'Route To'}>
             <div
               style={{
                 marginBottom: '10px'
@@ -119,7 +120,7 @@ export class K8sRuleBuilder extends React.Component<Props, State> {
               />
             </div>
           </Tab>
-          <Tab eventKey={2} title={'Route Filtering'} data-test={'Route Filtering'}>
+          <Tab eventKey={2} title={t('Route Filtering')} data-test={'Route Filtering'}>
             <div style={{ marginTop: '20px' }}>
               <K8sFilterBuilder {...this.props} />
               <K8sFilters {...this.props} />

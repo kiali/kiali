@@ -189,7 +189,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <Tooltip
               key="tooltip_missing_label"
               position={TooltipPosition.top}
-              content="Layer 7 service Mesh capabilities in Istio Ambient"
+              content={t('Layer 7 service Mesh capabilities in Istio Ambient')}
             >
               <KialiIcon.Info className={classes(infoStyle, rendererInfoStyle)} />
             </Tooltip>
