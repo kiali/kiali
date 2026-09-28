@@ -527,12 +527,18 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
     echo "Determining the route to send traffic to, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
 
     # first, try route for gateway in bookinfo namespace created by gateway-api
+    # Envoy Gateway API uses bookinfo-gateway-istio; agentgateway ingress uses bookinfo-gateway
     # make sure you have latest kubectl/oc which support JSONPath condition without value
-    ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route bookinfo-gateway-istio -n ${NAMESPACE}
-    INGRESS_ROUTE=$(${CLIENT_EXE} get route bookinfo-gateway-istio -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
+    if [ "${AGENTGATEWAY_INGRESS}" == "true" ]; then
+      BOOKINFO_GATEWAY_ROUTE="bookinfo-gateway"
+    else
+      BOOKINFO_GATEWAY_ROUTE="bookinfo-gateway-istio"
+    fi
+    ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route ${BOOKINFO_GATEWAY_ROUTE} -n ${NAMESPACE}
+    INGRESS_ROUTE=$(${CLIENT_EXE} get route ${BOOKINFO_GATEWAY_ROUTE} -o jsonpath='{.spec.host}{"\n"}' -n ${NAMESPACE})
     if [ -z "${INGRESS_ROUTE}" ]; then
       sleep 1
-      echo "No bookinfo-gateway-istio route in ${NAMESPACE} namespace, next, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
+      echo "No ${BOOKINFO_GATEWAY_ROUTE} route in ${NAMESPACE} namespace, next, trying istio-ingressgateway route in ${INGRESS_NAMESPACE} namespace"
 
       # next, try istio-ingressgateway in istio-system, wait for a while the host is populated
       ${CLIENT_EXE} wait --for=jsonpath='{.status.ingress[].host}' --timeout=10s route istio-ingressgateway -n ${INGRESS_NAMESPACE}
