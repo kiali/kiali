@@ -227,7 +227,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 				if ref.DisplayName != "" {
 					displayNames = append(displayNames, ref.DisplayName)
 				}
-				metricFilters := filters
+				var metricFilters string
 				if ref.UsePodSelector {
 					metricFilters = in.buildWorkloadPodMetricLabels(params.Namespace, ref.Labels)
 				} else {
@@ -455,11 +455,11 @@ func (in *DashboardsService) buildWorkloadPodMetricLabels(namespace string, extr
 	}
 
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf(`{%s="%s"`, namespaceLabel, namespace))
+	fmt.Fprintf(&b, `{%s="%s"`, namespaceLabel, namespace)
 	if len(podNames) == 1 {
-		b.WriteString(fmt.Sprintf(`,pod="%s"`, podNames[0]))
+		fmt.Fprintf(&b, `,pod="%s"`, podNames[0])
 	} else if len(podNames) > 1 {
-		b.WriteString(fmt.Sprintf(`,pod=~"%s"`, strings.Join(podNames, "|")))
+		fmt.Fprintf(&b, `,pod=~"%s"`, strings.Join(podNames, "|"))
 	}
 	keys := make([]string, 0, len(extraLabels))
 	for key := range extraLabels {
@@ -467,10 +467,10 @@ func (in *DashboardsService) buildWorkloadPodMetricLabels(namespace string, extr
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		b.WriteString(fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(extraLabels[key])))
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(extraLabels[key]))
 	}
 	for labelName, labelValue := range in.promConfig.QueryScope {
-		b.WriteString(fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue)))
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue))
 	}
 	b.WriteByte('}')
 	return b.String()
@@ -513,7 +513,7 @@ func appendPromLabelMatchers(selector string, labels, labelRegexps map[string]st
 			if b.Len() > 1 {
 				b.WriteByte(',')
 			}
-			b.WriteString(fmt.Sprintf(`%s%s"%s"`, prometheus.SanitizeLabelName(key), op, escapePromLabelValue(matchers[key])))
+			fmt.Fprintf(&b, `%s%s"%s"`, prometheus.SanitizeLabelName(key), op, escapePromLabelValue(matchers[key]))
 		}
 	}
 	appendMatchers(labels, "=")

@@ -10,6 +10,16 @@ import {
 import { DEGRADED, HEALTHY } from 'types/Health';
 import type { Workload } from 'types/Workload';
 
+rstest.mock('utils/I18nUtils', () => ({
+  t: (key: string, options?: Record<string, string | number>) => {
+    if (!options) {
+      return key;
+    }
+
+    return key.replace(/\{\{(\w+)\}\}/g, (_match, name: string) => String(options[name] ?? ''));
+  }
+}));
+
 describe('EnvoyMemoryUtils', () => {
   it('detects workloads with an Envoy proxy', () => {
     const workload = {
@@ -41,7 +51,7 @@ describe('EnvoyMemoryUtils', () => {
         memoryMaxBytes: 8703180,
         memoryUsedPercent: 0.8
       })
-    ).toContain('0.8%');
+    ).toBe('8.3 MiB (0.8% of 1.0 GiB limit)');
     expect(
       formatEnvoyMemoryUsage({
         memoryLimitBytes: 0,
