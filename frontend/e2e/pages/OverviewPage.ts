@@ -29,6 +29,10 @@ export class OverviewPage extends BasePage {
     await gotoConsolePage(this.page, 'overview');
   }
 
+  async expectOfflineStatusVisible(): Promise<void> {
+    await expect(this.getBySel('offline-status')).toBeVisible();
+  }
+
   /** Navigate without waiting for loading to finish — use before asserting loading states with mocked APIs. */
   async openPending(): Promise<void> {
     await gotoConsolePage(this.page, 'overview', {}, { waitForLoad: false });
