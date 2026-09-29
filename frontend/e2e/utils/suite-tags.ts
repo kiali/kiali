@@ -38,3 +38,6 @@ export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };
 
 /** @external-kiali — external Kiali multicluster mesh page suite */
 export const externalKialiOnly = { tag: '@external-kiali' as const };
+
+/** @offline — offline mode Playwright / Cypress suite */
+export const offlineOnly = { tag: '@offline' as const };
