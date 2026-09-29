@@ -1,12 +1,13 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
+import { kialiUrl } from '../utils/kialiUrl';
 import { selectClusterMeshNode, selectMeshNodeByLabel, selectTracingMeshNode } from '../utils/meshTopology';
 import { waitForLoadingComplete } from '../utils/transition';
-import { kialiUrl } from '../utils/kialiUrl';
 
 type MeshGraphNode = {
   data?: {
+    cluster?: string;
     healthData?: string;
     id?: string;
     infraName?: string;
@@ -38,35 +39,65 @@ export class MeshPage extends BasePage {
    * Uses /api/mesh/graph (more stable than React fiber selectors).
    */
   async expectKialiConnectedToIstiod(edgeCount = 1): Promise<void> {
+    await this.expectInfraConnectedTo('kiali', 'istiod', edgeCount);
+  }
+
+  /** Assert count of mesh infra nodes of a given type on a named cluster. */
+  async expectInfraNodeCount(infraType: string, cluster: string, count: number): Promise<void> {
     await this.waitForLoad();
 
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const matched = nodes.filter(n => n.data?.infraType === infraType && n.data?.cluster === cluster);
+      expect(
+        matched.length,
+        `Expected ${count} "${infraType}" node(s) on cluster "${cluster}", got ${matched.length}`
+      ).toBe(count);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  /** Assert a source infra node has the expected number of edges to dest infra nodes. */
+  async expectInfraConnectedTo(sourceInfraType: string, destInfraType: string, edgeCount: number): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+
+      const source = nodes.find(n => n.data?.infraType === sourceInfraType);
+      expect(source?.data?.id, `Expected a "${sourceInfraType}" infra node in mesh graph`).toBeTruthy();
+
+      const destIds = new Set(
+        nodes
+          .filter(n => n.data?.infraType === destInfraType)
+          .map(n => n.data?.id)
+          .filter(Boolean) as string[]
+      );
+      expect(destIds.size, `Expected at least one "${destInfraType}" node`).toBeGreaterThan(0);
+
+      const sourceId = source!.data!.id!;
+      const connected = edges.filter(e => {
+        const { source: edgeSource, target } = e.data ?? {};
+        if (!edgeSource || !target) {
+          return false;
+        }
+        return (edgeSource === sourceId && destIds.has(target)) || (target === sourceId && destIds.has(edgeSource));
+      });
+
+      expect(
+        connected.length,
+        `Expected ${edgeCount} ${sourceInfraType}↔${destInfraType} edge(s), got ${connected.length}`
+      ).toBe(edgeCount);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  private async fetchMeshGraph(): Promise<{ edges: MeshGraphEdge[]; nodes: MeshGraphNode[] }> {
     const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
     expect(response.ok(), `Expected /api/mesh/graph OK, got ${response.status()}`).toBeTruthy();
     const body = (await response.json()) as MeshGraphResponse;
-    const nodes = body.elements?.nodes ?? [];
-    const edges = body.elements?.edges ?? [];
-
-    const kiali = nodes.find(n => n.data?.infraType === 'kiali');
-    expect(kiali?.data?.id, 'Expected a kiali infra node in mesh graph').toBeTruthy();
-
-    const istiodIds = new Set(
-      nodes
-        .filter(n => n.data?.infraType === 'istiod')
-        .map(n => n.data?.id)
-        .filter(Boolean) as string[]
-    );
-    expect(istiodIds.size, 'Expected at least one istiod node').toBeGreaterThan(0);
-
-    const kialiId = kiali!.data!.id!;
-    const connected = edges.filter(e => {
-      const { source, target } = e.data ?? {};
-      if (!source || !target) {
-        return false;
-      }
-      return (source === kialiId && istiodIds.has(target)) || (target === kialiId && istiodIds.has(source));
-    });
-
-    expect(connected.length, `Expected ${edgeCount} kiali↔istiod edge(s), got ${connected.length}`).toBe(edgeCount);
+    return {
+      edges: body.elements?.edges ?? [],
+      nodes: body.elements?.nodes ?? []
+    };
   }
 
   async selectMeshNodeByLabel(label: string): Promise<void> {

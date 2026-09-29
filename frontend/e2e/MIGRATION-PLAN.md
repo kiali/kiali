@@ -63,8 +63,8 @@
 - [x] `@playwright/test` ≥1.48 installed in `frontend/` (pin documented, e.g. v1.61.x)
 - [x] `playwright.config.ts` with projects matching CI suites via `grep` tags
 - [x] `BasePage` with `getBySel()`, `waitForLoad` — **no** `robustClick` / `retryOnError` (PR #10174)
-- [x] `auth.setup.ts` / `storageState` handles: `anonymous`, `openshift`. Unimplemented strategies
-  (`token`, `openid`) fail gracefully via `expect().toContain()`. (PR #10174, #10217)
+- [x] `auth.setup.ts` / `storageState` handles: `anonymous`, `openshift`, `openid` (Keycloak).
+  Unimplemented `token` fails gracefully via `expect().toContain()`. (PR #10174, #10217)
 - [ ] `cleanup` fixture established (replaces `@clean-istio-namespace-resources-after`-style hooks)
 - [x] Shared utils ported: navigation, table, `linkSelector`, transition, namespace, suite-tags
   (PR #10174, #10195, #10217)
@@ -99,7 +99,7 @@
 - [ ] `@multi-cluster` suite passes
 - [ ] `@multi-primary` suite passes
 - [ ] `@multi-mesh` suite passes
-- [ ] `@external-kiali` suite passes
+- [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [ ] `@tracing` suite passes
 - [ ] `@offline` suite passes
 - [ ] `@ai-chatbot` suite passes
@@ -109,11 +109,13 @@
 - [x] During migration: Playwright runs **alongside** Cypress in GitHub Actions for migrated suites
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
-  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient`
-  suites (PR #10174, #10195, #10220, #10269, #10292)
+- [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
+  `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
+  `playwright-ambient`, and `playwright-external-kiali` suites
+  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
-  (PR #10174, #10220; core-caching workflow on epic branch)
+  (PR #10174, #10220; core-caching workflow on epic branch; external-kiali Playwright workflow)
 - [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
   removal
 - [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
@@ -151,7 +153,7 @@
 
 - [ ] Replace remaining React fiber reads in `graphTopology.ts` with `data-test` / DOM attributes
   (PR #10220 TODO)
-- [ ] Implement `token` and `openid` auth strategies in `auth.setup.ts` (PR #10174 / #10217)
+- [ ] Implement `token` auth strategy in `auth.setup.ts` (`openid` done for external-kiali)
 - [ ] Create `cleanup` fixture (`cleanup.trackNamespace()`) for demo mutation teardown (PR #10195
   pattern)
 - [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations
