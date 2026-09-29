@@ -85,7 +85,7 @@ const columns = (isMultiCluster: boolean): SortableTh[] => {
 };
 
 const LockIcon = (props: { mTLS?: number }): React.ReactElement => {
-  const msg = props.mTLS ? `${props.mTLS} % of mTLS traffic` : 'mTLS is disabled';
+  const msg = props.mTLS ? t('{{percent}} % of mTLS traffic', { percent: props.mTLS }) : t('mTLS is disabled');
 
   return (
     <Tooltip position={TooltipPosition.top} content={msg}>
@@ -196,7 +196,7 @@ class TrafficListComponent extends FilterComponent.Component<
             <Tooltip
               key={`tt_status_${i}`}
               position={TooltipPosition.top}
-              content={<>Traffic Status: {item.healthStatus.status.name}</>}
+              content={<>{t('Traffic Status: {{status}}', { status: item.healthStatus.status.name })}</>}
             >
               {createTooltipIcon(createIcon(item.healthStatus.status))}
             </Tooltip>,

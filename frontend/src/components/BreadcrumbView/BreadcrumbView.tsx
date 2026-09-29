@@ -21,7 +21,7 @@ const getListPageTitle = (pathItem: string, translate: (key: string) => string):
     case Paths.ISTIO:
       return translate('Istio Config');
     default:
-      return capitalize(pathItem);
+      return translate(capitalize(pathItem));
   }
 };
 

@@ -3,7 +3,7 @@
 exports[`HealthDetails > renders deployments failure 1`] = `
 <div>
   <div>
-    Traffic Status (Last {{duration}}) {"duration":"1m"} 
+    Traffic Status (Last {{duration}}) {"count":1,"duration":"1m"} 
     <ul
       style="list-style-type: none;"
     >
@@ -45,7 +45,7 @@ exports[`HealthDetails > renders deployments failure 1`] = `
             </span>
           </span>
         </span>
-        Inbound: 100.00%
+        {{direction}}: {{percent}}% {"direction":"Inbound","percent":"100.00"}
       </li>
     </ul>
   </div>

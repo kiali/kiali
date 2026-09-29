@@ -170,7 +170,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
-    const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
+    const typeDisplay = this.props.type === 'istio' ? t('Istio Config') : this.props.type;
 
     const childrenWithProps = React.Children.map(this.props.children, child => {
       // Checking isValidElement is the safe way and avoids a TS error too.

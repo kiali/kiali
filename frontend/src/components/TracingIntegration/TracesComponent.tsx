@@ -152,8 +152,7 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
     }
 
     const changedTimeRange = !isEqualTimeRange(this.props.timeRange, prevProps.timeRange);
-    const changedLanguage = prevProps.language !== this.props.language;
-    if (this.props.lastRefreshAt !== prevProps.lastRefreshAt || changedTimeRange || changedLanguage) {
+    if (this.props.lastRefreshAt !== prevProps.lastRefreshAt || changedTimeRange) {
       if (changedTimeRange) {
         this.fetcher.resetLastFetchTime();
       }

@@ -7,7 +7,7 @@ import type { DurationInSeconds, TimeRange } from '../../types/Common';
 import { guardTimeRange } from '../../types/Common';
 import { getName, getRefreshIntervalName } from '../../utils/RateIntervals';
 import type { KialiAppState } from '../../store/Store';
-import { durationSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
+import { durationSelector, languageSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { HistoryManager, location } from '../../app/History';
 import type { KialiDispatch } from '../../types/Redux';
@@ -17,6 +17,7 @@ import { formatLastDuration, t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
+  language: string;
   refreshInterval: number;
   timeRange: TimeRange;
 };
@@ -109,6 +110,7 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   duration: durationSelector(state),
+  language: languageSelector(state),
   timeRange: timeRangeSelector(state),
   refreshInterval: refreshIntervalSelector(state)
 });

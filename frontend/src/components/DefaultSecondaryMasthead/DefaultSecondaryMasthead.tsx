@@ -10,11 +10,6 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
 
 const resolvePageTitleKey = (path: string): string => {
-  if (path.startsWith('istio/new/')) {
-    const objectType = kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1));
-    return `Create ${objectType}`;
-  }
-
   if (path.startsWith('istio')) {
     return 'Istio Config';
   }
@@ -95,7 +90,11 @@ export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
     const path = getPagePath();
 
     if (titles.some(titlePath => path.startsWith(titlePath))) {
-      const title = t(resolvePageTitleKey(path));
+      const title = path.startsWith('istio/new/')
+        ? t('Create {{kind}}', {
+            kind: kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1))
+          })
+        : t(resolvePageTitleKey(path));
       const disabled = false;
 
       return {

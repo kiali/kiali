@@ -27,7 +27,7 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
   const errorLabel = t('% Error');
 
   // for the table and graph
-  const title = `gRPC Traffic (${props.isRequests ? 'requests' : 'messages'} per second)`;
+  const title = props.isRequests ? t('gRPC Traffic (requests per second)') : t('gRPC Traffic (messages per second)');
   const errRate: number = props.rateGrpcErr + props.rateNR;
   const percentErr: number = props.rate === 0 ? 0 : (errRate / props.rate) * 100;
   const percentOK: number = 100 - percentErr;
@@ -142,7 +142,7 @@ export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcp
   const totalLabel = t('Total');
   const successLabel = t('% Success');
   const errorLabel = t('% Error');
-  const title = 'TCP Traffic (bytes per second)';
+  const title = t('TCP Traffic (bytes per second)');
 
   return (
     <div>

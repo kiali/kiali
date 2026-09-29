@@ -30,7 +30,7 @@ export const tMap = (value: { [key: string]: string }, options?: TOptions): { [k
   return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, t(v, options)]));
 };
 
-/** Leading integer from duration labels such as "5m" or "1h". */
+/** Leading integer from duration labels such as "5m" or "1h". Defaults to 2 for plural _other form. */
 export const parseDurationLabelCount = (durationLabel: string): number => {
   const match = /^(\d+)/.exec(durationLabel.trim());
   return match ? Number.parseInt(match[1], 10) : 2;

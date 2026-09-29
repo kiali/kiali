@@ -180,7 +180,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
     return (
       <>
-        <span style={{ paddingRight: '0.75rem' }}>{t('Namespace')}:</span>
+        <span style={{ paddingRight: '0.75rem' }}>{t('Namespace:')}</span>
         {this.state.selectedNamespaces.length === 1 ? (
           <span>{this.state.selectedNamespaces[0].name}</span>
         ) : (

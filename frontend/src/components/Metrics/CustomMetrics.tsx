@@ -179,7 +179,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     const content = (
       <>
         {this.renderOptionsBar()}
-        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics('Loading metrics')}
+        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics(t('Loading metrics'))}
       </>
     );
 
@@ -241,7 +241,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        addError('Could not fetch custom dashboard.', error);
+        addError(t('Could not fetch custom dashboard.'), error);
       });
   };
 
