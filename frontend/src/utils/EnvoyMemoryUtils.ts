@@ -134,7 +134,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       );
     case 'requestRate':
       return t(
-        'Rate of Prometheus metric istio_requests_total for this proxy (Upstream = reporter=~"source|waypoint", Downstream = reporter=destination). Envoy request counters are usually absent with default Istio stats, so they are only used when present.'
+        'Rate of Prometheus metric istio_requests_total for this proxy (Upstream reporters source or waypoint; Downstream reporter destination). Envoy request counters are usually absent with default Istio stats, so they are only used when present.'
       );
     case 'memoryStatus':
       return t(

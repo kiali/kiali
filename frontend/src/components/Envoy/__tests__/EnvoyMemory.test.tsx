@@ -123,9 +123,31 @@ describe('EnvoyMemory', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Summary' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
 
     expect(await screen.findByTestId('envoy-memory-tab')).toBeInTheDocument();
+  });
+
+  it('renders Memory Status below metric tiles', async () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 0, to: 1000 }}
+            workload={workload}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    const metrics = await screen.findByTestId('envoy-memory-summary-metrics');
+    const status = await screen.findByTestId('envoy-memory-status-alert');
+    expect(metrics.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Memory Status')).toBeInTheDocument();
+    expect(screen.queryByText(/Warning at/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Rough estimate from cluster count')).not.toBeInTheDocument();
   });
 
   it('navigates to envoy resource tabs from overview links', async () => {
