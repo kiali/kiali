@@ -93,6 +93,7 @@
     "playwright:run:perses": "playwright test --project=perses --pass-with-no-tests",
     "playwright:run:junit": "yarn playwright:run:crd-validation && yarn playwright:run:core1 && yarn playwright:run:core2 && yarn playwright:run:core-caching",
     "playwright:run:core-optional": "playwright test --project=crd-validation --project=perses --pass-with-no-tests",
+    "playwright:run:external-kiali": "playwright test --project=external-kiali --pass-with-no-tests",
     "playwright:run:all": "yarn playwright:run:smoke && yarn playwright:run:core1 && yarn playwright:run:core2 && yarn playwright:run:core-caching && yarn playwright:run:crd-validation && yarn playwright:run:perses && playwright test --project=ai-chatbot --pass-with-no-tests",
     "playwright:run:ambient": "playwright test --project=ambient --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
     "playwright:run:ambient:junit": "yarn run playwright:run:ambient",

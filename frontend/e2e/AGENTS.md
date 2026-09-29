@@ -233,9 +233,10 @@ test('Apps list shows bookinfo apps @core-1', async ({ page }) => { ... });
   KinD/Jenkins anonymous CI — **skip**, do not fail the suite.
 - **Logout** must run on a fresh session — `test.use({ storageState: { cookies: [], origins: [] } })`
   — so `/api/logout` does not invalidate `AUTH_FILE` for later projects.
-- **Unimplemented strategies** (`token`, `openid`): write empty `storageState` first, then fail via
+- **Unimplemented strategies** (`token`): write empty `storageState` first, then fail via
   `expect(implemented).toContain(strategy)`. A hard `throw` crashes the setup project — JUnit emits
-  nothing and Jenkins sees an empty report instead of 1 FAILED + 18 SKIPPED.
+  nothing and Jenkins sees an empty report instead of 1 FAILED + 18 SKIPPED. `openid` and `openshift`
+  are implemented.
 - Use `page.request` (carries browser cookies) for post-login API checks, not standalone `request`
   (401 after OAuth).
 
