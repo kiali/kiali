@@ -258,7 +258,7 @@ Cypress hovers the first-column icon and checks tooltip text. Playwright equival
 ## CI and JUnit
 
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites
-  `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
+  `playwright/blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
   The `playwright:run:last-failed` script was removed.
 - **`workers: 2` in CI** is intentional (Jenkins OOM prevention) — keep it documented if changed.
 - **JUnit**: Playwright may record timeouts as `errors`, not `failures` — check both in the XML.
