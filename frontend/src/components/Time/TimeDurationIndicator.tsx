@@ -3,16 +3,17 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Button, Tooltip } from '@patternfly/react-core';
 import { config } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
-import { DurationInSeconds, guardTimeRange, TimeRange } from '../../types/Common';
+import type { DurationInSeconds, TimeRange } from '../../types/Common';
+import { guardTimeRange } from '../../types/Common';
 import { getName, getRefreshIntervalName } from '../../utils/RateIntervals';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { durationSelector, refreshIntervalSelector, timeRangeSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import { HistoryManager, location } from '../../app/History';
-import { KialiDispatch } from '../../types/Redux';
+import type { KialiDispatch } from '../../types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { t } from 'utils/I18nUtils';
+import { formatLastDuration, t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   duration: DurationInSeconds;
@@ -64,11 +65,11 @@ class TimeDurationIndicatorComponent extends React.PureComponent<Props> {
 
   timeDurationDetail = (): string => {
     if (this.props.isDuration) {
-      return t('Last {{duration}}', { duration: getName(this.props.duration) });
+      return formatLastDuration(getName(this.props.duration));
     } else {
       return guardTimeRange(
         this.props.timeRange,
-        d => t('Last {{duration}}', { duration: getName(d) }),
+        d => formatLastDuration(getName(d)),
         b => {
           const oldDate = new Date(b.from!).toLocaleString();
           const newDate = b.to ? new Date(b.to).toLocaleString() : t('now');

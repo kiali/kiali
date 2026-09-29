@@ -3,6 +3,7 @@ import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { renderRateChartHttp, renderRateChartGrpc } from './RateChart';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const tableStyle = kialiStyle({
   marginBottom: '0.5rem'
@@ -20,6 +21,11 @@ type RateTableTcpPropType = {
 };
 
 export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableGrpcPropType) => {
+  const { t } = useKialiTranslation();
+  const totalLabel = t('Total');
+  const successLabel = t('% Success');
+  const errorLabel = t('% Error');
+
   // for the table and graph
   const title = `gRPC Traffic (${props.isRequests ? 'requests' : 'messages'} per second)`;
   const errRate: number = props.rateGrpcErr + props.rateNR;
@@ -33,26 +39,26 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
       <Table>
         <Thead>
           <Tr>
-            <Th dataLabel="Total" textCenter>
-              Total
+            <Th dataLabel={totalLabel} textCenter>
+              {totalLabel}
             </Th>
-            <Th dataLabel="% Success" textCenter>
-              % Success
+            <Th dataLabel={successLabel} textCenter>
+              {successLabel}
             </Th>
-            <Th dataLabel="% Error" textCenter>
-              % Error
+            <Th dataLabel={errorLabel} textCenter>
+              {errorLabel}
             </Th>
           </Tr>
         </Thead>
         <Tbody>
           <Tr>
-            <Td dataLabel="Total" textCenter>
+            <Td dataLabel={totalLabel} textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="% Success" textCenter>
+            <Td dataLabel={successLabel} textCenter>
               {props.isRequests ? percentOK.toFixed(2) : '-'}
             </Td>
-            <Td dataLabel="% Error" textCenter>
+            <Td dataLabel={errorLabel} textCenter>
               {props.isRequests ? percentErr.toFixed(2) : '-'}
             </Td>
           </Tr>
@@ -65,15 +71,20 @@ export const RateTableGrpc: React.FC<RateTableGrpcPropType> = (props: RateTableG
 };
 
 type RateTableHttpPropType = {
-  title: string;
   rate: number;
   rate3xx: number;
   rate4xx: number;
   rate5xx: number;
   rateNR: number;
+  title: string;
 };
 
 export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableHttpPropType) => {
+  const { t } = useKialiTranslation();
+  const totalLabel = t('Total');
+  const successLabel = t('% Success');
+  const errorLabel = t('% Error');
+
   // for the table
   const errRate: number = props.rate4xx + props.rate5xx + props.rateNR;
   const percentErr: number = props.rate === 0 ? 0 : (errRate / props.rate) * 100;
@@ -95,26 +106,26 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
       <Table variant={TableVariant.compact} className={tableStyle}>
         <Thead>
           <Tr>
-            <Th dataLabel="Total" textCenter>
-              Total
+            <Th dataLabel={totalLabel} textCenter>
+              {totalLabel}
             </Th>
-            <Th dataLabel="% Success" textCenter>
-              % Success
+            <Th dataLabel={successLabel} textCenter>
+              {successLabel}
             </Th>
-            <Th dataLabel="% Error" textCenter>
-              % Error
+            <Th dataLabel={errorLabel} textCenter>
+              {errorLabel}
             </Th>
           </Tr>
         </Thead>
         <Tbody>
           <Tr>
-            <Td dataLabel="Total" textCenter>
+            <Td dataLabel={totalLabel} textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="% Success" textCenter>
+            <Td dataLabel={successLabel} textCenter>
               {successErr.toFixed(2)}
             </Td>
-            <Td dataLabel="% Error" textCenter>
+            <Td dataLabel={errorLabel} textCenter>
               {percentErr.toFixed(2)}
             </Td>
           </Tr>
@@ -127,6 +138,10 @@ export const RateTableHttp: React.FC<RateTableHttpPropType> = (props: RateTableH
 };
 
 export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcpPropType) => {
+  const { t } = useKialiTranslation();
+  const totalLabel = t('Total');
+  const successLabel = t('% Success');
+  const errorLabel = t('% Error');
   const title = 'TCP Traffic (bytes per second)';
 
   return (
@@ -136,26 +151,26 @@ export const RateTableTcp: React.FC<RateTableTcpPropType> = (props: RateTableTcp
       <Table>
         <Thead>
           <Tr>
-            <Th dataLabel="Total" textCenter>
-              Total
+            <Th dataLabel={totalLabel} textCenter>
+              {totalLabel}
             </Th>
-            <Th dataLabel="% Success" textCenter>
-              % Success
+            <Th dataLabel={successLabel} textCenter>
+              {successLabel}
             </Th>
-            <Th dataLabel="% Error" textCenter>
-              % Error
+            <Th dataLabel={errorLabel} textCenter>
+              {errorLabel}
             </Th>
           </Tr>
         </Thead>
         <Tbody>
           <Tr>
-            <Td dataLabel="Total" textCenter>
+            <Td dataLabel={totalLabel} textCenter>
               {props.rate.toFixed(2)}
             </Td>
-            <Td dataLabel="% Success" textCenter>
+            <Td dataLabel={successLabel} textCenter>
               {'-'}
             </Td>
-            <Td dataLabel="% Error" textCenter>
+            <Td dataLabel={errorLabel} textCenter>
               {'-'}
             </Td>
           </Tr>

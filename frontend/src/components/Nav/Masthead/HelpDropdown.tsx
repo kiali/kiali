@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { AboutUIModal } from '../../About/AboutUIModal';
-import { KialiAppState } from '../../../store/Store';
+import type { KialiAppState } from '../../../store/Store';
 import { DebugInformation } from '../../../components/DebugInformation/DebugInformation';
 import { QuestionCircleIcon } from '@patternfly/react-icons/';
 import { connect } from 'react-redux';
 import { isUpstream } from '../../UpstreamDetector/UpstreamDetector';
-import { Status, StatusKey } from '../../../types/StatusState';
+import type { Status } from '../../../types/StatusState';
+import { StatusKey } from '../../../types/StatusState';
 import { config } from '../../../config';
-import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ReduxProps = {
@@ -50,19 +52,19 @@ const HelpDropdownComponent: React.FC<HelpDropdownProps> = (props: HelpDropdownP
       key={'view_documentation'}
       onClick={() => window.open(buildDocumentationLink(), '_blank', 'noopener,noreferrer')}
     >
-      Documentation
+      {t('Documentation')}
     </DropdownItem>
   );
 
   items.push(
     <DropdownItem key={'view_debug_info'} onClick={() => setIsDebugInformationOpen(true)}>
-      View Debug Info
+      {t('View Debug Info')}
     </DropdownItem>
   );
 
   items.push(
     <DropdownItem key={'view_about_info'} onClick={() => setIsAboutModalOpen(true)}>
-      About
+      {t('About')}
     </DropdownItem>
   );
 

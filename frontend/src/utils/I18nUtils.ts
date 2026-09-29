@@ -1,6 +1,7 @@
 import { i18n } from 'i18n';
 import type { TOptions } from 'i18next';
-import { UseTranslationResponse, useTranslation } from 'react-i18next';
+import type { UseTranslationResponse } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 const I18N_NAMESPACE = process.env.I18N_NAMESPACE;
 
@@ -27,4 +28,21 @@ export const t = (value: string, options?: TOptions): string => {
  */
 export const tMap = (value: { [key: string]: string }, options?: TOptions): { [key: string]: string } => {
   return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, t(v, options)]));
+};
+
+/** Leading integer from duration labels such as "5m" or "1h". */
+export const parseDurationLabelCount = (durationLabel: string): number => {
+  const match = /^(\d+)/.exec(durationLabel.trim());
+  return match ? Number.parseInt(match[1], 10) : 2;
+};
+
+export const formatLastDuration = (durationLabel: string): string => {
+  return t('Last {{duration}}', { count: parseDurationLabelCount(durationLabel), duration: durationLabel });
+};
+
+export const formatTrafficStatusLastDuration = (durationLabel: string): string => {
+  return t('Traffic Status (Last {{duration}})', {
+    count: parseDurationLabelCount(durationLabel),
+    duration: durationLabel
+  });
 };

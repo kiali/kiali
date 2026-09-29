@@ -2,6 +2,7 @@ import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from './PfColors';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export type PFBadgeType = {
   badge: string;
@@ -151,10 +152,12 @@ type PFBadgeProps = {
 };
 
 export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
+  const { t } = useKialiTranslation();
   const key = props.keyValue || `pfbadge-${props.badge.badge}`;
   const ttKey = `tt-${key}`;
   const style = { ...props.badge.style, ...props.style };
-  const tt = props.tooltip ?? props.badge.tt;
+  const tooltip = props.tooltip ?? props.badge.tt;
+  const tt = typeof tooltip === 'string' ? t(tooltip) : tooltip;
   const className = props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
   const badge = (

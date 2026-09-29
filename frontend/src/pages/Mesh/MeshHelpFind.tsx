@@ -58,14 +58,13 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
 
   useTopologyResize(handleResize);
 
-  const preface =
-    'You can use the Find and Hide fields to highlight or hide mesh nodes and edges. Each field accepts ' +
-    'expressions using the language described below. Preset expressions are available via the dropdown. ' +
-    'Hide takes precedence when using Find and Hide together.';
+  const preface = t(
+    'You can use the Find and Hide fields to highlight or hide mesh nodes and edges. Each field accepts expressions using the language described below. Preset expressions are available via the dropdown. Hide takes precedence when using Find and Hide together.'
+  );
 
   const edgeColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Notes') }];
 
-  const edgeRows: IRow[] = [{ cells: ['N/A Currently no Edge expressions'] }];
+  const edgeRows: IRow[] = [{ cells: [t('N/A Currently no Edge expressions')] }];
 
   const exampleColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Description') }];
 
@@ -73,76 +72,88 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
     {
       cells: [
         'label:region',
-        `nodes with the 'region' label. This tests for label existence, the label value is ignored.`
+        t("nodes with the 'region' label. This tests for label existence, the label value is ignored.")
       ]
     },
     {
       cells: [
         '!label:region',
-        `nodes without the 'region' label. This tests for label existence, the label value is ignored.`
+        t("nodes without the 'region' label. This tests for label existence, the label value is ignored.")
       ]
     },
-    { cells: ['label:region = east', `nodes with 'region' label equal to 'east'`] },
+    { cells: ['label:region = east', t("nodes with 'region' label equal to 'east'")] },
     {
       cells: [
         'label:region != east',
-        `nodes with 'region' label not equal to 'east'.  Note, "!label:region = east" is invalid, leading negation is valid only for label existence.`
+        t(
+          "nodes with 'region' label not equal to 'east'.  Note, \"!label:region = east\" is invalid, leading negation is valid only for label existence."
+        )
       ]
     },
-    { cells: ['name = test-kiali', `nodes with infraName equal to 'test-kiali'`] },
-    { cells: ['name not contains test', `"nodes with infraName not containing 'test'`] },
-    { cells: ['name startswith test', `nodes with infraName starting with 'test'`] },
+    { cells: ['name = test-kiali', t("nodes with infraName equal to 'test-kiali'")] },
+    {
+      cells: ['name not contains test', t("\"nodes with infraName not containing 'test'")]
+    },
+    { cells: ['name startswith test', t("nodes with infraName starting with 'test'")] },
     {
       cells: [
         'name != test-kiali and ns=test-ns',
-        `nodes with infraName not equal to 'test-kiali' and with namespace equal to 'test-ns'`
+        t("nodes with infraName not equal to 'test-kiali' and with namespace equal to 'test-ns'")
       ]
     },
     {
-      cells: ['node = infra or name startswith test or !traffic', 'infra node or any node starting with "test"']
+      cells: ['node = infra or name startswith test or !traffic', t('infra node or any node starting with "test"')]
     }
   ];
 
   const nodeColumns: ThProps[] = [{ title: t('Expression') }, { title: t('Notes') }];
 
   const nodeRows: IRow[] = [
-    { cells: ['cluster <op> <clusterName>', 'nodes within the matching clusters'] },
-    { cells: ['label:<label> <op> <value>', '<label> is a k8s label on the service, workload, etc'] },
-    { cells: ['name <op> <string>', 'tests against infraName'] },
-    { cells: ['namespace <op> <namespaceName>', 'nodes within the matching namespaces'] },
-    { cells: ['type <op> <infraType>', 'infraType: dataplane | istiod | kiali | metricStore | traceStore'] },
-    { cells: ['healthy', 'is not degraded or failing.'] }
+    { cells: ['cluster <op> <clusterName>', t('nodes within the matching clusters')] },
+    {
+      cells: ['label:<label> <op> <value>', t('<label> is a k8s label on the service, workload, etc')]
+    },
+    { cells: ['name <op> <string>', t('tests against infraName')] },
+    { cells: ['namespace <op> <namespaceName>', t('nodes within the matching namespaces')] },
+    {
+      cells: ['type <op> <infraType>', t('infraType: dataplane | istiod | kiali | metricStore | traceStore')]
+    },
+    { cells: ['healthy', t('is not degraded or failing.')] }
   ];
 
   const noteColumns: ThProps[] = [{ title: t('Usage Note'), width: 10 }];
 
   const noteRows: IRow[] = [
-    { cells: ['Press Tab key to autocomplete operands.'] },
-    { cells: ['OR has precedence over AND.  Parentheses are not supported.'] },
-    { cells: ['Use OR to combine node and edge criteria.'] },
-    { cells: [`Unary operands may optionally be prefixed with "is" or "has". (i.e. "is outofmesh")`] },
-    { cells: ['Abbreviate: ns|namespace, ms|metricStore, ts|traceStore'] },
-    { cells: ['Hiding nodes will automatically hide connected edges.'] },
-    { cells: ['Hiding edges will automatically hide nodes left with no visible edges.'] },
-    { cells: ['Hiding "healthy" nodes may still leave valid, healthy edges in the mesh.'] }
+    { cells: [t('Press Tab key to autocomplete operands.')] },
+    { cells: [t('OR has precedence over AND.  Parentheses are not supported.')] },
+    { cells: [t('Use OR to combine node and edge criteria.')] },
+    {
+      cells: [t('Unary operands may optionally be prefixed with "is" or "has". (i.e. "is outofmesh")')]
+    },
+    { cells: [t('Abbreviate: ns|namespace, ms|metricStore, ts|traceStore')] },
+    { cells: [t('Hiding nodes will automatically hide connected edges.')] },
+    { cells: [t('Hiding edges will automatically hide nodes left with no visible edges.')] },
+    {
+      cells: [t('Hiding "healthy" nodes may still leave valid, healthy edges in the mesh.')]
+    }
   ];
 
   const operatorColumns: ThProps[] = [{ title: t('Operator') }, { title: t('Description') }];
 
   const operatorRows: IRow[] = [
-    { cells: ['! | not <unary expression>', `negation`] },
-    { cells: ['=', `equals`] },
-    { cells: ['!=', `not equals`] },
-    { cells: ['endswith | $=', `ends with, strings only`] },
-    { cells: ['!endswith | !$=', `not ends with, strings only`] },
-    { cells: ['startswith | ^=', `starts with, strings only`] },
-    { cells: ['!startswith | !^=', `not starts with, strings only`] },
-    { cells: ['contains | *=', 'contains, strings only'] },
-    { cells: ['!contains | !*=', 'not contains, strings only'] },
-    { cells: ['>', `greater than`] },
-    { cells: ['>=', `greater than or equals`] },
-    { cells: ['<', `less than`] },
-    { cells: ['<=', `less than or equals`] }
+    { cells: ['! | not <unary expression>', t('negation')] },
+    { cells: ['=', t('equals')] },
+    { cells: ['!=', t('not equals')] },
+    { cells: ['endswith | $=', t('ends with, strings only')] },
+    { cells: ['!endswith | !$=', t('not ends with, strings only')] },
+    { cells: ['startswith | ^=', t('starts with, strings only')] },
+    { cells: ['!startswith | !^=', t('not starts with, strings only')] },
+    { cells: ['contains | *=', t('contains, strings only')] },
+    { cells: ['!contains | !*=', t('not contains, strings only')] },
+    { cells: ['>', t('greater than')] },
+    { cells: ['>=', t('greater than or equals')] },
+    { cells: ['<', t('less than')] },
+    { cells: ['<=', t('less than or equals')] }
   ];
 
   const getTable = (label: string, columns: ThProps[], rows: IRow[]): React.ReactNode => {
@@ -167,7 +178,7 @@ export const MeshHelpFind: React.FC<MeshHelpFindProps> = (props: MeshHelpFindPro
           shouldClose={props.onClose}
           headerContent={
             <div>
-              <span>Mesh Find/Hide</span>
+              <span>{t('Mesh Find/Hide')}</span>
             </div>
           }
           bodyContent={

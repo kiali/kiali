@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import type { ServiceDetailsInfo } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
+import type { Gateway, ObjectCheck, ObjectValidation, VirtualService } from '../../types/IstioObjects';
 import { ValidationList } from '../../components/Validations/ValidationList';
 import { KialiIcon } from '../../config/KialiIcon';
 import { infoStyle } from 'styles/IconStyle';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import type { IPFamily } from '../../types/ServiceInfo';
 
 type ServiceNetworkProps = {
   gateways: Gateway[];
@@ -19,6 +21,18 @@ type HostnameInfo = {
   hostname: string;
 };
 
+const getServiceIpLabel = (ipFamily: IPFamily | undefined, translate: (key: string) => string): string => {
+  if (ipFamily === 'IPv4') {
+    return translate('Service IPv4');
+  }
+
+  if (ipFamily === 'IPv6') {
+    return translate('Service IPv6');
+  }
+
+  return translate('Service IP');
+};
+
 const resourceListStyle = kialiStyle({
   $nest: {
     '& > ul > li > span': {
@@ -30,6 +44,8 @@ const resourceListStyle = kialiStyle({
 });
 
 export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetworkProps) => {
+  const { t } = useKialiTranslation();
+
   const getPortOver = (portId: number): React.ReactNode => {
     return <ValidationList checks={getPortChecks(portId)} />;
   };
@@ -43,7 +59,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   };
 
   const getHostnames = (virtualServices: VirtualService[]): HostnameInfo[] => {
-    let hostnames: HostnameInfo[] = [];
+    const hostnames: HostnameInfo[] = [];
 
     virtualServices.forEach(vs => {
       vs.spec.hosts?.forEach(host => {
@@ -68,7 +84,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
     });
 
     // If there is a wildcard, then it will display only one, the first match
-    for (let hostnameInfo of hostnames) {
+    for (const hostnameInfo of hostnames) {
       if (hostnameInfo.hostname === '*') {
         return [hostnameInfo];
       }
@@ -78,28 +94,26 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   };
 
   const service = props.serviceDetails.service;
-  let ips = service.type !== 'External' ? (service.ips ? service.ips : [service.ip]) : [];
+  const ips = service.type !== 'External' ? (service.ips ? service.ips : [service.ip]) : [];
   return (
     <Card isCompact={true} id="ServiceNetworkCard">
       <CardHeader>
         <Title headingLevel="h3" size={TitleSizes['xl']}>
-          Network
+          {t('Network')}
         </Title>
       </CardHeader>
       <CardBody>
         <div key="network-list" className={resourceListStyle}>
           <ul style={{ listStyleType: 'none' }}>
             <li>
-              <span>Type</span>
-              {service.type}
+              <span>{t('Type')}</span>
+              {t(service.type)}
             </li>
 
             {ips.map((ip, i) => (
               <li key={`ip_${i}`}>
                 <span>
-                  {service.type !== 'ExternalName'
-                    ? `Service ${service.ipFamilies ? service.ipFamilies[i] : 'IP'}`
-                    : 'ExternalName'}
+                  {service.type !== 'ExternalName' ? getServiceIpLabel(service.ipFamilies?.[i], t) : t('ExternalName')}
                 </span>
                 {service.type !== 'ExternalName' ? ip : service.externalName ? service.externalName : ''}
               </li>
@@ -107,7 +121,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
 
             {props.serviceDetails.endpoints && props.serviceDetails.endpoints.length > 0 && (
               <li>
-                <span>Endpoints</span>
+                <span>{t('Endpoints')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {(props.serviceDetails.endpoints ?? []).map((endpoint, i) => {
                     return (endpoint.addresses ?? []).map((address, u) => (
@@ -137,7 +151,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
 
             {service.ports && service.ports.length > 0 && (
               <li>
-                <span>Ports</span>
+                <span>{t('Ports')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {(service.ports ?? []).map((port, i) => {
                     return (
@@ -150,7 +164,11 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                           {port.appProtocol && port.appProtocol !== '' ? (
                             <Tooltip
                               position={TooltipPosition.right}
-                              content={<div style={{ textAlign: 'left' }}>App Protocol: {port.appProtocol}</div>}
+                              content={
+                                <div style={{ textAlign: 'left' }}>
+                                  {t('App Protocol: {{protocol}}', { protocol: port.appProtocol })}
+                                </div>
+                              }
                             >
                               <span style={{ marginRight: '0.25rem' }}>
                                 <KialiIcon.Info className={infoStyle} />
@@ -158,7 +176,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
                             </Tooltip>
                           ) : undefined}
                         </div>
-                        <div>({port.protocol})</div>
+                        <div>({t(port.protocol)})</div>
                       </div>
                     );
                   })}
@@ -168,7 +186,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
 
             {props.serviceDetails.virtualServices.length > 0 && (
               <li>
-                <span>Hostnames</span>
+                <span>{t('Hostnames')}</span>
                 <div style={{ display: 'inline-block' }}>
                   {getHostnames(props.serviceDetails.virtualServices).map((hostname, i) => {
                     return (

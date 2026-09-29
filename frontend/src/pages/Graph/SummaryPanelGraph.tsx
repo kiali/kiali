@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Node, Visualization } from '@patternfly/react-topology';
+import type { Node, Visualization } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { GraphType, NodeAttr, NodeType, Protocol, SummaryPanelPropType, TrafficRate, UNKNOWN } from '../../types/Graph';
+import type { SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeAttr, NodeType, Protocol, TrafficRate, UNKNOWN } from '../../types/Graph';
+import type { TrafficRateGrpc, TrafficRateHttp, TrafficRateTcp } from '../../utils/TrafficRate';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
-  getAccumulatedTrafficRateTcp,
-  TrafficRateGrpc,
-  TrafficRateHttp,
-  TrafficRateTcp
+  getAccumulatedTrafficRateTcp
 } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import {
@@ -20,23 +19,25 @@ import {
   getTitle,
   hr,
   noTrafficStyle,
+  renderTopologySummary,
   shouldRefreshData,
   summaryBodyTabs,
   summaryFont,
   summaryPanelWidth
 } from './SummaryPanelCommon';
 import { buildReporter } from '../../types/MetricsOptions';
-import { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { Datapoint, IstioMetricsMap, Labels } from '../../types/Metrics';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { serverConfig } from '../../config/ServerConfig';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { NodeData } from 'pages/Graph/GraphElems';
+import type { NodeData } from 'pages/Graph/GraphElems';
 import { edgesIn, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -104,11 +105,6 @@ const defaultState: SummaryPanelGraphState = {
   ...defaultMetricsState
 };
 
-const topologyStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  marginRight: '0.5rem'
-});
-
 const namespaceStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center'
@@ -166,22 +162,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
   }
 
   render(): React.ReactNode {
-    let numSvc: number,
-      numWorkloads: number,
-      numApps: number,
-      numVersions: number,
-      numEdges: number,
-      grpcIn: TrafficRateGrpc,
-      grpcOut: TrafficRateGrpc,
-      grpcTotal: TrafficRateGrpc,
-      httpIn: TrafficRateHttp,
-      httpOut: TrafficRateHttp,
-      httpTotal: TrafficRateHttp,
-      isGrpcRequests: boolean,
-      tcpIn: TrafficRateTcp,
-      tcpOut: TrafficRateTcp,
-      tcpTotal: TrafficRateTcp;
-
     const controller = this.props.data.summaryTarget as Visualization;
 
     if (!controller) {
@@ -189,14 +169,12 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     }
     const { nodes, edges } = elems(controller);
 
-    numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
-    numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
-
-    ({ numApps, numVersions } = this.countApps());
-    numEdges = edges.length;
-
-    ({ grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
-      this.graphTraffic ?? this.getGraphTraffic());
+    const numSvc = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.SERVICE }).length;
+    const numWorkloads = select(nodes, { prop: NodeAttr.nodeType, val: NodeType.WORKLOAD }).length;
+    const { numApps, numVersions } = this.countApps();
+    const numEdges = edges.length;
+    const { grpcIn, grpcOut, grpcTotal, httpIn, httpOut, httpTotal, isGrpcRequests, tcpIn, tcpOut, tcpTotal } =
+      this.graphTraffic ?? this.getGraphTraffic();
 
     const tooltipInboundRef = React.createRef();
     const tooltipOutboundRef = React.createRef();
@@ -207,7 +185,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
         <div id="summary-panel-graph-heading" className={panelHeadingStyle}>
           {getTitle('Current Graph')}
           {this.renderNamespacesSummary()}
-          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
+          {renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
         <div className={summaryBodyTabs}>
@@ -439,45 +417,6 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     );
   };
 
-  private renderTopologySummary = (
-    numSvc: number,
-    numWorkloads: number,
-    numApps: number,
-    numVersions: number,
-    numEdges: number
-  ): React.ReactNode => (
-    <>
-      {numApps > 0 && (
-        <div>
-          <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
-        </div>
-      )}
-
-      {numSvc > 0 && (
-        <div>
-          <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-        </div>
-      )}
-
-      {numWorkloads > 0 && (
-        <div>
-          <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-        </div>
-      )}
-
-      {numEdges > 0 && (
-        <div>
-          <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </div>
-      )}
-    </>
-  );
-
   private shouldShowCharts(): boolean {
     // TODO we omit the charts when dealing with multiple namespaces. There is no backend
     // API support to gather the data. The whole-graph chart is of nominal value, it will likely be OK.
@@ -600,7 +539,7 @@ export class SummaryPanelGraph extends React.Component<SummaryPanelPropType, Sum
     let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
     let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
-    let filters: string[] = [];
+    const filters: string[] = [];
 
     if (grpcTotal.rate > 0 && !isGrpcRequests) {
       filters.push('grpc_sent', 'grpc_received');

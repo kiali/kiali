@@ -2,12 +2,13 @@ import * as React from 'react';
 
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
-import { Direction } from '../../types/MetricsOptions';
+import type { Direction } from '../../types/MetricsOptions';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { infoStyle } from 'styles/IconStyle';
 import { classes } from 'typestyle';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   direction: Direction;
@@ -26,21 +27,6 @@ export class MetricsReporter extends React.Component<Props> {
     destination: 'Destination',
     source: 'Source',
     both: 'Both'
-  };
-
-  static initialReporter = (direction: Direction): string => {
-    const reporterParam = HistoryManager.getParam(URLParam.REPORTER);
-
-    if (reporterParam !== undefined) {
-      return reporterParam;
-    }
-
-    return direction === 'inbound' ? 'destination' : 'source';
-  };
-
-  onReporterChanged = (reporter: string): void => {
-    HistoryManager.setParam(URLParam.REPORTER, reporter);
-    this.props.onChanged(reporter);
   };
 
   reportTooltip = (
@@ -72,17 +58,38 @@ export class MetricsReporter extends React.Component<Props> {
     </div>
   );
 
+  static initialReporter = (direction: Direction): string => {
+    const reporterParam = HistoryManager.getParam(URLParam.REPORTER);
+
+    if (reporterParam !== undefined) {
+      return reporterParam;
+    }
+
+    return direction === 'inbound' ? 'destination' : 'source';
+  };
+
+  onReporterChanged = (reporter: string): void => {
+    HistoryManager.setParam(URLParam.REPORTER, reporter);
+    this.props.onChanged(reporter);
+  };
+
   render(): React.ReactNode {
+    const reporterOptions = {
+      destination: t('Destination'),
+      source: t('Source'),
+      both: t('Both')
+    };
+
     return (
       <span>
         <ToolbarDropdown
           id={'metrics_filter_reporter'}
           disabled={false}
           handleSelect={this.onReporterChanged}
-          nameDropdown={'Reported from'}
+          nameDropdown={t('Reported from')}
           value={this.props.reporter}
-          label={MetricsReporter.ReporterOptions[this.props.reporter]}
-          options={MetricsReporter.ReporterOptions}
+          label={reporterOptions[this.props.reporter]}
+          options={reporterOptions}
         />
 
         <Tooltip content={<div style={{ textAlign: 'left' }}>{this.reportTooltip}</div>} position={TooltipPosition.top}>

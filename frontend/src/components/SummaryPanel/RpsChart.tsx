@@ -4,10 +4,11 @@ import { InfoAltIcon, SquareFullIcon } from '@patternfly/react-icons';
 import { SparklineChart } from 'components/Charts/SparklineChart';
 import { PFColors } from '../Pf/PfColors';
 import { SUMMARY_PANEL_CHART_WIDTH } from '../../types/Graph';
-import { Datapoint } from '../../types/Metrics';
+import type { Datapoint } from '../../types/Metrics';
 import { toVCLine } from 'utils/VictoryChartsUtils';
-import { RichDataPoint, VCDataPoint, VCLine, VCLines } from 'types/VictoryChartInfo';
+import type { RichDataPoint, VCDataPoint, VCLine, VCLines } from 'types/VictoryChartInfo';
 import { summaryTitle } from 'pages/Graph/SummaryPanelCommon';
+import { t } from 'utils/I18nUtils';
 
 type RequestChartProp = {
   dataErrors: Datapoint[];
@@ -71,7 +72,7 @@ export class RequestChart extends React.Component<RequestChartProp> {
       <>
         {!this.props.hide && (
           <div className={blockStyle}>
-            <div className={summaryTitle}>{this.props.label} min / max:</div>
+            <div className={summaryTitle}>{t('{{label}} min / max:', { label: this.props.label })}</div>
             {this.renderContent()}
           </div>
         )}
@@ -136,7 +137,7 @@ export class StreamChart extends React.Component<StreamChartProp> {
       <>
         {!this.props.hide && (
           <div className={blockStyle}>
-            <div className={summaryTitle}>{this.props.label} min / max:</div>
+            <div className={summaryTitle}>{t('{{label}} min / max:', { label: this.props.label })}</div>
             {this.renderContent()}
           </div>
         )}

@@ -1,15 +1,17 @@
+import { mapValues } from 'lodash-es';
 import { ToolbarDropdown } from './ToolbarDropdown';
 import { serverConfig, humanDurations } from '../../config/ServerConfig';
 import * as React from 'react';
-import { DurationInSeconds } from '../../types/Common';
-import { KialiAppState } from '../../store/Store';
+import { formatLastDuration, useKialiTranslation } from 'utils/I18nUtils';
+import type { DurationInSeconds } from '../../types/Common';
+import type { KialiAppState } from '../../store/Store';
 import { durationSelector } from '../../store/Selectors';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { connect } from 'react-redux';
 import { HistoryManager, URLParam, location } from '../../app/History';
-import { TooltipPosition } from '@patternfly/react-core';
+import type { TooltipPosition } from '@patternfly/react-core';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kioskDurationAction } from '../Kiosk/KioskActions';
 
@@ -25,6 +27,7 @@ type DurationDropdownProps = ReduxStateProps &
   ReduxDispatchProps & {
     disabled?: boolean;
     id: string;
+    lastLabel?: boolean;
     nameDropdown?: string;
     prefix?: string;
     suffix?: string;
@@ -35,6 +38,8 @@ type DurationDropdownProps = ReduxStateProps &
   };
 
 export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props: DurationDropdownProps) => {
+  const { i18n } = useKialiTranslation();
+
   const updateDurationInterval = (duration: number): void => {
     props.setDuration(duration); // notify redux of the change
 
@@ -43,7 +48,16 @@ export const DurationDropdownComponent: React.FC<DurationDropdownProps> = (props
     }
   };
 
-  const durations = humanDurations(serverConfig, props.prefix, props.suffix);
+  const durations = React.useMemo(() => {
+    if (props.lastLabel) {
+      return mapValues(serverConfig.durations, durationLabel => {
+        const label = formatLastDuration(durationLabel);
+        return props.suffix ? `${label} ${props.suffix}` : label;
+      });
+    }
+
+    return humanDurations(serverConfig, props.prefix, props.suffix);
+  }, [i18n.language, props.lastLabel, props.prefix, props.suffix]);
 
   return (
     <ToolbarDropdown

@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Edge, GraphElement, Node } from '@patternfly/react-topology';
+import type { GraphElement, Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType, NodeType, TrafficRate, Protocol, UNKNOWN, NodeAttr } from '../../types/Graph';
+import type { SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, TrafficRate, Protocol, UNKNOWN, NodeAttr } from '../../types/Graph';
+import type { TrafficRateGrpc, TrafficRateHttp, TrafficRateTcp } from '../../utils/TrafficRate';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
-  getAccumulatedTrafficRateTcp,
-  TrafficRateGrpc,
-  TrafficRateHttp,
-  TrafficRateTcp
+  getAccumulatedTrafficRateTcp
 } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import {
@@ -23,11 +22,13 @@ import {
   getDatapoints,
   summaryPanelWidth,
   getTitle,
-  noTrafficStyle
+  noTrafficStyle,
+  renderTopologySummary
 } from './SummaryPanelCommon';
 import { buildReporter } from '../../types/MetricsOptions';
-import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { KialiLink } from 'components/Link/KialiLink';
@@ -35,7 +36,7 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
@@ -103,11 +104,6 @@ const defaultState: SummaryPanelNamespaceBoxState = {
   namespaceBox: null,
   ...defaultMetricsState
 };
-
-const topologyStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  marginRight: '0.5rem'
-});
 
 const namespaceStyle = kialiStyle({
   display: 'flex',
@@ -186,7 +182,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         <div className={panelHeadingStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace, cluster)}
-          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
+          {renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
         <div className={summaryBodyTabs}>
@@ -333,10 +329,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const namespace = data[NodeAttr.namespace];
     const cluster = data[NodeAttr.cluster];
 
-    let inboundEdges: Edge[] | any;
-    let outboundEdges: Edge[] | any;
-    let totalEdges: Edge[] | any;
-
     const controller = (namespaceBox as Node).getController();
     const { nodes } = elems(controller);
 
@@ -346,14 +338,16 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     ]) as Node[];
 
     // inbound edges are from a different namespace or a different cluster
-    inboundEdges = edgesOut(outsideNodes, boxed);
+    const inboundEdges = edgesOut(outsideNodes, boxed);
 
     // outbound edges are to a different namespace or a different cluster
-    outboundEdges = edgesIn(outsideNodes, boxed);
+    const outboundEdges = edgesIn(outsideNodes, boxed);
 
     // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    totalEdges = [...inboundEdges];
-    totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
+    const totalEdges = [
+      ...inboundEdges,
+      ...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[])
+    ];
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
@@ -399,45 +393,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
       </div>
     );
   };
-
-  private renderTopologySummary = (
-    numSvc: number,
-    numWorkloads: number,
-    numApps: number,
-    numVersions: number,
-    numEdges: number
-  ): React.ReactNode => (
-    <>
-      {numApps > 0 && (
-        <div>
-          <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
-        </div>
-      )}
-
-      {numSvc > 0 && (
-        <div>
-          <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-        </div>
-      )}
-
-      {numWorkloads > 0 && (
-        <div>
-          <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-        </div>
-      )}
-
-      {numEdges > 0 && (
-        <div>
-          <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </div>
-      )}
-    </>
-  );
 
   private renderCharts = (): React.ReactNode => {
     const props: SummaryPanelPropType = this.props;
@@ -564,7 +519,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
     let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
-    let filters: string[] = [];
+    const filters: string[] = [];
 
     if (grpcTotal.rate > 0 && !isGrpcRequests) {
       filters.push('grpc_sent', 'grpc_received');

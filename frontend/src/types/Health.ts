@@ -14,7 +14,7 @@ import type { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
 import type { HealthAnnotationType } from './HealthAnnotation';
 import type { NamespaceStatus } from './NamespaceInfo';
-import { t } from 'utils/I18nUtils';
+import { formatTrafficStatusLastDuration, t } from 'utils/I18nUtils';
 
 interface HealthConfig {
   items: HealthItem[];
@@ -91,7 +91,7 @@ export interface WorkloadHealthResponse {
 }
 
 const createTrafficTitle = (time: string): string => {
-  return t('Traffic Status (Last {{duration}})', { duration: time });
+  return formatTrafficStatusLastDuration(time);
 };
 
 /*
@@ -367,7 +367,10 @@ export abstract class Health {
   // Optional pre-calculated status from the backend
   public backendStatus?: CalculatedHealthStatus;
 
-  constructor(public health: HealthConfig, backendStatus?: CalculatedHealthStatus) {
+  constructor(
+    public health: HealthConfig,
+    backendStatus?: CalculatedHealthStatus
+  ) {
     this.backendStatus = backendStatus;
   }
 
