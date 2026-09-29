@@ -372,6 +372,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-core-caching` | Playwright core-caching suite (KinD + in-cluster Kiali with cache enabled) |
 | `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
 | `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
+| `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
 
 #### The `local` Suite (Recommended for Local Development)
 
@@ -484,12 +485,14 @@ yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:ambient
+yarn playwright:run:external-kiali
 hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
 hack/run-integration-tests.sh --test-suite playwright-core-1
 hack/run-integration-tests.sh --test-suite playwright-core-2
 hack/run-integration-tests.sh --test-suite playwright-core-caching
 hack/run-integration-tests.sh --test-suite playwright-core-optional
 hack/run-integration-tests.sh --test-suite playwright-ambient
+hack/run-integration-tests.sh --test-suite playwright-external-kiali # KinD multicluster + in-cluster Kiali (OpenID)
 ```
 
 **Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`. Cypress remains in `frontend/cypress/` until cutover.

@@ -73,7 +73,7 @@ Do **not** add comments in `frontend/e2e/` that mention Cypress (e.g. “matches
 - **Never** rely on `process.env` set in the setup worker — workers do not inherit it. Use `getAuthStrategy(page)` or `request.get('/api/auth/info')`.
 - **OpenShift-only** login/logout/cookie/session tests: `test.skip(strategy !== 'openshift', '…')` on KinD/Jenkins anonymous CI — **skip**, do not fail the suite.
 - **Logout** must use `test.use({ storageState: { cookies: [], origins: [] } })` so `/api/logout` does not invalidate `AUTH_FILE` for later projects.
-- Unimplemented strategies (`token`, `openid`): prefer failing setup with JUnit output (empty `storageState` + `expect(implemented).toContain(strategy)`) over a bare `throw` that skips all projects with no report.
+- Unimplemented strategies (`token`): prefer failing setup with JUnit output (empty `storageState` + `expect(implemented).toContain(strategy)`) over a bare `throw` that skips all projects with no report. `openid` (Keycloak) and `openshift` are implemented.
 
 ### Health indicators in tables
 
@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`), matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented. **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`), matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. One parallel job per suite. Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -156,6 +156,17 @@ Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP e
 hack/run-integration-tests.sh --test-suite playwright-ambient
 ```
 
+### External Kiali (`yarn playwright:run:external-kiali`)
+
+Ports mesh page `@external-kiali` scenarios (mgmt + mesh clusters). CI uses KinD multicluster `external-kiali`, OpenID/Keycloak (`kiali`/`kiali`), and **in-cluster** Kiali (not the local binary).
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-external-kiali
+# or setup once, then:
+hack/run-integration-tests.sh --test-suite playwright-external-kiali --setup-only true
+hack/run-integration-tests.sh --test-suite playwright-external-kiali --tests-only true
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -170,6 +181,7 @@ yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:perses
 yarn playwright:run:ambient
+yarn playwright:run:external-kiali
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -178,7 +190,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, and `playwright-ambient` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, and `playwright-external-kiali` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 
@@ -190,5 +202,5 @@ Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwrigh
 - Replace negative version assertions in `kiali_about.spec.ts` with `toHaveText(/^v?\d+\.\d+\.\d+/)`.
 - `cleanup` fixture (`cleanup.trackNamespace()`) instead of ad-hoc `afterEach` / kubectl for demo mutations.
 - `page.routeWebSocket()` wherever graph live updates are mocked.
-- `token` / `openid` auth in `auth.setup.ts`.
+- `token` auth in `auth.setup.ts` (`openid` supported for external-kiali / Keycloak).
 - OSSMC Playwright sync and Cypress cutover ([#9712](https://github.com/kiali/kiali/issues/9712) later phases).

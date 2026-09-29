@@ -35,3 +35,6 @@ export const waypointOnly = { tag: '@waypoint' as const };
 
 /** @waypoint-tracing — frontend-ambient Playwright / Cypress suite */
 export const waypointTracingOnly = { tag: '@waypoint-tracing' as const };
+
+/** @external-kiali — external Kiali multicluster mesh page suite */
+export const externalKialiOnly = { tag: '@external-kiali' as const };
