@@ -135,7 +135,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -170,7 +170,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -205,7 +205,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}

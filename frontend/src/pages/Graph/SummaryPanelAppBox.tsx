@@ -522,7 +522,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableGrpc
-        title={t('GRPC Traffic (requests per second):')}
+        title={`${t('gRPC Traffic (requests per second)')}:`}
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
         inRateNR={inbound.rateNoResponse}
@@ -547,7 +547,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableHttp
-        title={t('HTTP (requests per second):')}
+        title={`${t('HTTP (requests per second)')}:`}
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
         inRate4xx={inbound.rate4xx}
