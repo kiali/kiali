@@ -15,6 +15,7 @@ import {
 } from './table';
 import { openTab, waitForKialiApiReady } from './transition';
 import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
+import { isOssmcUrl, peelCoveringLayers } from './graph';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -100,7 +101,22 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
         // that matches the exact data path.
         const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
         const dataPointInGraph = pointWithTraceName.children[0].props.d;
-        cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
+        const peels: HTMLElement[] = [];
+
+        // ChartWithLegend only fires onClick when hoveredItem is set (tooltip open).
+        // force:true skips hover, so peel OSSMC overlays and issue a real click.
+        cy.get(`path[d="${dataPointInGraph}"]`).then($path => {
+          const win = $path[0].ownerDocument.defaultView as Window;
+          if (isOssmcUrl(win.location.href)) {
+            peels.push(...peelCoveringLayers($path[0], win));
+          }
+
+          cy.wrap($path).click();
+
+          cy.then(() => {
+            peels.forEach(el => el.style.removeProperty('pointer-events'));
+          });
+        });
       });
   });
 });

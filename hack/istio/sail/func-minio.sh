@@ -106,8 +106,8 @@ spec:
             mountPath: "/storage"
       containers:
       - name: minio
-        # Pulls the latest Minio image from quay.io
-        image: quay.io/minio/minio:latest
+        # quay.io/minio/minio is no longer publicly pullable; use OpenShift's multi-arch mirror.
+        image: quay.io/openshifttest/minio:latest@sha256:fc6bedc99355fbdf1982a734475b56d01f4bbc59a9ec6f9a7bc4e222f74f5326
         args:
         - server
         - /storage

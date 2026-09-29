@@ -1,6 +1,6 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { Visualization } from '@patternfly/react-topology';
-import { elems, selectAnd } from './graph';
+import { clickGraphNode, elems, findGraphNode, selectAnd } from './graph';
 import { NodeAttr } from 'types/Graph';
 
 When('user clicks the {string} {string} node', (svcName: string, nodeType: string) => {
@@ -163,37 +163,24 @@ When(
 When(
   'user clicks the {string} service node in the {string} namespace in the {string} cluster',
   (service: string, namespace: string, cluster: string) => {
-    cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-      .should('have.length', '1')
-      .then($graph => {
-        const { state } = $graph[0];
-
-        const controller = state.graphRefs.getController() as Visualization;
-        assert.isTrue(controller.hasGraph());
-        const { nodes } = elems(controller);
-
-        const serviceNode = nodes.filter(
+    findGraphNode(
+      nodes =>
+        nodes.filter(
           node =>
             node.getData().nodeType === 'service' &&
             node.getData().isBox === undefined &&
             node.getData().service === service &&
             node.getData().namespace === namespace &&
             node.getData().cluster === cluster
-        );
-
-        expect(serviceNode.length).to.equal(1);
-
-        cy.get(`[data-id=${serviceNode[0].getId()}]`).click();
-
-        // Wait for the side panel to change.
-        // Note we can't use summary-graph-panel since that
-        // element will get unmounted and disappear when
-        // the context changes but the graph-side-panel does not.
-        cy.waitForReact();
-        cy.get('#graph-side-panel').contains(service);
-        cy.wrap(serviceNode[0]).as('contextNode');
-      });
+        ),
+      `service Node ${service} in namespace ${namespace} in cluster ${cluster} not found`
+    ).then(node => {
+      clickGraphNode(node.getId());
+      // graph-side-panel persists across context changes unlike summary-graph-panel
+      cy.waitForReact();
+      cy.get('#graph-side-panel').contains(service);
+      cy.wrap(node).as('contextNode');
+    });
   }
 );
 

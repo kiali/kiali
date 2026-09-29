@@ -2,6 +2,7 @@ import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { clusterParameterExists } from './navigation';
 import { openTab } from './transition';
+import { waitForComponentState } from './react-utils';
 
 const openEnvoyTab = (tab: string): void => {
   cy.get('#envoy-details').should('exist').contains(tab).click();
@@ -30,18 +31,9 @@ Then('user sees workload inbound metrics information', () => {
 
   openTab('Inbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact();
-
-  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } })
-    // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then(
-      (metricsComponents: any) =>
-        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
+  waitForComponentState('IstioMetricsComponent', { props: { 'data-test': 'inbound-metrics-component' } }, state => {
+    assert.isNotEmpty(state?.dashboard);
+  });
 });
 
 Then('user sees workload outbound metrics information', () => {
@@ -49,18 +41,9 @@ Then('user sees workload outbound metrics information', () => {
 
   openTab('Outbound Metrics');
   cy.wait('@fetchMetrics');
-  cy.waitForReact();
-
-  cy.getReact('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } })
-    // HOCs can match the component name. This filters the HOCs for just the bare component.
-    .then(
-      (metricsComponents: any) =>
-        metricsComponents.filter((component: any) => component.name === 'IstioMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
+  waitForComponentState('IstioMetricsComponent', { props: { 'data-test': 'outbound-metrics-component' } }, state => {
+    assert.isNotEmpty(state?.dashboard);
+  });
 });
 
 Then('user sees Perses link in the Inbound Metrics tab', () => {
@@ -163,14 +146,9 @@ Then('the user sees the metrics tab', () => {
 
   cy.contains('Loading metrics').should('not.exist');
 
-  cy.getReact('CustomMetricsComponent', { props: { 'data-test': 'envoy-metrics-component' } })
-    .then(
-      (metricsComponents: any) => metricsComponents.filter(component => component.name === 'CustomMetricsComponent')[0]
-    )
-    .getCurrentState()
-    .then(state => {
-      cy.wrap(state.dashboard).should('not.be.empty');
-    });
+  waitForComponentState('CustomMetricsComponent', { props: { 'data-test': 'envoy-metrics-component' } }, state => {
+    assert.isNotEmpty(state?.dashboard);
+  });
 });
 
 Then('the user can see the {string} link', (link: string) => {

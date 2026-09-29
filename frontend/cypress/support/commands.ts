@@ -1,4 +1,4 @@
-import { buildNodeTree, findComponentsInTree, getReactFiber, isReactRoot, ReactNode, ReactOpts } from './react-utils';
+import { buildNodeTree, findComponentsInTree, getReactFiber, isReactRoot, ReactNode, ReactOpts } from '../integration/common/react-utils';
 
 // ***********************************************
 // Custom Cypress commands for Kiali testing.

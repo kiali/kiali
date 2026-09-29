@@ -39,6 +39,7 @@ Feature: Kiali Workload Details page
     Then user sees workload outbound metrics information
 
   @perses
+  @skip-ossmc
   Scenario: See workload Perses link
     Then user sees Perses link in the Inbound Metrics tab
 

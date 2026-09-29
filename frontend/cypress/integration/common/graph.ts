@@ -5,6 +5,7 @@
 
 import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
+import { buildNodeTree, findComponentsInTree, getReactFiber } from './react-utils';
 
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
@@ -46,19 +47,28 @@ Then('nodes in the {string} cluster should contain the cluster name in their lin
 Then(
   'user clicks on the {string} workload in the {string} namespace in the {string} cluster',
   (workload: string, namespace: string, cluster: string) => {
-    cy.waitForReact();
-    cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-      .should('have.length', '1')
-      .then($graph => {
-        const { state } = $graph[0];
+    let nodeId: string;
 
+    cy.waitForReact();
+    cy.window({ log: false })
+      .should((win: Window) => {
+        const rootFiber = freshFiber(win);
+        assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+        const tree = buildNodeTree(rootFiber);
+        const results = findComponentsInTree(tree, 'GraphPageComponent', {
+          state: { graphData: { isLoading: false }, isReady: true }
+        });
+        assert.equal(results.length, 1, 'GraphPageComponent should be loaded and ready');
+
+        const { state } = results[0];
         const controller = state.graphRefs.getController() as Visualization;
         assert.isTrue(controller.hasGraph());
         const { nodes } = elems(controller);
 
+        // Workloads are apps in the versioned app graph
         const workloadNode = nodes.filter(
           node =>
-            // Apparently workloads are apps for the versioned app graph.
             node.getData().nodeType === 'app' &&
             node.getData().isBox === undefined &&
             node.getData().workload === workload &&
@@ -67,15 +77,12 @@ Then(
         );
 
         expect(workloadNode.length).to.equal(1);
-        cy.get(`[data-id=${workloadNode[0]?.getId()}]`)
-          .click()
-          .then(() => {
-            // Wait for the side panel to change.
-            // Note we can't use summary-graph-panel since that
-            // element will get unmounted and disappear when
-            // the context changes but the graph-side-panel does not.
-            cy.get('#graph-side-panel').contains(workload);
-          });
+        nodeId = workloadNode[0]?.getId();
+      })
+      .then(() => {
+        clickGraphNode(nodeId);
+        // graph-side-panel persists across context changes unlike summary-graph-panel
+        cy.get('#graph-side-panel').contains(workload);
       });
   }
 );
@@ -120,35 +127,156 @@ export const elems = (c: Controller): { edges: Edge[]; nodes: Node[] } => {
 };
 
 /**
- * Retryable assertion wrapper for the full-page graph. Uses `.should()` instead
- * of `.then()` so Cypress automatically retries the callback when an assertion
- * fails, eliminating race conditions with graph data loading.
+ * Click a PatternFly topology node.
+ *
+ * Do not use Cypress `{ force: true }` here: that skips PF topology
+ * hit-testing, so the context menu and side panel never open.
+ *
+ * In OSSMC, Console paints an overlay over the SVG. Temporarily disable
+ * pointer-events on covering layers so a real click reaches the node.
  */
-export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
-  cy.waitForReact();
-  cy.getReact('GraphPageComponent', { state: { graphData: { isLoading: false }, isReady: true } })
-    .should('have.length', '1')
-    .should(($graph: any) => {
-      const { state } = $graph[0];
-      const controller = state.graphRefs.getController() as Visualization;
-      assert.isTrue(controller.hasGraph());
-      fn(elems(controller), state);
+export const isOssmcUrl = (url: string): boolean =>
+  url.includes('/ossmconsole/') || url.includes('openshift-console');
+
+export const peelCoveringLayers = (node: Element, win: Window): HTMLElement[] => {
+  const peels: HTMLElement[] = [];
+  const rect = node.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+
+  for (let i = 0; i < 8; i++) {
+    const top = win.document.elementFromPoint(x, y) as HTMLElement | null;
+    if (!top || top === node || node.contains(top)) {
+      break;
+    }
+    peels.push(top);
+    top.style.setProperty('pointer-events', 'none');
+  }
+
+  return peels;
+};
+
+/**
+ * SVG <g> topology nodes often have 0 offsetWidth/offsetHeight, so jQuery
+ * :visible is false even when the node is painted. Cypress click
+ * actionability uses getBoundingClientRect (same as v2.27's plain rightclick).
+ */
+const isPaintedElement = (el: Element): boolean => {
+  const r = el.getBoundingClientRect();
+  return r.width > 1 && r.height > 1;
+};
+
+const paintedGraphNodes = ($nodes: JQuery<HTMLElement>): HTMLElement[] =>
+  [...$nodes].filter(isPaintedElement) as HTMLElement[];
+
+export const clickGraphNode = (nodeId: string, options?: { rightClick?: boolean }): void => {
+  const peels: HTMLElement[] = [];
+
+  cy.get(`[data-id="${nodeId}"]`)
+    .should($nodes => {
+      assert.isAtLeast(paintedGraphNodes($nodes as JQuery<HTMLElement>).length, 1, 'graph node should be painted');
+    })
+    .then($nodes => {
+      const painted = paintedGraphNodes($nodes as JQuery<HTMLElement>);
+      const el = painted.find(e => e.closest('[data-layer-id="nodes"]')) ?? painted[0];
+      const win = el.ownerDocument.defaultView as Window;
+
+      if (isOssmcUrl(win.location.href)) {
+        peels.push(...peelCoveringLayers(el, win));
+      }
+
+      if (options?.rightClick) {
+        cy.wrap(el).rightclick();
+      } else {
+        cy.wrap(el).click();
+      }
+
+      cy.then(() => {
+        peels.forEach(p => p.style.removeProperty('pointer-events'));
+      });
     });
 };
 
 /**
- * Retryable assertion wrapper for the mini graph card.
+ * Read the React fiber root fresh from the DOM so that `.should()` retries
+ * always see the latest committed React state instead of a stale cached
+ * reference from `waitForReact()`.
  */
-export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
+const freshFiber = (win: Window): any => {
+  const rootSelector = Cypress.env('rootSelector') || 'body';
+  const rootEl = win.document.querySelector(rootSelector);
+  return rootEl ? getReactFiber(rootEl as Element) : null;
+};
+
+/**
+ * Wait until a graph node matching `filter` is present. Re-reads React fiber
+ * on every Cypress retry so multi-cluster nodes that appear after the first
+ * graph payload are not missed by a stale `cy.getReact()` snapshot.
+ */
+export const findGraphNode = (filter: (nodes: Node[]) => GraphElement[], errorMsg: string): Cypress.Chainable<Node> => {
+  let found: Node | undefined;
   cy.waitForReact();
-  cy.getReact('MiniGraphCardComponent', { state: { isReady: true, isLoading: false } })
-    .should('have.length', '1')
-    .should(($graph: any) => {
-      const { state } = $graph[0];
+  return cy
+    .window({ log: false })
+    .should((win: Window) => {
+      const rootFiber = freshFiber(win);
+      assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+      const tree = buildNodeTree(rootFiber);
+      const results = findComponentsInTree(tree, 'GraphPageComponent', {
+        state: { graphData: { isLoading: false }, isReady: true }
+      });
+      assert.equal(results.length, 1, 'GraphPageComponent should be loaded and ready');
+
+      const { state } = results[0];
       const controller = state.graphRefs.getController() as Visualization;
       assert.isTrue(controller.hasGraph());
-      fn(elems(controller), state);
-    });
+      const matched = filter(elems(controller).nodes);
+      assert.equal(matched.length, 1, errorMsg);
+      found = matched[0] as Node;
+
+      const nodeEls = win.document.querySelectorAll(`[data-id="${found.getId()}"]`);
+      assert.isAtLeast([...nodeEls].filter(isPaintedElement).length, 1, 'graph node should be painted in the SVG');
+    })
+    .then(() => found as Node);
+};
+
+/**
+ * Retryable assertion wrapper that re-reads the React fiber root from the
+ * DOM on every `.should()` retry, ensuring Cypress always sees the latest
+ * committed React state.
+ *
+ * The previous approach used `cy.getReact()` which returned a static
+ * `cy.wrap()` snapshot — `.should()` retried the assertion against that
+ * stale snapshot, causing false negatives after graph refetches.
+ */
+const assertReady = (
+  componentName: string,
+  stateFilter: Record<string, any>,
+  fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void
+): void => {
+  cy.waitForReact();
+  cy.window({ log: false }).should((win: Window) => {
+    const rootFiber = freshFiber(win);
+    assert.isNotNull(rootFiber, 'React fiber root must exist');
+
+    const tree = buildNodeTree(rootFiber);
+    const results = findComponentsInTree(tree, componentName, { state: stateFilter });
+    assert.equal(results.length, 1, `${componentName} should be loaded and ready`);
+
+    const { state } = results[0];
+    const controller = state.graphRefs.getController() as Visualization;
+    assert.isTrue(controller.hasGraph());
+    fn(elems(controller), state);
+  });
+};
+
+export const assertGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
+  assertReady('GraphPageComponent', { graphData: { isLoading: false }, isReady: true }, fn);
+};
+
+export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node[] }, state: any) => void): void => {
+  assertReady('MiniGraphCardComponent', { isReady: true, isLoading: false }, fn);
 };
 
 export type SelectOp =

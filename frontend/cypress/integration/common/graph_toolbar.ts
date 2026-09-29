@@ -20,16 +20,17 @@ When('user closes graph tour', () => {
 });
 
 When('user {string} traffic menu', (action: string) => {
-  cy.get('button#graph-traffic-dropdown').then($button => {
-    const currentState = $button.attr('aria-expanded');
-    const isCurrentlyOpen = currentState === 'true';
-    const shouldBeOpen = action.includes('open');
+  cy.get('button#graph-traffic-dropdown')
+    .should('not.be.disabled')
+    .then($button => {
+      const currentState = $button.attr('aria-expanded');
+      const isCurrentlyOpen = currentState === 'true';
+      const shouldBeOpen = action.includes('open');
 
-    // Only click if the current state is different from the desired state
-    if (isCurrentlyOpen !== shouldBeOpen) {
-      cy.wrap($button).click();
-    }
-  });
+      if (isCurrentlyOpen !== shouldBeOpen) {
+        cy.wrap($button).click();
+      }
+    });
 });
 
 When('user {string} {string} traffic option', (action: string, option: string) => {
