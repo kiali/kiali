@@ -456,8 +456,7 @@ func WorkloadEnvoyMemory(
 			return
 		}
 
-		dashboardsService := business.NewDashboardsService(conf, grafana, prom, namespaceInfo, workloadDetails)
-		envoyMemoryService := business.NewEnvoyMemoryService(dashboardsService.PrometheusClient(), conf)
+		envoyMemoryService := business.NewEnvoyMemoryService(prom, conf)
 		summary, err := envoyMemoryService.GetSummary(r.Context(), workloadDetails, &params.RangeQuery)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())

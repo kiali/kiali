@@ -121,14 +121,16 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 					DataType: dashboards.Rate,
 					Metrics: []dashboards.MonitoringDashboardMetric{
 						{
-							DisplayName:  "Upstream",
-							MetricName:   "istio_requests_total",
-							LabelRegexps: map[string]string{"reporter": "source|waypoint"},
+							DisplayName:            "Upstream",
+							MetricName:             "istio_requests_total",
+							IstioMetricLabelPrefix: "source",
+							LabelRegexps:           map[string]string{"reporter": "source|waypoint"},
 						},
 						{
-							DisplayName: "Downstream",
-							MetricName:  "istio_requests_total",
-							Labels:      map[string]string{"reporter": "destination"},
+							DisplayName:            "Downstream",
+							MetricName:             "istio_requests_total",
+							IstioMetricLabelPrefix: "destination",
+							Labels:                 map[string]string{"reporter": "destination"},
 						},
 					},
 				},
@@ -136,9 +138,23 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 		},
 	}
 
-	service, prom := setupService(t, config.NewConfig(), "bookinfo", []dashboards.MonitoringDashboard{*dashboardDef})
-	expectedLabelsUpstream := `{namespace="bookinfo",app="productpage",reporter=~"source|waypoint"}`
-	expectedLabelsDownstream := `{namespace="bookinfo",app="productpage",reporter="destination"}`
+	conf := config.NewConfig()
+	conf.CustomDashboards = append(conf.CustomDashboards, *dashboardDef)
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name:      "productpage-v1",
+			Namespace: "bookinfo",
+			Labels:    map[string]string{"app": "productpage", "version": "v1"},
+		},
+	}
+	prom := new(pmock.PromClientMock)
+	ns := models.Namespace{Name: "bookinfo"}
+	grafanaSvc, err := grafana.NewService(conf, kubetest.NewFakeK8sClient())
+	require.NoError(t, err)
+	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, workload)
+
+	expectedLabelsUpstream := `{source_workload_namespace="bookinfo",source_workload="productpage-v1",reporter=~"source|waypoint"}`
+	expectedLabelsDownstream := `{destination_workload_namespace="bookinfo",destination_workload="productpage-v1",reporter="destination"}`
 	query := models.DashboardQuery{
 		Namespace: "bookinfo",
 		LabelsFilters: map[string]string{
@@ -161,13 +177,14 @@ func TestGetDashboardEnsuresMissingDisplayNameMetrics(t *testing.T) {
 	assert.Contains(names, "Downstream")
 }
 
-func TestGetDashboardUsesWorkloadLabels(t *testing.T) {
+func TestGetDashboardUsesLabelsFiltersEvenWithWorkload(t *testing.T) {
 	assert := assert.New(t)
 
 	conf := config.NewConfig()
 	conf.CustomDashboards = append(conf.CustomDashboards, *fakeDashboard("1"))
 	workload := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
+			Name:      "waypoint-abc",
 			Namespace: "bookinfo",
 			Labels:    map[string]string{"gateway.networking.k8s.io/gateway-name": "waypoint"},
 		},
@@ -178,11 +195,11 @@ func TestGetDashboardUsesWorkloadLabels(t *testing.T) {
 	require.NoError(t, err)
 	service := NewDashboardsService(conf, grafanaSvc, prom, &ns, workload)
 
-	expectedLabels := `{namespace="bookinfo",gateway_networking_k8s_io_gateway_name="waypoint"}`
+	expectedLabels := `{namespace="bookinfo",app="my-app"}`
 	query := models.DashboardQuery{
 		Namespace: "bookinfo",
 		LabelsFilters: map[string]string{
-			"app": "ignored-app-label",
+			"app": "my-app",
 		},
 	}
 	query.FillDefaults()
@@ -641,6 +658,58 @@ func TestAppendPromLabels(t *testing.T) {
 		`{namespace="bookinfo",reporter=~"source|waypoint"}`,
 		appendPromLabelMatchers(`{namespace="bookinfo"}`, nil, map[string]string{"reporter": "source|waypoint"}),
 	)
+}
+
+func TestBuildIstioWorkloadMetricLabels(t *testing.T) {
+	conf := config.NewConfig()
+	ns := models.Namespace{Name: "bookinfo"}
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name:      "details-v1",
+			Namespace: "bookinfo",
+		},
+	}
+	svc := NewDashboardsService(conf, nil, nil, &ns, workload)
+
+	ref := dashboards.MonitoringDashboardMetric{
+		IstioMetricLabelPrefix: "source",
+		LabelRegexps:           map[string]string{"reporter": "source|waypoint"},
+	}
+	assert.Equal(t,
+		`{source_workload_namespace="bookinfo",source_workload="details-v1",reporter=~"source|waypoint"}`,
+		svc.buildIstioWorkloadMetricLabels("bookinfo", ref),
+	)
+
+	ref = dashboards.MonitoringDashboardMetric{
+		IstioMetricLabelPrefix: "destination",
+		Labels:                 map[string]string{"reporter": "destination"},
+	}
+	assert.Equal(t,
+		`{destination_workload_namespace="bookinfo",destination_workload="details-v1",reporter="destination"}`,
+		svc.buildIstioWorkloadMetricLabels("bookinfo", ref),
+	)
+}
+
+func TestBuildIstioWorkloadMetricLabelsWithQueryScope(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Prometheus.QueryScope = map[string]string{"mesh_id": "mesh1"}
+	ns := models.Namespace{Name: "bookinfo"}
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name:      "reviews-v2",
+			Namespace: "bookinfo",
+		},
+	}
+	prom := new(pmock.PromClientMock)
+	svc := NewDashboardsService(conf, nil, prom, &ns, workload)
+
+	ref := dashboards.MonitoringDashboardMetric{
+		IstioMetricLabelPrefix: "source",
+	}
+	result := svc.buildIstioWorkloadMetricLabels("bookinfo", ref)
+	assert.Contains(t, result, `source_workload="reviews-v2"`)
+	assert.Contains(t, result, `source_workload_namespace="bookinfo"`)
+	assert.Contains(t, result, `mesh_id="mesh1"`)
 }
 
 func TestBuildWorkloadPodMetricLabels(t *testing.T) {

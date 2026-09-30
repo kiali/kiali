@@ -172,6 +172,20 @@ func TestEnvoyRequestRateFromMetricsUsesUpstreamVariants(t *testing.T) {
 	assert.Equal(t, 4.0, envoyRequestRateFromMetrics(emptyMetric, upstream, emptyMetric))
 }
 
+func TestBuildIstioWorkloadLabels(t *testing.T) {
+	conf := config.NewConfig()
+	labels := buildIstioWorkloadLabels("bookinfo", "productpage-v1", "source", conf)
+	assert.Contains(t, labels, `source_workload_namespace="bookinfo"`)
+	assert.Contains(t, labels, `source_workload="productpage-v1"`)
+
+	confWithScope := config.NewConfig()
+	confWithScope.ExternalServices.Prometheus.QueryScope = map[string]string{"mesh_id": "mesh1"}
+	labels = buildIstioWorkloadLabels("bookinfo", "details-v1", "destination", confWithScope)
+	assert.Contains(t, labels, `destination_workload_namespace="bookinfo"`)
+	assert.Contains(t, labels, `destination_workload="details-v1"`)
+	assert.Contains(t, labels, `mesh_id="mesh1"`)
+}
+
 func TestHasEnvoyProxyWorkload(t *testing.T) {
 	workload := &models.Workload{
 		Pods: models.Pods{

@@ -75,6 +75,7 @@ const DEFAULT_DASHBOARDS_YAML = `
       metrics:
       - metricName: "istio_requests_total"
         displayName: "Upstream total requests"
+        istioMetricLabelPrefix: "source"
         labelRegexps:
           reporter: "source|waypoint"
   - chart:
@@ -91,6 +92,7 @@ const DEFAULT_DASHBOARDS_YAML = `
       metrics:
       - metricName: "istio_requests_total"
         displayName: "Downstream HTTP requests"
+        istioMetricLabelPrefix: "destination"
         labels:
           reporter: "destination"
 
@@ -139,10 +141,12 @@ const DEFAULT_DASHBOARDS_YAML = `
       # Waypoints report as reporter="waypoint" (same pattern as Kiali traffic metrics).
       - metricName: "istio_requests_total"
         displayName: "Request Upstream"
+        istioMetricLabelPrefix: "source"
         labelRegexps:
           reporter: "source|waypoint"
       - metricName: "istio_requests_total"
         displayName: "Request Downstream"
+        istioMetricLabelPrefix: "destination"
         labels:
           reporter: "destination"
 - name: go

@@ -52,11 +52,6 @@ type DashboardsService struct {
 	CustomEnabled bool
 }
 
-// PrometheusClient returns the Prometheus client used for dashboard queries.
-func (in *DashboardsService) PrometheusClient() prometheus.ClientInterface {
-	return in.promClient
-}
-
 // NewDashboardsService initializes this business service
 func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promClient prometheus.ClientInterface, namespace *models.Namespace, workload *models.Workload) *DashboardsService {
 	customEnabled := conf.ExternalServices.CustomDashboards.Enabled
@@ -177,13 +172,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 		return nil, err
 	}
 
-	filters := ""
-	if in.workload != nil {
-		filters = BuildWorkloadMetricLabels(in.conf, in.workload)
-	}
-	if filters == "" {
-		filters = in.buildLabelsQueryString(params.Namespace, params.LabelsFilters)
-	}
+	filters := in.buildLabelsQueryString(params.Namespace, params.LabelsFilters)
 	aggLabels := append(params.AdditionalLabels, models.ConvertAggregations(*dashboard)...)
 	if len(aggLabels) == 0 {
 		// Prevent null in json
@@ -228,7 +217,9 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					displayNames = append(displayNames, ref.DisplayName)
 				}
 				var metricFilters string
-				if ref.UsePodSelector {
+				if ref.IstioMetricLabelPrefix != "" && in.workload != nil {
+					metricFilters = in.buildIstioWorkloadMetricLabels(params.Namespace, ref)
+				} else if ref.UsePodSelector {
 					metricFilters = in.buildWorkloadPodMetricLabels(params.Namespace, ref.Labels)
 				} else {
 					metricFilters = appendPromLabelMatchers(filters, ref.Labels, ref.LabelRegexps)
@@ -474,6 +465,33 @@ func (in *DashboardsService) buildWorkloadPodMetricLabels(namespace string, extr
 	}
 	b.WriteByte('}')
 	return b.String()
+}
+
+// buildIstioWorkloadMetricLabels builds a Prometheus selector using Istio-intrinsic
+// workload labels instead of scrape-based labels.  The prefix (from
+// IstioMetricLabelPrefix) determines the label names (e.g. "source" produces
+// source_workload, source_workload_namespace).  Per-metric Labels and
+// LabelRegexps are appended.
+func (in *DashboardsService) buildIstioWorkloadMetricLabels(namespace string, ref dashboards.MonitoringDashboardMetric) string {
+	workloadName := ""
+	if in.workload != nil {
+		workloadName = in.workload.Name
+	}
+
+	direction := istioMetricLabelPrefixToDirection(ref.IstioMetricLabelPrefix)
+	lb := NewMetricsLabelsBuilder(direction, in.conf)
+	lb.Workload(workloadName, namespace).QueryScope()
+
+	return appendPromLabelMatchers(lb.Build(), ref.Labels, ref.LabelRegexps)
+}
+
+// istioMetricLabelPrefixToDirection maps an IstioMetricLabelPrefix value
+// ("source" or "destination") to the MetricsLabelsBuilder direction.
+func istioMetricLabelPrefixToDirection(prefix string) string {
+	if prefix == "source" {
+		return "outbound"
+	}
+	return "inbound"
 }
 
 // escapePromLabelValue escapes backslashes and double-quotes in a PromQL label value

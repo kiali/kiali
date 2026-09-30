@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -49,24 +50,27 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		return nil, fmt.Errorf("workload does not have an Envoy proxy")
 	}
 
-	labels := BuildWorkloadMetricLabels(in.conf, workload)
-	if labels == "" {
+	envoyLabels := BuildWorkloadMetricLabels(in.conf, workload)
+	if envoyLabels == "" {
 		return nil, fmt.Errorf("workload has no pods with an Envoy proxy")
 	}
 
-	memoryMetric := in.prom.FetchRange(ctx, "envoy_server_memory_allocated", labels, "", "", q)
-	clustersMetric := in.prom.FetchRange(ctx, "envoy_cluster_manager_active_clusters", labels, "", "", q)
+	memoryMetric := in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+	clustersMetric := in.prom.FetchRange(ctx, "envoy_cluster_manager_active_clusters", envoyLabels, "", "", q)
 
-	upstreamCx := in.prom.FetchRange(ctx, "envoy_cluster_upstream_cx_active", labels, "", "", q)
-	upstreamRqTotal := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq_total", []string{labels}, "", q)
+	upstreamCx := in.prom.FetchRange(ctx, "envoy_cluster_upstream_cx_active", envoyLabels, "", "", q)
+	upstreamRqTotal := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq_total", []string{envoyLabels}, "", q)
 	// Some Istio versions export upstream_rq without the _total suffix.
-	upstreamRq := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq", []string{labels}, "", q)
+	upstreamRq := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq", []string{envoyLabels}, "", q)
 	// Downstream listener stats are often absent on waypoints and newer gateways.
-	downstreamCx := in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", labels, "", "", q)
-	downstreamRq := fetchEnvoyDownstreamRequestRate(ctx, in.prom, labels, q)
-	// Default Istio stats omit app-level Envoy request counters (often only xds-grpc remains).
-	// istio_requests_total is the reliable traffic signal for the overview tile and classification.
-	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{labels}, "", q)
+	downstreamCx := in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", envoyLabels, "", "", q)
+	downstreamRq := fetchEnvoyDownstreamRequestRate(ctx, in.prom, envoyLabels, q)
+	// istio_requests_total must use Istio-intrinsic labels (source_workload,
+	// destination_workload) because scrape-based labels (app, version) are
+	// stripped in federated Prometheus setups via recording-rule aggregation.
+	istioSourceLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "source", in.conf)
+	istioDestLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "destination", in.conf)
+	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{istioSourceLabels, istioDestLabels}, "", q)
 
 	memoryMax := maxLatestValue(memoryMetric)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
@@ -76,7 +80,7 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 
 	proxyType := envoyProxyType(workload)
 	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
-	memoryLimit := resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, labels, q.End)
+	memoryLimit := resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
 	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
 	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate)
 
@@ -279,15 +283,37 @@ func buildEnvoyMetricLabels(conf *config.Config, namespace string, labelsFilters
 		namespaceLabel = "namespace"
 	}
 
-	labels := fmt.Sprintf(`{%s="%s"`, namespaceLabel, namespace)
-	for key, value := range labelsFilters {
-		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(value))
+	var b strings.Builder
+	fmt.Fprintf(&b, `{%s="%s"`, namespaceLabel, namespace)
+
+	keys := make([]string, 0, len(labelsFilters))
+	for key := range labelsFilters {
+		keys = append(keys, key)
 	}
-	for labelName, labelValue := range conf.ExternalServices.Prometheus.QueryScope {
-		labels += fmt.Sprintf(`,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue))
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(labelsFilters[key]))
 	}
-	labels += "}"
-	return labels
+
+	keys = keys[:0]
+	for labelName := range conf.ExternalServices.Prometheus.QueryScope {
+		keys = append(keys, labelName)
+	}
+	sort.Strings(keys)
+	for _, labelName := range keys {
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(conf.ExternalServices.Prometheus.QueryScope[labelName]))
+	}
+
+	b.WriteByte('}')
+	return b.String()
+}
+
+// buildIstioWorkloadLabels builds a Prometheus selector using Istio-intrinsic
+// workload labels.  prefix must be "source" or "destination".
+func buildIstioWorkloadLabels(namespace, workloadName, prefix string, conf *config.Config) string {
+	lb := NewMetricsLabelsBuilder(istioMetricLabelPrefixToDirection(prefix), conf)
+	lb.Workload(workloadName, namespace).QueryScope()
+	return lb.Build()
 }
 
 func maxLatestValue(metric prometheus.Metric) float64 {
