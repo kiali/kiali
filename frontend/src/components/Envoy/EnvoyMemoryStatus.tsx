@@ -73,6 +73,9 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
       <div>
+        <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause)}
+      </div>
+      <div>
         <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryUsage(summary)}
       </div>
       {summary.memoryThresholdBytes > 0 && (
@@ -101,7 +104,7 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   return (
     <span className={inlineIconRowStyle} data-test="envoy-memory-status">
       {createIcon(status)}
-      {envoyMemoryCauseLabel(summary.cause)}
+      {status.name}
       <Tooltip content={tooltipContent} position={TooltipPosition.top}>
         <KialiIcon.Info className={infoStyle} />
       </Tooltip>

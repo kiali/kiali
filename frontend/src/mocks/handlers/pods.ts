@@ -1368,7 +1368,55 @@ export const podHandlers = [
     const { template } = params;
     const url = new URL(request.url);
     const direction = url.searchParams.get('direction') || 'inbound';
-    return HttpResponse.json(generateMockDashboard(String(template), direction));
+    const byLabels = url.searchParams.getAll('byLabels');
+    const labelsFilters = url.searchParams.get('labelsFilters') || '';
+    const podFilter = labelsFilters
+      .split(',')
+      .map(part => part.trim())
+      .find(part => part.startsWith('pod:'))
+      ?.slice('pod:'.length);
+    const dashboard = generateMockDashboard(String(template), direction);
+
+    if (template === 'envoy-memory') {
+      const memoryChart = (dashboard.charts as Array<Record<string, unknown>>).find(
+        chart => chart.name === 'Memory trends'
+      );
+      if (memoryChart && Array.isArray(memoryChart.metrics)) {
+        let metrics = memoryChart.metrics as Array<Record<string, unknown>>;
+        if (podFilter) {
+          metrics = metrics.filter(metric => (metric.labels as Record<string, string> | undefined)?.pod === podFilter);
+        }
+        // When not grouping by pod, collapse series to aggregated lines (Max/Sum).
+        if (!byLabels.includes('pod')) {
+          const byName = new Map<string, Array<[number, number]>>();
+          metrics.forEach(metric => {
+            const name = String(metric.name);
+            const dps = metric.datapoints as Array<[number, number]>;
+            if (!byName.has(name)) {
+              byName.set(
+                name,
+                dps.map(([ts, val]) => [ts, val])
+              );
+              return;
+            }
+            const existing = byName.get(name)!;
+            dps.forEach(([ts, val], idx) => {
+              if (existing[idx]) {
+                existing[idx] = [ts, Math.max(existing[idx][1], val)];
+              }
+            });
+          });
+          metrics = Array.from(byName.entries()).map(([name, datapoints]) => ({
+            datapoints,
+            labels: podFilter ? { pod: podFilter } : {},
+            name
+          }));
+        }
+        memoryChart.metrics = metrics;
+      }
+    }
+
+    return HttpResponse.json(dashboard);
   }),
 
   http.get('*/api/namespaces/:namespace/ztunnel/:controlPlane/dashboard', ({ request }) => {

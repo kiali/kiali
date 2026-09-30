@@ -97,7 +97,7 @@ describe('EnvoyMemory', () => {
     expect(screen.getByText('Within normal range')).toBeInTheDocument();
   });
 
-  it('requests overlay chart with Max aggregation by default and By pod when selected', async () => {
+  it('renders Memory Status above metric tiles', async () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
@@ -111,7 +111,51 @@ describe('EnvoyMemory', () => {
       </Provider>
     );
 
+    const metrics = await screen.findByTestId('envoy-memory-summary-metrics');
+    const status = await screen.findByTestId('envoy-memory-status-alert');
+    expect(status.compareDocumentPosition(metrics) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Memory Status')).toBeInTheDocument();
+    expect(screen.getByText('Within normal range')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Envoy proxy memory is within the expected range for this workload type.')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Warning at/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Rough estimate from cluster count')).not.toBeInTheDocument();
+  });
+
+  it('requests overlay chart with Max aggregation by default, Sum, and By pod when selected', async () => {
+    const workloadWithPods = {
+      ...workload,
+      pods: [{ name: 'details-v1-abc123' }, { name: 'details-v1-def456' }]
+    };
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 0, to: 1000 }}
+            workload={workloadWithPods}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
     expect(await screen.findByTestId('envoy-memory-chart-view-mode')).toBeInTheDocument();
+    expect(screen.getByText('Pod metrics')).toBeInTheDocument();
+    expect(document.getElementById('envoy-memory-chart-pod-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('envoy-memory-chart-expand')).toBeInTheDocument();
+    expect(screen.getByTestId('envoy-memory-status-help')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('envoy-memory-chart-expand'));
+    expect(screen.queryByTestId('envoy-memory-status-alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('envoy-memory-summary-metrics')).not.toBeInTheDocument();
+    expect(screen.getByTestId('envoy-memory-overlay-chart')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('envoy-memory-chart-expand'));
+    expect(await screen.findByTestId('envoy-memory-status-alert')).toBeInTheDocument();
+    expect(screen.getByTestId('envoy-memory-summary-metrics')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(API.getCustomDashboard).toHaveBeenCalledWith(
@@ -120,6 +164,22 @@ describe('EnvoyMemory', () => {
         expect.objectContaining({
           byLabels: [],
           rawDataAggregator: 'max',
+          workload: 'details-v1'
+        }),
+        'cluster-default'
+      );
+    });
+
+    fireEvent.click(document.getElementById('envoy-memory-chart-view-mode-toggle')!);
+    fireEvent.click(screen.getByText('Sum'));
+
+    await waitFor(() => {
+      expect(API.getCustomDashboard).toHaveBeenCalledWith(
+        'bookinfo',
+        'envoy-memory',
+        expect.objectContaining({
+          byLabels: [],
+          rawDataAggregator: 'sum',
           workload: 'details-v1'
         }),
         'cluster-default'
@@ -204,28 +264,6 @@ describe('EnvoyMemory', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
 
     expect(await screen.findByTestId('envoy-memory-tab')).toBeInTheDocument();
-  });
-
-  it('renders Memory Status below metric tiles', async () => {
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <EnvoyMemory
-            lastRefreshAt={1720526431902}
-            namespace="bookinfo"
-            timeRange={{ from: 0, to: 1000 }}
-            workload={workload}
-          />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    const metrics = await screen.findByTestId('envoy-memory-summary-metrics');
-    const status = await screen.findByTestId('envoy-memory-status-alert');
-    expect(metrics.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText('Memory Status')).toBeInTheDocument();
-    expect(screen.queryByText(/Warning at/)).not.toBeInTheDocument();
-    expect(screen.queryByText('Rough estimate from cluster count')).not.toBeInTheDocument();
   });
 
   it('navigates to envoy resource tabs from overview links', async () => {

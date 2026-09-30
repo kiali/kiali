@@ -99,34 +99,36 @@ export const workloadHandlers = [
         ? []
         : [{ name: 'envoy', dashboardRefs: [{ template: 'envoy', title: 'Envoy Metrics' }] }];
 
+      // reviews-v1: multi-pod mock for Envoy memory chart / pod selector
+      const podSuffixes = workload === 'reviews-v1' ? ['abc123', 'def456', 'ghi789'] : ['abc123'];
+      const pods = podSuffixes.map(suffix => ({
+        name: `${workload}-${suffix}`,
+        labels: found.labels,
+        createdAt: new Date().toISOString(),
+        createdBy: [{ name: workload as string, kind: found.isZtunnel ? 'DaemonSet' : 'Deployment' }],
+        istioContainers,
+        istioInitContainers,
+        status: 'Running',
+        statusMessage: '',
+        statusReason: '',
+        appLabel: true,
+        versionLabel: true,
+        containers: [{ name: found.labels.app, image: `${found.labels.app}:1.0` }],
+        serviceAccountName: `${found.labels.app}-service-account`
+      }));
+
       return HttpResponse.json({
         ...found,
         createdAt: new Date().toISOString(),
         resourceVersion: '12345',
         type: found.isZtunnel ? 'DaemonSet' : 'Deployment',
         istioInjectionAnnotation: !found.isZtunnel,
-        podCount: found.isZtunnel ? 3 : 1,
+        podCount: found.isZtunnel ? 3 : pods.length,
         annotations: {},
         healthAnnotations: {},
         additionalDetails: [],
         serviceAccountNames: [`${found.labels.app}-service-account`],
-        pods: [
-          {
-            name: `${workload}-abc123`,
-            labels: found.labels,
-            createdAt: new Date().toISOString(),
-            createdBy: [{ name: workload as string, kind: found.isZtunnel ? 'DaemonSet' : 'Deployment' }],
-            istioContainers,
-            istioInitContainers,
-            status: 'Running',
-            statusMessage: '',
-            statusReason: '',
-            appLabel: true,
-            versionLabel: true,
-            containers: [{ name: found.labels.app, image: `${found.labels.app}:1.0` }],
-            serviceAccountName: `${found.labels.app}-service-account`
-          }
-        ],
+        pods,
         services: [createMockServiceListItem(found.labels.app, namespace as string)],
         runtimes,
         validations: workloadValidations,
@@ -361,7 +363,25 @@ export const workloadHandlers = [
     return HttpResponse.json(generateMockDashboard('Workload', direction));
   }),
 
-  http.get('*/api/namespaces/:namespace/workloads/:workload/envoymemory', () => {
+  http.get('*/api/namespaces/:namespace/workloads/:workload/envoymemory', ({ params }) => {
+    const { workload } = params;
+    // ratings-v1: warning / configuration-heavy mock for Envoy memory status
+    if (workload === 'ratings-v1') {
+      return HttpResponse.json({
+        activeClustersMax: 180,
+        activeConnections: 0,
+        cause: 'configuration',
+        largeConfigClustersThreshold: 50,
+        memoryLimitBytes: 1073741824,
+        memoryMaxBytes: 905969664,
+        memoryThresholdBytes: 751619277,
+        memoryUsedPercent: 84.4,
+        proxyType: 'sidecar',
+        requestRate: 0.01,
+        roughConfigMemoryBytes: 9216000
+      });
+    }
+
     return HttpResponse.json({
       activeClustersMax: 12,
       activeConnections: 0,

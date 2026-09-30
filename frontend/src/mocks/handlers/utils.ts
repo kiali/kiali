@@ -1,5 +1,5 @@
-import { InstanceType } from '../../types/Common';
-import { Metric } from '../../types/Metrics';
+import type { InstanceType } from '../../types/Common';
+import type { Metric } from '../../types/Metrics';
 import { getItemHealthStatus, getScenarioConfig } from '../scenarios';
 
 const generateDatapoints = (baseValue: number, variance: number, points = 61): Array<[number, number]> => {
@@ -151,6 +151,10 @@ const generateRandomSeries = (
 };
 
 export const generateMockDashboard = (entityType: string, direction: string): Record<string, unknown> => {
+  if (entityType === 'envoy-memory') {
+    return generateEnvoyMemoryMockDashboard();
+  }
+
   const directionLabel = direction === 'inbound' ? 'Inbound' : 'Outbound';
 
   return {
@@ -264,6 +268,58 @@ export const generateMockDashboard = (entityType: string, direction: string): Re
     ],
     externalLinks: [],
     rows: 3
+  };
+};
+
+const generateEnvoyMemoryMockDashboard = (): Record<string, unknown> => {
+  const pods = ['reviews-v1-abc123', 'reviews-v1-def456', 'reviews-v1-ghi789'];
+  const memoryMetrics = pods.flatMap((pod, i) => [
+    {
+      datapoints: generateDatapoints(60_000_000 * (1 + i * 0.35), 8_000_000),
+      labels: { pod },
+      name: 'Envoy allocated'
+    },
+    {
+      datapoints: generateDatapoints(55_000_000 * (1 + i * 0.3), 6_000_000),
+      labels: { container: 'istio-proxy', pod },
+      name: 'Container working set'
+    }
+  ]);
+
+  return {
+    title: 'Envoy Memory',
+    charts: [
+      {
+        name: 'Memory trends',
+        unit: 'bytes',
+        spans: 12,
+        metrics: memoryMetrics,
+        chartType: 'line',
+        xAxis: 'time'
+      },
+      {
+        name: 'Active connections',
+        unit: 'conn',
+        spans: 12,
+        metrics: [
+          {
+            datapoints: generateDatapoints(40, 15),
+            labels: {},
+            name: 'TCP connections opened'
+          },
+          {
+            datapoints: generateDatapoints(25, 10),
+            labels: {},
+            name: 'TCP connections closed'
+          }
+        ],
+        chartType: 'line',
+        xAxis: 'time'
+      }
+    ],
+    aggregations: [{ label: 'pod', displayName: 'Pod' }],
+    externalLinks: [],
+    rows: 1
   };
 };
 

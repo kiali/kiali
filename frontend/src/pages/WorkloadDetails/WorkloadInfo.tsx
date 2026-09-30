@@ -405,8 +405,8 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               </DescriptionListGroup>
 
               {isPrometheusAvailable() && hasEnvoyMemoryWorkload(workload) && (
-                <DescriptionListGroup data-test="details-envoy-memory">
-                  <DescriptionListTerm>{t('Envoy memory')}</DescriptionListTerm>
+                <DescriptionListGroup data-test="details-envoy-status">
+                  <DescriptionListTerm>{t('Envoy status')}</DescriptionListTerm>
                   <DescriptionListDescription>
                     <EnvoyMemoryStatus
                       lastRefreshAt={this.props.lastRefreshAt}

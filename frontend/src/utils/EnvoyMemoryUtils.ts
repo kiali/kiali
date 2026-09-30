@@ -90,21 +90,35 @@ export const envoyMemoryCauseLabel = (cause: EnvoyMemoryCause): string => {
   }
 };
 
-export const envoyMemoryCauseDescription = (cause: EnvoyMemoryCause): string => {
-  switch (cause) {
-    case 'configuration':
-      return t(
-        'This workload has high proxy memory with little traffic and many active clusters. Consider applying configuration scoping.'
-      );
-    case 'traffic':
-      return t('Proxy memory is elevated while the workload is handling active connections or requests.');
-    case 'unknown':
-      return t(
-        'Proxy memory is elevated without active traffic. Memory may not have been released yet, or another factor is involved.'
-      );
-    default:
-      return t('Envoy proxy memory is within the expected range for this workload type.');
+export const envoyMemoryThresholdHelp = (summary: {
+  largeConfigClustersThreshold: number;
+  memoryLimitBytes: number;
+  memoryThresholdBytes: number;
+  proxyType?: string;
+}): string => {
+  const threshold = formatEnvoyMemoryBytes(summary.memoryThresholdBytes);
+  if (summary.memoryLimitBytes > 0) {
+    return t(
+      'Memory is flagged as high when allocated memory exceeds {{threshold}} (70% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
+      {
+        threshold,
+        limit: formatEnvoyMemoryBytes(summary.memoryLimitBytes),
+        clusters: summary.largeConfigClustersThreshold
+      }
+    );
   }
+
+  const proxyLabel =
+    summary.proxyType === 'waypoint' || summary.proxyType === 'gateway' ? t('gateways and waypoints') : t('sidecars');
+
+  return t(
+    'Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.',
+    {
+      threshold,
+      proxyType: proxyLabel,
+      clusters: summary.largeConfigClustersThreshold
+    }
+  );
 };
 
 export const istioConfigurationScopingUrl = (): string => ISTIO_CONFIGURATION_SCOPING_URL;
@@ -116,8 +130,7 @@ export type EnvoyMemoryMetricHelpKey =
   | 'listeners'
   | 'routes'
   | 'activeConnections'
-  | 'requestRate'
-  | 'memoryStatus';
+  | 'requestRate';
 
 export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => {
   switch (key) {
@@ -145,14 +158,15 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       return t(
         'HTTP: rate of istio_requests_total (source/waypoint and destination reporters). Waypoints/gateways: combined rate of istio_tcp_sent_bytes_total and istio_tcp_received_bytes_total (L4; no reporter filter).'
       );
-    case 'memoryStatus':
-      return t(
-        'Heuristic classification from allocated memory, request rate, active connections, and active clusters. High memory with idle traffic and many clusters is labeled as configuration; high memory with active traffic is labeled as traffic.'
-      );
     default:
       return '';
   }
 };
+
+export const sortedEnvoyPodNames = (workload: Workload): string[] =>
+  [...(workload.pods ?? [])].map(pod => pod.name).sort((a, b) => (a >= b ? 1 : -1));
+
+export const sortedEnvoyPodName = (workload: Workload): string | undefined => sortedEnvoyPodNames(workload)[0];
 
 export const buildEnvoyMemoryQueryParams = (
   timeRange: TimeRange,

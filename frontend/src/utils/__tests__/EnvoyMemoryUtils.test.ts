@@ -5,7 +5,8 @@ import {
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
   envoyMemoryCauseLabel,
-  envoyMemoryCauseStatus
+  envoyMemoryCauseStatus,
+  envoyMemoryThresholdHelp
 } from '../EnvoyMemoryUtils';
 import { DEGRADED, HEALTHY } from 'types/Health';
 import type { Workload } from 'types/Workload';
@@ -71,6 +72,26 @@ describe('EnvoyMemoryUtils', () => {
     expect(envoyMemoryCauseStatus('configuration')).toBe(DEGRADED);
     expect(envoyMemoryCauseStatus('traffic')).toBe(DEGRADED);
     expect(envoyMemoryCauseStatus('unknown')).toBe(DEGRADED);
+  });
+
+  it('describes the active warning threshold', () => {
+    expect(
+      envoyMemoryThresholdHelp({
+        largeConfigClustersThreshold: 50,
+        memoryLimitBytes: 1024 * 1024 * 1024,
+        memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
+        proxyType: 'sidecar'
+      })
+    ).toContain('70%');
+
+    expect(
+      envoyMemoryThresholdHelp({
+        largeConfigClustersThreshold: 50,
+        memoryLimitBytes: 0,
+        memoryThresholdBytes: 100 * 1024 * 1024,
+        proxyType: 'sidecar'
+      })
+    ).toContain('absolute threshold');
   });
 
   it('builds query params with queryTime in seconds', () => {

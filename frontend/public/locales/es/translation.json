@@ -1393,5 +1393,20 @@
   "Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). When available, the chart draws a Memory limit line from container_spec_memory_limit_bytes, otherwise sidecar.istio.io/proxyMemoryLimit.": "Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). When available, the chart draws a Memory limit line from container_spec_memory_limit_bytes, otherwise sidecar.istio.io/proxyMemoryLimit.",
   "Series": "Series",
   "TCP throughput": "Throughput TCP",
-  "Use Max to aggregate memory across pods (maximum), or By pod to plot each pod separately. Active connections remain a workload total on the right axis.": "Usa Máx para agregar la memoria entre pods (máximo), o Por pod para graficar cada pod por separado. Las conexiones activas siguen siendo el total del workload en el eje derecho."
+  "Use Max to aggregate memory across pods (maximum), or By pod to plot each pod separately. Active connections remain a workload total on the right axis.": "Usa Máx para agregar la memoria entre pods (máximo), o Por pod para graficar cada pod por separado. Las conexiones activas siguen siendo el total del workload en el eje derecho.",
+  "{{count}} pods_one": "{{count}} pods",
+  "{{count}} pods_many": "{{count}} pods",
+  "{{count}} pods_other": "{{count}} pods",
+  "All pods": "Todos los pods",
+  "Envoy status": "Estado de Envoy",
+  "gateways and waypoints": "gateways y waypoints",
+  "Maximize chart": "Maximizar gráfico",
+  "Memory is flagged as high when allocated memory exceeds {{threshold}} (70% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.": "La memoria se marca como alta cuando la memoria asignada supera {{threshold}} (70% del límite de memoria del proxy de {{limit}} desde container_spec_memory_limit_bytes o sidecar.istio.io/proxyMemoryLimit). Se considera configuración grande cuando los clusters activos superan {{clusters}}.",
+  "Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.": "La memoria se marca como alta cuando la memoria asignada supera {{threshold}} (umbral absoluto por defecto para {{proxyType}}; no hay límite de memoria del proxy). Se considera configuración grande cuando los clusters activos superan {{clusters}}.",
+  "Minimize chart": "Minimizar gráfico",
+  "No pods": "Sin pods",
+  "Pod metrics": "Métricas de pod",
+  "sidecars": "sidecars",
+  "Sum": "Suma",
+  "Use Max or Sum to aggregate memory across pods, or By pod to plot each pod separately. The pod selector filters one or more pods. Active connections remain a workload total on the right axis.": "Usa Máx o Suma para agregar memoria entre pods, o Por pod para dibujar cada pod por separado. El selector de pods filtra uno o más pods. Las conexiones activas siguen siendo el total del workload en el eje derecho."
 }
