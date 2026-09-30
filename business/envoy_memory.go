@@ -23,6 +23,8 @@ const (
 	envoyMemoryLimitRatio      = 0.7
 	idleRequestRatePerSecond   = 0.1
 	idleActiveConnections      = 5
+	// Waypoints expose L4 byte rates; treat below this as idle for classification.
+	idleTCPBytesPerSecond = 100.0
 	// Rough estimate of Envoy config memory contribution per active cluster.
 	// There is no explicit config-vs-traffic memory split; this is a ballpark for UI guidance.
 	roughConfigBytesPerCluster = 50 * 1024
@@ -58,31 +60,41 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	memoryMetric := in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
 	clustersMetric := in.prom.FetchRange(ctx, "envoy_cluster_manager_active_clusters", envoyLabels, "", "", q)
 
-	upstreamCx := in.prom.FetchRange(ctx, "envoy_cluster_upstream_cx_active", envoyLabels, "", "", q)
 	upstreamRqTotal := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq_total", []string{envoyLabels}, "", q)
 	// Some Istio versions export upstream_rq without the _total suffix.
 	upstreamRq := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq", []string{envoyLabels}, "", q)
 	// Downstream listener stats are often absent on waypoints and newer gateways.
-	downstreamCx := in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", envoyLabels, "", "", q)
 	downstreamRq := fetchEnvoyDownstreamRequestRate(ctx, in.prom, envoyLabels, q)
-	// istio_requests_total must use Istio-intrinsic labels (source_workload,
-	// destination_workload) because scrape-based labels (app, version) are
-	// stripped in federated Prometheus setups via recording-rule aggregation.
+	// Istio telemetry must use intrinsic workload labels (source_workload /
+	// destination_workload); scrape labels are stripped in federated Prometheus.
 	istioSourceLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "source", in.conf)
 	istioDestLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "destination", in.conf)
-	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{istioSourceLabels, istioDestLabels}, "", q)
+	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{
+		appendPromLabelMatchers(istioSourceLabels, nil, map[string]string{"reporter": "source|waypoint"}),
+		appendPromLabels(istioDestLabels, map[string]string{"reporter": "destination"}),
+	}, "", q)
+	// Prefer Istio TCP connection counters: Envoy cx gauges are often disabled / stuck at 1.
+	tcpOpened := fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_opened_total", istioSourceLabels, istioDestLabels, q)
+	tcpClosed := fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_closed_total", istioSourceLabels, istioDestLabels, q)
 
 	memoryMax := maxLatestValue(memoryMetric)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
-	activeConnections := sumEnvoyActiveConnections(upstreamCx, downstreamCx)
-	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
-	requestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
+	activeConnections := activeTCPConnections(tcpOpened, tcpClosed)
 
 	proxyType := envoyProxyType(workload)
+	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
+	httpRequestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
+	// Waypoints (and often gateways) primarily emit L4 TCP telemetry, not HTTP request counts.
+	tcpByteRate := fetchIstioTCPByteRate(ctx, in.prom, istioSourceLabels, istioDestLabels, q)
+	requestRate := httpRequestRate
+	if proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0) {
+		requestRate = tcpByteRate
+	}
+
 	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
 	memoryLimit := resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
 	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
-	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate)
+	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate, proxyType)
 
 	var memoryUsedPercent float64
 	if memoryLimit > 0 {
@@ -125,12 +137,16 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 	return models.EnvoyProxyTypeSidecar
 }
 
-func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, requestRate float64) models.EnvoyMemoryCause {
+func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, proxyType models.EnvoyProxyType) models.EnvoyMemoryCause {
 	if memoryBytes <= memoryThreshold {
 		return models.EnvoyMemoryCauseOK
 	}
 
-	idle := requestRate < idleRequestRatePerSecond && activeConnections < idleActiveConnections
+	idleTraffic := trafficRate < idleRequestRatePerSecond
+	if proxyType == models.EnvoyProxyTypeWaypoint || proxyType == models.EnvoyProxyTypeGateway {
+		idleTraffic = trafficRate < idleTCPBytesPerSecond
+	}
+	idle := idleTraffic && activeConnections < idleActiveConnections
 	largeConfig := activeClusters > largeConfigThreshold
 
 	if idle && largeConfig {
@@ -233,13 +249,62 @@ func promInstantScalar(ctx context.Context, prom prometheus.ClientInterface, que
 }
 
 // BuildWorkloadMetricLabels builds Prometheus label selectors scoped to a workload.
+// Prefers pod-name selectors when pods are known so sibling gateway/waypoint pods
+// that share app or gateway labels are not included.
 func BuildWorkloadMetricLabels(conf *config.Config, workload *models.Workload) string {
+	if podLabels := buildWorkloadPodNamesSelector(conf, workload); podLabels != "" {
+		return podLabels
+	}
+
 	labelFilters := workloadLabelFilters(conf, workload.Labels)
 	if len(labelFilters) > 0 {
 		return buildEnvoyMetricLabels(conf, workload.Namespace, labelFilters)
 	}
 
 	return ""
+}
+
+func buildWorkloadPodNamesSelector(conf *config.Config, workload *models.Workload) string {
+	if workload == nil {
+		return ""
+	}
+
+	podNames := make([]string, 0, len(workload.Pods))
+	for _, pod := range workload.Pods {
+		if pod == nil || pod.Name == "" {
+			continue
+		}
+		podNames = append(podNames, escapePromLabelValue(pod.Name))
+	}
+	if len(podNames) == 0 {
+		return ""
+	}
+	sort.Strings(podNames)
+
+	namespaceLabel := conf.ExternalServices.CustomDashboards.NamespaceLabel
+	if namespaceLabel == "" {
+		namespaceLabel = "namespace"
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, `{%s="%s"`, namespaceLabel, workload.Namespace)
+	if len(podNames) == 1 {
+		fmt.Fprintf(&b, `,pod="%s"`, podNames[0])
+	} else {
+		fmt.Fprintf(&b, `,pod=~"%s"`, strings.Join(podNames, "|"))
+	}
+
+	keys := make([]string, 0, len(conf.ExternalServices.Prometheus.QueryScope))
+	for labelName := range conf.ExternalServices.Prometheus.QueryScope {
+		keys = append(keys, labelName)
+	}
+	sort.Strings(keys)
+	for _, labelName := range keys {
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(conf.ExternalServices.Prometheus.QueryScope[labelName]))
+	}
+
+	b.WriteByte('}')
+	return b.String()
 }
 
 func workloadLabelFilters(conf *config.Config, labels map[string]string) map[string]string {
@@ -364,8 +429,43 @@ func maxRequestRate(candidates ...float64) float64 {
 	return max
 }
 
-func sumEnvoyActiveConnections(upstream, downstream prometheus.Metric) int64 {
-	return int64(sumLatestValues(upstream) + sumLatestValues(downstream))
+func activeTCPConnections(opened, closed prometheus.Metric) int64 {
+	active := sumLatestValues(opened) - sumLatestValues(closed)
+	if active < 0 {
+		return 0
+	}
+	return int64(active)
+}
+
+// fetchIstioTCPConnections loads a TCP counter for this workload as source or destination.
+// Do not filter by reporter: Istio L4 telemetry reporter labels are inverted
+// (https://github.com/istio/istio/issues/32399), so source_workload=waypoint often
+// appears with reporter="destination".
+func fetchIstioTCPConnections(
+	ctx context.Context,
+	prom prometheus.ClientInterface,
+	metricName string,
+	sourceLabels string,
+	destLabels string,
+	q *prometheus.RangeQuery,
+) prometheus.Metric {
+	source := prom.FetchRange(ctx, metricName, sourceLabels, "", "sum", q)
+	dest := prom.FetchRange(ctx, metricName, destLabels, "", "sum", q)
+	return prometheus.Metric{Matrix: append(source.Matrix, dest.Matrix...)}
+}
+
+// fetchIstioTCPByteRate returns combined TCP sent+received byte rate for this workload.
+func fetchIstioTCPByteRate(
+	ctx context.Context,
+	prom prometheus.ClientInterface,
+	sourceLabels string,
+	destLabels string,
+	q *prometheus.RangeQuery,
+) float64 {
+	labels := []string{sourceLabels, destLabels}
+	sent := prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", labels, "", q)
+	received := prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", labels, "", q)
+	return sumLatestValues(sent) + sumLatestValues(received)
 }
 
 func fetchEnvoyDownstreamRequestRate(ctx context.Context, prom prometheus.ClientInterface, labels string, q *prometheus.RangeQuery) prometheus.Metric {

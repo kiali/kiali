@@ -243,7 +243,8 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   const listenersLabel = t('Listeners');
   const routesLabel = t('Routes');
   const activeConnectionsLabel = t('Active connections');
-  const requestRateLabel = t('Request rate');
+  const requestRateLabel =
+    summary?.proxyType === 'waypoint' || summary?.proxyType === 'gateway' ? t('TCP throughput') : t('Request rate');
   const memoryStatusLabel = t('Memory Status');
 
   return (
@@ -332,6 +333,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
         <div className={sectionStyle}>
           <EnvoyMemoryOverlayChart
             lastRefreshAt={props.lastRefreshAt}
+            memoryLimitBytes={summary?.memoryLimitBytes}
             namespace={props.namespace}
             timeRange={props.timeRange}
             workload={props.workload}

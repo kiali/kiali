@@ -81,7 +81,13 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
         </div>
       )}
       <div>
-        <strong>{t('Request rate')}:</strong> {formatEnvoyRequestRate(summary)}
+        <strong>
+          {summary.proxyType === 'waypoint' || summary.proxyType === 'gateway'
+            ? t('TCP throughput')
+            : t('Request rate')}
+          :
+        </strong>{' '}
+        {formatEnvoyRequestRate(summary)}
       </div>
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>

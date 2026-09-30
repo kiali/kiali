@@ -190,8 +190,13 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 			if chart.UnitScale != 0.0 {
 				conversionParams.Scale = chart.UnitScale
 			}
-			// Group by labels is concat of what is defined in CR + what is passed as parameters
-			byLabels := append(chart.GroupLabels, params.ByLabels...)
+			// Group by labels is concat of chart GroupLabels + request ByLabels that the chart declares.
+			byLabels := append([]string{}, chart.GroupLabels...)
+			for _, lbl := range params.ByLabels {
+				if chartSupportsAggregationLabel(chart, lbl) {
+					byLabels = append(byLabels, lbl)
+				}
+			}
 			if len(chart.SortLabel) > 0 {
 				// We also need to group by the label used for sorting, if not explicitly present
 				present := false
@@ -483,6 +488,22 @@ func (in *DashboardsService) buildIstioWorkloadMetricLabels(namespace string, re
 	lb.Workload(workloadName, namespace).QueryScope()
 
 	return appendPromLabelMatchers(lb.Build(), ref.Labels, ref.LabelRegexps)
+}
+
+// chartSupportsAggregationLabel reports whether a chart declares an aggregation for label,
+// so request ByLabels are only applied to charts that can meaningfully group by that label.
+func chartSupportsAggregationLabel(chart dashboards.MonitoringDashboardChart, label string) bool {
+	for _, agg := range chart.Aggregations {
+		if agg.Label == label {
+			return true
+		}
+	}
+	for _, groupLabel := range chart.GroupLabels {
+		if groupLabel == label {
+			return true
+		}
+	}
+	return false
 }
 
 // istioMetricLabelPrefixToDirection maps an IstioMetricLabelPrefix value

@@ -44,14 +44,14 @@ describe('EnvoyMemoryUtils', () => {
     expect(formatEnvoyRequestRate({ requestRate: 0 })).toBe('0.00 req/s');
   });
 
-  it('formats memory usage with limit', () => {
+  it('formats memory usage as allocated bytes', () => {
     expect(
       formatEnvoyMemoryUsage({
         memoryLimitBytes: 1073741824,
         memoryMaxBytes: 8703180,
         memoryUsedPercent: 0.8
       })
-    ).toBe('8.3 MiB (0.8% of 1.0 GiB limit)');
+    ).toBe('8.3 MiB');
     expect(
       formatEnvoyMemoryUsage({
         memoryLimitBytes: 0,

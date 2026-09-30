@@ -23,19 +23,28 @@ export const formatEnvoyMemoryUsage = (summary: {
   memoryMaxBytes: number;
   memoryUsedPercent: number;
 }): string => {
-  const allocated = formatEnvoyMemoryBytes(summary.memoryMaxBytes);
-
-  if (summary.memoryLimitBytes > 0) {
-    const limit = formatEnvoyMemoryBytes(summary.memoryLimitBytes);
-    const percent = summary.memoryUsedPercent.toFixed(1);
-    return t('{{allocated}} ({{percent}}% of {{limit}} limit)', { allocated, limit, percent });
-  }
-
-  return allocated;
+  return formatEnvoyMemoryBytes(summary.memoryMaxBytes);
 };
 
-export const formatEnvoyRequestRate = (summary: { requestRate: number }): string => {
+export const formatEnvoyRequestRate = (summary: { proxyType?: string; requestRate: number }): string => {
+  if (summary.proxyType === 'waypoint' || summary.proxyType === 'gateway') {
+    return formatEnvoyByteRate(summary.requestRate);
+  }
   return `${summary.requestRate.toFixed(2)} req/s`;
+};
+
+export const formatEnvoyByteRate = (bytesPerSecond: number): string => {
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond < 0) {
+    return '0 B/s';
+  }
+  if (bytesPerSecond < 1024) {
+    return `${bytesPerSecond.toFixed(1)} B/s`;
+  }
+  const kib = bytesPerSecond / 1024;
+  if (kib < 1024) {
+    return `${kib.toFixed(1)} KiB/s`;
+  }
+  return `${(kib / 1024).toFixed(1)} MiB/s`;
 };
 
 export const formatEnvoyMemoryBytes = (bytes: number): string => {
@@ -114,7 +123,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
   switch (key) {
     case 'allocatedMemory':
       return t(
-        'Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). The limit uses container_spec_memory_limit_bytes when available, otherwise the sidecar.istio.io/proxyMemoryLimit annotation.'
+        'Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). When available, the chart draws a Memory limit line from container_spec_memory_limit_bytes, otherwise sidecar.istio.io/proxyMemoryLimit.'
       );
     case 'roughConfigMemory':
       return t(
@@ -130,11 +139,11 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       return t('Count of routes from the Envoy config dump of the selected pod (not a Prometheus metric).');
     case 'activeConnections':
       return t(
-        'Sum of Prometheus metrics envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active (latest values).'
+        'Active TCP connections approximated as sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total) for this workload. Reporter is not filtered because Istio L4 telemetry inverts reporter labels.'
       );
     case 'requestRate':
       return t(
-        'Rate of Prometheus metric istio_requests_total for this proxy (Upstream reporters source or waypoint; Downstream reporter destination). Envoy request counters are usually absent with default Istio stats, so they are only used when present.'
+        'HTTP: rate of istio_requests_total (source/waypoint and destination reporters). Waypoints/gateways: combined rate of istio_tcp_sent_bytes_total and istio_tcp_received_bytes_total (L4; no reporter filter).'
       );
     case 'memoryStatus':
       return t(

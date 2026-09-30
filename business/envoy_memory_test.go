@@ -17,26 +17,26 @@ import (
 func TestClassifyEnvoyMemorySidecar(t *testing.T) {
 	threshold := float64(sidecarHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 100, 0, 0)
+	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 100, 0, 0, models.EnvoyProxyTypeSidecar)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 5)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 5, models.EnvoyProxyTypeSidecar)
 	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0, models.EnvoyProxyTypeSidecar)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, models.EnvoyProxyTypeSidecar)
 	assert.Equal(t, models.EnvoyMemoryCauseOK, cause)
 }
 
 func TestClassifyEnvoyMemoryGateway(t *testing.T) {
 	threshold := float64(gatewayHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0)
+	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0, models.EnvoyProxyTypeGateway)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0)
+	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0, models.EnvoyProxyTypeGateway)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 }
 
@@ -78,6 +78,28 @@ func TestBuildWorkloadMetricLabelsUsesAppLabels(t *testing.T) {
 	assert.Equal(t, `{namespace="bookinfo",app="productpage",version="v1"}`, labels)
 }
 
+func TestBuildWorkloadMetricLabelsPrefersPodNames(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.CustomDashboards.NamespaceLabel = "namespace"
+
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Namespace: "bookinfo",
+			Labels: map[string]string{
+				"gateway.networking.k8s.io/gateway-name": "waypoint",
+				"app":                                    "waypoint",
+			},
+		},
+		Pods: models.Pods{
+			&models.Pod{Name: "waypoint-abc"},
+		},
+	}
+
+	labels := BuildWorkloadMetricLabels(conf, workload)
+	assert.Equal(t, `{namespace="bookinfo",pod="waypoint-abc"}`, labels)
+}
+
 func TestBuildWorkloadMetricLabelsUsesGatewayLabels(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -111,8 +133,9 @@ func TestSumEnvoyTrafficSignals(t *testing.T) {
 	}
 
 	assert.Equal(10.0, sumEnvoyRequestRate(upstream, downstream))
-	assert.Equal(int64(10), sumEnvoyActiveConnections(upstream, downstream))
+	assert.Equal(int64(5), activeTCPConnections(downstream, upstream))
 	assert.Equal(2.5, sumEnvoyRequestRate(upstream, prometheus.Metric{}))
+	assert.Equal(int64(0), activeTCPConnections(upstream, downstream))
 }
 
 func TestMaxRequestRate(t *testing.T) {

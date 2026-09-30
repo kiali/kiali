@@ -107,9 +107,14 @@ const DEFAULT_DASHBOARDS_YAML = `
       dataType: "raw"
       min: 0
       aggregator: "max"
+      aggregations:
+      - label: "pod"
+        displayName: "Pod"
       metrics:
+      # Scope to this workload's pods so sibling gateway/waypoint pods are excluded.
       - metricName: "envoy_server_memory_allocated"
         displayName: "Envoy allocated"
+        usePodSelector: true
       - metricName: "container_memory_working_set_bytes"
         displayName: "Container working set"
         labels:
@@ -119,18 +124,31 @@ const DEFAULT_DASHBOARDS_YAML = `
       name: "Active connections"
       spans: 12
       dataType: "raw"
+      aggregator: "sum"
       metrics:
-      - metricName: "envoy_cluster_upstream_cx_active"
-        displayName: "Upstream"
-      - metricName: "envoy_listener_downstream_cx_active"
-        displayName: "Downstream"
+      # Istio L4 reporter labels are inverted; do not filter by reporter here.
+      - metricName: "istio_tcp_connections_opened_total"
+        displayName: "TCP opened Upstream"
+        istioMetricLabelPrefix: "source"
+      - metricName: "istio_tcp_connections_opened_total"
+        displayName: "TCP opened Downstream"
+        istioMetricLabelPrefix: "destination"
+      - metricName: "istio_tcp_connections_closed_total"
+        displayName: "TCP closed Upstream"
+        istioMetricLabelPrefix: "source"
+      - metricName: "istio_tcp_connections_closed_total"
+        displayName: "TCP closed Downstream"
+        istioMetricLabelPrefix: "destination"
   - chart:
       name: "Active clusters"
       spans: 12
-      metricName: "envoy_cluster_manager_active_clusters"
       dataType: "raw"
       min: 0
       aggregator: "max"
+      metrics:
+      - metricName: "envoy_cluster_manager_active_clusters"
+        displayName: "Active clusters"
+        usePodSelector: true
   - chart:
       name: "Request rate"
       spans: 12

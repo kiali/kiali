@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { EnvoyDetails } from '../EnvoyDetails';
@@ -40,7 +40,22 @@ describe('EnvoyMemory', () => {
         title: 'Envoy Memory',
         aggregations: [],
         charts: [
-          { name: 'Memory trends', metrics: [], spans: 12, startCollapsed: false, unit: 'bytes' },
+          {
+            name: 'Memory trends',
+            metrics: [
+              {
+                name: 'Envoy allocated',
+                labels: {},
+                datapoints: [
+                  [1720526400, 1024],
+                  [1720526430, 2048]
+                ]
+              }
+            ],
+            spans: 12,
+            startCollapsed: false,
+            unit: 'bytes'
+          },
           { name: 'Active connections', metrics: [], spans: 12, startCollapsed: false, unit: '' },
           { name: 'Active clusters', metrics: [], spans: 12, startCollapsed: false, unit: '' },
           { name: 'Request rate', metrics: [], spans: 12, startCollapsed: false, unit: 'rps' }
@@ -80,6 +95,69 @@ describe('EnvoyMemory', () => {
 
     expect(await screen.findByTestId('envoy-memory-status-alert')).toBeInTheDocument();
     expect(screen.getByText('Within normal range')).toBeInTheDocument();
+  });
+
+  it('requests overlay chart with Max aggregation by default and By pod when selected', async () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 0, to: 1000 }}
+            workload={workload}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await screen.findByTestId('envoy-memory-chart-view-mode')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(API.getCustomDashboard).toHaveBeenCalledWith(
+        'bookinfo',
+        'envoy-memory',
+        expect.objectContaining({
+          byLabels: [],
+          rawDataAggregator: 'max',
+          workload: 'details-v1'
+        }),
+        'cluster-default'
+      );
+    });
+
+    fireEvent.click(document.getElementById('envoy-memory-chart-view-mode-toggle')!);
+    fireEvent.click(screen.getByText('By pod'));
+
+    await waitFor(() => {
+      expect(API.getCustomDashboard).toHaveBeenCalledWith(
+        'bookinfo',
+        'envoy-memory',
+        expect.objectContaining({
+          byLabels: ['pod'],
+          rawDataAggregator: 'max',
+          workload: 'details-v1'
+        }),
+        'cluster-default'
+      );
+    });
+  });
+
+  it('shows Memory limit in the chart legend when summary has a limit', async () => {
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 1720526400000, to: 1720526430000 }}
+            workload={workload}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await screen.findByText('Memory limit')).toBeInTheDocument();
   });
 
   it('renders EnvoyDetails memory tab without invalid element type errors', () => {
