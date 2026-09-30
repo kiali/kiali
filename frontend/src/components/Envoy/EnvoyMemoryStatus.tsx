@@ -3,8 +3,8 @@ import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import type { Workload } from 'types/Workload';
 import type { EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
+import { ColorScheme } from 'types/Common';
 import { NA } from 'types/Health';
-import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { location } from '../../app/History';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
@@ -12,11 +12,14 @@ import { inlineIconRowStyle } from 'styles/FlexStyles';
 import { infoStyle } from 'styles/IconStyle';
 import { moreInfoLinkStyle } from 'components/Validations/WorkloadConfigValidation';
 import { KialiLink } from 'components/Link/KialiLink';
+import { PFColors } from 'components/Pf/PfColors';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import {
   buildEnvoyMemoryQueryParams,
   buildEnvoyMemoryTabUrl,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
+  fetchEnvoyMemorySummary,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
@@ -33,16 +36,19 @@ type EnvoyMemoryStatusProps = {
 
 export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: EnvoyMemoryStatusProps) => {
   const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
+  // Tooltip has reversed theme (light theme = dark background), so link colors are inverted
+  const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
+  const linkColor = darkTheme ? PFColors.LinkTooltipDarkTheme : PFColors.LinkTooltipLightTheme;
 
   const fetchSummary = React.useCallback((): void => {
-    API.getWorkloadEnvoyMemory(
+    fetchEnvoyMemorySummary(
       props.namespace,
       props.workload.name,
       buildEnvoyMemoryQueryParams(props.timeRange, props.lastRefreshAt),
       props.workload.cluster
     )
-      .then(response => {
-        setSummary(response.data);
+      .then(data => {
+        setSummary(data);
       })
       .catch(error => {
         addError('Could not fetch Envoy memory summary.', error);
@@ -84,17 +90,14 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
         </div>
       )}
       <div>
-        <strong>
-          {summary.proxyType === 'waypoint' || summary.proxyType === 'gateway'
-            ? t('TCP throughput')
-            : t('Request rate')}
-          :
-        </strong>{' '}
-        {formatEnvoyRequestRate(summary)}
+        <strong>{t('Traffic rate')}:</strong> {formatEnvoyRequestRate(summary)}
       </div>
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>
-        <KialiLink to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())}>
+        <KialiLink
+          to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())}
+          style={{ color: linkColor }}
+        >
           {t('Envoy overview tab')}
         </KialiLink>
       </div>

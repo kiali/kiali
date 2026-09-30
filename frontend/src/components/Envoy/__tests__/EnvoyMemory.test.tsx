@@ -25,7 +25,7 @@ describe('EnvoyMemory', () => {
         activeClustersMax: 10,
         activeConnections: 5,
         cause: 'ok',
-        largeConfigClustersThreshold: 50,
+        largeConfigClustersThreshold: 100,
         memoryLimitBytes: 1073741824,
         memoryMaxBytes: 1024,
         memoryThresholdBytes: 751619277,
@@ -123,7 +123,7 @@ describe('EnvoyMemory', () => {
     expect(screen.queryByText('Rough estimate from cluster count')).not.toBeInTheDocument();
   });
 
-  it('requests overlay chart with Max aggregation by default, Sum, and By pod when selected', async () => {
+  it('requests overlay chart with Max aggregation by default and Sum when selected', async () => {
     const workloadWithPods = {
       ...workload,
       pods: [{ name: 'details-v1-abc123' }, { name: 'details-v1-def456' }]
@@ -143,7 +143,7 @@ describe('EnvoyMemory', () => {
     );
 
     expect(await screen.findByTestId('envoy-memory-chart-view-mode')).toBeInTheDocument();
-    expect(screen.getByText('Pod metrics')).toBeInTheDocument();
+    expect(screen.getByText('Pod Aggregation')).toBeInTheDocument();
     expect(document.getElementById('envoy-memory-chart-pod-toggle')).toBeInTheDocument();
     expect(screen.getByTestId('envoy-memory-chart-expand')).toBeInTheDocument();
     expect(screen.getByTestId('envoy-memory-status-help')).toBeInTheDocument();
@@ -180,22 +180,6 @@ describe('EnvoyMemory', () => {
         expect.objectContaining({
           byLabels: [],
           rawDataAggregator: 'sum',
-          workload: 'details-v1'
-        }),
-        'cluster-default'
-      );
-    });
-
-    fireEvent.click(document.getElementById('envoy-memory-chart-view-mode-toggle')!);
-    fireEvent.click(screen.getByText('By pod'));
-
-    await waitFor(() => {
-      expect(API.getCustomDashboard).toHaveBeenCalledWith(
-        'bookinfo',
-        'envoy-memory',
-        expect.objectContaining({
-          byLabels: ['pod'],
-          rawDataAggregator: 'max',
           workload: 'details-v1'
         }),
         'cluster-default'

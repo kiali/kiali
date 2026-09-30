@@ -1,4 +1,4 @@
-import type { InstanceType } from '../../types/Common';
+import { InstanceType } from '../../types/Common';
 import type { Metric } from '../../types/Metrics';
 import { getItemHealthStatus, getScenarioConfig } from '../scenarios';
 

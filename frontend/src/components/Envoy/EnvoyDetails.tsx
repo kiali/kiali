@@ -436,6 +436,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.namespace}
               onSelectEnvoyTab={resource => this.selectEnvoyTab(resource)}
+              podName={this.state.pod.name}
               timeRange={this.props.rangeDuration}
               workload={this.props.workload}
             />
@@ -485,6 +486,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
             onSelect={this.envoyHandleTabClick}
             mountOnEnter={true}
             unmountOnExit={true}
+            isSubtab={true}
           >
             {tabs}
           </Tabs>

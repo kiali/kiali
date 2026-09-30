@@ -1,14 +1,57 @@
 import type { Workload } from 'types/Workload';
-import type { EnvoyMemoryCause } from 'types/EnvoyMemory';
+import type { EnvoyMemoryCause, EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
 import type { IstioMetricsOptions } from 'types/MetricsOptions';
 import type { Status } from 'types/Health';
 import { DEGRADED, HEALTHY } from 'types/Health';
 import { timeRangeToOptions } from 'components/Metrics/Helper';
+import * as API from '../services/Api';
 import { computePrometheusRateParams } from '../services/Prometheus';
 import { t } from 'utils/I18nUtils';
 
 const ISTIO_CONFIGURATION_SCOPING_URL = 'https://istio.io/latest/docs/ops/configuration/mesh/configuration-scoping/';
+
+// Rough estimate of Envoy config memory contribution per active cluster (matches backend).
+export const ROUGH_CONFIG_BYTES_PER_CLUSTER = 50 * 1024;
+
+// Short client-side cache so Summary and Envoy Overview tabs do not duplicate in-flight fetches.
+const ENVOY_MEMORY_SUMMARY_CACHE_TTL_MS = 5000;
+type EnvoyMemorySummaryCacheEntry = {
+  expiresAt: number;
+  promise: Promise<EnvoyMemorySummary>;
+};
+const envoyMemorySummaryCache = new Map<string, EnvoyMemorySummaryCacheEntry>();
+
+export const estimateEnvoyConfigMemoryBytes = (clusterCount: number): number => {
+  if (!Number.isFinite(clusterCount) || clusterCount <= 0) {
+    return 0;
+  }
+  return Math.round(clusterCount) * ROUGH_CONFIG_BYTES_PER_CLUSTER;
+};
+
+export const fetchEnvoyMemorySummary = (
+  namespace: string,
+  workload: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<EnvoyMemorySummary> => {
+  const key = `${cluster ?? ''}|${namespace}|${workload}|${JSON.stringify(params)}`;
+  const now = Date.now();
+  const cached = envoyMemorySummaryCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.promise;
+  }
+
+  const promise = API.getWorkloadEnvoyMemory(namespace, workload, params, cluster).then(response => response.data);
+  envoyMemorySummaryCache.set(key, { expiresAt: now + ENVOY_MEMORY_SUMMARY_CACHE_TTL_MS, promise });
+  promise.catch(() => {
+    const current = envoyMemorySummaryCache.get(key);
+    if (current?.promise === promise) {
+      envoyMemorySummaryCache.delete(key);
+    }
+  });
+  return promise;
+};
 
 export const hasEnvoyMemoryWorkload = (workload?: Workload): boolean => {
   if (!workload || workload.isZtunnel) {
@@ -140,7 +183,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       );
     case 'roughConfigMemory':
       return t(
-        'Rough estimate, not a Prometheus metric: active clusters × 50 KiB. Used as a ballpark for configuration footprint because Envoy does not expose config vs traffic memory separately.'
+        'Rough estimate, not a Prometheus metric: active clusters × 50 KiB (prefers config-dump cluster count for the selected pod when available). Used as a ballpark for configuration footprint because Envoy does not expose config vs traffic memory separately.'
       );
     case 'activeClusters':
       return t(
@@ -156,7 +199,7 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       );
     case 'requestRate':
       return t(
-        'HTTP: rate of istio_requests_total (source/waypoint and destination reporters). Waypoints/gateways: combined rate of istio_tcp_sent_bytes_total and istio_tcp_received_bytes_total (L4; no reporter filter).'
+        'Traffic rate from Istio telemetry. HTTP: rate of istio_requests_total (source/waypoint and destination reporters). L4 proxies (waypoints, or gateways with only TCP traffic): combined rate of istio_tcp_sent_bytes_total and istio_tcp_received_bytes_total (no reporter filter).'
       );
     default:
       return '';

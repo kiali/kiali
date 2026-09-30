@@ -77,7 +77,7 @@ describe('EnvoyMemoryUtils', () => {
   it('describes the active warning threshold', () => {
     expect(
       envoyMemoryThresholdHelp({
-        largeConfigClustersThreshold: 50,
+        largeConfigClustersThreshold: 100,
         memoryLimitBytes: 1024 * 1024 * 1024,
         memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
         proxyType: 'sidecar'
@@ -86,7 +86,7 @@ describe('EnvoyMemoryUtils', () => {
 
     expect(
       envoyMemoryThresholdHelp({
-        largeConfigClustersThreshold: 50,
+        largeConfigClustersThreshold: 100,
         memoryLimitBytes: 0,
         memoryThresholdBytes: 100 * 1024 * 1024,
         proxyType: 'sidecar'

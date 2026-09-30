@@ -17,27 +17,31 @@ import (
 func TestClassifyEnvoyMemorySidecar(t *testing.T) {
 	threshold := float64(sidecarHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 100, 0, 0, models.EnvoyProxyTypeSidecar)
+	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 200, 0, 0, false)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 5, models.EnvoyProxyTypeSidecar)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 5, false)
 	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0, models.EnvoyProxyTypeSidecar)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0, false)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, models.EnvoyProxyTypeSidecar)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, false)
 	assert.Equal(t, models.EnvoyMemoryCauseOK, cause)
 }
 
 func TestClassifyEnvoyMemoryGateway(t *testing.T) {
 	threshold := float64(gatewayHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0, models.EnvoyProxyTypeGateway)
+	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0, true)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0, models.EnvoyProxyTypeGateway)
+	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0, true)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
+
+	// HTTP gateways report req/s; a busy gateway must not be treated as idle against the TCP byte threshold.
+	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 50, false)
+	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 }
 
 func TestComputeEnvoyMemoryThreshold(t *testing.T) {

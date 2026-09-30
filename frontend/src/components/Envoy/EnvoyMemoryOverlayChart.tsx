@@ -10,13 +10,15 @@ import {
   SelectList,
   SelectOption,
   Title,
-  TitleSizes
+  TitleSizes,
+  TooltipPosition
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
 import { ChartWithLegend } from 'components/Charts/ChartWithLegend';
 import { maximizeButtonStyle } from 'components/Charts/KChart';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import * as MetricsHelper from 'components/Metrics/Helper';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
@@ -34,7 +36,7 @@ import type { Workload } from 'types/Workload';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
-import { getDataSupplier, toOverlay, toVCLine, toVCLines } from 'utils/VictoryChartsUtils';
+import { getDataSupplier, toOverlay, toVCLine } from 'utils/VictoryChartsUtils';
 import { sortedEnvoyPodNames } from 'utils/EnvoyMemoryUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
@@ -50,7 +52,7 @@ type EnvoyMemoryOverlayChartProps = {
   workload: Workload;
 };
 
-type ChartViewMode = 'max' | 'sum' | 'byPod';
+type ChartViewMode = 'max' | 'sum';
 
 const DEFAULT_CHART_HEIGHT = 300;
 const MIN_MAXIMIZED_CHART_HEIGHT = 200;
@@ -58,12 +60,18 @@ const MIN_MAXIMIZED_CHART_HEIGHT = 200;
 const rootStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
-  minHeight: 0
+  maxWidth: '100%',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden'
 });
 
 const chartWrapStyle = kialiStyle({
   marginTop: PFSpacer.md,
+  maxWidth: '100%',
   minHeight: '280px',
+  minWidth: 0,
+  overflow: 'hidden',
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md
 });
@@ -73,7 +81,10 @@ const maximizedChartWrapStyle = kialiStyle({
   flex: 1,
   flexDirection: 'column',
   marginTop: PFSpacer.md,
+  maxWidth: '100%',
   minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden',
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md
 });
@@ -106,11 +117,6 @@ const toolbarStyle = kialiStyle({
 const helpBodyStyle = kialiStyle({
   maxWidth: '22rem',
   textAlign: 'left'
-});
-
-const dropdownTitleStyle = kialiStyle({
-  alignSelf: 'center',
-  marginRight: '10px'
 });
 
 const findChart = (dashboard: DashboardModel | undefined, name: string): ChartModel | undefined => {
@@ -151,19 +157,6 @@ const activeConnectionsDatapoints = (
       return { name, x: new Date(x), y: active > 0 ? active : 0 };
     });
 };
-
-// Always include the pod label in series names when viewing by pod (even if there is only one pod).
-const metricsWithPodNames = (metrics: Metric[]): Metric[] =>
-  metrics.map(metric => {
-    const pod = metric.labels?.pod;
-    if (!pod) {
-      return metric;
-    }
-    return {
-      ...metric,
-      name: `${metric.name} [${pod}]`
-    };
-  });
 
 const filterMetricsByPods = (metrics: Metric[], selectedPods: string[], allPods: string[]): Metric[] => {
   if (allPods.length === 0 || selectedPods.length === allPods.length) {
@@ -258,9 +251,7 @@ const PodMultiSelect: React.FC<PodMultiSelectProps> = ({ allPods, onChange, sele
 
   return (
     <>
-      <span id="envoy-memory-chart-pod-name" className={dropdownTitleStyle}>
-        {t('Pod')}
-      </span>
+      <PFBadge badge={PFBadges.Pod} position={TooltipPosition.top} />
       <Select
         id="envoy-memory-chart-pod"
         data-test="envoy-memory-chart-pod"
@@ -299,13 +290,12 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
   const app = appLabelName ? props.workload.labels[appLabelName] : '';
   const version = verLabelName ? props.workload.labels[verLabelName] : undefined;
   const chartTitle = t('Memory vs active connections');
-  const connectionsSeriesName = t('Active connections');
+  const connectionsSeriesName = t('Active Connections');
   const podNames = React.useMemo(() => sortedEnvoyPodNames(props.workload), [props.workload.pods]);
   const podNamesKey = podNames.join('|');
   const viewModeOptions: { [key in ChartViewMode]: string } = {
     max: t('Max'),
-    sum: t('Sum'),
-    byPod: t('By pod')
+    sum: t('Sum')
   };
   const allPodsSelected = podNames.length === 0 || selectedPods.length === podNames.length;
   const chartHeight = props.isMaximized ? Math.max(measuredHeight, MIN_MAXIMIZED_CHART_HEIGHT) : DEFAULT_CHART_HEIGHT;
@@ -359,8 +349,8 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     options.workload = props.workload.name;
     options.workloadType = props.workload.gvk.Kind;
 
-    // Fetch per-pod series when viewing by pod or when filtering to a subset of pods.
-    const needsPerPod = viewMode === 'byPod' || !allPodsSelected;
+    // Fetch per-pod series when filtering to a subset of pods, then aggregate client-side.
+    const needsPerPod = !allPodsSelected;
     options.rawDataAggregator = (viewMode === 'sum' ? 'sum' : 'max') as Aggregator;
     options.byLabels = needsPerPod ? ['pod'] : [];
 
@@ -406,10 +396,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
 
   if (memoryChart) {
     let metrics = filterMetricsByPods(memoryChart.metrics, selectedPods, podNames);
-    if (viewMode === 'byPod') {
-      metrics = metricsWithPodNames(metrics);
-      memoryLines = toVCLines(metrics, memoryChart.unit, colorScale, 'time');
-    } else if (!allPodsSelected) {
+    if (!allPodsSelected) {
       metrics = aggregateMetricsByName(metrics, viewMode);
       memoryLines = getDataSupplier({ ...memoryChart, metrics }, { values: new Map() }, colorScale)();
     } else {
@@ -466,7 +453,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
       </p>
       <p>
         {t(
-          'Use Max or Sum to aggregate memory across pods, or By pod to plot each pod separately. The pod selector filters one or more pods. Active connections remain a workload total on the right axis.'
+          'Use Max or Sum to aggregate memory across pods. The pod selector filters one or more pods. Active Connections remain a workload total on the right axis.'
         )}
       </p>
     </>
@@ -508,7 +495,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
         <ToolbarDropdown
           id="envoy-memory-chart-view-mode"
           handleSelect={key => setViewMode(key as ChartViewMode)}
-          nameDropdown={t('Pod metrics')}
+          nameDropdown={t('Pod Aggregation')}
           value={viewMode}
           label={viewModeOptions[viewMode]}
           options={viewModeOptions}

@@ -19,6 +19,8 @@ import {
   envoyMemoryCauseStatus,
   envoyMemoryMetricHelp,
   envoyMemoryThresholdHelp,
+  estimateEnvoyConfigMemoryBytes,
+  fetchEnvoyMemorySummary,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
@@ -33,6 +35,7 @@ type EnvoyMemoryProps = {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
   onSelectEnvoyTab?: (resource: string) => void;
+  podName?: string;
   timeRange: TimeRange;
   workload: Workload;
 };
@@ -72,7 +75,7 @@ const linkRowStyle = kialiStyle({
 const tilesRowStyle = kialiStyle({
   alignItems: 'stretch',
   display: 'flex',
-  flexWrap: 'nowrap',
+  flexWrap: 'wrap',
   gap: PFSpacer.md
 });
 
@@ -81,11 +84,11 @@ const tileStyle = kialiStyle({
   border: `1px solid ${PFColors.BorderColor100}`,
   borderRadius: 'var(--pf-t--global--border--radius--medium)',
   display: 'flex',
-  flex: '1 1 0',
+  flex: '1 1 8rem',
   flexDirection: 'column',
   gap: PFSpacer.xs,
   minHeight: '5.5rem',
-  minWidth: 0,
+  minWidth: '8rem',
   padding: `${PFSpacer.sm} ${PFSpacer.md}`
 });
 
@@ -110,14 +113,20 @@ const tileValueStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: PFSpacer.lg
+  marginTop: PFSpacer.lg,
+  maxWidth: '100%',
+  minWidth: 0,
+  overflow: 'hidden'
 });
 
 const maximizedSectionStyle = kialiStyle({
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
-  minHeight: 0
+  maxWidth: '100%',
+  minHeight: 0,
+  minWidth: 0,
+  overflow: 'hidden'
 });
 
 const helpBodyStyle = kialiStyle({
@@ -186,18 +195,18 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
   const [configCounts, setConfigCounts] = React.useState<{ counts: EnvoyConfigCounts; podName: string }>();
   const [isChartMaximized, setIsChartMaximized] = React.useState(false);
-  const podName = sortedEnvoyPodName(props.workload);
+  const podName = props.podName || sortedEnvoyPodName(props.workload);
   const effectiveConfigCounts = podName && configCounts?.podName === podName ? configCounts.counts : undefined;
 
   const fetchSummary = React.useCallback((): void => {
-    API.getWorkloadEnvoyMemory(
+    fetchEnvoyMemorySummary(
       props.namespace,
       props.workload.name,
       buildEnvoyMemoryQueryParams(props.timeRange, props.lastRefreshAt),
       props.workload.cluster
     )
-      .then(response => {
-        setSummary(response.data);
+      .then(data => {
+        setSummary(data);
       })
       .catch(error => {
         addError('Could not fetch Envoy memory summary.', error);
@@ -244,15 +253,16 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   }, [podName, props.lastRefreshAt, props.namespace, props.workload.cluster]);
 
   const clusterCount = effectiveConfigCounts?.clusters ?? summary?.activeClustersMax;
-  const roughConfigBytes = summary?.roughConfigMemoryBytes;
+  // Prefer config-dump cluster count so the estimate is not stuck at 0 when Prometheus lacks the metric.
+  const roughConfigBytes =
+    clusterCount !== undefined ? estimateEnvoyConfigMemoryBytes(clusterCount) : (summary?.roughConfigMemoryBytes ?? 0);
   const allocatedMemoryLabel = t('Allocated memory');
   const roughConfigLabel = t('Est. config memory');
   const activeClustersLabel = t('Active clusters');
   const listenersLabel = t('Listeners');
   const routesLabel = t('Routes');
-  const activeConnectionsLabel = t('Active connections');
-  const requestRateLabel =
-    summary?.proxyType === 'waypoint' || summary?.proxyType === 'gateway' ? t('TCP throughput') : t('Request rate');
+  const activeConnectionsLabel = t('Active Connections');
+  const requestRateLabel = t('Traffic rate');
   const memoryStatusLabel = t('Memory Status');
 
   return (
@@ -310,7 +320,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                   <MetricTile
                     helpKey="roughConfigMemory"
                     label={roughConfigLabel}
-                    value={formatEnvoyMemoryBytes(roughConfigBytes ?? 0)}
+                    value={formatEnvoyMemoryBytes(roughConfigBytes)}
                   />
                   <MetricTile
                     helpKey="activeClusters"

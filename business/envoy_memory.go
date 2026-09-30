@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -16,9 +17,10 @@ import (
 )
 
 const (
-	sidecarHighMemoryBytes     = 100 * 1024 * 1024
-	gatewayHighMemoryBytes     = 256 * 1024 * 1024
-	sidecarLargeConfigClusters = 50
+	sidecarHighMemoryBytes = 100 * 1024 * 1024
+	gatewayHighMemoryBytes = 256 * 1024 * 1024
+	// Bookinfo alone can approach ~50 clusters without scoping; keep headroom for small meshes.
+	sidecarLargeConfigClusters = 100
 	gatewayLargeConfigClusters = 150
 	envoyMemoryLimitRatio      = 0.7
 	idleRequestRatePerSecond   = 0.1
@@ -57,25 +59,74 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		return nil, fmt.Errorf("workload has no pods with an Envoy proxy")
 	}
 
-	memoryMetric := in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
-	clustersMetric := in.prom.FetchRange(ctx, "envoy_cluster_manager_active_clusters", envoyLabels, "", "", q)
-
-	upstreamRqTotal := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq_total", []string{envoyLabels}, "", q)
-	// Some Istio versions export upstream_rq without the _total suffix.
-	upstreamRq := in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq", []string{envoyLabels}, "", q)
-	// Downstream listener stats are often absent on waypoints and newer gateways.
-	downstreamRq := fetchEnvoyDownstreamRequestRate(ctx, in.prom, envoyLabels, q)
 	// Istio telemetry must use intrinsic workload labels (source_workload /
 	// destination_workload); scrape labels are stripped in federated Prometheus.
 	istioSourceLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "source", in.conf)
 	istioDestLabels := buildIstioWorkloadLabels(workload.Namespace, workload.Name, "destination", in.conf)
-	istioRq := in.prom.FetchRateRange(ctx, "istio_requests_total", []string{
+	istioRequestLabels := []string{
 		appendPromLabelMatchers(istioSourceLabels, nil, map[string]string{"reporter": "source|waypoint"}),
 		appendPromLabels(istioDestLabels, map[string]string{"reporter": "destination"}),
-	}, "", q)
-	// Prefer Istio TCP connection counters: Envoy cx gauges are often disabled / stuck at 1.
-	tcpOpened := fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_opened_total", istioSourceLabels, istioDestLabels, q)
-	tcpClosed := fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_closed_total", istioSourceLabels, istioDestLabels, q)
+	}
+
+	var (
+		memoryMetric    prometheus.Metric
+		clustersMetric  prometheus.Metric
+		upstreamRqTotal prometheus.Metric
+		upstreamRq      prometheus.Metric
+		downstreamRq    prometheus.Metric
+		istioRq         prometheus.Metric
+		tcpOpened       prometheus.Metric
+		tcpClosed       prometheus.Metric
+		tcpByteRate     float64
+		memoryLimit     float64
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(10)
+	go func() {
+		defer wg.Done()
+		memoryMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		clustersMetric = in.prom.FetchRange(ctx, "envoy_cluster_manager_active_clusters", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		upstreamRqTotal = in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq_total", []string{envoyLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		// Some Istio versions export upstream_rq without the _total suffix.
+		upstreamRq = in.prom.FetchRateRange(ctx, "envoy_cluster_upstream_rq", []string{envoyLabels}, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		// Downstream listener stats are often absent on waypoints and newer gateways.
+		downstreamRq = fetchEnvoyDownstreamRequestRate(ctx, in.prom, envoyLabels, q)
+	}()
+	go func() {
+		defer wg.Done()
+		istioRq = in.prom.FetchRateRange(ctx, "istio_requests_total", istioRequestLabels, "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		// Prefer Istio TCP connection counters: Envoy cx gauges are often disabled / stuck at 1.
+		tcpOpened = fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_opened_total", istioSourceLabels, istioDestLabels, q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpClosed = fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_closed_total", istioSourceLabels, istioDestLabels, q)
+	}()
+	go func() {
+		defer wg.Done()
+		tcpByteRate = fetchIstioTCPByteRate(ctx, in.prom, istioSourceLabels, istioDestLabels, q)
+	}()
+	go func() {
+		defer wg.Done()
+		memoryLimit = resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
+	}()
+	wg.Wait()
 
 	memoryMax := maxLatestValue(memoryMetric)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
@@ -84,17 +135,16 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	proxyType := envoyProxyType(workload)
 	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
 	httpRequestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
-	// Waypoints (and often gateways) primarily emit L4 TCP telemetry, not HTTP request counts.
-	tcpByteRate := fetchIstioTCPByteRate(ctx, in.prom, istioSourceLabels, istioDestLabels, q)
+	// Use TCP byte rate for waypoints, or when HTTP request rate is absent and TCP bytes are present.
+	trafficIsByteRate := proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0)
 	requestRate := httpRequestRate
-	if proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0) {
+	if trafficIsByteRate {
 		requestRate = tcpByteRate
 	}
 
 	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
-	memoryLimit := resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
 	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
-	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate, proxyType)
+	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate, trafficIsByteRate)
 
 	var memoryUsedPercent float64
 	if memoryLimit > 0 {
@@ -137,13 +187,13 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 	return models.EnvoyProxyTypeSidecar
 }
 
-func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, proxyType models.EnvoyProxyType) models.EnvoyMemoryCause {
+func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
 	if memoryBytes <= memoryThreshold {
 		return models.EnvoyMemoryCauseOK
 	}
 
 	idleTraffic := trafficRate < idleRequestRatePerSecond
-	if proxyType == models.EnvoyProxyTypeWaypoint || proxyType == models.EnvoyProxyTypeGateway {
+	if trafficIsByteRate {
 		idleTraffic = trafficRate < idleTCPBytesPerSecond
 	}
 	idle := idleTraffic && activeConnections < idleActiveConnections
