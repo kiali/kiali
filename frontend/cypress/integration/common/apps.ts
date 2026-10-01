@@ -109,8 +109,9 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
             peels.push(...peelCoveringLayers($path[0], win));
           }
 
-          // Hover then click so Victory data onClick receives the datum.
-          cy.wrap($path).trigger('mousemove').click();
+          // One click only. A separate mousemove opens the Victory tooltip
+          // over the point, then Cypress fails actionability on click.
+          cy.wrap($path).click();
 
           cy.then(() => {
             peels.forEach(el => el.style.removeProperty('pointer-events'));
