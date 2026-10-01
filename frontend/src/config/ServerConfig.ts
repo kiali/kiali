@@ -214,9 +214,7 @@ export const isPrometheusAvailable = (): boolean => {
   return serverConfig.prometheus.enabled && !serverConfig.prometheus.disabledReason;
 };
 
-export const isHealthStatusMetricsEnabled = (): boolean => {
-  return serverConfig.healthStatusMetricsEnabled;
-};
+const isHealthStatusMetricsEnabled = (): boolean => serverConfig.healthStatusMetricsEnabled;
 
 export const isHealthHistoryAvailable = (): boolean => {
   return isPrometheusAvailable() && isHealthStatusMetricsEnabled();
