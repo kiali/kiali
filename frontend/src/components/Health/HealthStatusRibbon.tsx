@@ -95,7 +95,10 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   const barRef = React.useRef<HTMLDivElement>(null);
   const [hover, setHover] = React.useState<HoverInfo | null>(null);
 
-  const segments = buildHealthStatusSegments(datapoints, startTime, endTime);
+  const segments = React.useMemo(
+    () => buildHealthStatusSegments(datapoints, startTime, endTime),
+    [datapoints, endTime, startTime]
+  );
   const totalDuration = endTime - startTime;
   const today = new Date();
 
