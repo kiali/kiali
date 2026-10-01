@@ -2,6 +2,7 @@ import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { NA, type HealthStatusId } from 'types/Health';
 import type { Datapoint } from 'types/Metrics';
 import { buildHealthStatusSegments, findHealthStatusSegmentAt } from './HealthStatusRibbonUtils';
 
@@ -82,9 +83,11 @@ const formatTooltipTime = (ts: number, today: Date): string => {
 
 type HoverInfo = {
   cursorX: number;
-  label: string;
+  label: HealthStatusId;
   timestamp: number;
 };
+
+const healthStatusI18nKey = (id: HealthStatusId): string => (id === NA.id ? 'n/a' : id);
 
 export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   datapoints,
@@ -139,7 +142,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
       <div className={ribbonBarWrapperStyle}>
         {hover && (
           <div className={hoverLabelStyle} style={{ left: `${hover.cursorX}px` }} data-test="health-ribbon-hover-label">
-            {`${t(hover.label)}: ${formatTooltipTime(hover.timestamp, today)}`}
+            {`${t(healthStatusI18nKey(hover.label))}: ${formatTooltipTime(hover.timestamp, today)}`}
           </div>
         )}
         <div

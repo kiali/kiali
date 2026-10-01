@@ -1,22 +1,22 @@
-import { PFColors } from 'components/Pf/PfColors';
+import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, type HealthStatusId } from 'types/Health';
 import type { Datapoint } from 'types/Metrics';
 
 export type HealthStatusRibbonSegment = {
   color: string;
   endTime: number;
-  label: string;
+  label: HealthStatusId;
   startTime: number;
   status: number;
 };
 
-const statusMap: Record<number, { color: string; label: string }> = {
-  0: { color: PFColors.Success, label: 'Healthy' },
-  1: { color: PFColors.Custom, label: 'Not Ready' },
-  2: { color: PFColors.Warning, label: 'Degraded' },
-  3: { color: PFColors.Danger, label: 'Failure' }
+const statusMap: Record<number, { color: string; label: HealthStatusId }> = {
+  0: { color: HEALTHY.color, label: HEALTHY.id as HealthStatusId },
+  1: { color: NOT_READY.color, label: NOT_READY.id as HealthStatusId },
+  2: { color: DEGRADED.color, label: DEGRADED.id as HealthStatusId },
+  3: { color: FAILURE.color, label: FAILURE.id as HealthStatusId }
 };
 
-const naStatus = { color: PFColors.Color200, label: 'n/a' };
+const naStatus = { color: NA.color, label: NA.id as HealthStatusId };
 
 export const findHealthStatusSegmentAt = (
   segments: HealthStatusRibbonSegment[],
@@ -42,7 +42,7 @@ export const buildHealthStatusSegments = (
   const sorted = [...datapoints].sort((a, b) => a[0] - b[0]);
   const segments: HealthStatusRibbonSegment[] = [];
 
-  const statusInfo = (val: number): { color: string; label: string } => statusMap[val] ?? naStatus;
+  const statusInfo = (val: number): { color: string; label: HealthStatusId } => statusMap[val] ?? naStatus;
 
   let prevEnd = startTime;
 
