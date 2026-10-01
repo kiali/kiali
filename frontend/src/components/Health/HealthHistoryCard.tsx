@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@patternfly/react-core';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
-import { isPrometheusAvailable } from '../../config';
+import { isHealthHistoryAvailable } from '../../config';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
@@ -64,7 +64,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   };
 
   React.useEffect(() => {
-    if (!isPrometheusAvailable()) {
+    if (!isHealthHistoryAvailable()) {
       setLoading(false);
       return;
     }
@@ -112,7 +112,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     };
   }, [cluster, duration, healthType, name, namespace, t]);
 
-  if (!isPrometheusAvailable()) {
+  if (!isHealthHistoryAvailable()) {
     return null;
   }
 
