@@ -370,6 +370,10 @@ func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery 
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
 		conf := config.Get()
+		if !conf.Server.Observability.Metrics.HealthStatus.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "Health status metrics are not enabled")
+			return
+		}
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
 		var name string
