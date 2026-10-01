@@ -50,7 +50,10 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     const options: Record<string, string> = {};
 
     healthHistoryDurations.forEach(durationSeconds => {
-      options[String(durationSeconds)] = allDurations[durationSeconds];
+      const label = allDurations[durationSeconds];
+      if (label) {
+        options[String(durationSeconds)] = label;
+      }
     });
 
     return options;
