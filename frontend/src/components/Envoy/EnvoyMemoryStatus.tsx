@@ -11,7 +11,7 @@ import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { inlineIconRowStyle } from 'styles/FlexStyles';
 import { infoStyle } from 'styles/IconStyle';
 import { moreInfoLinkStyle } from 'components/Validations/WorkloadConfigValidation';
-import { KialiLink } from 'components/Link/KialiLink';
+import { Link } from 'react-router-dom-v5-compat';
 import { PFColors } from 'components/Pf/PfColors';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import {
@@ -23,7 +23,8 @@ import {
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
-  hasEnvoyMemoryWorkload
+  hasEnvoyMemoryWorkload,
+  istioConfigurationScopingUrl
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -76,6 +77,7 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   }
 
   const status = envoyMemoryCauseStatus(summary.cause);
+  const showWarningLinks = summary.cause !== 'ok';
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
       <div>
@@ -92,14 +94,24 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
       <div>
         <strong>{t('Traffic rate')}:</strong> {formatEnvoyRequestRate(summary)}
       </div>
+      {showWarningLinks && (
+        <div className={moreInfoLinkStyle} data-test="envoy-memory-status-scoping-link">
+          <span>{t('More info at')}</span>
+          <Link
+            to={istioConfigurationScopingUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: linkColor }}
+          >
+            {t('Learn about configuration scoping')}
+          </Link>
+        </div>
+      )}
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>
-        <KialiLink
-          to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())}
-          style={{ color: linkColor }}
-        >
+        <Link to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())} style={{ color: linkColor }}>
           {t('Envoy overview tab')}
-        </KialiLink>
+        </Link>
       </div>
     </div>
   );

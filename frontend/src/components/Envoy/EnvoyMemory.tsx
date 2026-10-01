@@ -295,7 +295,27 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                       {memoryStatusLabel}
                       <Popover
                         aria-label={t('{{label}} information', { label: memoryStatusLabel })}
-                        bodyContent={<div className={helpBodyStyle}>{envoyMemoryThresholdHelp(summary)}</div>}
+                        bodyContent={
+                          <div className={helpBodyStyle}>
+                            {envoyMemoryThresholdHelp(summary)}
+                            {summary.cause !== 'ok' && (
+                              <p className={linkRowStyle}>
+                                <Button
+                                  component="a"
+                                  href={istioConfigurationScopingUrl()}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  variant={ButtonVariant.link}
+                                  isInline
+                                  icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
+                                  data-test="envoy-memory-status-scoping-link"
+                                >
+                                  {t('Learn about configuration scoping')}
+                                </Button>
+                              </p>
+                            )}
+                          </div>
+                        }
                         headerContent={<span>{memoryStatusLabel}</span>}
                         position={PopoverPosition.top}
                         triggerAction="hover"
