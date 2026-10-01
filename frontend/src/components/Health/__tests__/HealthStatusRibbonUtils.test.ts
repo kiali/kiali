@@ -10,7 +10,7 @@ describe('buildHealthStatusSegments', () => {
       startTime: 100,
       endTime: 200,
       status: -1,
-      label: 'n/a'
+      label: 'NA'
     });
   });
 
@@ -48,7 +48,7 @@ describe('buildHealthStatusSegments', () => {
     const segments = buildHealthStatusSegments(datapoints, 100, 200);
 
     expect(segments).toHaveLength(2);
-    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 150, status: -1, label: 'n/a' });
+    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 150, status: -1, label: 'NA' });
     expect(segments[1]).toMatchObject({ startTime: 150, endTime: 200, status: 0, label: 'Healthy' });
   });
 
@@ -56,7 +56,7 @@ describe('buildHealthStatusSegments', () => {
     const segments = buildHealthStatusSegments([[100, 99]], 100, 200);
 
     expect(segments).toHaveLength(1);
-    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 200, status: 99, label: 'n/a' });
+    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 200, status: 99, label: 'NA' });
   });
 });
 
