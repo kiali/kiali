@@ -3,13 +3,14 @@ import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@pattern
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
 import { isHealthHistoryAvailable } from '../../config';
+import { humanDurations, serverConfig } from '../../config/ServerConfig';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { Datapoint } from 'types/Metrics';
-import type { IstioMetricsOptions } from 'types/MetricsOptions';
+import type { HealthStatusHistoryQuery } from 'types/MetricsOptions';
 import type { HealthHistoryType } from '../../services/Api';
 
 type HealthHistoryCardProps = {
@@ -19,15 +20,7 @@ type HealthHistoryCardProps = {
   namespace: string;
 };
 
-const durationOptions: Record<string, string> = {
-  '3600': 'Last 1h',
-  '10800': 'Last 3h',
-  '21600': 'Last 6h',
-  '43200': 'Last 12h',
-  '86400': 'Last 1d',
-  '604800': 'Last 7d',
-  '2592000': 'Last 30d'
-};
+const healthHistoryDurations = [3600, 10800, 21600, 43200, 86400, 604800, 2592000];
 
 const defaultDuration = 21600;
 
@@ -52,6 +45,16 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   namespace
 }: HealthHistoryCardProps) => {
   const { t } = useKialiTranslation();
+  const durationOptions = React.useMemo((): Record<string, string> => {
+    const allDurations = humanDurations(serverConfig, t('Last'));
+    const options: Record<string, string> = {};
+
+    healthHistoryDurations.forEach(durationSeconds => {
+      options[String(durationSeconds)] = allDurations[durationSeconds];
+    });
+
+    return options;
+  }, [t]);
 
   const [datapoints, setDatapoints] = React.useState<Datapoint[]>([]);
   const [duration, setDuration] = React.useState<number>(defaultDuration);
@@ -74,11 +77,8 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     setEndTime(queryEnd);
 
     const rateParams = computePrometheusRateParams(duration, 100);
-    const options: IstioMetricsOptions = {
-      direction: 'outbound',
+    const options: HealthStatusHistoryQuery = {
       duration: duration,
-      filters: [],
-      rateInterval: rateParams.rateInterval,
       step: rateParams.step
     };
 

@@ -55,7 +55,12 @@ import type {
   TracingSingleResponse
 } from '../types/TracingInfo';
 import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
-import type { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import type {
+  DashboardQuery,
+  HealthStatusHistoryQuery,
+  IstioMetricsOptions,
+  MetricsStatsQuery
+} from '../types/MetricsOptions';
 import type {
   IstioMetricsMap,
   Metric,
@@ -280,10 +285,10 @@ export const getHealthStatusHistory = (
   namespace: string,
   healthType: HealthHistoryType,
   name: string,
-  params: IstioMetricsOptions,
+  params: HealthStatusHistoryQuery,
   cluster?: string
 ): Promise<ApiResponse<Readonly<Metric[]>>> => {
-  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+  const queryParams: QueryParams<HealthStatusHistoryQuery> = { ...params };
 
   if (cluster) {
     queryParams.clusterName = cluster;
