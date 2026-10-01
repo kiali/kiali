@@ -109,9 +109,10 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
             peels.push(...peelCoveringLayers($path[0], win));
           }
 
-          // One click only. A separate mousemove opens the Victory tooltip
-          // over the point, then Cypress fails actionability on click.
-          cy.wrap($path).click();
+          // force:true sends the event to the series path. A normal click hits
+          // the Victory tooltip/voronoi at the same coordinates, so the datum
+          // handler never runs and Cypress may fail actionability.
+          cy.wrap($path).should('be.visible').click({ force: true });
 
           cy.then(() => {
             peels.forEach(el => el.style.removeProperty('pointer-events'));
