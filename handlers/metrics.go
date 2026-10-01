@@ -51,6 +51,35 @@ var healthStatusHistoryQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("step"),
 }
 
+// healthStatusHistoryParams documents query parameters for health status history endpoints.
+//
+// swagger:parameters workloadHealthStatusHistory appHealthStatusHistory serviceHealthStatusHistory namespaceHealthStatusHistory
+type healthStatusHistoryParams struct {
+	// Cluster name
+	//
+	// in: query
+	// required: false
+	ClusterName string `json:"clusterName"`
+	// Duration of the query period, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 1800
+	Duration int `json:"duration"`
+	// Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.
+	//
+	// in: query
+	// required: false
+	// default: now
+	QueryTime string `json:"queryTime"`
+	// Step between datapoints, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 15
+	Step int `json:"step"`
+}
+
 var istioMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("avg"),
 	queryparams.PresenceParam("byLabels[]"),

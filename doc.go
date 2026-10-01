@@ -33,7 +33,7 @@ type AggregateValueParam struct {
 	Name string `json:"aggregateValue"`
 }
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appSpans appTraces errorTraces usageMetrics
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appHealthStatusHistory appSpans appTraces errorTraces usageMetrics
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -160,7 +160,7 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging appHealthStatusHistory namespaceHealthStatusHistory serviceHealthStatusHistory workloadHealthStatusHistory namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
 type NamespacePathParam struct {
 	// The namespace name.
 	//
@@ -214,7 +214,7 @@ type ResourceParam struct {
 	Name string `json:"resource"`
 }
 
-// swagger:parameters serviceDetails serviceUpdate serviceMetrics graphService graphAggregateByService serviceDashboard serviceSpans serviceTraces
+// swagger:parameters serviceDetails serviceUpdate serviceMetrics graphService graphAggregateByService serviceDashboard serviceHealthStatusHistory serviceSpans serviceTraces
 type ServiceParam struct {
 	// The service name.
 	//
@@ -241,7 +241,7 @@ type TraceIDParam struct {
 	Name string `json:"traceID"`
 }
 
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadHealthStatusHistory workloadSpans workloadTraces ztunnelDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
