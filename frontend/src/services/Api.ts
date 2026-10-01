@@ -275,9 +275,12 @@ export const getResourceUsageMetrics = (
   );
 };
 
+export type HealthHistoryType = 'app' | 'namespace' | 'service' | 'workload';
+
 export const getHealthStatusHistory = (
   namespace: string,
-  workload: string,
+  healthType: HealthHistoryType,
+  name: string,
   params: IstioMetricsOptions,
   cluster?: string
 ): Promise<ApiResponse<Readonly<Metric[]>>> => {
@@ -287,7 +290,12 @@ export const getHealthStatusHistory = (
     queryParams.clusterName = cluster;
   }
 
-  return newRequest<Readonly<Metric[]>>(HTTP_VERBS.GET, urls.healthStatusHistory(namespace, workload), queryParams, {});
+  return newRequest<Readonly<Metric[]>>(
+    HTTP_VERBS.GET,
+    urls.healthStatusHistory(namespace, healthType, name),
+    queryParams,
+    {}
+  );
 };
 
 export const getZtunnelDashboard = (

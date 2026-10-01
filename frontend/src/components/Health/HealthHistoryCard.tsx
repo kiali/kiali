@@ -10,11 +10,13 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { Datapoint } from 'types/Metrics';
 import type { IstioMetricsOptions } from 'types/MetricsOptions';
+import type { HealthHistoryType } from '../../services/Api';
 
 type HealthHistoryCardProps = {
   cluster?: string;
+  healthType: HealthHistoryType;
+  name: string;
   namespace: string;
-  workload: string;
 };
 
 const durationOptions: Record<string, string> = {
@@ -45,8 +47,9 @@ const emptyStateStyle = kialiStyle({
 
 export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   cluster,
-  namespace,
-  workload
+  healthType,
+  name,
+  namespace
 }: HealthHistoryCardProps) => {
   const { t } = useKialiTranslation();
 
@@ -79,7 +82,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
       step: rateParams.step
     };
 
-    API.getHealthStatusHistory(namespace, workload, options, cluster)
+    API.getHealthStatusHistory(namespace, healthType, name, options, cluster)
       .then(response => {
         if (!active) {
           return;
@@ -107,7 +110,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     return () => {
       active = false;
     };
-  }, [cluster, duration, namespace, t, workload]);
+  }, [cluster, duration, healthType, name, namespace, t]);
 
   if (!isPrometheusAvailable()) {
     return null;
