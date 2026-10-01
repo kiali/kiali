@@ -1040,3 +1040,128 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 
 	return client, api, k
 }
+
+func setupHealthStatusHistoryEndpoint(t *testing.T, enabled bool) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = "cluster-default"
+	conf.Server.Observability.Metrics.HealthStatus.Enabled = enabled
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient(*conf, k8s.GetToken())
+	require.NoError(t, err)
+	prom.Inject(xapi)
+
+	handler := WithFakeAuthInfo(conf, HealthStatusHistory(conf, cache, discovery, cf, prom, "workload", "workload"))
+
+	mr := mux.NewRouter()
+	mr.HandleFunc("/api/namespaces/{namespace}/workloads/{workload}/health/history", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	return ts, xapi
+}
+
+func TestHealthStatusHistoryDisabled(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, false)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when health status metrics are disabled")
+	})
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns/workloads/reviews-v1/health/history")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	assert.Contains(t, string(actual), "Health status metrics are not enabled")
+}
+
+func TestHealthStatusHistoryDefault(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	query := `max(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="workload",name="reviews-v1"})`
+
+	now := time.Now()
+	delta := 15 * time.Second
+	var rangeSentinel uint32
+
+	api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+		assert.Equal(t, query, args[1].(string))
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
+		atomic.AddUint32(&rangeSentinel, 1)
+		assert.Equal(t, 15*time.Second, r.Step)
+		assert.WithinDuration(t, now, r.End, delta)
+		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
+	})
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns/workloads/reviews-v1/health/history")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.NotEmpty(t, actual)
+	assert.NotZero(t, rangeSentinel)
+}
+
+func TestHealthStatusHistoryRejectsIstioParam(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has unsupported Istio params")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("reporter", "source")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "unsupported query parameter 'reporter'")
+}
+
+func TestHealthStatusHistoryRejectsUnknownParam(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has unknown params")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("filters[]", "request_count")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "unsupported query parameter 'filters[]'")
+}
