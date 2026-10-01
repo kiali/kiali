@@ -441,3 +441,9 @@ func (in *MetricsService) GetResourceMetrics(ctx context.Context, q models.Istio
 
 	return metrics, nil
 }
+
+func (in *MetricsService) GetHealthStatusHistory(ctx context.Context, cluster, namespace, healthType, name string, q *prometheus.RangeQuery) ([]models.Metric, error) {
+	labels := fmt.Sprintf(`{cluster=%q,namespace=%q,health_type=%q,name=%q}`, cluster, namespace, healthType, name)
+	metric := in.prom.FetchRange(ctx, "kiali_health_status", labels, "", "max", q)
+	return models.ConvertMetric("kiali_health_status", metric, models.ConversionParams{Scale: 1})
+}

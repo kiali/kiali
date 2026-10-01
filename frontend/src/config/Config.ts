@@ -181,6 +181,8 @@ const conf = {
         `api/namespaces/${namespace}/pods/${pod}/config_dump_ztunnel`,
       resourceUsageMetrics: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/${workload}/usage_metrics`,
+      healthStatusHistory: (namespace: string, workload: string) =>
+        `api/namespaces/${namespace}/workloads/${workload}/health/history`,
       serverConfig: `api/config`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>
