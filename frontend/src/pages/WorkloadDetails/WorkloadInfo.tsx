@@ -708,8 +708,9 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                   <StackItem className={noShrinkStyle}>
                     <HealthHistoryCard
                       cluster={workload.cluster}
+                      healthType="workload"
+                      name={workload.name}
                       namespace={this.props.namespace}
-                      workload={workload.name}
                     />
                   </StackItem>
                 )}

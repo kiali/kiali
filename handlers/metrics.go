@@ -363,32 +363,39 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 }
 
 // HealthStatusHistory is the API handler to fetch kiali_health_status time series
-// for a workload, to be displayed as a health history ribbon.
-func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
+// for an app, namespace, service, or workload, to be displayed as a health history ribbon.
+// entityVar is the mux route variable holding the entity name; for namespace health it is ignored.
+func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, healthType, entityVar string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		namespace := vars["namespace"]
-		workload := vars["workload"]
-		if !validK8sNameRe.MatchString(workload) {
-			RespondWithError(w, http.StatusBadRequest, "Invalid workload name")
-			return
-		}
 		conf := config.Get()
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
+
+		var name string
+		if healthType == "namespace" {
+			name = namespace
+		} else {
+			name = vars[entityVar]
+			if !validK8sNameRe.MatchString(name) {
+				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid %s name", entityVar))
+				return
+			}
+		}
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			return
 		}
 
-		params := models.IstioMetricsQuery{Workload: workload, Cluster: cluster, Namespace: namespaceInfo.Name}
+		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespaceInfo.Name}
 		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, "workload", workload, &params.RangeQuery)
+		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, healthType, name, &params.RangeQuery)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
