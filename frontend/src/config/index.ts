@@ -24,7 +24,6 @@ import { jaegerQuery } from './JaegerQuery';
 import {
   homeCluster,
   isHealthHistoryAvailable,
-  isHealthStatusMetricsEnabled,
   isMultiCluster,
   isPrometheusAvailable,
   serverConfig
@@ -37,7 +36,6 @@ export {
   icons,
   homeCluster,
   isHealthHistoryAvailable,
-  isHealthStatusMetricsEnabled,
   isMultiCluster,
   kialiLogoLight,
   kialiLogoDark,
