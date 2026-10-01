@@ -123,7 +123,7 @@ describe('EnvoyMemory', () => {
     expect(screen.queryByText('Rough estimate from cluster count')).not.toBeInTheDocument();
   });
 
-  it('requests overlay chart with Max aggregation by default and Sum when selected', async () => {
+  it('requests per-pod series by default and Sum/Max when selected', async () => {
     const workloadWithPods = {
       ...workload,
       pods: [{ name: 'details-v1-abc123' }, { name: 'details-v1-def456' }]
@@ -162,7 +162,7 @@ describe('EnvoyMemory', () => {
         'bookinfo',
         'envoy-memory',
         expect.objectContaining({
-          byLabels: [],
+          byLabels: ['pod'],
           rawDataAggregator: 'max',
           workload: 'details-v1'
         }),
@@ -178,13 +178,74 @@ describe('EnvoyMemory', () => {
         'bookinfo',
         'envoy-memory',
         expect.objectContaining({
-          byLabels: [],
+          byLabels: ['pod'],
           rawDataAggregator: 'sum',
           workload: 'details-v1'
         }),
         'cluster-default'
       );
     });
+  });
+
+  it('shows one legend entry per pod with Max or Sum aggregation', async () => {
+    const workloadWithPods = {
+      ...workload,
+      pods: [{ name: 'details-v1-abc123' }, { name: 'details-v1-def456' }]
+    };
+
+    rstest.spyOn(API, 'getCustomDashboard').mockResolvedValue({
+      data: {
+        title: 'Envoy Memory',
+        aggregations: [],
+        charts: [
+          {
+            name: 'Memory trends',
+            metrics: [
+              {
+                name: 'Envoy allocated',
+                labels: { pod: 'details-v1-abc123' },
+                datapoints: [
+                  [1720526400, 1024],
+                  [1720526430, 1536]
+                ]
+              },
+              {
+                name: 'Envoy allocated',
+                labels: { pod: 'details-v1-def456' },
+                datapoints: [
+                  [1720526400, 2048],
+                  [1720526430, 2560]
+                ]
+              }
+            ],
+            spans: 12,
+            startCollapsed: false,
+            unit: 'bytes'
+          },
+          { name: 'Active connections', metrics: [], spans: 12, startCollapsed: false, unit: '' }
+        ],
+        externalLinks: [],
+        rows: 1
+      }
+    } as any);
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 1720526400000, to: 1720526430000 }}
+            workload={workloadWithPods}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Envoy allocated [details-v1-abc123]')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Envoy allocated [details-v1-def456]')).toBeInTheDocument();
   });
 
   it('shows Memory limit in the chart legend when summary has a limit', async () => {

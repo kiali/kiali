@@ -8,7 +8,7 @@ import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { helpIconStyle } from 'styles/IconStyle';
-import { PFFontWeight } from 'styles/PfTypography';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFColors } from 'components/Pf/PfColors';
 import { tabCardStyle, flexCardStyle, noShrinkStyle } from 'styles/FlexStyles';
@@ -100,9 +100,9 @@ const tileLabelRowStyle = kialiStyle({
 });
 
 const tileLabelStyle = kialiStyle({
-  color: PFColors.Color200,
-  fontSize: '0.875rem',
-  fontWeight: PFFontWeight.BodyBold
+  color: 'var(--pf-t--global--text--color--subtle)',
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.BodyDefault
 });
 
 const tileValueStyle = kialiStyle({

@@ -36,7 +36,7 @@ import type { Workload } from 'types/Workload';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
-import { getDataSupplier, toOverlay, toVCLine } from 'utils/VictoryChartsUtils';
+import { getDataSupplier, toOverlay, toVCLine, toVCLines } from 'utils/VictoryChartsUtils';
 import { sortedEnvoyPodNames } from 'utils/EnvoyMemoryUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
@@ -165,43 +165,27 @@ const activeConnectionsDatapoints = (
     });
 };
 
+// Include pod in series names so each pod appears as its own legend entry.
+const metricsWithPodNames = (metrics: Metric[]): Metric[] =>
+  metrics.map(metric => {
+    const pod = metric.labels?.pod;
+    if (!pod) {
+      return metric;
+    }
+    return {
+      ...metric,
+      name: `${metric.name} [${pod}]`
+    };
+  });
+
 const filterMetricsByPods = (metrics: Metric[], selectedPods: string[], allPods: string[]): Metric[] => {
-  if (allPods.length === 0 || selectedPods.length === allPods.length) {
+  if (allPods.length === 0 || selectedPods.length === 0 || selectedPods.length === allPods.length) {
     return metrics;
-  }
-  if (selectedPods.length === 0) {
-    return [];
   }
   const selected = new Set(selectedPods);
   return metrics.filter(metric => {
     const pod = metric.labels?.pod;
     return !!pod && selected.has(pod);
-  });
-};
-
-const aggregateMetricsByName = (metrics: Metric[], mode: 'max' | 'sum'): Metric[] => {
-  const byName = new Map<string, Metric[]>();
-  metrics.forEach(metric => {
-    const list = byName.get(metric.name) ?? [];
-    list.push(metric);
-    byName.set(metric.name, list);
-  });
-
-  return Array.from(byName.entries()).map(([name, series]) => {
-    const byTime = new Map<number, number[]>();
-    series.forEach(metric => {
-      metric.datapoints.forEach(([ts, val]) => {
-        const values = byTime.get(ts) ?? [];
-        values.push(val);
-        byTime.set(ts, values);
-      });
-    });
-
-    const datapoints: Datapoint[] = Array.from(byTime.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([ts, values]) => [ts, mode === 'sum' ? values.reduce((acc, v) => acc + v, 0) : Math.max(...values)]);
-
-    return { datapoints, labels: {}, name };
   });
 };
 
@@ -233,7 +217,7 @@ const PodMultiSelect: React.FC<PodMultiSelectProps> = ({ allPods, onChange, sele
   const handleSelect = (_event?: React.MouseEvent | undefined, value?: string | number): void => {
     const key = String(value ?? '');
     if (key === 'all') {
-      onChange(allSelected ? [] : [...allPods]);
+      onChange([...allPods]);
       return;
     }
 
@@ -304,7 +288,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     max: t('Max'),
     sum: t('Sum')
   };
-  const allPodsSelected = podNames.length === 0 || selectedPods.length === podNames.length;
+  const needsPerPodSeries = podNames.length > 1;
   const chartHeight = props.isMaximized ? Math.max(measuredHeight, MIN_MAXIMIZED_CHART_HEIGHT) : DEFAULT_CHART_HEIGHT;
 
   React.useEffect(() => {
@@ -356,10 +340,9 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     options.workload = props.workload.name;
     options.workloadType = props.workload.gvk.Kind;
 
-    // Fetch per-pod series when filtering to a subset of pods, then aggregate client-side.
-    const needsPerPod = !allPodsSelected;
+    // Multi-pod workloads: fetch per-pod series; Max/Sum choose the Prometheus aggregator (legend stays one line per pod).
     options.rawDataAggregator = (viewMode === 'sum' ? 'sum' : 'max') as Aggregator;
-    options.byLabels = needsPerPod ? ['pod'] : [];
+    options.byLabels = needsPerPodSeries ? ['pod'] : [];
 
     if (!options.queryTime) {
       options.queryTime = Math.floor(props.lastRefreshAt / 1000);
@@ -373,7 +356,6 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
         addError('Could not fetch Envoy memory charts.', error);
       });
   }, [
-    allPodsSelected,
     app,
     appLabelName,
     props.lastRefreshAt,
@@ -382,6 +364,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     props.workload.cluster,
     props.workload.gvk.Kind,
     props.workload.name,
+    needsPerPodSeries,
     verLabelName,
     version,
     viewMode
@@ -403,11 +386,12 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
 
   if (memoryChart) {
     let metrics = filterMetricsByPods(memoryChart.metrics, selectedPods, podNames);
-    if (!allPodsSelected) {
-      metrics = aggregateMetricsByName(metrics, viewMode);
-      memoryLines = getDataSupplier({ ...memoryChart, metrics }, { values: new Map() }, colorScale)();
+    const showPodLegend = needsPerPodSeries || metrics.some(metric => !!metric.labels?.pod);
+    if (showPodLegend) {
+      metrics = metricsWithPodNames(metrics);
+      memoryLines = toVCLines(metrics, memoryChart.unit, colorScale, memoryChart.xAxis || 'time');
     } else {
-      memoryLines = getDataSupplier(memoryChart, { values: new Map() }, colorScale)();
+      memoryLines = getDataSupplier({ ...memoryChart, metrics }, { values: new Map() }, colorScale)();
     }
   }
 
@@ -460,7 +444,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
       </p>
       <p>
         {t(
-          'Use Max or Sum to aggregate memory across pods. The pod selector filters one or more pods. Active Connections remain a workload total on the right axis.'
+          'Max and Sum choose how Prometheus aggregates samples when grouping by pod. The chart always shows one legend line per pod (filtered by the pod selector). Active Connections remain a workload total on the right axis.'
         )}
       </p>
     </>
