@@ -69,8 +69,12 @@ export const formatEnvoyMemoryUsage = (summary: {
   return formatEnvoyMemoryBytes(summary.memoryMaxBytes);
 };
 
-export const formatEnvoyRequestRate = (summary: { proxyType?: string; requestRate: number }): string => {
-  if (summary.proxyType === 'waypoint' || summary.proxyType === 'gateway') {
+export const formatEnvoyRequestRate = (summary: {
+  proxyType?: string;
+  requestRate: number;
+  trafficIsByteRate?: boolean;
+}): string => {
+  if (summary.trafficIsByteRate) {
     return formatEnvoyByteRate(summary.requestRate);
   }
   return `${summary.requestRate.toFixed(2)} req/s`;

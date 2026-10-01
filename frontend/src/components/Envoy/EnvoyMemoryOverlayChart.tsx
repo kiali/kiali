@@ -66,6 +66,13 @@ const rootStyle = kialiStyle({
   overflow: 'hidden'
 });
 
+const chartHostStyle = kialiStyle({
+  maxWidth: '100%',
+  minWidth: 0,
+  overflow: 'hidden',
+  width: '100%'
+});
+
 const chartWrapStyle = kialiStyle({
   marginTop: PFSpacer.md,
   maxWidth: '100%',
@@ -506,22 +513,24 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
       </div>
       <div className={props.isMaximized ? maximizedChartWrapStyle : chartWrapStyle} ref={chartWrapRef}>
         {memoryLines.length > 0 ? (
-          <ChartWithLegend<RichDataPoint, LineInfo>
-            chartHeight={chartHeight}
-            data={memoryLines}
-            fill={false}
-            isMaximized={props.isMaximized}
-            overlay={connectionsOverlay}
-            overlayAsLine={true}
-            overlayRightPadding={48}
-            seriesComponent={<ChartLine />}
-            showSpans={false}
-            splitLegend={true}
-            stroke={true}
-            thresholds={memoryLimitThresholds}
-            timeWindow={timeWindow}
-            unit="bytes"
-          />
+          <div className={chartHostStyle}>
+            <ChartWithLegend<RichDataPoint, LineInfo>
+              chartHeight={chartHeight}
+              data={memoryLines}
+              fill={false}
+              isMaximized={props.isMaximized}
+              overlay={connectionsOverlay}
+              overlayAsLine={true}
+              overlayRightPadding={48}
+              seriesComponent={<ChartLine />}
+              showSpans={false}
+              splitLegend={true}
+              stroke={true}
+              thresholds={memoryLimitThresholds}
+              timeWindow={timeWindow}
+              unit="bytes"
+            />
+          </div>
         ) : (
           <div>{dashboard ? t('No data available') : t('Loading metrics')}</div>
         )}

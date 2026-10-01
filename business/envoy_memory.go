@@ -155,6 +155,7 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		ActiveClustersMax:            activeClustersMax,
 		ActiveConnections:            activeConnections,
 		Cause:                        cause,
+		ConfigCountsPod:              podWithMaxLatestMemory(memoryMetric),
 		LargeConfigClustersThreshold: largeConfigClusters,
 		MemoryLimitBytes:             int64(memoryLimit),
 		MemoryMaxBytes:               int64(memoryMax),
@@ -163,6 +164,7 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		ProxyType:                    proxyType,
 		RequestRate:                  requestRate,
 		RoughConfigMemoryBytes:       activeClustersMax * roughConfigBytesPerCluster,
+		TrafficIsByteRate:            trafficIsByteRate,
 	}, nil
 }
 
@@ -443,6 +445,28 @@ func maxLatestValue(metric prometheus.Metric) float64 {
 		}
 	}
 	return max
+}
+
+// podWithMaxLatestMemory returns the pod label for the series with the highest latest memory sample.
+func podWithMaxLatestMemory(metric prometheus.Metric) string {
+	bestPod := ""
+	bestValue := 0.0
+	for _, stream := range metric.Matrix {
+		if len(stream.Values) == 0 {
+			continue
+		}
+		value := float64(stream.Values[len(stream.Values)-1].Value)
+		if value <= bestValue {
+			continue
+		}
+		pod := string(stream.Metric[model.LabelName("pod")])
+		if pod == "" {
+			continue
+		}
+		bestValue = value
+		bestPod = pod
+	}
+	return bestPod
 }
 
 func sumLatestValues(metric prometheus.Metric) float64 {

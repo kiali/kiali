@@ -45,6 +45,15 @@ describe('EnvoyMemoryUtils', () => {
     expect(formatEnvoyRequestRate({ requestRate: 0 })).toBe('0.00 req/s');
   });
 
+  it('formats traffic rate as bytes only when trafficIsByteRate is set', () => {
+    expect(formatEnvoyRequestRate({ proxyType: 'gateway', requestRate: 50, trafficIsByteRate: false })).toBe(
+      '50.00 req/s'
+    );
+    expect(formatEnvoyRequestRate({ proxyType: 'gateway', requestRate: 2048, trafficIsByteRate: true })).toBe(
+      '2.0 KiB/s'
+    );
+  });
+
   it('formats memory usage as allocated bytes', () => {
     expect(
       formatEnvoyMemoryUsage({

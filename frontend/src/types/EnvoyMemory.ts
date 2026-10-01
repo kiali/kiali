@@ -6,6 +6,7 @@ export type EnvoyMemorySummary = {
   activeClustersMax: number;
   activeConnections: number;
   cause: EnvoyMemoryCause;
+  configCountsPod?: string;
   largeConfigClustersThreshold: number;
   memoryLimitBytes: number;
   memoryMaxBytes: number;
@@ -14,6 +15,7 @@ export type EnvoyMemorySummary = {
   proxyType: EnvoyProxyType;
   requestRate: number;
   roughConfigMemoryBytes: number;
+  trafficIsByteRate?: boolean;
 };
 
 export type EnvoyConfigCounts = {

@@ -148,6 +148,22 @@ func TestMaxRequestRate(t *testing.T) {
 	assert.Equal(t, 12.0, maxRequestRate(12.0, 3.0))
 }
 
+func TestPodWithMaxLatestMemory(t *testing.T) {
+	metric := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
+				Values: []model.SamplePair{{Value: model.SampleValue(100)}},
+			},
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-b"},
+				Values: []model.SamplePair{{Value: model.SampleValue(250)}},
+			},
+		},
+	}
+	assert.Equal(t, "pod-b", podWithMaxLatestMemory(metric))
+}
+
 func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {
 	envoyOnly := envoyRequestRateFromMetrics(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{})
 	istio := prometheus.Metric{

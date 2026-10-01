@@ -112,6 +112,19 @@ const tileValueStyle = kialiStyle({
   fontWeight: PFFontWeight.BodyBold
 });
 
+const envoyMemoryCardStyle = kialiStyle({
+  maxWidth: '100%',
+  minWidth: 0,
+  overflow: 'hidden',
+  $nest: {
+    '& > .pf-v6-c-card__body': {
+      maxWidth: '100%',
+      minWidth: 0,
+      overflow: 'hidden'
+    }
+  }
+});
+
 const sectionStyle = kialiStyle({
   marginTop: PFSpacer.lg,
   maxWidth: '100%',
@@ -195,8 +208,9 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
   const [configCounts, setConfigCounts] = React.useState<{ counts: EnvoyConfigCounts; podName: string }>();
   const [isChartMaximized, setIsChartMaximized] = React.useState(false);
-  const podName = props.podName || sortedEnvoyPodName(props.workload);
-  const effectiveConfigCounts = podName && configCounts?.podName === podName ? configCounts.counts : undefined;
+  const configDumpPodName = props.podName || summary?.configCountsPod || sortedEnvoyPodName(props.workload);
+  const effectiveConfigCounts =
+    configDumpPodName && configCounts?.podName === configDumpPodName ? configCounts.counts : undefined;
 
   const fetchSummary = React.useCallback((): void => {
     fetchEnvoyMemorySummary(
@@ -218,16 +232,16 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   }, [fetchSummary]);
 
   React.useEffect(() => {
-    if (!podName) {
+    if (!configDumpPodName) {
       return;
     }
 
     let cancelled = false;
 
     Promise.all([
-      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'clusters', props.workload.cluster),
-      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'listeners', props.workload.cluster),
-      API.getPodEnvoyProxyResourceEntries(props.namespace, podName, 'routes', props.workload.cluster)
+      API.getPodEnvoyProxyResourceEntries(props.namespace, configDumpPodName, 'clusters', props.workload.cluster),
+      API.getPodEnvoyProxyResourceEntries(props.namespace, configDumpPodName, 'listeners', props.workload.cluster),
+      API.getPodEnvoyProxyResourceEntries(props.namespace, configDumpPodName, 'routes', props.workload.cluster)
     ])
       .then(([clusters, listeners, routes]) => {
         if (cancelled) {
@@ -235,7 +249,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
         }
 
         setConfigCounts({
-          podName,
+          podName: configDumpPodName,
           counts: {
             clusters: clusters.data.clusters?.length ?? 0,
             listeners: listeners.data.listeners?.length ?? 0,
@@ -250,7 +264,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
     return () => {
       cancelled = true;
     };
-  }, [podName, props.lastRefreshAt, props.namespace, props.workload.cluster]);
+  }, [configDumpPodName, props.lastRefreshAt, props.namespace, props.workload.cluster]);
 
   const clusterCount = effectiveConfigCounts?.clusters ?? summary?.activeClustersMax;
   // Prefer config-dump cluster count so the estimate is not stuck at 0 when Prometheus lacks the metric.
@@ -266,7 +280,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   const memoryStatusLabel = t('Memory Status');
 
   return (
-    <Card className={classes(flexCardStyle, tabCardStyle)} data-test="envoy-memory-tab">
+    <Card className={classes(flexCardStyle, tabCardStyle, envoyMemoryCardStyle)} data-test="envoy-memory-tab">
       <CardBody>
         {!isChartMaximized && (
           <div className={classes(summaryStyle, noShrinkStyle)}>
