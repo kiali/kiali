@@ -107,12 +107,17 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
           const win = $path[0].ownerDocument.defaultView as Window;
           if (isOssmcUrl(win.location.href)) {
             peels.push(...peelCoveringLayers($path[0], win));
+            // Deployed OSSMC still selects traces via parent onClick after
+            // hoveredItem is set. KIALI_PR ChartWithLegend is not in the
+            // cluster plugin image, so a force-click on the point is a no-op.
+            cy.wrap($path).trigger('mousemove', { force: true });
+            cy.get('foreignObject').should('be.visible');
+            cy.wrap($path).closest('svg').click({ force: true });
+          } else {
+            // force:true sends the event to the series path. A normal click
+            // hits the Victory tooltip/voronoi at the same coordinates.
+            cy.wrap($path).should('be.visible').click({ force: true });
           }
-
-          // force:true sends the event to the series path. A normal click hits
-          // the Victory tooltip/voronoi at the same coordinates, so the datum
-          // handler never runs and Cypress may fail actionability.
-          cy.wrap($path).should('be.visible').click({ force: true });
 
           cy.then(() => {
             peels.forEach(el => el.style.removeProperty('pointer-events'));
