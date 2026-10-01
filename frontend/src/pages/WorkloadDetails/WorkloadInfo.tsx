@@ -39,6 +39,7 @@ import { getGVKTypeString, isGVKSupported, stringToGVK } from '../../utils/Istio
 import { WorkloadEntries } from './WorkloadEntries';
 import { Spire } from '../../components/Spire/Spire';
 import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
+import { HealthHistoryCard } from '../../components/Health/HealthHistoryCard';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
@@ -693,12 +694,25 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             </GridItem>
 
             <GridItem span={miniGraphSpan}>
-              <MiniGraphCard
-                dataSource={this.graphDataSource}
-                namespace={this.props.namespace}
-                workload={this.props.workload}
-                refreshWorkload={this.props.refreshWorkload}
-              />
+              <Stack hasGutter>
+                {workload && (
+                  <StackItem>
+                    <HealthHistoryCard
+                      cluster={workload.cluster}
+                      namespace={this.props.namespace}
+                      workload={workload.name}
+                    />
+                  </StackItem>
+                )}
+                <StackItem>
+                  <MiniGraphCard
+                    dataSource={this.graphDataSource}
+                    namespace={this.props.namespace}
+                    workload={this.props.workload}
+                    refreshWorkload={this.props.refreshWorkload}
+                  />
+                </StackItem>
+              </Stack>
             </GridItem>
           </Grid>
         </div>

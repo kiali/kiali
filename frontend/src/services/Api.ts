@@ -58,6 +58,7 @@ import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
 import type { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
 import type {
   IstioMetricsMap,
+  Metric,
   MetricsPerNamespace,
   MetricsStatsResult,
   ResourceUsageMetricsMap
@@ -271,6 +272,21 @@ export const getResourceUsageMetrics = (
     queryParams,
     {}
   );
+};
+
+export const getHealthStatusHistory = (
+  namespace: string,
+  workload: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<Readonly<Metric[]>>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<Metric[]>>(HTTP_VERBS.GET, urls.healthStatusHistory(namespace, workload), queryParams, {});
 };
 
 export const getZtunnelDashboard = (

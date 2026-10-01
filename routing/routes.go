@@ -998,6 +998,28 @@ func NewRoutes(
 			handlers.WorkloadMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/health/history workloads workloadHealthStatusHistory
+		// ---
+		// Endpoint to fetch kiali_health_status time series for a workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"WorkloadHealthStatusHistory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/health/history",
+			handlers.HealthStatusHistory(conf, kialiCache, discovery, clientFactory, prom),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single control plane
