@@ -44,6 +44,13 @@ var baseMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("step"),
 }
 
+var healthStatusHistoryQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("step"),
+}
+
 var istioMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("avg"),
 	queryparams.PresenceParam("byLabels[]"),
@@ -392,14 +399,20 @@ func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery 
 			return
 		}
 
-		params := models.IstioMetricsQuery{Cluster: cluster, Namespace: namespaceInfo.Name}
-		if err := extractIstioMetricsQueryParams(r, &params, namespaceInfo); err != nil {
+		params := prometheus.RangeQuery{}
+		params.FillDefaults()
+		queryParams := r.URL.Query()
+		if err := queryparams.RejectUnknown(queryParams, queryparams.Names(healthStatusHistoryQueryParams)...); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		if err := extractBaseMetricsQueryParams(queryParams, &params, namespaceInfo); err != nil {
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
 
 		metricsService := business.NewMetricsService(prom, conf)
-		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, healthType, name, &params.RangeQuery)
+		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, healthType, name, &params)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
 			return
