@@ -103,15 +103,14 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
         const dataPointInGraph = pointWithTraceName.children[0].props.d;
         const peels: HTMLElement[] = [];
 
-        // ChartWithLegend only fires onClick when hoveredItem is set (tooltip open).
-        // force:true skips hover, so peel OSSMC overlays and issue a real click.
         cy.get(`path[d="${dataPointInGraph}"]`).then($path => {
           const win = $path[0].ownerDocument.defaultView as Window;
           if (isOssmcUrl(win.location.href)) {
             peels.push(...peelCoveringLayers($path[0], win));
           }
 
-          cy.wrap($path).click();
+          // Hover then click so Victory data onClick receives the datum.
+          cy.wrap($path).trigger('mousemove').click();
 
           cy.then(() => {
             peels.forEach(el => el.style.removeProperty('pointer-events'));
