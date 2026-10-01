@@ -3,29 +3,13 @@ import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import type { Datapoint } from 'types/Metrics';
-
-interface RibbonSegment {
-  color: string;
-  endTime: number;
-  label: string;
-  startTime: number;
-  status: number;
-}
+import { buildHealthStatusSegments, findHealthStatusSegmentAt } from './HealthStatusRibbonUtils';
 
 type HealthStatusRibbonProps = {
   datapoints: Datapoint[];
   endTime: number;
   startTime: number;
 };
-
-const statusMap: Record<number, { color: string; label: string }> = {
-  0: { color: PFColors.Success, label: 'Healthy' },
-  1: { color: PFColors.Custom, label: 'Not Ready' },
-  2: { color: PFColors.Warning, label: 'Degraded' },
-  3: { color: PFColors.Danger, label: 'Failure' }
-};
-
-const naStatus = { color: PFColors.Color200, label: 'n/a' };
 
 const ribbonContainerStyle = kialiStyle({
   display: 'flex',
@@ -96,72 +80,6 @@ const formatTooltipTime = (ts: number, today: Date): string => {
   return d.toLocaleString([], options);
 };
 
-const findSegmentAt = (segments: RibbonSegment[], timestamp: number): RibbonSegment | undefined => {
-  for (let i = segments.length - 1; i >= 0; i--) {
-    if (timestamp >= segments[i].startTime) {
-      return segments[i];
-    }
-  }
-  return segments[0];
-};
-
-const buildSegments = (datapoints: Datapoint[], startTime: number, endTime: number): RibbonSegment[] => {
-  if (datapoints.length === 0) {
-    return [{ color: naStatus.color, endTime, label: naStatus.label, startTime, status: -1 }];
-  }
-
-  const sorted = [...datapoints].sort((a, b) => a[0] - b[0]);
-  const segments: RibbonSegment[] = [];
-
-  const statusInfo = (val: number): { color: string; label: string } => statusMap[val] ?? naStatus;
-
-  let prevEnd = startTime;
-
-  for (let i = 0; i < sorted.length; i++) {
-    const ts = sorted[i][0];
-    const val = Math.round(sorted[i][1]);
-    const info = statusInfo(val);
-
-    const nextTs = i + 1 < sorted.length ? sorted[i + 1][0] : endTime;
-    const segEnd = Math.min(nextTs, endTime);
-
-    if (ts - prevEnd > 1) {
-      const last = segments.length > 0 ? segments[segments.length - 1] : null;
-      if (last && last.status === -1) {
-        last.endTime = ts;
-      } else {
-        segments.push({ color: naStatus.color, endTime: ts, label: naStatus.label, startTime: prevEnd, status: -1 });
-      }
-    }
-
-    const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === val) {
-      last.endTime = segEnd;
-    } else {
-      segments.push({ color: info.color, endTime: segEnd, label: info.label, startTime: ts, status: val });
-    }
-
-    prevEnd = segEnd;
-  }
-
-  if (prevEnd < endTime) {
-    const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === -1) {
-      last.endTime = endTime;
-    } else {
-      segments.push({
-        color: naStatus.color,
-        endTime,
-        label: naStatus.label,
-        startTime: prevEnd,
-        status: -1
-      });
-    }
-  }
-
-  return segments;
-};
-
 type HoverInfo = {
   cursorX: number;
   label: string;
@@ -177,7 +95,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   const barRef = React.useRef<HTMLDivElement>(null);
   const [hover, setHover] = React.useState<HoverInfo | null>(null);
 
-  const segments = buildSegments(datapoints, startTime, endTime);
+  const segments = buildHealthStatusSegments(datapoints, startTime, endTime);
   const totalDuration = endTime - startTime;
   const today = new Date();
 
@@ -190,7 +108,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     const rect = bar.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
     const timestamp = Math.round(startTime + ratio * totalDuration);
-    const segment = findSegmentAt(segments, timestamp);
+    const segment = findHealthStatusSegmentAt(segments, timestamp);
     if (!segment) {
       return;
     }
