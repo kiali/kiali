@@ -21,7 +21,17 @@ import { Paths } from './Paths';
 import { jaegerQuery } from './JaegerQuery';
 
 // ServerConfig
+<<<<<<< HEAD
 import { homeCluster, isMultiCluster, isPrometheusAvailable, serverConfig } from './ServerConfig';
+=======
+import {
+  homeCluster,
+  isHealthHistoryAvailable,
+  isMultiCluster,
+  isPrometheusAvailable,
+  serverConfig
+} from './ServerConfig';
+>>>>>>> 58d101c (Keep isHealthStatusMetricsEnabled internal to ServerConfig.)
 
 export {
   authenticationConfig,
@@ -29,6 +39,10 @@ export {
   Paths,
   icons,
   homeCluster,
+<<<<<<< HEAD
+=======
+  isHealthHistoryAvailable,
+>>>>>>> 58d101c (Keep isHealthStatusMetricsEnabled internal to ServerConfig.)
   isMultiCluster,
   kialiLogoLight,
   kialiLogoDark,

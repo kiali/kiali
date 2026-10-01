@@ -213,6 +213,15 @@ export const isPrometheusAvailable = (): boolean => {
   return serverConfig.prometheus.enabled && !serverConfig.prometheus.disabledReason;
 };
 
+<<<<<<< HEAD
+=======
+const isHealthStatusMetricsEnabled = (): boolean => serverConfig.healthStatusMetricsEnabled;
+
+export const isHealthHistoryAvailable = (): boolean => {
+  return isPrometheusAvailable() && isHealthStatusMetricsEnabled();
+};
+
+>>>>>>> 58d101c (Keep isHealthStatusMetricsEnabled internal to ServerConfig.)
 export const isIstioNamespace = (namespace: string): boolean => {
   return Object.values(serverConfig.controlPlanes).some(cpNamespace => cpNamespace === namespace);
 };
