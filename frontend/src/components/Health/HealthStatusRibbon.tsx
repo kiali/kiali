@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -35,10 +34,31 @@ const ribbonContainerStyle = kialiStyle({
   width: '100%'
 });
 
+const ribbonBarWrapperStyle = kialiStyle({
+  position: 'relative',
+  width: '100%'
+});
+
+const hoverLabelStyle = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor200,
+  border: `1px solid ${PFColors.BorderDefault}`,
+  borderRadius: '3px',
+  fontSize: '0.75rem',
+  left: 0,
+  padding: '0.125rem 0.375rem',
+  pointerEvents: 'none',
+  position: 'absolute',
+  top: '-1.75rem',
+  transform: 'translateX(-50%)',
+  whiteSpace: 'nowrap',
+  zIndex: 1
+});
+
 const ribbonBarStyle = kialiStyle({
   borderRadius: '3px',
+  cursor: 'crosshair',
   display: 'flex',
-  height: '1.25rem',
+  height: '0.625rem',
   overflow: 'hidden',
   width: '100%'
 });
@@ -50,32 +70,39 @@ const timeAxisStyle = kialiStyle({
   opacity: 0.7
 });
 
-const legendStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flexWrap: 'wrap',
-  fontSize: '0.7rem',
-  gap: '0.75rem',
-  marginTop: '0.125rem'
-});
-
-const legendItemStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  gap: '0.25rem'
-});
-
-const legendSwatchStyle = (color: string): React.CSSProperties => ({
-  backgroundColor: color,
-  borderRadius: '2px',
-  display: 'inline-block',
-  height: '0.6rem',
-  width: '0.6rem'
-});
+const isSameCalendarDay = (a: Date, b: Date): boolean =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 const formatTime = (ts: number): string => {
   const d = new Date(ts * 1000);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const formatTooltipTime = (ts: number, today: Date): string => {
+  const d = new Date(ts * 1000);
+  if (isSameCalendarDay(d, today)) {
+    return formatTime(ts);
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short'
+  };
+  if (d.getFullYear() !== today.getFullYear()) {
+    options.year = 'numeric';
+  }
+  return d.toLocaleString([], options);
+};
+
+const findSegmentAt = (segments: RibbonSegment[], timestamp: number): RibbonSegment | undefined => {
+  for (let i = segments.length - 1; i >= 0; i--) {
+    if (timestamp >= segments[i].startTime) {
+      return segments[i];
+    }
+  }
+  return segments[0];
 };
 
 const buildSegments = (datapoints: Datapoint[], startTime: number, endTime: number): RibbonSegment[] => {
@@ -135,15 +162,49 @@ const buildSegments = (datapoints: Datapoint[], startTime: number, endTime: numb
   return segments;
 };
 
+type HoverInfo = {
+  cursorX: number;
+  label: string;
+  timestamp: number;
+};
+
 export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   datapoints,
   endTime,
   startTime
 }: HealthStatusRibbonProps) => {
   const { t } = useKialiTranslation();
+  const barRef = React.useRef<HTMLDivElement>(null);
+  const [hover, setHover] = React.useState<HoverInfo | null>(null);
 
   const segments = buildSegments(datapoints, startTime, endTime);
   const totalDuration = endTime - startTime;
+  const today = new Date();
+
+  const handleBarMouseMove = (event: React.MouseEvent<HTMLDivElement>): void => {
+    const bar = barRef.current;
+    if (!bar || totalDuration <= 0) {
+      return;
+    }
+
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const timestamp = Math.round(startTime + ratio * totalDuration);
+    const segment = findSegmentAt(segments, timestamp);
+    if (!segment) {
+      return;
+    }
+
+    setHover({
+      cursorX: event.clientX - rect.left,
+      label: segment.label,
+      timestamp
+    });
+  };
+
+  const handleBarMouseLeave = (): void => {
+    setHover(null);
+  };
 
   const timeLabels: string[] = [];
   const numLabels = 5;
@@ -152,26 +213,29 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     timeLabels.push(formatTime(ts));
   }
 
-  const legendEntries = [
-    { color: statusMap[0].color, label: t('Healthy') },
-    { color: statusMap[1].color, label: t('Not Ready') },
-    { color: statusMap[2].color, label: t('Degraded') },
-    { color: statusMap[3].color, label: t('Failure') },
-    { color: naStatus.color, label: t('n/a') }
-  ];
-
   return (
     <div className={ribbonContainerStyle}>
-      <div className={ribbonBarStyle}>
-        {segments.map((seg, idx) => {
-          const width = totalDuration > 0 ? ((seg.endTime - seg.startTime) / totalDuration) * 100 : 0;
-          if (width <= 0) {
-            return null;
-          }
-          const tooltipContent = `${t(seg.label)}: ${formatTime(seg.startTime)} – ${formatTime(seg.endTime)}`;
-          return (
-            <Tooltip key={`${seg.startTime}-${seg.endTime}-${seg.status}`} content={tooltipContent}>
+      <div className={ribbonBarWrapperStyle}>
+        {hover && (
+          <div className={hoverLabelStyle} style={{ left: `${hover.cursorX}px` }} data-test="health-ribbon-hover-label">
+            {`${t(hover.label)}: ${formatTooltipTime(hover.timestamp, today)}`}
+          </div>
+        )}
+        <div
+          ref={barRef}
+          className={ribbonBarStyle}
+          data-test="health-ribbon-bar"
+          onMouseLeave={handleBarMouseLeave}
+          onMouseMove={handleBarMouseMove}
+        >
+          {segments.map((seg, idx) => {
+            const width = totalDuration > 0 ? ((seg.endTime - seg.startTime) / totalDuration) * 100 : 0;
+            if (width <= 0) {
+              return null;
+            }
+            return (
               <div
+                key={`${seg.startTime}-${seg.endTime}-${seg.status}`}
                 data-test={`health-ribbon-segment-${idx}`}
                 style={{
                   backgroundColor: seg.color,
@@ -181,23 +245,14 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
                   minWidth: '2px'
                 }}
               />
-            </Tooltip>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <div className={timeAxisStyle}>
         {timeLabels.map(label => (
           <span key={label}>{label}</span>
-        ))}
-      </div>
-
-      <div className={legendStyle}>
-        {legendEntries.map(entry => (
-          <span key={entry.label} className={legendItemStyle}>
-            <span style={legendSwatchStyle(entry.color)} />
-            {entry.label}
-          </span>
         ))}
       </div>
     </div>
