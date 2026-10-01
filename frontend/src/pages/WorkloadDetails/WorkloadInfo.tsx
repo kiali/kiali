@@ -21,7 +21,16 @@ import { ValidationTypes } from '../../types/IstioObjects';
 import type { WorkloadHealth } from '../../types/Health';
 import type { Workload } from '../../types/Workload';
 import { activeTab } from '../../components/Tab/Tabs';
-import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import {
+  detailCardStackStyle,
+  detailGridStyle,
+  detailLeftColumnStyle,
+  detailMiniGraphStackItemStyle,
+  detailRightColumnStyle,
+  detailRightStackStyle,
+  flexFillStyle,
+  noShrinkStyle
+} from 'styles/FlexStyles';
 import { GraphDataSource } from '../../services/GraphDataSource';
 import type { DurationInSeconds } from 'types/Common';
 import {
@@ -693,10 +702,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               </Stack>
             </GridItem>
 
-            <GridItem span={miniGraphSpan}>
-              <Stack hasGutter>
+            <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
+              <Stack className={detailRightStackStyle} hasGutter>
                 {workload && (
-                  <StackItem>
+                  <StackItem className={noShrinkStyle}>
                     <HealthHistoryCard
                       cluster={workload.cluster}
                       namespace={this.props.namespace}
@@ -704,7 +713,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                     />
                   </StackItem>
                 )}
-                <StackItem>
+                <StackItem className={detailMiniGraphStackItemStyle}>
                   <MiniGraphCard
                     dataSource={this.graphDataSource}
                     namespace={this.props.namespace}
