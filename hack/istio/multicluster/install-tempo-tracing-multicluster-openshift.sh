@@ -28,7 +28,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 TEMPO_RESOURCES_DIR="${SCRIPT_DIR}/../tempo/resources"
-MINIO_YAML="${TEMPO_RESOURCES_DIR}/minio.yaml"
+SEAWEEDFS_YAML="${TEMPO_RESOURCES_DIR}/seaweedfs.yaml"
 
 info() {
   echo "[INFO] $*"
@@ -160,7 +160,7 @@ if [[ "${INSTALL_CERT_MANAGER}" != "true" && "${INSTALL_CERT_MANAGER}" != "false
 fi
 
 require_bin oc
-[[ -f "${MINIO_YAML}" ]] || error "Expected file not found: ${MINIO_YAML}"
+[[ -f "${SEAWEEDFS_YAML}" ]] || error "Expected file not found: ${SEAWEEDFS_YAML}"
 
 if ! oc config get-contexts "${CTX_CLUSTER1}" &>/dev/null; then
   error "Cluster1 context not found in kubeconfig: ${CTX_CLUSTER1}"
@@ -424,18 +424,19 @@ EOF
   wait_for_any_deployment_in_namespace "${context}" "${TEMPO_OPERATOR_NAMESPACE}"
 }
 
-install_minio_cluster1() {
+install_seaweedfs_cluster1() {
   local context="$1"
 
-  info "Installing MinIO backing store on cluster1"
+  info "Installing SeaweedFS backing store on cluster1"
   ensure_namespace "${context}" "${TEMPO_NAMESPACE}"
-  oc --context "${context}" -n "${TEMPO_NAMESPACE}" apply -f "${MINIO_YAML}"
+  oc --context "${context}" -n "${TEMPO_NAMESPACE}" apply -f "${SEAWEEDFS_YAML}"
+  oc --context "${context}" -n "${TEMPO_NAMESPACE}" rollout status deployment/seaweedfs --timeout=5m
 
-  oc --context "${context}" -n "${TEMPO_NAMESPACE}" create secret generic tempostack-dev-minio \
+  oc --context "${context}" -n "${TEMPO_NAMESPACE}" create secret generic tempostack-dev-seaweedfs \
     --from-literal=bucket="tempo-data" \
-    --from-literal=endpoint="http://minio.${TEMPO_NAMESPACE}.svc.cluster.local:9000" \
-    --from-literal=access_key_id="minio" \
-    --from-literal=access_key_secret="minio123" \
+    --from-literal=endpoint="http://seaweedfs.${TEMPO_NAMESPACE}.svc.cluster.local:8333" \
+    --from-literal=access_key_id="seaweedfs" \
+    --from-literal=access_key_secret="seaweedfs123" \
     --dry-run=client -o yaml | oc --context "${context}" apply -f -
 }
 
@@ -457,7 +458,7 @@ spec:
   storage:
     secret:
       type: s3
-      name: tempostack-dev-minio
+      name: tempostack-dev-seaweedfs
   observability:
     tracing:
       jaeger_agent_endpoint: localhost:6831
@@ -1164,7 +1165,7 @@ install_opentelemetry_operator "${CTX_CLUSTER1}"
 install_opentelemetry_operator "${CTX_CLUSTER2}"
 
 info "=== Step 2: Install Tempo stack on cluster1 ==="
-install_minio_cluster1 "${CTX_CLUSTER1}"
+install_seaweedfs_cluster1 "${CTX_CLUSTER1}"
 install_tempo_stack_cluster1 "${CTX_CLUSTER1}"
 
 info "=== Step 3: Install collectors and gateway RBAC on cluster1 ==="

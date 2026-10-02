@@ -1,4 +1,4 @@
-name: Integration Tests Frontend Playwright External Kiali
+name: Integration Tests Frontend Playwright Tempo
 
 on:
   workflow_call:
@@ -23,8 +23,8 @@ env:
   BUILD_BRANCH: ${{ inputs.build_branch || inputs.target_branch }}
 
 jobs:
-  integration_tests_frontend_playwright_external_kiali:
-    name: Playwright tests (external Kiali)
+  integration_tests_frontend_playwright_tempo:
+    name: Playwright tests (tempo / tracing)
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -42,7 +42,7 @@ jobs:
         docker system prune -af --volumes
 
     - name: Start resource sampler
-      run: nohup nice -n 19 bash hack/ci-resource-sampler.sh start --csv /tmp/ci-telemetry-frontend-playwright-external-kiali.csv > /tmp/sampler.out 2>&1 &
+      run: nohup nice -n 19 bash hack/ci-resource-sampler.sh start --csv /tmp/ci-telemetry-frontend-playwright-tempo.csv > /tmp/sampler.out 2>&1 &
       continue-on-error: true
 
     - name: Install Helm
@@ -79,20 +79,20 @@ jobs:
         path: ~/.cache/ms-playwright
         key: playwright-${{ runner.os }}-${{ hashFiles('frontend/yarn.lock') }}
 
-    - name: Run Playwright external Kiali integration tests
-      run: hack/run-integration-tests.sh --test-suite playwright-external-kiali --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
+    - name: Run Playwright tempo / tracing integration tests
+      run: hack/run-integration-tests.sh --test-suite playwright-tempo --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: junit-frontend-playwright-external-kiali-report
+        name: junit-frontend-playwright-tempo-report
         path: frontend/playwright/results/combined-report.xml
         if-no-files-found: warn
 
     - name: Stop resource sampler
       if: always()
-      run: bash hack/ci-resource-sampler.sh stop --csv /tmp/ci-telemetry-frontend-playwright-external-kiali.csv || true
+      run: bash hack/ci-resource-sampler.sh stop --csv /tmp/ci-telemetry-frontend-playwright-tempo.csv || true
       continue-on-error: true
 
     - name: Upload resource telemetry
@@ -100,8 +100,8 @@ jobs:
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       continue-on-error: true
       with:
-        name: resource-telemetry-frontend-playwright-external-kiali
-        path: /tmp/ci-telemetry-frontend-playwright-external-kiali.csv
+        name: resource-telemetry-frontend-playwright-tempo
+        path: /tmp/ci-telemetry-frontend-playwright-tempo.csv
         retention-days: 14
         if-no-files-found: ignore
 
@@ -115,14 +115,14 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: debug-info-frontend-playwright-external-kiali
+        name: debug-info-frontend-playwright-tempo
         path: debug-output
 
     - name: Upload Playwright report
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: playwright-report-external-kiali
+        name: playwright-report-tempo
         path: |
           frontend/playwright/report
           frontend/playwright/test-results
@@ -133,5 +133,5 @@ jobs:
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       if: ${{ inputs.stern_logs == true }}
       with:
-        name: playwright-logs-frontend-external-kiali
+        name: playwright-logs-frontend-tempo
         path: hack/stern
