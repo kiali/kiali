@@ -13,13 +13,13 @@ const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' 
 const reporters: ReporterDescription[] = isCI
   ? [
       ['list'],
-      ['blob', { outputDir: 'blob-report' }],
-      ['junit', { outputFile: 'playwright-results/junit-results.xml' }]
+      ['blob', { outputDir: 'playwright/blob-report' }],
+      ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
     ]
   : [
       ['list'],
-      ['html', { open: 'never', outputFolder: 'playwright-report' }],
-      ['junit', { outputFile: 'playwright-results/junit-results.xml' }]
+      ['html', { open: 'never', outputFolder: 'playwright/report' }],
+      ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
     ];
 
 /**
@@ -30,6 +30,8 @@ const reporters: ReporterDescription[] = isCI
  */
 export default defineConfig({
   testDir: './e2e/tests',
+  // Failure artifacts (screenshots, videos, traces) under playwright/ like Cypress outputs.
+  outputDir: 'playwright/test-results',
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,

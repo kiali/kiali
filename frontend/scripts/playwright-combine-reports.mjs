@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Produce playwright-results/combined-report.xml for Jenkins / Polarion.
+ * Produce playwright/results/combined-report.xml for Jenkins / Polarion.
  *
  * Merge CI blob reports into combined-report.xml for Jenkins / Polarion.
  * Falls back to the direct junit reporter output when merge is empty/missing.
@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(__dirname, '..');
-const resultsDir = path.join(frontendRoot, 'playwright-results');
-const blobDir = path.join(frontendRoot, 'blob-report');
+const resultsDir = path.join(frontendRoot, 'playwright/results');
+const blobDir = path.join(frontendRoot, 'playwright/blob-report');
 const combinedPath = path.join(resultsDir, 'combined-report.xml');
 const directJunitPath = path.join(resultsDir, 'junit-results.xml');
 const playwrightBin = path.join(frontendRoot, 'node_modules', '.bin', 'playwright');
@@ -25,7 +25,7 @@ const hasTestCases = filePath => {
     return false;
   }
   const xml = fs.readFileSync(filePath, 'utf8');
-  return /<testcase[\s>]/i.test(xml);
+  return /<testcase[\s>]/.test(xml);
 };
 
 const blobZips = fs.existsSync(blobDir)
@@ -33,10 +33,10 @@ const blobZips = fs.existsSync(blobDir)
   : [];
 
 if (blobZips.length > 0) {
-  console.log(`Merging ${blobZips.length} blob report(s) from blob-report/`);
+  console.log(`Merging ${blobZips.length} blob report(s) from playwright/blob-report/`);
   const result = spawnSync(
     playwrightBin,
-    ['merge-reports', '--config=playwright.merge.config.ts', './blob-report'],
+    ['merge-reports', '--config=playwright.merge.config.ts', './playwright/blob-report'],
     { cwd: frontendRoot, stdio: 'inherit', env: process.env }
   );
   if (result.status !== 0) {
@@ -51,7 +51,7 @@ if (!hasTestCases(combinedPath) && fs.existsSync(directJunitPath)) {
 
 if (!hasTestCases(combinedPath)) {
   console.error(
-    'ERROR: combined-report.xml has no <testcase> entries. Check blob-report/ and playwright-results/junit-results.xml.'
+    'ERROR: combined-report.xml has no <testcase> entries. Check playwright/blob-report/ and playwright/results/junit-results.xml.'
   );
   process.exit(1);
 }
