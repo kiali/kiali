@@ -1,16 +1,17 @@
 import { getExpr } from '../../../config/HealthConfig';
-import { RequestHealth, RequestType } from '../../Health';
-import { HealthAnnotationType } from '../../HealthAnnotation';
-import { TrafficItem } from '../../../components/TrafficList/TrafficDetails';
-import { NodeType, Responses } from '../../Graph';
-import { ServerConfig } from 'types/ServerConfig';
+import type { RequestHealth, RequestType } from '../../Health';
+import type { HealthAnnotationType } from '../../HealthAnnotation';
+import type { TrafficItem } from '../../../components/TrafficList/TrafficDetails';
+import type { Responses } from '../../Graph';
+import { NodeType } from '../../Graph';
+import type { ServerConfig } from 'types/ServerConfig';
 
 const codes = ['200', '400', '404', '500'];
 export const annotationSample: HealthAnnotationType = { 'health.kiali.io/rate': '4XX,10,20,http,inbound' };
 
 const precision = 100; // 2 decimals
 const randomRequest = (greater = 40): RequestType => {
-  let result = {
+  const result = {
     http: {}
   };
   codes.forEach(code => {
@@ -21,10 +22,10 @@ const randomRequest = (greater = 40): RequestType => {
 };
 
 export const generateTrafficItem = (requests: { [key: string]: number[] }): TrafficItem => {
-  let responses: Responses = {};
+  const responses: Responses = {};
 
   Object.keys(requests).forEach(key => {
-    let flags = {};
+    const flags = {};
     requests[key].forEach((v, i) => (flags[i] = v));
     responses[key] = {
       hosts: {},
@@ -168,6 +169,7 @@ export const serverRateConfig = {
       }
     ]
   },
+  healthStatusMetricsEnabled: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',

@@ -44,6 +44,13 @@ var baseMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("step"),
 }
 
+var healthStatusHistoryQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("step"),
+}
+
 var istioMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("avg"),
 	queryparams.PresenceParam("byLabels[]"),
@@ -356,6 +363,59 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 
 		for k, v := range resourceMetrics {
 			metrics[k] = v
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
+
+// HealthStatusHistory is the API handler to fetch kiali_health_status time series
+// for an app, namespace, service, or workload, to be displayed as a health history ribbon.
+// entityVar is the mux route variable holding the entity name; for namespace health it is ignored.
+func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, healthType, entityVar string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		conf := config.Get()
+		if !conf.Server.Observability.Metrics.HealthStatus.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "Health status metrics are not enabled")
+			return
+		}
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
+
+		var name string
+		if healthType == "namespace" {
+			name = namespace
+		} else {
+			name = vars[entityVar]
+			if !validK8sNameRe.MatchString(name) {
+				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid %s name", entityVar))
+				return
+			}
+		}
+
+		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		if err != nil {
+			return
+		}
+
+		params := prometheus.RangeQuery{}
+		params.FillDefaults()
+		queryParams := r.URL.Query()
+		if err := queryparams.RejectUnknown(queryParams, queryparams.Names(healthStatusHistoryQueryParams)...); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		if err := extractBaseMetricsQueryParams(queryParams, &params, namespaceInfo); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		metricsService := business.NewMetricsService(prom, conf)
+		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, healthType, name, &params)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
 		}
 
 		RespondWithJSON(w, http.StatusOK, metrics)

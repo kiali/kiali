@@ -998,6 +998,94 @@ func NewRoutes(
 			handlers.WorkloadMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/health/history workloads workloadHealthStatusHistory
+		// ---
+		// Endpoint to fetch kiali_health_status time series for a workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"WorkloadHealthStatusHistory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/health/history",
+			handlers.HealthStatusHistory(conf, kialiCache, discovery, clientFactory, prom, "workload", "workload"),
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/apps/{app}/health/history apps appHealthStatusHistory
+		// ---
+		// Endpoint to fetch kiali_health_status time series for an app
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"AppHealthStatusHistory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/apps/{app}/health/history",
+			handlers.HealthStatusHistory(conf, kialiCache, discovery, clientFactory, prom, "app", "app"),
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/services/{service}/health/history services serviceHealthStatusHistory
+		// ---
+		// Endpoint to fetch kiali_health_status time series for a service
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"ServiceHealthStatusHistory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/services/{service}/health/history",
+			handlers.HealthStatusHistory(conf, kialiCache, discovery, clientFactory, prom, "service", "service"),
+			true,
+		},
+		// swagger:route GET /namespaces/{namespace}/health/history namespaces namespaceHealthStatusHistory
+		// ---
+		// Endpoint to fetch kiali_health_status time series for a namespace
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      503: serviceUnavailableError
+		//      200: metricsResponse
+		//
+		{
+			"NamespaceHealthStatusHistory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/health/history",
+			handlers.HealthStatusHistory(conf, kialiCache, discovery, clientFactory, prom, "namespace", ""),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single control plane
