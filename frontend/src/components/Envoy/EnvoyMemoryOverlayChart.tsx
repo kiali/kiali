@@ -63,13 +63,13 @@ const rootStyle = kialiStyle({
   maxWidth: '100%',
   minHeight: 0,
   minWidth: 0,
-  overflow: 'hidden'
+  overflow: 'visible'
 });
 
 const chartHostStyle = kialiStyle({
   maxWidth: '100%',
   minWidth: 0,
-  overflow: 'hidden',
+  overflow: 'visible',
   width: '100%'
 });
 
@@ -78,7 +78,7 @@ const chartWrapStyle = kialiStyle({
   maxWidth: '100%',
   minHeight: '280px',
   minWidth: 0,
-  overflow: 'hidden',
+  overflow: 'visible',
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md
 });
@@ -91,7 +91,7 @@ const maximizedChartWrapStyle = kialiStyle({
   maxWidth: '100%',
   minHeight: 0,
   minWidth: 0,
-  overflow: 'hidden',
+  overflow: 'visible',
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md
 });
@@ -505,7 +505,8 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
               isMaximized={props.isMaximized}
               overlay={connectionsOverlay}
               overlayAsLine={true}
-              overlayRightPadding={48}
+              overlayRightPadding={54}
+              paddingLeft={42}
               seriesComponent={<ChartLine />}
               showSpans={false}
               splitLegend={true}

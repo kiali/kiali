@@ -49,6 +49,8 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   // Extra right padding when an overlay axis is shown (default 15).
   overlayRightPadding?: number;
   overrideSeriesComponentStyle?: boolean;
+  // Extra left padding for the primary Y axis tick labels (default 10).
+  paddingLeft?: number;
   // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
   // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
   pointer?: boolean;
@@ -163,7 +165,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
       bottom: showLegend ? CHART_BOTTOM_PADDING : 0,
-      left: 10,
+      left: this.props.paddingLeft ?? 10,
       right: 10 + overlayRightPadding,
       top: 0
     };

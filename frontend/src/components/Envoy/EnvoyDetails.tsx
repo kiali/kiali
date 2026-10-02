@@ -432,6 +432,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = t(envoyTabTitles[value] ?? value);
+      const tabNeedsPod = value !== 'memory' && value !== 'metrics';
 
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
