@@ -4,7 +4,6 @@ import { gotoConsolePage } from '../utils/navigation';
 import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage';
 import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
-import { linkSelector } from '../utils/linkSelector';
 import { restartWorkload } from '../utils/sidecarInjection';
 import { waitForLoadingComplete } from '../utils/transition';
 
@@ -391,33 +390,35 @@ export class WorkloadDetailsPage extends BasePage {
 
   async expectModeInPopover(...texts: string[]): Promise<void> {
     await this.getBySel('details-mode').locator('svg').click();
-    const dialog = this.page.getByRole('dialog');
+    const dialog = this.page.getByRole('dialog', { name: 'Mode info' });
     await expect(dialog).toBeVisible();
     for (const text of texts) {
       await expect(dialog).toContainText(text);
     }
-    await this.page.locator('body').click({ position: { x: 0, y: 0 } });
+    await dialog.getByRole('button', { name: 'Close' }).first().click();
+    await expect(dialog).toHaveCount(0);
   }
 
   async expectProtocolInPodPopover(value: string): Promise<void> {
     await this.getBySel('pod-info').first().click();
-    const dialog = this.page.getByRole('dialog');
+    const dialog = this.page.getByRole('dialog').filter({ hasText: 'Protocol' });
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText('Protocol');
     await expect(dialog).toContainText(value);
     await dialog.getByRole('button', { name: 'Close' }).first().click();
+    await expect(dialog).toHaveCount(0);
   }
 
   async expectL7WaypointLink(waypointName: string): Promise<void> {
     const resources = this.getBySel('workload-resources-card');
     await expect(resources).toContainText('L7');
-    const link = this.getBySel('waypoint-link');
+    // data-test="waypoint-link" is on the KialiLink itself (not a wrapper).
+    const link = this.getBySel('waypoint-link').filter({ hasText: waypointName });
+    await expect(link).toBeVisible();
     await expect(link.locator('xpath=ancestor::li[1]').locator('span').filter({ hasText: 'L7' })).toBeVisible();
-    await expect(link.locator(linkSelector()).filter({ hasText: waypointName })).toBeVisible();
   }
 
   async clickL7WaypointLink(waypointName: string): Promise<void> {
-    await this.getBySel('waypoint-link').locator(linkSelector()).filter({ hasText: waypointName }).click();
+    await this.getBySel('waypoint-link').filter({ hasText: waypointName }).click();
     await waitForLoadingComplete(this.page);
   }
 

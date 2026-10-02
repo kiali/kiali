@@ -254,13 +254,22 @@ export class GraphPage extends BasePage {
   async setDisplayOption(optionName: string, enabled: boolean): Promise<void> {
     const optionId = DISPLAY_OPTION_IDS[optionName.toLowerCase()] ?? optionName;
     const clientOnly = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
+    const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
+    await expect(input).toBeAttached();
+
+    // No-op when already in the desired state — avoids waiting forever for a graph
+    // refetch that will never fire (e.g. waypoint proxies defaults to off).
+    const isChecked = await input.isChecked();
+    if (enabled === isChecked) {
+      return;
+    }
+
     const graphResponse = clientOnly.includes(optionId)
       ? null
       : this.page.waitForResponse(
           response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
         );
 
-    const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
     if (enabled) {
       await input.check();
       if (optionId === 'rank') {
