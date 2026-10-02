@@ -252,20 +252,18 @@ export class AiChatbotPage extends BasePage {
     await this.getBySel('new-chat-confirm').click();
   }
 
+  providerSelectorToggle(): Locator {
+    // ChatbotHeaderMain holds only the provider/model MenuToggle (actions are siblings).
+    return this.page.locator('.pf-chatbot__header-main').getByRole('button');
+  }
+
   async selectSecondProvider(providerName = SECOND_PROVIDER_NAME): Promise<void> {
-    await this.page.locator('.pf-chatbot__header').locator('button.pf-v6-c-menu-toggle').first().click();
-    await this.page
-      .locator('.pf-v6-c-menu__group')
-      .filter({ has: this.page.locator('.pf-v6-c-menu__group-title', { hasText: providerName }) })
-      .locator('button.pf-v6-c-menu__item')
-      .first()
-      .click();
+    await this.providerSelectorToggle().click();
+    await this.page.locator(`[data-test^="ai-chatbot-provider-model-${providerName}-"]`).first().click();
   }
 
   async expectHeaderShowsProvider(providerName: string): Promise<void> {
-    await expect(this.page.locator('.pf-chatbot__header').locator('button.pf-v6-c-menu-toggle').first()).toContainText(
-      providerName
-    );
+    await expect(this.providerSelectorToggle()).toContainText(providerName);
   }
 
   async expectRunningToolLabel(toolName: string): Promise<void> {

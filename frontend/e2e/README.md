@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`, `playwright-ai-chatbot`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional/external-kiali, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). **ai-chatbot** uses local `kiali` with `ci-test-config-ai.yaml` (`chat_ai` enabled) and demos with `--install-errorrates-beta false`. One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`, `playwright-ai-chatbot`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional/external-kiali/ai-chatbot, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). **ai-chatbot** enables `chat_ai` via Helm (`--enable-ai`) and installs demos with `--install-errorrates-beta false`. One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `playwright/blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -181,9 +181,8 @@ hack/run-integration-tests.sh --test-suite playwright-offline
 
 Covers toggle/theme, messaging, navigation actions, new chat/provider, tools, YAML attachments, and
 errors/interaction modes. Chat SSE is mocked via `page.route`; YAML create/patch/delete hit real
-Istio APIs against bookinfo. Local Kiali uses `hack/ci-yaml/ci-test-config-ai.yaml`
-(`chat_ai.enabled` + dummy provider) because `--deploy-kiali false` skips in-cluster Helm
-`--enable-ai`.
+Istio APIs against bookinfo. CI deploys **in-cluster** Kiali with `chat_ai` enabled (`--enable-ai`).
+For local binary debugging, use `hack/ci-yaml/ci-test-config-ai.yaml`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ai-chatbot

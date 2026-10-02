@@ -1,5 +1,12 @@
+import { expect } from '@playwright/test';
 import { test } from '../../fixtures/kialiFixtures';
-import { mockChatAiServerError, mockChatAiStreamError, waitForChatAiPost } from '../../utils/aiChatbotHelpers';
+import {
+  mockChatAiServerError,
+  mockChatAiStreamError,
+  waitForChatAiPost,
+  type ChatRequestCapture
+} from '../../utils/aiChatbotHelpers';
+import { mockPayload } from '../../utils/aiChatbotMocks';
 import { aiChatbotOnly } from '../../utils/suite-tags';
 
 test.describe('AI chatbot errors and interaction modes', () => {
@@ -65,8 +72,10 @@ test.describe('AI chatbot errors and interaction modes', () => {
     await aiChatbotPage.open();
     await aiChatbotPage.openInteractionModeDropdown();
     await aiChatbotPage.selectInteractionMode('troubleshoot');
-    await aiChatbotPage.sendMessage('What is wrong with my services?');
+    const capture: ChatRequestCapture = {};
+    await aiChatbotPage.sendMessage('What is wrong with my services?', mockPayload, { capture });
     await aiChatbotPage.expectAnswerContains('Of course.');
+    expect(capture.body?.interaction_mode).toBe('troubleshoot');
   });
 
   test(

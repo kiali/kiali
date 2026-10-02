@@ -1477,21 +1477,11 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_OFFLINE}" ]; then
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AI_CHATBOT}" ]; then
   ensurePlaywrightReady
 
-  GOPATH=$(go env GOPATH)
-
-  if [ -z "${GOPATH}" ]; then
-    echo "ERROR: Unable to determine GOPATH. Please ensure Go is properly installed."
-    exit 1
-  fi
-
-  KIALI_BINARY="${GOPATH}/bin/kiali"
-  if [ ! -f "${KIALI_BINARY}" ]; then
-    echo "ERROR: Kiali binary not found at ${KIALI_BINARY}. Please build the kiali binary first."
-    exit 1
-  fi
-
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --deploy-kiali false --install-perses "true" --enable-ai "true" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    # Deploy Kiali in-cluster with chat_ai enabled (MetalLB ingress).
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    # Perses is not required for chatbot coverage.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous --sail true --enable-ai "true" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Skip beta error-rates namespace — not needed by chatbot tests
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
@@ -1503,36 +1493,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AI_CHATBOT}" ]; then
     exit 0
   fi
 
-  # Local binary with AI enabled in config (in-cluster Helm --enable-ai is skipped when deploy-kiali=false)
-  infomsg "Starting Kiali locally in the background using binary: ${KIALI_BINARY}"
-  "${KIALI_BINARY}" -c "${SCRIPT_DIR}/ci-yaml/ci-test-config-ai.yaml" run --cluster-name-overrides kind-ci=cluster-default --port-forward-tracing --enable-tracing --port-forward-prom --port-forward-grafana --no-browser &
-  KIALI_PID=$!
-
-  KIALI_URL="http://localhost:20001"
-
-  infomsg "Waiting for Kiali server to respond at ${KIALI_URL}"
-  WAIT_START=$(date +%s)
-  WAIT_END=$((WAIT_START + 60))
-  while true; do
-    if ! ps -p ${KIALI_PID} > /dev/null; then
-      echo "Kiali process is not running. An error must have occurred. Check the logs above."
-      exit 1
-    fi
-    if curl -s --fail "${KIALI_URL}/healthz" > /dev/null 2>&1; then
-      break
-    fi
-    WAIT_NOW=$(date +%s)
-    if [ "${WAIT_NOW}" -gt "${WAIT_END}" ]; then
-      echo "Timed out waiting for Kiali server to respond at ${KIALI_URL}/healthz"
-      exit 1
-    fi
-    sleep 2
-  done
-  infomsg "Kiali server is healthy"
+  ensureKialiServerReady
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
-
-  trap cleanup_kiali EXIT
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e

@@ -38,6 +38,8 @@ export async function mockChatAiResponse(
   } = {}
 ): Promise<void> {
   const urlPattern = options.urlPattern ?? '**/api/chat/**/ai';
+  // Replace any prior handler for this pattern so repeated sendMessage/mocks do not stack.
+  await page.unroute(urlPattern);
   await page.route(urlPattern, async route => {
     const request = route.request();
     if (request.method() !== 'POST') {

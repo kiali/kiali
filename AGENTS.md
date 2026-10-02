@@ -374,7 +374,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
 | `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
 | `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
-| `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + local Kiali with chat_ai config) |
+| `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
 
 #### The `local` Suite (Recommended for Local Development)
 
