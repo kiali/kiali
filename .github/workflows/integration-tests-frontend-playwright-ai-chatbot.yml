@@ -124,9 +124,9 @@ jobs:
       with:
         name: playwright-report-ai-chatbot
         path: |
-          frontend/playwright-report
-          frontend/test-results
-          frontend/playwright-results
+          frontend/playwright/report
+          frontend/playwright/test-results
+          frontend/playwright/results
         if-no-files-found: ignore
 
     - name: Upload stern logs
