@@ -1,0 +1,37 @@
+health_config:
+  rate:
+  - kind: service
+    name: y-server
+    namespace: alpha
+    tolerance:
+    - code: 5xx
+      degraded: 2
+      failure: 100
+additional_display_details:
+- title: API Documentation
+  annotation: kiali.io/api-spec
+  icon_annotation: kiali.io/api-type
+# Mirror setup-kind-in-ci.sh --enable-ai for local kiali binary (deploy-kiali false).
+# Dummy key is enough: chat responses are mocked in Playwright; toggle requires enabled + providers.
+chat_ai:
+  default_provider: openai
+  enabled: true
+  providers:
+  - config: default
+    default_model: gemini-2.5-pro
+    description: OpenAI API Provider
+    enabled: true
+    key: dummy-api-key
+    models:
+    - description: Model provided by Google with OpenAI API Support
+      enabled: true
+      endpoint: https://generativelanguage.googleapis.com/v1beta/openai
+      model: gemini-2.5-pro
+      name: gemini-2.5-pro
+    name: openai
+    type: openai
+kiali_internal:
+  graph_cache:
+    enabled: false
+  health_cache:
+    enabled: false

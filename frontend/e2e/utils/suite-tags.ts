@@ -41,3 +41,6 @@ export const externalKialiOnly = { tag: '@external-kiali' as const };
 
 /** @offline — offline mode Playwright / Cypress suite */
 export const offlineOnly = { tag: '@offline' as const };
+
+/** @ai-chatbot — AI chatbot Playwright suite */
+export const aiChatbotOnly = { tag: '@ai-chatbot' as const };
