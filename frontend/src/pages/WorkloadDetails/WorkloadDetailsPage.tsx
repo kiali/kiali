@@ -29,7 +29,7 @@ import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
-import { hasEnvoyMemoryWorkload } from 'utils/EnvoyMemoryUtils';
+import { shouldShowEnvoyWorkloadTab } from 'utils/EnvoyMemoryUtils';
 import { WorkloadHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
@@ -352,7 +352,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       }
     }
 
-    if (this.state.workload && hasEnvoyMemoryWorkload(this.state.workload)) {
+    if (this.state.workload && shouldShowEnvoyWorkloadTab(this.state.workload)) {
       const envoyTab = (
         <Tab title={t('Envoy')} eventKey={10} key="Envoy">
           {this.state.workload && (

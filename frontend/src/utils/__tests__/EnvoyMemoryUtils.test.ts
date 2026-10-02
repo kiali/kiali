@@ -2,6 +2,7 @@ import {
   buildEnvoyMemoryQueryParams,
   hasEnvoyMemoryRunningPods,
   hasEnvoyMemoryWorkload,
+  shouldShowEnvoyWorkloadTab,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
@@ -43,6 +44,41 @@ describe('EnvoyMemoryUtils', () => {
 
     expect(hasEnvoyMemoryRunningPods(workload)).toBe(false);
     expect(hasEnvoyMemoryRunningPods({ ...workload, pods: [{ name: 'pod-a' }] } as any as Workload)).toBe(true);
+  });
+
+  it('hides the Envoy tab when the workload has no pods in the selected cluster', () => {
+    const remoteWorkload = {
+      istioSidecar: true,
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      pods: []
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(remoteWorkload)).toBe(false);
+  });
+
+  it('shows the Envoy tab when a sidecar pod is present in the selected cluster', () => {
+    const workload = {
+      istioSidecar: true,
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      pods: [{ containers: [{ name: 'istio-proxy' }] }]
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(workload)).toBe(true);
+  });
+
+  it('shows the Envoy tab for waypoints even when pod list is empty', () => {
+    const workload = {
+      istioSidecar: false,
+      isWaypoint: true,
+      isZtunnel: false,
+      pods: []
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(workload)).toBe(true);
   });
 
   it('formats memory bytes', () => {

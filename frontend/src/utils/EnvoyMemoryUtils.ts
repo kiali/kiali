@@ -65,6 +65,46 @@ export const hasEnvoyMemoryRunningPods = (workload?: Workload): boolean => {
   return (workload?.pods?.length ?? 0) > 0;
 };
 
+const istioProxyContainerName = 'istio-proxy';
+
+// Mirrors legacy WorkloadDetails hasIstioSidecars(): Envoy UI is pod-scoped in the active cluster.
+export const workloadHasEnvoyProxyInPods = (workload?: Workload): boolean => {
+  if (!workload?.pods?.length) {
+    return false;
+  }
+
+  let hasEnvoyProxy = false;
+  workload.pods.forEach(pod => {
+    if (pod.istioContainers && pod.istioContainers.length > 0) {
+      hasEnvoyProxy = true;
+    } else if (pod.istioInitContainers?.some(cont => cont.name === istioProxyContainerName)) {
+      hasEnvoyProxy = true;
+    } else {
+      hasEnvoyProxy =
+        hasEnvoyProxy ||
+        (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyContainerName && !workload.isZtunnel));
+    }
+  });
+
+  return hasEnvoyProxy;
+};
+
+export const shouldShowEnvoyWorkloadTab = (workload?: Workload): boolean => {
+  if (!workload || workload.isZtunnel) {
+    return false;
+  }
+
+  if (workload.isWaypoint) {
+    return true;
+  }
+
+  if (!hasEnvoyMemoryWorkload(workload)) {
+    return false;
+  }
+
+  return workloadHasEnvoyProxyInPods(workload);
+};
+
 export const formatEnvoyMemoryUsage = (summary: {
   memoryLimitBytes: number;
   memoryMaxBytes: number;
