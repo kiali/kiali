@@ -44,3 +44,6 @@ export const offlineOnly = { tag: '@offline' as const };
 
 /** @ai-chatbot — AI chatbot Playwright suite */
 export const aiChatbotOnly = { tag: '@ai-chatbot' as const };
+
+/** @tracing — frontend-tempo / Playwright tracing project (excludes @waypoint-tracing) */
+export const tracingOnly = { tag: '@tracing' as const };
