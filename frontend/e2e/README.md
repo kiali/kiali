@@ -150,10 +150,16 @@ Requires Perses in the cluster **and** `external_services.perses` in the Kiali c
 
 ### Ambient (`yarn playwright:run:ambient`)
 
-Ports Cypress `@ambient` scenarios (ambient badge, graph traffic menu/TCP/HTTP edge counts, services Healthy filter, workloads out-of-mesh, workload ambient badge, ztunnel logs). Graph TCP/HTTP tests assert the same edge floors as Cypress (≥6 / ≥2). Health filter waits for `productpage` Healthy via API then filters Healthy. KinD setup matches Cypress `frontend-ambient` (ambient Sail, demos, **in-cluster Kiali** via MetalLB; anonymous auth for Playwright). `@waypoint` and `@waypoint-tracing` projects are included with `--pass-with-no-tests` until ported.
+Ports `@ambient` and full `@waypoint` scenarios (bookinfo + demo-NS graph/details matrix + sidecar↔ambient
++ Add to Ambient + waypoint logs). KinD setup matches Cypress `frontend-ambient` (ambient Sail, demos
+including `install-waypoints.sh`, **in-cluster Kiali** via MetalLB; anonymous auth). Bookinfo enrollment
+and gateway traces readiness run in waypoint `beforeAll` helpers. `@waypoint-tracing` and
+`@waypoint-multicluster` remain separate.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient
+# waypoint project only (after ambient cluster is up):
+cd frontend && yarn playwright test --project=waypoint
 ```
 
 ### External Kiali (`yarn playwright:run:external-kiali`)
