@@ -329,7 +329,7 @@ describe('EnvoyMemory', () => {
       </Provider>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Summary' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
 
     expect(await screen.findByTestId('envoy-memory-tab')).toBeInTheDocument();
   });

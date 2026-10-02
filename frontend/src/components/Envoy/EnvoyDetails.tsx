@@ -83,7 +83,7 @@ const envoyTabTitles: Record<string, string> = {
   clusters: 'Clusters',
   config: 'Config',
   listeners: 'Listeners',
-  memory: 'Summary',
+  memory: 'Overview',
   metrics: 'Metrics',
   routes: 'Routes'
 };
