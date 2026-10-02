@@ -1,7 +1,7 @@
 import { When, Then } from '@badeball/cypress-cucumber-preprocessor';
 import { getCellsForCol } from './table';
 import { clickSpanFilterOptionWithFallback, clusterParameterExists } from './navigation';
-import { openTab } from './transition';
+import { ensureKialiFinishedLoading, openTab } from './transition';
 
 const WAYPOINT_FALLBACK = 'waypoint';
 
@@ -187,6 +187,47 @@ Then('the user sees the metrics tab', () => {
   // Charts render only when dashboard data is loaded. CustomMetrics does not forward data-test
   // to the DOM; with unmountOnExit only this tab's content is mounted.
   cy.get('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
+});
+
+Then('the user sees healthy Envoy status on workload details', () => {
+  cy.getBySel('details-envoy-status').within(() => {
+    cy.getBySel('envoy-memory-status').should('be.visible');
+    cy.contains('Healthy');
+  });
+});
+
+When('the user opens the Envoy memory overview', () => {
+  cy.intercept('**/api/namespaces/bookinfo/workloads/details-v1/envoymemory**').as('fetchEnvoyMemorySummary');
+  cy.intercept('**/api/namespaces/bookinfo/customdashboard/envoy-memory**').as('fetchEnvoyMemoryDashboard');
+
+  openTab('Envoy');
+  openEnvoyTab('Overview');
+
+  cy.wait('@fetchEnvoyMemorySummary');
+  cy.wait('@fetchEnvoyMemoryDashboard');
+  ensureKialiFinishedLoading();
+
+  cy.getBySel('envoy-memory-tab').should('be.visible');
+});
+
+Then('the user sees healthy Envoy memory overview', () => {
+  cy.getBySel('envoy-memory-status-alert').should('have.class', 'pf-v6-c-alert--success');
+  cy.getBySel('envoy-memory-status-alert').contains('Within normal range');
+});
+
+Then('the user sees Envoy memory summary metrics with data', () => {
+  cy.getBySel('envoy-memory-summary-metrics').within(() => {
+    cy.getBySel('envoy-overview-clusters-link')
+      .invoke('text')
+      .then(text => {
+        expect(Number.parseInt(text.trim(), 10), `expected active clusters > 0, got "${text}"`).to.be.greaterThan(0);
+      });
+    cy.contains(/[1-9][0-9]*(\.[0-9]+)?\s*(B|KiB|MiB|GiB)/);
+  });
+});
+
+Then('the user sees Envoy memory chart statistics', () => {
+  cy.getBySel('envoy-memory-overlay-chart').find('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
 });
 
 Then('the user sees the ztunnel services table', () => {
