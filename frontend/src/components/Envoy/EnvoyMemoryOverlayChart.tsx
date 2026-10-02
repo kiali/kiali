@@ -497,7 +497,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
       </div>
       <div className={props.isMaximized ? maximizedChartWrapStyle : chartWrapStyle} ref={chartWrapRef}>
         {memoryLines.length > 0 ? (
-          <div className={chartHostStyle}>
+          <div className={chartHostStyle} data-test="metrics-chart">
             <ChartWithLegend<RichDataPoint, LineInfo>
               chartHeight={chartHeight}
               data={memoryLines}

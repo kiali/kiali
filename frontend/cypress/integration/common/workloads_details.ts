@@ -190,28 +190,29 @@ Then('the user sees the metrics tab', () => {
 });
 
 Then('the user sees healthy Envoy status on workload details', () => {
+  ensureKialiFinishedLoading();
+  cy.getBySel('details-envoy-status', { timeout: 60000 }).should('be.visible');
   cy.getBySel('details-envoy-status').within(() => {
-    cy.getBySel('envoy-memory-status').should('be.visible');
-    cy.contains('Healthy');
+    cy.getBySel('envoy-memory-status', { timeout: 60000 }).should('be.visible').and('contain.text', 'Healthy');
   });
 });
 
 When('the user opens the Envoy memory overview', () => {
-  cy.intercept('**/api/namespaces/bookinfo/workloads/details-v1/envoymemory**').as('fetchEnvoyMemorySummary');
   cy.intercept('**/api/namespaces/bookinfo/customdashboard/envoy-memory**').as('fetchEnvoyMemoryDashboard');
 
   openTab('Envoy');
   openEnvoyTab('Overview');
 
-  cy.wait('@fetchEnvoyMemorySummary');
-  cy.wait('@fetchEnvoyMemoryDashboard');
+  // envoymemory is often fetched on the workload Overview tab (Envoy status row) and reused from the
+  // 5s client cache — do not cy.wait() for it here or the test flakes when no second request is sent.
+  cy.wait('@fetchEnvoyMemoryDashboard', { timeout: 60000 });
   ensureKialiFinishedLoading();
 
   cy.getBySel('envoy-memory-tab').should('be.visible');
 });
 
 Then('the user sees healthy Envoy memory overview', () => {
-  cy.getBySel('envoy-memory-status-alert').should('have.class', 'pf-v6-c-alert--success');
+  cy.getBySel('envoy-memory-status-alert').should('have.class', 'pf-m-success');
   cy.getBySel('envoy-memory-status-alert').contains('Within normal range');
 });
 
@@ -227,7 +228,13 @@ Then('the user sees Envoy memory summary metrics with data', () => {
 });
 
 Then('the user sees Envoy memory chart statistics', () => {
-  cy.getBySel('envoy-memory-overlay-chart').find('[data-test="metrics-chart"]').should('have.length.greaterThan', 0);
+  cy.getBySel('envoy-memory-overlay-chart', { timeout: 60000 }).should('be.visible');
+  cy.getBySel('envoy-memory-overlay-chart').within(() => {
+    cy.contains('Loading metrics', { timeout: 120000 }).should('not.exist');
+  });
+  cy.getBySel('envoy-memory-overlay-chart')
+    .find('[data-test="metrics-chart"]', { timeout: 120000 })
+    .should('have.length.greaterThan', 0);
 });
 
 Then('the user sees the ztunnel services table', () => {
