@@ -373,6 +373,8 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
 | `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
 | `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
+| `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
+| `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
 
 #### The `local` Suite (Recommended for Local Development)
 
@@ -493,6 +495,8 @@ hack/run-integration-tests.sh --test-suite playwright-core-caching
 hack/run-integration-tests.sh --test-suite playwright-core-optional
 hack/run-integration-tests.sh --test-suite playwright-ambient
 hack/run-integration-tests.sh --test-suite playwright-external-kiali # KinD multicluster + in-cluster Kiali (OpenID)
+hack/run-integration-tests.sh --test-suite playwright-offline
+hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
 ```
 
 **Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`. Cypress remains in `frontend/cypress/` until cutover.

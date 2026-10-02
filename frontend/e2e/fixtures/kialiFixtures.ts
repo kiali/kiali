@@ -1,4 +1,5 @@
 import { test as base } from '@playwright/test';
+import { AiChatbotPage } from '../pages/AiChatbotPage';
 import { AppDetailsPage } from '../pages/AppDetailsPage';
 import { AppsPage } from '../pages/AppsPage';
 import { GraphPage } from '../pages/GraphPage';
@@ -16,6 +17,7 @@ import { WorkloadDetailsPage } from '../pages/WorkloadDetailsPage';
 import { WorkloadsPage } from '../pages/WorkloadsPage';
 
 type KialiFixtures = {
+  aiChatbotPage: AiChatbotPage;
   appDetailsPage: AppDetailsPage;
   appsPage: AppsPage;
   graphPage: GraphPage;
@@ -37,6 +39,9 @@ type KialiFixtures = {
  * Kiali page-object fixtures. Extend this as more POMs are migrated.
  */
 export const test = base.extend<KialiFixtures>({
+  aiChatbotPage: async ({ page }, use) => {
+    await use(new AiChatbotPage(page));
+  },
   appDetailsPage: async ({ page }, use) => {
     await use(new AppDetailsPage(page));
   },
