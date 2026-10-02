@@ -190,7 +190,10 @@ hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
 
 ### Tempo / tracing (`yarn playwright:run:tracing`)
 
-Ports Cypress `@tracing` scenarios (app/service/workload Traces tab, graph side panel traces list, workload logs spans). KinD setup matches Cypress `frontend-tempo` (Sail + Tempo + **in-cluster Kiali** via MetalLB with Tempo provider). For local binary debugging, use `hack/ci-yaml/ci-test-config-tempo.yaml` with `--port-forward-tracing`.
+App/service/workload Traces tab, graph side panel traces list, and workload logs spans.
+KinD setup installs Sail + Tempo and deploys **in-cluster** Kiali via MetalLB with the Tempo
+provider. For local binary debugging, use `hack/ci-yaml/ci-test-config-tempo.yaml` with
+`--port-forward-tracing`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-tempo

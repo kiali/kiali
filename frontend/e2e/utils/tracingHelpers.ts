@@ -51,7 +51,7 @@ export const waitForTracesViaApi = async (
   let lastError = '';
 
   while (Date.now() < deadline) {
-    // Same window as Cypress waitForTargetTracesInApi — bare /traces uses start=0 and Tempo 400s.
+    // Tempo rejects bare /traces with start=0; query a recent window (last 10 minutes).
     const nowMicros = Date.now() * 1000;
     const response = await request.get(kialiUrl(path), {
       params: {
@@ -101,7 +101,7 @@ export const expectTraceScatterplot = async (page: Page): Promise<void> => {
 
 /**
  * Select a trace with at least `minSpans` spans.
- * Prefer clicking the Victory scatterplot (Cypress parity); fall back to `traceId` URL param.
+ * Prefer clicking the Victory scatterplot; fall back to `traceId` URL param.
  * TODO(#9712): Prefer data-test on scatter points when available (same fiber caveat as graphTopology).
  */
 export const selectTraceWithMinSpans = async (page: Page, minSpans = 0, fallbackTraceId?: string): Promise<void> => {
