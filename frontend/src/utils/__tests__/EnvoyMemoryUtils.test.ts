@@ -39,10 +39,10 @@ describe('EnvoyMemoryUtils', () => {
     const workload = {
       istioSidecar: true,
       pods: []
-    } as Workload;
+    } as any as Workload;
 
     expect(hasEnvoyMemoryRunningPods(workload)).toBe(false);
-    expect(hasEnvoyMemoryRunningPods({ ...workload, pods: [{ name: 'pod-a' }] } as Workload)).toBe(true);
+    expect(hasEnvoyMemoryRunningPods({ ...workload, pods: [{ name: 'pod-a' }] } as any as Workload)).toBe(true);
   });
 
   it('formats memory bytes', () => {

@@ -238,16 +238,12 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string): void => {
-    if (!this.state.pod) {
+    const pod = this.state.pod;
+    if (!pod) {
       return;
     }
 
-    API.getPodEnvoyProxyResourceEntries(
-      this.props.namespace,
-      this.state.pod.name,
-      resource,
-      this.props.workload.cluster
-    )
+    API.getPodEnvoyProxyResourceEntries(this.props.namespace, pod.name, resource, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,
@@ -255,16 +251,17 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        addError(`Could not fetch envoy config ${resource} entries for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config ${resource} entries for ${pod.name}.`, error);
       });
   };
 
   fetchEnvoyProxy = (): void => {
-    if (!this.state.pod) {
+    const pod = this.state.pod;
+    if (!pod) {
       return;
     }
 
-    API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
+    API.getPodEnvoyProxy(this.props.namespace, pod.name, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,
@@ -272,7 +269,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        addError(`Could not fetch envoy config for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config for ${pod.name}.`, error);
       });
   };
 
