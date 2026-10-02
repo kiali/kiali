@@ -23,6 +23,7 @@ import {
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
+  hasEnvoyMemoryRunningPods,
   hasEnvoyMemoryWorkload,
   istioConfigurationScopingUrl
 } from 'utils/EnvoyMemoryUtils';
@@ -57,13 +58,22 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   }, [props.lastRefreshAt, props.namespace, props.timeRange, props.workload.cluster, props.workload.name]);
 
   React.useEffect(() => {
-    if (hasEnvoyMemoryWorkload(props.workload)) {
+    if (hasEnvoyMemoryWorkload(props.workload) && hasEnvoyMemoryRunningPods(props.workload)) {
       fetchSummary();
     }
   }, [fetchSummary, props.workload]);
 
   if (!hasEnvoyMemoryWorkload(props.workload)) {
     return null;
+  }
+
+  if (!hasEnvoyMemoryRunningPods(props.workload)) {
+    return (
+      <span className={inlineIconRowStyle} data-test="envoy-memory-status">
+        {createIcon(NA)}
+        {NA.name}
+      </span>
+    );
   }
 
   if (!summary) {

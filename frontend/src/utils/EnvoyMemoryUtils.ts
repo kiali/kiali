@@ -61,6 +61,10 @@ export const hasEnvoyMemoryWorkload = (workload?: Workload): boolean => {
   return workload.istioSidecar || workload.isGateway || workload.isWaypoint;
 };
 
+export const hasEnvoyMemoryRunningPods = (workload?: Workload): boolean => {
+  return (workload?.pods?.length ?? 0) > 0;
+};
+
 export const formatEnvoyMemoryUsage = (summary: {
   memoryLimitBytes: number;
   memoryMaxBytes: number;

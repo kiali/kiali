@@ -8,7 +8,19 @@ import type { Workload } from 'types/Workload';
 import type { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
-import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  Card,
+  CardBody,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Tab,
+  Tabs,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import type { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -97,7 +109,7 @@ type EnvoyDetailsState = {
   config: EnvoyProxyDump;
   editorHeight: number;
   fetch: boolean;
-  pod: Pod;
+  pod?: Pod;
   resource: string;
   tableSortBy: ResourceSorts;
 };
@@ -163,10 +175,20 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     this.heightObserver.disconnect();
   }
 
-  componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
+  componentDidUpdate(prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
     const currentTabIndex = this.tabIndexForResource(activeTab(tabName, defaultTab));
 
-    if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
+    const prevFirstPod = prevProps.workload.pods[0]?.name;
+    const nextFirstPod = this.props.workload.pods[0]?.name;
+    if (prevFirstPod !== nextFirstPod) {
+      this.setState({
+        config: {},
+        fetch: true,
+        pod: this.sortedPods()[0]
+      });
+    }
+
+    if (this.state.pod?.name !== prevState.pod?.name || this.state.resource !== prevState.resource) {
       this.fetchContent();
 
       if (currentTabIndex !== this.state.activeKey) {
@@ -216,6 +238,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string): void => {
+    if (!this.state.pod) {
+      return;
+    }
+
     API.getPodEnvoyProxyResourceEntries(
       this.props.namespace,
       this.state.pod.name,
@@ -234,6 +260,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
   };
 
   fetchEnvoyProxy = (): void => {
+    if (!this.state.pod) {
+      return;
+    }
+
     API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
@@ -248,6 +278,12 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   fetchContent = (): void => {
     if (this.state.fetch !== true) {
+      return;
+    }
+
+    const needsPod = this.state.resource !== 'memory' && this.state.resource !== 'metrics';
+    if (needsPod && !this.state.pod) {
+      this.setState({ fetch: false });
       return;
     }
 
@@ -268,17 +304,33 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const podIdx: number = +podName;
     const targetPod: Pod = this.sortedPods()[podIdx];
 
-    if (targetPod.name !== this.state.pod.name) {
-      this.setState({
-        config: {},
-        pod: targetPod,
-        fetch: true
-      });
+    if (!targetPod || targetPod.name === this.state.pod?.name) {
+      return;
     }
+
+    this.setState({
+      config: {},
+      pod: targetPod,
+      fetch: true
+    });
   };
 
   sortedPods = (): Pod[] => {
-    return this.props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+    return [...this.props.workload.pods].sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+  };
+
+  hasPods = (): boolean => {
+    return this.props.workload.pods.length > 0;
+  };
+
+  renderNoPodsEmptyState = (): React.ReactNode => {
+    return (
+      <EmptyState headingLevel="h5" titleText={t('No pods')} variant={EmptyStateVariant.full}>
+        <EmptyStateBody>
+          {t('Envoy pod configuration is unavailable until this workload has running pods.')}
+        </EmptyStateBody>
+      </EmptyState>
+    );
   };
 
   onSort = (tab: string, index: number, direction: SortByDirection): void => {
@@ -386,7 +438,9 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
-          {this.showEditor() ? (
+          {tabNeedsPod && !this.hasPods() ? (
+            this.renderNoPodsEmptyState()
+          ) : this.showEditor() ? (
             <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <div className={editorColumnStyle}>
@@ -399,8 +453,8 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       id="envoy_pods_list"
                       tooltip={t('Display envoy config for the selected pod')}
                       handleSelect={key => this.setPod(key)}
-                      value={this.state.pod.name}
-                      label={this.state.pod.name}
+                      value={this.state.pod?.name ?? ''}
+                      label={this.state.pod?.name ?? ''}
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
@@ -436,7 +490,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.namespace}
               onSelectEnvoyTab={resource => this.selectEnvoyTab(resource)}
-              podName={this.state.pod.name}
+              podName={this.state.pod?.name}
               timeRange={this.props.rangeDuration}
               workload={this.props.workload}
             />
@@ -466,7 +520,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                   writer={summaryWriter}
                   sortBy={this.state.tableSortBy}
                   onSort={this.onSort}
-                  pod={this.state.pod.name}
+                  pod={this.state.pod?.name ?? ''}
                   pods={this.props.workload.pods.map(pod => pod.name)}
                   setPod={this.setPod}
                 />

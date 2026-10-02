@@ -63,6 +63,29 @@ func TestEnvoyProxyMemoryLimitFromAnnotations(t *testing.T) {
 	assert.Equal(t, float64(512*1024*1024), envoyProxyMemoryLimitFromAnnotations(workload))
 }
 
+func TestGetSummaryRequiresRunningPods(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.CustomDashboards.NamespaceLabel = "namespace"
+
+	service := NewEnvoyMemoryService(nil, conf)
+	workload := &models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name:         "details-v1",
+			Namespace:    "bookinfo",
+			IstioSidecar: true,
+			Labels: map[string]string{
+				"app":     "details",
+				"version": "v1",
+			},
+		},
+	}
+
+	_, err := service.GetSummary(context.Background(), workload, &prometheus.RangeQuery{})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "no pods with an Envoy proxy")
+}
+
 func TestBuildWorkloadMetricLabelsUsesAppLabels(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)

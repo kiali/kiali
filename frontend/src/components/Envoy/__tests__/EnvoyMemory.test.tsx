@@ -15,7 +15,8 @@ const workload = {
   isGateway: false,
   isWaypoint: false,
   isZtunnel: false,
-  gvk: { Group: 'apps', Version: 'v1', Kind: 'Deployment' }
+  gvk: { Group: 'apps', Version: 'v1', Kind: 'Deployment' },
+  pods: [{ name: 'details-v1-abc123' }]
 } as any;
 
 describe('EnvoyMemory', () => {
@@ -77,6 +78,28 @@ describe('EnvoyMemory', () => {
 
   afterEach(() => {
     rstest.clearAllMocks();
+  });
+
+  it('shows n/a when the workload has no running pods', async () => {
+    const scaledToZero = { ...workload, pods: [] };
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 0, to: 1000 }}
+            workload={scaledToZero}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await screen.findByTestId('envoy-memory-status-alert')).toBeInTheDocument();
+    expect(screen.getByText('n/a')).toBeInTheDocument();
+    expect(screen.queryByText('Within normal range')).not.toBeInTheDocument();
+    expect(API.getWorkloadEnvoyMemory).not.toHaveBeenCalled();
   });
 
   it('renders without invalid element type errors', async () => {

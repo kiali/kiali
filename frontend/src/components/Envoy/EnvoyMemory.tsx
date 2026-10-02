@@ -24,12 +24,14 @@ import {
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
+  hasEnvoyMemoryRunningPods,
   istioConfigurationScopingUrl,
   sortedEnvoyPodName,
   type EnvoyMemoryMetricHelpKey
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
+import { NA } from 'types/Health';
 
 type EnvoyMemoryProps = {
   lastRefreshAt: TimeInMilliseconds;
@@ -227,9 +229,15 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
       });
   }, [props.lastRefreshAt, props.namespace, props.timeRange, props.workload.cluster, props.workload.name]);
 
+  const podsAvailable = hasEnvoyMemoryRunningPods(props.workload);
+
   React.useEffect(() => {
+    if (!podsAvailable) {
+      setSummary(undefined);
+      return;
+    }
     fetchSummary();
-  }, [fetchSummary]);
+  }, [fetchSummary, podsAvailable]);
 
   React.useEffect(() => {
     if (!configDumpPodName) {
@@ -284,116 +292,135 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
       <CardBody>
         {!isChartMaximized && (
           <div className={classes(summaryStyle, noShrinkStyle)}>
-            {summary && (
-              <>
-                <Alert
-                  className={statusAlertStyle}
-                  data-test="envoy-memory-status-alert"
-                  isInline
-                  title={
-                    <span className={statusTitleStyle}>
-                      {memoryStatusLabel}
-                      <Popover
-                        aria-label={t('{{label}} information', { label: memoryStatusLabel })}
-                        bodyContent={
-                          <div className={helpBodyStyle}>
-                            {envoyMemoryThresholdHelp(summary)}
-                            {summary.cause !== 'ok' && (
-                              <p className={linkRowStyle}>
-                                <Button
-                                  component="a"
-                                  href={istioConfigurationScopingUrl()}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  variant={ButtonVariant.link}
-                                  isInline
-                                  icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
-                                  data-test="envoy-memory-status-scoping-link"
-                                >
-                                  {t('Learn about configuration scoping')}
-                                </Button>
-                              </p>
-                            )}
-                          </div>
-                        }
-                        headerContent={<span>{memoryStatusLabel}</span>}
-                        position={PopoverPosition.top}
-                        triggerAction="hover"
-                      >
-                        <span data-test="envoy-memory-status-help">
-                          <KialiIcon.Help className={helpIconStyle} />
-                        </span>
-                      </Popover>
-                    </span>
-                  }
-                  variant={summary.cause === 'ok' ? 'success' : 'warning'}
-                >
-                  <div className={statusCauseStyle}>
-                    {createIcon(envoyMemoryCauseStatus(summary.cause))}
-                    {envoyMemoryCauseLabel(summary.cause)}
-                  </div>
-                </Alert>
-
-                {summary.cause === 'configuration' && (
-                  <div className={linkRowStyle}>
-                    <Button
-                      component="a"
-                      href={istioConfigurationScopingUrl()}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant={ButtonVariant.link}
-                      isInline
-                      icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
-                    >
-                      {t('Learn about configuration scoping')}
-                    </Button>
-                  </div>
-                )}
-
-                <div className={tilesRowStyle} data-test="envoy-memory-summary-metrics">
-                  <MetricTile
-                    helpKey="roughConfigMemory"
-                    label={roughConfigLabel}
-                    value={formatEnvoyMemoryBytes(roughConfigBytes)}
-                  />
-                  <MetricTile
-                    helpKey="activeClusters"
-                    label={activeClustersLabel}
-                    onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('clusters') : undefined}
-                    selectTestId="envoy-overview-clusters-link"
-                    value={clusterCount ?? 0}
-                  />
-                  {effectiveConfigCounts && (
-                    <>
-                      <MetricTile
-                        helpKey="listeners"
-                        label={listenersLabel}
-                        onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('listeners') : undefined}
-                        selectTestId="envoy-overview-listeners-link"
-                        value={effectiveConfigCounts.listeners}
-                      />
-                      <MetricTile
-                        helpKey="routes"
-                        label={routesLabel}
-                        onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('routes') : undefined}
-                        selectTestId="envoy-overview-routes-link"
-                        value={effectiveConfigCounts.routes}
-                      />
-                    </>
-                  )}
-                  <MetricTile
-                    helpKey="allocatedMemory"
-                    label={allocatedMemoryLabel}
-                    value={formatEnvoyMemoryUsage(summary)}
-                  />
-                  <MetricTile
-                    helpKey="activeConnections"
-                    label={activeConnectionsLabel}
-                    value={summary.activeConnections}
-                  />
-                  <MetricTile helpKey="requestRate" label={requestRateLabel} value={formatEnvoyRequestRate(summary)} />
+            {!podsAvailable ? (
+              <Alert
+                className={statusAlertStyle}
+                data-test="envoy-memory-status-alert"
+                isInline
+                title={memoryStatusLabel}
+                variant="info"
+              >
+                <div className={statusCauseStyle}>
+                  {createIcon(NA)}
+                  {NA.name}
                 </div>
-              </>
+              </Alert>
+            ) : (
+              summary && (
+                <>
+                  <Alert
+                    className={statusAlertStyle}
+                    data-test="envoy-memory-status-alert"
+                    isInline
+                    title={
+                      <span className={statusTitleStyle}>
+                        {memoryStatusLabel}
+                        <Popover
+                          aria-label={t('{{label}} information', { label: memoryStatusLabel })}
+                          bodyContent={
+                            <div className={helpBodyStyle}>
+                              {envoyMemoryThresholdHelp(summary)}
+                              {summary.cause !== 'ok' && (
+                                <p className={linkRowStyle}>
+                                  <Button
+                                    component="a"
+                                    href={istioConfigurationScopingUrl()}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant={ButtonVariant.link}
+                                    isInline
+                                    icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
+                                    data-test="envoy-memory-status-scoping-link"
+                                  >
+                                    {t('Learn about configuration scoping')}
+                                  </Button>
+                                </p>
+                              )}
+                            </div>
+                          }
+                          headerContent={<span>{memoryStatusLabel}</span>}
+                          position={PopoverPosition.top}
+                          triggerAction="hover"
+                        >
+                          <span data-test="envoy-memory-status-help">
+                            <KialiIcon.Help className={helpIconStyle} />
+                          </span>
+                        </Popover>
+                      </span>
+                    }
+                    variant={summary.cause === 'ok' ? 'success' : 'warning'}
+                  >
+                    <div className={statusCauseStyle}>
+                      {createIcon(envoyMemoryCauseStatus(summary.cause))}
+                      {envoyMemoryCauseLabel(summary.cause)}
+                    </div>
+                  </Alert>
+
+                  {summary.cause === 'configuration' && (
+                    <div className={linkRowStyle}>
+                      <Button
+                        component="a"
+                        href={istioConfigurationScopingUrl()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant={ButtonVariant.link}
+                        isInline
+                        icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
+                      >
+                        {t('Learn about configuration scoping')}
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className={tilesRowStyle} data-test="envoy-memory-summary-metrics">
+                    <MetricTile
+                      helpKey="roughConfigMemory"
+                      label={roughConfigLabel}
+                      value={formatEnvoyMemoryBytes(roughConfigBytes)}
+                    />
+                    <MetricTile
+                      helpKey="activeClusters"
+                      label={activeClustersLabel}
+                      onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('clusters') : undefined}
+                      selectTestId="envoy-overview-clusters-link"
+                      value={clusterCount ?? 0}
+                    />
+                    {effectiveConfigCounts && (
+                      <>
+                        <MetricTile
+                          helpKey="listeners"
+                          label={listenersLabel}
+                          onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('listeners') : undefined}
+                          selectTestId="envoy-overview-listeners-link"
+                          value={effectiveConfigCounts.listeners}
+                        />
+                        <MetricTile
+                          helpKey="routes"
+                          label={routesLabel}
+                          onSelect={props.onSelectEnvoyTab ? () => props.onSelectEnvoyTab!('routes') : undefined}
+                          selectTestId="envoy-overview-routes-link"
+                          value={effectiveConfigCounts.routes}
+                        />
+                      </>
+                    )}
+                    <MetricTile
+                      helpKey="allocatedMemory"
+                      label={allocatedMemoryLabel}
+                      value={formatEnvoyMemoryUsage(summary)}
+                    />
+                    <MetricTile
+                      helpKey="activeConnections"
+                      label={activeConnectionsLabel}
+                      value={summary.activeConnections}
+                    />
+                    <MetricTile
+                      helpKey="requestRate"
+                      label={requestRateLabel}
+                      value={formatEnvoyRequestRate(summary)}
+                    />
+                  </div>
+                </>
+              )
             )}
           </div>
         )}

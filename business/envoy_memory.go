@@ -54,7 +54,7 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		return nil, fmt.Errorf("workload does not have an Envoy proxy")
 	}
 
-	envoyLabels := BuildWorkloadMetricLabels(in.conf, workload)
+	envoyLabels := buildWorkloadPodNamesSelector(in.conf, workload)
 	if envoyLabels == "" {
 		return nil, fmt.Errorf("workload has no pods with an Envoy proxy")
 	}

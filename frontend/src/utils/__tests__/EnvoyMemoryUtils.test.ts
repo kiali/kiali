@@ -1,5 +1,6 @@
 import {
   buildEnvoyMemoryQueryParams,
+  hasEnvoyMemoryRunningPods,
   hasEnvoyMemoryWorkload,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
@@ -32,6 +33,16 @@ describe('EnvoyMemoryUtils', () => {
 
     expect(hasEnvoyMemoryWorkload(workload)).toBe(true);
     expect(hasEnvoyMemoryWorkload({ ...workload, isZtunnel: true })).toBe(false);
+  });
+
+  it('detects when a workload has no running pods for Envoy memory', () => {
+    const workload = {
+      istioSidecar: true,
+      pods: []
+    } as Workload;
+
+    expect(hasEnvoyMemoryRunningPods(workload)).toBe(false);
+    expect(hasEnvoyMemoryRunningPods({ ...workload, pods: [{ name: 'pod-a' }] } as Workload)).toBe(true);
   });
 
   it('formats memory bytes', () => {
