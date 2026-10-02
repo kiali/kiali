@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
+import { kubectlExec } from '../utils/kubectl';
 import { waitForLoadingComplete } from '../utils/transition';
 import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
@@ -253,13 +254,22 @@ export class GraphPage extends BasePage {
   async setDisplayOption(optionName: string, enabled: boolean): Promise<void> {
     const optionId = DISPLAY_OPTION_IDS[optionName.toLowerCase()] ?? optionName;
     const clientOnly = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
+    const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
+    await expect(input).toBeAttached();
+
+    // No-op when already in the desired state — avoids waiting forever for a graph
+    // refetch that will never fire (e.g. waypoint proxies defaults to off).
+    const isChecked = await input.isChecked();
+    if (enabled === isChecked) {
+      return;
+    }
+
     const graphResponse = clientOnly.includes(optionId)
       ? null
       : this.page.waitForResponse(
           response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
         );
 
-    const input = this.page.locator('#graph-display-menu').locator(`input#${optionId}`);
     if (enabled) {
       await input.check();
       if (optionId === 'rank') {
@@ -524,6 +534,58 @@ export class GraphPage extends BasePage {
         { prop: EdgeAttr.hasTraffic, op: '!=', val: undefined }
       );
       expect(trafficEdges.length).toBeGreaterThanOrEqual(edgeCount);
+    });
+  }
+
+  /**
+   * Floor for edge counts when the scenario number includes a Prometheus edge.
+   * If Prometheus is deployed, accept one fewer edge (same rule as ambient graph steps).
+   */
+  async expectTrafficEdgesAtLeastIncludingPrometheus(edgeCountIncludingPrometheus: number): Promise<void> {
+    const prometheus = kubectlExec('kubectl get deployments -A | grep -c prometheus || true');
+    const prometheusCount = parseInt(prometheus.stdout.trim(), 10) || 0;
+    const expected = prometheusCount > 0 ? edgeCountIncludingPrometheus - 1 : edgeCountIncludingPrometheus;
+    await this.expectTrafficEdgesAtLeast(expected);
+  }
+
+  /** Assert a workload-backed node is present or absent in the topology. */
+  async expectWorkloadNodeExists(workload: string, exists: boolean): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const matches = select(
+        nodes.map(node => ({ data: node.data })),
+        { prop: NodeAttr.workload, op: '=', val: workload }
+      );
+      if (exists) {
+        expect(matches.length).toBe(1);
+      } else {
+        expect(matches.length).toBe(0);
+      }
+    });
+  }
+
+  /** Count visible app/service nodes (excludes boxes / idle wrappers). */
+  async expectAppOrServiceNodeCount(count: number): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const visible = nodes.filter(n => {
+        const nodeType = n.data?.[NodeAttr.nodeType];
+        return nodeType === 'app' || nodeType === 'service';
+      });
+      expect(visible.length).toBe(count);
+    });
+  }
+
+  /** Assert a service-backed node is present or absent in the topology. */
+  async expectServiceNodeExists(service: string, exists: boolean): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const matches = select(
+        nodes.map(node => ({ data: node.data })),
+        { prop: NodeAttr.service, op: '=', val: service }
+      );
+      if (exists) {
+        expect(matches.length).toBe(1);
+      } else {
+        expect(matches.length).toBe(0);
+      }
     });
   }
 
