@@ -100,7 +100,7 @@
 - [ ] `@multi-primary` suite passes
 - [ ] `@multi-mesh` suite passes
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
-- [ ] `@tracing` suite passes
+- [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
 - [x] `@offline` suite passes (Playwright spec + `playwright-offline` CI; run `yarn playwright:run:offline`)
 - [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
 
@@ -110,12 +110,12 @@
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
   `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
-  `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`, and
-  `playwright-ai-chatbot` suites
-  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; AI chatbot on epic branch)
+  `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`,
+  `playwright-ai-chatbot`, and `playwright-tempo` suites
+  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; AI chatbot + tempo on epic branch)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
-  (PR #10174, #10220; core-caching, external-kiali, offline, and AI chatbot workflows on epic branch)
+  (PR #10174, #10220; core-caching, external-kiali, offline, AI chatbot, and tempo Playwright workflows)
 - [ ] Jenkins / private nightly pipelines updated and green for Playwright suites before Cypress
   removal
 - [ ] Cutover gate: **2+ consecutive all-green** Playwright runs covering all suites before Cypress is
