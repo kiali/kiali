@@ -24,6 +24,8 @@ import { panelBodyStyle, panelStyle } from './SummaryPanelStyle';
 import { PFColors } from 'components/Pf/PfColors';
 import type { GraphElement } from '@patternfly/react-topology';
 import { contrastOverlayNest } from 'styles/ThemeSurfaces';
+import { languageSelector } from 'store/Selectors';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelState = {
   isVisible: boolean;
@@ -31,6 +33,7 @@ type SummaryPanelState = {
 
 type ReduxProps = {
   kiosk: string;
+  language: string;
   tracingState: TracingState;
 };
 
@@ -133,11 +136,11 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
             <div className={classes(toggleSidePanelStyle)} onClick={this.togglePanel}>
               {this.state.isVisible ? (
                 <>
-                  <KialiIcon.AngleDoubleDown /> Hide
+                  <KialiIcon.AngleDoubleDown /> {t('Hide')}
                 </>
               ) : (
                 <>
-                  <KialiIcon.AngleDoubleUp /> Show
+                  <KialiIcon.AngleDoubleUp /> {t('Show')}
                 </>
               )}
             </div>
@@ -173,6 +176,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'app':
             return (
               <SummaryPanelAppBox
+                key={this.props.language}
                 data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
@@ -188,6 +192,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'cluster':
             return (
               <SummaryPanelClusterBox
+                key={this.props.language}
                 data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
@@ -203,6 +208,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
           case 'namespace':
             return (
               <SummaryPanelNamespaceBox
+                key={this.props.language}
                 data={summary}
                 duration={this.props.duration}
                 graphType={this.props.graphType}
@@ -220,10 +226,11 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
         }
       }
       case 'edge':
-        return <SummaryPanelEdge {...this.props} />;
+        return <SummaryPanelEdge key={this.props.language} {...this.props} />;
       case 'graph':
         return (
           <SummaryPanelGraph
+            key={this.props.language}
             data={summary}
             duration={this.props.duration}
             graphType={this.props.graphType}
@@ -239,6 +246,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
       case 'node':
         return (
           <SummaryPanelNode
+            key={this.props.language}
             data={this.props.data}
             duration={this.props.duration}
             graphType={this.props.graphType}
@@ -266,6 +274,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   kiosk: state.globalState.kiosk,
+  language: languageSelector(state),
   tracingState: state.tracingState
 });
 

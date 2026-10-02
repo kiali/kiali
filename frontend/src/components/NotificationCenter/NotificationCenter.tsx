@@ -27,15 +27,15 @@ import {
   ExclamationTriangleIcon,
   InfoCircleIcon
 } from '@patternfly/react-icons';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
+import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import EllipsisVIcon from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import SearchIcon from '@patternfly/react-icons/dist/esm/icons/search-icon';
 import TrashIcon from '@patternfly/react-icons/dist/esm/icons/trash-icon';
 import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiAppState } from 'store/Store';
+import type { NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
+import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
 import { PFColors } from 'components/Pf/PfColors';
@@ -214,7 +214,13 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
   return (
     <NotificationDrawer ref={drawerRef}>
-      <NotificationDrawerHeader count={getNumberUnread()} onClose={() => props.toggleNotificationCenter()}>
+      <NotificationDrawerHeader
+        closeButtonAriaLabel={t('Close')}
+        count={getNumberUnread()}
+        onClose={() => props.toggleNotificationCenter()}
+        title={t('Notifications')}
+        unreadText={t('unread')}
+      >
         <Dropdown
           onSelect={closeActionsMenu}
           isOpen={isActionsMenuOpen['nc-actions'] || false}

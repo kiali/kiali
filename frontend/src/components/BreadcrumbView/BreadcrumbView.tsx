@@ -8,7 +8,22 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { capitalize } from '../../utils/Common';
 
-const istioName = 'Istio Config';
+const getListPageTitle = (pathItem: string, translate: (key: string) => string): string => {
+  switch (pathItem) {
+    case Paths.APPLICATIONS:
+      return translate('Applications');
+    case Paths.SERVICES:
+      return translate('Services');
+    case Paths.WORKLOADS:
+      return translate('Workloads');
+    case Paths.NAMESPACES:
+      return translate('Namespaces');
+    case Paths.ISTIO:
+      return translate('Istio Config');
+    default:
+      return translate(capitalize(pathItem));
+  }
+};
 
 const cleanFilters = (): void => {
   FilterSelected.resetFilters();
@@ -86,7 +101,7 @@ export const BreadcrumbView: React.FC = () => {
       <Breadcrumb>
         <BreadcrumbItem>
           <Link to={listHref} onClick={cleanFilters}>
-            {capitalize(Paths.NAMESPACES)}
+            {t('Namespaces')}
           </Link>
         </BreadcrumbItem>
         <BreadcrumbItem isActive={true}>{model.namespace}</BreadcrumbItem>
@@ -121,7 +136,7 @@ export const BreadcrumbView: React.FC = () => {
     <Breadcrumb>
       <BreadcrumbItem>
         <Link to={`/${pathItem}`} onClick={cleanFilters}>
-          {isIstio ? istioName : capitalize(pathItem)}
+          {getListPageTitle(pathItem, t)}
         </Link>
       </BreadcrumbItem>
 

@@ -14,6 +14,7 @@ rstest.mock('utils/HealthComputeDuration', () => ({
 }));
 
 rstest.mock('utils/I18nUtils', () => ({
+  formatLastDuration: (durationLabel: string) => `Last ${durationLabel}`,
   t: (key: string, opts?: { duration?: string }) =>
     opts && opts.duration !== undefined ? `Last ${opts.duration}` : key
 }));

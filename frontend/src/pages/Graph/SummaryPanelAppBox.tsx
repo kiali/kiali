@@ -1,16 +1,10 @@
 import * as React from 'react';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { GraphElement, Node } from '@patternfly/react-topology';
+import type { GraphElement, Node } from '@patternfly/react-topology';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import {
-  DecoratedGraphNodeData,
-  NodeAttr,
-  NodeType,
-  Protocol,
-  SummaryPanelPropType,
-  TrafficRate
-} from '../../types/Graph';
+import type { DecoratedGraphNodeData, SummaryPanelPropType } from '../../types/Graph';
+import { NodeAttr, NodeType, Protocol, TrafficRate } from '../../types/Graph';
 import { getAccumulatedTrafficRateGrpc, getAccumulatedTrafficRateHttp } from '../../utils/TrafficRate';
 import { renderBadgedLink, renderHealth } from './SummaryLink';
 import {
@@ -24,8 +18,9 @@ import {
   getDatapoints,
   getTitle
 } from './SummaryPanelCommon';
-import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { getOptions, clickHandler } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import { KialiLink } from 'components/Link/KialiLink';
@@ -35,17 +30,11 @@ import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { isMultiCluster, serverConfig } from 'config';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
-import {
-  Dropdown,
-  DropdownGroup,
-  DropdownItem,
-  DropdownList,
-  MenuToggle,
-  MenuToggleElement
-} from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Dropdown, DropdownGroup, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 
 type SummaryPanelAppBoxMetricsState = {
@@ -173,7 +162,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
         {options.map((o, i) => {
           return (
             <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-              {o.text} {o.target === '_blank' && <ExternalLinkAltIcon />}
+              {t(o.text)} {o.target === '_blank' && <ExternalLinkAltIcon />}
             </DropdownItem>
           );
         })}
@@ -533,7 +522,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableGrpc
-        title={t('GRPC Traffic (requests per second):')}
+        title={`${t('gRPC Traffic (requests per second)')}:`}
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
         inRateNR={inbound.rateNoResponse}
@@ -558,7 +547,7 @@ export class SummaryPanelAppBox extends React.Component<SummaryPanelPropType, Su
 
     return (
       <InOutRateTableHttp
-        title={t('HTTP (requests per second):')}
+        title={`${t('HTTP (requests per second)')}:`}
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
         inRate4xx={inbound.rate4xx}

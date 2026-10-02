@@ -8,6 +8,7 @@ import { isMultiCluster } from '../config';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import type { KialiDispatch } from '../types/Redux';
 import { arrayEquals } from '../utils/Common';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export type ManagedListColumnActions = {
   setColumnOrder: (order: string[]) => KialiAppAction;
@@ -128,6 +129,8 @@ export const useManagedListColumns = ({
   listType,
   untoggleableColumnId
 }: ManagedListColumnsConfig): UseManagedListColumnsResult => {
+  const { i18n, t } = useKialiTranslation();
+
   const resetColumnsToDefault = useCallback((): void => {
     dispatch(actions.setColumnOrder([]));
     dispatch(actions.setHiddenColumns([]));
@@ -167,9 +170,9 @@ export const useManagedListColumns = ({
       isShownByDefault: true,
       isUntoggleable: c.id === untoggleableColumnId,
       key: c.id,
-      title: c.title
+      title: t(c.title)
     }));
-  }, [columnOrder, hiddenColumnIds, hideClusterColumnInModal, listType, untoggleableColumnId]);
+  }, [columnOrder, hiddenColumnIds, hideClusterColumnInModal, i18n.language, listType, t, untoggleableColumnId]);
 
   return {
     appliedColumns,

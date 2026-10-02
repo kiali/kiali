@@ -7,17 +7,9 @@ import {
 } from '../../utils/TrafficRate';
 import { InOutRateTableGrpc, InOutRateTableHttp } from '../../components/SummaryPanel/InOutRateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import {
-  GraphType,
-  NodeType,
-  SummaryPanelPropType,
-  Protocol,
-  DecoratedGraphNodeData,
-  UNKNOWN,
-  TrafficRate,
-  NodeAttr
-} from '../../types/Graph';
-import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
+import type { SummaryPanelPropType, DecoratedGraphNodeData } from '../../types/Graph';
+import { GraphType, NodeType, Protocol, UNKNOWN, TrafficRate, NodeAttr } from '../../types/Graph';
+import type { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
 import {
   shouldRefreshData,
   NodeMetricType,
@@ -28,12 +20,13 @@ import {
   mergeMetricsResponses,
   hr
 } from './SummaryPanelCommon';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { edgesOut, nodesIn, nodesOut, select } from 'helpers/GraphHelpers';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
-import { Node } from '@patternfly/react-topology';
+import type { Node } from '@patternfly/react-topology';
 import { t } from 'utils/I18nUtils';
 
 type SummaryPanelNodeMetricsState = {
@@ -161,7 +154,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         const filtersRps = ['request_count', 'request_error_count'];
 
         // use dest metrics for inbound, except for service nodes which need source metrics to capture source errors
-        let reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
+        const reporter = nodeData.nodeType === NodeType.SERVICE && nodeData.isIstio ? 'source' : 'destination';
 
         // For special service dest nodes we want to narrow the data to only TS with 'unknown' workloads (see the related
         // comparator in getNodeDatapoints).
@@ -433,7 +426,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <InOutRateTableGrpc
         hideIn={nodeData.isRoot}
-        title={t('gRPC Traffic (requests per second):')}
+        title={`${t('gRPC Traffic (requests per second)')}:`}
         inRate={inbound.rate}
         inRateGrpcErr={inbound.rateGrpcErr}
         inRateNR={inbound.rateNoResponse}
@@ -453,7 +446,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
     return (
       <InOutRateTableHttp
         hideIn={nodeData.isRoot}
-        title={t('HTTP (requests per second):')}
+        title={`${t('HTTP (requests per second)')}:`}
         inRate={inbound.rate}
         inRate3xx={inbound.rate3xx}
         inRate4xx={inbound.rate4xx}
@@ -520,7 +513,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasGrpcIn(nodeData) && (
             <>
               <RequestChart
-                label={isInOutSameNode ? 'gRPC - Request Traffic' : 'gRPC - Inbound Request Traffic'}
+                label={isInOutSameNode ? t('gRPC - Request Traffic') : t('gRPC - Inbound Request Traffic')}
                 dataRps={this.state.grpcRequestCountIn!}
                 dataErrors={this.state.grpcErrorCountIn}
               />
@@ -553,7 +546,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         <>
           {this.hasGrpcIn(nodeData) && (
             <StreamChart
-              label={isInOutSameNode ? 'gRPC - Traffic' : 'gRPC - Inbound Traffic'}
+              label={isInOutSameNode ? t('gRPC - Traffic') : t('gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
@@ -579,7 +572,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
           {this.hasHttpIn(nodeData) && (
             <>
               <RequestChart
-                label={isInOutSameNode ? 'HTTP - Request Traffic' : 'HTTP - Inbound Request Traffic'}
+                label={isInOutSameNode ? t('HTTP - Request Traffic') : t('HTTP - Inbound Request Traffic')}
                 dataRps={this.state.httpRequestCountIn!}
                 dataErrors={this.state.httpErrorCountIn}
               />
@@ -616,7 +609,7 @@ export class SummaryPanelNodeTraffic extends React.Component<SummaryPanelNodePro
         <>
           {this.hasTcpIn(nodeData) && (
             <StreamChart
-              label={isInOutSameNode ? 'TCP - Traffic' : 'TCP - Inbound Traffic'}
+              label={isInOutSameNode ? t('TCP - Traffic') : t('TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"

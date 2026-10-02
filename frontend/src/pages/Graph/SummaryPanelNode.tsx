@@ -7,10 +7,12 @@ import {
   renderDestServicesLinks,
   renderHealth
 } from './SummaryLink';
-import { DecoratedGraphNodeData, DestService, NodeType, RankResult, SummaryPanelPropType } from '../../types/Graph';
+import type { DecoratedGraphNodeData, DestService, RankResult, SummaryPanelPropType } from '../../types/Graph';
+import { NodeType } from '../../types/Graph';
 import { getTitle, summaryBodyTabs, summaryFont, summaryPanel } from './SummaryPanelCommon';
 import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Dropdown,
   DropdownGroup,
@@ -18,21 +20,20 @@ import {
   DropdownList,
   ExpandableSection,
   MenuToggle,
-  MenuToggleElement,
   Tab
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
 import { SummaryPanelNodeTraces } from './SummaryPanelNodeTraces';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
-import { TracingState } from 'reducers/TracingState';
+import type { TracingState } from 'reducers/TracingState';
 import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { ServiceDetailsInfo } from 'types/ServiceInfo';
+import type { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ServiceWizardActionsDropdownGroup } from 'components/IstioWizards/ServiceWizardActionsDropdownGroup';
-import { PeerAuthentication } from '../../types/IstioObjects';
+import type { PeerAuthentication } from '../../types/IstioObjects';
 import { useServiceDetailForGraphNode } from '../../hooks/services';
 import { useKialiSelector } from '../../hooks/redux';
 import { groupMenuStyle, kebabToggleStyle, titleStyle } from 'styles/DropdownStyles';
@@ -40,10 +41,10 @@ import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
-import { Node } from '@patternfly/react-topology';
+import type { Node } from '@patternfly/react-topology';
 import { KialiLink } from 'components/Link/KialiLink';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
-import { KioskData, KioskMode } from 'types/Common';
+import type { KioskData, KioskMode } from 'types/Common';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -159,12 +160,12 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     if (options.length > 0) {
       items.push(
         <React.Fragment key="show-group">
-          <div className={titleStyle}>Show</div>
+          <div className={titleStyle}>{t('Show')}</div>
           <DropdownGroup key="show" className={groupMenuStyle}>
             {options.map((o, i) => {
               return (
                 <DropdownItem key={`option-${i}`} onClick={() => clickHandler(o, this.props.kiosk)}>
-                  {o.text} {o.target === '_blank' && <KialiIcon.ExternalLink />}
+                  {t(o.text)} {o.target === '_blank' && <KialiIcon.ExternalLink />}
                 </DropdownItem>
               );
             })}
@@ -353,7 +354,11 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
   };
 
   private renderVsHostnames = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
-    return this.renderHostnamesSection(nodeData.hasVS?.hostnames!);
+    const hostnames = nodeData.hasVS?.hostnames;
+    if (!hostnames) {
+      return null;
+    }
+    return this.renderHostnamesSection(hostnames);
   };
 
   private renderHostnamesSection = (hostnames: string[]): React.ReactNode => {

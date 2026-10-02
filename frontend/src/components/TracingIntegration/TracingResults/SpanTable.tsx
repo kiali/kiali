@@ -378,7 +378,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       <>
         {!this.props.fromWaypoint && (
           <>
-            <strong key={`${key}-app`}>Application: </strong>
+            <strong key={`${key}-app`}>{`${t('Application')}:`} </strong>
             {(item.linkToApp && (
               <KialiLink key={`${key}-link-app`} to={item.linkToApp}>
                 {item.app}
@@ -389,7 +389,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             <br key={`${key}-br`} />
           </>
         )}
-        <strong key={`${key}-wl`}>Workload: </strong>
+        <strong key={`${key}-wl`}>{`${t('Workload')}:`} </strong>
         {(item.linkToWorkload && (
           <KialiLink key={`${key}-link-wl`} to={item.linkToWorkload}>
             {item.workload}
@@ -399,7 +399,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 
         {this.isExpanded(item.spanID) && (
           <div key={`${key}-expanded-br-1`}>
-            <strong key={`${key}-expanded-pod`}>Pod: </strong>
+            <strong key={`${key}-expanded-pod`}>{`${t('Pod')}:`} </strong>
             {item.pod || 'unknown'}
           </div>
         )}
@@ -416,12 +416,12 @@ class SpanTableComponent extends React.Component<Props, State> {
         {item.info.hasError && (
           <div key={`${key}-err`}>
             <KialiIcon.ExclamationCircle key={`${key}-err-ic`} className={errorIconStyle} />
-            <strong key={`${key}-err-msg`}>This span reported an error</strong>
+            <strong key={`${key}-err-msg`}>{t('This span reported an error')}</strong>
           </div>
         )}
 
         <div key={`${key}-op`}>
-          <strong key={`${key}-op-title`}>Operation: </strong>
+          <strong key={`${key}-op-title`}>{`${t('Operation')}:`} </strong>
           {flag ? (
             <span key={`${key}-op-name`}>
               {item.operationName} ({flag} <KialiIcon.ExclamationCircle key={`${key}-dan-ic`} />)
@@ -432,7 +432,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         </div>
 
         <div key={`${key}-comp`}>
-          <strong key={`${key}-comp=-title`}>Component: </strong>
+          <strong key={`${key}-comp=-title`}>{`${t('Component')}:`} </strong>
           {item.component}
         </div>
 
@@ -557,7 +557,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     return (
       <div key={key}>
         <div key={`${key}-dur-div`}>
-          <strong key={`${key}-dur-title`}>Duration: </strong>
+          <strong key={`${key}-dur-title`}>{`${t('Duration')}:`} </strong>
           {formatDuration(item.duration)}
         </div>
 

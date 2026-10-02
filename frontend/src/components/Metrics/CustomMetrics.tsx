@@ -21,31 +21,33 @@ import {
 } from 'styles/FlexStyles';
 import { router, HistoryManager, URLParam, location } from '../../app/History';
 import * as API from '../../services/Api';
-import { KialiAppState } from '../../store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange } from '../../types/Common';
+import type { KialiAppState } from '../../store/Store';
+import type { TimeRange, TimeInMilliseconds } from '../../types/Common';
+import { evalTimeRange, isEqualTimeRange } from '../../types/Common';
 import { addError } from '../../utils/AlertUtils';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
-import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
+import type { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import { MetricsRawAggregation } from '../MetricsOptions/MetricsRawAggregation';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { GrafanaLinks } from './GrafanaLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import { DashboardModel } from 'types/Dashboards';
-import { Overlay } from 'types/Overlay';
-import { Aggregator, DashboardQuery } from 'types/MetricsOptions';
-import { RawOrBucket } from 'types/VictoryChartInfo';
+import type { JaegerLineInfo } from './SpanOverlay';
+import { SpanOverlay } from './SpanOverlay';
+import type { DashboardModel } from 'types/Dashboards';
+import type { Overlay } from 'types/Overlay';
+import type { Aggregator, DashboardQuery } from 'types/MetricsOptions';
+import type { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
-import { timeRangeSelector } from '../../store/Selectors';
+import { languageSelector, timeRangeSelector } from '../../store/Selectors';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
-import { GrafanaInfo } from '../../types/GrafanaInfo';
+import type { GrafanaInfo } from '../../types/GrafanaInfo';
 import { t } from 'utils/I18nUtils';
 
 type MetricsState = {
@@ -74,6 +76,7 @@ type CustomMetricsProps = {
 
 type ReduxStateProps = {
   kiosk: string;
+  language: string;
   timeRange: TimeRange;
   tracingIntegration: boolean;
 };
@@ -121,23 +124,6 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     this.spanOverlay = new SpanOverlay(changed => this.setState({ spanOverlay: changed }));
   }
 
-  private initOptions = (settings: MetricsSettings): DashboardQuery => {
-    const filters = this.props.app && this.props.appLabelName ? `${this.props.appLabelName}:${this.props.app}` : '';
-
-    const options: DashboardQuery = this.props.version
-      ? {
-          labelsFilters: `${filters},${this.props.versionLabelName}:${this.props.version}`
-        }
-      : {
-          labelsFilters: filters,
-          additionalLabels: 'version:Version'
-        };
-
-    MetricsHelper.settingsToOptions(settings, options, []);
-
-    return options;
-  };
-
   componentDidMount(): void {
     this.refresh();
   }
@@ -159,6 +145,66 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
       this.spanOverlay.reset();
       this.refresh();
     }
+  }
+
+  renderFetchMetrics = (title: string): React.ReactNode => {
+    return (
+      <div className={emptyStyle}>
+        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm}></EmptyState>
+      </div>
+    );
+  };
+
+  render(): React.ReactNode {
+    const urlParams = new URLSearchParams(location.getSearch());
+    const expandedChart = urlParams.get('expand') || undefined;
+
+    const dashboard = this.state.dashboard && (
+      <Dashboard
+        key={this.props.language}
+        dashboard={this.state.dashboard}
+        customMetric={true}
+        template={this.props.template}
+        labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+        maximizedChart={expandedChart}
+        onExpand={this.handleExpand}
+        onClick={this.onClickDataPoint}
+        showSpans={this.state.showSpans}
+        overlay={this.state.spanOverlay}
+        timeWindow={evalTimeRange(this.props.timeRange)}
+        brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+      />
+    );
+
+    const content = (
+      <>
+        {this.renderOptionsBar()}
+        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics(t('Loading metrics'))}
+      </>
+    );
+
+    return (
+      <>
+        {this.props.embedded ? (
+          <>{content}</>
+        ) : (
+          <div className={classes(flexFillStyle, constrainedScrollStyle)}>
+            <Card className={classes(flexCardStyle, tabCardStyle)}>
+              <CardBody>
+                <div className={scrollableContentStyle}>{content}</div>
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
+      </>
+    );
   }
 
   private refresh = (): void => {
@@ -195,7 +241,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
         });
       })
       .catch(error => {
-        addError('Could not fetch custom dashboard.', error);
+        addError(t('Could not fetch custom dashboard.'), error);
       });
   };
 
@@ -242,65 +288,22 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
     }
   };
 
-  renderFetchMetrics = (title: string): React.ReactNode => {
-    return (
-      <div className={emptyStyle}>
-        <EmptyState headingLevel="h5" titleText={<>{title}</>} variant={EmptyStateVariant.sm}></EmptyState>
-      </div>
-    );
+  private initOptions = (settings: MetricsSettings): DashboardQuery => {
+    const filters = this.props.app && this.props.appLabelName ? `${this.props.appLabelName}:${this.props.app}` : '';
+
+    const options: DashboardQuery = this.props.version
+      ? {
+          labelsFilters: `${filters},${this.props.versionLabelName}:${this.props.version}`
+        }
+      : {
+          labelsFilters: filters,
+          additionalLabels: 'version:Version'
+        };
+
+    MetricsHelper.settingsToOptions(settings, options, []);
+
+    return options;
   };
-
-  render(): React.ReactNode {
-    const urlParams = new URLSearchParams(location.getSearch());
-    const expandedChart = urlParams.get('expand') || undefined;
-
-    const dashboard = this.state.dashboard && (
-      <Dashboard
-        dashboard={this.state.dashboard}
-        customMetric={true}
-        template={this.props.template}
-        labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-        maximizedChart={expandedChart}
-        onExpand={this.handleExpand}
-        onClick={this.onClickDataPoint}
-        showSpans={this.state.showSpans}
-        overlay={this.state.spanOverlay}
-        timeWindow={evalTimeRange(this.props.timeRange)}
-        brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-      />
-    );
-
-    const content = (
-      <>
-        {this.renderOptionsBar()}
-        {this.state.dashboard !== undefined ? dashboard : this.renderFetchMetrics('Loading metrics')}
-      </>
-    );
-
-    return (
-      <>
-        {this.props.embedded ? (
-          <>{content}</>
-        ) : (
-          <div className={classes(flexFillStyle, constrainedScrollStyle)}>
-            <Card className={classes(flexCardStyle, tabCardStyle)}>
-              <CardBody>
-                <div className={scrollableContentStyle}>{content}</div>
-              </CardBody>
-            </Card>
-          </div>
-        )}
-
-        <TimeDurationModal
-          customDuration={true}
-          isOpen={this.state.isTimeOptionsOpen}
-          onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility}
-        />
-      </>
-    );
-  }
-
   private onTraceSpansChange = (checked: boolean, limit: number): void => {
     const urlParams = new URLSearchParams(location.getSearch());
     urlParams.set(URLParam.SHOW_SPANS, String(checked));
@@ -326,6 +329,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
             {(hasHistograms || hasLabels) && (
               <ToolbarItem>
                 <MetricsSettingsDropdown
+                  key={this.props.language}
                   onChanged={this.onMetricsSettingsChanged}
                   onLabelsFiltersChanged={this.onLabelsFiltersChanged}
                   direction={this.state.dashboard?.title || 'dashboard'}
@@ -393,6 +397,7 @@ class CustomMetricsComponent extends React.Component<Props, MetricsState> {
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     kiosk: state.globalState.kiosk,
+    language: languageSelector(state),
     timeRange: timeRangeSelector(state),
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false
   };

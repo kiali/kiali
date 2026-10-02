@@ -5,8 +5,42 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
 import { getPagePath } from '../../utils/NavigationUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 const titles = ['applications', 'istio', 'istio/new', 'mesh', 'namespaces', 'overview', 'services', 'workloads'];
+
+const resolvePageTitleKey = (path: string): string => {
+  if (path.startsWith('istio')) {
+    return 'Istio Config';
+  }
+
+  if (path.startsWith('mesh')) {
+    return 'Clusters';
+  }
+
+  if (path.startsWith('applications')) {
+    return 'Applications';
+  }
+
+  if (path.startsWith('workloads')) {
+    return 'Workloads';
+  }
+
+  if (path.startsWith('services')) {
+    return 'Services';
+  }
+
+  if (path.startsWith('namespaces')) {
+    return 'Namespaces';
+  }
+
+  if (path.startsWith('overview')) {
+    return 'Overview';
+  }
+
+  const basePath = path.split('/')[0];
+  return `${basePath.charAt(0).toUpperCase()}${basePath.slice(1)}`;
+};
 
 const titleSuffixStyle = kialiStyle({
   fontSize: '0.875rem',
@@ -50,24 +84,19 @@ type Props = {
 };
 
 export const DefaultSecondaryMasthead: React.FC<Props> = (props: Props) => {
+  const { t } = useKialiTranslation();
+
   const showTitle = (): { disabled: boolean; title: React.ReactNode } => {
     const path = getPagePath();
 
-    if (titles.some(t => path.startsWith(t))) {
-      let title = `${path.charAt(0).toUpperCase()}${path.slice(1)}`;
+    if (titles.some(titlePath => path.startsWith(titlePath))) {
+      const title = path.startsWith('istio/new/')
+        ? t('Create {{kind}}', {
+            kind: kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1))
+          })
+        : t(resolvePageTitleKey(path));
+      const disabled = false;
 
-      let disabled = false;
-
-      if (path.startsWith('istio/new/')) {
-        // 'istio/new/'.length() == 10
-        // istio/new/gateway.networking.k8s.io/v1/Gateway should be K8sGateway
-        const objectType = kindToStringIncludeK8s(path.substring(10), path.substring(path.lastIndexOf('/') + 1));
-        title = `Create ${objectType}`;
-      } else if (path === 'istio') {
-        title = 'Istio Config';
-      } else if (path === 'mesh') {
-        title = 'Clusters';
-      }
       return {
         title: (
           <>

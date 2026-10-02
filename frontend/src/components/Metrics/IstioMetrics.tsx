@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { Card, CardBody, Checkbox, Toolbar, ToolbarGroup, ToolbarItem } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import {
@@ -13,36 +13,39 @@ import {
   scrollableContentStyle
 } from 'styles/FlexStyles';
 import * as API from 'services/Api';
-import { KialiAppState } from 'store/Store';
-import { TimeRange, evalTimeRange, TimeInMilliseconds, isEqualTimeRange, IntervalInMilliseconds } from 'types/Common';
-import { Direction, IstioMetricsOptions, withWaypoint, baseReporter } from 'types/MetricsOptions';
+import type { KialiAppState } from 'store/Store';
+import type { TimeRange, TimeInMilliseconds, IntervalInMilliseconds } from 'types/Common';
+import { evalTimeRange, isEqualTimeRange } from 'types/Common';
+import type { Direction, IstioMetricsOptions } from 'types/MetricsOptions';
+import { withWaypoint, baseReporter } from 'types/MetricsOptions';
 import { addError } from 'utils/AlertUtils';
 import * as MetricsHelper from './Helper';
 import { KioskElement } from '../Kiosk/KioskElement';
-import { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
+import type { MetricsSettings, LabelsSettings } from '../MetricsOptions/MetricsSettings';
 import { MetricsSettingsDropdown } from '../MetricsOptions/MetricsSettingsDropdown';
 import { MetricsReporter } from '../MetricsOptions/MetricsReporter';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { GrafanaInfo } from 'types/GrafanaInfo';
+import type { GrafanaInfo } from 'types/GrafanaInfo';
 import { MessageType } from 'types/NotificationCenter';
-import { SpanOverlay, JaegerLineInfo } from './SpanOverlay';
-import { ChartModel, DashboardModel } from 'types/Dashboards';
-import { Overlay } from 'types/Overlay';
-import { RawOrBucket } from 'types/VictoryChartInfo';
+import type { JaegerLineInfo } from './SpanOverlay';
+import { SpanOverlay } from './SpanOverlay';
+import type { ChartModel, DashboardModel } from 'types/Dashboards';
+import type { Overlay } from 'types/Overlay';
+import type { RawOrBucket } from 'types/VictoryChartInfo';
 import { Dashboard } from 'components/Charts/Dashboard';
-import { refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
+import { languageSelector, refreshIntervalSelector, timeRangeSelector } from 'store/Selectors';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { KialiDisabledFeatures } from 'types/ServerConfig';
+import type { KialiDisabledFeatures } from 'types/ServerConfig';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
 import { GrafanaLinks } from './GrafanaLinks';
-import { PersesInfo } from '../../types/PersesInfo';
+import type { PersesInfo } from '../../types/PersesInfo';
 import { PersesLinks } from './PersesLinks';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { t } from 'utils/I18nUtils';
 
 type MetricsState = {
@@ -75,6 +78,7 @@ type IstioMetricsProps = ObjectId & {
 type ReduxStateProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
+  language: string;
   refreshInterval: IntervalInMilliseconds;
   timeRange: TimeRange;
   tracingIntegration: boolean;
@@ -90,10 +94,10 @@ type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 const traceLimitDefault = 20;
 
 class IstioMetricsComponent extends React.Component<Props, MetricsState> {
-  options: IstioMetricsOptions;
-  spanOverlay: SpanOverlay;
   static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
   static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
+  options: IstioMetricsOptions;
+  spanOverlay: SpanOverlay;
 
   constructor(props: Props) {
     super(props);
@@ -117,23 +121,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     this.spanOverlay = new SpanOverlay(changed => {
       this.setState({ spanOverlay: changed });
     });
-  }
-
-  private initOptions(settings: MetricsSettings): IstioMetricsOptions {
-    const initialReporter = MetricsReporter.initialReporter(this.props.direction);
-    const options: IstioMetricsOptions = {
-      direction: this.props.direction,
-      reporter: withWaypoint(initialReporter, this.props.includeWaypoint)
-    };
-
-    const defaultLabels = [
-      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service',
-      this.props.direction === 'inbound' ? 'source_workload_namespace' : 'destination_workload_namespace'
-    ];
-
-    MetricsHelper.settingsToOptions(settings, options, defaultLabels);
-
-    return options;
   }
 
   componentDidMount(): void {
@@ -176,6 +163,66 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
     }
   }
 
+  render(): React.ReactNode {
+    const urlParams = new URLSearchParams(location.getSearch());
+    const expandedChart = urlParams.get('expand') ?? undefined;
+
+    return (
+      <>
+        <div className={classes(flexFillStyle, constrainedScrollStyle)}>
+          <Card className={classes(flexCardStyle, tabCardStyle)}>
+            <CardBody>
+              <div className={scrollableContentStyle}>
+                {this.renderOptionsBar()}
+
+                {this.state.dashboard && (
+                  <Dashboard
+                    key={this.props.language}
+                    dashboard={this.state.dashboard}
+                    labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
+                    maximizedChart={expandedChart}
+                    onExpand={this.handleExpand}
+                    onClick={this.onClickDataPoint}
+                    labelPrettifier={MetricsHelper.prettyLabelValues}
+                    overlay={this.state.spanOverlay}
+                    showSpans={this.state.showSpans}
+                    showTrendlines={this.state.showTrendlines}
+                    timeWindow={evalTimeRange(this.props.timeRange)}
+                    brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
+                  />
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
+      </>
+    );
+  }
+
+  private initOptions(settings: MetricsSettings): IstioMetricsOptions {
+    const initialReporter = MetricsReporter.initialReporter(this.props.direction);
+    const options: IstioMetricsOptions = {
+      direction: this.props.direction,
+      reporter: withWaypoint(initialReporter, this.props.includeWaypoint)
+    };
+
+    const defaultLabels = [
+      this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service',
+      this.props.direction === 'inbound' ? 'source_workload_namespace' : 'destination_workload_namespace'
+    ];
+
+    MetricsHelper.settingsToOptions(settings, options, defaultLabels);
+
+    return options;
+  }
+
   private refresh = (): void => {
     this.fetchMetrics();
 
@@ -194,7 +241,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
   private fetchMetrics = (): Promise<void> => {
     // Time range needs to be reevaluated everytime fetching
     MetricsHelper.timeRangeToOptions(this.props.timeRange, this.options);
-    let opts = { ...this.options };
+    const opts = { ...this.options };
 
     if (opts.reporter === 'both') {
       opts.byLabels = (opts.byLabels ?? []).concat('reporter');
@@ -312,8 +359,8 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
         this.props.objectType === MetricsObjectTypes.APP
           ? 'applications'
           : this.props.objectType === MetricsObjectTypes.SERVICE
-          ? 'services'
-          : 'workloads';
+            ? 'services'
+            : 'workloads';
 
       const traceUrl = `/namespaces/${this.props.namespace}/${domain}/${this.props.object}?tab=traces&${URLParam.TRACING_TRACE_ID}=${traceId}&${URLParam.TRACING_SPAN_ID}=${spanId}`;
 
@@ -334,48 +381,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
       this.props.setTimeRange(range);
     }
-  }
-
-  render(): React.ReactNode {
-    const urlParams = new URLSearchParams(location.getSearch());
-    const expandedChart = urlParams.get('expand') ?? undefined;
-
-    return (
-      <>
-        <div className={classes(flexFillStyle, constrainedScrollStyle)}>
-          <Card className={classes(flexCardStyle, tabCardStyle)}>
-            <CardBody>
-              <div className={scrollableContentStyle}>
-                {this.renderOptionsBar()}
-
-                {this.state.dashboard && (
-                  <Dashboard
-                    dashboard={this.state.dashboard}
-                    labelValues={MetricsHelper.convertAsPromLabels(this.state.labelsSettings)}
-                    maximizedChart={expandedChart}
-                    onExpand={this.handleExpand}
-                    onClick={this.onClickDataPoint}
-                    labelPrettifier={MetricsHelper.prettyLabelValues}
-                    overlay={this.state.spanOverlay}
-                    showSpans={this.state.showSpans}
-                    showTrendlines={this.state.showTrendlines}
-                    timeWindow={evalTimeRange(this.props.timeRange)}
-                    brushHandlers={{ onDomainChangeEnd: (_, props) => this.onDomainChange(props.currentDomain.x) }}
-                  />
-                )}
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-
-        <TimeDurationModal
-          customDuration={true}
-          isOpen={this.state.isTimeOptionsOpen}
-          onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility}
-        />
-      </>
-    );
   }
 
   private onTraceSpansChange = (checked: boolean, limit: number): void => {
@@ -418,6 +423,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
           <ToolbarGroup style={{ alignItems: 'center' }}>
             <ToolbarItem>
               <MetricsSettingsDropdown
+                key={this.props.language}
                 onChanged={this.onMetricsSettingsChanged}
                 onLabelsFiltersChanged={this.onLabelsFiltersChanged}
                 direction={this.props.direction}
@@ -430,6 +436,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
             <ToolbarItem>
               <MetricsReporter
+                key={this.props.language}
                 onChanged={this.onReporterChanged}
                 direction={this.props.direction}
                 reporter={baseReporter(this.options.reporter)}
@@ -500,6 +507,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
     externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
+    language: languageSelector(state),
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false,
     timeRange: timeRangeSelector(state),
     refreshInterval: refreshIntervalSelector(state)

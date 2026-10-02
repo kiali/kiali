@@ -133,7 +133,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   return (
     <Td
       role="gridcell"
-      dataLabel="Details"
+      dataLabel={t('Details')}
       key={`VirtuaItem_Details_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >

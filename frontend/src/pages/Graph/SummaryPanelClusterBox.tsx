@@ -2,7 +2,14 @@ import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import type { GraphElement, Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
-import { summaryFont, summaryBodyTabs, summaryPanelWidth, getTitle, noTrafficStyle } from './SummaryPanelCommon';
+import {
+  summaryFont,
+  summaryBodyTabs,
+  summaryPanelWidth,
+  getTitle,
+  noTrafficStyle,
+  renderTopologySummary
+} from './SummaryPanelCommon';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from 'components/SummaryPanel/RateTable';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { PFColors } from 'components/Pf/PfColors';
@@ -32,11 +39,6 @@ type SummaryPanelClusterBoxState = {
 const defaultState: SummaryPanelClusterBoxState = {
   clusterBox: null
 };
-
-const topologyStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  marginRight: '0.5rem'
-});
 
 const kialiIconStyle = kialiStyle({
   width: '1rem',
@@ -91,7 +93,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
         <div className={panelHeadingStyle}>
           {getTitle('Cluster')}
           {this.renderCluster(cluster, kialiInstances)}
-          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
+          {renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
         <div className={summaryBodyTabs}>
@@ -133,7 +135,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -168,7 +170,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -203,7 +205,7 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
 
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title={t('HTTP (requests per second):')}
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -321,45 +323,4 @@ export class SummaryPanelClusterBox extends React.Component<SummaryPanelPropType
       }
     });
   };
-
-  private renderTopologySummary = (
-    numSvc: number,
-    numWorkloads: number,
-    numApps: number,
-    numVersions: number,
-    numEdges: number
-  ): React.ReactNode => (
-    <div style={{ marginTop: '1rem' }}>
-      {getTitle('Current Graph')}
-
-      {numApps > 0 && (
-        <div>
-          <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
-        </div>
-      )}
-
-      {numSvc > 0 && (
-        <div>
-          <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-        </div>
-      )}
-
-      {numWorkloads > 0 && (
-        <div>
-          <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-        </div>
-      )}
-
-      {numEdges > 0 && (
-        <div>
-          <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </div>
-      )}
-    </div>
-  );
 }

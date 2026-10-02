@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { IstioConfigItem } from '../../types/IstioConfigList';
-import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -38,7 +39,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
   const noIstioConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
       <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-        No Istio Config found for {props.name}
+        {t('No Istio Config found for {{name}}', { name: props.name })}
       </EmptyStateBody>
     </EmptyState>
   );
@@ -89,7 +90,7 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
     <Card isCompact={true} id="IstioConfigCard">
       <CardHeader actions={{ actions: <></>, hasNoOffset: false }}>
         <Title headingLevel="h3" size={TitleSizes.lg}>
-          Istio Config
+          {t('Istio Config')}
         </Title>
       </CardHeader>
 

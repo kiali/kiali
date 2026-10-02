@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { NodeType, SummaryPanelPropType, Protocol, DecoratedGraphNodeData, BoxByType } from '../../types/Graph';
-import { IstioMetricsOptions, Direction, withWaypoint } from '../../types/MetricsOptions';
+import type { SummaryPanelPropType, Protocol, DecoratedGraphNodeData } from '../../types/Graph';
+import { NodeType, BoxByType } from '../../types/Graph';
+import type { IstioMetricsOptions, Direction } from '../../types/MetricsOptions';
+import { withWaypoint } from '../../types/MetricsOptions';
 import * as API from '../../services/Api';
-import * as M from '../../types/Metrics';
+import type * as M from '../../types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from 'components/Pf/PfColors';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { t } from 'utils/I18nUtils';
 
 export enum NodeMetricType {
@@ -54,6 +56,50 @@ export const noTrafficStyle = kialiStyle({
     }
   }
 });
+
+const topologyStyle = kialiStyle({
+  marginLeft: '0.25rem',
+  marginRight: '0.5rem'
+});
+
+export const renderTopologySummary = (
+  numSvc: number,
+  numWorkloads: number,
+  numApps: number,
+  numVersions: number,
+  numEdges: number
+): React.ReactNode => (
+  <>
+    {numApps > 0 && (
+      <div>
+        <KialiIcon.Applications className={topologyStyle} />
+        {t('{{count}} application', { count: numApps })}
+        {numVersions > 0 && ` (${t('{{count}} version', { count: numVersions })})`}
+      </div>
+    )}
+
+    {numSvc > 0 && (
+      <div>
+        <KialiIcon.Services className={topologyStyle} />
+        {t('{{count}} service', { count: numSvc })}
+      </div>
+    )}
+
+    {numWorkloads > 0 && (
+      <div>
+        <KialiIcon.Workloads className={topologyStyle} />
+        {t('{{count}} workload', { count: numWorkloads })}
+      </div>
+    )}
+
+    {numEdges > 0 && (
+      <div>
+        <KialiIcon.Topology className={topologyStyle} />
+        {t('{{count}} edge', { count: numEdges })}
+      </div>
+    )}
+  </>
+);
 
 const hrStyle = kialiStyle({
   border: 0,
@@ -167,7 +213,7 @@ export const getDatapoints = (
   comparator: (metric: M.Labels, protocol?: Protocol) => boolean,
   protocol?: Protocol
 ): M.Datapoint[] => {
-  let dpsMap = new Map<number, M.Datapoint>();
+  const dpsMap = new Map<number, M.Datapoint>();
 
   if (metrics) {
     for (let i = 0; i < metrics.length; ++i) {

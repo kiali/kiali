@@ -18,30 +18,28 @@ import * as API from 'services/Api';
 import { addDanger, addWarning } from 'utils/AlertUtils';
 import { KioskElement } from '../Kiosk/KioskElement';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
-import { KialiAppState } from 'store/Store';
-import { JaegerTrace, TracingError } from 'types/TracingInfo';
+import type { KialiAppState } from 'store/Store';
+import type { JaegerTrace, TracingError } from 'types/TracingInfo';
 import { TraceDetails } from './TracingResults/TraceDetails';
 import { TracingScatter } from './TracingScatter';
-import { FetchOptions, TracesFetcher } from './TracesFetcher';
+import type { FetchOptions } from './TracesFetcher';
+import { TracesFetcher } from './TracesFetcher';
 import { SpanDetails } from './TracingResults/SpanDetails';
-import {
-  durationToBounds,
-  guardTimeRange,
-  isEqualTimeRange,
-  TargetKind,
-  TimeInMilliseconds,
-  TimeRange
-} from 'types/Common';
-import { timeRangeSelector } from 'store/Selectors';
-import { DisplaySettings, percentilesOptions, QuerySettings, TracesDisplayOptions } from './TracesDisplayOptions';
-import { Direction, genStatsKey, getStatsReporters, MetricsStatsQuery } from 'types/MetricsOptions';
-import { MetricsStatsResult } from 'types/Metrics';
+import type { TargetKind, TimeInMilliseconds, TimeRange } from 'types/Common';
+import { durationToBounds, guardTimeRange, isEqualTimeRange } from 'types/Common';
+import { languageSelector, timeRangeSelector } from 'store/Selectors';
+import type { DisplaySettings, QuerySettings } from './TracesDisplayOptions';
+import { percentilesOptions, TracesDisplayOptions } from './TracesDisplayOptions';
+import type { Direction, MetricsStatsQuery } from 'types/MetricsOptions';
+import { genStatsKey, getStatsReporters } from 'types/MetricsOptions';
+import type { MetricsStatsResult } from 'types/Metrics';
 import { getSpanId } from 'utils/SearchParamUtils';
 import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import { subTabStyle } from 'styles/TabStyles';
-import { JAEGER, TracingUrlProvider } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
+import { JAEGER } from 'types/Tracing';
 import { GetTracingUrlProvider } from 'utils/tracing/UrlProviders';
-import { ExternalServiceInfo } from 'types/StatusState';
+import type { ExternalServiceInfo } from 'types/StatusState';
 import { retrieveTimeRange } from '../Time/TimeRangeHelper';
 import { isParentKiosk, kioskTracingAction } from '../Kiosk/KioskActions';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -51,6 +49,7 @@ import { t } from 'utils/I18nUtils';
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
+  language: string;
   namespaceSelector: boolean;
   provider?: string;
   selectedTrace?: JaegerTrace;
@@ -159,6 +158,137 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
       }
       this.fetchTraces();
     }
+  }
+
+  render(): JSX.Element {
+    const tracingURL = this.getTracingUrl();
+    return (
+      <>
+        <div className={containerStyle}>
+          <Card className={tabCardStyle}>
+            <CardBody>
+              <Toolbar style={{ padding: 0 }}>
+                {this.state.infoMessage && this.state.visibleAlert && (
+                  <ToolbarGroup>
+                    <ToolbarItem style={{ width: '100%' }}>
+                      <Alert
+                        style={{ width: '100%' }}
+                        isInline={true}
+                        variant={AlertVariant.info}
+                        title={this.state.infoMessage}
+                        actionClose={<AlertActionCloseButton onClose={() => this.setState({ visibleAlert: false })} />}
+                      />
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                )}
+                <ToolbarGroup>
+                  <ToolbarItem>
+                    <TracesDisplayOptions
+                      key={this.props.language}
+                      onDisplaySettingsChanged={this.onDisplaySettingsChanged}
+                      onQuerySettingsChanged={this.onQuerySettingsChanged}
+                      percentilesPromise={this.percentilesPromise}
+                      disabled={this.state.toolbarDisabled}
+                    />
+                  </ToolbarItem>
+                  <ToolbarItem style={{ marginLeft: 'auto' }}>
+                    {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
+                  </ToolbarItem>
+                  {(tracingURL || isParentKiosk(this.props.kiosk)) && (
+                    <ToolbarItem>
+                      <Tooltip
+                        content={
+                          <>
+                            {this.props.provider === JAEGER
+                              ? t('Open Chart in {{provider}} UI', { provider: this.props.provider })
+                              : t('Open Chart in the UI')}
+                          </>
+                        }
+                      >
+                        <a
+                          href={tracingURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ marginLeft: '10px' }}
+                          data-test="view-in-tracing"
+                          onClick={e => {
+                            if (isParentKiosk(this.props.kiosk)) {
+                              e.preventDefault();
+                              kioskTracingAction(tracingURL);
+                            } else {
+                              window.open(tracingURL, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                        >
+                          {t('View in Tracing')} <ExternalLinkAltIcon />
+                        </a>
+                      </Tooltip>
+                    </ToolbarItem>
+                  )}
+                  <KioskElement>
+                    <ToolbarItem>
+                      <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
+                    </ToolbarItem>
+                  </KioskElement>
+                </ToolbarGroup>
+              </Toolbar>
+              <TracingScatter
+                showSpansAverage={this.state.displaySettings.showSpansAverage}
+                traces={this.state.traces}
+                errorFetchTraces={this.state.tracingErrors}
+                errorTraces={true}
+                includeWaypoint={this.shouldIncludeWaypoint()}
+                cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
+              />
+            </CardBody>
+          </Card>
+          {this.props.selectedTrace && (
+            <div style={{ marginTop: '2rem' }}>
+              <div className={subTabStyle}>
+                <Tabs
+                  id="trace-details"
+                  data-test="trace-details-tabs"
+                  activeKey={this.state.activeTab}
+                  onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
+                >
+                  <Tab eventKey={traceDetailsTab} title={t('Trace Details')}>
+                    <TraceDetails
+                      namespace={this.props.namespace}
+                      target={this.props.target}
+                      targetKind={this.props.targetKind}
+                      tracingURLProvider={this.urlProvider}
+                      otherTraces={this.state.traces}
+                      includeWaypoint={this.shouldIncludeWaypoint()}
+                      cluster={this.props.cluster ? this.props.cluster : ''}
+                      provider={this.props.provider}
+                    />
+                  </Tab>
+                  <Tab eventKey={spansDetailsTab} title={t('Span Details')}>
+                    <SpanDetails
+                      namespace={this.props.namespace}
+                      target={this.props.target}
+                      externalURLProvider={this.urlProvider}
+                      items={this.props.selectedTrace.spans}
+                      traceID={this.props.selectedTrace.traceID}
+                      cluster={this.props.cluster ? this.props.cluster : ''}
+                      fromWaypoint={this.props.fromWaypoint}
+                      includeWaypoint={this.shouldIncludeWaypoint()}
+                      waypointServiceFilter={this.props.waypointServiceFilter}
+                    />
+                  </Tab>
+                </Tabs>
+              </div>
+            </div>
+          )}
+        </div>
+        <TimeDurationModal
+          customDuration={true}
+          isOpen={this.state.isTimeOptionsOpen}
+          onConfirm={this.toggleTimeOptionsVisibility}
+          onCancel={this.toggleTimeOptionsVisibility}
+        />
+      </>
+    );
   }
 
   private getTags = (): Record<string, string> => {
@@ -290,136 +420,13 @@ class TracesComp extends React.Component<TracesProps, TracesState> {
   private toggleTimeOptionsVisibility = (): void => {
     this.setState(prevState => ({ isTimeOptionsOpen: !prevState.isTimeOptionsOpen }));
   };
-
-  render(): JSX.Element {
-    const tracingURL = this.getTracingUrl();
-    return (
-      <>
-        <div className={containerStyle}>
-          <Card className={tabCardStyle}>
-            <CardBody>
-              <Toolbar style={{ padding: 0 }}>
-                {this.state.infoMessage && this.state.visibleAlert && (
-                  <ToolbarGroup>
-                    <ToolbarItem style={{ width: '100%' }}>
-                      <Alert
-                        style={{ width: '100%' }}
-                        isInline={true}
-                        variant={AlertVariant.info}
-                        title={this.state.infoMessage}
-                        actionClose={<AlertActionCloseButton onClose={() => this.setState({ visibleAlert: false })} />}
-                      />
-                    </ToolbarItem>
-                  </ToolbarGroup>
-                )}
-                <ToolbarGroup>
-                  <ToolbarItem>
-                    <TracesDisplayOptions
-                      onDisplaySettingsChanged={this.onDisplaySettingsChanged}
-                      onQuerySettingsChanged={this.onQuerySettingsChanged}
-                      percentilesPromise={this.percentilesPromise}
-                      disabled={this.state.toolbarDisabled}
-                    />
-                  </ToolbarItem>
-                  <ToolbarItem style={{ marginLeft: 'auto' }}>
-                    {/*Blank item used as a separator do shift the following ToolbarItems to the right*/}
-                  </ToolbarItem>
-                  {(tracingURL || isParentKiosk(this.props.kiosk)) && (
-                    <ToolbarItem>
-                      <Tooltip
-                        content={<>Open Chart in {this.props.provider === JAEGER ? this.props.provider : 'the'} UI</>}
-                      >
-                        <a
-                          href={tracingURL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ marginLeft: '10px' }}
-                          data-test="view-in-tracing"
-                          onClick={e => {
-                            if (isParentKiosk(this.props.kiosk)) {
-                              e.preventDefault();
-                              kioskTracingAction(tracingURL);
-                            } else {
-                              window.open(tracingURL, '_blank', 'noopener,noreferrer');
-                            }
-                          }}
-                        >
-                          View in Tracing <ExternalLinkAltIcon />
-                        </a>
-                      </Tooltip>
-                    </ToolbarItem>
-                  )}
-                  <KioskElement>
-                    <ToolbarItem>
-                      <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
-                    </ToolbarItem>
-                  </KioskElement>
-                </ToolbarGroup>
-              </Toolbar>
-              <TracingScatter
-                showSpansAverage={this.state.displaySettings.showSpansAverage}
-                traces={this.state.traces}
-                errorFetchTraces={this.state.tracingErrors}
-                errorTraces={true}
-                includeWaypoint={this.shouldIncludeWaypoint()}
-                cluster={this.props.cluster ? this.props.cluster : ''} // TODO: Test single cluster
-              />
-            </CardBody>
-          </Card>
-          {this.props.selectedTrace && (
-            <div style={{ marginTop: '2rem' }}>
-              <div className={subTabStyle}>
-                <Tabs
-                  id="trace-details"
-                  data-test="trace-details-tabs"
-                  activeKey={this.state.activeTab}
-                  onSelect={(_, idx: any) => this.setState({ activeTab: idx })}
-                >
-                  <Tab eventKey={traceDetailsTab} title={t('Trace Details')}>
-                    <TraceDetails
-                      namespace={this.props.namespace}
-                      target={this.props.target}
-                      targetKind={this.props.targetKind}
-                      tracingURLProvider={this.urlProvider}
-                      otherTraces={this.state.traces}
-                      includeWaypoint={this.shouldIncludeWaypoint()}
-                      cluster={this.props.cluster ? this.props.cluster : ''}
-                      provider={this.props.provider}
-                    />
-                  </Tab>
-                  <Tab eventKey={spansDetailsTab} title={t('Span Details')}>
-                    <SpanDetails
-                      namespace={this.props.namespace}
-                      target={this.props.target}
-                      externalURLProvider={this.urlProvider}
-                      items={this.props.selectedTrace.spans}
-                      traceID={this.props.selectedTrace.traceID}
-                      cluster={this.props.cluster ? this.props.cluster : ''}
-                      fromWaypoint={this.props.fromWaypoint}
-                      includeWaypoint={this.shouldIncludeWaypoint()}
-                      waypointServiceFilter={this.props.waypointServiceFilter}
-                    />
-                  </Tab>
-                </Tabs>
-              </div>
-            </div>
-          )}
-        </div>
-        <TimeDurationModal
-          customDuration={true}
-          isOpen={this.state.isTimeOptionsOpen}
-          onConfirm={this.toggleTimeOptionsVisibility}
-          onCancel={this.toggleTimeOptionsVisibility}
-        />
-      </>
-    );
-  }
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => {
   return {
     externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
+    language: languageSelector(state),
     namespaceSelector: state.tracingState.info ? state.tracingState.info.namespaceSelector : true,
     provider: state.tracingState.info?.provider,
     selectedTrace: state.tracingState.selectedTrace,

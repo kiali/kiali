@@ -127,7 +127,7 @@ describe('Health', () => {
       expect(health.health.items).toHaveLength(2);
 
       const proxyStatus = health.health.items[0];
-      expect(proxyStatus.title).toEqual('Pod Status');
+      expect(H.getHealthItemDisplayTitle(proxyStatus)).toEqual('Pod Status');
       expect(proxyStatus.status).toEqual(HEALTHY);
 
       expect(proxyStatus.children).toHaveLength(1);
@@ -163,7 +163,7 @@ describe('Health', () => {
       expect(health.health.items).toHaveLength(2);
 
       const proxyStatus = health.health.items[0];
-      expect(proxyStatus.title).toEqual('Pod Status');
+      expect(H.getHealthItemDisplayTitle(proxyStatus)).toEqual('Pod Status');
       expect(proxyStatus.status).toEqual(DEGRADED);
 
       expect(proxyStatus.children).toHaveLength(2);

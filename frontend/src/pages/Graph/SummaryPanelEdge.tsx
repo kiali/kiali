@@ -1,18 +1,10 @@
 import * as React from 'react';
 import { RateTableGrpc, RateTableHttp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { ResponseTimeChart, ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
-import {
-  DecoratedGraphEdgeData,
-  DecoratedGraphNodeData,
-  GraphType,
-  NodeType,
-  prettyProtocol,
-  Protocol,
-  SummaryPanelPropType,
-  TrafficRate,
-  UNKNOWN
-} from '../../types/Graph';
+import type { ResponseTimeUnit } from '../../components/SummaryPanel/ResponseTimeChart';
+import { ResponseTimeChart } from '../../components/SummaryPanel/ResponseTimeChart';
+import type { DecoratedGraphEdgeData, DecoratedGraphNodeData, SummaryPanelPropType } from '../../types/Graph';
+import { GraphType, NodeType, prettyProtocol, Protocol, TrafficRate, UNKNOWN } from '../../types/Graph';
 import { renderBadgedLink } from './SummaryLink';
 import {
   getDatapoints,
@@ -27,19 +19,20 @@ import {
   summaryFont,
   summaryPanel
 } from './SummaryPanelCommon';
-import { Datapoint, IstioMetricsMap, Labels, Metric } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { Datapoint, IstioMetricsMap, Labels, Metric } from '../../types/Metrics';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { ResponseFlagsTable } from 'components/SummaryPanel/ResponseFlagsTable';
 import { ResponseHostsTable } from 'components/SummaryPanel/ResponseHostsTable';
 import { KialiIcon } from 'config/KialiIcon';
 import { Tab, Tooltip } from '@patternfly/react-core';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
-import { Direction } from 'types/MetricsOptions';
+import type { Direction } from 'types/MetricsOptions';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Edge } from '@patternfly/react-topology';
+import type { Edge } from '@patternfly/react-topology';
 import { classes } from 'typestyle';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { icons, serverConfig } from 'config';
 import { t } from 'utils/I18nUtils';
 
@@ -206,11 +199,17 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
         <div>
           <div className={panelHeadingStyle}>
             {getTitle(`Edge (${prettyProtocol(protocol)})`)}
-            {renderBadgedLink(source, undefined, `${t('From:')}  `, undefined, isBidirectional ? fromToStyle : undefined)}
+            {renderBadgedLink(
+              source,
+              undefined,
+              `${t('From')}:  `,
+              undefined,
+              isBidirectional ? fromToStyle : undefined
+            )}
             {renderBadgedLink(
               dest,
               undefined,
-              `${t('To:')}        `,
+              `${t('To')}:        `,
               undefined,
               isBidirectional ? fromToStyle : undefined
             )}{' '}
@@ -593,7 +592,8 @@ export class SummaryPanelEdge extends React.Component<SummaryPanelPropType, Summ
     this.metricsPromise.promise
       .then(response => {
         const metrics = response.data;
-        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, received, unit } = defaultMetricsState;
+        let { rates: reqRates, errRates, rtAvg, rtMed, rt95, rt99, sent, received } = defaultMetricsState;
+        const { unit } = defaultMetricsState;
         if (isHttp || (isGrpc && isRequests)) {
           reqRates = this.getNodeDataPoints(
             metrics.request_count,
