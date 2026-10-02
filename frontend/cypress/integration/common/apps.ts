@@ -108,11 +108,19 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
           if (isOssmcUrl(win.location.href)) {
             peels.push(...peelCoveringLayers($path[0], win));
             // Deployed OSSMC still selects traces via parent onClick after
-            // hoveredItem is set. KIALI_PR ChartWithLegend is not in the
-            // cluster plugin image, so a force-click on the point is a no-op.
-            cy.wrap($path).trigger('mousemove', { force: true });
+            // hoveredItem is set. Voronoi listens on the SVG, so a path-only
+            // mousemove never opens the tooltip on sparse charts (ratings).
+            const svg = $path[0].closest('svg');
+            if (!svg) {
+              throw new Error('tracing scatterplot point is not inside an svg');
+            }
+            const pathRect = $path[0].getBoundingClientRect();
+            const svgRect = svg.getBoundingClientRect();
+            const offsetX = pathRect.left + pathRect.width / 2 - svgRect.left;
+            const offsetY = pathRect.top + pathRect.height / 2 - svgRect.top;
+            cy.wrap(svg).trigger('mousemove', offsetX, offsetY, { force: true });
             cy.get('foreignObject').should('be.visible');
-            cy.wrap($path).closest('svg').click({ force: true });
+            cy.wrap(svg).click(offsetX, offsetY, { force: true });
           } else {
             // force:true sends the event to the series path. A normal click
             // hits the Victory tooltip/voronoi at the same coordinates.
