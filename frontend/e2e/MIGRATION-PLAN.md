@@ -55,7 +55,7 @@
 - [x] Auth setup failure handling: write empty `storageState` then fail via `expect().toContain()`,
   not `throw`. Hard throws produce zero JUnit output; `expect` produces 1 FAILED + 18 SKIPPED.
   (PR #10217)
-- [x] `playwright:run:last-failed` removed — `--last-failed` overwrites `blob-report/` and produces
+- [x] `playwright:run:last-failed` removed — `--last-failed` overwrites `playwright/blob-report/` and produces
   misleading Jenkins failure counts. CI reports reflect the full first pass only. (PR #10195)
 
 ## Phase 0 — Infrastructure

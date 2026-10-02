@@ -7,7 +7,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   reporter: [
     ['list'],
-    ['junit', { outputFile: 'playwright-results/combined-report.xml' }],
-    ['html', { open: 'never', outputFolder: 'playwright-report' }]
+    ['junit', { outputFile: 'playwright/results/combined-report.xml' }],
+    ['html', { open: 'never', outputFolder: 'playwright/report' }]
   ]
 });
