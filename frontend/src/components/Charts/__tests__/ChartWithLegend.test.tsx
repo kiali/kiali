@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
+import type { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
 // Mock heavy ESM dependencies that Jest cannot transform
 rstest.mock('d3-format', () => ({
@@ -38,6 +38,8 @@ rstest.mock('@patternfly/react-charts/victory', () => {
     ChartLine: () => null,
     ChartProps: {},
     ChartScatter: () => null,
+    ChartThreshold: (props: any) =>
+      React.createElement('div', { 'data-test': 'chart-threshold', 'data-name': props.data?.[0]?.name }),
     ChartTooltipProps: {},
     createContainer: () => () => null
   };
@@ -108,6 +110,24 @@ describe('ChartWithLegend', () => {
     expect(legendItems[0]).toHaveTextContent('Series A');
     expect(legendItems[1]).toHaveTextContent('Series B');
     expect(legendItems[2]).toHaveTextContent('Series C');
+  });
+
+  it('includes thresholds in the legend and renders ChartThreshold', () => {
+    const data = makeSeries(['Series A']);
+    const thresholds = makeSeries(['Memory limit']);
+    render(
+      <ChartWithLegend
+        data={data}
+        thresholds={thresholds}
+        unit="bytes"
+        seriesComponent={<div />}
+        fill={false}
+        stroke={true}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /Memory limit/ })).toBeInTheDocument();
+    expect(screen.getByTestId('chart-threshold')).toBeInTheDocument();
   });
 
   it('toggles series visibility on legend click and restores on second click', async () => {
@@ -203,47 +223,14 @@ describe('ChartWithLegend', () => {
     expect(seriesA).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('shows toggle button when legendOverflows is true', () => {
-    const data = makeSeries(['Series A', 'Series B']);
-    const { rerender } = render(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
-    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
-    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
-    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
-    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
-
-    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
-    expect(toggleButton).toBeDefined();
-  });
-
-  it('does not show toggle button when legend fits in one row', () => {
-    const data = makeSeries(['Series A']);
+  it('does not show a legend collapse toggle (legend stays expanded)', () => {
+    const data = makeSeries(['Series A', 'Series B', 'Series C', 'Series D']);
     render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
-    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
-    expect(toggleButton).toBeUndefined();
-  });
-
-  it('checkLegendOverflow sets legendOverflows state based on DOM measurement', () => {
-    const data = makeSeries(['Series A', 'Series B']);
-    const { rerender } = render(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
-    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
-    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
-    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
-    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
-
-    const toggleAfterOverflow = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
-    expect(toggleAfterOverflow).toBeDefined();
-
-    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 25 });
-    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
-    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
-
-    const toggleAfterFit = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
-    expect(toggleAfterFit).toBeUndefined();
+    const legendButtons = screen.getAllByRole('button').filter(b => (b.textContent || '').includes('Series'));
+    expect(legendButtons).toHaveLength(4);
+    const nonSeriesButtons = screen.getAllByRole('button').filter(b => !(b.textContent || '').includes('Series'));
+    expect(nonSeriesButtons).toHaveLength(0);
   });
 
   it('calls onClick when data click handler receives a valid datum', () => {
@@ -295,27 +282,5 @@ describe('ChartWithLegend', () => {
     render(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
 
     expect(lastChartEvents).toHaveLength(0);
-  });
-
-  it('toggles legendExpanded state when toggle button is clicked', async () => {
-    const user = userEvent.setup();
-    const data = makeSeries(['Series A', 'Series B']);
-    const { rerender } = render(
-      <ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />
-    );
-    const legendHost = screen.getByRole('button', { name: /Series A/ }).parentElement!;
-    Object.defineProperty(legendHost, 'scrollHeight', { configurable: true, value: 50 });
-    Object.defineProperty(legendHost, 'clientHeight', { configurable: true, value: 25 });
-    rerender(<ChartWithLegend data={data} unit="ops" seriesComponent={<div />} fill={false} stroke={true} />);
-
-    const toggleButton = screen.getAllByRole('button').find(b => !(b.textContent || '').includes('Series'));
-    expect(toggleButton).toBeDefined();
-
-    const classBefore = legendHost.className;
-    await user.click(toggleButton!);
-    expect(legendHost.className).not.toBe(classBefore);
-
-    await user.click(toggleButton!);
-    expect(legendHost.className).toBe(classBefore);
   });
 });

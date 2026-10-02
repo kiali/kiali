@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
+import type { ChartProps, ChartTooltipProps } from '@patternfly/react-charts/victory';
 import {
   ChartAxis,
   Chart,
@@ -7,18 +7,20 @@ import {
   ChartScatter,
   ChartLabel,
   ChartLine,
+  ChartThreshold,
   createContainer
 } from '@patternfly/react-charts/victory';
 import { VictoryPortal } from 'victory-core';
 import { VictoryBoxPlot } from 'victory-box-plot';
 import { format as d3Format } from 'd3-format';
 import { getFormatter, getUnit } from 'utils/Formatter';
-import { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
-import { Overlay } from 'types/Overlay';
-import { BrushHandlers, getVoronoiContainerProps } from './Container';
+import type { VCLines, LegendItem, LineInfo, RichDataPoint, RawOrBucket, VCDataPoint } from 'types/VictoryChartInfo';
+import type { Overlay } from 'types/Overlay';
+import type { BrushHandlers } from './Container';
+import { getVoronoiContainerProps } from './Container';
 import { toBuckets } from 'utils/VictoryChartsUtils';
-import { VCEvent } from 'utils/VictoryEvents';
-import { XAxisType } from 'types/Dashboards';
+import type { VCEvent } from 'utils/VictoryEvents';
+import type { XAxisType } from 'types/Dashboards';
 import { CustomTooltip } from './CustomTooltip';
 import { INTERPOLATION_STRATEGY } from './SparklineChart';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -42,7 +44,13 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   onTooltipClose?: (datum: RawOrBucket<O>) => void;
   onTooltipOpen?: (datum: RawOrBucket<O>) => void;
   overlay?: Overlay<O>;
+  // Render overlay as a line (dual-axis charts) instead of scatter (span overlays).
+  overlayAsLine?: boolean;
+  // Extra right padding when an overlay axis is shown (default 15).
+  overlayRightPadding?: number;
   overrideSeriesComponentStyle?: boolean;
+  // Extra left padding for the primary Y axis tick labels (default 10).
+  paddingLeft?: number;
   // The TracingScatter component needs a flag to indicate that the trace datapoint needs a mouse pointer
   // It could be detected indirectly, but it's complicated and less clear, a new optional flag simplifies this logic
   pointer?: boolean;
@@ -50,7 +58,11 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
   showSpans?: boolean;
   showTrendline?: boolean;
   sizeRatio?: number;
+  // Put main-series legend on the left and overlay legend on the right (by axis unit).
+  splitLegend?: boolean;
   stroke?: boolean;
+  // Horizontal reference lines on the primary Y axis (e.g. memory limit).
+  thresholds?: VCLines<RichDataPoint>;
   timeWindow?: [Date, Date];
   unit: string;
   xAxis?: XAxisType;
@@ -58,8 +70,6 @@ type Props<T extends RichDataPoint, O extends LineInfo> = {
 
 type State = {
   hiddenSeries: Set<string>;
-  legendExpanded: boolean;
-  legendOverflows: boolean;
   width: number;
 };
 
@@ -88,15 +98,7 @@ export const LEGEND_HEIGHT = 25;
 export const CHART_LEGEND_GAP = 4;
 const CHART_BOTTOM_PADDING = 16;
 
-const legendCollapsedStyle = kialiStyle({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '0 1rem',
-  height: `${LEGEND_HEIGHT}px`,
-  overflow: 'hidden'
-});
-
-const legendExpandedStyle = kialiStyle({
+const legendStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap',
   gap: '0 1rem'
@@ -111,23 +113,24 @@ const htmlLegendItemStyle = kialiStyle({
   userSelect: 'none'
 });
 
-const legendToggleStyle = kialiStyle({
-  marginLeft: 'auto'
+const splitLegendRightStyle = kialiStyle({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '0 1rem',
+  justifyContent: 'flex-end'
 });
 
 export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extends React.Component<Props<T, O>, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   hoveredItem?: VCDataPoint;
-  legendRef: HTMLDivElement | null = null;
   private mountTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(props: Props<T, O>) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
     this.state = {
-      hiddenSeries: new Set([overlayName]),
-      legendExpanded: false,
-      legendOverflows: false,
+      // Span overlays start hidden; dual-axis line overlays start visible.
+      hiddenSeries: new Set(props.overlayAsLine ? [] : [overlayName]),
       width: 0
     };
   }
@@ -136,13 +139,8 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     this.mountTimer = setTimeout(() => {
       this.mountTimer = undefined;
       this.handleResize();
-      this.checkLegendOverflow();
       window.addEventListener('resize', this.handleResize);
     });
-  }
-
-  componentDidUpdate(): void {
-    this.checkLegendOverflow();
   }
 
   componentWillUnmount(): void {
@@ -152,51 +150,22 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     window.removeEventListener('resize', this.handleResize);
   }
 
-  private checkLegendOverflow = (): void => {
-    if (this.legendRef && !this.state.legendExpanded) {
-      const overflows = this.legendRef.scrollHeight > this.legendRef.clientHeight;
-
-      if (overflows !== this.state.legendOverflows) {
-        this.setState({ legendOverflows: overflows });
-      }
-    }
-  };
-
-  private onTooltipClose = (): void => {
-    if (this.props.onTooltipClose) {
-      this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
-    }
-
-    this.hoveredItem = undefined;
-  };
-
-  private onTooltipOpen = (points?: VCDataPoint[]): void => {
-    if (points && points.length > 0) {
-      this.hoveredItem = points[0];
-    } else {
-      this.hoveredItem = undefined;
-    }
-
-    if (this.props.onTooltipOpen) {
-      this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
-    }
-  };
-
-  private handleToggleLegendExpanded = (): void => {
-    this.setState(prevState => ({ legendExpanded: !prevState.legendExpanded }));
-  };
-
   render(): React.ReactNode {
     const scaleInfo = this.scaledAxisInfo(this.props.data);
     const fullLegendData = this.buildFullLegendData();
+    const overlayLegendData = this.buildOverlayLegendData();
     const chartHeight = this.props.chartHeight ?? 300;
-    const showOverlay = (this.props.overlay && this.props.showSpans) ?? false;
-    const overlayRightPadding = showOverlay ? 15 : 0;
+    const overlaySeriesName = this.props.overlay?.info.lineInfo.name ?? overlayName;
+    // Span overlays follow showSpans; dual-axis line overlays follow legend visibility.
+    const showOverlay =
+      !!this.props.overlay &&
+      (this.props.overlayAsLine ? !this.state.hiddenSeries.has(overlaySeriesName) : !!this.props.showSpans);
+    const overlayRightPadding = showOverlay ? (this.props.overlayRightPadding ?? 15) : 0;
 
     const showLegend = chartHeight > MIN_HEIGHT_YAXIS;
     const padding: Padding = {
       bottom: showLegend ? CHART_BOTTOM_PADDING : 0,
-      left: 10,
+      left: this.props.paddingLeft ?? 10,
       right: 10 + overlayRightPadding,
       top: 0
     };
@@ -205,7 +174,9 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     let normalizedOverlay: RawOrBucket<O>[] = [];
     let overlayFactor = 1.0;
 
-    const mainMax = Math.max(...this.props.data.map(line => Math.max(...line.datapoints.map(d => d.y))));
+    const dataYs = this.props.data.flatMap(line => line.datapoints.map(d => d.y));
+    const thresholdYs = (this.props.thresholds ?? []).flatMap(line => line.datapoints.map(d => d.y));
+    const mainMax = Math.max(0, ...dataYs, ...thresholdYs);
 
     if (this.props.overlay) {
       // Normalization for y-axis display to match y-axis domain of the main data
@@ -376,6 +347,19 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
             {this.props.xAxis === 'series' ? this.renderCategories() : this.renderTimeSeries(svgHeight)}
 
+            {(this.props.thresholds ?? []).map((serie, idx) => {
+              if (this.state.hiddenSeries.has(serie.legendItem.name)) {
+                return undefined;
+              }
+              return (
+                <ChartThreshold
+                  key={`threshold-${idx}`}
+                  data={serie.datapoints}
+                  style={{ data: { stroke: serie.color } }}
+                />
+              );
+            })}
+
             {showOverlay &&
               (this.props.overlay!.info.buckets ? (
                 <VictoryBoxPlot
@@ -390,6 +374,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
                     median: { stroke: 'white', strokeWidth: 2 }
                   }}
                 />
+              ) : this.props.overlayAsLine ? (
+                <ChartLine
+                  key="overlay"
+                  name={overlayName}
+                  data={normalizedOverlay}
+                  interpolation={INTERPOLATION_STRATEGY}
+                  style={{ data: this.props.overlay!.info.dataStyle }}
+                />
               ) : (
                 <ChartScatter
                   key="overlay"
@@ -403,56 +395,14 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
         {showLegend && (
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <div
-              ref={ref => {
-                this.legendRef = ref;
-              }}
-              className={this.state.legendExpanded ? legendExpandedStyle : legendCollapsedStyle}
-              style={{ flex: 1 }}
-            >
-              {fullLegendData.map(item => (
-                <span
-                  key={item.name}
-                  aria-pressed={this.state.hiddenSeries.has(item.name)}
-                  className={htmlLegendItemStyle}
-                  onClick={() => this.handleToggleSeries(item.name)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      this.handleToggleSeries(item.name);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <svg width="10" height="10" viewBox="0 0 10 10">
-                    {this.renderLegendSymbol(item.symbol)}
-                  </svg>
-                  <span style={{ color: this.state.hiddenSeries.has(item.name) ? PFColors.Color200 : undefined }}>
-                    {item.name}
-                  </span>
-                </span>
-              ))}
+            <div className={legendStyle} style={{ flex: 1 }}>
+              {fullLegendData.map(item => this.renderLegendItem(item))}
             </div>
 
-            {(this.state.legendOverflows || this.state.legendExpanded) && (
-              <Tooltip
-                position={TooltipPosition.left}
-                content={
-                  <div style={{ textAlign: 'left' }}>
-                    {this.state.legendExpanded ? t('Collapse legend') : t('Show full legend')}
-                  </div>
-                }
-              >
-                <Button
-                  variant={ButtonVariant.link}
-                  className={legendToggleStyle}
-                  isInline
-                  onClick={this.handleToggleLegendExpanded}
-                >
-                  <KialiIcon.MoreLegend />
-                </Button>
-              </Tooltip>
+            {this.props.splitLegend && overlayLegendData.length > 0 && (
+              <div className={splitLegendRightStyle} style={{ flex: 1 }} data-test="chart-overlay-legend">
+                {overlayLegendData.map(item => this.renderLegendItem(item))}
+              </div>
             )}
           </div>
         )}
@@ -474,6 +424,26 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
       </div>
     );
   }
+
+  private onTooltipClose = (): void => {
+    if (this.props.onTooltipClose) {
+      this.props.onTooltipClose(this.hoveredItem as RawOrBucket<O>);
+    }
+
+    this.hoveredItem = undefined;
+  };
+
+  private onTooltipOpen = (points?: VCDataPoint[]): void => {
+    if (points && points.length > 0) {
+      this.hoveredItem = points[0];
+    } else {
+      this.hoveredItem = undefined;
+    }
+
+    if (this.props.onTooltipOpen) {
+      this.props.onTooltipOpen(this.hoveredItem as RawOrBucket<O>);
+    }
+  };
 
   private renderTimeSeries = (height: number): React.ReactNode => {
     const groupOffset = this.props.groupOffset ?? 0;
@@ -504,7 +474,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
               const first_dpx = (serie.datapoints[0].x as Date).getTime() / 1000;
 
               const datapoints = serie.datapoints.map(d => {
-                let t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
+                const t = ((d.x as Date).getTime() / 1000 - first_dpx) / 10000;
                 let trendPoint = parseFloat(d.y.toString());
 
                 if (d.y0) {
@@ -520,7 +490,7 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
               const linearRegression = regression.linear(datapoints, { precision: 10 });
 
-              let regressionDatapoints = serie.datapoints.map(d => ({
+              const regressionDatapoints = serie.datapoints.map(d => ({
                 ...d,
                 name: `${d.name} (trendline)`,
                 y: linearRegression.predict(((d.x as Date).getTime() / 1000 - first_dpx) / 10000)[1],
@@ -632,8 +602,34 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     });
   };
 
+  private renderLegendItem = (item: LegendItem): React.ReactNode => {
+    const hidden = this.state.hiddenSeries.has(item.name);
+    return (
+      <span
+        key={item.name}
+        aria-pressed={hidden}
+        className={htmlLegendItemStyle}
+        onClick={() => this.handleToggleSeries(item.name)}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            this.handleToggleSeries(item.name);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10">
+          {this.renderLegendSymbol(item.symbol)}
+        </svg>
+        <span style={{ color: hidden ? PFColors.Color200 : undefined }}>{item.name}</span>
+      </span>
+    );
+  };
+
   private buildFullLegendData = (): LegendItem[] => {
-    return this.props.data.map(s => {
+    const series = [...this.props.data, ...(this.props.thresholds ?? [])];
+    return series.map(s => {
       const name = s.legendItem.name;
 
       if (this.state.hiddenSeries.has(name)) {
@@ -642,6 +638,26 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
 
       return { ...s.legendItem, name };
     });
+  };
+
+  private buildOverlayLegendData = (): LegendItem[] => {
+    if (!this.props.overlay || !this.props.splitLegend) {
+      return [];
+    }
+
+    const lineInfo = this.props.overlay.info.lineInfo;
+    const name = lineInfo.name || overlayName;
+    const hidden = this.state.hiddenSeries.has(name);
+
+    return [
+      {
+        name,
+        symbol: {
+          fill: hidden ? PFColors.Color200 : lineInfo.color,
+          type: this.props.overlayAsLine ? undefined : 'circle'
+        }
+      }
+    ];
   };
 
   private scaledAxisInfo = (data: VCLines<VCDataPoint & T>): ScaleInfo => {

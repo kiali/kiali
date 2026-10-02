@@ -1,0 +1,163 @@
+import {
+  buildEnvoyMemoryQueryParams,
+  hasEnvoyMemoryRunningPods,
+  hasEnvoyMemoryWorkload,
+  shouldShowEnvoyWorkloadTab,
+  formatEnvoyMemoryBytes,
+  formatEnvoyMemoryUsage,
+  formatEnvoyRequestRate,
+  envoyMemoryCauseLabel,
+  envoyMemoryCauseStatus,
+  envoyMemoryThresholdHelp
+} from '../EnvoyMemoryUtils';
+import { DEGRADED, HEALTHY } from 'types/Health';
+import type { Workload } from 'types/Workload';
+
+rstest.mock('utils/I18nUtils', () => ({
+  t: (key: string, options?: Record<string, string | number>) => {
+    if (!options) {
+      return key;
+    }
+
+    return key.replace(/\{\{(\w+)\}\}/g, (_match, name: string) => String(options[name] ?? ''));
+  }
+}));
+
+describe('EnvoyMemoryUtils', () => {
+  it('detects workloads with an Envoy proxy', () => {
+    const workload = {
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      istioSidecar: true
+    } as Workload;
+
+    expect(hasEnvoyMemoryWorkload(workload)).toBe(true);
+    expect(hasEnvoyMemoryWorkload({ ...workload, isZtunnel: true })).toBe(false);
+  });
+
+  it('detects when a workload has no running pods for Envoy memory', () => {
+    const workload = {
+      istioSidecar: true,
+      pods: []
+    } as any as Workload;
+
+    expect(hasEnvoyMemoryRunningPods(workload)).toBe(false);
+    expect(hasEnvoyMemoryRunningPods({ ...workload, pods: [{ name: 'pod-a' }] } as any as Workload)).toBe(true);
+  });
+
+  it('hides the Envoy tab when the workload has no pods in the selected cluster', () => {
+    const remoteWorkload = {
+      istioSidecar: true,
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      pods: []
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(remoteWorkload)).toBe(false);
+  });
+
+  it('shows the Envoy tab when a sidecar pod is present in the selected cluster', () => {
+    const workload = {
+      istioSidecar: true,
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      pods: [{ containers: [{ name: 'istio-proxy' }] }]
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(workload)).toBe(true);
+  });
+
+  it('shows the Envoy tab for waypoints even when pod list is empty', () => {
+    const workload = {
+      istioSidecar: false,
+      isWaypoint: true,
+      isZtunnel: false,
+      pods: []
+    } as any as Workload;
+
+    expect(shouldShowEnvoyWorkloadTab(workload)).toBe(true);
+  });
+
+  it('formats memory bytes', () => {
+    expect(formatEnvoyMemoryBytes(512)).toBe('512 B');
+    expect(formatEnvoyMemoryBytes(2048)).toBe('2.0 KiB');
+    expect(formatEnvoyMemoryBytes(1048576)).toBe('1.0 MiB');
+  });
+
+  it('formats request rate for envoy-only metrics', () => {
+    expect(formatEnvoyRequestRate({ requestRate: 1.5 })).toBe('1.50 req/s');
+    expect(formatEnvoyRequestRate({ requestRate: 0 })).toBe('0.00 req/s');
+  });
+
+  it('formats traffic rate as bytes only when trafficIsByteRate is set', () => {
+    expect(formatEnvoyRequestRate({ proxyType: 'gateway', requestRate: 50, trafficIsByteRate: false })).toBe(
+      '50.00 req/s'
+    );
+    expect(formatEnvoyRequestRate({ proxyType: 'gateway', requestRate: 2048, trafficIsByteRate: true })).toBe(
+      '2.0 KiB/s'
+    );
+  });
+
+  it('formats memory usage as allocated bytes', () => {
+    expect(
+      formatEnvoyMemoryUsage({
+        memoryLimitBytes: 1073741824,
+        memoryMaxBytes: 8703180,
+        memoryUsedPercent: 0.8
+      })
+    ).toBe('8.3 MiB');
+    expect(
+      formatEnvoyMemoryUsage({
+        memoryLimitBytes: 0,
+        memoryMaxBytes: 8703180,
+        memoryUsedPercent: 0
+      })
+    ).toBe('8.3 MiB');
+  });
+
+  it('maps cause labels', () => {
+    expect(envoyMemoryCauseLabel('configuration')).toContain('configuration');
+    expect(envoyMemoryCauseLabel('traffic')).toContain('traffic');
+  });
+
+  it('maps cause status to health icons', () => {
+    expect(envoyMemoryCauseStatus('ok')).toBe(HEALTHY);
+    expect(envoyMemoryCauseStatus('configuration')).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('traffic')).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('unknown')).toBe(DEGRADED);
+  });
+
+  it('describes the active warning threshold', () => {
+    expect(
+      envoyMemoryThresholdHelp({
+        largeConfigClustersThreshold: 100,
+        memoryLimitBytes: 1024 * 1024 * 1024,
+        memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
+        proxyType: 'sidecar'
+      })
+    ).toContain('70%');
+
+    expect(
+      envoyMemoryThresholdHelp({
+        largeConfigClustersThreshold: 100,
+        memoryLimitBytes: 0,
+        memoryThresholdBytes: 100 * 1024 * 1024,
+        proxyType: 'sidecar'
+      })
+    ).toContain('absolute threshold');
+  });
+
+  it('builds query params with queryTime in seconds', () => {
+    const params = buildEnvoyMemoryQueryParams({ rangeDuration: 300 }, 1_700_000_000_000);
+
+    expect(params.duration).toBe(300);
+    expect(params.queryTime).toBe(1_700_000_000);
+    expect(params.direction).toBe('outbound');
+    expect(params.reporter).toBe('source');
+    expect(params.rateInterval).toBeDefined();
+    expect(params.step).toBeDefined();
+  });
+});
