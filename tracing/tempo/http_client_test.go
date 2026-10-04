@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model/json"
@@ -147,6 +148,64 @@ func TestGetTrace(t *testing.T) {
 	assert.NotNil(t, response.Data)
 	assert.Equal(t, len(response.Data.Spans), 8)
 	assert.Equal(t, response.Data.Matched, 8)
+}
+
+// TestUnreadableSearchBody covers a 200 whose body is not a Tempo search answer, so a wrong
+// endpoint gives a meaningful error instead of an empty trace list.
+func TestUnreadableSearchBody(t *testing.T) {
+	bodies := map[string]string{
+		"an object with no keys at all":      `{}`,
+		"an error Tempo reports as a 200":    `{"error":"no org id","status":"error"}`,
+		"a trace detail sent to the search":  `{"batches":[]}`,
+		"a body wrapped in something else":   `{"result":{"traces":[]}}`,
+		"an HTML error page from a proxy":    `<html><body>502 Bad Gateway</body></html>`,
+		"a list where an object is expected": `[]`,
+	}
+
+	for name, body := range bodies {
+		t.Run(name, func(t *testing.T) {
+			httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(body)),
+				}
+			})}
+
+			tempoClient, err := NewOtelClient(context.TODO())
+			require.NoError(t, err)
+
+			response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, getBaseUrl(), serviceName, models.TracingQuery{})
+			require.Error(t, err, "a body Kiali cannot read must not reach the user as an empty result")
+			assert.Empty(t, response.Data)
+		})
+	}
+}
+
+// TestEmptySearch verifies that a valid search answer with no traces reports no traces.
+func TestEmptySearch(t *testing.T) {
+	bodies := map[string]string{
+		"no traces and no metrics to report": `{"traces":[],"metrics":{}}`,
+		"metrics only":                       `{"metrics":{"inspectedTraces":42,"inspectedBytes":"1024"}}`,
+		"an empty traces list only":          `{"traces":[]}`,
+	}
+
+	for name, body := range bodies {
+		t.Run(name, func(t *testing.T) {
+			httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(strings.NewReader(body)),
+				}
+			})}
+
+			tempoClient, err := NewOtelClient(context.TODO())
+			require.NoError(t, err)
+
+			response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, getBaseUrl(), serviceName, models.TracingQuery{})
+			require.NoError(t, err)
+			assert.Empty(t, response.Data)
+		})
+	}
 }
 
 func TestErrorResponse(t *testing.T) {
