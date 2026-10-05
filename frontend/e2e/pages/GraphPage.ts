@@ -269,7 +269,8 @@ export class GraphPage extends BasePage {
     }
 
     if (graphResponse) {
-      await graphResponse;
+      // Waypoint proxies (and similar) may apply from already-fetched telemetry without a new GET.
+      await Promise.race([graphResponse, waitForLoadingComplete(this.page)]);
     }
     await waitForLoadingComplete(this.page);
   }

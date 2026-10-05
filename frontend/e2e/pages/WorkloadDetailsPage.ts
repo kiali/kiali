@@ -553,12 +553,12 @@ export class WorkloadDetailsPage extends BasePage {
     const grid = this.page.getByRole('grid');
     await expect(grid.locator('td[data-label="Service VIP"]').first()).toBeVisible();
     await expect(grid.locator('td[data-label="Waypoint"]').first()).toBeAttached();
-    await expect(grid.locator('td[data-label="Namespace"]')).toContainText(namespace);
+    await expect(grid.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
 
     await tabs.getByText('Workloads', { exact: true }).click();
     await expect(grid.locator('td[data-label="Pod Name"]').first()).toBeVisible();
     await expect(grid.locator('td[data-label="Node"]').first()).toBeAttached();
-    await expect(grid.locator('td[data-label="Namespace"]')).toContainText(namespace);
+    await expect(grid.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
 
     await this.page.locator('button#filter_select_type-toggle').click();
     await this.page
