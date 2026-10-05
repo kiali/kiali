@@ -114,10 +114,37 @@ export class MeshPage extends BasePage {
     };
   }
 
-  async selectMeshNodeByLabel(label: string): Promise<void> {
+  async selectMeshNodeByLabel(label: string, cluster?: string): Promise<void> {
     await this.waitForLoad();
-    await selectMeshNodeByLabel(this.page, label);
+    await selectMeshNodeByLabel(this.page, label, cluster);
     await this.waitForLoad();
+  }
+
+  async selectClusterNodeOnCluster(cluster: string): Promise<void> {
+    await this.waitForLoad();
+    await selectClusterMeshNode(this.page, cluster);
+    await this.waitForLoad();
+  }
+
+  async expectNamespaceSidePanel(namespace: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(namespace);
+  }
+
+  async expectControlPlaneDonutInNamespacePanel(): Promise<void> {
+    await expect(
+      this.page
+        .locator('#target-panel-namespace [data-test="control-plane-donut"], #target-panel-namespace svg')
+        .first()
+    ).toBeVisible();
+  }
+
+  async expectManagedByRemoteControlPlane(primaryCluster: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-cluster');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Managed by remote ControlPlane');
+    await expect(panel).toContainText(primaryCluster);
   }
 
   async expectNodeSidePanel(name: string): Promise<void> {

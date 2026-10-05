@@ -4,7 +4,14 @@ import { gotoConsolePage, gotoListPage } from '../utils/navigation';
 import { selectNamespace, selectOnlyNamespaces } from '../utils/namespace';
 import { waitForLoadingComplete } from '../utils/transition';
 import { linkSelector } from '../utils/linkSelector';
-import { colExists, expectOnlyRow, expectRowCount, getColWithRowText } from '../utils/table';
+import {
+  colExists,
+  expectListSortedByColumn,
+  expectOnlyRow,
+  expectRowCount,
+  getColWithRowText,
+  sortListByColumn
+} from '../utils/table';
 import { collectAmbientL7Warnings } from '../utils/ambientValidation';
 import { editIstioConfigYaml } from '../utils/monacoEditor';
 import {
@@ -195,6 +202,54 @@ export class IstioConfigPage extends BasePage {
 
   async expectColumn(colName: string, visible: boolean): Promise<void> {
     await colExists(this.page, colName, visible);
+  }
+
+  async sortByColumn(column: string, order: 'ascending' | 'descending'): Promise<void> {
+    await sortListByColumn(this.page, column, order);
+  }
+
+  async expectSortedByColumn(column: string, order: 'ascending' | 'descending'): Promise<void> {
+    await expectListSortedByColumn(this.page, column, order);
+  }
+
+  async openConfigByCluster(cluster: string, namespace: string, type: string, name: string): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    await this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`)
+      .locator(linkSelector())
+      .first()
+      .click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectObjectListedOnCluster(type: string, name: string, namespace: string, cluster: string): Promise<void> {
+    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
+    await expect(async () => {
+      await this.refreshList();
+      await expect(row).toBeVisible();
+    }).toPass({ intervals: [5_000], timeout: 60_000 });
+  }
+
+  async expectObjectNotListedOnCluster(type: string, name: string, namespace: string, cluster: string): Promise<void> {
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
+  }
+
+  async saveYamlAndWaitForPatch(name: string): Promise<void> {
+    const patchPromise = this.page.waitForResponse(
+      response =>
+        response.request().method() === 'PATCH' &&
+        response.url().includes(`/AuthorizationPolicy/${name}`) &&
+        response.ok()
+    );
+    await this.page.getByRole('button', { name: 'Save' }).click();
+    await patchPromise;
+  }
+
+  async deleteObjectFromEditor(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Actions' }).click();
+    await this.page.getByRole('menuitem', { name: 'Delete' }).click();
+    await expect(this.page.getByText('Confirm Delete')).toBeVisible();
+    await this.page.getByRole('button', { name: 'Delete' }).click();
+    await waitForLoadingComplete(this.page);
   }
 
   async expectIstioObjectColumnInformation(object: string): Promise<void> {
