@@ -460,12 +460,12 @@ export class WorkloadDetailsPage extends BasePage {
   }
 
   async expectWaypointServicesData(): Promise<void> {
-    await expect(this.getBySel('enrolled-data-title')).toBeVisible();
-    const grid = this.page.getByRole('grid');
-    await expect(grid.locator('td[data-label="Name"]')).toContainText('productpage');
-    await expect(grid.locator('#pfbadge-S')).toBeVisible();
-    await expect(grid.locator('td[data-label="Namespace"]')).toContainText('bookinfo');
-    await expect(grid.locator('td[data-label="Labeled by"]')).toContainText('namespace');
+    await this.expectEnrolledWaypointTable({
+      badgeId: 'pfbadge-S',
+      labeledBy: 'namespace',
+      name: 'productpage',
+      namespace: 'bookinfo'
+    });
   }
 
   async expectWaypointInfoFor(type: string): Promise<void> {
@@ -488,15 +488,22 @@ export class WorkloadDetailsPage extends BasePage {
     labeledBy: string;
     name: string;
     namespace: string;
-    rows: number;
+    rows?: number;
   }): Promise<void> {
-    await expect(this.getBySel('enrolled-data-title')).toBeVisible();
-    await expect(this.page.locator('table tbody tr')).toHaveCount(options.rows);
-    const grid = this.page.getByRole('grid');
-    await expect(grid.locator('td[data-label="Name"]')).toContainText(options.name);
-    await expect(grid.locator(`#${options.badgeId}`)).toBeVisible();
-    await expect(grid.locator('td[data-label="Namespace"]')).toContainText(options.namespace);
-    await expect(grid.locator('td[data-label="Labeled by"]')).toContainText(options.labeledBy);
+    const title = this.getBySel('enrolled-data-title');
+    await expect(title).toBeVisible();
+    const table = title.locator('xpath=following::table[1]');
+    if (options.rows !== undefined) {
+      await expect(table.locator('tbody tr')).toHaveCount(options.rows);
+    }
+    await expect(table.locator('td[data-label="Name"]').filter({ hasText: options.name }).first()).toBeVisible();
+    await expect(table.locator(`#${options.badgeId}`).first()).toBeVisible();
+    await expect(
+      table.locator('td[data-label="Namespace"]').filter({ hasText: options.namespace }).first()
+    ).toBeVisible();
+    await expect(
+      table.locator('td[data-label="Labeled by"]').filter({ hasText: options.labeledBy }).first()
+    ).toBeVisible();
   }
 
   async expectProxyStatus(status: string): Promise<void> {

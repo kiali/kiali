@@ -75,9 +75,16 @@ export async function waitForHealthyWaypoint(
   let lastSummary = '';
 
   while (Date.now() < deadline) {
-    const response = await request.get(
-      kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`)
-    );
+    let response;
+    try {
+      response = await request.get(
+        kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`)
+      );
+    } catch (err) {
+      lastSummary = `request-error=${err instanceof Error ? err.message : String(err)}`;
+      await sleep(5_000);
+      continue;
+    }
     const body = (await response.json().catch(() => ({}))) as { pods?: WorkloadPod[] };
     const pods = Array.isArray(body.pods) ? body.pods : [];
     const proxySummary =
@@ -122,9 +129,15 @@ export async function waitForWorkloadTraces(
       tags: '{}',
       limit: '100'
     });
-    const response = await request.get(
-      kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}/traces?${qs.toString()}`)
-    );
+    let response;
+    try {
+      response = await request.get(
+        kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}/traces?${qs.toString()}`)
+      );
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
     const body = (await response.json().catch(() => ({}))) as { data?: unknown[] };
     const traces = Array.isArray(body.data) ? body.data : [];
     lastCount = traces.length;
@@ -151,7 +164,13 @@ export async function labelNamespaceWithWaypoint(
 
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const response = await request.get(kialiUrl('/api/namespaces'));
+    let response;
+    try {
+      response = await request.get(kialiUrl('/api/namespaces'));
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
     expect(response.ok()).toBeTruthy();
     const namespaces = (await response.json()) as Array<{ name?: string; labels?: Record<string, string> }>;
     const ns = namespaces.find(n => n.name === namespace);
@@ -196,7 +215,13 @@ export async function waitForBookinfoWaypointGraphTraffic(
       rateTcp: 'sent',
       namespaces: namespace
     });
-    const response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
+    let response;
+    try {
+      response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as { elements?: { edges?: GraphEdge[] } };
     const edges = body.elements?.edges ?? [];
@@ -252,7 +277,13 @@ export async function waitForSidecarAmbientGraphTraffic(
       rateTcp: 'sent',
       namespaces: targetNamespace
     });
-    const response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
+    let response;
+    try {
+      response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as { elements?: { edges?: GraphEdge[] } };
     const edges = body.elements?.edges ?? [];
@@ -284,9 +315,14 @@ export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, 
     tags: '{}',
     limit: '20'
   });
-  const response = await request.get(
-    kialiUrl(`/api/namespaces/${namespace}/workloads/bookinfo-gateway-istio/traces?${qs.toString()}`)
-  );
+  let response;
+  try {
+    response = await request.get(
+      kialiUrl(`/api/namespaces/${namespace}/workloads/bookinfo-gateway-istio/traces?${qs.toString()}`)
+    );
+  } catch {
+    return;
+  }
   if (!response.ok()) {
     return;
   }
@@ -335,9 +371,13 @@ export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, 
 
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
-    const ready = await request.get(kialiUrl('/api'));
-    if (ready.ok()) {
-      return;
+    try {
+      const ready = await request.get(kialiUrl('/api'));
+      if (ready.ok()) {
+        return;
+      }
+    } catch {
+      // Rollout can leave MetalLB ingress unreachable for a few seconds.
     }
     await sleep(5_000);
   }

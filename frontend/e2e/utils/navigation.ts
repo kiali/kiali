@@ -23,7 +23,26 @@ export const gotoConsolePage = async (
   options: GotoConsolePageOptions = {}
 ): Promise<void> => {
   const params = new URLSearchParams({ refresh: '0', ...query });
-  await page.goto(kialiUrl(`/console/${pagePath}?${params.toString()}`));
+  const url = kialiUrl(`/console/${pagePath}?${params.toString()}`);
+  const deadline = Date.now() + 90_000;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      await page.goto(url);
+      lastError = undefined;
+      break;
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/ERR_CONNECTION_REFUSED|EHOSTUNREACH|ERR_CONNECTION_RESET|net::ERR_FAILED/.test(message)) {
+        throw err;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2_000));
+    }
+  }
+  if (lastError) {
+    throw lastError;
+  }
   if (options.waitForLoad !== false) {
     await waitForLoadingComplete(page);
   }
