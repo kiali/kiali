@@ -10,6 +10,7 @@ type HealthStatusRibbonProps = {
   datapoints: Datapoint[];
   endTime: number;
   startTime: number;
+  step: number;
 };
 
 const ribbonContainerStyle = kialiStyle({
@@ -92,15 +93,16 @@ const healthStatusI18nKey = (id: HealthStatusId): string => (id === NA.id ? 'n/a
 export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   datapoints,
   endTime,
-  startTime
+  startTime,
+  step
 }: HealthStatusRibbonProps) => {
   const { t } = useKialiTranslation();
   const barRef = React.useRef<HTMLDivElement>(null);
   const [hover, setHover] = React.useState<HoverInfo | null>(null);
 
   const segments = React.useMemo(
-    () => buildHealthStatusSegments(datapoints, startTime, endTime),
-    [datapoints, endTime, startTime]
+    () => buildHealthStatusSegments(datapoints, startTime, endTime, step),
+    [datapoints, endTime, startTime, step]
   );
   const totalDuration = endTime - startTime;
   const today = new Date();

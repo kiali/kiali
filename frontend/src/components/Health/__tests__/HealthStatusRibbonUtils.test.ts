@@ -1,9 +1,11 @@
 import type { Datapoint } from 'types/Metrics';
 import { buildHealthStatusSegments, findHealthStatusSegmentAt } from '../HealthStatusRibbonUtils';
 
+const defaultStep = 100;
+
 describe('buildHealthStatusSegments', () => {
   it('returns a single n/a segment when there are no datapoints', () => {
-    const segments = buildHealthStatusSegments([], 100, 200);
+    const segments = buildHealthStatusSegments([], 100, 200, defaultStep);
 
     expect(segments).toHaveLength(1);
     expect(segments[0]).toMatchObject({
@@ -21,7 +23,7 @@ describe('buildHealthStatusSegments', () => {
       [120, 0]
     ];
 
-    const segments = buildHealthStatusSegments(datapoints, 100, 200);
+    const segments = buildHealthStatusSegments(datapoints, 100, 200, defaultStep);
 
     expect(segments).toHaveLength(1);
     expect(segments[0]).toMatchObject({ startTime: 100, endTime: 200, status: 0, label: 'Healthy' });
@@ -34,7 +36,7 @@ describe('buildHealthStatusSegments', () => {
       [200, 0]
     ];
 
-    const segments = buildHealthStatusSegments(datapoints, 100, 250);
+    const segments = buildHealthStatusSegments(datapoints, 100, 250, defaultStep);
 
     expect(segments).toHaveLength(3);
     expect(segments[0]).toMatchObject({ startTime: 100, endTime: 150, status: 0, label: 'Healthy' });
@@ -45,18 +47,45 @@ describe('buildHealthStatusSegments', () => {
   it('fills a leading gap with an n/a segment', () => {
     const datapoints: Datapoint[] = [[150, 0]];
 
-    const segments = buildHealthStatusSegments(datapoints, 100, 200);
+    const segments = buildHealthStatusSegments(datapoints, 100, 200, 30);
 
-    expect(segments).toHaveLength(2);
+    expect(segments).toHaveLength(3);
     expect(segments[0]).toMatchObject({ startTime: 100, endTime: 150, status: -1, label: 'NA' });
-    expect(segments[1]).toMatchObject({ startTime: 150, endTime: 200, status: 0, label: 'Healthy' });
+    expect(segments[1]).toMatchObject({ startTime: 150, endTime: 180, status: 0, label: 'Healthy' });
+    expect(segments[2]).toMatchObject({ startTime: 180, endTime: 200, status: -1, label: 'NA' });
   });
 
   it('treats unknown status values as n/a', () => {
-    const segments = buildHealthStatusSegments([[100, 99]], 100, 200);
+    const segments = buildHealthStatusSegments([[100, 99]], 100, 200, defaultStep);
 
     expect(segments).toHaveLength(1);
     expect(segments[0]).toMatchObject({ startTime: 100, endTime: 200, status: 99, label: 'NA' });
+  });
+
+  it('bounds each sample to the query step and renders stale gaps as n/a', () => {
+    const segments = buildHealthStatusSegments([[100, 0]], 100, 500, 30);
+
+    expect(segments).toHaveLength(2);
+    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 130, status: 0, label: 'Healthy' });
+    expect(segments[1]).toMatchObject({ startTime: 130, endTime: 500, status: -1, label: 'NA' });
+  });
+
+  it('renders n/a between samples that are farther apart than the step', () => {
+    const segments = buildHealthStatusSegments(
+      [
+        [100, 0],
+        [400, 0]
+      ],
+      100,
+      500,
+      30
+    );
+
+    expect(segments).toHaveLength(4);
+    expect(segments[0]).toMatchObject({ startTime: 100, endTime: 130, status: 0, label: 'Healthy' });
+    expect(segments[1]).toMatchObject({ startTime: 130, endTime: 400, status: -1, label: 'NA' });
+    expect(segments[2]).toMatchObject({ startTime: 400, endTime: 430, status: 0, label: 'Healthy' });
+    expect(segments[3]).toMatchObject({ startTime: 430, endTime: 500, status: -1, label: 'NA' });
   });
 });
 
@@ -68,7 +97,8 @@ describe('findHealthStatusSegmentAt', () => {
         [150, 2]
       ],
       100,
-      200
+      200,
+      defaultStep
     );
 
     expect(findHealthStatusSegmentAt(segments, 125)).toMatchObject({ status: 0, label: 'Healthy' });

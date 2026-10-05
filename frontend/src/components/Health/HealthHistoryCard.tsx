@@ -124,6 +124,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   }
 
   const startTime = endTime > 0 ? endTime - duration : 0;
+  const step = computePrometheusRateParams(duration, 100).step;
 
   return (
     <Card isCompact data-test="health-history-card">
@@ -147,7 +148,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
             <Spinner size="md" />
           </div>
         ) : datapoints.length > 0 ? (
-          <HealthStatusRibbon datapoints={datapoints} startTime={startTime} endTime={endTime} />
+          <HealthStatusRibbon datapoints={datapoints} endTime={endTime} startTime={startTime} step={step} />
         ) : (
           <div className={emptyStateStyle}>{t('No health history available.')}</div>
         )}
