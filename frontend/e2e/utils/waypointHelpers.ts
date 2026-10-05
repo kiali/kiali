@@ -390,7 +390,35 @@ type TraceItem = { processes?: Record<string, TraceProcess>; traceID?: string };
  * If gateway traces include a waypoint.* process name, enable tracing.use_waypoint_name
  * and restart Kiali (same conditional as the Setup scenario).
  */
+const isUseWaypointNameEnabled = (): boolean => {
+  const info = discoverKialiRuntimeInfo();
+  const cm = kubectlExec(
+    `kubectl get configmap ${info.configMapName} -n ${info.namespace} -o jsonpath="{.data.config\\\\.yaml}"`,
+    false
+  );
+  if (/use_waypoint_name:\s*true/.test(cm.stdout)) {
+    return true;
+  }
+  const primaryResource = kubectlExec(
+    `kubectl get deployment/${info.deploymentName} -n ${info.namespace} -o jsonpath="{.metadata.annotations.operator-sdk\\/primary-resource}"`,
+    false
+  ).stdout.trim();
+  if (!primaryResource) {
+    return false;
+  }
+  const [crNamespace, crName] = primaryResource.split('/');
+  const crVal = kubectlExec(
+    `kubectl get kiali ${crName} -n ${crNamespace} -o jsonpath="{.spec.external_services.tracing.use_waypoint_name}"`,
+    false
+  ).stdout.trim();
+  return crVal === 'true';
+};
+
 export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, namespace = 'bookinfo'): Promise<void> {
+  if (isUseWaypointNameEnabled()) {
+    return;
+  }
+
   const nowMicros = Date.now() * 1000;
   const qs = new URLSearchParams({
     startMicros: String(nowMicros - 10 * 60 * 1000 * 1000),

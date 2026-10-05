@@ -550,28 +550,26 @@ export class WorkloadDetailsPage extends BasePage {
     const tabs = this.page.locator('#ztunnel-details');
     await expect(tabs).toBeVisible();
     await tabs.getByText('Services', { exact: true }).click();
-    const grid = this.page.getByRole('grid');
-    await expect(grid.locator('td[data-label="Service VIP"]').first()).toBeVisible();
-    await expect(grid.locator('td[data-label="Waypoint"]').first()).toBeAttached();
-    await expect(grid.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
+    const services = this.page.locator('table[aria-label="Ztunnel services config"]');
+    await expect(services.locator('td[data-label="Service VIP"]').first()).toBeVisible();
+    await expect(services.locator('td[data-label="Waypoint"]').first()).toBeAttached();
+    await expect(services.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
 
     await tabs.getByText('Workloads', { exact: true }).click();
-    await expect(grid.locator('td[data-label="Pod Name"]').first()).toBeVisible();
-    await expect(grid.locator('td[data-label="Node"]').first()).toBeAttached();
-    await expect(grid.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
+    const workloads = this.page.locator('table[aria-label="Ztunnel workloads config"]');
+    await expect(workloads.locator('td[data-label="Pod Name"]').first()).toBeVisible();
+    await expect(workloads.locator('td[data-label="Node"]').first()).toBeAttached();
+    await expect(workloads.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
 
-    await this.page.locator('button#filter_select_type-toggle').click();
-    await this.page
-      .locator('div#filter_select_type button')
-      .filter({ hasText: /^Namespace$/ })
-      .click();
-    const input = this.page.locator('input[placeholder="Filter by Namespace"]');
+    await this.page.getByTestId('filter-type-toggle').click();
+    await this.page.getByTestId('filter-type-select').getByRole('option', { name: 'Namespace', exact: true }).click();
+    const input = this.page.getByTestId('filter-type-input').locator('input');
+    await input.click();
     await input.fill(namespace);
-    await input.press('Enter');
-    await this.page.locator(`li[label="${namespace}"]`).getByRole('button').click();
+    await this.page.getByTestId('filter-value-select').getByRole('option', { name: namespace, exact: true }).click();
     await waitForLoadingComplete(this.page);
 
-    const cells = this.page.locator('td[data-label="Namespace"]');
+    const cells = workloads.locator('td[data-label="Namespace"]');
     const count = await cells.count();
     expect(count).toBeGreaterThan(0);
     for (let i = 0; i < count; i++) {
