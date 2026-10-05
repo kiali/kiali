@@ -28,7 +28,7 @@ test.describe('Service details multi-cluster', () => {
     await serviceDetailsPage.open('bookinfo', 'ratings', { clusterName: WEST });
     await expect(serviceDetailsPage.getBySel('service-resources-card')).toBeVisible();
     await expectLinksContainCluster(page, WEST);
-    await expectClusterBadge(page, WEST);
+    await expectClusterBadge(page, WEST, 'Service');
   });
 
   test('See traffic with cluster columns for west ratings', multiClusterOnly, async ({ serviceDetailsPage, page }) => {
@@ -71,7 +71,7 @@ test.describe('Service details multi-cluster', () => {
     async ({ serviceDetailsPage, page }) => {
       await serviceDetailsPage.open('bookinfo', 'ratings', { clusterName: EAST });
       await expectLinksContainCluster(page, EAST);
-      await expectClusterBadge(page, EAST);
+      await expectClusterBadge(page, EAST, 'Service');
     }
   );
 

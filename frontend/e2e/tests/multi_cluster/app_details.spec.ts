@@ -29,7 +29,7 @@ test.describe('App details multi-cluster', () => {
     await appDetailsPage.openApp('bookinfo', 'reviews', { clusterName: WEST });
     await expect(appDetailsPage.getBySel('app-resources-card')).toContainText('reviews-v1');
     await expectLinksContainCluster(page, WEST);
-    await expectClusterBadge(page, WEST);
+    await expectClusterBadge(page, WEST, 'App');
   });
 
   test('See traffic with cluster columns for west reviews', multiClusterOnly, async ({ appDetailsPage, page }) => {
@@ -75,7 +75,7 @@ test.describe('App details multi-cluster', () => {
   test('See details for east ratings app not deployed remotely', multiClusterOnly, async ({ appDetailsPage, page }) => {
     await appDetailsPage.openApp('bookinfo', 'ratings', { clusterName: EAST });
     await expectLinksContainCluster(page, EAST);
-    await expectClusterBadge(page, EAST);
+    await expectClusterBadge(page, EAST, 'App');
   });
 
   test('Empty traffic for east ratings', multiClusterOnly, async ({ appDetailsPage, page }) => {

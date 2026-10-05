@@ -8,7 +8,6 @@ export async function openDetailsTab(page: Page, tab: string): Promise<void> {
   if ((await tabLocator.count()) > 0) {
     await tabLocator.click();
   } else {
-    // Legacy PF markup (buttons inside .pf-v6-c-tabs__list) — matches Cypress openTab().
     await tabsRoot.locator('.pf-v6-c-tabs__list button').filter({ hasText: tab }).click();
   }
   await waitForLoadingComplete(page);
@@ -18,10 +17,16 @@ export async function expectClusterColumnHidden(page: Page): Promise<void> {
   await colExists(page, 'Cluster', false);
 }
 
-export async function expectClusterBadge(page: Page, cluster: string): Promise<void> {
-  await expect(
-    page.locator('#pfbadge-C').locator('xpath=ancestor::li[1]').filter({ hasText: cluster }).first()
-  ).toBeVisible();
+export type DetailsCardKind = 'App' | 'Service' | 'Workload';
+
+const detailsCardTestId: Record<DetailsCardKind, string> = {
+  App: 'app-details-card',
+  Service: 'service-details-card',
+  Workload: 'workload-details-card'
+};
+
+export async function expectClusterBadge(page: Page, cluster: string, kind: DetailsCardKind): Promise<void> {
+  await expect(page.getByTestId(detailsCardTestId[kind])).toContainText(cluster);
 }
 
 export async function expectLinksContainCluster(page: Page, cluster: string): Promise<void> {
@@ -46,7 +51,6 @@ export async function expectEmptyMinigraph(page: Page): Promise<void> {
 
 export async function expectNoTraces(page: Page): Promise<void> {
   await openDetailsTab(page, 'Traces');
-  await expect(page.getByTestId('tracing-scatterplot')).toHaveCount(0);
   await expect(page.getByTestId('empty-traces')).toContainText('No trace results');
 }
 

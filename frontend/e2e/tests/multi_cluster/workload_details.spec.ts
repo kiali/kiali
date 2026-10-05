@@ -27,7 +27,7 @@ test.describe('Workload details multi-cluster', () => {
     await workloadDetailsPage.open('bookinfo', 'reviews-v2', { clusterName: WEST });
     await expect(workloadDetailsPage.getBySel('workload-resources-card')).toBeVisible();
     await expectLinksContainCluster(page, WEST);
-    await expectClusterBadge(page, WEST);
+    await expectClusterBadge(page, WEST, 'Workload');
   });
 
   test(
@@ -110,7 +110,7 @@ test.describe('Workload details multi-cluster', () => {
     async ({ workloadDetailsPage, page }) => {
       await workloadDetailsPage.open('bookinfo', 'ratings-v1', { clusterName: EAST });
       await expectLinksContainCluster(page, EAST);
-      await expectClusterBadge(page, EAST);
+      await expectClusterBadge(page, EAST, 'Workload');
     }
   );
 

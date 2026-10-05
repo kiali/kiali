@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
-import { readMiniGraphTopology } from './graphTopology';
+import { findMiniGraphNode, nodeInfo, readMiniGraphTopology } from './graphTopology';
 import { kialiUrl } from './kialiUrl';
 import { kubectlExec } from './kubectl';
 
@@ -184,7 +184,12 @@ export const ensureTrafficRoutingOnCluster = async (
 export const expectMiniGraphHasClusterNode = async (page: Page, type: string, cluster: string): Promise<void> => {
   await expect(async () => {
     const topology = await readMiniGraphTopology(page);
-    const matched = topology.nodes.filter(n => n.data.cluster === cluster && n.data.nodeType === type);
+    const graphType = topology.graphType ?? 'versionedApp';
+    const { isBox, nodeType } = nodeInfo(type, graphType);
+    const matched = topology.nodes.filter(n => {
+      const data = n.data as { cluster?: string; isBox?: string; nodeType?: string };
+      return data.cluster === cluster && data.nodeType === nodeType && data.isBox === isBox;
+    });
     expect(matched.length).toBeGreaterThan(0);
   }).toPass({ intervals: [3_000], timeout: 60_000 });
 };
@@ -198,18 +203,7 @@ export const clickMiniGraphNode = async (
   let nodeId = '';
   await expect(async () => {
     const topology = await readMiniGraphTopology(page);
-    const node = topology.nodes.find(n => {
-      if (n.data.cluster !== cluster || n.data.namespace !== 'bookinfo') {
-        return false;
-      }
-      if (type === 'app') {
-        return n.data.nodeType === 'app' && n.data.app === name;
-      }
-      if (type === 'service') {
-        return n.data.nodeType === 'service' && n.data.service === name;
-      }
-      return n.data.nodeType === 'workload' && n.data.workload === name;
-    });
+    const node = findMiniGraphNode(topology, name, type, cluster);
     expect(node).toBeTruthy();
     nodeId = node!.id;
   }).toPass({ intervals: [3_000], timeout: 60_000 });
