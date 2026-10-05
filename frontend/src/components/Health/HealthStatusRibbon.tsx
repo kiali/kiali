@@ -4,7 +4,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { NA, type HealthStatusId } from 'types/Health';
 import type { Datapoint } from 'types/Metrics';
-import { buildHealthStatusSegments, findHealthStatusSegmentAt } from './HealthStatusRibbonUtils';
+import { buildHealthStatusSegments, findHealthStatusSegmentAt, formatAxisTimeLabel } from './HealthStatusRibbonUtils';
 
 type HealthStatusRibbonProps = {
   datapoints: Datapoint[];
@@ -154,11 +154,11 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     setHover(null);
   };
 
-  const timeLabels: string[] = [];
+  const timeLabels: { label: string; ts: number }[] = [];
   const numLabels = 5;
   for (let i = 0; i < numLabels; i++) {
     const ts = startTime + (totalDuration * i) / (numLabels - 1);
-    timeLabels.push(formatTime(ts));
+    timeLabels.push({ label: formatAxisTimeLabel(ts, totalDuration, today), ts });
   }
 
   const barWidth = barRef.current?.offsetWidth ?? 0;
@@ -207,8 +207,8 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
       </div>
 
       <div className={timeAxisStyle}>
-        {timeLabels.map(label => (
-          <span key={label}>{label}</span>
+        {timeLabels.map(({ label, ts }) => (
+          <span key={ts}>{label}</span>
         ))}
       </div>
     </div>

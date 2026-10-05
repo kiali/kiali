@@ -1,5 +1,5 @@
 import type { Datapoint } from 'types/Metrics';
-import { buildHealthStatusSegments, findHealthStatusSegmentAt } from '../HealthStatusRibbonUtils';
+import { buildHealthStatusSegments, findHealthStatusSegmentAt, formatAxisTimeLabel } from '../HealthStatusRibbonUtils';
 
 const defaultStep = 100;
 
@@ -103,5 +103,35 @@ describe('findHealthStatusSegmentAt', () => {
 
     expect(findHealthStatusSegmentAt(segments, 125)).toMatchObject({ status: 0, label: 'Healthy' });
     expect(findHealthStatusSegmentAt(segments, 175)).toMatchObject({ status: 2, label: 'Degraded' });
+  });
+});
+
+describe('formatAxisTimeLabel', () => {
+  const today = new Date(2026, 9, 5, 12, 0, 0);
+  const oneDaySeconds = 86400;
+  const sevenDaySeconds = 604800;
+
+  it('shows time only for ranges up to one day', () => {
+    const ts = Math.floor(new Date(2026, 9, 5, 14, 30).getTime() / 1000);
+    const label = formatAxisTimeLabel(ts, oneDaySeconds, today);
+
+    expect(label).toMatch(/14:30|2:30/);
+    expect(label).not.toMatch(/Oct|10/);
+  });
+
+  it('shows date for ranges longer than one day', () => {
+    const ts = Math.floor(new Date(2026, 9, 1, 14, 30).getTime() / 1000);
+    const label = formatAxisTimeLabel(ts, sevenDaySeconds, today);
+
+    expect(label).toMatch(/Oct/);
+    expect(label).toMatch(/1/);
+    expect(label).not.toMatch(/:/);
+  });
+
+  it('includes year when the label is outside the current year', () => {
+    const ts = Math.floor(new Date(2025, 11, 28, 14, 30).getTime() / 1000);
+    const label = formatAxisTimeLabel(ts, sevenDaySeconds, today);
+
+    expect(label).toMatch(/2025/);
   });
 });
