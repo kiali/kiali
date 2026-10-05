@@ -247,6 +247,89 @@ export async function prepareBookinfoWaypoint(request: APIRequestContext): Promi
   await waitForBookinfoWaypointGraphTraffic(request, 'ztunnel', 'bookinfo');
 }
 
+const SIDECAR_AMBIENT_SIDECAR_NS = 'test-sidecar';
+const SIDECAR_AMBIENT_AMBIENT_NS = 'test-ambient';
+
+type NamespaceListItem = {
+  labels?: Record<string, string>;
+  name?: string;
+};
+
+/**
+ * Restore install-sidecars-ambient.sh labels via kubectl (does not depend on Kiali).
+ * The "Add to Ambient" UI test mutates test-sidecar; serial retries then see KIA1315/KIA1316
+ * (sidecar pods in an ambient-labeled namespace) unless labels are put back.
+ */
+export function restoreSidecarAmbientDemoNamespaces(): void {
+  kubectlExec(`kubectl label namespace ${SIDECAR_AMBIENT_SIDECAR_NS} istio.io/dataplane-mode-`, false);
+  kubectlExec(`kubectl label namespace ${SIDECAR_AMBIENT_SIDECAR_NS} istio-injection=enabled --overwrite`, true);
+  kubectlExec(`kubectl label namespace ${SIDECAR_AMBIENT_AMBIENT_NS} istio-injection-`, false);
+  kubectlExec(
+    `kubectl label namespace ${SIDECAR_AMBIENT_AMBIENT_NS} istio.io/dataplane-mode=ambient --overwrite`,
+    true
+  );
+}
+
+const namespaceMatchesSidecarAmbientDemo = (namespaces: NamespaceListItem[]): boolean => {
+  const sidecar = namespaces.find(n => n.name === SIDECAR_AMBIENT_SIDECAR_NS);
+  const ambient = namespaces.find(n => n.name === SIDECAR_AMBIENT_AMBIENT_NS);
+  const sidecarLabels = sidecar?.labels ?? {};
+  const ambientLabels = ambient?.labels ?? {};
+  return (
+    sidecarLabels['istio-injection'] === 'enabled' &&
+    sidecarLabels['istio.io/dataplane-mode'] !== 'ambient' &&
+    ambientLabels['istio.io/dataplane-mode'] === 'ambient'
+  );
+};
+
+/**
+ * Ensure demo namespaces match install-sidecars-ambient.sh, then wait until Kiali reflects that.
+ * Restarts test-sidecar curl-client when ambient pollution was present so pods leave dual mode.
+ */
+export async function ensureSidecarAmbientDemoNamespaces(
+  request: APIRequestContext,
+  timeoutMs = 180_000
+): Promise<void> {
+  const before = kubectlExec(
+    `kubectl get namespace ${SIDECAR_AMBIENT_SIDECAR_NS} -o jsonpath='{.metadata.labels.istio\\.io/dataplane-mode}'`,
+    false
+  );
+  const hadAmbientOnSidecar = before.stdout.trim() === 'ambient';
+
+  restoreSidecarAmbientDemoNamespaces();
+
+  if (hadAmbientOnSidecar) {
+    kubectlExec(`kubectl rollout restart deployment/curl-client -n ${SIDECAR_AMBIENT_SIDECAR_NS}`, true);
+    kubectlExec(`kubectl rollout status deployment/curl-client -n ${SIDECAR_AMBIENT_SIDECAR_NS} --timeout=120s`, true);
+  }
+
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    let response;
+    try {
+      response = await request.get(kialiUrl('/api/namespaces'));
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
+    if (!response.ok()) {
+      await sleep(5_000);
+      continue;
+    }
+    const namespaces = (await response.json()) as NamespaceListItem[];
+    if (namespaceMatchesSidecarAmbientDemo(namespaces)) {
+      return;
+    }
+    await sleep(5_000);
+  }
+
+  throw new Error(
+    `Sidecar/ambient demo namespaces not restored in Kiali within ${timeoutMs}ms ` +
+      `(expected ${SIDECAR_AMBIENT_SIDECAR_NS}: istio-injection=enabled, ` +
+      `${SIDECAR_AMBIENT_AMBIENT_NS}: istio.io/dataplane-mode=ambient)`
+  );
+}
+
 /**
  * Wait until test-ambient + test-sidecar graph has enough HTTP and total edges
  * (sidecar↔ambient traffic scenarios).

@@ -1,5 +1,10 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { prepareBookinfoWaypoint, waitForSidecarAmbientGraphTraffic } from '../../utils/waypointHelpers';
+import {
+  ensureSidecarAmbientDemoNamespaces,
+  prepareBookinfoWaypoint,
+  restoreSidecarAmbientDemoNamespaces,
+  waitForSidecarAmbientGraphTraffic
+} from '../../utils/waypointHelpers';
 import { waypointOnly } from '../../utils/suite-tags';
 
 test.describe('Waypoint sidecar ambient', () => {
@@ -7,8 +12,15 @@ test.describe('Waypoint sidecar ambient', () => {
 
   test.beforeAll(async ({ request }) => {
     test.setTimeout(900_000);
+    // Serial retries re-run this group after "Add to Ambient" may have left ambient labels on
+    // test-sidecar; restore install defaults before read-only graph/config assertions.
+    await ensureSidecarAmbientDemoNamespaces(request);
     await prepareBookinfoWaypoint(request);
     await waitForSidecarAmbientGraphTraffic(request);
+  });
+
+  test.afterAll(() => {
+    restoreSidecarAmbientDemoNamespaces();
   });
 
   test('Sidecar Ambient traffic graph', waypointOnly, async ({ graphPage }) => {
@@ -48,14 +60,19 @@ test.describe('Waypoint sidecar ambient', () => {
 
   test('Add to Ambient in the test-sidecar namespace', waypointOnly, async ({ namespaceDetailPage }) => {
     test.setTimeout(240_000);
-    await namespaceDetailPage.open('test-sidecar');
-    await namespaceDetailPage.expectActionAbsent('Add to Ambient');
-    await namespaceDetailPage.removeNamespaceInjection();
-    await namespaceDetailPage.expectNamespaceLabel('istio-injection');
-    await namespaceDetailPage.clickAmbientAction('add');
-    await namespaceDetailPage.expectNamespaceLabel('istio.io/dataplane-mode', 'ambient');
-    await namespaceDetailPage.clickAmbientAction('remove');
-    await namespaceDetailPage.enableNamespaceInjection();
-    await namespaceDetailPage.expectNamespaceLabel('istio-injection', 'enabled');
+    try {
+      await namespaceDetailPage.open('test-sidecar');
+      await namespaceDetailPage.expectActionAbsent('Add to Ambient');
+      await namespaceDetailPage.removeNamespaceInjection();
+      await namespaceDetailPage.expectNamespaceLabel('istio-injection');
+      await namespaceDetailPage.clickAmbientAction('add');
+      await namespaceDetailPage.expectNamespaceLabel('istio.io/dataplane-mode', 'ambient');
+      await namespaceDetailPage.clickAmbientAction('remove');
+      await namespaceDetailPage.enableNamespaceInjection();
+      await namespaceDetailPage.expectNamespaceLabel('istio-injection', 'enabled');
+    } finally {
+      // kubectl restore even when Kiali LB returns ECONNREFUSED mid-mutation
+      restoreSidecarAmbientDemoNamespaces();
+    }
   });
 });
