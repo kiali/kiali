@@ -18,6 +18,25 @@ const statusMap: Record<number, { color: string; label: HealthStatusId }> = {
 
 const naStatus = { color: NA.color, label: NA.id as HealthStatusId };
 
+const ONE_DAY_SECONDS = 86400;
+
+export const formatAxisTimeLabel = (ts: number, totalDuration: number, today: Date): string => {
+  const d = new Date(ts * 1000);
+
+  if (totalDuration <= ONE_DAY_SECONDS) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  const options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short'
+  };
+  if (d.getFullYear() !== today.getFullYear()) {
+    options.year = 'numeric';
+  }
+  return d.toLocaleDateString([], options);
+};
+
 export const findHealthStatusSegmentAt = (
   segments: HealthStatusRibbonSegment[],
   timestamp: number
