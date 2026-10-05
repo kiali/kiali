@@ -11,6 +11,7 @@ import { humanDurations, serverConfig } from '../../config/ServerConfig';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
+import { useRefreshInterval } from 'hooks/refresh';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { Datapoint } from 'types/Metrics';
@@ -48,6 +49,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   name,
   namespace
 }: HealthHistoryCardProps) => {
+  const { lastRefreshAt } = useRefreshInterval();
   const { t } = useKialiTranslation();
   const durationOptions = React.useMemo((): Record<string, string> => {
     const allDurations = humanDurations(serverConfig, t('Last'));
@@ -117,7 +119,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     return () => {
       active = false;
     };
-  }, [cluster, duration, healthType, name, namespace, t]);
+  }, [cluster, duration, healthType, lastRefreshAt, name, namespace, t]);
 
   if (!isPrometheusAvailable()) {
     return null;
