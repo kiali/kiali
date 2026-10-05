@@ -82,9 +82,10 @@ test.describe('Waypoint (bookinfo)', () => {
 
   test('Ztunnel workload details are valid', waypointOnly, async ({ request, workloadDetailsPage }) => {
     test.setTimeout(180_000);
-    await waitForWorkloadHealthStatus(request, 'istio-system', 'ztunnel', 'Healthy');
-    await workloadDetailsPage.open('istio-system', 'ztunnel');
-    await workloadDetailsPage.expectMissingSidecarBadge(false, 'istio-system', 'ztunnel');
+    // Sail ambient installs the ztunnel DaemonSet in the `ztunnel` namespace (not istio-system).
+    await waitForWorkloadHealthStatus(request, 'ztunnel', 'ztunnel', 'Healthy');
+    await workloadDetailsPage.open('ztunnel', 'ztunnel');
+    await workloadDetailsPage.expectMissingSidecarBadge(false, 'ztunnel', 'ztunnel');
     await workloadDetailsPage.expectProxyStatus('healthy');
     await workloadDetailsPage.expectZtunnelServicesTable();
     await workloadDetailsPage.expectZtunnelTabForNamespace('bookinfo');
