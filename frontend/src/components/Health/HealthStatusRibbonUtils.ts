@@ -33,7 +33,8 @@ export const findHealthStatusSegmentAt = (
 export const buildHealthStatusSegments = (
   datapoints: Datapoint[],
   startTime: number,
-  endTime: number
+  endTime: number,
+  step: number
 ): HealthStatusRibbonSegment[] => {
   if (datapoints.length === 0) {
     return [{ color: naStatus.color, endTime, label: naStatus.label, startTime, status: -1 }];
@@ -44,47 +45,57 @@ export const buildHealthStatusSegments = (
 
   const statusInfo = (val: number): { color: string; label: HealthStatusId } => statusMap[val] ?? naStatus;
 
+  const pushNaSegment = (segmentStart: number, segmentEnd: number): void => {
+    if (segmentEnd <= segmentStart) {
+      return;
+    }
+
+    const last = segments.length > 0 ? segments[segments.length - 1] : null;
+    if (last && last.status === -1) {
+      last.endTime = segmentEnd;
+    } else {
+      segments.push({
+        color: naStatus.color,
+        endTime: segmentEnd,
+        label: naStatus.label,
+        startTime: segmentStart,
+        status: -1
+      });
+    }
+  };
+
   let prevEnd = startTime;
 
   for (let i = 0; i < sorted.length; i++) {
     const ts = sorted[i][0];
     const val = Math.round(sorted[i][1]);
     const info = statusInfo(val);
+    const boundedEnd = Math.min(ts + step, endTime);
 
-    const nextTs = i + 1 < sorted.length ? sorted[i + 1][0] : endTime;
-    const segEnd = Math.min(nextTs, endTime);
+    if (ts > prevEnd + 1) {
+      pushNaSegment(prevEnd, ts);
+    }
 
-    if (ts - prevEnd > 1) {
-      const last = segments.length > 0 ? segments[segments.length - 1] : null;
-      if (last && last.status === -1) {
+    const last = segments.length > 0 ? segments[segments.length - 1] : null;
+    if (last && last.status === val && last.endTime >= ts) {
+      last.endTime = Math.max(last.endTime, boundedEnd);
+    } else {
+      if (last && last.endTime > ts) {
         last.endTime = ts;
-      } else {
-        segments.push({ color: naStatus.color, endTime: ts, label: naStatus.label, startTime: prevEnd, status: -1 });
       }
+      segments.push({ color: info.color, endTime: boundedEnd, label: info.label, startTime: ts, status: val });
     }
 
-    const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === val) {
-      last.endTime = segEnd;
-    } else {
-      segments.push({ color: info.color, endTime: segEnd, label: info.label, startTime: ts, status: val });
-    }
+    prevEnd = boundedEnd;
 
-    prevEnd = segEnd;
-  }
-
-  if (prevEnd < endTime) {
-    const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === -1) {
-      last.endTime = endTime;
-    } else {
-      segments.push({
-        color: naStatus.color,
-        endTime,
-        label: naStatus.label,
-        startTime: prevEnd,
-        status: -1
-      });
+    const nextTs = i + 1 < sorted.length ? sorted[i + 1][0] : undefined;
+    if (nextTs !== undefined) {
+      if (nextTs > prevEnd + 1) {
+        pushNaSegment(prevEnd, nextTs);
+        prevEnd = nextTs;
+      }
+    } else if (prevEnd < endTime) {
+      pushNaSegment(prevEnd, endTime);
     }
   }
 

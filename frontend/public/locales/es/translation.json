@@ -618,6 +618,7 @@
   "Labels list": "Lista de etiquetas",
   "Labels must have non-empty keys": "Las etiquetas deben tener claves no vacías",
   "Language": "Idioma",
+  "Last": "Last",
   "Last {{duration}}_one": "Último {{duration}}",
   "Last {{duration}}_many": "Últimos {{duration}}",
   "Last {{duration}}_other": "Últimos {{duration}}",
