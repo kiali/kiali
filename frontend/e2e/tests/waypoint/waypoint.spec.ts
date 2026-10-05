@@ -5,11 +5,11 @@ import { linkSelector } from '../../utils/linkSelector';
 import {
   enableUseWaypointNameIfNeeded,
   getFirstWorkloadTraceId,
-  prepareBookinfoWaypoint
+  prepareBookinfoWaypoint,
+  waitForZtunnelWorkloadReady
 } from '../../utils/waypointHelpers';
 import { expectTraceDetails, expectTraceScatterplot, openTracesTab, selectTraceById } from '../../utils/waypointTraces';
 import { openDetailsTab } from '../../utils/detailsPage';
-import { waitForWorkloadHealthStatus } from '../../utils/health';
 import { waypointOnly } from '../../utils/suite-tags';
 
 test.describe('Waypoint (bookinfo)', () => {
@@ -82,11 +82,10 @@ test.describe('Waypoint (bookinfo)', () => {
 
   test('Ztunnel workload details are valid', waypointOnly, async ({ request, workloadDetailsPage }) => {
     test.setTimeout(180_000);
-    // Sail ambient installs the ztunnel DaemonSet in the `ztunnel` namespace (not istio-system).
-    await waitForWorkloadHealthStatus(request, 'ztunnel', 'ztunnel', 'Healthy');
-    await workloadDetailsPage.open('ztunnel', 'ztunnel');
-    await workloadDetailsPage.expectMissingSidecarBadge(false, 'ztunnel', 'ztunnel');
-    await workloadDetailsPage.expectProxyStatus('healthy');
+    const ztunnel = await waitForZtunnelWorkloadReady(request);
+    await workloadDetailsPage.open(ztunnel.namespace, ztunnel.name);
+    await workloadDetailsPage.expectMissingSidecarBadge(false, ztunnel.namespace, ztunnel.name);
+    await workloadDetailsPage.expectProxyStatusIcon('healthy');
     await workloadDetailsPage.expectZtunnelServicesTable();
     await workloadDetailsPage.expectZtunnelTabForNamespace('bookinfo');
   });

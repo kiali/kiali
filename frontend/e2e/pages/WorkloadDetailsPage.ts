@@ -520,6 +520,11 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(detailsStatus.locator(`.icon-${status.toLowerCase()}`)).toBeVisible();
   }
 
+  async expectProxyStatusIcon(status: string): Promise<void> {
+    const card = this.getBySel('workload-details-card');
+    await expect(card.locator(`span[class*="icon-${status.toLowerCase()}"]`)).toBeVisible();
+  }
+
   async expectNoConfigIssues(): Promise<void> {
     const card = this.getBySel('workload-details-card');
     await expect(card).toBeVisible();
