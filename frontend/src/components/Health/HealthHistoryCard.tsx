@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@patternfly/react-core';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
+import { PFColors } from 'components/Pf/PfColors';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
 import { isHealthHistoryAvailable } from '../../config';
 import { humanDurations, serverConfig } from '../../config/ServerConfig';
@@ -62,7 +63,7 @@ const cardHeaderStyle = kialiStyle({
 });
 
 const emptyStateStyle = kialiStyle({
-  color: 'var(--pf-t--color--gray--50)',
+  color: PFColors.Color200,
   fontSize: '0.85rem',
   padding: '1rem 0',
   textAlign: 'center'

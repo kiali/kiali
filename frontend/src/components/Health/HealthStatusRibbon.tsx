@@ -21,8 +21,6 @@ const ribbonContainerStyle = kialiStyle({
 });
 
 const ribbonBarWrapperStyle = kialiStyle({
-  overflow: 'hidden',
-  paddingTop: '1.75rem',
   position: 'relative',
   width: '100%'
 });
@@ -35,8 +33,9 @@ const hoverLabelStyle = kialiStyle({
   left: 0,
   padding: '0.125rem 0.375rem',
   pointerEvents: 'none',
+  marginTop: '0.25rem',
   position: 'absolute',
-  top: 0,
+  top: '100%',
   transform: 'translateX(-50%)',
   whiteSpace: 'nowrap',
   zIndex: 1
@@ -58,6 +57,12 @@ const ribbonBarStyle = kialiStyle({
   height: '0.625rem',
   overflow: 'hidden',
   width: '100%'
+});
+
+const ribbonSegmentStyle = kialiStyle({
+  flexGrow: 0,
+  flexShrink: 0,
+  minWidth: '2px'
 });
 
 const timeAxisStyle = kialiStyle({
@@ -192,13 +197,11 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
             return (
               <div
                 key={`${seg.startTime}-${seg.endTime}-${seg.status}`}
+                className={ribbonSegmentStyle}
                 data-test={`health-ribbon-segment-${idx}`}
                 style={{
                   backgroundColor: seg.color,
-                  flexBasis: `${width}%`,
-                  flexGrow: 0,
-                  flexShrink: 0,
-                  minWidth: '2px'
+                  flexBasis: `${width}%`
                 }}
               />
             );
