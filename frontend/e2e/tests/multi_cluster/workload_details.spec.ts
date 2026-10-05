@@ -64,8 +64,8 @@ test.describe('Workload details multi-cluster', () => {
     await filterSpansByWorkload(page, 'details-v1');
   });
 
-  test('No traces for west reviews-v3', multiClusterOnly, async ({ workloadDetailsPage, page }) => {
-    await workloadDetailsPage.open('bookinfo', 'reviews-v3', { clusterName: WEST });
+  test('No traces for west details-v1', multiClusterOnly, async ({ workloadDetailsPage, page }) => {
+    await workloadDetailsPage.open('bookinfo', 'details-v1', { clusterName: WEST });
     await expectNoTraces(page);
   });
 
