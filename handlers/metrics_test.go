@@ -1165,3 +1165,27 @@ func TestHealthStatusHistoryRejectsUnknownParam(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Contains(t, string(actual), "unsupported query parameter 'filters[]'")
 }
+
+func TestHealthStatusHistoryRejectsZeroStep(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has step=0")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("step", "0")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "query parameter 'step' must be positive")
+}
