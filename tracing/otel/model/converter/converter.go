@@ -158,15 +158,18 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 func getDuration(end string, start string) (uint64, error) {
 	endInt, err := strconv.ParseUint(end, 10, 64)
 	if err != nil {
-		log.Errorf("Error converting end date: %s", err.Error())
 		return 0, err
 	}
 	startInt, err := strconv.ParseUint(start, 10, 64)
 	if err != nil {
-		log.Errorf("Error converting start date: %s", err.Error())
 		return 0, err
 	}
-	// nano to micro
+	// A span whose end precedes its start must not wrap through uint64
+	// (~584 years); treat it as zero-length so one bad emitter cannot
+	// flatten the whole trace view (#10372).
+	if endInt < startInt {
+		return 0, nil
+	}
 	return (endInt - startInt) / 1000, nil
 }
 

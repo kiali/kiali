@@ -75,3 +75,13 @@ func getAttributes() []otelModels.Attribute {
 
 	return attbs
 }
+
+func TestGetDuration_InvertedSpanDoesNotWrap(t *testing.T) {
+	got, err := getDuration("1000", "2000")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != 0 {
+		t.Fatalf("getDuration(end<start) = %d, want 0", got)
+	}
+}
