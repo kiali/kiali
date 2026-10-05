@@ -507,7 +507,17 @@ export class WorkloadDetailsPage extends BasePage {
   }
 
   async expectProxyStatus(status: string): Promise<void> {
-    await expect(this.getBySel('workload-details-card').locator(`span[class*="icon-${status}"]`)).toBeVisible();
+    const statusLabels: Record<string, string> = {
+      degraded: 'Degraded',
+      failure: 'Failure',
+      healthy: 'Healthy',
+      info: 'Info',
+      na: 'n/a'
+    };
+    const label = statusLabels[status.toLowerCase()] ?? status;
+    const detailsStatus = this.getBySel('details-status');
+    await expect(detailsStatus).toContainText(label);
+    await expect(detailsStatus.locator(`.icon-${status.toLowerCase()}`)).toBeVisible();
   }
 
   async expectNoConfigIssues(): Promise<void> {

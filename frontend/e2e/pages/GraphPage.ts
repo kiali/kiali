@@ -86,22 +86,11 @@ export class GraphPage extends BasePage {
   }
 
   async graphNamespaces(namespaces: string, refresh = '0', duration?: string): Promise<void> {
-    const params = new URLSearchParams({ refresh, namespaces });
+    const query: Record<string, string> = { refresh, namespaces };
     if (duration) {
-      params.set('duration', duration);
+      query.duration = duration;
     }
-    const graphResponse =
-      namespaces !== ''
-        ? this.page.waitForResponse(
-            response => response.url().includes('/api/namespaces/graph') && response.request().method() === 'GET'
-          )
-        : null;
-
-    await this.page.goto(kialiUrl(`/console/graph/namespaces?${params.toString()}`));
-    if (graphResponse) {
-      await graphResponse;
-    }
-    await waitForLoadingComplete(this.page);
+    await gotoConsolePage(this.page, 'graph/namespaces', query);
   }
 
   async expectGraphLoaded(): Promise<void> {

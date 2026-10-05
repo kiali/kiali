@@ -9,6 +9,7 @@ import {
 } from '../../utils/waypointHelpers';
 import { expectTraceDetails, expectTraceScatterplot, openTracesTab, selectTraceById } from '../../utils/waypointTraces';
 import { openDetailsTab } from '../../utils/detailsPage';
+import { waitForWorkloadHealthStatus } from '../../utils/health';
 import { waypointOnly } from '../../utils/suite-tags';
 
 test.describe('Waypoint (bookinfo)', () => {
@@ -79,8 +80,9 @@ test.describe('Waypoint (bookinfo)', () => {
     await workloadDetailsPage.expectWaypointInfoFor('service');
   });
 
-  test('Ztunnel workload details are valid', waypointOnly, async ({ workloadDetailsPage }) => {
+  test('Ztunnel workload details are valid', waypointOnly, async ({ request, workloadDetailsPage }) => {
     test.setTimeout(180_000);
+    await waitForWorkloadHealthStatus(request, 'istio-system', 'ztunnel', 'Healthy');
     await workloadDetailsPage.open('istio-system', 'ztunnel');
     await workloadDetailsPage.expectMissingSidecarBadge(false, 'istio-system', 'ztunnel');
     await workloadDetailsPage.expectProxyStatus('healthy');
