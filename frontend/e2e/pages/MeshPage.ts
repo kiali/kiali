@@ -5,11 +5,25 @@ import { kialiUrl } from '../utils/kialiUrl';
 import { selectClusterMeshNode, selectMeshNodeByLabel, selectTracingMeshNode } from '../utils/meshTopology';
 import { waitForLoadingComplete } from '../utils/transition';
 
+type IstiodMeshConfig = {
+  config?: {
+    standardConfig?: {
+      configMap?: {
+        mesh?: {
+          defaultConfig?: { meshId?: string };
+          trustDomain?: string;
+        };
+      };
+    };
+  };
+};
+
 type MeshGraphNode = {
   data?: {
     cluster?: string;
     healthData?: string;
     id?: string;
+    infraData?: IstiodMeshConfig;
     infraName?: string;
     infraType?: string;
   };
@@ -232,31 +246,91 @@ export class MeshPage extends BasePage {
   }
 
   async expectMeshSidePanel(): Promise<void> {
-    await expect(this.page.locator('#target-panel-mesh')).toBeVisible();
+    const panel = this.page.locator('#target-panel-mesh');
+    await expect(panel).toBeVisible();
     const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
     const meshNames = body.meshNames as string[];
     expect(meshNames?.length).toBeGreaterThan(0);
+
+    const tabs = this.getBySel('mesh-tabs');
+    if ((await tabs.count()) > 0) {
+      await tabs.getByRole('tab', { name: /Meshes/ }).click();
+    }
+
     for (const meshName of meshNames) {
-      await expect(this.page.locator('#target-panel-mesh')).toContainText(`Mesh: ${meshName}`);
+      await expect(panel).toContainText(`Mesh: ${meshName}`);
     }
   }
 
   async expectExpectedMeshInfra(): Promise<void> {
-    const response = await this.page.request.get(kialiUrl('/api/mesh/graph'));
-    expect(response.ok()).toBeTruthy();
-    const body = await response.json();
-    const nodes = body.elements?.nodes ?? [];
-    const nodeNames = nodes.map((n: { data?: { infraName?: string; infraType?: string } }) =>
-      (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase()
-    );
-    expect(nodeNames.some((n: string) => n.includes('data plane') || n === 'dataplane')).toBeTruthy();
-    expect(nodeNames.some((n: string) => n.includes('grafana'))).toBeTruthy();
-    expect(nodeNames.some((n: string) => n.startsWith('istiod') || n.includes('istiod'))).toBeTruthy();
-    expect(nodeNames.some((n: string) => n.includes('jaeger') || n.includes('tempo'))).toBeTruthy();
-    expect(nodeNames.some((n: string) => n.includes('kiali'))).toBeTruthy();
-    expect(nodeNames.some((n: string) => n.includes('prometheus'))).toBeTruthy();
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+      const nodeNames = nodes.map(n => (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase());
+      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-26-0');
+      const minNodes = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
+      const minEdges = isMultiControlplane ? 7 : 5;
+
+      expect(nodes.length, `Expected at least ${minNodes} infra nodes, got ${nodes.length}`).toBeGreaterThanOrEqual(
+        minNodes
+      );
+      expect(edges.length, `Expected at least ${minEdges} infra edges, got ${edges.length}`).toBeGreaterThanOrEqual(
+        minEdges
+      );
+      expect(nodeNames.some(n => n.includes('data plane') || n === 'dataplane')).toBeTruthy();
+      expect(nodeNames.some(n => n.includes('grafana'))).toBeTruthy();
+      expect(nodeNames.some(n => n.startsWith('istiod') || n.includes('istiod'))).toBeTruthy();
+      expect(nodeNames.some(n => n.includes('jaeger') || n.includes('tempo'))).toBeTruthy();
+      expect(nodeNames.some(n => n.includes('kiali'))).toBeTruthy();
+      expect(nodeNames.some(n => n.includes('prometheus'))).toBeTruthy();
+
+      const tabs = this.getBySel('mesh-tabs');
+      if (isMultiControlplane) {
+        await expect(tabs).toBeVisible();
+        await expect(tabs.getByRole('tab', { name: 'Overview', exact: true })).toBeVisible();
+        await expect(tabs.getByRole('tab', { name: /Meshes/ })).toBeVisible();
+      } else {
+        await expect(tabs).toHaveCount(0);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectMeshTabCountMatchesControlPlanes(): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const meshNames = new Set(nodes.filter(n => n.data?.infraType === 'istiod').map(n => this.meshNameFromIstiod(n)));
+      if (meshNames.size > 1) {
+        await expect(
+          this.getBySel('mesh-tabs').getByRole('tab', { name: `Meshes (${meshNames.size})`, exact: true })
+        ).toBeVisible();
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectControlPlaneSummaryClusterNames(): Promise<void> {
+    await this.waitForLoad();
+    const panel = this.page.locator('#target-panel-mesh');
+    await expect(panel).toBeVisible();
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const istiodNodes = nodes.filter(n => n.data?.infraType === 'istiod');
+      expect(istiodNodes.length, 'Expected at least one istiod node').toBeGreaterThan(0);
+      const clusterNames = [...new Set(istiodNodes.map(n => n.data?.cluster).filter(Boolean) as string[])];
+      for (const cluster of clusterNames) {
+        await expect(panel).toContainText(cluster);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  private meshNameFromIstiod(node: MeshGraphNode): string {
+    const mesh = node.data?.infraData?.config?.standardConfig?.configMap?.mesh;
+    return mesh?.defaultConfig?.meshId || mesh?.trustDomain || 'Istio mesh';
   }
 
   async expectDataPlaneSidePanel(): Promise<void> {

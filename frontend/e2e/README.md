@@ -90,7 +90,7 @@ Use `isVisible()` / `isHidden()` for toggle guards — same semantics as `toBeVi
 
 ### CI and Jenkins
 
-- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`, `playwright-ai-chatbot`, `playwright-tempo`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional/external-kiali/ai-chatbot/tempo, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). **ai-chatbot** enables `chat_ai` via Helm (`--enable-ai`) and installs demos with `--install-errorrates-beta false`. **tempo** installs Sail Tempo and deploys in-cluster Kiali with Tempo provider URLs (parity with Cypress `frontend-tempo`). One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
+- **GitHub** (`playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`, `playwright-ai-chatbot`, `playwright-tempo`, `playwright-multi-mesh`): KinD cluster with Kiali **in-cluster** (MetalLB ingress, `web_root=/kiali`) for smoke/core/ambient/core-optional/external-kiali/ai-chatbot/tempo/multi-mesh, matching Cypress frontend fidelity. Anonymous auth until Playwright `token` auth.setup is implemented (except **external-kiali**, which uses OpenID/Keycloak on KinD multicluster). **core-caching** deploys demos first, then Kiali with cache enabled (`--kiali-only --enable-cache`). **core-optional** installs bookinfo + sleep + Perses. **offline** gathers must-gather data from KinD then runs `kiali run offline` (local binary). **ai-chatbot** enables `chat_ai` via Helm (`--enable-ai`) and installs demos with `--install-errorrates-beta false`. **tempo** installs Sail Tempo and deploys in-cluster Kiali with Tempo provider URLs (parity with Cypress `frontend-tempo`). **multi-mesh** is one KinD cluster plus extra Istio installs (`istio-system-26` / `istio-system-26-2`), matching Cypress `frontend-multi-mesh`. One parallel job per suite (local+offline smoke/offline run sequentially in one job). Local `kiali run` remains useful for interactive debugging (see suite sections below).
 - **Jenkins** (`kiali-playwright-tests`): in-cluster OSSM Kiali via OpenShift route (downstream validation). Default `TEST_SET` is `playwright:run:junit` (crd-validation, core-1, core-2, core-caching). Error-rates health tests poll `/api/.../health`; empty `health_config.rate` on the OSSM CR is fine (Kiali uses built-in degraded thresholds).
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites `playwright/blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
 - **JUnit**: Playwright may record timeouts as `errors` not `failures` — check both in XML.
@@ -199,6 +199,14 @@ provider. For local binary debugging, use `hack/ci-yaml/ci-test-config-tempo.yam
 hack/run-integration-tests.sh --test-suite playwright-tempo
 ```
 
+### Multi-mesh (`yarn playwright:run:multi-mesh`)
+
+Ports Cypress `@multi-mesh` scenarios from `mesh.feature` (4 tests): expected mesh infra (dual-tagged with `@core-caching` on the existing mesh spec), mesh tab count, dataplane namespace summary, and control-plane cluster names. CI uses one KinD cluster plus extra Istio control planes in `istio-system-26` and `istio-system-26-2`.
+
+```bash
+hack/run-integration-tests.sh --test-suite playwright-multi-mesh
+```
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -217,6 +225,7 @@ yarn playwright:run:external-kiali
 yarn playwright:run:offline
 yarn playwright:run:ai-chatbot
 yarn playwright:run:tracing
+yarn playwright:run:multi-mesh
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
@@ -225,7 +234,7 @@ Use `yarn playwright:install` — not `yarn playwright install`.
 
 ## CI
 
-PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, local+offline (`playwright-smoke` + `playwright-offline`), `playwright-ai-chatbot`, and `playwright-tempo` integration suites (`hack/run-integration-tests.sh`).
+PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workflows/playwright-ci.yml`): build + parallel `playwright-smoke`, `playwright-core-1`, `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`, `playwright-ambient`, `playwright-external-kiali`, local+offline (`playwright-smoke` + `playwright-offline`), `playwright-ai-chatbot`, `playwright-tempo`, and `playwright-multi-mesh` integration suites (`hack/run-integration-tests.sh`).
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — prefer `TEST_SET=playwright:run:smoke` or `playwright:run:all` with empty `TEST_TAGS` on OpenShift; use `playwright:run:core1` equivalent via `run:all` or future dedicated script.
 

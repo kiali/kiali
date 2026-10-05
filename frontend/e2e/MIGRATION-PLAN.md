@@ -98,7 +98,7 @@
 - [ ] `@waypoint-multicluster` suite passes
 - [ ] `@multi-cluster` suite passes
 - [ ] `@multi-primary` suite passes
-- [ ] `@multi-mesh` suite passes
+- [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
 - [x] `@offline` suite passes (Playwright spec + `playwright-offline` CI; run `yarn playwright:run:offline`)
@@ -111,7 +111,7 @@
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
   `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
   `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`,
-  `playwright-ai-chatbot`, and `playwright-tempo` suites
+  `playwright-ai-chatbot`, `playwright-tempo`, and `playwright-multi-mesh` suites
   (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; AI chatbot + tempo on epic branch)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
