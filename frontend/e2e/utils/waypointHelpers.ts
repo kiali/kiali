@@ -466,12 +466,6 @@ export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, 
   }
 }
 
-type NamespaceInfo = { name?: string };
-
-type WorkloadListResponse = {
-  workloads?: Array<{ name?: string; namespace?: string }>;
-};
-
 type WorkloadHealthBody = {
   health?: {
     status?: { status?: string };
@@ -480,48 +474,37 @@ type WorkloadHealthBody = {
 };
 
 /**
- * Locate the ztunnel DaemonSet as Kiali sees it. Sail puts it in `ztunnel`;
- * some installs keep it in `istio-system`.
+ * Locate the ztunnel DaemonSet via its details API. Sail installs it in `ztunnel`;
+ * some meshes keep it in `istio-system`. Do not scan every namespace list — those
+ * list calls 404 for namespaces Kiali does not serve as workloads, and the ztunnel
+ * namespace may be absent from `/api/namespaces`.
  */
 export async function resolveZtunnelWorkload(
   request: APIRequestContext,
   timeoutMs = 90_000
 ): Promise<{ namespace: string; name: string }> {
-  const preferred = ['ztunnel', 'istio-system'];
+  const candidates = [
+    { namespace: 'ztunnel', name: 'ztunnel' },
+    { namespace: 'istio-system', name: 'ztunnel' }
+  ];
   const deadline = Date.now() + timeoutMs;
   let last = 'no poll yet';
 
   while (Date.now() < deadline) {
-    let nsResponse;
-    try {
-      nsResponse = await request.get(kialiUrl('/api/namespaces'));
-    } catch (error) {
-      last = `namespaces-error=${error instanceof Error ? error.message : String(error)}`;
-      await sleep(5_000);
-      continue;
-    }
-    const namespaces = (await nsResponse.json().catch(() => [])) as NamespaceInfo[];
-    const names = (Array.isArray(namespaces) ? namespaces : []).map(n => n.name).filter((n): n is string => !!n);
-    const ordered = [...preferred.filter(n => names.includes(n)), ...names.filter(n => !preferred.includes(n))];
-
-    for (const ns of ordered) {
-      let listResponse;
+    for (const candidate of candidates) {
+      let response;
       try {
-        listResponse = await request.get(kialiUrl(`/api/namespaces/${ns}/workloads`));
+        response = await request.get(
+          kialiUrl(`/api/namespaces/${candidate.namespace}/workloads/${candidate.name}?health=true`)
+        );
       } catch (error) {
-        last = `${ns} list-error=${error instanceof Error ? error.message : String(error)}`;
+        last = `${candidate.namespace}/${candidate.name} error=${error instanceof Error ? error.message : String(error)}`;
         continue;
       }
-      if (!listResponse.ok()) {
-        last = `${ns} list HTTP ${listResponse.status()}`;
-        continue;
+      last = `${candidate.namespace}/${candidate.name} HTTP ${response.status()}`;
+      if (response.ok()) {
+        return candidate;
       }
-      const body = (await listResponse.json().catch(() => ({}))) as WorkloadListResponse;
-      const found = (body.workloads ?? []).find(w => w.name === 'ztunnel');
-      if (found?.name) {
-        return { namespace: found.namespace || ns, name: found.name };
-      }
-      last = `${ns} list HTTP ${listResponse.status()}, no ztunnel row`;
     }
     await sleep(5_000);
   }
