@@ -213,11 +213,12 @@ export class IstioConfigPage extends BasePage {
   }
 
   async openConfigByCluster(cluster: string, namespace: string, type: string, name: string): Promise<void> {
-    await waitForLoadingComplete(this.page);
-    await this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`)
-      .locator(linkSelector())
-      .first()
-      .click();
+    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
+    await expect(async () => {
+      await this.refreshList();
+      await expect(row).toBeVisible();
+    }).toPass({ intervals: [5_000], timeout: 60_000 });
+    await row.locator(linkSelector()).first().click();
     await waitForLoadingComplete(this.page);
   }
 

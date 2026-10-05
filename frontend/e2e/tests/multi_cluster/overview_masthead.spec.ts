@@ -5,7 +5,7 @@ import { cluster1Context, EAST, scaleDeploymentOnContext } from '../../utils/mul
 import { multiClusterOnly } from '../../utils/suite-tags';
 
 test.describe('Overview and masthead multi-cluster', () => {
-  test.describe.configure({ timeout: 180_000 });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
   test('Debug info shows 2 clusters', multiClusterOnly, async ({ overviewPage }) => {
     await overviewPage.open();

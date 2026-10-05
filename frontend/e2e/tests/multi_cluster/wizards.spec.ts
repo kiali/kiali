@@ -11,7 +11,7 @@ import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
 test.describe('Istio wizards multi-cluster', () => {
-  test.describe.configure({ timeout: 180_000 });
+  test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
   test(
     'Gateway preview disabled without cluster selection',
