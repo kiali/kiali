@@ -585,11 +585,14 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		}
 	}
 	if step := queryParams.Get("step"); step != "" {
-		if num, err := strconv.Atoi(step); err == nil {
-			q.Step = time.Duration(num) * time.Second
-		} else {
+		num, err := strconv.Atoi(step)
+		if err != nil {
 			return errors.New("bad request, cannot parse query parameter 'step'")
 		}
+		if num <= 0 {
+			return errors.New("bad request, query parameter 'step' must be positive")
+		}
+		q.Step = time.Duration(num) * time.Second
 	}
 	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
 		for _, quantile := range quantiles {
