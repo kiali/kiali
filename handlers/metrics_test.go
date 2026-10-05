@@ -1090,7 +1090,7 @@ func TestHealthStatusHistoryDisabled(t *testing.T) {
 func TestHealthStatusHistoryDefault(t *testing.T) {
 	ts, api := setupHealthStatusHistoryEndpoint(t, true)
 
-	query := `max(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="workload",name="reviews-v1"})`
+	query := `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="workload",name="reviews-v1"}[15s]))`
 
 	now := time.Now()
 	delta := 15 * time.Second
