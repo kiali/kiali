@@ -561,7 +561,7 @@ func TestGetHealthStatusHistory(t *testing.T) {
 	q := prometheus.RangeQuery{}
 	q.FillDefaults()
 
-	api.MockRange(`max(kiali_health_status{cluster="cluster-default",namespace="bookinfo",health_type="workload",name="reviews-v1"})`, 2.0)
+	api.MockRange(`max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="bookinfo",health_type="workload",name="reviews-v1"}[15s]))`, 2.0)
 
 	metrics, err := srv.GetHealthStatusHistory(context.Background(), "cluster-default", "bookinfo", "workload", "reviews-v1", &q)
 	assert.NoError(err)
