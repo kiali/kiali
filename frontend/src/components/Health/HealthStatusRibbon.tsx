@@ -21,6 +21,8 @@ const ribbonContainerStyle = kialiStyle({
 });
 
 const ribbonBarWrapperStyle = kialiStyle({
+  overflow: 'hidden',
+  paddingTop: '1.75rem',
   position: 'relative',
   width: '100%'
 });
@@ -34,11 +36,20 @@ const hoverLabelStyle = kialiStyle({
   padding: '0.125rem 0.375rem',
   pointerEvents: 'none',
   position: 'absolute',
-  top: '-1.75rem',
+  top: 0,
   transform: 'translateX(-50%)',
   whiteSpace: 'nowrap',
   zIndex: 1
 });
+
+const clampTooltipLeft = (cursorX: number, barWidth: number, tooltipWidth: number): number => {
+  if (barWidth <= 0 || tooltipWidth <= 0) {
+    return cursorX;
+  }
+
+  const halfWidth = tooltipWidth / 2;
+  return Math.max(halfWidth, Math.min(barWidth - halfWidth, cursorX));
+};
 
 const ribbonBarStyle = kialiStyle({
   borderRadius: '3px',
@@ -98,7 +109,9 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
 }: HealthStatusRibbonProps) => {
   const { t } = useKialiTranslation();
   const barRef = React.useRef<HTMLDivElement>(null);
+  const tooltipRef = React.useRef<HTMLDivElement>(null);
   const [hover, setHover] = React.useState<HoverInfo | null>(null);
+  const [tooltipWidth, setTooltipWidth] = React.useState(0);
 
   const segments = React.useMemo(
     () => buildHealthStatusSegments(datapoints, startTime, endTime, step),
@@ -106,6 +119,15 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   );
   const totalDuration = endTime - startTime;
   const today = new Date();
+
+  React.useLayoutEffect(() => {
+    if (!hover || !tooltipRef.current) {
+      setTooltipWidth(0);
+      return;
+    }
+
+    setTooltipWidth(tooltipRef.current.offsetWidth);
+  }, [hover]);
 
   const handleBarMouseMove = (event: React.MouseEvent<HTMLDivElement>): void => {
     const bar = barRef.current;
@@ -139,11 +161,19 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     timeLabels.push(formatTime(ts));
   }
 
+  const barWidth = barRef.current?.offsetWidth ?? 0;
+  const tooltipLeft = hover ? clampTooltipLeft(hover.cursorX, barWidth, tooltipWidth) : 0;
+
   return (
     <div className={ribbonContainerStyle}>
       <div className={ribbonBarWrapperStyle}>
         {hover && (
-          <div className={hoverLabelStyle} style={{ left: `${hover.cursorX}px` }} data-test="health-ribbon-hover-label">
+          <div
+            ref={tooltipRef}
+            className={hoverLabelStyle}
+            data-test="health-ribbon-hover-label"
+            style={{ left: `${tooltipLeft}px` }}
+          >
             {`${t(healthStatusI18nKey(hover.label))}: ${formatTooltipTime(hover.timestamp, today)}`}
           </div>
         )}
