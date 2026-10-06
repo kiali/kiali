@@ -87,7 +87,7 @@
   with TODO (PR #10220).
 - [x] `@smoke` suite passes (~32 scenarios, PR #10174)
 - [x] `@core-1` suite passes (145 tests, PR #10195 + #10220)
-- [x] `@core-2` suite passes (PR #10269)
+- [x] `@core-2` suite passes (PR #10269; colliding K8s Gateway wizard on `issue9712_missing_merged_e2e`)
 - [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
@@ -101,7 +101,7 @@
 - [ ] `@multi-mesh` suite passes
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
-- [x] `@offline` suite passes (Playwright spec + `playwright-offline` CI; run `yarn playwright:run:offline`)
+- [x] `@offline` suite passes (Playwright specs + `playwright-offline` CI; run `yarn playwright:run:offline`)
 - [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
 
 ## CI / pipelines
