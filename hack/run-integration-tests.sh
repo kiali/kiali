@@ -1371,12 +1371,32 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
+  # Ambient must finish before waypoint enrollment mutates bookinfo.
+  # Unique blob names + stash: a second Playwright run may wipe blob-report/.
+  blob_dir="${SCRIPT_DIR}/../frontend/playwright/blob-report"
+  blob_stash="${SCRIPT_DIR}/../frontend/playwright/blob-stash"
+  mkdir -p "${blob_stash}"
   set +e
-  yarn run playwright:run:ambient
-  PLAYWRIGHT_EXIT=$?
+  PLAYWRIGHT_BLOB_NAME=ambient yarn run playwright:run:ambient
+  AMBIENT_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  PLAYWRIGHT_BLOB_NAME=waypoint yarn run playwright:run:waypoint
+  WAYPOINT_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  mkdir -p "${blob_dir}"
+  if ls "${blob_stash}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_stash}"/*.zip "${blob_dir}/"
+  fi
   set -e
   yarn run playwright:combine:reports
-  exit ${PLAYWRIGHT_EXIT}
+  if [ ${AMBIENT_EXIT} -ne 0 ] || [ ${WAYPOINT_EXIT} -ne 0 ]; then
+    exit 1
+  fi
+  exit 0
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_EXTERNAL_KIALI}" ]; then
   ensurePlaywrightReady
 

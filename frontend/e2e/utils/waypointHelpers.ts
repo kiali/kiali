@@ -576,26 +576,3 @@ export async function waitForZtunnelWorkloadReady(
 
   throw new Error(`Timeout waiting for ztunnel ${located.namespace}/${located.name} to be ready. Last: ${last}`);
 }
-
-/** First trace id from the workload traces API, if any. */
-export async function getFirstWorkloadTraceId(
-  request: APIRequestContext,
-  namespace: string,
-  workload: string
-): Promise<string | undefined> {
-  const nowMicros = Date.now() * 1000;
-  const qs = new URLSearchParams({
-    startMicros: String(nowMicros - 10 * 60 * 1000 * 1000),
-    endMicros: String(nowMicros),
-    tags: '{}',
-    limit: '100'
-  });
-  const response = await request.get(
-    kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}/traces?${qs.toString()}`)
-  );
-  if (!response.ok()) {
-    return undefined;
-  }
-  const body = (await response.json()) as { data?: TraceItem[] };
-  return body.data?.[0]?.traceID;
-}

@@ -13,7 +13,13 @@ const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' 
 const reporters: ReporterDescription[] = isCI
   ? [
       ['list'],
-      ['blob', { outputDir: 'playwright/blob-report' }],
+      [
+        'blob',
+        {
+          fileName: `${process.env.PLAYWRIGHT_BLOB_NAME ?? 'report'}.zip`,
+          outputDir: 'playwright/blob-report'
+        }
+      ],
       ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
     ]
   : [

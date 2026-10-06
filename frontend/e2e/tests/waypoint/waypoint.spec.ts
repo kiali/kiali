@@ -4,11 +4,16 @@ import { expectColumnTextOnRow, expectHealthIconInRow, getColWithRowText } from 
 import { linkSelector } from '../../utils/linkSelector';
 import {
   enableUseWaypointNameIfNeeded,
-  getFirstWorkloadTraceId,
   prepareBookinfoWaypoint,
   waitForZtunnelWorkloadReady
 } from '../../utils/waypointHelpers';
-import { expectTraceDetails, expectTraceScatterplot, openTracesTab, selectTraceById } from '../../utils/waypointTraces';
+import {
+  expectTraceDetails,
+  expectTraceScatterplot,
+  openTracesTab,
+  selectTrace,
+  waitForTracesViaApi
+} from '../../utils/tracingHelpers';
 import { openDetailsTab } from '../../utils/detailsPage';
 import { waypointOnly } from '../../utils/suite-tags';
 
@@ -50,11 +55,10 @@ test.describe('Waypoint (bookinfo)', () => {
     await workloadDetailsPage.expectModeInPopover('L4', 'L7');
     await workloadDetailsPage.expectProtocolInPodPopover('HBONE');
 
-    const traceId = await getFirstWorkloadTraceId(request, 'bookinfo', 'ratings-v1');
+    const traces = await waitForTracesViaApi(request, 'workload', 'bookinfo', 'ratings-v1');
     await openTracesTab(page);
     await expectTraceScatterplot(page);
-    expect(traceId, 'ratings-v1 should have at least one trace').toBeTruthy();
-    await selectTraceById(page, traceId!);
+    await selectTrace(page, traces[0]?.traceID);
     await expectTraceDetails(page);
 
     await openDetailsTab(page, 'Overview');

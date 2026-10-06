@@ -92,8 +92,8 @@
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
 - [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
-- [x] `@waypoint` suite ported on `issue9712_waypoint` (full `waypoint.feature` + waypoint logs; runs in
-  `playwright-ambient` via `--project=waypoint`)
+- [x] `@waypoint` suite ported on `issue9712_waypoint` (full `waypoint.feature` + waypoint logs;
+  `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
 - [ ] `@waypoint-tracing` suite passes
 - [ ] `@ambient-multi-primary` suite passes
 - [ ] `@waypoint-multicluster` suite passes
@@ -173,6 +173,7 @@
 ## Waypoint port plan (`@waypoint`)
 
 **CI:** Reuse `playwright-ambient` (same KinD ambient Sail + demos as Cypress `frontend-ambient`).
+Run ambient to completion, then `yarn playwright:run:waypoint` (`waypoint` + `waypoint-tracing`).
 Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
 
 **Specs (`frontend/e2e/tests/waypoint/`):**
