@@ -2,7 +2,12 @@ import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
-import { selectClusterMeshNode, selectMeshNodeByLabel, selectTracingMeshNode } from '../utils/meshTopology';
+import {
+  selectAmbientIstiodMeshNode,
+  selectClusterMeshNode,
+  selectMeshNodeByLabel,
+  selectTracingMeshNode
+} from '../utils/meshTopology';
 import { waitForLoadingComplete } from '../utils/transition';
 
 type IstiodMeshConfig = {
@@ -23,9 +28,10 @@ type MeshGraphNode = {
     cluster?: string;
     healthData?: string;
     id?: string;
-    infraData?: IstiodMeshConfig;
+    infraData?: IstiodMeshConfig | Array<{ isAmbient?: boolean }> | Record<string, unknown>;
     infraName?: string;
     infraType?: string;
+    isAmbient?: boolean;
   };
 };
 
@@ -145,6 +151,60 @@ export class MeshPage extends BasePage {
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Managed by remote ControlPlane');
     await expect(panel).toContainText(primaryCluster);
+  }
+
+  async selectAmbientIstiod(): Promise<void> {
+    await this.waitForLoad();
+    await selectAmbientIstiodMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async expectControlPlaneAmbientBadge(visible: boolean): Promise<void> {
+    const panel = this.page.locator('#target-panel-control-plane');
+    await expect(panel).toBeVisible();
+    if (visible) {
+      await expect(panel.getByText('ambient', { exact: false })).toBeVisible();
+    } else {
+      await expect(panel.getByText('ambient', { exact: false })).toHaveCount(0);
+    }
+  }
+
+  async expectClusterCount(count: number): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const clusters = nodes.filter(n => n.data?.infraType === 'cluster');
+      expect(clusters.length, `Expected ${count} cluster node(s), got ${clusters.length}`).toBe(count);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectZtunnelInBothClusters(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const ztunnels = nodes.filter(n => n.data?.infraType === 'ztunnel' && n.data?.cluster);
+      const clusters = new Set(ztunnels.map(n => n.data?.cluster));
+      expect(ztunnels.length, 'Expected at least one ztunnel per cluster').toBeGreaterThanOrEqual(2);
+      expect(clusters.size, 'Expected ztunnel nodes on both clusters').toBeGreaterThanOrEqual(2);
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  async expectAmbientDataPlanesInBothClusters(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const dataPlanes = nodes.filter(n => n.data?.infraType === 'dataplane');
+      expect(dataPlanes.length, 'Expected data plane nodes in both clusters').toBeGreaterThanOrEqual(2);
+      for (const plane of dataPlanes) {
+        const infra = plane.data?.infraData;
+        const namespaces = Array.isArray(infra) ? infra : [];
+        const ambientNamespaces = namespaces.filter(ns => ns.isAmbient);
+        expect(
+          ambientNamespaces.length,
+          `Expected an ambient namespace on data plane cluster ${plane.data?.cluster ?? 'unknown'}`
+        ).toBeGreaterThanOrEqual(1);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
   }
 
   async expectNodeSidePanel(name: string): Promise<void> {
@@ -356,7 +416,11 @@ export class MeshPage extends BasePage {
   }
 
   private meshNameFromIstiod(node: MeshGraphNode): string {
-    const mesh = node.data?.infraData?.config?.standardConfig?.configMap?.mesh;
+    const infra = node.data?.infraData;
+    if (!infra || Array.isArray(infra)) {
+      return 'Istio mesh';
+    }
+    const mesh = (infra as IstiodMeshConfig).config?.standardConfig?.configMap?.mesh;
     return mesh?.defaultConfig?.meshId || mesh?.trustDomain || 'Istio mesh';
   }
 

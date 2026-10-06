@@ -103,6 +103,8 @@
     "playwright:run:ambient": "playwright test --project=ambient --pass-with-no-tests",
     "playwright:run:waypoint": "playwright test --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
     "playwright:run:ambient:junit": "yarn run playwright:run:ambient && yarn run playwright:run:waypoint",
+    "playwright:run:ambient-multi-primary": "playwright test --project=ambient-multi-primary --pass-with-no-tests",
+    "playwright:run:ambient-multi-primary:junit": "yarn run playwright:run:ambient-multi-primary",
     "playwright:run:multi-cluster": "playwright test --project=multi-cluster --pass-with-no-tests",
     "playwright:run:multi-cluster:junit": "playwright test --project=multi-cluster --pass-with-no-tests",
     "playwright:run:multi-primary:junit": "playwright test --project=multi-primary --pass-with-no-tests",

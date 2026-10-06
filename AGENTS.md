@@ -372,6 +372,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-core-caching` | Playwright core-caching suite (KinD + in-cluster Kiali with cache enabled) |
 | `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
 | `playwright-ambient` | Playwright ambient then waypoint+waypoint-tracing (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
+| `playwright-ambient-multi-primary` | Playwright ambient multi-primary suite (KinD east/west + Sail ambient + in-cluster Kiali) |
 | `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
 | `playwright-primary-remote` | Playwright primary-remote multicluster suite (KinD east/west + in-cluster Kiali) |
 | `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
@@ -491,6 +492,7 @@ yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:ambient
 yarn playwright:run:waypoint
+yarn playwright:run:ambient-multi-primary
 yarn playwright:run:external-kiali
 yarn playwright:run:multi-cluster
 yarn playwright:run:tracing
@@ -501,6 +503,7 @@ hack/run-integration-tests.sh --test-suite playwright-core-2
 hack/run-integration-tests.sh --test-suite playwright-core-caching
 hack/run-integration-tests.sh --test-suite playwright-core-optional
 hack/run-integration-tests.sh --test-suite playwright-ambient
+hack/run-integration-tests.sh --test-suite playwright-ambient-multi-primary
 hack/run-integration-tests.sh --test-suite playwright-external-kiali # KinD multicluster + in-cluster Kiali (OpenID)
 hack/run-integration-tests.sh --test-suite playwright-primary-remote # KinD primary-remote east/west
 hack/run-integration-tests.sh --test-suite playwright-offline

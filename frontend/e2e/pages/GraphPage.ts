@@ -581,6 +581,16 @@ export class GraphPage extends BasePage {
     });
   }
 
+  async expectWorkloadClustersAtLeast(clusterCount: number): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const workloadNodes = nodes.filter(
+        node => node.data?.[NodeAttr.nodeType] === 'workload' && node.data?.[NodeAttr.cluster]
+      );
+      const clusters = new Set(workloadNodes.map(node => node.data?.[NodeAttr.cluster] as string));
+      expect(clusters.size, 'Expected workload nodes from multiple clusters').toBeGreaterThanOrEqual(clusterCount);
+    });
+  }
+
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {
     await expectGraphTopology(this.page, ({ edges }) => {
       const edgeElems = edges.map(e => ({ data: e.data }));
