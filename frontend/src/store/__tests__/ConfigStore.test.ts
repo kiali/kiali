@@ -41,8 +41,14 @@ describe('migratePersistedGlobalState', () => {
     expect(migrated.language).toBe(Language.SYSTEM);
   });
 
+  it('preserves French language preference', () => {
+    const migrated = migratePersistedGlobalState({ language: Language.FRENCH });
+
+    expect(migrated.language).toBe(Language.FRENCH);
+  });
+
   it('resets invalid persisted language to the initial value', () => {
-    const migrated = migratePersistedGlobalState({ language: 'fr' });
+    const migrated = migratePersistedGlobalState({ language: 'de' });
 
     expect(migrated.language).toBe(INITIAL_GLOBAL_STATE.language);
   });

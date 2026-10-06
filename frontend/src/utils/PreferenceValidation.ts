@@ -1,11 +1,17 @@
 import { ColorScheme, ContrastMode, Language, Theme } from 'types/Common';
 
-export type ResolvedLanguage = Language.CHINESE | Language.ENGLISH | Language.KOREAN | Language.SPANISH;
+export type ResolvedLanguage =
+  | Language.CHINESE
+  | Language.ENGLISH
+  | Language.FRENCH
+  | Language.KOREAN
+  | Language.SPANISH;
 
 export const isSupportedLanguage = (language: string | null | undefined): language is ResolvedLanguage => {
   return (
     language === Language.CHINESE ||
     language === Language.ENGLISH ||
+    language === Language.FRENCH ||
     language === Language.KOREAN ||
     language === Language.SPANISH
   );
