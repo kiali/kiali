@@ -581,6 +581,20 @@ type BadRequestError struct {
 	} `json:"body"`
 }
 
+// ForbiddenError: the client is not allowed to access the requested namespace
+//
+// swagger:response forbiddenError
+type ForbiddenError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 403
+		// default: 403
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
 // A NotFoundError is the error message that is generated when server could not find what was requested.
 //
 // swagger:response notFoundError

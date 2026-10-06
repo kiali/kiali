@@ -364,6 +364,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: istioConfigList
 		//
@@ -407,6 +408,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigDetailsResponse
@@ -429,6 +431,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200
@@ -455,6 +458,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: istioConfigDetailsResponse
@@ -477,6 +481,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//		202
@@ -522,6 +527,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceDetailsResponse
@@ -548,6 +554,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: serviceDetailsResponse
@@ -570,6 +577,7 @@ func NewRoutes(
 		//		Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		// 		500: internalError
 		//		200: spansResponse
 		{
@@ -590,6 +598,7 @@ func NewRoutes(
 		//		Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		// 		500: internalError
 		//		200: spansResponse
 		{
@@ -610,6 +619,7 @@ func NewRoutes(
 		//		Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		// 		500: internalError
 		//		200: spansResponse
 		{
@@ -630,6 +640,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: traceDetailsResponse
@@ -652,6 +663,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: traceDetailsResponse
@@ -674,6 +686,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: traceDetailsResponse
@@ -696,6 +709,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: errorTracesResponse
@@ -761,6 +775,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: workloadDetails
@@ -787,6 +802,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: workloadDetails
@@ -830,6 +846,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: appDetails
@@ -877,6 +894,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      404: notFoundError
 		//      500: internalError
 		//      200: namespaceResponse
@@ -899,6 +917,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: namespaceList
 		//
@@ -921,6 +940,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -943,6 +963,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -965,6 +986,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -987,6 +1009,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1009,6 +1032,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1031,6 +1055,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1053,6 +1078,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1075,6 +1101,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1097,6 +1124,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1119,6 +1147,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1141,6 +1170,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: dashboardResponse
 		//
@@ -1163,6 +1193,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: dashboardResponse
 		//
@@ -1185,6 +1216,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: dashboardResponse
 		//
@@ -1207,6 +1239,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: dashboardResponse
 		//
@@ -1229,6 +1262,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: dashboardResponse
 		//
@@ -1251,6 +1285,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      503: serviceUnavailableError
 		//      200: metricsResponse
 		//
@@ -1296,6 +1331,7 @@ func NewRoutes(
 		// responses:
 		//      200: namespaceValidationSummaryResponse
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//
 		{
@@ -1362,6 +1398,7 @@ func NewRoutes(
 		// responses:
 		//      200: namespaceTlsResponse
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//
 		{
@@ -1449,6 +1486,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1471,6 +1509,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1493,6 +1532,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1515,6 +1555,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1537,6 +1578,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1559,6 +1601,7 @@ func NewRoutes(
 		//
 		// responses:
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      500: internalError
 		//      200: graphResponse
 		//
@@ -1692,6 +1735,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: workloadDetails
@@ -1714,6 +1758,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: workloadDetails
@@ -1736,6 +1781,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: configDump
@@ -1758,6 +1804,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: configDumpResource
@@ -1780,6 +1827,7 @@ func NewRoutes(
 		//     Schemes: http, https
 		//
 		// responses:
+		//      403: forbiddenError
 		//      500: internalError
 		//      404: notFoundError
 		//      200: ztunnelConfigDump
@@ -1805,6 +1853,7 @@ func NewRoutes(
 		//      500: internalError
 		//      404: notFoundError
 		//      400: badRequestError
+		//      403: forbiddenError
 		//      200: noContent
 		//
 		{

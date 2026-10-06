@@ -4,12 +4,12 @@ import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
 import { isHealthHistoryAvailable } from '../../config';
-import { humanDurations, serverConfig } from '../../config/ServerConfig';
+import { serverConfig } from '../../config/ServerConfig';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { useRefreshInterval } from 'hooks/refresh';
-import { useKialiTranslation } from 'utils/I18nUtils';
+import { formatLastDuration, useKialiTranslation } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { Datapoint } from 'types/Metrics';
 import type { HealthStatusHistoryQuery } from 'types/MetricsOptions';
@@ -26,14 +26,13 @@ const healthHistoryDurations = [3600, 10800, 21600, 43200, 86400, 604800, 259200
 
 const preferredDuration = 21600;
 
-const buildHealthHistoryDurationOptions = (prefix: string): Record<string, string> => {
-  const allDurations = humanDurations(serverConfig, prefix);
+const buildHealthHistoryDurationOptions = (): Record<string, string> => {
   const options: Record<string, string> = {};
 
   healthHistoryDurations.forEach(durationSeconds => {
-    const label = allDurations[durationSeconds];
-    if (label) {
-      options[String(durationSeconds)] = label;
+    const durationLabel = serverConfig.durations[durationSeconds];
+    if (durationLabel) {
+      options[String(durationSeconds)] = formatLastDuration(durationLabel);
     }
   });
 
@@ -76,8 +75,8 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   namespace
 }: HealthHistoryCardProps) => {
   const { lastRefreshAt } = useRefreshInterval();
-  const { t } = useKialiTranslation();
-  const durationOptions = React.useMemo(() => buildHealthHistoryDurationOptions(t('Last')), [t]);
+  const { i18n, t } = useKialiTranslation();
+  const durationOptions = React.useMemo(() => buildHealthHistoryDurationOptions(), [i18n.language]);
 
   const [datapoints, setDatapoints] = React.useState<Datapoint[]>([]);
   const [duration, setDuration] = React.useState<number>(preferredDuration);
@@ -90,6 +89,13 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     }
     return getDefaultHealthHistoryDuration(durationOptions);
   }, [duration, durationOptions]);
+
+  const queryStep = React.useMemo((): number | undefined => {
+    if (resolvedDuration === undefined) {
+      return undefined;
+    }
+    return computePrometheusRateParams(resolvedDuration, 100).step;
+  }, [resolvedDuration]);
 
   const handleDurationSelect = (key: string): void => {
     setDuration(Number(key));
@@ -110,7 +116,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
       return;
     }
 
-    if (resolvedDuration === undefined) {
+    if (resolvedDuration === undefined || queryStep === undefined) {
       setDatapoints([]);
       setLoading(false);
       return;
@@ -120,10 +126,9 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     const queryEnd = Math.floor(Date.now() / 1000);
     setEndTime(queryEnd);
 
-    const rateParams = computePrometheusRateParams(resolvedDuration, 100);
     const options: HealthStatusHistoryQuery = {
       duration: resolvedDuration,
-      step: rateParams.step
+      step: queryStep
     };
 
     API.getHealthStatusHistory(namespace, healthType, name, options, cluster)
@@ -154,14 +159,14 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     return () => {
       active = false;
     };
-  }, [cluster, healthType, lastRefreshAt, name, namespace, resolvedDuration, t]);
+  }, [cluster, healthType, lastRefreshAt, name, namespace, queryStep, resolvedDuration, t]);
 
   if (!isHealthHistoryAvailable()) {
     return null;
   }
 
   const startTime = endTime > 0 && resolvedDuration !== undefined ? endTime - resolvedDuration : 0;
-  const step = resolvedDuration !== undefined ? computePrometheusRateParams(resolvedDuration, 100).step : 0;
+  const step = queryStep ?? 0;
 
   return (
     <Card isCompact data-test="health-history-card">
