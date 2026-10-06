@@ -29,6 +29,8 @@ const WIZARD_TITLES: Record<string, string> = {
   request_timeouts: 'Request Timeouts'
 };
 
+const VIEW_ONLY_TOOLTIP = 'No user permission or Kiali in view-only mode';
+
 const GRAPH_TYPE_LABELS: Record<string, string> = {
   APP: 'App',
   SERVICE: 'Service',
@@ -654,6 +656,8 @@ export class GraphPage extends BasePage {
     const item = this.page.locator('.pf-topology-context-menu__c-dropdown__menu').locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
+    await item.hover({ force: true });
+    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
   }
 
   async expectContextMenuItemEnabledInViewOnly(menuKey: string): Promise<void> {
@@ -683,6 +687,24 @@ export class GraphPage extends BasePage {
 
   async clickSidePanelKebabItem(menuKey: string): Promise<void> {
     await this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`).click();
+  }
+
+  async expectSidePanelKebabItemDisabledInViewOnly(menuKey: string): Promise<void> {
+    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    await expect(item).toHaveClass(/pf-m-disabled/);
+    await expect(item.locator('button')).toBeDisabled();
+    await item.hover({ force: true });
+    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+  }
+
+  async expectSidePanelKebabItemEnabledInViewOnly(menuKey: string): Promise<void> {
+    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    await expect(item).not.toHaveClass(/pf-m-disabled/);
+    await expect(item.locator('button')).toBeEnabled();
+  }
+
+  async expectSidePanelClusterBadgeHidden(): Promise<void> {
+    await expect(this.page.locator('#graph-side-panel #pfbadge-C')).toHaveCount(0);
   }
 
   async pressReplay(): Promise<void> {
