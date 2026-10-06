@@ -259,6 +259,7 @@ describe('PreferencesModal language', () => {
     { expectedLanguage: Language.ENGLISH, label: 'English', startLanguage: Language.CHINESE },
     { expectedLanguage: Language.SPANISH, label: 'Español', startLanguage: Language.ENGLISH },
     { expectedLanguage: Language.CHINESE, label: '中文', startLanguage: Language.ENGLISH },
+    { expectedLanguage: Language.JAPANESE, label: '日本語', startLanguage: Language.ENGLISH },
     { expectedLanguage: Language.KOREAN, label: '한국어', startLanguage: Language.ENGLISH }
   ];
 
