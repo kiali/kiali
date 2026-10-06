@@ -57,14 +57,20 @@ function isOpenShift(): boolean {
 }
 
 function getNodeArchitecture(): string | undefined {
-  try {
-    return execSync(path.join(HACK_ISTIO, 'cypress/get-node-architecture.sh'), {
-      cwd: REPO_ROOT,
-      encoding: 'utf8'
-    }).trim();
-  } catch {
-    return undefined;
+  const script = path.join(HACK_ISTIO, 'cypress/get-node-architecture.sh');
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    try {
+      const arch = execSync(script, { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
+      if (arch) {
+        return arch;
+      }
+    } catch {
+      // kubectl can miss worker-node labels while the API is busy with parallel installs
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_000);
   }
+  return undefined;
 }
 
 function hasKialiCr(): boolean {
