@@ -1111,9 +1111,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
 
   fi
 
@@ -1565,16 +1565,16 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_MESH}" ]; then
   ensurePlaywrightReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # Single KinD cluster plus extra Istio control planes (istio-system-26 / istio-system-26-2).
+    # Single KinD cluster plus extra Istio control planes (istio-system-31 / istio-system-31-1).
     # Anonymous auth so Playwright auth.setup works (token not implemented).
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
   fi
 
   infomsg "Setup complete."

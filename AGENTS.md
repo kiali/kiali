@@ -376,7 +376,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
 | `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
 | `playwright-tempo` | Playwright tracing suite (KinD + Tempo + in-cluster Kiali via MetalLB) |
-| `playwright-multi-mesh` | Playwright multi-mesh suite (KinD + extra Istio installs in `istio-system-26` / `istio-system-26-2`) |
+| `playwright-multi-mesh` | Playwright multi-mesh suite (KinD + extra Istio installs in `istio-system-31` / `istio-system-31-1`) |
 
 #### The `local` Suite (Recommended for Local Development)
 

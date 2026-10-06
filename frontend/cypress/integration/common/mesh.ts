@@ -238,7 +238,7 @@ Then('user sees expected mesh infra', () => {
 
       const { nodes, edges } = elems(controller);
       const nodeNames = nodes.map(n => n.getLabel().toLowerCase());
-      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-26-0');
+      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-31-0');
       const minNodesLength = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
       const minEdgesLength = isMultiControlplane ? 7 : 5;
 

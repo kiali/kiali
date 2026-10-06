@@ -270,7 +270,7 @@ export class MeshPage extends BasePage {
     await expect(async () => {
       const { nodes, edges } = await this.fetchMeshGraph();
       const nodeNames = nodes.map(n => (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase());
-      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-26-0');
+      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-31-0');
       const minNodes = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
       const minEdges = isMultiControlplane ? 7 : 5;
 
