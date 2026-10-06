@@ -891,12 +891,12 @@ export class GraphPage extends BasePage {
 
   async expectReadOnlyWizardYaml(wizardKey: string): Promise<void> {
     const title = `View ${WIZARD_TITLES[wizardKey]}`;
-    const modal = this.page.locator('.pf-v6-c-modal-box').last();
-    await expect(modal).toContainText(title);
-    await expect(modal.getByText('Copy')).toBeVisible();
-    await expect(modal.getByText('Download')).toBeVisible();
-    await expect(modal.getByRole('code').first()).toBeAttached();
-    await expect(modal.getByRole('button', { name: 'Close' })).toBeVisible();
+    const dialog = this.page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: title })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Copy' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Download' })).toBeVisible();
+    await expect(dialog.getByRole('code').first()).toBeAttached();
+    await expect(dialog.getByRole('contentinfo').getByRole('button', { name: 'Close' })).toBeVisible();
   }
 
   async clickGraphEdge(fromName: string, fromType: string, toName: string, toType: string): Promise<void> {
