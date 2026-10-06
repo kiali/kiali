@@ -450,7 +450,7 @@ The manual **Release MCP** workflow (`.github/workflows/release-mcp.yml`) publis
 
 **Publish path** (default):
 
-1. Build from the selected `release_branch` (e.g. `v2.27`).
+1. Build from the selected `release_branch` (e.g. `v2.33`).
 2. Compute the next patch from existing Quay tags and push:
    - `quay.io/kiali/kiali_mcp:vX.Y.Z-<sha7>` (immutable)
    - `quay.io/kiali/kiali_mcp:vX.Y` (floating branch line)
@@ -467,7 +467,7 @@ Workflow inputs:
 
 | Input | Purpose |
 |-------|---------|
-| `release_branch` | Branch line to publish from (`v2.27`, `v2.22`, …) |
+| `release_branch` | Branch line to publish from (`v2.33`, `v2.27`, `v2.22`, …) |
 | `skip_publication` | Skip Quay push; run pin validation only |
 | `kubernetes_mcp_server_ref` | MCP git ref whose `build/kiali.mk` pins are used (default `main`) |
 | `run_validation` | Enable/disable the validate job (default `true`) |

@@ -2,7 +2,7 @@ name: Release MCP
 
 # Builds the Kiali image from a release branch and publishes it to
 # quay.io/kiali/kiali_mcp. Versioning is derived from existing Quay tags for
-# that branch line (e.g. v2.27 -> next patch v2.27.N). Tags pushed:
+# that branch line (e.g. v2.33 -> next patch v2.33.N). Tags pushed:
 #   - vX.Y.Z-<git-sha>    (immutable/traceable release version with short git sha)
 #   - vX.Y                (floating minor/branch line — overwrites on each publish)
 #
@@ -16,11 +16,12 @@ on:
   workflow_dispatch:
     inputs:
       release_branch:
-        description: Release branch to publish from (e.g. v2.27)
+        description: Release branch to publish from (e.g. v2.33)
         required: true
-        default: v2.27
+        default: v2.33
         type: choice
         options:
+        - v2.33
         - v2.27
         - v2.22
       skip_publication:
