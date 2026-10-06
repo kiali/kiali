@@ -188,16 +188,24 @@ export class ChartWithLegend<T extends RichDataPoint, O extends LineInfo> extend
     const events: VCEvent[] = [];
 
     if (this.props.onClick) {
-      events.push({
-        target: 'parent',
-        eventHandlers: {
-          onClick: () => {
-            if (this.hoveredItem) {
-              this.props.onClick!(this.hoveredItem as RawOrBucket<O>);
-            }
-            return [];
-          }
+      // Click the series itself so Victory passes the datum. Parent onClick
+      // only fires when hoveredItem is set from the tooltip, which Cypress
+      // and OSSMC overlay clicks do not do.
+      const serieNames = this.props.data
+        .map((serie, idx) => (this.state.hiddenSeries.has(serie.legendItem.name) ? undefined : `serie-${idx}`))
+        .filter((name): name is string => name !== undefined);
+      const onClick = this.props.onClick;
+      const dataClickHandler: any = (_evt: MouseEvent, victoryProps: { datum?: RawOrBucket<O> }) => {
+        if (victoryProps.datum) {
+          onClick(victoryProps.datum);
         }
+        return [];
+      };
+
+      events.push({
+        childName: serieNames,
+        eventHandlers: { onClick: dataClickHandler },
+        target: 'data'
       });
     }
 

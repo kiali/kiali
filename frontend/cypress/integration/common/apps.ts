@@ -15,7 +15,7 @@ import {
 } from './table';
 import { openTab, waitForKialiApiReady } from './transition';
 import { enableKialiFeature, HEALTH_CACHE_CONFIG } from './kiali-config';
-import { isOssmcUrl, peelCoveringLayers } from './graph';
+import { isOssmcUrl } from './graph';
 
 // Type definition for health cache metrics API response
 interface HealthCacheMetrics {
@@ -100,22 +100,29 @@ When('user selects a trace with at least {int} spans', (spans: number) => {
         // on the graph so here we are looking at the react state of the points and then finding one
         // that matches the exact data path.
         const pointWithTraceName = $points.filter(point => point.props?.datum?.trace?.spans.length >= spans)[0];
+        const datum = pointWithTraceName.props.datum;
         const dataPointInGraph = pointWithTraceName.children[0].props.d;
-        const peels: HTMLElement[] = [];
 
-        // ChartWithLegend only fires onClick when hoveredItem is set (tooltip open).
-        // force:true skips hover, so peel OSSMC overlays and issue a real click.
-        cy.get(`path[d="${dataPointInGraph}"]`).then($path => {
-          const win = $path[0].ownerDocument.defaultView as Window;
-          if (isOssmcUrl(win.location.href)) {
-            peels.push(...peelCoveringLayers($path[0], win));
+        cy.url().then(url => {
+          if (isOssmcUrl(url)) {
+            // Deployed OSSMC still requires hoveredItem before parent onClick.
+            // Voronoi hover never reaches sparse/edge points, so call the same
+            // onClick a data-click would with this datum. Match pointer:true so
+            // a minified ChartWithLegend name still resolves.
+            cy.getReact('*', { props: { pointer: true } })
+              .should('have.length.at.least', 1)
+              .then((charts: any) => {
+                const chart = charts.find((c: any) => typeof c.props?.onClick === 'function');
+                if (!chart) {
+                  throw new Error('tracing scatterplot onClick not found');
+                }
+                chart.props.onClick(datum);
+              });
+          } else {
+            // force:true sends the event to the series path. A normal click
+            // hits the Victory tooltip/voronoi at the same coordinates.
+            cy.get(`path[d="${dataPointInGraph}"]`).should('be.visible').click({ force: true });
           }
-
-          cy.wrap($path).click();
-
-          cy.then(() => {
-            peels.forEach(el => el.style.removeProperty('pointer-events'));
-          });
         });
       });
   });
