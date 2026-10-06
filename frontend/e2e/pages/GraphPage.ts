@@ -29,6 +29,8 @@ const WIZARD_TITLES: Record<string, string> = {
   request_timeouts: 'Request Timeouts'
 };
 
+const VIEW_ONLY_TOOLTIP = 'No user permission or Kiali in view-only mode';
+
 const GRAPH_TYPE_LABELS: Record<string, string> = {
   APP: 'App',
   SERVICE: 'Service',
@@ -654,6 +656,8 @@ export class GraphPage extends BasePage {
     const item = this.page.locator('.pf-topology-context-menu__c-dropdown__menu').locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
+    await item.hover({ force: true });
+    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
   }
 
   async expectContextMenuItemEnabledInViewOnly(menuKey: string): Promise<void> {
@@ -683,6 +687,24 @@ export class GraphPage extends BasePage {
 
   async clickSidePanelKebabItem(menuKey: string): Promise<void> {
     await this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`).click();
+  }
+
+  async expectSidePanelKebabItemDisabledInViewOnly(menuKey: string): Promise<void> {
+    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    await expect(item).toHaveClass(/pf-m-disabled/);
+    await expect(item.locator('button')).toBeDisabled();
+    await item.hover({ force: true });
+    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+  }
+
+  async expectSidePanelKebabItemEnabledInViewOnly(menuKey: string): Promise<void> {
+    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    await expect(item).not.toHaveClass(/pf-m-disabled/);
+    await expect(item.locator('button')).toBeEnabled();
+  }
+
+  async expectSidePanelClusterBadgeHidden(): Promise<void> {
+    await expect(this.page.locator('#graph-side-panel #pfbadge-C')).toHaveCount(0);
   }
 
   async pressReplay(): Promise<void> {
@@ -869,12 +891,12 @@ export class GraphPage extends BasePage {
 
   async expectReadOnlyWizardYaml(wizardKey: string): Promise<void> {
     const title = `View ${WIZARD_TITLES[wizardKey]}`;
-    const modal = this.page.locator('.pf-v6-c-modal-box').last();
-    await expect(modal).toContainText(title);
-    await expect(modal.getByText('Copy')).toBeVisible();
-    await expect(modal.getByText('Download')).toBeVisible();
-    await expect(modal.locator('.monaco-editor')).toBeAttached();
-    await expect(modal.getByRole('button', { name: 'Close' })).toBeVisible();
+    const dialog = this.page.getByRole('dialog');
+    await expect(dialog.getByRole('heading', { name: title })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Copy' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Download' })).toBeVisible();
+    await expect(dialog.getByRole('code').first()).toBeAttached();
+    await expect(dialog.getByRole('contentinfo').getByRole('button', { name: 'Close' })).toBeVisible();
   }
 
   async clickGraphEdge(fromName: string, fromType: string, toName: string, toType: string): Promise<void> {
