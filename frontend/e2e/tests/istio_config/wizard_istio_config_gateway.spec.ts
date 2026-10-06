@@ -72,4 +72,62 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
     await istioConfigWizardPage.createIstioConfig();
     await istioConfigPage.expectObjectListed('K8sReferenceGrant', refGrantName, namespace);
   });
+
+  test(
+    'Create colliding K8s Gateways and drop the reference after delete',
+    core2,
+    async ({ istioConfigPage, istioConfigWizardPage, page }) => {
+      const first = 'gatewayapi-1';
+      const second = 'gatewayapi-2';
+      const collidingHost = 'bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com';
+
+      const createCollidingGateway = async (name: string): Promise<void> => {
+        await istioConfigPage.open();
+        await selectNamespace(page, namespace);
+        await istioConfigPage.clickCreateIstioConfigAction('K8sGateway');
+        await istioConfigWizardPage.expectConfigWizard('Create K8sGateway');
+        await istioConfigWizardPage.addListener();
+        await istioConfigWizardPage.typesInInput('name', name);
+        await istioConfigWizardPage.typesInInput('addName_0', 'default');
+        await istioConfigWizardPage.typesInInput('addHostname_0', collidingHost);
+        await istioConfigWizardPage.typesInInput('addPort_0', '80');
+        await istioConfigWizardPage.addHostname();
+        await istioConfigWizardPage.chooseModeFromSelect('Hostname', 'addType_0');
+        await istioConfigWizardPage.typesInInput('addValue_0', 'google.com');
+        await istioConfigWizardPage.previewConfiguration();
+        await istioConfigWizardPage.createIstioConfig();
+      };
+
+      try {
+        deleteK8sGateway(first, namespace);
+        deleteK8sGateway(second, namespace);
+        await createCollidingGateway(first);
+        await createCollidingGateway(second);
+
+        await istioConfigPage.expectObjectListed('K8sGateway', first, namespace);
+        await istioConfigPage.expectObjectListed('K8sGateway', second, namespace);
+        await istioConfigPage.expectValidationStatus(namespace, 'K8sGateway', first, 'warning');
+        await istioConfigPage.expectValidationStatus(namespace, 'K8sGateway', second, 'warning');
+
+        await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', first);
+        await istioConfigPage.expectK8sGatewayReferenced(namespace, second, true);
+
+        await istioConfigPage.open();
+        await selectNamespace(page, namespace);
+        await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', second);
+        await istioConfigPage.deleteCurrentConfig();
+
+        await istioConfigPage.open();
+        await selectNamespace(page, namespace);
+        await istioConfigPage.expectObjectNotListed('K8sGateway', second, namespace);
+        await istioConfigPage.expectValidationStatus(namespace, 'K8sGateway', first, 'success');
+
+        await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', first);
+        await istioConfigPage.expectK8sGatewayReferenced(namespace, second, false);
+      } finally {
+        deleteK8sGateway(first, namespace);
+        deleteK8sGateway(second, namespace);
+      }
+    }
+  );
 });

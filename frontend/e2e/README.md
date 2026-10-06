@@ -169,7 +169,10 @@ hack/run-integration-tests.sh --test-suite playwright-external-kiali --tests-onl
 
 ### Offline (`yarn playwright:run:offline`)
 
-Ports Cypress `@offline` scenarios from `offline_status.feature` (2 tests): offline status icon on overview, and minigraph offline state on workload details.
+Ports unique `@offline` scenarios: status icon on overview, minigraph offline state on
+workload details, graph context-menu / side-panel view-only traffic actions, and Istio Config
+list Name/Namespace/Type (no Cluster column). Dual-tagged list/graph
+scenarios that also run in core suites stay in those projects.
 
 Requires must-gather data and Kiali running in offline mode (no live cluster during tests):
 
