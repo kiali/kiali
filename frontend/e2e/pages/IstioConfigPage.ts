@@ -198,16 +198,20 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectIstioObjectColumnInformation(object: string): Promise<void> {
+    await this.expectIstioObjectNameNamespaceType(object);
+    const configCell = getColWithRowText(this.page, object, 'Configuration');
+    await expect(
+      configCell.locator(linkSelector(`/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}`))
+    ).toBeVisible();
+  }
+
+  async expectIstioObjectNameNamespaceType(object: string): Promise<void> {
     const nameCell = getColWithRowText(this.page, object, 'Name');
     await expect(
       nameCell.locator(linkSelector(`/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}`))
     ).toBeVisible();
     await expect(getColWithRowText(this.page, object, 'Namespace')).toContainText('bookinfo');
     await expect(getColWithRowText(this.page, object, 'Type')).toContainText('Gateway');
-    const configCell = getColWithRowText(this.page, object, 'Configuration');
-    await expect(
-      configCell.locator(linkSelector(`/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${object}`))
-    ).toBeVisible();
   }
 
   async expectAllConfigurationTogglesChecked(): Promise<void> {
@@ -461,6 +465,24 @@ export class IstioConfigPage extends BasePage {
 
   async expectObjectNotListed(type: string, name: string, namespace: string): Promise<void> {
     await expect(this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
+  }
+
+  async expectK8sGatewayReferenced(namespace: string, gateway: string, referenced: boolean): Promise<void> {
+    await waitForLoadingComplete(this.page);
+    const ref = this.getBySel(`K8sGateway-${namespace}-${gateway}`);
+    if (referenced) {
+      await expect(this.page.getByRole('heading', { name: 'Validation References' })).toBeVisible();
+      await expect(ref).toBeVisible();
+      return;
+    }
+    await expect(ref).toHaveCount(0);
+  }
+
+  async deleteCurrentConfig(): Promise<void> {
+    await this.page.locator('#actions-toggle').click();
+    await this.page.locator('#actions').getByText('Delete', { exact: true }).click();
+    await this.page.locator('#pf-modal-part-1').getByRole('button', { name: 'Delete' }).click();
+    await waitForLoadingComplete(this.page);
   }
 
   async openConfigByRow(namespace: string, typeName: string, name: string): Promise<void> {
