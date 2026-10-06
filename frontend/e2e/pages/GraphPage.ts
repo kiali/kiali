@@ -895,7 +895,7 @@ export class GraphPage extends BasePage {
     await expect(modal).toContainText(title);
     await expect(modal.getByText('Copy')).toBeVisible();
     await expect(modal.getByText('Download')).toBeVisible();
-    await expect(modal.locator('.monaco-editor')).toBeAttached();
+    await expect(modal.getByRole('code').first()).toBeAttached();
     await expect(modal.getByRole('button', { name: 'Close' })).toBeVisible();
   }
 

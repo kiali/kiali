@@ -171,7 +171,7 @@ hack/run-integration-tests.sh --test-suite playwright-external-kiali --tests-onl
 
 Ports unique `@offline` scenarios: status icon on overview, minigraph offline state on
 workload details, graph context-menu / side-panel view-only traffic actions, and Istio Config
-list without the Configuration column (validations are unavailable). Dual-tagged list/graph
+list Name/Namespace/Type (no Cluster column). Dual-tagged list/graph
 scenarios that also run in core suites stay in those projects.
 
 Requires must-gather data and Kiali running in offline mode (no live cluster during tests):
