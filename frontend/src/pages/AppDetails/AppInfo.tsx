@@ -84,7 +84,10 @@ export class AppInfo extends React.Component<AppInfoProps> {
           </GridItem>
 
           <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
-            <Stack className={detailRightStackStyle} hasGutter>
+            <Stack className={detailRightStackStyle}>
+              <StackItem className={detailMiniGraphStackItemStyle}>
+                <MiniGraphCard dataSource={this.graphDataSource} />
+              </StackItem>
               {app && (
                 <StackItem className={noShrinkStyle}>
                   <HealthHistoryCard
@@ -95,9 +98,6 @@ export class AppInfo extends React.Component<AppInfoProps> {
                   />
                 </StackItem>
               )}
-              <StackItem className={detailMiniGraphStackItemStyle}>
-                <MiniGraphCard dataSource={this.graphDataSource} />
-              </StackItem>
             </Stack>
           </GridItem>
         </Grid>

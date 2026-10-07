@@ -251,7 +251,15 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
             </GridItem>
 
             <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
-              <Stack className={detailRightStackStyle} hasGutter>
+              <Stack className={detailRightStackStyle}>
+                <StackItem className={detailMiniGraphStackItemStyle}>
+                  <MiniGraphCard
+                    dataSource={this.graphDataSource}
+                    onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
+                    onLaunchWizard={this.handleLaunchWizard}
+                    serviceDetails={this.props.serviceDetails}
+                  />
+                </StackItem>
                 {this.props.service && (
                   <StackItem className={noShrinkStyle}>
                     <HealthHistoryCard
@@ -262,14 +270,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                     />
                   </StackItem>
                 )}
-                <StackItem className={detailMiniGraphStackItemStyle}>
-                  <MiniGraphCard
-                    dataSource={this.graphDataSource}
-                    onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
-                    onLaunchWizard={this.handleLaunchWizard}
-                    serviceDetails={this.props.serviceDetails}
-                  />
-                </StackItem>
               </Stack>
             </GridItem>
           </Grid>

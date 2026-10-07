@@ -703,7 +703,15 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
             </GridItem>
 
             <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
-              <Stack className={detailRightStackStyle} hasGutter>
+              <Stack className={detailRightStackStyle}>
+                <StackItem className={detailMiniGraphStackItemStyle}>
+                  <MiniGraphCard
+                    dataSource={this.graphDataSource}
+                    namespace={this.props.namespace}
+                    workload={this.props.workload}
+                    refreshWorkload={this.props.refreshWorkload}
+                  />
+                </StackItem>
                 {workload && (
                   <StackItem className={noShrinkStyle}>
                     <HealthHistoryCard
@@ -714,14 +722,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                     />
                   </StackItem>
                 )}
-                <StackItem className={detailMiniGraphStackItemStyle}>
-                  <MiniGraphCard
-                    dataSource={this.graphDataSource}
-                    namespace={this.props.namespace}
-                    workload={this.props.workload}
-                    refreshWorkload={this.props.refreshWorkload}
-                  />
-                </StackItem>
               </Stack>
             </GridItem>
           </Grid>

@@ -273,7 +273,10 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
               <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
             </GridItem>
             <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
-              <Stack className={detailRightStackStyle} hasGutter>
+              <Stack className={detailRightStackStyle}>
+                <StackItem className={detailMiniGraphStackItemStyle}>
+                  <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
+                </StackItem>
                 <StackItem className={noShrinkStyle}>
                   <HealthHistoryCard
                     cluster={this.props.nsInfo.cluster}
@@ -281,9 +284,6 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
                     name={namespace}
                     namespace={namespace}
                   />
-                </StackItem>
-                <StackItem className={detailMiniGraphStackItemStyle}>
-                  <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
                 </StackItem>
               </Stack>
             </GridItem>
