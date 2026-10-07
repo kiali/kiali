@@ -110,6 +110,7 @@ export const detailRightStackStyle = kialiStyle({
   display: 'flex',
   flex: 1,
   flexDirection: 'column',
+  gap: '0.5rem',
   height: '100%',
   minHeight: 0
 });

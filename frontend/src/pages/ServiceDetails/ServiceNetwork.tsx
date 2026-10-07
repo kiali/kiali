@@ -98,7 +98,7 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
   return (
     <Card isCompact={true} id="ServiceNetworkCard">
       <CardHeader>
-        <Title headingLevel="h3" size={TitleSizes['xl']}>
+        <Title headingLevel="h4" size={TitleSizes.md}>
           {t('Network')}
         </Title>
       </CardHeader>
