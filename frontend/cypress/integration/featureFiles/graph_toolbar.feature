@@ -23,9 +23,9 @@ Feature: Kiali Graph page - Toolbar (various)
   @error-rates-app
   @core-1
   Scenario: Graph alpha namespace with query params
-    When user graphs "alpha" namespaces with refresh "900000" and duration "300"
+    When user graphs "alpha" namespaces with refresh "900000" and duration "600"
     Then user sees the "alpha" namespace
-    And user sees selected graph duration "Last 5m"
+    And user sees selected graph duration "Last 10m"
     And user sees selected graph refresh "Every 15m"
 
   @offline
