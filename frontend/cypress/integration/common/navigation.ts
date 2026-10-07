@@ -1,4 +1,5 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { DEFAULT_GRAPH_DURATION_SECONDS, detailPageQueryParams } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 
 enum DetailType {
@@ -35,7 +36,9 @@ Given('user is at the {string} page for the {string} namespace', (page: string, 
 Given('user is at the {string} page with manual refresh', (page: string) => {
   // Forcing "Manual" to prevent any page load
   if (page === 'graph') {
-    cy.visit({ url: `${Cypress.config('baseUrl')}/console/graph/namespaces?namespaces=bookinfo&refresh=1` });
+    cy.visit({
+      url: `${Cypress.config('baseUrl')}/console/graph/namespaces?duration=${DEFAULT_GRAPH_DURATION_SECONDS}&namespaces=bookinfo&refresh=1`
+    });
   } else {
     cy.visit({ url: `${Cypress.config('baseUrl')}/console/${page}?refresh=1` });
   }
@@ -46,13 +49,7 @@ Given(
   (detail: DetailType, namespacedNamed: string, cluster: string) => {
     cy.url().then(() => {
       const detailPage = getPageDetail(detail);
-      const qs = {
-        // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-        refresh: '0'
-      };
-      if (cluster !== '') {
-        qs['clusterName'] = cluster;
-      }
+      const qs = detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {});
 
       const namespaceAndName = namespacedNamed.split('/');
       const namespace = namespaceAndName[0];
@@ -109,16 +106,9 @@ Given(
           const podName = result.stdout.trim();
 
           // Use the existing function for workload details
-          const qs = {
-            refresh: '0'
-          };
-          if (cluster !== '') {
-            qs['clusterName'] = cluster;
-          }
-
           cy.visit({
             url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/pods/${podName}`,
-            qs
+            qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
           });
           ensureKialiFinishedLoading();
         } else {
@@ -127,20 +117,13 @@ Given(
       });
     } else {
       // For non-OSSMC environments, treat DaemonSet as a regular workload
-      const qs = {
-        refresh: '0'
-      };
-      if (cluster !== '') {
-        qs['clusterName'] = cluster;
-      }
-
       const namespaceAndName = namespacedNamed.split('/');
       const namespace = namespaceAndName[0];
       const name = namespaceAndName[1];
 
       cy.visit({
         url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/workloads/${name}`,
-        qs
+        qs: detailPageQueryParams(cluster !== '' ? { clusterName: cluster } : {})
       });
       ensureKialiFinishedLoading();
     }

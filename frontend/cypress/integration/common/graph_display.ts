@@ -1,15 +1,18 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { assertGraphReady, select, selectAnd, selectOr } from './graph';
+import { assertGraphReady, DEFAULT_GRAPH_DURATION_SECONDS, select, selectAnd, selectOr } from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 const CLIENT_SIDE_ONLY_OPTIONS = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
 
 When('user graphs {string} namespaces', (namespaces: string) => {
-  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
+  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing.
+  // Pin duration so tests do not inherit a value from redux-persist set by an earlier scenario.
   cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
-  cy.visit({ url: `/console/graph/namespaces?refresh=0&namespaces=${namespaces}` });
+  cy.visit({
+    url: `/console/graph/namespaces?duration=${DEFAULT_GRAPH_DURATION_SECONDS}&refresh=0&namespaces=${namespaces}`
+  });
 
   if (namespaces !== '') {
     cy.url().then(url => {
@@ -471,7 +474,7 @@ When(
     cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
     cy.visit({
-      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=${DEFAULT_GRAPH_DURATION_SECONDS}&namespaces=${namespace}&refresh=${refreshMs}`
     });
 
     cy.url().then(url => {
@@ -503,7 +506,7 @@ When(
     cy.intercept(`**/api/namespaces/graph*`).as('graphNamespaces');
 
     cy.visit({
-      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=60s&namespaces=${namespace}&refresh=${refreshMs}`
+      url: `/console/graph/namespaces?graphType=app&edges=noEdgeLabels&duration=${DEFAULT_GRAPH_DURATION_SECONDS}&namespaces=${namespace}&refresh=${refreshMs}`
     });
 
     cy.url().then(url => {
@@ -529,7 +532,7 @@ When(
 
 Then('graph cache metrics should show at least {int} miss and {int} hits', (minMisses: number, minHits: number) => {
   cy.get('@graphCacheMetricsBefore').then(beforeObj => {
-    const before = (beforeObj as unknown) as GraphCacheMetrics;
+    const before = beforeObj as unknown as GraphCacheMetrics;
 
     cy.request({ url: 'api/test/metrics/graph/cache' }).then(resp => {
       expect(resp.status).to.eq(200);
@@ -561,7 +564,9 @@ Given('prometheus is reported as disabled in the config', () => {
     });
   }).as('configWithPrometheusDisabled');
   // Visit the graph page immediately so the intercept is active for the config load
-  cy.visit({ url: `${Cypress.config('baseUrl')}/console/graph/namespaces?refresh=0` });
+  cy.visit({
+    url: `${Cypress.config('baseUrl')}/console/graph/namespaces?duration=${DEFAULT_GRAPH_DURATION_SECONDS}&refresh=0`
+  });
   cy.wait('@configWithPrometheusDisabled');
 });
 

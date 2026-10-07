@@ -1,11 +1,12 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { detailPageQueryParams } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 import { linkSelector } from './utils';
 
 Given('user is at the details page for the {string} namespace', (ns: string) => {
   cy.visit({
     url: `/console/namespaces/${ns}`,
-    qs: { refresh: '0' }
+    qs: detailPageQueryParams()
   });
   ensureKialiFinishedLoading();
 });
@@ -32,10 +33,10 @@ Then('user sees the {string} card', (title: string) => {
     title === 'Resources'
       ? 'namespace-resources-card'
       : title === 'Labels'
-      ? 'namespace-labels-card'
-      : title === 'Annotations'
-      ? 'namespace-annotations-card'
-      : '';
+        ? 'namespace-labels-card'
+        : title === 'Annotations'
+          ? 'namespace-annotations-card'
+          : '';
   cy.get(`[data-test="${testId}"]`).should('exist');
 });
 

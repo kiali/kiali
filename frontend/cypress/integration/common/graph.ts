@@ -7,6 +7,16 @@ import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
 import { buildNodeTree, findComponentsInTree, getReactFiber } from '../../support/react-utils';
 
+/** Default graph rate interval for Cypress tests (5 minutes, in seconds). */
+export const DEFAULT_GRAPH_DURATION_SECONDS = 300;
+
+/** Query params for detail-page visits (overview minigraph, traffic tab). */
+export const detailPageQueryParams = (extra: Record<string, string> = {}): Record<string, string> => ({
+  duration: String(DEFAULT_GRAPH_DURATION_SECONDS),
+  refresh: '0',
+  ...extra
+});
+
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
 });
@@ -235,20 +245,7 @@ export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node
 };
 
 export type SelectOp =
-  | '='
-  | '!='
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | '!*='
-  | '!$='
-  | '!^='
-  | '*='
-  | '$='
-  | '^='
-  | 'falsy'
-  | 'truthy';
+  '=' | '!=' | '>' | '<' | '>=' | '<=' | '!*=' | '!$=' | '!^=' | '*=' | '$=' | '^=' | 'falsy' | 'truthy';
 
 export type SelectExp = {
   op?: SelectOp;
