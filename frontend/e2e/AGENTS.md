@@ -327,6 +327,13 @@ These look like rule violations but are intentional — **do not "fix" them:**
   `storageState`. (PR #10217)
 - **Namespace dropdown `getByRole('checkbox')` needs `aria-label`** — PF renders the name in a sibling
   `<span>`, not a `<label>`. Scope to `namespace-dropdown-list` with `exact: true`. (PR #10217)
+- **Waypoint enrollment is test-time** — ambient install applies the bookinfo Gateway CR only; label
+  `istio.io/use-waypoint=waypoint` and wait on `/api/namespaces` before bookinfo waypoint UI asserts
+  (`utils/waypointHelpers.ts`).
+- **Waypoint Background traces ≠ Tempo** — poll gateway workload traces on the ambient cluster
+  (Jaeger-style); do not require `playwright-tempo`. Defer deep trace UI to `@waypoint-tracing`.
+- **Graph Prometheus-inclusive edge floors** — when the scenario count includes Prometheus, subtract
+  one if Prometheus is deployed (`GraphPage.expectTrafficEdgesAtLeastIncludingPrometheus`).
 
 ---
 

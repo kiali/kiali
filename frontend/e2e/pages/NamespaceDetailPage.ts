@@ -127,4 +127,30 @@ export class NamespaceDetailPage extends BasePage {
       expect(body.labels).not.toHaveProperty('istio-injection');
     }
   }
+
+  async expectActionAbsent(optionLabel: string): Promise<void> {
+    await this.openActionsMenu();
+    await expect(this.page.locator('[role="menu"]')).toBeVisible();
+    await expect(this.page.locator('[role="menu"]').getByText(optionLabel, { exact: true })).toHaveCount(0);
+    await this.page.locator('body').click({ position: { x: 0, y: 0 } });
+    await expect(this.page.locator('[role="menu"]')).toHaveCount(0);
+  }
+
+  async clickAmbientAction(action: 'add' | 'remove'): Promise<void> {
+    await this.openActionsMenu();
+    const selector = `${action}-${this.targetNamespace}-namespace-ambient`;
+    await this.getBySel(selector).click();
+    await this.confirmTrafficPolicyModal();
+  }
+
+  async expectNamespaceLabel(labelKey: string, labelValue?: string): Promise<void> {
+    const response = await this.page.request.get(kialiUrl(`/api/namespaces/${this.targetNamespace}/info`));
+    expect(response.ok()).toBeTruthy();
+    const body = await response.json();
+    if (labelValue === undefined) {
+      expect(body.labels).not.toHaveProperty(labelKey);
+    } else {
+      expect(body.labels[labelKey]).toBe(labelValue);
+    }
+  }
 }

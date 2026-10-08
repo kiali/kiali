@@ -13,7 +13,13 @@ const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' 
 const reporters: ReporterDescription[] = isCI
   ? [
       ['list'],
-      ['blob', { outputDir: 'playwright/blob-report' }],
+      [
+        'blob',
+        {
+          fileName: `${process.env.PLAYWRIGHT_BLOB_NAME ?? 'report'}.zip`,
+          outputDir: 'playwright/blob-report'
+        }
+      ],
       ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
     ]
   : [
@@ -121,15 +127,22 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {
+      name: 'waypoint-setup',
+      testMatch: /waypoint\.setup\.ts/,
+      testDir: './e2e/global-setup',
+      dependencies: ['setup'],
+      use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
+    },
+    {
       name: 'waypoint',
       grep: /@waypoint(?!-)/,
-      dependencies: ['setup'],
+      dependencies: ['waypoint-setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {
       name: 'waypoint-tracing',
       grep: /@waypoint-tracing/,
-      dependencies: ['setup'],
+      dependencies: ['waypoint-setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {

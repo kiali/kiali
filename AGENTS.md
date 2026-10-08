@@ -371,7 +371,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-core-2` | Playwright core test group 2 (KinD + in-cluster Kiali) |
 | `playwright-core-caching` | Playwright core-caching suite (KinD + in-cluster Kiali with cache enabled) |
 | `playwright-core-optional` | Playwright CRD validation and Perses suite (KinD + in-cluster Kiali) |
-| `playwright-ambient` | Playwright ambient mesh suite (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
+| `playwright-ambient` | Playwright ambient then waypoint+waypoint-tracing (ambient KinD + Sail + in-cluster Kiali via MetalLB) |
 | `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
 | `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
 | `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
@@ -488,6 +488,7 @@ yarn playwright:run:core2
 yarn playwright:run:core-caching
 yarn playwright:run:core-optional
 yarn playwright:run:ambient
+yarn playwright:run:waypoint
 yarn playwright:run:external-kiali
 yarn playwright:run:tracing
 hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
