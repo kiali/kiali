@@ -366,3 +366,73 @@ func TestConfigHandlerAmbientEnabledChecksAllClusters(t *testing.T) {
 	}
 	require.True(hasWaypoint, "GatewayAPIClasses should include istio-waypoint when a remote cluster has ztunnel")
 }
+
+func TestConfigHandlerWithAIBudgetFilter(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.Providers = []config.ProviderConfig{
+		{
+			Name:         "test-openai",
+			Type:         config.OpenAIProvider,
+			Enabled:      true,
+			DefaultModel: "gpt-4o",
+			Models: []config.AIModel{
+				{Name: "gpt-4o", Model: "gpt-4o", Enabled: true},
+				{Name: "gpt-4o-mini", Model: "gpt-4o-mini", Enabled: true},
+			},
+		},
+		{
+			Name:         "test-anthropic",
+			Type:         config.AnthropicProvider,
+			Enabled:      true,
+			DefaultModel: "claude-3-5",
+			Models: []config.AIModel{
+				{Name: "claude-3-5", Model: "claude-3-5", Enabled: true},
+			},
+		},
+	}
+	conf.AI.Metrics = true
+	conf.AI.Consumption.Budgets = []config.UserBudgetConfig{
+		{
+			Usernames:        []string{"anonymous", "", "*"},
+			Interval:         config.WeeklyBudget,
+			MaxCost:          10.0,
+			AllowedProviders: []config.ProviderType{config.OpenAIProvider},
+			AllowedModels:    []string{"gpt-4o"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := &istiotest.FakeDiscovery{}
+
+	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
+
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, discovery, cf, prom))
+	mr := mux.NewRouter()
+	mr.Handle("/api/config", handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/api/config")
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	require.Equal(200, resp.StatusCode, string(actual))
+
+	var confResp handlers.PublicConfig
+	require.NoError(json.Unmarshal(actual, &confResp))
+
+	// Verify that the providers and models are filtered according to the budget of user "anonymous"
+	require.Len(confResp.AI.ChatAI.Providers, 1)
+	require.Equal("test-openai", confResp.AI.ChatAI.Providers[0].Name)
+	require.Len(confResp.AI.ChatAI.Providers[0].Models, 1)
+	require.Equal("gpt-4o", confResp.AI.ChatAI.Providers[0].Models[0].Name)
+}

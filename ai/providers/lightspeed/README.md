@@ -19,19 +19,21 @@ entirely by the LightSpeed service itself.
 
 ## Configuration
 
-Add a `lightspeed` provider to `chat_ai.providers` in your Kiali configuration. Only `endpoint` is
+Add a `lightspeed` provider to `ai.chat.providers` in your Kiali configuration. Only `endpoint` is
 required:
 
 ```yaml
-chat_ai:
+ai:
   enabled: true
-  default_provider: "LightSpeed"
-  providers:
-    - name: "LightSpeed"
-      description: "OpenShift LightSpeed"
-      type: "lightspeed"
-      endpoint: "http://127.0.0.1:8080/"
-      enabled: true
+  chat:
+    enabled: true
+    default_provider: "LightSpeed"
+    providers:
+      - name: "LightSpeed"
+        description: "OpenShift LightSpeed"
+        type: "lightspeed"
+        endpoint: "http://127.0.0.1:8080/"
+        enabled: true
 ```
 
 | Field        | Required | Description                                             |

@@ -34,6 +34,7 @@ import { ChatBot } from 'components/ChatBot/ChatBot';
 import { ParentAppearanceSync } from 'components/Kiosk/ParentAppearanceSync';
 
 type ReduxStateProps = {
+  ai: boolean;
   chatbotEnabled: boolean;
   colorScheme: string;
   externalServices: ExternalServiceInfo[];
@@ -145,7 +146,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     </Masthead>
   );
 
-  const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} />;
+  const menu = <Menu isNavOpen={isNavOpen} externalServices={props.externalServices} ai={props.ai} />;
 
   const Sidebar = kioskMode ? undefined : (
     <PageSidebar isSidebarOpen={isNavOpen}>
@@ -172,6 +173,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   chatbotEnabled: state.ai.enabled && state.ai.chat.enabled,
+  ai: state.ai,
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
   navCollapsed: state.userSettings.interface.navCollapse,

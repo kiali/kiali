@@ -82,6 +82,10 @@ const defaultServerConfig: ComputedServerConfig = {
       store: {
         enabled: false
       }
+    },
+    consumption: {
+      enabled: false,
+      allowed: false
     }
   },
   clusters: {},

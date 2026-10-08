@@ -58,16 +58,21 @@ type ChatAIStoreConfig struct {
 }
 
 type AIConfig struct {
-	Enabled bool         `json:"enabled"`
-	ChatAI  ChatAIConfig `json:"chat,omitempty"`
+	Enabled     bool                `json:"enabled"`
+	ChatAI      ChatAIConfig        `json:"chat"`
+	Consumption AIConsumptionConfig `json:"consumption"`
+}
+
+type AIConsumptionConfig struct {
+	Enabled bool `json:"enabled"`
+	Allowed bool `json:"allowed"`
 }
 
 type ChatAIConfig struct {
-	Enabled         bool              `json:"enabled"`
-	Allowed         bool              `json:"allowed"`
-	DefaultProvider string            `json:"defaultProvider"`
-	Providers       []ProviderConfig  `json:"providers"`
-	Store           ChatAIStoreConfig `json:"store"`
+	Enabled         bool             `json:"enabled"`
+	Allowed         bool             `json:"allowed"`
+	DefaultProvider string           `json:"defaultProvider"`
+	Providers       []ProviderConfig `json:"providers"`
 }
 
 type AIModel struct {
@@ -129,6 +134,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig(conf, prom, logger)
 
+		log.Infof("AI Info: %+v", conf.AI.Metrics)
 		aiConfig := getAIConfig(conf, r)
 
 		publicConfig := PublicConfig{
@@ -221,18 +227,43 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 	}
 }
 
+func isUserAllowed(usernames []string, username string) bool {
+	if len(usernames) > 0 && !slices.Contains(usernames, username) {
+		return false
+	}
+	return true
+}
+
+func getAIConsumptionConfig(conf *config.Config, username string) AIConsumptionConfig {
+	if !conf.AI.Metrics {
+		return AIConsumptionConfig{
+			Enabled: false,
+			Allowed: false,
+		}
+	}
+	return AIConsumptionConfig{
+		Enabled: true,
+		Allowed: isUserAllowed(conf.AI.Consumption.AllowedUsersDashboard, username),
+	}
+}
+
+func getAIChatConfig(conf *config.Config, username string) ChatAIConfig {
+	if !conf.AI.ChatAI.Enabled {
+		return ChatAIConfig{
+			Enabled: false,
+		}
+	}
+	return ChatAIConfig{
+		Enabled: conf.AI.ChatAI.Enabled,
+		Allowed: isUserAllowed(conf.AI.ChatAI.AllowedUsers, username),
+	}
+}
+
 func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
 	if !conf.AI.Enabled {
 		return AIConfig{}
 	}
-	if !conf.AI.ChatAI.Enabled {
-		return AIConfig{
-			Enabled: conf.AI.Enabled,
-			ChatAI: ChatAIConfig{
-				Enabled: false,
-			},
-		}
-	}
+
 	fallbackUserID := "anonymous"
 	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 		authInfo, err := getAuthInfo(r)
@@ -248,52 +279,76 @@ func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
 		fallbackUserID = clusterAuth.Username
 	}
 
-	if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, fallbackUserID) {
-		log.Infof("AI initialization: user %q is not allowed to use the ChatAI feature", fallbackUserID)
-		return AIConfig{
-			Enabled: conf.AI.Enabled,
-			ChatAI: ChatAIConfig{
-				Enabled: conf.AI.ChatAI.Enabled,
-				Allowed: false,
-			},
-		}
+	aiConfig := AIConfig{
+		Enabled:     conf.AI.Enabled,
+		ChatAI:      getAIChatConfig(conf, fallbackUserID),
+		Consumption: getAIConsumptionConfig(conf, fallbackUserID),
 	}
 
-	aiConfig := AIConfig{
-		Enabled: conf.AI.Enabled,
-		ChatAI: ChatAIConfig{
-			Enabled:         conf.AI.ChatAI.Enabled,
-			Allowed:         true,
-			DefaultProvider: conf.AI.ChatAI.DefaultProvider,
-			Providers:       []ProviderConfig{},
-			Store: ChatAIStoreConfig{
-				Enabled: conf.AI.ChatAI.Enabled && conf.AI.ChatAI.StoreConfig.Enabled,
-			},
-		},
-	}
-	providers := []ProviderConfig{}
-	for _, provider := range conf.AI.ChatAI.Providers {
-		models := []AIModel{}
-		if provider.Enabled {
-			for _, model := range provider.Models {
-				if model.Enabled {
-					models = append(models, AIModel{
-						Name:        model.Name,
-						Model:       model.Model,
-						Description: model.Description,
+	if aiConfig.ChatAI.Enabled && aiConfig.ChatAI.Allowed {
+		var budget *config.UserBudgetConfig
+		if conf.AI.Metrics {
+			budget = conf.AI.Consumption.GetBudgetForUser(fallbackUserID)
+		}
+
+		providers := []ProviderConfig{}
+		for _, provider := range conf.AI.ChatAI.Providers {
+			if budget != nil && len(budget.AllowedProviders) > 0 {
+				allowed := false
+				for _, ap := range budget.AllowedProviders {
+					if provider.Type == ap {
+						allowed = true
+						break
+					}
+				}
+				if !allowed {
+					continue
+				}
+			}
+
+			models := []AIModel{}
+			if provider.Enabled {
+				for _, model := range provider.Models {
+					if model.Enabled {
+						if budget != nil && len(budget.AllowedModels) > 0 {
+							allowed := false
+							if provider.Type == config.LightSpeedProvider {
+								allowed = true
+							} else {
+								for _, am := range budget.AllowedModels {
+									if config.MatchModelPattern(am, model.Name) || config.MatchModelPattern(am, model.Model) {
+										allowed = true
+										break
+									}
+								}
+							}
+							if !allowed {
+								continue
+							}
+						}
+
+						models = append(models, AIModel{
+							Name:        model.Name,
+							Model:       model.Model,
+							Description: model.Description,
+						})
+					}
+				}
+				if len(models) > 0 {
+					providers = append(providers, ProviderConfig{
+						Name:         provider.Name,
+						Description:  provider.Description,
+						DefaultModel: provider.DefaultModel,
+						Models:       models,
 					})
 				}
 			}
-			providers = append(providers, ProviderConfig{
-				Name:         provider.Name,
-				Description:  provider.Description,
-				DefaultModel: provider.DefaultModel,
-				Models:       models,
-			})
 		}
+		aiConfig.ChatAI.DefaultProvider = conf.AI.ChatAI.DefaultProvider
+		aiConfig.ChatAI.Providers = providers
 	}
-	aiConfig.ChatAI.Providers = providers
 	return aiConfig
+
 }
 
 type PrometheusPartialConfig struct {

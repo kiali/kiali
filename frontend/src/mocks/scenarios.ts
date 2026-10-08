@@ -86,9 +86,15 @@ export interface ClusterConfig {
   validationWarnings?: number;
 }
 
+export interface AIrights {
+  allowed?: boolean;
+  enabled?: boolean;
+}
+
 export interface AIConfig {
   enabled?: boolean;
   chat?: ChatAIConfig;
+  consumption?: AIrights;
 }
 
 export interface ChatAIConfig {

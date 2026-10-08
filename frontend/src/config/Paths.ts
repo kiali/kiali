@@ -1,6 +1,7 @@
 /** Navigation paths */
 export enum Paths {
   OVERVIEW = 'overview',
+  AI = 'ai',
   AGGREGATES = 'aggregates',
   APPLICATIONS = 'applications',
   ISTIO = 'istio',

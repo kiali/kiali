@@ -18,6 +18,7 @@ import { t } from 'utils/I18nUtils';
 import { RouteObject } from 'react-router-dom-v5-compat';
 import { WildcardRoute } from 'routes/WildcardRoute';
 import { NamespaceDetailsRoute } from 'routes/NamespaceDetailsRoute';
+import { AIDashboardPage } from 'pages/AIDashboard/AIDashboardPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -77,10 +78,20 @@ const navMenuItems: MenuItem[] = [
     id: 'tracing',
     title: t('Distributed Tracing'),
     to: `/${Paths.TRACING}`
+  },
+  {
+    id: 'ai',
+    title: t('AI Dashboard'),
+    to: '/ai',
+    pathsActive: [/^\/ai\/(.*)/]
   }
 ];
 
 const pathRoutes: RouteObject[] = [
+  {
+    path: `/${Paths.AI}`,
+    element: <AIDashboardPage />
+  },
   {
     path: `/${Paths.OVERVIEW}`,
     element: <OverviewPage />

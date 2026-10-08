@@ -203,6 +203,12 @@ export interface TourState {
 
 export interface AIState {
   chat: ChatAIState;
+  consumption: AIRightView;
+  enabled: boolean;
+}
+
+export interface AIRightView {
+  allowed: boolean;
   enabled: boolean;
 }
 

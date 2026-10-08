@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { SessionTimeout } from '../../SessionTimeout/SessionTimeout';
-import { config, isMultiCluster, serverConfig } from '../../../config';
+import { config, isMultiCluster } from '../../../config';
 import { MILLISECONDS } from '../../../types/Common';
 import type { KialiAppState, LoginSession } from '../../../store/Store';
 import { authenticationConfig } from '../../../config/AuthenticationConfig';
@@ -12,7 +12,6 @@ import { connect } from 'react-redux';
 import * as API from '../../../services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { namespacesPerClusterSelector } from 'store/Selectors';
-import { ChatSessionUsageModal } from 'components/ChatSessionUsage/ChatSessionUsageModal';
 import { PreferencesModal } from './PreferencesModal';
 import { isParentOwnedAppearance } from 'utils/AppearanceUtils';
 import { Divider, Dropdown, DropdownGroup, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
@@ -36,7 +35,6 @@ type UserState = {
   isDropdownOpen: boolean;
   isPreferencesOpen: boolean;
   isSessionTimeoutDismissed: boolean;
-  isSessionTokenStatsOpen: boolean;
   showSessionTimeOut: boolean;
   timeCountDownSeconds: number;
   timeLeftTimerId?: ReturnType<typeof setInterval>;
@@ -55,8 +53,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       timeCountDownSeconds: this.timeLeft() / MILLISECONDS,
       isSessionTimeoutDismissed: false,
       isDropdownOpen: false,
-      isPreferencesOpen: false,
-      isSessionTokenStatsOpen: false
+      isPreferencesOpen: false
     };
   }
 
@@ -134,19 +131,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
     });
   };
 
-  openSessionTokenStats = (): void => {
-    this.setState({
-      isDropdownOpen: false,
-      isSessionTokenStatsOpen: true
-    });
-  };
-
-  closeSessionTokenStats = (): void => {
-    this.setState({
-      isSessionTokenStatsOpen: false
-    });
-  };
-
   openPreferences = (): void => {
     this.setState({
       isDropdownOpen: false,
@@ -161,8 +145,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
   };
 
   render(): React.ReactNode {
-    const { isDropdownOpen, isPreferencesOpen, isSessionTokenStatsOpen } = this.state;
-    const showSessionTokenStats = serverConfig.ai.chat.enabled && serverConfig.ai.chat.store.enabled;
+    const { isDropdownOpen, isPreferencesOpen } = this.state;
     const showPreferences = !isParentOwnedAppearance();
 
     const clusterIsInSessionInfo = (cluster: string): boolean =>
@@ -186,11 +169,7 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
       });
     }
     const hasDropdownActions =
-      showPreferences ||
-      showSessionTokenStats ||
-      canLogout ||
-      loggedInClusters.length > 0 ||
-      loggedOutClusters.length > 0;
+      showPreferences || canLogout || loggedInClusters.length > 0 || loggedOutClusters.length > 0;
 
     return (
       <>
@@ -258,17 +237,12 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
               </>
             )}
 
-            {showSessionTokenStats && (
-              <DropdownItem key={'session_token_stats_option'} onClick={this.openSessionTokenStats}>
-                {t('Session Token Stats')}
-              </DropdownItem>
-            )}
             {showPreferences && (
               <DropdownItem data-test="preferences" key={'preferences_option'} onClick={this.openPreferences}>
                 {t('Preferences')}
               </DropdownItem>
             )}
-            {(showSessionTokenStats || showPreferences) && canLogout && <Divider component="li" />}
+            {showPreferences && canLogout && <Divider component="li" />}
             {canLogout && (
               <DropdownItem data-test="user-logout" key={'user_logout_option'} onClick={this.handleLogout}>
                 {t('Logout')}
@@ -277,7 +251,6 @@ class UserDropdownComponent extends React.Component<UserProps, UserState> {
           </Dropdown>
         )}
 
-        <ChatSessionUsageModal isOpen={isSessionTokenStatsOpen} onClose={this.closeSessionTokenStats} />
         <PreferencesModal isOpen={isPreferencesOpen} onClose={this.closePreferences} />
 
         {authenticationConfig.strategy === AuthStrategy.openshift && authenticationConfig.logoutEndpoint && (
