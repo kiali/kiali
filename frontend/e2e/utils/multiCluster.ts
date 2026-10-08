@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
@@ -91,22 +90,29 @@ export const deleteGatewayOnClusters = async (request: APIRequestContext, name: 
   await deleteIstioOnClusters(request, `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${name}`);
 };
 
-export const applyAuthorizationPolicyOnCluster = (name: string, namespace: string, clusterContext: string): void => {
-  execSync(
-    `kubectl --context ${clusterContext} delete AuthorizationPolicy ${name} -n ${namespace} --ignore-not-found=true`,
-    { encoding: 'utf8' }
-  );
-  const yaml = `apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ${name}
-  namespace: ${namespace}
-spec: {}
-`;
-  execSync(`kubectl --context ${clusterContext} apply -n ${namespace} -f -`, {
-    encoding: 'utf8',
-    input: yaml
+/**
+ * Create a minimal AuthorizationPolicy via the Kiali API on a named cluster.
+ * Prefer this over kubectl apply — remote-cluster informer lag can leave Kiali
+ * returning HTTP 404 for minutes after an out-of-band create.
+ */
+export const applyAuthorizationPolicyOnCluster = async (
+  request: APIRequestContext,
+  name: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const collectionPath = `/api/namespaces/${namespace}/istio/security.istio.io/v1/AuthorizationPolicy`;
+  const objectPath = `${collectionPath}/${name}`;
+  await request.delete(kialiUrl(`${objectPath}?clusterName=${cluster}`), { failOnStatusCode: false });
+  const createResponse = await request.post(kialiUrl(`${collectionPath}?clusterName=${cluster}`), {
+    data: {
+      apiVersion: 'security.istio.io/v1',
+      kind: 'AuthorizationPolicy',
+      metadata: { name, namespace },
+      spec: {}
+    }
   });
+  expect(createResponse.ok()).toBeTruthy();
 };
 
 export const scaleDeploymentOnContext = (

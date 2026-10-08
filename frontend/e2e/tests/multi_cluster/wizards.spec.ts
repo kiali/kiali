@@ -2,7 +2,6 @@ import { test } from '../../fixtures/kialiFixtures';
 import {
   EAST,
   applyAuthorizationPolicyOnCluster,
-  cluster1Context,
   deleteGatewayOnClusters,
   deleteIstioOnClusters,
   deleteRequestRoutingOnClusters
@@ -33,7 +32,7 @@ test.describe('Istio wizards multi-cluster', () => {
   );
 
   test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
-    applyAuthorizationPolicyOnCluster('east-auth-pol', 'bookinfo', cluster1Context());
+    await applyAuthorizationPolicyOnCluster(request, 'east-auth-pol', 'bookinfo', EAST);
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', 'east-auth-pol');
@@ -47,8 +46,8 @@ test.describe('Istio wizards multi-cluster', () => {
     );
   });
 
-  test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page }) => {
-    applyAuthorizationPolicyOnCluster('east-auth-pol', 'bookinfo', cluster1Context());
+  test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
+    await applyAuthorizationPolicyOnCluster(request, 'east-auth-pol', 'bookinfo', EAST);
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', 'east-auth-pol');

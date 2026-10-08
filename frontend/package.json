@@ -99,7 +99,7 @@
     "playwright:run:tracing": "PLAYWRIGHT_BLOB_NAME=tracing playwright test --project=tracing --pass-with-no-tests",
     "playwright:run:tracing:junit": "PLAYWRIGHT_BLOB_NAME=tracing playwright test --project=tracing --pass-with-no-tests",
     "playwright:run:multi-mesh": "PLAYWRIGHT_BLOB_NAME=multi-mesh playwright test --project=multi-mesh --pass-with-no-tests",
-    "playwright:run:all": "r=0; yarn playwright:run:smoke || r=1; yarn playwright:run:core1 || r=1; yarn playwright:run:core2 || r=1; yarn playwright:run:core-caching || r=1; yarn playwright:run:crd-validation || r=1; yarn playwright:run:perses || r=1; yarn playwright:run:tracing || r=1; yarn playwright:run:ai-chatbot || r=1; exit $r",
+    "playwright:run:all": "yarn playwright:run:junit",
     "playwright:run:ambient": "PLAYWRIGHT_BLOB_NAME=ambient playwright test --project=ambient --pass-with-no-tests",
     "playwright:run:waypoint": "PLAYWRIGHT_BLOB_NAME=waypoint playwright test --project=waypoint --project=waypoint-tracing --pass-with-no-tests",
     "playwright:run:ambient:junit": "r=0; yarn run playwright:run:ambient || r=1; yarn run playwright:run:waypoint || r=1; exit $r",
