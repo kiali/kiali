@@ -41,7 +41,7 @@ import {
 } from 'utils/AppearanceUtils';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { initializeLanguage, registerSystemLanguageListener } from 'utils/LanguageUtils';
-import type { ChatAIConfig } from 'types/Chatbot';
+import type { AIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -53,7 +53,7 @@ interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
-  setChatAI: (chatAI: ChatAIConfig) => void;
+  setAI: (ai: AIConfig) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -210,7 +210,13 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
-      this.props.setChatAI(configs[1].data.ai.chat);
+      this.props.setAI({
+        ...configs[1].data.ai,
+        consumption: configs[1].data.ai.consumption ?? {
+          allowed: false,
+          enabled: false
+        }
+      });
       this.applyUIDefaults();
 
       // Notify the user about Prometheus availability.
@@ -394,7 +400,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
   statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch),
-  setChatAI: bindActionCreators(ChatAIActions.setChatAI, dispatch)
+  setAI: bindActionCreators(ChatAIActions.setAI, dispatch)
 });
 
 export const AuthenticationController = connect(mapStateToProps, mapDispatchToProps)(AuthenticationControllerComponent);

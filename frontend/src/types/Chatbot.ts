@@ -93,14 +93,18 @@ export type ModelAI = {
 };
 
 export type AIConfig = {
-  enabled: boolean;
   chat: ChatAIConfig;
+  consumption: AIrights;
+  enabled: boolean;
 };
 
-export type ChatAIConfig = {
+export type AIrights = {
   allowed: boolean;
-  defaultProvider: string;
   enabled: boolean;
+};
+
+export type ChatAIConfig = AIrights & {
+  defaultProvider: string;
   providers: ProviderAI[];
   store: {
     enabled: boolean;
@@ -153,6 +157,22 @@ export type ChatResourceHealth = {
   status?: HealthStatusId;
 };
 
+export type ChatSessionUsageBudget = {
+  has_budget: boolean;
+  interval: string;
+  max_cost: number;
+  max_tokens: number;
+  remaining_cost: number;
+  remaining_tokens: number;
+};
+
+export type ChatSessionUsageResponse = {
+  budget: ChatSessionUsageBudget;
+  currentPeriod?: AIUsageResponse;
+  metrics?: AIUsageResponse;
+  session: ChatSessionUsageMetric[];
+};
+
 export type ChatSessionUsageMetric = {
   completion_tokens: number;
   last_updated: string;
@@ -163,4 +183,83 @@ export type ChatSessionUsageMetric = {
   since: string;
   total_tokens: number;
   user_id: string;
+};
+
+/** Values are expressed in millions of tokens (see AIUsageResponse.tokenUnit). */
+export const formatTokensInMillions = (value: number): string =>
+  `${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })} M`;
+
+export const formatCost = (value: number, currency = 'USD'): string =>
+  `${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`;
+// ---- AI global usage (GET /api/chat/usage) ----------------------------------
+
+export type AICost = {
+  currency?: string;
+  input: number;
+  output: number;
+  total: number;
+};
+
+/** One row in a provider- or model-level aggregation. Token counts are in millions. */
+export type AITokenRow = {
+  completionTokens: number;
+  cost?: AICost;
+  model?: string;
+  promptTokens: number;
+  provider?: string;
+  timeSeries?: AITimeSeriesPoint[];
+  totalTokens: number;
+};
+
+/** A single time-bucket point in a per-(provider, model) series. */
+export type AITimeSeriesPoint = {
+  completionTokens: number;
+  cost?: AICost;
+  promptTokens: number;
+  timestamp: string;
+  totalTokens: number;
+};
+
+/** One time series for a specific provider + model combination. */
+export type AITimeSeriesEntry = {
+  model: string;
+  points: AITimeSeriesPoint[];
+  provider: string;
+};
+
+export type TokenMetric = 'totalTokens' | 'promptTokens' | 'completionTokens';
+
+export type UsageValueKind = 'cost' | 'tokens';
+
+export type AITopModelRow = {
+  cost?: AICost;
+  model: string;
+  provider: string;
+  totalTokens: number;
+};
+
+export type AITopUserRow = {
+  cost?: AICost;
+  totalTokens: number;
+  username: string;
+};
+
+export type AITopSummary = {
+  topModels: AITopModelRow[];
+  topUsers: AITopUserRow[];
+};
+
+/** Full response shape returned by GET /api/chat/usage. Token counts are in millions. */
+export type AIUsageResponse = {
+  summary: {
+    byModel: AITokenRow[];
+    byProvider: AITokenRow[];
+  };
+  timeSeries: {
+    series: AITimeSeriesEntry[];
+    step: string;
+    window: string;
+  };
+  tokenUnit: 'millions';
+  topSummary?: AITopSummary;
 };
