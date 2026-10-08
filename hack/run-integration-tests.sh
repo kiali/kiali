@@ -38,6 +38,7 @@ PLAYWRIGHT_OFFLINE="playwright-offline"
 PLAYWRIGHT_AI_CHATBOT="playwright-ai-chatbot"
 PLAYWRIGHT_SMOKE="playwright-smoke"
 PLAYWRIGHT_TEMPO="playwright-tempo"
+PLAYWRIGHT_MULTI_MESH="playwright-multi-mesh"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KIALI_VERSION=""
@@ -191,8 +192,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     -ts|--test-suite)
       TEST_SUITE="${2}"
-      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_TEMPO}" ]; then
-        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_AMBIENT}', '${PLAYWRIGHT_EXTERNAL_KIALI}', '${PLAYWRIGHT_OFFLINE}', '${PLAYWRIGHT_AI_CHATBOT}', '${PLAYWRIGHT_SMOKE}' or '${PLAYWRIGHT_TEMPO}'"
+      if [ "${TEST_SUITE}" != "${BACKEND}" ] && [ "${TEST_SUITE}" != "${BACKEND_EXTERNAL_CONTROLPLANE}" ] && [ "${TEST_SUITE}" != "${FRONTEND}" ] && [ "${TEST_SUITE}" != "${FRONTEND_AMBIENT}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_1}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_2}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${FRONTEND_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${FRONTEND_PRIMARY_REMOTE}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_PRIMARY}" ] && [ "${TEST_SUITE}" != "${FRONTEND_MULTI_MESH}" ] && [ "${TEST_SUITE}" != "${FRONTEND_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${FRONTEND_TEMPO}" ] && [ "${TEST_SUITE}" != "${AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${LOCAL}" ] && [ "${TEST_SUITE}" != "${OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_1}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_2}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_CACHING}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_CORE_OPTIONAL}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AMBIENT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_EXTERNAL_KIALI}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_OFFLINE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_AI_CHATBOT}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_SMOKE}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_TEMPO}" ] && [ "${TEST_SUITE}" != "${PLAYWRIGHT_MULTI_MESH}" ]; then
+        echo "--test-suite option must be one of '${BACKEND}', '${BACKEND_EXTERNAL_CONTROLPLANE}', '${FRONTEND}', '${FRONTEND_AMBIENT}', '${FRONTEND_CORE_1}', '${FRONTEND_CORE_2}', '${FRONTEND_CORE_CACHING}', '${FRONTEND_CORE_OPTIONAL}', '${FRONTEND_PRIMARY_REMOTE}', '${FRONTEND_MULTI_PRIMARY}', '${FRONTEND_EXTERNAL_KIALI}', '${FRONTEND_TEMPO}', '${AI_CHATBOT}', '${LOCAL}', '${OFFLINE}', '${PLAYWRIGHT_CORE_1}', '${PLAYWRIGHT_CORE_2}', '${PLAYWRIGHT_CORE_CACHING}', '${PLAYWRIGHT_CORE_OPTIONAL}', '${PLAYWRIGHT_AMBIENT}', '${PLAYWRIGHT_EXTERNAL_KIALI}', '${PLAYWRIGHT_OFFLINE}', '${PLAYWRIGHT_AI_CHATBOT}', '${PLAYWRIGHT_SMOKE}', '${PLAYWRIGHT_TEMPO}' or '${PLAYWRIGHT_MULTI_MESH}'"
         exit 1
       fi
       shift;shift
@@ -274,7 +275,7 @@ Valid command line arguments:
   -to|--tests-only <true|false>
     If true, only run the tests and skip the setup.
     Default: false
-  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_AMBIENT}|${PLAYWRIGHT_EXTERNAL_KIALI}|${PLAYWRIGHT_OFFLINE}|${PLAYWRIGHT_AI_CHATBOT}|${PLAYWRIGHT_SMOKE}|${PLAYWRIGHT_TEMPO}>
+  -ts|--test-suite <${BACKEND}|${BACKEND_EXTERNAL_CONTROLPLANE}|${FRONTEND}|${FRONTEND_AMBIENT}|${FRONTEND_CORE_1}|${FRONTEND_CORE_2}|${FRONTEND_CORE_CACHING}|${FRONTEND_CORE_OPTIONAL}|${FRONTEND_PRIMARY_REMOTE}|${FRONTEND_MULTI_PRIMARY}|${FRONTEND_MULTI_MESH}|${FRONTEND_MULTIPLE_CONTROLPLANES}|${FRONTEND_EXTERNAL_KIALI}|${FRONTEND_TEMPO}|${AI_CHATBOT}|${LOCAL}|${OFFLINE}|${PLAYWRIGHT_CORE_1}|${PLAYWRIGHT_CORE_2}|${PLAYWRIGHT_CORE_CACHING}|${PLAYWRIGHT_CORE_OPTIONAL}|${PLAYWRIGHT_AMBIENT}|${PLAYWRIGHT_EXTERNAL_KIALI}|${PLAYWRIGHT_OFFLINE}|${PLAYWRIGHT_AI_CHATBOT}|${PLAYWRIGHT_SMOKE}|${PLAYWRIGHT_TEMPO}|${PLAYWRIGHT_MULTI_MESH}>
     Which test suite to run.
     Default: ${BACKEND}
   -w|--waypoint <true|false>
@@ -1110,9 +1111,9 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.0 -mid istio_26 -n istio-system-26 -ir "default-v1-26-0"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
 
-     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.26.2 -mid istio_26 -n istio-system-26-2 -ir "default-v1-26-2"
+     "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
 
   fi
 
@@ -1576,6 +1577,39 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   cd "${SCRIPT_DIR}"/../frontend
   set +e
   yarn run playwright:run:tracing
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  exit ${PLAYWRIGHT_EXIT}
+elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_MESH}" ]; then
+  ensurePlaywrightReady
+
+  if [ "${TESTS_ONLY}" == "false" ]; then
+    # Single KinD cluster plus extra Istio control planes (istio-system-31 / istio-system-31-1).
+    # Anonymous auth so Playwright auth.setup works (token not implemented).
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+
+    # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
+    "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.0 -mid istio_31 -n istio-system-31 -ir "default-v1-31-0"
+
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh -c kubectl -iv 1.31.1 -mid istio_31 -n istio-system-31-1 -ir "default-v1-31-1"
+  fi
+
+  infomsg "Setup complete."
+
+  if [ "${SETUP_ONLY}" == "true" ]; then
+    exit 0
+  fi
+
+  ensureKialiServerReady
+
+  export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
+
+  cd "${SCRIPT_DIR}"/../frontend
+  set +e
+  yarn run playwright:run:multi-mesh
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports

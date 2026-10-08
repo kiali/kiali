@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { hasGrafanaDeployment } from '../../utils/kialiConfig';
-import { coreCachingOnly } from '../../utils/suite-tags';
+import { coreCachingAndMultiMesh, coreCachingOnly } from '../../utils/suite-tags';
 
 const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
@@ -20,7 +20,7 @@ test.describe('Mesh page core-caching', () => {
     await meshPage.expectMeshTourVisible(false);
   });
 
-  test('See mesh', coreCachingOnly, async ({ meshPage }) => {
+  test('See mesh', coreCachingAndMultiMesh, async ({ meshPage }) => {
     await meshPage.expectMeshSidePanel();
     await meshPage.expectExpectedMeshInfra();
   });
