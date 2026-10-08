@@ -104,7 +104,11 @@ const generateServerConfig = (): ServerConfig => {
     authStrategy: 'anonymous',
     ai: {
       enabled: scenarioConfig.ai?.enabled ?? false,
-      chat: generateChatAIConfig()
+      chat: generateChatAIConfig(),
+      consumption: {
+        enabled: scenarioConfig.ai?.consumption?.enabled ?? false,
+        allowed: scenarioConfig.ai?.consumption?.allowed ?? false
+      }
     },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),

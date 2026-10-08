@@ -1944,7 +1944,29 @@ func NewRoutes(
 			handlers.DeleteConversations(conf, aiStore),
 			true,
 		},
-		// swagger:route GET /chat/session/usage chat aiChatSessionUsage
+		// swagger:route GET /ai/usage/user chat aiUserUsage
+		// ---
+		// Endpoint to get current-session token usage, user-scoped historical metrics, and budget status
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      500: internalError
+		//      400: badRequestError
+		//      200: noContent
+		//
+		{
+			"AIUserUsage",
+			log.ChatAILogName,
+			"GET",
+			"/api/ai/usage/user",
+			handlers.AIUserUsage(conf, aiStore, prom),
+			true,
+		},
+		// swagger:route GET /chat/usage chat aiChatUsage
 		// ---
 		// Endpoint to get token usage statistics for the current user session
 		//
@@ -1959,11 +1981,11 @@ func NewRoutes(
 		//      200: noContent
 		//
 		{
-			"ChatSessionUsage",
+			"ChatUsage",
 			log.ChatAILogName,
 			"GET",
-			"/api/chat/session/usage",
-			handlers.ChatSessionUsage(conf, aiStore),
+			"/api/ai/usage",
+			handlers.AIUsage(conf, aiStore, prom),
 			true,
 		},
 	}

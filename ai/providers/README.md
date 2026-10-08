@@ -1,13 +1,15 @@
 # AI Providers
 
-Kiali AI providers are configured under `chat_ai.providers` in `config/config.go`.
-Each provider defines a `type`, a `config` mode, a default model, and a list of
-models with credentials. Only enabled providers/models are used.
+Kiali AI providers are configured under `ai.chat.providers` in `config/config.go`
+(Kiali CR `spec.ai.chat.providers`). Each provider defines a `type`, a `config` mode,
+a default model, and a list of models with credentials. Only enabled providers/models
+are used. The deprecated top-level `chat_ai` setting is migrated to `ai.chat`.
 
 ## Available providers
 
 - [OpenAI (`type: openai`)](#openai-type-openai)
 - [Google GenAI (`type: google`)](#google-genai-type-google)
+- [LightSpeed (`type: lightspeed`)](lightspeed/README.md)
 
 ### OpenAI (`type: openai`)
 
@@ -39,21 +41,23 @@ These fields apply to all OpenAI config modes:
 Use this for OpenAI or any OpenAI-compatible endpoint.
 
 ```yaml
-chat_ai:
+ai:
   enabled: true
-  default_provider: openai-default
-  providers:
-  - name: openai-default
-    type: openai
-    config: default
+  chat:
     enabled: true
-    default_model: gpt-4o-mini
-    key: "secret:my-ai-keys:openai"
-    models:
-    - name: gpt-4o-mini
-      model: gpt-4o-mini
+    default_provider: openai-default
+    providers:
+    - name: openai-default
+      type: openai
+      config: default
       enabled: true
-      # endpoint: "https://api.openai.com/v1" # optional override
+      default_model: gpt-4o-mini
+      key: "secret:my-ai-keys:openai"
+      models:
+      - name: gpt-4o-mini
+        model: gpt-4o-mini
+        enabled: true
+        # endpoint: "https://api.openai.com/v1" # optional override
 ```
 
 #### Config mode: `gemini`
@@ -63,21 +67,23 @@ is omitted, Kiali defaults to:
 `https://generativelanguage.googleapis.com/v1beta/openai`.
 
 ```yaml
-chat_ai:
+ai:
   enabled: true
-  default_provider: gemini
-  providers:
-  - name: gemini
-    type: openai
-    config: gemini
+  chat:
     enabled: true
-    default_model: gemini-pro
-    key: "secret:my-ai-keys:gemini"
-    models:
-    - name: gemini-pro
-      model: gemini-2.5-pro
+    default_provider: gemini
+    providers:
+    - name: gemini
+      type: openai
+      config: gemini
       enabled: true
-      # endpoint: "https://generativelanguage.googleapis.com/v1beta/openai"
+      default_model: gemini-pro
+      key: "secret:my-ai-keys:gemini"
+      models:
+      - name: gemini-pro
+        model: gemini-2.5-pro
+        enabled: true
+        # endpoint: "https://generativelanguage.googleapis.com/v1beta/openai"
 ```
 
 ### Google GenAI (`type: google`)
@@ -102,20 +108,22 @@ These fields apply to the Google provider:
 #### Config mode: `gemini` (or `default`)
 
 ```yaml
-chat_ai:
+ai:
   enabled: true
-  default_provider: google-gemini
-  providers:
-  - name: google-gemini
-    type: google
-    config: gemini
+  chat:
     enabled: true
-    default_model: gemini-pro
-    key: "secret:my-ai-keys:google-gemini"
-    models:
-    - name: gemini-pro
-      model: gemini-2.5-pro
+    default_provider: google-gemini
+    providers:
+    - name: google-gemini
+      type: google
+      config: gemini
       enabled: true
+      default_model: gemini-pro
+      key: "secret:my-ai-keys:google-gemini"
+      models:
+      - name: gemini-pro
+        model: gemini-2.5-pro
+        enabled: true
 ```
 
 #### Config mode: `azure`
@@ -124,21 +132,23 @@ Use this for Azure OpenAI. `endpoint` is required and must include the Azure
 resource endpoint. The SDK uses API version `2024-06-01`.
 
 ```yaml
-chat_ai:
+ai:
   enabled: true
-  default_provider: azure-openai
-  providers:
-  - name: azure-openai
-    type: openai
-    config: azure
+  chat:
     enabled: true
-    default_model: gpt-4o
-    models:
-    - name: gpt-4o
-      model: gpt-4o
+    default_provider: azure-openai
+    providers:
+    - name: azure-openai
+      type: openai
+      config: azure
       enabled: true
-      endpoint: "https://<resource-name>.openai.azure.com"
-      key: "secret:my-ai-keys:azure-openai"
+      default_model: gpt-4o
+      models:
+      - name: gpt-4o
+        model: gpt-4o
+        enabled: true
+        endpoint: "https://<resource-name>.openai.azure.com"
+        key: "secret:my-ai-keys:azure-openai"
 ```
 
 ## Credentials and secrets

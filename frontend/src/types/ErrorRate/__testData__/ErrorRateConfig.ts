@@ -76,6 +76,10 @@ export const serverRateConfig = {
       store: {
         enabled: false
       }
+    },
+    consumption: {
+      enabled: false,
+      allowed: false
     }
   },
   clusters: {},

@@ -10,7 +10,7 @@ import type { DurationInSeconds, Password, TimeInSeconds, UserName } from '../ty
 import { HTTP_VERBS } from '../types/Common';
 import type { DashboardModel } from 'types/Dashboards';
 import type { GrafanaInfo } from '../types/GrafanaInfo';
-import type { ChatSessionUsageMetric } from '../types/Chatbot';
+import type { AIUsageResponse, ChatSessionUsageResponse } from '../types/Chatbot';
 import type { GraphDefinition, GraphElementsQuery, NodeParamsType } from '../types/Graph';
 import { NodeType } from '../types/Graph';
 import type {
@@ -1575,8 +1575,55 @@ export const deleteChatConversations = (conversationIDs: string): Promise<ApiRes
   return newRequest<Record<string, string>>(HTTP_VERBS.DELETE, urls.chatDeleteConversations, { conversationIDs }, {});
 };
 
-export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
-  return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
+export const getAISessionUsage = (n?: number): Promise<ApiResponse<ChatSessionUsageResponse>> => {
+  const params: { [key: string]: string } = { _ts: Date.now().toString() };
+  if (n) {
+    params.n = n.toString();
+  }
+  return newRequest<ChatSessionUsageResponse>(HTTP_VERBS.GET, urls.aiSessionUsage, params, {});
+};
+
+export const getAIUsage = (
+  windowSecs?: number,
+  step?: number,
+  provider?: string,
+  request?: string,
+  window?: 'weekly' | 'monthly',
+  from?: number,
+  since?: number,
+  consumption?: boolean,
+  limit?: number
+): Promise<ApiResponse<AIUsageResponse>> => {
+  const params: { [key: string]: string } = { request: request || 'chat' };
+
+  if (window) {
+    params.window = window;
+    if (from) {
+      params.from = from.toString();
+    }
+    if (since) {
+      params.since = since.toString();
+    }
+    if (consumption) {
+      params.consumption = 'true';
+    }
+    if (limit) {
+      params.limit = limit.toString();
+    }
+  } else {
+    if (windowSecs) {
+      params.window = windowSecs.toString();
+    }
+    if (step) {
+      params.step = step.toString();
+    }
+  }
+
+  if (provider) {
+    params.provider = provider;
+  }
+
+  return newRequest<AIUsageResponse>(HTTP_VERBS.GET, urls.aiUsage, params, {});
 };
 
 export const getOverviewAppRates = (): Promise<

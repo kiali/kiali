@@ -2,10 +2,11 @@
 import { createStandardAction } from 'typesafe-actions';
 import type { ActionType } from 'typesafe-actions';
 import { ActionKeys } from './ActionKeys';
-import type { ChatAIConfig, ChatEntry, ChatInteractionMode, ChatResourceHealth, Tool } from 'types/Chatbot';
+import type { AIConfig, ChatAIConfig, ChatEntry, ChatInteractionMode, ChatResourceHealth, Tool } from 'types/Chatbot';
 import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 
-export const setChatAI = createStandardAction(ActionKeys.CHAT_AI_SET_CHAT_AI)<ChatAIConfig>();
+export const setAI = createStandardAction(ActionKeys.CHAT_AI_SET_AI)<AIConfig>();
+export const setAIChat = createStandardAction(ActionKeys.CHAT_AI_SET_AI_CHAT)<ChatAIConfig>();
 export const setConversationID = createStandardAction(ActionKeys.CHAT_AI_SET_CONVERSATION_ID)<{
   id: string | undefined;
 }>();
@@ -43,7 +44,8 @@ export const setResourceHealth = createStandardAction(ActionKeys.CHAT_AI_SET_RES
 export const clearResourceHealth = createStandardAction(ActionKeys.CHAT_AI_CLEAR_RESOURCE_HEALTH)();
 
 export const ChatAIActions = {
-  setChatAI,
+  setAI,
+  setAIChat,
   setAlwaysNavigate,
   setInteractionMode,
   setQuery,

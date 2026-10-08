@@ -145,16 +145,18 @@ This allows concurrent access to different sessions while maintaining consistenc
 
 ## Configuration
 
-AI Store is controlled via the `chat_ai.store_config` configuration block:
+AI Store is controlled via the `ai.chat.store_config` configuration block
+(the deprecated top-level `chat_ai.store_config` is migrated to `ai.chat`):
 
 ```yaml
-chat_ai:
-  store_config:
-    enabled: true              # Default: true when AI chat is enabled
-    inactivity_timeout: "60m"  # How long to keep inactive conversations
-    max_cache_memory_mb: 1024  # Memory limit across all conversations
-    reduce_with_ai: false      # Enable AI-based conversation summarization
-    reduce_threshold: 15       # Minimum message count before reduction triggers
+ai:
+  chat:
+    store_config:
+      enabled: true              # Default: true when AI chat is enabled
+      inactivity_timeout: "60m"  # How long to keep inactive conversations
+      max_cache_memory_mb: 1024  # Memory limit across all conversations
+      reduce_with_ai: false      # Enable AI-based conversation summarization
+      reduce_threshold: 15       # Minimum message count before reduction triggers
 ```
 
 - **enabled**: Master switch for conversation storage

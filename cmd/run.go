@@ -182,7 +182,7 @@ func portForwardToPod(ctx context.Context, localClient kubernetes.ClientInterfac
 	}
 
 	pod := pods.Items[0]
-	log.Infof("Port forwarding to %s pod", pod.Name)
+	log.Infof("Port forwarding to %s pod in port %d", pod.Name, localPort)
 	pf, err := httputil.NewPortForwarder(
 		localClient.Kube().CoreV1().RESTClient(),
 		localClient.ClusterInfo().ClientConfig,

@@ -14,6 +14,10 @@ export const healthConfig = {
       store: {
         enabled: false
       }
+    },
+    consumption: {
+      enabled: false,
+      allowed: false
     }
   },
   clusters: {},
