@@ -23,7 +23,8 @@ export const gotoConsolePage = async (
   options: GotoConsolePageOptions = {}
 ): Promise<void> => {
   const params = new URLSearchParams({ refresh: '0', ...query });
-  await page.goto(kialiUrl(`/console/${pagePath}?${params.toString()}`));
+  const url = kialiUrl(`/console/${pagePath}?${params.toString()}`);
+  await page.goto(url);
   if (options.waitForLoad !== false) {
     await waitForLoadingComplete(page);
   }
