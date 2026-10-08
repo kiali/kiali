@@ -92,6 +92,10 @@ export const deleteGatewayOnClusters = async (request: APIRequestContext, name: 
 };
 
 export const applyAuthorizationPolicyOnCluster = (name: string, namespace: string, clusterContext: string): void => {
+  execSync(
+    `kubectl --context ${clusterContext} delete AuthorizationPolicy ${name} -n ${namespace} --ignore-not-found=true`,
+    { encoding: 'utf8' }
+  );
   const yaml = `apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
