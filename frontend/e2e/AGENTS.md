@@ -258,6 +258,9 @@ Cypress hovers the first-column icon and checks tooltip text. Playwright equival
 
 ## CI and JUnit
 
+- **Unique `PLAYWRIGHT_BLOB_NAME` per suite** in `package.json` run scripts so chained Jenkins
+  `TEST_SET` (`run:junit` / `run:all`) keeps one zip each; `playwright:combine:reports` merges them
+  (Cypress: `results-[hash].xml` + `jrm`). No Jenkinsfile change.
 - **Do not run `playwright test --last-failed` before merge-reports** — the rerun overwrites
   `playwright/blob-report/` and Jenkins `combined-report.xml` only lists rerun tests (misleading failure counts).
   The `playwright:run:last-failed` script was removed.

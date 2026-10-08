@@ -9,6 +9,8 @@ const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' 
 
 /**
  * CI: blob (for merge-reports) + junit (fallback when merge is empty).
+ * Yarn scripts set PLAYWRIGHT_BLOB_NAME per suite so chained Jenkins runs
+ * (run:junit / run:all) keep one zip each — same idea as Cypress results-[hash].xml.
  */
 const reporters: ReporterDescription[] = isCI
   ? [

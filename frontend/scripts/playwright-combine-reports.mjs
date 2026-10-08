@@ -2,8 +2,8 @@
 /**
  * Produce playwright/results/combined-report.xml for Jenkins / Polarion.
  *
- * Merge CI blob reports into combined-report.xml for Jenkins / Polarion.
- * Falls back to the direct junit reporter output when merge is empty/missing.
+ * Merges every zip under playwright/blob-report/ (one per suite via
+ * PLAYWRIGHT_BLOB_NAME). Falls back to junit-results.xml when merge is empty.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
