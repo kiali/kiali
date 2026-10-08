@@ -98,6 +98,7 @@
     "playwright:run:ai-chatbot": "playwright test --project=ai-chatbot --pass-with-no-tests",
     "playwright:run:tracing": "playwright test --project=tracing --pass-with-no-tests",
     "playwright:run:tracing:junit": "playwright test --project=tracing --pass-with-no-tests",
+    "playwright:run:multi-mesh": "playwright test --project=multi-mesh --pass-with-no-tests",
     "playwright:run:all": "yarn playwright:run:smoke && yarn playwright:run:core1 && yarn playwright:run:core2 && yarn playwright:run:core-caching && yarn playwright:run:crd-validation && yarn playwright:run:perses && yarn playwright:run:tracing && yarn playwright:run:ai-chatbot",
     "playwright:run:ambient": "playwright test --project=ambient --pass-with-no-tests",
     "playwright:run:waypoint": "playwright test --project=waypoint --project=waypoint-tracing --pass-with-no-tests",

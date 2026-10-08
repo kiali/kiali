@@ -47,3 +47,9 @@ export const aiChatbotOnly = { tag: '@ai-chatbot' as const };
 
 /** @tracing — frontend-tempo / Playwright tracing project (excludes @waypoint-tracing) */
 export const tracingOnly = { tag: '@tracing' as const };
+
+/** @multi-mesh — extra control planes on a single cluster (istio-system-31 / istio-system-31-1) */
+export const multiMeshOnly = { tag: '@multi-mesh' as const };
+
+/** Dual-tagged mesh infra check: core-caching and multi-mesh suites */
+export const coreCachingAndMultiMesh = { tag: ['@core-caching', '@multi-mesh'] as const };
