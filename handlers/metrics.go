@@ -382,15 +382,9 @@ func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery 
 		}
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		var name string
-		if healthType == "namespace" {
-			name = namespace
-		} else {
+		name := namespace
+		if healthType != "namespace" {
 			name = vars[entityVar]
-			if !validK8sNameRe.MatchString(name) {
-				RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Invalid %s name", entityVar))
-				return
-			}
 		}
 
 		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
