@@ -43,6 +43,7 @@ describe('Masthead Navigation', () => {
             colorScheme={ColorScheme.LIGHT}
             showNotificationCenter={false}
             chatbotEnabled={false}
+            ai={false}
           />
         </MemoryRouter>
       </Provider>
@@ -64,6 +65,7 @@ describe('Masthead Navigation', () => {
             colorScheme={ColorScheme.LIGHT}
             showNotificationCenter={false}
             chatbotEnabled={false}
+            ai={false}
           />
         </MemoryRouter>
       </Provider>

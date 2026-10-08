@@ -43,7 +43,7 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
 );
 
 type MenuProps = {
-  ai: boolean;
+  ai?: boolean;
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
 };
