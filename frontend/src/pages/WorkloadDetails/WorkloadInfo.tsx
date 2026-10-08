@@ -26,7 +26,7 @@ import { GraphDataSource } from '../../services/GraphDataSource';
 import type { DurationInSeconds, TimeInMilliseconds, TimeRange } from 'types/Common';
 import { isPrometheusAvailable } from 'config';
 import { EnvoyMemoryStatus } from 'components/Envoy/EnvoyMemoryStatus';
-import { hasEnvoyMemoryRunningPods, hasEnvoyMemoryWorkload } from 'utils/EnvoyMemoryUtils';
+import { shouldShowEnvoyMemoryStatus } from 'utils/EnvoyMemoryUtils';
 import {
   isIstioNamespace,
   serverConfig,
@@ -404,7 +404,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                 </DescriptionListDescription>
               </DescriptionListGroup>
 
-              {isPrometheusAvailable() && hasEnvoyMemoryWorkload(workload) && hasEnvoyMemoryRunningPods(workload) && (
+              {isPrometheusAvailable() && shouldShowEnvoyMemoryStatus(workload) && (
                 <DescriptionListGroup data-test="details-envoy-status">
                   <DescriptionListTerm>{t('Envoy status')}</DescriptionListTerm>
                   <DescriptionListDescription>

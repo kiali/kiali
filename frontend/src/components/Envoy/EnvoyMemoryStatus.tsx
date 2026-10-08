@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import type { Workload } from 'types/Workload';
-import type { EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
 import { ColorScheme } from 'types/Common';
 import { NA } from 'types/Health';
-import { addError } from '../../utils/AlertUtils';
 import { location } from '../../app/History';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { inlineIconRowStyle } from 'styles/FlexStyles';
@@ -14,16 +12,16 @@ import { moreInfoLinkStyle } from 'components/Validations/WorkloadConfigValidati
 import { Link } from 'react-router-dom-v5-compat';
 import { PFColors } from 'components/Pf/PfColors';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
+import { useEnvoyMemorySummary } from 'hooks/useEnvoyMemorySummary';
 import {
-  buildEnvoyMemoryQueryParams,
   buildEnvoyMemoryTabUrl,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
-  fetchEnvoyMemorySummary,
   formatEnvoyMemoryBytes,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
-  hasEnvoyMemoryWorkload
+  hasEnvoyMemoryWorkload,
+  shouldShowEnvoyMemoryStatus
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -35,31 +33,17 @@ type EnvoyMemoryStatusProps = {
 };
 
 export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: EnvoyMemoryStatusProps) => {
-  const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
+  const fetchEnabled = shouldShowEnvoyMemoryStatus(props.workload);
+  const { summary } = useEnvoyMemorySummary(
+    props.namespace,
+    props.workload,
+    props.timeRange,
+    props.lastRefreshAt,
+    fetchEnabled
+  );
   // Tooltip has reversed theme (light theme = dark background), so link colors are inverted
   const darkTheme = useKialiColorScheme() === ColorScheme.DARK;
   const linkColor = darkTheme ? PFColors.LinkTooltipDarkTheme : PFColors.LinkTooltipLightTheme;
-
-  const fetchSummary = React.useCallback((): void => {
-    fetchEnvoyMemorySummary(
-      props.namespace,
-      props.workload.name,
-      buildEnvoyMemoryQueryParams(props.timeRange, props.lastRefreshAt),
-      props.workload.cluster
-    )
-      .then(data => {
-        setSummary(data);
-      })
-      .catch(error => {
-        addError('Could not fetch Envoy memory summary.', error);
-      });
-  }, [props.lastRefreshAt, props.namespace, props.timeRange, props.workload.cluster, props.workload.name]);
-
-  React.useEffect(() => {
-    if (hasEnvoyMemoryWorkload(props.workload) && hasEnvoyMemoryRunningPods(props.workload)) {
-      fetchSummary();
-    }
-  }, [fetchSummary, props.workload]);
 
   if (!hasEnvoyMemoryWorkload(props.workload)) {
     return null;
@@ -72,6 +56,10 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
         {NA.name}
       </span>
     );
+  }
+
+  if (!fetchEnabled) {
+    return null;
   }
 
   if (!summary) {

@@ -2,6 +2,7 @@ import {
   buildEnvoyMemoryQueryParams,
   hasEnvoyMemoryRunningPods,
   hasEnvoyMemoryWorkload,
+  shouldShowEnvoyMemoryStatus,
   shouldShowEnvoyWorkloadTab,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
@@ -79,6 +80,19 @@ describe('EnvoyMemoryUtils', () => {
     } as any as Workload;
 
     expect(shouldShowEnvoyWorkloadTab(workload)).toBe(true);
+    expect(shouldShowEnvoyMemoryStatus(workload)).toBe(false);
+  });
+
+  it('shows Summary Envoy status when the workload tab would be shown and pods are running', () => {
+    const workload = {
+      istioSidecar: true,
+      isGateway: false,
+      isWaypoint: false,
+      isZtunnel: false,
+      pods: [{ containers: [{ name: 'istio-proxy' }] }]
+    } as any as Workload;
+
+    expect(shouldShowEnvoyMemoryStatus(workload)).toBe(true);
   });
 
   it('formats memory bytes', () => {
@@ -138,7 +152,7 @@ describe('EnvoyMemoryUtils', () => {
         memoryThresholdBytes: 0.7 * 1024 * 1024 * 1024,
         proxyType: 'sidecar'
       })
-    ).toContain('70%');
+    ).toContain('70.0%');
 
     expect(
       envoyMemoryThresholdHelp({

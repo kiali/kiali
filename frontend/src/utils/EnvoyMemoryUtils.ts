@@ -105,6 +105,15 @@ export const shouldShowEnvoyWorkloadTab = (workload?: Workload): boolean => {
   return workloadHasEnvoyProxyInPods(workload);
 };
 
+// Summary Envoy status and Envoy tab share the same workload eligibility; status also requires running pods.
+export const shouldShowEnvoyMemoryStatus = (workload?: Workload): boolean => {
+  if (!hasEnvoyMemoryRunningPods(workload)) {
+    return false;
+  }
+
+  return shouldShowEnvoyWorkloadTab(workload);
+};
+
 export const formatEnvoyMemoryUsage = (
   summary: {
     memoryLimitBytes: number;

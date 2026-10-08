@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { Alert, Button, ButtonVariant, Card, CardBody, Popover, PopoverPosition } from '@patternfly/react-core';
 import { EnvoyMemoryOverlayChart } from 'components/Envoy/EnvoyMemoryOverlayChart';
+import { IstioConfigurationScopingLink } from 'components/Envoy/IstioConfigurationScopingLink';
+import { useEnvoyMemorySummary } from 'hooks/useEnvoyMemorySummary';
 import type { Workload } from 'types/Workload';
-import type { EnvoyConfigCounts, EnvoyMemorySummary } from 'types/EnvoyMemory';
+import type { EnvoyConfigCounts } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
 import * as API from '../../services/Api';
-import { addError } from '../../utils/AlertUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { helpIconStyle } from 'styles/IconStyle';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
@@ -14,18 +15,15 @@ import { PFColors } from 'components/Pf/PfColors';
 import { flexCardStyle, noShrinkStyle, scrollableContentStyle, tabCardStyle } from 'styles/FlexStyles';
 import { classes } from 'typestyle';
 import {
-  buildEnvoyMemoryQueryParams,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
   envoyMemoryMetricHelp,
   envoyMemoryThresholdHelp,
   estimateEnvoyConfigMemoryBytes,
-  fetchEnvoyMemorySummary,
   formatEnvoyMemoryBytes,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
-  istioConfigurationScopingUrl,
   sortedEnvoyPodName,
   type EnvoyMemoryMetricHelpKey
 } from 'utils/EnvoyMemoryUtils';
@@ -192,37 +190,19 @@ const MetricTile: React.FC<MetricTileProps> = ({ helpKey, label, onSelect, selec
 );
 
 export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps) => {
-  const [summary, setSummary] = React.useState<EnvoyMemorySummary>();
   const [configCounts, setConfigCounts] = React.useState<{ counts: EnvoyConfigCounts; podName: string }>();
   const [isChartMaximized, setIsChartMaximized] = React.useState(false);
+  const podsAvailable = hasEnvoyMemoryRunningPods(props.workload);
+  const { summary } = useEnvoyMemorySummary(
+    props.namespace,
+    props.workload,
+    props.timeRange,
+    props.lastRefreshAt,
+    podsAvailable
+  );
   const configDumpPodName = props.podName || summary?.configCountsPod || sortedEnvoyPodName(props.workload);
   const effectiveConfigCounts =
     configDumpPodName && configCounts?.podName === configDumpPodName ? configCounts.counts : undefined;
-
-  const fetchSummary = React.useCallback((): void => {
-    fetchEnvoyMemorySummary(
-      props.namespace,
-      props.workload.name,
-      buildEnvoyMemoryQueryParams(props.timeRange, props.lastRefreshAt),
-      props.workload.cluster
-    )
-      .then(data => {
-        setSummary(data);
-      })
-      .catch(error => {
-        addError('Could not fetch Envoy memory summary.', error);
-      });
-  }, [props.lastRefreshAt, props.namespace, props.timeRange, props.workload.cluster, props.workload.name]);
-
-  const podsAvailable = hasEnvoyMemoryRunningPods(props.workload);
-
-  React.useEffect(() => {
-    if (!podsAvailable) {
-      setSummary(undefined);
-      return;
-    }
-    fetchSummary();
-  }, [fetchSummary, podsAvailable]);
 
   React.useEffect(() => {
     if (!configDumpPodName) {
@@ -308,18 +288,10 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                                 {envoyMemoryThresholdHelp(summary)}
                                 {summary.cause !== 'ok' && (
                                   <p className={linkRowStyle}>
-                                    <Button
-                                      component="a"
-                                      href={istioConfigurationScopingUrl()}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      variant={ButtonVariant.link}
-                                      isInline
-                                      icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
-                                      data-test="envoy-memory-status-scoping-link"
-                                    >
-                                      {t('Learn about configuration scoping')}
-                                    </Button>
+                                    <IstioConfigurationScopingLink
+                                      dataTest="envoy-memory-status-scoping-link"
+                                      externalLinkIconClassName={externalLinkIconStyle}
+                                    />
                                   </p>
                                 )}
                               </div>
@@ -344,17 +316,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
 
                     {summary.cause === 'configuration' && (
                       <div className={linkRowStyle}>
-                        <Button
-                          component="a"
-                          href={istioConfigurationScopingUrl()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          variant={ButtonVariant.link}
-                          isInline
-                          icon={<KialiIcon.ExternalLink className={externalLinkIconStyle} />}
-                        >
-                          {t('Learn about configuration scoping')}
-                        </Button>
+                        <IstioConfigurationScopingLink externalLinkIconClassName={externalLinkIconStyle} />
                       </div>
                     )}
 
