@@ -52,6 +52,21 @@ export const expectTableContainsRow = async (page: Page, name: string): Promise<
   await expect(page.locator('tbody').getByRole('row').filter({ hasText: name })).toBeVisible();
 };
 
+export const expectClusterEntriesInTable = async (page: Page, ...clusters: string[]): Promise<void> => {
+  for (const cluster of clusters) {
+    await expect(page.locator('tbody td[data-label="Cluster"]').filter({ hasText: cluster }).first()).toBeVisible();
+  }
+};
+
+export const expectHealthyConfigOnBothClusters = async (page: Page, namespace: string): Promise<void> => {
+  const rows = page
+    .locator('tbody tr')
+    .filter({ has: page.locator('td[data-label="Namespace"]', { hasText: namespace }) });
+  await expect(rows.locator('td[data-label="Cluster"]').filter({ hasText: 'east' }).first()).toBeVisible();
+  await expect(rows.locator('td[data-label="Cluster"]').filter({ hasText: 'west' }).first()).toBeVisible();
+  await expect(rows.locator('[data-test="icon-correct-validation"]').first()).toBeVisible();
+};
+
 export const expectOnlyRow = async (page: Page, name: string): Promise<void> => {
   await expectTableContainsRow(page, name);
   await expect(page.locator('tbody tr')).toHaveCount(1);
@@ -187,21 +202,28 @@ export const sortListByColumn = async (page: Page, column: string, order: SortOr
 };
 
 export const expectListSortedByColumn = async (page: Page, column: string, order: SortOrder): Promise<void> => {
-  const rows = page.locator('tbody tr');
-  const rowCount = await rows.count();
-  for (let i = 0; i < rowCount - 1; i++) {
-    const current = await rows.nth(i).locator(`td[data-label="${column}"]`).innerText();
-    const next = await rows
-      .nth(i + 1)
-      .locator(`td[data-label="${column}"]`)
-      .innerText();
-    const comparison = current.localeCompare(next);
-    if (order === 'ascending') {
-      expect(comparison).toBeLessThanOrEqual(0);
-    } else {
-      expect(comparison).toBeGreaterThanOrEqual(0);
+  await expect(async () => {
+    const rows = page.locator('tbody tr');
+    const rowCount = await rows.count();
+    if (rowCount < 2) {
+      return;
     }
-  }
+    for (let i = 0; i < rowCount - 1; i++) {
+      const current = (await rows.nth(i).locator(`td[data-label="${column}"]`).innerText()).trim();
+      const next = (
+        await rows
+          .nth(i + 1)
+          .locator(`td[data-label="${column}"]`)
+          .innerText()
+      ).trim();
+      const comparison = current.localeCompare(next);
+      if (order === 'ascending') {
+        expect(comparison).toBeLessThanOrEqual(0);
+      } else {
+        expect(comparison).toBeGreaterThanOrEqual(0);
+      }
+    }
+  }).toPass();
 };
 
 export const expectTableColumnOrder = async (page: Page, expectedOrder: string[]): Promise<void> => {
