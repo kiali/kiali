@@ -552,6 +552,62 @@ export class OverviewPage extends BasePage {
     }).toPass({ intervals: [5_000], timeout: 60_000 });
   }
 
+  async expectClusterLabelWithIcon(clusterName: string, iconType: 'success' | 'warning'): Promise<void> {
+    await expect(async () => {
+      await this.getBySel('refresh-button').click();
+      await waitForLoadingComplete(this.page);
+      const label = this.getBySel(`istio-status-${iconType}`);
+      await expect(label).toBeVisible();
+      await expect(label).toContainText(clusterName);
+    }).toPass({ intervals: [10_000], timeout: 120_000 });
+  }
+
+  async hoverClusterLabelWithIcon(iconType: 'success' | 'warning'): Promise<void> {
+    await this.getBySel(`istio-status-${iconType}`).hover();
+  }
+
+  async expectComponentStatusTooltipContains(...texts: string[]): Promise<void> {
+    const tooltip = this.getBySel('component-status-tooltip');
+    await expect(tooltip).toBeVisible();
+    for (const text of texts) {
+      await expect(tooltip).toContainText(text);
+    }
+  }
+
+  async expectComponentStatusTooltipExcludes(...texts: string[]): Promise<void> {
+    const tooltip = this.getBySel('component-status-tooltip');
+    await expect(tooltip).toBeVisible();
+    for (const text of texts) {
+      await expect(tooltip).not.toContainText(text);
+    }
+  }
+
+  async expectUnhealthyClusters(): Promise<void> {
+    await expect(async () => {
+      await this.getBySel('refresh-button').click();
+      await waitForLoadingComplete(this.page);
+      await expect(this.clustersCard().getByText('Fetching cluster data')).toHaveCount(0);
+      await expect(this.getBySel('clusters-issues')).toBeVisible();
+    }).toPass({ intervals: [10_000], timeout: 90_000 });
+  }
+
+  async openClustersIssuesPopover(): Promise<void> {
+    await this.getBySel('clusters-issues').click();
+  }
+
+  async expectClustersPopoverShowsIssues(): Promise<void> {
+    await expect(this.page.getByRole('dialog').getByText(/issue/i)).toBeVisible();
+  }
+
+  async expectAllClustersHealthy(): Promise<void> {
+    await expect(async () => {
+      await this.getBySel('refresh-button').click();
+      await waitForLoadingComplete(this.page);
+      await expect(this.getBySel('clusters-healthy')).toBeVisible();
+      await expect(this.getBySel('clusters-issues')).toHaveCount(0);
+    }).toPass({ intervals: [10_000], timeout: 90_000 });
+  }
+
   async openUserDropdown(): Promise<void> {
     await this.getBySel('user-dropdown').click();
   }

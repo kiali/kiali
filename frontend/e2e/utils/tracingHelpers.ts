@@ -42,7 +42,8 @@ export const waitForTracesViaApi = async (
   namespace: string,
   name: string,
   minSpans = 0,
-  timeoutMs = 180_000
+  timeoutMs = 180_000,
+  clusterName?: string
 ): Promise<TraceListItem[]> => {
   const path = tracesApiPath(targetType, namespace, name);
   const deadline = Date.now() + timeoutMs;
@@ -55,6 +56,7 @@ export const waitForTracesViaApi = async (
     const nowMicros = Date.now() * 1000;
     const response = await request.get(kialiUrl(path), {
       params: {
+        clusterName: clusterName ?? '',
         endMicros: String(nowMicros),
         limit: '100',
         startMicros: String(nowMicros - 10 * 60 * 1000 * 1000),

@@ -26,8 +26,8 @@ const INBOUND_METRIC_GRAPHS = [
 ] as const;
 
 export class ServiceDetailsPage extends BasePage {
-  async open(namespace: string, service: string): Promise<void> {
-    await gotoConsolePage(this.page, `namespaces/${namespace}/services/${service}`);
+  async open(namespace: string, service: string, query: Record<string, string> = {}): Promise<void> {
+    await gotoConsolePage(this.page, `namespaces/${namespace}/services/${service}`, query);
   }
 
   async clickServiceAction(action: ServiceAction): Promise<void> {

@@ -16,7 +16,65 @@ export type TopologyEdge = {
 
 export type GraphTopology = {
   edges: TopologyEdge[];
+  graphType?: string;
   nodes: TopologyNode[];
+};
+
+type MiniGraphNodeData = {
+  app?: string;
+  cluster?: string;
+  isBox?: string;
+  namespace?: string;
+  nodeType?: string;
+  service?: string;
+  workload?: string;
+};
+
+export const nodeInfo = (nodeType: string, graphType: string): { isBox?: string; nodeType: string } => {
+  let isBox: string | undefined;
+  if (nodeType === 'app') {
+    nodeType = 'box';
+    isBox = 'app';
+  } else if (nodeType === 'workload' && graphType === 'versionedApp') {
+    nodeType = 'app';
+  }
+
+  return {
+    isBox,
+    nodeType
+  };
+};
+
+export const findMiniGraphNode = (
+  topology: GraphTopology,
+  name: string,
+  type: string,
+  cluster: string,
+  namespace = 'bookinfo'
+): TopologyNode | undefined => {
+  const graphType = topology.graphType ?? 'versionedApp';
+  const { isBox, nodeType } = nodeInfo(type, graphType);
+  return topology.nodes.find(n => {
+    const data = n.data as MiniGraphNodeData;
+    if (
+      data.cluster !== cluster ||
+      data.namespace !== namespace ||
+      data.nodeType !== nodeType ||
+      data.isBox !== isBox
+    ) {
+      return false;
+    }
+    if (type === 'app') {
+      return data.app === name;
+    }
+    if (type === 'service') {
+      return data.service === name;
+    }
+    if (type === 'workload') {
+      return data.workload === name;
+    }
+    return false;
+  });
 };
 
 type ComponentGraphState = Record<string, unknown>;
@@ -251,7 +309,8 @@ async function evaluateGraphPageComponent(
           edges.push({ id: el.getId(), data: el.getData() });
         }
       });
-      return { nodes, edges };
+      const dataSource = results[0].props.dataSource as { fetchParameters?: { graphType?: string } } | undefined;
+      return { edges, graphType: dataSource?.fetchParameters?.graphType, nodes };
     },
     { componentName, stateFilter, operation }
   );

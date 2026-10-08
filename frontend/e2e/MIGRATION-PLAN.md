@@ -97,7 +97,7 @@
 - [ ] `@waypoint-tracing` suite passes
 - [ ] `@ambient-multi-primary` suite passes
 - [ ] `@waypoint-multicluster` suite passes
-- [ ] `@multi-cluster` suite passes
+- [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
 - [ ] `@multi-primary` suite passes
 - [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)

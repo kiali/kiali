@@ -6,8 +6,8 @@ import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 
 export class AppDetailsPage extends BasePage {
-  async openApp(namespace: string, name: string): Promise<void> {
-    await gotoConsolePage(this.page, `namespaces/${namespace}/applications/${name}`);
+  async openApp(namespace: string, name: string, query: Record<string, string> = {}): Promise<void> {
+    await gotoConsolePage(this.page, `namespaces/${namespace}/applications/${name}`, query);
   }
 
   async expectDetailsForApp(name: string): Promise<void> {

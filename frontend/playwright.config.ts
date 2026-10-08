@@ -160,6 +160,7 @@ export default defineConfig({
     {
       name: 'multi-cluster',
       grep: /@multi-cluster/,
+      grepInvert: /@multi-primary/,
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
