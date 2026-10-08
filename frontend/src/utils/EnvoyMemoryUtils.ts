@@ -105,12 +105,19 @@ export const shouldShowEnvoyWorkloadTab = (workload?: Workload): boolean => {
   return workloadHasEnvoyProxyInPods(workload);
 };
 
-export const formatEnvoyMemoryUsage = (summary: {
-  memoryLimitBytes: number;
-  memoryMaxBytes: number;
-  memoryUsedPercent: number;
-}): string => {
-  return formatEnvoyMemoryBytes(summary.memoryMaxBytes);
+export const formatEnvoyMemoryUsage = (
+  summary: {
+    memoryLimitBytes: number;
+    memoryMaxBytes: number;
+    memoryUsedPercent: number;
+  },
+  options?: { includeLimitPercent?: boolean }
+): string => {
+  const allocated = formatEnvoyMemoryBytes(summary.memoryMaxBytes);
+  if (options?.includeLimitPercent && summary.memoryLimitBytes > 0 && Number.isFinite(summary.memoryUsedPercent)) {
+    return `${allocated} (${summary.memoryUsedPercent.toFixed(1)}% of limit)`;
+  }
+  return allocated;
 };
 
 export const formatEnvoyRequestRate = (summary: {
@@ -189,9 +196,11 @@ export const envoyMemoryThresholdHelp = (summary: {
 }): string => {
   const threshold = formatEnvoyMemoryBytes(summary.memoryThresholdBytes);
   if (summary.memoryLimitBytes > 0) {
+    const limitPercent = ((summary.memoryThresholdBytes / summary.memoryLimitBytes) * 100).toFixed(1);
     return t(
-      'Memory is flagged as high when allocated memory exceeds {{threshold}} (70% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
+      'Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
       {
+        limitPercent,
         threshold,
         limit: formatEnvoyMemoryBytes(summary.memoryLimitBytes),
         clusters: summary.largeConfigClustersThreshold

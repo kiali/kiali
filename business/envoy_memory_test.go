@@ -28,6 +28,9 @@ func TestClassifyEnvoyMemorySidecar(t *testing.T) {
 
 	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, false)
 	assert.Equal(t, models.EnvoyMemoryCauseOK, cause)
+
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, 0, 10, 0, 0, false)
+	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 }
 
 func TestClassifyEnvoyMemoryGateway(t *testing.T) {

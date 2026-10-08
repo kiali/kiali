@@ -102,13 +102,13 @@ describe('EnvoyMemoryUtils', () => {
   });
 
   it('formats memory usage as allocated bytes', () => {
-    expect(
-      formatEnvoyMemoryUsage({
-        memoryLimitBytes: 1073741824,
-        memoryMaxBytes: 8703180,
-        memoryUsedPercent: 0.8
-      })
-    ).toBe('8.3 MiB');
+    const summary = {
+      memoryLimitBytes: 1073741824,
+      memoryMaxBytes: 8703180,
+      memoryUsedPercent: 0.8
+    };
+    expect(formatEnvoyMemoryUsage(summary)).toBe('8.3 MiB');
+    expect(formatEnvoyMemoryUsage(summary, { includeLimitPercent: true })).toBe('8.3 MiB (0.8% of limit)');
     expect(
       formatEnvoyMemoryUsage({
         memoryLimitBytes: 0,

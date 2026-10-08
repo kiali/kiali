@@ -190,6 +190,9 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 }
 
 func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
+	if memoryBytes == 0 {
+		return models.EnvoyMemoryCauseUnknown
+	}
 	if memoryBytes <= memoryThreshold {
 		return models.EnvoyMemoryCauseOK
 	}

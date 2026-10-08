@@ -115,7 +115,7 @@ const tileValueStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: PFSpacer.lg,
+  marginTop: PFSpacer.sm,
   maxWidth: '100%',
   minWidth: 0
 });

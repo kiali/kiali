@@ -21,11 +21,9 @@ import {
   envoyMemoryCauseStatus,
   fetchEnvoyMemorySummary,
   formatEnvoyMemoryBytes,
-  formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
-  hasEnvoyMemoryWorkload,
-  istioConfigurationScopingUrl
+  hasEnvoyMemoryWorkload
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -87,15 +85,30 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   }
 
   const status = envoyMemoryCauseStatus(summary.cause);
-  const showWarningLinks = summary.cause !== 'ok';
+  const memoryLimitBytes = summary.memoryLimitBytes;
+  const percentOfLimit =
+    memoryLimitBytes > 0
+      ? Number.isFinite(summary.memoryUsedPercent) && summary.memoryUsedPercent > 0
+        ? summary.memoryUsedPercent
+        : (summary.memoryMaxBytes / memoryLimitBytes) * 100
+      : undefined;
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
       <div>
         <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause)}
       </div>
       <div>
-        <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryUsage(summary)}
+        <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}
       </div>
+      {memoryLimitBytes > 0 && percentOfLimit !== undefined && (
+        <div>
+          <strong>{t('Memory limit')}:</strong>{' '}
+          {t('{{limit}} ({{percent}}% of limit)', {
+            limit: formatEnvoyMemoryBytes(memoryLimitBytes),
+            percent: percentOfLimit.toFixed(1)
+          })}
+        </div>
+      )}
       {summary.memoryThresholdBytes > 0 && (
         <div>
           <strong>{t('Warning threshold')}:</strong> {formatEnvoyMemoryBytes(summary.memoryThresholdBytes)}
@@ -104,19 +117,6 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
       <div>
         <strong>{t('Traffic rate')}:</strong> {formatEnvoyRequestRate(summary)}
       </div>
-      {showWarningLinks && (
-        <div className={moreInfoLinkStyle} data-test="envoy-memory-status-scoping-link">
-          <span>{t('More info at')}</span>
-          <Link
-            to={istioConfigurationScopingUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: linkColor }}
-          >
-            {t('Learn about configuration scoping')}
-          </Link>
-        </div>
-      )}
       <div className={moreInfoLinkStyle}>
         <span>{t('More info at')}</span>
         <Link to={buildEnvoyMemoryTabUrl(location.getPathname(), location.getSearch())} style={{ color: linkColor }}>
@@ -127,12 +127,12 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   );
 
   return (
-    <span className={inlineIconRowStyle} data-test="envoy-memory-status">
-      {createIcon(status)}
-      {status.name}
-      <Tooltip content={tooltipContent} position={TooltipPosition.top}>
+    <Tooltip content={tooltipContent} position={TooltipPosition.top}>
+      <span className={inlineIconRowStyle} data-test="envoy-memory-status">
+        {createIcon(status)}
+        {status.name}
         <KialiIcon.Info className={infoStyle} />
-      </Tooltip>
-    </span>
+      </span>
+    </Tooltip>
   );
 };
