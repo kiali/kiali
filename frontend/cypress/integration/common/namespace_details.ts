@@ -1,5 +1,5 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
-import { detailPageQueryParams } from './graph';
+import { detailPageQueryParams, ensureGraphDuration } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 import { linkSelector } from './utils';
 
@@ -9,6 +9,7 @@ Given('user is at the details page for the {string} namespace', (ns: string) => 
     qs: detailPageQueryParams()
   });
   ensureKialiFinishedLoading();
+  ensureGraphDuration();
 });
 
 Then('user sees the namespace detail overview for {string}', (ns: string) => {

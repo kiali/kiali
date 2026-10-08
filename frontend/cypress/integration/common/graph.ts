@@ -17,6 +17,25 @@ export const detailPageQueryParams = (extra: Record<string, string> = {}): Recor
   ...extra
 });
 
+/**
+ * Select the graph duration from the masthead dropdown and wait for graph data to reload.
+ * URL query params alone are not reliable: DurationDropdown used to rewrite duration=300
+ * back to the stale Redux value before MiniGraphCard's TimeDurationIndicator mounted.
+ */
+export const ensureGraphDuration = (durationSeconds: number = DEFAULT_GRAPH_DURATION_SECONDS): void => {
+  cy.intercept('**/api/**/graph*').as('graphAfterDuration');
+
+  cy.get('button#time_range_duration-toggle').should('be.visible').click();
+  cy.get(`button[id="${durationSeconds}"]`).click();
+
+  cy.url().then(url => {
+    if (!url.includes('/ossmconsole/')) {
+      cy.wait('@graphAfterDuration');
+    }
+  });
+  cy.get('#loading_kiali_spinner').should('not.exist');
+};
+
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
 });

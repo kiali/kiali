@@ -85,11 +85,13 @@ const withURLAwareness = (
       const urlParams = new URLSearchParams(location.getSearch());
       const urlDuration = HistoryManager.getDuration(urlParams);
 
+      const duration = urlDuration !== undefined ? urlDuration : props.duration;
+
       if (urlDuration !== undefined && urlDuration !== props.duration) {
         props.setDuration(urlDuration);
       }
 
-      HistoryManager.setParam(URLParam.DURATION, String(props.duration));
+      HistoryManager.setParam(URLParam.DURATION, String(duration));
     }
 
     componentDidUpdate(): void {

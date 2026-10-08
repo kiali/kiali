@@ -1,6 +1,13 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { ensureKialiFinishedLoading } from './transition';
-import { assertGraphReady, DEFAULT_GRAPH_DURATION_SECONDS, select, selectAnd, selectOr } from './graph';
+import {
+  assertGraphReady,
+  DEFAULT_GRAPH_DURATION_SECONDS,
+  ensureGraphDuration,
+  select,
+  selectAnd,
+  selectOr
+} from './graph';
 import { EdgeAttr, NodeAttr } from 'types/Graph';
 
 const CLIENT_SIDE_ONLY_OPTIONS = ['filterTrafficAnimation', 'filterSidecars', 'rank'];
@@ -25,6 +32,7 @@ When('user graphs {string} namespaces', (namespaces: string) => {
   }
 
   ensureKialiFinishedLoading();
+  ensureGraphDuration();
 });
 
 When('user {string} display menu', (_action: string) => {

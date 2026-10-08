@@ -1,5 +1,5 @@
 import { Given, Then } from '@badeball/cypress-cucumber-preprocessor';
-import { DEFAULT_GRAPH_DURATION_SECONDS, detailPageQueryParams } from './graph';
+import { DEFAULT_GRAPH_DURATION_SECONDS, detailPageQueryParams, ensureGraphDuration } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 
 enum DetailType {
@@ -70,6 +70,7 @@ Given(
 
       cy.visit({ url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/${pageDetail}/${name}`, qs });
       ensureKialiFinishedLoading();
+      ensureGraphDuration();
     });
   }
 );
