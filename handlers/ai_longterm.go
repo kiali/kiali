@@ -304,11 +304,12 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 		now := time.Now()
 		sinceTime = now
 
-		if windowStr == "weekly" {
+		switch windowStr {
+		case "weekly":
 			fromTime = now.AddDate(0, 0, -7*12) // Default to 12 weeks back
-		} else if windowStr == "monthly" {
+		case "monthly":
 			fromTime = now.AddDate(0, -12, 0) // Default to 12 months back
-		} else {
+		default:
 			// It's a duration window (e.g. 2592000 = 30d)
 			window, err := parseUsageDuration(windowStr)
 			if err != nil {
@@ -444,17 +445,18 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 			}
 
 			var ts time.Time
-			if windowStr == "weekly" {
+			switch windowStr {
+			case "weekly":
 				weekStr := string(s.Metric[model.LabelName("week")])
 				year, _ := strconv.Atoi(yearStr)
 				week, _ := strconv.Atoi(weekStr)
 				ts = isoWeekToTime(year, week)
-			} else if windowStr == "monthly" {
+			case "monthly":
 				monthStr := string(s.Metric[model.LabelName("month")])
 				year, _ := strconv.Atoi(yearStr)
 				month, _ := strconv.Atoi(monthStr)
 				ts = time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
-			} else {
+			default:
 				// For duration queries (e.g. 30d), we don't add to the time series here
 				// We only use this for the summary totals
 				ts = time.Time{}
@@ -600,19 +602,20 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 	// If it's a duration query, we also need to get the time series data
 	// by querying Prometheus range API
 	if windowStr != "weekly" && windowStr != "monthly" {
-		stepSecs, _ := parseUsageDuration(r.URL.Query().Get("step"))
-		if stepSecs <= 0 {
-			stepSecs = 3600 // default 1h
+		step, _ := parseUsageDuration(r.URL.Query().Get("step"))
+		if step <= 0 {
+			step = time.Hour
 		}
+		stepSeconds := int64(step / time.Second)
 
 		rangeParams := prom_v1.Range{
 			Start: fromTime,
 			End:   sinceTime,
-			Step:  time.Duration(stepSecs) * time.Second,
+			Step:  step,
 		}
 
 		queryRangeMetric := func(metricName string) model.Matrix {
-			query := fmt.Sprintf("increase(%s%s[%ds])", metricName, selector, stepSecs)
+			query := fmt.Sprintf("increase(%s%s[%ds])", metricName, selector, stepSeconds)
 			result, warnings, err := api.QueryRange(r.Context(), query, rangeParams)
 			if len(warnings) > 0 {
 				log.Warningf("handleLongTermChatUsage: warnings querying %s range: %v", metricName, warnings)

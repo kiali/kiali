@@ -42,6 +42,7 @@ const router = createMemoryRouter([
         colorScheme={ColorScheme.LIGHT}
         showNotificationCenter={false}
         chatbotEnabled={false}
+        ai={false}
       />
     ),
     children: pathRoutes
