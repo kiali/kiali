@@ -11,12 +11,12 @@ const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 export class NamespaceDetailPage extends BasePage {
   private targetNamespace = '';
 
-  async open(namespace: string): Promise<void> {
+  async open(namespace: string, query: Record<string, string> = {}): Promise<void> {
     this.targetNamespace = namespace;
     if (isOssmc()) {
       await this.page.route('**/api/namespaces/graph*', route => route.continue());
     }
-    await gotoConsolePage(this.page, `namespaces/${namespace}`);
+    await gotoConsolePage(this.page, `namespaces/${namespace}`, query);
     if (isOssmc()) {
       await this.page.waitForResponse(response => response.url().includes('/api/namespaces/graph'));
     }
@@ -113,6 +113,22 @@ export class NamespaceDetailPage extends BasePage {
 
   async removeNamespaceInjection(): Promise<void> {
     await this.clickSidecarInjectionAction('remove');
+  }
+
+  async applyTrafficPolicyAction(action: 'create' | 'delete' | 'update'): Promise<void> {
+    await this.openActionsMenu();
+    const label = `${action[0].toUpperCase()}${action.slice(1)} Traffic Policies`;
+    await this.page.getByRole('menuitem', { name: label }).click();
+    await waitForLoadingComplete(this.page);
+    if (action === 'create' || action === 'update') {
+      await this.getBySel(action).click();
+    }
+    await this.getBySel('confirm-create').click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectInfoMessage(message: string): Promise<void> {
+    await expect(this.page.getByText(message)).toBeVisible();
   }
 
   async expectNamespaceInjectionLabel(state: 'absent' | 'disabled' | 'enabled'): Promise<void> {

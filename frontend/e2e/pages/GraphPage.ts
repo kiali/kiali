@@ -674,10 +674,15 @@ export class GraphPage extends BasePage {
     expect(labels).toEqual(sorted);
   }
 
-  async openContextMenuForService(serviceName: string): Promise<void> {
+  async openContextMenuForService(serviceName: string, cluster?: string): Promise<void> {
     let nodeId = '';
     await expectGraphTopology(this.page, ({ nodes }) => {
-      const node = nodes.find(n => n.data.nodeType === 'service' && n.data.service === serviceName);
+      const node = nodes.find(
+        n =>
+          n.data.nodeType === 'service' &&
+          n.data.service === serviceName &&
+          (cluster === undefined || n.data.cluster === cluster)
+      );
       expect(node).toBeTruthy();
       nodeId = node!.id;
     });
@@ -700,8 +705,45 @@ export class GraphPage extends BasePage {
     await item.first().click();
   }
 
-  async expectUrlWithoutClusterParam(): Promise<void> {
-    await expect(this.page).not.toHaveURL(/clusterName=/);
+  async confirmDeleteTrafficRouting(): Promise<void> {
+    await this.page.getByRole('button', { name: /delete/i }).click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectBookinfoAcrossEastWest(): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const boxes = nodes.filter(n => n.data.isBox === 'namespace' && n.data.namespace === 'bookinfo');
+      expect(boxes.filter(n => n.data.cluster === 'east').length).toBe(1);
+      expect(boxes.filter(n => n.data.cluster === 'west').length).toBe(1);
+    });
+  }
+
+  async expectClusterNodeLinks(cluster: string): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes, edges }) => {
+      const clusterNodes = nodes.filter(n => n.data.cluster === cluster);
+      expect(clusterNodes.length).toBeGreaterThan(0);
+      for (const edge of edges) {
+        if (clusterNodes.some(n => n.id === edge.data.source)) {
+          const source = clusterNodes.find(n => n.id === edge.data.source);
+          expect(source?.data.cluster).toBe(cluster);
+        }
+      }
+    });
+  }
+
+  async expectSummaryWorkloadDetailsLink(cluster: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-node, #graph-side-panel, [id^="target-panel"]').first();
+    await expect(
+      panel.locator(`a[href*="clusterName=${cluster}"], button[data-href*="clusterName=${cluster}"]`).first()
+    ).toBeVisible();
+  }
+
+  async expectTracesTabClusterParam(cluster: string): Promise<void> {
+    await this.page.getByRole('tab', { name: 'Traces' }).click();
+    await waitForLoadingComplete(this.page);
+    await expect(
+      this.page.locator(`a[href*="clusterName=${cluster}"], button[data-href*="clusterName=${cluster}"]`).first()
+    ).toBeVisible();
   }
 
   async expectContextMenuItemDisabledInViewOnly(menuKey: string): Promise<void> {
@@ -722,11 +764,17 @@ export class GraphPage extends BasePage {
     await expect(this.page.locator('[data-test="delete-traffic-routing-modal"]')).toBeAttached();
   }
 
-  async clickGraphNode(name: string, nodeType: string): Promise<void> {
-    const prop = nodeType === 'service' ? NodeAttr.service : NodeAttr.app;
+  async clickGraphNode(name: string, nodeType: string, cluster?: string): Promise<void> {
+    const prop = nodeType === 'service' ? NodeAttr.service : nodeType === 'workload' ? 'workload' : NodeAttr.app;
     let nodeId = '';
     await expectGraphTopology(this.page, ({ nodes }) => {
-      const node = nodes.find(n => n.data.nodeType === nodeType && n.data[prop] === name);
+      const node = nodes.find(
+        n =>
+          n.data.nodeType === (nodeType === 'workload' ? 'app' : nodeType) &&
+          n.data[prop] === name &&
+          (cluster === undefined || n.data.cluster === cluster) &&
+          (nodeType !== 'workload' || n.data.isBox === undefined)
+      );
       expect(node).toBeTruthy();
       nodeId = node!.id;
     });

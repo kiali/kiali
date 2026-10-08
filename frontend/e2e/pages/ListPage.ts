@@ -1,7 +1,13 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoListPage } from '../utils/navigation';
-import { colExists, expectColumnHeaderVisible, expectColumnHeaderHidden } from '../utils/table';
+import {
+  colExists,
+  expectColumnHeaderVisible,
+  expectColumnHeaderHidden,
+  expectListSortedByColumn,
+  sortListByColumn
+} from '../utils/table';
 import { waitForLoadingComplete } from '../utils/transition';
 
 const COLUMN_MANAGEMENT_MODAL = '[data-ouia-component-id="ColumnManagementModal"]';
@@ -99,6 +105,14 @@ export class ListPage extends BasePage {
 
   async expectColumn(colName: string, visible: boolean): Promise<void> {
     await colExists(this.page, colName, visible);
+  }
+
+  async sortByColumn(column: string, order: 'ascending' | 'descending'): Promise<void> {
+    await sortListByColumn(this.page, column, order);
+  }
+
+  async expectSortedByColumn(column: string, order: 'ascending' | 'descending'): Promise<void> {
+    await expectListSortedByColumn(this.page, column, order);
   }
 
   async openColumnManagement(testId: string): Promise<void> {

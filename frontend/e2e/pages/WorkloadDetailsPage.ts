@@ -12,8 +12,8 @@ const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 type SidecarAction = 'disable_auto_injection' | 'enable_auto_injection' | 'remove_auto_injection';
 
 export class WorkloadDetailsPage extends BasePage {
-  async open(namespace: string, workload: string): Promise<void> {
-    await gotoConsolePage(this.page, `namespaces/${namespace}/workloads/${workload}`);
+  async open(namespace: string, workload: string, query: Record<string, string> = {}): Promise<void> {
+    await gotoConsolePage(this.page, `namespaces/${namespace}/workloads/${workload}`, query);
   }
 
   async openLogsTab(namespace: string, workload: string): Promise<void> {
@@ -300,6 +300,15 @@ export class WorkloadDetailsPage extends BasePage {
       .click();
     await this.page.locator('input#filter_input_value').fill(value);
     await this.page.locator('input#filter_input_value').press('Enter');
+  }
+
+  async expectEnvoyTabVisible(visible: boolean): Promise<void> {
+    const tab = this.page.locator('#basic-tabs').getByRole('tab', { name: 'Envoy', exact: true });
+    if (visible) {
+      await expect(tab).toBeVisible();
+    } else {
+      await expect(tab).toHaveCount(0);
+    }
   }
 
   async expectClustersTable(): Promise<void> {
