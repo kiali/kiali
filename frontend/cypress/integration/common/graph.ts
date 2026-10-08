@@ -18,22 +18,37 @@ export const detailPageQueryParams = (extra: Record<string, string> = {}): Recor
 });
 
 /**
- * Select the graph duration from the masthead dropdown and wait for graph data to reload.
- * URL query params alone are not reliable: DurationDropdown used to rewrite duration=300
- * back to the stale Redux value before MiniGraphCard's TimeDurationIndicator mounted.
+ * Ensure the masthead duration matches the expected graph window.
+ * Re-selecting the current duration does not refetch graph data — never wait for a graph
+ * request unless the dropdown selection actually changes.
  */
 export const ensureGraphDuration = (durationSeconds: number = DEFAULT_GRAPH_DURATION_SECONDS): void => {
-  cy.intercept('**/api/**/graph*').as('graphAfterDuration');
-
-  cy.get('button#time_range_duration-toggle').should('be.visible').click();
-  cy.get(`button[id="${durationSeconds}"]`).click();
-
   cy.url().then(url => {
-    if (!url.includes('/ossmconsole/')) {
-      cy.wait('@graphAfterDuration');
+    const urlDuration = new URL(url).searchParams.get('duration');
+    if (urlDuration === String(durationSeconds)) {
+      cy.get('#loading_kiali_spinner').should('not.exist');
+      return;
     }
+
+    cy.get('button#time_range_duration-toggle').should('be.visible').click();
+    cy.get(`button[id="${durationSeconds}"]`).then($option => {
+      const alreadySelected = $option.attr('aria-selected') === 'true';
+
+      if (alreadySelected) {
+        cy.get('button#time_range_duration-toggle').click();
+        cy.get('#loading_kiali_spinner').should('not.exist');
+        return;
+      }
+
+      cy.intercept('**/api/**/graph*').as('graphAfterDuration');
+      cy.wrap($option).click();
+
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphAfterDuration');
+      }
+      cy.get('#loading_kiali_spinner').should('not.exist');
+    });
   });
-  cy.get('#loading_kiali_spinner').should('not.exist');
 };
 
 Then('user does not see a minigraph', () => {
