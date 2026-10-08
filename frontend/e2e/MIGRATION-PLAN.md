@@ -91,8 +91,9 @@
 - [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
 - [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
 - [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
-- [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs; `@waypoint` / `@waypoint-tracing` follow-up)
-- [ ] `@waypoint` suite passes
+- [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
+- [x] `@waypoint` suite ported on `issue9712_waypoint` (full `waypoint.feature` + waypoint logs;
+  `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
 - [ ] `@waypoint-tracing` suite passes
 - [ ] `@ambient-multi-primary` suite passes
 - [ ] `@waypoint-multicluster` suite passes
@@ -158,8 +159,8 @@
   pattern)
 - [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations
   deferred from PR #10217
-- [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites — core-2 done (#10269); ambient/multi-cluster
-  pending
+- [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites — core-2 done (#10269); ambient done
+  (#10319); waypoint bookinfo slice in progress (`issue9712_waypoint`); multi-cluster pending
 - [ ] Add `page.routeWebSocket()` where graph live updates are mocked
 - [ ] Verify TextInputGroupMain `data-test` scoping — PF renders `data-test` on outer `<div>`, not
   inner `<input>`; assess if PF should be patched or if `getByTestId().locator('input')` is sufficient
@@ -168,3 +169,28 @@
   LabelGroup (PR #10174 review)
 - [ ] OSSMC Playwright sync and Cypress cutover ([#9712](https://github.com/kiali/kiali/issues/9712)
   later phases)
+
+## Waypoint port plan (`@waypoint`)
+
+**CI:** Reuse `playwright-ambient` (same KinD ambient Sail + demos as Cypress `frontend-ambient`).
+Run ambient to completion, then `yarn playwright:run:waypoint` (`waypoint` + `waypoint-tracing`).
+Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
+
+**Specs (`frontend/e2e/tests/waypoint/`):**
+| File | Coverage |
+|------|----------|
+| `waypoint.spec.ts` | Setup/enrollment, bookinfo list/details/ztunnel/logs/graph/istio/namespaces |
+| `waypoint_demo_graph.spec.ts` | `waypoint-*` demo-NS graph matrix |
+| `waypoint_demo_details.spec.ts` | Demo-NS Waypoint tab / L7 links |
+| `waypoint_sidecar_ambient.spec.ts` | Sidecar↔ambient graph, config issues, Add to Ambient |
+
+**Still separate tags (not this port):** `@waypoint-tracing`, `@waypoint-multicluster`
+
+### Learned lessons (converting ambient → waypoint)
+
+1. **Same CI cluster as ambient** — no separate KinD job; enrollment is test-time (`istio.io/use-waypoint`).
+2. **Traces Background ≠ Tempo** — poll gateway/workload traces on ambient (Jaeger-style); deep UI is `@waypoint-tracing`.
+3. **Graph edge counts are floors** — use `expectTrafficEdgesAtLeast` / Prometheus-inclusive helper.
+4. **Reuse ambient POM** — extend `GraphPage` / `WorkloadDetailsPage` / `NamespaceDetailPage`.
+5. **Serial `beforeAll` is expensive** — one readiness wait per describe file; demo NSs share ambient install.
+6. **No Cypress mentions in `frontend/e2e/`** — keep conversion notes here / in `README.md`.

@@ -388,6 +388,200 @@ export class WorkloadDetailsPage extends BasePage {
     }
   }
 
+  async expectModeInPopover(...texts: string[]): Promise<void> {
+    await this.getBySel('details-mode').locator('svg').click();
+    const dialog = this.page.getByRole('dialog', { name: 'Mode info' });
+    await expect(dialog).toBeVisible();
+    for (const text of texts) {
+      await expect(dialog).toContainText(text);
+    }
+    await dialog.getByRole('button', { name: 'Close' }).first().click();
+    await expect(dialog).toHaveCount(0);
+  }
+
+  async expectProtocolInPodPopover(value: string): Promise<void> {
+    await this.getBySel('pod-info').first().click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: 'Protocol' });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText(value);
+    await dialog.getByRole('button', { name: 'Close' }).first().click();
+    await expect(dialog).toHaveCount(0);
+  }
+
+  async expectL7WaypointLink(waypointName: string): Promise<void> {
+    const resources = this.getBySel('workload-resources-card');
+    await expect(resources).toContainText('L7');
+    // data-test="waypoint-link" is on the KialiLink itself (not a wrapper).
+    const link = this.getBySel('waypoint-link').filter({ hasText: waypointName });
+    await expect(link).toBeVisible();
+    await expect(link.locator('xpath=ancestor::li[1]').locator('span').filter({ hasText: 'L7' })).toBeVisible();
+  }
+
+  async clickL7WaypointLink(waypointName: string): Promise<void> {
+    await this.getBySel('waypoint-link').filter({ hasText: waypointName }).click();
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectWaypointAttribute(): Promise<void> {
+    await expect(this.getBySel('details-waypoint')).toContainText('true');
+  }
+
+  async expectProxyStatusWithDetail(status: string, detail: string): Promise<void> {
+    const proxyStatus = this.getBySel('proxy-status');
+    await expect(proxyStatus.locator(`.icon-${status}`)).toBeVisible();
+    await proxyStatus.hover();
+    await expect(this.page.getByRole('tooltip')).toContainText(detail);
+  }
+
+  async expectIstioConfigEntry(configTestId: string, badgeId: string): Promise<void> {
+    if (isOssmc()) {
+      return;
+    }
+    const card = this.page.locator('#IstioConfigCard');
+    await expect(card).toBeVisible();
+    await expect(card.getByTestId(configTestId)).toBeVisible();
+    await expect(card.locator(`#${badgeId}`)).toBeVisible();
+  }
+
+  async openWaypointTab(): Promise<void> {
+    await openDetailsTab(this.page, 'Waypoint');
+  }
+
+  async openWaypointSubtab(subtab: string): Promise<void> {
+    const tabs = this.page.locator('#waypoint-details');
+    await expect(tabs).toBeVisible();
+    const tabLocator = tabs.getByRole('tab', { name: subtab, exact: true });
+    if ((await tabLocator.count()) > 0) {
+      await tabLocator.click();
+    } else {
+      await tabs.locator('.pf-v6-c-tabs__list button').filter({ hasText: subtab }).click();
+    }
+    await waitForLoadingComplete(this.page);
+  }
+
+  async expectWaypointServicesData(): Promise<void> {
+    await this.expectEnrolledWaypointTable({
+      badgeId: 'pfbadge-S',
+      labeledBy: 'namespace',
+      name: 'productpage',
+      namespace: 'bookinfo'
+    });
+  }
+
+  async expectWaypointInfoFor(type: string): Promise<void> {
+    await expect(this.getBySel('waypointfor-title')).toContainText(type);
+    await expect(this.page.getByRole('grid').locator('td[data-label="RDS"]')).toContainText('IGNORED');
+  }
+
+  async expectNoL7WaypointLink(): Promise<void> {
+    await expect(this.getBySel('workload-resources-card')).not.toContainText('L7');
+  }
+
+  async expectWaypointSubtabAbsent(subtab: string): Promise<void> {
+    const tabs = this.page.locator('#waypoint-details');
+    await expect(tabs).toBeVisible();
+    await expect(tabs).not.toContainText(subtab);
+  }
+
+  async expectEnrolledWaypointTable(options: {
+    badgeId: string;
+    labeledBy: string;
+    name: string;
+    namespace: string;
+    rows?: number;
+  }): Promise<void> {
+    const title = this.getBySel('enrolled-data-title');
+    await expect(title).toBeVisible();
+    const table = title.locator('xpath=following::table[1]');
+    if (options.rows !== undefined) {
+      await expect(table.locator('tbody tr')).toHaveCount(options.rows);
+    }
+    await expect(table.locator('td[data-label="Name"]').filter({ hasText: options.name }).first()).toBeVisible();
+    await expect(table.locator(`#${options.badgeId}`).first()).toBeVisible();
+    await expect(
+      table.locator('td[data-label="Namespace"]').filter({ hasText: options.namespace }).first()
+    ).toBeVisible();
+    await expect(
+      table.locator('td[data-label="Labeled by"]').filter({ hasText: options.labeledBy }).first()
+    ).toBeVisible();
+  }
+
+  async expectProxyStatus(status: string): Promise<void> {
+    const statusLabels: Record<string, string> = {
+      degraded: 'Degraded',
+      failure: 'Failure',
+      healthy: 'Healthy',
+      info: 'Info',
+      na: 'n/a'
+    };
+    const label = statusLabels[status.toLowerCase()] ?? status;
+    const detailsStatus = this.getBySel('details-status');
+    await expect(detailsStatus).toContainText(label);
+    await expect(detailsStatus.locator(`.icon-${status.toLowerCase()}`)).toBeVisible();
+  }
+
+  async expectProxyStatusIcon(status: string): Promise<void> {
+    const card = this.getBySel('workload-details-card');
+    await expect(card.locator(`span[class*="icon-${status.toLowerCase()}"]`)).toBeVisible();
+  }
+
+  async expectNoConfigIssues(): Promise<void> {
+    const card = this.getBySel('workload-details-card');
+    await expect(card).toBeVisible();
+    await expect(card).not.toContainText('Config Issues');
+  }
+
+  async openZtunnelTab(): Promise<void> {
+    await openDetailsTab(this.page, 'Ztunnel');
+  }
+
+  async expectZtunnelServicesTable(): Promise<void> {
+    await this.openZtunnelTab();
+    const tabs = this.page.locator('#ztunnel-details');
+    await expect(tabs).toBeVisible();
+    await tabs.getByText('Services', { exact: true }).click();
+    const table = this.page.locator('table[aria-label="Ztunnel services config"]');
+    await expect(table).toBeVisible();
+    await expect(table.locator('th[data-label="Service VIP"]')).toBeVisible();
+  }
+
+  async expectZtunnelTabForNamespace(namespace: string): Promise<void> {
+    await this.openZtunnelTab();
+    const tabs = this.page.locator('#ztunnel-details');
+    await expect(tabs).toBeVisible();
+    await tabs.getByText('Services', { exact: true }).click();
+    const services = this.page.locator('table[aria-label="Ztunnel services config"]');
+    await expect(services.locator('td[data-label="Service VIP"]').first()).toBeVisible();
+    await expect(services.locator('td[data-label="Waypoint"]').first()).toBeAttached();
+    await expect(services.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
+
+    await tabs.getByText('Workloads', { exact: true }).click();
+    const workloads = this.page.locator('table[aria-label="Ztunnel workloads config"]');
+    await expect(workloads.locator('td[data-label="Pod Name"]').first()).toBeVisible();
+    await expect(workloads.locator('td[data-label="Node"]').first()).toBeAttached();
+    await expect(workloads.locator('td[data-label="Namespace"]').filter({ hasText: namespace }).first()).toBeVisible();
+
+    await this.page.getByTestId('filter-type-toggle').click();
+    await this.page.getByTestId('filter-type-select').getByRole('option', { name: 'Namespace', exact: true }).click();
+    const input = this.page.getByTestId('filter-type-input').locator('input');
+    await input.click();
+    await input.fill(namespace);
+    await this.page.getByTestId('filter-value-select').getByRole('option', { name: namespace, exact: true }).click();
+    await waitForLoadingComplete(this.page);
+
+    const cells = workloads.locator('td[data-label="Namespace"]');
+    const count = await cells.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i++) {
+      await expect(cells.nth(i)).toContainText(namespace);
+    }
+  }
+
+  async setLogLevel(level: string): Promise<void> {
+    await this.getBySel('log-actions-dropdown').click();
+    await this.page.locator(`#setLogLevel${level}`).click();
+  }
+
   async expectNoWorkloadInjectionLabel(): Promise<void> {
     const card = this.getBySel('workload-labels-card');
     const overflow = card.locator('.pf-m-overflow');
