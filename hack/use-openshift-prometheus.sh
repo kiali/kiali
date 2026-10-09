@@ -274,73 +274,10 @@ spec:
       targetLabel: mesh_id
 EOM
 
+  # Per-namespace PodMonitors are required for UWM; platform monitoring alone does not scrape workload proxies.
   echo "Apply a PodMonitor resource to all mesh namespaces in order to collect Istio telemetry from proxies"
-  for n in ${NAMESPACES} ${ISTIO_NAMESPACE}; do
-    echo "Applying PodMonitor resource to [${n}]"
-    cat <<EOM | ${OC} apply -n ${n} -f -
-apiVersion: monitoring.coreos.com/v1
-kind: PodMonitor
-metadata:
-  name: istio-proxies-monitor
-  labels:
-    ${RESOURCE_LABEL_COLON}
-spec:
-  selector:
-    matchExpressions:
-    - key: istio-prometheus-ignore
-      operator: DoesNotExist
-  podMetricsEndpoints:
-  - path: /stats/prometheus
-    interval: 30s
-    relabelings:
-    - action: keep
-      sourceLabels: [__meta_kubernetes_pod_container_name]
-      regex: "istio-proxy"
-    - action: keep
-      sourceLabels: [__meta_kubernetes_pod_annotationpresent_prometheus_io_scrape]
-    - action: replace
-      regex: (\\d+);(([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4})
-      replacement: '[\$2]:\$1'
-      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
-      targetLabel: __address__
-    - action: replace
-      regex: (\\d+);((([0-9]+?)(\.|$)){4})
-      replacement: \$2:\$1
-      sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_ip]
-      targetLabel: __address__
-    # Set the 'app' label from 'app.kubernetes.io/name' or fallback to 'app'
-    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_name", "__meta_kubernetes_pod_label_app"]
-      separator: ";"
-      targetLabel: "app"
-      action: replace
-      regex: "(.+);.*|.*;(.+)"
-      replacement: "\${1}\${2}"  # Use the first non-empty value
-    # Set the 'version' label from 'app.kubernetes.io/version' or fallback to 'version'
-    - sourceLabels: ["__meta_kubernetes_pod_label_app_kubernetes_io_version", "__meta_kubernetes_pod_label_version"]
-      separator: ";"
-      targetLabel: "version"
-      action: replace
-      regex: "(.+);.*|.*;(.+)"
-      replacement: "\${1}\${2}"  # Use the first non-empty value
-    - action: replace
-      regex: "(.+)"
-      replacement: "\${1}"
-      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-      targetLabel: app_kubernetes_io_name
-    - action: replace
-      regex: "(.+)"
-      replacement: "\${1}"
-      sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_version]
-      targetLabel: app_kubernetes_io_version
-    # add some labels we want
-    - sourceLabels: [__meta_kubernetes_namespace]
-      action: replace
-      targetLabel: namespace
-    - action: replace
-      replacement: "${MESH_LABEL}"
-      targetLabel: mesh_id
-EOM
-  done
+  HACK_ISTIO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/istio" && pwd)"
+  "${HACK_ISTIO_DIR}/ensure-openshift-istio-proxies-podmonitor.sh" -c "${OC}" -ml "${MESH_LABEL}" -n "${NAMESPACES} ${ISTIO_NAMESPACE}"
 
   echo "Adding this to the Kiali CR [${KIALI_CR_NAME}] found in namespace [${KIALI_CR_NAMESPACE}]"
   echo "---"

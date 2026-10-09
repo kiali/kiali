@@ -1,4 +1,5 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { detailPageQueryParams } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 import { confirmNamespaceTrafficPolicyModal, openNamespaceActionsMenu } from './namespace_actions';
 
@@ -309,7 +310,10 @@ When('I remove override configuration for sidecar injection in the namespace', f
 });
 
 function switchWorkloadSidecarInjection(enableOrDisable: string): void {
-  cy.visit({ url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}?refresh=0` });
+  cy.visit({
+    url: `/console/namespaces/${this.targetNamespace}/workloads/${this.targetWorkload}`,
+    qs: detailPageQueryParams()
+  });
 
   // In OSSMC, the workload actions toggle does not exist. Workload actions are integrated in the minigraph menu
   if (Cypress.env('OSSMC')) {
@@ -355,14 +359,15 @@ When('I remove override configuration for sidecar injection in the workload', fu
   switchWorkloadSidecarInjection.apply(this, ['remove']);
 });
 
-Then('I should see the override annotation for sidecar injection in the namespace as {string}', function (
-  enabled: string
-) {
-  cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
-    expect(response.status).to.equal(200);
-    expect(response.body.labels['istio-injection']).to.equal(enabled);
-  });
-});
+Then(
+  'I should see the override annotation for sidecar injection in the namespace as {string}',
+  function (enabled: string) {
+    cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {
+      expect(response.status).to.equal(200);
+      expect(response.body.labels['istio-injection']).to.equal(enabled);
+    });
+  }
+);
 
 Then('I should see no override annotation for sidecar injection in the namespace', function () {
   cy.request({ method: 'GET', url: `/api/namespaces/${this.targetNamespace}/info` }).then(response => {

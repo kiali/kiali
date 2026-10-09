@@ -1,13 +1,20 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
+import { detailPageQueryParams } from './graph';
 
 Given('I am on the {string} workload detail page of the {string} namespace', (workload: string, namespace: string) => {
-  cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?refresh=0` });
+  cy.visit({
+    url: `/console/namespaces/${namespace}/workloads/${workload}`,
+    qs: detailPageQueryParams()
+  });
 });
 
 Given(
   'I am on the logs tab of the {string} workload detail page of the {string} namespace',
   (workload: string, namespace: string) => {
-    cy.visit({ url: `/console/namespaces/${namespace}/workloads/${workload}?tab=logs&refresh=0` });
+    cy.visit({
+      url: `/console/namespaces/${namespace}/workloads/${workload}`,
+      qs: detailPageQueryParams({ tab: 'logs' })
+    });
 
     const changeIntervalDuration = (): void => {
       cy.get('#metrics_filter_interval_duration-toggle').click();
