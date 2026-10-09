@@ -101,6 +101,12 @@ export class ServicesPage extends ListPage {
     await expectServicesInTable(this.page, result);
   }
 
+  async expectServiceFromCluster(service: string, cluster: string, namespace: string): Promise<void> {
+    await expect(
+      this.page.getByTestId(new RegExp(`VirtualItem_Cluster${cluster}_Ns${namespace}_${service}`))
+    ).toBeVisible();
+  }
+
   async expectOnlyRow(name: string): Promise<void> {
     await expectOnlyRow(this.page, name);
   }

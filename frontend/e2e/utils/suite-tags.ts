@@ -30,6 +30,9 @@ export const persesOnly = { tag: '@perses' as const };
 /** @ambient — frontend-ambient Playwright / Cypress suite */
 export const ambientOnly = { tag: '@ambient' as const };
 
+/** @ambient-multi-primary — KinD multi-primary ambient Playwright suite */
+export const ambientMultiPrimaryOnly = { tag: '@ambient-multi-primary' as const };
+
 /** @waypoint — frontend-ambient Playwright / Cypress suite */
 export const waypointOnly = { tag: '@waypoint' as const };
 

@@ -56,21 +56,33 @@ function isOpenShift(): boolean {
   }
 }
 
-function getNodeArchitecture(): string | undefined {
+function mapProcessArch(): string {
+  return process.arch === 'x64' ? 'amd64' : process.arch;
+}
+
+/** Resolve worker-node arch for demo image selection. Retries under API load; falls back to process.arch. */
+function getNodeArchitecture(): string {
   const script = path.join(HACK_ISTIO, 'cypress/get-node-architecture.sh');
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 60_000;
+  let lastErr: unknown;
+
   while (Date.now() < deadline) {
     try {
       const arch = execSync(script, { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
       if (arch) {
         return arch;
       }
-    } catch {
+    } catch (e) {
       // kubectl can miss worker-node labels while the API is busy with parallel installs
+      lastErr = e;
     }
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1_000);
   }
-  return undefined;
+
+  const fallback = mapProcessArch();
+  const detail = lastErr instanceof Error ? ` (last attempt: ${lastErr.message})` : '';
+  console.warn(`Could not detect node architecture via kubectl${detail}; falling back to ${fallback}`);
+  return fallback;
 }
 
 function hasKialiCr(): boolean {
@@ -109,9 +121,6 @@ function waitForDemoNamespaces(namespaces: string): void {
 function installDemoApp(demoapp: DemoApp): void {
   const config = DEMO_APP_CONFIG[demoapp];
   const arch = getNodeArchitecture();
-  if (!arch) {
-    throw new Error(`Could not detect node architecture to install ${demoapp} demo app`);
-  }
 
   const installScript = path.join(HACK_ISTIO, `install-${demoapp}-demo.sh`);
   const openshift = isOpenShift();

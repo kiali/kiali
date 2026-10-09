@@ -35,4 +35,6 @@ if (setupStatus !== 0) {
 console.log(
   `Running filtered tests (grep=${PLAYWRIGHT_GREP ?? '<none>'}, grepInvert=${PLAYWRIGHT_GREP_INVERT ?? '<none>'})...`
 );
-process.exit(run(['test', '--pass-with-no-tests'], baseEnv));
+// Unique blob so Jenkins combine:reports can merge with other suite zips (Cypress results-[hash].xml).
+const suiteEnv = { ...baseEnv, PLAYWRIGHT_BLOB_NAME: baseEnv.PLAYWRIGHT_BLOB_NAME ?? 'test-group' };
+process.exit(run(['test', '--pass-with-no-tests'], suiteEnv));
