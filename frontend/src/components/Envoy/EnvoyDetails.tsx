@@ -8,7 +8,19 @@ import type { Workload } from 'types/Workload';
 import type { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
-import { Button, ButtonVariant, Card, CardBody, Tab, Tabs, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import {
+  Button,
+  ButtonVariant,
+  Card,
+  CardBody,
+  EmptyState,
+  EmptyStateBody,
+  EmptyStateVariant,
+  Tab,
+  Tabs,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
 import type { Namespace } from 'types/Namespace';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -21,6 +33,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import type { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
+import { EnvoyMemory } from 'components/Envoy/EnvoyMemory';
+import type { TimeRange } from 'types/Common';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { location, router } from '../../app/History';
 import {
@@ -44,8 +58,6 @@ import { subTabStyle } from 'styles/TabStyles';
 import { getAppLabelName, getVersionLabelName } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
 
-const resources: string[] = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
-
 const iconStyle = kialiStyle({
   display: 'inline-block',
   alignSelf: 'center'
@@ -62,17 +74,19 @@ const copyButtonStyle = kialiStyle({
   }
 });
 
-const envoyTabs = ['clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
+const envoyTabs = ['memory', 'clusters', 'listeners', 'routes', 'bootstrap', 'config', 'metrics'];
+const tabName = 'envoyTab';
+const defaultTab = 'memory';
+
 const envoyTabTitles: Record<string, string> = {
   bootstrap: 'Bootstrap',
   clusters: 'Clusters',
   config: 'Config',
   listeners: 'Listeners',
+  memory: 'Overview',
   metrics: 'Metrics',
   routes: 'Routes'
 };
-const tabName = 'envoyTab';
-const defaultTab = 'clusters';
 
 export type ResourceSorts = { [resource: string]: ISortBy };
 
@@ -86,6 +100,7 @@ type ReduxProps = {
 type EnvoyDetailsProps = ReduxProps & {
   lastRefreshAt: TimeInMilliseconds;
   namespace: string;
+  rangeDuration: TimeRange;
   workload: Workload;
 };
 
@@ -94,7 +109,7 @@ type EnvoyDetailsState = {
   config: EnvoyProxyDump;
   editorHeight: number;
   fetch: boolean;
-  pod: Pod;
+  pod?: Pod;
   resource: string;
   tableSortBy: ResourceSorts;
 };
@@ -123,13 +138,15 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     this.monacoEditorRef = React.createRef();
     this.editorWrapperRef = React.createRef();
 
+    const initialResource = activeTab(tabName, defaultTab);
+
     this.state = {
       pod: this.sortedPods()[0],
       config: {},
       editorHeight: 300,
       fetch: true,
-      activeKey: envoyTabs.indexOf(activeTab(tabName, defaultTab)),
-      resource: activeTab(tabName, defaultTab),
+      activeKey: this.tabIndexForResource(initialResource),
+      resource: initialResource,
       tableSortBy: {
         clusters: {
           index: 0,
@@ -158,10 +175,20 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     this.heightObserver.disconnect();
   }
 
-  componentDidUpdate(_prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
-    const currentTabIndex = envoyTabs.indexOf(activeTab(tabName, defaultTab));
+  componentDidUpdate(prevProps: EnvoyDetailsProps, prevState: EnvoyDetailsState): void {
+    const currentTabIndex = this.tabIndexForResource(activeTab(tabName, defaultTab));
 
-    if (this.state.pod.name !== prevState.pod.name || this.state.resource !== prevState.resource) {
+    const prevFirstPod = prevProps.workload.pods[0]?.name;
+    const nextFirstPod = this.props.workload.pods[0]?.name;
+    if (prevFirstPod !== nextFirstPod) {
+      this.setState({
+        config: {},
+        fetch: true,
+        pod: this.sortedPods()[0]
+      });
+    }
+
+    if (this.state.pod?.name !== prevState.pod?.name || this.state.resource !== prevState.resource) {
       this.fetchContent();
 
       if (currentTabIndex !== this.state.activeKey) {
@@ -180,31 +207,43 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   envoyHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
-    const targetResource: string = resources[resourceIdx];
+    const targetResource = this.getFilteredEnvoyTabs()[resourceIdx];
 
-    if (targetResource !== this.state.resource) {
-      this.setState({
-        config: {},
-        fetch: true,
-        resource: targetResource,
-        activeKey: resourceIdx
-      });
-
-      const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
-      const urlParams = new URLSearchParams(location.getSearch());
-      urlParams.set(tabName, targetResource);
-      urlParams.set(workloadTabName, mainTab);
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
+    if (!targetResource || targetResource === this.state.resource) {
+      return;
     }
+
+    this.selectEnvoyTab(targetResource, resourceIdx);
+  };
+
+  selectEnvoyTab = (targetResource: string, resourceIdx?: number): void => {
+    const activeKey = resourceIdx ?? this.tabIndexForResource(targetResource);
+
+    if (targetResource === this.state.resource && activeKey === this.state.activeKey) {
+      return;
+    }
+
+    this.setState({
+      config: {},
+      fetch: true,
+      resource: targetResource,
+      activeKey
+    });
+
+    const mainTab = new URLSearchParams(location.getSearch()).get(workloadTabName) ?? workloadDefaultTab;
+    const urlParams = new URLSearchParams(location.getSearch());
+    urlParams.set(tabName, targetResource);
+    urlParams.set(workloadTabName, mainTab);
+    router.navigate(`${location.getPathname()}?${urlParams.toString()}`);
   };
 
   fetchEnvoyProxyResourceEntries = (resource: string): void => {
-    API.getPodEnvoyProxyResourceEntries(
-      this.props.namespace,
-      this.state.pod.name,
-      resource,
-      this.props.workload.cluster
-    )
+    const pod = this.state.pod;
+    if (!pod) {
+      return;
+    }
+
+    API.getPodEnvoyProxyResourceEntries(this.props.namespace, pod.name, resource, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,
@@ -212,12 +251,17 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        addError(`Could not fetch envoy config ${resource} entries for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config ${resource} entries for ${pod.name}.`, error);
       });
   };
 
   fetchEnvoyProxy = (): void => {
-    API.getPodEnvoyProxy(this.props.namespace, this.state.pod.name, this.props.workload.cluster)
+    const pod = this.state.pod;
+    if (!pod) {
+      return;
+    }
+
+    API.getPodEnvoyProxy(this.props.namespace, pod.name, this.props.workload.cluster)
       .then(resultEnvoyProxy => {
         this.setState({
           config: resultEnvoyProxy.data,
@@ -225,35 +269,65 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
         });
       })
       .catch(error => {
-        addError(`Could not fetch envoy config for ${this.state.pod.name}.`, error);
+        addError(`Could not fetch envoy config for ${pod.name}.`, error);
       });
   };
 
   fetchContent = (): void => {
-    if (this.state.fetch === true) {
-      if (this.state.resource === 'config') {
-        this.fetchEnvoyProxy();
-      } else {
-        this.fetchEnvoyProxyResourceEntries(this.state.resource);
-      }
+    if (this.state.fetch !== true) {
+      return;
     }
+
+    const needsPod = this.state.resource !== 'memory' && this.state.resource !== 'metrics';
+    if (needsPod && !this.state.pod) {
+      this.setState({ fetch: false });
+      return;
+    }
+
+    if (this.state.resource === 'config') {
+      this.fetchEnvoyProxy();
+      return;
+    }
+
+    if (this.state.resource === 'memory' || this.state.resource === 'metrics') {
+      this.setState({ fetch: false });
+      return;
+    }
+
+    this.fetchEnvoyProxyResourceEntries(this.state.resource);
   };
 
   setPod = (podName: string): void => {
     const podIdx: number = +podName;
     const targetPod: Pod = this.sortedPods()[podIdx];
 
-    if (targetPod.name !== this.state.pod.name) {
-      this.setState({
-        config: {},
-        pod: targetPod,
-        fetch: true
-      });
+    if (!targetPod || targetPod.name === this.state.pod?.name) {
+      return;
     }
+
+    this.setState({
+      config: {},
+      pod: targetPod,
+      fetch: true
+    });
   };
 
   sortedPods = (): Pod[] => {
-    return this.props.workload.pods.sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+    return [...this.props.workload.pods].sort((p1: Pod, p2: Pod) => (p1.name >= p2.name ? 1 : -1));
+  };
+
+  hasPods = (): boolean => {
+    return this.props.workload.pods.length > 0;
+  };
+
+  renderNoPodsEmptyState = (): React.ReactNode => {
+    return (
+      <EmptyState headingLevel="h5" titleText={t('No pods')} variant={EmptyStateVariant.full}>
+        <EmptyStateBody>
+          {t('Envoy pod configuration is unavailable until this workload has running pods.')}
+        </EmptyStateBody>
+      </EmptyState>
+    );
   };
 
   onSort = (tab: string, index: number, direction: SortByDirection): void => {
@@ -284,6 +358,10 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     return this.state.resource === 'config' || this.state.resource === 'bootstrap';
   };
 
+  showMemory = (): boolean => {
+    return this.state.resource === 'memory';
+  };
+
   showMetrics = (): boolean => {
     return this.state.resource === 'metrics';
   };
@@ -300,12 +378,32 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     return envoyDashboardRef;
   };
 
+  getFilteredEnvoyTabs = (): string[] => {
+    if (this.getEnvoyMetricsDashboardRef()) {
+      return envoyTabs;
+    }
+
+    return envoyTabs.filter(tab => tab !== 'metrics');
+  };
+
+  tabIndexForResource = (resource: string): number => {
+    const filteredTabs = this.getFilteredEnvoyTabs();
+    const index = filteredTabs.indexOf(resource);
+
+    if (index >= 0) {
+      return index;
+    }
+
+    const defaultIndex = filteredTabs.indexOf(defaultTab);
+    return defaultIndex >= 0 ? defaultIndex : 0;
+  };
+
   onRouteLinkClick = (): void => {
     this.setState({
       config: {},
       fetch: true,
       resource: 'routes',
-      activeKey: 2 // Routes index
+      activeKey: this.tabIndexForResource('routes')
     });
 
     // Forcing to regenerate the active filters
@@ -330,18 +428,17 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
     const app = appLabelName ? this.props.workload.labels[appLabelName] : '';
     const version = verLabelName ? this.props.workload.labels[verLabelName] : '';
     const envoyMetricsDashboardRef = this.getEnvoyMetricsDashboardRef();
-    let filteredEnvoyTabs = envoyTabs;
-
-    if (!envoyMetricsDashboardRef) {
-      filteredEnvoyTabs = envoyTabs.slice(0, envoyTabs.length - 1);
-    }
+    const filteredEnvoyTabs = this.getFilteredEnvoyTabs();
 
     const tabs = filteredEnvoyTabs.map((value, index) => {
       const title = t(envoyTabTitles[value] ?? value);
+      const tabNeedsPod = value !== 'memory' && value !== 'metrics';
 
       return (
         <Tab key={`tab_${value}`} eventKey={index} title={title}>
-          {this.showEditor() ? (
+          {tabNeedsPod && !this.hasPods() ? (
+            this.renderNoPodsEmptyState()
+          ) : this.showEditor() ? (
             <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <div className={editorColumnStyle}>
@@ -354,8 +451,8 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       id="envoy_pods_list"
                       tooltip={t('Display envoy config for the selected pod')}
                       handleSelect={key => this.setPod(key)}
-                      value={this.state.pod.name}
-                      label={this.state.pod.name}
+                      value={this.state.pod?.name ?? ''}
+                      label={this.state.pod?.name ?? ''}
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
@@ -386,6 +483,15 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                 </div>
               </CardBody>
             </Card>
+          ) : this.showMemory() ? (
+            <EnvoyMemory
+              lastRefreshAt={this.props.lastRefreshAt}
+              namespace={this.props.namespace}
+              onSelectEnvoyTab={resource => this.selectEnvoyTab(resource)}
+              podName={this.state.pod?.name}
+              timeRange={this.props.rangeDuration}
+              workload={this.props.workload}
+            />
           ) : this.showMetrics() && envoyMetricsDashboardRef ? (
             <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
@@ -405,20 +511,20 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                 </div>
               </CardBody>
             </Card>
-          ) : (
+          ) : SummaryWriterComp ? (
             <Card className={classes(flexCardStyle, tabCardStyle)}>
               <CardBody>
                 <SummaryWriterComp
                   writer={summaryWriter}
                   sortBy={this.state.tableSortBy}
                   onSort={this.onSort}
-                  pod={this.state.pod.name}
+                  pod={this.state.pod?.name ?? ''}
                   pods={this.props.workload.pods.map(pod => pod.name)}
                   setPod={this.setPod}
                 />
               </CardBody>
             </Card>
-          )}
+          ) : null}
         </Tab>
       );
     });
@@ -432,6 +538,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
             onSelect={this.envoyHandleTabClick}
             mountOnEnter={true}
             unmountOnExit={true}
+            isSubtab={true}
           >
             {tabs}
           </Tabs>

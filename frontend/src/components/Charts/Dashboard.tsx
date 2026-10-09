@@ -2,13 +2,13 @@ import * as React from 'react';
 import { Grid, GridItem } from '@patternfly/react-core';
 import { ChartThemeColor, getTheme } from '@patternfly/react-charts/victory';
 
-import { AllPromLabelsValues } from 'types/Metrics';
-import { ChartModel, DashboardModel } from 'types/Dashboards';
+import type { AllPromLabelsValues } from 'types/Metrics';
+import type { ChartModel, DashboardModel, SpanValue } from 'types/Dashboards';
 import { getDataSupplier } from 'utils/VictoryChartsUtils';
-import { Overlay } from 'types/Overlay';
+import type { Overlay } from 'types/Overlay';
 import { KChart } from './KChart';
-import { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
-import { BrushHandlers } from './Container';
+import type { LineInfo, RawOrBucket } from 'types/VictoryChartInfo';
+import type { BrushHandlers } from './Container';
 import { isArray } from 'lodash-es';
 import { kialiStyle } from 'styles/StyleUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
@@ -29,6 +29,7 @@ const GRID_ROW_GAP = 16;
 
 export type Props<T extends LineInfo> = {
   brushHandlers?: BrushHandlers;
+  chartsPerRow?: number;
   colors?: string[];
   customMetric?: boolean;
   dashboard: DashboardModel;
@@ -70,17 +71,6 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
     this.heightObserver = null;
   }
 
-  private startObserving(): void {
-    const el = this.containerRef.current;
-    if (!el) {
-      return;
-    }
-    if (!this.heightObserver) {
-      this.heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
-    }
-    this.heightObserver.observe(el);
-  }
-
   render(): React.ReactNode {
     let content;
 
@@ -94,10 +84,10 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
 
     if (!content) {
       content = (
-        <Grid className={chartsGridStyle}>
+        <Grid hasGutter className={chartsGridStyle}>
           {this.props.dashboard.charts.map(c => {
             return (
-              <GridItem span={c.spans} key={c.name}>
+              <GridItem span={this.getChartSpan(c)} key={c.name}>
                 {this.renderChart(c)}
               </GridItem>
             );
@@ -112,6 +102,27 @@ export class Dashboard<T extends LineInfo> extends React.Component<Props<T>, Sta
       </div>
     );
   }
+
+  private startObserving(): void {
+    const el = this.containerRef.current;
+    if (!el) {
+      return;
+    }
+    if (!this.heightObserver) {
+      this.heightObserver = new ResizeHeightObserver(h => this.setState({ measuredHeight: h }));
+    }
+    this.heightObserver.observe(el);
+  }
+
+  private getChartSpan = (chart: ChartModel): SpanValue => {
+    if (chart.spans > 0) {
+      return chart.spans;
+    }
+
+    const chartsPerRow = this.props.chartsPerRow ?? 2;
+    const span = Math.max(1, Math.floor(12 / chartsPerRow));
+    return span as SpanValue;
+  };
 
   private getChartHeight = (): number => {
     if (this.state.measuredHeight === 0) {

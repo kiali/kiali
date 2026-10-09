@@ -160,7 +160,7 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
 type NamespacePathParam struct {
 	// The namespace name.
 	//
@@ -241,7 +241,7 @@ type TraceIDParam struct {
 	Name string `json:"traceID"`
 }
 
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics workloadEnvoyMemory graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
@@ -397,7 +397,7 @@ type AdditionalLabelsParam struct {
 	Name string `json:"additionalLabels"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type AvgParam struct {
 	// Flag for fetching histogram average. Default is true.
 	//
@@ -407,7 +407,7 @@ type AvgParam struct {
 	Name bool `json:"avg"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type ByLabelsParam struct {
 	// List of labels to use for grouping metrics (via Prometheus 'by' clause).
 	//
@@ -416,7 +416,7 @@ type ByLabelsParam struct {
 	Name []string `json:"byLabels[]"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory appDashboard serviceDashboard workloadDashboard
 type DirectionParam struct {
 	// Traffic direction: 'inbound' or 'outbound'.
 	//
@@ -426,7 +426,7 @@ type DirectionParam struct {
 	Name string `json:"direction"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type DurationParam struct {
 	// Duration of the query period, in seconds.
 	//
@@ -436,7 +436,7 @@ type DurationParam struct {
 	Name int `json:"duration"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory
 type FiltersParam struct {
 	// List of metrics to fetch. Fetch all metrics when empty. List entries are Kiali internal metric names.
 	//
@@ -455,7 +455,7 @@ type LabelsFiltersParam struct {
 	Name string `json:"labelsFilters"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type QuantilesParam struct {
 	// List of quantiles to fetch. Fetch no quantiles when empty. Ex: [0.5, 0.95, 0.99].
 	//
@@ -464,7 +464,7 @@ type QuantilesParam struct {
 	Name []string `json:"quantiles[]"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type RateFuncParam struct {
 	// Prometheus function used to calculate rate: 'rate' or 'irate'.
 	//
@@ -474,7 +474,7 @@ type RateFuncParam struct {
 	Name string `json:"rateFunc"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type RateIntervalParam struct {
 	// Interval used for rate and histogram calculation.
 	//
@@ -484,7 +484,7 @@ type RateIntervalParam struct {
 	Name string `json:"rateInterval"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory appDashboard serviceDashboard workloadDashboard
 type RequestProtocolParam struct {
 	// Desired request protocol for the telemetry: For example, 'http' or 'grpc'.
 	//
@@ -494,7 +494,7 @@ type RequestProtocolParam struct {
 	Name string `json:"requestProtocol"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory appDashboard serviceDashboard workloadDashboard
 type ReporterParam struct {
 	// Istio telemetry reporter: 'source' or 'destination'.
 	//
@@ -504,7 +504,7 @@ type ReporterParam struct {
 	Name string `json:"reporter"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics customDashboard appDashboard serviceDashboard workloadDashboard
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory customDashboard appDashboard serviceDashboard workloadDashboard
 type StepParam struct {
 	// Step between [graph] datapoints, in seconds.
 	//
@@ -514,7 +514,7 @@ type StepParam struct {
 	Name int `json:"step"`
 }
 
-// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics
+// swagger:parameters serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory
 type VersionParam struct {
 	// Filters metrics by the specified version
 	//
@@ -713,6 +713,13 @@ type WorkloadDetailsResponse struct {
 type MetricsResponse struct {
 	// in:body
 	Body models.MetricsMap
+}
+
+// Envoy memory diagnostics for a workload
+// swagger:response workloadEnvoyMemoryResponse
+type WorkloadEnvoyMemoryResponse struct {
+	// in:body
+	Body models.EnvoyMemorySummary
 }
 
 // Dashboard response model

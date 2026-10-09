@@ -39,7 +39,7 @@ export const useIconFontReady = (): boolean => {
       if (!active || globalReady) return;
       globalReady = true;
       setReady(true);
-      document.fonts.removeEventListener('loadingdone', check);
+      document.fonts?.removeEventListener('loadingdone', check);
     };
 
     const check = (): void => {
@@ -54,7 +54,7 @@ export const useIconFontReady = (): boolean => {
 
     return () => {
       active = false;
-      document.fonts.removeEventListener('loadingdone', check);
+      document.fonts?.removeEventListener('loadingdone', check);
     };
   }, []);
 

@@ -998,6 +998,29 @@ func NewRoutes(
 			handlers.WorkloadMetrics(conf, kialiCache, discovery, clientFactory, prom),
 			true,
 		},
+		// swagger:route GET /namespaces/{namespace}/workloads/{workload}/envoymemory workloads workloadEnvoyMemory
+		// ---
+		// Endpoint to fetch Envoy proxy memory diagnostics for a workload
+		//
+		//     Produces:
+		//     - application/json
+		//
+		//     Schemes: http, https
+		//
+		// responses:
+		//      400: badRequestError
+		//      404: notFoundError
+		//      503: serviceUnavailableError
+		//      200: workloadEnvoyMemoryResponse
+		//
+		{
+			"WorkloadEnvoyMemory",
+			log.MetricsLogName,
+			"GET",
+			"/api/namespaces/{namespace}/workloads/{workload}/envoymemory",
+			handlers.WorkloadEnvoyMemory(conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery),
+			true,
+		},
 		// swagger:route GET /namespaces/{namespace}/controlplanes/{controlplane}/metrics controlplanes controlPlaneMetrics
 		// ---
 		// Endpoint to fetch metrics to be displayed, related to a single control plane

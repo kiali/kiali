@@ -134,6 +134,15 @@ Feature: Kiali Workload Details page
   Scenario: See Envoy metrics for a workload
     Then the user sees the metrics tab
 
+  @bookinfo-app
+  @core-2
+  Scenario: See Envoy memory overview for a workload
+    Then the user sees healthy Envoy status on workload details
+    When the user opens the Envoy memory overview
+    Then the user sees healthy Envoy memory overview
+    And the user sees Envoy memory summary metrics with data
+    And the user sees Envoy memory chart statistics
+
   @ambient
   @ambient-multi-primary
   # TODO: offline - ambient support.
