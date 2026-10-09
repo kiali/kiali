@@ -55,6 +55,7 @@ _
 | GET | /api/clusters/apps | [app list](#app-list) |  |
 | GET | /api/namespaces/{namespace}/apps/{app}/metrics | [app metrics](#app-metrics) |  |
   
+| GET | /api/namespaces/{namespace}/apps/{app}/health/history | [app health status history](#app-health-status-history) |  |
 
 
 ###  auth
@@ -160,6 +161,7 @@ _
 | GET | /api/namespaces/{namespace}/validations | [namespace validations](#namespace-validations) |  |
 | GET | /api/istio/validations | [namespaces validations](#namespaces-validations) |  |
   
+| GET | /api/namespaces/{namespace}/health/history | [namespace health status history](#namespace-health-status-history) |  |
 
 
 ###  operations
@@ -201,6 +203,7 @@ _
 | GET | /api/namespaces/{namespace}/services/{service}/metrics | [service metrics](#service-metrics) |  |
 | PATCH | /api/namespaces/{namespace}/services/{service} | [service update](#service-update) | Endpoint to update the Service configuration using Json Merge Patch strategy. |
   
+| GET | /api/namespaces/{namespace}/services/{service}/health/history | [service health status history](#service-health-status-history) |  |
 
 
 ###  stats
@@ -256,6 +259,7 @@ _
 | PATCH | /api/namespaces/{namespace}/workloads/{workload} | [workload update](#workload-update) | Endpoint to update the Workload configuration using Json Merge Patch strategy. |
 | GET | /api/namespaces/{namespace}/ztunnel/{workload}/dashboard | [ztunnel dashboard](#ztunnel-dashboard) |  |
   
+| GET | /api/namespaces/{namespace}/workloads/{workload}/health/history | [workload health status history](#workload-health-status-history) |  |
 
 
 ## Paths
@@ -6740,6 +6744,398 @@ Status: Service Unavailable
 |------|------|---------|:--------:| ------- |-------------|---------|
 | Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
 | Message | string| `string` |  | |  |  |
+
+
+
+
+### <span id="app-health-status-history"></span> app health status history (*appHealthStatusHistory*)
+
+```
+GET /api/namespaces/{namespace}/apps/{app}/health/history
+```
+
+Endpoint to fetch kiali_health_status time series for an app
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| app | `path` | string | `string` |  | ✓ |  | The app name (label value). |
+| clusterName | `query` | string | `string` |  |  |  | Cluster name |
+| duration | `query` | int64 (formatted integer) | `int64` |  |  | `1800` | Duration of the query period, in seconds. |
+| queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| step | `query` | int64 (formatted integer) | `int64` |  |  | `15` | Step between datapoints, in seconds. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#app-health-status-history-200) | OK | Metrics response model |  | [schema](#app-health-status-history-200-schema) |
+| [400](#app-health-status-history-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#app-health-status-history-400-schema) |
+| [503](#app-health-status-history-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#app-health-status-history-503-schema) |
+
+#### Responses
+
+
+##### <span id="app-health-status-history-200"></span> 200 - Metrics response model
+Status: OK
+
+###### <span id="app-health-status-history-200-schema"></span> Schema
+   
+  
+
+map of [Metric](#metric)
+
+##### <span id="app-health-status-history-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="app-health-status-history-400-schema"></span> Schema
+   
+  
+
+[AppHealthStatusHistoryBadRequestBody](#app-health-status-history-bad-request-body)
+
+##### <span id="app-health-status-history-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="app-health-status-history-503-schema"></span> Schema
+   
+  
+
+[AppHealthStatusHistoryServiceUnavailableBody](#app-health-status-history-service-unavailable-body)
+
+###### Inlined models
+
+**<span id="app-health-status-history-bad-request-body"></span> AppHealthStatusHistoryBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="app-health-status-history-service-unavailable-body"></span> AppHealthStatusHistoryServiceUnavailableBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
+| Message | string| `string` |  | |  |  |
+
+
+
+
+### <span id="namespace-health-status-history"></span> namespace health status history (*namespaceHealthStatusHistory*)
+
+```
+GET /api/namespaces/{namespace}/health/history
+```
+
+Endpoint to fetch kiali_health_status time series for a namespace
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| clusterName | `query` | string | `string` |  |  |  | Cluster name |
+| duration | `query` | int64 (formatted integer) | `int64` |  |  | `1800` | Duration of the query period, in seconds. |
+| queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| step | `query` | int64 (formatted integer) | `int64` |  |  | `15` | Step between datapoints, in seconds. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#namespace-health-status-history-200) | OK | Metrics response model |  | [schema](#namespace-health-status-history-200-schema) |
+| [400](#namespace-health-status-history-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#namespace-health-status-history-400-schema) |
+| [503](#namespace-health-status-history-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#namespace-health-status-history-503-schema) |
+
+#### Responses
+
+
+##### <span id="namespace-health-status-history-200"></span> 200 - Metrics response model
+Status: OK
+
+###### <span id="namespace-health-status-history-200-schema"></span> Schema
+   
+  
+
+map of [Metric](#metric)
+
+##### <span id="namespace-health-status-history-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="namespace-health-status-history-400-schema"></span> Schema
+   
+  
+
+[NamespaceHealthStatusHistoryBadRequestBody](#namespace-health-status-history-bad-request-body)
+
+##### <span id="namespace-health-status-history-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="namespace-health-status-history-503-schema"></span> Schema
+   
+  
+
+[NamespaceHealthStatusHistoryServiceUnavailableBody](#namespace-health-status-history-service-unavailable-body)
+
+###### Inlined models
+
+**<span id="namespace-health-status-history-bad-request-body"></span> NamespaceHealthStatusHistoryBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="namespace-health-status-history-service-unavailable-body"></span> NamespaceHealthStatusHistoryServiceUnavailableBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
+| Message | string| `string` |  | |  |  |
+
+
+
+
+### <span id="service-health-status-history"></span> service health status history (*serviceHealthStatusHistory*)
+
+```
+GET /api/namespaces/{namespace}/services/{service}/health/history
+```
+
+Endpoint to fetch kiali_health_status time series for a service
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| service | `path` | string | `string` |  | ✓ |  | The service name. |
+| clusterName | `query` | string | `string` |  |  |  | Cluster name |
+| duration | `query` | int64 (formatted integer) | `int64` |  |  | `1800` | Duration of the query period, in seconds. |
+| queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| step | `query` | int64 (formatted integer) | `int64` |  |  | `15` | Step between datapoints, in seconds. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#service-health-status-history-200) | OK | Metrics response model |  | [schema](#service-health-status-history-200-schema) |
+| [400](#service-health-status-history-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#service-health-status-history-400-schema) |
+| [503](#service-health-status-history-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#service-health-status-history-503-schema) |
+
+#### Responses
+
+
+##### <span id="service-health-status-history-200"></span> 200 - Metrics response model
+Status: OK
+
+###### <span id="service-health-status-history-200-schema"></span> Schema
+   
+  
+
+map of [Metric](#metric)
+
+##### <span id="service-health-status-history-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="service-health-status-history-400-schema"></span> Schema
+   
+  
+
+[ServiceHealthStatusHistoryBadRequestBody](#service-health-status-history-bad-request-body)
+
+##### <span id="service-health-status-history-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="service-health-status-history-503-schema"></span> Schema
+   
+  
+
+[ServiceHealthStatusHistoryServiceUnavailableBody](#service-health-status-history-service-unavailable-body)
+
+###### Inlined models
+
+**<span id="service-health-status-history-bad-request-body"></span> ServiceHealthStatusHistoryBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="service-health-status-history-service-unavailable-body"></span> ServiceHealthStatusHistoryServiceUnavailableBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
+| Message | string| `string` |  | |  |  |
+
+
+
+
+### <span id="workload-health-status-history"></span> workload health status history (*workloadHealthStatusHistory*)
+
+```
+GET /api/namespaces/{namespace}/workloads/{workload}/health/history
+```
+
+Endpoint to fetch kiali_health_status time series for a workload
+
+#### URI Schemes
+  * http
+  * https
+
+#### Produces
+  * application/json
+
+#### Parameters
+
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
+|------|--------|------|---------|-----------| :------: |---------|-------------|
+| namespace | `path` | string | `string` |  | ✓ |  | The namespace name. |
+| workload | `path` | string | `string` |  | ✓ |  | The workload name. |
+| clusterName | `query` | string | `string` |  |  |  | Cluster name |
+| duration | `query` | int64 (formatted integer) | `int64` |  |  | `1800` | Duration of the query period, in seconds. |
+| queryTime | `query` | string | `string` |  |  | `"now"` | Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now. |
+| step | `query` | int64 (formatted integer) | `int64` |  |  | `15` | Step between datapoints, in seconds. |
+
+#### All responses
+| Code | Status | Description | Has headers | Schema |
+|------|--------|-------------|:-----------:|--------|
+| [200](#workload-health-status-history-200) | OK | Metrics response model |  | [schema](#workload-health-status-history-200-schema) |
+| [400](#workload-health-status-history-400) | Bad Request | BadRequestError: the client request is incorrect |  | [schema](#workload-health-status-history-400-schema) |
+| [503](#workload-health-status-history-503) | Service Unavailable | A Internal is the error message that means something has gone wrong |  | [schema](#workload-health-status-history-503-schema) |
+
+#### Responses
+
+
+##### <span id="workload-health-status-history-200"></span> 200 - Metrics response model
+Status: OK
+
+###### <span id="workload-health-status-history-200-schema"></span> Schema
+   
+  
+
+map of [Metric](#metric)
+
+##### <span id="workload-health-status-history-400"></span> 400 - BadRequestError: the client request is incorrect
+Status: Bad Request
+
+###### <span id="workload-health-status-history-400-schema"></span> Schema
+   
+  
+
+[WorkloadHealthStatusHistoryBadRequestBody](#workload-health-status-history-bad-request-body)
+
+##### <span id="workload-health-status-history-503"></span> 503 - A Internal is the error message that means something has gone wrong
+Status: Service Unavailable
+
+###### <span id="workload-health-status-history-503-schema"></span> Schema
+   
+  
+
+[WorkloadHealthStatusHistoryServiceUnavailableBody](#workload-health-status-history-service-unavailable-body)
+
+###### Inlined models
+
+**<span id="workload-health-status-history-bad-request-body"></span> WorkloadHealthStatusHistoryBadRequestBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `400`| HTTP status code | `400` |
+| Message | string| `string` |  | |  |  |
+
+
+
+**<span id="workload-health-status-history-service-unavailable-body"></span> WorkloadHealthStatusHistoryServiceUnavailableBody**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| Code | int32 (formatted integer)| `int32` |  | `503`| HTTP status code | `503` |
+| Message | string| `string` |  | |  |  |
+
 
 
 

@@ -33,7 +33,7 @@ type AggregateValueParam struct {
 	Name string `json:"aggregateValue"`
 }
 
-// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appSpans appTraces errorTraces usageMetrics
+// swagger:parameters appMetrics appDetails graphApp graphAppVersion appDashboard appHealthStatusHistory appSpans appTraces errorTraces usageMetrics
 type AppParam struct {
 	// The app name (label value).
 	//
@@ -160,7 +160,7 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging appHealthStatusHistory namespaceHealthStatusHistory serviceHealthStatusHistory workloadHealthStatusHistory namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
 type NamespacePathParam struct {
 	// The namespace name.
 	//
@@ -214,7 +214,7 @@ type ResourceParam struct {
 	Name string `json:"resource"`
 }
 
-// swagger:parameters serviceDetails serviceUpdate serviceMetrics graphService graphAggregateByService serviceDashboard serviceSpans serviceTraces
+// swagger:parameters serviceDetails serviceUpdate serviceMetrics graphService graphAggregateByService serviceDashboard serviceHealthStatusHistory serviceSpans serviceTraces
 type ServiceParam struct {
 	// The service name.
 	//
@@ -241,7 +241,7 @@ type TraceIDParam struct {
 	Name string `json:"traceID"`
 }
 
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadHealthStatusHistory workloadSpans workloadTraces ztunnelDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//
@@ -445,6 +445,33 @@ type FiltersParam struct {
 	Name []string `json:"filters[]"`
 }
 
+// swagger:parameters workloadHealthStatusHistory appHealthStatusHistory serviceHealthStatusHistory namespaceHealthStatusHistory
+type HealthStatusHistoryParams struct {
+	// Cluster name
+	//
+	// in: query
+	// required: false
+	ClusterName string `json:"clusterName"`
+	// Duration of the query period, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 1800
+	Duration int `json:"duration"`
+	// Unix time (seconds) for query such that time range is [queryTime-duration..queryTime]. Default is now.
+	//
+	// in: query
+	// required: false
+	// default: now
+	QueryTime string `json:"queryTime"`
+	// Step between datapoints, in seconds.
+	//
+	// in: query
+	// required: false
+	// default: 15
+	Step int `json:"step"`
+}
+
 // swagger:parameters customDashboard
 type LabelsFiltersParam struct {
 	// In custom dashboards, labels filters to use when fetching metrics, formatted as key:value pairs. Ex: "app:foo,version:bar".
@@ -549,6 +576,20 @@ type BadRequestError struct {
 		// HTTP status code
 		// example: 400
 		// default: 400
+		Code    int32 `json:"code"`
+		Message error `json:"message"`
+	} `json:"body"`
+}
+
+// ForbiddenError: the client is not allowed to access the requested namespace
+//
+// swagger:response forbiddenError
+type ForbiddenError struct {
+	// in: body
+	Body struct {
+		// HTTP status code
+		// example: 403
+		// default: 403
 		Code    int32 `json:"code"`
 		Message error `json:"message"`
 	} `json:"body"`

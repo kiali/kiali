@@ -94,6 +94,7 @@ const defaultServerConfig: ComputedServerConfig = {
   healthConfig: {
     rate: []
   },
+  healthStatusMetricsEnabled: false,
   deployment: {
     viewOnlyMode: false
   },
@@ -211,6 +212,12 @@ export const setServerConfig = (cfg: ServerConfig): void => {
 
 export const isPrometheusAvailable = (): boolean => {
   return serverConfig.prometheus.enabled && !serverConfig.prometheus.disabledReason;
+};
+
+const isHealthStatusMetricsEnabled = (): boolean => serverConfig.healthStatusMetricsEnabled;
+
+export const isHealthHistoryAvailable = (): boolean => {
+  return isPrometheusAvailable() && isHealthStatusMetricsEnabled();
 };
 
 export const isIstioNamespace = (namespace: string): boolean => {

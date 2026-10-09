@@ -1,4 +1,4 @@
-import { TargetKind } from './Common';
+import type { TargetKind } from './Common';
 
 export interface MetricsQuery {
   avg?: boolean;
@@ -10,6 +10,8 @@ export interface MetricsQuery {
   rateInterval?: string;
   step?: number;
 }
+
+export type HealthStatusHistoryQuery = Pick<MetricsQuery, 'duration' | 'queryTime' | 'step'>;
 
 export interface DashboardQuery extends MetricsQuery {
   additionalLabels?: string;

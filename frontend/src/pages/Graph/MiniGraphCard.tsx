@@ -5,12 +5,12 @@ import {
   Card,
   CardBody,
   CardHeader,
-  CardTitle,
   Dropdown,
   DropdownItem,
   DropdownList,
   MenuToggle,
-  ToolbarItem
+  Title,
+  TitleSizes
 } from '@patternfly/react-core';
 import type { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, router } from '../../app/History';
@@ -48,15 +48,30 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
 const cardStyle = kialiStyle({
-  height: '100%',
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  height: '100%'
+});
+
+const cardHeaderStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  justifyContent: 'space-between',
+  width: '100%'
+});
+
+const cardHeaderActionsStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexShrink: 0,
+  gap: '0.25rem'
 });
 
 const cardBodyStyle = kialiStyle({
-  flex: '1 1 auto',
   display: 'flex',
-  flexDirection: 'column'
+  flex: '1 1 auto',
+  flexDirection: 'column',
+  paddingBlockStart: 0
 });
 
 const graphContainerStyle = kialiStyle({
@@ -190,43 +205,38 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     return (
       <>
-        <Card id={'MiniGraphCard'} data-test="mini-graph" className={cardStyle}>
-          <CardHeader
-            actions={{
-              actions: (
-                <>
-                  <KioskElement>
-                    <ToolbarItem>
-                      <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
-                    </ToolbarItem>
-                  </KioskElement>
-                  <Dropdown
-                    toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-                      <MenuToggle
-                        id="minigraph-toggle"
-                        ref={toggleRef}
-                        className={kebabToggleStyle}
-                        aria-label={t('Actions')}
-                        variant="plain"
-                        onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
-                        isExpanded={this.state.isKebabOpen}
-                      >
-                        <KialiIcon.KebabToggle />
-                      </MenuToggle>
-                    )}
-                    isOpen={this.state.isKebabOpen}
-                    onOpenChange={(isOpen: boolean) => this.onGraphActionsToggle(isOpen)}
-                    popperProps={{ position: 'right' }}
-                  >
-                    <DropdownList>{graphCardActions}</DropdownList>
-                  </Dropdown>
-                </>
-              ),
-              hasNoOffset: false,
-              className: undefined
-            }}
-          >
-            <CardTitle style={{ float: 'left' }}>{intervalTitle}</CardTitle>
+        <Card isCompact id="MiniGraphCard" data-test="mini-graph" className={cardStyle}>
+          <CardHeader>
+            <div className={cardHeaderStyle}>
+              <Title headingLevel="h4" size={TitleSizes.md}>
+                {intervalTitle}
+              </Title>
+              <div className={cardHeaderActionsStyle}>
+                <KioskElement>
+                  <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} isDuration={true} />
+                </KioskElement>
+                <Dropdown
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle
+                      id="minigraph-toggle"
+                      ref={toggleRef}
+                      className={kebabToggleStyle}
+                      aria-label={t('Actions')}
+                      variant="plain"
+                      onClick={() => this.onGraphActionsToggle(!this.state.isKebabOpen)}
+                      isExpanded={this.state.isKebabOpen}
+                    >
+                      <KialiIcon.KebabToggle />
+                    </MenuToggle>
+                  )}
+                  isOpen={this.state.isKebabOpen}
+                  onOpenChange={(isOpen: boolean) => this.onGraphActionsToggle(isOpen)}
+                  popperProps={{ position: 'right' }}
+                >
+                  <DropdownList>{graphCardActions}</DropdownList>
+                </Dropdown>
+              </div>
+            </div>
           </CardHeader>
 
           <CardBody className={cardBodyStyle}>

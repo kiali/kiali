@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes } from '@patternfly/react-core';
-import { Workload, SpireManagedIdentityMatch } from '../../types/Workload';
-import { ServiceDetailsInfo } from '../../types/ServiceInfo';
-import { App } from '../../types/App';
+import type { Workload, SpireManagedIdentityMatch } from '../../types/Workload';
+import type { ServiceDetailsInfo } from '../../types/ServiceInfo';
+import type { App } from '../../types/App';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
 
@@ -87,7 +87,7 @@ export const Spire: React.FC<SpireProps> = (props: SpireProps) => {
     return (
       <Card isCompact={true} id="SpireCard">
         <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
+          <Title headingLevel="h4" size={TitleSizes.md}>
             {t('SPIRE')}
           </Title>
         </CardHeader>
@@ -115,7 +115,7 @@ export const Spire: React.FC<SpireProps> = (props: SpireProps) => {
     return (
       <Card isCompact={true} id="SpireCard">
         <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
+          <Title headingLevel="h4" size={TitleSizes.md}>
             {t('SPIRE')}
           </Title>
         </CardHeader>
@@ -138,7 +138,7 @@ export const Spire: React.FC<SpireProps> = (props: SpireProps) => {
     return (
       <Card isCompact={true} id="SpireCard">
         <CardHeader>
-          <Title headingLevel="h5" size={TitleSizes.lg}>
+          <Title headingLevel="h4" size={TitleSizes.md}>
             {t('SPIRE')}
           </Title>
         </CardHeader>

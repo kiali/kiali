@@ -148,6 +148,7 @@ const generateServerConfig = (): ServerConfig => {
         }
       ]
     },
+    healthStatusMetricsEnabled: false,
     ignoreHomeCluster: false,
     installationTag: 'Kiali Mock',
     istioAPIInstalled: false,

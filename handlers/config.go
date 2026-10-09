@@ -79,29 +79,30 @@ type AIModel struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AuthStrategy          string                        `json:"authStrategy,omitempty"`
-	AmbientEnabled        bool                          `json:"ambientEnabled,omitempty"`
-	AI                    AIConfig                      `json:"ai,omitempty"`
-	Clusters              map[string]models.KubeCluster `json:"clusters,omitempty"`
-	ClusterWideAccess     bool                          `json:"clusterWideAccess,omitempty"`
-	ControlPlanes         map[string]string             `json:"controlPlanes,omitempty"`
-	Deployment            DeploymentConfig              `json:"deployment,omitempty"`
-	GatewayAPIClasses     []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
-	GatewayAPIEnabled     bool                          `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig          config.HealthConfig           `json:"healthConfig,omitempty"`
-	IgnoreHomeCluster     bool                          `json:"ignoreHomeCluster,omitempty"`
-	InstallationTag       string                        `json:"installationTag,omitempty"`
-	IstioAnnotations      IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioAPIInstalled     bool                          `json:"istioAPIInstalled,omitempty"`
-	IstioGatewayInstalled bool                          `json:"istioGatewayInstalled,omitempty"`
-	IstioIdentityDomain   string                        `json:"istioIdentityDomain,omitempty"`
-	IstioLabels           config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioStatusEnabled    bool                          `json:"istioStatusEnabled,omitempty"`
-	KialiFeatureFlags     config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
-	LogLevel              string                        `json:"logLevel,omitempty"`
-	Prometheus            PrometheusConfig              `json:"prometheus,omitempty"`
-	RunConfig             *config.OfflineManifest       `json:"runConfig,omitempty"`
-	RunMode               config.RunMode                `json:"runMode,omitempty"`
+	AuthStrategy               string                        `json:"authStrategy,omitempty"`
+	AmbientEnabled             bool                          `json:"ambientEnabled,omitempty"`
+	AI                         AIConfig                      `json:"ai,omitempty"`
+	Clusters                   map[string]models.KubeCluster `json:"clusters,omitempty"`
+	ClusterWideAccess          bool                          `json:"clusterWideAccess,omitempty"`
+	ControlPlanes              map[string]string             `json:"controlPlanes,omitempty"`
+	Deployment                 DeploymentConfig              `json:"deployment,omitempty"`
+	GatewayAPIClasses          []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
+	GatewayAPIEnabled          bool                          `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig               config.HealthConfig           `json:"healthConfig,omitempty"`
+	HealthStatusMetricsEnabled bool                          `json:"healthStatusMetricsEnabled,omitempty"`
+	IgnoreHomeCluster          bool                          `json:"ignoreHomeCluster,omitempty"`
+	InstallationTag            string                        `json:"installationTag,omitempty"`
+	IstioAnnotations           IstioAnnotations              `json:"istioAnnotations,omitempty"`
+	IstioAPIInstalled          bool                          `json:"istioAPIInstalled,omitempty"`
+	IstioGatewayInstalled      bool                          `json:"istioGatewayInstalled,omitempty"`
+	IstioIdentityDomain        string                        `json:"istioIdentityDomain,omitempty"`
+	IstioLabels                config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioStatusEnabled         bool                          `json:"istioStatusEnabled,omitempty"`
+	KialiFeatureFlags          config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
+	LogLevel                   string                        `json:"logLevel,omitempty"`
+	Prometheus                 PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig                  *config.OfflineManifest       `json:"runConfig,omitempty"`
+	RunMode                    config.RunMode                `json:"runMode,omitempty"`
 }
 
 // resolvePublicIdentityDomain returns the identity domain to expose to the
@@ -146,15 +147,16 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
 				IstioInjectionAnnotation: config.IstioInjectionAnnotation,
 			},
-			HealthConfig:        conf.HealthConfig,
-			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
-			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-			IstioIdentityDomain: resolvePublicIdentityDomain(r.Context(), conf, discovery),
-			IstioLabels:         conf.IstioLabels,
-			KialiFeatureFlags:   conf.KialiFeatureFlags,
-			LogLevel:            log.GetLogLevel(),
-			Prometheus:          promConfig,
-			RunMode:             conf.RunMode,
+			HealthConfig:               conf.HealthConfig,
+			HealthStatusMetricsEnabled: conf.Server.Observability.Metrics.HealthStatus.Enabled,
+			IgnoreHomeCluster:          conf.Clustering.IgnoreHomeCluster,
+			IstioStatusEnabled:         conf.ExternalServices.Istio.ComponentStatuses.Enabled,
+			IstioIdentityDomain:        resolvePublicIdentityDomain(r.Context(), conf, discovery),
+			IstioLabels:                conf.IstioLabels,
+			KialiFeatureFlags:          conf.KialiFeatureFlags,
+			LogLevel:                   log.GetLogLevel(),
+			Prometheus:                 promConfig,
+			RunMode:                    conf.RunMode,
 		}
 
 		if conf.RunMode == config.RunModeOffline {

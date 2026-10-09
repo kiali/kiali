@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { WorkloadGroupEntry } from '../../types/IstioObjects';
-import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
+import type { WorkloadGroupEntry } from '../../types/IstioObjects';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -109,7 +110,7 @@ export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadE
   return (
     <Card isCompact={true} id="WorkloadEntriesCard">
       <CardHeader>
-        <Title headingLevel="h5" size={TitleSizes.lg}>
+        <Title headingLevel="h4" size={TitleSizes.md}>
           Workload Entries
         </Title>
       </CardHeader>

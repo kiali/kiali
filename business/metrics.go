@@ -441,3 +441,14 @@ func (in *MetricsService) GetResourceMetrics(ctx context.Context, q models.Istio
 
 	return metrics, nil
 }
+
+func (in *MetricsService) GetHealthStatusHistory(ctx context.Context, cluster, namespace, healthType, name string, q *prometheus.RangeQuery) ([]models.Metric, error) {
+	labels := fmt.Sprintf(`{cluster=%q,namespace=%q,health_type=%q,name=%q}`, cluster, namespace, healthType, name)
+	stepSecs := int64(q.Step.Seconds())
+	// Range history uses ~100 points (see frontend step sizing). max_over_time over [step]
+	// returns the worst health status seen in each display bucket so brief degradations are
+	// not lost on long ranges. Outer max deduplicates HA replicas (higher value = worse).
+	query := fmt.Sprintf(`max(max_over_time(kiali_health_status%s[%ds]))`, labels, stepSecs)
+	metric := prometheus.FetchRangeQuery(ctx, in.prom.API(), query, q)
+	return models.ConvertMetric("kiali_health_status", metric, models.ConversionParams{Scale: 1})
+}

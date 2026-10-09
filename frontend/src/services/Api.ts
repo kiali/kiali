@@ -55,9 +55,15 @@ import type {
   TracingSingleResponse
 } from '../types/TracingInfo';
 import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
-import type { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import type {
+  DashboardQuery,
+  HealthStatusHistoryQuery,
+  IstioMetricsOptions,
+  MetricsStatsQuery
+} from '../types/MetricsOptions';
 import type {
   IstioMetricsMap,
+  Metric,
   MetricsPerNamespace,
   MetricsStatsResult,
   ResourceUsageMetricsMap
@@ -268,6 +274,29 @@ export const getResourceUsageMetrics = (
   return newRequest<Readonly<ResourceUsageMetricsMap>>(
     HTTP_VERBS.GET,
     urls.resourceUsageMetrics(namespace, workload),
+    queryParams,
+    {}
+  );
+};
+
+export type HealthHistoryType = 'app' | 'namespace' | 'service' | 'workload';
+
+export const getHealthStatusHistory = (
+  namespace: string,
+  healthType: HealthHistoryType,
+  name: string,
+  params: HealthStatusHistoryQuery,
+  cluster?: string
+): Promise<ApiResponse<Readonly<Metric[]>>> => {
+  const queryParams: QueryParams<HealthStatusHistoryQuery> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<Metric[]>>(
+    HTTP_VERBS.GET,
+    urls.healthStatusHistory(namespace, healthType, name),
     queryParams,
     {}
   );
