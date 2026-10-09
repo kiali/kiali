@@ -628,3 +628,7 @@ if [ "${WAIT_TIMEOUT}" != "0" ]; then
   echo "Waiting for all pods to be ready in namespace [${NAMESPACE}]"
   $CLIENT_EXE wait pods --all -n ${NAMESPACE} --for=condition=Ready --timeout=${WAIT_TIMEOUT}
 fi
+
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  "${HACK_SCRIPT_DIR}/ensure-openshift-istio-proxies-podmonitor.sh" -c "${CLIENT_EXE_NAME}" -n "${NAMESPACE}"
+fi
