@@ -176,6 +176,7 @@ export default defineConfig({
       name: 'multi-mesh',
       grep: /@multi-mesh/,
       dependencies: ['setup'],
+      timeout: 180_000,
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {

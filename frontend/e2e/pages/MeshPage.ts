@@ -340,6 +340,7 @@ export class MeshPage extends BasePage {
     const body = await response.json();
     const meshNames = body.meshNames as string[];
     expect(meshNames?.length).toBeGreaterThan(0);
+    expect(meshNames).not.toContain('');
 
     const tabs = this.getBySel('mesh-tabs');
     if ((await tabs.count()) > 0) {
@@ -357,9 +358,10 @@ export class MeshPage extends BasePage {
     await expect(async () => {
       const { nodes, edges } = await this.fetchMeshGraph();
       const nodeNames = nodes.map(n => (n.data?.infraName ?? n.data?.infraType ?? '').toLowerCase());
-      const isMultiControlplane = nodeNames.some(n => n === 'istiod-default-v1-31-0');
-      const minNodes = nodeNames.some(n => n === 'external deployments') ? (isMultiControlplane ? 13 : 9) : 8;
-      const minEdges = isMultiControlplane ? 7 : 5;
+      const meshNames = new Set(nodes.filter(n => n.data?.infraType === 'istiod').map(n => this.meshNameFromIstiod(n)));
+      const isMultiMesh = meshNames.size > 1;
+      const minNodes = nodeNames.some(n => n === 'external deployments') ? (isMultiMesh ? 13 : 9) : 8;
+      const minEdges = isMultiMesh ? 7 : 5;
 
       expect(nodes.length, `Expected at least ${minNodes} infra nodes, got ${nodes.length}`).toBeGreaterThanOrEqual(
         minNodes
@@ -367,15 +369,16 @@ export class MeshPage extends BasePage {
       expect(edges.length, `Expected at least ${minEdges} infra edges, got ${edges.length}`).toBeGreaterThanOrEqual(
         minEdges
       );
-      expect(nodeNames.some(n => n.includes('data plane') || n === 'dataplane')).toBeTruthy();
-      expect(nodeNames.some(n => n.includes('grafana'))).toBeTruthy();
-      expect(nodeNames.some(n => n.startsWith('istiod') || n.includes('istiod'))).toBeTruthy();
-      expect(nodeNames.some(n => n.includes('jaeger') || n.includes('tempo'))).toBeTruthy();
-      expect(nodeNames.some(n => n.includes('kiali'))).toBeTruthy();
-      expect(nodeNames.some(n => n.includes('prometheus'))).toBeTruthy();
+      // Labels use "Data Plane"; infraType fallback is "dataplane".
+      expect(nodeNames.includes('data plane') || nodeNames.includes('dataplane')).toBeTruthy();
+      expect(nodeNames).toContain('grafana');
+      expect(nodeNames.some(n => n.startsWith('istiod'))).toBeTruthy();
+      expect(nodeNames.includes('jaeger') || nodeNames.includes('tempo')).toBeTruthy();
+      expect(nodeNames).toContain('kiali');
+      expect(nodeNames).toContain('prometheus');
 
       const tabs = this.getBySel('mesh-tabs');
-      if (isMultiControlplane) {
+      if (isMultiMesh) {
         await expect(tabs).toBeVisible();
         await expect(tabs.getByRole('tab', { name: 'Overview', exact: true })).toBeVisible();
         await expect(tabs.getByRole('tab', { name: /Meshes/ })).toBeVisible();
@@ -391,11 +394,10 @@ export class MeshPage extends BasePage {
     await expect(async () => {
       const { nodes } = await this.fetchMeshGraph();
       const meshNames = new Set(nodes.filter(n => n.data?.infraType === 'istiod').map(n => this.meshNameFromIstiod(n)));
-      if (meshNames.size > 1) {
-        await expect(
-          this.getBySel('mesh-tabs').getByRole('tab', { name: `Meshes (${meshNames.size})`, exact: true })
-        ).toBeVisible();
-      }
+      expect(meshNames.size, 'Expected at least 2 distinct mesh names from istiod nodes').toBeGreaterThan(1);
+      await expect(
+        this.getBySel('mesh-tabs').getByRole('tab', { name: `Meshes (${meshNames.size})`, exact: true })
+      ).toBeVisible();
     }).toPass({ intervals: [2_000], timeout: 60_000 });
   }
 
@@ -408,9 +410,27 @@ export class MeshPage extends BasePage {
       const { nodes } = await this.fetchMeshGraph();
       const istiodNodes = nodes.filter(n => n.data?.infraType === 'istiod');
       expect(istiodNodes.length, 'Expected at least one istiod node').toBeGreaterThan(0);
-      const clusterNames = [...new Set(istiodNodes.map(n => n.data?.cluster).filter(Boolean) as string[])];
+      for (const n of istiodNodes) {
+        expect(n.data?.cluster, `istiod node ${n.data?.infraName} is missing its cluster`).toBeTruthy();
+      }
+      const clusterNames = new Set(istiodNodes.map(n => n.data!.cluster as string));
       for (const cluster of clusterNames) {
         await expect(panel).toContainText(cluster);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
+  }
+
+  /** Assert each Data Plane node lists at least one dataplane namespace (UI summary source). */
+  async expectDataPlaneNamespacesPopulated(): Promise<void> {
+    await this.waitForLoad();
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const dpNodes = nodes.filter(n => n.data?.infraType === 'dataplane');
+      expect(dpNodes.length, 'Expected Data Plane nodes in mesh graph').toBeGreaterThan(0);
+      for (const dp of dpNodes) {
+        const infraData = dp.data?.infraData;
+        const nsCount = Array.isArray(infraData) ? infraData.length : 0;
+        expect(nsCount, `Data Plane node ${dp.data?.infraName} should list dataplane namespaces`).toBeGreaterThan(0);
       }
     }).toPass({ intervals: [2_000], timeout: 60_000 });
   }
