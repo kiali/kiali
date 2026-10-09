@@ -8,27 +8,31 @@ const isCI = !!process.env.CI;
 const videoMode = (process.env.PLAYWRIGHT_VIDEO ?? 'retain-on-failure') as 'on' | 'off' | 'retain-on-failure';
 
 /**
- * CI: blob (for merge-reports) + junit (fallback when merge is empty).
  * Yarn scripts set PLAYWRIGHT_BLOB_NAME per suite so chained Jenkins runs
- * (run:junit / run:all) keep one zip each — same idea as Cypress results-[hash].xml.
+ * (run:junit / run:all) keep one zip and one junit XML each — same idea as
+ * Cypress results-[hash].xml. combine:reports then jrm-merges the XMLs
+ * (and optionally merge-reports the blobs). Never overwrite a shared
+ * junit-results.xml across suites or Jenkins only sees the last suite.
  */
-const reporters: ReporterDescription[] = isCI
-  ? [
-      ['list'],
-      [
-        'blob',
-        {
-          fileName: `${process.env.PLAYWRIGHT_BLOB_NAME ?? 'report'}.zip`,
-          outputDir: 'playwright/blob-report'
-        }
-      ],
-      ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
-    ]
-  : [
-      ['list'],
-      ['html', { open: 'never', outputFolder: 'playwright/report' }],
-      ['junit', { outputFile: 'playwright/results/junit-results.xml' }]
-    ];
+const suiteReportName = process.env.PLAYWRIGHT_BLOB_NAME ?? 'results';
+const junitOutputFile = `playwright/results/junit-${suiteReportName}.xml`;
+const emitBlob = isCI || !!process.env.PLAYWRIGHT_BLOB_NAME;
+
+const reporters: ReporterDescription[] = [
+  ['list'],
+  ...(emitBlob
+    ? ([
+        [
+          'blob',
+          {
+            fileName: `${suiteReportName}.zip`,
+            outputDir: 'playwright/blob-report'
+          }
+        ]
+      ] as ReporterDescription[])
+    : ([['html', { open: 'never', outputFolder: 'playwright/report' }]] as ReporterDescription[])),
+  ['junit', { outputFile: junitOutputFile }]
+];
 
 /**
  * Projects mirror hack/run-integration-tests.sh suites.
