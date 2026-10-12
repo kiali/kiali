@@ -37,11 +37,9 @@ test.describe('Istio wizards multi-primary', () => {
     }
   );
 
-  test('Edit AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, page, request }) => {
+  test('Edit AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, request }) => {
     const policy = 'west-auth-pol-edit';
     await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.editYaml();
@@ -56,8 +54,6 @@ test.describe('Istio wizards multi-primary', () => {
   test('Delete AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, page, request }) => {
     const policy = 'west-auth-pol-delete';
     await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.deleteObjectFromEditor();

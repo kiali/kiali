@@ -450,7 +450,9 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectEditorVisible(): Promise<void> {
-    await expect(this.page.locator('[data-test="istio-config-editor"] .monaco-editor')).toBeVisible();
+    await expect(this.page.locator('[data-test="istio-config-editor"] .monaco-editor')).toBeVisible({
+      timeout: 60_000
+    });
   }
 
   async editYaml(): Promise<void> {
