@@ -40,7 +40,7 @@ test.describe('Waypoint tracing details', () => {
       await openTracesTab(page);
       await expectTraceScatterplot(page);
       await selectTraceWithMinSpans(page, 4, traces[0]?.traceID);
-      await expectSpanDetails(page);
+      await expectSpanDetails(page, { expectMetricsLoaded: false });
       await filterSpansByWorkload(page, 'details-v1');
     }
   );
@@ -69,7 +69,7 @@ test.describe('Waypoint tracing details', () => {
       await openTracesTab(page);
       await expectTraceScatterplot(page);
       await selectTraceWithMinSpans(page, 4, traces[0]?.traceID);
-      await expectSpanDetails(page);
+      await expectSpanDetails(page, { expectMetricsLoaded: false });
     }
   );
 
@@ -90,7 +90,7 @@ test.describe('Waypoint tracing details', () => {
     await openTracesTab(page);
     await expectTraceScatterplot(page);
     await selectTraceWithMinSpans(page, 4, traces[0]?.traceID);
-    await expectSpanDetails(page);
+    await expectSpanDetails(page, { expectMetricsLoaded: false });
     await filterSpansByApp(page, 'details', 'waypoint');
   });
 });

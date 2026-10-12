@@ -198,13 +198,28 @@ export const expectTraceDetails = async (page: Page): Promise<void> => {
   await page.keyboard.press('Escape');
 };
 
-export const expectSpanDetails = async (page: Page): Promise<void> => {
+export type ExpectSpanDetailsOptions = {
+  /**
+   * When true (default), require span metrics to have loaded so "Load statistics"
+   * is gone. Waypoint/ambient traces often lack matching Prometheus stats, so
+   * callers should pass false there.
+   */
+  expectMetricsLoaded?: boolean;
+};
+
+export const expectSpanDetails = async (page: Page, options: ExpectSpanDetailsOptions = {}): Promise<void> => {
+  const { expectMetricsLoaded = true } = options;
   await page.getByTestId('trace-details-tabs').getByText('Span Details').click();
   const rows = page.locator('table tbody tr');
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   await expect(rows).not.toHaveCount(0);
-  await expect(rows.nth(1).locator('td').nth(4)).toBeVisible();
-  await expect(rows.nth(1).locator('td').nth(3).locator('button')).toHaveCount(0);
+  const spanRow = rows.nth(1);
+  await expect(spanRow.locator('td').nth(4)).toBeVisible();
+  const statsCell = spanRow.locator('td').nth(3);
+  await expect(statsCell).toContainText('Duration');
+  if (expectMetricsLoaded) {
+    await expect(statsCell.getByRole('button', { name: /Load statistics/i })).toHaveCount(0);
+  }
 };
 
 export const expectViewInTracingLink = async (page: Page, linkText: string): Promise<void> => {
