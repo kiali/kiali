@@ -49,73 +49,99 @@ export const findHealthStatusSegmentAt = (
   return segments[0];
 };
 
+// Align query bounds to the Prometheus range step (same as /api/v1/query_range).
+export const alignPrometheusRange = (
+  queryEnd: number,
+  duration: number,
+  step: number
+): { endTime: number; startTime: number } => {
+  if (step <= 0 || duration <= 0) {
+    return { endTime: queryEnd, startTime: queryEnd - duration };
+  }
+
+  const rawStart = queryEnd - duration;
+  const startTime = Math.floor(rawStart / step) * step;
+  return { endTime: queryEnd, startTime };
+};
+
+const bucketIndex = (timestamp: number, rangeStart: number, step: number): number =>
+  Math.round((timestamp - rangeStart) / step);
+
+const assignDatapointsToBuckets = (
+  datapoints: Datapoint[],
+  rangeStart: number,
+  rangeEnd: number,
+  step: number
+): Map<number, number> => {
+  const buckets = new Map<number, number>();
+  const maxIndex = Math.max(0, Math.floor((rangeEnd - rangeStart) / step));
+
+  datapoints.forEach(dp => {
+    const ts = dp[0];
+    const index = bucketIndex(ts, rangeStart, step);
+    if (index < 0 || index > maxIndex) {
+      return;
+    }
+
+    const bucketTime = rangeStart + index * step;
+    if (!buckets.has(bucketTime)) {
+      buckets.set(bucketTime, Math.round(dp[1]));
+    }
+  });
+
+  return buckets;
+};
+
 export const buildHealthStatusSegments = (
   datapoints: Datapoint[],
   startTime: number,
   endTime: number,
   step: number
 ): HealthStatusRibbonSegment[] => {
-  if (datapoints.length === 0) {
+  if (endTime <= startTime || step <= 0) {
     return [{ color: naStatus.color, endTime, label: naStatus.label, startTime, status: -1 }];
   }
 
-  const sorted = [...datapoints].sort((a, b) => a[0] - b[0]);
+  const buckets = assignDatapointsToBuckets(datapoints, startTime, endTime, step);
   const segments: HealthStatusRibbonSegment[] = [];
 
-  const statusInfo = (val: number): { color: string; label: HealthStatusId } => statusMap[val] ?? naStatus;
+  const statusInfo = (val: number): { color: string; label: HealthStatusId; status: number } => {
+    const mapped = statusMap[val];
+    if (mapped) {
+      return { ...mapped, status: val };
+    }
+    return { ...naStatus, status: -1 };
+  };
 
-  const pushNaSegment = (segmentStart: number, segmentEnd: number): void => {
+  const pushSegment = (segmentStart: number, segmentEnd: number, status: number): void => {
     if (segmentEnd <= segmentStart) {
       return;
     }
 
+    const info = status === -1 ? { ...naStatus, status: -1 } : statusInfo(status);
     const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === -1) {
+    if (last && last.status === info.status) {
       last.endTime = segmentEnd;
-    } else {
-      segments.push({
-        color: naStatus.color,
-        endTime: segmentEnd,
-        label: naStatus.label,
-        startTime: segmentStart,
-        status: -1
-      });
+      return;
     }
+
+    segments.push({
+      color: info.color,
+      endTime: segmentEnd,
+      label: info.label,
+      startTime: segmentStart,
+      status: info.status
+    });
   };
 
-  let prevEnd = startTime;
+  for (let t = startTime; t < endTime; t += step) {
+    const bucketEnd = Math.min(t + step, endTime);
+    const status = buckets.has(t) ? buckets.get(t)! : -1;
+    pushSegment(t, bucketEnd, status);
+  }
 
-  for (let i = 0; i < sorted.length; i++) {
-    const ts = sorted[i][0];
-    const val = Math.round(sorted[i][1]);
-    const info = statusInfo(val);
-    const boundedEnd = Math.min(ts + step, endTime);
-
-    if (ts > prevEnd + 1) {
-      pushNaSegment(prevEnd, ts);
-    }
-
-    const last = segments.length > 0 ? segments[segments.length - 1] : null;
-    if (last && last.status === val && last.endTime >= ts) {
-      last.endTime = Math.max(last.endTime, boundedEnd);
-    } else {
-      if (last && last.endTime > ts) {
-        last.endTime = ts;
-      }
-      segments.push({ color: info.color, endTime: boundedEnd, label: info.label, startTime: ts, status: val });
-    }
-
-    prevEnd = boundedEnd;
-
-    const nextTs = i + 1 < sorted.length ? sorted[i + 1][0] : undefined;
-    if (nextTs !== undefined) {
-      if (nextTs > prevEnd + 1) {
-        pushNaSegment(prevEnd, nextTs);
-        prevEnd = nextTs;
-      }
-    } else if (prevEnd < endTime) {
-      pushNaSegment(prevEnd, endTime);
-    }
+  if (segments.length === 0) {
+    return [{ color: naStatus.color, endTime, label: naStatus.label, startTime, status: -1 }];
   }
 
   return segments;

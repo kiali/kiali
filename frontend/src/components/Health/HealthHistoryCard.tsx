@@ -3,6 +3,7 @@ import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@pattern
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
+import { alignPrometheusRange } from './HealthStatusRibbonUtils';
 import { isHealthHistoryAvailable } from '../../config';
 import { serverConfig } from '../../config/ServerConfig';
 import { computePrometheusRateParams } from '../../services/Prometheus';
@@ -98,7 +99,11 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   }, [resolvedDuration]);
 
   const handleDurationSelect = (key: string): void => {
-    setDuration(Number(key));
+    const nextDuration = Number(key);
+    if (nextDuration === resolvedDuration) {
+      return;
+    }
+    setDuration(nextDuration);
     setLoading(true);
   };
 
@@ -128,6 +133,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
 
     const options: HealthStatusHistoryQuery = {
       duration: resolvedDuration,
+      queryTime: queryEnd,
       step: queryStep
     };
 
@@ -165,8 +171,12 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     return null;
   }
 
-  const startTime = endTime > 0 && resolvedDuration !== undefined ? endTime - resolvedDuration : 0;
   const step = queryStep ?? 0;
+  const range =
+    endTime > 0 && resolvedDuration !== undefined && step > 0
+      ? alignPrometheusRange(endTime, resolvedDuration, step)
+      : { endTime: 0, startTime: 0 };
+  const { endTime: ribbonEnd, startTime } = range;
 
   return (
     <Card isCompact data-test="health-history-card">
@@ -193,8 +203,8 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
           <div className={emptyStateStyle}>
             <Spinner size="md" />
           </div>
-        ) : datapoints.length > 0 ? (
-          <HealthStatusRibbon datapoints={datapoints} endTime={endTime} startTime={startTime} step={step} />
+        ) : ribbonEnd > startTime ? (
+          <HealthStatusRibbon datapoints={datapoints} endTime={ribbonEnd} startTime={startTime} step={step} />
         ) : (
           <div className={emptyStateStyle}>{t('No health history available.')}</div>
         )}
