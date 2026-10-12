@@ -147,20 +147,23 @@ export class MeshPage extends BasePage {
   }
 
   /**
-   * After selecting a namespace node on a cluster, the side panel should describe that
-   * cluster's control plane (donut + dataplane namespace count) and show the cluster badge.
+   * After selecting a namespace node on a cluster, the side panel shows that cluster's
+   * control-plane donut (not the mesh-body "dataplane namespaces: N" summary).
    */
   async expectNamespacePanelOwnControlPlane(cluster: string): Promise<void> {
     const panel = this.page.locator('#target-panel-namespace');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Namespaces managed by Control Planes');
     await expect(panel).toContainText(cluster);
-    // Count may be split across nodes; match on panel text then require > 0.
-    await expect(panel).toContainText(/dataplane namespaces: \d+/);
-    const text = await panel.innerText();
-    const match = text.match(/dataplane namespaces: (\d+)/);
-    expect(match, 'Expected dataplane namespaces count in namespace panel').toBeTruthy();
-    expect(parseInt(match![1], 10), `Dataplane namespaces count should be > 0, got ${match![1]}`).toBeGreaterThan(0);
+    await expect(panel.getByTestId('controlplane-donut')).toBeVisible();
+    // Donut legend/title encode managed namespace count (e.g. "istiod: 1" / "1 namespaces").
+    await expect(panel.getByTestId('controlplane-donut')).toContainText(/namespaces/i);
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const istiods = nodes.filter(n => n.data?.infraType === 'istiod' && n.data?.cluster === cluster);
+      expect(istiods.length, `Expected istiod node(s) on cluster "${cluster}"`).toBeGreaterThan(0);
+    }).toPass({ intervals: [2_000], timeout: 30_000 });
   }
 
   async expectNamespacePanelClusterBadge(cluster: string): Promise<void> {
