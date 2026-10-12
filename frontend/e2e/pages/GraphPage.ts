@@ -757,11 +757,16 @@ export class GraphPage extends BasePage {
   }
 
   async expectContextMenuItemDisabledInViewOnly(menuKey: string): Promise<void> {
-    const item = this.page.locator('.pf-topology-context-menu__c-dropdown__menu').locator(`[data-test="${menuKey}"]`);
+    const menu = this.page.locator('.pf-topology-context-menu__c-dropdown__menu');
+    const item = menu.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    await item.hover({ force: true });
-    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+    // Tooltip wraps a parent div; disabled button alone does not receive hover.
+    const tooltipTrigger = menu.locator('div').filter({ has: item }).first();
+    await expect(async () => {
+      await tooltipTrigger.hover();
+      await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+    }).toPass({ intervals: [500, 1_000], timeout: 15_000 });
   }
 
   async expectContextMenuItemEnabledInViewOnly(menuKey: string): Promise<void> {
@@ -800,11 +805,15 @@ export class GraphPage extends BasePage {
   }
 
   async expectSidePanelKebabItemDisabledInViewOnly(menuKey: string): Promise<void> {
-    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    const actions = this.page.locator('#summary-node-actions');
+    const item = actions.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    await item.hover({ force: true });
-    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+    const tooltipTrigger = actions.locator('div').filter({ has: item }).first();
+    await expect(async () => {
+      await tooltipTrigger.hover();
+      await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+    }).toPass({ intervals: [500, 1_000], timeout: 15_000 });
   }
 
   async expectSidePanelKebabItemEnabledInViewOnly(menuKey: string): Promise<void> {
