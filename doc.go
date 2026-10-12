@@ -160,11 +160,7 @@ type LoggingParam struct {
 	Level ProxyLogLevel `json:"level"`
 }
 
-<<<<<<< HEAD
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
-=======
-// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging appHealthStatusHistory namespaceHealthStatusHistory serviceHealthStatusHistory workloadHealthStatusHistory namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
->>>>>>> 6f507b8 (Document health status history API in swagger annotations.)
+// swagger:parameters istioConfigList workloadDetails workloadUpdate serviceDetails serviceUpdate appSpans serviceSpans workloadSpans appTraces serviceTraces workloadTraces errorTraces workloadValidations serviceMetrics aggregateMetrics appMetrics workloadMetrics workloadEnvoyMemory istioConfigDetails istioConfigDetailsSubtype istioConfigDelete istioConfigDeleteSubtype istioConfigUpdate istioConfigUpdateSubtype appDetails graphAggregate graphAggregateByService graphApp graphAppVersion graphNamespace graphService graphWorkload namespaceMetrics customDashboard appDashboard serviceDashboard workloadDashboard istioConfigCreate istioConfigCreateSubtype namespaceUpdate namespaceTls podDetails podLogs namespaceValidations podProxyDump podProxyResource podProxyLogging appHealthStatusHistory namespaceHealthStatusHistory serviceHealthStatusHistory workloadHealthStatusHistory namespaceInfo controlPlaneMetrics ztunnelDashboard ztunnelConfigDump usageMetrics
 type NamespacePathParam struct {
 	// The namespace name.
 	//
@@ -245,11 +241,7 @@ type TraceIDParam struct {
 	Name string `json:"traceID"`
 }
 
-<<<<<<< HEAD
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics workloadEnvoyMemory graphWorkload workloadDashboard workloadSpans workloadTraces ztunnelDashboard
-=======
-// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics graphWorkload workloadDashboard workloadHealthStatusHistory workloadSpans workloadTraces ztunnelDashboard
->>>>>>> 6f507b8 (Document health status history API in swagger annotations.)
+// swagger:parameters workloadDetails workloadUpdate workloadValidations workloadMetrics workloadEnvoyMemory graphWorkload workloadDashboard workloadHealthStatusHistory workloadSpans workloadTraces ztunnelDashboard
 type WorkloadParam struct {
 	// The workload name.
 	//

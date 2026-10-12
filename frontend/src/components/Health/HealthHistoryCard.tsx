@@ -3,16 +3,8 @@ import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@pattern
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
-<<<<<<< HEAD
-import { isPrometheusAvailable } from '../../config';
-=======
 import { isHealthHistoryAvailable } from '../../config';
-<<<<<<< HEAD
-import { humanDurations, serverConfig } from '../../config/ServerConfig';
->>>>>>> 498fffc78 (Refine health history API query params and i18n duration dropdown.)
-=======
 import { serverConfig } from '../../config/ServerConfig';
->>>>>>> ee141b5 (Address PR review feedback for health history ribbon.)
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
@@ -111,9 +103,6 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
   };
 
   React.useEffect(() => {
-<<<<<<< HEAD
-    if (!isPrometheusAvailable()) {
-=======
     if (resolvedDuration === undefined || durationOptions[String(duration)] !== undefined) {
       return;
     }
@@ -123,7 +112,6 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
 
   React.useEffect(() => {
     if (!isHealthHistoryAvailable()) {
->>>>>>> c345082 (Initialize health history duration from available options.)
       setLoading(false);
       return;
     }
@@ -173,7 +161,7 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
     };
   }, [cluster, healthType, lastRefreshAt, name, namespace, queryStep, resolvedDuration, t]);
 
-  if (!isPrometheusAvailable()) {
+  if (!isHealthHistoryAvailable()) {
     return null;
   }
 
