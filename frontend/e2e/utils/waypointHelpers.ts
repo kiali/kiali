@@ -69,17 +69,24 @@ export async function waitForHealthyWaypoint(
   request: APIRequestContext,
   namespace: string,
   name: string,
-  timeoutMs = 600_000
+  timeoutMs = 600_000,
+  clusterName?: string
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastSummary = '';
+  const qs = new URLSearchParams({
+    health: 'true',
+    rateInterval: '60s',
+    validate: 'true'
+  });
+  if (clusterName) {
+    qs.set('clusterName', clusterName);
+  }
 
   while (Date.now() < deadline) {
     let response;
     try {
-      response = await request.get(
-        kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`)
-      );
+      response = await request.get(kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?${qs.toString()}`));
     } catch (err) {
       lastSummary = `request-error=${err instanceof Error ? err.message : String(err)}`;
       await sleep(5_000);
@@ -107,7 +114,7 @@ export async function waitForHealthyWaypoint(
   }
 
   throw new Error(
-    `Waypoint not healthy within ${timeoutMs}ms (namespace=${namespace}, name=${name}, last=${lastSummary})`
+    `Waypoint not healthy within ${timeoutMs}ms (namespace=${namespace}, name=${name}, cluster=${clusterName ?? ''}, last=${lastSummary})`
   );
 }
 
@@ -237,6 +244,16 @@ export async function waitForBookinfoWaypointGraphTraffic(
   throw new Error(
     `Graph traffic not ready within ${timeoutMs}ms (ambientTraffic=${ambientTraffic}, namespace=${namespace}, edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount}, expected>=${minTotalEdges}, expectedHttp>=${minHttpEdges})`
   );
+}
+
+/** Background readiness for bookinfo-waypoints L7 / multicluster waypoint scenarios. */
+export async function prepareBookinfoWaypointsMulticluster(
+  request: APIRequestContext,
+  namespace = 'bookinfo-waypoints'
+): Promise<void> {
+  await waitForHealthyWaypoint(request, namespace, 'waypoint', 600_000, 'east');
+  await waitForHealthyWaypoint(request, namespace, 'waypoint', 600_000, 'west');
+  await waitForBookinfoWaypointGraphTraffic(request, 'waypoint', namespace);
 }
 
 /** Background readiness used by bookinfo waypoint scenarios. */

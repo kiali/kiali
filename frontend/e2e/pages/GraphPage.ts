@@ -591,6 +591,55 @@ export class GraphPage extends BasePage {
     });
   }
 
+  /** Assert a waypoint proxy node is visible for the given cluster. */
+  async expectWaypointNodeInCluster(workload: string, cluster: string): Promise<void> {
+    const target = workload.toLowerCase();
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const matches = nodes.filter(node => {
+        const data = node.data ?? {};
+        if (data[NodeAttr.isBox] !== undefined || data[NodeAttr.cluster] !== cluster) {
+          return false;
+        }
+        if (data[NodeAttr.isWaypoint] !== true) {
+          return false;
+        }
+        const candidates = [data[NodeAttr.workload], data[NodeAttr.app], data[NodeAttr.service], data.name].filter(
+          (v): v is string => typeof v === 'string'
+        );
+        return candidates.some(c => {
+          const lc = c.toLowerCase();
+          return lc === target || lc.startsWith(`${target}-`);
+        });
+      });
+      expect(matches.length, `Expected waypoint node "${workload}" in cluster "${cluster}"`).toBeGreaterThanOrEqual(1);
+    });
+  }
+
+  /** Assert traffic edges involve nodes from both clusters. */
+  async expectTrafficFromClusters(cluster1: string, cluster2: string): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes, edges }) => {
+      const trafficEdges = edges.filter(edge => edge.data?.[EdgeAttr.hasTraffic] !== undefined);
+      const nodeById = new Map(nodes.map(n => [n.id, n]));
+      const clustersWithTraffic = new Set<string>();
+
+      for (const edge of trafficEdges) {
+        const srcId = edge.data?.source as string | undefined;
+        const dstId = edge.data?.target as string | undefined;
+        const srcCluster = srcId ? (nodeById.get(srcId)?.data?.[NodeAttr.cluster] as string | undefined) : undefined;
+        const dstCluster = dstId ? (nodeById.get(dstId)?.data?.[NodeAttr.cluster] as string | undefined) : undefined;
+        if (srcCluster) {
+          clustersWithTraffic.add(srcCluster);
+        }
+        if (dstCluster) {
+          clustersWithTraffic.add(dstCluster);
+        }
+      }
+
+      expect(Array.from(clustersWithTraffic)).toContain(cluster1);
+      expect(Array.from(clustersWithTraffic)).toContain(cluster2);
+    });
+  }
+
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {
     await expectGraphTopology(this.page, ({ edges }) => {
       const edgeElems = edges.map(e => ({ data: e.data }));
