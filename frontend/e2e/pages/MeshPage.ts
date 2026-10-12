@@ -155,7 +155,12 @@ export class MeshPage extends BasePage {
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Namespaces managed by Control Planes');
     await expect(panel).toContainText(cluster);
-    await expect(panel.getByText(/dataplane namespaces: [1-9]\d*/)).toBeVisible();
+    // Count may be split across nodes; match on panel text then require > 0.
+    await expect(panel).toContainText(/dataplane namespaces: \d+/);
+    const text = await panel.innerText();
+    const match = text.match(/dataplane namespaces: (\d+)/);
+    expect(match, 'Expected dataplane namespaces count in namespace panel').toBeTruthy();
+    expect(parseInt(match![1], 10), `Dataplane namespaces count should be > 0, got ${match![1]}`).toBeGreaterThan(0);
   }
 
   async expectNamespacePanelClusterBadge(cluster: string): Promise<void> {
