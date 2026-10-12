@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
@@ -761,12 +761,8 @@ export class GraphPage extends BasePage {
     const item = menu.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    // Tooltip wraps a parent div; disabled button alone does not receive hover.
-    const tooltipTrigger = menu.locator('div').filter({ has: item }).first();
-    await expect(async () => {
-      await tooltipTrigger.hover();
-      await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
-    }).toPass({ intervals: [500, 1_000], timeout: 15_000 });
+    // Tooltip wraps the immediate parent div; disabled button has pointer-events: none.
+    await this.expectViewOnlyTooltip(menu.locator(`div:has(> [data-test="${menuKey}"])`));
   }
 
   async expectContextMenuItemEnabledInViewOnly(menuKey: string): Promise<void> {
@@ -809,11 +805,14 @@ export class GraphPage extends BasePage {
     const item = actions.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    const tooltipTrigger = actions.locator('div').filter({ has: item }).first();
-    await expect(async () => {
-      await tooltipTrigger.hover();
-      await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
-    }).toPass({ intervals: [500, 1_000], timeout: 15_000 });
+    await this.expectViewOnlyTooltip(actions.locator(`div:has(> [data-test="${menuKey}"])`));
+  }
+
+  /** PF Tooltip only listens on the wrapper around a disabled DropdownItem. */
+  private async expectViewOnlyTooltip(tooltipTrigger: Locator): Promise<void> {
+    await tooltipTrigger.hover({ force: true });
+    await tooltipTrigger.dispatchEvent('mouseenter');
+    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
   }
 
   async expectSidePanelKebabItemEnabledInViewOnly(menuKey: string): Promise<void> {
