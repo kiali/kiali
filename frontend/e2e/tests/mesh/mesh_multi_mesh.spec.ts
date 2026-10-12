@@ -13,7 +13,7 @@ test.describe('Mesh page multi-mesh', () => {
 
   test('single mesh infra summary shows control planes', multiMeshOnly, async ({ meshPage }) => {
     await meshPage.expectMeshSidePanel();
-    await meshPage.expectMeshBodyNotContains('dataplane namespaces: 0');
+    await meshPage.expectDataPlaneNamespacesPopulated();
   });
 
   test('control plane summary shows cluster name', multiMeshOnly, async ({ meshPage }) => {

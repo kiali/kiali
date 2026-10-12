@@ -173,4 +173,8 @@ export class ServiceDetailsPage extends BasePage {
   async expectServiceReference(namespace: string, name: string): Promise<void> {
     await expect(this.getBySel(`service-${namespace}-${name}`)).toBeVisible();
   }
+
+  async expectAmbientBadge(): Promise<void> {
+    await expect(this.getBySel('service-details-card')).toContainText('Ambient');
+  }
 }

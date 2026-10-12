@@ -456,7 +456,6 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.open();
       await selectNamespace(page, 'sleep');
       await istioConfigPage.primeValidationFromDetails('sleep', 'PeerAuthentication', 'default');
-      await selectNamespace(page, 'sleep');
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0207');
     });
 

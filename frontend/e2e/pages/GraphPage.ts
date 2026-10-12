@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
@@ -581,6 +581,16 @@ export class GraphPage extends BasePage {
     });
   }
 
+  async expectWorkloadClustersAtLeast(clusterCount: number): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes }) => {
+      const workloadNodes = nodes.filter(
+        node => node.data?.[NodeAttr.nodeType] === 'workload' && node.data?.[NodeAttr.cluster]
+      );
+      const clusters = new Set(workloadNodes.map(node => node.data?.[NodeAttr.cluster] as string));
+      expect(clusters.size, 'Expected workload nodes from multiple clusters').toBeGreaterThanOrEqual(clusterCount);
+    });
+  }
+
   async expectTrafficProtocol(protocol: string, visible: boolean): Promise<void> {
     await expectGraphTopology(this.page, ({ edges }) => {
       const edgeElems = edges.map(e => ({ data: e.data }));
@@ -747,11 +757,12 @@ export class GraphPage extends BasePage {
   }
 
   async expectContextMenuItemDisabledInViewOnly(menuKey: string): Promise<void> {
-    const item = this.page.locator('.pf-topology-context-menu__c-dropdown__menu').locator(`[data-test="${menuKey}"]`);
+    const menu = this.page.locator('.pf-topology-context-menu__c-dropdown__menu');
+    const item = menu.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    await item.hover({ force: true });
-    await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
+    // Tooltip wraps the immediate parent div; disabled button has pointer-events: none.
+    await this.expectViewOnlyTooltip(menu.locator(`div:has(> [data-test="${menuKey}"])`));
   }
 
   async expectContextMenuItemEnabledInViewOnly(menuKey: string): Promise<void> {
@@ -790,10 +801,17 @@ export class GraphPage extends BasePage {
   }
 
   async expectSidePanelKebabItemDisabledInViewOnly(menuKey: string): Promise<void> {
-    const item = this.page.locator(`#summary-node-actions [data-test="${menuKey}"]`);
+    const actions = this.page.locator('#summary-node-actions');
+    const item = actions.locator(`[data-test="${menuKey}"]`);
     await expect(item).toHaveClass(/pf-m-disabled/);
     await expect(item.locator('button')).toBeDisabled();
-    await item.hover({ force: true });
+    await this.expectViewOnlyTooltip(actions.locator(`div:has(> [data-test="${menuKey}"])`));
+  }
+
+  /** PF Tooltip only listens on the wrapper around a disabled DropdownItem. */
+  private async expectViewOnlyTooltip(tooltipTrigger: Locator): Promise<void> {
+    await tooltipTrigger.hover({ force: true });
+    await tooltipTrigger.dispatchEvent('mouseenter');
     await expect(this.page.getByRole('tooltip')).toContainText(VIEW_ONLY_TOOLTIP);
   }
 

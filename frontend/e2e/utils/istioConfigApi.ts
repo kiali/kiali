@@ -37,28 +37,42 @@ export function istioConfigDetailsConsolePath(namespace: string, typeName: strin
   return istioConfigDetailsApiPath(namespace, typeName, name).replace(/^\/api\//, '');
 }
 
-async function bustIstioConfigCache(page: Page): Promise<void> {
-  await page.request.get(kialiUrl(`/api/istio/config?_=${Date.now()}`));
+async function bustIstioConfigCache(page: Page, cluster?: string): Promise<void> {
+  const query = new URLSearchParams({ _: String(Date.now()) });
+  if (cluster) {
+    query.set('clusterName', cluster);
+  }
+  await page.request.get(kialiUrl(`/api/istio/config?${query.toString()}`));
 }
 
 /**
  * Poll the istio config details API until the object exists (HTTP 200). Non-200 responses
  * (e.g. 404 while the object is still propagating) are retried instead of failing immediately.
+ * Pass `cluster` for multi-cluster objects so the request hits the correct remote cluster.
  */
 export async function waitForIstioObjectDetails(
   page: Page,
   namespace: string,
   typeName: string,
-  name: string
+  name: string,
+  cluster?: string
 ): Promise<void> {
   const path = istioConfigDetailsApiPath(namespace, typeName, name);
+  // Details API allows only cluster, help, and validate query params (no `_` cache-bust).
+  const query = new URLSearchParams({ validate: 'true' });
+  if (cluster) {
+    query.set('clusterName', cluster);
+  }
 
   await expect(async () => {
-    await bustIstioConfigCache(page);
-    // Details API allows only cluster, help, and validate query params (no `_` cache-bust).
-    const response = await page.request.get(kialiUrl(`${path}?validate=true`));
+    await bustIstioConfigCache(page, cluster);
+    const response = await page.request.get(kialiUrl(`${path}?${query.toString()}`));
     if (response.status() === 404) {
-      throw new Error('istio object not available yet (HTTP 404)');
+      throw new Error(
+        cluster
+          ? `istio object not available yet on cluster ${cluster} (HTTP 404)`
+          : 'istio object not available yet (HTTP 404)'
+      );
     }
     if (!response.ok()) {
       throw new Error(`unexpected istio details response (HTTP ${response.status()})`);

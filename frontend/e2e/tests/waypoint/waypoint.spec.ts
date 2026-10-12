@@ -104,7 +104,10 @@ test.describe('Waypoint (bookinfo)', () => {
     await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
     await workloadDetailsPage.expectContainerListed('waypoint');
     await workloadDetailsPage.expectContainerListed('ratings');
-    await workloadDetailsPage.selectContainer('waypoint-ratings');
+    // Wait for waypoint access logs (sparse) before filtering — app lines match "ratings" alone.
+    await workloadDetailsPage.selectContainer('waypoint-ratings', {
+      bodyMustInclude: 'ratings.bookinfo.svc.cluster.local'
+    });
     await workloadDetailsPage.expectContainerChecked('waypoint-ratings');
     await workloadDetailsPage.expectContainerChecked('container-ratings');
     await workloadDetailsPage.expectPodSelected('ratings-v1');
