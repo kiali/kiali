@@ -2,7 +2,6 @@ import { test } from '../../fixtures/kialiFixtures';
 import {
   EAST,
   applyAuthorizationPolicyOnCluster,
-  cluster1Context,
   deleteGatewayOnClusters,
   deleteIstioOnClusters,
   deleteRequestRoutingOnClusters
@@ -11,7 +10,8 @@ import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
 test.describe('Istio wizards multi-cluster', () => {
-  test.describe.configure({ mode: 'serial', timeout: 180_000 });
+  // applyAuthorizationPolicyOnCluster may wait up to ~180s (delete clear + GET ready).
+  test.describe.configure({ mode: 'serial', timeout: 240_000 });
 
   test(
     'Gateway preview disabled without cluster selection',
@@ -33,30 +33,33 @@ test.describe('Istio wizards multi-cluster', () => {
   );
 
   test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
-    applyAuthorizationPolicyOnCluster('east-auth-pol', 'bookinfo', cluster1Context());
+    // Separate name from delete so a slow east delete cannot race the next create.
+    const policy = 'east-auth-pol-edit';
+    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
-    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', 'east-auth-pol');
+    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.editYaml();
-    await istioConfigPage.saveYamlAndWaitForPatch('east-auth-pol');
+    await istioConfigPage.saveYamlAndWaitForPatch(policy);
     await deleteIstioOnClusters(
       request,
-      '/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/east-auth-pol',
+      `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}`,
       [EAST]
     );
   });
 
-  test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page }) => {
-    applyAuthorizationPolicyOnCluster('east-auth-pol', 'bookinfo', cluster1Context());
+  test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
+    const policy = 'east-auth-pol-delete';
+    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
-    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', 'east-auth-pol');
+    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.deleteObjectFromEditor();
     await istioConfigPage.open();
     await selectNamespace(page, 'bookinfo');
-    await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', 'east-auth-pol', 'bookinfo', EAST);
+    await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', EAST);
   });
 });
 
