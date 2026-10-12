@@ -95,7 +95,7 @@
 - [x] `@waypoint` suite ported on `issue9712_waypoint` (full `waypoint.feature` + waypoint logs;
   `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
 - [ ] `@waypoint-tracing` suite passes
-- [ ] `@ambient-multi-primary` suite passes
+- [ ] `@ambient-multi-primary` suite passes (specs + `playwright-ambient-multi-primary` CI on `issue9712_ambient-multi-primary`; `@waypoint-multicluster` deferred)
 - [ ] `@waypoint-multicluster` suite passes
 - [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
 - [ ] `@multi-primary` suite passes
@@ -111,9 +111,9 @@
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
   `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
-  `playwright-ambient`, `playwright-external-kiali`, `playwright-offline`,
+  `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-offline`,
   `playwright-ai-chatbot`, `playwright-tempo`, and `playwright-multi-mesh` suites
-  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; AI chatbot + tempo on epic branch)
+  (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; multi-mesh #10370; AI chatbot + tempo on epic branch)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
   (PR #10174, #10220; core-caching, external-kiali, offline, AI chatbot, and tempo Playwright workflows)

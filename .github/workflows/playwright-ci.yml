@@ -107,6 +107,14 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
+  integration_tests_frontend_playwright_ambient_multi_primary:
+    name: Run Playwright ambient multi-primary tests
+    uses: ./.github/workflows/integration-tests-frontend-playwright-ambient-multi-primary.yml
+    needs: [initialize, build_backend]
+    with:
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
+
   integration_tests_frontend_playwright_external_kiali:
     name: Run Playwright external Kiali tests
     uses: ./.github/workflows/integration-tests-frontend-playwright-external-kiali.yml

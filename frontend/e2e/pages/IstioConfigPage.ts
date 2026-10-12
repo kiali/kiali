@@ -213,21 +213,24 @@ export class IstioConfigPage extends BasePage {
   }
 
   async openConfigByCluster(cluster: string, namespace: string, type: string, name: string): Promise<void> {
+    // Wait until Kiali can serve the object on the remote cluster before relying on list refresh.
+    await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
     const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
     await expect(async () => {
-      await this.refreshList();
+      await this.refreshList(cluster);
       await expect(row).toBeVisible();
-    }).toPass({ intervals: [5_000], timeout: 60_000 });
+    }).toPass({ intervals: [5_000], timeout: 120_000 });
     await row.locator(linkSelector()).first().click();
     await waitForLoadingComplete(this.page);
   }
 
   async expectObjectListedOnCluster(type: string, name: string, namespace: string, cluster: string): Promise<void> {
+    await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
     const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
     await expect(async () => {
-      await this.refreshList();
+      await this.refreshList(cluster);
       await expect(row).toBeVisible();
-    }).toPass({ intervals: [5_000], timeout: 60_000 });
+    }).toPass({ intervals: [5_000], timeout: 120_000 });
   }
 
   async expectObjectNotListedOnCluster(type: string, name: string, namespace: string, cluster: string): Promise<void> {
@@ -381,20 +384,24 @@ export class IstioConfigPage extends BasePage {
     }
   }
 
-  async refreshList(): Promise<void> {
-    await this.bustIstioConfigCache();
+  async refreshList(cluster?: string): Promise<void> {
+    await this.bustIstioConfigCache(cluster);
     await this.getBySel('refresh-button').click();
     await waitForLoadingComplete(this.page);
   }
 
   /** Forces Kiali to drop cached istio config before list refresh. */
-  private async bustIstioConfigCache(): Promise<void> {
-    const response = await this.page.request.get(kialiUrl(`/api/istio/config?_=${Date.now()}`));
+  private async bustIstioConfigCache(cluster?: string): Promise<void> {
+    const query = new URLSearchParams({ _: String(Date.now()) });
+    if (cluster) {
+      query.set('clusterName', cluster);
+    }
+    const response = await this.page.request.get(kialiUrl(`/api/istio/config?${query.toString()}`));
     expect(response.ok()).toBeTruthy();
   }
 
-  async waitForIstioObjectDetails(namespace: string, typeName: string, name: string): Promise<void> {
-    await waitForIstioObjectDetailsApi(this.page, namespace, typeName, name);
+  async waitForIstioObjectDetails(namespace: string, typeName: string, name: string, cluster?: string): Promise<void> {
+    await waitForIstioObjectDetailsApi(this.page, namespace, typeName, name, cluster);
   }
 
   async ensureConfigurationValidationEnabled(): Promise<void> {

@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
@@ -91,18 +90,48 @@ export const deleteGatewayOnClusters = async (request: APIRequestContext, name: 
   await deleteIstioOnClusters(request, `/api/namespaces/bookinfo/istio/networking.istio.io/v1/Gateway/${name}`);
 };
 
-export const applyAuthorizationPolicyOnCluster = (name: string, namespace: string, clusterContext: string): void => {
-  const yaml = `apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata:
-  name: ${name}
-  namespace: ${namespace}
-spec: {}
-`;
-  execSync(`kubectl --context ${clusterContext} apply -n ${namespace} -f -`, {
-    encoding: 'utf8',
-    input: yaml
+/**
+ * Create a minimal AuthorizationPolicy via the Kiali API on a named cluster.
+ * Prefer this over kubectl apply — remote-cluster informer lag can leave Kiali
+ * returning HTTP 404 after an out-of-band create.
+ *
+ * Waits for delete to clear, creates once, then polls GET until Kiali can serve
+ * the object (so openConfigByCluster does not burn its timeout on a cold cache).
+ */
+export const applyAuthorizationPolicyOnCluster = async (
+  request: APIRequestContext,
+  name: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const collectionPath = `/api/namespaces/${namespace}/istio/security.istio.io/v1/AuthorizationPolicy`;
+  const objectPath = `${collectionPath}/${name}`;
+  const objectUrl = kialiUrl(`${objectPath}?clusterName=${cluster}`);
+  const detailsUrl = kialiUrl(`${objectPath}?clusterName=${cluster}&validate=true`);
+
+  await request.delete(objectUrl, { failOnStatusCode: false });
+  await expect(async () => {
+    const gone = await request.get(objectUrl, { failOnStatusCode: false });
+    expect(gone.status()).toBe(404);
+  }).toPass({ intervals: [1_000, 2_000], timeout: 60_000 });
+
+  const createResponse = await request.post(kialiUrl(`${collectionPath}?clusterName=${cluster}`), {
+    data: {
+      apiVersion: 'security.istio.io/v1',
+      kind: 'AuthorizationPolicy',
+      metadata: { name, namespace },
+      spec: {}
+    }
   });
+  expect(createResponse.ok()).toBeTruthy();
+
+  await expect(async () => {
+    await request.get(kialiUrl(`/api/istio/config?clusterName=${cluster}&_=${Date.now()}`), {
+      failOnStatusCode: false
+    });
+    const getResponse = await request.get(detailsUrl, { failOnStatusCode: false });
+    expect(getResponse.status()).toBe(200);
+  }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
 };
 
 export const scaleDeploymentOnContext = (
