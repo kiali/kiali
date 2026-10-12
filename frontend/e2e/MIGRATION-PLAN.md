@@ -94,7 +94,8 @@
 - [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
 - [x] `@waypoint` suite ported on `issue9712_waypoint` (full `waypoint.feature` + waypoint logs;
   `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
-- [ ] `@waypoint-tracing` suite passes
+- [x] `@waypoint-tracing` suite ported (`playwright-ambient` → `yarn playwright:run:waypoint`; heatmap
+  hover scenarios deferred)
 - [ ] `@ambient-multi-primary` suite passes (specs + `playwright-ambient-multi-primary` CI on `issue9712_ambient-multi-primary`; `@waypoint-multicluster` deferred)
 - [ ] `@waypoint-multicluster` suite passes
 - [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
@@ -183,8 +184,20 @@ Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
 | `waypoint_demo_graph.spec.ts` | `waypoint-*` demo-NS graph matrix |
 | `waypoint_demo_details.spec.ts` | Demo-NS Waypoint tab / L7 links |
 | `waypoint_sidecar_ambient.spec.ts` | Sidecar↔ambient graph, config issues, Add to Ambient |
+| `waypoint_tracing_*.spec.ts` | `@waypoint-tracing` mesh/details/logs/graph (heatmaps deferred) |
 
-**Still separate tags (not this port):** `@waypoint-tracing`, `@waypoint-multicluster`
+**Still separate tags (not this port):** `@waypoint-multicluster`
+
+## Waypoint-tracing port (`@waypoint-tracing`)
+
+**CI:** Same `playwright-ambient` job; after ambient, `yarn playwright:run:waypoint` runs
+`--project=waypoint` then `--project=waypoint-tracing` (depends on `waypoint-setup`).
+
+**Ported:** mesh waypoints + ztunnel side panels; workload/service/app trace + span UI; workload logs
+spans; graph side-panel Traces tab.
+
+**Deferred:** tooltip heat-map hover scenarios (reviews app/service/workload) until a stable
+Playwright hover helper exists for the scatterplot tooltip.
 
 ### Learned lessons (converting ambient → waypoint)
 

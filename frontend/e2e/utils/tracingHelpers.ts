@@ -225,15 +225,21 @@ export const expectMoreSpanDetailsLink = async (page: Page, linkText: string): P
   await page.keyboard.press('Escape');
 };
 
-export const filterSpansByApp = async (page: Page, app: string): Promise<void> => {
+export const filterSpansByApp = async (page: Page, app: string, fallbackApp = 'waypoint'): Promise<void> => {
   await page.locator('button#filter_select_type-toggle').click();
   await page.locator('div#filter_select_type button').filter({ hasText: /^App$/ }).click();
   await page.locator('input[placeholder="Filter by App"]').click();
-  await page
-    .getByRole('option', { name: app })
-    .or(page.locator(`button:has-text("${app}")`))
-    .first()
-    .click();
+
+  const preferred = page.getByRole('option', { name: app, exact: true });
+  if ((await preferred.count()) > 0) {
+    await preferred.click();
+  } else {
+    await page
+      .getByRole('option', { name: fallbackApp, exact: true })
+      .or(page.locator(`button:has-text("${fallbackApp}")`))
+      .first()
+      .click();
+  }
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
@@ -241,22 +247,35 @@ export const filterSpansByApp = async (page: Page, app: string): Promise<void> =
   expect(count).toBeGreaterThan(0);
   for (let i = 0; i < count; i++) {
     const text = (await cells.nth(i).innerText()).toLowerCase();
-    expect(text.includes(app.toLowerCase()) || text.includes('waypoint')).toBeTruthy();
+    expect(
+      text.includes(app.toLowerCase()) || text.includes(fallbackApp.toLowerCase()),
+      `Expected "${text}" to contain "${app}" or "${fallbackApp}"`
+    ).toBeTruthy();
   }
   await page.locator('table tbody tr td').nth(4).locator('button').first().click();
   await expect(page.locator('ul[role="menu"]')).toBeVisible();
   await page.keyboard.press('Escape');
 };
 
-export const filterSpansByWorkload = async (page: Page, workload: string): Promise<void> => {
+export const filterSpansByWorkload = async (
+  page: Page,
+  workload: string,
+  fallbackWorkload = 'waypoint'
+): Promise<void> => {
   await page.locator('button#filter_select_type-toggle').click();
   await page.locator('button#Workload').click();
   await page.locator('input[placeholder="Filter by Workload"]').click();
-  await page
-    .getByRole('option', { name: workload })
-    .or(page.locator(`button:has-text("${workload}")`))
-    .first()
-    .click();
+
+  const preferred = page.getByRole('option', { name: workload, exact: true });
+  if ((await preferred.count()) > 0) {
+    await preferred.click();
+  } else {
+    await page
+      .getByRole('option', { name: fallbackWorkload, exact: true })
+      .or(page.locator(`button:has-text("${fallbackWorkload}")`))
+      .first()
+      .click();
+  }
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
@@ -264,7 +283,10 @@ export const filterSpansByWorkload = async (page: Page, workload: string): Promi
   expect(count).toBeGreaterThan(0);
   for (let i = 0; i < count; i++) {
     const text = (await cells.nth(i).innerText()).toLowerCase();
-    expect(text.includes(workload.toLowerCase()) || text.includes('waypoint')).toBeTruthy();
+    expect(
+      text.includes(workload.toLowerCase()) || text.includes(fallbackWorkload.toLowerCase()),
+      `Expected "${text}" to contain "${workload}" or "${fallbackWorkload}"`
+    ).toBeTruthy();
   }
   await page.locator('table tbody tr td').nth(4).locator('button').first().click();
   await expect(page.locator('ul[role="menu"]')).toBeVisible();
