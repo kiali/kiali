@@ -77,6 +77,12 @@ export class WorkloadsPage extends ListPage {
     await expect(this.page.locator('tbody')).toContainText(text);
   }
 
+  async expectWorkloadFromCluster(workload: string, cluster: string, namespace: string): Promise<void> {
+    await expect(
+      this.page.getByTestId(new RegExp(`VirtualItem_Cluster${cluster}_Ns${namespace}_Deployment_${workload}`))
+    ).toBeVisible();
+  }
+
   async expectOnlyWorkloadsWithAppLabel(): Promise<void> {
     const regex = /app=|service\.istio\.io\/canonical-name=|app\.kubernetes\.io\/name=/;
     const rows = this.page.locator('tbody tr');

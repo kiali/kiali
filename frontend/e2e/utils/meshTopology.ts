@@ -182,9 +182,18 @@ export async function selectTracingMeshNode(page: Page): Promise<void> {
   }
 }
 
-async function selectMeshNodeByInfraType(page: Page, infraType: string, cluster?: string): Promise<void> {
+export async function selectAmbientIstiodMeshNode(page: Page): Promise<void> {
+  await selectMeshNodeByInfraType(page, 'istiod', undefined, true);
+}
+
+async function selectMeshNodeByInfraType(
+  page: Page,
+  infraType: string,
+  cluster?: string,
+  isAmbient?: boolean
+): Promise<void> {
   await page.evaluate(
-    ({ type, clusterName }) => {
+    ({ type, clusterName, ambient }) => {
       const getReactFiber = (el: Element): unknown => {
         if ('_reactRootContainer' in el) {
           const container = (
@@ -298,7 +307,7 @@ async function selectMeshNodeByInfraType(page: Page, infraType: string, cluster?
         meshRefs: {
           getController: () => {
             getElements: () => Array<{
-              getData: () => { infraType?: string };
+              getData: () => { cluster?: string; infraType?: string; isAmbient?: boolean };
               getId: () => string;
               getKind: () => string;
             }>;
@@ -316,19 +325,29 @@ async function selectMeshNodeByInfraType(page: Page, infraType: string, cluster?
       const elements = controller.getElements();
       const nodes = elements.filter(el => el.getKind?.() === 'node');
       const node = nodes.find(n => {
-        const data = n.getData() as { cluster?: string; infraType?: string };
+        const data = n.getData();
         if (data.infraType !== type) {
           return false;
         }
-        return !clusterName || data.cluster === clusterName;
+        if (clusterName && data.cluster !== clusterName) {
+          return false;
+        }
+        if (ambient !== undefined && Boolean(data.isAmbient) !== ambient) {
+          return false;
+        }
+        return true;
       });
       if (!node) {
-        const clusterHint = clusterName ? ` on cluster "${clusterName}"` : '';
-        throw new Error(`Mesh node with infraType "${type}"${clusterHint} not found`);
+        const hints = [
+          clusterName ? `cluster="${clusterName}"` : '',
+          ambient === undefined ? '' : `isAmbient=${ambient}`
+        ].filter(Boolean);
+        const hint = hints.length ? ` (${', '.join(hints)})` : '';
+        throw new Error(`Mesh node with infraType "${type}"${hint} not found`);
       }
 
       state.meshRefs.setSelectedIds([node.getId()]);
     },
-    { type: infraType, clusterName: cluster }
+    { type: infraType, clusterName: cluster, ambient: isAmbient }
   );
 }
