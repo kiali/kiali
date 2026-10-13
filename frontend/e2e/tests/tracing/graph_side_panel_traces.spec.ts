@@ -12,7 +12,7 @@ test.describe('Graph side panel tracing', () => {
     await graphPage.graphNamespaces('bookinfo');
     await graphPage.clickGraphNode('reviews', 'service');
     await expect(page.locator('#pfbadge-S')).toBeVisible();
-    await page.locator('#graph_summary_tabs').getByText('Traces').click();
+    await page.locator('#graph_summary_tabs').getByRole('tab', { name: 'Traces', exact: true }).click();
     await waitForLoadingComplete(page);
     await expect(page.getByTestId('traces-list')).toBeVisible({ timeout: 60_000 });
   });

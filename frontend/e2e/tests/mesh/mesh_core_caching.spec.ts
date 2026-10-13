@@ -1,8 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { hasGrafanaDeployment } from '../../utils/kialiConfig';
+import { hasGrafanaDeployment, isOssmc } from '../../utils/kialiConfig';
 import { coreCachingAndMultiMesh, coreCachingOnly } from '../../utils/suite-tags';
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
 test.describe('Mesh page core-caching', () => {
   test.beforeEach(async ({ meshPage }) => {
@@ -73,14 +71,14 @@ test.describe('Mesh page core-caching', () => {
   });
 
   test('See the Mesh menu link', coreCachingOnly, async ({ sidebarPage }) => {
-    test.skip(isOssmc(), 'Mesh sidebar menu is not shown in OSSMC (Cypress @skip-ossmc)');
+    test.skip(isOssmc(), 'Mesh sidebar menu is not shown in OSSMC kiosk mode');
     await sidebarPage.openOverview();
     await sidebarPage.ensureSidebarOpen();
     await sidebarPage.expectMeshMenuVisible();
   });
 
   test('See the Mesh link in the about', coreCachingOnly, async ({ overviewPage }) => {
-    test.skip(isOssmc(), 'About mesh link is not shown in OSSMC (Cypress @skip-ossmc)');
+    test.skip(isOssmc(), 'About mesh link is not shown in OSSMC kiosk mode');
     await overviewPage.open();
     await overviewPage.openHelpAndAbout();
     await overviewPage.expectModalTitle('Kiali');

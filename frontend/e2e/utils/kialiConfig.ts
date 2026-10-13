@@ -72,6 +72,9 @@ export function hasSailIstioCr(): boolean {
   return kubectlExec('kubectl get istio default -n istio-system').exitCode === 0;
 }
 
+/** True when running under the OSSMC kiosk (PLAYWRIGHT_OSSMC=true). */
+export const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
+
 export function hasLoggersNamespace(): boolean {
   return kubectlExec('kubectl get namespace loggers').exitCode === 0;
 }

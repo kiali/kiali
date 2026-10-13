@@ -1,5 +1,4 @@
 import type { APIRequestContext } from '@playwright/test';
-import { expect } from '@playwright/test';
 
 import { NodeAttr } from './graphSelect';
 import { discoverKialiRuntimeInfo } from './kialiCaching';
@@ -262,15 +261,22 @@ export async function labelNamespaceWithWaypoint(
   kubectlExec(`kubectl label namespace ${namespace} istio.io/use-waypoint=${waypointName} --overwrite`, false);
 
   const deadline = Date.now() + timeoutMs;
+  let lastError = '';
   while (Date.now() < deadline) {
     let response;
     try {
       response = await request.get(kialiUrl('/api/namespaces'));
     } catch {
+      lastError = 'request failed';
       await sleep(5_000);
       continue;
     }
-    expect(response.ok()).toBeTruthy();
+    if (!response.ok()) {
+      // Kiali may briefly error during rollout; retry until the deadline.
+      lastError = `GET /api/namespaces returned ${response.status()}`;
+      await sleep(10_000);
+      continue;
+    }
     const namespaces = (await response.json()) as Array<{ name?: string; labels?: Record<string, string> }>;
     const ns = namespaces.find(n => n.name === namespace);
     const labels = ns?.labels ?? {};
@@ -280,7 +286,9 @@ export async function labelNamespaceWithWaypoint(
     await sleep(10_000);
   }
 
-  throw new Error(`Namespace ${namespace} not enrolled with waypoint=${waypointName} within ${timeoutMs}ms`);
+  throw new Error(
+    `Namespace ${namespace} not enrolled with waypoint=${waypointName} within ${timeoutMs}ms (lastError=${lastError || 'label never seen'})`
+  );
 }
 
 /**
@@ -298,6 +306,7 @@ export async function waitForBookinfoWaypointGraphTraffic(
   const deadline = Date.now() + timeoutMs;
   let lastEdgeCount = -1;
   let lastHttpEdgeCount = -1;
+  let lastError = '';
 
   while (Date.now() < deadline) {
     const qs = new URLSearchParams({
@@ -318,10 +327,16 @@ export async function waitForBookinfoWaypointGraphTraffic(
     try {
       response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
     } catch {
+      lastError = 'request failed';
       await sleep(5_000);
       continue;
     }
-    expect(response.ok()).toBeTruthy();
+    if (!response.ok()) {
+      // Kiali may briefly error while the mesh settles; retry until the deadline.
+      lastError = `graph request returned ${response.status()}`;
+      await sleep(10_000);
+      continue;
+    }
     const body = (await response.json()) as { elements?: { edges?: GraphEdge[] } };
     const edges = body.elements?.edges ?? [];
     lastEdgeCount = edges.length;
@@ -334,7 +349,7 @@ export async function waitForBookinfoWaypointGraphTraffic(
   }
 
   throw new Error(
-    `Graph traffic not ready within ${timeoutMs}ms (ambientTraffic=${ambientTraffic}, namespace=${namespace}, edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount}, expected>=${minTotalEdges}, expectedHttp>=${minHttpEdges})`
+    `Graph traffic not ready within ${timeoutMs}ms (ambientTraffic=${ambientTraffic}, namespace=${namespace}, edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount}, expected>=${minTotalEdges}, expectedHttp>=${minHttpEdges}, lastError=${lastError || 'none'})`
   );
 }
 
@@ -454,6 +469,7 @@ export async function waitForSidecarAmbientGraphTraffic(
   const deadline = Date.now() + timeoutMs;
   let lastEdgeCount = -1;
   let lastHttpEdgeCount = -1;
+  let lastError = '';
 
   while (Date.now() < deadline) {
     const qs = new URLSearchParams({
@@ -474,10 +490,16 @@ export async function waitForSidecarAmbientGraphTraffic(
     try {
       response = await request.get(kialiUrl(`/api/namespaces/graph?${qs.toString()}`));
     } catch {
+      lastError = 'request failed';
       await sleep(5_000);
       continue;
     }
-    expect(response.ok()).toBeTruthy();
+    if (!response.ok()) {
+      // Kiali may briefly error while the mesh settles; retry until the deadline.
+      lastError = `graph request returned ${response.status()}`;
+      await sleep(10_000);
+      continue;
+    }
     const body = (await response.json()) as { elements?: { edges?: GraphEdge[] } };
     const edges = body.elements?.edges ?? [];
     lastEdgeCount = edges.length;
@@ -489,7 +511,7 @@ export async function waitForSidecarAmbientGraphTraffic(
   }
 
   throw new Error(
-    `Sidecar ambient graph not ready within ${timeoutMs}ms (edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount})`
+    `Sidecar ambient graph not ready within ${timeoutMs}ms (edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount}, lastError=${lastError || 'none'})`
   );
 }
 
@@ -590,6 +612,9 @@ export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, 
     true
   );
 
+  // The early returns above (no traces / no waypoint service names / API error) are intentional
+  // "not needed here" gates for suites without tracing. Only a failed rollout must fail loudly:
+  // a swallowed failure surfaces later as confusing "no traces" test failures.
   const deadline = Date.now() + 180_000;
   while (Date.now() < deadline) {
     try {
@@ -602,6 +627,7 @@ export async function enableUseWaypointNameIfNeeded(request: APIRequestContext, 
     }
     await sleep(5_000);
   }
+  throw new Error('Kiali did not come back within 180s after use_waypoint_name rollout');
 }
 
 type WorkloadHealthBody = {

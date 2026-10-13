@@ -12,7 +12,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 test.describe('Kiali logout', () => {
   test('Kiali logout successfully', smokeAndCoreCaching, async ({ overviewPage, page }) => {
     const strategy = await getAuthStrategy(page);
-    test.skip(strategy !== 'openshift', 'Logout UI is openshift-only in Cypress');
+    test.skip(strategy !== 'openshift', 'Logout UI is openshift-only; other strategies have no logout dropdown');
 
     await loginOpenShift(page, playwrightCredentials());
     await overviewPage.open();

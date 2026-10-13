@@ -4,6 +4,7 @@ import { kubectlNamespaceExists, kubectlScale } from '../../utils/kubectl';
 import { selectNamespace } from '../../utils/namespace';
 import { waitForAppHealthStatus } from '../../utils/health';
 import { core1 } from '../../utils/suite-tags';
+import { withBookinfoRoutingLock } from '../../utils/bookinfoRoutingLock';
 
 test.describe('Apps list', () => {
   test.beforeEach(async ({ appsPage, page }) => {
@@ -79,13 +80,17 @@ test.describe('Apps list idle health', () => {
     'The idle status of a logical mesh application is reported in the list',
     core1,
     async ({ appsPage, page, request }) => {
-      ensureDemoApp('sleep');
-      kubectlScale('sleep', 'sleep', 0);
-      await waitForAppHealthStatus(request, 'sleep', 'sleep', 'Not Ready');
-      await appsPage.openList();
-      await selectNamespace(page, 'sleep');
-      await appsPage.expectApplicationListedAs('sleep', 'sleep', 'idle');
-      await appsPage.expectApplicationHealthStatus('sleep', 'sleep', 'Not Ready');
+      // Scales the shared sleep deployment; hold the routing lock (convention; no other
+      // core-1 spec touches sleep today).
+      await withBookinfoRoutingLock(async () => {
+        ensureDemoApp('sleep');
+        kubectlScale('sleep', 'sleep', 0);
+        await waitForAppHealthStatus(request, 'sleep', 'sleep', 'Not Ready');
+        await appsPage.openList();
+        await selectNamespace(page, 'sleep');
+        await appsPage.expectApplicationListedAs('sleep', 'sleep', 'idle');
+        await appsPage.expectApplicationHealthStatus('sleep', 'sleep', 'Not Ready');
+      });
     }
   );
 });
@@ -95,6 +100,7 @@ test.describe('Apps list health statuses', () => {
     'The failing status of a logical mesh application is reported in the list',
     core1,
     async ({ appsPage, page, request }) => {
+      ensureDemoApp('error-rates');
       await waitForAppHealthStatus(request, 'alpha', 'v-server', 'Failure');
       await appsPage.openList();
       await selectNamespace(page, 'alpha');
@@ -107,6 +113,7 @@ test.describe('Apps list health statuses', () => {
     'The degraded status of a logical mesh application is reported in the list',
     core1,
     async ({ appsPage, page, request }) => {
+      ensureDemoApp('error-rates');
       await waitForAppHealthStatus(request, 'alpha', 'b-client', 'Degraded');
       await appsPage.openList();
       await selectNamespace(page, 'alpha');
