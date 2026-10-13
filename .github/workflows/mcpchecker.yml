@@ -134,7 +134,7 @@ jobs:
 
     - name: Run mcpchecker evaluation
       id: mcpchecker
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       with:
@@ -219,7 +219,7 @@ jobs:
 
     - name: Run mcpchecker multicluster evaluation
       id: mcpchecker
-      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@a61730b7f9adc15c18a5e1dc9e72697f66049513 # v0.0.19
+      uses: mcpchecker/mcpchecker/.github/actions/mcpchecker-action@5c8147f67729a4547c01d5e49bee0d6c7023e929 # v0.0.22
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       with:
