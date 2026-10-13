@@ -3,6 +3,7 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/fr/translation.json`
 - `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
 
@@ -124,6 +125,57 @@ These entries already match the preferred direction and are good references for 
 - Do not: `espacio de nombres`, `malla`, translated variants of `workload`, `escucha` / `oyente` for `Listener`, `servidor` for Gateway form `Server` / `Servers`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
+
+## French conventions (`fr`)
+
+### Canonical term choices
+
+Use these consistently in French UI strings:
+
+- `namespace` -> `namespace` / `namespaces`
+  - Avoid `espace de noms` in technical UI text
+- `control plane` -> `plan de contrôle`
+- `data plane` -> `plan de données`
+- `mesh` -> `mesh` / `meshes`
+  - Avoid `maillage`
+- `workload` -> `workload` / `workloads`
+  - Avoid alternating with `charge de travail`
+- `listener` -> `Listener` / `Listeners`
+  - Keep in English: Gateway API spec field (`spec.listeners`)
+- `server` -> `Server` / `Servers`
+  - Keep in English: Istio Gateway form field for listener endpoints
+  - Exception: `Server Certificate` -> `Certificat du serveur` (only the descriptive word is translated)
+
+Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
+
+### French UI style
+
+- Prefer short, neutral wording that works across French variants
+- Prefer infinitive or impersonal UI phrasing (`Sélectionner`, `Filtrer par namespace`)
+- Prefer `vous` over `tu` when a personal form is needed
+- Use standard UI punctuation; do not require a space before `:`, `;`, `!`, or `?`
+- Rephrase if a sentence becomes awkward after keeping a technical term in English
+
+### Existing examples from `frontend/public/locales/fr/translation.json`
+
+These entries match the preferred direction and are good references for future edits:
+
+- `"Namespace": "Namespace"`
+- `"Namespaces": "Namespaces"`
+- `"Filter by Namespace": "Filtrer par namespace"`
+- `"Namespace Health": "Santé du namespace"`
+- `"Control plane": "Plan de contrôle"`
+- `"Data plane": "Plan de données"`
+- `"Mesh": "Mesh"`
+- `"Waypoint": "Waypoint"`
+- `"{{count}} workload_other": "{{count}} workloads"`
+- `"Listeners": "Listeners"`
+- `"Servers": "Servers"`
+
+### French do / do not
+
+- Do: `plan de contrôle`, `plan de données`, `namespace`, `mesh`, `workload`, `Listener`, `Server`
+- Do not: `espace de noms`, `maillage`, translated variants of `workload`
 
 ## Chinese conventions (`zh`, Simplified Chinese)
 
