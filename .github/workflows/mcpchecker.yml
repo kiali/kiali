@@ -266,14 +266,14 @@ jobs:
 
     - name: Download single-cluster results
       if: needs.run-evaluation.result == 'success'
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: mcpchecker-results
         path: mcpchecker-results/
 
     - name: Download multicluster results
       if: needs.run-evaluation-multicluster.result == 'success'
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: mcpchecker-multicluster-results
         path: mcpchecker-multicluster-results/
@@ -453,14 +453,14 @@ jobs:
 
     - name: Download mcpchecker results
       if: needs.run-evaluation.result == 'success'
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: mcpchecker-results
         path: mcpchecker-results/
 
     - name: Download mcpchecker multicluster results
       if: needs.run-evaluation-multicluster.result == 'success'
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: mcpchecker-multicluster-results
         path: mcpchecker-multicluster-results/
