@@ -17,7 +17,7 @@ import (
 
 const (
 	// DefaultAIPricingFilePath is where the operator/helm chart mounts the user-managed
-	// pricing ConfigMap named by ai.consumption.prizes_config_map (key: prices.yaml).
+	// pricing ConfigMap named by ai.consumption.prices_config_map (key: prices.yaml).
 	DefaultAIPricingFilePath = "/kiali-ai-pricing/prices.yaml"
 )
 
@@ -134,7 +134,7 @@ type AIConfig struct {
 // This require AI.Metrics to be enabled.
 type AIConsumptionConfig struct {
 	AllowedUsersDashboard []string           `yaml:"allowed_users_dashboard,omitempty" json:"allowed_users_dashboard,omitempty"`
-	PrizesConfigMap       string             `yaml:"prizes_config_map,omitempty" json:"prizes_config_map,omitempty"` // ConfigMap name in the Kiali namespace; empty uses the built-in catalog
+	PrizesConfigMap       string             `yaml:"prices_config_map,omitempty" json:"prices_config_map,omitempty"` // ConfigMap name in the Kiali namespace; empty uses the built-in catalog
 	Budgets               []UserBudgetConfig `yaml:"budgets,omitempty" json:"budgets,omitempty"`
 
 	// ModelPricings is the resolved token-pricing catalog used for cost estimates.
@@ -230,7 +230,7 @@ func loadDefaultModelPricings() []ModelPricing {
 }
 
 // resolveModelPricings loads the token-pricing catalog used for consumption cost estimates.
-// An empty prizes_config_map uses the embedded ai_default_prices.yaml. When a ConfigMap
+// An empty prices_config_map uses the embedded ai_default_prices.yaml. When a ConfigMap
 // name is set, prices are read from DefaultAIPricingFilePath (mounted by the operator/helm
 // chart). If that file is missing or invalid, Kiali logs the error and falls back to the
 // built-in catalog.

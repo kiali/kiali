@@ -13,7 +13,7 @@
    1. [Architecture](#architecture)
    2. [Metrics](#metrics)
    3. [Cost estimation](#cost-estimation)
-   4. [Built-in catalog and `prizes_config_map`](#built-in-catalog-and-prizes_config_map)
+   4. [Built-in catalog and `prices_config_map`](#built-in-catalog-and-prices_config_map)
    5. [Operator and Helm mount](#operator-and-helm-mount)
    6. [Budgets](#budgets)
    7. [Dashboard access](#dashboard-access)
@@ -24,7 +24,7 @@
 
 Add an AI consumption subsystem to Kiali that records ChatAI token usage, estimates monetary cost from a per-model price catalog, enforces optional per-user budgets, and exposes that data in the AI dashboard.
 
-Usage recording is gated by `ai.metrics`. Cost estimates, budgets, and the consumption dashboard are configured under `ai.consumption`. Prices come from a built-in catalog (`config/ai_default_prices.yaml`) unless the administrator names a user-managed ConfigMap in `ai.consumption.prizes_config_map`; the operator/Helm chart then mounts that ConfigMap for the Kiali server to load.
+Usage recording is gated by `ai.metrics`. Cost estimates, budgets, and the consumption dashboard are configured under `ai.consumption`. Prices come from a built-in catalog (`config/ai_default_prices.yaml`) unless the administrator names a user-managed ConfigMap in `ai.consumption.prices_config_map`; the operator/Helm chart then mounts that ConfigMap for the Kiali server to load.
 
 # Motivation
 
@@ -68,7 +68,7 @@ AI consumption is a **metrics-backed cost and budget layer** on top of ChatAI:
 3. The server estimates cost by joining usage with a resolved `ModelPricings` catalog
 4. Chat requests are rejected when the user's budget is exhausted or the provider/model is not allowed
 
-The default catalog is embedded in the Kiali binary. Administrators who need custom prices create a ConfigMap and set `spec.ai.consumption.prizes_config_map` to its name. If that field is empty, the built-in catalog is used and no extra volume is mounted.
+The default catalog is embedded in the Kiali binary. Administrators who need custom prices create a ConfigMap and set `spec.ai.consumption.prices_config_map` to its name. If that field is empty, the built-in catalog is used and no extra volume is mounted.
 
 # Technical Challenges
 
@@ -123,8 +123,8 @@ AI dashboard / consumption APIs
     ├─ query Prometheus AI counters
     └─ calculateCost() via resolved ModelPricings
            │
-           ├─ prizes_config_map == ""  → embed config/ai_default_prices.yaml
-           └─ prizes_config_map set    → /kiali-ai-pricing/prices.yaml
+           ├─ prices_config_map == ""  → embed config/ai_default_prices.yaml
+           └─ prices_config_map set    → /kiali-ai-pricing/prices.yaml
                                          (fallback to embed on error)
 ```
 
@@ -156,13 +156,13 @@ A catalog row matches when `provider` and `model_id` equal the usage labels. Opt
 
 If no row matches, cost is omitted (tokens still display).
 
-## Built-in catalog and `prizes_config_map`
+## Built-in catalog and `prices_config_map`
 
 The built-in catalog is `config/ai_default_prices.yaml`, embedded with `go:embed`. Entries cover Anthropic, OpenAI, and Google models with USD per million tokens.
 
-`prizes_config_map` is a **string**: the name of a ConfigMap in the Kiali deployment namespace.
+`prices_config_map` is a **string**: the name of a ConfigMap in the Kiali deployment namespace.
 
-| `prizes_config_map` | Server behavior |
+| `prices_config_map` | Server behavior |
 |---|---|
 | omitted or `""` | Load embedded `ai_default_prices.yaml`. No extra volume. |
 | ConfigMap name | Read `/kiali-ai-pricing/prices.yaml`. On missing/invalid file, log and fall back to the embedded catalog. |
@@ -185,7 +185,7 @@ Resolved rows are kept in memory as `AIConsumptionConfig.ModelPricings` (`yaml:"
 
 ## Operator and Helm mount
 
-When `spec.ai.consumption.prizes_config_map` (operator) or `ai.consumption.prizes_config_map` (Helm) is a non-empty name:
+When `spec.ai.consumption.prices_config_map` (operator) or `ai.consumption.prices_config_map` (Helm) is a non-empty name:
 
 - Volume `kiali-ai-pricing` sources that ConfigMap (`optional: true`)
 - VolumeMount path is `/kiali-ai-pricing` (`readOnly: true`)
@@ -218,7 +218,7 @@ spec:
     enabled: true
     metrics: true
     consumption:
-      prizes_config_map: kiali-ai-prices
+      prices_config_map: kiali-ai-prices
 ```
 
 Updating ConfigMap contents requires a Kiali pod restart (the server loads prices at config unmarshal time).
@@ -261,7 +261,7 @@ ai:
   metrics: true                 # required for usage, cost, budgets, dashboard
   consumption:
     allowed_users_dashboard: [] # empty = everyone
-    prizes_config_map: ""       # empty = built-in catalog; set to a ConfigMap name to replace it
+    prices_config_map: ""       # empty = built-in catalog; set to a ConfigMap name to replace it
     budgets:
       - usernames: ["alice", "bob"]
         interval: monthly
@@ -278,10 +278,10 @@ Defaults:
 
 - `ai.metrics`: `false`
 - `ai.consumption.allowed_users_dashboard`: `[]`
-- `ai.consumption.prizes_config_map`: `""`
+- `ai.consumption.prices_config_map`: `""`
 - `ai.consumption.budgets`: `[]`
 
-Ansible/Helm defaults keep `prizes_config_map: ""`. An empty **list** must not be used for that field; it is a string ConfigMap name, not inline prices.
+Ansible/Helm defaults keep `prices_config_map: ""`. An empty **list** must not be used for that field; it is a string ConfigMap name, not inline prices.
 
 # Future Considerations
 

@@ -16,7 +16,7 @@ This package provides the Kiali AI Assistant backend. It wires the chat provider
 - [Metrics and consumption](#metrics-and-consumption)
   - [Consumption keys (`ai.consumption`)](#consumption-keys-aiconsumption)
   - [Budget keys (`ai.consumption.budgets[]`)](#budget-keys-aiconsumptionbudgets)
-  - [Custom pricing ConfigMap (`prizes_config_map`)](#custom-pricing-configmap-prizes_config_map)
+  - [Custom pricing ConfigMap (`prices_config_map`)](#custom-pricing-configmap-prices_config_map)
 - [Providers Supported](#providers-supported)
 - [MCP tools (summary)](#mcp-tools-summary)
 - [AI Store](#ai-store)
@@ -29,7 +29,7 @@ This package provides the Kiali AI Assistant backend. It wires the chat provider
 3. The provider sends the conversation to the model and exposes MCP tools.
 4. Tool results (actions, referenced_docs, data) are combined into the final response.
 5. We recommend enabling the AI store to retain context; it can optionally reduce stored conversations with AI (see [AI Store](#ai-store)).
-6. When `ai.metrics` is true, token usage is recorded. The consumption dashboard estimates cost from the built-in price catalog or from a user-managed ConfigMap named by `ai.consumption.prizes_config_map`.
+6. When `ai.metrics` is true, token usage is recorded. The consumption dashboard estimates cost from the built-in price catalog or from a user-managed ConfigMap named by `ai.consumption.prices_config_map`.
 
 ## Configuration summary
 
@@ -74,7 +74,7 @@ ai:
             key: "secret:my-key-secret:openai-gemini"
   consumption:
     allowed_users_dashboard: []
-    prizes_config_map: ""   # empty = built-in catalog (config/ai_default_prices.yaml)
+    prices_config_map: ""   # empty = built-in catalog (config/ai_default_prices.yaml)
     budgets: []
 ```
 
@@ -83,7 +83,7 @@ Notes:
 * Model keys override provider keys if both are set.
 * `endpoint` is required for the `azure` config and optional for others.
 * Provider and model names are used in secret volume names; avoid special characters.
-* Operator/Helm mount `secret:<name>:<key>` credentials automatically. `prizes_config_map` is a ConfigMap name in the Kiali namespace, not a Secret.
+* Operator/Helm mount `secret:<name>:<key>` credentials automatically. `prices_config_map` is a ConfigMap name in the Kiali namespace, not a Secret.
 
 ## Configuring providers and models
 
@@ -193,7 +193,7 @@ Then configure `ai.chat` to reference the secret. The Kiali Operator and Helm ch
 |-----|------|---------|-------------|
 | `allowed_users_dashboard` | array | `[]` | Users allowed to view the consumption dashboard. Empty means all users. |
 | `budgets` | array | `[]` | Per-user budget limits. Empty means no budget restrictions. See [Budget keys](#budget-keys-aiconsumptionbudgets). |
-| `prizes_config_map` | string | `""` | Name of a user-managed ConfigMap in the Kiali deployment namespace that holds a custom token pricing catalog. Empty uses the built-in catalog (`config/ai_default_prices.yaml`). |
+| `prices_config_map` | string | `""` | Name of a user-managed ConfigMap in the Kiali deployment namespace that holds a custom token pricing catalog. Empty uses the built-in catalog (`config/ai_default_prices.yaml`). |
 
 ### Budget keys (`ai.consumption.budgets[]`)
 
@@ -206,9 +206,9 @@ Then configure `ai.chat` to reference the secret. The Kiali Operator and Helm ch
 | `allowed_providers` | array | Provider types this budget allows (`openai`, `anthropic`, `google`, `lightspeed`). Empty means all configured providers. |
 | `allowed_models` | array | Model names or IDs this budget allows. Supports `*` wildcards. Empty means all models of the allowed providers. |
 
-### Custom pricing ConfigMap (`prizes_config_map`)
+### Custom pricing ConfigMap (`prices_config_map`)
 
-When `prizes_config_map` is empty, Kiali loads the embedded catalog from `config/ai_default_prices.yaml`.
+When `prices_config_map` is empty, Kiali loads the embedded catalog from `config/ai_default_prices.yaml`.
 
 When it is set to a ConfigMap name, the operator (and the `kiali-server` Helm chart) mounts that ConfigMap at `/kiali-ai-pricing` (`optional: true`, `readOnly: true`). The ConfigMap must live in the Kiali deployment namespace and contain a `prices.yaml` key in the same format as the built-in catalog. That catalog **replaces** the built-in list. If the file is missing or invalid, Kiali logs an error and falls back to the built-in catalog. Restart the Kiali pod after changing ConfigMap contents.
 
@@ -235,10 +235,10 @@ ai:
   enabled: true
   metrics: true
   consumption:
-    prizes_config_map: kiali-ai-prices
+    prices_config_map: kiali-ai-prices
 ```
 
-Operator install path: Kiali CR `spec.ai.consumption.prizes_config_map`. See `docs/agents/operator-architecture.md` in the kiali-operator repo.
+Operator install path: Kiali CR `spec.ai.consumption.prices_config_map`. See `docs/agents/operator-architecture.md` in the kiali-operator repo.
 
 ## Providers Supported
 
@@ -275,6 +275,6 @@ The AI store keeps conversation context (enabled by default). When limits are re
 
 ## AI Consumption
 
-AI consumption records ChatAI token usage, estimates cost from a per-model price catalog, and optionally enforces per-user budgets. Usage is gated by `ai.metrics`. Cost, dashboard access, and budgets are configured under `ai.consumption`. Prices come from the built-in catalog unless `prizes_config_map` names a user-managed ConfigMap, which the operator/Helm chart mounts at `/kiali-ai-pricing`.
+AI consumption records ChatAI token usage, estimates cost from a per-model price catalog, and optionally enforces per-user budgets. Usage is gated by `ai.metrics`. Cost, dashboard access, and budgets are configured under `ai.consumption`. Prices come from the built-in catalog unless `prices_config_map` names a user-managed ConfigMap, which the operator/Helm chart mounts at `/kiali-ai-pricing`.
 
 For all consumption keys, values, and descriptions, see [Metrics and consumption](#metrics-and-consumption). For design and behavior details, see [AI Consumption KEP](../design/KEPS/ai-consumption/proposal.md).

@@ -113,7 +113,7 @@ func TestUnmarshalPrizesConfigMapName(t *testing.T) {
 	conf, err := Unmarshal(`
 ai:
   consumption:
-    prizes_config_map: my-ai-prices
+    prices_config_map: my-ai-prices
 `)
 	require.NoError(t, err)
 	t.Cleanup(func() {
