@@ -354,7 +354,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && shouldShowEnvoyWorkloadTab(this.state.workload)) {
       const envoyTab = (
-        <Tab title={t('Envoy')} eventKey={10} key="Envoy">
+        <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
             <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
