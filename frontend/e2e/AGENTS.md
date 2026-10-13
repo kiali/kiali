@@ -5,8 +5,9 @@
 > `master`; fold anything durable into `README.md`. Progress tracking lives in `MIGRATION-PLAN.md`.
 
 These rules come from the [#9712](https://github.com/kiali/kiali/issues/9712) plan and review feedback
-on PRs #10174, #10195, #10217, #10220. **Do not re-introduce Cypress patterns when porting.** Every
-rule below is already applied in the branch code — match the existing code, don't regress it.
+on PRs #10174, #10195, #10217, #10220. **Do not re-introduce Cypress patterns when porting.**
+These rules are the standard for all code in this branch; pre-existing violations are tracked in the
+branch review and being cleaned up incrementally — match the existing code, don't regress it.
 
 ---
 

@@ -450,14 +450,16 @@ make cypress-selected   # Runs @selected tagged tests (tag a scenario with @sele
 | Tag | Description | Suite |
 |-----|-------------|-------|
 | `@smoke` | Quick smoke tests (~30 scenarios) | `local` |
-| `@core-1` | Core UI tests group 1 (~130 scenarios) | `frontend-core-1` |
-| `@core-2` | Core UI tests group 2 (~155 scenarios) | `frontend-core-2` |
+| `@core-1` | Core UI tests group 1 (119 scenarios) | `frontend-core-1` |
+| `@core-2` | Core UI tests group 2 (37 scenarios) | `frontend-core-2` |
 | `@crd-validation` | CRD validation tests | `frontend-core-optional` |
 | `@perses` | Perses dashboard tests | `frontend-core-optional` |
 | `@multi-cluster` | Primary-remote multicluster tests | `frontend-primary-remote` |
 | `@multi-primary` | Multi-primary multicluster tests | `frontend-multi-primary` |
 | `@multi-mesh` | Multi-mesh tests | `frontend-multi-mesh` |
 | `@ambient` | Ambient mesh tests | `frontend-ambient` |
+| `@waypoint` | Waypoint tests (run after ambient in the same CI job) | `frontend-ambient` |
+| `@waypoint-tracing` | Waypoint tracing tests | `frontend-ambient` |
 | `@tracing` | Distributed tracing (Tempo) tests | `frontend-tempo` |
 | `@offline` | Offline mode tests | `offline` |
 | `@selected` | Manual selection for debugging | N/A |

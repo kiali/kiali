@@ -376,6 +376,7 @@ export async function expectGraphTopology(page: Page, assertFn: (topology: Graph
         try {
           const topology = await readGraphTopology(page);
           assertFn(topology);
+          lastError = undefined;
           return true;
         } catch (error) {
           lastError = error;

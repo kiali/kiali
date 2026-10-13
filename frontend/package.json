@@ -97,7 +97,6 @@
     "playwright:run:offline": "PLAYWRIGHT_BLOB_NAME=offline playwright test --project=offline --pass-with-no-tests",
     "playwright:run:ai-chatbot": "PLAYWRIGHT_BLOB_NAME=ai-chatbot playwright test --project=ai-chatbot --pass-with-no-tests",
     "playwright:run:tracing": "PLAYWRIGHT_BLOB_NAME=tracing playwright test --project=tracing --pass-with-no-tests",
-    "playwright:run:tracing:junit": "PLAYWRIGHT_BLOB_NAME=tracing playwright test --project=tracing --pass-with-no-tests",
     "playwright:run:multi-mesh": "PLAYWRIGHT_BLOB_NAME=multi-mesh playwright test --project=multi-mesh --pass-with-no-tests",
     "playwright:run:all": "yarn playwright:run:junit",
     "playwright:run:ambient": "PLAYWRIGHT_BLOB_NAME=ambient playwright test --project=ambient --pass-with-no-tests",

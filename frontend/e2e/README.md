@@ -112,11 +112,11 @@ Ports all Cypress `@smoke` scenarios: about, alert, cookie, help, login, logout,
 
 ### Core-1 (`yarn playwright:run:core1`)
 
-Ports all Cypress `@core-1` scenarios (145 tests): graph display, toolbar, legend, find/hide, context menu, side panel, replay; istio config list; apps list, health, app details graph; column management.
+Ports all Cypress `@core-1` scenarios (144 tests): graph display, toolbar, legend, find/hide, context menu, side panel, replay; istio config list; apps list, health, app details graph; column management.
 
 ### Core-2 (`yarn playwright:run:core2`)
 
-Ports all Cypress `@core-2` scenarios (~240 tests): mesh, shared mesh, sidecar injection, istio config editor/actions, workload logs, wizards, and related list/detail flows (PR #10269).
+Ports all Cypress `@core-2` scenarios (37 tests, 1:1 with the cypress @core-2 scenario count): mesh, shared mesh, sidecar injection, istio config editor/actions, workload logs, wizards, and related list/detail flows (PR #10269).
 
 ### Core-caching (`yarn playwright:run:core-caching`)
 
@@ -271,12 +271,12 @@ PRs targeting `epic/playwright-migration` run **Playwright CI** (`.github/workfl
 
 Jenkins: `kiali/test-jobs/kiali-playwright-tests` — default `TEST_SET=playwright:run:junit` (or `playwright:run:all`, same suites) with empty `TEST_TAGS` on OpenShift; ambient / multi-cluster / multi-primary via their `:junit` scripts. Smoke/perses/tracing/ai-chatbot are not part of that Jenkins default (GitHub KinD or a dedicated `TEST_SET`).
 
+`playwright:run:all` is an alias of `playwright:run:junit` (crd-validation, core-1, core-2, core-caching) — the same set Jenkins runs on the OpenShift default. All other suites (smoke, core-optional, tracing, ai-chatbot, ambient, ambient-multi-primary, waypoint, external-kiali, multi-cluster, multi-mesh, offline) each have their own dedicated script and GitHub KinD workflow (see the suite sections above).
+
 ---
 
 ## Follow-ups (from review / not done yet)
 
-- Add `data-test` on `StatefulFilters` (`filter-type-toggle`, `filter-value-toggle`, `filter-toolbar`, `filter-type-input`) and migrate `IstioConfigPage` off `#filter_select_*` IDs.
-- Replace negative version assertions in `kiali_about.spec.ts` with `toHaveText(/^v?\d+\.\d+\.\d+/)`.
 - `cleanup` fixture (`cleanup.trackNamespace()`) instead of ad-hoc `afterEach` / kubectl for demo mutations.
 - `page.routeWebSocket()` wherever graph live updates are mocked.
 - `token` auth in `auth.setup.ts` (`openid` supported for external-kiali / Keycloak).

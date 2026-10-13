@@ -402,7 +402,7 @@ export function cleanIstioSystemMeshResources(): void {
   waitForResourceDeleted('kubectl get Sidecar default -n istio-system', ISTIO_SYSTEM_MESH_CLEANUP_TIMEOUT_MS);
 }
 
-/** Mirrors Cypress `@clean-istio-namespace-resources-after` alpha/beta Envoy reload. */
+/** Alpha/beta Envoy reload during istio-system cleanup (post mTLS mutation). */
 export function restartAlphaBetaEnvoyConfig(): void {
   for (const namespace of ['alpha', 'beta']) {
     if (!kubectlNamespaceExists(namespace)) {
@@ -413,7 +413,7 @@ export function restartAlphaBetaEnvoyConfig(): void {
   }
 }
 
-/** Full istio-system cleanup including alpha/beta rollout (Cypress `@clean-istio-namespace-resources-after`). */
+/** Full istio-system cleanup including alpha/beta rollout. */
 export function cleanIstioSystemTestResources(): void {
   cleanIstioSystemMeshResources();
   restartAlphaBetaEnvoyConfig();

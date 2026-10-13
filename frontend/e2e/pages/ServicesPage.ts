@@ -120,6 +120,11 @@ export class ServicesPage extends ListPage {
     expect(rowCount).toBeGreaterThan(count);
   }
 
+  /** True when the list shows the "No services found" empty state. */
+  async hasNoResults(): Promise<boolean> {
+    return (await this.page.getByText('No services found').count()) > 0;
+  }
+
   async expectAllTogglesChecked(): Promise<void> {
     await expect(this.getBySel('toggle-configuration')).toBeChecked();
     await expect(this.getBySel('toggle-health')).toBeChecked();

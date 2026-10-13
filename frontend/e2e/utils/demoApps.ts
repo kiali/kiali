@@ -142,7 +142,7 @@ function installDemoApp(demoapp: DemoApp): void {
 }
 
 /**
- * Ensure a Cypress demo app is installed (mirrors @bookinfo-app / @sleep-app hooks).
+ * Ensure a demo app is installed (same preconditions as the per-app test hooks).
  */
 export function ensureDemoApp(demoapp: DemoApp): void {
   const config = DEMO_APP_CONFIG[demoapp];

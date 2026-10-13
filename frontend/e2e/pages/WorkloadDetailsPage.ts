@@ -6,8 +6,7 @@ import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { restartWorkload } from '../utils/sidecarInjection';
 import { waitForLoadingComplete } from '../utils/transition';
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
+import { isOssmc } from '../utils/kialiConfig';
 
 type SidecarAction = 'disable_auto_injection' | 'enable_auto_injection' | 'remove_auto_injection';
 
@@ -459,12 +458,8 @@ export class WorkloadDetailsPage extends BasePage {
   async openWaypointSubtab(subtab: string): Promise<void> {
     const tabs = this.page.locator('#waypoint-details');
     await expect(tabs).toBeVisible();
-    const tabLocator = tabs.getByRole('tab', { name: subtab, exact: true });
-    if ((await tabLocator.count()) > 0) {
-      await tabLocator.click();
-    } else {
-      await tabs.locator('.pf-v6-c-tabs__list button').filter({ hasText: subtab }).click();
-    }
+    // PF Tabs renders role="tab" buttons; fail fast if the subtab is not rendered.
+    await tabs.getByRole('tab', { name: subtab, exact: true }).click();
     await waitForLoadingComplete(this.page);
   }
 
@@ -513,20 +508,6 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(
       table.locator('td[data-label="Labeled by"]').filter({ hasText: options.labeledBy }).first()
     ).toBeVisible();
-  }
-
-  async expectProxyStatus(status: string): Promise<void> {
-    const statusLabels: Record<string, string> = {
-      degraded: 'Degraded',
-      failure: 'Failure',
-      healthy: 'Healthy',
-      info: 'Info',
-      na: 'n/a'
-    };
-    const label = statusLabels[status.toLowerCase()] ?? status;
-    const detailsStatus = this.getBySel('details-status');
-    await expect(detailsStatus).toContainText(label);
-    await expect(detailsStatus.locator(`.icon-${status.toLowerCase()}`)).toBeVisible();
   }
 
   async expectProxyStatusIcon(status: string): Promise<void> {
@@ -593,7 +574,9 @@ export class WorkloadDetailsPage extends BasePage {
 
   async expectNoWorkloadInjectionLabel(): Promise<void> {
     const card = this.getBySel('workload-labels-card');
-    const overflow = card.locator('.pf-m-overflow');
+    // The labels card renders a "N more" overflow toggle only when it has more labels
+    // than fit; PF renders it as a role="button" carrying the count in its name.
+    const overflow = card.getByRole('button', { name: /\d+\s+more/ });
     if ((await overflow.count()) > 0) {
       await overflow.click();
     }
