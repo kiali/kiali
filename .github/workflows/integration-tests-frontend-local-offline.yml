@@ -88,7 +88,7 @@ jobs:
 
     - name: Upload resource telemetry
       if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       continue-on-error: true
       with:
         name: resource-telemetry-frontend-local-offline
@@ -104,20 +104,20 @@ jobs:
 
     - name: Upload debug info artifact
       if: failure()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: debug-info-frontend-local-offline
         path: debug-output
 
     - name: Upload cypress screenshots when tests fail
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       if: failure()
       with:
         name: cypress-screenshots-frontend-local-offline
         path: frontend/cypress/screenshots
 
     - name: Upload cypress logs from stern
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       if: ${{ inputs.stern_logs == true }}
       with:
         name: cypress-logs-frontend-local-offline
