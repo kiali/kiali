@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -440,4 +441,38 @@ func (in *MetricsService) GetResourceMetrics(ctx context.Context, q models.Istio
 	metrics["cpu_usage"] = converted
 
 	return metrics, nil
+}
+
+func healthStatusHistoryLookbackSeconds(stepSecs int64, conf *config.Config) int64 {
+	lookback := stepSecs
+	scrapeSecs := 30
+	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
+	if thanosConf.Enabled && thanosConf.ScrapeInterval != "" {
+		if d, err := time.ParseDuration(thanosConf.ScrapeInterval); err == nil && d > 0 {
+			scrapeSecs = int(d.Seconds())
+		}
+	}
+	if scrapeSecs < 1 {
+		scrapeSecs = 30
+	}
+	cap := int64(2 * scrapeSecs)
+	if cap > 0 && cap < lookback {
+		lookback = cap
+	}
+	if lookback < 1 {
+		lookback = 1
+	}
+	return lookback
+}
+
+func (in *MetricsService) GetHealthStatusHistory(ctx context.Context, cluster, namespace, healthType, name string, q *prometheus.RangeQuery) ([]models.Metric, error) {
+	labels := fmt.Sprintf(`{cluster=%q,namespace=%q,health_type=%q,name=%q}`, cluster, namespace, healthType, name)
+	stepSecs := int64(q.Step.Seconds())
+	lookbackSecs := healthStatusHistoryLookbackSeconds(stepSecs, in.conf)
+	// Range history uses ~100 points (see frontend step sizing). max_over_time uses a lookback
+	// capped at ~2x Prometheus scrape interval so long gaps without scrapes stay empty in the
+	// matrix and the UI can render them as n/a. Outer max deduplicates HA replicas.
+	query := fmt.Sprintf(`max(max_over_time(kiali_health_status%s[%ds]))`, labels, lookbackSecs)
+	metric := prometheus.FetchRangeQuery(ctx, in.prom.API(), query, q)
+	return models.ConvertMetric("kiali_health_status", metric, models.ConversionParams{Scale: 1})
 }

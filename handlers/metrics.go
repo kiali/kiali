@@ -44,6 +44,13 @@ var baseMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("step"),
 }
 
+var healthStatusHistoryQueryParams = []queryparams.Param{
+	queryparams.ClusterParam(),
+	queryparams.PresenceParam("duration"),
+	queryparams.PresenceParam("queryTime"),
+	queryparams.PresenceParam("step"),
+}
+
 var istioMetricsQueryParams = []queryparams.Param{
 	queryparams.PresenceParam("avg"),
 	queryparams.PresenceParam("byLabels[]"),
@@ -362,6 +369,52 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 	}
 }
 
+// HealthStatusHistory is the API handler to fetch kiali_health_status time series
+// for an app, namespace, service, or workload, to be displayed as a health history ribbon.
+// entityVar is the mux route variable holding the entity name; for namespace health it is ignored.
+func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, healthType, entityVar string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		namespace := vars["namespace"]
+		if !conf.Server.Observability.Metrics.HealthStatus.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "Health status metrics are not enabled")
+			return
+		}
+		cluster := queryparams.ClusterName(conf, r.URL.Query())
+
+		name := namespace
+		if healthType != "namespace" {
+			name = vars[entityVar]
+		}
+
+		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		if err != nil {
+			return
+		}
+
+		params := prometheus.RangeQuery{}
+		params.FillDefaults()
+		queryParams := r.URL.Query()
+		if err := queryparams.RejectUnknown(queryParams, queryparams.Names(healthStatusHistoryQueryParams)...); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		if err := extractBaseMetricsQueryParams(queryParams, &params, namespaceInfo); err != nil {
+			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+
+		metricsService := business.NewMetricsService(prom, conf)
+		metrics, err := metricsService.GetHealthStatusHistory(r.Context(), cluster, namespaceInfo.Name, healthType, name, &params)
+		if err != nil {
+			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
+			return
+		}
+
+		RespondWithJSON(w, http.StatusOK, metrics)
+	}
+}
+
 // NamespaceMetrics is the API handler to fetch metrics to be displayed, related to all
 // services in the namespace
 func NamespaceMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface) http.HandlerFunc {
@@ -525,11 +578,14 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		}
 	}
 	if step := queryParams.Get("step"); step != "" {
-		if num, err := strconv.Atoi(step); err == nil {
-			q.Step = time.Duration(num) * time.Second
-		} else {
+		num, err := strconv.Atoi(step)
+		if err != nil {
 			return errors.New("bad request, cannot parse query parameter 'step'")
 		}
+		if num <= 0 {
+			return errors.New("bad request, query parameter 'step' must be positive")
+		}
+		q.Step = time.Duration(num) * time.Second
 	}
 	if quantiles, ok := queryParams["quantiles[]"]; ok && len(quantiles) > 0 {
 		for _, quantile := range quantiles {

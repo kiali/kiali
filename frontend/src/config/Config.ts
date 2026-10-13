@@ -181,6 +181,18 @@ const conf = {
         `api/namespaces/${namespace}/pods/${pod}/config_dump_ztunnel`,
       resourceUsageMetrics: (namespace: string, workload: string) =>
         `api/namespaces/${namespace}/${workload}/usage_metrics`,
+      healthStatusHistory: (namespace: string, healthType: string, name: string) => {
+        switch (healthType) {
+          case 'app':
+            return `api/namespaces/${namespace}/apps/${name}/health/history`;
+          case 'namespace':
+            return `api/namespaces/${namespace}/health/history`;
+          case 'service':
+            return `api/namespaces/${namespace}/services/${name}/health/history`;
+          default:
+            return `api/namespaces/${namespace}/workloads/${name}/health/history`;
+        }
+      },
       serverConfig: `api/config`,
       service: (namespace: string, service: string) => `api/namespaces/${namespace}/services/${service}`,
       serviceGraphElements: (namespace: string, service: string) =>

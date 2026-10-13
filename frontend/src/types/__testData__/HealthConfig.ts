@@ -1,4 +1,4 @@
-import { ServerConfig } from 'types/ServerConfig';
+import type { ServerConfig } from 'types/ServerConfig';
 import { getExpr } from '../../config/HealthConfig';
 
 export const healthConfig = {
@@ -92,6 +92,7 @@ export const healthConfig = {
       }
     ]
   },
+  healthStatusMetricsEnabled: false,
   installationTag: 'Kiali Console',
   istioAnnotations: {
     ambientAnnotation: 'ambient.istio.io/redirection',
