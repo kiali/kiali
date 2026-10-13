@@ -21,7 +21,7 @@ Feature: Kiali Graph page - Toolbar (various)
 
   @offline
   @error-rates-app
-  Scenario: Graph alpha namespace with query params
+  Scenario: Graph alpha namespace with query params for offline
     When user graphs "alpha" namespaces with refresh "900000" and duration "300"
     Then user sees the "alpha" namespace
     And user sees selected graph duration "Last 5m"
@@ -29,7 +29,7 @@ Feature: Kiali Graph page - Toolbar (various)
 
   @core-1
   @error-rates-app
-  Scenario: Graph alpha namespace with query params
+  Scenario: Graph alpha namespace with query params for live cluster
     When user graphs "alpha" namespaces with refresh "900000" and duration "600"
     Then user sees the "alpha" namespace
     And user sees selected graph duration "Last 10m"
