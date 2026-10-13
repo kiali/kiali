@@ -4,17 +4,14 @@
 //
 // # Kiali Project, The Console for Istio Service Mesh
 //
-// NOTE! The Kiali API is not for public use and is not supported for any use outside of the Kiali UI itself.
+// NOTE! The Kiali API is not for public use and is not supported for any use outside Kiali's own tooling.
 // The API can and will change from version to version with no guarantee of backwards compatibility.
 //
-// To generate this API document:
-// ```
+// To generate this API document, run from the repository root:
 //
-//	> alias swagger='docker run --rm -it  --user $(id -u):$(id -g) -e GOCACHE=/tmp -e GOPATH=$(go env GOPATH):/go -v $HOME:$HOME -w $(pwd) quay.io/goswagger/swagger'
-//	> swagger generate spec -o ./swagger.json
-//	> swagger generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md
+//	make swagger-doc
 //
-// ```
+// The generated doc's Version field uses the Makefile VERSION variable (default in the root Makefile).
 //
 //	Schemes: http, https
 //	BasePath: /api
@@ -25,6 +22,10 @@
 //
 //	Produces:
 //	- application/json
+//
+//	SecurityDefinitions:
+//	authorization:
+//	  type: basic
 //
 // swagger:meta
 package main
