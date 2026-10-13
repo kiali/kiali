@@ -199,7 +199,8 @@ export const expectTraceDetails = async (page: Page): Promise<void> => {
 };
 
 export const expectSpanDetails = async (page: Page): Promise<void> => {
-  await page.getByTestId('trace-details-tabs').getByText('Span Details').click();
+  // PF Tabs renders role="tab" buttons; data-test on the Tabs root scopes the tablist.
+  await page.getByTestId('trace-details-tabs').getByRole('tab', { name: 'Span Details', exact: true }).click();
   const rows = page.locator('table tbody tr');
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   await expect(rows).not.toHaveCount(0);
@@ -219,55 +220,52 @@ export const expectViewInTracingTraceLink = async (page: Page, linkText: string)
 };
 
 export const expectMoreSpanDetailsLink = async (page: Page, linkText: string): Promise<void> => {
+  // PF ActionsColumn renders the per-row kebab with aria-label "Kebab toggle".
   const row = page.locator('table tbody tr').nth(1);
-  await row.locator('td').nth(4).locator('button').click();
-  await expect(page.locator('ul[role="menu"]')).toContainText(linkText);
+  await row.getByRole('button', { name: 'Kebab toggle' }).click();
+  await expect(page.getByRole('menu')).toContainText(linkText);
   await page.keyboard.press('Escape');
 };
 
 export const filterSpansByApp = async (page: Page, app: string): Promise<void> => {
-  await page.locator('button#filter_select_type-toggle').click();
-  await page.locator('div#filter_select_type button').filter({ hasText: /^App$/ }).click();
-  await page.locator('input[placeholder="Filter by App"]').click();
-  await page
-    .getByRole('option', { name: app })
-    .or(page.locator(`button:has-text("${app}")`))
-    .first()
-    .click();
+  await page.getByTestId('filter-type-toggle').click();
+  await page.getByTestId('filter-type-select').getByRole('option', { name: 'App', exact: true }).click();
+  await page.getByTestId('filter-type-input').locator('input').click();
+  await page.getByTestId('istio-type-dropdown').getByRole('option', { name: app, exact: true }).click();
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
-  const count = await cells.count();
-  expect(count).toBeGreaterThan(0);
-  for (let i = 0; i < count; i++) {
-    const text = (await cells.nth(i).innerText()).toLowerCase();
-    expect(text.includes(app.toLowerCase()) || text.includes('waypoint')).toBeTruthy();
+  await expect(cells).not.toHaveCount(0);
+  // toHaveText is a single-element assertion; assert per cell, each expect auto-retries.
+  const expectedApp = new RegExp('(' + app + '|waypoint)', 'i');
+  for (let i = 0; i < (await cells.count()); i++) {
+    await expect(cells.nth(i)).toHaveText(expectedApp);
   }
-  await page.locator('table tbody tr td').nth(4).locator('button').first().click();
-  await expect(page.locator('ul[role="menu"]')).toBeVisible();
+  // Verify the row kebab opens a menu (PF ActionsColumn, aria-label "Kebab toggle").
+  const row = page.locator('table tbody tr').first();
+  await row.getByRole('button', { name: 'Kebab toggle' }).click();
+  await expect(page.getByRole('menu')).toBeVisible();
   await page.keyboard.press('Escape');
 };
 
 export const filterSpansByWorkload = async (page: Page, workload: string): Promise<void> => {
-  await page.locator('button#filter_select_type-toggle').click();
-  await page.locator('button#Workload').click();
-  await page.locator('input[placeholder="Filter by Workload"]').click();
-  await page
-    .getByRole('option', { name: workload })
-    .or(page.locator(`button:has-text("${workload}")`))
-    .first()
-    .click();
+  await page.getByTestId('filter-type-toggle').click();
+  await page.getByTestId('filter-type-select').getByRole('option', { name: 'Workload', exact: true }).click();
+  await page.getByTestId('filter-type-input').locator('input').click();
+  await page.getByTestId('istio-type-dropdown').getByRole('option', { name: workload, exact: true }).click();
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
-  const count = await cells.count();
-  expect(count).toBeGreaterThan(0);
-  for (let i = 0; i < count; i++) {
-    const text = (await cells.nth(i).innerText()).toLowerCase();
-    expect(text.includes(workload.toLowerCase()) || text.includes('waypoint')).toBeTruthy();
+  await expect(cells).not.toHaveCount(0);
+  // toHaveText is a single-element assertion; assert per cell, each expect auto-retries.
+  const expectedWorkload = new RegExp('(' + workload + '|waypoint)', 'i');
+  for (let i = 0; i < (await cells.count()); i++) {
+    await expect(cells.nth(i)).toHaveText(expectedWorkload);
   }
-  await page.locator('table tbody tr td').nth(4).locator('button').first().click();
-  await expect(page.locator('ul[role="menu"]')).toBeVisible();
+  // Verify the row kebab opens a menu (PF ActionsColumn, aria-label "Kebab toggle").
+  const row = page.locator('table tbody tr').first();
+  await row.getByRole('button', { name: 'Kebab toggle' }).click();
+  await expect(page.getByRole('menu')).toBeVisible();
   await page.keyboard.press('Escape');
 };
 
@@ -284,6 +282,7 @@ export const enableSpansInLogs = async (page: Page): Promise<void> => {
 
 export const expectLogPaneShowsSpans = async (page: Page): Promise<void> => {
   await expect(page.locator('#trace-limit-dropdown-toggle')).toBeVisible();
-  const spansColor = await page.locator('#spans-show').evaluate(el => getComputedStyle(el).accentColor);
-  await expect(page.locator('#logsText p').first()).toHaveCSS('color', spansColor);
+  // Span log lines render with the span color as an inline style (WorkloadPodLogs
+  // spanColor). Assert the inline color styling exists without coupling to the token value.
+  await expect(page.locator('#logsText p').first()).toHaveAttribute('style', /color:/);
 };

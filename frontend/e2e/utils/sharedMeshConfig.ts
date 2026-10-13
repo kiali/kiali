@@ -1,4 +1,5 @@
 import type { APIRequestContext } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { kubectlExec } from './kubectl';
 import { hasSailIstioCr } from './kialiConfig';
 import { kialiUrl } from './kialiUrl';
@@ -24,33 +25,30 @@ function restoreSharedMeshConfigResources(): void {
 }
 
 async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName: string): Promise<void> {
-  const maxTries = 15;
-  for (let tries = 1; tries <= maxTries; tries++) {
-    const response = await request.get(kialiUrl('/api/mesh/graph'));
-    if (!response.ok()) {
-      restoreSharedMeshConfigResources();
-      throw new Error(`Expected 200 from /api/mesh/graph, got ${response.status()}`);
-    }
-    const body = await response.json();
-    const istiodNode = body.elements?.nodes?.find(
-      (node: { data?: { infraType?: string; infraData?: { config?: { sharedConfig?: unknown } } } }) =>
-        node.data?.infraType === 'istiod'
-    );
-    if (istiodNode?.data?.infraData?.config?.sharedConfig === undefined) {
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      continue;
-    }
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get(kialiUrl('/api/mesh/graph'));
+        if (!response.ok()) {
+          throw new Error(`Expected 200 from /api/mesh/graph, got ${response.status()}`);
+        }
+        const body = await response.json();
+        const istiodNode = body.elements?.nodes?.find(
+          (node: { data?: { infraType?: string; infraData?: { config?: { sharedConfig?: unknown } } } }) =>
+            node.data?.infraType === 'istiod'
+        );
+        return istiodNode?.data?.infraData?.config?.sharedConfig !== undefined;
+      },
+      { timeout: 45_000, intervals: [3_000] }
+    )
+    .toBe(true);
 
-    // Cypress @shared-mesh-config else branch: wait for pre-patch pod delete when possible.
-    // On OSSM/Sail the pod may keep running while Kiali already reports sharedConfig — do not fail setup.
-    const podStillExists = kubectlExec(`kubectl get pod/${istiodPodName} -n istio-system`, false).exitCode === 0;
-    if (podStillExists) {
-      kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, false);
-    }
-    return;
+  // On OSSM/Sail the old pod may still be running while Kiali already reports sharedConfig —
+  // wait for the pre-patch pod delete when possible; do not fail setup on this alone.
+  const podStillExists = kubectlExec(`kubectl get pod/${istiodPodName} -n istio-system`, false).exitCode === 0;
+  if (podStillExists) {
+    kubectlExec(`kubectl wait --for=delete pod/${istiodPodName} -n istio-system --timeout=60s`, false);
   }
-  restoreSharedMeshConfigResources();
-  throw new Error('Timed out waiting for Kiali to see the Shared Mesh Config');
 }
 
 export async function applySharedMeshConfig(request: APIRequestContext): Promise<void> {

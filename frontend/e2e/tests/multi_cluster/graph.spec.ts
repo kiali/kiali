@@ -2,6 +2,7 @@ import { expect, test } from '../../fixtures/kialiFixtures';
 import { EAST, WEST, deleteRequestRoutingOnClusters, ensureTrafficRoutingOnCluster } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
+import { withBookinfoRoutingLock } from '../../utils/bookinfoRoutingLock';
 
 const WIZARD_ACTIONS = [
   'traffic_shifting',
@@ -70,17 +71,21 @@ test.describe('Graph multi-cluster', () => {
     'Delete traffic routing from context menu on east details',
     multiClusterOnly,
     async ({ graphPage, istioConfigPage, page, request }) => {
-      await ensureTrafficRoutingOnCluster(request, 'details', 'bookinfo', EAST);
-      await graphPage.graphNamespaces('bookinfo');
-      await graphPage.expectGraphLoaded();
-      await graphPage.openContextMenuForService('details', EAST);
-      await graphPage.clickContextMenuItem('delete_traffic_routing');
-      await graphPage.expectDeleteTrafficRoutingModal();
-      await graphPage.confirmDeleteTrafficRouting();
-      await istioConfigPage.open();
-      await selectNamespace(page, 'bookinfo');
-      await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'details', 'bookinfo', EAST);
-      await deleteRequestRoutingOnClusters(request, 'details');
+      // Creates/deletes the shared bookinfo 'details' VS on EAST; hold the routing lock so
+      // parallel workers (traffic_policies.spec.ts, wizards.spec.ts) cannot race this mutation.
+      await withBookinfoRoutingLock(async () => {
+        await ensureTrafficRoutingOnCluster(request, 'details', 'bookinfo', EAST);
+        await graphPage.graphNamespaces('bookinfo');
+        await graphPage.expectGraphLoaded();
+        await graphPage.openContextMenuForService('details', EAST);
+        await graphPage.clickContextMenuItem('delete_traffic_routing');
+        await graphPage.expectDeleteTrafficRoutingModal();
+        await graphPage.confirmDeleteTrafficRouting();
+        await istioConfigPage.open();
+        await selectNamespace(page, 'bookinfo');
+        await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'details', 'bookinfo', EAST);
+        await deleteRequestRoutingOnClusters(request, 'details');
+      });
     }
   );
 

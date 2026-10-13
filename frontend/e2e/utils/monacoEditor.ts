@@ -1,6 +1,4 @@
 import { expect, type Page } from '@playwright/test';
-import { getColWithRowText } from './table';
-import { linkSelector } from './linkSelector';
 
 export async function editIstioConfigYaml(page: Page): Promise<void> {
   const editor = page.locator('[data-test="istio-config-editor"] .monaco-editor');
@@ -56,9 +54,4 @@ export async function expectEditorMatchesRegex(page: Page, regexContent: string)
       }, regexContent);
     })
     .toBe(true);
-}
-
-export async function clickIstioConfigRowLink(page: Page, column: string, rowText: string): Promise<void> {
-  const cell = getColWithRowText(page, rowText, column);
-  await cell.locator(linkSelector()).first().click();
 }

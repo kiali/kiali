@@ -32,11 +32,12 @@ async function expectTrafficList(page: Page, gridName: string, pattern: RegExp):
   await expect(async () => {
     const text = (await grid.textContent()) ?? '';
     if (!pattern.test(text)) {
+      // Telemetry lags tab switches; a hard refresh + reopen is the only reliable retry
+      // (mirrors the old manual polling loop). expect.toPass retries until the content matches.
       await clickRefreshAndWait(page);
       await openDetailsTab(page, TRAFFIC_TAB);
       throw new Error(`${gridName} not populated yet`);
     }
-    await expect(grid).toContainText(pattern);
   }).toPass(TRAFFIC_RETRY);
 }
 
@@ -59,6 +60,8 @@ export async function expectDetailsTrafficTab(page: Page, options: DetailsTraffi
   await openDetailsTab(page, TRAFFIC_TAB);
 
   await expect(async () => {
+    // Read-only .pf-v6-c-card__body scope: the traffic card has no data-test; the
+    // 'Inbound Traffic' text keeps the scope unambiguous within the page.
     const trafficCard = scopeInboundToTrafficCard
       ? page.locator('.pf-v6-c-card__body').filter({ hasText: 'Inbound Traffic' })
       : null;

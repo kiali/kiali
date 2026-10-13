@@ -223,17 +223,15 @@ func discoverUrl(ctx context.Context, zl *zerolog.Logger, parsedUrl model.Parsed
 				}
 			}
 		default:
-			{
-				vc, ll := validateJaegerHTTP(ctx, client, zl, parsedUrl, port)
-				validConfigs = append(validConfigs, vc...)
-				logs = append(logs, ll...)
-				vc, ll = validateTempoHTTP(ctx, client, zl, parsedUrl, port)
-				validConfigs = append(validConfigs, vc...)
-				logs = append(logs, ll...)
-				vc, ll = validateSimpleTempoHTTP(ctx, client, zl, parsedUrl, port)
-				validConfigs = append(validConfigs, vc...)
-				logs = append(logs, ll...)
-			}
+			vc, ll := validateJaegerHTTP(ctx, client, zl, parsedUrl, port)
+			validConfigs = append(validConfigs, vc...)
+			logs = append(logs, ll...)
+			vc, ll = validateTempoHTTP(ctx, client, zl, parsedUrl, port)
+			validConfigs = append(validConfigs, vc...)
+			logs = append(logs, ll...)
+			vc, ll = validateSimpleTempoHTTP(ctx, client, zl, parsedUrl, port)
+			validConfigs = append(validConfigs, vc...)
+			logs = append(logs, ll...)
 		}
 	}
 	return validConfigs, logs

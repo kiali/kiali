@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 /**
  * Select a mesh topology node by label via MeshPageComponent React state.
+ * TODO(#9712): Prefer DOM/data-test assertions when the mesh page exposes stable test hooks.
  */
 export async function selectMeshNodeByLabel(page: Page, label: string, cluster?: string): Promise<void> {
   await page.evaluate(
@@ -186,6 +187,10 @@ export async function selectAmbientIstiodMeshNode(page: Page): Promise<void> {
   await selectMeshNodeByInfraType(page, 'istiod', undefined, true);
 }
 
+/**
+ * Select a mesh topology node by infra type (e.g. tracing backend) via React state.
+ * TODO(#9712): Prefer DOM/data-test assertions when the mesh page exposes stable test hooks.
+ */
 async function selectMeshNodeByInfraType(
   page: Page,
   infraType: string,

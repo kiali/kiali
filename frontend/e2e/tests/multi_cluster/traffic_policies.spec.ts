@@ -7,9 +7,13 @@ import {
 } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 
 test.describe.serial('Traffic policies multi-cluster (east local)', () => {
   test.describe.configure({ timeout: 180_000 });
+  // These tests mutate shared bookinfo routing/policies on EAST; serialize across
+  // parallel workers (graph.spec.ts / wizards.spec.ts touch the same objects).
+  useBookinfoRoutingLockPerTest();
 
   test(
     'Create traffic policy on east only',

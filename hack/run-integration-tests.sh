@@ -1222,7 +1222,13 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_SMOKE}" ]; then
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
 
   cd "${SCRIPT_DIR}"/../frontend
+  set +e
   yarn run playwright:run:smoke
+  PLAYWRIGHT_EXIT=$?
+  set -e
+  yarn run playwright:combine:reports
+  detectRaceConditions
+  exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
   ensurePlaywrightReady
 
@@ -1250,6 +1256,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_1}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
   ensurePlaywrightReady
@@ -1278,6 +1285,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_2}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
   ensurePlaywrightReady
@@ -1318,6 +1326,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_CACHING}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
   ensurePlaywrightReady
@@ -1348,6 +1357,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_CORE_OPTIONAL}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   ensurePlaywrightReady
@@ -1396,6 +1406,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT}" ]; then
   fi
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   if [ ${AMBIENT_EXIT} -ne 0 ] || [ ${WAYPOINT_EXIT} -ne 0 ]; then
     exit 1
   fi
@@ -1428,6 +1439,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_EXTERNAL_KIALI}" ]; then
   ensurePlaywrightReady
@@ -1608,6 +1620,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AI_CHATBOT}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   ensurePlaywrightReady
@@ -1638,6 +1651,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_MESH}" ]; then
   ensurePlaywrightReady
@@ -1671,6 +1685,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_MESH}" ]; then
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
+  detectRaceConditions
   exit ${PLAYWRIGHT_EXIT}
 elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   ensureCypressReady

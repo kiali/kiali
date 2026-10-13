@@ -58,18 +58,6 @@ export class OverviewPage extends BasePage {
     return this.getBySel('apps-card');
   }
 
-  async waitForControlPlanesApi(): Promise<void> {
-    await this.page.waitForResponse(
-      response => response.url().includes('/api/mesh/controlplanes') && response.request().method() === 'GET'
-    );
-  }
-
-  async waitForClustersApi(): Promise<void> {
-    await this.page.waitForResponse(
-      response => response.url().includes('/api/istio/status') && response.request().method() === 'GET'
-    );
-  }
-
   async waitForServiceInsightsApis(): Promise<void> {
     await Promise.all([
       this.page.waitForResponse(
@@ -82,18 +70,6 @@ export class OverviewPage extends BasePage {
         response => response.url().includes('/api/overview/metrics/services/throughput') && response.ok()
       )
     ]);
-  }
-
-  async waitForApplicationsApi(): Promise<void> {
-    await this.page.waitForResponse(
-      response => response.url().includes('/api/overview/metrics/apps/rates') && response.request().method() === 'GET'
-    );
-  }
-
-  async waitForIstioConfigsApi(): Promise<void> {
-    await this.page.waitForResponse(
-      response => response.url().includes('/api/istio/config') && response.request().method() === 'GET'
-    );
   }
 
   // ==================== Istio configs warnings ====================
