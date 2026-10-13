@@ -107,13 +107,13 @@ export const ServiceNetwork: React.FC<ServiceNetworkProps> = (props: ServiceNetw
           <ul style={{ listStyleType: 'none' }}>
             <li>
               <span>{t('Type')}</span>
-              {t(service.type)}
+              {service.type}
             </li>
 
             {ips.map((ip, i) => (
               <li key={`ip_${i}`}>
                 <span>
-                  {service.type !== 'ExternalName' ? getServiceIpLabel(service.ipFamilies?.[i], t) : t('ExternalName')}
+                  {service.type !== 'ExternalName' ? getServiceIpLabel(service.ipFamilies?.[i], t) : 'ExternalName'}
                 </span>
                 {service.type !== 'ExternalName' ? ip : service.externalName ? service.externalName : ''}
               </li>
