@@ -135,7 +135,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig(conf, prom, logger)
 
-		log.Infof("AI Info: %+v", conf.AI.Metrics)
+		log.Debugf("AI Info: %+v", conf.AI.Metrics)
 		aiConfig := getAIConfig(conf, r)
 
 		publicConfig := PublicConfig{
