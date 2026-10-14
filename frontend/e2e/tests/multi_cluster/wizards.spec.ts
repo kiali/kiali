@@ -1,17 +1,10 @@
 import { test } from '../../fixtures/kialiFixtures';
-import {
-  EAST,
-  applyAuthorizationPolicyOnCluster,
-  deleteGatewayOnClusters,
-  deleteIstioOnClusters,
-  deleteRequestRoutingOnClusters
-} from '../../utils/multiCluster';
+import { EAST, deleteGatewayOnClusters, deleteRequestRoutingOnClusters } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
-test.describe('Istio wizards multi-cluster', () => {
-  // applyAuthorizationPolicyOnCluster may wait up to ~180s (delete clear + GET ready).
-  test.describe.configure({ mode: 'serial', timeout: 240_000 });
+test.describe.serial('Multi-cluster istio wizards', () => {
+  test.describe.configure({ timeout: 240_000 });
 
   test(
     'Gateway preview disabled without cluster selection',
@@ -31,36 +24,6 @@ test.describe('Istio wizards multi-cluster', () => {
       await istioConfigWizardPage.expectPreviewButtonDisabled();
     }
   );
-
-  test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, request }) => {
-    // Separate name from delete so a slow east delete cannot race the next create.
-    const policy = 'east-auth-pol-edit';
-    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
-    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
-    await istioConfigPage.expectEditorVisible();
-    await istioConfigPage.editYaml();
-    await istioConfigPage.saveYamlAndWaitForPatch(policy);
-    await deleteIstioOnClusters(
-      request,
-      `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}`,
-      [EAST]
-    );
-  });
-
-  test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
-    const policy = 'east-auth-pol-delete';
-    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
-    await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
-    await istioConfigPage.expectEditorVisible();
-    await istioConfigPage.deleteObjectFromEditor();
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
-    await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', EAST);
-  });
-});
-
-test.describe.serial('Request routing multi-cluster (east local)', () => {
-  test.describe.configure({ timeout: 180_000 });
 
   test(
     'Create request routing for east details',

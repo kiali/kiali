@@ -375,6 +375,7 @@ hack/run-integration-tests.sh --test-suite <suite> --tests-only true
 | `playwright-ambient-multi-primary` | Playwright ambient multi-primary suite (KinD east/west + Sail ambient + in-cluster Kiali) |
 | `playwright-external-kiali` | Playwright external Kiali suite (KinD multicluster + in-cluster Kiali, OpenID) |
 | `playwright-primary-remote` | Playwright primary-remote multicluster suite (KinD east/west + in-cluster Kiali) |
+| `playwright-multi-primary` | Playwright multi-primary suite (KinD east/west + Sail sidecar + in-cluster Kiali) |
 | `playwright-offline` | Playwright offline suite (KinD + local `kiali run offline` with must-gather) |
 | `playwright-ai-chatbot` | Playwright AI chatbot suite (KinD + in-cluster Kiali with chat_ai enabled) |
 | `playwright-tempo` | Playwright tracing suite (KinD + Tempo + in-cluster Kiali via MetalLB) |
@@ -495,6 +496,7 @@ yarn playwright:run:waypoint
 yarn playwright:run:ambient-multi-primary
 yarn playwright:run:external-kiali
 yarn playwright:run:multi-cluster
+yarn playwright:run:multi-primary
 yarn playwright:run:tracing
 yarn playwright:run:multi-mesh
 hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
@@ -506,6 +508,7 @@ hack/run-integration-tests.sh --test-suite playwright-ambient
 hack/run-integration-tests.sh --test-suite playwright-ambient-multi-primary
 hack/run-integration-tests.sh --test-suite playwright-external-kiali # KinD multicluster + in-cluster Kiali (OpenID)
 hack/run-integration-tests.sh --test-suite playwright-primary-remote # KinD primary-remote east/west
+hack/run-integration-tests.sh --test-suite playwright-multi-primary # KinD multi-primary east/west
 hack/run-integration-tests.sh --test-suite playwright-offline
 hack/run-integration-tests.sh --test-suite playwright-ai-chatbot
 hack/run-integration-tests.sh --test-suite playwright-tempo

@@ -198,6 +198,10 @@ export async function selectAmbientIstiodMeshNode(page: Page): Promise<void> {
   await selectMeshNodeByInfraType(page, 'istiod', undefined, true);
 }
 
+export async function selectNonAmbientIstiodMeshNode(page: Page): Promise<void> {
+  await selectMeshNodeByInfraType(page, 'istiod', undefined, false);
+}
+
 async function selectMeshNodeByInfraType(
   page: Page,
   infraType: string,
@@ -354,7 +358,7 @@ async function selectMeshNodeByInfraType(
           clusterName ? `cluster="${clusterName}"` : '',
           ambient === undefined ? '' : `isAmbient=${ambient}`
         ].filter(Boolean);
-        const hint = hints.length ? ` (${', '.join(hints)})` : '';
+        const hint = hints.length ? ` (${hints.join(', ')})` : '';
         throw new Error(`Mesh node with infraType "${type}"${hint} not found`);
       }
 
