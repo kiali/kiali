@@ -64,10 +64,14 @@ export async function waitForIstioObjectDetails(
     query.set('clusterName', cluster);
   }
 
+  // Bust cache only after a 404. Busting before every GET can drop a warm remote
+  // object from Kiali's cache and leave details returning 404 for the full timeout.
   await expect(async () => {
-    await bustIstioConfigCache(page, cluster);
-    const response = await page.request.get(kialiUrl(`${path}?${query.toString()}`));
+    const response = await page.request.get(kialiUrl(`${path}?${query.toString()}`), {
+      failOnStatusCode: false
+    });
     if (response.status() === 404) {
+      await bustIstioConfigCache(page, cluster);
       throw new Error(
         cluster
           ? `istio object not available yet on cluster ${cluster} (HTTP 404)`
@@ -77,5 +81,5 @@ export async function waitForIstioObjectDetails(
     if (!response.ok()) {
       throw new Error(`unexpected istio details response (HTTP ${response.status()})`);
     }
-  }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
 }
