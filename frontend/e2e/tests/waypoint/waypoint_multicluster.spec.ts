@@ -39,8 +39,8 @@ test.describe('Waypoint multicluster (ambient multi-primary)', () => {
       await graphPage.setDisplayOption('waypoint proxies', true);
       await graphPage.closeDisplayMenu();
 
-      await graphPage.expectWaypointNodeInCluster('waypoint', EAST);
-      await graphPage.expectWaypointNodeInCluster('waypoint', WEST);
+      await graphPage.expectWaypointNodeInCluster('waypoint', EAST, BOOKINFO_WAYPOINTS_NS);
+      await graphPage.expectWaypointNodeInCluster('waypoint', WEST, BOOKINFO_WAYPOINTS_NS);
       await graphPage.expectWorkloadClustersAtLeast(2);
     }
   );
@@ -76,7 +76,7 @@ test.describe('Waypoint multicluster (ambient multi-primary)', () => {
   });
 
   test(
-    'Traces for productpage-v1 in east cluster',
+    'Traces for reviews-v1 in east cluster',
     waypointMulticlusterOnly,
     async ({ page, request, workloadDetailsPage }) => {
       test.setTimeout(240_000);
@@ -84,12 +84,12 @@ test.describe('Waypoint multicluster (ambient multi-primary)', () => {
         request,
         'workload',
         BOOKINFO_WAYPOINTS_NS,
-        'productpage-v1',
+        'reviews-v1',
         0,
         180_000,
         EAST
       );
-      await workloadDetailsPage.open(BOOKINFO_WAYPOINTS_NS, 'productpage-v1', { clusterName: EAST });
+      await workloadDetailsPage.open(BOOKINFO_WAYPOINTS_NS, 'reviews-v1', { clusterName: EAST });
       await openTracesTab(page);
       await expectTraceScatterplot(page);
       await selectTrace(page, traces[0]?.traceID);

@@ -4,7 +4,8 @@ import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
 import { kubectlExec } from '../utils/kubectl';
 import { waitForLoadingComplete } from '../utils/transition';
-import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
+import { expectGraphTopology, readGraphTopology, scaleGraphBy } from '../utils/graphTopology';
+import { graphHasWaypointInCluster, waypointVisibleGraphQuery } from '../utils/waypointHelpers';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
 
 const DISPLAY_OPTION_IDS: Record<string, string> = {
@@ -592,27 +593,29 @@ export class GraphPage extends BasePage {
   }
 
   /** Assert a waypoint proxy node is visible for the given cluster. */
-  async expectWaypointNodeInCluster(workload: string, cluster: string): Promise<void> {
-    const target = workload.toLowerCase();
-    await expectGraphTopology(this.page, ({ nodes }) => {
-      const matches = nodes.filter(node => {
-        const data = node.data ?? {};
-        if (data[NodeAttr.isBox] !== undefined || data[NodeAttr.cluster] !== cluster) {
-          return false;
-        }
-        if (data[NodeAttr.isWaypoint] !== true) {
-          return false;
-        }
-        const candidates = [data[NodeAttr.workload], data[NodeAttr.app], data[NodeAttr.service], data.name].filter(
-          (v): v is string => typeof v === 'string'
-        );
-        return candidates.some(c => {
-          const lc = c.toLowerCase();
-          return lc === target || lc.startsWith(`${target}-`);
-        });
-      });
-      expect(matches.length, `Expected waypoint node "${workload}" in cluster "${cluster}"`).toBeGreaterThanOrEqual(1);
-    });
+  async expectWaypointNodeInCluster(
+    workload: string,
+    cluster: string,
+    namespace = 'bookinfo-waypoints'
+  ): Promise<void> {
+    await expect(async () => {
+      const topology = await readGraphTopology(this.page);
+      const uiNodes = topology.nodes.map(n => ({ data: n.data }));
+      if (graphHasWaypointInCluster(uiNodes, workload, cluster, namespace)) {
+        return;
+      }
+
+      const response = await this.page.request.get(
+        kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
+      );
+      expect(response.ok(), `graph API failed with HTTP ${response.status()}`).toBeTruthy();
+      const body = (await response.json()) as { elements?: { nodes?: { data?: Record<string, unknown> }[] } };
+      const apiNodes = body.elements?.nodes ?? [];
+      expect(
+        graphHasWaypointInCluster(apiNodes, workload, cluster, namespace),
+        `Expected waypoint "${workload}" in cluster "${cluster}" (namespace=${namespace})`
+      ).toBeTruthy();
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
 
   /** Assert traffic edges involve nodes from both clusters. */
