@@ -10,8 +10,10 @@ import {
 import { selectNamespace } from '../../utils/namespace';
 import { multiPrimaryOnly } from '../../utils/suite-tags';
 
-test.describe('Istio wizards multi-primary', () => {
-  test.describe.configure({ mode: 'serial', timeout: 240_000 });
+// One serial block: Playwright runs sibling describes in parallel on CI (2 workers).
+// West request-routing wizards and AuthorizationPolicy setup both hit remote istio config cache.
+test.describe.serial('Multi-primary istio wizards', () => {
+  test.describe.configure({ timeout: 240_000 });
 
   test(
     'Create Gateway in both clusters',
@@ -61,10 +63,6 @@ test.describe('Istio wizards multi-primary', () => {
     await selectNamespace(page, 'bookinfo');
     await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', WEST);
   });
-});
-
-test.describe.serial('Request routing multi-primary (west remote)', () => {
-  test.describe.configure({ timeout: 180_000 });
 
   test(
     'Create request routing for west ratings',

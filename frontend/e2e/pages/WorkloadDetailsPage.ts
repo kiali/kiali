@@ -142,6 +142,9 @@ export class WorkloadDetailsPage extends BasePage {
         await waitForLoadingComplete(this.page);
       }
       await checkAndWaitForLogs(30_000);
+      await expect(this.page.locator('#logsText p').filter({ hasText: bodyMustInclude }).first()).toBeVisible({
+        timeout: 5_000
+      });
     }).toPass({ intervals: [2_000, 5_000], timeout: 90_000 });
   }
 
@@ -183,7 +186,10 @@ export class WorkloadDetailsPage extends BasePage {
 
   /** At least one log line contains text. */
   async expectSomeLogLinesContain(text: string): Promise<void> {
-    await expect(this.page.locator('#logsText p').filter({ hasText: text }).first()).toBeVisible();
+    const matchingLine = this.page.locator('#logsText p').filter({ hasText: text }).first();
+    await expect(async () => {
+      await expect(matchingLine).toBeVisible({ timeout: 5_000 });
+    }).toPass({ intervals: [2_000, 3_000], timeout: 90_000 });
   }
 
   async expectLogLinesNotContain(text: string): Promise<void> {

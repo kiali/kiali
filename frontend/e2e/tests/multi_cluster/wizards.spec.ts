@@ -9,9 +9,8 @@ import {
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
-test.describe('Istio wizards multi-cluster', () => {
-  // applyAuthorizationPolicyOnCluster may wait up to ~180s (delete clear + GET ready).
-  test.describe.configure({ mode: 'serial', timeout: 240_000 });
+test.describe.serial('Multi-cluster istio wizards', () => {
+  test.describe.configure({ timeout: 240_000 });
 
   test(
     'Gateway preview disabled without cluster selection',
@@ -33,7 +32,6 @@ test.describe('Istio wizards multi-cluster', () => {
   );
 
   test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, request }) => {
-    // Separate name from delete so a slow east delete cannot race the next create.
     const policy = 'east-auth-pol-edit';
     await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
     await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
@@ -57,10 +55,6 @@ test.describe('Istio wizards multi-cluster', () => {
     await selectNamespace(page, 'bookinfo');
     await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', EAST);
   });
-});
-
-test.describe.serial('Request routing multi-cluster (east local)', () => {
-  test.describe.configure({ timeout: 180_000 });
 
   test(
     'Create request routing for east details',

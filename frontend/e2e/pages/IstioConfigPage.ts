@@ -15,6 +15,7 @@ import {
 import { collectAmbientL7Warnings } from '../utils/ambientValidation';
 import { editIstioConfigYaml } from '../utils/monacoEditor';
 import {
+  istioConfigDetailsApiPath,
   istioConfigDetailsConsolePath,
   waitForIstioObjectDetails as waitForIstioObjectDetailsApi
 } from '../utils/istioConfigApi';
@@ -213,13 +214,62 @@ export class IstioConfigPage extends BasePage {
   }
 
   async openConfigByCluster(cluster: string, namespace: string, type: string, name: string): Promise<void> {
-    // Wait until Kiali can serve the object, then open details directly. List refresh + cache
-    // bust races with remote-cluster informers and can 404 an object that was just ready.
-    await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
-    await gotoConsolePage(this.page, istioConfigDetailsConsolePath(namespace, type, name), {
-      clusterName: cluster
-    });
-    await waitForLoadingComplete(this.page);
+    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
+    const detailsApiPath = istioConfigDetailsApiPath(namespace, type, name);
+    const consolePath = istioConfigDetailsConsolePath(namespace, type, name);
+    const editor = this.page.locator('[data-test="istio-config-editor"] .monaco-editor');
+
+    const openFromList = async (): Promise<void> => {
+      await this.open();
+      await selectNamespace(this.page, namespace);
+      await this.refreshList(cluster);
+      await expect(row).toBeVisible({ timeout: 15_000 });
+      const detailsResponse = this.page.waitForResponse(
+        response =>
+          response.request().method() === 'GET' &&
+          response.ok() &&
+          response.url().includes(detailsApiPath) &&
+          response.url().includes(`clusterName=${encodeURIComponent(cluster)}`),
+        { timeout: 45_000 }
+      );
+      await row.locator(linkSelector()).first().click();
+      await detailsResponse;
+      await waitForLoadingComplete(this.page);
+    };
+
+    const openFromUrl = async (): Promise<void> => {
+      const detailsResponse = this.page.waitForResponse(
+        response =>
+          response.request().method() === 'GET' &&
+          response.ok() &&
+          response.url().includes(detailsApiPath) &&
+          response.url().includes(`clusterName=${encodeURIComponent(cluster)}`),
+        { timeout: 45_000 }
+      );
+      await gotoConsolePage(this.page, consolePath, { clusterName: cluster });
+      await this.page.reload();
+      await detailsResponse;
+      await waitForLoadingComplete(this.page);
+    };
+
+    await expect(async () => {
+      await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
+
+      await openFromList();
+      if (await this.istioConfigDetailsNotFoundVisible(name)) {
+        await openFromUrl();
+      }
+
+      if (await this.istioConfigDetailsNotFoundVisible(name)) {
+        throw new Error(`Istio config "${name}" not loaded on cluster "${cluster}" (empty details panel)`);
+      }
+      await expect(editor).toBeVisible({ timeout: 15_000 });
+    }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
+  }
+
+  private async istioConfigDetailsNotFoundVisible(objectName: string): Promise<boolean> {
+    const notFound = this.page.getByText(`${objectName} is not found in the mesh`);
+    return notFound.isVisible();
   }
 
   async expectObjectListedOnCluster(type: string, name: string, namespace: string, cluster: string): Promise<void> {
@@ -236,14 +286,17 @@ export class IstioConfigPage extends BasePage {
   }
 
   async saveYamlAndWaitForPatch(name: string): Promise<void> {
-    const patchPromise = this.page.waitForResponse(
-      response =>
-        response.request().method() === 'PATCH' &&
-        response.url().includes(`/AuthorizationPolicy/${name}`) &&
-        response.ok()
-    );
-    await this.page.getByRole('button', { name: 'Save' }).click();
-    await patchPromise;
+    const patchPath = `/AuthorizationPolicy/${name}`;
+    await expect(async () => {
+      const patchPromise = this.page.waitForResponse(
+        response => response.request().method() === 'PATCH' && response.url().includes(patchPath) && response.ok(),
+        { timeout: 45_000 }
+      );
+      const saveButton = this.page.getByRole('button', { name: 'Save' });
+      await expect(saveButton).toBeEnabled();
+      await saveButton.click();
+      await patchPromise;
+    }).toPass({ intervals: [2_000, 3_000], timeout: 90_000 });
   }
 
   async deleteObjectFromEditor(): Promise<void> {
@@ -450,9 +503,13 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectEditorVisible(): Promise<void> {
-    await expect(this.page.locator('[data-test="istio-config-editor"] .monaco-editor')).toBeVisible({
-      timeout: 60_000
-    });
+    const editor = this.page.locator('[data-test="istio-config-editor"] .monaco-editor');
+    await expect(async () => {
+      if (await this.page.getByText('is not found in the mesh').isVisible()) {
+        throw new Error('Istio config details show "not found in the mesh" instead of the editor');
+      }
+      await expect(editor).toBeVisible({ timeout: 15_000 });
+    }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
   }
 
   async editYaml(): Promise<void> {
