@@ -149,7 +149,7 @@ func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
 	switch reporter {
 	case "source":
 		aggregate(sample, in.inboundSource)
-	case "destination":
+	case "destination", "waypoint":
 		aggregate(sample, in.inboundDestination)
 	default:
 		log.Tracef("Inbound metric without reporter %v ", sample)
@@ -159,9 +159,9 @@ func (in *RequestHealth) AggregateInbound(sample *model.Sample) {
 
 // AggregateOutbound adds the provided metric sample to internal outbound counters and updates error ratios
 func (in *RequestHealth) AggregateOutbound(sample *model.Sample) {
-	// Outbound traffic will be aggregated per source reporter
+	// Outbound traffic is reported by sidecars and ztunnels as source, or by a destination waypoint.
 	reporter := string(sample.Metric[model.LabelName("reporter")])
-	if reporter == "source" {
+	if reporter == "source" || reporter == "waypoint" {
 		aggregate(sample, in.Outbound)
 	}
 }

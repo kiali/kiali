@@ -189,6 +189,14 @@ func TestParseWaypointPodToWorkload(t *testing.T) {
 	assert.Equal(int32(1), w.AvailableReplicas)
 }
 
+func TestWorkloadHasHTTPTrafficWithWaypoint(t *testing.T) {
+	workload := Workload{
+		WaypointWorkloads: []WorkloadReferenceInfo{{Name: "waypoint", Namespace: "bookinfo"}},
+	}
+
+	assert.True(t, workload.HasHTTPTraffic())
+}
+
 func TestParsePodsToWorkload(t *testing.T) {
 	assert := assert.New(t)
 	config.Set(config.NewConfig())

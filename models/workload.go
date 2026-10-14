@@ -170,9 +170,6 @@ type WorkloadListItem struct {
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
 
-	// Names of the waypoint proxy workloads, if any
-	WaypointWorkloads []string `json:"waypointWorkloads"`
-
 	// ValidationKey is a pre-calculated key string: "cluster:namespace:name"
 	ValidationKey string
 
@@ -183,12 +180,6 @@ type WorkloadListItem struct {
 }
 
 type WorkloadOverviews []*WorkloadListItem
-
-// HasHTTPTraffic returns true if the workload can report HTTP traffic metrics.
-// This is true if the workload has a sidecar, is a gateway, or is associated with an ambient waypoint.
-func (w *WorkloadListItem) HasHTTPTraffic() bool {
-	return w.IstioSidecar || w.IsGateway || len(w.WaypointWorkloads) > 0
-}
 
 // WorkloadReferenceInfo holds the service information needed to create links to another workload.
 // Used, for example, to link services to Ambient waypoint proxies
@@ -267,6 +258,12 @@ type Workload struct {
 
 	// SPIRE information for SPIRE-managed workloads
 	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
+}
+
+// HasHTTPTraffic returns true if the workload can report HTTP traffic metrics.
+// This is true if the workload has a sidecar, is a gateway, or is associated with an ambient waypoint.
+func (w *Workload) HasHTTPTraffic() bool {
+	return w.IstioSidecar || w.IsGateway() || len(w.WaypointWorkloads) > 0
 }
 
 // SpireManagedIdentityMatch represents a single match that indicates SPIRE-managed identity
