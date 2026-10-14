@@ -33,6 +33,7 @@ type MeshGraphNode = {
     infraName?: string;
     infraType?: string;
     isAmbient?: boolean;
+    namespace?: string;
   };
 };
 
@@ -143,26 +144,39 @@ export class MeshPage extends BasePage {
     const panel = this.page.locator('#target-panel-namespace');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Namespaces managed by Control Planes');
-    await expect(panel.locator('[data-test="control-plane-donut"], svg').first()).toBeVisible();
+    await expect(panel.getByTestId('controlplane-donut')).toBeVisible();
   }
 
   /**
-   * After selecting a namespace node on a cluster, the side panel shows that cluster's
-   * control-plane donut (not the mesh-body "dataplane namespaces: N" summary).
+   * Namespace panel donut lists control planes for the selected namespace on that cluster only
+   * (see TargetPanelNamespace.getControlPlanes). Istiod names often collide across clusters
+   * (both "istiod"), so compare legend entry count to the mesh graph instead of legend text.
    */
-  async expectNamespacePanelOwnControlPlane(cluster: string): Promise<void> {
+  async expectNamespacePanelOwnControlPlane(cluster: string, namespace = 'istio-system'): Promise<void> {
     const panel = this.page.locator('#target-panel-namespace');
     await expect(panel).toBeVisible();
     await expect(panel).toContainText('Namespaces managed by Control Planes');
     await expect(panel).toContainText(cluster);
-    await expect(panel.getByTestId('controlplane-donut')).toBeVisible();
-    // Donut legend/title encode managed namespace count (e.g. "istiod: 1" / "1 namespaces").
-    await expect(panel.getByTestId('controlplane-donut')).toContainText(/namespaces/i);
+    const donut = panel.getByTestId('controlplane-donut');
+    await expect(donut).toBeVisible();
+    await expect(donut).toContainText(/namespaces/i);
 
     await expect(async () => {
       const { nodes } = await this.fetchMeshGraph();
-      const istiods = nodes.filter(n => n.data?.infraType === 'istiod' && n.data?.cluster === cluster);
-      expect(istiods.length, `Expected istiod node(s) on cluster "${cluster}"`).toBeGreaterThan(0);
+      const ownIstiods = nodes.filter(
+        n => n.data?.infraType === 'istiod' && n.data?.cluster === cluster && n.data?.namespace === namespace
+      );
+      expect(ownIstiods.length, `Expected istiod in "${namespace}" on cluster "${cluster}"`).toBeGreaterThan(0);
+
+      const donutText = await donut.innerText();
+      const legendLines = donutText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /:\s*\d/.test(line));
+      expect(
+        legendLines.length,
+        `Expected ${ownIstiods.length} control-plane legend line(s) for ${cluster}, donut text:\n${donutText}`
+      ).toBe(ownIstiods.length);
     }).toPass({ intervals: [2_000], timeout: 30_000 });
   }
 

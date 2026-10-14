@@ -18,10 +18,12 @@ test.describe('Mesh multi-primary', () => {
   });
 
   test('Each namespace panel shows only its own control plane donut', multiPrimaryOnly, async ({ meshPage }) => {
-    await meshPage.selectMeshNodeByLabel('istio-system', EAST);
-    await meshPage.expectNamespaceSidePanel('istio-system');
-    await meshPage.expectControlPlaneDonutInNamespacePanel();
-    await meshPage.expectNamespacePanelOwnControlPlane(EAST);
+    for (const cluster of [EAST, WEST]) {
+      await meshPage.selectMeshNodeByLabel('istio-system', cluster);
+      await meshPage.expectNamespaceSidePanel('istio-system');
+      await meshPage.expectControlPlaneDonutInNamespacePanel();
+      await meshPage.expectNamespacePanelOwnControlPlane(cluster);
+    }
   });
 
   test('Namespace panel shows correct cluster badge', multiPrimaryOnly, async ({ meshPage }) => {
