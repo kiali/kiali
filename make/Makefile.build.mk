@@ -169,8 +169,27 @@ ifndef AIR
 	${GO} install github.com/air-verse/air@latest
 endif
 
-## Download istio-crds to testdata dir if necessary.
-## You can specify the istio version like this: make ISTIO_VERSION=1.24 download-istio-crds
+GOSWAGGER_VERSION ?= v0.36.6
+GOSWAGGER_DOCKER ?= quay.io/goswagger/swagger:$(GOSWAGGER_VERSION)
+
+## swagger-doc: Regenerate kiali_internal_api.md from swagger annotations (requires Docker)
+.PHONY: swagger-doc
+swagger-doc:
+	@mkdir -p ${OUTDIR}
+	@docker run --rm --user $$(id -u):$$(id -g) \
+		-e GOCACHE=/tmp \
+		-e GOPATH=$$($(GO) env GOPATH):/go \
+		-v $(HOME):$(HOME) \
+		-w $(ROOTDIR) \
+		$(GOSWAGGER_DOCKER) generate spec -o ./swagger.json
+	@python3 hack/swagger-set-spec-version.py ./swagger.json "$(VERSION)"
+	@docker run --rm --user $$(id -u):$$(id -g) \
+		-v $(HOME):$(HOME) \
+		-w $(ROOTDIR) \
+		$(GOSWAGGER_DOCKER) generate markdown --quiet --spec ./swagger.json --output ./kiali_internal_api.md
+	@rm -f $(ROOTDIR)/swagger.json
+
+## download-istio-crds: Download istio-crds to testdata dir if necessary. You can specify the istio version like: make ISTIO_VERSION=1.24 download-istio-crds
 download-istio-crds: .ensure-yq-exists
 	$(eval ISTIO_VERSION ?= $(shell helm show chart --repo https://blob.istio.io/istio-release/charts base | yq '.version'))
 	$(eval ISTIO_MINOR_VERSION := $(shell cut -d "." -f 1-2 <<< ${ISTIO_VERSION}))

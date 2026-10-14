@@ -2,6 +2,7 @@ package main
 
 import (
 	config_common "github.com/kiali/kiali/graph/config/common"
+	"github.com/kiali/kiali/handlers"
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
@@ -920,6 +921,27 @@ type ClusterTlsResponse struct {
 type ConfigurationValidationResponse struct {
 	// in: body
 	Body model.ConfigurationValidation
+}
+
+// Response of the graph cache metrics test endpoint
+// swagger:response graphCacheMetricsResponse
+type GraphCacheMetricsResponse struct {
+	// in: body
+	Body handlers.GraphCacheMetrics
+}
+
+// Response of the health cache metrics test endpoint
+// swagger:response healthCacheMetricsResponse
+type HealthCacheMetricsResponse struct {
+	// in: body
+	Body handlers.HealthCacheMetrics
+}
+
+// Response of the health status metrics test endpoint
+// swagger:response healthStatusMetricsResponse
+type HealthStatusMetricsResponse struct {
+	// in: body
+	Body handlers.HealthStatusMetrics
 }
 
 // Response of the tracing diagnose query
