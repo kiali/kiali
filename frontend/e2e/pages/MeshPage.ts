@@ -6,6 +6,7 @@ import {
   selectAmbientIstiodMeshNode,
   selectClusterMeshNode,
   selectMeshNodeByLabel,
+  selectNonAmbientIstiodMeshNode,
   selectTracingMeshNode
 } from '../utils/meshTopology';
 import { waitForLoadingComplete } from '../utils/transition';
@@ -32,6 +33,7 @@ type MeshGraphNode = {
     infraName?: string;
     infraType?: string;
     isAmbient?: boolean;
+    namespace?: string;
   };
 };
 
@@ -139,11 +141,77 @@ export class MeshPage extends BasePage {
   }
 
   async expectControlPlaneDonutInNamespacePanel(): Promise<void> {
-    await expect(
-      this.page
-        .locator('#target-panel-namespace [data-test="control-plane-donut"], #target-panel-namespace svg')
-        .first()
-    ).toBeVisible();
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Namespaces managed by Control Planes');
+    await expect(panel.getByTestId('controlplane-donut')).toBeVisible();
+  }
+
+  /**
+   * Namespace panel donut lists control planes for the selected namespace on that cluster only
+   * (see TargetPanelNamespace.getControlPlanes). Istiod names often collide across clusters
+   * (both "istiod"), so compare legend entry count to the mesh graph instead of legend text.
+   */
+  async expectNamespacePanelOwnControlPlane(cluster: string, namespace = 'istio-system'): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText('Namespaces managed by Control Planes');
+    await expect(panel).toContainText(cluster);
+    const donut = panel.getByTestId('controlplane-donut');
+    await expect(donut).toBeVisible();
+    await expect(donut).toContainText(/namespaces/i);
+
+    await expect(async () => {
+      const { nodes } = await this.fetchMeshGraph();
+      const ownIstiods = nodes.filter(
+        n => n.data?.infraType === 'istiod' && n.data?.cluster === cluster && n.data?.namespace === namespace
+      );
+      expect(ownIstiods.length, `Expected istiod in "${namespace}" on cluster "${cluster}"`).toBeGreaterThan(0);
+
+      const donutText = await donut.innerText();
+      const legendLines = donutText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => /:\s*\d/.test(line));
+      expect(
+        legendLines.length,
+        `Expected ${ownIstiods.length} control-plane legend line(s) for ${cluster}, donut text:\n${donutText}`
+      ).toBe(ownIstiods.length);
+    }).toPass({ intervals: [2_000], timeout: 30_000 });
+  }
+
+  async expectNamespacePanelClusterBadge(cluster: string): Promise<void> {
+    const panel = this.page.locator('#target-panel-namespace');
+    await expect(panel).toBeVisible();
+    await expect(panel).toContainText(cluster);
+  }
+
+  /** Each cluster's istiod should share an edge with that cluster's dataplane. */
+  async expectIstiodDataplaneEdgesPerCluster(): Promise<void> {
+    await this.waitForLoad();
+
+    await expect(async () => {
+      const { nodes, edges } = await this.fetchMeshGraph();
+      const istiods = nodes.filter(n => n.data?.infraType === 'istiod' && n.data?.cluster && n.data?.id);
+      const dataplanes = nodes.filter(n => n.data?.infraType === 'dataplane' && n.data?.cluster && n.data?.id);
+      expect(istiods.length, 'Expected istiod nodes on multiple clusters').toBeGreaterThanOrEqual(2);
+      expect(dataplanes.length, 'Expected dataplane nodes on multiple clusters').toBeGreaterThanOrEqual(2);
+
+      for (const istiod of istiods) {
+        const cluster = istiod.data!.cluster!;
+        const istiodId = istiod.data!.id!;
+        const dpIds = new Set(dataplanes.filter(d => d.data?.cluster === cluster).map(d => d.data!.id!));
+        expect(dpIds.size, `Expected a dataplane on cluster "${cluster}"`).toBeGreaterThan(0);
+        const linked = edges.some(e => {
+          const { source, target } = e.data ?? {};
+          if (!source || !target) {
+            return false;
+          }
+          return (source === istiodId && dpIds.has(target)) || (target === istiodId && dpIds.has(source));
+        });
+        expect(linked, `Expected istiod↔dataplane edge on cluster "${cluster}"`).toBe(true);
+      }
+    }).toPass({ intervals: [2_000], timeout: 60_000 });
   }
 
   async expectManagedByRemoteControlPlane(primaryCluster: string): Promise<void> {
@@ -156,6 +224,12 @@ export class MeshPage extends BasePage {
   async selectAmbientIstiod(): Promise<void> {
     await this.waitForLoad();
     await selectAmbientIstiodMeshNode(this.page);
+    await this.waitForLoad();
+  }
+
+  async selectNonAmbientIstiod(): Promise<void> {
+    await this.waitForLoad();
+    await selectNonAmbientIstiodMeshNode(this.page);
     await this.waitForLoad();
   }
 
