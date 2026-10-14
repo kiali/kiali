@@ -1,6 +1,7 @@
 import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { EdgeAttr } from 'types/Graph';
 import { assertGraphReady, select } from './graph';
+import { ensureKialiFinishedLoading } from './transition';
 
 When(
   'user graphs {string} namespaces with refresh {string} and duration {string}',
@@ -8,6 +9,7 @@ When(
     cy.visit({
       url: `/console/graph/namespaces?refresh=${refresh}&duration=${duration}&namespaces=${namespaces}`
     });
+    ensureKialiFinishedLoading();
   }
 );
 
