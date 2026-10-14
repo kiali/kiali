@@ -125,12 +125,20 @@ export const applyAuthorizationPolicyOnCluster = async (
   });
   expect(createResponse.ok()).toBeTruthy();
 
+  // Require consecutive 200s so a single warm hit is not followed by cache-bust 404s.
+  let consecutiveOk = 0;
   await expect(async () => {
-    await request.get(kialiUrl(`/api/istio/config?clusterName=${cluster}&_=${Date.now()}`), {
-      failOnStatusCode: false
-    });
     const getResponse = await request.get(detailsUrl, { failOnStatusCode: false });
+    if (getResponse.status() === 404) {
+      consecutiveOk = 0;
+      await request.get(kialiUrl(`/api/istio/config?clusterName=${cluster}&_=${Date.now()}`), {
+        failOnStatusCode: false
+      });
+      throw new Error(`AuthorizationPolicy ${name} not available yet on cluster ${cluster} (HTTP 404)`);
+    }
     expect(getResponse.status()).toBe(200);
+    consecutiveOk += 1;
+    expect(consecutiveOk, 'Expected consecutive HTTP 200 details responses').toBeGreaterThanOrEqual(2);
   }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
 };
 

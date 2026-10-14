@@ -213,14 +213,12 @@ export class IstioConfigPage extends BasePage {
   }
 
   async openConfigByCluster(cluster: string, namespace: string, type: string, name: string): Promise<void> {
-    // Wait until Kiali can serve the object on the remote cluster before relying on list refresh.
+    // Wait until Kiali can serve the object, then open details directly. List refresh + cache
+    // bust races with remote-cluster informers and can 404 an object that was just ready.
     await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
-    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`);
-    await expect(async () => {
-      await this.refreshList(cluster);
-      await expect(row).toBeVisible();
-    }).toPass({ intervals: [5_000], timeout: 120_000 });
-    await row.locator(linkSelector()).first().click();
+    await gotoConsolePage(this.page, istioConfigDetailsConsolePath(namespace, type, name), {
+      clusterName: cluster
+    });
     await waitForLoadingComplete(this.page);
   }
 

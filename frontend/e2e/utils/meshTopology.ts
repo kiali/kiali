@@ -3,9 +3,14 @@ import type { Page } from '@playwright/test';
 /**
  * Select a mesh topology node by label via MeshPageComponent React state.
  */
-export async function selectMeshNodeByLabel(page: Page, label: string, cluster?: string): Promise<void> {
+export async function selectMeshNodeByLabel(
+  page: Page,
+  label: string,
+  cluster?: string,
+  nodeType?: string
+): Promise<void> {
   await page.evaluate(
-    ({ label: nodeLabel, cluster: clusterName }) => {
+    ({ label: nodeLabel, cluster: clusterName, nodeType: expectedNodeType }) => {
       const getReactFiber = (el: Element): unknown => {
         if ('_reactRootContainer' in el) {
           const container = (
@@ -153,20 +158,27 @@ export async function selectMeshNodeByLabel(page: Page, label: string, cluster?:
         if (!labelMatches) {
           return false;
         }
-        if (!clusterName) {
-          return true;
+        const data = n.getData() as { cluster?: string; nodeType?: string };
+        if (expectedNodeType && data.nodeType !== expectedNodeType) {
+          return false;
         }
-        const data = n.getData() as { cluster?: string };
-        return data.cluster === clusterName;
+        if (clusterName && data.cluster !== clusterName) {
+          return false;
+        }
+        return true;
       });
       if (!node) {
-        const clusterHint = clusterName ? ` on cluster "${clusterName}"` : '';
-        throw new Error(`Mesh node with label "${nodeLabel}"${clusterHint} not found`);
+        const hints = [
+          clusterName ? `cluster "${clusterName}"` : '',
+          expectedNodeType ? `nodeType "${expectedNodeType}"` : ''
+        ].filter(Boolean);
+        const hint = hints.length ? ` (${hints.join(', ')})` : '';
+        throw new Error(`Mesh node with label "${nodeLabel}"${hint} not found`);
       }
 
       state.meshRefs.setSelectedIds([node.getId()]);
     },
-    { label, cluster }
+    { label, cluster, nodeType }
   );
 }
 
