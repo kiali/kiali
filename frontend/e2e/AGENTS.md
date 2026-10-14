@@ -336,7 +336,8 @@ These look like rule violations but are intentional — **do not "fix" them:**
   `istio.io/use-waypoint=waypoint` and wait on `/api/namespaces` before bookinfo waypoint UI asserts
   (`utils/waypointHelpers.ts`).
 - **Waypoint Background traces ≠ Tempo** — poll gateway workload traces on the ambient cluster
-  (Jaeger-style); do not require `playwright-tempo`. Defer deep trace UI to `@waypoint-tracing`.
+  (Jaeger-style); do not require `playwright-tempo`. Deep trace UI lives in `@waypoint-tracing`
+  (`waypoint_tracing_*.spec.ts`, `yarn playwright:run:waypoint`).
 - **Graph Prometheus-inclusive edge floors** — when the scenario count includes Prometheus, subtract
   one if Prometheus is deployed (`GraphPage.expectTrafficEdgesAtLeastIncludingPrometheus`).
 

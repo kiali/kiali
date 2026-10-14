@@ -154,8 +154,10 @@ Ports `@ambient` scenarios. KinD setup matches Cypress `frontend-ambient` (ambie
 including `install-waypoints.sh`, **in-cluster Kiali** via MetalLB; anonymous auth).
 
 Waypoint enrollment mutates bookinfo, so CI runs **ambient first**, then `yarn playwright:run:waypoint`
-(`waypoint` + `waypoint-tracing`). Bookinfo enrollment and gateway traces readiness run in waypoint
-`beforeAll` helpers. `@waypoint-multicluster` remains a separate suite.
+(`waypoint` + `waypoint-tracing`). Bookinfo enrollment and gateway traces readiness run in
+`waypoint-setup` / helpers. `@waypoint-tracing` covers mesh waypoints/ztunnel, details trace/span UI,
+workload log spans, and graph Traces tab (tooltip heat maps deferred). `@waypoint-multicluster`
+remains a separate suite.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient
