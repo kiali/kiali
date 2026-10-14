@@ -1081,7 +1081,6 @@ func (p aiTimeSeriesPoint) MarshalJSON() ([]byte, error) {
 //
 //   - summary.byProvider  – total tokens aggregated per provider
 //   - summary.byModel     – total tokens aggregated per (provider, model)
-//   - summary.byUser      – total tokens aggregated per username
 //   - timeSeries          – per-(provider, model) token counts bucketed in time
 //
 // Query parameters:
