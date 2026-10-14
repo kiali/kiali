@@ -1094,7 +1094,7 @@ func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInter
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
 			return
 		}
-		if !conf.AI.Enabled || !conf.AI.Metrics {
+		if !conf.AI.Metrics {
 			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI metrics are not enabled")
 			return
 		}
