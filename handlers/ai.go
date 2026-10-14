@@ -1133,6 +1133,15 @@ func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInter
 			return
 		}
 
+		// allowed_users_dashboard only hides the dashboard tab in the UI. This
+		// endpoint returns cluster-wide consumption, including topUsers, so the
+		// same allow-list has to be enforced here.
+		username := resolveChatAIUsername(r, conf, "")
+		if !isUserAllowed(conf.AI.Consumption.AllowedUsersDashboard, username) {
+			RespondWithError(w, http.StatusForbidden, "You are not allowed to view the AI consumption dashboard")
+			return
+		}
+
 		windowStr := r.URL.Query().Get("window")
 		if windowStr == "" {
 			windowStr = "86400" // 24 h

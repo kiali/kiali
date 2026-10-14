@@ -1254,6 +1254,95 @@ func TestChatUsage_MetricsDisabledReturns503(t *testing.T) {
 	assert.Contains(t, body["error"], "ChatAI metrics are not enabled")
 }
 
+func TestChatUsage_DashboardAllowListRejectsOtherUsers(t *testing.T) {
+	internalmetrics.MarkAITokensSeedingComplete()
+	const allowedUser = "istio-system:kiali-test-user"
+
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.Metrics = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+	conf.AI.Consumption.AllowedUsersDashboard = []string{allowedUser}
+
+	promAPI := new(prometheustest.PromAPIMock)
+	promClient := new(prometheustest.PromClientMock)
+	promClient.On("API").Return(promAPI)
+	otherUser := model.Vector{
+		&model.Sample{
+			Metric: model.Metric{
+				"ai_model":    "gpt-4o",
+				"ai_provider": "openai",
+				"request":     "chat",
+				"username":    "someone-else",
+				"week":        "36",
+				"year":        "2026",
+			},
+			Value: 500000,
+		},
+	}
+	promAPI.On("Query", mock.Anything, mock.Anything, mock.Anything).Return(otherUser, nil)
+
+	mr := mux.NewRouter()
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	mr.Handle("/api/ai/usage", WithAuthInfo(authInfo, AIUsage(conf, nil, promClient)))
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	deniedReq, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage?window=weekly&from=1767225600&since=1790812800", nil)
+	require.NoError(t, err)
+	deniedReq.Header.Set("Kiali-User", "someone-else")
+	deniedResp, err := http.DefaultClient.Do(deniedReq)
+	require.NoError(t, err)
+	t.Cleanup(func() { deniedResp.Body.Close() })
+
+	assert.Equal(t, http.StatusForbidden, deniedResp.StatusCode)
+	deniedBody, err := io.ReadAll(deniedResp.Body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(deniedBody), "topUsers")
+	assert.NotContains(t, string(deniedBody), "someone-else")
+	promAPI.AssertNotCalled(t, "Query", mock.Anything, mock.Anything, mock.Anything)
+
+	allowedReq, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage?window=weekly&from=1767225600&since=1790812800", nil)
+	require.NoError(t, err)
+	allowedReq.Header.Set("Kiali-User", allowedUser)
+	allowedResp, err := http.DefaultClient.Do(allowedReq)
+	require.NoError(t, err)
+	t.Cleanup(func() { allowedResp.Body.Close() })
+	assert.Equal(t, http.StatusOK, allowedResp.StatusCode)
+}
+
+func TestChatUsage_EmptyDashboardAllowListAllowsAnyUser(t *testing.T) {
+	internalmetrics.MarkAITokensSeedingComplete()
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.Metrics = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+	conf.AI.Consumption.AllowedUsersDashboard = []string{}
+
+	mr := mux.NewRouter()
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	mr.Handle("/api/ai/usage", WithAuthInfo(authInfo, AIUsage(conf, nil, nil)))
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage?window=3600&step=300", nil)
+	require.NoError(t, err)
+	req.Header.Set("Kiali-User", "someone-else")
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	var body map[string]interface{}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Equal(t, "millions", body["tokenUnit"])
+	summary, ok := body["summary"].(map[string]interface{})
+	require.True(t, ok)
+	assert.Contains(t, summary, "byProvider")
+}
+
 func TestChatUsage_BothDisabledChatAICheckedFirst(t *testing.T) {
 	conf := config.NewConfig()
 	conf.AI.Enabled = false
