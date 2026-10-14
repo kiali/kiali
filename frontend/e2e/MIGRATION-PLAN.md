@@ -99,7 +99,8 @@
 - [ ] `@ambient-multi-primary` suite passes (specs + `playwright-ambient-multi-primary` CI on `issue9712_ambient-multi-primary`; `@waypoint-multicluster` deferred)
 - [ ] `@waypoint-multicluster` suite passes
 - [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
-- [ ] `@multi-primary` suite passes
+- [ ] `@multi-primary` suite first slice ported (`playwright-multi-primary` CI; mesh + west wizards;
+  authorization RBAC / restricted remote ns deferred)
 - [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
@@ -112,8 +113,9 @@
   (coexistence) (PR #10195 — `integration-tests-frontend-playwright-core-1.yml`)
 - [x] `hack/run-integration-tests.sh` updated for `playwright-smoke`, `playwright-core-1`,
   `playwright-core-2`, `playwright-core-caching`, `playwright-core-optional`,
-  `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-offline`,
-  `playwright-ai-chatbot`, `playwright-tempo`, and `playwright-multi-mesh` suites
+  `playwright-ambient`, `playwright-ambient-multi-primary`, `playwright-external-kiali`, `playwright-primary-remote`,
+  `playwright-multi-primary`, `playwright-offline`, `playwright-ai-chatbot`, `playwright-tempo`, and
+  `playwright-multi-mesh` suites
   (PR #10174, #10195, #10220, #10269, #10292; ambient #10319; multi-mesh #10370; AI chatbot + tempo on epic branch)
 - [ ] `hack/run-integration-tests.sh` updated for all remaining Playwright projects
 - [x] GitHub Actions workflows updated for Playwright (JUnit artifacts, screenshots/traces on failure)
