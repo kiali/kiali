@@ -266,31 +266,30 @@ func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
 		return AIConfig{}
 	}
 
-	fallbackUserID := "anonymous"
+	username := "anonymous"
 	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 		authInfo, err := getAuthInfo(r)
 		if err != nil {
 			log.Error("AI initialization error, loading config: " + err.Error())
 			return AIConfig{}
 		}
-		clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
-		if !ok || clusterAuth == nil {
+		if clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]; !ok || clusterAuth == nil {
 			log.Error("AI initialization error, loading config: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName)
 			return AIConfig{}
 		}
-		fallbackUserID = clusterAuth.Username
+		username = resolveChatAIUsername(r, conf, "")
 	}
 
 	aiConfig := AIConfig{
 		Enabled:     conf.AI.Enabled,
-		ChatAI:      getAIChatConfig(conf, fallbackUserID),
-		Consumption: getAIConsumptionConfig(conf, fallbackUserID),
+		ChatAI:      getAIChatConfig(conf, username),
+		Consumption: getAIConsumptionConfig(conf, username),
 	}
 
 	if aiConfig.ChatAI.Enabled && aiConfig.ChatAI.Allowed {
 		var budget *config.UserBudgetConfig
 		if conf.AI.Metrics {
-			budget = conf.AI.Consumption.GetBudgetForUser(fallbackUserID)
+			budget = conf.AI.Consumption.GetBudgetForUser(username)
 		}
 
 		providers := []ProviderConfig{}

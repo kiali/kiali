@@ -15,6 +15,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/gorilla/mux"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/model"
@@ -2549,6 +2551,138 @@ func TestAIUserUsage_AnonymousSessionQueriesPrometheusUsername(t *testing.T) {
 	assert.Equal(t, "weekly", got.Metrics.TimeSeries.Window)
 	require.NotEmpty(t, got.Metrics.TimeSeries.Series)
 	assert.Equal(t, "openai", got.Metrics.TimeSeries.Series[0].Provider)
+}
+
+// TestAIUserUsage_TokenAuthKialiUserExcludesOtherUsers covers token auth, where the
+// request context only has AuthInfo.Token. The subject is the Kiali-User header.
+// Series for a different user must not be returned as cluster-wide usage.
+func TestAIUserUsage_TokenAuthKialiUserExcludesOtherUsers(t *testing.T) {
+	const kialiUser = "istio-system:kiali-test-user"
+	body := fetchTokenAuthUserUsage(t, "test", kialiUser, kialiUser)
+	assertUserUsageExcludesOtherUser(t, body, kialiUser)
+}
+
+// TestAIUserUsage_TokenAuthJWTSubExcludesOtherUsers covers the same token-auth gap
+// when Kiali-User is missing and the subject has to be read from the JWT sub claim.
+func TestAIUserUsage_TokenAuthJWTSubExcludesOtherUsers(t *testing.T) {
+	const kialiUser = "istio-system:kiali-test-user"
+	token := signKialiServiceAccountToken(t, "system:serviceaccount:"+kialiUser)
+	body := fetchTokenAuthUserUsage(t, token, "", kialiUser)
+	assertUserUsageExcludesOtherUser(t, body, kialiUser)
+}
+
+func TestGetAIConfig_TokenAuthUsesKialiUser(t *testing.T) {
+	const kialiUser = "istio-system:kiali-test-user"
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+	conf.AI.ChatAI.AllowedUsers = []string{kialiUser}
+
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	req.Header.Set("Kiali-User", kialiUser)
+	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
+
+	got := getAIConfig(conf, req)
+	assert.True(t, got.ChatAI.Allowed)
+
+	withoutUser := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	withoutUser = withoutUser.WithContext(authentication.SetAuthInfoContext(withoutUser.Context(), authInfo))
+	denied := getAIConfig(conf, withoutUser)
+	assert.False(t, denied.ChatAI.Allowed)
+}
+
+func signKialiServiceAccountToken(t *testing.T, sub string) string {
+	t.Helper()
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte("0123456789abcdef0123456789abcdef")}, nil)
+	require.NoError(t, err)
+	raw, err := jwt.Signed(signer).Claims(map[string]interface{}{"sub": sub}).Serialize()
+	require.NoError(t, err)
+	return raw
+}
+
+// fetchTokenAuthUserUsage requests /api/ai/usage/user with a token and no AuthInfo.Username.
+// Prometheus returns another user's series unless the query is scoped to expectedUser.
+func fetchTokenAuthUserUsage(t *testing.T, token, kialiUserHeader, expectedUser string) string {
+	t.Helper()
+
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.Metrics = true
+	conf.Auth.Strategy = config.AuthStrategyToken
+
+	now := time.Now().UTC()
+	year, week := now.ISOWeek()
+	own := &model.Sample{
+		Metric: model.Metric{
+			"ai_model":    "gpt-4o",
+			"ai_provider": "openai",
+			"request":     "chat",
+			"username":    model.LabelValue(expectedUser),
+			"week":        model.LabelValue(strconv.Itoa(week)),
+			"year":        model.LabelValue(strconv.Itoa(year)),
+		},
+		Value: 2000,
+	}
+	other := &model.Sample{
+		Metric: model.Metric{
+			"ai_model":    "claude",
+			"ai_provider": "anthropic",
+			"request":     "chat",
+			"username":    "someone-else",
+			"week":        model.LabelValue(strconv.Itoa(week)),
+			"year":        model.LabelValue(strconv.Itoa(year)),
+		},
+		Value: 9000,
+	}
+	otherRange := model.Matrix{&model.SampleStream{
+		Metric: other.Metric,
+		Values: []model.SamplePair{{
+			Timestamp: model.TimeFromUnix(now.Unix()),
+			Value:     other.Value,
+		}},
+	}}
+
+	scoped := func(q string) bool {
+		return strings.Contains(q, fmt.Sprintf("username=%q", expectedUser))
+	}
+	promAPI := new(prometheustest.PromAPIMock)
+	promClient := new(prometheustest.PromClientMock)
+	promClient.On("API").Return(promAPI)
+	promAPI.On("Query", mock.Anything, mock.MatchedBy(scoped), mock.Anything).Return(model.Vector{own}, nil)
+	promAPI.On("Query", mock.Anything, mock.MatchedBy(func(q string) bool { return !scoped(q) }), mock.Anything).Return(model.Vector{other}, nil)
+	promAPI.On("QueryRange", mock.Anything, mock.MatchedBy(scoped), mock.Anything).Return(model.Matrix{}, nil)
+	promAPI.On("QueryRange", mock.Anything, mock.MatchedBy(func(q string) bool { return !scoped(q) }), mock.Anything).Return(otherRange, nil)
+
+	handler := AIUserUsage(conf, ai.NewAIStore(context.Background(), nil), promClient)
+	mr := mux.NewRouter()
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: token}}
+	mr.Handle("/api/ai/usage/user", WithAuthInfo(authInfo, handler))
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage/user", nil)
+	require.NoError(t, err)
+	if kialiUserHeader != "" {
+		req.Header.Set("Kiali-User", kialiUserHeader)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return string(body)
+}
+
+func assertUserUsageExcludesOtherUser(t *testing.T, body, kialiUser string) {
+	t.Helper()
+	assert.NotContains(t, body, "someone-else", "usage for %s included another user's series", kialiUser)
+	assert.NotContains(t, body, "anthropic")
+	assert.Contains(t, body, "openai")
 }
 
 func TestAIUserUsage_CurrentPeriodHourlyFromWeekStart(t *testing.T) {

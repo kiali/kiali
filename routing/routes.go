@@ -2104,10 +2104,6 @@ func NewRoutes(
 			handlers.DeleteConversations(conf, aiStore),
 			true,
 		},
-<<<<<<< HEAD
-		// swagger:route GET /chat/session/usage chat aiChatSessionUsage
-		//
-=======
 		// swagger:route GET /ai/usage/user chat aiUserUsage
 		// ---
 		// Endpoint to get current-session token usage, user-scoped historical metrics, and budget status
@@ -2119,8 +2115,8 @@ func NewRoutes(
 		//
 		// responses:
 		//      500: internalError
+		//      503: serviceUnavailableError
 		//      400: badRequestError
-		//      200: noContent
 		//
 		{
 			"AIUserUsage",
@@ -2130,10 +2126,9 @@ func NewRoutes(
 			handlers.AIUserUsage(conf, aiStore, prom),
 			true,
 		},
-		// swagger:route GET /chat/usage chat aiChatUsage
+		// swagger:route GET /api/ai/usage chat aiChatUsage
 		// ---
->>>>>>> 1f2bd67d1 ([AI][Dashboard] Metrics and consumption)
-		// Endpoint to get token usage statistics for the current user session
+		// Endpoint to get token usage statistics for the current cluster
 		//
 		// Produces:
 		// - application/json

@@ -26,6 +26,7 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/handlers/queryparams"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/jwt"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/perses"
@@ -202,29 +203,25 @@ func ChatAI(
 			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
-		fallbackUserID := ""
 		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 			authInfo, err := getAuthInfo(r)
 			if err != nil {
 				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
 				return
 			}
-			clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
-			if !ok || clusterAuth == nil {
+			if clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]; !ok || clusterAuth == nil {
 				RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("AI initialization error: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName))
 				return
 			}
-			fallbackUserID = clusterAuth.Username
-		} else {
-			fallbackUserID = "anonymous"
 		}
 
-		if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, fallbackUserID) {
+		// Token auth leaves AuthInfo.Username empty; resolve from Kiali-User or the JWT sub.
+		username := resolveChatAIUsername(r, conf, "")
+		if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, username) {
 			RespondWithError(w, http.StatusForbidden, "You are not allowed to use the ChatAI feature")
 			return
 		}
 
-		username := resolveChatAIUsername(r, conf, fallbackUserID)
 		sessionID := resolveChatAISessionID(r, conf, username)
 
 		if conf.AI.Metrics {
@@ -359,6 +356,11 @@ func ChatAI(
 
 // resolveChatAIUsername returns the durable user identity used for Prometheus
 // token metrics and budget evaluation. It must not return a browser session ID.
+//
+// Token, header, and OpenID auth store only AuthInfo.Token in the request
+// context, so AuthInfo.Username is empty. ValidateSession publishes the
+// subject on the Kiali-User header (for example istio-system:kiali-test-user).
+// When that header is absent, the same subject is read from the JWT "sub" claim.
 func resolveChatAIUsername(r *http.Request, conf *config.Config, fallbackUserID string) string {
 	if fallbackUserID != "" && fallbackUserID != AnonymousSessionID {
 		return fallbackUserID
@@ -366,25 +368,58 @@ func resolveChatAIUsername(r *http.Request, conf *config.Config, fallbackUserID 
 	if conf != nil && conf.Auth.Strategy == config.AuthStrategyAnonymous {
 		return "anonymous"
 	}
+	if user := kialiUserFromHeader(r); user != "" {
+		return user
+	}
 
 	authInfo, err := getAuthInfo(r)
-	if err != nil {
-		if conf != nil && conf.Auth.Strategy == config.AuthStrategyAnonymous {
-			return "anonymous"
-		}
+	if err != nil || conf == nil {
 		return ""
 	}
 	clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
-	if !ok || clusterAuth == nil || clusterAuth.Username == "" {
-		if conf != nil && conf.Auth.Strategy == config.AuthStrategyAnonymous {
-			return "anonymous"
-		}
+	if !ok || clusterAuth == nil {
 		return ""
 	}
 	if clusterAuth.Username == AnonymousSessionID {
 		return "anonymous"
 	}
-	return clusterAuth.Username
+	if clusterAuth.Username != "" {
+		return clusterAuth.Username
+	}
+	return subjectFromK8sToken(clusterAuth.Token)
+}
+
+// subjectFromK8sToken reads the JWT "sub" claim and strips the Kubernetes
+// service-account prefix. Opaque tokens and tokens without a subject return
+// empty so usage queries stay user-scoped instead of falling back to a generic label.
+func subjectFromK8sToken(token string) string {
+	if token == "" {
+		return ""
+	}
+	parsed, err := jwt.ParseSigned(token)
+	if err != nil {
+		return ""
+	}
+	var claims map[string]any
+	if err = parsed.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return ""
+	}
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return ""
+	}
+	return strings.TrimPrefix(sub, "system:serviceaccount:")
+}
+
+// kialiUserFromHeader returns the audit identity set by ValidateSession.
+// The service-account prefix is stripped so the value matches the JWT sub form
+// stored on AI metrics.
+func kialiUserFromHeader(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
+	user := strings.TrimSpace(r.Header.Get("Kiali-User"))
+	return strings.TrimPrefix(user, "system:serviceaccount:")
 }
 
 // resolveChatAISessionID returns the in-memory session key for chat transcripts

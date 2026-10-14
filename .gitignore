@@ -120,6 +120,9 @@ frontend/.env.production.local
 
 # Logging and logging binaries
 hack/stern/stern
+
+# AI mock metrics injector binary
+hack/ai-mock/inject_metrics
 frontend/logs
 
 # Cypress
