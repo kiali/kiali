@@ -240,21 +240,37 @@ export const expectMoreSpanDetailsLink = async (page: Page, linkText: string): P
   await page.keyboard.press('Escape');
 };
 
+/** Mirrors Cypress clickSpanFilterOptionWithFallback (cypress/integration/common/navigation.ts). */
+const clickSpanFilterOptionWithFallback = async (
+  page: Page,
+  expectedOption: string,
+  fallbackOption: string
+): Promise<void> => {
+  const listbox = page.locator('ul[role="listbox"]');
+  await expect(async () => {
+    await expect(listbox).toBeVisible();
+    const preferred = listbox.locator(`li[label="${expectedOption}"]`);
+    const fallback = listbox.locator(`li[label="${fallbackOption}"]`);
+    const optionCount = (await preferred.count()) + (await fallback.count());
+    expect(optionCount, `Expected "${expectedOption}" or "${fallbackOption}" in span filter listbox`).toBeGreaterThan(
+      0
+    );
+  }).toPass({ intervals: [500], timeout: 15_000 });
+
+  const preferred = listbox.locator(`li[label="${expectedOption}"]`);
+  if ((await preferred.count()) > 0) {
+    await preferred.locator('button').click();
+  } else {
+    await listbox.locator(`li[label="${fallbackOption}"]`).locator('button').click();
+  }
+};
+
 export const filterSpansByApp = async (page: Page, app: string, fallbackApp = 'waypoint'): Promise<void> => {
   await page.locator('button#filter_select_type-toggle').click();
   await page.locator('div#filter_select_type button').filter({ hasText: /^App$/ }).click();
   await page.locator('input[placeholder="Filter by App"]').click();
 
-  const preferred = page.getByRole('option', { name: app, exact: true });
-  if ((await preferred.count()) > 0) {
-    await preferred.click();
-  } else {
-    await page
-      .getByRole('option', { name: fallbackApp, exact: true })
-      .or(page.locator(`button:has-text("${fallbackApp}")`))
-      .first()
-      .click();
-  }
+  await clickSpanFilterOptionWithFallback(page, app, fallbackApp);
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
@@ -281,16 +297,7 @@ export const filterSpansByWorkload = async (
   await page.locator('button#Workload').click();
   await page.locator('input[placeholder="Filter by Workload"]').click();
 
-  const preferred = page.getByRole('option', { name: workload, exact: true });
-  if ((await preferred.count()) > 0) {
-    await preferred.click();
-  } else {
-    await page
-      .getByRole('option', { name: fallbackWorkload, exact: true })
-      .or(page.locator(`button:has-text("${fallbackWorkload}")`))
-      .first()
-      .click();
-  }
+  await clickSpanFilterOptionWithFallback(page, workload, fallbackWorkload);
   await waitForLoadingComplete(page);
 
   const cells = page.locator('table tbody tr td[data-label="App / Workload"]');
