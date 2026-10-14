@@ -32,12 +32,10 @@ test.describe('Istio wizards multi-cluster', () => {
     }
   );
 
-  test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
+  test('Edit AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, request }) => {
     // Separate name from delete so a slow east delete cannot race the next create.
     const policy = 'east-auth-pol-edit';
     await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.editYaml();
@@ -52,8 +50,6 @@ test.describe('Istio wizards multi-cluster', () => {
   test('Delete AuthorizationPolicy on east', multiClusterOnly, async ({ istioConfigPage, page, request }) => {
     const policy = 'east-auth-pol-delete';
     await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', EAST);
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
     await istioConfigPage.openConfigByCluster(EAST, 'bookinfo', 'AuthorizationPolicy', policy);
     await istioConfigPage.expectEditorVisible();
     await istioConfigPage.deleteObjectFromEditor();

@@ -120,9 +120,9 @@ export class MeshPage extends BasePage {
     };
   }
 
-  async selectMeshNodeByLabel(label: string, cluster?: string): Promise<void> {
+  async selectMeshNodeByLabel(label: string, cluster?: string, nodeType?: string): Promise<void> {
     await this.waitForLoad();
-    await selectMeshNodeByLabel(this.page, label, cluster);
+    await selectMeshNodeByLabel(this.page, label, cluster, nodeType);
     await this.waitForLoad();
   }
 
@@ -490,7 +490,8 @@ export class MeshPage extends BasePage {
   }
 
   async setMeshDisplayOption(option: string, enabled: boolean): Promise<void> {
-    const optionId = option.toLowerCase() === 'gateways' ? 'filterGateways' : option;
+    const lower = option.toLowerCase();
+    const optionId = lower === 'gateways' ? 'filterGateways' : lower === 'waypoints' ? 'filterWaypoints' : option;
     const input = this.page.locator(`div#mesh-display-menu input#${optionId}`);
     if (enabled) {
       await input.check();
