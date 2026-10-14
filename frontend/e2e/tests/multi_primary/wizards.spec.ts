@@ -1,17 +1,10 @@
 import { test } from '../../fixtures/kialiFixtures';
-import {
-  EAST,
-  WEST,
-  applyAuthorizationPolicyOnCluster,
-  deleteGatewayOnClusters,
-  deleteIstioOnClusters,
-  deleteRequestRoutingOnClusters
-} from '../../utils/multiCluster';
+import { EAST, WEST, deleteGatewayOnClusters, deleteRequestRoutingOnClusters } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiPrimaryOnly } from '../../utils/suite-tags';
 
-// One serial block: Playwright runs sibling describes in parallel on CI (2 workers).
-// West request-routing wizards and AuthorizationPolicy setup both hit remote istio config cache.
+// One serial block: Playwright runs sibling describes in parallel on CI (2 workers),
+// and every west wizard here hits the same remote istio config cache.
 test.describe.serial('Multi-primary istio wizards', () => {
   test.describe.configure({ timeout: 240_000 });
 
@@ -38,31 +31,6 @@ test.describe.serial('Multi-primary istio wizards', () => {
       await deleteGatewayOnClusters(request, 'bookinfo-gateway-mc');
     }
   );
-
-  test('Edit AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, request }) => {
-    const policy = 'west-auth-pol-edit';
-    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
-    await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
-    await istioConfigPage.expectEditorVisible();
-    await istioConfigPage.editYaml();
-    await istioConfigPage.saveYamlAndWaitForPatch(policy);
-    await deleteIstioOnClusters(
-      request,
-      `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}`,
-      [WEST]
-    );
-  });
-
-  test('Delete AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, page, request }) => {
-    const policy = 'west-auth-pol-delete';
-    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
-    await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
-    await istioConfigPage.expectEditorVisible();
-    await istioConfigPage.deleteObjectFromEditor();
-    await istioConfigPage.open();
-    await selectNamespace(page, 'bookinfo');
-    await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', WEST);
-  });
 
   test(
     'Create request routing for west ratings',

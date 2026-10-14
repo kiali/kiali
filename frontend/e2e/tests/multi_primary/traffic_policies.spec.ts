@@ -2,14 +2,19 @@ import { test } from '../../fixtures/kialiFixtures';
 import {
   EAST,
   WEST,
+  applyAuthorizationPolicyOnCluster,
   deleteGeneratedTrafficPolicies,
+  deleteIstioOnClusters,
   expectGeneratedTrafficPoliciesOnCluster
 } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiPrimaryOnly } from '../../utils/suite-tags';
 
+// The AuthorizationPolicy editor tests live here, not in wizards.spec.ts: the namespace
+// traffic-policy update/delete actions wipe every AuthorizationPolicy in bookinfo on the
+// target cluster, so they must not run in a sibling file that CI can schedule in parallel.
 test.describe.serial('Traffic policies multi-primary (west remote)', () => {
-  test.describe.configure({ timeout: 180_000 });
+  test.describe.configure({ timeout: 240_000 });
 
   test(
     'Create traffic policy on west only',
@@ -45,4 +50,29 @@ test.describe.serial('Traffic policies multi-primary (west remote)', () => {
       await deleteGeneratedTrafficPolicies(request);
     }
   );
+
+  test('Edit AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, request }) => {
+    const policy = 'west-auth-pol-edit';
+    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
+    await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
+    await istioConfigPage.expectEditorVisible();
+    await istioConfigPage.editYaml();
+    await istioConfigPage.saveYamlAndWaitForPatch(policy);
+    await deleteIstioOnClusters(
+      request,
+      `/api/namespaces/bookinfo/istio/security.istio.io/v1/AuthorizationPolicy/${policy}`,
+      [WEST]
+    );
+  });
+
+  test('Delete AuthorizationPolicy on west', multiPrimaryOnly, async ({ istioConfigPage, page, request }) => {
+    const policy = 'west-auth-pol-delete';
+    await applyAuthorizationPolicyOnCluster(request, policy, 'bookinfo', WEST);
+    await istioConfigPage.openConfigByCluster(WEST, 'bookinfo', 'AuthorizationPolicy', policy);
+    await istioConfigPage.expectEditorVisible();
+    await istioConfigPage.deleteObjectFromEditor();
+    await istioConfigPage.open();
+    await selectNamespace(page, 'bookinfo');
+    await istioConfigPage.expectObjectNotListedOnCluster('AuthorizationPolicy', policy, 'bookinfo', WEST);
+  });
 });

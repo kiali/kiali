@@ -1,4 +1,4 @@
-import { expect, type Locator } from '@playwright/test';
+import { expect, type Locator, type Response } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { gotoConsolePage, gotoListPage } from '../utils/navigation';
 import { selectNamespace, selectOnlyNamespaces } from '../utils/namespace';
@@ -219,47 +219,50 @@ export class IstioConfigPage extends BasePage {
     const consolePath = istioConfigDetailsConsolePath(namespace, type, name);
     const editor = this.page.locator('[data-test="istio-config-editor"] .monaco-editor');
 
-    const openFromList = async (): Promise<void> => {
+    // Match on method and URL only. Folding `response.ok()` into the predicate would make an
+    // error response (404 after a concurrent delete) hang for the full 45s instead of letting
+    // the outer toPass retry, and would report a bare timeout instead of the status.
+    const waitForDetailsResponse = (): Promise<Response> =>
+      this.page.waitForResponse(
+        response =>
+          response.request().method() === 'GET' &&
+          response.url().includes(detailsApiPath) &&
+          response.url().includes(`clusterName=${encodeURIComponent(cluster)}`),
+        { timeout: 45_000 }
+      );
+
+    const openFromList = async (): Promise<Response> => {
       await this.open();
       await selectNamespace(this.page, namespace);
       await this.refreshList(cluster);
       await expect(row).toBeVisible({ timeout: 15_000 });
-      const detailsResponse = this.page.waitForResponse(
-        response =>
-          response.request().method() === 'GET' &&
-          response.ok() &&
-          response.url().includes(detailsApiPath) &&
-          response.url().includes(`clusterName=${encodeURIComponent(cluster)}`),
-        { timeout: 45_000 }
-      );
+      const detailsResponse = waitForDetailsResponse();
       await row.locator(linkSelector()).first().click();
-      await detailsResponse;
+      const response = await detailsResponse;
       await waitForLoadingComplete(this.page);
+      return response;
     };
 
-    const openFromUrl = async (): Promise<void> => {
-      const detailsResponse = this.page.waitForResponse(
-        response =>
-          response.request().method() === 'GET' &&
-          response.ok() &&
-          response.url().includes(detailsApiPath) &&
-          response.url().includes(`clusterName=${encodeURIComponent(cluster)}`),
-        { timeout: 45_000 }
-      );
+    const openFromUrl = async (): Promise<Response> => {
+      const detailsResponse = waitForDetailsResponse();
       await gotoConsolePage(this.page, consolePath, { clusterName: cluster });
       await this.page.reload();
-      await detailsResponse;
+      const response = await detailsResponse;
       await waitForLoadingComplete(this.page);
+      return response;
     };
 
     await expect(async () => {
       await waitForIstioObjectDetailsApi(this.page, namespace, type, name, cluster);
 
-      await openFromList();
-      if (await this.istioConfigDetailsNotFoundVisible(name)) {
-        await openFromUrl();
+      let response = await openFromList();
+      if (!response.ok() || (await this.istioConfigDetailsNotFoundVisible(name))) {
+        response = await openFromUrl();
       }
 
+      if (!response.ok()) {
+        throw new Error(`Istio config "${name}" details on cluster "${cluster}" returned HTTP ${response.status()}`);
+      }
       if (await this.istioConfigDetailsNotFoundVisible(name)) {
         throw new Error(`Istio config "${name}" not loaded on cluster "${cluster}" (empty details panel)`);
       }
@@ -288,14 +291,17 @@ export class IstioConfigPage extends BasePage {
   async saveYamlAndWaitForPatch(name: string): Promise<void> {
     const patchPath = `/AuthorizationPolicy/${name}`;
     await expect(async () => {
+      // Status is asserted after the wait, not inside the predicate, so a rejected PATCH
+      // retries in seconds and reports its status instead of timing out opaquely.
       const patchPromise = this.page.waitForResponse(
-        response => response.request().method() === 'PATCH' && response.url().includes(patchPath) && response.ok(),
+        response => response.request().method() === 'PATCH' && response.url().includes(patchPath),
         { timeout: 45_000 }
       );
       const saveButton = this.page.getByRole('button', { name: 'Save' });
       await expect(saveButton).toBeEnabled();
       await saveButton.click();
-      await patchPromise;
+      const patchResponse = await patchPromise;
+      expect(patchResponse.status(), `PATCH ${patchPath}`).toBeLessThan(400);
     }).toPass({ intervals: [2_000, 3_000], timeout: 90_000 });
   }
 
