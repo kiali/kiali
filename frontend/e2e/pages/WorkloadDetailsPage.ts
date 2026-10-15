@@ -138,8 +138,9 @@ export class WorkloadDetailsPage extends BasePage {
 
     await expect(async () => {
       if (await checkbox.isChecked()) {
+        // The checkAndWaitForLogs response wait below subsumes the reload triggered by
+        // unchecking, so no separate loading-complete wait is needed here.
         await checkbox.uncheck();
-        await waitForLoadingComplete(this.page);
       }
       await checkAndWaitForLogs(30_000);
       await expect(this.page.locator('#logsText p').filter({ hasText: bodyMustInclude }).first()).toBeVisible({

@@ -14,7 +14,10 @@ import { multiPrimaryOnly } from '../../utils/suite-tags';
 // traffic-policy update/delete actions wipe every AuthorizationPolicy in bookinfo on the
 // target cluster, so they must not run in a sibling file that CI can schedule in parallel.
 test.describe.serial('Traffic policies multi-primary (west remote)', () => {
-  test.describe.configure({ timeout: 240_000 });
+  // The AuthorizationPolicy editor chain (applyAuthorizationPolicyOnCluster poll +
+  // openConfigByCluster 120s + saveYamlAndWaitForPatch 90s) can sum well past 240s in
+  // degraded CI; budget above the realistic sum so helper errors surface.
+  test.describe.configure({ timeout: 480_000 });
 
   test(
     'Create traffic policy on west only',

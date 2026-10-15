@@ -257,7 +257,8 @@ export const expectSpanDetails = async (page: Page, options: ExpectSpanDetailsOp
   await page.getByTestId('trace-details-tabs').getByText('Span Details').click();
   const rows = page.locator('table tbody tr');
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
-  await expect(rows).not.toHaveCount(0);
+  // At least 2 rows are required: the second row is asserted on below.
+  expect(await rows.count(), 'Expected at least 2 span rows').toBeGreaterThan(1);
   const spanRow = rows.nth(1);
   await expect(spanRow.locator('td').nth(4)).toBeVisible();
   const statsCell = spanRow.locator('td').nth(3);
@@ -285,7 +286,10 @@ export const expectMoreSpanDetailsLink = async (page: Page, linkText: string): P
   await page.keyboard.press('Escape');
 };
 
-/** Mirrors Cypress clickSpanFilterOptionWithFallback (cypress/integration/common/navigation.ts). */
+/**
+ * Pick the expected span-filter option, falling back (e.g. to the waypoint proxy) when the
+ * preferred option is absent — ambient traces may only carry the fallback span tags.
+ */
 const clickSpanFilterOptionWithFallback = async (
   page: Page,
   expectedOption: string,

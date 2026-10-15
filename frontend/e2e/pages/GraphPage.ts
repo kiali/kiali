@@ -602,19 +602,25 @@ export class GraphPage extends BasePage {
     await expect(async () => {
       const topology = await readGraphTopology(this.page);
       const uiNodes = topology.nodes.map(n => ({ data: n.data }));
-      if (graphHasWaypointInCluster(uiNodes, workload, cluster, namespace)) {
-        return;
+      const found = graphHasWaypointInCluster(uiNodes, workload, cluster, namespace);
+      let apiNote = '';
+      if (!found) {
+        // Diagnostic only: distinguish "backend doesn't know the waypoint" from "UI didn't render it".
+        // Never satisfy the assertion from the API response — this test guards the display toggle.
+        const response = await this.page.request.get(
+          kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
+        );
+        const body = (await response.json().catch(() => null)) as {
+          elements?: { nodes?: { data?: Record<string, unknown> }[] };
+        } | null;
+        const apiHasIt = !!body && graphHasWaypointInCluster(body.elements?.nodes ?? [], workload, cluster, namespace);
+        apiNote = apiHasIt
+          ? ' (graph API has the waypoint — UI did not render it)'
+          : ` (graph API HTTP ${response.status()}, waypoint absent there too)`;
       }
-
-      const response = await this.page.request.get(
-        kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
-      );
-      expect(response.ok(), `graph API failed with HTTP ${response.status()}`).toBeTruthy();
-      const body = (await response.json()) as { elements?: { nodes?: { data?: Record<string, unknown> }[] } };
-      const apiNodes = body.elements?.nodes ?? [];
       expect(
-        graphHasWaypointInCluster(apiNodes, workload, cluster, namespace),
-        `Expected waypoint "${workload}" in cluster "${cluster}" (namespace=${namespace})`
+        found,
+        `Expected waypoint "${workload}" visible in UI graph for cluster "${cluster}" (namespace=${namespace})${apiNote}`
       ).toBeTruthy();
     }).toPass({ intervals: [3_000], timeout: 120_000 });
   }
@@ -622,7 +628,7 @@ export class GraphPage extends BasePage {
   /** Assert traffic edges involve nodes from both clusters. */
   async expectTrafficFromClusters(cluster1: string, cluster2: string): Promise<void> {
     await expectGraphTopology(this.page, ({ nodes, edges }) => {
-      const trafficEdges = edges.filter(edge => edge.data?.[EdgeAttr.hasTraffic] !== undefined);
+      const trafficEdges = edges.filter(edge => edge.data?.[EdgeAttr.hasTraffic] === true);
       const nodeById = new Map(nodes.map(n => [n.id, n]));
       const clustersWithTraffic = new Set<string>();
 
