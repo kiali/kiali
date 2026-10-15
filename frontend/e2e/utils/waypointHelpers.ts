@@ -44,6 +44,97 @@ type GraphEdge = {
   data?: { traffic?: { protocol?: string } };
 };
 
+type GraphNode = {
+  data?: Record<string, unknown>;
+};
+
+/** Query params aligned with waypoint multicluster graph UI (workload + ambient total + waypoints). */
+export const waypointVisibleGraphQuery = (namespace: string, graphType = 'workload'): URLSearchParams =>
+  new URLSearchParams({
+    duration: '300s',
+    graphType,
+    includeIdleEdges: 'false',
+    injectServiceNodes: 'true',
+    boxBy: 'cluster,namespace,app',
+    waypoints: 'true',
+    ambientTraffic: 'total',
+    appenders: 'deadNode,istio,serviceEntry,meshCheck,workloadEntry,health,ambient',
+    rateGrpc: 'requests',
+    rateHttp: 'requests',
+    rateTcp: 'sent',
+    namespaces: namespace
+  });
+
+export const graphHasWaypointInCluster = (
+  nodes: GraphNode[],
+  workload: string,
+  cluster: string,
+  namespace?: string
+): boolean => {
+  const target = workload.toLowerCase();
+  return nodes.some(n => {
+    const data = n.data ?? {};
+    if (data.isBox !== undefined) {
+      return false;
+    }
+    if (data.cluster !== cluster) {
+      return false;
+    }
+    if (data.isWaypoint !== true) {
+      return false;
+    }
+    if (namespace && data.namespace !== namespace) {
+      return false;
+    }
+    const candidates = [data.workload, data.app, data.service, data.name].filter(
+      (v): v is string => typeof v === 'string'
+    );
+    return candidates.some(c => {
+      const lc = c.toLowerCase();
+      return lc === target || lc.startsWith(`${target}-`);
+    });
+  });
+};
+
+/** Poll graph API until each cluster exposes a waypoint workload node (waypoints display on). */
+export async function waitForWaypointInGraphClusters(
+  request: APIRequestContext,
+  namespace: string,
+  clusters: string[],
+  timeoutMs = 600_000
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let lastMissing = clusters.join(',');
+
+  while (Date.now() < deadline) {
+    let response;
+    try {
+      response = await request.get(
+        kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
+      );
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
+    if (!response.ok()) {
+      await sleep(10_000);
+      continue;
+    }
+    const body = (await response.json()) as { elements?: { nodes?: GraphNode[] } };
+    const nodes = body.elements?.nodes ?? [];
+    const missing = clusters.filter(c => !graphHasWaypointInCluster(nodes, 'waypoint', c, namespace));
+    if (missing.length === 0) {
+      return;
+    }
+    lastMissing = missing.join(',');
+    await sleep(10_000);
+  }
+
+  throw new Error(
+    `Waypoint node not found in graph for cluster(s) [${lastMissing}] (namespace=${namespace}) within ${timeoutMs}ms`
+  );
+}
+
 /**
  * Wait until every mesh-controller Gateway deployment reports healthy proxy status via Kiali API.
  */
@@ -69,17 +160,24 @@ export async function waitForHealthyWaypoint(
   request: APIRequestContext,
   namespace: string,
   name: string,
-  timeoutMs = 600_000
+  timeoutMs = 600_000,
+  clusterName?: string
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   let lastSummary = '';
+  const qs = new URLSearchParams({
+    health: 'true',
+    rateInterval: '60s',
+    validate: 'true'
+  });
+  if (clusterName) {
+    qs.set('clusterName', clusterName);
+  }
 
   while (Date.now() < deadline) {
     let response;
     try {
-      response = await request.get(
-        kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?validate=true&rateInterval=60s&health=true`)
-      );
+      response = await request.get(kialiUrl(`/api/namespaces/${namespace}/workloads/${name}?${qs.toString()}`));
     } catch (err) {
       lastSummary = `request-error=${err instanceof Error ? err.message : String(err)}`;
       await sleep(5_000);
@@ -107,7 +205,7 @@ export async function waitForHealthyWaypoint(
   }
 
   throw new Error(
-    `Waypoint not healthy within ${timeoutMs}ms (namespace=${namespace}, name=${name}, last=${lastSummary})`
+    `Waypoint not healthy within ${timeoutMs}ms (namespace=${namespace}, name=${name}, cluster=${clusterName ?? ''}, last=${lastSummary})`
   );
 }
 
@@ -237,6 +335,17 @@ export async function waitForBookinfoWaypointGraphTraffic(
   throw new Error(
     `Graph traffic not ready within ${timeoutMs}ms (ambientTraffic=${ambientTraffic}, namespace=${namespace}, edges=${lastEdgeCount}, httpEdges=${lastHttpEdgeCount}, expected>=${minTotalEdges}, expectedHttp>=${minHttpEdges})`
   );
+}
+
+/** Background readiness for bookinfo-waypoints L7 / multicluster waypoint scenarios. */
+export async function prepareBookinfoWaypointsMulticluster(
+  request: APIRequestContext,
+  namespace = 'bookinfo-waypoints'
+): Promise<void> {
+  await waitForHealthyWaypoint(request, namespace, 'waypoint', 600_000, 'east');
+  await waitForHealthyWaypoint(request, namespace, 'waypoint', 600_000, 'west');
+  await waitForBookinfoWaypointGraphTraffic(request, 'waypoint', namespace);
+  await waitForWaypointInGraphClusters(request, namespace, ['east', 'west']);
 }
 
 /** Background readiness used by bookinfo waypoint scenarios. */

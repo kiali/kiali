@@ -4,7 +4,8 @@ import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
 import { kubectlExec } from '../utils/kubectl';
 import { waitForLoadingComplete } from '../utils/transition';
-import { expectGraphTopology, scaleGraphBy } from '../utils/graphTopology';
+import { expectGraphTopology, readGraphTopology, scaleGraphBy } from '../utils/graphTopology';
+import { graphHasWaypointInCluster, waypointVisibleGraphQuery } from '../utils/waypointHelpers';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
 
 const DISPLAY_OPTION_IDS: Record<string, string> = {
@@ -588,6 +589,57 @@ export class GraphPage extends BasePage {
       );
       const clusters = new Set(workloadNodes.map(node => node.data?.[NodeAttr.cluster] as string));
       expect(clusters.size, 'Expected workload nodes from multiple clusters').toBeGreaterThanOrEqual(clusterCount);
+    });
+  }
+
+  /** Assert a waypoint proxy node is visible for the given cluster. */
+  async expectWaypointNodeInCluster(
+    workload: string,
+    cluster: string,
+    namespace = 'bookinfo-waypoints'
+  ): Promise<void> {
+    await expect(async () => {
+      const topology = await readGraphTopology(this.page);
+      const uiNodes = topology.nodes.map(n => ({ data: n.data }));
+      if (graphHasWaypointInCluster(uiNodes, workload, cluster, namespace)) {
+        return;
+      }
+
+      const response = await this.page.request.get(
+        kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
+      );
+      expect(response.ok(), `graph API failed with HTTP ${response.status()}`).toBeTruthy();
+      const body = (await response.json()) as { elements?: { nodes?: { data?: Record<string, unknown> }[] } };
+      const apiNodes = body.elements?.nodes ?? [];
+      expect(
+        graphHasWaypointInCluster(apiNodes, workload, cluster, namespace),
+        `Expected waypoint "${workload}" in cluster "${cluster}" (namespace=${namespace})`
+      ).toBeTruthy();
+    }).toPass({ intervals: [3_000], timeout: 120_000 });
+  }
+
+  /** Assert traffic edges involve nodes from both clusters. */
+  async expectTrafficFromClusters(cluster1: string, cluster2: string): Promise<void> {
+    await expectGraphTopology(this.page, ({ nodes, edges }) => {
+      const trafficEdges = edges.filter(edge => edge.data?.[EdgeAttr.hasTraffic] !== undefined);
+      const nodeById = new Map(nodes.map(n => [n.id, n]));
+      const clustersWithTraffic = new Set<string>();
+
+      for (const edge of trafficEdges) {
+        const srcId = edge.data?.source as string | undefined;
+        const dstId = edge.data?.target as string | undefined;
+        const srcCluster = srcId ? (nodeById.get(srcId)?.data?.[NodeAttr.cluster] as string | undefined) : undefined;
+        const dstCluster = dstId ? (nodeById.get(dstId)?.data?.[NodeAttr.cluster] as string | undefined) : undefined;
+        if (srcCluster) {
+          clustersWithTraffic.add(srcCluster);
+        }
+        if (dstCluster) {
+          clustersWithTraffic.add(dstCluster);
+        }
+      }
+
+      expect(Array.from(clustersWithTraffic)).toContain(cluster1);
+      expect(Array.from(clustersWithTraffic)).toContain(cluster2);
     });
   }
 

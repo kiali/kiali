@@ -1,5 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { waitForServiceHealthStatus } from '../../utils/health';
+import { waitForAnyServiceHealthStatus } from '../../utils/health';
 import { ambientOnly } from '../../utils/suite-tags';
 
 test.describe('Ambient mesh', () => {
@@ -50,8 +50,16 @@ test.describe('Ambient mesh', () => {
 
   test('Filter services table by health', ambientOnly, async ({ request, servicesPage }) => {
     test.setTimeout(240_000);
-    // Wait until productpage reports Healthy, then filter Healthy.
-    await waitForServiceHealthStatus(request, 'bookinfo', 'productpage', 'Healthy', 180_000);
+    // The Healthy filter only needs one healthy row, so wait for whichever bookinfo service
+    // settles first. productpage takes the external traffic and can sit in Degraded while
+    // generator errors age out of the health rate window.
+    await waitForAnyServiceHealthStatus(
+      request,
+      'bookinfo',
+      ['details', 'ratings', 'reviews', 'productpage'],
+      'Healthy',
+      180_000
+    );
     await servicesPage.openListWithNamespace('bookinfo');
     await servicesPage.filterBy('Health', 'Healthy');
     await servicesPage.expectServicesInTable('something');
