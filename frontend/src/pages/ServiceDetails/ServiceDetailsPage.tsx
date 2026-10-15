@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -186,6 +187,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             }}
             tabMap={tabIndex}
             tabName={tabName}
+            customTimeTabs={['metrics', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
