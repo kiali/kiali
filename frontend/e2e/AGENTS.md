@@ -358,3 +358,7 @@ These look like rule violations but are intentional — **do not "fix" them:**
 
 `MiniGraphCard.tsx` exposes `data-ready={!isLoading && isReady}` on the root `<Card>`; assert with
 `page.locator('#MiniGraphCard[data-ready="true"]')`.
+
+`GraphPage.tsx` exposes the same attribute on the `#pft-graph` container; assert with
+`page.locator('#pft-graph[data-ready="true"]')` instead of a fiber read of `GraphPageComponent`
+state (used by the perf suite, `e2e/perf/utils/measure.ts`).
