@@ -1,6 +1,7 @@
 import type { APIRequestContext } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+import { NodeAttr } from './graphSelect';
 import { discoverKialiRuntimeInfo } from './kialiCaching';
 import { kubectlExec } from './kubectl';
 import { kialiUrl } from './kialiUrl';
@@ -80,7 +81,7 @@ export const graphHasWaypointInCluster = (
     if (data.cluster !== cluster) {
       return false;
     }
-    if (data.isWaypoint !== true) {
+    if (data[NodeAttr.isWaypoint] !== true) {
       return false;
     }
     if (namespace && data.namespace !== namespace) {
