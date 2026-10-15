@@ -1,4 +1,4 @@
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, ElementHandle, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
 import { openDetailsTab } from './detailsPage';
@@ -102,13 +102,16 @@ export const expectTraceScatterplot = async (page: Page): Promise<void> => {
 };
 
 /**
- * Find the SVG path `d` of a Victory scatter point with at least `minSpans` spans.
+ * Find the <path> element of a Victory scatter point with at least `minSpans` spans.
+ *
+ * Returns the live DOM element rather than its `d` value: Victory circle paths contain
+ * newlines between path commands, which cannot be embedded in a CSS attribute selector.
  *
  * TODO(#9712): replace with a data-test hook on the scatter points. Shared by the click
  * (selectTrace*) and hover (tooltip heat map) paths so the fiber heuristic lives in one place.
  */
-const findScatterPointPathD = async (page: Page, minSpans: number): Promise<string | null> => {
-  return await page.evaluate(min => {
+const findScatterPointElement = async (page: Page, minSpans: number): Promise<ElementHandle<Element> | null> => {
+  const handle = await page.evaluateHandle(min => {
     const root = document.querySelector('[data-test="tracing-scatterplot"]');
     if (!root) {
       return null;
@@ -117,7 +120,7 @@ const findScatterPointPathD = async (page: Page, minSpans: number): Promise<stri
       const key = Object.keys(el).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
       return key ? (el as unknown as Record<string, unknown>)[key] : null;
     };
-    const hits: string[] = [];
+    const hits: Element[] = [];
     const walk = (fiber: unknown): void => {
       if (!fiber || typeof fiber !== 'object') {
         return;
@@ -127,10 +130,10 @@ const findScatterPointPathD = async (page: Page, minSpans: number): Promise<stri
         memoizedProps?: {
           symbol?: string;
           datum?: { trace?: { spans?: unknown[]; matched?: number } };
-          d?: string;
         };
         child?: unknown;
         sibling?: unknown;
+        stateNode?: unknown;
       };
       const typeName =
         typeof f.elementType === 'string'
@@ -146,10 +149,13 @@ const findScatterPointPathD = async (page: Page, minSpans: number): Promise<stri
         const matched = trace?.matched;
         const spans = typeof matched === 'number' && matched > 0 ? matched : (trace?.spans?.length ?? 0);
         if (spans >= min) {
-          const child = f.child as { memoizedProps?: { d?: string } } | undefined;
-          const d = child?.memoizedProps?.d ?? f.memoizedProps.d;
-          if (d) {
-            hits.push(d);
+          // Descend through wrapper fibers to the host fiber; its stateNode is the <path> DOM node.
+          let node: { child?: unknown; stateNode?: unknown } | undefined = f;
+          while (node && !(node.stateNode instanceof Element)) {
+            node = node.child as { child?: unknown; stateNode?: unknown } | undefined;
+          }
+          if (node?.stateNode instanceof Element) {
+            hits.push(node.stateNode);
           }
         }
       }
@@ -160,6 +166,7 @@ const findScatterPointPathD = async (page: Page, minSpans: number): Promise<stri
     root.querySelectorAll('*').forEach(el => walk(getFiber(el)));
     return hits[0] ?? null;
   }, minSpans);
+  return handle.asElement();
 };
 
 /**
@@ -173,13 +180,13 @@ export const selectTraceWithMinSpans = async (page: Page, minSpans = 0, fallback
 
   try {
     await expect(async () => {
-      const pathD = await findScatterPointPathD(page, minSpans);
+      const point = await findScatterPointElement(page, minSpans);
 
-      if (!pathD) {
+      if (!point) {
         throw new Error(`No scatterplot point with >= ${minSpans} spans yet`);
       }
 
-      await scatter.locator(`path[d="${pathD}"]`).first().click({ force: true });
+      await point.click({ force: true });
       await expect(page.getByTestId('trace-details-tabs')).toBeVisible({ timeout: 10_000 });
     }).toPass({ intervals: [3_000], timeout: 45_000 });
     return;
@@ -208,14 +215,13 @@ export const hoverTraceScatterplotWithMinSpans = async (page: Page, minSpans = 4
   await expect(scatter).toBeVisible({ timeout: 60_000 });
 
   await expect(async () => {
-    const pathD = await findScatterPointPathD(page, minSpans);
+    const point = await findScatterPointElement(page, minSpans);
 
-    if (!pathD) {
+    if (!point) {
       throw new Error(`No scatterplot point with >= ${minSpans} spans yet`);
     }
 
-    // Victory emits the same `d` for points sharing plot coordinates, so scope to one.
-    await scatter.locator(`path[d="${pathD}"]`).first().hover({ force: true });
+    await point.hover({ force: true });
   }).toPass({ intervals: [3_000], timeout: 60_000 });
 };
 

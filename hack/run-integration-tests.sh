@@ -1534,7 +1534,8 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_PRIMARY}" ]; then
   fi
 
   ensureKialiServerReady
-  ensureMulticlusterApplicationsAreHealthy
+  # Like the Cypress multi-primary suite: with openid auth the API needs a kiali session
+  # cookie, so the applications-health check happens inside the frontend tests.
 
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
   export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-east"
@@ -1673,7 +1674,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_TEMPO}" ]; then
   ensurePlaywrightReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # Deploy Kiali in-cluster with Tempo (MetalLB), same fidelity as Cypress frontend-tempo.
+    # Deploy Kiali in-cluster with Tempo (MetalLB).
     # Anonymous auth so Playwright auth.setup works (token not implemented).
     "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy anonymous ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
