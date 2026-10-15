@@ -6,7 +6,10 @@ import { multiPrimaryOnly } from '../../utils/suite-tags';
 // One serial block: Playwright runs sibling describes in parallel on CI (2 workers),
 // and every west wizard here hits the same remote istio config cache.
 test.describe.serial('Multi-primary istio wizards', () => {
-  test.describe.configure({ timeout: 240_000 });
+  // Helper chains (e.g. waitForIstioObjectDetailsApi 120s + openConfigByCluster 120s)
+  // can sum well past 240s in degraded CI; budget above the realistic sum so their
+  // descriptive errors surface instead of a generic test timeout.
+  test.describe.configure({ timeout: 480_000 });
 
   test(
     'Create Gateway in both clusters',

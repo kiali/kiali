@@ -59,15 +59,17 @@ export async function waitForIstioObjectDetails(
 ): Promise<void> {
   const path = istioConfigDetailsApiPath(namespace, typeName, name);
   // Details API allows only cluster, help, and validate query params (no `_` cache-bust).
-  const query = new URLSearchParams({ validate: 'true' });
+  const baseQuery = new URLSearchParams();
   if (cluster) {
-    query.set('clusterName', cluster);
+    baseQuery.set('clusterName', cluster);
   }
 
-  // Bust cache only after a 404. Busting before every GET can drop a warm remote
-  // object from Kiali's cache and leave details returning 404 for the full timeout.
+  // Cheap existence poll: plain GET until it stops 404ing; bust cache only after a 404.
+  // Busting before every GET can drop a warm remote object from Kiali's cache and leave
+  // details returning 404 for the full timeout. Validation is skipped while polling so the
+  // backend does not run Istio validation on every retry for a not-yet-propagated object.
   await expect(async () => {
-    const response = await page.request.get(kialiUrl(`${path}?${query.toString()}`), {
+    const response = await page.request.get(kialiUrl(`${path}?${baseQuery.toString()}`), {
       failOnStatusCode: false
     });
     if (response.status() === 404) {
@@ -82,4 +84,13 @@ export async function waitForIstioObjectDetails(
       throw new Error(`unexpected istio details response (HTTP ${response.status()})`);
     }
   }).toPass({ intervals: [2_000, 3_000, 5_000], timeout: 120_000 });
+
+  // One validated read; assert on the body so a validation-level failure is diagnosable.
+  const validated = await page.request.get(
+    kialiUrl(`${path}?${new URLSearchParams({ ...baseQuery, validate: 'true' })}`)
+  );
+  expect(
+    validated.ok(),
+    `validated istio details GET failed (HTTP ${validated.status()}): ${(await validated.text()).slice(0, 200)}`
+  ).toBeTruthy();
 }
