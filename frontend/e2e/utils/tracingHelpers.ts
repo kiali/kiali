@@ -140,7 +140,11 @@ const findScatterPointPathD = async (page: Page, minSpans: number): Promise<stri
             : '';
       if (/oint/i.test(typeName) && f.memoizedProps?.symbol === 'circle') {
         const trace = f.memoizedProps.datum?.trace;
-        const spans = trace?.matched ?? trace?.spans?.length ?? 0;
+        // Same semantics as spanCount() above: Jaeger traces always carry
+        // matched=0 (the backend leaves it unset), so only a positive matched
+        // (Tempo) may override the actual number of spans.
+        const matched = trace?.matched;
+        const spans = typeof matched === 'number' && matched > 0 ? matched : (trace?.spans?.length ?? 0);
         if (spans >= min) {
           const child = f.child as { memoizedProps?: { d?: string } } | undefined;
           const d = child?.memoizedProps?.d ?? f.memoizedProps.d;
