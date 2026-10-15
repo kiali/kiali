@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -9,6 +10,7 @@ import { buildHealthStatusSegments, findHealthStatusSegmentAt, formatAxisTimeLab
 type HealthStatusRibbonProps = {
   datapoints: Datapoint[];
   endTime: number;
+  onSelect: (timestamp: number) => void;
   startTime: number;
   step: number;
 };
@@ -52,7 +54,7 @@ const clampTooltipLeft = (cursorX: number, barWidth: number, tooltipWidth: numbe
 
 const ribbonBarStyle = kialiStyle({
   borderRadius: '3px',
-  cursor: 'crosshair',
+  cursor: 'pointer',
   display: 'flex',
   height: '0.625rem',
   overflow: 'hidden',
@@ -109,6 +111,7 @@ const healthStatusI18nKey = (id: HealthStatusId): string => (id === NA.id ? 'n/a
 export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   datapoints,
   endTime,
+  onSelect,
   startTime,
   step
 }: HealthStatusRibbonProps) => {
@@ -117,6 +120,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
   const tooltipRef = React.useRef<HTMLDivElement>(null);
   const [hover, setHover] = React.useState<HoverInfo | null>(null);
   const [tooltipWidth, setTooltipWidth] = React.useState(0);
+  const [keyboardTime, setKeyboardTime] = React.useState<number>();
 
   const segments = React.useMemo(
     () => buildHealthStatusSegments(datapoints, startTime, endTime, step),
@@ -134,15 +138,26 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     setTooltipWidth(tooltipRef.current.offsetWidth);
   }, [hover]);
 
-  const handleBarMouseMove = (event: React.MouseEvent<HTMLDivElement>): void => {
+  const getPointerTime = (clientX: number): number | undefined => {
     const bar = barRef.current;
     if (!bar || totalDuration <= 0) {
       return;
     }
 
     const rect = bar.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-    const timestamp = Math.round(startTime + ratio * totalDuration);
+    if (rect.width <= 0) {
+      return;
+    }
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return Math.round(startTime + ratio * totalDuration);
+  };
+
+  const handleBarMouseMove = (event: React.MouseEvent<HTMLDivElement>): void => {
+    const timestamp = getPointerTime(event.clientX);
+    if (timestamp === undefined || !barRef.current) {
+      return;
+    }
+    const rect = barRef.current.getBoundingClientRect();
     const segment = findHealthStatusSegmentAt(segments, timestamp);
     if (!segment) {
       return;
@@ -153,6 +168,52 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
       label: segment.label,
       timestamp
     });
+  };
+
+  const handleBarClick = (event: React.MouseEvent<HTMLDivElement>): void => {
+    const timestamp = getPointerTime(event.clientX);
+    if (timestamp !== undefined) {
+      setKeyboardTime(timestamp);
+      setHover(null);
+      onSelect(timestamp);
+    }
+  };
+
+  const handleBarKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
+    const current = Math.max(startTime, Math.min(endTime, keyboardTime ?? startTime + totalDuration / 2));
+    let next: number;
+    switch (event.key) {
+      case 'ArrowLeft':
+        next = Math.max(startTime, current - step);
+        break;
+      case 'ArrowRight':
+        next = Math.min(endTime, current + step);
+        break;
+      case 'Home':
+        next = startTime;
+        break;
+      case 'End':
+        next = endTime;
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        setHover(null);
+        onSelect(current);
+        return;
+      default:
+        return;
+    }
+    event.preventDefault();
+    setKeyboardTime(next);
+    const segment = findHealthStatusSegmentAt(segments, next);
+    if (segment) {
+      setHover({
+        cursorX: ((next - startTime) / totalDuration) * (barRef.current?.offsetWidth ?? 0),
+        label: segment.label,
+        timestamp: next
+      });
+    }
   };
 
   const handleBarMouseLeave = (): void => {
@@ -186,6 +247,12 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
           ref={barRef}
           className={ribbonBarStyle}
           data-test="health-ribbon-bar"
+          role="button"
+          tabIndex={0}
+          aria-label={t('Select a time to troubleshoot health. Use arrow keys to move, then press Enter.')}
+          onClick={handleBarClick}
+          onKeyDown={handleBarKeyDown}
+          onBlur={handleBarMouseLeave}
           onMouseLeave={handleBarMouseLeave}
           onMouseMove={handleBarMouseMove}
         >
