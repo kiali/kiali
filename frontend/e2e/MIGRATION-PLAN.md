@@ -96,8 +96,9 @@
   `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
 - [x] `@waypoint-tracing` suite ported (`playwright-ambient` → `yarn playwright:run:waypoint`; heatmap
   hover scenarios deferred)
-- [ ] `@ambient-multi-primary` suite passes (specs + `playwright-ambient-multi-primary` CI on `issue9712_ambient-multi-primary`; `@waypoint-multicluster` deferred)
-- [ ] `@waypoint-multicluster` suite passes
+- [x] `@ambient-multi-primary` suite ported (`playwright-ambient-multi-primary` CI; KinD multi-primary ambient)
+- [x] `@waypoint-multicluster` suite ported on `issue9712_waypoint-multicluster` (5 scenarios;
+  `playwright-ambient-multi-primary` CI sets `--waypoint true`, then runs ambient-multi-primary + waypoint-multicluster)
 - [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
 - [ ] `@multi-primary` suite first slice ported (`playwright-multi-primary` CI; mesh + west wizards;
   authorization RBAC / restricted remote ns deferred)
@@ -187,8 +188,9 @@ Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
 | `waypoint_demo_details.spec.ts` | Demo-NS Waypoint tab / L7 links |
 | `waypoint_sidecar_ambient.spec.ts` | Sidecar↔ambient graph, config issues, Add to Ambient |
 | `waypoint_tracing_*.spec.ts` | `@waypoint-tracing` mesh/details/logs/graph (heatmaps deferred) |
+| `waypoint_multicluster.spec.ts` | `@waypoint-multicluster` on ambient multi-primary (`bookinfo-waypoints`) |
 
-**Still separate tags (not this port):** `@waypoint-multicluster`
+**Separate tags (not the single-cluster `@waypoint` port):** `@waypoint-tracing`, `@waypoint-multicluster`
 
 ## Waypoint-tracing port (`@waypoint-tracing`)
 
@@ -200,6 +202,12 @@ spans; graph side-panel Traces tab.
 
 **Deferred:** tooltip heat-map hover scenarios (reviews app/service/workload) until a stable
 Playwright hover helper exists for the scatterplot tooltip.
+
+## Waypoint multicluster (`@waypoint-multicluster`)
+
+**CI:** Same job as `@ambient-multi-primary` (`playwright-ambient-multi-primary`). Setup uses
+`--waypoint true` so baseline `bookinfo` stays L4 and `bookinfo-waypoints` is enrolled for L7.
+Run ambient-multi-primary, then `yarn playwright:run:waypoint-multicluster` with unique blob names.
 
 ### Learned lessons (converting ambient → waypoint)
 
