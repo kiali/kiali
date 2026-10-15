@@ -1449,9 +1449,9 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}" ]; then
   ensurePlaywrightReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # KinD east/west multi-primary ambient, in-cluster Kiali (MetalLB), anonymous auth.
-    # Waypoint demos are omitted; that coverage belongs to a separate suite.
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy anonymous --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
+    # KinD east/west multi-primary ambient + bookinfo-waypoints (--waypoint true),
+    # in-cluster Kiali (MetalLB), anonymous auth — same layout as Cypress ambient-multi-primary.
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy anonymous --ambient true --sail true --waypoint true ${HELM_CHARTS_DIR_ARG}
   fi
 
   infomsg "Setup complete."
@@ -1468,12 +1468,32 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_AMBIENT_MULTI_PRIMARY}" ]; then
   export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-west"
 
   cd "${SCRIPT_DIR}"/../frontend
+  # Ambient multi-primary then waypoint-multicluster (bookinfo-waypoints L7).
+  # Unique blob names + stash: a second Playwright run may wipe blob-report/.
+  blob_dir="${SCRIPT_DIR}/../frontend/playwright/blob-report"
+  blob_stash="${SCRIPT_DIR}/../frontend/playwright/blob-stash"
+  mkdir -p "${blob_stash}"
   set +e
-  yarn run playwright:run:ambient-multi-primary
-  PLAYWRIGHT_EXIT=$?
+  PLAYWRIGHT_BLOB_NAME=ambient-multi-primary yarn run playwright:run:ambient-multi-primary
+  AMP_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  PLAYWRIGHT_BLOB_NAME=waypoint-multicluster yarn run playwright:run:waypoint-multicluster
+  WAYPOINT_MC_EXIT=$?
+  if ls "${blob_dir}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_dir}"/*.zip "${blob_stash}/"
+  fi
+  mkdir -p "${blob_dir}"
+  if ls "${blob_stash}"/*.zip >/dev/null 2>&1; then
+    cp "${blob_stash}"/*.zip "${blob_dir}/"
+  fi
   set -e
   yarn run playwright:combine:reports
-  exit ${PLAYWRIGHT_EXIT}
+  if [ ${AMP_EXIT} -ne 0 ] || [ ${WAYPOINT_MC_EXIT} -ne 0 ]; then
+    exit 1
+  fi
+  exit 0
 elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_EXTERNAL_KIALI}" ]; then
   ensurePlaywrightReady
 

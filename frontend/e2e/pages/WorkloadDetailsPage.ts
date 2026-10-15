@@ -432,6 +432,15 @@ export class WorkloadDetailsPage extends BasePage {
     await expect(link.locator('xpath=ancestor::li[1]').locator('span').filter({ hasText: 'L7' })).toBeVisible();
   }
 
+  async expectL7WaypointLinkPointsToCluster(cluster: string): Promise<void> {
+    const link = this.getBySel('waypoint-link').first();
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute('href');
+    const dataHref = await link.getAttribute('data-href');
+    const target = href ?? dataHref ?? '';
+    expect(target).toContain(`clusterName=${cluster}`);
+  }
+
   async clickL7WaypointLink(waypointName: string): Promise<void> {
     await this.getBySel('waypoint-link').filter({ hasText: waypointName }).click();
     await waitForLoadingComplete(this.page);
