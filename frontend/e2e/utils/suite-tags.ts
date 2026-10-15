@@ -4,7 +4,7 @@
  */
 
 /** @smoke + @core-caching — smoke project and Cypress core-caching grep suite */
-export const smokeAndCoreCaching = { tag: ['@smoke', '@core-caching'] as const };
+export const smokeAndCoreCaching = { tag: ['@smoke', '@core-caching'] };
 
 /** @smoke only */
 export const smokeOnly = { tag: '@smoke' as const };
@@ -19,7 +19,7 @@ export const core1 = { tag: '@core-1' as const };
 export const core2 = { tag: '@core-2' as const };
 
 /** @smoke + @prometheus-disabled */
-export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disabled'] as const };
+export const smokeAndPrometheusDisabled = { tag: ['@smoke', '@prometheus-disabled'] };
 
 /** @crd-validation — frontend-core-optional Playwright / Cypress suite */
 export const crdValidationOnly = { tag: '@crd-validation' as const };
@@ -60,8 +60,11 @@ export const multiClusterOnly = { tag: '@multi-cluster' as const };
 /** @multi-primary — KinD multi-primary (sidecar) Playwright suite */
 export const multiPrimaryOnly = { tag: '@multi-primary' as const };
 
+/** @authorization — limited-user RBAC (dual-tagged @multi-primary in Cypress) */
+export const authorizationOnly = { tag: ['@authorization', '@multi-primary'] };
+
 /** @multi-mesh — extra control planes on a single cluster (istio-system-31 / istio-system-31-1) */
 export const multiMeshOnly = { tag: '@multi-mesh' as const };
 
 /** Dual-tagged mesh infra check: core-caching and multi-mesh suites */
-export const coreCachingAndMultiMesh = { tag: ['@core-caching', '@multi-mesh'] as const };
+export const coreCachingAndMultiMesh = { tag: ['@core-caching', '@multi-mesh'] };

@@ -102,6 +102,63 @@ export const expectTraceScatterplot = async (page: Page): Promise<void> => {
 };
 
 /**
+ * Find the SVG path `d` of a Victory scatter point with at least `minSpans` spans.
+ *
+ * TODO(#9712): replace with a data-test hook on the scatter points. Shared by the click
+ * (selectTrace*) and hover (tooltip heat map) paths so the fiber heuristic lives in one place.
+ */
+const findScatterPointPathD = async (page: Page, minSpans: number): Promise<string | null> => {
+  return await page.evaluate(min => {
+    const root = document.querySelector('[data-test="tracing-scatterplot"]');
+    if (!root) {
+      return null;
+    }
+    const getFiber = (el: Element): unknown => {
+      const key = Object.keys(el).find(k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'));
+      return key ? (el as unknown as Record<string, unknown>)[key] : null;
+    };
+    const hits: string[] = [];
+    const walk = (fiber: unknown): void => {
+      if (!fiber || typeof fiber !== 'object') {
+        return;
+      }
+      const f = fiber as {
+        elementType?: { name?: string } | string;
+        memoizedProps?: {
+          symbol?: string;
+          datum?: { trace?: { spans?: unknown[]; matched?: number } };
+          d?: string;
+        };
+        child?: unknown;
+        sibling?: unknown;
+      };
+      const typeName =
+        typeof f.elementType === 'string'
+          ? f.elementType
+          : typeof f.elementType?.name === 'string'
+            ? f.elementType.name
+            : '';
+      if (/oint/i.test(typeName) && f.memoizedProps?.symbol === 'circle') {
+        const trace = f.memoizedProps.datum?.trace;
+        const spans = trace?.matched ?? trace?.spans?.length ?? 0;
+        if (spans >= min) {
+          const child = f.child as { memoizedProps?: { d?: string } } | undefined;
+          const d = child?.memoizedProps?.d ?? f.memoizedProps.d;
+          if (d) {
+            hits.push(d);
+          }
+        }
+      }
+      walk(f.child);
+      walk(f.sibling);
+    };
+    walk(getFiber(root));
+    root.querySelectorAll('*').forEach(el => walk(getFiber(el)));
+    return hits[0] ?? null;
+  }, minSpans);
+};
+
+/**
  * Select a trace with at least `minSpans` spans.
  * Prefer clicking the Victory scatterplot; fall back to `traceId` URL param.
  * TODO(#9712): Prefer data-test on scatter points when available (same fiber caveat as graphTopology).
@@ -112,62 +169,13 @@ export const selectTraceWithMinSpans = async (page: Page, minSpans = 0, fallback
 
   try {
     await expect(async () => {
-      const pathD = await page.evaluate(min => {
-        const root = document.querySelector('[data-test="tracing-scatterplot"]');
-        if (!root) {
-          return null;
-        }
-        const getFiber = (el: Element): unknown => {
-          const key = Object.keys(el).find(
-            k => k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$')
-          );
-          return key ? (el as unknown as Record<string, unknown>)[key] : null;
-        };
-        const hits: string[] = [];
-        const walk = (fiber: unknown): void => {
-          if (!fiber || typeof fiber !== 'object') {
-            return;
-          }
-          const f = fiber as {
-            elementType?: { name?: string } | string;
-            memoizedProps?: {
-              symbol?: string;
-              datum?: { trace?: { spans?: unknown[]; matched?: number } };
-              d?: string;
-            };
-            child?: unknown;
-            sibling?: unknown;
-          };
-          const typeName =
-            typeof f.elementType === 'string'
-              ? f.elementType
-              : typeof f.elementType?.name === 'string'
-                ? f.elementType.name
-                : '';
-          if (/oint/i.test(typeName) && f.memoizedProps?.symbol === 'circle') {
-            const trace = f.memoizedProps.datum?.trace;
-            const spans = trace?.matched ?? trace?.spans?.length ?? 0;
-            if (spans >= min) {
-              const child = f.child as { memoizedProps?: { d?: string } } | undefined;
-              const d = child?.memoizedProps?.d ?? f.memoizedProps.d;
-              if (d) {
-                hits.push(d);
-              }
-            }
-          }
-          walk(f.child);
-          walk(f.sibling);
-        };
-        walk(getFiber(root));
-        root.querySelectorAll('*').forEach(el => walk(getFiber(el)));
-        return hits[0] ?? null;
-      }, minSpans);
+      const pathD = await findScatterPointPathD(page, minSpans);
 
       if (!pathD) {
         throw new Error(`No scatterplot point with >= ${minSpans} spans yet`);
       }
 
-      await scatter.locator(`path[d="${pathD}"]`).click({ force: true });
+      await scatter.locator(`path[d="${pathD}"]`).first().click({ force: true });
       await expect(page.getByTestId('trace-details-tabs')).toBeVisible({ timeout: 10_000 });
     }).toPass({ intervals: [3_000], timeout: 45_000 });
     return;
@@ -188,6 +196,32 @@ export const selectTraceWithMinSpans = async (page: Page, minSpans = 0, fallback
 /** Select any available trace (minSpans=0). */
 export const selectTrace = async (page: Page, fallbackTraceId?: string): Promise<void> => {
   await selectTraceWithMinSpans(page, 0, fallbackTraceId);
+};
+
+/** Hover a scatterplot point with at least `minSpans` spans (tooltip heat map scenarios). */
+export const hoverTraceScatterplotWithMinSpans = async (page: Page, minSpans = 4): Promise<void> => {
+  const scatter = page.getByTestId('tracing-scatterplot');
+  await expect(scatter).toBeVisible({ timeout: 60_000 });
+
+  await expect(async () => {
+    const pathD = await findScatterPointPathD(page, minSpans);
+
+    if (!pathD) {
+      throw new Error(`No scatterplot point with >= ${minSpans} spans yet`);
+    }
+
+    // Victory emits the same `d` for points sharing plot coordinates, so scope to one.
+    await scatter.locator(`path[d="${pathD}"]`).first().hover({ force: true });
+  }).toPass({ intervals: [3_000], timeout: 60_000 });
+};
+
+export const expectTraceTooltipHeatmap = async (page: Page): Promise<void> => {
+  const tooltip = page.getByTestId('trace-tooltip');
+  await expect(tooltip).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('trace-tooltip-heatmap')).toBeVisible({ timeout: 20_000 });
+  // Cells render a numeric value once the heat map has data ("n/a" until then).
+  await expect(page.getByTestId('trace-tooltip-heatmap-area')).toHaveText(/\d/);
+  await expect(tooltip.locator('[role="progressbar"]')).toHaveCount(0);
 };
 
 export const expectTraceDetails = async (page: Page): Promise<void> => {

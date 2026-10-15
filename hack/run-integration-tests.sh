@@ -1519,8 +1519,18 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_PRIMARY}" ]; then
   ensurePlaywrightReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    # KinD east/west multi-primary (sidecar), in-cluster Kiali (MetalLB), anonymous auth.
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy anonymous --sail true ${HELM_CHARTS_DIR_ARG}
+    # KinD east/west multi-primary (sidecar), in-cluster Kiali (MetalLB), openid/Keycloak — matches Cypress multi-primary.
+    if [ -n "$KEYCLOAK_LIMIT_MEMORY" ]; then
+        MEMORY_LIMIT_ARG="-klm $KEYCLOAK_LIMIT_MEMORY"
+    else
+        MEMORY_LIMIT_ARG=""
+    fi
+    if [ -n "$KEYCLOAK_REQUESTS_MEMORY" ]; then
+       MEMORY_REQUEST_ARG="-krm $KEYCLOAK_REQUESTS_MEMORY"
+    else
+       MEMORY_REQUEST_ARG=""
+    fi
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "multi-primary" ${ISTIO_VERSION_ARG} --auth-strategy openid --sail true ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
   fi
 
   ensureKialiServerReady
@@ -1529,6 +1539,8 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_PRIMARY}" ]; then
   export PLAYWRIGHT_BASE_URL="${KIALI_URL}"
   export PLAYWRIGHT_CLUSTER1_CONTEXT="kind-east"
   export PLAYWRIGHT_CLUSTER2_CONTEXT="kind-west"
+  export PLAYWRIGHT_USERNAME="kiali"
+  export PLAYWRIGHT_PASSWD="kiali"
 
   if [ "${SETUP_ONLY}" == "true" ]; then
     exit 0
