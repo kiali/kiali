@@ -27,7 +27,7 @@ import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
-import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
+import { INITIAL_AI_RIGHT_VIEW_STATE, INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
 import { Theme } from 'types/Common';
 import {
   isColorScheme,
@@ -157,6 +157,7 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
 const initialStore: KialiAppState = {
   ai: {
     chat: INITIAL_CHAT_AI_STATE,
+    consumption: INITIAL_AI_RIGHT_VIEW_STATE,
     enabled: false
   },
   authentication: INITIAL_LOGIN_STATE,

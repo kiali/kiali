@@ -7,7 +7,7 @@ const normalizeConversationModule = (module: unknown): Partial<ChatResponse> => 
   }
   if (module && typeof module === 'object' && 'default' in (module as { default?: unknown })) {
     const payload = (module as { default?: unknown }).default;
-    return typeof payload === 'string' ? { answer: payload } : (payload as Partial<ChatResponse>) ?? {};
+    return typeof payload === 'string' ? { answer: payload } : ((payload as Partial<ChatResponse>) ?? {});
   }
   return (module as Partial<ChatResponse>) ?? {};
 };

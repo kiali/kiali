@@ -138,21 +138,22 @@ export const buildPromptVariables = (
 
   const cluster = ctx.clusterName && isMultiCluster ? ` in cluster '${ctx.clusterName}'` : '';
   const namespaces = ctx.namespaceList || 'currently selected';
-  const namespace = ctx.resourceKind === 'namespace' ? ctx.resourceName ?? '' : ctx.namespace ?? ctx.resourceName ?? '';
+  const namespace =
+    ctx.resourceKind === 'namespace' ? (ctx.resourceName ?? '') : (ctx.namespace ?? ctx.resourceName ?? '');
   const health = healthStatus && healthStatus !== 'NA' ? healthStatus : '';
 
   return {
     ...PROMPT_VARIABLE_DEFAULTS,
-    application: ctx.resourceKind === 'application' ? ctx.resourceName ?? '' : '',
+    application: ctx.resourceKind === 'application' ? (ctx.resourceName ?? '') : '',
     cluster,
     health,
     health_context: formatHealthContext(healthStatus),
-    istio_object: ctx.resourceKind === 'istio' ? ctx.resourceName ?? '' : '',
+    istio_object: ctx.resourceKind === 'istio' ? (ctx.resourceName ?? '') : '',
     istio_type: ctx.istioType ?? '',
     namespace,
     namespaces,
-    service: ctx.resourceKind === 'service' ? ctx.resourceName ?? '' : '',
-    workload: ctx.resourceKind === 'workload' ? ctx.resourceName ?? '' : ''
+    service: ctx.resourceKind === 'service' ? (ctx.resourceName ?? '') : '',
+    workload: ctx.resourceKind === 'workload' ? (ctx.resourceName ?? '') : ''
   };
 };
 

@@ -1077,6 +1077,106 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "",
 		},
+		"consumption budgets valid": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"alice", "bob"},
+						Interval:         WeeklyBudget,
+						MaxCost:          10.50,
+						MaxTokens:        1.0,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+						AllowedModels:    []string{"gpt-4"},
+					},
+					{
+						Usernames:        []string{"*"},
+						Interval:         MonthlyBudget,
+						MaxCost:          50.00,
+						MaxTokens:        5.0,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+					},
+				}
+			},
+			expectErr: "",
+		},
+		"consumption budgets invalid empty usernames": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{},
+						Interval:  WeeklyBudget,
+					},
+				}
+			},
+			expectErr: "usernames must not be empty",
+		},
+		"consumption budgets invalid interval": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  BudgetInterval("yearly"),
+					},
+				}
+			},
+			expectErr: "interval must be either 'weekly' or 'monthly'",
+		},
+		"consumption budgets negative max cost": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  WeeklyBudget,
+						MaxCost:   -5.0,
+					},
+				}
+			},
+			expectErr: "max_cost must be non-negative",
+		},
+		"consumption budgets negative max tokens": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  WeeklyBudget,
+						MaxTokens: -1.0,
+					},
+				}
+			},
+			expectErr: "max_tokens must be non-negative",
+		},
+		"consumption budgets invalid provider type not in chat providers": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"john"},
+						Interval:         WeeklyBudget,
+						AllowedProviders: []ProviderType{AnthropicProvider},
+					},
+				}
+			},
+			expectErr: "allowed provider \"anthropic\" is not defined in ai.chat.providers",
+		},
+		"consumption budgets invalid model name not in chat provider models": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"john"},
+						Interval:         WeeklyBudget,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+						AllowedModels:    []string{"invalid-model"},
+					},
+				}
+			},
+			expectErr: "allowed model \"invalid-model\" is not defined/enabled under any matching provider in ai.chat.providers",
+		},
 	}
 
 	for name, tc := range cases {
