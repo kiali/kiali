@@ -156,8 +156,8 @@ including `install-waypoints.sh`, **in-cluster Kiali** via MetalLB; anonymous au
 Waypoint enrollment mutates bookinfo, so CI runs **ambient first**, then `yarn playwright:run:waypoint`
 (`waypoint` + `waypoint-tracing`). Bookinfo enrollment and gateway traces readiness run in
 `waypoint-setup` / helpers. `@waypoint-tracing` covers mesh waypoints/ztunnel, details trace/span UI,
-workload log spans, and graph Traces tab (tooltip heat maps deferred). `@waypoint-multicluster`
-remains a separate suite.
+workload log spans, and graph Traces tab (tooltip heat maps deferred). Multicluster waypoint coverage
+runs under `playwright-ambient-multi-primary`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient
@@ -169,10 +169,19 @@ yarn playwright:run:waypoint
 
 ### Ambient multi-primary (`yarn playwright:run:ambient-multi-primary`)
 
-Ports Cypress `@ambient-multi-primary` scenarios (7 tests): workload graph traffic across east/west, mesh ambient badge and dual-cluster ztunnel/data planes, services/workloads list rows per cluster, service and workload Ambient badges. KinD **multi-primary** ambient Sail, **in-cluster** Kiali via MetalLB, anonymous auth. `@waypoint-multicluster` is deferred.
+Ports `@ambient-multi-primary` (7 tests) and `@waypoint-multicluster` (5 tests). KinD **multi-primary**
+ambient Sail with `--waypoint true` (baseline `bookinfo` without namespace enrollment plus
+`bookinfo-waypoints` for L7), **in-cluster** Kiali via MetalLB, anonymous auth.
+
+CI runs ambient-multi-primary first, then `yarn playwright:run:waypoint-multicluster` (unique
+`PLAYWRIGHT_BLOB_NAME`, combined reports) — same chain as Cypress `cypress:run:ambient-multi-primary`.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-ambient-multi-primary
+# locally after the cluster is up:
+cd frontend
+yarn playwright:run:ambient-multi-primary
+yarn playwright:run:waypoint-multicluster
 ```
 
 ### External Kiali (`yarn playwright:run:external-kiali`)
@@ -264,6 +273,7 @@ yarn playwright:run:perses
 yarn playwright:run:ambient
 yarn playwright:run:waypoint
 yarn playwright:run:ambient-multi-primary
+yarn playwright:run:waypoint-multicluster
 yarn playwright:run:external-kiali
 yarn playwright:run:multi-cluster
 yarn playwright:run:multi-primary

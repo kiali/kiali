@@ -70,17 +70,18 @@ export const selectOr = (elems: GraphDataElement[], ors: SelectOr): GraphDataEle
 export const NodeAttr = {
   app: 'app',
   cluster: 'cluster',
+  healthStatus: 'healthStatus',
   isBox: 'isBox',
+  isFind: 'isFind',
   isIdle: 'isIdle',
+  isOutside: 'isOutside',
+  isWaypoint: 'isWaypoint',
   namespace: 'namespace',
   nodeType: 'nodeType',
   rank: 'rank',
   service: 'service',
   version: 'version',
-  workload: 'workload',
-  healthStatus: 'healthStatus',
-  isFind: 'isFind',
-  isOutside: 'isOutside'
+  workload: 'workload'
 } as const;
 
 export const EdgeAttr = {
