@@ -223,7 +223,7 @@ func aggregate(sample *model.Sample, requests map[string]map[string]float64) {
 // CastWorkloadStatus returns a WorkloadStatus out of a given Workload
 func (w Workload) CastWorkloadStatus() *WorkloadStatus {
 	syncedProxies := int32(-1)
-	if w.HasIstioSidecar() && !w.IsGateway() {
+	if w.HasIstioSidecar() && !w.IsGatewayWorkload() {
 		syncedProxies = w.Pods.SyncedPodProxiesCount()
 	}
 

@@ -170,20 +170,20 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 
 // HasEnvoyProxyWorkload returns true when the workload exposes Envoy memory diagnostics.
 func HasEnvoyProxyWorkload(workload *models.Workload) bool {
-	if workload == nil || workload.IsZtunnel() {
+	if workload == nil || workload.IsZtunnelWorkload() {
 		return false
 	}
-	if workload.IsGateway() || workload.IsWaypoint() {
+	if workload.IsGatewayWorkload() || workload.IsWaypointWorkload() {
 		return true
 	}
 	return workload.HasIstioSidecar()
 }
 
 func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
-	if workload.IsGateway() {
+	if workload.IsGatewayWorkload() {
 		return models.EnvoyProxyTypeGateway
 	}
-	if workload.IsWaypoint() {
+	if workload.IsWaypointWorkload() {
 		return models.EnvoyProxyTypeWaypoint
 	}
 	return models.EnvoyProxyTypeSidecar

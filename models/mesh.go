@@ -269,8 +269,8 @@ func (m MeshConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	var meshUnstructured map[string]any
-	if err := json.Unmarshal(originalJSON, &meshUnstructured); err != nil {
-		return nil, err
+	if unmarshalErr := json.Unmarshal(originalJSON, &meshUnstructured); unmarshalErr != nil {
+		return nil, unmarshalErr
 	}
 
 	if _, ok := meshUnstructured["outboundTrafficPolicy"]; ok {

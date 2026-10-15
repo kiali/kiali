@@ -182,8 +182,8 @@ func TestParseWaypointPodToWorkload(t *testing.T) {
 	assert.Equal("2709198702082918", w.ResourceVersion)
 	assert.Equal("Pod", w.WorkloadGVK.Kind)
 	assert.False(w.IsAmbient)
-	assert.True(w.IsWaypoint())
-	assert.False(w.IsGateway())
+	assert.True(w.IsWaypointWorkload())
+	assert.False(w.IsGatewayWorkload())
 	assert.Equal(int32(1), w.DesiredReplicas)
 	assert.Equal(int32(1), w.CurrentReplicas)
 	assert.Equal(int32(1), w.AvailableReplicas)
@@ -302,7 +302,7 @@ func TestIsGatewayLabelsToWorkload(t *testing.T) {
 			w.Labels = tc.Labels
 			w.TemplateAnnotations = tc.TemplateAnnotations
 
-			require.Equal(tc.ShouldBeGateway, w.IsGateway())
+			require.Equal(tc.ShouldBeGateway, w.IsGatewayWorkload())
 		})
 	}
 }
