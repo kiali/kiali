@@ -57,6 +57,13 @@ export const tracingOnly = { tag: '@tracing' as const };
 /** @multi-cluster — primary-remote KinD (excludes dual-tagged @multi-primary scenarios) */
 export const multiClusterOnly = { tag: '@multi-cluster' as const };
 
+/**
+ * @multi-cluster-mutations — scales istiod/grafana down on east, breaking istio
+ * webhook-validated writes cluster-wide. Runs in a separate sequential project
+ * after the multi-cluster project so it never overlaps parallel workers.
+ */
+export const multiClusterMutating = { tag: '@multi-cluster-mutations' as const };
+
 /** @multi-primary — KinD multi-primary (sidecar) Playwright suite */
 export const multiPrimaryOnly = { tag: '@multi-primary' as const };
 

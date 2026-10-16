@@ -67,20 +67,23 @@ test.describe('Graph multi-cluster', () => {
   });
 
   test(
-    'Delete traffic routing from context menu on east details',
+    // Targets productpage, not details: the details VirtualService belongs to the
+    // serial routing tests in wizards.spec.ts, and a different file can run in
+    // parallel on the second CI worker.
+    'Delete traffic routing from context menu on east productpage',
     multiClusterOnly,
     async ({ graphPage, istioConfigPage, page, request }) => {
-      await ensureTrafficRoutingOnCluster(request, 'details', 'bookinfo', EAST);
+      await ensureTrafficRoutingOnCluster(request, 'productpage', 'bookinfo', EAST);
       await graphPage.graphNamespaces('bookinfo');
       await graphPage.expectGraphLoaded();
-      await graphPage.openContextMenuForService('details', EAST);
+      await graphPage.openContextMenuForService('productpage', EAST);
       await graphPage.clickContextMenuItem('delete_traffic_routing');
       await graphPage.expectDeleteTrafficRoutingModal();
       await graphPage.confirmDeleteTrafficRouting();
       await istioConfigPage.open();
       await selectNamespace(page, 'bookinfo');
-      await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'details', 'bookinfo', EAST);
-      await deleteRequestRoutingOnClusters(request, 'details');
+      await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'productpage', 'bookinfo', EAST);
+      await deleteRequestRoutingOnClusters(request, 'productpage');
     }
   );
 
