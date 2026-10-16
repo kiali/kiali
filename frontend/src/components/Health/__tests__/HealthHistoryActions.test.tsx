@@ -60,6 +60,16 @@ describe('health history click actions', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it.each([
+    [150, '25%'],
+    [450, '75%']
+  ])('anchors the popover at click position %s instead of the ribbon center', async (clientX, left) => {
+    const { ribbon } = setup();
+    fireEvent.click(ribbon, { clientX });
+    await screen.findByTestId('health-history-actions');
+    expect(screen.getByTestId('health-history-popover-anchor')).toHaveStyle({ left });
+  });
+
   it('changes the window locally, then applies it when opening a detail tab', async () => {
     const { ribbon, onSelect } = setup();
     fireEvent.click(ribbon, { clientX: 300 });
@@ -78,6 +88,7 @@ describe('health history click actions', () => {
     const replay = await screen.findByTestId('health-history-replay');
     const url = new URL(replay.getAttribute('href')!, 'http://kiali');
     expect(url.searchParams.get('replayStart')).toBe(String((startTime - 240) * 1000));
+    expect(parseFloat(screen.getByTestId('health-history-popover-anchor').style.left)).toBeCloseTo(100 / 60);
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
     expect(onSelect).not.toHaveBeenCalled();
