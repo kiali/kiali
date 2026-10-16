@@ -229,8 +229,9 @@ export const expectTraceTooltipHeatmap = async (page: Page): Promise<void> => {
   const tooltip = page.getByTestId('trace-tooltip');
   await expect(tooltip).toBeVisible({ timeout: 10_000 });
   await expect(page.getByTestId('trace-tooltip-heatmap')).toBeVisible({ timeout: 20_000 });
-  // Cells render a numeric value once the heat map has data ("n/a" until then).
-  await expect(page.getByTestId('trace-tooltip-heatmap-area')).toHaveText(/\d/);
+  // Compact heat maps render only colored cells with no text; "n/a" means the stats
+  // matrix completed without data.
+  await expect(page.getByTestId('trace-tooltip-heatmap-area')).not.toContainText('n/a');
   await expect(tooltip.locator('[role="progressbar"]')).toHaveCount(0);
 };
 
