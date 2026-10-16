@@ -1,8 +1,10 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Spinner, Title, TitleSizes } from '@patternfly/react-core';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { HealthStatusRibbon } from './HealthStatusRibbon';
+import { HealthHistoryActions } from './HealthHistoryActions';
 import { alignPrometheusRange } from './HealthStatusRibbonUtils';
 import { isHealthHistoryAvailable } from '../../config';
 import { serverConfig } from '../../config/ServerConfig';
@@ -204,7 +206,23 @@ export const HealthHistoryCard: React.FC<HealthHistoryCardProps> = ({
             <Spinner size="md" />
           </div>
         ) : ribbonEnd > startTime ? (
-          <HealthStatusRibbon datapoints={datapoints} endTime={ribbonEnd} startTime={startTime} step={step} />
+          <HealthHistoryActions
+            key={`${cluster}-${namespace}-${healthType}-${name}`}
+            cluster={cluster}
+            healthType={healthType}
+            name={name}
+            namespace={namespace}
+          >
+            {onSelect => (
+              <HealthStatusRibbon
+                datapoints={datapoints}
+                endTime={ribbonEnd}
+                onSelect={onSelect}
+                startTime={startTime}
+                step={step}
+              />
+            )}
+          </HealthHistoryActions>
         ) : (
           <div className={emptyStateStyle}>{t('No health history available.')}</div>
         )}

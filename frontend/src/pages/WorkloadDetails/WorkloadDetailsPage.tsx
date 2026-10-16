@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -183,6 +184,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             }}
             tabMap={paramToTab}
             tabName={tabName}
+            customTimeTabs={['in_metrics', 'out_metrics', 'logs', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
