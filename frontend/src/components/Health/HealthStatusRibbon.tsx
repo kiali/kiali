@@ -10,7 +10,7 @@ import { buildHealthStatusSegments, findHealthStatusSegmentAt, formatAxisTimeLab
 type HealthStatusRibbonProps = {
   datapoints: Datapoint[];
   endTime: number;
-  onSelect: (timestamp: number) => void;
+  onSelect: (timestamp: number, position: number) => void;
   startTime: number;
   step: number;
 };
@@ -175,7 +175,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
     if (timestamp !== undefined) {
       setKeyboardTime(timestamp);
       setHover(null);
-      onSelect(timestamp);
+      onSelect(timestamp, (timestamp - startTime) / totalDuration);
     }
   };
 
@@ -199,7 +199,7 @@ export const HealthStatusRibbon: React.FC<HealthStatusRibbonProps> = ({
       case ' ':
         event.preventDefault();
         setHover(null);
-        onSelect(current);
+        onSelect(current, totalDuration > 0 ? (current - startTime) / totalDuration : 0.5);
         return;
       default:
         return;
