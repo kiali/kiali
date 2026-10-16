@@ -39,7 +39,7 @@ test.describe('Workloads performance tests', () => {
       name: 'All Namespaces Workloads',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('workloads/namespaces', { ...listQuery, namespaces: perfParams.allNamespaces })
+      url: consoleUrl('workloads', { ...listQuery, namespaces: perfParams.allNamespaces })
     });
   });
 
@@ -49,7 +49,7 @@ test.describe('Workloads performance tests', () => {
       name: 'Selected Namespaces Workloads',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('workloads/namespaces', { ...listQuery, namespaces: perfParams.namespaces })
+      url: consoleUrl('workloads', { ...listQuery, namespaces: perfParams.namespaces })
     });
   });
 

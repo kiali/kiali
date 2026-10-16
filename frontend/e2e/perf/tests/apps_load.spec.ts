@@ -30,7 +30,7 @@ test.describe('Apps performance tests', () => {
       name: 'All Namespaces Apps',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('applications/namespaces', { ...listQuery, namespaces: perfParams.allNamespaces })
+      url: consoleUrl('applications', { ...listQuery, namespaces: perfParams.allNamespaces })
     });
   });
 
@@ -40,7 +40,7 @@ test.describe('Apps performance tests', () => {
       name: 'Selected Namespaces Apps',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('applications/namespaces', { ...listQuery, namespaces: perfParams.namespaces })
+      url: consoleUrl('applications', { ...listQuery, namespaces: perfParams.namespaces })
     });
   });
 

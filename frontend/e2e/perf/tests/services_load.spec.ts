@@ -29,7 +29,7 @@ test.describe('Services performance tests', () => {
       name: 'All Namespaces Services',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('services/namespaces', { ...listQuery, namespaces: perfParams.allNamespaces })
+      url: consoleUrl('services', { ...listQuery, namespaces: perfParams.allNamespaces })
     });
   });
 
@@ -39,7 +39,7 @@ test.describe('Services performance tests', () => {
       name: 'Selected Namespaces Services',
       ready: listReady,
       section: LIST_SECTION,
-      url: consoleUrl('services/namespaces', { ...listQuery, namespaces: perfParams.namespaces })
+      url: consoleUrl('services', { ...listQuery, namespaces: perfParams.namespaces })
     });
   });
 
