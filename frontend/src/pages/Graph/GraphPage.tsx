@@ -507,7 +507,11 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 </Label>
               )}
               {(!this.props.replayActive || isReplayReady) && (
-                <div id="pft-graph" className={graphContainerStyle}>
+                <div
+                  id="pft-graph"
+                  className={graphContainerStyle}
+                  data-ready={!this.state.graphData.isLoading && this.state.isReady}
+                >
                   <EmptyGraphLayout
                     action={this.handleEmptyGraphAction}
                     elements={this.state.graphData.elements}
