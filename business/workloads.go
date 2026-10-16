@@ -211,7 +211,7 @@ func (in *WorkloadService) GetGateways(ctx context.Context) (models.Workloads, e
 		}
 
 		clusterGateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
-			return w.IsGateway()
+			return w.IsGatewayWorkload()
 		})
 		gateways = append(gateways, clusterGateways...)
 	}
@@ -1717,7 +1717,7 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 			// Add the Proxy Status to the workload
 			addedWaypointsForWorkload := false
 			for _, pod := range w.Pods {
-				isWaypoint := w.IsWaypoint()
+				isWaypoint := w.IsWaypointWorkload()
 				if in.conf.ExternalServices.Istio.IstioAPIEnabled && (pod.HasIstioSidecar() || isWaypoint) {
 					pod.ProxyStatus = in.businessLayer.ProxyStatus.GetPodProxyStatus(cluster, w.Namespace, pod.Name, !isWaypoint)
 				}
@@ -1749,8 +1749,6 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 				if w.IsSpireServer() {
 					w.SpireInfo.IsSpireServer = true
 				}
-				// Also set on WorkloadListItem so it's available in lists
-				w.WorkloadListItem.SpireInfo = w.SpireInfo
 			}
 
 			ws = append(ws, w)
@@ -1837,13 +1835,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
 			Cluster:   criteria.Cluster,
+			Health:    *models.EmptyWorkloadHealth(),
 			Namespace: criteria.Namespace,
 		},
 		Pods:              models.Pods{},
 		Services:          []models.ServiceOverview{},
 		Runtimes:          []models.Runtime{},
 		AdditionalDetails: []models.AdditionalItem{},
-		Health:            *models.EmptyWorkloadHealth(),
 	}
 
 	// Check if user has access to the namespace (RBAC) in cache scenarios and/or
@@ -2247,13 +2245,13 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		w := models.Workload{
 			WorkloadListItem: models.WorkloadListItem{
 				Cluster:   criteria.Cluster,
+				Health:    *models.EmptyWorkloadHealth(),
 				Namespace: criteria.Namespace,
 			},
 			Pods:              models.Pods{},
 			Services:          []models.ServiceOverview{},
 			Runtimes:          []models.Runtime{},
 			AdditionalDetails: []models.AdditionalItem{},
-			Health:            *models.EmptyWorkloadHealth(),
 		}
 
 		// We have a controller with criteria.workloadName but if criteria.WorkloadType is specified and does
@@ -2428,11 +2426,11 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			w.SetPods(cPods, in.businessLayer.Mesh.IsControlPlane)
 		}
 
-		w.WorkloadListItem.IsGateway = w.IsGateway()
-		isWaypoint := w.IsWaypoint()
-		w.WorkloadListItem.IsWaypoint = isWaypoint
-		w.WorkloadListItem.IsZtunnel = w.IsZtunnel()
-		w.IsAmbient = isWaypoint || w.WorkloadListItem.IsZtunnel || w.HasIstioAmbient()
+		w.IsGateway = w.IsGatewayWorkload()
+		isWaypoint := w.IsWaypointWorkload()
+		w.IsWaypoint = isWaypoint
+		w.IsZtunnel = w.IsZtunnelWorkload()
+		w.IsAmbient = isWaypoint || w.IsZtunnel || w.HasIstioAmbient()
 
 		// Set SpireInfo if workload is SPIRE-managed or is a SPIRE server
 		spireMatches := w.SpireManagedIdentity()
@@ -2447,8 +2445,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if w.IsSpireServer() {
 				w.SpireInfo.IsSpireServer = true
 			}
-			// Also set on WorkloadListItem so it's available in lists
-			w.WorkloadListItem.SpireInfo = w.SpireInfo
 		}
 
 		// Add the Proxy Status to the workload
@@ -2521,7 +2517,7 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 			continue
 		}
 
-		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypoint() })
+		clusterWaypoints := sliceutil.Filter(gateways, func(gw *models.Workload) bool { return gw.IsWaypointWorkload() })
 		waypoints = append(waypoints, clusterWaypoints...)
 	}
 	in.cache.SetWaypoints(waypoints)
@@ -2958,7 +2954,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 	}
 
 	tracingName.App = workload
-	if wkd.IsGateway() || wkd.IsWaypoint() {
+	if wkd.IsGatewayWorkload() || wkd.IsWaypointWorkload() {
 		// Waypoints and Gateways doesn't have an app label, but they have valid traces data
 		tracingName.Lookup = workload
 		return tracingName, nil

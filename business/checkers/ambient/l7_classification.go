@@ -41,7 +41,7 @@ type VirtualServiceClassification struct {
 // FindNamespaceWaypoint returns whether any workload in the list is a waypoint proxy.
 func FindNamespaceWaypoint(workloads models.Workloads) (bool, string) {
 	for _, wl := range workloads {
-		if wl != nil && wl.IsWaypoint() {
+		if wl != nil && wl.IsWaypointWorkload() {
 			return true, wl.Name
 		}
 	}
