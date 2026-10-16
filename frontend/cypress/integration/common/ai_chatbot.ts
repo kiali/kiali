@@ -580,7 +580,7 @@ Given('two AI providers are configured', () => {
         : [{ name: 'test-model', model: 'test-model', enabled: true }];
 
     store.dispatch({
-      type: 'CHAT_AI_SET_CHAT_AI',
+      type: 'CHAT_AI_SET_AI_CHAT',
       payload: {
         allowed: aiState.allowed,
         enabled: aiState.enabled,
@@ -604,7 +604,7 @@ Given('two AI providers are configured', () => {
 /**
  * Simulates the backend marking the current user as not allowed to use ChatAI
  * (e.g. because "allowedUsers" is configured and the user is not in the list).
- * Dispatches the same CHAT_AI_SET_CHAT_AI action the app dispatches after login,
+ * Dispatches the same CHAT_AI_SET_AI_CHAT action the app dispatches after login,
  * but with allowed:false, leaving every other field untouched.
  */
 Given('the user is not allowed to use the AI chatbot', () => {
@@ -621,7 +621,7 @@ Given('the user is not allowed to use the AI chatbot', () => {
 
     const aiState = store.getState().ai.chat;
     store.dispatch({
-      type: 'CHAT_AI_SET_CHAT_AI',
+      type: 'CHAT_AI_SET_AI_CHAT',
       payload: {
         allowed: false,
         enabled: aiState.enabled,

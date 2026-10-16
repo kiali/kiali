@@ -17,30 +17,28 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { IRow, TableVariant } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
+import type { IRow } from '@patternfly/react-table';
 import { LocalTime } from 'components/Time/LocalTime';
-import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
 import * as API from 'services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
-import {
-  AITimeSeriesEntry,
-  ChatSessionUsageMetric,
-  ChatSessionUsageResponse,
-  formatCost,
-  formatTokensInMillions
-} from 'types/Chatbot';
+import { formatCost, formatTokensInMillions } from 'types/Chatbot';
+import type { AITimeSeriesEntry, ChatSessionUsageMetric, ChatSessionUsageResponse } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { onAIResponseReceived } from 'utils/aiEvents';
 import { ClusterIcon, CogIcon, CubesIcon, DesktopIcon, MoneyBillIcon } from '@patternfly/react-icons';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { AIStats } from './AIStats';
 import { BudgetBulletCard, CurrentWeekThresholdChart } from './AIUsageCharts';
 import { getWeekNumber } from './AIStats/calculationData';
 import { TokensMillionsValue } from './TokensMillionsValue';
+import { formatBudgetIntervalTitle } from './aiDashboardUtils';
 
 const contentStyle = kialiStyle({
   minHeight: 0
@@ -167,13 +165,13 @@ class AIStatsErrorBoundary extends React.Component<{ children: React.ReactNode }
     super(props);
     this.state = { error: null };
   }
-  static getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError(error: Error): { error: Error } {
     return { error };
   }
-  componentDidCatch(error: Error) {
+  componentDidCatch(error: Error): void {
     console.error('[AIStats] Chart render error:', error);
   }
-  render() {
+  render(): React.ReactNode {
     if (this.state.error) {
       return (
         <Alert variant="danger" title={t('Chart render error')} style={{ margin: PFSpacer.md }}>
@@ -296,7 +294,7 @@ export const AIUsage: React.FC = () => {
             <Grid hasGutter className={galleryStyle} data-test="ai-usage-budget">
               <GridItem span={12}>
                 <Title headingLevel="h2" size={TitleSizes.xl} className={columnTitleStyle}>
-                  {`${t('Budget')} (${budget.interval})`}
+                  {formatBudgetIntervalTitle(t, budget.interval)}
                 </Title>
               </GridItem>
               <GridItem span={12} md={6}>
@@ -370,6 +368,7 @@ export const AIUsage: React.FC = () => {
                   <div className={noteStyle}>
                     {t('Data calculated')} {t('Since')} {since ? <LocalTime time={since} /> : '-'}
                     <Button
+                      aria-label={t('Refresh')}
                       icon={<KialiIcon.Sync />}
                       id="refresh-metrics"
                       variant={ButtonVariant.link}

@@ -15,8 +15,9 @@ import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFColors } from 'components/Pf/PfColors';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
-import { UsageValueKind } from 'types/Chatbot';
+import type { UsageValueKind } from 'types/Chatbot';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { buildMonthRangeOptions, buildWeekRangeOptions } from '../aiDashboardUtils';
 
 // Sticks to the top of the consumption tab, which scrolls inside a padded container.
 const headerStyle = kialiStyle({
@@ -36,66 +37,9 @@ const headerStyle = kialiStyle({
   zIndex: 10
 });
 
-const WINDOW_OPTIONS_MAP: { [k: string]: string } = {
-  weekly: 'Weekly',
-  monthly: 'Monthly'
-};
-
-const getISOWeek = (date: Date): { year: number; week: number } => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return { year: d.getUTCFullYear(), week: weekNo };
-};
-
-const getWeekOptions = (): { label: string; value: number }[] => {
-  const options: { label: string; value: number }[] = [];
-  const now = new Date();
-
-  // Start with the Monday of the current week
-  const current = new Date(now);
-  const day = current.getDay();
-  const diff = current.getDate() - day + (day === 0 ? -6 : 1);
-  current.setDate(diff);
-  current.setHours(0, 0, 0, 0);
-
-  // Generate last 52 weeks
-  for (let i = 0; i < 52; i++) {
-    const d = new Date(current.getTime() - i * 7 * 24 * 60 * 60 * 1000);
-    const { week } = getISOWeek(d);
-
-    const monthStr = d.toLocaleString('en-US', { month: 'short' });
-    const yearStr = d.getFullYear().toString().slice(-2);
-
-    options.push({
-      label: `W${week} ${monthStr} ${yearStr}`,
-      value: d.getTime()
-    });
-  }
-  return options;
-};
-
-const getMonthOptions = (): { label: string; value: number }[] => {
-  const options: { label: string; value: number }[] = [];
-  const now = new Date();
-  const current = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0));
-
-  for (let i = 0; i < 24; i++) {
-    const d = new Date(current);
-    d.setMonth(current.getMonth() - i);
-
-    const monthStr = d.toLocaleString('en-US', { month: 'short' });
-    const yearStr = d.getFullYear().toString().slice(-2);
-
-    options.push({
-      label: `${monthStr} ${yearStr}`,
-      value: d.getTime()
-    });
-  }
-  return options;
-};
+const rangeLabelStyle = kialiStyle({
+  marginRight: PFSpacer.sm
+});
 
 export const AIConsumptionHeader: React.FC<{
   fromVal: number;
@@ -109,7 +53,18 @@ export const AIConsumptionHeader: React.FC<{
 }> = ({ fromVal, onRangeChange, onValueKindChange, onWindowChange, title, toVal, valueKind, window }) => {
   const { t } = useKialiTranslation();
 
-  const options = window === 'weekly' ? getWeekOptions() : getMonthOptions();
+  const windowOptions = React.useMemo(
+    () => ({
+      monthly: t('Monthly'),
+      weekly: t('Weekly')
+    }),
+    [t]
+  );
+
+  const options = React.useMemo(
+    () => (window === 'weekly' ? buildWeekRangeOptions(t) : buildMonthRangeOptions()),
+    [t, window]
+  );
 
   // "From" options should only include values <= toVal
   const fromOptions: { [key: string]: string } = {};
@@ -162,14 +117,14 @@ export const AIConsumptionHeader: React.FC<{
                   id="ai-consumption-window-dd"
                   handleSelect={value => onWindowChange(value)}
                   value={window}
-                  label={WINDOW_OPTIONS_MAP[window] ?? window}
-                  options={WINDOW_OPTIONS_MAP}
+                  label={windowOptions[window] ?? window}
+                  options={windowOptions}
                   tooltip={t('Aggregation window')}
                 />
               </ToolbarItem>
               <ToolbarItem variant="separator" />
               <ToolbarItem>
-                <span style={{ marginRight: '0.5rem' }}>{t('From:')}</span>
+                <span className={rangeLabelStyle}>{t('From:')}</span>
                 <ToolbarDropdown
                   id="ai-consumption-from-dd"
                   handleSelect={value => onRangeChange(parseInt(value.slice(1), 10), toVal)}
@@ -181,7 +136,7 @@ export const AIConsumptionHeader: React.FC<{
               </ToolbarItem>
               <ToolbarItem variant="separator" />
               <ToolbarItem>
-                <span style={{ marginRight: '0.5rem' }}>{t('To:')}</span>
+                <span className={rangeLabelStyle}>{t('To:')}</span>
                 <ToolbarDropdown
                   id="ai-consumption-to-dd"
                   handleSelect={value => onRangeChange(fromVal, parseInt(value.slice(1), 10))}

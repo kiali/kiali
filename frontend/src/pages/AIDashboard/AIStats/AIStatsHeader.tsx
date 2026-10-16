@@ -1,3 +1,4 @@
+import * as React from 'react';
 import {
   Grid,
   GridItem,
@@ -12,25 +13,21 @@ import {
 } from '@patternfly/react-core';
 
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
-import { UsageValueKind } from 'types/Chatbot';
-import { useKialiTranslation } from 'utils/I18nUtils';
+import type { UsageValueKind } from 'types/Chatbot';
+import { formatLastDuration, useKialiTranslation } from 'utils/I18nUtils';
 
 const ALL_DURATION_OPTIONS: { label: string; value: number }[] = [
-  { value: 300, label: 'Last 5m' },
-  { value: 900, label: 'Last 15m' },
-  { value: 1800, label: 'Last 30m' },
-  { value: 3600, label: 'Last 1h' },
-  { value: 10800, label: 'Last 3h' },
-  { value: 21600, label: 'Last 6h' },
-  { value: 43200, label: 'Last 12h' },
-  { value: 86400, label: 'Last 1d' },
-  { value: 604800, label: 'Last 7d' },
-  { value: 2592000, label: 'Last 30d' }
+  { value: 300, label: '5m' },
+  { value: 900, label: '15m' },
+  { value: 1800, label: '30m' },
+  { value: 3600, label: '1h' },
+  { value: 10800, label: '3h' },
+  { value: 21600, label: '6h' },
+  { value: 43200, label: '12h' },
+  { value: 86400, label: '1d' },
+  { value: 604800, label: '7d' },
+  { value: 2592000, label: '30d' }
 ];
-
-const DURATION_OPTIONS_MAP: { [k: string]: string } = Object.fromEntries(
-  ALL_DURATION_OPTIONS.map(o => [String(o.value), o.label])
-);
 
 // All candidate step sizes, from finest to coarsest.
 const ALL_STEP_OPTIONS: { label: string; value: number }[] = [
@@ -67,6 +64,13 @@ export const AIStatsHeader: React.FC<{
   window: number;
 }> = ({ heading, hideTimeRange = false, onValueKindChange, onWindowChange, valueKind, window }) => {
   const { t } = useKialiTranslation();
+  const durationOptions = React.useMemo(
+    () =>
+      Object.fromEntries(ALL_DURATION_OPTIONS.map(option => [String(option.value), formatLastDuration(option.label)])),
+    [t]
+  );
+  const selectedDurationLabel = ALL_DURATION_OPTIONS.find(option => option.value === window)?.label ?? String(window);
+
   return (
     <Grid>
       <GridItem span={9}>
@@ -89,8 +93,8 @@ export const AIStatsHeader: React.FC<{
                         onWindowChange(newDuration, newStep);
                       }}
                       value={window}
-                      label={ALL_DURATION_OPTIONS.find(o => o.value === window)?.label ?? String(window)}
-                      options={DURATION_OPTIONS_MAP}
+                      label={formatLastDuration(selectedDurationLabel)}
+                      options={durationOptions}
                       tooltip={t('Metric time period')}
                     />
                   </ToolbarItem>
