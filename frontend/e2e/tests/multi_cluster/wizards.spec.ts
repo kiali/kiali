@@ -1,5 +1,10 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { EAST, deleteGatewayOnClusters, deleteRequestRoutingOnClusters } from '../../utils/multiCluster';
+import {
+  EAST,
+  deleteGatewayOnClusters,
+  deleteRequestRoutingOnClusters,
+  ensureTrafficRoutingOnCluster
+} from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
@@ -74,6 +79,31 @@ test.describe.serial('Multi-cluster istio wizards', () => {
       await serviceDetailsPage.expectIstioConfigTableEmpty();
       await deleteRequestRoutingOnClusters(request, 'details');
       await deleteGatewayOnClusters(request, 'details-gateway');
+    }
+  );
+
+  test(
+    // Lives here, not in graph.spec.ts: it creates and deletes the same `details`
+    // routing as the wizard chain above, and a different file can run in parallel
+    // on the second CI worker. Must target `details`: the confirm modal deletes
+    // every VirtualService routing to the target service, and productpage and
+    // reviews are routed by setup objects (the `bookinfo` ingress VirtualService,
+    // the `reviews` traffic-shifting VirtualService) whose collateral deletion
+    // blackholes mesh traffic for the rest of the run.
+    'Delete traffic routing from context menu on east details',
+    multiClusterOnly,
+    async ({ graphPage, istioConfigPage, page, request }) => {
+      await ensureTrafficRoutingOnCluster(request, 'details', 'bookinfo', EAST);
+      await graphPage.graphNamespaces('bookinfo');
+      await graphPage.expectGraphLoaded();
+      await graphPage.openContextMenuForService('details', EAST);
+      await graphPage.clickContextMenuItem('delete_traffic_routing');
+      await graphPage.expectDeleteTrafficRoutingModal();
+      await graphPage.confirmDeleteTrafficRouting();
+      await istioConfigPage.open();
+      await selectNamespace(page, 'bookinfo');
+      await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'details', 'bookinfo', EAST);
+      await deleteRequestRoutingOnClusters(request, 'details');
     }
   );
 });

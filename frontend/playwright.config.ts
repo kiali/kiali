@@ -173,10 +173,11 @@ export default defineConfig({
     {
       name: 'multi-cluster-mutations',
       grep: /@multi-cluster-mutations/,
-      dependencies: ['setup'],
       // Scales istiod/grafana to 0 on east, breaking istio writes cluster-wide.
-      // Projects run sequentially, so listing it after multi-cluster keeps it from
-      // overlapping tests scheduled in parallel on the second worker.
+      // Projects share workers and interleave freely, so only the multi-cluster
+      // dependency guarantees no overlap with that suite's tests still running
+      // on the other worker.
+      dependencies: ['setup', 'multi-cluster'],
       fullyParallel: false,
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },

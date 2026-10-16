@@ -59,8 +59,9 @@ export const multiClusterOnly = { tag: '@multi-cluster' as const };
 
 /**
  * @multi-cluster-mutations — scales istiod/grafana down on east, breaking istio
- * webhook-validated writes cluster-wide. Runs in a separate sequential project
- * after the multi-cluster project so it never overlaps parallel workers.
+ * webhook-validated writes cluster-wide. Runs in its own project that depends on
+ * the multi-cluster project in playwright.config.ts, so it never overlaps that
+ * suite's parallel workers.
  */
 export const multiClusterMutating = { tag: '@multi-cluster-mutations' as const };
 
