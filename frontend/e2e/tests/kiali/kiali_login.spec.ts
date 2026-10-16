@@ -48,6 +48,29 @@ test.describe('Kiali login', () => {
     await expect(page).toHaveURL(/overview/, { timeout: 60_000 });
   });
 
+  test('OpenShift login shows an error when the code exchange fails', smokeAndCoreCaching, async ({ page }) => {
+    const strategy = await getAuthStrategy(page);
+    test.skip(strategy !== 'openshift', 'Code-exchange failure requires openshift auth');
+
+    // Corrupt the authorization code on the way back from the IdP so Kiali's token
+    // exchange fails. Registered before the login flow starts: the callback arrives as
+    // a redirect during submitOpenShiftLoginForm.
+    await page.route('**/api/auth/callback*', async route => {
+      const url = new URL(route.request().url());
+      if (!url.searchParams.has('code')) {
+        await route.continue();
+        return;
+      }
+      url.searchParams.set('code', 'invalidcode');
+      await route.continue({ url: url.toString() });
+    });
+
+    await submitOpenShiftLoginForm(page, playwrightCredentials());
+
+    await expect(page.getByText('Openshift authentication failed.')).toBeVisible({ timeout: 60_000 });
+    await expect(page).toHaveURL(/openshift_error/, { timeout: 60_000 });
+  });
+
   test('An expiring session should show a pop up to renew', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy === 'anonymous', 'Session timeout requires a login-based auth strategy');

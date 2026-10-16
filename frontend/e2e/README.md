@@ -208,7 +208,9 @@ hack/run-integration-tests.sh --test-suite playwright-primary-remote --tests-onl
 
 ### Multi-primary (`yarn playwright:run:multi-primary`)
 
-Ports a first slice of Cypress `@multi-primary` scenarios: mesh topology (dataplane/controlplane per cluster, namespace panel donut/badge, no ambient badge on sidecar istiod), request routing / traffic policies / Istio config editor on west, and Gateway create in both clusters. CI uses KinD **multi-primary** Sail (sidecar, no ambient), anonymous auth, and in-cluster Kiali. Authorization RBAC and restricted remote-namespace graph/detail scenarios remain deferred.
+Ports the Cypress `@multi-primary` scenarios: mesh topology (dataplane/controlplane per cluster, namespace panel donut/badge, no ambient badge on sidecar istiod), request routing / traffic policies / Istio config editor on west, Gateway create in both clusters, graph context-menu and side-panel traffic routing for remote services, the Istio config list cluster column, and the `@authorization` limited-user RBAC + restricted remote-namespace graph scenarios. CI uses KinD **multi-primary** Sail (sidecar, no ambient), **openid/Keycloak** auth (the RBAC scenarios need a non-admin user; they skip on anonymous), and in-cluster Kiali.
+
+Everything that mutates `bookinfo/ratings` traffic routing lives in one serial block in `wizards.spec.ts` — Playwright schedules sibling spec *files* in parallel, so a second file deleting the same VirtualService mid-test is a flake source. The limited-user specs run with empty `storageState` so the admin's Keycloak SSO session does not suppress the login form.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-multi-primary

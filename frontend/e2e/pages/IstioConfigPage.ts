@@ -288,6 +288,58 @@ export class IstioConfigPage extends BasePage {
     await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_${type}_${name}`)).toHaveCount(0);
   }
 
+  async expectTrafficRoutingForServiceOnCluster(service: string, namespace: string, cluster: string): Promise<void> {
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`)).toBeVisible();
+    await expect(
+      this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`)
+    ).toBeVisible();
+  }
+
+  async expectNoTrafficRoutingForServiceOnCluster(service: string, namespace: string, cluster: string): Promise<void> {
+    // Anchor on a row that must be present first. A bare `not.toContainText` resolves on the
+    // first passing poll, so an empty or still-loading table would satisfy the absence checks.
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_Gateway_bookinfo-gateway`)).toBeVisible();
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_VirtualService_${service}`)).toHaveCount(
+      0
+    );
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_DestinationRule_${service}`)).toHaveCount(
+      0
+    );
+  }
+
+  /** Row columns scoped to one cluster — a name-only row filter matches east and west alike. */
+  async expectGatewayRowColumns(name: string, namespace: string, cluster: string): Promise<void> {
+    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Ns${namespace}_Gateway_${name}`);
+    await expect(row.locator('td[data-label="Cluster"]')).toContainText(cluster);
+    await expect(row.locator('td[data-label="Namespace"]')).toContainText(namespace);
+    await expect(row.locator('td[data-label="Type"]')).toContainText('Gateway');
+    await expect(
+      row
+        .locator('td[data-label="Name"]')
+        .locator(linkSelector(`/namespaces/${namespace}/istio/networking.istio.io/v1/Gateway/${name}`))
+    ).toBeVisible();
+  }
+
+  async expectBookinfoVirtualServiceOnClusterVisible(cluster: string, externalCluster: string): Promise<void> {
+    const row = this.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_bookinfo`);
+    await expect(row.locator('td[data-label="Cluster"]')).toContainText(cluster);
+    await expect(this.getBySel(`VirtualItem_Cluster${externalCluster}_Nsbookinfo_VirtualService_bookinfo`)).toHaveCount(
+      0
+    );
+  }
+
+  async expectForbiddenIstioConfigEmptyState(): Promise<void> {
+    await expect(this.page.locator('#empty-page-error')).toBeVisible({ timeout: 60_000 });
+    await expect(this.page.locator('#empty-page-error')).toContainText('No Istio object is selected');
+  }
+
+  async expectMulticlusterBookinfoGatewayAndVirtualService(): Promise<void> {
+    for (const cluster of ['east', 'west']) {
+      await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_Gateway_bookinfo-gateway`)).toBeVisible();
+      await expect(this.getBySel(`VirtualItem_Cluster${cluster}_Nsbookinfo_VirtualService_bookinfo`)).toBeVisible();
+    }
+  }
+
   async saveYamlAndWaitForPatch(name: string): Promise<void> {
     const patchPath = `/AuthorizationPolicy/${name}`;
     await expect(async () => {
