@@ -5,6 +5,8 @@ import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { AITopModelRow, AITopUserRow, AIUsageResponse, UsageValueKind } from 'types/Chatbot';
+import { useKialiTranslation } from 'utils/I18nUtils';
+import { formatAICost } from '../aiDashboardUtils';
 import { TokensMillionsValue } from '../TokensMillionsValue';
 
 const tablesToolbarStyle = kialiStyle({
@@ -33,10 +35,6 @@ const emptyStyle = kialiStyle({
   padding: PFSpacer.sm
 });
 
-const formatCost = (value: number, currency = 'USD'): string => {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
-};
-
 const generateTable = (
   summary: AITopModelRow[] | AITopUserRow[],
   columnNames: { name: string; value: string },
@@ -63,7 +61,7 @@ const generateTable = (
     if (valueKind === 'cost') {
       const costVal = item.cost?.total || 0;
       const currency = item.cost?.currency || 'USD';
-      return formatCost(costVal, currency);
+      return formatAICost(costVal, currency);
     }
     return <TokensMillionsValue fromMillions value={item.totalTokens} />;
   };
@@ -104,21 +102,22 @@ export const AIConsumptionTables: React.FC<{
   summary: AIUsageResponse['topSummary'] | null;
   valueKind: UsageValueKind;
 }> = ({ limit, onLimitChange, summary, valueKind }) => {
-  const valueColumn = valueKind === 'cost' ? 'Cost' : 'Tokens (M)';
+  const { t } = useKialiTranslation();
+  const valueColumn = valueKind === 'cost' ? t('Cost') : t('Tokens (M)');
   const modelColumnNames = {
-    name: 'Provider/Model',
+    name: t('Provider/Model'),
     value: valueColumn
   };
 
   const usernameColumnNames = {
-    name: 'Username',
+    name: t('Username'),
     value: valueColumn
   };
 
   return (
     <div>
       <div className={tablesToolbarStyle}>
-        <span>Show top:</span>
+        <span>{t('Show top:')}</span>
         <ToolbarDropdown
           id="ai-consumption-limit-dd"
           handleSelect={value => onLimitChange(parseInt(value, 10))}
@@ -129,22 +128,22 @@ export const AIConsumptionTables: React.FC<{
       </div>
       <Grid hasGutter>
         <GridItem span={6}>
-          <h4 className={tableTitleStyle}>Top {limit} Consumed Models</h4>
+          <h4 className={tableTitleStyle}>{t('Top {{limit}} Consumed Models', { limit })}</h4>
           <div className={tableScrollStyle}>
             {summary?.topModels && summary.topModels.length > 0 ? (
-              generateTable(summary.topModels, modelColumnNames, 'AIConsumptionTablesForModels', valueKind)
+              generateTable(summary.topModels, modelColumnNames, t('Top consumed models'), valueKind)
             ) : (
-              <p className={emptyStyle}>No model consumption</p>
+              <p className={emptyStyle}>{t('No model consumption')}</p>
             )}
           </div>
         </GridItem>
         <GridItem span={6}>
-          <h4 className={tableTitleStyle}>Top {limit} Consumed Users</h4>
+          <h4 className={tableTitleStyle}>{t('Top {{limit}} Consumed Users', { limit })}</h4>
           <div className={tableScrollStyle}>
             {summary?.topUsers && summary.topUsers.length > 0 ? (
-              generateTable(summary.topUsers, usernameColumnNames, 'AIConsumptionTablesForUsers', valueKind)
+              generateTable(summary.topUsers, usernameColumnNames, t('Top consumed users'), valueKind)
             ) : (
-              <p className={emptyStyle}>No user consumption</p>
+              <p className={emptyStyle}>{t('No user consumption')}</p>
             )}
           </div>
         </GridItem>

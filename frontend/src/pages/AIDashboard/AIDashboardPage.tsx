@@ -1,4 +1,4 @@
-import { Tab, Tabs, TabTitleIcon, TabTitleText, Title, TitleSizes, Tooltip } from '@patternfly/react-core';
+import { Tab, Tabs, TabTitleIcon, TabTitleText, Title, TitleSizes } from '@patternfly/react-core';
 import * as React from 'react';
 import { classes } from 'typestyle';
 import { AIUsage } from './AIUsage';
@@ -8,7 +8,7 @@ import { PFSpacer } from 'styles/PfSpacer';
 import { flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
 import { basicTabStyle } from 'styles/TabStyles';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { t } from 'utils/I18nUtils';
 import { AIConsumption } from './AIConsumption/AIConsumption';
 
@@ -33,9 +33,14 @@ const pageTitleStyle = kialiStyle({
 const TAB_CONSUMPTION = 'consumption';
 const TAB_SESSION_USAGE = 'session-usage';
 
+/** Metrics on (consumption.enabled) and user may open the cluster consumption tab (consumption.allowed). */
+function showConsumptionDashboard(aiConfig: KialiAppState['ai']): boolean {
+  return !!(aiConfig.consumption?.enabled && aiConfig.consumption.allowed);
+}
+
 function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
   const keys: string[] = [TAB_SESSION_USAGE];
-  if (aiConfig.consumption?.enabled && aiConfig.consumption.allowed) {
+  if (showConsumptionDashboard(aiConfig)) {
     keys.push(TAB_CONSUMPTION);
   }
   return keys;
@@ -43,13 +48,9 @@ function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
 
 export const AIDashboardPage: React.FC = () => {
   const aiConfig = useSelector((state: KialiAppState) => state.ai);
-  const username = useSelector((state: KialiAppState) => state.authentication.session?.username);
   const visibleTabKeys = React.useMemo(() => getVisibleTabKeys(aiConfig), [aiConfig]);
   const [activeTabKey, setActiveTabKey] = React.useState<string | number>(TAB_SESSION_USAGE);
-  const adminView = React.useMemo(
-    () => (aiConfig.consumption?.allowed && aiConfig.consumption.enabled ? true : false),
-    [aiConfig]
-  );
+  const adminView = React.useMemo(() => showConsumptionDashboard(aiConfig), [aiConfig]);
 
   React.useEffect(() => {
     if (!visibleTabKeys.includes(String(activeTabKey))) {
@@ -99,32 +100,24 @@ export const AIDashboardPage: React.FC = () => {
                 </div>
               )}
             </Tab>
-            {aiConfig.consumption?.enabled && (
-              <Tab
-                eventKey={TAB_CONSUMPTION}
-                title={
-                  <>
-                    <TabTitleIcon>
-                      <TenantIcon />
-                    </TabTitleIcon>
-                    <TabTitleText>{t('Consumption')}</TabTitleText>
-                  </>
-                }
-                aria-label={t('Consumption tab')}
-                isAriaDisabled={!aiConfig.consumption.allowed}
-                tooltip={
-                  !aiConfig.consumption.allowed ? (
-                    <Tooltip content={`AI consumption is not allowed for user ${username}`} />
-                  ) : undefined
-                }
-              >
-                {activeTabKey === TAB_CONSUMPTION && (
-                  <div className={tabContentStyle}>
-                    <AIConsumption />
-                  </div>
-                )}
-              </Tab>
-            )}
+            <Tab
+              eventKey={TAB_CONSUMPTION}
+              title={
+                <>
+                  <TabTitleIcon>
+                    <TenantIcon />
+                  </TabTitleIcon>
+                  <TabTitleText>{t('Consumption')}</TabTitleText>
+                </>
+              }
+              aria-label={t('Consumption tab')}
+            >
+              {activeTabKey === TAB_CONSUMPTION && (
+                <div className={tabContentStyle}>
+                  <AIConsumption />
+                </div>
+              )}
+            </Tab>
           </Tabs>
         </div>
       )}

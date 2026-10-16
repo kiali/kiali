@@ -47,8 +47,6 @@ export const TOKEN_METRIC_COLORS: Record<string, string> = {
   completionTokens: '#2E7D32' // forest green
 };
 
-// ── Lookup helpers ────────────────────────────────────────────────────────────
-
 /**
  * Returns the palette assigned to a provider.
  * Assignment is based on the provider's index in `specificProviders`

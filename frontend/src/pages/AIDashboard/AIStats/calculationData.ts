@@ -1,8 +1,7 @@
 import { formatCost, formatTokensInMillions } from 'types/Chatbot';
 import type { AITokenRow, AIUsageResponse, TokenMetric, UsageValueKind } from 'types/Chatbot';
+import { t } from 'utils/I18nUtils';
 import { buildColorScale } from './colorPalette';
-
-// ── Provider filter helpers ───────────────────────────────────────────────────
 
 /** Parses the provider string into a Set, or null for 'All'. */
 const toProviderSet = (provider: string): Set<string> | null =>
@@ -25,12 +24,11 @@ const matchesProvider = (set: Set<string> | null, p: string | undefined): boolea
  *  - multiple        → "provider/model" so each line stays identifiable
  */
 const rowLabel = (item: AITokenRow, set: Set<string> | null): string => {
-  if (set === null) return item.provider ?? 'Unknown';
-  if (set.size === 1) return item.model ?? 'Unknown';
-  return `${item.provider ?? '?'}/${item.model ?? '?'}`;
+  const unknown = t('Unknown');
+  if (set === null) return item.provider ?? unknown;
+  if (set.size === 1) return item.model ?? unknown;
+  return `${item.provider ?? unknown}/${item.model ?? unknown}`;
 };
-
-// ── Donut chart ───────────────────────────────────────────────────────────────
 
 export interface DonutDataPoint {
   x: string;
@@ -71,38 +69,6 @@ export const getDonutDataBy = (
   return { colorScale, data: donutData, legend: legendData, total };
 };
 
-// ── Stacked bar (consumption by token type) ───────────────────────────────────
-
-export interface ConsumptionByTokenTypeData {
-  name: string;
-  x: string;
-  y: number;
-}
-
-const legendConsumption: DonutLegendItem[] = [{ name: 'promptTokens' }, { name: 'completionTokens' }];
-
-export const getConsumptionByTokenTypeData = (
-  dataSummary: AIUsageResponse['summary']['byModel'] | null,
-  provider: string,
-  metric: TokenMetric
-): { data: ConsumptionByTokenTypeData[][]; legend: DonutLegendItem[] } => {
-  const set = toProviderSet(provider);
-  const rows = (dataSummary ?? []).filter(item => matchesProvider(set, item.provider));
-  const legend = metric === 'totalTokens' ? legendConsumption : [{ name: metric }];
-
-  const data: ConsumptionByTokenTypeData[][] = legend.map(legendItem =>
-    rows.map(item => ({
-      name: legendItem.name,
-      x: rowLabel(item, set),
-      y: item[legendItem.name as keyof AITokenRow] as number
-    }))
-  );
-
-  return { data, legend };
-};
-
-// ── Line chart ────────────────────────────────────────────────────────────────
-
 export interface LineDataPoint {
   name: string;
   x: string;
@@ -123,7 +89,10 @@ const formatTimestamp = (iso: string, window: string): string => {
     return `${d.toLocaleString([], { month: 'short' })}(${d.getFullYear().toString().slice(2)})`;
   }
   if (window === 'weekly') {
-    return `week-${getWeekNumber(d)} (${d.toLocaleString([], { month: 'short' })})`;
+    return t('week-{{week}} ({{month}})', {
+      week: getWeekNumber(d),
+      month: d.toLocaleString(undefined, { month: 'short' })
+    });
   }
   return d.toLocaleString([], {
     month: 'short',
@@ -212,8 +181,8 @@ export const getStackThresholdChartData = (
   const thresholdData =
     thresholdY > 0 && line.xTickValues.length > 0
       ? [
-          { name: 'Budget threshold', x: line.xTickValues[0], y: thresholdY },
-          { name: 'Budget threshold', x: line.xTickValues[line.xTickValues.length - 1], y: thresholdY }
+          { name: t('Budget threshold'), x: line.xTickValues[0], y: thresholdY },
+          { name: t('Budget threshold'), x: line.xTickValues[line.xTickValues.length - 1], y: thresholdY }
         ]
       : [];
 

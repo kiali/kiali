@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { ChartArea, ChartGroup, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
 import { Card, CardBody, CardHeader, Flex, Icon } from '@patternfly/react-core';
-import { AITokenRow, formatCost, formatTokensInMillions, TokenMetric, UsageValueKind } from 'types/Chatbot';
+import { formatCost, formatTokensInMillions } from 'types/Chatbot';
+import type { AITokenRow, TokenMetric, UsageValueKind } from 'types/Chatbot';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
@@ -106,8 +107,8 @@ export const AIKPICard: React.FC<AIKPICardProps> = ({
         )}
         <div style={{ height: '100px', width: '100%' }}>
           <ChartGroup
-            ariaDesc={`Chart ${title} ${seriesName}`}
-            ariaTitle={`Chart ${title} ${seriesName}`}
+            ariaDesc={t('{{title}} {{metric}} chart', { metric: seriesName, title })}
+            ariaTitle={t('{{title}} {{metric}} chart', { metric: seriesName, title })}
             maxDomain={{ y: cardValue || 1 }}
             padding={0}
             containerComponent={

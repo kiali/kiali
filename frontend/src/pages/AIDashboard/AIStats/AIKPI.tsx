@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Gallery, GalleryItem } from '@patternfly/react-core';
-import { AIUsageResponse, TokenMetric, UsageValueKind } from 'types/Chatbot';
+import type { AIUsageResponse, TokenMetric, UsageValueKind } from 'types/Chatbot';
 import { AIKPICard } from './AIKPICard';
 import { CubeIcon, ResourcesFullIcon } from '@patternfly/react-icons';
 import { ALL_ITEM_COLOR, getProviderColor } from './colorPalette';
 import { style } from 'typestyle';
+import { t } from 'utils/I18nUtils';
 
 interface AIKPIProps {
   metric: TokenMetric;
@@ -43,7 +44,7 @@ export const AIKPI: React.FC<AIKPIProps> = ({
   // Providers that are actual data providers (not the synthetic 'total').
   const specificProviders = summary.byProvider.map(p => p.provider ?? '').filter(p => p !== 'total');
 
-  const handleClick = (clickedProvider: string) => {
+  const handleClick = (clickedProvider: string): void => {
     setActiveProviders(prev => {
       const next = new Set(prev);
 
@@ -89,7 +90,7 @@ export const AIKPI: React.FC<AIKPIProps> = ({
             onClick={() => handleClick('total')}
             showTokens={showTokens}
             summary={totalEntry}
-            title="Total"
+            title={t('Total')}
             valueKind={valueKind}
           />
         </GalleryItem>

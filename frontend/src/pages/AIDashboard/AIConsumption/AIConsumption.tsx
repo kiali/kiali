@@ -12,6 +12,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { AIConsumptionHeader } from './AIConsumptionHeader';
 import { AIKPI } from '../AIStats/AIKPI';
 import { AIConsumptionTables } from './AIConsumptionTables';
+import { formatAICost, formatConsumptionRangeTitle } from '../aiDashboardUtils';
 
 const chartBoxStyle = kialiStyle({
   boxSizing: 'border-box',
@@ -41,20 +42,6 @@ const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number 
   return width;
 };
 
-// We need a helper to format costs
-const formatCost = (value: number, currency = 'USD'): string => {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
-};
-
-const getISOWeek = (date: Date): { week: number; year: number } => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return { year: d.getUTCFullYear(), week: weekNo };
-};
-
 const getDefaultRange = (window: string): { fromVal: number; toVal: number } => {
   const now = new Date();
   if (window === 'weekly') {
@@ -71,33 +58,6 @@ const getDefaultRange = (window: string): { fromVal: number; toVal: number } => 
     const from = new Date(to);
     from.setMonth(to.getMonth() - 4);
     return { fromVal: from.getTime(), toVal: to.getTime() };
-  }
-};
-
-const formatRangeTitle = (win: string, fVal: number, tVal: number): string => {
-  const fDate = new Date(fVal);
-  const tDate = new Date(tVal);
-
-  const fMonth = fDate.toLocaleString('en-US', { month: 'short' });
-  const fYear = fDate.getFullYear().toString().slice(-2);
-  const tMonth = tDate.toLocaleString('en-US', { month: 'short' });
-  const tYear = tDate.getFullYear().toString().slice(-2);
-
-  if (win === 'weekly') {
-    const fWeek = getISOWeek(fDate).week;
-    const tWeek = getISOWeek(tDate).week;
-
-    if (fVal === tVal) {
-      return `AI Consumption Week ${fWeek} ${fMonth} ${fYear}`;
-    } else {
-      return `AI Consumption Week ${fWeek} ${fMonth} ${fYear} - Week ${tWeek} ${tMonth} ${tYear}`;
-    }
-  } else {
-    if (fVal === tVal) {
-      return `AI Consumption ${fMonth} ${fYear}`;
-    } else {
-      return `AI Consumption ${fMonth} ${fYear} - ${tMonth} ${tYear}`;
-    }
   }
 };
 
@@ -211,6 +171,11 @@ export const AIConsumption: React.FC = () => {
     return totalRow?.cost?.currency || 'USD';
   }, [summary]);
 
+  const rangeTitle = React.useMemo(
+    () => formatConsumptionRangeTitle(t, window, fromVal, toVal),
+    [t, window, fromVal, toVal]
+  );
+
   const emptyState = (
     <EmptyState headingLevel="h4" titleText={t('No consumption stats yet')}>
       <EmptyStateBody>{t('This view will populate after you use Chat AI.')}</EmptyStateBody>
@@ -233,7 +198,7 @@ export const AIConsumption: React.FC = () => {
         }}
         onValueKindChange={setValueKind}
         onWindowChange={handleWindowChange}
-        title={formatRangeTitle(window, fromVal, toVal)}
+        title={rangeTitle}
         toVal={toVal}
         valueKind={valueKind}
         window={window}
@@ -262,8 +227,8 @@ export const AIConsumption: React.FC = () => {
               <div className={chartBoxStyle} ref={lineRef}>
                 {seriesData.length > 0 && chartWidth > 0 && (
                   <Chart
-                    ariaDesc={valueKind === 'cost' ? 'AI cost over time' : 'AI tokens over time'}
-                    ariaTitle={valueKind === 'cost' ? 'Cost time series' : 'Token time series'}
+                    ariaDesc={valueKind === 'cost' ? t('AI cost over time') : t('AI tokens over time')}
+                    ariaTitle={valueKind === 'cost' ? t('Cost time series') : t('Token time series')}
                     colorScale={lineColorScale}
                     containerComponent={
                       <ChartVoronoiContainer
@@ -271,7 +236,7 @@ export const AIConsumption: React.FC = () => {
                         labels={({ datum }) =>
                           datum.y != null
                             ? `${datum.name}: ${
-                                valueKind === 'cost' ? formatCost(datum.y, currency) : formatTokensInMillions(datum.y)
+                                valueKind === 'cost' ? formatAICost(datum.y, currency) : formatTokensInMillions(datum.y)
                               }`
                             : ''
                         }
@@ -286,14 +251,16 @@ export const AIConsumption: React.FC = () => {
                   >
                     <ChartAxis
                       tickValues={xTickValues}
-                      tickFormat={(t, i) => (i % Math.max(1, Math.floor(xTickValues.length / 12)) === 0 ? t : '')}
+                      tickFormat={(tick, i) => (i % Math.max(1, Math.floor(xTickValues.length / 12)) === 0 ? tick : '')}
                       style={{ tickLabels: { angle: -30, fontSize: 8 } }}
                     />
                     <ChartAxis
                       dependentAxis
                       showGrid
-                      tickFormat={t =>
-                        valueKind === 'cost' ? formatCost(t as number, currency) : formatTokensInMillions(t as number)
+                      tickFormat={tick =>
+                        valueKind === 'cost'
+                          ? formatAICost(tick as number, currency)
+                          : formatTokensInMillions(tick as number)
                       }
                     />
                     <ChartStack>
