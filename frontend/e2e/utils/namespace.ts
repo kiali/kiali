@@ -1,7 +1,41 @@
-import type { Page } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import { expect } from '@playwright/test';
 
+import { kialiUrl } from './kialiUrl';
 import { waitForLoadingComplete } from './transition';
+
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Wait until the Kiali API lists the namespace. The list is served from a
+ * server-side cache, so a namespace created moments ago can be missing for a
+ * few seconds after it exists in the cluster — and the namespace dropdown
+ * fetches the list only once per page load, so a page mounted against a stale
+ * list never shows the namespace. Same pattern as the /api/namespaces waits in
+ * waypointHelpers.ts.
+ */
+export const waitForNamespaceListed = async (
+  request: APIRequestContext,
+  namespace: string,
+  timeoutMs = 60_000
+): Promise<void> => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    let response;
+    try {
+      response = await request.get(kialiUrl('/api/namespaces'));
+    } catch {
+      await sleep(5_000);
+      continue;
+    }
+    const namespaces = (await response.json().catch(() => [])) as Array<{ name?: string }>;
+    if (response.ok() && namespaces.some(ns => ns.name === namespace)) {
+      return;
+    }
+    await sleep(5_000);
+  }
+  throw new Error(`Namespace ${namespace} not listed by the Kiali API within ${timeoutMs}ms`);
+};
 
 /** Select one or more namespaces in the Kiali namespace dropdown (additive — does not clear others). */
 export const selectNamespaces = async (page: Page, namespaces: string[]): Promise<void> => {

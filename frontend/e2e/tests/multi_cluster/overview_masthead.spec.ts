@@ -2,7 +2,7 @@ import { test } from '../../fixtures/kialiFixtures';
 import { getAuthStrategy } from '../../utils/auth-strategy';
 import { skipUnlessHealthyIstioComponents } from '../../utils/istioStatus';
 import { cluster1Context, EAST, scaleDeploymentOnContext } from '../../utils/multiCluster';
-import { multiClusterOnly } from '../../utils/suite-tags';
+import { multiClusterMutating, multiClusterOnly } from '../../utils/suite-tags';
 
 test.describe('Overview and masthead multi-cluster', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -29,7 +29,7 @@ test.describe('Overview and masthead multi-cluster', () => {
     await overviewPage.expectComponentStatusTooltipExcludes('Not', 'Unreachable');
   });
 
-  test('Masthead warning when grafana scaled down', multiClusterOnly, async ({ overviewPage }) => {
+  test('Masthead warning when grafana scaled down', multiClusterMutating, async ({ overviewPage }) => {
     try {
       scaleDeploymentOnContext(cluster1Context(), 'istio-system', 'grafana', 0);
       await overviewPage.open();
@@ -45,19 +45,23 @@ test.describe('Overview and masthead multi-cluster', () => {
     await overviewPage.expectComponentStatusTooltipExcludes('Not', 'Unreachable');
   });
 
-  test('Clusters card shows unhealthy clusters when istiod scaled down', multiClusterOnly, async ({ overviewPage }) => {
-    try {
-      scaleDeploymentOnContext(cluster1Context(), 'istio-system', 'istiod', 0);
+  test(
+    'Clusters card shows unhealthy clusters when istiod scaled down',
+    multiClusterMutating,
+    async ({ overviewPage }) => {
+      try {
+        scaleDeploymentOnContext(cluster1Context(), 'istio-system', 'istiod', 0);
+        await overviewPage.open();
+        await overviewPage.expectUnhealthyClusters();
+        await overviewPage.openClustersIssuesPopover();
+        await overviewPage.expectClustersPopoverShowsIssues();
+      } finally {
+        scaleDeploymentOnContext(cluster1Context(), 'istio-system', 'istiod', 1);
+      }
       await overviewPage.open();
-      await overviewPage.expectUnhealthyClusters();
-      await overviewPage.openClustersIssuesPopover();
-      await overviewPage.expectClustersPopoverShowsIssues();
-    } finally {
-      scaleDeploymentOnContext(cluster1Context(), 'istio-system', 'istiod', 1);
+      await overviewPage.expectAllClustersHealthy();
     }
-    await overviewPage.open();
-    await overviewPage.expectAllClustersHealthy();
-  });
+  );
 
   test('OpenShift dual-cluster login is skipped on anonymous', multiClusterOnly, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
