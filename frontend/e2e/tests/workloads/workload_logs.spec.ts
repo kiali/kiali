@@ -1,10 +1,10 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { hasLoggersNamespace } from '../../utils/kialiConfig';
-import { core2, coreCachingOnly } from '../../utils/suite-tags';
+import { core2AndOffline, coreCachingAndOffline } from '../../utils/suite-tags';
 
 test.describe('Workload logs tab core-caching', () => {
-  test('The logs tab should show the logs of a pod', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('The logs tab should show the logs of a pod', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     ensureDemoApp('bookinfo');
     await workloadDetailsPage.open('bookinfo', 'ratings-v1');
     await workloadDetailsPage.goToLogsTab();
@@ -17,7 +17,7 @@ test.describe('Workload logs tab core-caching', () => {
 
   test(
     'The log pane of the logs tab should limit the number of log lines that are fetched',
-    coreCachingOnly,
+    coreCachingAndOffline,
     async ({ workloadDetailsPage }) => {
       ensureDemoApp('bookinfo');
       await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
@@ -28,7 +28,7 @@ test.describe('Workload logs tab core-caching', () => {
 
   test(
     'The log pane of the logs tab should only show logs for the selected container',
-    coreCachingOnly,
+    coreCachingAndOffline,
     async ({ workloadDetailsPage }) => {
       ensureDemoApp('bookinfo');
       await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
@@ -45,7 +45,7 @@ test.describe('Workload logs tab core-2', () => {
 
   test(
     'The log pane of the logs tab should only show the lines with the requested text',
-    core2,
+    core2AndOffline,
     async ({ workloadDetailsPage }) => {
       await workloadDetailsPage.openLogsTab('loggers', 'custom-logger');
       await workloadDetailsPage.setLogShow('GET');
@@ -55,7 +55,7 @@ test.describe('Workload logs tab core-2', () => {
 
   test(
     'The log pane of the logs tab should hide the lines with the requested text',
-    core2,
+    core2AndOffline,
     async ({ workloadDetailsPage }) => {
       await workloadDetailsPage.openLogsTab('loggers', 'custom-logger');
       await workloadDetailsPage.setLogHide('GET');
@@ -65,7 +65,7 @@ test.describe('Workload logs tab core-2', () => {
 
   test(
     'The log pane of the logs tab should show json log lines with a json log indicator',
-    core2,
+    core2AndOffline,
     async ({ workloadDetailsPage }) => {
       await workloadDetailsPage.openLogsTab('loggers', 'json-logger');
       await workloadDetailsPage.setLogHide('text log format');
@@ -73,10 +73,14 @@ test.describe('Workload logs tab core-2', () => {
     }
   );
 
-  test('The json log should contain certain values on the parsed object', core2, async ({ workloadDetailsPage }) => {
-    await workloadDetailsPage.openLogsTab('loggers', 'json-logger');
-    await workloadDetailsPage.setLogHide('text log format');
-    await workloadDetailsPage.clickJsonLogLine();
-    await workloadDetailsPage.expectParsedJsonValues();
-  });
+  test(
+    'The json log should contain certain values on the parsed object',
+    core2AndOffline,
+    async ({ workloadDetailsPage }) => {
+      await workloadDetailsPage.openLogsTab('loggers', 'json-logger');
+      await workloadDetailsPage.setLogHide('text log format');
+      await workloadDetailsPage.clickJsonLogLine();
+      await workloadDetailsPage.expectParsedJsonValues();
+    }
+  );
 });

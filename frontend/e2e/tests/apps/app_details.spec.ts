@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
-import { coreCachingOnly } from '../../utils/suite-tags';
+import { coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('App details core-caching', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -10,16 +10,16 @@ test.describe('App details core-caching', () => {
     await appDetailsPage.openApp('bookinfo', 'details');
   });
 
-  test('See details for app', coreCachingOnly, async ({ appDetailsPage }) => {
+  test('See details for app', coreCachingAndOffline, async ({ appDetailsPage }) => {
     await appDetailsPage.expectDetailsForApp('details');
     await appDetailsPage.expectResourcesCard();
   });
 
-  test('See Inbound Metrics', coreCachingOnly, async ({ appDetailsPage }) => {
+  test('See Inbound Metrics', coreCachingAndOffline, async ({ appDetailsPage }) => {
     await appDetailsPage.expectInboundMetrics();
   });
 
-  test('See Outbound Metrics', coreCachingOnly, async ({ appDetailsPage }) => {
+  test('See Outbound Metrics', coreCachingAndOffline, async ({ appDetailsPage }) => {
     await appDetailsPage.expectOutboundMetrics();
   });
 

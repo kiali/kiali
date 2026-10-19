@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { waitForAnyServiceHealthStatus } from '../../utils/health';
-import { ambientOnly } from '../../utils/suite-tags';
+import { ambientAndOffline, ambientOnly } from '../../utils/suite-tags';
 
 test.describe('Ambient mesh', () => {
   test('Ambient badge is visible on namespaces list', ambientOnly, async ({ namespacesPage }) => {
@@ -22,7 +22,7 @@ test.describe('Ambient mesh', () => {
     await graphPage.expectTrafficMenuHidden();
   });
 
-  test('User sees tcp traffic', ambientOnly, async ({ graphPage }) => {
+  test('User sees tcp traffic', ambientAndOffline, async ({ graphPage }) => {
     test.setTimeout(180_000);
     await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');
@@ -35,7 +35,7 @@ test.describe('Ambient mesh', () => {
     await graphPage.expectSummaryPanelTrafficRate('TCP');
   });
 
-  test('User sees http traffic', ambientOnly, async ({ graphPage }) => {
+  test('User sees http traffic', ambientAndOffline, async ({ graphPage }) => {
     test.setTimeout(180_000);
     await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');

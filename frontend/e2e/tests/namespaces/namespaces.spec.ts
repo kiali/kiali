@@ -1,48 +1,52 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { coreCachingOnly } from '../../utils/suite-tags';
+import { coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('Namespaces list', () => {
   test.beforeEach(async ({ namespacesPage }) => {
     await namespacesPage.openList();
   });
 
-  test('Namespace name links to namespace detail page', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Namespace name links to namespace detail page', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.expectNamespaceVisible('bookinfo');
     await namespacesPage.clickNamespaceDetailLink('bookinfo');
     await namespacesPage.expectOnNamespaceDetailPage('bookinfo');
   });
 
-  test('Cluster column is hidden on single-cluster namespaces list', coreCachingOnly, async ({ namespacesPage }) => {
-    await namespacesPage.expectNamespaceVisible('bookinfo');
-    await namespacesPage.expectColumn('Cluster', false);
-    await namespacesPage.expectTableHeadings(['Namespace', 'Type', 'Health', 'mTLS', 'Istio config', 'Labels']);
-    await namespacesPage.expectBookinfoNamespaceTableInfo();
-  });
+  test(
+    'Cluster column is hidden on single-cluster namespaces list',
+    coreCachingAndOffline,
+    async ({ namespacesPage }) => {
+      await namespacesPage.expectNamespaceVisible('bookinfo');
+      await namespacesPage.expectColumn('Cluster', false);
+      await namespacesPage.expectTableHeadings(['Namespace', 'Type', 'Health', 'mTLS', 'Istio config', 'Labels']);
+      await namespacesPage.expectBookinfoNamespaceTableInfo();
+    }
+  );
 
   test('See namespaces table with correct info', coreCachingOnly, async ({ namespacesPage }) => {
     await namespacesPage.expectBookinfoNamespaceTableInfo();
   });
 
-  test('Filter namespaces by name', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Filter namespaces by name', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.filterBy('Namespace', 'bookinfo');
     await namespacesPage.expectNamespaceVisible('bookinfo');
     await namespacesPage.expectRowCount(1);
   });
 
-  test('Filter namespaces by type', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Filter namespaces by type', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.filterBy('Type', 'Control plane');
     await namespacesPage.expectNamespaceVisible('istio-system');
     await namespacesPage.expectRowCount(1);
   });
 
-  test('Sort namespaces by name', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Sort namespaces by name', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.sortByColumn('Namespace', 'ascending');
     await namespacesPage.expectSortedByColumn('Namespace', 'ascending');
     await namespacesPage.sortByColumn('Namespace', 'descending');
     await namespacesPage.expectSortedByColumn('Namespace', 'descending');
   });
 
-  test('Hide Mode column on namespaces page', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Hide Mode column on namespaces page', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.expectNamespaceVisible('bookinfo');
     await namespacesPage.openColumnManagement();
     await namespacesPage.setColumnChecked('Mode', false);
@@ -51,7 +55,7 @@ test.describe('Namespaces list', () => {
     await namespacesPage.resetColumnsToDefault();
   });
 
-  test('Column order is applied from URL on namespaces page', coreCachingOnly, async ({ namespacesPage }) => {
+  test('Column order is applied from URL on namespaces page', coreCachingAndOffline, async ({ namespacesPage }) => {
     await namespacesPage.expectNamespaceVisible('bookinfo');
     await namespacesPage.setColumnOrderViaUrl([
       'Labels',

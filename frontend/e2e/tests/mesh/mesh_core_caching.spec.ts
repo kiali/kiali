@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { hasGrafanaDeployment } from '../../utils/kialiConfig';
-import { coreCachingAndMultiMesh, coreCachingOnly } from '../../utils/suite-tags';
+import { coreCachingAndMultiMesh, coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
@@ -9,12 +9,12 @@ test.describe('Mesh page core-caching', () => {
     await meshPage.open();
   });
 
-  test('Open mesh Tour', coreCachingOnly, async ({ meshPage }) => {
+  test('Open mesh Tour', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.openMeshTour();
     await meshPage.expectMeshTourVisible(true);
   });
 
-  test('Close mesh Tour', coreCachingOnly, async ({ meshPage }) => {
+  test('Close mesh Tour', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.openMeshTour();
     await meshPage.closeMeshTour();
     await meshPage.expectMeshTourVisible(false);
@@ -46,19 +46,19 @@ test.describe('Mesh page core-caching', () => {
     await meshPage.expectNodeSidePanel('Prometheus');
   });
 
-  test('Test DataPlane', coreCachingOnly, async ({ meshPage }) => {
+  test('Test DataPlane', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectMeshNodeByLabel('Data Plane');
     await meshPage.expectDataPlaneSidePanel();
     await meshPage.expandDataPlaneNamespace();
     await meshPage.expectConfigValidationInfo();
   });
 
-  test('Test Cluster', coreCachingOnly, async ({ meshPage }) => {
+  test('Test Cluster', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectClusterNode();
     await meshPage.expectClusterSidePanel();
   });
 
-  test('Test istio-system', coreCachingOnly, async ({ meshPage }) => {
+  test('Test istio-system', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectMeshNodeByLabel('istio-system');
     await meshPage.expectNamespaceSidePanel('istio-system');
     await meshPage.expectMeshBodyNotContains('dataplane namespaces: 0');
@@ -72,14 +72,14 @@ test.describe('Mesh page core-caching', () => {
     await meshPage.expectNodeSidePanel('bookinfo-gateway');
   });
 
-  test('See the Mesh menu link', coreCachingOnly, async ({ sidebarPage }) => {
+  test('See the Mesh menu link', coreCachingAndOffline, async ({ sidebarPage }) => {
     test.skip(isOssmc(), 'Mesh sidebar menu is not shown in OSSMC (Cypress @skip-ossmc)');
     await sidebarPage.openOverview();
     await sidebarPage.ensureSidebarOpen();
     await sidebarPage.expectMeshMenuVisible();
   });
 
-  test('See the Mesh link in the about', coreCachingOnly, async ({ overviewPage }) => {
+  test('See the Mesh link in the about', coreCachingAndOffline, async ({ overviewPage }) => {
     test.skip(isOssmc(), 'About mesh link is not shown in OSSMC (Cypress @skip-ossmc)');
     await overviewPage.open();
     await overviewPage.openHelpAndAbout();
