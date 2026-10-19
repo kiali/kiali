@@ -52,17 +52,32 @@ test.describe('Kiali login', () => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Code-exchange failure requires openshift auth');
 
-    // Corrupt the authorization code on the way back from the IdP so Kiali's token
-    // exchange fails. Registered before the login flow starts: the callback arrives as
-    // a redirect during submitOpenShiftLoginForm.
-    await page.route('**/api/auth/callback*', async route => {
-      const url = new URL(route.request().url());
-      if (!url.searchParams.has('code')) {
+    // The callback request is the navigation that follows the OAuth server's
+    // cross-origin 302 after the credential POST, so route interception never sees
+    // it and its query cannot be rewritten directly. Intercept the POST instead,
+    // fetch its response without following the redirect, and corrupt the code in
+    // the Location header so Kiali's token exchange fails.
+    await page.route('**/*', async route => {
+      const request = route.request();
+      if (request.method() !== 'POST') {
         await route.continue();
         return;
       }
-      url.searchParams.set('code', 'invalidcode');
-      await route.continue({ url: url.toString() });
+      const response = await route.fetch({ maxRedirects: 0 });
+      const location = response.headers()['location'];
+      if (!location) {
+        await route.fulfill({ response });
+        return;
+      }
+      const url = new URL(location, request.url());
+      if (url.pathname.endsWith('/api/auth/callback') && url.searchParams.has('code')) {
+        url.searchParams.set('code', 'invalidcode');
+        const headers: Record<string, string> = { ...response.headers(), location: url.toString() };
+        delete headers['content-length'];
+        await route.fulfill({ status: response.status(), headers, body: '' });
+        return;
+      }
+      await route.fulfill({ response });
     });
 
     await submitOpenShiftLoginForm(page, playwrightCredentials());
