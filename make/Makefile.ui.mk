@@ -31,3 +31,11 @@ perf-tests-run: .ensure-yarn-version
 ## perf-tests-gui: Runs the frontend perf tests locally with the GUI.
 perf-tests-gui: .ensure-yarn-version
 	@cd ${ROOTDIR}/frontend && yarn cypress:perf
+
+## playwright-perf-tests-run: Runs the frontend Playwright perf tests locally without the GUI.
+playwright-perf-tests-run: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn playwright:run:perf
+
+## playwright-perf-tests-gui: Runs the frontend Playwright perf tests locally in the UI mode runner.
+playwright-perf-tests-gui: .ensure-yarn-version
+	@cd ${ROOTDIR}/frontend && yarn playwright:perf
