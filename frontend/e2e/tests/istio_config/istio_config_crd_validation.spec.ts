@@ -36,7 +36,7 @@ import {
   restoreBookinfoNetworking
 } from '../../utils/istioCrdValidation';
 import { deleteK8sGateway, deleteK8sReferenceGrant } from '../../utils/istioConfigResources';
-import { selectNamespace, selectNamespaces, selectOnlyNamespaces } from '../../utils/namespace';
+import { selectNamespace, selectNamespaces, selectOnlyNamespaces, waitForNamespaceListed } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
 test.describe('Istio Config CRD validation', () => {
@@ -49,6 +49,13 @@ test.describe('Istio Config CRD validation', () => {
 
   test.describe('parallel', () => {
     test.describe.configure({ mode: 'parallel' });
+
+    // Pages mounted in the first seconds of the run can fetch a namespace list
+    // that still predates the sleep namespace (server cache lag); the dropdown
+    // never refetches, so those pages would never show it.
+    test.beforeAll(async ({ request }) => {
+      await waitForNamespaceListed(request, 'sleep');
+    });
 
     test('KIA0101 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const name = crdResourceName(testInfo, 'foo');
@@ -426,9 +433,12 @@ test.describe('Istio Config CRD validation', () => {
   test.describe('mTLS contention', () => {
     test.describe.configure({ mode: 'serial' });
 
-    test.beforeAll(() => {
+    test.beforeAll(async ({ request }) => {
       ensureDemoApp('bookinfo');
       ensureDemoApp('sleep');
+      // ensureDemoApp proves the namespace exists in the cluster, not that
+      // Kiali's cached namespace list includes it yet.
+      await waitForNamespaceListed(request, 'sleep');
     });
 
     test.beforeEach(() => {

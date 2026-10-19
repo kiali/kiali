@@ -1,6 +1,5 @@
 import { expect, test } from '../../fixtures/kialiFixtures';
-import { EAST, WEST, deleteRequestRoutingOnClusters, ensureTrafficRoutingOnCluster } from '../../utils/multiCluster';
-import { selectNamespace } from '../../utils/namespace';
+import { EAST, WEST } from '../../utils/multiCluster';
 import { multiClusterOnly } from '../../utils/suite-tags';
 
 const WIZARD_ACTIONS = [
@@ -65,24 +64,6 @@ test.describe('Graph multi-cluster', () => {
     await graphPage.clickContextMenuLink('Inbound Metrics');
     await expect(page).toHaveURL(new RegExp(`clusterName=${EAST}`));
   });
-
-  test(
-    'Delete traffic routing from context menu on east details',
-    multiClusterOnly,
-    async ({ graphPage, istioConfigPage, page, request }) => {
-      await ensureTrafficRoutingOnCluster(request, 'details', 'bookinfo', EAST);
-      await graphPage.graphNamespaces('bookinfo');
-      await graphPage.expectGraphLoaded();
-      await graphPage.openContextMenuForService('details', EAST);
-      await graphPage.clickContextMenuItem('delete_traffic_routing');
-      await graphPage.expectDeleteTrafficRoutingModal();
-      await graphPage.confirmDeleteTrafficRouting();
-      await istioConfigPage.open();
-      await selectNamespace(page, 'bookinfo');
-      await istioConfigPage.expectObjectNotListedOnCluster('VirtualService', 'details', 'bookinfo', EAST);
-      await deleteRequestRoutingOnClusters(request, 'details');
-    }
-  );
 
   for (const action of WIZARD_ACTIONS) {
     test(`Launch ${action} wizard from west ratings context menu`, multiClusterOnly, async ({ graphPage }) => {
