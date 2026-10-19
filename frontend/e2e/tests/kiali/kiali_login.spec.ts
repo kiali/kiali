@@ -48,6 +48,55 @@ test.describe('Kiali login', () => {
     await expect(page).toHaveURL(/overview/, { timeout: 60_000 });
   });
 
+  test('OpenShift login shows an error when the code exchange fails', smokeAndCoreCaching, async ({ page }) => {
+    const strategy = await getAuthStrategy(page);
+    test.skip(strategy !== 'openshift', 'Code-exchange failure requires openshift auth');
+
+    // The callback request is a redirect-following navigation, so route interception
+    // never sees it and its query cannot be rewritten directly. Intercept the
+    // credential POST instead and fulfill it with a redirect straight to the OAuth
+    // redirect_uri carrying a corrupted authorization code, so Kiali's token
+    // exchange fails. The state parameter is omitted: Kiali's callback only reads
+    // the code and the nonce cookie.
+    await page.route('**/*', async route => {
+      const request = route.request();
+      if (request.method() !== 'POST') {
+        await route.continue();
+        return;
+      }
+      const response = await route.fetch({ maxRedirects: 0 });
+      const location = response.headers()['location'];
+      if (!location) {
+        await route.fulfill({ response });
+        return;
+      }
+      const url = new URL(location, request.url());
+      let callbackUrl: URL | undefined;
+      if (url.pathname.endsWith('/api/auth/callback')) {
+        // The IdP redirects straight back to the callback
+        callbackUrl = url;
+      } else {
+        // OpenShift's IdP redirects back to its authorize endpoint first; the
+        // callback URL is the redirect_uri it carries
+        const redirectUri = url.searchParams.get('redirect_uri');
+        if (redirectUri?.endsWith('/api/auth/callback')) {
+          callbackUrl = new URL(redirectUri);
+        }
+      }
+      if (callbackUrl) {
+        callbackUrl.searchParams.set('code', 'invalidcode');
+        await route.fulfill({ status: 302, headers: { location: callbackUrl.toString() }, body: '' });
+        return;
+      }
+      await route.fulfill({ response });
+    });
+
+    await submitOpenShiftLoginForm(page, playwrightCredentials());
+
+    await expect(page.getByText('Openshift authentication failed.')).toBeVisible({ timeout: 60_000 });
+    await expect(page).toHaveURL(/openshift_error/, { timeout: 60_000 });
+  });
+
   test('An expiring session should show a pop up to renew', smokeAndCoreCaching, async ({ page }) => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy === 'anonymous', 'Session timeout requires a login-based auth strategy');

@@ -100,8 +100,9 @@
 - [x] `@waypoint-multicluster` suite ported on `issue9712_waypoint-multicluster` (5 scenarios;
   `playwright-ambient-multi-primary` CI sets `--waypoint true`, then runs ambient-multi-primary + waypoint-multicluster)
 - [ ] `@multi-cluster` suite passes (Playwright specs + `playwright-primary-remote` CI; run `yarn playwright:run:multi-cluster`)
-- [ ] `@multi-primary` suite first slice ported (`playwright-multi-primary` CI; mesh + west wizards;
-  authorization RBAC / restricted remote ns deferred)
+- [x] `@multi-primary` suite ported (`playwright-multi-primary` CI on openid/Keycloak; mesh, west
+  wizards incl. graph context menu / side panel, istio config list, `@authorization` limited-user
+  RBAC and restricted remote-namespace graphs)
 - [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
@@ -187,7 +188,7 @@ Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
 | `waypoint_demo_graph.spec.ts` | `waypoint-*` demo-NS graph matrix |
 | `waypoint_demo_details.spec.ts` | Demo-NS Waypoint tab / L7 links |
 | `waypoint_sidecar_ambient.spec.ts` | Sidecar↔ambient graph, config issues, Add to Ambient |
-| `waypoint_tracing_*.spec.ts` | `@waypoint-tracing` mesh/details/logs/graph (heatmaps deferred) |
+| `waypoint_tracing_*.spec.ts` | `@waypoint-tracing` mesh/details/logs/graph/tooltip heat maps |
 | `waypoint_multicluster.spec.ts` | `@waypoint-multicluster` on ambient multi-primary (`bookinfo-waypoints`) |
 
 **Separate tags (not the single-cluster `@waypoint` port):** `@waypoint-tracing`, `@waypoint-multicluster`
@@ -198,10 +199,8 @@ Project `waypoint` greps `@waypoint` (not `@waypoint-tracing`).
 `--project=waypoint` then `--project=waypoint-tracing` (depends on `waypoint-setup`).
 
 **Ported:** mesh waypoints + ztunnel side panels; workload/service/app trace + span UI; workload logs
-spans; graph side-panel Traces tab.
-
-**Deferred:** tooltip heat-map hover scenarios (reviews app/service/workload) until a stable
-Playwright hover helper exists for the scatterplot tooltip.
+spans; graph side-panel Traces tab; tooltip heat-map hover scenarios (reviews app/service/workload,
+`waypoint_tracing_heatmap.spec.ts`) via `hoverTraceScatterplotWithMinSpans`.
 
 ## Waypoint multicluster (`@waypoint-multicluster`)
 

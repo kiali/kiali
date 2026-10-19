@@ -1,5 +1,6 @@
 import { expect, type Locator } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { linkSelector } from '../utils/linkSelector';
 import { gotoConsolePage } from '../utils/navigation';
 import { kialiUrl } from '../utils/kialiUrl';
 import { kubectlExec } from '../utils/kubectl';
@@ -875,6 +876,17 @@ export class GraphPage extends BasePage {
 
   async expectSidePanelClusterBadgeHidden(): Promise<void> {
     await expect(this.page.locator('#graph-side-panel #pfbadge-C')).toHaveCount(0);
+  }
+
+  async expectSidePanelClusterBadgeVisible(cluster: string): Promise<void> {
+    const panel = this.page.locator('#graph-side-panel');
+    await expect(panel.locator('#pfbadge-C')).toBeVisible();
+    await expect(panel).toContainText(cluster);
+  }
+
+  async expectSidePanelLinksContain(param: string): Promise<void> {
+    const panel = this.page.locator('#graph-side-panel');
+    await expect(panel.locator(linkSelector(param)).first()).toBeVisible();
   }
 
   async pressReplay(): Promise<void> {

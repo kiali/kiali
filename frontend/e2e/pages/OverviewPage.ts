@@ -533,6 +533,14 @@ export class OverviewPage extends BasePage {
     await expect(this.page.locator('div[role="dialog"] #mesh')).toBeVisible();
   }
 
+  async expectMeshLinkAbsentInAboutDialog(): Promise<void> {
+    await expect(this.page.locator('div[role="dialog"] #mesh')).toHaveCount(0);
+  }
+
+  async expectMeshNavAbsent(): Promise<void> {
+    await expect(this.page.locator('#page-sidebar #mesh')).toHaveCount(0);
+  }
+
   async refreshAndExpectNoIstioComponentStatus(): Promise<void> {
     await expect(async () => {
       const statusResponse = this.page.waitForResponse(

@@ -75,6 +75,68 @@ export const expectGeneratedTrafficPoliciesOnCluster = async (
   }
 };
 
+/** Duplicate wizard-created request routing to another cluster (multi-primary graph context menu hack). */
+export const duplicateRequestRoutingToCluster = async (
+  request: APIRequestContext,
+  service: string,
+  namespace: string,
+  cluster: string
+): Promise<void> => {
+  const virtualService = {
+    apiVersion: 'networking.istio.io/v1',
+    kind: 'VirtualService',
+    metadata: {
+      labels: { kiali_wizard: 'request_routing' },
+      name: service,
+      namespace
+    },
+    spec: {
+      gateways: null,
+      hosts: [`${service}.${namespace}.svc.cluster.local`],
+      http: [
+        {
+          route: [
+            {
+              destination: {
+                host: `${service}.${namespace}.svc.cluster.local`,
+                subset: 'v1'
+              },
+              weight: 100
+            }
+          ]
+        }
+      ]
+    }
+  };
+  const destinationRule = {
+    apiVersion: 'networking.istio.io/v1',
+    kind: 'DestinationRule',
+    metadata: {
+      labels: { kiali_wizard: 'request_routing' },
+      name: service,
+      namespace
+    },
+    spec: {
+      host: service,
+      subsets: [
+        { labels: { version: 'v1' }, name: 'v1' },
+        { labels: { version: 'v2' }, name: 'v2' },
+        { labels: { version: 'v3' }, name: 'v3' }
+      ]
+    }
+  };
+  const vsResponse = await request.post(
+    kialiUrl(`/api/namespaces/${namespace}/istio/networking.istio.io/v1/VirtualService?clusterName=${cluster}`),
+    { data: virtualService }
+  );
+  expect(vsResponse.ok()).toBeTruthy();
+  const drResponse = await request.post(
+    kialiUrl(`/api/namespaces/${namespace}/istio/networking.istio.io/v1/DestinationRule?clusterName=${cluster}`),
+    { data: destinationRule }
+  );
+  expect(drResponse.ok()).toBeTruthy();
+};
+
 export const deleteRequestRoutingOnClusters = async (request: APIRequestContext, service: string): Promise<void> => {
   await deleteIstioOnClusters(
     request,
