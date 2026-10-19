@@ -52,11 +52,12 @@ test.describe('Kiali login', () => {
     const strategy = await getAuthStrategy(page);
     test.skip(strategy !== 'openshift', 'Code-exchange failure requires openshift auth');
 
-    // The callback request is the navigation that follows the OAuth server's
-    // cross-origin 302 after the credential POST, so route interception never sees
-    // it and its query cannot be rewritten directly. Intercept the POST instead,
-    // fetch its response without following the redirect, and corrupt the code in
-    // the Location header so Kiali's token exchange fails.
+    // The callback request is a redirect-following navigation, so route interception
+    // never sees it and its query cannot be rewritten directly. Intercept the
+    // credential POST instead and fulfill it with a redirect straight to the OAuth
+    // redirect_uri carrying a corrupted authorization code, so Kiali's token
+    // exchange fails. The state parameter is omitted: Kiali's callback only reads
+    // the code and the nonce cookie.
     await page.route('**/*', async route => {
       const request = route.request();
       if (request.method() !== 'POST') {
@@ -70,11 +71,21 @@ test.describe('Kiali login', () => {
         return;
       }
       const url = new URL(location, request.url());
-      if (url.pathname.endsWith('/api/auth/callback') && url.searchParams.has('code')) {
-        url.searchParams.set('code', 'invalidcode');
-        const headers: Record<string, string> = { ...response.headers(), location: url.toString() };
-        delete headers['content-length'];
-        await route.fulfill({ status: response.status(), headers, body: '' });
+      let callbackUrl: URL | undefined;
+      if (url.pathname.endsWith('/api/auth/callback')) {
+        // The IdP redirects straight back to the callback
+        callbackUrl = url;
+      } else {
+        // OpenShift's IdP redirects back to its authorize endpoint first; the
+        // callback URL is the redirect_uri it carries
+        const redirectUri = url.searchParams.get('redirect_uri');
+        if (redirectUri?.endsWith('/api/auth/callback')) {
+          callbackUrl = new URL(redirectUri);
+        }
+      }
+      if (callbackUrl) {
+        callbackUrl.searchParams.set('code', 'invalidcode');
+        await route.fulfill({ status: 302, headers: { location: callbackUrl.toString() }, body: '' });
         return;
       }
       await route.fulfill({ response });
