@@ -1,10 +1,19 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { EAST, WEST, deleteGatewayOnClusters, deleteRequestRoutingOnClusters } from '../../utils/multiCluster';
+import {
+  EAST,
+  WEST,
+  deleteGatewayOnClusters,
+  deleteRequestRoutingOnClusters,
+  duplicateRequestRoutingToCluster,
+  ensureTrafficRoutingOnCluster
+} from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiPrimaryOnly } from '../../utils/suite-tags';
 
 // One serial block: Playwright runs sibling describes in parallel on CI (2 workers),
-// and every west wizard here hits the same remote istio config cache.
+// and every west wizard here hits the same remote istio config cache. Everything that
+// mutates bookinfo/ratings traffic routing belongs here — including the graph context
+// menu and side panel flows — so a sibling file cannot delete the routing mid-test.
 test.describe.serial('Multi-primary istio wizards', () => {
   test.describe.configure({ timeout: 240_000 });
 
@@ -82,6 +91,51 @@ test.describe.serial('Multi-primary istio wizards', () => {
       await serviceDetailsPage.expectIstioConfigTableEmpty();
       await deleteRequestRoutingOnClusters(request, 'ratings');
       await deleteGatewayOnClusters(request, 'ratings-gateway');
+    }
+  );
+
+  test(
+    'Create request routing on west ratings from the graph context menu',
+    multiPrimaryOnly,
+    async ({ graphPage, k8sRoutingWizardPage, istioConfigPage, page, request }) => {
+      await deleteRequestRoutingOnClusters(request, 'ratings');
+      await graphPage.graphNamespaces('bookinfo');
+      await graphPage.expectGraphLoaded();
+      await graphPage.openContextMenuForService('ratings', WEST);
+      await graphPage.clickContextMenuItem('request_routing');
+      await graphPage.expectWizardVisible('request_routing');
+      await k8sRoutingWizardPage.clickTab('Request Matching');
+      await k8sRoutingWizardPage.addRoute();
+      await k8sRoutingWizardPage.previewConfiguration();
+      await k8sRoutingWizardPage.createConfiguration();
+      // The wizards only write to one cluster; multi-primary needs the config on both
+      // sides or cross-cluster ratings traffic starts failing on the graph.
+      await duplicateRequestRoutingToCluster(request, 'ratings', 'bookinfo', EAST);
+      await istioConfigPage.open();
+      await selectNamespace(page, 'bookinfo');
+      await istioConfigPage.expectTrafficRoutingForServiceOnCluster('ratings', 'bookinfo', WEST);
+      await deleteRequestRoutingOnClusters(request, 'ratings');
+    }
+  );
+
+  test(
+    'Delete traffic routing for west ratings from the graph side panel kebab',
+    multiPrimaryOnly,
+    async ({ graphPage, istioConfigPage, page, request }) => {
+      await ensureTrafficRoutingOnCluster(request, 'ratings', 'bookinfo', WEST);
+      await graphPage.graphNamespaces('bookinfo');
+      await graphPage.expectGraphLoaded();
+      await graphPage.clickGraphNode('ratings', 'service', WEST);
+      await graphPage.expectSidePanelLinksContain('clusterName=west');
+      await graphPage.expectSidePanelClusterBadgeVisible(WEST);
+      await graphPage.openSidePanelKebab();
+      await graphPage.clickSidePanelKebabItem('delete_traffic_routing');
+      await graphPage.expectDeleteTrafficRoutingModal();
+      await graphPage.confirmDeleteTrafficRouting();
+      await istioConfigPage.open();
+      await selectNamespace(page, 'bookinfo');
+      await istioConfigPage.expectNoTrafficRoutingForServiceOnCluster('ratings', 'bookinfo', WEST);
+      await deleteRequestRoutingOnClusters(request, 'ratings');
     }
   );
 });

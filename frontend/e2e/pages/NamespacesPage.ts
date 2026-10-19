@@ -39,6 +39,14 @@ export class NamespacesPage extends BasePage {
     ).toBeVisible();
   }
 
+  async expectNamespaceVirtualItem(cluster: string, namespace: string): Promise<void> {
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_${namespace}`)).toBeVisible();
+  }
+
+  async expectNamespaceVirtualItemAbsent(cluster: string, namespace: string): Promise<void> {
+    await expect(this.getBySel(`VirtualItem_Cluster${cluster}_${namespace}`)).toHaveCount(0);
+  }
+
   async expectBadgeOnNamespace(namespace: string, badge: string): Promise<void> {
     await expectColumnTextOnRow(this.page, namespace, 'Mode', badge);
   }

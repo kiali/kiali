@@ -324,6 +324,29 @@ async function readComponentGraphTopology(
   return (await evaluateGraphPageComponent(page, componentName, stateFilter, { type: 'read' })) as GraphTopology;
 }
 
+/** Nodes in `cluster` (non-box) must be marked inaccessible for limited-user RBAC graphs. */
+export async function expectGraphNodesRestrictedInCluster(page: Page, cluster: string): Promise<void> {
+  await expectGraphTopology(page, ({ nodes }) => {
+    const filtered = nodes.filter(n => n.data.cluster === cluster && !n.data.isBox);
+    expect(filtered.length, `Expected graph nodes in cluster ${cluster}`).toBeGreaterThan(0);
+    for (const node of filtered) {
+      expect(node.data.isInaccessible, `node ${node.id} in ${cluster}`).toBeTruthy();
+    }
+  });
+}
+
+/** Minigraph nodes in `cluster` must be inaccessible for limited-user RBAC. */
+export async function expectMiniGraphNodesRestrictedInCluster(page: Page, cluster: string): Promise<void> {
+  await expect(async () => {
+    const topology = await readMiniGraphTopology(page);
+    const filtered = topology.nodes.filter(n => n.data.cluster === cluster && !n.data.isBox);
+    expect(filtered.length, `Expected minigraph nodes in cluster ${cluster}`).toBeGreaterThan(0);
+    for (const node of filtered) {
+      expect(node.data.isInaccessible, `minigraph node ${node.id} in ${cluster}`).toBeTruthy();
+    }
+  }).toPass({ intervals: [2_000, 3_000], timeout: 60_000 });
+}
+
 export async function readGraphTopology(page: Page): Promise<GraphTopology> {
   return readComponentGraphTopology(page, 'GraphPageComponent', {
     graphData: { isLoading: false },
@@ -376,6 +399,8 @@ export async function expectGraphTopology(page: Page, assertFn: (topology: Graph
         try {
           const topology = await readGraphTopology(page);
           assertFn(topology);
+          // Clear it: a failure on an earlier poll must not fail a run that later passes.
+          lastError = undefined;
           return true;
         } catch (error) {
           lastError = error;
