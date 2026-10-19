@@ -78,6 +78,37 @@ discoverySelectors:
 	assert.Equal("mazzkey2", data.Mesh.DiscoverySelectors[1].MatchExpressions[1].Key)
 }
 
+func TestLoadServiceEntryVisibility(t *testing.T) {
+	conf := config.NewConfig()
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
+		Data: map[string]string{"mesh": `serviceEntryVisibility:
+  applyToSidecars: true
+  defaultVisibility: NAMESPACE
+  policies:
+  - matchingRules:
+    - namespaceSelector:
+        matchLabels:
+          trusted: "true"
+    visibility: PUBLIC
+`},
+	}
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"), cm, certtest.FakeIstioCertificateConfigMap("istio-system"))
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+	discovery := NewDiscovery(clients, kialiCache, conf)
+	kubeCache, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+	require.NoError(t, err)
+	cp := &models.ControlPlane{
+		Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodNamespace: "istio-system", MeshConfig: models.NewMeshConfig(),
+	}
+	require.NoError(t, discovery.setControlPlaneConfig(kubeCache, cp))
+	policy := cp.MeshConfig.ServiceEntryVisibilityPolicy()
+	assert.Same(t, policy, cp.MeshConfig.ServiceEntryVisibilityPolicy())
+	assert.False(t, policy.ForNamespace("definitions", nil).IsVisible([]string{"*"}, "client", false))
+	assert.True(t, policy.ForNamespace("definitions", map[string]string{"trusted": "true"}).IsVisible([]string{"*"}, "client", false))
+}
+
 func TestIstioConfigMapName(t *testing.T) {
 	testCases := map[string]struct {
 		configMap *corev1.ConfigMap

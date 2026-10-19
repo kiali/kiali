@@ -15,12 +15,13 @@ import (
 
 func NewGlobalIstioInfo() *GlobalIstioInfo {
 	return &GlobalIstioInfo{
-		AmbientWaypoints:    make(map[graph.NodeKey]bool),
-		AppsMap:             make(map[string]map[string]*models.AppListItem),
-		ClusterServiceLists: make(map[string]*models.ServiceList),
-		ServiceEntryHosts:   make(map[string]serviceEntryHosts),
-		ServiceLists:        make(map[string]*models.ServiceList),
-		WorkloadLists:       make(map[string]*models.WorkloadList),
+		AmbientWaypoints:       make(map[graph.NodeKey]bool),
+		AppsMap:                make(map[string]map[string]*models.AppListItem),
+		ClusterServiceLists:    make(map[string]*models.ServiceList),
+		ServiceEntryHosts:      make(map[string]serviceEntryHosts),
+		ServiceEntryNamespaces: make(map[string]map[string]models.Namespace),
+		ServiceLists:           make(map[string]*models.ServiceList),
+		WorkloadLists:          make(map[string]*models.WorkloadList),
 	}
 }
 
@@ -34,6 +35,8 @@ type GlobalIstioInfo struct {
 	ClusterServiceLists map[string]*models.ServiceList
 	// ServiceEntryHosts maps composite keys (serviceEntryHostsKey:cluster:namespace) to service entry hosts
 	ServiceEntryHosts map[string]serviceEntryHosts
+	// ServiceEntryNamespaces supplies definition-namespace labels for visibility policies.
+	ServiceEntryNamespaces map[string]map[string]models.Namespace
 	// ServiceLists caches service lists by cluster:namespace key
 	ServiceLists map[string]*models.ServiceList
 	// WorkloadLists caches workload lists by cluster:namespace key
