@@ -108,6 +108,8 @@
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
 - [x] `@offline` suite passes (Playwright specs + `playwright-offline` CI; run `yarn playwright:run:offline`)
 - [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
+- [x] Perf suite ported (`playwright-perf.config.ts` / `yarn playwright:run:perf`; `e2e/perf/`,
+  text report written by `e2e/perf/perfReporter.ts`)
 
 ## CI / pipelines
 
