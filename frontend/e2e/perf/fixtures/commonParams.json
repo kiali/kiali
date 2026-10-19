@@ -1,0 +1,18 @@
+{
+  "allNamespaces": "bookinfo,alpha,beta,gamma,sleep",
+  "applicationName": "productpage",
+  "configGroup": "networking.istio.io",
+  "configKind": "VirtualService",
+  "configName": "bookinfo",
+  "configVersion": "v1",
+  "detailsNs": "bookinfo",
+  "duration": "300",
+  "graphType": "versionedApp",
+  "layout": "kiali-dagre",
+  "namespaces": "bookinfo,alpha,beta,gamma,sleep",
+  "rangeDuration": "300",
+  "refresh": "15000",
+  "serviceName": "productpage",
+  "traffic": "grpc,grpcRequest,http,httpRequest,tcp,tcpSent",
+  "workloadName": "productpage-v1"
+}

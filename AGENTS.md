@@ -283,9 +283,13 @@ make cypress-gui
 # Run Cypress tests headlessly
 make cypress-run
 
-# Run performance tests
+# Run performance tests (Cypress)
 make perf-tests-gui
 make perf-tests-run
+
+# Run performance tests (Playwright)
+make playwright-perf-tests-gui
+make playwright-perf-tests-run
 ```
 
 **Cypress Environment Variables:**
@@ -499,6 +503,7 @@ yarn playwright:run:multi-cluster
 yarn playwright:run:multi-primary
 yarn playwright:run:tracing
 yarn playwright:run:multi-mesh
+yarn playwright:run:perf   # page-load timings, separate playwright-perf.config.ts
 hack/run-integration-tests.sh --test-suite playwright-smoke   # KinD + in-cluster Kiali
 hack/run-integration-tests.sh --test-suite playwright-core-1
 hack/run-integration-tests.sh --test-suite playwright-core-2
@@ -515,7 +520,7 @@ hack/run-integration-tests.sh --test-suite playwright-tempo
 hack/run-integration-tests.sh --test-suite playwright-multi-mesh
 ```
 
-**Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`. Cypress remains in `frontend/cypress/` until cutover.
+**Layout:** `frontend/e2e/pages/`, `frontend/e2e/tests/`, `frontend/e2e/fixtures/kialiFixtures.ts`, `frontend/playwright.config.ts`; the perf suite lives in `frontend/e2e/perf/` with `frontend/playwright-perf.config.ts`. Cypress remains in `frontend/cypress/` until cutover.
 
 #### Debugging Cypress Tests with Playwright MCP
 

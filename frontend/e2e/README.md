@@ -259,6 +259,44 @@ Ports Cypress `@multi-mesh` scenarios from `mesh.feature` (4 tests): expected me
 hack/run-integration-tests.sh --test-suite playwright-multi-mesh
 ```
 
+### Perf (`yarn playwright:run:perf`)
+
+Page-load timings, not assertions. Ports the Cypress perf suite (`cypress-perf.config.ts`,
+`cypress/perf/`) to `e2e/perf/` with its own `playwright-perf.config.ts`: overview, graph (including
+the issue #8524 appender combinations), namespaces, and the apps / services / workloads / istio
+config list and details pages.
+
+The suite is **not** part of `playwright.config.ts` — measurements need a single worker, no retries,
+and no trace/video instrumentation, and nothing fails on a slow page. Each measured page is loaded
+`PERF_VISITS` (default 5) times; the average is compared against `e2e/perf/fixtures/baselines.json`
+and written to `playwright/results/performance.txt` by `e2e/perf/perfReporter.ts`:
+
+```
+[Graph page]
+
+All Namespaces Graph load time: 3.8421 sec, baseline: 4 sec, difference: -0.15790 sec
+```
+
+Readiness per page type (`e2e/perf/utils/measure.ts`): graph waits on
+`#pft-graph[data-ready="true"]`, lists on `filter-toolbar`, details on `#basic-tabs`, and every visit
+also waits out `#loading_kiali_spinner`. Timing is `performance.now()` evaluated in the loaded
+document, i.e. elapsed time since that navigation started.
+
+```bash
+yarn playwright:run:perf                              # headless, writes the text report
+yarn playwright:perf                                  # UI mode runner
+PERF_VISITS=1 yarn playwright:run:perf                # quick check
+make playwright-perf-tests-run                        # from the repo root
+```
+
+Environment knobs: `PERF_VISITS`, `PERF_READY_TIMEOUT` (default 300000 ms), `PERF_TEST_TIMEOUT`,
+`PERF_REPORT_FILE`, `PERF_PARAMS_FILE` and `PERF_BASELINES_FILE` (point at your own fixture copies to
+measure a different environment).
+
+The measured Kiali must serve a UI built from this branch: released images (e.g.
+`quay.io/kiali/kiali:v2.31`) have neither `data-ready` on `#pft-graph` nor `data-test="filter-toolbar"`,
+so the graph and list measurements wait out `PERF_READY_TIMEOUT` instead of timing a load.
+
 ## Local run
 
 Kiali UI at `http://localhost:3001` (override with `PLAYWRIGHT_BASE_URL`):
@@ -283,6 +321,7 @@ yarn playwright:run:offline
 yarn playwright:run:ai-chatbot
 yarn playwright:run:tracing
 yarn playwright:run:multi-mesh
+yarn playwright:run:perf
 yarn playwright:run:smoke --headed
 yarn playwright:ui --project=smoke
 ```
