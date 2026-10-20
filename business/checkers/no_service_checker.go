@@ -45,31 +45,50 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-// gatewayWorkloadScope resolves each known Gateway once per validating namespace,
-// so route blocks follow the selected proxies without scanning workloads per route.
-func (in NoServiceChecker) gatewayWorkloadScope() map[string]bool {
-	if in.ValidatingNamespace == "" || len(in.IstioConfigList.VirtualServices) == 0 {
+// gatewayWorkloadScope resolves only gateways referenced by gateway-only routes.
+// The index and results are built lazily and reused across this namespace's
+// VirtualServices, including negative results. Nothing persists across validations.
+func (in NoServiceChecker) gatewayWorkloadScope() virtualservices.GatewayWorkloadScope {
+	if in.ValidatingNamespace == "" || len(in.IstioConfigList.VirtualServices) == 0 || len(in.IstioConfigList.Gateways) == 0 {
 		return nil
 	}
-	scope := make(map[string]bool, len(in.IstioConfigList.Gateways))
-	for _, gateway := range in.IstioConfigList.Gateways {
-		key := kubernetes.ParseHost(gateway.Name, gateway.Namespace, in.IdentityDomain).String()
-		scope[key] = false
-		if in.IsGatewayToNamespace && gateway.Namespace != in.ValidatingNamespace {
-			continue
+	var gateways map[string]*networking_v1.Gateway
+	var scope map[string]bool
+	return func(host kubernetes.Host) (bool, bool) {
+		key := host.String()
+		if applies, cached := scope[key]; cached {
+			return applies, true
 		}
-		selector := labels.SelectorFromSet(gateway.Spec.Selector)
-		for _, workload := range in.WorkloadsPerNamespace[in.ValidatingNamespace] {
-			if selector.Matches(labels.Set(workload.Labels)) {
-				scope[key] = true
-				break
+		if gateways == nil {
+			gateways = make(map[string]*networking_v1.Gateway, len(in.IstioConfigList.Gateways))
+			for _, gateway := range in.IstioConfigList.Gateways {
+				gateways[kubernetes.ParseHost(gateway.Name, gateway.Namespace, in.IdentityDomain).String()] = gateway
 			}
 		}
+		gateway, known := gateways[key]
+		if !known {
+			return false, false
+		}
+		applies := false
+		workloads := in.WorkloadsPerNamespace[in.ValidatingNamespace]
+		if (!in.IsGatewayToNamespace || gateway.Namespace == in.ValidatingNamespace) && len(workloads) > 0 {
+			selector := labels.SelectorFromSet(gateway.Spec.Selector)
+			for _, workload := range workloads {
+				if selector.Matches(labels.Set(workload.Labels)) {
+					applies = true
+					break
+				}
+			}
+		}
+		if scope == nil {
+			scope = make(map[string]bool)
+		}
+		scope[key] = applies
+		return applies, true
 	}
-	return scope
 }
 
-func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, policyAllowAny bool, cluster string, identityDomain string, validatingNamespace string, gatewayWorkloadScope map[string]bool) models.IstioValidations {
+func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, policyAllowAny bool, cluster string, identityDomain string, validatingNamespace string, gatewayWorkloadScope virtualservices.GatewayWorkloadScope) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices, cluster)
 
 	result, valid := virtualservices.NoHostChecker{

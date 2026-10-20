@@ -12,12 +12,15 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+// GatewayWorkloadScope resolves whether a known Gateway selects a workload in the
+// validating namespace. Unknown references return known=false to retain the fallback.
+type GatewayWorkloadScope func(kubernetes.Host) (applies, known bool)
+
 type NoHostChecker struct {
 	Conf *config.Config
-	// GatewayWorkloadScope records whether each known Gateway, keyed by FQDN,
-	// selects a workload in ValidatingNamespace. Unresolved references fall back
-	// to their configuration namespace.
-	GatewayWorkloadScope map[string]bool
+	// GatewayWorkloadScope is called only for gateway-only routes. The caller
+	// supplies namespace-scoped caching; nil retains the reference-namespace fallback.
+	GatewayWorkloadScope GatewayWorkloadScope
 	IdentityDomain       string
 	KubeServiceHosts     kubernetes.KubeServiceHosts
 	Namespaces           []string
@@ -110,42 +113,47 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 // ValidatingNamespace keeps the legacy behavior of validating every block.
 func (n NoHostChecker) routeBlockScope(matchGateways [][]string) (applies bool, viewer string) {
 	namespace := n.VirtualService.Namespace
-	meshApplicable := false
-	gatewayApplicable := false
-
+	if n.ValidatingNamespace == "" {
+		return true, namespace
+	}
 	scopes := matchGateways
 	if len(scopes) == 0 {
 		// A block without matches inherits the top-level gateway scope.
 		scopes = [][]string{nil}
 	}
-	for _, scope := range scopes {
-		gateways := scope
+	// Any mesh-applicable match keeps the existing mesh behavior. Determine that
+	// before resolving gateways, even when a gateway match precedes the mesh match.
+	for _, gateways := range scopes {
 		if len(gateways) == 0 {
 			gateways = n.VirtualService.Spec.Gateways
 		}
 		if len(gateways) == 0 {
-			meshApplicable = true
-			continue
+			return true, namespace
 		}
 		for _, gateway := range gateways {
 			if gateway == "mesh" {
-				meshApplicable = true
-				continue
-			}
-			host := kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain)
-			if applies, known := n.GatewayWorkloadScope[host.String()]; known {
-				gatewayApplicable = gatewayApplicable || applies
-			} else {
-				gatewayApplicable = gatewayApplicable || host.Namespace == n.ValidatingNamespace
+				return true, namespace
 			}
 		}
 	}
-
-	if meshApplicable || n.ValidatingNamespace == "" {
-		return true, namespace
-	}
-	if gatewayApplicable {
-		return true, n.ValidatingNamespace
+	for _, gateways := range scopes {
+		if len(gateways) == 0 {
+			gateways = n.VirtualService.Spec.Gateways
+		}
+		for _, gateway := range gateways {
+			host := kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain)
+			if n.GatewayWorkloadScope != nil {
+				if applies, known := n.GatewayWorkloadScope(host); known {
+					if applies {
+						return true, n.ValidatingNamespace
+					}
+					continue
+				}
+			}
+			if host.Namespace == n.ValidatingNamespace {
+				return true, n.ValidatingNamespace
+			}
+		}
 	}
 	return false, ""
 }

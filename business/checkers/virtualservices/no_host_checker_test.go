@@ -497,3 +497,38 @@ func TestGatewayScopedRouteWithoutPerspective(t *testing.T) {
 	assert.Len(vals, 1)
 	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
 }
+
+func TestMeshRoutesSkipGatewayWorkloadScope(t *testing.T) {
+	for _, tt := range []struct {
+		gateways      []string
+		matchGateways [][]string
+		name          string
+		namespace     string
+	}{
+		{name: "implicit mesh", namespace: "client"},
+		{gateways: []string{"default/egress", "mesh"}, name: "mixed top-level gateways", namespace: "client"},
+		{matchGateways: [][]string{{"default/egress"}, {"mesh"}}, name: "mesh match after gateway match", namespace: "client"},
+		{gateways: []string{"default/egress"}, matchGateways: [][]string{{"mesh"}}, name: "mesh match overrides top-level gateway", namespace: "client"},
+		{gateways: []string{"default/egress"}, name: "legacy checker without namespace"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			vs := gatewayScopedVS()
+			vs.Spec.Gateways = tt.gateways
+			vs.Spec.Tls[0].Match = nil
+			for _, gateways := range tt.matchGateways {
+				vs.Spec.Tls[0].Match = append(vs.Spec.Tls[0].Match, &api_networking_v1.TLSMatchAttributes{Gateways: gateways})
+			}
+			calls := 0
+			checks, valid := NoHostChecker{
+				GatewayWorkloadScope: func(kubernetes.Host) (bool, bool) {
+					calls++
+					return true, true
+				},
+				IdentityDomain: "svc.cluster.local", ValidatingNamespace: tt.namespace, VirtualService: vs,
+			}.Check()
+			assert.Zero(t, calls, "mesh-applicable blocks must not resolve gateway selectors")
+			assert.False(t, valid, "the missing mesh destination must still be checked")
+			assert.Len(t, checks, 1)
+		})
+	}
+}

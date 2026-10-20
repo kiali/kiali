@@ -1,6 +1,7 @@
 package checkers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -60,4 +61,86 @@ func TestNoServiceCheckerGatewayWorkloadScope(t *testing.T) {
 			assert.Equal(t, tt.applies, missingHost)
 		})
 	}
+}
+
+func BenchmarkNoServiceCheckerGatewayScope(b *testing.B) {
+	for _, size := range []struct {
+		gateways  int
+		workloads int
+	}{{gateways: 10, workloads: 100}, {gateways: 100, workloads: 1000}} {
+		for _, gatewayRoute := range []bool{false, true} {
+			b.Run(fmt.Sprintf("gateways=%d/workloads=%d/gateway_route=%t", size.gateways, size.workloads, gatewayRoute), func(b *testing.B) {
+				vs := data.AddHttpRoutesToVirtualService(
+					data.CreateHttpRouteDestination("external.example.com", "", 100),
+					data.CreateEmptyVirtualService("vs", "default", []string{"external.example.com"}),
+				)
+				if gatewayRoute {
+					vs.Spec.Gateways = []string{"default/gateway-0"}
+				}
+				checker := NoServiceChecker{
+					IdentityDomain: "svc.cluster.local",
+					IstioConfigList: &models.IstioConfigList{
+						ServiceEntries:  []*networkingv1.ServiceEntry{data.CreateEmptyMeshExternalServiceEntry("external", "default", []string{"external.example.com"})},
+						VirtualServices: []*networkingv1.VirtualService{vs},
+					},
+					ValidatingNamespace: "client", WorkloadsPerNamespace: map[string]models.Workloads{},
+				}
+				for i := 0; i < size.gateways; i++ {
+					checker.IstioConfigList.Gateways = append(checker.IstioConfigList.Gateways,
+						data.CreateEmptyGateway(fmt.Sprintf("gateway-%d", i), "default", map[string]string{"istio": "egressgateway"}))
+				}
+				for i := 0; i < size.workloads; i++ {
+					checker.WorkloadsPerNamespace["client"] = append(checker.WorkloadsPerNamespace["client"],
+						data.CreateWorkload("client", fmt.Sprintf("workload-%d", i), map[string]string{"app": "other"}))
+				}
+				b.ReportAllocs()
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					checker.Check()
+				}
+			})
+		}
+	}
+}
+
+func TestGatewayWorkloadScopeLazyCache(t *testing.T) {
+	workload := data.CreateWorkload("client", "proxy", map[string]string{"role": "other"})
+	checker := NoServiceChecker{
+		IdentityDomain: "svc.cluster.local",
+		IstioConfigList: &models.IstioConfigList{
+			Gateways: []*networkingv1.Gateway{
+				data.CreateEmptyGateway("first", "default", map[string]string{"role": "first"}),
+				data.CreateEmptyGateway("second", "default", map[string]string{"role": "second"}),
+			},
+			VirtualServices: []*networkingv1.VirtualService{data.CreateEmptyVirtualService("vs", "default", nil)},
+		},
+		ValidatingNamespace: "client", WorkloadsPerNamespace: map[string]models.Workloads{"client": {workload}},
+	}
+	resolve := checker.gatewayWorkloadScope()
+	require.NotNil(t, resolve)
+	first := kubernetes.ParseHost("first", "default", checker.IdentityDomain)
+	second := kubernetes.ParseHost("second", "default", checker.IdentityDomain)
+	applies, known := resolve(first)
+	assert.True(t, known)
+	assert.False(t, applies)
+
+	// Mutating the fixture verifies that resolved results are reused and that
+	// unreferenced selectors have not been evaluated eagerly.
+	workload.Labels["role"] = "first"
+	applies, known = resolve(first)
+	assert.True(t, known)
+	assert.False(t, applies, "reuse the negative result")
+	workload.Labels["role"] = "second"
+	applies, known = resolve(second)
+	assert.True(t, known)
+	assert.True(t, applies, "resolve previously unreferenced gateways only when needed")
+	workload.Labels["role"] = "other"
+	applies, known = resolve(second)
+	assert.True(t, known)
+	assert.True(t, applies, "reuse the positive result")
+	applies, known = checker.gatewayWorkloadScope()(second)
+	assert.True(t, known)
+	assert.False(t, applies, "a new validation gets a fresh cache")
+	_, known = resolve(kubernetes.ParseHost("missing", "default", checker.IdentityDomain))
+	assert.False(t, known, "unknown references retain their fallback")
 }
