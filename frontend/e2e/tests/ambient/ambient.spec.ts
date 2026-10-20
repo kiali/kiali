@@ -29,6 +29,12 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
+    if (test.info().project.name === 'offline') {
+      // The must-gather is recorded from a sidecar cluster with HTTP telemetry only,
+      // so disabling http leaves the bookinfo graph without any traffic.
+      await graphPage.expectNoTraffic();
+      return;
+    }
     // At least 6 edges with traffic when HTTP is disabled.
     await graphPage.expectTrafficEdgesAtLeast(6);
     await graphPage.expectTrafficProtocol('http', false);

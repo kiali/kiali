@@ -19,7 +19,7 @@ test.describe('Namespaces list', () => {
       await namespacesPage.expectNamespaceVisible('bookinfo');
       await namespacesPage.expectColumn('Cluster', false);
       await namespacesPage.expectTableHeadings(['Namespace', 'Type', 'Health', 'mTLS', 'Istio config', 'Labels']);
-      await namespacesPage.expectBookinfoNamespaceTableInfo();
+      await namespacesPage.expectNamespaceColumnText('bookinfo');
     }
   );
 
