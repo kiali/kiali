@@ -35,7 +35,7 @@ type GlobalIstioInfo struct {
 	ClusterServiceLists map[string]*models.ServiceList
 	// ServiceEntryHosts maps composite keys (serviceEntryHostsKey:cluster:namespace) to service entry hosts
 	ServiceEntryHosts map[string]serviceEntryHosts
-	// ServiceEntryNamespaces supplies definition-namespace labels for visibility policies.
+	// ServiceEntryNamespaces caches definition-namespace labels by cluster, then namespace name.
 	ServiceEntryNamespaces map[string]map[string]models.Namespace
 	// ServiceLists caches service lists by cluster:namespace key
 	ServiceLists map[string]*models.ServiceList

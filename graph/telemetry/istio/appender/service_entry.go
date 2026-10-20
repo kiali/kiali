@@ -42,17 +42,25 @@ const ServiceEntryAppenderName = "serviceEntry"
 // telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
 //
 // A note about visibility. The namespace-local representation above is only used when the requesting
-// namespace can see the ServiceEntry. We build a host lookup per (cluster, requesting namespace),
-// first checking the ServiceEntry's exportTo, or meshConfig.defaultServiceExportTo when omitted.
-// meshConfig.serviceEntryVisibility can further restrict that scope; it never widens exportTo.
-// Its policies are matched in order against the labels of the original definition namespace,
+// namespace can see the ServiceEntry. We build a host lookup per (cluster, requesting namespace).
+// Sidecar callers honor the ServiceEntry's exportTo, or meshConfig.defaultServiceExportTo when
+// omitted. meshConfig.serviceEntryVisibility can further restrict that scope when applyToSidecars
+// is enabled. Ambient callers ignore exportTo and defaultServiceExportTo; they use the resolved
+// visibility, defaulting to public when serviceEntryVisibility is not configured.
+// Policies are matched in order against the labels of the original definition namespace,
 // not the requesting namespace. The first matching policy wins, otherwise defaultVisibility applies.
-// The shared visibility evaluator combines that result with the exportTo decision.
 //
-// We assume requesting namespaces with IsAmbient=true have ambient callers, and other namespaces
-// have sidecar callers. The visibility constraint applies to ambient callers and also to sidecar
-// callers when applyToSidecars=true, including in sidecar-only deployments. Otherwise only the
-// existing exportTo rules apply. Compiled policies are reused with the cached mesh snapshot;
+// We deliberately classify callers by requesting namespace: IsAmbient=true means ambient,
+// otherwise sidecar. This assumes a single dataplane mode per namespace. We do not identify
+// individual caller modes or special-case control-plane namespaces. Consequently, an Envoy
+// gateway, injected sidecar, or opted-out workload in an ambient namespace is treated as
+// ambient, including gateways in control-plane namespaces marked ambient. This approximation
+// can change ServiceEntry attribution for those callers even when applyToSidecars=false;
+// observed traffic is still preserved.
+//
+// applyToSidecars=true also enables the visibility constraint in sidecar-only deployments.
+// Sidecar callers without that opt-in use only the exportTo rules.
+// Compiled policies are reused with the cached mesh snapshot;
 // namespace host lookups are rebuilt as needed for each graph generation.
 //
 // This only controls attribution to a ServiceEntry. A host that is not visible to the requesting
@@ -109,6 +117,10 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 		return
 	}
 
+	// The requesting namespace's control plane governs its callers, so use its MeshConfig
+	// even when the ServiceEntry's definition namespace belongs to another control plane.
+	// Match that control plane's policies against the definition namespace's labels.
+	//
 	// Fetch mesh once and precompute namespace -> MeshConfig for all candidate
 	// (cluster, namespace) pairs. This avoids repeated discovery.Mesh() mutex acquisition inside the loop.
 	nsMeshConfigs := make(map[string]*models.MeshConfig)
@@ -167,6 +179,7 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(ctx context.Context, cluster
 				}
 			}
 		}
+		// A nil MeshConfig is supported and supplies defaults for unmanaged requesters.
 		policy := meshConfig.ServiceEntryVisibilityPolicy()
 		// Keep the namespace-local graph representation, but only attribute hosts that
 		// this requesting namespace can see. Rejected hosts retain their observed traffic.
@@ -180,7 +193,8 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(ctx context.Context, cluster
 				}
 				visible = visibility.IsVisible(entry.Spec.ExportTo, namespace, requestingAmbient)
 			} else {
-				visible = policy.IsExportedTo(entry.Spec.ExportTo, entry.Namespace, namespace)
+				// Without a visibility policy, ambient defaults to public; sidecars honor exportTo.
+				visible = requestingAmbient || policy.IsExportedTo(entry.Spec.ExportTo, entry.Namespace, namespace)
 			}
 			if entry.Spec.Hosts != nil && visible {
 				location := "MESH_EXTERNAL"
@@ -203,6 +217,8 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(ctx context.Context, cluster
 	return len(serviceEntryHosts) > 0
 }
 
+// getServiceEntryNamespaces caches definition namespaces for one graph build, avoiding
+// repeated namespace scans and label-map construction across requesting namespaces.
 func getServiceEntryNamespaces(ctx context.Context, cluster string, globalInfo *GlobalInfo) map[string]models.Namespace {
 	if namespaces, found := globalInfo.Vendor.ServiceEntryNamespaces[cluster]; found {
 		return namespaces

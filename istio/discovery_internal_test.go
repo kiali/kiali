@@ -79,10 +79,13 @@ discoverySelectors:
 }
 
 func TestLoadServiceEntryVisibility(t *testing.T) {
-	conf := config.NewConfig()
-	cm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
-		Data: map[string]string{"mesh": `serviceEntryVisibility:
+	for name, tt := range map[string]struct {
+		meshYAML         string
+		policyConfigured bool
+		untrustedVisible bool
+	}{
+		"configured policy": {
+			meshYAML: `serviceEntryVisibility:
   applyToSidecars: true
   defaultVisibility: NAMESPACE
   policies:
@@ -91,22 +94,40 @@ func TestLoadServiceEntryVisibility(t *testing.T) {
         matchLabels:
           trusted: "true"
     visibility: PUBLIC
-`},
+`,
+			policyConfigured: true,
+		},
+		"omitted policy preserves legacy visibility": {
+			meshYAML:         "defaultServiceExportTo: [\"*\"]\n",
+			untrustedVisible: true,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			conf := config.NewConfig()
+			cm := &corev1.ConfigMap{
+				Data:       map[string]string{"mesh": tt.meshYAML},
+				ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"},
+			}
+			k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"), cm, certtest.FakeIstioCertificateConfigMap("istio-system"))
+			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+			kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
+			discovery := NewDiscovery(clients, kialiCache, conf)
+			kubeCache, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
+			require.NoError(t, err)
+			cp := &models.ControlPlane{
+				Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodNamespace: "istio-system", MeshConfig: models.NewMeshConfig(),
+			}
+			require.NoError(t, discovery.setControlPlaneConfig(kubeCache, cp))
+			assert.Equal(t, tt.policyConfigured, cp.MeshConfig.GetServiceEntryVisibility() != nil)
+			policy := cp.MeshConfig.ServiceEntryVisibilityPolicy()
+			assert.Same(t, policy, cp.MeshConfig.ServiceEntryVisibilityPolicy(), "discovery should prepare the policy even when it is unconfigured")
+			for _, ambient := range []bool{false, true} {
+				assert.Equal(t, tt.untrustedVisible, policy.ForNamespace("definitions", nil).IsVisible([]string{"*"}, "client", ambient))
+				assert.True(t, policy.ForNamespace("definitions", map[string]string{"trusted": "true"}).IsVisible([]string{"*"}, "client", ambient))
+				assert.Equal(t, ambient, policy.ForNamespace("definitions", map[string]string{"trusted": "true"}).IsVisible([]string{"."}, "client", ambient), "only sidecars honor exportTo")
+			}
+		})
 	}
-	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"), cm, certtest.FakeIstioCertificateConfigMap("istio-system"))
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
-	kialiCache := cache.NewTestingCacheWithClients(t, clients, *conf)
-	discovery := NewDiscovery(clients, kialiCache, conf)
-	kubeCache, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
-	require.NoError(t, err)
-	cp := &models.ControlPlane{
-		Cluster: &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName}, IstiodNamespace: "istio-system", MeshConfig: models.NewMeshConfig(),
-	}
-	require.NoError(t, discovery.setControlPlaneConfig(kubeCache, cp))
-	policy := cp.MeshConfig.ServiceEntryVisibilityPolicy()
-	assert.Same(t, policy, cp.MeshConfig.ServiceEntryVisibilityPolicy())
-	assert.False(t, policy.ForNamespace("definitions", nil).IsVisible([]string{"*"}, "client", false))
-	assert.True(t, policy.ForNamespace("definitions", map[string]string{"trusted": "true"}).IsVisible([]string{"*"}, "client", false))
 }
 
 func TestIstioConfigMapName(t *testing.T) {

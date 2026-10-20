@@ -110,14 +110,21 @@ func (p *ServiceEntryVisibilityPolicy) IsExportedTo(exportTo []string, definitio
 	return kubernetes.IsExportedTo(exportTo, definitionNamespace, requestingNamespace)
 }
 
-// IsVisible preserves the existing exportTo decision and applies the administrator's ceiling
-// for ambient requesters, or for sidecar/gateway requesters when applyToSidecars is enabled.
+// IsVisible applies the resolved visibility to ambient requesters, which ignore exportTo.
+// Sidecar/gateway requesters honor exportTo, with the administrator's visibility ceiling
+// applied only when applyToSidecars is enabled. The zero value defaults to public for
+// ambient requesters and evaluates exportTo without mesh defaults for sidecar requesters.
 func (v ServiceEntryVisibility) IsVisible(exportTo []string, requestingNamespace string, requestingAmbient bool) bool {
-	if !v.policy.IsExportedTo(exportTo, v.definitionNamespace, requestingNamespace) {
-		return false
-	}
-	if !requestingAmbient && !v.policy.applyToSidecars {
-		return true
+	if !requestingAmbient {
+		if v.policy == nil {
+			return kubernetes.IsExportedTo(exportTo, v.definitionNamespace, requestingNamespace)
+		}
+		if !v.policy.IsExportedTo(exportTo, v.definitionNamespace, requestingNamespace) {
+			return false
+		}
+		if !v.policy.applyToSidecars {
+			return true
+		}
 	}
 	switch v.visibility {
 	case meshapi.ServiceEntryVisibility_NONE:
