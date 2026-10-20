@@ -6,7 +6,7 @@ import { kialiUrl } from '../utils/kialiUrl';
 import { kubectlExec } from '../utils/kubectl';
 import { waitForLoadingComplete } from '../utils/transition';
 import { expectGraphTopology, readGraphTopology, scaleGraphBy } from '../utils/graphTopology';
-import { graphHasWaypointInCluster, waypointVisibleGraphQuery } from '../utils/waypointHelpers';
+import { GraphNode, graphHasWaypointInCluster, waypointVisibleGraphQuery } from '../utils/waypointHelpers';
 import { EdgeAttr, NodeAttr, select, selectAnd, selectOr } from '../utils/graphSelect';
 
 const DISPLAY_OPTION_IDS: Record<string, string> = {
@@ -599,30 +599,33 @@ export class GraphPage extends BasePage {
     cluster: string,
     namespace = 'bookinfo-waypoints'
   ): Promise<void> {
-    await expect(async () => {
-      const topology = await readGraphTopology(this.page);
-      const uiNodes = topology.nodes.map(n => ({ data: n.data }));
-      const found = graphHasWaypointInCluster(uiNodes, workload, cluster, namespace);
-      let apiNote = '';
-      if (!found) {
-        // Diagnostic only: distinguish "backend doesn't know the waypoint" from "UI didn't render it".
-        // Never satisfy the assertion from the API response — this test guards the display toggle.
-        const response = await this.page.request.get(
-          kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
-        );
-        const body = (await response.json().catch(() => null)) as {
-          elements?: { nodes?: { data?: Record<string, unknown> }[] };
-        } | null;
-        const apiHasIt = !!body && graphHasWaypointInCluster(body.elements?.nodes ?? [], workload, cluster, namespace);
-        apiNote = apiHasIt
-          ? ' (graph API has the waypoint — UI did not render it)'
-          : ` (graph API HTTP ${response.status()}, waypoint absent there too)`;
-      }
-      expect(
-        found,
-        `Expected waypoint "${workload}" visible in UI graph for cluster "${cluster}" (namespace=${namespace})${apiNote}`
-      ).toBeTruthy();
-    }).toPass({ intervals: [3_000], timeout: 120_000 });
+    try {
+      await expect(async () => {
+        const topology = await readGraphTopology(this.page);
+        const uiNodes = topology.nodes.map(n => ({ data: n.data }));
+        const found = graphHasWaypointInCluster(uiNodes, workload, cluster, namespace);
+        expect(
+          found,
+          `Expected waypoint "${workload}" visible in UI graph for cluster "${cluster}" (namespace=${namespace})`
+        ).toBeTruthy();
+      }).toPass({ intervals: [3_000], timeout: 120_000 });
+    } catch (e) {
+      // Diagnostic only, fired once after the retries are exhausted: distinguish "backend
+      // doesn't know the waypoint" from "UI didn't render it". Never satisfies the assertion
+      // from the API response — the test guards the display toggle.
+      const response = await this.page.request.get(
+        kialiUrl(`/api/namespaces/graph?${waypointVisibleGraphQuery(namespace).toString()}`)
+      );
+      const body = (await response.json().catch(() => null)) as { elements?: { nodes?: GraphNode[] } } | null;
+      const apiHasIt = !!body && graphHasWaypointInCluster(body.elements?.nodes ?? [], workload, cluster, namespace);
+      const apiNote = apiHasIt
+        ? ' (graph API has the waypoint — UI did not render it)'
+        : ` (graph API HTTP ${response.status()}, waypoint absent there too)`;
+      throw new Error(
+        `Expected waypoint "${workload}" visible in UI graph for cluster "${cluster}" (namespace=${namespace})${apiNote}`,
+        { cause: e }
+      );
+    }
   }
 
   /** Assert traffic edges involve nodes from both clusters. */

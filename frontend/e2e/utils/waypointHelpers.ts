@@ -45,7 +45,7 @@ type GraphEdge = {
   data?: { traffic?: { protocol?: string } };
 };
 
-type GraphNode = {
+export type GraphNode = {
   data?: Record<string, unknown>;
 };
 

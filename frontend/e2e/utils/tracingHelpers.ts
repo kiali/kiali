@@ -258,7 +258,7 @@ export const expectSpanDetails = async (page: Page, options: ExpectSpanDetailsOp
   const rows = page.locator('table tbody tr');
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
   // At least 2 rows are required: the second row is asserted on below.
-  expect(await rows.count(), 'Expected at least 2 span rows').toBeGreaterThan(1);
+  await expect(rows.nth(1)).toBeVisible();
   const spanRow = rows.nth(1);
   await expect(spanRow.locator('td').nth(4)).toBeVisible();
   const statsCell = spanRow.locator('td').nth(3);

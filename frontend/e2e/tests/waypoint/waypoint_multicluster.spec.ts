@@ -17,8 +17,10 @@ test.describe('Waypoint multicluster (ambient multi-primary)', () => {
 
   test.beforeAll(async ({ request }) => {
     // The setup chains four sequential helpers with 600s budgets each (healthy waypoints on
-    // east and west, graph traffic, waypoint in both clusters) = 2400s worst case.
-    test.setTimeout(1800_000);
+    // east and west, graph traffic, waypoint in both clusters) = 2400s worst case. Budget the
+    // beforeAll above that sum so a slow helper's descriptive error surfaces instead of the
+    // generic timeout cutting off the serial file.
+    test.setTimeout(2400_000);
     await prepareBookinfoWaypointsMulticluster(request, BOOKINFO_WAYPOINTS_NS);
   });
 
@@ -78,9 +80,8 @@ test.describe('Waypoint multicluster (ambient multi-primary)', () => {
   });
 
   test(
-    // Uses reviews-v1 instead of the original cypress productpage-v1: both are east-only
-    // workloads in the bookinfo-waypoints split, and reviews-v1 traces proved stable under
-    // waypoint L7 attribution in this environment.
+    // Uses reviews-v1: an east-only workload in the bookinfo-waypoints split whose traces
+    // proved stable under waypoint L7 attribution.
     'Traces for reviews-v1 in east cluster',
     waypointMulticlusterOnly,
     async ({ page, request, workloadDetailsPage }) => {
