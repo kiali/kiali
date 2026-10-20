@@ -613,7 +613,7 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.K8sGRPCRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sHTTPRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
-		checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, ValidatingNamespace: vInfo.nsInfo.namespace.Name, WorkloadsPerNamespace: workloadsPerNamespace},
+		checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IsGatewayToNamespace: gatewayToNamespace, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, ValidatingNamespace: vInfo.nsInfo.namespace.Name, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.NewPeerAuthenticationChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries},
@@ -820,7 +820,7 @@ func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo
 		return nil, nil, err
 	}
 
-	noServiceChecker := checkers.NoServiceChecker{Conf: conf, IdentityDomain: identityDomain, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: policyAllowAny, ValidatingNamespace: namespace}
+	noServiceChecker := checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IsGatewayToNamespace: gatewayToNamespace, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, ValidatingNamespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace}
 	importScope := in.buildImportScope(vInfo, nsNames, identityDomain)
 
 	switch objectGVK {

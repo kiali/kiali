@@ -13,14 +13,18 @@ import (
 )
 
 type NoHostChecker struct {
-	Conf                *config.Config
-	IdentityDomain      string
-	KubeServiceHosts    kubernetes.KubeServiceHosts
-	Namespaces          []string
-	PolicyAllowAny      bool
-	ServiceEntryHosts   map[string][]string
-	ValidatingNamespace string
-	VirtualService      *networking_v1.VirtualService
+	Conf *config.Config
+	// GatewayWorkloadScope records whether each known Gateway, keyed by FQDN,
+	// selects a workload in ValidatingNamespace. Unresolved references fall back
+	// to their configuration namespace.
+	GatewayWorkloadScope map[string]bool
+	IdentityDomain       string
+	KubeServiceHosts     kubernetes.KubeServiceHosts
+	Namespaces           []string
+	PolicyAllowAny       bool
+	ServiceEntryHosts    map[string][]string
+	ValidatingNamespace  string
+	VirtualService       *networking_v1.VirtualService
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -100,14 +104,14 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 // per-match gateways override the top-level spec.gateways for that match, and an
 // empty gateway list defaults to the mesh. A block scoped only to named gateways
 // is applied by the gateway proxies alone, so its destinations are validated only
-// from the perspective of a gateway's namespace; every other block can also be
+// from namespaces containing selected gateway workloads; every other block can also be
 // applied by sidecars in any namespace the VirtualService is exported to, and is
 // validated as before from the VirtualService's own namespace. An unset
 // ValidatingNamespace keeps the legacy behavior of validating every block.
 func (n NoHostChecker) routeBlockScope(matchGateways [][]string) (applies bool, viewer string) {
 	namespace := n.VirtualService.Namespace
 	meshApplicable := false
-	gatewayNamespaces := make(map[string]struct{})
+	gatewayApplicable := false
 
 	scopes := matchGateways
 	if len(scopes) == 0 {
@@ -128,14 +132,19 @@ func (n NoHostChecker) routeBlockScope(matchGateways [][]string) (applies bool, 
 				meshApplicable = true
 				continue
 			}
-			gatewayNamespaces[kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain).Namespace] = struct{}{}
+			host := kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain)
+			if applies, known := n.GatewayWorkloadScope[host.String()]; known {
+				gatewayApplicable = gatewayApplicable || applies
+			} else {
+				gatewayApplicable = gatewayApplicable || host.Namespace == n.ValidatingNamespace
+			}
 		}
 	}
 
 	if meshApplicable || n.ValidatingNamespace == "" {
 		return true, namespace
 	}
-	if _, ok := gatewayNamespaces[n.ValidatingNamespace]; ok {
+	if gatewayApplicable {
 		return true, n.ValidatingNamespace
 	}
 	return false, ""
