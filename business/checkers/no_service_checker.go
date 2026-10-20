@@ -21,6 +21,7 @@ type NoServiceChecker struct {
 	Namespaces            models.Namespaces
 	PolicyAllowAny        bool
 	Services              []core_v1.Service
+	ValidatingNamespace   string
 	WorkloadsPerNamespace map[string]models.Workloads
 }
 
@@ -31,7 +32,7 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	gatewayNames := kubernetes.GatewayNames(in.IstioConfigList.Gateways, in.IdentityDomain)
 
 	for _, virtualService := range in.IstioConfigList.VirtualServices {
-		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.KubeServiceHosts, in.PolicyAllowAny, in.Cluster, in.IdentityDomain))
+		validations.MergeValidations(runVirtualServiceCheck(virtualService, serviceHosts, in.Namespaces, in.KubeServiceHosts, in.PolicyAllowAny, in.Cluster, in.IdentityDomain, in.ValidatingNamespace))
 
 		validations.MergeValidations(runGatewayCheck(virtualService, gatewayNames, in.Cluster, in.IdentityDomain))
 	}
@@ -41,16 +42,17 @@ func (in NoServiceChecker) Check() models.IstioValidations {
 	return validations
 }
 
-func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, policyAllowAny bool, cluster string, identityDomain string) models.IstioValidations {
+func runVirtualServiceCheck(virtualService *networking_v1.VirtualService, serviceHosts map[string][]string, clusterNamespaces models.Namespaces, kubeServiceHosts kubernetes.KubeServiceHosts, policyAllowAny bool, cluster string, identityDomain string, validatingNamespace string) models.IstioValidations {
 	key, validations := EmptyValidValidation(virtualService.Name, virtualService.Namespace, kubernetes.VirtualServices, cluster)
 
 	result, valid := virtualservices.NoHostChecker{
-		IdentityDomain:    identityDomain,
-		Namespaces:        clusterNamespaces.GetNames(),
-		VirtualService:    virtualService,
-		ServiceEntryHosts: serviceHosts,
-		KubeServiceHosts:  kubeServiceHosts,
-		PolicyAllowAny:    policyAllowAny,
+		IdentityDomain:      identityDomain,
+		Namespaces:          clusterNamespaces.GetNames(),
+		ValidatingNamespace: validatingNamespace,
+		VirtualService:      virtualService,
+		ServiceEntryHosts:   serviceHosts,
+		KubeServiceHosts:    kubeServiceHosts,
+		PolicyAllowAny:      policyAllowAny,
 	}.Check()
 
 	validations.Valid = valid
