@@ -275,7 +275,7 @@ func TestMeshConfigJSONMarshal(t *testing.T) {
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
-			b, err := json.Marshal(models.MeshConfig{&istiov1alpha1.MeshConfig{OutboundTrafficPolicy: tc.OutboundTrafficPolicy}})
+			b, err := json.Marshal(models.MeshConfig{MeshConfig: &istiov1alpha1.MeshConfig{OutboundTrafficPolicy: tc.OutboundTrafficPolicy}})
 			require.NoError(err)
 
 			require.Equal(string(b), tc.Expected)
