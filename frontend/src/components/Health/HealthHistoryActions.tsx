@@ -1,6 +1,16 @@
 // Assisted-by: OpenAI Codex
 import * as React from 'react';
-import { Button, FormGroup, FormSelect, FormSelectOption, Popover, Stack, StackItem } from '@patternfly/react-core';
+import {
+  Button,
+  Divider,
+  FormGroup,
+  FormSelect,
+  FormSelectOption,
+  Popover,
+  Stack,
+  StackItem
+} from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
 import { KialiLink } from 'components/Link/KialiLink';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import { useKialiSelector } from 'hooks/redux';
@@ -37,6 +47,40 @@ const actionsStyle = kialiStyle({
   gap: PFSpacer.sm
 });
 
+const headerStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: PFSpacer.sm
+});
+
+const bodyStyle = kialiStyle({
+  paddingTop: PFSpacer.sm
+});
+
+const timeRangeStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: PFSpacer.sm
+});
+
+const timeOptions: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit'
+};
+
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'numeric',
+  year: 'numeric',
+  ...timeOptions
+};
+
+const formatTime = (timestamp: number, referenceTimestamp: number): string => {
+  const date = new Date(timestamp);
+  const sameDay = date.toDateString() === new Date(referenceTimestamp).toDateString();
+  return sameDay ? date.toLocaleTimeString(undefined, timeOptions) : date.toLocaleString(undefined, dateTimeOptions);
+};
+
 export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props => {
   const { t } = useKialiTranslation();
   const { onSelect, tabs } = React.useContext(CustomTimeTabsContext);
@@ -44,17 +88,17 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
   const anchorRef = React.useRef<HTMLSpanElement>(null);
   const [selection, setSelection] = React.useState<{ now: number; position: number; timestamp: number }>();
   const [duration, setDuration] = React.useState(600);
+  const [isHelpOpen, setIsHelpOpen] = React.useState(false);
   const range = selection ? getHealthHistoryRange(selection.timestamp, duration, selection.now) : undefined;
-  const formatTime = (timestamp: number): string => new Date(timestamp).toLocaleString();
   const options: Record<string, string> = {
-    60: t('1 minute'),
     300: t('5 minutes'),
     600: t('10 minutes'),
     1800: t('30 minutes')
   };
 
   const handleSelect = React.useCallback((timestamp: number, position: number): void => {
-    setSelection({ now: Date.now(), position, timestamp });
+    setIsHelpOpen(false);
+    setSelection({ now: Date.now(), position, timestamp: Math.floor(timestamp / 60) * 60 });
   }, []);
 
   return (
@@ -68,33 +112,72 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
       />
       <Popover
         triggerRef={anchorRef}
-        headerContent={t('Troubleshoot health')}
+        headerContent={
+          selection ? (
+            <span className={headerStyle}>
+              {formatTime(selection.timestamp * 1000, selection.now)}
+              <Popover
+                position="right"
+                headerContent={t('Troubleshooting Time Range')}
+                onShow={() => setIsHelpOpen(true)}
+                onHide={() => setIsHelpOpen(false)}
+                bodyContent={t(
+                  'Centers a custom time range on the selected time when possible. Choose a troubleshooting page below to open it with this range preset.'
+                )}
+              >
+                <Button
+                  variant="plain"
+                  isInline
+                  hasNoPadding
+                  icon={<KialiIcon.Help />}
+                  aria-label={t('About the troubleshooting time range')}
+                  data-test="health-history-time-range-help"
+                />
+              </Popover>
+            </span>
+          ) : null
+        }
         position="top"
         isVisible={selection !== undefined}
-        shouldClose={() => setSelection(undefined)}
+        shouldClose={() => {
+          // Dismiss nested help before closing the troubleshooting actions.
+          if (!isHelpOpen) {
+            setSelection(undefined);
+          }
+        }}
         bodyContent={
           range && selection ? (
-            <Stack hasGutter data-test="health-history-actions">
+            <Stack hasGutter className={bodyStyle} data-test="health-history-actions">
               <StackItem>
-                {t('Selected time')}: {formatTime(selection.timestamp * 1000)}
+                <Divider />
               </StackItem>
               <StackItem>
-                <FormGroup label={t('Troubleshooting window')} fieldId="health-history-window">
-                  <FormSelect
-                    id="health-history-window"
-                    aria-label={t('Troubleshooting window')}
-                    value={duration}
-                    onChange={(_event, value) => setDuration(Number(value))}
-                    data-test="health-history-window"
-                  >
-                    {Object.entries(options).map(([seconds, label]) => (
-                      <FormSelectOption key={seconds} value={seconds} label={label} />
-                    ))}
-                  </FormSelect>
+                <FormGroup
+                  className={timeRangeStyle}
+                  label={t('Troubleshooting Time Range')}
+                  fieldId="health-history-window"
+                >
+                  <div className={timeRangeStyle}>
+                    <FormSelect
+                      id="health-history-window"
+                      aria-label={t('Troubleshooting Time Range')}
+                      value={duration}
+                      onChange={(_event, value) => setDuration(Number(value))}
+                      data-test="health-history-window"
+                    >
+                      {Object.entries(options).map(([seconds, label]) => (
+                        <FormSelectOption key={seconds} value={seconds} label={label} />
+                      ))}
+                    </FormSelect>
+                    <div data-test="health-history-investigation-range">
+                      {formatTime(range.from, selection.timestamp * 1000)} –{' '}
+                      {formatTime(range.to, selection.timestamp * 1000)}
+                    </div>
+                  </div>
                 </FormGroup>
               </StackItem>
-              <StackItem data-test="health-history-investigation-range">
-                {formatTime(range.from)} – {formatTime(range.to)}
+              <StackItem>
+                <Divider />
               </StackItem>
               <StackItem className={actionsStyle}>
                 <KialiLink

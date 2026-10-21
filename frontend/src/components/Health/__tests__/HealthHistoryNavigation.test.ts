@@ -6,15 +6,33 @@ describe('health history navigation', () => {
   const clicked = Date.UTC(2026, 9, 15, 12, 0, 23) / 1000;
   const now = Date.UTC(2026, 9, 15, 13);
 
-  it('centers a ten-minute window and aligns it to the replay minute boundary', () => {
+  it('centers a ten-minute window on the minute shown by the ribbon tooltip', () => {
     expect(getHealthHistoryRange(clicked, 600, now)).toEqual({
       from: Date.UTC(2026, 9, 15, 11, 55),
       to: Date.UTC(2026, 9, 15, 12, 5)
     });
   });
 
+  it('uses whole-minute endpoints for a one-minute window', () => {
+    expect(getHealthHistoryRange(clicked, 60, now)).toEqual({
+      from: Date.UTC(2026, 9, 15, 11, 59),
+      to: Date.UTC(2026, 9, 15, 12, 0)
+    });
+  });
+
+  it('uses the same bounds for clicks anywhere in the same minute', () => {
+    for (const duration of [60, 300, 600, 1800]) {
+      const range = getHealthHistoryRange(clicked, duration, now);
+      expect(getHealthHistoryRange(clicked + 36, duration, now)).toEqual(range);
+      expect(range.from % 60000).toBe(0);
+      expect(range.to % 60000).toBe(0);
+      expect(range.to - range.from).toBe(duration * 1000);
+    }
+  });
+
   it('shifts a near-now window backwards while preserving its length', () => {
-    const range = getHealthHistoryRange(now / 1000 - 30, 600, now);
+    const preciseNow = now + 37000;
+    const range = getHealthHistoryRange(preciseNow / 1000 - 30, 600, preciseNow);
     expect(range.to).toBe(now);
     expect(range.to - range.from).toBe(600000);
   });

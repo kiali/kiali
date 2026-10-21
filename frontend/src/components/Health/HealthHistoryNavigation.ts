@@ -8,8 +8,9 @@ export type HealthHistoryRange = Required<BoundsInMilliseconds>;
 
 export const getHealthHistoryRange = (timestamp: number, duration: number, now = Date.now()): HealthHistoryRange => {
   const length = duration * 1000;
-  // Replay rounds its start to the minute. Use the same bounds for every destination.
-  const to = Math.min(Math.floor((timestamp * 1000 + length / 2) / 60000), Math.floor(now / 60000)) * 60000;
+  // Match the minute shown by the ribbon tooltip and every destination's custom range.
+  const selectedTime = Math.floor(timestamp / 60) * 60000;
+  const to = Math.floor(Math.min(selectedTime + length / 2, now) / 60000) * 60000;
   return { from: to - length, to };
 };
 
