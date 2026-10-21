@@ -1584,6 +1584,8 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	vInfo.mesh = testMesh(conf)
 	filteredSEs := v.filterSEExportToNamespaces(currentIstioObjects, &vInfo)
 	var expectedSE []*networking_v1.ServiceEntry
+	// The sidecar requester honors exports even when the definition namespace is ambient.
+	expectedSE = append(expectedSE, se1to3)
 	expectedSE = append(expectedSE, se2tothis)
 	expectedSE = append(expectedSE, se3to2)
 	expectedSE = append(expectedSE, se3toall)
