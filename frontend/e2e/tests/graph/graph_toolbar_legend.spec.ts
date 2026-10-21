@@ -1,5 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { core1 } from '../../utils/suite-tags';
+import { core1AndOffline } from '../../utils/suite-tags';
 
 const TOOLBAR_BUTTONS = [
   'reset-view',
@@ -19,7 +19,7 @@ test.describe('Graph toolbar legend', () => {
   });
 
   for (const id of TOOLBAR_BUTTONS) {
-    test(`Toggle button ${id} is enabled`, core1, async ({ graphPage }) => {
+    test(`Toggle button ${id} is enabled`, core1AndOffline, async ({ graphPage }) => {
       await graphPage.expectToolbarButtonEnabled(id);
     });
   }
@@ -33,21 +33,21 @@ test.describe('Graph toolbar legend', () => {
     'toolbar_layout_breadth_first',
     'legend'
   ]) {
-    test(`Button ${id} can be turned on`, core1, async ({ graphPage }) => {
+    test(`Button ${id} can be turned on`, core1AndOffline, async ({ graphPage }) => {
       await graphPage.clickToolbarButton(id);
       await graphPage.expectToolbarButtonActive(id, true);
     });
   }
 
   for (const id of ['toolbar_edge_mode_unhealthy', 'toolbar_edge_mode_none']) {
-    test(`Button ${id} can be turned off`, core1, async ({ graphPage }) => {
+    test(`Button ${id} can be turned off`, core1AndOffline, async ({ graphPage }) => {
       await graphPage.prepareToolbarButton(id, true);
       await graphPage.clickToolbarButton(id);
       await graphPage.expectToolbarButtonActive(id, false);
     });
   }
 
-  test('Hide Healthy Edges off when Hide All Edges on', core1, async ({ graphPage }) => {
+  test('Hide Healthy Edges off when Hide All Edges on', core1AndOffline, async ({ graphPage }) => {
     await graphPage.prepareToolbarButton('toolbar_edge_mode_unhealthy', false);
     await graphPage.prepareToolbarButton('toolbar_edge_mode_none', false);
     await graphPage.clickToolbarButton('toolbar_edge_mode_unhealthy');
@@ -56,7 +56,7 @@ test.describe('Graph toolbar legend', () => {
     await graphPage.expectToolbarButtonActive('toolbar_edge_mode_none', true);
   });
 
-  test('Hide All Edges off when Hide Healthy Edges on', core1, async ({ graphPage }) => {
+  test('Hide All Edges off when Hide Healthy Edges on', core1AndOffline, async ({ graphPage }) => {
     await graphPage.prepareToolbarButton('toolbar_edge_mode_unhealthy', false);
     await graphPage.prepareToolbarButton('toolbar_edge_mode_none', false);
     await graphPage.clickToolbarButton('toolbar_edge_mode_none');
@@ -65,7 +65,7 @@ test.describe('Graph toolbar legend', () => {
     await graphPage.expectToolbarButtonActive('toolbar_edge_mode_none', false);
   });
 
-  test('Graph Layout Style buttons are mutually exclusive', core1, async ({ graphPage }) => {
+  test('Graph Layout Style buttons are mutually exclusive', core1AndOffline, async ({ graphPage }) => {
     await graphPage.prepareToolbarButton('toolbar_layout_dagre', true);
     await graphPage.prepareToolbarButton('toolbar_layout_grid', false);
     await graphPage.prepareToolbarButton('toolbar_layout_concentric', false);
@@ -79,20 +79,20 @@ test.describe('Graph toolbar legend', () => {
     await graphPage.expectToolbarButtonActive('toolbar_layout_breadth_first', true);
   });
 
-  test('Show the Legend', core1, async ({ graphPage }) => {
+  test('Show the Legend', core1AndOffline, async ({ graphPage }) => {
     await graphPage.clickToolbarButton('legend');
     await graphPage.expectLegendVisible();
     await graphPage.expectToolbarButtonActive('legend', true);
   });
 
-  test('Close the Legend using the button', core1, async ({ graphPage }) => {
+  test('Close the Legend using the button', core1AndOffline, async ({ graphPage }) => {
     await graphPage.clickToolbarButton('legend');
     await graphPage.clickToolbarButton('legend');
     await graphPage.expectLegendHidden();
     await graphPage.expectToolbarButtonActive('legend', false);
   });
 
-  test('Close the Legend using the cross', core1, async ({ graphPage }) => {
+  test('Close the Legend using the cross', core1AndOffline, async ({ graphPage }) => {
     await graphPage.clickToolbarButton('legend');
     await graphPage.closeLegendWithCross();
     await graphPage.expectLegendHidden();

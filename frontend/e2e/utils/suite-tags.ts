@@ -76,3 +76,16 @@ export const multiMeshOnly = { tag: '@multi-mesh' as const };
 
 /** Dual-tagged mesh infra check: core-caching and multi-mesh suites */
 export const coreCachingAndMultiMesh = { tag: ['@core-caching', '@multi-mesh'] };
+
+/**
+ * Dual-tagged offline reruns: the same test runs in its live-cluster suite
+ * (core-1, core-2, core-caching, ambient) and in the offline must-gather
+ * project, mirroring Cypress scenarios tagged e.g. `@core-1 @offline`.
+ */
+export const core1AndOffline = { tag: ['@core-1', '@offline'] };
+
+export const core2AndOffline = { tag: ['@core-2', '@offline'] };
+
+export const coreCachingAndOffline = { tag: ['@core-caching', '@offline'] };
+
+export const ambientAndOffline = { tag: ['@ambient', '@offline'] };

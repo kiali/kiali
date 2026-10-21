@@ -1,14 +1,14 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { core1 } from '../../utils/suite-tags';
+import { core1AndOffline } from '../../utils/suite-tags';
 
 test.describe('Graph replay', () => {
-  test('Graph alpha and beta namespaces', core1, async ({ graphPage }) => {
+  test('Graph alpha and beta namespaces', core1AndOffline, async ({ graphPage }) => {
     await graphPage.graphNamespaces('alpha,beta');
     await graphPage.expectNamespaceInSummaryPanel('alpha');
     await graphPage.expectNamespaceInSummaryPanel('beta');
   });
 
-  test('Show Replay controls', core1, async ({ graphPage }) => {
+  test('Show Replay controls', core1AndOffline, async ({ graphPage }) => {
     await graphPage.graphNamespaces('alpha,beta');
     await graphPage.pressReplay();
     await graphPage.expectReplayCloseVisible();
@@ -20,7 +20,7 @@ test.describe('Graph replay', () => {
     await graphPage.pressReplayPause();
   });
 
-  test('Close Replay', core1, async ({ graphPage }) => {
+  test('Close Replay', core1AndOffline, async ({ graphPage }) => {
     await graphPage.graphNamespaces('alpha,beta');
     await graphPage.pressReplay();
     await graphPage.pressReplayClose();

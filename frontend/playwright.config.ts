@@ -1,5 +1,6 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test';
 import { AUTH_FILE } from './e2e/utils/auth';
+import { OFFLINE_PROJECT_NAME } from './e2e/utils/projects';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3001';
 const isCI = !!process.env.CI;
@@ -207,7 +208,7 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }
     },
     {
-      name: 'offline',
+      name: OFFLINE_PROJECT_NAME,
       grep: /@offline/,
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'], storageState: AUTH_FILE }

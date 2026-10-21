@@ -1,5 +1,5 @@
 import { test, expect } from '../../fixtures/kialiFixtures';
-import { core1 } from '../../utils/suite-tags';
+import { core1, core1AndOffline } from '../../utils/suite-tags';
 
 const WIZARD_ACTIONS = [
   'traffic_shifting',
@@ -15,21 +15,21 @@ test.describe('Graph context menu', () => {
     await graphPage.expectGraphLoaded();
   });
 
-  test('Detail action in context menu for service node', core1, async ({ graphPage, page }) => {
+  test('Detail action in context menu for service node', core1AndOffline, async ({ graphPage, page }) => {
     await graphPage.openContextMenuForService('productpage');
     await graphPage.clickContextMenuLink('Details');
     await expect(page).not.toHaveURL(/clusterName=/);
     await page.goBack();
   });
 
-  test('Traffic action in context menu for service node', core1, async ({ graphPage, page }) => {
+  test('Traffic action in context menu for service node', core1AndOffline, async ({ graphPage, page }) => {
     await graphPage.openContextMenuForService('productpage');
     await graphPage.clickContextMenuLink('Traffic');
     await expect(page).not.toHaveURL(/clusterName=/);
     await page.goBack();
   });
 
-  test('Inbound Metrics in context menu for service node', core1, async ({ graphPage, page }) => {
+  test('Inbound Metrics in context menu for service node', core1AndOffline, async ({ graphPage, page }) => {
     await graphPage.openContextMenuForService('productpage');
     await graphPage.clickContextMenuLink('Inbound Metrics');
     await expect(page).not.toHaveURL(/clusterName=/);

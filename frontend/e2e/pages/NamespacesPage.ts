@@ -76,6 +76,10 @@ export class NamespacesPage extends BasePage {
     await colExists(this.page, colName, visible);
   }
 
+  async expectNamespaceColumnText(namespace: string): Promise<void> {
+    await expectColumnTextOnRow(this.page, namespace, 'Namespace', namespace);
+  }
+
   async expectBookinfoNamespaceTableInfo(): Promise<void> {
     await this.expectNamespaceVisible('bookinfo');
     await this.expectTableHeadings(['Namespace', 'Type', 'Health', 'mTLS', 'Istio config', 'Labels']);

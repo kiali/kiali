@@ -1,5 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { core1 } from '../../utils/suite-tags';
+import { core1, core1AndOffline } from '../../utils/suite-tags';
 
 const WIZARD_ACTIONS = [
   'traffic_shifting',
@@ -31,7 +31,7 @@ test.describe('Graph side panel', () => {
     });
   }
 
-  test('Validate summary panel edge', core1, async ({ graphPage }) => {
+  test('Validate summary panel edge', core1AndOffline, async ({ graphPage }) => {
     await graphPage.clickGraphEdge('productpage', 'app', 'details', 'service');
     await graphPage.expectSummaryPanelContains('Edge (HTTP)');
   });
