@@ -38,6 +38,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                 >
                   <button
                     aria-expanded="false"
+                    aria-haspopup="menu"
                     class="pf-v6-c-menu-toggle"
                     data-ouia-component-id="OUIA-Generated-MenuToggle-56"
                     data-ouia-component-type="PF6/MenuToggle"
@@ -84,6 +85,7 @@ exports[`Inbound Metrics for a workload > renders initial layout 1`] = `
                     </span>
                     <button
                       aria-expanded="false"
+                      aria-haspopup="menu"
                       aria-label="Destination"
                       class="pf-v6-c-menu-toggle"
                       data-ouia-component-id="OUIA-Generated-MenuToggle-59"
@@ -229,6 +231,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                 >
                   <button
                     aria-expanded="false"
+                    aria-haspopup="menu"
                     class="pf-v6-c-menu-toggle"
                     data-ouia-component-id="OUIA-Generated-MenuToggle-7"
                     data-ouia-component-type="PF6/MenuToggle"
@@ -275,6 +278,7 @@ exports[`Metrics for a service > renders initial layout 1`] = `
                     </span>
                     <button
                       aria-expanded="false"
+                      aria-haspopup="menu"
                       aria-label="Destination"
                       class="pf-v6-c-menu-toggle"
                       data-ouia-component-id="OUIA-Generated-MenuToggle-10"

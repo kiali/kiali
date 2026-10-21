@@ -36,7 +36,7 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-4"
+            data-ouia-component-id="OUIA-Generated-Button-control-5"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -78,9 +78,10 @@ exports[`DateTimePicker > renders correctly with no selected date 1`] = `
       >
         <button
           aria-expanded="false"
+          aria-haspopup="menu"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-8"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-9"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
@@ -159,7 +160,7 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
           <input
             aria-invalid="false"
             aria-label="Date and time picker"
-            data-ouia-component-id="OUIA-Generated-TextInputBase-10"
+            data-ouia-component-id="OUIA-Generated-TextInputBase-11"
             data-ouia-component-type="PF6/TextInput"
             data-ouia-safe="true"
             data-test="date-time-picker"
@@ -178,7 +179,7 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-12"
+            data-ouia-component-id="OUIA-Generated-Button-control-14"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -220,9 +221,10 @@ exports[`DateTimePicker > renders correctly with selected date 1`] = `
       >
         <button
           aria-expanded="false"
+          aria-haspopup="menu"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-16"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-18"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
@@ -301,7 +303,7 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
           <input
             aria-invalid="false"
             aria-label="Date and time picker"
-            data-ouia-component-id="OUIA-Generated-TextInputBase-42"
+            data-ouia-component-id="OUIA-Generated-TextInputBase-47"
             data-ouia-component-type="PF6/TextInput"
             data-ouia-safe="true"
             data-test="date-time-picker"
@@ -320,7 +322,7 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
           <button
             aria-label="Toggle the calendar"
             class="pf-v6-c-button pf-m-control"
-            data-ouia-component-id="OUIA-Generated-Button-control-44"
+            data-ouia-component-id="OUIA-Generated-Button-control-50"
             data-ouia-component-type="PF6/Button"
             data-ouia-safe="true"
             type="button"
@@ -362,9 +364,10 @@ exports[`DateTimePicker > renders with min and max date constraints 1`] = `
       >
         <button
           aria-expanded="false"
+          aria-haspopup="menu"
           aria-label="Time picker"
           class="pf-v6-c-menu-toggle"
-          data-ouia-component-id="OUIA-Generated-MenuToggle-48"
+          data-ouia-component-id="OUIA-Generated-MenuToggle-54"
           data-ouia-component-type="PF6/MenuToggle"
           data-ouia-safe="true"
           type="button"
