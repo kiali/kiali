@@ -1,6 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { selectNamespace } from '../../utils/namespace';
-import { core1 } from '../../utils/suite-tags';
+import { core1AndOffline } from '../../utils/suite-tags';
 
 test.describe('Column management', () => {
   test.describe('Apps list', () => {
@@ -9,19 +9,19 @@ test.describe('Column management', () => {
       await selectNamespace(page, 'bookinfo');
     });
 
-    test('Open column management modal', core1, async ({ appsPage }) => {
+    test('Open column management modal', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.expectColumnManagementModal();
       await appsPage.expectModalTitle('Manage columns');
     });
 
-    test('Name column is not hideable in modal', core1, async ({ appsPage }) => {
+    test('Name column is not hideable in modal', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.expectColumnCheckboxDisabled('Name');
       await appsPage.expectColumnCheckboxChecked('Name');
     });
 
-    test('Hide and show columns via modal', core1, async ({ appsPage }) => {
+    test('Hide and show columns via modal', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.setColumnChecked('Labels', false);
       await appsPage.setColumnChecked('Details', false);
@@ -36,13 +36,13 @@ test.describe('Column management', () => {
       await appsPage.expectColumnVisibleInTable('Labels');
     });
 
-    test('Reorder columns via modal', core1, async ({ appsPage }) => {
+    test('Reorder columns via modal', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.reorderColumnsViaUrl();
       await appsPage.expectFirstDataColumn('Health');
     });
 
-    test('Reset columns to default', core1, async ({ appsPage }) => {
+    test('Reset columns to default', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.setColumnChecked('Health', false);
       await appsPage.applyColumnChanges();
@@ -54,7 +54,7 @@ test.describe('Column management', () => {
       await appsPage.expectColumnVisibleInTable('Health');
     });
 
-    test('Name column cannot be hidden via URL', core1, async ({ appsPage, page }) => {
+    test('Name column cannot be hidden via URL', core1AndOffline, async ({ appsPage, page }) => {
       await appsPage.openList({ apphide: 'name,health,labels' });
       await selectNamespace(page, 'bookinfo');
       await appsPage.expectColumnVisibleInTable('Name');
@@ -62,7 +62,7 @@ test.describe('Column management', () => {
       await appsPage.expectColumnHiddenInTable('Labels');
     });
 
-    test('Column state persists in URL', core1, async ({ appsPage }) => {
+    test('Column state persists in URL', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.setColumnChecked('Namespace', false);
       await appsPage.applyColumnChanges();
@@ -71,7 +71,7 @@ test.describe('Column management', () => {
       await appsPage.expectColumnHiddenInTable('Namespace');
     });
 
-    test('Column order persists in URL', core1, async ({ appsPage }) => {
+    test('Column order persists in URL', core1AndOffline, async ({ appsPage }) => {
       await appsPage.openColumnManagement('apps-manage-columns');
       await appsPage.reorderColumnsViaUrl();
       await appsPage.expectUrlContains('apporder');
@@ -81,7 +81,7 @@ test.describe('Column management', () => {
   });
 
   test.describe('Services list', () => {
-    test('Name column is not hideable', core1, async ({ servicesPage, page }) => {
+    test('Name column is not hideable', core1AndOffline, async ({ servicesPage, page }) => {
       await servicesPage.openList();
       await selectNamespace(page, 'bookinfo');
       await servicesPage.openColumnManagement('services-manage-columns');
@@ -94,7 +94,7 @@ test.describe('Column management', () => {
   });
 
   test.describe('Workloads list', () => {
-    test('Name column is not hideable', core1, async ({ workloadsPage, page }) => {
+    test('Name column is not hideable', core1AndOffline, async ({ workloadsPage, page }) => {
       await workloadsPage.openList();
       await selectNamespace(page, 'bookinfo');
       await workloadsPage.openColumnManagement('workloads-manage-columns');

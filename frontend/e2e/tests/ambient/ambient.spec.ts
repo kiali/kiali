@@ -1,7 +1,8 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { waitForAnyServiceHealthStatus } from '../../utils/health';
-import { ambientOnly } from '../../utils/suite-tags';
+import { isOfflineProject } from '../../utils/projects';
+import { ambientAndOffline, ambientOnly } from '../../utils/suite-tags';
 
 test.describe('Ambient mesh', () => {
   test('Ambient badge is visible on namespaces list', ambientOnly, async ({ namespacesPage }) => {
@@ -23,20 +24,26 @@ test.describe('Ambient mesh', () => {
     await graphPage.expectTrafficMenuHidden();
   });
 
-  test('User sees tcp traffic', ambientOnly, async ({ graphPage }) => {
+  test('User sees tcp traffic', ambientAndOffline, async ({ graphPage }) => {
     test.setTimeout(180_000);
     await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
+    if (isOfflineProject(test.info())) {
+      // The must-gather is recorded from a sidecar cluster with HTTP telemetry only,
+      // so disabling http leaves the bookinfo graph without any traffic.
+      await graphPage.expectNoTraffic();
+      return;
+    }
     // At least 6 edges with traffic when HTTP is disabled.
     await graphPage.expectTrafficEdgesAtLeast(6);
     await graphPage.expectTrafficProtocol('http', false);
     await graphPage.expectSummaryPanelTrafficRate('TCP');
   });
 
-  test('User sees http traffic', ambientOnly, async ({ graphPage }) => {
+  test('User sees http traffic', ambientAndOffline, async ({ graphPage }) => {
     test.setTimeout(180_000);
     await graphPage.graphNamespaces('bookinfo', '0', '600s');
     await graphPage.expectNamespaceInSummaryPanel('bookinfo');

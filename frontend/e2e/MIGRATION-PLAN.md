@@ -127,9 +127,11 @@
 - [x] `@multi-mesh` suite ported (Playwright specs + `playwright-multi-mesh` CI; run `yarn playwright:run:multi-mesh`)
 - [x] `@external-kiali` suite passes (Playwright + `playwright-external-kiali` CI; OpenID auth)
 - [x] `@tracing` suite passes (Playwright specs + `playwright-tempo` CI; run `yarn playwright:run:tracing`)
-- [x] `@offline` suite ported as a documented subset (13 tests, the offline-specific scenarios;
-  see the `@offline` reduction decision in "Decisions & tracking"; `playwright-offline` CI; run
-  `yarn playwright:run:offline`)
+- [x] `@offline` suite fully ported — all 146 Cypress `@offline` scenarios covered: 139
+  dual-tagged `<suite> @offline` reruns across 18 specs (core-1/core-2/core-caching/ambient
+  tests that also run in the offline project, mirroring Cypress dual tags) plus the
+  offline-specific specs (graph wizard locks, status icon, istio config); run
+  `yarn playwright:run:offline`
 - [x] `@ai-chatbot` suite ported (`playwright-ai-chatbot` / `yarn playwright:run:ai-chatbot`)
 - [x] Perf suite ported (`playwright-perf.config.ts` / `yarn playwright:run:perf`; `e2e/perf/`,
   text report written by `e2e/perf/perfReporter.ts`)

@@ -1,18 +1,18 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { hasGrafanaDeployment, isOssmc } from '../../utils/kialiConfig';
-import { coreCachingAndMultiMesh, coreCachingOnly } from '../../utils/suite-tags';
+import { coreCachingAndMultiMesh, coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('Mesh page core-caching', () => {
   test.beforeEach(async ({ meshPage }) => {
     await meshPage.open();
   });
 
-  test('Open mesh Tour', coreCachingOnly, async ({ meshPage }) => {
+  test('Open mesh Tour', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.openMeshTour();
     await meshPage.expectMeshTourVisible(true);
   });
 
-  test('Close mesh Tour', coreCachingOnly, async ({ meshPage }) => {
+  test('Close mesh Tour', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.openMeshTour();
     await meshPage.closeMeshTour();
     await meshPage.expectMeshTourVisible(false);
@@ -44,19 +44,19 @@ test.describe('Mesh page core-caching', () => {
     await meshPage.expectNodeSidePanel('Prometheus');
   });
 
-  test('Test DataPlane', coreCachingOnly, async ({ meshPage }) => {
+  test('Test DataPlane', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectMeshNodeByLabel('Data Plane');
     await meshPage.expectDataPlaneSidePanel();
     await meshPage.expandDataPlaneNamespace();
     await meshPage.expectConfigValidationInfo();
   });
 
-  test('Test Cluster', coreCachingOnly, async ({ meshPage }) => {
+  test('Test Cluster', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectClusterNode();
     await meshPage.expectClusterSidePanel();
   });
 
-  test('Test istio-system', coreCachingOnly, async ({ meshPage }) => {
+  test('Test istio-system', coreCachingAndOffline, async ({ meshPage }) => {
     await meshPage.selectMeshNodeByLabel('istio-system');
     await meshPage.expectNamespaceSidePanel('istio-system');
     await meshPage.expectMeshBodyNotContains('dataplane namespaces: 0');
