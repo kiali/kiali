@@ -12,15 +12,22 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+// GatewayWorkloadScope resolves whether a known Gateway selects a workload in the
+// validating namespace. Unknown references return known=false to retain the fallback.
+type GatewayWorkloadScope func(kubernetes.Host) (applies, known bool)
+
 type NoHostChecker struct {
-	Conf                *config.Config
-	IdentityDomain      string
-	KubeServiceHosts    kubernetes.KubeServiceHosts
-	Namespaces          []string
-	PolicyAllowAny      bool
-	ServiceEntryHosts   map[string][]string
-	ValidatingNamespace string
-	VirtualService      *networking_v1.VirtualService
+	Conf *config.Config
+	// GatewayWorkloadScope is called only for gateway-only routes. The caller
+	// supplies namespace-scoped caching; nil retains the reference-namespace fallback.
+	GatewayWorkloadScope GatewayWorkloadScope
+	IdentityDomain       string
+	KubeServiceHosts     kubernetes.KubeServiceHosts
+	Namespaces           []string
+	PolicyAllowAny       bool
+	ServiceEntryHosts    map[string][]string
+	ValidatingNamespace  string
+	VirtualService       *networking_v1.VirtualService
 }
 
 func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
@@ -100,43 +107,53 @@ func (n NoHostChecker) Check() ([]*models.IstioCheck, bool) {
 // per-match gateways override the top-level spec.gateways for that match, and an
 // empty gateway list defaults to the mesh. A block scoped only to named gateways
 // is applied by the gateway proxies alone, so its destinations are validated only
-// from the perspective of a gateway's namespace; every other block can also be
+// from namespaces containing selected gateway workloads; every other block can also be
 // applied by sidecars in any namespace the VirtualService is exported to, and is
 // validated as before from the VirtualService's own namespace. An unset
 // ValidatingNamespace keeps the legacy behavior of validating every block.
 func (n NoHostChecker) routeBlockScope(matchGateways [][]string) (applies bool, viewer string) {
 	namespace := n.VirtualService.Namespace
-	meshApplicable := false
-	gatewayNamespaces := make(map[string]struct{})
-
+	if n.ValidatingNamespace == "" {
+		return true, namespace
+	}
 	scopes := matchGateways
 	if len(scopes) == 0 {
 		// A block without matches inherits the top-level gateway scope.
 		scopes = [][]string{nil}
 	}
-	for _, scope := range scopes {
-		gateways := scope
+	// Any mesh-applicable match keeps the existing mesh behavior. Determine that
+	// before resolving gateways, even when a gateway match precedes the mesh match.
+	for _, gateways := range scopes {
 		if len(gateways) == 0 {
 			gateways = n.VirtualService.Spec.Gateways
 		}
 		if len(gateways) == 0 {
-			meshApplicable = true
-			continue
+			return true, namespace
 		}
 		for _, gateway := range gateways {
 			if gateway == "mesh" {
-				meshApplicable = true
-				continue
+				return true, namespace
 			}
-			gatewayNamespaces[kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain).Namespace] = struct{}{}
 		}
 	}
-
-	if meshApplicable || n.ValidatingNamespace == "" {
-		return true, namespace
-	}
-	if _, ok := gatewayNamespaces[n.ValidatingNamespace]; ok {
-		return true, n.ValidatingNamespace
+	for _, gateways := range scopes {
+		if len(gateways) == 0 {
+			gateways = n.VirtualService.Spec.Gateways
+		}
+		for _, gateway := range gateways {
+			host := kubernetes.ParseGatewayAsHost(gateway, namespace, n.IdentityDomain)
+			if n.GatewayWorkloadScope != nil {
+				if applies, known := n.GatewayWorkloadScope(host); known {
+					if applies {
+						return true, n.ValidatingNamespace
+					}
+					continue
+				}
+			}
+			if host.Namespace == n.ValidatingNamespace {
+				return true, n.ValidatingNamespace
+			}
+		}
 	}
 	return false, ""
 }
