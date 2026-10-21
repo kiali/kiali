@@ -1,5 +1,6 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { waitForAnyServiceHealthStatus } from '../../utils/health';
+import { isOfflineProject } from '../../utils/projects';
 import { ambientAndOffline, ambientOnly } from '../../utils/suite-tags';
 
 test.describe('Ambient mesh', () => {
@@ -29,7 +30,7 @@ test.describe('Ambient mesh', () => {
     await graphPage.openTrafficMenu();
     await graphPage.setTrafficOption('http', false);
     await graphPage.closeTrafficMenu();
-    if (test.info().project.name === 'offline') {
+    if (isOfflineProject(test.info())) {
       // The must-gather is recorded from a sidecar cluster with HTTP telemetry only,
       // so disabling http leaves the bookinfo graph without any traffic.
       await graphPage.expectNoTraffic();

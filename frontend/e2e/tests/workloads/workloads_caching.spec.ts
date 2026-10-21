@@ -1,11 +1,15 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { selectNamespace } from '../../utils/namespace';
+import { isOfflineProject } from '../../utils/projects';
 import { coreCachingAndOffline } from '../../utils/suite-tags';
 
 test.describe('Workloads list caching', () => {
   test.beforeEach(async ({ workloadsPage }) => {
-    ensureDemoApp('bookinfo');
+    // Offline runs serve bookinfo from the must-gather; there may be no cluster to install into.
+    if (!isOfflineProject(test.info())) {
+      ensureDemoApp('bookinfo');
+    }
     await workloadsPage.openList();
   });
 

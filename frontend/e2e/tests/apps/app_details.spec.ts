@@ -1,12 +1,16 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
+import { isOfflineProject } from '../../utils/projects';
 import { coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('App details core-caching', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
 
   test.beforeEach(async ({ appDetailsPage }) => {
-    ensureDemoApp('bookinfo');
+    // Offline runs serve bookinfo from the must-gather; there may be no cluster to install into.
+    if (!isOfflineProject(test.info())) {
+      ensureDemoApp('bookinfo');
+    }
     await appDetailsPage.openApp('bookinfo', 'details');
   });
 

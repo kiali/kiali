@@ -1,11 +1,18 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
 import { hasLoggersNamespace } from '../../utils/kialiConfig';
+import { isOfflineProject } from '../../utils/projects';
 import { core2AndOffline, coreCachingAndOffline } from '../../utils/suite-tags';
 
 test.describe('Workload logs tab core-caching', () => {
+  test.beforeEach(() => {
+    // Offline runs serve bookinfo from the must-gather; there may be no cluster to install into.
+    if (!isOfflineProject(test.info())) {
+      ensureDemoApp('bookinfo');
+    }
+  });
+
   test('The logs tab should show the logs of a pod', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
-    ensureDemoApp('bookinfo');
     await workloadDetailsPage.open('bookinfo', 'ratings-v1');
     await workloadDetailsPage.goToLogsTab();
     await workloadDetailsPage.expectContainerListed('sidecar-proxy');
@@ -19,7 +26,6 @@ test.describe('Workload logs tab core-caching', () => {
     'The log pane of the logs tab should limit the number of log lines that are fetched',
     coreCachingAndOffline,
     async ({ workloadDetailsPage }) => {
-      ensureDemoApp('bookinfo');
       await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
       await workloadDetailsPage.setMaxLogLines(100);
       await workloadDetailsPage.expectLogLineCountAtMost(100);
@@ -30,7 +36,6 @@ test.describe('Workload logs tab core-caching', () => {
     'The log pane of the logs tab should only show logs for the selected container',
     coreCachingAndOffline,
     async ({ workloadDetailsPage }) => {
-      ensureDemoApp('bookinfo');
       await workloadDetailsPage.openLogsTab('bookinfo', 'ratings-v1');
       await workloadDetailsPage.selectOnlyContainer('ratings');
       await workloadDetailsPage.expectLogsOnlyForContainer('ratings');
