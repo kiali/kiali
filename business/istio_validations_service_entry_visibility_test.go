@@ -218,6 +218,63 @@ func TestValidationServiceEntryVisibilityUsesRequestingMesh(t *testing.T) {
 	}
 }
 
+func TestServiceEntryConflictVisibleOnlyFromRequestingNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	definitionMesh, requesterMesh := models.NewMeshConfig(), models.NewMeshConfig()
+	definitionMesh.ServiceEntryVisibility = &meshapi.ServiceEntryVisibility{ApplyToSidecars: true, DefaultVisibility: meshapi.ServiceEntryVisibility_NONE}
+	requesterMesh.ServiceEntryVisibility = &meshapi.ServiceEntryVisibility{ApplyToSidecars: true, DefaultVisibility: meshapi.ServiceEntryVisibility_PUBLIC}
+	definitionMesh.PrepareServiceEntryVisibility()
+	requesterMesh.PrepareServiceEntryVisibility()
+	mesh := models.Mesh{ControlPlanes: []models.ControlPlane{
+		{
+			Cluster:           &models.KubeCluster{IsKialiHome: true, Name: cluster},
+			IstiodNamespace:   "istio-system",
+			ManagedNamespaces: []models.Namespace{{Name: "definitions"}, {Name: "istio-system"}},
+			MeshConfig:        definitionMesh,
+			RootNamespace:     "istio-system",
+		},
+		{
+			Cluster:           &models.KubeCluster{Name: cluster},
+			IstiodNamespace:   "istio-system",
+			ManagedNamespaces: []models.Namespace{{Name: "client"}},
+			MeshConfig:        requesterMesh,
+			RootNamespace:     "istio-system",
+		},
+	}}
+	first := data.AddPortDefinitionToServiceEntry(data.CreateEmptyServicePortDefinition(80, "http", "HTTP"), data.CreateEmptyMeshExternalServiceEntry("external", "definitions", []string{"api.example.com"}))
+	first.Spec.ExportTo = []string{"*"}
+	second := first.DeepCopy()
+	second.Name = "conflicting"
+	second.Namespace = "client"
+	service := fakeValidationMeshServiceWithMesh(t, *conf, mesh,
+		kubetest.FakeNamespace("definitions"), kubetest.FakeNamespace("client"), kubetest.FakeNamespace("istio-system"),
+		&corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: "istio", Namespace: "istio-system"}}, first, second)
+	ctx := context.Background()
+	info, err := service.NewValidationInfo(ctx, []string{cluster}, nil)
+	require.NoError(t, err)
+	performed, full, err := service.Validate(ctx, cluster, info)
+	require.NoError(t, err)
+	require.True(t, performed)
+
+	firstKey := models.BuildKey(kubernetes.ServiceEntries, first.Name, first.Namespace, cluster)
+	secondKey := models.BuildKey(kubernetes.ServiceEntries, second.Name, second.Namespace, cluster)
+	conflictCheck := models.Build("serviceentries.multimatch", "spec/ports[0]")
+	for _, entry := range []*networkingv1.ServiceEntry{first, second} {
+		key := models.BuildKey(kubernetes.ServiceEntries, entry.Name, entry.Namespace, cluster)
+		require.Contains(t, full, key)
+		assert.Equal(t, []*models.IstioCheck{&conflictCheck}, full[key].Checks)
+		// The first entry is hidden locally, so detail validation must visit the client namespace.
+		single, _, err := service.ValidateIstioObject(ctx, cluster, entry.Namespace, kubernetes.ServiceEntries, entry.Name)
+		require.NoError(t, err)
+		require.Contains(t, single, key)
+		assert.Equal(t, full[key], single[key])
+	}
+	assert.Equal(t, []models.IstioValidationKey{secondKey}, full[firstKey].References)
+	assert.Equal(t, []models.IstioValidationKey{firstKey}, full[secondKey].References)
+}
+
 func TestValidationServiceEntryVisibilityCacheLifetime(t *testing.T) {
 	cluster := config.DefaultClusterID
 	mc := models.NewMeshConfig()

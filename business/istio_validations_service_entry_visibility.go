@@ -52,7 +52,7 @@ func (c *serviceEntryVisibilityCache) isVisible(entry *networkingv1.ServiceEntry
 	meshConfig := c.meshConfigs[requester]
 	policy := c.policies[meshConfig]
 	if policy == nil {
-		// The nil receiver supplies defaults for unmanaged requesters.
+		// A nil MeshConfig uses defaults for unmanaged requesters.
 		policy = meshConfig.ServiceEntryVisibilityPolicy()
 		c.policies[meshConfig] = policy
 	}
@@ -62,9 +62,9 @@ func (c *serviceEntryVisibilityCache) isVisible(entry *networkingv1.ServiceEntry
 		if len(exportTo) == 0 && meshConfig != nil && meshConfig.MeshConfig != nil {
 			exportTo = meshConfig.DefaultServiceExportTo
 		}
-		// Retain validation's existing treatment of unknown export namespaces, so
-		// a bad declaration remains available to checks rather than causing cascades
-		// of missing-host errors. The visibility policy still caps this scope.
+		// Unlike graph/telemetry/istio/appender/service_entry.go, validation widens
+		// unknown export namespaces to avoid cascading missing-host errors. Both paths
+		// honor mesh defaults, and the visibility policy still caps this scope.
 		for _, ns := range exportTo {
 			if ns != "." && ns != "*" && ns != "~" {
 				if _, found := c.namespaces[ns]; !found {
@@ -93,6 +93,7 @@ func (c *serviceEntryVisibilityCache) isVisible(entry *networkingv1.ServiceEntry
 // version makes refreshed visibility settings participate in validation change
 // detection. Hash each distinct mesh snapshot once; namespace bindings are sorted
 // so discovery ordering does not cause needless validation runs.
+// Definition-namespace label changes are tracked separately by NewValidationInfo.
 func (c *serviceEntryVisibilityCache) version() string {
 	digest := sha256.New()
 	versions := make(map[*models.MeshConfig][sha256.Size]byte)
