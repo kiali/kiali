@@ -3,7 +3,7 @@ import { ensureDemoApp } from '../../utils/demoApps';
 import { kubectlNamespaceExists, kubectlScale } from '../../utils/kubectl';
 import { selectNamespace } from '../../utils/namespace';
 import { waitForAppHealthStatus } from '../../utils/health';
-import { core1 } from '../../utils/suite-tags';
+import { core1, core1AndOffline } from '../../utils/suite-tags';
 
 test.describe('Apps list', () => {
   test.beforeEach(async ({ appsPage, page }) => {
@@ -17,28 +17,28 @@ test.describe('Apps list', () => {
     await appsPage.expectColumn('Cluster', false);
   });
 
-  test('See all Apps toggles', core1, async ({ appsPage }) => {
+  test('See all Apps toggles', core1AndOffline, async ({ appsPage }) => {
     await appsPage.expectAllAppsTogglesChecked();
   });
 
-  test('Toggle Apps health toggle', core1, async ({ appsPage }) => {
+  test('Toggle Apps health toggle', core1AndOffline, async ({ appsPage }) => {
     await appsPage.setToggle('health', false);
     await appsPage.expectColumn('Health', false);
     await appsPage.setToggle('health', true);
     await appsPage.expectColumn('Health', true);
   });
 
-  test('Filter Apps by Istio Name', core1, async ({ appsPage }) => {
+  test('Filter Apps by Istio Name', core1AndOffline, async ({ appsPage }) => {
     await appsPage.filterBy('App Name', 'productpage');
     await appsPage.expectOnlyRow('productpage');
   });
 
-  test('Filter Apps by Istio Sidecar', core1, async ({ appsPage }) => {
+  test('Filter Apps by Istio Sidecar', core1AndOffline, async ({ appsPage }) => {
     await appsPage.filterBy('Istio Sidecar', 'Present');
     await appsPage.expectRows('productpage', 'details', 'reviews', 'ratings');
   });
 
-  test('Filter Apps by Istio Sidecar not present', core1, async ({ appsPage }) => {
+  test('Filter Apps by Istio Sidecar not present', core1AndOffline, async ({ appsPage }) => {
     await appsPage.filterBy('Istio Sidecar', 'Not Present');
     await appsPage.expectRows('kiali-traffic-generator');
   });
@@ -48,20 +48,24 @@ test.describe('Apps list', () => {
     await appsPage.expectOnlyRow('productpage');
   });
 
-  test('Filter Apps by Health', core1, async ({ appsPage }) => {
+  test('Filter Apps by Health', core1AndOffline, async ({ appsPage }) => {
     await appsPage.filterBy('Health', 'Healthy');
     await appsPage.expectOnlyHealthyApps();
   });
 
-  test('Filter Applications table by Label', core1, async ({ appsPage }) => {
+  test('Filter Applications table by Label', core1AndOffline, async ({ appsPage }) => {
     await appsPage.filterBy('Label', 'app=reviews');
     await appsPage.expectRows('reviews');
     await appsPage.expectOnlyAppsNamed('reviews');
   });
 
-  test('The healthy status of a logical mesh application is reported in the list', core1, async ({ appsPage }) => {
-    await appsPage.expectApplicationListedAs('bookinfo', 'details', 'healthy');
-  });
+  test(
+    'The healthy status of a logical mesh application is reported in the list',
+    core1AndOffline,
+    async ({ appsPage }) => {
+      await appsPage.expectApplicationListedAs('bookinfo', 'details', 'healthy');
+    }
+  );
 });
 
 test.describe('Apps list idle health', () => {
