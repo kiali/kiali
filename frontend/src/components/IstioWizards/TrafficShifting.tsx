@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Slider } from 'components/Slider/Slider';
+import { RoutingSlider } from 'components/Slider/RoutingSlider';
 import type { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
@@ -272,7 +272,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               {workload.name}
             </div>,
 
-            <Slider
+            <RoutingSlider
               id={`slider-${workload.name}`}
               key={`slider-${workload.name}`}
               tooltip={true}
@@ -349,7 +349,7 @@ export class TrafficShifting extends React.Component<Props, State> {
                 <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
                 {mirroredWorkload.name}
               </div>,
-              <Slider
+              <RoutingSlider
                 id={`slider-mirror-${mirroredWorkload.name}`}
                 key={`slider-mirror-${mirroredWorkload.name}`}
                 tooltip={false}
