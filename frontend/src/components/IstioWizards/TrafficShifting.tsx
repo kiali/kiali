@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Slider } from './Slider/Slider';
-import { WorkloadOverview } from '../../types/ServiceInfo';
+import { Slider } from 'components/Slider/Slider';
+import type { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import {
@@ -14,7 +14,8 @@ import {
 } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { BalanceScaleIcon, MigrationIcon } from '@patternfly/react-icons';
 
@@ -180,7 +181,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
-        let maxWeight = 100;
+        const maxWeight = 100;
 
         // Reset all mirrored workload but selected one.
         for (let i = 0; i < prevState.workloads.length; i++) {

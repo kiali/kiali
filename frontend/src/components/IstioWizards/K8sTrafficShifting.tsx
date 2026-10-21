@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { ThProps } from '@patternfly/react-table';
-import { Slider } from './Slider/Slider';
+import { Slider } from 'components/Slider/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultBackendRefs } from './WizardActions';
