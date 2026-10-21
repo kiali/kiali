@@ -14,7 +14,10 @@ import {
 } from '../../utils/tracingHelpers';
 
 test.describe('Waypoint tracing details', () => {
-  test.describe.configure({ timeout: 180_000 });
+  // 240s so the 180s waitForTracesViaApi poll fires before the test timeout and
+  // its informative error (list size / status) reaches the JUnit report instead of a
+  // generic test timeout.
+  test.describe.configure({ timeout: 240_000 });
 
   test(
     'See workload tracing info after selecting a trace',

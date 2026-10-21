@@ -15,7 +15,10 @@ import { multiPrimaryOnly } from '../../utils/suite-tags';
 // mutates bookinfo/ratings traffic routing belongs here — including the graph context
 // menu and side panel flows — so a sibling file cannot delete the routing mid-test.
 test.describe.serial('Multi-primary istio wizards', () => {
-  test.describe.configure({ timeout: 240_000 });
+  // Helper chains (e.g. waitForIstioObjectDetailsApi 120s + openConfigByCluster 120s)
+  // can sum well past 240s in degraded CI; budget above the realistic sum so their
+  // descriptive errors surface instead of a generic test timeout.
+  test.describe.configure({ timeout: 480_000 });
 
   test(
     'Create Gateway in both clusters',
