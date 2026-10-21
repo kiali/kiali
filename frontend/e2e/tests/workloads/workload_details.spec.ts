@@ -1,10 +1,14 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
-import { coreCachingOnly } from '../../utils/suite-tags';
+import { isOfflineProject } from '../../utils/projects';
+import { coreCachingAndOffline, coreCachingOnly } from '../../utils/suite-tags';
 
 test.describe('Workload details core-caching', () => {
   test.beforeEach(async ({ workloadDetailsPage }) => {
-    ensureDemoApp('bookinfo');
+    // Offline runs serve bookinfo from the must-gather; there may be no cluster to install into.
+    if (!isOfflineProject(test.info())) {
+      ensureDemoApp('bookinfo');
+    }
     await workloadDetailsPage.open('bookinfo', 'details-v1');
   });
 
@@ -29,27 +33,27 @@ test.describe('Workload details core-caching', () => {
     await workloadDetailsPage.expectOutboundMetrics();
   });
 
-  test('See Envoy clusters configuration for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('See Envoy clusters configuration for a workload', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.filterEnvoyTab('Port', '9080', 'Clusters');
     await workloadDetailsPage.expectClustersTable();
   });
 
-  test('See Envoy listeners configuration for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('See Envoy listeners configuration for a workload', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.filterEnvoyTab('Destination', '9090', 'Listeners');
     await workloadDetailsPage.expectListenersTable();
   });
 
-  test('See Envoy routes configuration for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('See Envoy routes configuration for a workload', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.filterEnvoyTab('Domains', 'details', 'Routes');
     await workloadDetailsPage.expectRoutesTable();
   });
 
-  test('See Envoy bootstrap configuration for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('See Envoy bootstrap configuration for a workload', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.openBootstrapTab();
     await workloadDetailsPage.expectBootstrapEditor();
   });
 
-  test('See Envoy config configuration for a workload', coreCachingOnly, async ({ workloadDetailsPage }) => {
+  test('See Envoy config configuration for a workload', coreCachingAndOffline, async ({ workloadDetailsPage }) => {
     await workloadDetailsPage.openConfigTab();
     await workloadDetailsPage.expectConfigEditor();
   });

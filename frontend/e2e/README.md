@@ -218,12 +218,21 @@ hack/run-integration-tests.sh --test-suite playwright-multi-primary
 
 ### Offline (`yarn playwright:run:offline`)
 
-Ports unique `@offline` scenarios: status icon on overview, minigraph offline state on
-workload details, graph context-menu / side-panel view-only traffic actions, and Istio Config
-list Name/Namespace/Type (no Cluster column). Dual-tagged list/graph
-scenarios that also run in core suites stay in those projects.
+Most offline coverage is **dual-tagged**: the same scenarios run in their live-cluster suite
+(core-1, core-2, core-caching, ambient) and again in the `offline` project against must-gather
+data, via the `core1AndOffline` / `core2AndOffline` / `coreCachingAndOffline` /
+`ambientAndOffline` helpers in `e2e/utils/suite-tags.ts` (mirroring Cypress scenarios tagged
+e.g. `@core-1 @offline`). Together with the `@offline`-only scenarios — status icon on
+overview, minigraph offline state on workload details, graph context-menu / side-panel
+view-only traffic actions, and Istio Config list Name/Namespace/Type (no Cluster column) —
+this gives the offline project ~167 tests.
 
-Requires must-gather data and Kiali running in offline mode (no live cluster during tests):
+CI uses `hack/run-integration-tests.sh --test-suite playwright-offline`: it sets up the KinD
+cluster with demo apps, records a must-gather (`kiali gather`, plus a seeded fault-injection
+VirtualService), then starts `kiali run offline --data-path <must-gather>` on port 20001 and
+points Playwright at it. The cluster stays up during the run, but demo-app install hooks
+(`ensureDemoApp`) are skipped in the offline project, so the suite also runs locally against
+a pre-built must-gather with no live cluster.
 
 ```bash
 hack/run-integration-tests.sh --test-suite playwright-offline
