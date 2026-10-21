@@ -1593,7 +1593,7 @@ elif [ "${TEST_SUITE}" == "${PLAYWRIGHT_MULTI_PRIMARY}" ]; then
 
   cd "${SCRIPT_DIR}"/../frontend
   set +e
-  yarn run playwright:run:multi-primary:junit
+  yarn run playwright:run:multi-primary
   PLAYWRIGHT_EXIT=$?
   set -e
   yarn run playwright:combine:reports
