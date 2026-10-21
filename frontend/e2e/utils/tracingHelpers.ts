@@ -376,7 +376,7 @@ export const enableSpansInLogs = async (page: Page): Promise<void> => {
 
 export const expectLogPaneShowsSpans = async (page: Page): Promise<void> => {
   await expect(page.locator('#trace-limit-dropdown-toggle')).toBeVisible();
-  // Span log lines render with the span color as an inline style (WorkloadPodLogs
-  // spanColor). Assert the inline color styling exists without coupling to the token value.
-  await expect(page.locator('#logsText p').first()).toHaveAttribute('style', /color:/);
+  // Every log line (span or not) carries an inline color style, so the style attribute
+  // cannot distinguish spans. WorkloadPodLogs marks span lines with a data-test token.
+  await expect(page.getByTestId('span-log-line').first()).toBeVisible();
 };

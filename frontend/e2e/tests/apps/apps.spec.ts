@@ -90,6 +90,10 @@ test.describe('Apps list idle health', () => {
         await selectNamespace(page, 'sleep');
         await appsPage.expectApplicationListedAs('sleep', 'sleep', 'idle');
         await appsPage.expectApplicationHealthStatus('sleep', 'sleep', 'Not Ready');
+        // Scale back inside the lock — afterEach runs after the lock is released, which
+        // reopens the cross-worker race the lock exists to close. afterEach stays as a
+        // failure-path fallback.
+        kubectlScale('sleep', 'sleep', 1);
       });
     }
   );

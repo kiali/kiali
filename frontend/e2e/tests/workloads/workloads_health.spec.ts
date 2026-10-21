@@ -29,6 +29,10 @@ test.describe('Workloads list idle health', () => {
         await workloadsPage.openListWithNamespace('sleep');
         await workloadsPage.expectWorkloadListedAs('sleep', 'sleep', 'idle');
         await workloadsPage.expectWorkloadHealthStatus('sleep', 'sleep', 'Not Ready');
+        // Scale back inside the lock — afterEach runs after the lock is released, which
+        // reopens the cross-worker race the lock exists to close. afterEach stays as a
+        // failure-path fallback.
+        kubectlScale('sleep', 'sleep', 1);
       });
     }
   );

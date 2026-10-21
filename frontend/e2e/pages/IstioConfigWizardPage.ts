@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { chooseFromSelect } from '../utils/pfSelect';
 import { waitForLoadingComplete } from '../utils/transition';
 
 export class IstioConfigWizardPage extends BasePage {
@@ -79,6 +80,14 @@ export class IstioConfigWizardPage extends BasePage {
 
   async expectInputEmpty(id: string): Promise<void> {
     await expect(this.page.locator(`input[id="${id}"]`)).toBeEmpty();
+  }
+
+  async selectClusters(clusters: string): Promise<void> {
+    await this.getBySel('cluster-dropdown').click();
+    for (const cluster of clusters.split(',')) {
+      await this.page.locator(`input[type="checkbox"][value="${cluster.trim()}"]`).check();
+    }
+    await this.getBySel('cluster-dropdown').click();
   }
 
   async closeSuccessNotification(): Promise<void> {

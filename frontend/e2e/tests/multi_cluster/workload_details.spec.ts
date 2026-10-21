@@ -64,9 +64,11 @@ test.describe('Workload details multi-cluster', () => {
     await filterSpansByWorkload(page, 'details-v1');
   });
 
-  test('No traces for west reviews-v3', multiClusterOnly, async ({ workloadDetailsPage, page }) => {
-    // reviews-v3 receives 0% of routed traffic in the standard bookinfo demo, so it has no traces.
-    await workloadDetailsPage.open('bookinfo', 'reviews-v3', { clusterName: WEST });
+  test('No traces for west details-v1', multiClusterOnly, async ({ workloadDetailsPage, page }) => {
+    // details-v1 is scaled to zero replicas on west in the multicluster bookinfo split, so it has no traces.
+    // (All reviews workloads DO get traffic there: the split installs a traffic-shifting
+    // VirtualService that routes to every reviews version.)
+    await workloadDetailsPage.open('bookinfo', 'details-v1', { clusterName: WEST });
     await expectNoTraces(page);
   });
 

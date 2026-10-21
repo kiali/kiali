@@ -30,7 +30,9 @@ async function waitForSharedMeshConfig(request: APIRequestContext, istiodPodName
       async () => {
         const response = await request.get(kialiUrl('/api/mesh/graph'));
         if (!response.ok()) {
-          throw new Error(`Expected 200 from /api/mesh/graph, got ${response.status()}`);
+          // Return false (not throw) so expect.poll retries: transient non-200s are
+          // expected while istiod restarts after the SHARED_MESH_CONFIG patch.
+          return false;
         }
         const body = await response.json();
         const istiodNode = body.elements?.nodes?.find(
@@ -62,9 +64,18 @@ export async function applySharedMeshConfig(request: APIRequestContext): Promise
   );
   const podName = podResult.stdout;
 
-  kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`, true);
-  kubectlExec(`kubectl patch istio default --type='merge' -p '${applyPatch}'`, true);
-  await waitForSharedMeshConfig(request, podName);
+  // The mutations must not leak past a failure: the caller (mesh_core2.spec.ts) invokes
+  // applySharedMeshConfig before its try block, so its finally-restore never runs if we
+  // throw here. Restore and rethrow so the mesh is not left with REGISTRY_ONLY outbound
+  // policy for the rest of the CI job.
+  try {
+    kubectlExec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`, true);
+    kubectlExec(`kubectl patch istio default --type='merge' -p '${applyPatch}'`, true);
+    await waitForSharedMeshConfig(request, podName);
+  } catch (e) {
+    restoreSharedMeshConfigResources();
+    throw e;
+  }
 }
 
 export function restoreSharedMeshConfig(): void {

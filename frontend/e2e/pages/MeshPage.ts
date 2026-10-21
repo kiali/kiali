@@ -599,7 +599,9 @@ export class MeshPage extends BasePage {
   async expectTraceConfigFooterActions(): Promise<void> {
     const dialog = this.page.getByRole('dialog');
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Close' })).toBeVisible();
+    // The deprecated PF Modal renders two "Close" buttons (header X + footer action); scope
+    // to the footer (implicit contentinfo role) to keep the locator strict-mode safe.
+    await expect(dialog.getByRole('contentinfo').getByRole('button', { name: 'Close' })).toBeVisible();
   }
 
   async clickRediscover(): Promise<void> {
