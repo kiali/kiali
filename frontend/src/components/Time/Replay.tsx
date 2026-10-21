@@ -8,7 +8,7 @@ import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core'
 import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { Slider } from 'components/Slider/Slider';
+import { RoutingSlider } from 'components/Slider/RoutingSlider';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { toString } from './Utils';
@@ -264,7 +264,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         </Tooltip>
 
         <span className={sliderStyle}>
-          <Slider
+          <RoutingSlider
             key={endString} // on new endTime force new slider because of bug updating tick labels
             id="replay-slider"
             orientation="horizontal"

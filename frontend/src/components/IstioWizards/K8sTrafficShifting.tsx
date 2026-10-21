@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { ThProps } from '@patternfly/react-table';
-import { Slider } from 'components/Slider/Slider';
+import { RoutingSlider } from 'components/Slider/RoutingSlider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultBackendRefs } from './WizardActions';
@@ -116,7 +116,7 @@ export class K8sTrafficShifting extends React.Component<Props, State> {
             {service.name}
           </div>,
 
-          <Slider
+          <RoutingSlider
             id={`slider-${service.name}`}
             key={`slider-${service.name}`}
             tooltip={true}
