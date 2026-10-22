@@ -293,6 +293,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
           onSelect={waypointHandleTabClick}
           mountOnEnter={true}
           unmountOnExit={true}
+          isSubtab={true}
         >
           {tabs}
         </Tabs>
