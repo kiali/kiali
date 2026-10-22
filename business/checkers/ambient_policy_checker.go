@@ -373,7 +373,7 @@ func (c AmbientPolicyChecker) selectorNeedsWarning(matchLabels map[string]string
 	matchedAmbient := false
 	matchedOptedOutOnly := false
 	for _, wl := range workloads {
-		if wl == nil || wl.IsWaypoint() {
+		if wl == nil || wl.IsWaypointWorkload() {
 			continue
 		}
 		if !selector.Matches(labels.Set(wl.Labels)) {

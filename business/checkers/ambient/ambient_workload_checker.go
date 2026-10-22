@@ -131,7 +131,7 @@ func (awc AmbientWorkloadChecker) hasSidecarInAmbientNamespace() bool {
 }
 
 func (awc AmbientWorkloadChecker) hasAuthPolicyAndNoWaypoint() bool {
-	if awc.workload.IsWaypoint() || awc.workload.IsGateway() {
+	if awc.workload.IsWaypointWorkload() || awc.workload.IsGatewayWorkload() {
 		return false
 	}
 	// Explicit workload opt-out of Ambient dataplane — never KIA1317 (even if IsAmbient is stale).
