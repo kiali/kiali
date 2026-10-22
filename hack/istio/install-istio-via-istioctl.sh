@@ -40,6 +40,7 @@ REQUIRE_SCC="false"
 REVISION=""
 IMAGE_HUB="docker.io/istio"
 IMAGE_TAG="default"
+IPTABLES_BACKEND="auto"
 
 # SPIRE configuration
 SPIRE_ENABLED="false"
@@ -148,6 +149,15 @@ while [[ $# -gt 0 ]]; do
       ;;
     -iv|--istio-version)
       ISTIO_VERSION="$2"
+      shift;shift
+      ;;
+    -ib|--iptables-backend)
+      if [ "${2}" == "auto" ] || [ "${2}" == "legacy" ] || [ "${2}" == "nft" ] || [ "${2}" == "default" ]; then
+        IPTABLES_BACKEND="$2"
+      else
+        echo "ERROR: The --iptables-backend flag must be 'auto', 'legacy', 'nft', or 'default'"
+        exit 1
+      fi
       shift;shift
       ;;
     -ih|--image-hub)
@@ -297,6 +307,14 @@ Valid command line arguments:
        Default: "default"
   -iv|--istio-version <version>:
        The Istio version to install. This is ignored if --istio-dir is specified.
+  -ib|--iptables-backend (auto|legacy|nft|default):
+       Which iptables backend the Istio sidecar istio-init containers should use.
+       'auto' runs a short-lived detection pod and forces the legacy backend only if
+       the cluster node kernels cannot use the nftables backend (e.g. some minikube kvm2
+       kernels ship without the nf_tables module, which crash-loops every sidecar-injected pod).
+       'legacy' or 'nft' always forces that backend; 'default' never forces one (Istio's own
+       detection decides). OpenShift nodes always support nftables, so no detection is done there.
+       Default: auto
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
        Default: true
@@ -570,6 +588,60 @@ if [[ "${CUSTOM_INSTALL_SETTINGS}" == *"values.meshConfig.defaultConfig.tracing.
   DEFAULT_ZIPKIN_SERVICE_OPTION=""
 fi
 
+# Determine which iptables backend the Istio sidecar istio-init containers should use.
+# Some minimal node kernels (e.g. certain minikube kvm2 kernels) ship without the nf_tables
+# kernel module. Istio's istio-init defaults to the nftables iptables backend and fails there
+# with "Could not fetch rule set generation id: Invalid argument", crash-looping every
+# sidecar-injected pod. FORCE_IPTABLES_BINARY (read by istio-init and istio-cni, and passed to
+# injected sidecars through meshConfig.defaultConfig.proxyMetadata) forces the legacy backend
+# when nftables is unusable.
+IPTABLES_BACKEND_OPTION=""
+if [ "${IPTABLES_BACKEND}" == "legacy" ] || [ "${IPTABLES_BACKEND}" == "nft" ]; then
+  echo "Forcing the iptables backend of Istio sidecars to [${IPTABLES_BACKEND}]"
+  IPTABLES_BACKEND_OPTION="--set meshConfig.defaultConfig.proxyMetadata.FORCE_IPTABLES_BINARY=${IPTABLES_BACKEND}"
+elif [ "${IPTABLES_BACKEND}" == "auto" ] && [ "${DELETE_ISTIO}" != "true" ] && [ "${IS_OPENSHIFT}" != "true" ]; then
+  # OpenShift nodes always support nftables, so only probe on other cluster types.
+  DETECT_IMAGE_TAG="${IMAGE_TAG}"
+  if [ "${DETECT_IMAGE_TAG}" == "default" ]; then
+    DETECT_IMAGE_TAG="$(basename ${ISTIO_DIR} | sed 's/^istio-//')"
+  fi
+  DETECT_IMAGE="${IMAGE_HUB}/proxyv2:${DETECT_IMAGE_TAG}"
+  DETECT_POD="kiali-nft-detect"
+  echo "Detecting whether the cluster nodes support the nftables iptables backend..."
+  ${CLIENT_EXE} delete pod ${DETECT_POD} -n ${NAMESPACE} --ignore-not-found=true >/dev/null 2>&1
+  cat <<DETECTPOD | ${CLIENT_EXE} apply -f - >/dev/null 2>&1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${DETECT_POD}
+  namespace: ${NAMESPACE}
+spec:
+  restartPolicy: Never
+  containers:
+  - name: nft-detect
+    image: ${DETECT_IMAGE}
+    command: ["sh", "-c", "iptables-nft -L -n >/dev/null 2>&1 && echo NFT_SUPPORTED || echo NFT_UNSUPPORTED"]
+    securityContext:
+      capabilities:
+        add: ["NET_ADMIN", "NET_RAW"]
+DETECTPOD
+  NFT_DETECT_RESULT=""
+  for _ in $(seq 1 30); do
+    NFT_DETECT_RESULT=$(${CLIENT_EXE} logs -n ${NAMESPACE} ${DETECT_POD} 2>/dev/null | head -n1)
+    [ -n "${NFT_DETECT_RESULT}" ] && break
+    sleep 2
+  done
+  ${CLIENT_EXE} delete pod ${DETECT_POD} -n ${NAMESPACE} --wait=false >/dev/null 2>&1
+  if [[ "${NFT_DETECT_RESULT}" == *NFT_UNSUPPORTED* ]]; then
+    echo "The nftables iptables backend is NOT usable on the cluster nodes - forcing Istio sidecars to use the legacy iptables backend"
+    IPTABLES_BACKEND_OPTION="--set meshConfig.defaultConfig.proxyMetadata.FORCE_IPTABLES_BINARY=legacy"
+  elif [[ "${NFT_DETECT_RESULT}" == *NFT_SUPPORTED* ]]; then
+    echo "The nftables iptables backend is usable on the cluster nodes"
+  else
+    echo "WARNING: Could not detect nftables iptables support on the cluster nodes - not forcing an iptables backend."
+  fi
+fi
+
 for s in \
    "${IMAGE_HUB_OPTION}" \
    "${IMAGE_TAG_OPTION}" \
@@ -590,6 +662,7 @@ for s in \
    "${REVISION_OPTION}" \
    "${DUALSTACK_OPTIONS}" \
    "${IPV6_DISABLE_OPTIONS}" \
+   "${IPTABLES_BACKEND_OPTION}" \
    "${SPIRE_OPTIONS}" \
    "${CUSTOM_INSTALL_SETTINGS}"
 do
