@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { ThProps } from '@patternfly/react-table';
-import { RoutingSlider } from 'components/Slider/RoutingSlider';
+import { RoutingSlider } from 'components/Slider';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant, TooltipPosition } from '@patternfly/react-core';
 import { getDefaultBackendRefs } from './WizardActions';

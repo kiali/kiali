@@ -15,6 +15,7 @@ export type SliderProps = {
   min: number;
   onChange: (event: SliderOnChangeEvent, value: number) => void;
   onValueCommit?: (value: number) => void;
+  railTrackFill?: string;
   showBoundaries?: boolean;
   showTicks?: boolean;
   step?: number;
@@ -31,6 +32,7 @@ export const Slider: React.FC<SliderProps> = ({
   max,
   maxRailWidth,
   min,
+  railTrackFill,
   onChange,
   onValueCommit,
   showBoundaries,
@@ -56,7 +58,7 @@ export const Slider: React.FC<SliderProps> = ({
 
   return (
     <div
-      className={classes(sliderStyle(maxRailWidth), className)}
+      className={classes(sliderStyle(maxRailWidth, railTrackFill), className)}
       onMouseUp={onValueCommit ? handleRelease : undefined}
       onTouchEnd={onValueCommit ? handleRelease : undefined}
     >

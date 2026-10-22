@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Slider } from 'components/Slider/Slider';
+import { Slider } from 'components/Slider';
 import { KialiIcon } from 'config/KialiIcon';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { infoStyle } from 'styles/IconStyle';

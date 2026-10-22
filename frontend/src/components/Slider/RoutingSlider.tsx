@@ -11,37 +11,30 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { MigrationIcon, LockIcon as PFLockIcon, LockOpenIcon } from '@patternfly/react-icons';
-import { classes } from 'typestyle';
 import { Slider } from './Slider';
-import { sliderMirroredStyle, sliderReplayStyle } from './SliderStyle';
+import { sliderMirroredStyle } from './SliderStyle';
 import { kialiStyle } from 'styles/StyleUtils';
 
-export const noop = Function.prototype;
+const noop = Function.prototype;
 
-type RoutingSliderProps = {
+export type RoutingSliderProps = {
   id: string;
   input: boolean;
   inputFormat?: string;
   locked: boolean;
   max: number;
   maxLimit: number;
-  maxWidth?: string;
+  maxRailWidth?: string;
   min: number;
   mirrored: boolean;
   onLock?: (locked: boolean) => void;
   onMirror?: (mirror: boolean) => void;
   onSlide?: (value: number) => void;
   onSlideStop?: (value: number) => void;
-  orientation?: string;
-  replayAccent?: boolean;
   showLock: boolean;
   showMirror?: boolean;
-  sliderClass?: string;
   step?: number;
-  ticks?: number[];
-  ticks_labels?: string[];
   tooltip?: boolean;
-  tooltipFormatter?: (value: number) => string;
   value: number;
 };
 
@@ -67,20 +60,17 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   locked,
   max,
   maxLimit,
-  maxWidth,
+  maxRailWidth,
   min,
   mirrored,
   onLock = noop,
   onMirror = noop,
   onSlide = noop,
   onSlideStop = noop,
-  replayAccent = false,
   showLock,
   showMirror = false,
   step = 1,
-  ticks,
-  tooltip = false,
-  tooltipFormatter,
+  tooltip = true,
   value
 }) => {
   const [localValue, setLocalValue] = React.useState(value);
@@ -111,10 +101,7 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
     onSlideStop(localValue);
   };
 
-  const tooltipContent =
-    tooltipFormatter && tooltipFormatter !== noop
-      ? tooltipFormatter(tooltipValue)
-      : `${tooltipValue} ${inputFormat}${mirrored ? ' mirrored traffic' : ''}`;
+  const thumbTooltipContent = `${tooltipValue} ${inputFormat}${mirrored ? ' mirrored traffic' : ''}`;
 
   const lockAction = showLock ? (
     <Tooltip position={TooltipPosition.top} content={<>{locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}>
@@ -160,24 +147,21 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
     </InputGroup>
   ) : null;
 
-  const showTicks = Boolean(ticks && ticks.length > 0);
-
   return (
     <Slider
       id={id}
-      className={classes(mirrored && sliderMirroredStyle, replayAccent && sliderReplayStyle)}
+      className={mirrored ? sliderMirroredStyle : undefined}
       min={min}
       max={maxLimit}
-      maxRailWidth={maxWidth}
+      maxRailWidth={maxRailWidth}
       step={step}
       value={localValue}
       isDisabled={locked}
-      showTicks={showTicks}
       showBoundaries={false}
       hasTooltipOverThumb={tooltip}
-      tooltipContent={tooltip ? tooltipContent : undefined}
+      tooltipContent={tooltip ? thumbTooltipContent : undefined}
       onChange={handleChange}
-      onValueCommit={value => onSlideStop(value)}
+      onValueCommit={committed => onSlideStop(committed)}
       endActions={
         <>
           {inputAction}
