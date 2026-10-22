@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { chooseFromSelect } from '../utils/pfSelect';
 import { waitForLoadingComplete } from '../utils/transition';
 
 export class IstioConfigWizardPage extends BasePage {
@@ -58,23 +59,7 @@ export class IstioConfigWizardPage extends BasePage {
   }
 
   async chooseModeFromSelect(option: string, id: string): Promise<void> {
-    const select = this.page.locator(`select[id="${id}"]`);
-    if ((await select.count()) > 0) {
-      await select.selectOption(option);
-      return;
-    }
-    await this.page.locator(`button[id="${id}-toggle"]`).click();
-    const menu = this.page.locator(`#${id}-menu, [aria-label="${id} Select"]`).first();
-    const optionLocator = menu.getByRole('option', { name: new RegExp(option, 'i') });
-    if ((await optionLocator.count()) > 0) {
-      await optionLocator.first().click();
-      return;
-    }
-    await this.page
-      .locator('.pf-v6-c-menu__list-item')
-      .filter({ hasText: new RegExp(option, 'i') })
-      .first()
-      .click();
+    await chooseFromSelect(this.page, option, id);
   }
 
   async expectMessage(message: string): Promise<void> {

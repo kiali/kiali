@@ -39,6 +39,19 @@ import { deleteK8sGateway, deleteK8sReferenceGrant } from '../../utils/istioConf
 import { selectNamespace, selectNamespaces, selectOnlyNamespaces, waitForNamespaceListed } from '../../utils/namespace';
 import { crdValidationOnly } from '../../utils/suite-tags';
 
+/**
+ * Ensure the Gateway API CRDs exist. If they had to be installed during this run, Kiali's CRD
+ * cache will not recognize them until restart, so skip rather than produce false results.
+ */
+function requireGatewayApiCrds(): void {
+  if (isGatewayApiCrdInstalled()) {
+    return;
+  }
+  ensureGatewayApiCrds();
+  test.skip(!isGatewayApiCrdInstalled(), 'Gateway API CRDs not available on cluster');
+  test.skip(true, 'Gateway API CRDs were installed during this run; restart Kiali and re-run');
+}
+
 test.describe('Istio Config CRD validation', () => {
   test.describe.configure({ timeout: 180_000 });
 
@@ -356,12 +369,7 @@ test.describe('Istio Config CRD validation', () => {
       const gatewayApiEnabled = await isGatewayApiEnabled(page.request);
       test.skip(!gatewayApiEnabled, 'gateway API not enabled on cluster');
 
-      const crdInstalledBeforeEnsure = isGatewayApiCrdInstalled();
-      if (!crdInstalledBeforeEnsure) {
-        ensureGatewayApiCrds();
-        test.skip(!isGatewayApiCrdInstalled(), 'Gateway API CRDs not available on cluster');
-        test.skip(true, 'Gateway API CRDs were installed during this run; restart Kiali and re-run');
-      }
+      requireGatewayApiCrds();
 
       const foo = crdResourceName(testInfo, 'foo');
       const bar = crdResourceName(testInfo, 'bar');
@@ -386,12 +394,7 @@ test.describe('Istio Config CRD validation', () => {
       const gatewayApiEnabled = await isGatewayApiEnabled(page.request);
       test.skip(!gatewayApiEnabled, 'gateway API not enabled on cluster');
 
-      const crdInstalledBeforeEnsure = isGatewayApiCrdInstalled();
-      if (!crdInstalledBeforeEnsure) {
-        ensureGatewayApiCrds();
-        test.skip(!isGatewayApiCrdInstalled(), 'Gateway API CRDs not available on cluster');
-        test.skip(true, 'Gateway API CRDs were installed during this run; restart Kiali and re-run');
-      }
+      requireGatewayApiCrds();
 
       const name = crdResourceName(testInfo, 'foo');
       ensureDemoApp('bookinfo');
@@ -409,12 +412,7 @@ test.describe('Istio Config CRD validation', () => {
       const gatewayApiEnabled = await isGatewayApiEnabled(page.request);
       test.skip(!gatewayApiEnabled, 'gateway API not enabled on cluster');
 
-      const crdInstalledBeforeEnsure = isGatewayApiCrdInstalled();
-      if (!crdInstalledBeforeEnsure) {
-        ensureGatewayApiCrds();
-        test.skip(!isGatewayApiCrdInstalled(), 'Gateway API CRDs not available on cluster');
-        test.skip(true, 'Gateway API CRDs were installed during this run; restart Kiali and re-run');
-      }
+      requireGatewayApiCrds();
 
       const name = crdResourceName(testInfo, 'foo');
       ensureDemoApp('bookinfo');
@@ -446,7 +444,7 @@ test.describe('Istio Config CRD validation', () => {
       cleanIstioSystemMeshResources();
     });
 
-    // Cypress `@clean-istio-namespace-resources-after`: alpha/beta rollout only after KIA0208/KIA0506/KIA1006.
+    // Alpha/beta rollout only after KIA0208/KIA0506/KIA1006 (namespace cleanup gate).
     test.afterEach(({ page }, testInfo) => {
       void page;
       cleanSleepMtlsTestResources();
@@ -469,7 +467,7 @@ test.describe('Istio Config CRD validation', () => {
       await istioConfigPage.expectValidationOnDetailsPage('sleep', 'DestinationRule', drName, 'KIA0207');
     });
 
-    // Keep before KIA0505 (Cypress order): sleep PeerAuthentication DISABLE blocks KIA0208 mesh validation.
+    // Must run before KIA0505: sleep PeerAuthentication DISABLE blocks KIA0208 mesh validation.
     test('KIA0208 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const drName = crdResourceName(testInfo, 'disable-mtls');
       applyDestinationRule(drName, 'sleep', '*.sleep.svc.cluster.local');

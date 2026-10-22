@@ -59,10 +59,6 @@ export class AiChatbotPage extends BasePage {
     return this.page.locator('[data-testid="chatbot-interaction-mode-toggle"]');
   }
 
-  toolLabel(name: string): Locator {
-    return this.page.locator(`[data-test="ai-tool-label-${name}"]`);
-  }
-
   async expectToggleVisible(): Promise<void> {
     await expect(this.toggle()).toBeVisible();
   }

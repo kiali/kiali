@@ -64,17 +64,6 @@ export async function setupWorkloadWithSidecar(page: Page, namespace: string, wo
   await restartWorkload(namespace, workload);
 }
 
-export async function ensureWorkloadNoInjectionOverride(
-  page: Page,
-  namespace: string,
-  workload: string,
-  hasSidecar: boolean
-): Promise<void> {
-  await setNamespaceInjection(page, namespace, hasSidecar ? 'enabled' : 'disabled');
-  await patchWorkloadInjection(page, namespace, workload, null, null);
-  await restartWorkload(namespace, workload);
-}
-
 export async function ensureWorkloadHasInjectionOverride(
   page: Page,
   namespace: string,

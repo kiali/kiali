@@ -12,7 +12,7 @@ export function isInferenceApiCrdInstalled(): boolean {
   }
 }
 
-/** Mirrors Cypress `@gateway-api-ie` hook — KinD CI usually has CRDs from Sail install. */
+/** KinD CI usually has the Inference Extension CRDs from the Sail install; install when absent. */
 export function ensureInferenceApiCrds(): void {
   if (isInferenceApiCrdInstalled()) {
     return;

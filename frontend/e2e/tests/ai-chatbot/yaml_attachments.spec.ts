@@ -13,6 +13,9 @@ import { expectEditorMatchesRegex } from '../../utils/monacoEditor';
 import { aiChatbotOnly } from '../../utils/suite-tags';
 
 const BOOKINFO = 'bookinfo';
+// Synthetic (RFC 2606 reserved) host: the seeded/applied test VS must not route to the real
+// bookinfo 'reviews' service, which would merge with the demo VS and alter live demo routing.
+const SYNTHETIC_HOST = 'vs-ai-pw.invalid';
 
 test.describe('AI chatbot YAML attachments', () => {
   // create/patch/delete share vs-ai-pw; parallel workers race on kubectl apply/delete
@@ -101,7 +104,7 @@ test.describe('AI chatbot YAML attachments', () => {
     'The AI chatbot YAML attachment triggers Istio VirtualService patch',
     aiChatbotOnly,
     async ({ page, aiChatbotPage }) => {
-      applyVirtualService(AI_CHATBOT_TEST_VS, BOOKINFO, 'main', 'reviews');
+      applyVirtualService(AI_CHATBOT_TEST_VS, BOOKINFO, 'main', SYNTHETIC_HOST);
       await aiChatbotPage.open();
       await aiChatbotPage.sendMessage('Patch the reviews VirtualService timeout in bookinfo', filePatchYamlPayload);
       await aiChatbotPage.expectAnswerContains('Apply this patch to the existing VirtualService.');
@@ -123,7 +126,7 @@ test.describe('AI chatbot YAML attachments', () => {
     'The AI chatbot YAML attachment triggers Istio VirtualService delete',
     aiChatbotOnly,
     async ({ page, aiChatbotPage }) => {
-      applyVirtualService(AI_CHATBOT_TEST_VS, BOOKINFO, 'main', 'reviews');
+      applyVirtualService(AI_CHATBOT_TEST_VS, BOOKINFO, 'main', SYNTHETIC_HOST);
       await aiChatbotPage.open();
       await aiChatbotPage.sendMessage('Delete the reviews VirtualService in bookinfo', fileDeleteYamlPayload);
       await aiChatbotPage.expectAnswerContains('Confirm deletion of this VirtualService.');

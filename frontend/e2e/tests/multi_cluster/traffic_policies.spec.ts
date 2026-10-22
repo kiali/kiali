@@ -9,6 +9,7 @@ import {
 } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 
 // The AuthorizationPolicy editor tests live here, not in wizards.spec.ts: the namespace
 // traffic-policy update/delete actions wipe every AuthorizationPolicy in bookinfo on the
@@ -18,6 +19,9 @@ test.describe.serial('Traffic policies multi-cluster (east local)', () => {
   // openConfigByCluster 120s + saveYamlAndWaitForPatch 90s) can sum well past 240s in
   // degraded CI; budget above the realistic sum so helper errors surface.
   test.describe.configure({ timeout: 480_000 });
+  // These tests mutate shared bookinfo routing/policies on EAST; serialize across
+  // parallel workers (graph.spec.ts / wizards.spec.ts touch the same objects).
+  useBookinfoRoutingLockPerTest();
 
   test(
     'Create traffic policy on east only',

@@ -62,7 +62,7 @@ type GraphCacheMetrics = {
 export class GraphPage extends BasePage {
   /**
    * Visit graph with prometheus.enabled=false mocked via the config API route.
-   * Waits for the mocked /api/config response (same as Cypress intercept + cy.wait)
+   * Waits for the mocked /api/config response (same as the old intercept + wait pattern)
    * so serverConfig is applied before asserting the empty state.
    */
   async openWithPrometheusDisabled(): Promise<void> {
@@ -510,13 +510,6 @@ export class GraphPage extends BasePage {
     await expect(this.page.locator('#loading_kiali_spinner')).toHaveCount(0);
   }
 
-  async expectTrafficVisible(protocol: string): Promise<void> {
-    await expectGraphTopology(this.page, ({ edges }) => {
-      const edgeElems = edges.map(e => ({ data: e.data }));
-      expect(select(edgeElems, { prop: protocol, op: '>', val: 0 }).length).toBeGreaterThan(0);
-    });
-  }
-
   async expectNoTraffic(): Promise<void> {
     await expect(this.page.locator('#empty-graph')).toBeVisible();
   }
@@ -787,19 +780,6 @@ export class GraphPage extends BasePage {
       const boxes = nodes.filter(n => n.data.isBox === 'namespace' && n.data.namespace === 'bookinfo');
       expect(boxes.filter(n => n.data.cluster === 'east').length).toBe(1);
       expect(boxes.filter(n => n.data.cluster === 'west').length).toBe(1);
-    });
-  }
-
-  async expectClusterNodeLinks(cluster: string): Promise<void> {
-    await expectGraphTopology(this.page, ({ nodes, edges }) => {
-      const clusterNodes = nodes.filter(n => n.data.cluster === cluster);
-      expect(clusterNodes.length).toBeGreaterThan(0);
-      for (const edge of edges) {
-        if (clusterNodes.some(n => n.id === edge.data.source)) {
-          const source = clusterNodes.find(n => n.id === edge.data.source);
-          expect(source?.data.cluster).toBe(cluster);
-        }
-      }
     });
   }
 
@@ -1160,7 +1140,8 @@ export class GraphPage extends BasePage {
         await graphResponse;
       }
       await waitForLoadingComplete(this.page);
-      // PF refresh button debounce (matches Cypress cy.wait(600) between graph refreshes).
+      // PF refresh button debounce: the UI rate-limits graph re-fetches, so a short
+      // settle delay after the API response is still required for deterministic rendering.
       await this.page.waitForTimeout(600);
     }
   }

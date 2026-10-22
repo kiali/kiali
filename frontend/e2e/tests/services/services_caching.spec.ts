@@ -32,10 +32,10 @@ test.describe('Services list caching', () => {
     await servicesPage.openList();
     await selectNamespace(page, 'bookinfo');
     await servicesPage.filterBy('Service Type', 'External');
-    const tbodyText = (await page.locator('tbody').textContent()) ?? '';
-    if (!tbodyText.includes('No services found')) {
-      test.skip(true, 'bookinfo namespace contains External-type services (CI uses a clean bookinfo install)');
-    }
+    test.skip(
+      !(await servicesPage.hasNoResults()),
+      'bookinfo namespace contains External-type services (CI uses a clean bookinfo install)'
+    );
     await servicesPage.expectServicesInTable('nothing');
   });
 

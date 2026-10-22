@@ -9,7 +9,7 @@ export function isGatewayApiCrdInstalled(): boolean {
   return kubectlExec(`kubectl get crd ${GATEWAY_API_CRD}`).exitCode === 0;
 }
 
-/** Mirrors Cypress `@gateway-api` hook — KinD CI usually has CRDs from Sail install. */
+/** KinD CI usually has the Gateway API CRDs from the Sail install; install when absent. */
 export function ensureGatewayApiCrds(): void {
   if (isGatewayApiCrdInstalled()) {
     return;

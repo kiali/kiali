@@ -79,7 +79,7 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
     async ({ istioConfigPage, istioConfigWizardPage, page }) => {
       const first = 'gatewayapi-1';
       const second = 'gatewayapi-2';
-      const collidingHost = 'bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com';
+      const collidingHost = 'colliding.example.com';
 
       const createCollidingGateway = async (name: string): Promise<void> => {
         await istioConfigPage.open();

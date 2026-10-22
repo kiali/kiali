@@ -11,12 +11,14 @@
 - [x] Playwright installed and configured with projects matching current test suites (PR #10174)
 - [ ] All existing Cypress tests migrated to Playwright
 - [x] JUnit reporting preserved for CI integration (PR #10174)
-- [ ] CI workflows updated (`hack/run-integration-tests.sh` and GitHub Actions) — partial: smoke +
-  core-1, core-2, and core-caching done; remaining suites pending
-- [ ] AGENTS.md and developer documentation updated
+- [x] CI workflows updated (`hack/run-integration-tests.sh` and GitHub Actions) — all 13 Playwright
+  suites have `hack/run-integration-tests.sh` branches and GitHub Actions workflows
+- [x] AGENTS.md and developer documentation updated (root `AGENTS.md`, `e2e/AGENTS.md`, and
+  `e2e/README.md` reviewed and brought current in the branch review; cutover-time doc updates
+  remain, tracked under "Cutover & docs")
 - [ ] Cypress and all Cypress-specific devDependencies removed
 - [x] `@smoke` tests pass (~32 scenarios, PR #10174)
-- [x] `@core-1` and `@core-2` tests pass — core-1 done (145 tests, PR #10195/#10220); core-2 done
+- [x] `@core-1` and `@core-2` tests pass — core-1 done (144 tests, PR #10195/#10220); core-2 done
   (PR #10269)
 - [ ] `@core-caching` tests pass — ported on epic branch (playwright-core-caching CI)
 - [ ] Multi-cluster and ambient test suites pass
@@ -27,7 +29,9 @@
 - [x] Playwright traces are retained on failure (or first retry) and are viewable from archived
   artifacts (PR #10174/#10220)
 - [x] CI archives actionable test reports/logs (`combined-report.xml` and test result artifacts)
-- [ ] CI continues to archive Kiali server and operator logs for cluster-side failure diagnosis
+- [x] CI continues to archive Kiali server and operator logs for cluster-side failure diagnosis
+  (verified in branch review: all 13 Playwright integration workflows run `hack/ci-get-debug-info.sh`
+  on failure)
 - [ ] Environment snapshot capture remains available for downstream reporting/debugging workflows
 
 ## Decisions & tracking
@@ -48,7 +52,10 @@
   OSSMC, Jenkins, Cypress removal)
 - [x] Suite tags: use Playwright's native `tag` option via centralized exports in
   `e2e/utils/suite-tags.ts`, not title-only strings. Non-project conditions (e.g.
-  `@prometheus-disabled`) use the `annotation` API. (PR #10174 review, PR #10195, PR #10217)
+  `@prometheus-disabled`) are additional `tag` values combined with the suite tag (e.g.
+  `smokeAndPrometheusDisabled`); such tests mock the condition themselves (e.g. `page.route` on
+  `/api/config`) and run in the normal suite — no `annotation` API usage.
+  (PR #10174 review, PR #10195, PR #10217)
 - [x] Test-migration PR scope: only `data-test` attributes and `aria-label` additions in source code.
   No ESLint fixes, refactors, or production behavioral changes — those go to dedicated PRs targeting
   `master`. (PR #10217 — StatefulFilters revert)
@@ -57,6 +64,19 @@
   (PR #10217)
 - [x] `playwright:run:last-failed` removed — `--last-failed` overwrites `playwright/blob-report/` and produces
   misleading Jenkins failure counts. CI reports reflect the full first pass only. (PR #10195)
+- [x] Decision documented: **`@offline` port is an intentional subset** — 13 Playwright tests cover
+  the offline-specific scenarios (status icon, minigraph offline state, graph view-only traffic
+  actions under fault injection, offline Istio Config list). The remaining ~150 Cypress `@offline`
+  scenario instances were re-runs of core suite scenarios (graph display/toolbar, workloads,
+  column management, apps, etc.) against a must-gather archive, not offline-specific coverage.
+  Re-running the core Playwright suites against must-gather data is a follow-up in
+  [#9712](https://github.com/kiali/kiali/issues/9712), gated on validating the graph/metrics
+  helpers against archived data first.
+- [x] Decision documented: **the 2 unported `@openshift` login scenarios are deferred** — "Openshift
+  login shows error message when code exchange fails" and "Login to two different openshift
+  clusters" require live OpenShift OAuth (the second needs two OCP clusters), which the KinD CI
+  suites cannot provide. They stay in Cypress until OSSMC/OCP e2e infra exists; file a follow-up
+  issue when that work starts.
 
 ## Phase 0 — Infrastructure
 
@@ -86,11 +106,11 @@
   `data-test` or DOM assertions (no residual Cypress React helpers). Graph topology fiber reads remain
   with TODO (PR #10220).
 - [x] `@smoke` suite passes (~32 scenarios, PR #10174)
-- [x] `@core-1` suite passes (145 tests, PR #10195 + #10220)
+- [x] `@core-1` suite passes (144 tests, PR #10195 + #10220)
 - [x] `@core-2` suite passes (PR #10269; colliding K8s Gateway wizard on `issue9712_missing_merged_e2e`)
 - [x] `@core-caching` suite ported (playwright-core-caching CI; in-cluster Kiali with health/graph cache)
-- [ ] `@crd-validation` suite passes (Playwright spec + `playwright-core-optional` CI; run `yarn playwright:run:core-optional`)
-- [ ] `@perses` suite passes (Playwright spec ported; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`)
+- [x] `@crd-validation` suite ported (28 tests; `playwright-core-optional` CI; run `yarn playwright:run:core-optional`; CI green still pending)
+- [x] `@perses` suite ported (2 tests; run `yarn playwright:run:perses` or `yarn playwright:run:core-optional`; CI green still pending)
 - [x] `@ambient` suite ported (`playwright-ambient` CI; in-cluster Kiali; Healthy filter + edge floors + ztunnel logs)
 - [x] `@waypoint` suite ported (PR #10365; full `waypoint.feature` + waypoint logs;
   `playwright-ambient` CI runs ambient, then `yarn playwright:run:waypoint`)
@@ -167,13 +187,19 @@
 
 - [ ] Replace remaining React fiber reads in `graphTopology.ts` with `data-test` / DOM attributes
   (PR #10220 TODO)
+- [ ] Extract the duplicated React-fiber boilerplate (`getReactFiber` / `getComponentName` /
+  `getStateFromFiber`, ~120 lines in `graphTopology.ts` and `meshTopology.ts`) into a shared
+  `utils/reactFiber.ts`. **Deferred**: `page.evaluate()` only accepts one serializable argument,
+  so the helpers cannot be passed in — a `page.addInitScript()`-attached `window.__kialiFiber`
+  (or similar) is needed; bundle with the DOM-hook migration above so it is written once.
 - [ ] Implement `token` auth strategy in `auth.setup.ts` (`openid` done for external-kiali)
 - [ ] Create `cleanup` fixture (`cleanup.trackNamespace()`) for demo mutation teardown (PR #10195
   pattern)
 - [ ] Create dedicated PR to `master` for StatefulFilters ESLint cleanup — 19 pre-existing violations
   deferred from PR #10217
-- [ ] Port `@core-2`, ambient/multi-cluster, OSSMC suites — core-2 done (#10269); ambient done
-  (#10319); waypoint bookinfo slice in progress (`issue9712_waypoint`); multi-cluster pending
+- [ ] Port OSSMC-specific suites — all standalone suites are ported (core-2 #10269, ambient
+  #10319, waypoint 37 tests on `issue9712_waypoint`, multi-cluster `0a19cbda5`); remaining: OSSMC
+  `sidebar_navigation` and other non-vendored support (see "OSSMC")
 - [ ] Add `page.routeWebSocket()` where graph live updates are mocked
 - [ ] Verify TextInputGroupMain `data-test` scoping — PF renders `data-test` on outer `<div>`, not
   inner `<input>`; assess if PF should be patched or if `getByTestId().locator('input')` is sufficient

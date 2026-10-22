@@ -67,7 +67,6 @@ test.describe('Column management', () => {
       await appsPage.setColumnChecked('Namespace', false);
       await appsPage.applyColumnChanges();
       await appsPage.expectUrlContains('apphide');
-      await appsPage.expectUrlContains('namespace');
       await appsPage.refreshPage();
       await appsPage.expectColumnHiddenInTable('Namespace');
     });

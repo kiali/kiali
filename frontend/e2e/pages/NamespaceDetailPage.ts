@@ -5,8 +5,7 @@ import { expectMiniGraphReady } from '../utils/graphTopology';
 import { linkSelector } from '../utils/linkSelector';
 import { waitForLoadingComplete } from '../utils/transition';
 import { kialiUrl } from '../utils/kialiUrl';
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
+import { isOssmc } from '../utils/kialiConfig';
 
 export class NamespaceDetailPage extends BasePage {
   private targetNamespace = '';
