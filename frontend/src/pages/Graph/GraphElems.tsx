@@ -41,6 +41,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { t } from 'utils/I18nUtils';
 import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import { findNamespaceWaypointSplit, waypointNodeCanaryBadge } from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -434,6 +435,17 @@ export const setNodeLabel = (
   node.label = content.shift();
   if (content.length > 0) {
     data.secondaryLabel = content.join(':');
+  }
+
+  if (data.isWaypoint && !isBox && data.workload && data.namespace) {
+    let canaryLine = data.waypointCanaryLabel;
+    if (!canaryLine) {
+      const split = findNamespaceWaypointSplit(settings.activeNamespaces, data.namespace, data.cluster);
+      canaryLine = waypointNodeCanaryBadge(data.workload, data.namespace, split);
+    }
+    if (canaryLine) {
+      data.secondaryLabel = data.secondaryLabel ? `${data.secondaryLabel} · ${canaryLine}` : canaryLine;
+    }
   }
 
   data.hideContextMenuKebab = true;

@@ -417,7 +417,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 		// Get waypoint captured services if this workload is a waypoint
 		var waypointServices []models.ServiceReferenceInfo
 		if workloadDetails.IsWaypoint {
-			waypointServices = businessLayer.Svc.ListWaypointServices(
+			waypointServices = businessLayer.Svc.ListWaypointCapturedServices(
 				ctx,
 				workloadDetails.Name,
 				workloadDetails.Namespace,

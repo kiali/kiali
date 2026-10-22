@@ -62,6 +62,9 @@ import { toolbarActiveStyle } from 'styles/GraphStyle';
 import { scoreNodes, ScoringCriteria } from 'pages/Graph/GraphScore';
 import { TrafficAnimation } from '../Graph/TrafficAnimation/TrafficRenderer';
 import { GraphHighlighter } from './GraphHighlighter';
+import { useKialiSelector } from 'hooks/redux';
+import { namespaceItemsSelector } from 'store/Selectors';
+import { enrichActiveNamespaces } from 'utils/WaypointTrafficUtils';
 
 const DEFAULT_NODE_SIZE = 40;
 const ZOOM_IN = 4 / 3;
@@ -165,10 +168,11 @@ const TopologyContent: React.FC<{
   updateSummary
 }) => {
   const [updateModelTime, setUpdateModelTime] = React.useState(0);
+  const namespaceItems = useKialiSelector(namespaceItemsSelector);
 
   const graphSettings: GraphSettings = React.useMemo(() => {
     return {
-      activeNamespaces: graphData.fetchParams.namespaces,
+      activeNamespaces: enrichActiveNamespaces(graphData.fetchParams.namespaces, namespaceItems),
       edgeLabels: edgeLabels,
       graphType: graphData.fetchParams.graphType,
       showOutOfMesh: showOutOfMesh,
@@ -176,7 +180,7 @@ const TopologyContent: React.FC<{
       showVirtualServices: showVirtualServices,
       trafficRates: graphData.fetchParams.trafficRates
     } as GraphSettings;
-  }, [graphData.fetchParams, edgeLabels, showOutOfMesh, showSecurity, showVirtualServices]);
+  }, [graphData.fetchParams, edgeLabels, namespaceItems, showOutOfMesh, showSecurity, showVirtualServices]);
 
   //
   // SelectedIds State
