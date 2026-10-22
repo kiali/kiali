@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { HealthHistoryActions } from '../HealthHistoryActions';
 import { HealthStatusRibbon } from '../HealthStatusRibbon';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
+import type { Datapoint } from 'types/Metrics';
 
 rstest.mock('hooks/redux', () => ({
   useKialiSelector: () => 60
@@ -36,7 +37,8 @@ const formatInvestigationTime = (date: Date, selected: Date): string => {
 describe('health history click actions', () => {
   const startTime = Date.UTC(2026, 9, 14, 12) / 1000;
   const setup = (
-    rangeStart = startTime
+    rangeStart = startTime,
+    datapoints: Datapoint[] = Array.from({ length: 60 }, (_, index) => [rangeStart + index * 60, 0])
   ): ReturnType<typeof render> & { onSelect: ReturnType<typeof rstest.fn>; ribbon: HTMLElement } => {
     const onSelect = rstest.fn();
     const view = render(
@@ -52,7 +54,7 @@ describe('health history click actions', () => {
         <HealthHistoryActions healthType="workload" name="reviews-v1" namespace="bookinfo" cluster="east">
           {selectTime => (
             <HealthStatusRibbon
-              datapoints={[[rangeStart, 0]]}
+              datapoints={datapoints}
               startTime={rangeStart}
               endTime={rangeStart + 3600}
               step={60}
@@ -77,6 +79,35 @@ describe('health history click actions', () => {
     expect(screen.getByRole('button', { name: 'Logs' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Traces' })).toBeInTheDocument();
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [0, 'Healthy', 'icon-healthy'],
+    [1, 'Not Ready', 'icon-idle'],
+    [2, 'Degraded', 'icon-degraded'],
+    [3, 'Failure', 'icon-failure'],
+    [-1, 'n/a', 'icon-na']
+  ])('shows the clicked status %s with the standard icon and tooltip', async (value, label, iconClass) => {
+    const rangeStart = startTime + 23;
+    const { ribbon } = setup(rangeStart, value === -1 ? [] : [[rangeStart + 1800, value]]);
+    fireEvent.click(ribbon, { clientX: 300 });
+    const icon = await screen.findByRole('img', { name: label });
+    expect(icon.querySelector(`.${iconClass}`)).toBeInTheDocument();
+    fireEvent.focus(icon);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(label);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Investigation Time Range' }), {
+      target: { value: '1800' }
+    });
+    expect(screen.getByRole('img', { name: label })).toBe(icon);
+  });
+
+  it('uses the keyboard-selected ribbon status', async () => {
+    const { ribbon } = setup(startTime, [[startTime + 60, 3]]);
+    fireEvent.keyDown(ribbon, { key: 'Home' });
+    fireEvent.keyDown(ribbon, { key: 'ArrowRight' });
+    fireEvent.keyDown(ribbon, { key: 'Enter' });
+    expect(await screen.findByRole('img', { name: 'Failure' })).toBeInTheDocument();
   });
 
   it.each([
@@ -120,7 +151,7 @@ describe('health history click actions', () => {
       const params = new URL(replay.getAttribute('href')!, 'http://kiali').searchParams;
       expect(Number(params.get('replayStart'))).toBe(fromDate.getTime());
       expect(Number(params.get('replayInterval'))).toBe(toDate.getTime() - fromDate.getTime());
-      expect(screen.getByRole('combobox', { name: 'Troubleshooting Time Range' })).toBeInTheDocument();
+      expect(screen.getByRole('combobox', { name: 'Investigation Time Range' })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: 'Logs' }));
       expect(onSelect).toHaveBeenCalledWith('logs', { from: fromDate.getTime(), to: toDate.getTime() });
     }
@@ -146,25 +177,25 @@ describe('health history click actions', () => {
   it('opens help on click and closes it without dismissing the troubleshooting actions', async () => {
     const { ribbon, onSelect } = setup();
     fireEvent.click(ribbon, { clientX: 300 });
-    const help = await screen.findByRole('button', { name: 'About the troubleshooting time range' });
+    const help = await screen.findByRole('button', { name: 'About the investigation time range' });
     fireEvent.mouseEnter(help);
     fireEvent.focus(help);
-    expect(screen.queryByRole('dialog', { name: 'Troubleshooting Time Range' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Investigation Time Range' })).not.toBeInTheDocument();
     fireEvent.click(help);
-    const popover = await screen.findByRole('dialog', { name: 'Troubleshooting Time Range' });
+    const popover = await screen.findByRole('dialog', { name: 'Investigation Time Range' });
     const explanation = within(popover).getByText(/Centers a custom time range/);
     fireEvent.click(explanation);
     expect(popover).toBeInTheDocument();
     fireEvent.click(within(popover).getByRole('button', { name: 'Close' }));
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Troubleshooting Time Range' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'Investigation Time Range' })).not.toBeInTheDocument();
     });
     expect(screen.getByTestId('health-history-actions')).toBeInTheDocument();
     fireEvent.click(help);
-    await screen.findByRole('dialog', { name: 'Troubleshooting Time Range' });
+    await screen.findByRole('dialog', { name: 'Investigation Time Range' });
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => {
-      expect(screen.queryByRole('dialog', { name: 'Troubleshooting Time Range' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'Investigation Time Range' })).not.toBeInTheDocument();
     });
     expect(screen.getByTestId('health-history-actions')).toBeInTheDocument();
     expect(onSelect).not.toHaveBeenCalled();
@@ -174,7 +205,7 @@ describe('health history click actions', () => {
     const { ribbon, onSelect } = setup();
     fireEvent.click(ribbon, { clientX: 300 });
     await screen.findByTestId('health-history-actions');
-    fireEvent.change(screen.getByRole('combobox', { name: 'Troubleshooting Time Range' }), {
+    fireEvent.change(screen.getByRole('combobox', { name: 'Investigation Time Range' }), {
       target: { value: '1800' }
     });
     expect(onSelect).not.toHaveBeenCalled();

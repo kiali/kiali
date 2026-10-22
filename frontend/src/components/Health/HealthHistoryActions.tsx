@@ -8,9 +8,11 @@ import {
   FormSelectOption,
   Popover,
   Stack,
-  StackItem
+  StackItem,
+  Tooltip
 } from '@patternfly/react-core';
-import { KialiIcon } from 'config/KialiIcon';
+import { createIcon, KialiIcon } from 'config/KialiIcon';
+import { statusFromString, type HealthStatusId } from 'types/Health';
 import { KialiLink } from 'components/Link/KialiLink';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import { useKialiSelector } from 'hooks/redux';
@@ -21,7 +23,7 @@ import type { HealthHistoryType } from 'services/Api';
 import { getHealthHistoryGraphUrl, getHealthHistoryRange } from './HealthHistoryNavigation';
 
 type HealthHistoryActionsProps = {
-  children: (onSelect: (timestamp: number, position: number) => void) => React.ReactElement;
+  children: (onSelect: (timestamp: number, position: number, status: HealthStatusId) => void) => React.ReactElement;
   cluster?: string;
   healthType: HealthHistoryType;
   name: string;
@@ -86,7 +88,12 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
   const { onSelect, tabs } = React.useContext(CustomTimeTabsContext);
   const graphDuration = useKialiSelector(state => state.userSettings.duration);
   const anchorRef = React.useRef<HTMLSpanElement>(null);
-  const [selection, setSelection] = React.useState<{ now: number; position: number; timestamp: number }>();
+  const [selection, setSelection] = React.useState<{
+    now: number;
+    position: number;
+    status: HealthStatusId;
+    timestamp: number;
+  }>();
   const [duration, setDuration] = React.useState(600);
   const [isHelpOpen, setIsHelpOpen] = React.useState(false);
   const range = selection ? getHealthHistoryRange(selection.timestamp, duration, selection.now) : undefined;
@@ -96,10 +103,12 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
     1800: t('30 minutes')
   };
 
-  const handleSelect = React.useCallback((timestamp: number, position: number): void => {
+  const handleSelect = React.useCallback((timestamp: number, position: number, status: HealthStatusId): void => {
     setIsHelpOpen(false);
-    setSelection({ now: Date.now(), position, timestamp: Math.floor(timestamp / 60) * 60 });
+    setSelection({ now: Date.now(), position, status, timestamp: Math.floor(timestamp / 60) * 60 });
   }, []);
+
+  const statusLabel = selection ? t(selection.status === 'NA' ? 'n/a' : selection.status) : '';
 
   return (
     <div className={containerStyle}>
@@ -116,13 +125,18 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
           selection ? (
             <span className={headerStyle}>
               {formatTime(selection.timestamp * 1000, selection.now)}
+              <Tooltip content={statusLabel}>
+                <span aria-label={statusLabel} data-test="health-history-selected-status" role="img" tabIndex={0}>
+                  {createIcon(statusFromString(selection.status))}
+                </span>
+              </Tooltip>
               <Popover
                 position="right"
-                headerContent={t('Troubleshooting Time Range')}
+                headerContent={t('Investigation Time Range')}
                 onShow={() => setIsHelpOpen(true)}
                 onHide={() => setIsHelpOpen(false)}
                 bodyContent={t(
-                  'Centers a custom time range on the selected time when possible. Choose a troubleshooting page below to open it with this range preset.'
+                  'Centers a custom time range on the selected time when possible. Choose an investigation page below to open it with this range preset.'
                 )}
               >
                 <Button
@@ -130,7 +144,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                   isInline
                   hasNoPadding
                   icon={<KialiIcon.Help />}
-                  aria-label={t('About the troubleshooting time range')}
+                  aria-label={t('About the investigation time range')}
                   data-test="health-history-time-range-help"
                 />
               </Popover>
@@ -154,13 +168,13 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
               <StackItem>
                 <FormGroup
                   className={timeRangeStyle}
-                  label={t('Troubleshooting Time Range')}
+                  label={t('Investigation Time Range')}
                   fieldId="health-history-window"
                 >
                   <div className={timeRangeStyle}>
                     <FormSelect
                       id="health-history-window"
-                      aria-label={t('Troubleshooting Time Range')}
+                      aria-label={t('Investigation Time Range')}
                       value={duration}
                       onChange={(_event, value) => setDuration(Number(value))}
                       data-test="health-history-window"
@@ -192,7 +206,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                   )}
                   onClick={() => setSelection(undefined)}
                 >
-                  {t('Replay traffic graph')}
+                  {t('Traffic Graph Replay')}
                 </KialiLink>
                 {tabs.map(tab => (
                   <Button
