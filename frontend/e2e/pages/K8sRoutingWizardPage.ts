@@ -25,10 +25,6 @@ export class K8sRoutingWizardPage extends BasePage {
     await this.page.locator('input#header-name-id').fill(header);
   }
 
-  async typeFilteringHeader(header: string): Promise<void> {
-    await this.page.locator('input#filter-header-name-id').fill(header);
-  }
-
   async clickMatchValueDropdown(value: string): Promise<void> {
     await this.getBySel('requestmatching-match-toggle').click();
     await this.page.locator(`li[data-test="requestmatching-match-${value}"]`).locator('button').click();

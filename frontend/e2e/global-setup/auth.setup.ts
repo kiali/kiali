@@ -48,7 +48,6 @@ setup('authenticate', async ({ page, request }) => {
       implemented,
       `Auth strategy "${strategy}" is not implemented in auth.setup.ts — add support or switch to: ${implemented.join(', ')}`
     ).toContain(strategy);
-    return;
   }
 
   await page.context().storageState({ path: AUTH_FILE });

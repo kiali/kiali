@@ -73,10 +73,13 @@ export class ListPage extends BasePage {
       await this.page.locator('input#filter_input_value').fill(filterValue);
       await this.page.locator('input#filter_input_value').press('Enter');
     } else if (filter === 'Istio Config Type') {
-      const input = this.page.locator('input[placeholder="Filter by Istio Config Type"]');
+      const input = this.page.getByTestId('filter-type-input').locator('input');
       await input.fill(filterValue);
       await input.press('Enter');
-      await this.page.locator(`li[label="${filterValue}"] button`).click();
+      await this.page
+        .getByTestId('istio-type-dropdown')
+        .getByRole('option', { name: filterValue, exact: true })
+        .click();
     } else if (dropdownFilters.includes(filter)) {
       const valueToggle = this.page
         .locator('button#filter_select_value-toggle, div#filter_select_value-toggle button')

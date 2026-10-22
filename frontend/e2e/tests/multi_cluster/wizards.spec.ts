@@ -7,9 +7,13 @@ import {
 } from '../../utils/multiCluster';
 import { selectNamespace } from '../../utils/namespace';
 import { multiClusterOnly } from '../../utils/suite-tags';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 
 test.describe.serial('Multi-cluster istio wizards', () => {
   test.describe.configure({ timeout: 240_000 });
+  // Creates/updates/deletes the shared bookinfo 'details' VS + gateway on EAST;
+  // serialize across parallel workers (graph.spec.ts / traffic_policies.spec.ts too).
+  useBookinfoRoutingLockPerTest();
 
   test(
     'Gateway preview disabled without cluster selection',

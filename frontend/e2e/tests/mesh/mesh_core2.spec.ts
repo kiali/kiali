@@ -15,7 +15,7 @@ test.describe('Mesh page core-2', () => {
     try {
       kubectlScaleDeployment('istio-system', 'grafana', 1);
     } catch {
-      // Best-effort restore after Grafana upscale test (matches Cypress @component-health-upscale).
+      // Best-effort restore of default Grafana replicas after the upscale test.
     }
   });
 

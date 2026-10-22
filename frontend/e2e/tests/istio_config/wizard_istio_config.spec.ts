@@ -31,7 +31,7 @@ test.describe.serial('Istio Config wizard core-caching', () => {
   );
 
   test(
-    'Create an Sidecar with labels and annotations',
+    'Create a Sidecar with labels and annotations',
     coreCachingOnly,
     async ({ istioConfigPage, istioConfigWizardPage }) => {
       deleteSidecar('mysidecarwithlabels', namespace);

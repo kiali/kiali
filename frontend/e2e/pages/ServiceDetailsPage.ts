@@ -5,8 +5,7 @@ import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage'
 import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { waitForLoadingComplete } from '../utils/transition';
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
+import { isOssmc } from '../utils/kialiConfig';
 
 type ServiceAction = 'delete_traffic_routing' | 'k8s_grpc_request_routing' | 'k8s_request_routing' | 'request_routing';
 
@@ -165,7 +164,7 @@ export class ServiceDetailsPage extends BasePage {
     const table = this.page.locator('table[aria-label="Istio Config List"]');
     const row = table.locator('tbody tr').filter({ hasText: name }).filter({ hasText: badge });
     await expect(row).toHaveCount(1);
-    // Cypress: cy.contains('div', badge).siblings().first().click()
+    // Click the parent row of the badge (no stable link on the badge itself).
     await row.locator('div').filter({ hasText: badge }).locator('xpath=following-sibling::*[1]').click();
     await waitForLoadingComplete(this.page);
   }

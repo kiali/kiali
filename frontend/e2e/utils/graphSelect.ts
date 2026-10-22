@@ -1,4 +1,4 @@
-/** Plain-data graph selectors (ported from cypress/integration/common/graph.ts). */
+/** Plain-data graph selectors (selection DSL over loaded graph elements). */
 
 export type SelectOp =
   '=' | '!=' | '>' | '<' | '>=' | '<=' | '!*=' | '!$=' | '!^=' | '*=' | '$=' | '^=' | 'falsy' | 'truthy';

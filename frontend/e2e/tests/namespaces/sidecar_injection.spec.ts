@@ -10,16 +10,19 @@ import {
   setupWorkloadWithoutSidecar
 } from '../../utils/sidecarInjection';
 import { core2 } from '../../utils/suite-tags';
+import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 
 const namespace = 'sleep';
 const workload = 'sleep';
 
 /**
  * Namespace and workload scenarios share the sleep demo app; run serially so
- * parallel workers do not race on the same deployment (Cypress runs in order).
+ * parallel workers do not race on the same deployment.
  */
 test.describe('Sidecar injection', () => {
   test.describe.configure({ mode: 'serial' });
+  // workloads_health.spec.ts (same core-2 project, workers=2) also scales this deployment.
+  useBookinfoRoutingLockPerTest();
 
   test.describe('Namespace sidecar injection', () => {
     test.beforeEach(async ({ page, request }) => {

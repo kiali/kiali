@@ -1,12 +1,3 @@
-health_config:
-  rate:
-  - kind: service
-    name: y-server
-    namespace: alpha
-    tolerance:
-    - code: 5xx
-      degraded: 2
-      failure: 100
 additional_display_details:
 - title: API Documentation
   annotation: kiali.io/api-spec
@@ -30,6 +21,15 @@ chat_ai:
       name: gemini-2.5-pro
     name: openai
     type: openai
+health_config:
+  rate:
+  - kind: service
+    name: y-server
+    namespace: alpha
+    tolerance:
+    - code: 5xx
+      degraded: 2
+      failure: 100
 kiali_internal:
   graph_cache:
     enabled: false

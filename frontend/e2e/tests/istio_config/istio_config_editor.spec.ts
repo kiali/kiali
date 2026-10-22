@@ -1,9 +1,8 @@
 import { test } from '../../fixtures/kialiFixtures';
 import { ensureDemoApp } from '../../utils/demoApps';
+import { isOssmc } from '../../utils/kialiConfig';
 import { selectNamespace } from '../../utils/namespace';
 import { core2, coreCachingOnly } from '../../utils/suite-tags';
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
 test.describe('Istio Config editor', () => {
   test.beforeEach(async ({ istioConfigPage, page }) => {
@@ -21,7 +20,7 @@ test.describe('Istio Config editor', () => {
   });
 
   test('Unsaved YAML edits show reload confirmation', core2, async ({ istioConfigPage }) => {
-    test.skip(isOssmc(), 'Monaco editor unsaved-changes modal is skipped in OSSMC (Cypress @skip-ossmc)');
+    test.skip(isOssmc(), 'Monaco editor unsaved-changes modal is not reachable in OSSMC kiosk mode');
 
     await istioConfigPage.openConfigByName('bookinfo');
     await istioConfigPage.expectEditorVisible();
@@ -34,7 +33,7 @@ test.describe('Istio Config editor', () => {
   });
 
   test('Unsaved YAML edits show leave confirmation on Cancel', core2, async ({ istioConfigPage }) => {
-    test.skip(isOssmc(), 'Monaco editor unsaved-changes modal is skipped in OSSMC (Cypress @skip-ossmc)');
+    test.skip(isOssmc(), 'Monaco editor unsaved-changes modal is not reachable in OSSMC kiosk mode');
 
     await istioConfigPage.openConfigByName('bookinfo');
     await istioConfigPage.expectEditorVisible();

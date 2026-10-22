@@ -4,12 +4,8 @@ import { waitForLoadingComplete } from './transition';
 
 export async function openDetailsTab(page: Page, tab: string): Promise<void> {
   const tabsRoot = page.locator('#basic-tabs');
-  const tabLocator = tabsRoot.getByRole('tab', { name: tab, exact: true });
-  if ((await tabLocator.count()) > 0) {
-    await tabLocator.click();
-  } else {
-    await tabsRoot.locator('.pf-v6-c-tabs__list button').filter({ hasText: tab }).click();
-  }
+  // PF Tabs renders role="tab" buttons; no class-based fallback.
+  await tabsRoot.getByRole('tab', { name: tab, exact: true }).click();
   await waitForLoadingComplete(page);
 }
 
