@@ -26,11 +26,9 @@ This guide provides coding standards, development workflows, and common commands
 
 The currently supported Kiali release branches (which receive backports and security fixes) are:
 
-- `v2.33` (Kiali 2.33)
-- The following branches used by supported OSSM releases:
-
 | OSSM  | Branch | Kiali Version |
 |-------|--------|---------------|
+| 3.5   | v2.33  | 2.33          |
 | 3.4   | v2.27  | 2.27          |
 | 3.3   | v2.22  | 2.22          |
 | 3.2   | v2.17  | 2.17          |
