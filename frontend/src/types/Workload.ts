@@ -10,6 +10,7 @@ import type {
 } from './IstioObjects';
 import { InstanceType } from 'types/Common';
 import type { ServiceInfo } from './ServiceInfo';
+import type { WaypointTrafficSplit } from './WaypointTraffic';
 
 export type WorkloadId = {
   namespace: string;
@@ -17,11 +18,13 @@ export type WorkloadId = {
 };
 
 export type WorkloadInfo = {
+  canaryWeight?: number;
   cluster: string;
   labelType?: string;
   name: string;
   namespace: string;
   type?: string;
+  waypointRole?: string;
 };
 
 export type WaypointInfo = WorkloadInfo | ServiceInfo;
@@ -66,6 +69,7 @@ export interface Workload {
   validations?: Validations;
   versionLabel: boolean;
   waypointServices?: WaypointInfo[];
+  waypointTrafficSplit?: WaypointTrafficSplit;
   waypointWorkloads?: WaypointInfo[];
   workloadEntries: WorkloadGroupEntry[];
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -53,6 +54,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				delete(trafficMap, n.ID)
 			} else {
 				n.Metadata[graph.IsOutOfMesh] = false
+				a.setWaypointCanaryLabel(n)
 				for _, edge := range n.Edges {
 					// edges "from" the waypoint will typically be hidden as part of a bi-directional edge
 					edge.Metadata[graph.Waypoint] = &graph.WaypointEdgeInfo{
@@ -126,5 +128,20 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				delete(trafficMap, id)
 			}
 		}
+	}
+}
+
+func (a AmbientAppender) setWaypointCanaryLabel(n *graph.Node) {
+	if n.Workload == "" {
+		return
+	}
+	key := graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)
+	an, ok := a.AccessibleNamespaces[key]
+	if !ok || an.Labels == nil {
+		return
+	}
+	split := models.ResolveWaypointTrafficSplit(n.Cluster, n.Namespace, an.Labels, an.Annotations, "namespace")
+	if label := models.WaypointCanaryNodeLabel(n.Workload, n.Namespace, split); label != "" {
+		n.Metadata[graph.WaypointCanaryLabel] = label
 	}
 }

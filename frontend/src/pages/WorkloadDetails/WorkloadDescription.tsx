@@ -21,6 +21,7 @@ import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLa
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
+import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { getAppLabelName } from 'config/ServerConfig';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
@@ -145,6 +146,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               </li>
             );
           })}
+
+          {workload.waypointTrafficSplit?.canary && (
+            <WaypointCanaryPropertyList split={workload.waypointTrafficSplit} />
+          )}
 
           {runtimes.length > 0 && (
             <li id="runtimes">
