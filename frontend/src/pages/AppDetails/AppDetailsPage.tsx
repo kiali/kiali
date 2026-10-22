@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -145,6 +146,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             }}
             tabMap={paramToTab}
             tabName={tabName}
+            customTimeTabs={['in_metrics', 'out_metrics', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
