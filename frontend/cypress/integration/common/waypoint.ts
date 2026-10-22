@@ -818,7 +818,8 @@ Then(
 );
 
 Then('validates waypoint Info data for {string}', (type: string) => {
-  cy.get('[data-test=waypointfor-title]').should('exist').and('contain', type);
+  cy.get('[data-test=waypointfor-title]').should('exist').and('contain', 'Waypoint for');
+  cy.get('[data-test=waypointfor-scope]').should('exist').contains(type, { matchCase: false });
   cy.get('[role="grid"]').should('be.visible').find('td[data-label="RDS"]').should('contain', 'IGNORED');
 });
 
