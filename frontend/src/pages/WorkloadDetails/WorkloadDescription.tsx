@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Workload } from '../../types/Workload';
+import type { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -7,7 +7,7 @@ import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
-import * as H from '../../types/Health';
+import type * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { isMultiCluster } from '../../config';
@@ -21,6 +21,7 @@ import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLa
 import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
+import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { getAppLabelName } from 'config/ServerConfig';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
@@ -145,6 +146,10 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
               </li>
             );
           })}
+
+          {workload.waypointTrafficSplit?.canary && (
+            <WaypointCanaryPropertyList split={workload.waypointTrafficSplit} />
+          )}
 
           {runtimes.length > 0 && (
             <li id="runtimes">

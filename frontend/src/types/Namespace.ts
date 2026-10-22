@@ -1,3 +1,5 @@
+import type { WaypointTrafficSplit } from './WaypointTraffic';
+
 export interface Namespace {
   annotations?: { [key: string]: string };
   cluster?: string;
@@ -6,6 +8,7 @@ export interface Namespace {
   labels?: { [key: string]: string };
   name: string;
   revision?: string;
+  waypointTrafficSplit?: WaypointTrafficSplit;
 }
 
 export const namespaceFromString = (namespace: string): { name: string } => ({ name: namespace });
