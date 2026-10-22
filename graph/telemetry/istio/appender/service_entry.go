@@ -184,6 +184,9 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(ctx context.Context, cluster
 		// Keep the namespace-local graph representation, but only attribute hosts that
 		// this requesting namespace can see. Rejected hosts retain their observed traffic.
 		for _, entry := range istioCfg.ServiceEntries {
+			// Pass raw exports; the shared policy supplies mesh defaults. Validation
+			// (business/istio_validations_service_entry_visibility.go) also widens
+			// unknown export namespaces to avoid cascading missing-host errors.
 			var visible bool
 			if applyVisibility {
 				visibility, resolved := visibilities[entry.Namespace]
