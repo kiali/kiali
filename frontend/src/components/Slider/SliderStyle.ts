@@ -2,7 +2,12 @@ import type * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
-export const sliderStyle = (maxWidth?: string): string =>
+const railTrackFillVar = (color: string): React.CSSProperties =>
+  ({
+    '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor': color
+  }) as React.CSSProperties;
+
+export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =>
   kialiStyle({
     alignItems: 'center',
     display: 'flex',
@@ -12,7 +17,8 @@ export const sliderStyle = (maxWidth?: string): string =>
       '& .pf-v6-c-slider': {
         flex: '1 1 auto',
         minWidth: 0,
-        width: '100%'
+        width: '100%',
+        ...(railTrackFill ? railTrackFillVar(railTrackFill) : {})
       },
 
       // Match legacy bootstrap-slider layout: cap rail width only, not the % input / action buttons.
@@ -24,26 +30,12 @@ export const sliderStyle = (maxWidth?: string): string =>
     }
   });
 
-const mirroredSliderFill = {
-  '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor': PFColors.Purple20
-} as React.CSSProperties;
-
-const replaySliderFill = {
-  '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor': PFColors.Replay
-} as React.CSSProperties;
-
 export const sliderMirroredStyle = kialiStyle({
   $nest: {
     '& .pf-v6-c-slider__thumb': {
       backgroundColor: PFColors.Purple20
     },
 
-    '& .pf-v6-c-slider': mirroredSliderFill
-  }
-});
-
-export const sliderReplayStyle = kialiStyle({
-  $nest: {
-    '& .pf-v6-c-slider': replaySliderFill
+    '& .pf-v6-c-slider': railTrackFillVar(PFColors.Purple20)
   }
 });

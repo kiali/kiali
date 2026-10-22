@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { RoutingSlider } from 'components/Slider/RoutingSlider';
+import { RoutingSlider } from 'components/Slider';
 import type { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
@@ -281,7 +281,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               value={workload.weight}
               min={0}
               max={workload.maxWeight}
-              maxWidth="195px"
+              maxRailWidth="195px"
               maxLimit={100}
               onSlide={value => {
                 this.onWeight(workload.name, value as number);
@@ -358,7 +358,7 @@ export class TrafficShifting extends React.Component<Props, State> {
                 value={mirroredWorkload.weight}
                 min={0}
                 max={100}
-                maxWidth="195px"
+                maxRailWidth="195px"
                 maxLimit={100}
                 onSlide={value => {
                   this.onWeight(mirroredWorkload.name, value as number);
