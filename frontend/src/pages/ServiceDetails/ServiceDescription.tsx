@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
-import { AppWorkload } from '../../types/App';
+import type { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
+import type { AppWorkload } from '../../types/App';
 import { isMultiCluster } from '../../config';
 import { Labels } from '../../components/Label/Labels';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -13,6 +13,7 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
+import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { infoStyle } from 'styles/IconStyle';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
@@ -118,6 +119,10 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             <span>Version</span>
             {props.serviceDetails.service.resourceVersion}
           </li>
+        )}
+
+        {props.serviceDetails?.waypointTrafficSplit?.canary && (
+          <WaypointCanaryPropertyList split={props.serviceDetails.waypointTrafficSplit} />
         )}
 
         {props.serviceDetails?.service?.additionalDetails?.map((additionalItem, idx) => {

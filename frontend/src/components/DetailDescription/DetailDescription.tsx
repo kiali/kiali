@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AppWorkload } from '../../types/App';
+import type { AppWorkload } from '../../types/App';
 import { Popover, PopoverPosition, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
@@ -7,7 +7,7 @@ import { KialiLink } from '../Link/KialiLink';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { isMultiCluster } from '../../config';
-import { WorkloadInfo } from '../../types/Workload';
+import type { WorkloadInfo } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { infoStyle } from 'styles/IconStyle';
 import { t } from 'utils/I18nUtils';
@@ -66,6 +66,7 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
 
         <KialiLink to={href} kioskParams={kioskParams} dataTest="waypoint-link">
           {waypoint.name}
+          {waypoint.waypointRole ? ` (${waypoint.waypointRole})` : ''}
         </KialiLink>
       </li>
     );

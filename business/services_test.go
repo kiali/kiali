@@ -337,7 +337,7 @@ func TestGetServicesFromWaypoint(t *testing.T) {
 	clients := kubetest.FakeWaypointAndEnrolledClients("ratings", conf.KubernetesConfig.ClusterName, "bookinfo")
 	svc := NewLayerBuilder(t, conf).WithClients(clients).Build().Svc
 
-	svcList := svc.ListWaypointServices(context.TODO(), "waypoint", "bookinfo", conf.KubernetesConfig.ClusterName)
+	svcList := svc.ListWaypointServices(context.TODO(), "waypoint", "bookinfo", conf.KubernetesConfig.ClusterName, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary, 0)
 	require.NotNil(svcList)
 	assert.Equal("ratings", svcList[0].Name)
 	assert.Equal("service", svcList[0].LabelType)

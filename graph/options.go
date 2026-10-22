@@ -105,9 +105,11 @@ func GetClusterSensitiveKey(cluster, name string) ClusterSensitiveKey {
 }
 
 type AccessibleNamespace struct {
+	Annotations       map[string]string
 	Cluster           string
 	CreationTimestamp time.Time
 	IsAmbient         bool
+	Labels            map[string]string
 	Name              string
 }
 
@@ -479,9 +481,11 @@ func getAccessibleNamespaces(ctx context.Context, namespacesService *business.Na
 	accessibleNamespaces := make(AccessibleNamespaces)
 	for _, namespace := range namespaces {
 		accessibleNamespaces[GetClusterSensitiveKey(namespace.Cluster, namespace.Name)] = &AccessibleNamespace{
+			Annotations:       namespace.Annotations,
 			Cluster:           namespace.Cluster,
 			CreationTimestamp: namespace.CreationTimestamp,
 			IsAmbient:         namespace.IsAmbient,
+			Labels:            namespace.Labels,
 			Name:              namespace.Name,
 		}
 	}

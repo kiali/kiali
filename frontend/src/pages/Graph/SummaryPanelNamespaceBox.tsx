@@ -40,6 +40,7 @@ import type { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { t } from 'utils/I18nUtils';
+import { NamespaceWaypointCanarySplit } from '../../components/Ambient/WaypointCanarySummary';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -183,6 +184,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
           {getTitle('Namespace')}
           {this.renderNamespace(namespace, cluster)}
           {renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
+          <NamespaceWaypointCanarySplit namespace={namespace} cluster={cluster} />
         </div>
 
         <div className={summaryBodyTabs}>
