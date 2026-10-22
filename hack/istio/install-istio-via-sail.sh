@@ -109,6 +109,7 @@ done
 ADDONS="prometheus grafana jaeger"
 CONFIG_PROFILE=""
 CUSTOM_INSTALL_SETTINGS=""
+IPTABLES_BACKEND="auto"
 PATCH_FILE=""
 WAIT=true
 MESH_ID=""
@@ -163,6 +164,15 @@ while [[ $# -gt 0 ]]; do
       NETWORK_ID="$2"
       shift;shift
       ;;
+    -ib|--iptables-backend)
+      if [ "${2}" == "auto" ] || [ "${2}" == "legacy" ] || [ "${2}" == "nft" ] || [ "${2}" == "default" ]; then
+        IPTABLES_BACKEND="$2"
+      else
+        echo "ERROR: The --iptables-backend flag must be 'auto', 'legacy', 'nft', or 'default'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     --sail-operator-helm-repo)
       SAIL_OPERATOR_HELM_REPO="$2"
       shift;shift
@@ -205,6 +215,18 @@ Valid command line arguments:
        Cluster name for multicluster setup. Required for multicluster configurations.
   -n|--network <network-id>:
        Network ID for multicluster setup. Required for multicluster configurations.
+  -ib|--iptables-backend (auto|legacy|nft|default):
+       Which iptables backend the Istio sidecar istio-init containers should use.
+       'auto' runs a short-lived detection pod after Istio is installed (using the deployed
+       proxyv2 image) and forces the legacy backend only if the cluster node kernels cannot
+       use the nftables backend (e.g. some minikube kvm2 kernels ship without the nf_tables
+       module, which crash-loops every sidecar-injected pod).
+       'legacy' or 'nft' always forces that backend; 'default' never forces one (Istio's own
+       detection decides). If the detection itself fails, the script exits with an error -
+       pass 'legacy', 'nft' or 'default' to bypass the detection. Detection is also skipped
+       if FORCE_IPTABLES_BINARY is already set in the Istio configuration (e.g. via --set
+       or --patch-file), or on OpenShift (its nodes always support nftables).
+       Default: auto
   --sail-operator-helm-repo <url>:
        Helm repository URL where the Sail Operator chart is hosted.
        Default: ${SAIL_OPERATOR_HELM_REPO}
@@ -488,11 +510,119 @@ if [ -n "${NETWORK_ID}" ]; then
   kubectl label namespace "${ISTIO_NAMESPACE}" topology.istio.io/network="${NETWORK_ID}" --overwrite
 fi
 
+# Determine which iptables backend the Istio sidecar istio-init containers should use.
+# Some minimal node kernels (e.g. certain minikube kvm2 kernels) ship without the nf_tables
+# kernel module. Istio's istio-init defaults to the nftables iptables backend and fails there
+# with "Could not fetch rule set generation id: Invalid argument", crash-looping every
+# sidecar-injected pod. FORCE_IPTABLES_BINARY (read by istio-init and istio-cni, and passed to
+# injected sidecars through meshConfig.defaultConfig.proxyMetadata) forces the legacy backend
+# when nftables is unusable. The detection itself runs after Istio is installed (see below) so
+# that the deployed istiod image can be used to build the detection pod image.
+RUN_NFT_DETECTION="false"
+if [ "${IPTABLES_BACKEND}" == "legacy" ] || [ "${IPTABLES_BACKEND}" == "nft" ]; then
+  echo "Forcing the iptables backend of Istio sidecars to [${IPTABLES_BACKEND}]"
+  ISTIO_YAML=$(printf "%s" "${ISTIO_YAML}" | yq ".spec.values.meshConfig.defaultConfig.proxyMetadata.FORCE_IPTABLES_BINARY = \"${IPTABLES_BACKEND}\"")
+elif [ "${IPTABLES_BACKEND}" != "auto" ]; then
+  echo "Not forcing an iptables backend for Istio sidecars (iptables-backend=${IPTABLES_BACKEND})"
+elif kubectl api-versions | grep --quiet "route.openshift.io"; then
+  echo "OpenShift cluster detected - its nodes always support the nftables iptables backend; skipping detection"
+elif [ -n "$(printf "%s" "${ISTIO_YAML}" | yq '.spec.values.meshConfig.defaultConfig.proxyMetadata.FORCE_IPTABLES_BINARY // ""')" ]; then
+  echo "FORCE_IPTABLES_BINARY is already set in the Istio configuration - skipping nftables detection"
+else
+  RUN_NFT_DETECTION="true"
+fi
+
 kubectl apply -f - <<<"$ISTIO_YAML"
 if [ "${WAIT}" == "true" ]; then
   echo "Waiting for Istio to be ready..."
   kubectl wait --for=condition=Ready istios -l kiali.io/testing --timeout=300s
   ensure_istiod_validating_webhook_cabundle "${ISTIO_NAMESPACE}" 300
+fi
+
+if [ "${RUN_NFT_DETECTION}" == "true" ]; then
+  # The detection pod needs an image containing the iptables binaries; build it from the
+  # deployed istiod image (the proxyv2 image from the same hub/tag is what sidecars use).
+  # Override with the IPTABLES_DETECT_IMAGE environment variable to use a different image.
+  DETECT_IMAGE="${IPTABLES_DETECT_IMAGE:-}"
+  if [ -z "${DETECT_IMAGE}" ]; then
+    ISTIOD_IMAGE=""
+    for _ in $(seq 1 30); do
+      ISTIOD_IMAGE=$(kubectl get deployments -n "${ISTIO_NAMESPACE}" -l istio=pilot -o jsonpath='{.items[0].spec.template.spec.containers[0].image}' 2>/dev/null || true)
+      [ -n "${ISTIOD_IMAGE}" ] && break
+      sleep 2
+    done
+    DETECT_IMAGE=$(echo "${ISTIOD_IMAGE}" | sed 's|/pilot:|/proxyv2:|')
+    if [ -z "${ISTIOD_IMAGE}" ] || [ "${DETECT_IMAGE}" == "${ISTIOD_IMAGE}" ]; then
+      echo "ERROR: Could not determine a proxyv2 image from the istiod deployment [${ISTIOD_IMAGE:-not found}]."
+      echo "       Fix the cause of the failure, or bypass the detection by explicitly choosing an"
+      echo "       iptables backend via --iptables-backend (one of: legacy, nft, default)."
+      exit 1
+    fi
+  fi
+  DETECT_POD="kiali-nft-detect"
+  DETECT_POD_YAML=$(cat <<DETECTPOD
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ${DETECT_POD}
+  namespace: ${ISTIO_NAMESPACE}
+spec:
+  restartPolicy: Never
+  containers:
+  - name: nft-detect
+    image: ${DETECT_IMAGE}
+    command: ["sh", "-c", "iptables-nft -L -n >/dev/null 2>&1 && echo NFT_SUPPORTED || echo NFT_UNSUPPORTED"]
+    securityContext:
+      capabilities:
+        add: ["NET_ADMIN", "NET_RAW"]
+DETECTPOD
+)
+  echo "Detecting whether the cluster nodes support the nftables iptables backend (image: ${DETECT_IMAGE})..."
+  kubectl delete pod ${DETECT_POD} -n "${ISTIO_NAMESPACE}" --ignore-not-found=true >/dev/null 2>&1 || true
+  # stderr is not suppressed so apply errors (e.g. RBAC or Pod Security denials) are visible
+  if ! printf "%s" "${DETECT_POD_YAML}" | kubectl apply -f - >/dev/null; then
+    echo "ERROR: Failed to create the nftables detection pod [${DETECT_POD}] in namespace [${ISTIO_NAMESPACE}]."
+    echo "       Fix the cause of the failure, or bypass the detection by explicitly choosing an"
+    echo "       iptables backend via --iptables-backend (one of: legacy, nft, default)."
+    exit 1
+  fi
+  NFT_DETECT_RESULT=""
+  for _ in $(seq 1 30); do
+    NFT_DETECT_RESULT=$(kubectl logs -n "${ISTIO_NAMESPACE}" "${DETECT_POD}" 2>/dev/null | head -n1 || true)
+    [ -n "${NFT_DETECT_RESULT}" ] && break
+    sleep 2
+  done
+  if [ -z "${NFT_DETECT_RESULT}" ]; then
+    # the pod never produced output - report why (e.g. ImagePullBackOff, scheduling failures, quota)
+    DETECT_POD_PHASE=$(kubectl get pod "${DETECT_POD}" -n "${ISTIO_NAMESPACE}" -o jsonpath='{.status.phase}' 2>/dev/null || true)
+    DETECT_POD_REASON=$(kubectl get pod "${DETECT_POD}" -n "${ISTIO_NAMESPACE}" -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}' 2>/dev/null || true)
+    kubectl delete pod "${DETECT_POD}" -n "${ISTIO_NAMESPACE}" --wait=false >/dev/null 2>&1 || true
+    echo "ERROR: The nftables detection pod [${DETECT_POD}] did not produce any output"
+    echo "       (pod phase: ${DETECT_POD_PHASE:-unknown}; waiting reason: ${DETECT_POD_REASON:-unknown})."
+    echo "       Fix the cause of the failure, or bypass the detection by explicitly choosing an"
+    echo "       iptables backend via --iptables-backend (one of: legacy, nft, default)."
+    exit 1
+  fi
+  kubectl delete pod "${DETECT_POD}" -n "${ISTIO_NAMESPACE}" --wait=false >/dev/null 2>&1 || true
+  if [[ "${NFT_DETECT_RESULT}" == *NFT_UNSUPPORTED* ]]; then
+    echo "The nftables iptables backend is NOT usable on the cluster nodes - forcing Istio sidecars to use the legacy iptables backend"
+    kubectl patch istios "${ISTIO_NAME}" --type merge -p '{"spec":{"values":{"meshConfig":{"defaultConfig":{"proxyMetadata":{"FORCE_IPTABLES_BINARY":"legacy"}}}}}}'
+    # Wait until the mesh configuration (which feeds the sidecar injector) has picked it up.
+    for _ in $(seq 1 30); do
+      if kubectl get cm istio -n "${ISTIO_NAMESPACE}" -o jsonpath='{.data.mesh}' 2>/dev/null | grep --quiet FORCE_IPTABLES_BINARY; then
+        echo "The Istio mesh configuration now forces the legacy iptables backend for sidecars"
+        break
+      fi
+      sleep 2
+    done
+  elif [[ "${NFT_DETECT_RESULT}" == *NFT_SUPPORTED* ]]; then
+    echo "The nftables iptables backend is usable on the cluster nodes"
+  else
+    echo "ERROR: Unexpected output from the nftables detection pod: [${NFT_DETECT_RESULT}]"
+    echo "       Bypass the detection by explicitly choosing an iptables backend via"
+    echo "       --iptables-backend (one of: legacy, nft, default)."
+    exit 1
+  fi
 fi
 
 if [ "${CONFIG_PROFILE}" == "ambient" ]; then
