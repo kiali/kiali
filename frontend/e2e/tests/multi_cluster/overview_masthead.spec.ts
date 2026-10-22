@@ -1,5 +1,4 @@
 import { test } from '../../fixtures/kialiFixtures';
-import { getAuthStrategy } from '../../utils/auth-strategy';
 import { skipUnlessHealthyIstioComponents } from '../../utils/istioStatus';
 import { cluster1Context, EAST, scaleDeploymentOnContext } from '../../utils/multiCluster';
 import { multiClusterMutating, multiClusterOnly } from '../../utils/suite-tags';
@@ -62,9 +61,4 @@ test.describe('Overview and masthead multi-cluster', () => {
       await overviewPage.expectAllClustersHealthy();
     }
   );
-
-  test('OpenShift dual-cluster login is skipped on anonymous', multiClusterOnly, async ({ page }) => {
-    const strategy = await getAuthStrategy(page);
-    test.skip(strategy !== 'openshift', 'Dual-cluster OpenShift login requires openshift auth');
-  });
 });

@@ -3,6 +3,7 @@ import { ensureDemoApp } from '../../utils/demoApps';
 import { kubectlNamespaceExists, kubectlScale } from '../../utils/kubectl';
 import { waitForWorkloadHealthStatus } from '../../utils/health';
 import { core2 } from '../../utils/suite-tags';
+import { withBookinfoRoutingLock } from '../../utils/bookinfoRoutingLock';
 
 test.describe('Workloads list idle health', () => {
   test.afterEach(() => {
@@ -19,12 +20,20 @@ test.describe('Workloads list idle health', () => {
     'The idle status of a workload is reported in the list of workloads',
     core2,
     async ({ workloadsPage, request }) => {
-      ensureDemoApp('sleep');
-      kubectlScale('sleep', 'sleep', 0);
-      await waitForWorkloadHealthStatus(request, 'sleep', 'sleep', 'Not Ready');
-      await workloadsPage.openListWithNamespace('sleep');
-      await workloadsPage.expectWorkloadListedAs('sleep', 'sleep', 'idle');
-      await workloadsPage.expectWorkloadHealthStatus('sleep', 'sleep', 'Not Ready');
+      // Scales the shared sleep deployment; hold the routing lock so a parallel
+      // core-2 worker (sidecar_injection.spec.ts) cannot restart it mid-test.
+      await withBookinfoRoutingLock(async () => {
+        ensureDemoApp('sleep');
+        kubectlScale('sleep', 'sleep', 0);
+        await waitForWorkloadHealthStatus(request, 'sleep', 'sleep', 'Not Ready');
+        await workloadsPage.openListWithNamespace('sleep');
+        await workloadsPage.expectWorkloadListedAs('sleep', 'sleep', 'idle');
+        await workloadsPage.expectWorkloadHealthStatus('sleep', 'sleep', 'Not Ready');
+        // Scale back inside the lock — afterEach runs after the lock is released, which
+        // reopens the cross-worker race the lock exists to close. afterEach stays as a
+        // failure-path fallback.
+        kubectlScale('sleep', 'sleep', 1);
+      });
     }
   );
 });
@@ -34,6 +43,7 @@ test.describe('Workloads list error-rates health statuses', () => {
     'The failing status of a workload is reported in the list of workloads',
     core2,
     async ({ workloadsPage, request }) => {
+      ensureDemoApp('error-rates');
       await waitForWorkloadHealthStatus(request, 'alpha', 'v-server', 'Failure');
       await workloadsPage.openListWithNamespace('alpha');
       await workloadsPage.expectWorkloadListedAs('alpha', 'v-server', 'failure');
@@ -45,6 +55,7 @@ test.describe('Workloads list error-rates health statuses', () => {
     'The degraded status of a workload is reported in the list of workloads',
     core2,
     async ({ workloadsPage, request }) => {
+      ensureDemoApp('error-rates');
       await waitForWorkloadHealthStatus(request, 'alpha', 'b-client', 'Degraded');
       await workloadsPage.openListWithNamespace('alpha');
       await workloadsPage.expectWorkloadListedAs('alpha', 'b-client', 'degraded');

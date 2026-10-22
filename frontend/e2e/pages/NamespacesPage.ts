@@ -15,6 +15,7 @@ import {
   sortListByColumn
 } from '../utils/table';
 import { waitForLoadingComplete } from '../utils/transition';
+import { isOssmc } from '../utils/kialiConfig';
 
 const COLUMN_MANAGEMENT_MODAL = '[data-ouia-component-id="ColumnManagementModal"]';
 
@@ -24,8 +25,6 @@ const columnTitleToId = (title: string): string => {
   };
   return map[title] ?? title.toLowerCase();
 };
-
-const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
 
 export class NamespacesPage extends BasePage {
   async openList(query: Record<string, string> = {}): Promise<void> {

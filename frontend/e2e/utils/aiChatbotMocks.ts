@@ -124,6 +124,8 @@ export function createMockStreamResponse(payload: MockStreamPayload): string {
   return stream;
 }
 
+// The applied test payloads use a synthetic (RFC 2606 reserved) host so the VS these tests
+// create/patch/apply never routes to — or merges with — the live bookinfo 'reviews' service.
 const virtualServiceYamlCreate = `apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
@@ -131,11 +133,11 @@ metadata:
   namespace: bookinfo
 spec:
   hosts:
-    - reviews
+    - vs-ai-pw.invalid
   http:
     - route:
         - destination:
-            host: reviews
+            host: vs-ai-pw.invalid
 `;
 
 const virtualServiceYamlPatch = `apiVersion: networking.istio.io/v1
@@ -145,12 +147,12 @@ metadata:
   namespace: bookinfo
 spec:
   hosts:
-    - reviews
+    - vs-ai-pw.invalid
   http:
     - timeout: 2s
       route:
         - destination:
-            host: reviews
+            host: vs-ai-pw.invalid
 `;
 
 const virtualServiceYamlDelete = `apiVersion: networking.istio.io/v1
@@ -160,7 +162,7 @@ metadata:
   namespace: bookinfo
 spec:
   hosts:
-    - reviews
+    - vs-ai-pw.invalid
 `;
 
 const destinationRuleYaml = `apiVersion: networking.istio.io/v1
