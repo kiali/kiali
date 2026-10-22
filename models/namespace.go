@@ -49,6 +49,8 @@ type Namespace struct {
 	// Specific annotations used in Kiali
 	Annotations map[string]string `json:"annotations"`
 
+	WaypointTrafficSplit *WaypointTrafficSplit `json:"waypointTrafficSplit,omitempty"`
+
 	// Revision managing this namespace.
 	// If the namespace has 'istio-injection: enabled' label,
 	// it will be set to the 'default' revision. Otherwise
@@ -94,6 +96,7 @@ func CastNamespace(ns core_v1.Namespace, cluster string) Namespace {
 	if label, hasLabel := ns.Labels[config.IstioAmbientNamespaceLabel]; hasLabel && label == config.IstioAmbientNamespaceLabelValue {
 		namespace.IsAmbient = true
 	}
+	namespace.WaypointTrafficSplit = ResolveWaypointTrafficSplit(cluster, ns.Name, ns.Labels, ns.Annotations, "namespace")
 	return namespace
 }
 

@@ -55,7 +55,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
 
   Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
@@ -333,7 +333,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then the "Services" subtab doesn't exist
     Then the "Workloads" subtab doesn't exist
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "none"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint for service are valid
@@ -343,7 +343,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-forservice" namespace, "namespace" label for, "pfbadge-S" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint in different ns are valid
@@ -353,7 +353,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-differentns" namespace, "namespace" label for, "pfbadge-S" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint for all are valid
@@ -365,7 +365,7 @@ Feature: Kiali Waypoint related features
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-forall" namespace, "namespace" label for, "pfbadge-S" badge
     Then user goes to the waypoint "Workloads" subtab
     And validates Services data with "2" rows and "echo-server" workload, "waypoint-forall" namespace, "namespace" label for, "pfbadge-W" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "all"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint for workload are valid
@@ -375,7 +375,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Workloads" subtab
     And validates Services data with "1" rows and "echo-server" workload, "waypoint-forworkload" namespace, "workload" label for, "pfbadge-W" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "workload"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint override are valid
@@ -386,7 +386,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "namespace" label for, "pfbadge-S" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
   # TODO: End-Todo
     Then user is at the details page for the "workload" "waypoint-override/echo-server" located in the "" cluster
@@ -395,7 +395,7 @@ Feature: Kiali Waypoint related features
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
     And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "service" label for, "pfbadge-S" badge
-    Then user goes to the waypoint "Info" subtab
+    Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
 
   Scenario: [Waypoint details] The waypoint workload log level os updated

@@ -1,7 +1,7 @@
-import { Namespace } from './Namespace';
-import { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
-import { Health } from './Health';
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import type { Namespace } from './Namespace';
+import type { AppenderString, DurationInSeconds, TimeInSeconds } from './Common';
+import type { Health } from './Health';
+import type { Controller, GraphElement } from '@patternfly/react-topology';
 
 export const SUMMARY_PANEL_CHART_WIDTH = 250;
 
@@ -434,6 +434,7 @@ export interface GraphNodeData {
   service?: string;
   traffic?: ProtocolTraffic[];
   version?: string;
+  waypointCanaryLabel?: string;
   workload?: string;
 }
 

@@ -1,4 +1,4 @@
-import {
+import type {
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
   DecoratedGraphElements,
@@ -6,9 +6,9 @@ import {
   DecoratedGraphNodeWrapper,
   GraphEdgeWrapper,
   GraphElements,
-  GraphNodeWrapper,
-  hasProtocolTraffic
+  GraphNodeWrapper
 } from '../../types/Graph';
+import { hasProtocolTraffic } from '../../types/Graph';
 import { isIstioNamespace } from '../../config/ServerConfig';
 import { AppHealth, NA, ServiceHealth, WorkloadHealth } from 'types/Health';
 import { toSafeFieldName } from 'helpers/GraphHelpers';
@@ -79,6 +79,7 @@ export const decorateGraphData = (graphData: GraphElements, duration: number): D
       isRoot: undefined,
       isServiceEntry: undefined,
       isWaypoint: undefined,
+      waypointCanaryLabel: undefined,
       rank: undefined,
       service: undefined,
       tcpIn: NaN,

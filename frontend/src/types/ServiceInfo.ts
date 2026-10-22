@@ -1,7 +1,8 @@
-import { DEGRADED, FAILURE, HEALTHY, INFO, NA, ServiceHealth, Status } from './Health';
-import {
+import { DEGRADED, FAILURE, HEALTHY, INFO, NA } from './Health';
+import type { ServiceHealth, Status } from './Health';
+import { getWizardUpdateLabel, ValidationTypes } from './IstioObjects';
+import type {
   DestinationRule,
-  getWizardUpdateLabel,
   K8sHTTPRoute,
   K8sGRPCRoute,
   K8sInferencePool,
@@ -9,14 +10,14 @@ import {
   ObjectValidation,
   ServiceEntry,
   Validations,
-  ValidationTypes,
   VirtualService
 } from './IstioObjects';
-import { TLSStatus } from './TLSStatus';
-import { AdditionalItem, SpireInfo, WorkloadInfo } from './Workload';
-import { ResourcePermissions } from './Permissions';
+import type { TLSStatus } from './TLSStatus';
+import type { AdditionalItem, SpireInfo, WorkloadInfo } from './Workload';
+import type { WaypointTrafficSplit } from './WaypointTraffic';
+import type { ResourcePermissions } from './Permissions';
 import { KIALI_WIZARD_LABEL } from '../components/IstioWizards/WizardActions';
-import { ServiceOverview } from './ServiceList';
+import type { ServiceOverview } from './ServiceList';
 
 export type ServiceId = {
   namespace: string;
@@ -24,11 +25,13 @@ export type ServiceId = {
 };
 
 export type ServiceInfo = {
+  canaryWeight?: number;
   cluster: string;
   labelType?: string;
   name: string;
   namespace: string;
   type?: string;
+  waypointRole?: string;
 };
 
 export interface ServicePort {
@@ -104,6 +107,7 @@ export interface ServiceDetailsInfo {
   subServices?: ServiceOverview[];
   validations: Validations;
   virtualServices: VirtualService[];
+  waypointTrafficSplit?: WaypointTrafficSplit;
   waypointWorkloads?: WorkloadInfo[];
   workloads?: WorkloadOverview[];
 }

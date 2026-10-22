@@ -209,6 +209,12 @@ type WorkloadReferenceInfo struct {
 	// required: false
 	// example: workload/service
 	Type string `json:"type"`
+
+	// WaypointRole is primary or canary when this reference is waypoint enrollment.
+	WaypointRole string `json:"waypointRole,omitempty"`
+
+	// CanaryWeight is set when WaypointRole is canary (0-100).
+	CanaryWeight int `json:"canaryWeight,omitempty"`
 }
 
 // Workload has the details of a workload
@@ -247,6 +253,9 @@ type Workload struct {
 
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
+
+	// WaypointTrafficSplit is set for ambient workloads and waypoint gateways when canary labels apply.
+	WaypointTrafficSplit *WaypointTrafficSplit `json:"waypointTrafficSplit,omitempty"`
 
 	// WorkloadEntries bound to the workload
 	WorkloadEntries WorkloadEntries `json:"workloadEntries"`
