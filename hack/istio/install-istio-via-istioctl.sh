@@ -313,7 +313,9 @@ Valid command line arguments:
        the cluster node kernels cannot use the nftables backend (e.g. some minikube kvm2
        kernels ship without the nf_tables module, which crash-loops every sidecar-injected pod).
        'legacy' or 'nft' always forces that backend; 'default' never forces one (Istio's own
-       detection decides). OpenShift nodes always support nftables, so no detection is done there.
+       detection decides). If the detection itself fails, the script exits with an error -
+       pass 'legacy', 'nft' or 'default' to bypass the detection.
+       OpenShift nodes always support nftables, so no detection is done there.
        Default: auto
   -m|--mtls (true|false):
        Indicate if you want global MTLS auto enabled.
@@ -609,7 +611,8 @@ elif [ "${IPTABLES_BACKEND}" == "auto" ] && [ "${DELETE_ISTIO}" != "true" ] && [
   DETECT_POD="kiali-nft-detect"
   echo "Detecting whether the cluster nodes support the nftables iptables backend..."
   ${CLIENT_EXE} delete pod ${DETECT_POD} -n ${NAMESPACE} --ignore-not-found=true >/dev/null 2>&1
-  cat <<DETECTPOD | ${CLIENT_EXE} apply -f - >/dev/null 2>&1
+  # stderr is not suppressed so apply errors (e.g. RBAC or Pod Security denials) are visible
+  cat <<DETECTPOD | ${CLIENT_EXE} apply -f - >/dev/null
 apiVersion: v1
 kind: Pod
 metadata:
@@ -625,12 +628,29 @@ spec:
       capabilities:
         add: ["NET_ADMIN", "NET_RAW"]
 DETECTPOD
+  if [ "$?" != "0" ]; then
+    echo "ERROR: Failed to create the nftables detection pod [${DETECT_POD}] in namespace [${NAMESPACE}]."
+    echo "       Fix the cause of the failure, or bypass the detection by explicitly choosing an"
+    echo "       iptables backend via --iptables-backend (one of: legacy, nft, default)."
+    exit 1
+  fi
   NFT_DETECT_RESULT=""
   for _ in $(seq 1 30); do
     NFT_DETECT_RESULT=$(${CLIENT_EXE} logs -n ${NAMESPACE} ${DETECT_POD} 2>/dev/null | head -n1)
     [ -n "${NFT_DETECT_RESULT}" ] && break
     sleep 2
   done
+  if [ -z "${NFT_DETECT_RESULT}" ]; then
+    # the pod never produced output - report why (e.g. ImagePullBackOff, scheduling failures, quota)
+    DETECT_POD_PHASE=$(${CLIENT_EXE} get pod ${DETECT_POD} -n ${NAMESPACE} -o jsonpath='{.status.phase}' 2>/dev/null)
+    DETECT_POD_REASON=$(${CLIENT_EXE} get pod ${DETECT_POD} -n ${NAMESPACE} -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}' 2>/dev/null)
+    ${CLIENT_EXE} delete pod ${DETECT_POD} -n ${NAMESPACE} --wait=false >/dev/null 2>&1
+    echo "ERROR: The nftables detection pod [${DETECT_POD}] did not produce any output"
+    echo "       (pod phase: ${DETECT_POD_PHASE:-unknown}; waiting reason: ${DETECT_POD_REASON:-unknown})."
+    echo "       Fix the cause of the failure, or bypass the detection by explicitly choosing an"
+    echo "       iptables backend via --iptables-backend (one of: legacy, nft, default)."
+    exit 1
+  fi
   ${CLIENT_EXE} delete pod ${DETECT_POD} -n ${NAMESPACE} --wait=false >/dev/null 2>&1
   if [[ "${NFT_DETECT_RESULT}" == *NFT_UNSUPPORTED* ]]; then
     echo "The nftables iptables backend is NOT usable on the cluster nodes - forcing Istio sidecars to use the legacy iptables backend"
@@ -638,7 +658,10 @@ DETECTPOD
   elif [[ "${NFT_DETECT_RESULT}" == *NFT_SUPPORTED* ]]; then
     echo "The nftables iptables backend is usable on the cluster nodes"
   else
-    echo "WARNING: Could not detect nftables iptables support on the cluster nodes - not forcing an iptables backend."
+    echo "ERROR: Unexpected output from the nftables detection pod: [${NFT_DETECT_RESULT}]"
+    echo "       Bypass the detection by explicitly choosing an iptables backend via"
+    echo "       --iptables-backend (one of: legacy, nft, default)."
+    exit 1
   fi
 fi
 
