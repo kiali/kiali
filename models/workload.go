@@ -170,9 +170,6 @@ type WorkloadListItem struct {
 	// Health
 	Health WorkloadHealth `json:"health,omitempty"`
 
-	// Names of the waypoint proxy workloads, if any
-	WaypointWorkloads []string `json:"waypointWorkloads"`
-
 	// ValidationKey is a pre-calculated key string: "cluster:namespace:name"
 	ValidationKey string
 
@@ -183,12 +180,6 @@ type WorkloadListItem struct {
 }
 
 type WorkloadOverviews []*WorkloadListItem
-
-// HasHTTPTraffic returns true if the workload can report HTTP traffic metrics.
-// This is true if the workload has a sidecar, is a gateway, or is associated with an ambient waypoint.
-func (w *WorkloadListItem) HasHTTPTraffic() bool {
-	return w.IstioSidecar || w.IsGateway || len(w.WaypointWorkloads) > 0
-}
 
 // WorkloadReferenceInfo holds the service information needed to create links to another workload.
 // Used, for example, to link services to Ambient waypoint proxies
@@ -222,34 +213,32 @@ type WorkloadReferenceInfo struct {
 
 // Workload has the details of a workload
 type Workload struct {
-	WorkloadListItem
-
-	// Number of desired replicas defined by the user in the controller Spec
-	// required: true
-	// example: 2
-	DesiredReplicas int32 `json:"desiredReplicas"`
-
-	// Number of current replicas pods that matches controller selector labels
-	// required: true
-	// example: 2
-	CurrentReplicas int32 `json:"currentReplicas"`
+	// Additional details to display, such as configured annotations
+	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
 
 	// Number of available replicas
 	// required: true
 	// example: 1
 	AvailableReplicas int32 `json:"availableReplicas"`
 
+	// Number of current replicas pods that matches controller selector labels
+	// required: true
+	// example: 2
+	CurrentReplicas int32 `json:"currentReplicas"`
+
+	// Number of desired replicas defined by the user in the controller Spec
+	// required: true
+	// example: 2
+	DesiredReplicas int32 `json:"desiredReplicas"`
+
 	// Pods bound to the workload
 	Pods Pods `json:"pods"`
-
-	// Services that match workload selector
-	Services []ServiceOverview `json:"services"`
 
 	// Runtimes and associated dashboards
 	Runtimes []Runtime `json:"runtimes"`
 
-	// Additional details to display, such as configured annotations
-	AdditionalDetails []AdditionalItem `json:"additionalDetails"`
+	// Services that match workload selector
+	Services []ServiceOverview `json:"services"`
 
 	Validations IstioValidations `json:"validations"`
 
@@ -262,11 +251,13 @@ type Workload struct {
 	// WorkloadEntries bound to the workload
 	WorkloadEntries WorkloadEntries `json:"workloadEntries"`
 
-	// Health
-	Health WorkloadHealth `json:"health"`
+	WorkloadListItem
+}
 
-	// SPIRE information for SPIRE-managed workloads
-	SpireInfo *SpireInfo `json:"spireInfo,omitempty"`
+// HasHTTPTraffic returns true if the workload can report HTTP traffic metrics.
+// This is true if the workload has a sidecar, is a gateway, or is associated with an ambient waypoint.
+func (w *Workload) HasHTTPTraffic() bool {
+	return w.IstioSidecar || w.IsGatewayWorkload() || len(w.WaypointWorkloads) > 0
 }
 
 // SpireManagedIdentityMatch represents a single match that indicates SPIRE-managed identity
@@ -328,9 +319,9 @@ func (workload *WorkloadListItem) ParseWorkload(w *Workload, conf *config.Config
 	} else {
 		workload.IstioSidecar = w.HasIstioSidecar()
 	}
-	workload.IsGateway = w.IsGateway()
-	workload.IsWaypoint = w.IsWaypoint()
-	workload.IsZtunnel = w.IsZtunnel()
+	workload.IsGateway = w.IsGatewayWorkload()
+	workload.IsWaypoint = w.IsWaypointWorkload()
+	workload.IsZtunnel = w.IsZtunnelWorkload()
 	workload.IsAmbient = workload.IsWaypoint || workload.IsZtunnel || w.HasIstioAmbient()
 	workload.Labels = w.Labels
 	workload.PodCount = len(w.Pods)
@@ -398,8 +389,8 @@ func (workload *Workload) parseObjectMeta(meta *meta_v1.ObjectMeta, tplMeta *met
 
 	// do not bother to check the annotation if the label is explicitly set - label always overrides the annotation
 	if !labelExplicitlySet {
-		annotation, exist := annotations[config.IstioInjectionAnnotation]
-		if exist {
+		annotation, annotationExists := annotations[config.IstioInjectionAnnotation]
+		if annotationExists {
 			if value, err := strconv.ParseBool(annotation); err == nil {
 				if !value {
 					workload.IstioInjectionAnnotation = &value
@@ -685,25 +676,25 @@ func (workload *Workload) HasIstioSidecar() bool {
 	return workload.Pods.HasIstioSidecar()
 }
 
-// IsGateway return true if the workload is Ingress, Egress or K8s Gateway
-// waypoint proxies are not included. Use IsWaypoint() instead
-func (workload *Workload) IsGateway() bool {
+// IsGatewayWorkload detects Ingress, Egress, or K8s gateways from workload metadata.
+// Waypoint proxies are not included. Use IsWaypointWorkload instead.
+func (workload *Workload) IsGatewayWorkload() bool {
 	return config.IsGateway(workload.Labels, workload.TemplateAnnotations)
 }
 
 // IsInfra return true if the workload is a waypoint proxy or ztunnel (Based in labels)
 func (workload *Workload) IsInfra() bool {
-	return workload.IsWaypoint() || workload.IsZtunnel()
+	return workload.IsWaypointWorkload() || workload.IsZtunnelWorkload()
 }
 
-// IsWaypoint return true if the workload is a waypoint proxy (Based in labels)
-func (workload *Workload) IsWaypoint() bool {
+// IsWaypointWorkload detects waypoint proxies from workload labels.
+func (workload *Workload) IsWaypointWorkload() bool {
 	return config.IsWaypoint(workload.Labels)
 }
 
 // WaypointFor returns the waypoint type (workload/service)
 func (workload *Workload) WaypointFor() string {
-	if !workload.IsWaypoint() {
+	if !workload.IsWaypointWorkload() {
 		return ""
 	}
 	wpLabel, found := workload.Labels[config.WaypointFor]
@@ -743,8 +734,8 @@ func (workload *Workload) IsSpireServer() bool {
 	return false
 }
 
-// IsZtunnel return true if the workload is a ztunnel (Based in labels)
-func (workload *Workload) IsZtunnel() bool {
+// IsZtunnelWorkload detects ztunnel workloads from pod labels.
+func (workload *Workload) IsZtunnelWorkload() bool {
 	for _, pod := range workload.Pods {
 		if pod.Labels[config.IstioAppLabel] == config.Ztunnel {
 			return true

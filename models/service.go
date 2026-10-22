@@ -229,8 +229,8 @@ func (s *ServiceDetails) SetIstioSidecar(workloads WorkloadOverviews) {
 }
 
 func (s *ServiceList) HasMatchingServices(service string) bool {
-	for _, s := range s.Services {
-		if service == s.Name {
+	for _, svc := range s.Services {
+		if service == svc.Name {
 			return true
 		}
 	}
