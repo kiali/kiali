@@ -19,7 +19,7 @@ import {
   mockServiceInsightsSlow
 } from '../../utils/overviewMocks';
 
-test.describe('Overview cards @core-caching', () => {
+test.describe('Overview cards', () => {
   test(
     'View all warning Istio configs includes namespaces and filters',
     coreCachingOnly,

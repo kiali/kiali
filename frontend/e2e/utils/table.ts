@@ -145,8 +145,8 @@ export const checkHealthStatusInTable = async (
       await healthIcon.hover({ timeout: 10_000 });
       const tooltip = page.getByRole('tooltip');
       await expect(tooltip).toBeVisible({ timeout: 5_000 });
-      // Cypress: any strong in the health tooltip may match; degraded/failure tooltips
-      // also include legend <strong> labels — assert on the tooltip text as a whole.
+      // Any <strong> in the health tooltip may match; degraded/failure tooltips contain
+      // multiple (legend labels included) — assert on the tooltip text as a whole.
       await expect(tooltip).toContainText(healthStatus, { timeout: 5_000 });
       return;
     } catch {
@@ -237,7 +237,7 @@ export const expectTableColumnOrder = async (page: Page, expectedOrder: string[]
     }
   }
 
-  // Revision column appears when the mesh has multiple Istio revisions; Cypress CI often omits it.
+  // Revision column appears only on multi-revision meshes; most CI meshes omit it.
   if (actualOrder.length === expectedOrder.length + 1 && actualOrder[actualOrder.length - 1] === 'Revision') {
     expect(actualOrder.slice(0, expectedOrder.length)).toEqual(expectedOrder);
     return;

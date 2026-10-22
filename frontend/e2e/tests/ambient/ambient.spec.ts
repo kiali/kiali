@@ -1,4 +1,5 @@
 import { test } from '../../fixtures/kialiFixtures';
+import { ensureDemoApp } from '../../utils/demoApps';
 import { waitForAnyServiceHealthStatus } from '../../utils/health';
 import { isOfflineProject } from '../../utils/projects';
 import { ambientAndOffline, ambientOnly } from '../../utils/suite-tags';
@@ -74,6 +75,7 @@ test.describe('Ambient mesh', () => {
   });
 
   test('Out of mesh', ambientOnly, async ({ workloadsPage }) => {
+    ensureDemoApp('sleep');
     await workloadsPage.openListWithNamespace('sleep');
     await workloadsPage.expectTextInTable('Out of mesh');
   });
