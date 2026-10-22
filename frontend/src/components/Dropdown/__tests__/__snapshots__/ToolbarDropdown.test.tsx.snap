@@ -10,6 +10,7 @@ exports[`ToolbarDropdown > Render correctly the toolbar dropdown 1`] = `
   </span>
   <button
     aria-expanded="false"
+    aria-haspopup="menu"
     aria-label="1m"
     class="pf-v6-c-menu-toggle"
     data-ouia-component-id="OUIA-Generated-MenuToggle-3"
@@ -58,6 +59,7 @@ exports[`ToolbarDropdown > Render correctly the toolbar dropdown 2`] = `
   </span>
   <button
     aria-expanded="false"
+    aria-haspopup="menu"
     aria-label="Every 1m"
     class="pf-v6-c-menu-toggle"
     data-ouia-component-id="OUIA-Generated-MenuToggle-6"
@@ -106,6 +108,7 @@ exports[`ToolbarDropdown > Render correctly the toolbar dropdown 3`] = `
   </span>
   <button
     aria-expanded="false"
+    aria-haspopup="menu"
     class="pf-v6-c-menu-toggle"
     data-ouia-component-id="OUIA-Generated-MenuToggle-9"
     data-ouia-component-type="PF6/MenuToggle"
