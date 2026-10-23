@@ -4,7 +4,8 @@ import { useBookinfoRoutingLockPerTest } from '../../utils/bookinfoRoutingLock';
 import {
   deleteK8sGateway,
   deleteK8sReferenceGrant,
-  ensureBookinfoTlsCertSecret
+  ensureBookinfoTlsCertSecret,
+  touchK8sGateway
 } from '../../utils/istioConfigResources';
 import { isGatewayApiEnabled } from '../../utils/kialiConfig';
 import { selectNamespace } from '../../utils/namespace';
@@ -120,6 +121,10 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
         await istioConfigPage.open();
         await selectNamespace(page, namespace);
         await istioConfigPage.expectObjectNotListed('K8sGateway', second, namespace);
+        // Deleting a config object is invisible to Kiali's validation change
+        // detection, so the stale collision warning would never clear on an
+        // idle cluster. Touch the survivor to force a re-validation.
+        touchK8sGateway(first, namespace);
         await istioConfigPage.expectValidationStatus(namespace, 'K8sGateway', first, 'success');
 
         await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', first);

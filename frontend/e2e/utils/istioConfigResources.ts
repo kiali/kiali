@@ -28,6 +28,18 @@ export function waitForK8sGateway(name: string, namespace = 'bookinfo', timeoutM
   throw new Error(`Timed out waiting for gateway ${namespace}/${name}`);
 }
 
+/**
+ * Bump a K8sGateway's resourceVersion via a no-op annotation. Kiali's validation
+ * change detection does not notice object deletions (stale validations persist
+ * until an unrelated change forces re-validation), so after deleting a
+ * colliding gateway the surviving one keeps its warning until it is touched.
+ */
+export function touchK8sGateway(name: string, namespace = 'bookinfo'): void {
+  kubectlExec(
+    `kubectl annotate gateways.gateway.networking.k8s.io ${name} -n ${namespace} kiali.io/e2e-touch=${Date.now()} --overwrite`
+  );
+}
+
 /** TLS secret referenced by the K8s Gateway HTTPS wizard scenario. */
 export function ensureBookinfoTlsCertSecret(): void {
   if (kubectlExec('kubectl get secret cert -n bookinfo').exitCode === 0) {

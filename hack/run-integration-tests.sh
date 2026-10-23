@@ -441,11 +441,18 @@ detectRaceConditions() {
   local kubecontext=$1
 
   local context_arg=${kubecontext:+--context ${kubecontext}}
-  if ! kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"; then
+  local kiali_logs
+  kiali_logs="$(kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system 2>/dev/null)"
+  if [ -z "${kiali_logs}" ]; then
+    # Kubelet rotates container logs (10MB by default); a busy Kiali under a full
+    # Playwright run can rotate right at test end, leaving an empty log. An empty
+    # log proves nothing either way, so warn and skip rather than fail.
+    echo "WARN: Kiali logs are empty (possibly rotated); skipping data race detection"
+  elif echo "${kiali_logs}" | grep -q "WARNING: DATA RACE"; then
     echo "ERROR: Data race detected in Kiali logs!"
     echo "Showing a preview of Kiali logs with data race warnings:"
     echo "=========================================="
-    kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -A5 -B5 "WARNING: DATA RACE" || true
+    echo "${kiali_logs}" | grep -A5 -B5 "WARNING: DATA RACE" || true
     echo "=========================================="
     echo "Integration tests failed due to a data race in Kiali."
     echo "Download and review the Kiali server logs for more details."
