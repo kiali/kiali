@@ -619,7 +619,7 @@ export class IstioConfigPage extends BasePage {
     const row = this.getBySel(`VirtualItem_Ns${namespace}_${type}_${name}`);
     await expect(async () => {
       await this.refreshList();
-      await expect(row.locator('svg')).toBeVisible();
+      await expect(row.locator('svg').first()).toBeVisible();
     }).toPass({ intervals: [5_000], timeout: 60_000 });
   }
 

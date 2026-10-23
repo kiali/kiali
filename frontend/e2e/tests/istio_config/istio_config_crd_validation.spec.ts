@@ -530,7 +530,9 @@ test.describe('Istio Config CRD validation', () => {
       ensureDemoApp('bookinfo');
       deleteIstioConfig('VirtualService', 'bookinfo', 'bookinfo');
       applyAuthorizationPolicy(name, 'bookinfo');
-      patchAuthorizationPolicyToOperationHost(name, 'bookinfo', 'missing.hostname');
+      // Single-dot hosts whose suffix is not a known namespace are treated as HTTP Host
+      // header matchers and skipped by the checker; "bookinfo" keeps it registry-validated.
+      patchAuthorizationPolicyToOperationHost(name, 'bookinfo', 'missing.bookinfo');
 
       await istioConfigPage.open();
       await istioConfigPage.refreshList();
