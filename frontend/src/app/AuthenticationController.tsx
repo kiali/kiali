@@ -2,37 +2,46 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { authenticationConfig, isAuthStrategyOAuth } from '../config/AuthenticationConfig';
-import { KialiAppState, LoginStatus } from '../store/Store';
+import type { KialiAppState } from '../store/Store';
+import { LoginStatus } from '../store/Store';
 import * as API from '../services/Api';
 import { HelpDropdownActions } from '../actions/HelpDropdownActions';
 import { TracingActions } from '../actions/TracingActions';
 import { LoginThunkActions } from '../actions/LoginThunkActions';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { MessageType } from '../types/NotificationCenter';
-import { KialiDispatch } from '../types/Redux';
+import type { KialiDispatch } from '../types/Redux';
 import { InitializingScreen } from './InitializingScreen';
-import { getKioskMode, isKioskMode } from '../utils/SearchParamUtils';
+import { getKioskMode } from '../utils/SearchParamUtils';
 import { addError, addInfo, addWarning } from '../utils/AlertUtils';
 import { setServerConfig, serverConfig, humanDurations } from '../config/ServerConfig';
 import { AuthStrategy } from '../types/Auth';
-import { TracingInfo } from '../types/TracingInfo';
+import type { TracingInfo } from '../types/TracingInfo';
 import { LoginActions } from '../actions/LoginActions';
 import { location, router } from './History';
 import { NamespaceActions } from 'actions/NamespaceAction';
-import { Namespace } from 'types/Namespace';
+import type { Namespace } from 'types/Namespace';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { DurationInSeconds, IntervalInMilliseconds, PF_THEME_DARK, Theme } from 'types/Common';
+import type { DurationInSeconds, IntervalInMilliseconds } from 'types/Common';
 import { config } from 'config';
 import { store } from 'store/ConfigStore';
 import { toAmbientRate, toGrpcRate, toHttpRate, toTcpRate, TrafficRate } from 'types/Graph';
 import { GraphToolbarActions } from 'actions/GraphToolbarActions';
-import { StatusState, StatusKey } from 'types/StatusState';
+import type { StatusState } from 'types/StatusState';
+import { StatusKey } from 'types/StatusState';
 import { PromisesRegistry } from '../utils/CancelablePromises';
 import { GlobalActions } from '../actions/GlobalActions';
-import { getKialiTheme } from 'utils/ThemeUtils';
-import { i18n } from 'i18n';
+import {
+  applyDocumentAppearance,
+  getKialiColorScheme,
+  getKialiContrastMode,
+  getKialiTheme,
+  isParentOwnedAppearance,
+  syncReduxAppearanceFromDocument
+} from 'utils/AppearanceUtils';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { ChatAIConfig } from 'types/Chatbot';
+import { initializeLanguage, registerSystemLanguageListener } from 'utils/LanguageUtils';
+import type { AIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -44,7 +53,7 @@ interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
-  setChatAI: (chatAI: ChatAIConfig) => void;
+  setAI: (ai: AIConfig) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -84,6 +93,7 @@ class AuthenticationControllerComponent extends React.Component<
   // before transitioning to the "Loading" page.
   private readonly postLoginMSTillTransition = 3000;
   private promises = new PromisesRegistry();
+  private unregisterSystemLanguageListener?: () => void;
 
   constructor(props: AuthenticationControllerProps) {
     super(props);
@@ -121,6 +131,7 @@ class AuthenticationControllerComponent extends React.Component<
       }
     }
 
+    this.unregisterSystemLanguageListener = registerSystemLanguageListener();
     this.setDocLayout();
   }
 
@@ -144,6 +155,7 @@ class AuthenticationControllerComponent extends React.Component<
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
+    this.unregisterSystemLanguageListener?.();
   }
 
   render(): React.ReactNode {
@@ -198,13 +210,19 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
-      this.props.setChatAI(configs[1].data.chatAI);
+      this.props.setAI({
+        ...configs[1].data.ai,
+        consumption: configs[1].data.ai.consumption ?? {
+          allowed: false,
+          enabled: false
+        }
+      });
       this.applyUIDefaults();
 
       // Notify the user about Prometheus availability.
       if (configs[1].data.prometheus.disabledReason) {
         // Prometheus is enabled but was unreachable at startup — warn the user.
-        addWarning(configs[1].data.prometheus.disabledReason);
+        addWarning(configs[1].data.prometheus.disabledReason, '', true, true);
       } else if (!configs[1].data.prometheus.enabled) {
         // Prometheus was explicitly disabled by the user.
         addInfo(
@@ -235,15 +253,7 @@ class AuthenticationControllerComponent extends React.Component<
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
 
     if (uiDefaults) {
-      // Set I18n language
-      let language = store.getState().globalState.language || uiDefaults.i18n.language;
-
-      // Set language to default English value to force React re-render on language change
-      store.dispatch(GlobalActions.setLanguage('en'));
-
-      i18n.changeLanguage(language).then(() => {
-        store.dispatch(GlobalActions.setLanguage(language));
-      });
+      initializeLanguage();
 
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {
@@ -334,19 +344,28 @@ class AuthenticationControllerComponent extends React.Component<
   };
 
   private setDocLayout = (): void => {
-    // Set theme
-    const theme = getKialiTheme();
-    if (theme === Theme.DARK) {
-      document.documentElement.classList.add(PF_THEME_DARK);
+    const kiosk = getKioskMode();
+
+    // OSSMC / same-window parent: OpenShift Console owns <html> theme classes
+    // (including glass / high-contrast on OCP 5.0). Sync Redux from the document;
+    // do not overwrite console classes.
+    if (isParentOwnedAppearance()) {
+      syncReduxAppearanceFromDocument();
+    } else {
+      const colorScheme = getKialiColorScheme();
+      const contrastMode = getKialiContrastMode();
+      const theme = getKialiTheme();
+      applyDocumentAppearance(colorScheme, contrastMode, theme);
+      store.dispatch(GlobalActions.setColorScheme(colorScheme));
+      store.dispatch(GlobalActions.setContrastMode(contrastMode));
+      store.dispatch(GlobalActions.setTheme(theme));
     }
-    store.dispatch(GlobalActions.setTheme(theme));
 
     // Set Kiosk mode
-    const isKiosk = isKioskMode();
-    if (isKiosk) {
+    if (kiosk) {
       document.body.classList.add('kiosk');
     }
-    store.dispatch(GlobalActions.setKiosk(getKioskMode()));
+    store.dispatch(GlobalActions.setKiosk(kiosk));
   };
 
   private processServerStatus = (status: StatusState): void => {
@@ -381,7 +400,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
   statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch),
-  setChatAI: bindActionCreators(ChatAIActions.setChatAI, dispatch)
+  setAI: bindActionCreators(ChatAIActions.setAI, dispatch)
 });
 
 export const AuthenticationController = connect(mapStateToProps, mapDispatchToProps)(AuthenticationControllerComponent);

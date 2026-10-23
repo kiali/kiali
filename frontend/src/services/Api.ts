@@ -10,7 +10,7 @@ import type { DurationInSeconds, Password, TimeInSeconds, UserName } from '../ty
 import { HTTP_VERBS } from '../types/Common';
 import type { DashboardModel } from 'types/Dashboards';
 import type { GrafanaInfo } from '../types/GrafanaInfo';
-import type { ChatSessionUsageMetric } from '../types/Chatbot';
+import type { AIUsageResponse, ChatSessionUsageResponse } from '../types/Chatbot';
 import type { GraphDefinition, GraphElementsQuery, NodeParamsType } from '../types/Graph';
 import { NodeType } from '../types/Graph';
 import type {
@@ -55,9 +55,15 @@ import type {
   TracingSingleResponse
 } from '../types/TracingInfo';
 import type { ControlPlane, MeshDefinition, MeshQuery } from '../types/Mesh';
-import type { DashboardQuery, IstioMetricsOptions, MetricsStatsQuery } from '../types/MetricsOptions';
+import type {
+  DashboardQuery,
+  HealthStatusHistoryQuery,
+  IstioMetricsOptions,
+  MetricsStatsQuery
+} from '../types/MetricsOptions';
 import type {
   IstioMetricsMap,
+  Metric,
   MetricsPerNamespace,
   MetricsStatsResult,
   ResourceUsageMetricsMap
@@ -77,6 +83,7 @@ import type {
   WorkloadQuery,
   WorkloadUpdateQuery
 } from '../types/Workload';
+import type { EnvoyMemorySummary } from '../types/EnvoyMemory';
 import type { ApiError, ApiResponse } from 'types/Api';
 import { healthComputeDurationValidSeconds } from '../utils/HealthComputeDuration';
 import { getGVKTypeString } from '../utils/IstioConfigUtils';
@@ -268,6 +275,29 @@ export const getResourceUsageMetrics = (
   return newRequest<Readonly<ResourceUsageMetricsMap>>(
     HTTP_VERBS.GET,
     urls.resourceUsageMetrics(namespace, workload),
+    queryParams,
+    {}
+  );
+};
+
+export type HealthHistoryType = 'app' | 'namespace' | 'service' | 'workload';
+
+export const getHealthStatusHistory = (
+  namespace: string,
+  healthType: HealthHistoryType,
+  name: string,
+  params: HealthStatusHistoryQuery,
+  cluster?: string
+): Promise<ApiResponse<Readonly<Metric[]>>> => {
+  const queryParams: QueryParams<HealthStatusHistoryQuery> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<Readonly<Metric[]>>(
+    HTTP_VERBS.GET,
+    urls.healthStatusHistory(namespace, healthType, name),
     queryParams,
     {}
   );
@@ -666,6 +696,21 @@ export const getAppDashboard = (
   }
 
   return newRequest<DashboardModel>(HTTP_VERBS.GET, urls.appDashboard(namespace, app), queryParams, {});
+};
+
+export const getWorkloadEnvoyMemory = (
+  namespace: string,
+  workload: string,
+  params: IstioMetricsOptions,
+  cluster?: string
+): Promise<ApiResponse<EnvoyMemorySummary>> => {
+  const queryParams: QueryParams<IstioMetricsOptions> = { ...params };
+
+  if (cluster) {
+    queryParams.clusterName = cluster;
+  }
+
+  return newRequest<EnvoyMemorySummary>(HTTP_VERBS.GET, urls.workloadEnvoyMemory(namespace, workload), queryParams, {});
 };
 
 export const getWorkloadMetrics = (
@@ -1575,8 +1620,55 @@ export const deleteChatConversations = (conversationIDs: string): Promise<ApiRes
   return newRequest<Record<string, string>>(HTTP_VERBS.DELETE, urls.chatDeleteConversations, { conversationIDs }, {});
 };
 
-export const getChatSessionUsage = (): Promise<ApiResponse<ChatSessionUsageMetric[]>> => {
-  return newRequest<ChatSessionUsageMetric[]>(HTTP_VERBS.GET, urls.chatSessionUsage, { _ts: Date.now() }, {});
+export const getAISessionUsage = (n?: number): Promise<ApiResponse<ChatSessionUsageResponse>> => {
+  const params: { [key: string]: string } = { _ts: Date.now().toString() };
+  if (n) {
+    params.n = n.toString();
+  }
+  return newRequest<ChatSessionUsageResponse>(HTTP_VERBS.GET, urls.aiSessionUsage, params, {});
+};
+
+export const getAIUsage = (
+  windowSecs?: number,
+  step?: number,
+  provider?: string,
+  request?: string,
+  window?: 'weekly' | 'monthly',
+  from?: number,
+  since?: number,
+  consumption?: boolean,
+  limit?: number
+): Promise<ApiResponse<AIUsageResponse>> => {
+  const params: { [key: string]: string } = { request: request || 'chat' };
+
+  if (window) {
+    params.window = window;
+    if (from) {
+      params.from = from.toString();
+    }
+    if (since) {
+      params.since = since.toString();
+    }
+    if (consumption) {
+      params.consumption = 'true';
+    }
+    if (limit) {
+      params.limit = limit.toString();
+    }
+  } else {
+    if (windowSecs) {
+      params.window = windowSecs.toString();
+    }
+    if (step) {
+      params.step = step.toString();
+    }
+  }
+
+  if (provider) {
+    params.provider = provider;
+  }
+
+  return newRequest<AIUsageResponse>(HTTP_VERBS.GET, urls.aiUsage, params, {});
 };
 
 export const getOverviewAppRates = (): Promise<

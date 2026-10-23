@@ -238,6 +238,9 @@ func TestTransformWorkloadDetail_InjectionDisabled(t *testing.T) {
 	injectFalse := false
 	wl := &models.Workload{
 		WorkloadListItem: models.WorkloadListItem{
+			Health: models.WorkloadHealth{
+				Status: &models.CalculatedHealthStatus{Status: "Healthy"},
+			},
 			IstioInjectionAnnotation: &injectFalse,
 			IstioSidecar:             false,
 			IsAmbient:                false,
@@ -249,9 +252,6 @@ func TestTransformWorkloadDetail_InjectionDisabled(t *testing.T) {
 		CurrentReplicas:   1,
 		AvailableReplicas: 1,
 		Pods:              models.Pods{{Name: "p1", Status: "Running"}},
-		Health: models.WorkloadHealth{
-			Status: &models.CalculatedHealthStatus{Status: "Healthy"},
-		},
 	}
 	wl.Name = "details-v1"
 	wl.Namespace = "bookinfo"

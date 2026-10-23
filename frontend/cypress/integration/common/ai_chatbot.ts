@@ -23,8 +23,6 @@ const CHATBOT_TOGGLE = '[data-test="ai-chatbot-toggle"]';
 const CHATBOT_STOP_BUTTON = '.pf-chatbot__button--stop';
 const CHATBOT_TOGGLE_ICON_LIGHT = '[data-test="ai-chatbot-toggle-icon-light"]';
 const CHATBOT_TOGGLE_ICON_DARK = '[data-test="ai-chatbot-toggle-icon-dark"]';
-const THEME_SWITCH_DARK = 'button[aria-label="Dark theme"]';
-const THEME_SWITCH_LIGHT = 'button[aria-label="Light theme"]';
 const CHATBOT_VISIBLE = '.pf-chatbot.pf-chatbot--visible';
 const CHATBOT_HIDDEN = '.pf-chatbot.pf-chatbot--hidden';
 const CHATBOT_WELCOME_TITLE = '.pf-chatbot__hello';
@@ -81,50 +79,23 @@ Then('the AI chatbot toggle button should be visible', () => {
 });
 
 // ============================================================
-// Theme-aware toggle icon
+// Color-scheme-aware toggle icon
+// Appearance steps live in appearance.ts (shared with appearance.feature).
 // ============================================================
-
-/**
- * Guarantees light theme before the icon-variant test.
- * Needed because localStorage persists between test runs and could leave the
- * browser in dark mode, causing the icon data-test to be "…-dark" instead.
- */
-Given('the theme is explicitly set to light', () => {
-  // Remove the dark-mode class if it was toggled by a previous test
-  cy.get('html').then($html => {
-    if ($html.hasClass('pf-v6-theme-dark')) {
-      cy.get(THEME_SWITCH_LIGHT).click();
-      cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
-    }
-  });
-  // Clear the persisted preference so future page loads also start in light mode
-  cy.window().then(win => win.localStorage.removeItem('KIALI_THEME'));
-});
 
 /**
  * The chatbot must be CLOSED for the closedToggleIcon to be rendered.
  * The Background always starts at the overview page with the chatbot closed,
  * so no extra setup is needed.
  */
-Then('the AI chatbot toggle should show the light theme icon', () => {
+Then('the AI chatbot toggle should show the light color scheme icon', () => {
   cy.get(CHATBOT_TOGGLE_ICON_LIGHT, { timeout: 5000 }).should('exist');
   cy.get(CHATBOT_TOGGLE_ICON_DARK).should('not.exist');
 });
 
-Then('the AI chatbot toggle should show the dark theme icon', () => {
+Then('the AI chatbot toggle should show the dark color scheme icon', () => {
   cy.get(CHATBOT_TOGGLE_ICON_DARK, { timeout: 5000 }).should('exist');
   cy.get(CHATBOT_TOGGLE_ICON_LIGHT).should('not.exist');
-});
-
-When('the user switches to dark theme', () => {
-  cy.get(THEME_SWITCH_DARK).click();
-  // Wait for the Redux state and DOM to update
-  cy.get('html').should('have.class', 'pf-v6-theme-dark');
-});
-
-When('the user switches to light theme', () => {
-  cy.get(THEME_SWITCH_LIGHT).click();
-  cy.get('html').should('not.have.class', 'pf-v6-theme-dark');
 });
 
 When('user clicks the AI chatbot toggle', () => {
@@ -444,7 +415,7 @@ When('the user clicks the {string} header button', (label: string) => {
 
 /**
  * Verifies the Chatbot component class, which is driven by the displayMode value
- * stored in Redux (state.aiChat.displayMode). Pattern: pf-chatbot--{mode}.
+ * stored in Redux (state.ai.chat.displayMode). Pattern: pf-chatbot--{mode}.
  */
 Then('the chatbot should be in {string} display mode', (mode: string) => {
   cy.get(`.pf-chatbot.pf-chatbot--${mode}`).should('exist');
@@ -591,7 +562,7 @@ Given('two AI providers are configured', () => {
       );
     }
 
-    const aiState = store.getState().aiChat;
+    const aiState = store.getState().ai.chat;
     const realProviders: any[] = (aiState.providers ?? []).filter((p: any) => p.name !== SECOND_PROVIDER_NAME);
 
     if (realProviders.length === 0) {
@@ -609,8 +580,9 @@ Given('two AI providers are configured', () => {
         : [{ name: 'test-model', model: 'test-model', enabled: true }];
 
     store.dispatch({
-      type: 'CHAT_AI_SET_CHAT_AI',
+      type: 'CHAT_AI_SET_AI_CHAT',
       payload: {
+        allowed: aiState.allowed,
         enabled: aiState.enabled,
         defaultProvider: aiState.defaultProvider || first.name,
         providers: [
@@ -627,6 +599,42 @@ Given('two AI providers are configured', () => {
       }
     });
   });
+});
+
+/**
+ * Simulates the backend marking the current user as not allowed to use ChatAI
+ * (e.g. because "allowedUsers" is configured and the user is not in the list).
+ * Dispatches the same CHAT_AI_SET_AI_CHAT action the app dispatches after login,
+ * but with allowed:false, leaving every other field untouched.
+ */
+Given('the user is not allowed to use the AI chatbot', () => {
+  cy.get(CHATBOT_TOGGLE).should('exist');
+
+  cy.window().then(win => {
+    const store = getReduxStoreFromFiber(win);
+    if (!store) {
+      throw new Error(
+        'Could not find the Redux store via the React fiber tree. ' +
+          'Ensure the app is running in development/test mode.'
+      );
+    }
+
+    const aiState = store.getState().ai.chat;
+    store.dispatch({
+      type: 'CHAT_AI_SET_AI_CHAT',
+      payload: {
+        allowed: false,
+        enabled: aiState.enabled,
+        defaultProvider: aiState.defaultProvider,
+        providers: aiState.providers
+      }
+    });
+  });
+});
+
+Then('the AI chatbot toggle tooltip should say {string}', (tooltip: string) => {
+  cy.get(CHATBOT_TOGGLE).trigger('mouseover', { force: true }).trigger('mouseenter', { force: true });
+  cy.get('.pf-v6-c-tooltip__content', { timeout: 5000 }).should('be.visible').and('contain.text', tooltip);
 });
 
 When('user selects the second AI provider', () => {

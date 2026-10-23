@@ -191,7 +191,7 @@ func (in *AppService) GetClusterAppList(ctx context.Context, criteria AppCriteri
 			if w.HasIstioAmbient() {
 				appItem.IsAmbient = true
 			}
-			if w.IsGateway() {
+			if w.IsGatewayWorkload() {
 				appItem.IsGateway = true
 			}
 		}

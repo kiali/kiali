@@ -1560,7 +1560,7 @@ func TestValidateWaypoint(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.IsWaypoint())
+	assert.True(workload.IsWaypointWorkload())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1643,7 +1643,7 @@ func TestValidateWaypointNS(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.True(workload.IsWaypoint())
+	assert.True(workload.IsWaypointWorkload())
 
 	// Get waypoint proxy
 	criteriaDetails := WorkloadCriteria{Cluster: conf.KubernetesConfig.ClusterName, Namespace: "Namespace", WorkloadName: "details", WorkloadGVK: schema.GroupVersionKind{}, IncludeServices: false}
@@ -1732,7 +1732,7 @@ func TestValidateWaypointService(t *testing.T) {
 	require.NotNil(waypoint)
 
 	require.Equal(1, len(waypoint.Pods))
-	assert.True(waypoint.IsWaypoint())
+	assert.True(waypoint.IsWaypointWorkload())
 	assert.NotNil(waypoint.WaypointServices)
 	require.Equal(1, len(waypoint.WaypointServices))
 	assert.Equal("details", waypoint.WaypointServices[0].Name)
@@ -1823,7 +1823,7 @@ func TestGetWaypointWorkloads(t *testing.T) {
 	require.NotNil(waypoint)
 
 	assert.Equal(1, len(waypoint.Pods))
-	assert.True(waypoint.IsWaypoint())
+	assert.True(waypoint.IsWaypointWorkload())
 	assert.False(waypoint.HasIstioAmbient())
 	assert.NotNil(waypoint.WaypointWorkloads)
 	assert.NotNil(waypoint.WaypointServices)
@@ -1906,8 +1906,8 @@ func TestValidateWaypointProxyStatus(t *testing.T) {
 	require.NotNil(workload)
 
 	assert.Equal(1, len(workload.Pods))
-	assert.False(workload.IsGateway())
-	assert.True(workload.IsWaypoint())
+	assert.False(workload.IsGatewayWorkload())
+	assert.True(workload.IsWaypointWorkload())
 
 	pod := workload.Pods[0]
 	assert.NotNil(pod.ProxyStatus)
@@ -1946,7 +1946,7 @@ func TestGetWorkloadSetsIsGateway(t *testing.T) {
 	workload, err := svc.GetWorkload(context.TODO(), criteria)
 	require.NoError(err)
 
-	require.True(workload.WorkloadListItem.IsGateway, "Expected IsGateway to be True but it was false")
+	require.True(workload.IsGateway, "Expected IsGateway to be True but it was false")
 }
 
 func TestGetAllGateways(t *testing.T) {
@@ -1987,7 +1987,7 @@ func TestGetAllGateways(t *testing.T) {
 	})
 
 	require.Len(gateways, 1)
-	require.True(gateways[0].IsGateway(), "Expected IsGateway to be True but it was false")
+	require.True(gateways[0].IsGatewayWorkload(), "Expected IsGateway to be True but it was false")
 }
 
 func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {

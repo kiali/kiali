@@ -123,6 +123,8 @@ func TestAllMCPEndpointsExist(t *testing.T) {
 // KubernetesMCPServerEndpoints lists the tool names that containers/kubernetes-mcp-server
 // delegates to Kiali via POST /api/chat/mcp/<tool>. Keep in sync with
 // https://github.com/containers/kubernetes-mcp-server/blob/main/pkg/toolsets/kiali/tools/endpoints.go
+// Endpoint coverage vs MCP server is also checked by hack/mcp/check-mcp-endpoint-coverage.sh
+// in the Release MCP workflow validate job.
 var KubernetesMCPServerEndpoints = []string{
 	"get_mesh_traffic_graph",
 	"get_mesh_status",

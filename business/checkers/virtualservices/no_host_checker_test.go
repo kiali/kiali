@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
 	"github.com/kiali/kiali/config"
@@ -337,4 +338,197 @@ func TestValidServiceRegistry(t *testing.T) {
 
 	assert.False(valid)
 	assert.NotEmpty(vals)
+}
+
+// gatewayScopedVS returns a VirtualService with a single tls route scoped, via
+// per-match gateways, to an egress gateway living in istio-system.
+func gatewayScopedVS() *networking_v1.VirtualService {
+	vs := data.CreateEmptyVirtualService("egress-vs", "default", []string{"external.example.com"})
+	vs.Spec.Tls = []*api_networking_v1.TLSRoute{{
+		Match: []*api_networking_v1.TLSMatchAttributes{{
+			SniHosts: []string{"external.example.com"},
+			Gateways: []string{"istio-egressgateway.istio-system.svc.cluster.local"},
+		}},
+		Route: []*api_networking_v1.RouteDestination{{
+			Destination: &api_networking_v1.Destination{Host: "external.example.com"},
+		}},
+	}}
+	return vs
+}
+
+// A route block scoped only to a gateway is applied by that gateway alone, so
+// from the gateway's namespace perspective the destination must resolve against
+// the ServiceEntries visible there.
+func TestGatewayScopedRouteCheckedFromGatewayNamespace(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{"external.example.com": {"istio-system"}},
+		ValidatingNamespace: "istio-system",
+		VirtualService:      gatewayScopedVS(),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+// From any other namespace perspective the block is skipped: the sidecars there
+// never apply it, so an unreachable ServiceEntry must not be reported (issue #10410).
+func TestGatewayScopedRouteSkippedFromOtherNamespace(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{},
+		ValidatingNamespace: "bookinfo",
+		VirtualService:      gatewayScopedVS(),
+	}.Check()
+
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
+// When the gateway's namespace cannot resolve the host either, the error is
+// still reported from the gateway's namespace perspective.
+func TestGatewayScopedRouteMissingServiceEntry(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{},
+		ValidatingNamespace: "istio-system",
+		VirtualService:      gatewayScopedVS(),
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+	assert.Equal("spec/tls[0]/route[0]/destination/host", vals[0].Path)
+}
+
+// The scope can also come from the top-level spec.gateways when no per-match
+// gateways are set; both the <namespace>/<name> and the legacy FQDN formats
+// identify the gateway's namespace.
+func TestGatewayScopedRouteTopLevelGateways(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := data.CreateEmptyVirtualService("gw-vs", "default", []string{"*.external.example.com"})
+	vs.Spec.Gateways = []string{"istio-system/istio-egressgateway"}
+	vs.Spec.Http = []*api_networking_v1.HTTPRoute{{
+		Route: []*api_networking_v1.HTTPRouteDestination{{
+			Destination: &api_networking_v1.Destination{Host: "external.example.com"},
+		}},
+	}}
+
+	// Sidecar namespaces do not apply the route, so it is not checked there.
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{},
+		ValidatingNamespace: "bookinfo",
+		VirtualService:      vs,
+	}.Check()
+	assert.True(valid)
+	assert.Empty(vals)
+
+	// From the gateway's namespace the missing ServiceEntry is reported.
+	vals, valid = NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{},
+		ValidatingNamespace: "istio-system",
+		VirtualService:      vs,
+	}.Check()
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+	assert.Equal("spec/http[0]/route[0]/destination/host", vals[0].Path)
+}
+
+// A block applicable to the mesh (explicitly or by default) keeps being checked
+// from every perspective.
+func TestMeshScopedRouteCheckedFromEveryNamespace(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vs := gatewayScopedVS()
+	vs.Spec.Tls[0].Match[0].Gateways = []string{"mesh", "istio-system/istio-egressgateway"}
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:      "svc.cluster.local",
+		ServiceEntryHosts:   map[string][]string{},
+		ValidatingNamespace: "bookinfo",
+		VirtualService:      vs,
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+}
+
+// Without a perspective the legacy behavior is kept: every block is checked
+// against the VirtualService's own namespace visibility.
+func TestGatewayScopedRouteWithoutPerspective(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	vals, valid := NoHostChecker{
+		IdentityDomain:    "svc.cluster.local",
+		ServiceEntryHosts: map[string][]string{},
+		VirtualService:    gatewayScopedVS(),
+	}.Check()
+
+	assert.False(valid)
+	assert.Len(vals, 1)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", vals[0]))
+}
+
+func TestMeshRoutesSkipGatewayWorkloadScope(t *testing.T) {
+	for _, tt := range []struct {
+		gateways      []string
+		matchGateways [][]string
+		name          string
+		namespace     string
+	}{
+		{name: "implicit mesh", namespace: "client"},
+		{gateways: []string{"default/egress", "mesh"}, name: "mixed top-level gateways", namespace: "client"},
+		{matchGateways: [][]string{{"default/egress"}, {"mesh"}}, name: "mesh match after gateway match", namespace: "client"},
+		{gateways: []string{"default/egress"}, matchGateways: [][]string{{"mesh"}}, name: "mesh match overrides top-level gateway", namespace: "client"},
+		{gateways: []string{"default/egress"}, name: "legacy checker without namespace"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			vs := gatewayScopedVS()
+			vs.Spec.Gateways = tt.gateways
+			vs.Spec.Tls[0].Match = nil
+			for _, gateways := range tt.matchGateways {
+				vs.Spec.Tls[0].Match = append(vs.Spec.Tls[0].Match, &api_networking_v1.TLSMatchAttributes{Gateways: gateways})
+			}
+			calls := 0
+			checks, valid := NoHostChecker{
+				GatewayWorkloadScope: func(kubernetes.Host) (bool, bool) {
+					calls++
+					return true, true
+				},
+				IdentityDomain: "svc.cluster.local", ValidatingNamespace: tt.namespace, VirtualService: vs,
+			}.Check()
+			assert.Zero(t, calls, "mesh-applicable blocks must not resolve gateway selectors")
+			assert.False(t, valid, "the missing mesh destination must still be checked")
+			assert.Len(t, checks, 1)
+		})
+	}
 }

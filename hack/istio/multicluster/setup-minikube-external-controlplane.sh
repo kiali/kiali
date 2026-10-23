@@ -103,7 +103,7 @@ switch_cluster "${CTX_EXTERNAL_CLUSTER}"
 install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -a "prometheus"
 kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/default --timeout=3m
 
-helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
+helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://blob.istio.io/istio-release/charts -f - <<EOF
 service:
   type: LoadBalancer
   ports:
@@ -151,7 +151,7 @@ kubectl get ns external-istiod --context="${CTX_EXTERNAL_CLUSTER}" || kubectl cr
 
 REMOTE_IP=$(minikube ip -p ${REMOTE_CLUSTER_NAME})
 REMOTE_KUBE_API_SERVER_URL="https://${REMOTE_IP}:8443"
-[ "$(kubectl get istios external-istiod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ] || kubectl --context="${CTX_REMOTE_CLUSTER}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/external-istiod --timeout=1m
+wait_for_remote_istio_pending_secret "${CTX_REMOTE_CLUSTER}" "external-istiod" 60
 "${ISTIOCTL}" create-remote-secret \
   --context="${CTX_REMOTE_CLUSTER}" \
   --type=config \

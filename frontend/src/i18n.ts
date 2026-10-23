@@ -1,13 +1,18 @@
 import i18next from 'i18next';
 import HttpBackend from 'i18next-http-backend';
 import { initReactI18next } from 'react-i18next';
+import { webRoot } from 'app/History';
+
+/** Locale JSON is served under WEB_ROOT (e.g. /kiali/locales/en/translation.json). */
+const safeWebRoot = typeof webRoot === 'string' && webRoot.length > 0 ? webRoot : '/';
+const localeRoot = safeWebRoot === '/' ? '' : safeWebRoot;
 
 i18next
   .use(HttpBackend) // loads translations from server
   .use(initReactI18next) // passes i18n down to react-i18next
   .init({
     backend: {
-      loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`
+      loadPath: `${localeRoot}/locales/{{lng}}/{{ns}}.json`
     },
 
     fallbackLng: 'en',

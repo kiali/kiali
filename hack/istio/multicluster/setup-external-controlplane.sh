@@ -64,7 +64,7 @@ switch_cluster "${CTX_EXTERNAL_CLUSTER}"
 install_istio --patch-file "${EXTERNAL_ISTIO_YAML}" -a "prometheus"
 kubectl wait --context "${CTX_EXTERNAL_CLUSTER}" --for=condition=Ready istios/default --timeout=3m
 
-helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://istio-release.storage.googleapis.com/charts -f - <<EOF
+helm upgrade --install --kube-context "${CTX_EXTERNAL_CLUSTER}" --wait -n istio-system istio-ingressgateway gateway --repo https://blob.istio.io/istio-release/charts -f - <<EOF
 service:
   ports:
     - port: 15021
@@ -111,7 +111,7 @@ kubectl get ns external-istiod --context="${CTX_EXTERNAL_CLUSTER}" || kubectl cr
 
 KIND_IP=$(docker inspect ${REMOTE_CLUSTER_NAME}-control-plane --format "{{ .NetworkSettings.Networks.kind.IPAddress }}")
 REMOTE_KUBE_API_SERVER_URL="https://${KIND_IP}:6443"
-[ "$(kubectl get istios external-istiod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = "True" ] || kubectl --context="${CTX_REMOTE_CLUSTER}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/external-istiod --timeout=1m
+wait_for_remote_istio_pending_secret "${CTX_REMOTE_CLUSTER}" "external-istiod" 60
 "${ISTIOCTL}" create-remote-secret \
   --context="${CTX_REMOTE_CLUSTER}" \
   --type=config \
@@ -120,6 +120,53 @@ REMOTE_KUBE_API_SERVER_URL="https://${KIND_IP}:6443"
   --server="${REMOTE_KUBE_API_SERVER_URL}" \
   --create-service-account=false | \
   kubectl apply -f - --context="${CTX_EXTERNAL_CLUSTER}"
+
+MESH_CONFIG_FILE_ARGS=""
+MESH_CONFIG_MAP_NAME="istio-external-istiod"
+MESH_CONFIG_MOUNT_PATH="/etc/istio/config"
+if [ "${MESH_CONFIG_FILE_ENABLED}" == "true" ]; then
+  kubectl apply --context "${CTX_REMOTE_CLUSTER}" -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio
+  namespace: external-istiod
+data:
+  mesh: |
+    defaultConfig:
+      proxyMetadata:
+        SHARED_CONFIG_SOURCE: remote
+    enableTracing: true
+    trustDomain: shared.external
+EOF
+  kubectl apply --context "${CTX_EXTERNAL_CLUSTER}" -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio-custom
+  namespace: external-istiod
+data:
+  mesh: |
+    defaultConfig:
+      discoveryAddress: $EXTERNAL_ISTIOD_ADDR:15012
+      holdApplicationUntilProxyStarts: true
+    rootNamespace: external-istiod
+    trustDomain: file.external
+  meshNetworks: |
+    networks:
+      network1:
+        endpoints:
+          - fromRegistry: ${REMOTE_CLUSTER_NAME}
+EOF
+  MESH_CONFIG_MAP_NAME="istio-custom"
+  MESH_CONFIG_MOUNT_PATH="/etc/istio/custom"
+  MESH_CONFIG_FILE_ARGS=$(cat <<EOF
+      extraContainerArgs:
+        - --meshConfig=${MESH_CONFIG_MOUNT_PATH}/mesh
+        - --networksConfigFile=${MESH_CONFIG_MOUNT_PATH}/meshNetworks
+EOF
+)
+fi
 
 kubectl apply --context "${CTX_EXTERNAL_CLUSTER}" -f - <<EOF
 apiVersion: sailoperator.io/v1
@@ -136,16 +183,17 @@ spec:
         discoveryAddress: $EXTERNAL_ISTIOD_ADDR:15012
     pilot:
       enabled: true
+${MESH_CONFIG_FILE_ARGS}
       volumes:
         - name: config-volume
           configMap:
-            name: istio-external-istiod
+            name: ${MESH_CONFIG_MAP_NAME}
         - name: inject-volume
           configMap:
             name: istio-sidecar-injector-external-istiod
       volumeMounts:
         - name: config-volume
-          mountPath: /etc/istio/config
+          mountPath: ${MESH_CONFIG_MOUNT_PATH}
         - name: inject-volume
           mountPath: /var/lib/istio/inject
       env:

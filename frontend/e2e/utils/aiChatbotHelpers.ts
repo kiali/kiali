@@ -101,24 +101,24 @@ export async function injectSecondAiProviderInConfig(page: Page, providerName = 
   await page.route('**/api/config', async route => {
     const response = await route.fetch();
     const body = await response.json();
-    const chatAI = body.chatAI;
-    if (!chatAI?.providers?.length) {
+    const chat = body.ai?.chat;
+    if (!chat?.providers?.length) {
       await route.fulfill({ response, json: body });
       return;
     }
-    if (chatAI.providers.some((p: { name: string }) => p.name === providerName)) {
+    if (chat.providers.some((p: { name: string }) => p.name === providerName)) {
       await route.fulfill({ response, json: body });
       return;
     }
 
-    const first = chatAI.providers[0];
+    const first = chat.providers[0];
     const models =
       Array.isArray(first.models) && first.models.length > 0
         ? first.models
         : [{ name: 'test-model', model: 'test-model', description: 'test-model' }];
 
-    chatAI.providers = [
-      ...chatAI.providers,
+    chat.providers = [
+      ...chat.providers,
       {
         name: providerName,
         description: first.description ?? 'Second test provider',

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { ServerConfig, RunMode } from '../../types/ServerConfig';
+import { RunMode, type ServerConfig } from '../../types/ServerConfig';
 import { getScenarioConfig } from '../scenarios';
-import { ChatAIConfig } from 'types/Chatbot';
+import type { ChatAIConfig } from 'types/Chatbot';
 
 // Cluster config type
 type ClusterConfigType = Record<
@@ -63,8 +63,9 @@ const generateControlPlanes = (): Record<string, string> => {
 
 const generateChatAIConfig = (): ChatAIConfig => {
   const scenarioConfig = getScenarioConfig();
-  if (!scenarioConfig.chatAI) {
+  if (!scenarioConfig.ai?.chat) {
     return {
+      allowed: true,
       enabled: false,
       providers: [],
       defaultProvider: '',
@@ -74,9 +75,10 @@ const generateChatAIConfig = (): ChatAIConfig => {
     };
   }
   return {
-    enabled: scenarioConfig.chatAI.enabled ?? false,
+    allowed: scenarioConfig.ai?.chat.allowed ?? true,
+    enabled: scenarioConfig.ai?.chat.enabled ?? false,
     providers:
-      scenarioConfig.chatAI.providers?.map(provider => ({
+      scenarioConfig.ai?.chat.providers?.map(provider => ({
         name: provider.name,
         description: provider.description ?? '',
         defaultModel: provider.defaultModel ?? '',
@@ -87,9 +89,9 @@ const generateChatAIConfig = (): ChatAIConfig => {
             model: model.model ?? ''
           })) ?? []
       })) ?? [],
-    defaultProvider: scenarioConfig.chatAI.defaultProvider ?? '',
+    defaultProvider: scenarioConfig.ai?.chat.defaultProvider ?? '',
     store: {
-      enabled: scenarioConfig.chatAI.store?.enabled ?? scenarioConfig.chatAI.enabled ?? false
+      enabled: scenarioConfig.ai?.chat.store?.enabled ?? scenarioConfig.ai?.chat.enabled ?? false
     }
   };
 };
@@ -100,7 +102,14 @@ const generateServerConfig = (): ServerConfig => {
   return {
     ambientEnabled: scenarioConfig.ambientEnabled,
     authStrategy: 'anonymous',
-    chatAI: generateChatAIConfig(),
+    ai: {
+      enabled: scenarioConfig.ai?.enabled ?? false,
+      chat: generateChatAIConfig(),
+      consumption: {
+        enabled: scenarioConfig.ai?.consumption?.enabled ?? false,
+        allowed: scenarioConfig.ai?.consumption?.allowed ?? false
+      }
+    },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
     controlPlanes: generateControlPlanes(),
@@ -143,6 +152,7 @@ const generateServerConfig = (): ServerConfig => {
         }
       ]
     },
+    healthStatusMetricsEnabled: false,
     ignoreHomeCluster: false,
     installationTag: 'Kiali Mock',
     istioAPIInstalled: false,
@@ -177,7 +187,7 @@ const generateServerConfig = (): ServerConfig => {
           }
         },
         i18n: {
-          language: 'en',
+          language: '',
           showSelector: true
         },
         list: {

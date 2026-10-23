@@ -128,6 +128,22 @@ func TestAutoAuthzMeshMTLSEnabled(t *testing.T) {
 	testNoMtlsChecker("mtls_enabled_checker_14.yaml", t, false)
 }
 
+// Mesh-wide PERMISSIVE without a DestinationRule is Istio's default (inherited by UNSET
+// namespaces). With auto-mTLS, sidecar-to-sidecar traffic is still mTLS so source.namespaces
+// is valid. Without auto-mTLS, KIA0105 is still expected.
+func TestAutoAuthzMeshPermissiveNoDestRule(t *testing.T) {
+	testNoMtlsChecker("mtls_enabled_checker_23.yaml", t, true)
+
+	vals := mtlsCheckerTestPrep("mtls_enabled_checker_23.yaml", false, t)
+	ta := validations.ValidationsTestAsserter{T: t, Validations: vals}
+	ta.AssertValidationsPresent(1)
+	ta.AssertValidationAt(models.IstioValidationKey{
+		ObjectGVK: kubernetes.AuthorizationPolicies,
+		Name:      "policy",
+		Namespace: "bookinfo",
+	}, models.ErrorSeverity, "spec/rules[0]/from[0]/source/namespaces", "authorizationpolicy.mtls.needstobeenabled")
+}
+
 // Context: AutoMtls enabled
 // Context: Authorization Policy found
 // Context: Mesh-wide mTLS enabled

@@ -55,7 +55,6 @@ func fetchHistogramValues(ctx context.Context, api prom_v1.API, metricName, labe
 	queries := buildHistogramQueries(ctx, metricName, labels, grouping, rateInterval, avg, quantiles)
 	histogram := make(map[string]model.Vector, len(queries))
 	for k, query := range queries {
-		zl.Trace().Msgf("fetchHistogramValues: %s", query)
 		result, warnings, err := api.Query(ctx, query, queryTime)
 		if len(warnings) > 0 {
 			zl.Warn().Msgf("fetchHistogramValues. Prometheus Warnings: [%s]", strings.Join(warnings, ","))
@@ -134,6 +133,11 @@ func vectorToMatrix(ctx context.Context, vector []*model.Sample, t model.Time) m
 		}
 	})
 	return matrix
+}
+
+// FetchRangeQuery runs an arbitrary PromQL expression as a range query.
+func FetchRangeQuery(ctx context.Context, api prom_v1.API, query string, q *RangeQuery) Metric {
+	return fetchRange(ctx, api, query, q.Range)
 }
 
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
@@ -248,7 +252,6 @@ func getRequestRatesForLabel(ctx context.Context, api prom_v1.API, time time.Tim
 
 	zl := log.FromContext(ctx)
 	query := fmt.Sprintf("rate(istio_requests_total{%s}[%s]) > 0", labels, ratesInterval)
-	zl.Trace().Msgf("getRequestRatesForLabel: %s", query)
 	promtimer := internalmetrics.GetPrometheusProcessingTimePrometheusTimer("Metrics-GetRequestRates")
 	result, warnings, err := api.Query(ctx, query, time)
 	if len(warnings) > 0 {

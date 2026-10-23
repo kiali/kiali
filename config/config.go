@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -64,31 +63,7 @@ const (
 
 	// Login Token signing key used to prepare the token for user login
 	SecretFileLoginTokenSigningKey = "login-token-signing-key"
-
-	// Chat AI credential secret prefixes (used to build dynamic volume names)
-	secretFileChatAIProviderPrefix = "chat-ai-provider"
-	secretFileChatAIModelPrefix    = "chat-ai-model"
 )
-
-var secretNameSanitizer = regexp.MustCompile(`[^a-z0-9-]+`)
-
-func sanitizeSecretName(name string) string {
-	sanitized := strings.ToLower(name)
-	sanitized = secretNameSanitizer.ReplaceAllString(sanitized, "-")
-	sanitized = strings.Trim(sanitized, "-")
-	if sanitized == "" {
-		return "unknown"
-	}
-	return sanitized
-}
-
-func chatAIProviderSecretFileName(providerName string) string {
-	return fmt.Sprintf("%s-%s", secretFileChatAIProviderPrefix, sanitizeSecretName(providerName))
-}
-
-func chatAIModelSecretFileName(providerName, modelName string) string {
-	return fmt.Sprintf("%s-%s-%s", secretFileChatAIModelPrefix, sanitizeSecretName(providerName), sanitizeSecretName(modelName))
-}
 
 // The valid auth strategies and values for cookie handling
 const (
@@ -638,6 +613,12 @@ type OpenIdConfig struct {
 	UsernameClaim         string                  `yaml:"username_claim,omitempty"`
 }
 
+// DeploymentLoggerConfig configures Kiali server logging behavior that is read from
+// config.yaml (pod log format/level are still driven by deployment env vars).
+type DeploymentLoggerConfig struct {
+	LogPrometheusQueries bool `yaml:"log_prometheus_queries,omitempty"`
+}
+
 // DeploymentConfig provides details on how Kiali was deployed.
 type DeploymentConfig struct {
 	AccessibleNamespaces []string                 // this is no longer part of the actual config - we will generate this in Unmarshal()
@@ -645,6 +626,7 @@ type DeploymentConfig struct {
 	ClusterNameOverrides map[string]string        `yaml:"cluster_name_overrides,omitempty"`
 	DiscoverySelectors   DiscoverySelectorsConfig `yaml:"discovery_selectors,omitempty"`
 	InstanceName         string                   `yaml:"instance_name"`
+	Logger               DeploymentLoggerConfig   `yaml:"logger,omitempty"`
 	Namespace            string                   `yaml:"namespace,omitempty"` // Kiali deployment namespace
 	TLSConfig            DeploymentTLSConfig      `yaml:"tls_config,omitempty" json:"tlsConfig,omitempty"`
 	ViewOnlyMode         bool                     `yaml:"view_only_mode,omitempty"`
@@ -804,72 +786,6 @@ type Validations struct {
 	SkipWildcardGatewayHosts bool     `yaml:"skip_wildcard_gateway_hosts,omitempty"`
 }
 
-// AiStoreConfig defines configuration for the AI store subsystem
-type AiStoreConfig struct {
-	Enabled                 bool           `yaml:"enabled,omitempty" json:"enabled,omitempty"`                                    // Default: true
-	InactivityTimeout       DurationString `yaml:"inactivity_timeout,omitempty" json:"inactivityTimeout,omitempty"`               // Default: "30m"
-	HistoryTokenBudgetRatio float64        `yaml:"history_token_budget_ratio,omitempty" json:"historyTokenBudgetRatio,omitempty"` // Default: 0.85
-	MaxCacheMemoryMB        int            `yaml:"max_cache_memory_mb,omitempty" json:"maxCacheMemoryMB,omitempty"`               // Default: 1024
-	ReduceWithAI            bool           `yaml:"reduce_with_ai,omitempty" json:"reduceWithAI,omitempty"`                        // Default: false
-	ReduceThreshold         int            `yaml:"reduce_threshold,omitempty" json:"reduceThreshold,omitempty"`                   // Default: 15 messages
-}
-
-type AIModel struct {
-	Name        string     `yaml:"name" json:"name"`
-	Model       string     `yaml:"model" json:"model"`
-	Description string     `yaml:"description,omitempty" json:"description,omitempty"`
-	Enabled     bool       `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Endpoint    string     `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
-	Key         Credential `yaml:"key,omitempty" json:"key,omitempty"`
-}
-
-type ToolFilterConfig struct {
-	DisabledTools []string `yaml:"disabled_tools,omitempty" json:"disabled_tools,omitempty"`
-	EnabledTools  []string `yaml:"enabled_tools,omitempty" json:"enabled_tools,omitempty"`
-}
-
-type ProviderType string
-
-const (
-	AnthropicProvider   ProviderType = "anthropic"
-	DefaultProviderType ProviderType = "default"
-	GoogleProvider      ProviderType = "google"
-	LightSpeedProvider  ProviderType = "lightspeed"
-	OpenAIProvider      ProviderType = "openai"
-)
-
-type ProviderConfigType string
-
-const (
-	OpenAIProviderConfigAzure ProviderConfigType = "azure"
-	ProviderConfigGemini      ProviderConfigType = "gemini"
-	DefaultProviderConfigType ProviderConfigType = "default"
-)
-
-type ProviderConfig struct {
-	Config             ProviderConfigType `yaml:"config" json:"config"`
-	DefaultModel       string             `yaml:"default_model,omitempty" json:"default_model,omitempty"`
-	Description        string             `yaml:"description,omitempty" json:"description,omitempty"`
-	Enabled            bool               `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	Endpoint           string             `yaml:"endpoint,omitempty" json:"endpoint,omitempty"`
-	InsecureSkipVerify bool               `yaml:"insecure_skip_verify,omitempty" json:"insecureSkipVerify,omitempty"`
-	Key                Credential         `yaml:"key,omitempty" json:"key,omitempty"`
-	Models             []AIModel          `yaml:"models,omitempty" json:"models,omitempty"`
-	Name               string             `yaml:"name" json:"name"`
-	Tools              ToolFilterConfig   `yaml:"tools,omitempty" json:"tools,omitempty"`
-	Type               ProviderType       `yaml:"type" json:"type"`
-}
-
-// ChatAIConfig defines configuration for the ChatAI subsystem
-type ChatAIConfig struct {
-	DefaultProvider   string           `yaml:"default_provider,omitempty" json:"default_provider,omitempty"`
-	Enabled           bool             `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	MaxToolIterations int              `yaml:"max_tool_iterations,omitempty" json:"max_tool_iterations,omitempty"`
-	Providers         []ProviderConfig `yaml:"providers,omitempty" json:"providers,omitempty"`
-	StoreConfig       AiStoreConfig    `yaml:"store_config,omitempty" json:"store_config,omitempty"`
-	Tools             ToolFilterConfig `yaml:"tools,omitempty" json:"tools,omitempty"`
-}
-
 // Clustering defines configuration around multi-cluster functionality.
 type Clustering struct {
 	// Clusters is a list of clusters that cannot be autodetected by the Kiali Server.
@@ -1006,32 +922,42 @@ const (
 
 // Config defines full YAML configuration.
 type Config struct {
-	AdditionalDisplayDetails []AdditionalDisplayItem             `yaml:"additional_display_details,omitempty"`
-	Auth                     AuthConfig                          `yaml:"auth,omitempty"`
-	ChatAI                   ChatAIConfig                        `yaml:"chat_ai,omitempty"`
-	Clustering               Clustering                          `yaml:"clustering,omitempty"`
-	Credentials              *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
-	CustomDashboards         dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
-	Deployment               DeploymentConfig                    `yaml:"deployment,omitempty"`
-	Extensions               []ExtensionConfig                   `yaml:"extensions,omitempty"`
-	ExternalServices         ExternalServices                    `yaml:"external_services,omitempty"`
-	HealthConfig             HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
-	Identity                 security.Identity                   `yaml:",omitempty"`
-	InstallationTag          string                              `yaml:"installation_tag,omitempty"`
-	IstioLabels              IstioLabels                         `yaml:"istio_labels,omitempty"`
-	KialiFeatureFlags        KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
-	KialiInternal            KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
-	KubernetesConfig         KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
-	LoginToken               LoginToken                          `yaml:"login_token,omitempty"`
-	RunConfig                *OfflineManifest                    `yaml:"runConfig,omitempty"`
-	RunMode                  RunMode                             `yaml:"runMode,omitempty"`
-	ResolvedTLSPolicy        TLSPolicy                           `yaml:"-" json:"-"`
-	Server                   Server                              `yaml:",omitempty"`
+	AdditionalDisplayDetails []AdditionalDisplayItem `yaml:"additional_display_details,omitempty"`
+	AI                       AIConfig                `yaml:"ai,omitempty"`
+	Auth                     AuthConfig              `yaml:"auth,omitempty"`
+	// TODO remove this ChatAI when we no longer provide backward-compat support for the old chat_ai top-level setting
+	ChatAI            ChatAIConfig                        `yaml:"chat_ai,omitempty"` // Deprecated: use AI.ChatAI instead (yaml: "ai.chat"). See migrateDeprecatedChatAI.
+	Clustering        Clustering                          `yaml:"clustering,omitempty"`
+	Credentials       *CredentialManager                  `yaml:"-"` // Not serialized; manages file-based credentials with auto-rotation
+	CustomDashboards  dashboards.MonitoringDashboardsList `yaml:"custom_dashboards,omitempty"`
+	Deployment        DeploymentConfig                    `yaml:"deployment,omitempty"`
+	Extensions        []ExtensionConfig                   `yaml:"extensions,omitempty"`
+	ExternalServices  ExternalServices                    `yaml:"external_services,omitempty"`
+	HealthConfig      HealthConfig                        `yaml:"health_config,omitempty" json:"healthConfig,omitempty"`
+	Identity          security.Identity                   `yaml:",omitempty"`
+	InstallationTag   string                              `yaml:"installation_tag,omitempty"`
+	IstioLabels       IstioLabels                         `yaml:"istio_labels,omitempty"`
+	KialiFeatureFlags KialiFeatureFlags                   `yaml:"kiali_feature_flags,omitempty"`
+	KialiInternal     KialiInternalConfig                 `yaml:"kiali_internal,omitempty"`
+	KubernetesConfig  KubernetesConfig                    `yaml:"kubernetes_config,omitempty"`
+	LoginToken        LoginToken                          `yaml:"login_token,omitempty"`
+	RunConfig         *OfflineManifest                    `yaml:"runConfig,omitempty"`
+	RunMode           RunMode                             `yaml:"runMode,omitempty"`
+	ResolvedTLSPolicy TLSPolicy                           `yaml:"-" json:"-"`
+	Server            Server                              `yaml:",omitempty"`
 }
 
 // NewConfig creates a default Config struct
 func NewConfig() (c *Config) {
 	c = &Config{
+		AdditionalDisplayDetails: []AdditionalDisplayItem{
+			{
+				Annotation:     "kiali.io/api-spec",
+				IconAnnotation: "kiali.io/api-type",
+				Title:          "API Documentation",
+			},
+		},
+		AI: NewAIConfig(),
 		Auth: AuthConfig{
 			Strategy: AuthStrategyToken,
 			OpenId: OpenIdConfig{
@@ -1061,20 +987,6 @@ func NewConfig() (c *Config) {
 			OpenShift: OpenShiftConfig{
 				Impersonation:         ImpersonationConfig{Enabled: false, AllowedGroups: []string{}, AllowedUsers: []string{}},
 				InsecureSkipVerifyTLS: false,
-			},
-		},
-		ChatAI: ChatAIConfig{
-			Enabled:           false,
-			DefaultProvider:   "",
-			MaxToolIterations: 5,
-			Providers:         []ProviderConfig{},
-			StoreConfig: AiStoreConfig{
-				Enabled:                 true,
-				InactivityTimeout:       "30m",
-				MaxCacheMemoryMB:        1024,
-				HistoryTokenBudgetRatio: 0.85,
-				ReduceWithAI:            false,
-				ReduceThreshold:         15,
 			},
 		},
 		Clustering: Clustering{
@@ -1247,8 +1159,8 @@ func NewConfig() (c *Config) {
 					},
 				},
 				I18n: I18nUIDefaults{
-					Language:     "en",
-					ShowSelector: false,
+					Language:     "",
+					ShowSelector: true,
 				},
 				List: ListUIDefaults{
 					IncludeHealth:         true,
@@ -1393,164 +1305,15 @@ func (conf *Config) AddHealthDefault() {
 	conf.HealthConfig.Rate = append(conf.HealthConfig.Rate, healthConfig.Rate...)
 }
 
-func (conf *Config) ValidateAI() error {
-	if !conf.ChatAI.Enabled {
-		return nil
+// warnDeprecatedI18nShowSelector logs when the deprecated show_selector setting hides language selection.
+//
+// TODO: Remove this warning once ui_defaults.i18n.show_selector is no longer supported.
+func (conf *Config) warnDeprecatedI18nShowSelector() {
+	if conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector {
+		return
 	}
 
-	if conf.ChatAI.MaxToolIterations < 1 || conf.ChatAI.MaxToolIterations > 20 {
-		return fmt.Errorf("chat_ai.max_tool_iterations must be between 1 and 20, got %d", conf.ChatAI.MaxToolIterations)
-	}
-
-	if err := normalizeAndValidateToolFilter("chat_ai.tools", &conf.ChatAI.Tools); err != nil {
-		return err
-	}
-
-	if conf.ChatAI.DefaultProvider == "" {
-		return fmt.Errorf("chat_ai.default_provider is required when chat_ai.enabled is true")
-	}
-
-	defaultProviderFound := false
-	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
-		AnthropicProvider:  {DefaultProviderConfigType},
-		GoogleProvider:     {ProviderConfigGemini},
-		LightSpeedProvider: {DefaultProviderConfigType},
-		OpenAIProvider:     {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
-	}
-
-	seenNames := make(map[string]struct{})
-
-	for i := range conf.ChatAI.Providers {
-		p := &conf.ChatAI.Providers[i]
-		if !p.Enabled {
-			continue
-		}
-		if err := normalizeAndValidateToolFilter(fmt.Sprintf("chat_ai.providers[%q].tools", p.Name), &p.Tools); err != nil {
-			return err
-		}
-		if _, exists := seenNames[p.Name]; exists {
-			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
-		}
-		seenNames[p.Name] = struct{}{}
-
-		if p.Name == conf.ChatAI.DefaultProvider {
-			defaultProviderFound = true
-			if !p.Enabled {
-				return fmt.Errorf("chat_ai.default_provider %q must be enabled", conf.ChatAI.DefaultProvider)
-			}
-		}
-
-		if !p.Enabled {
-			continue
-		}
-
-		if p.Type == "" || p.Type == DefaultProviderType {
-			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, OpenAIProvider)
-			p.Type = OpenAIProvider
-		}
-		if _, valid := validCompatibleProviderTypes[p.Type]; !valid {
-			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid or not supported. Available types are: %v", p.Name, p.Type, validCompatibleProviderTypes[p.Type])
-		}
-
-		if p.Config == "" {
-			defaultValue := DefaultProviderConfigType
-			if p.Type == GoogleProvider {
-				defaultValue = ProviderConfigGemini
-			}
-			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q for provider type %s", p.Name, defaultValue, p.Type)
-			p.Config = defaultValue
-		}
-
-		if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
-			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
-		}
-
-		// LightSpeed is a special case:
-		//   - No models, default_model, or API key are needed — authentication is
-		//     handled per-request via the Kiali user's Kubernetes bearer token.
-		//   - Only the provider-level endpoint is required.
-		//   - config defaults to DefaultProviderConfigType when empty (handled above).
-		//   - A synthetic model entry (named after the provider) is auto-created so
-		//     the frontend always has at least one selectable model.
-		if p.Type == LightSpeedProvider {
-			if p.Endpoint == "" {
-				return fmt.Errorf("chat_ai.providers[%q] of type %q requires an endpoint", p.Name, LightSpeedProvider)
-			}
-			if len(p.Models) == 0 {
-				p.Models = []AIModel{{Name: p.Name, Enabled: true}}
-				p.DefaultModel = p.Name
-			}
-			continue
-		}
-
-		if p.DefaultModel == "" {
-			return fmt.Errorf("chat_ai.providers[%q].default_model is required", p.Name)
-		}
-
-		defaultModelFound := false
-		providerModelNames := make(map[string]struct{})
-		for _, m := range p.Models {
-			if _, exists := providerModelNames[m.Name]; exists {
-				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
-			}
-			providerModelNames[m.Name] = struct{}{}
-
-			if m.Name == p.DefaultModel {
-				defaultModelFound = true
-				if !m.Enabled {
-					return fmt.Errorf("chat_ai.providers[%q].default_model %q must be enabled", p.Name, p.DefaultModel)
-				}
-			}
-
-			if m.Key == "" && p.Key == "" && m.Enabled {
-				return fmt.Errorf("chat_ai.providers[%q].models[%q] requires a key when provider key is empty", p.Name, m.Name)
-			}
-		}
-
-		if !defaultModelFound {
-			return fmt.Errorf("chat_ai.providers[%q].default_model %q not found in models", p.Name, p.DefaultModel)
-		}
-	}
-
-	if !defaultProviderFound {
-		return fmt.Errorf("chat_ai.default_provider %q not found in providers", conf.ChatAI.DefaultProvider)
-	}
-
-	return nil
-}
-
-func normalizeAndValidateToolFilter(path string, filter *ToolFilterConfig) error {
-	if filter == nil {
-		return nil
-	}
-
-	enabledSet := make(map[string]struct{}, len(filter.EnabledTools))
-	for i, name := range filter.EnabledTools {
-		trimmed := strings.TrimSpace(name)
-		if trimmed == "" {
-			return fmt.Errorf("%s.enabled_tools[%d] must not be empty", path, i)
-		}
-		if _, exists := enabledSet[trimmed]; exists {
-			return fmt.Errorf("%s.enabled_tools contains duplicate name %q", path, trimmed)
-		}
-		enabledSet[trimmed] = struct{}{}
-		filter.EnabledTools[i] = trimmed
-	}
-
-	disabledSet := make(map[string]struct{}, len(filter.DisabledTools))
-	for i, name := range filter.DisabledTools {
-		trimmed := strings.TrimSpace(name)
-		if trimmed == "" {
-			return fmt.Errorf("%s.disabled_tools[%d] must not be empty", path, i)
-		}
-		if _, exists := disabledSet[trimmed]; exists {
-			return fmt.Errorf("%s.disabled_tools contains duplicate name %q", path, trimmed)
-		}
-		disabledSet[trimmed] = struct{}{}
-		filter.DisabledTools[i] = trimmed
-	}
-
-	return nil
+	log.Info("DEPRECATION NOTICE: 'kiali_feature_flags.ui_defaults.i18n.show_selector' has been deprecated - language selection is available in Preferences by default. Setting this to false hides the language selector until the setting is removed in a future release.")
 }
 
 // AllNamespacesAccessible determines if kiali has access to all namespaces.
@@ -1635,23 +1398,7 @@ func (conf Config) Obfuscate() (obf Config) {
 	obf.Identity.Obfuscate()
 	obf.LoginToken.Obfuscate()
 	obf.Auth.OpenId.ClientSecret = "xxx"
-	if len(obf.ChatAI.Providers) > 0 {
-		providers := make([]ProviderConfig, len(obf.ChatAI.Providers))
-		copy(providers, obf.ChatAI.Providers)
-		for i := range providers {
-			providers[i].Key = "xxx"
-			if len(providers[i].Models) == 0 {
-				continue
-			}
-			models := make([]AIModel, len(providers[i].Models))
-			copy(models, providers[i].Models)
-			for j := range models {
-				models[j].Key = "xxx"
-			}
-			providers[i].Models = models
-		}
-		obf.ChatAI.Providers = providers
-	}
+	obf.AI.Obfuscate()
 	return
 }
 
@@ -1696,6 +1443,9 @@ func (conf *Config) prepareDashboards() {
 // pool, including additional CAs from the kiali-cabundle ConfigMap.
 func Unmarshal(yamlString string) (conf *Config, err error) {
 	conf = NewConfig()
+	// Capture the default "ai.chat" settings before parsing so migrateDeprecatedChatAI
+	// can later tell whether the yaml actually set "ai.chat" or left it untouched.
+	defaultChatAI := conf.AI.ChatAI
 	err = yaml.Unmarshal([]byte(yamlString), &conf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse yaml data. error=%w", err)
@@ -1743,6 +1493,9 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 		conf.ExternalServices.Tracing.ExternalURL = conf.ExternalServices.Tracing.XURL
 		log.Info("DEPRECATION NOTICE: 'external_services.tracing.url' has been deprecated - switch to 'external_services.tracing.external_url'")
 	}
+	conf.migrateDeprecatedChatAI(defaultChatAI)
+	conf.warnDeprecatedI18nShowSelector()
+	conf.AI.Consumption.resolveModelPricings()
 
 	// Validate tracing min and max values
 	if conf.KialiFeatureFlags.UIDefaults.Tracing.Limit < 10 || conf.KialiFeatureFlags.UIDefaults.Tracing.Limit > 1000 {
@@ -1752,12 +1505,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 	// Some config settings (such as sensitive settings like passwords) are overrideable
 	// via secrets mounted on the file system rather than storing them directly in the config map itself.
 	// The names of the files in /kiali-override-secrets denote which credentials they are.
-	type overridesType struct {
-		configValue *Credential
-		fileName    string
-	}
-
-	overrides := []overridesType{
+	overrides := []credentialOverride{
 		// Prometheus credentials and certificates
 		{
 			configValue: &conf.ExternalServices.Prometheus.Auth.CertFile,
@@ -1886,24 +1634,7 @@ func Unmarshal(yamlString string) (conf *Config, err error) {
 			fileName:    SecretFileLoginTokenSigningKey,
 		},
 	}
-
-	for i := range conf.ChatAI.Providers {
-		provider := &conf.ChatAI.Providers[i]
-		if provider.Enabled {
-			overrides = append(overrides, overridesType{
-				configValue: &provider.Key,
-				fileName:    chatAIProviderSecretFileName(provider.Name),
-			})
-			for j := range provider.Models {
-				if provider.Models[j].Enabled {
-					overrides = append(overrides, overridesType{
-						configValue: &provider.Models[j].Key,
-						fileName:    chatAIModelSecretFileName(provider.Name, provider.Models[j].Name),
-					})
-				}
-			}
-		}
-	}
+	overrides = append(overrides, conf.aiCredentialOverrides()...)
 
 	// For each override, check if a secret file exists and set the config value to the file path.
 	// This enables automatic credential rotation as credentials are read on-use, not at startup.

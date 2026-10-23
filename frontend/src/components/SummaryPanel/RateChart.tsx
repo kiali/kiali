@@ -183,7 +183,8 @@ export const renderInOutRateChartHttp = (
   percent3xxOut: number,
   percent4xxOut: number,
   percent5xxOut: number,
-  percentNROut: number
+  percentNROut: number,
+  hideIn = false
 ): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
     {
@@ -228,11 +229,13 @@ export const renderInOutRateChartHttp = (
     } // No Response error, just use black
   ].map(line => {
     return {
-      datapoints: line.dp.map(dp => ({
-        name: line.name,
-        color: line.color,
-        ...dp
-      })),
+      datapoints: line.dp
+        .filter(dp => !hideIn || dp.x === 'Out')
+        .map(dp => ({
+          name: line.name,
+          color: line.color,
+          ...dp
+        })),
       color: line.color,
       legendItem: {
         name: line.name === 'No Response' ? 'NR' : line.name,
@@ -247,7 +250,8 @@ export const renderInOutRateChartGrpc = (
   percentOKIn: number,
   percentErrIn: number,
   percentOKOut: number,
-  percentErrOut: number
+  percentErrOut: number,
+  hideIn = false
 ): JSX.Element => {
   const vcLines: VCLines<RichDataPoint> = [
     {
@@ -268,11 +272,13 @@ export const renderInOutRateChartGrpc = (
     }
   ].map(line => {
     return {
-      datapoints: line.dp.map(dp => ({
-        name: line.name,
-        color: line.color,
-        ...dp
-      })),
+      datapoints: line.dp
+        .filter(dp => !hideIn || dp.x === 'Out')
+        .map(dp => ({
+          name: line.name,
+          color: line.color,
+          ...dp
+        })),
       color: line.color,
       legendItem: {
         name: line.name,

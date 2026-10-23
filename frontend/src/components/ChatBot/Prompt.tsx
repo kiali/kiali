@@ -12,6 +12,7 @@ import { MessageBar } from '@patternfly/chatbot';
 import { ToolModal } from './EntryChat/ToolModal';
 import { useLocationContext } from './hooks/useLocationContext';
 import { router } from 'app/History';
+import { dispatchAIResponseReceived } from 'utils/aiEvents';
 import {
   Button,
   ButtonVariant,
@@ -23,7 +24,7 @@ import {
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
 import { CommentDotsIcon, HelpIcon, WrenchIcon } from '@patternfly/react-icons';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { DataPrompts } from './DataPrompts';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { namespacesToString } from 'types/Namespace';
@@ -38,16 +39,17 @@ type PromptProps = {
 };
 
 export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
+  const { t } = useKialiTranslation();
   const dispatch = useDispatch();
   const [validated, setValidated] = React.useState<'default' | 'error'>('default');
 
-  const chatHistory = useSelector((s: KialiAppState) => s.aiChat.chatHistory);
-  const query: string = useSelector((s: KialiAppState) => s.aiChat.query);
-  const conversationID: string = useSelector((s: KialiAppState) => s.aiChat.conversationID);
-  const selectedProvider: string = useSelector((s: KialiAppState) => s.aiChat.selectedProvider);
-  const selectedModel: string = useSelector((s: KialiAppState) => s.aiChat.selectedModel);
-  const alwaysNavigate = useSelector((s: KialiAppState) => s.aiChat.alwaysNavigate);
-  const interactionMode = useSelector((s: KialiAppState) => s.aiChat.interactionMode);
+  const chatHistory = useSelector((s: KialiAppState) => s.ai.chat.chatHistory);
+  const query: string = useSelector((s: KialiAppState) => s.ai.chat.query);
+  const conversationID: string = useSelector((s: KialiAppState) => s.ai.chat.conversationID);
+  const selectedProvider: string = useSelector((s: KialiAppState) => s.ai.chat.selectedProvider);
+  const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chat.selectedModel);
+  const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chat.alwaysNavigate);
+  const interactionMode = useSelector((s: KialiAppState) => s.ai.chat.interactionMode);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
@@ -62,8 +64,10 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   // changes externally (e.g. welcome prompt click).
   React.useEffect(() => {
     if (textareaRef.current && textareaRef.current.value !== query) {
-      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')
-        ?.set;
+      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLTextAreaElement.prototype,
+        'value'
+      )?.set;
       nativeInputValueSetter?.call(textareaRef.current, query);
       textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
     }
@@ -98,14 +102,14 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     [activeNamespaces, kind, name, namespace, istio, clusterName]
   );
   const resourceHealthStatus = useChatResourceHealth(promptContext);
-  const promptVariables = React.useMemo(() => buildPromptVariables(promptContext, resourceHealthStatus), [
-    promptContext,
-    resourceHealthStatus
-  ]);
-  const resolvedPrompts = React.useMemo(() => substitutePrompts(promptData, promptVariables), [
-    promptData,
-    promptVariables
-  ]);
+  const promptVariables = React.useMemo(
+    () => buildPromptVariables(promptContext, resourceHealthStatus),
+    [promptContext, resourceHealthStatus]
+  );
+  const resolvedPrompts = React.useMemo(
+    () => substitutePrompts(promptData, promptVariables),
+    [promptData, promptVariables]
+  );
   const pageContext = React.useMemo(
     () => buildPageContext(kind, name, namespace, istio, clusterName, resourceHealthStatus),
     [kind, name, namespace, istio, clusterName, resourceHealthStatus]
@@ -302,6 +306,8 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           }
         }
       }
+      // Notify dashboard components so they can refresh token usage stats.
+      dispatchAIResponseReceived();
     };
     streamResponse().catch(streamError => {
       if (streamError.name !== 'AbortError') {
@@ -399,7 +405,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
               style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
               onClick={() => onPromptSelect(prompt.query)}
             >
-              {prompt.title}
+              {t(prompt.title)}
             </Button>
           ))}
         </div>

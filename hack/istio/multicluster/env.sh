@@ -62,6 +62,44 @@ install_istio() {
   fi
 }
 
+# Wait until Sail has reconciled a remote-profile Istio CR far enough to own remote RBAC,
+# but before (or without) the primary/external istiod having patched webhook caBundles.
+# create-remote-secret must run only after this point; otherwise istioctl creates the RBAC
+# first and Sail cannot take ownership.
+#
+# Newer Sail reports Ready reason RemoteIstiodNotReady with a caBundle message.
+# Older Sail used message "readiness probe on remote istiod failed".
+wait_for_remote_istio_pending_secret() {
+  local context="${1}"
+  local istio_name="${2}"
+  local timeout_secs="${3:-60}"
+  local end=$((SECONDS + timeout_secs))
+  local status reason message
+
+  echo "Waiting for remote Istio [${istio_name}] initial reconcile before create-remote-secret (context=${context})..."
+  while (( SECONDS < end )); do
+    status="$(kubectl --context="${context}" get istios "${istio_name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null || true)"
+    if [ "${status}" = "True" ]; then
+      echo "Remote Istio [${istio_name}] is already Ready"
+      return 0
+    fi
+
+    reason="$(kubectl --context="${context}" get istios "${istio_name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].reason}' 2>/dev/null || true)"
+    message="$(kubectl --context="${context}" get istios "${istio_name}" -o jsonpath='{.status.conditions[?(@.type=="Ready")].message}' 2>/dev/null || true)"
+    if [ "${reason}" = "RemoteIstiodNotReady" ] || \
+       [ "${message}" = "readiness probe on remote istiod failed" ] || \
+       [[ "${message}" == *"caBundle hasn't been set"* ]]; then
+      echo "Remote Istio [${istio_name}] pending remote istiod access (reason=${reason}); proceeding to create-remote-secret"
+      return 0
+    fi
+    sleep 2
+  done
+
+  echo "ERROR: Timed out waiting for remote Istio [${istio_name}] to reach RemoteIstiodNotReady (or Ready)"
+  kubectl --context="${context}" get istios "${istio_name}" -o yaml || true
+  return 1
+}
+
 # Shared function to install Istio addons (used by multiple multicluster scripts)
 install_istio_addons() {
   local client_exe="${1:-kubectl}"
@@ -223,6 +261,9 @@ CROSSNETWORK_GATEWAY_REQUIRED="true"
 
 # Under some conditions, manually configuring the mesh network will be required.
 MANUAL_MESH_NETWORK_CONFIG=""
+
+# Mount the external control plane mesh configuration from a non-standard ConfigMap.
+MESH_CONFIG_FILE_ENABLED="${MESH_CONFIG_FILE_ENABLED:-false}"
 
 # Tempo instead of Jaeger
 TEMPO="${TEMPO:-false}"
@@ -504,6 +545,11 @@ while [[ $# -gt 0 ]]; do
       MESH_ID="$2"
       shift;shift
       ;;
+    -mcf|--mesh-config-file)
+      [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--mesh-config-file must be 'true' or 'false'" && exit 1
+      MESH_CONFIG_FILE_ENABLED="$2"
+      shift;shift
+      ;;
     -mk|--manage-kind)
       [ "${2:-}" != "true" ] && [ "${2:-}" != "false" ] && echo "--manage-kind must be 'true' or 'false'" && exit 1
       MANAGE_KIND="$2"
@@ -617,6 +663,7 @@ Valid command line arguments:
   -md|--minikube-driver <name>: The driver used by minikube (e.g. virtualbox, kvm2) (Default: kvm2)
   -mdisk|--minikube-disk <space>: Amount of disk space to give to each minikube cluster
   -mi|--mesh-id <id>: When Istio is installed, it will be part of the mesh with this given name. (Default: mesh-default)
+  -mcf|--mesh-config-file <bool>: If true, mount a non-standard mesh ConfigMap as an istiod file. Used by external control plane setup. (Default: false)
   -mk|--manage-kind <bool>: If "true" and if --client-exe is kubectl, two kind instances will be managed
   -mm|--manage-minikube <bool>: If "true" and if --client-exe is kubectl, two minikube instances will be managed
   -mmem|--minikube-memory <mem>: Amount of memory to give to each minikube cluster

@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -29,6 +30,7 @@ import { TrafficDetails } from 'components/TrafficList/TrafficDetails';
 import { WorkloadWizardDropdown } from '../../components/IstioWizards/WorkloadWizardDropdown';
 import { TimeControl } from '../../components/Time/TimeControl';
 import { EnvoyDetails } from 'components/Envoy/EnvoyDetails';
+import { shouldShowEnvoyWorkloadTab } from 'utils/EnvoyMemoryUtils';
 import { WorkloadHealth } from 'types/Health';
 import { RenderHeader } from '../../components/Nav/Page/RenderHeader';
 import { ErrorSection } from '../../components/ErrorSection/ErrorSection';
@@ -42,6 +44,7 @@ import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import { t } from 'utils/I18nUtils';
 
 type WorkloadDetailsState = {
   cluster?: string;
@@ -181,6 +184,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
             }}
             tabMap={paramToTab}
             tabName={tabName}
+            customTimeTabs={['in_metrics', 'out_metrics', 'logs', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
@@ -237,7 +241,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         addError('Could not fetch Workload.', error);
 
         const msg: ErrorMsg = {
-          title: 'No Workload is selected',
+          title: t('No Workload is selected'),
           description: `${this.props.workloadId.workload} is not found in the mesh`
         };
 
@@ -250,13 +254,15 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     const tabsArray: React.ReactNode[] = [];
 
     const overTab = (
-      <Tab title="Overview" eventKey={0} key="Overview">
+      <Tab title={t('Overview')} eventKey={0} key="Overview">
         <WorkloadInfo
-          workload={this.state.workload}
           duration={this.props.duration}
           health={this.state.health}
+          lastRefreshAt={this.props.lastRefreshAt}
           namespace={this.props.workloadId.namespace}
           refreshWorkload={this.fetchWorkload}
+          timeRange={this.props.rangeDuration}
+          workload={this.state.workload}
         />
       </Tab>
     );
@@ -265,7 +271,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     if (this.state.workload && isGVKSupported(this.state.workload.gvk)) {
       if (!serverConfig.kialiFeatureFlags.disabledFeatures?.includes('logs-tab')) {
         const logTab = (
-          <Tab title="Logs" eventKey={2} key="Logs" data-test="workload-details-logs-tab">
+          <Tab title={t('Logs')} eventKey={2} key="Logs" data-test="workload-details-logs-tab">
             {hasPods ? (
               <WorkloadPodLogs
                 lastRefreshAt={this.props.lastRefreshAt}
@@ -292,7 +298,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
       if (isPrometheusAvailable()) {
         tabsArray.push(
-          <Tab title="Traffic" eventKey={1} key="Traffic">
+          <Tab title={t('Traffic')} eventKey={1} key="Traffic">
             <TrafficDetails
               itemName={this.props.workloadId.workload}
               itemType={MetricsObjectTypes.WORKLOAD}
@@ -301,7 +307,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               cluster={this.state.cluster}
             />
           </Tab>,
-          <Tab title="Inbound Metrics" eventKey={3} key="Inbound Metrics">
+          <Tab title={t('Inbound Metrics')} eventKey={3} key="Inbound Metrics">
             <IstioMetrics
               data-test="inbound-metrics-component"
               direction="inbound"
@@ -313,7 +319,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
               objectType={MetricsObjectTypes.WORKLOAD}
             />
           </Tab>,
-          <Tab title="Outbound Metrics" eventKey={4} key="Outbound Metrics">
+          <Tab title={t('Outbound Metrics')} eventKey={4} key="Outbound Metrics">
             <IstioMetrics
               data-test="outbound-metrics-component"
               direction="outbound"
@@ -332,7 +338,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         const fromWaypoint =
           this.state.workload?.waypointWorkloads && this.state.workload.waypointWorkloads.length > 0 ? true : false;
         tabsArray.push(
-          <Tab eventKey={5} title="Traces" key="Traces">
+          <Tab eventKey={5} title={t('Traces')} key="Traces">
             <TracesComponent
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
@@ -348,13 +354,14 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
       }
     }
 
-    if (this.state.workload && (this.hasIstioSidecars(this.state.workload) || this.state.workload.isWaypoint)) {
+    if (this.state.workload && shouldShowEnvoyWorkloadTab(this.state.workload)) {
       const envoyTab = (
-        <Tab title="Envoy" eventKey={10} key="Envoy">
+        <Tab title={t('Envoy')} eventKey={10} key="Envoy">
           {this.state.workload && (
             <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
               namespace={this.props.workloadId.namespace}
+              rangeDuration={this.props.rangeDuration}
               workload={this.state.workload}
             />
           )}
@@ -366,7 +373,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && this.state.workload.isZtunnel) {
       const ztunnelTab = (
-        <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
+        <Tab title={t('Ztunnel')} eventKey={11} key="Ztunnel">
           {this.state.workload && (
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
@@ -383,7 +390,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && this.state.workload.isWaypoint) {
       const waypointTab = (
-        <Tab title="Waypoint" eventKey={12} key="Waypoint">
+        <Tab title={t('Waypoint')} eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}
         </Tab>
       );
@@ -395,27 +402,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
     nextTabIndex = tabsArray.length + 1;
 
     return tabsArray;
-  }
-
-  private hasIstioSidecars(workload: Workload): boolean {
-    let hasIstioSidecars = false;
-
-    if (workload.pods.length > 0) {
-      workload.pods.forEach(pod => {
-        if (pod.istioContainers && pod.istioContainers.length > 0) {
-          hasIstioSidecars = true;
-        } else if (pod.istioInitContainers && pod.istioInitContainers.some(cont => cont.name === istioProxyName)) {
-          hasIstioSidecars = true;
-        } else {
-          // Ztunnel doesn't have Envoy
-          hasIstioSidecars =
-            hasIstioSidecars ||
-            (!!pod.containers && pod.containers.some(cont => cont.name === istioProxyName && !workload.isZtunnel));
-        }
-      });
-    }
-
-    return hasIstioSidecars;
   }
 
   private runtimeTabs(): React.ReactNode[] {

@@ -2,7 +2,6 @@ package authorization
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	api_security_v1 "istio.io/api/security/v1"
@@ -11,8 +10,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/httputil"
 )
-
-var methodMatcher = regexp.MustCompile(`^((\/[a-zA-Z\.]+)+)(\/[a-zA-Z]+)$`)
 
 type NamespaceMethodChecker struct {
 	AuthorizationPolicy *security_v1.AuthorizationPolicy
@@ -60,7 +57,7 @@ func (ap NamespaceMethodChecker) validateFromField(ruleIdx int, from []*api_secu
 		}
 
 		for i, n := range f.Source.Namespaces {
-			if !ap.Namespaces.Includes(n) {
+			if !ap.Namespaces.MatchesPattern(n) {
 				valid = true
 				path := fmt.Sprintf("spec/rules[%d]/from[%d]/source/namespaces[%d]", ruleIdx, fromIdx, i)
 				validation := models.Build("authorizationpolicy.source.namespacenotfound", path)
@@ -105,13 +102,49 @@ func (ap NamespaceMethodChecker) validateToField(ruleIdx int, to []*api_security
 }
 
 func validMethod(m string) bool {
-	valid := false
-
-	for _, httpMethod := range httputil.HttpMethods() {
-		// HTTP methods allowed or
-		// For gRPC service, a fully-qualified name like “/package.service/method”
-		valid = valid || (strings.TrimSpace(strings.ToUpper(m)) == httpMethod || methodMatcher.MatchString(m))
+	method := strings.TrimSpace(m)
+	if method == "" {
+		return false
 	}
 
-	return valid
+	// Istio AuthorizationPolicy string fields support Exact / Prefix / Suffix / Presence:
+	// https://istio.io/latest/docs/reference/config/security/authorization-policy/
+	// Presence match: "*" matches when the HTTP method header is not empty.
+	if method == "*" {
+		return true
+	}
+
+	// Prefix match: "GET*" ; Suffix match: "*ET" (wildcard only at start or end, not both).
+	prefixMatch := strings.HasSuffix(method, "*") && !strings.HasPrefix(method, "*")
+	suffixMatch := strings.HasPrefix(method, "*") && !strings.HasSuffix(method, "*")
+
+	var pattern string
+	switch {
+	case prefixMatch:
+		pattern = strings.ToUpper(strings.TrimSuffix(method, "*"))
+	case suffixMatch:
+		pattern = strings.ToUpper(strings.TrimPrefix(method, "*"))
+	default:
+		pattern = strings.ToUpper(method)
+	}
+
+	// methods is the HTTP method (for gRPC this is always POST). gRPC FQNs belong in paths.
+	for _, httpMethod := range httputil.HttpMethods() {
+		switch {
+		case prefixMatch:
+			if pattern != "" && strings.HasPrefix(httpMethod, pattern) {
+				return true
+			}
+		case suffixMatch:
+			if pattern != "" && strings.HasSuffix(httpMethod, pattern) {
+				return true
+			}
+		default:
+			if httpMethod == pattern {
+				return true
+			}
+		}
+	}
+
+	return false
 }

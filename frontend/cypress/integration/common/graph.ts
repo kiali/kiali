@@ -7,6 +7,50 @@ import { Then } from '@badeball/cypress-cucumber-preprocessor';
 import { Controller, Edge, Node, isNode, isEdge, GraphElement, Visualization } from '@patternfly/react-topology';
 import { buildNodeTree, findComponentsInTree, getReactFiber } from '../../support/react-utils';
 
+/** Default graph rate interval for Cypress tests (5 minutes, in seconds). */
+export const DEFAULT_GRAPH_DURATION_SECONDS = 300;
+
+/** Query params for detail-page visits (overview minigraph, traffic tab). */
+export const detailPageQueryParams = (extra: Record<string, string> = {}): Record<string, string> => ({
+  duration: String(DEFAULT_GRAPH_DURATION_SECONDS),
+  refresh: '0',
+  ...extra
+});
+
+/**
+ * Ensure the masthead duration matches the expected graph window.
+ * Re-selecting the current duration does not refetch graph data — never wait for a graph
+ * request unless the dropdown selection actually changes.
+ */
+export const ensureGraphDuration = (durationSeconds: number = DEFAULT_GRAPH_DURATION_SECONDS): void => {
+  cy.url().then(url => {
+    const urlDuration = new URL(url).searchParams.get('duration');
+    if (urlDuration === String(durationSeconds)) {
+      cy.get('#loading_kiali_spinner').should('not.exist');
+      return;
+    }
+
+    cy.get('button#time_range_duration-toggle').should('be.visible').click();
+    cy.get(`button[id="${durationSeconds}"]`).then($option => {
+      const alreadySelected = $option.attr('aria-selected') === 'true';
+
+      if (alreadySelected) {
+        cy.get('button#time_range_duration-toggle').click();
+        cy.get('#loading_kiali_spinner').should('not.exist');
+        return;
+      }
+
+      cy.intercept('**/api/**/graph*').as('graphAfterDuration');
+      cy.wrap($option).click();
+
+      if (!url.includes('/ossmconsole/')) {
+        cy.wait('@graphAfterDuration');
+      }
+      cy.get('#loading_kiali_spinner').should('not.exist');
+    });
+  });
+};
+
 Then('user does not see a minigraph', () => {
   cy.get('#MiniGraphCard').find('h5').contains('Empty Graph');
 });
@@ -235,20 +279,7 @@ export const assertMiniGraphReady = (fn: (elements: { edges: Edge[]; nodes: Node
 };
 
 export type SelectOp =
-  | '='
-  | '!='
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | '!*='
-  | '!$='
-  | '!^='
-  | '*='
-  | '$='
-  | '^='
-  | 'falsy'
-  | 'truthy';
+  '=' | '!=' | '>' | '<' | '>=' | '<=' | '!*=' | '!$=' | '!^=' | '*=' | '$=' | '^=' | 'falsy' | 'truthy';
 
 export type SelectExp = {
   op?: SelectOp;

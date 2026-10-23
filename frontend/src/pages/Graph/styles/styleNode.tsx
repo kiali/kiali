@@ -78,7 +78,7 @@ const nodeStyle = kialiStyle({
 const labelStyle = kialiStyle({
   $nest: {
     '& .pf-topology__node__label__icon__background': {
-      fill: 'var(pf-t--global--color--nonstatus--purple--300)'
+      fill: 'var(--pf-t--global--color--nonstatus--purple--300)'
     }
   }
 });
@@ -90,7 +90,7 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
-  const ColorSpan = PFColors.Purple500;
+  const ColorSpan = PFColors.Purple40;
   const OverlayOpacity = 0.35;
   const OverlayWidth = 40;
 

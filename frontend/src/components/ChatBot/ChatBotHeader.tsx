@@ -31,10 +31,10 @@ type ChatBotHeaderProps = {
 };
 
 export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onSelectProviderModel, onNewChat }) => {
-  const selectedProvider = useSelector((state: KialiAppState) => state.aiChat.selectedProvider);
-  const selectedModel = useSelector((state: KialiAppState) => state.aiChat.selectedModel);
-  const displayMode = useSelector((state: KialiAppState) => state.aiChat.displayMode);
-  const providers = useSelector((state: KialiAppState) => state.aiChat.providers);
+  const selectedProvider = useSelector((state: KialiAppState) => state.ai.chat.selectedProvider);
+  const selectedModel = useSelector((state: KialiAppState) => state.ai.chat.selectedModel);
+  const displayMode = useSelector((state: KialiAppState) => state.ai.chat.displayMode);
+  const providers = useSelector((state: KialiAppState) => state.ai.chat.providers);
   const dispatch = useDispatch();
 
   if (!selectedProvider || !selectedModel) {

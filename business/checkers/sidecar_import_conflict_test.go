@@ -275,7 +275,6 @@ func TestServiceEntryCheckerSidecarImportSkipsForeignMultiMatch(t *testing.T) {
 	vals := ServiceEntryChecker{
 		Cluster:     config.DefaultClusterID,
 		ImportScope: scope,
-		Namespaces:  models.Namespaces{{Name: "istio-test1"}, {Name: "external"}},
 		ServiceEntries: []*networking_v1.ServiceEntry{
 			foreignA, foreignB, localA, localB,
 		},

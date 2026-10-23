@@ -56,6 +56,7 @@ Feature: Kiali Istio Config wizard
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    And user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
 
   @gateway-api
   @bookinfo-app
@@ -76,6 +77,31 @@ Feature: Kiali Istio Config wizard
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "k8sapigateway" should be listed in "bookinfo" namespace
+    And user deletes k8sgateway named "k8sapigateway" and the resource is no longer available
+
+  @gateway-api
+  @bookinfo-app
+  @core-2
+  Scenario: Create a K8s Gateway with an address
+    When user deletes k8sgateway named "k8sgwaddress" and the resource is no longer available
+    And user clicks in the "K8sGateway" Istio config actions
+    And user sees the "Create K8sGateway" config wizard
+    And user adds listener
+    And user types "k8sgwaddress" in the "name" input
+    And user types "default" in the "addName_0" input
+    And user types "website.com" in the "addHostname_0" input
+    And user types "8080" in the "addPort_0" input
+    And user adds a hostname
+    And user checks validation of the gateway IP address "addValue_0" input
+    And user chooses "Hostname" mode from the "addType_0" select
+    And user checks validation of the gateway hostname address "addValue_0" input
+    And user chooses "IPAddress" mode from the "addType_0" select
+    And user types "192.168.1.1" in the "addValue_0" input
+    And user previews the configuration
+    Then "192.168.1.1" should be in preview
+    And user creates the istio config
+    Then the "K8sGateway" "k8sgwaddress" should be listed in "bookinfo" namespace
+    And user deletes k8sgateway named "k8sgwaddress" and the resource is no longer available
 
   @gateway-api
   @bookinfo-app
@@ -334,9 +360,6 @@ Feature: Kiali Istio Config wizard
     And user types "default" in the "addName_0" input
     And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
     And user types "80" in the "addPort_0" input
-    And user adds a hostname
-    And user chooses "Hostname" mode from the "addType_0" select
-    And user types "google.com" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
     And user clicks in the "K8sGateway" Istio config actions
@@ -346,20 +369,22 @@ Feature: Kiali Istio Config wizard
     And user types "default" in the "addName_0" input
     And user types "bookinfo-istio-system.apps.ocp4-kqe1.maistra.upshift.redhat.com" in the "addHostname_0" input
     And user types "80" in the "addPort_0" input
-    And user adds a hostname
-    And user chooses "Hostname" mode from the "addType_0" select
-    And user types "google.com" in the "addValue_0" input
     And user previews the configuration
     And user creates the istio config
     Then the "K8sGateway" "gatewayapi-1" should be listed in "bookinfo" namespace
     And the "K8sGateway" "gatewayapi-2" should be listed in "bookinfo" namespace
+    And user is at the details page for the K8sGateway "gatewayapi-1" in the "bookinfo" namespace
+    And user is at the details page for the K8sGateway "gatewayapi-2" in the "bookinfo" namespace
+    And user is at the "istio" page
+    And user selects the "bookinfo" namespace
     And the "gatewayapi-1" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     And the "gatewayapi-2" "K8sGateway" of the "bookinfo" namespace should have a "warning"
     When viewing the detail for "gatewayapi-1"
     Then "gatewayapi-2" should be referenced
-    When user is at the "istio" page
-    And viewing the detail for "gatewayapi-2"
+    When user is at the details page for the K8sGateway "gatewayapi-2" in the "bookinfo" namespace
     And choosing to delete it
+    And user is at the details page for the K8sGateway "gatewayapi-1" in the "bookinfo" namespace
+    And the details page does not include any error or warning
     And user is at the "istio" page
     And user selects the "bookinfo" namespace
     Then the "K8sGateway" "gatewayapi-2" should not be listed in "bookinfo" namespace

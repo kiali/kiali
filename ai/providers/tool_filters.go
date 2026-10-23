@@ -57,7 +57,7 @@ func IsDefaultToolExposed(conf *config.Config, providerName string, toolName str
 	if !conf.ExternalServices.Prometheus.Enabled && mcp.IsMetricTool(toolName) {
 		return false
 	}
-	if !toolAllowedByFilter(toolName, conf.ChatAI.Tools) {
+	if !toolAllowedByFilter(toolName, conf.AI.ChatAI.Tools) {
 		return false
 	}
 
@@ -112,7 +112,7 @@ func providerToolFilter(conf *config.Config, providerName string) (config.ToolFi
 	if conf == nil || providerName == "" {
 		return config.ToolFilterConfig{}, false
 	}
-	for _, provider := range conf.ChatAI.Providers {
+	for _, provider := range conf.AI.ChatAI.Providers {
 		if provider.Name == providerName {
 			return provider.Tools, true
 		}

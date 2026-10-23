@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ##############################################################################
 # install-primary-remote.sh
@@ -71,7 +72,7 @@ else
 fi
 
 helm install istio-eastwestgateway gateway \
-  --repo https://istio-release.storage.googleapis.com/charts \
+  --repo https://blob.istio.io/istio-release/charts \
   --wait \
   -n istio-system \
   --kube-context "${CLUSTER1_CONTEXT}" \
@@ -120,7 +121,7 @@ install_istio -a "" --patch-file "${MC_WEST_YAML}" --wait "false"
 # We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
 # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
 # also creates the RBAC and if that happens Sail can't take ownership of those resources.
-kubectl --context="${CLUSTER2_CONTEXT}" wait --for='jsonpath={.status.conditions[?(@.type=="Ready")].message}="readiness probe on remote istiod failed"' istios/default --timeout=1m
+wait_for_remote_istio_pending_secret "${CLUSTER2_CONTEXT}" "default" 60
 
 # For kind we need to use the container IP otherwise the unresolvable localhost will be used.
 SERVER_FLAG=""
@@ -144,7 +145,7 @@ curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${addo
   kubectl apply --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" -f -
 
 helm install istio-eastwestgateway gateway \
-  --repo https://istio-release.storage.googleapis.com/charts \
+  --repo https://blob.istio.io/istio-release/charts \
   -n istio-system \
   --kube-context "${CLUSTER2_CONTEXT}" \
   --set name=istio-eastwestgateway \

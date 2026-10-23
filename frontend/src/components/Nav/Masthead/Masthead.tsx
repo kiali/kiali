@@ -7,8 +7,6 @@ import { RunMode } from '../../../types/ServerConfig';
 import { IstioStatus } from '../../IstioStatus/IstioStatus';
 import { UserDropdown } from './UserDropdown';
 import { HelpDropdown } from './HelpDropdown';
-import { ThemeSwitch } from './ThemeSwitch';
-import { LanguageSwitch } from './LanguageSwitch';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
 import { NotificationCenterBadge } from 'components/NotificationCenter/NotificationCenterBadge';
@@ -39,22 +37,12 @@ export const MastheadItems: React.FC = () => {
 
         <ToolbarGroup align={{ default: 'alignEnd' }}>
           <ToolbarItem>
-            <ThemeSwitch />
-          </ToolbarItem>
-
-          <ToolbarItem>
             <NotificationCenterBadge />
           </ToolbarItem>
 
           <ToolbarItem>
             <HelpDropdown />
           </ToolbarItem>
-
-          {serverConfig.kialiFeatureFlags.uiDefaults?.i18n?.showSelector && (
-            <ToolbarItem>
-              <LanguageSwitch />
-            </ToolbarItem>
-          )}
 
           <ToolbarItem className={centerItemStyle} data-test="user-dropdown">
             <UserDropdown />

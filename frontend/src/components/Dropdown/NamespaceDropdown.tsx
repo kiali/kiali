@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { difference } from 'lodash-es';
 import { kialiStyle } from 'styles/StyleUtils';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Button,
   TextInput,
@@ -10,16 +11,20 @@ import {
   Divider,
   Badge,
   Dropdown,
-  MenuToggleElement,
   MenuToggle,
   DropdownList,
   Checkbox
 } from '@patternfly/react-core';
-import { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../../store/Selectors';
+import type { KialiAppState } from '../../store/Store';
+import {
+  activeNamespacesSelector,
+  languageSelector,
+  namespaceFilterSelector,
+  namespaceItemsSelector
+} from '../../store/Selectors';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
-import { Namespace } from '../../types/Namespace';
+import type { Namespace } from '../../types/Namespace';
 import { HistoryManager, URLParam } from '../../app/History';
 import {
   BoundingClientAwareComponent,
@@ -28,10 +33,12 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import { TourStop } from '../Tour/TourStop';
 import { GraphTourStops } from '../../pages/Graph/GraphHelpTour';
+import { t } from 'utils/I18nUtils';
 
 interface ReduxStateProps {
   activeNamespaces: Namespace[];
   filter: string;
+  language: string;
   namespaces: Namespace[];
 }
 
@@ -57,20 +64,17 @@ type NamespaceDropdownState = {
 const optionBulkStyle = kialiStyle({
   marginLeft: '0.5rem',
   position: 'relative',
-  top: 8
+  top: '0.5rem'
 });
 
-const optionStyle = kialiStyle({ marginLeft: '1.0rem' });
+const optionStyle = kialiStyle({ marginLeft: '0.75rem' });
 
 const optionLabelStyle = kialiStyle({ marginLeft: '0.5rem' });
 
 const headerStyle = kialiStyle({
-  margin: '0.5rem',
-  marginTop: 0,
+  margin: '0.5rem 0.25rem',
   width: 300
 });
-
-const marginBottom = 20;
 
 const namespaceContainerStyle = kialiStyle({
   overflow: 'auto'
@@ -83,6 +87,10 @@ const dividerStyle = kialiStyle({
 const closeButtonStyle = kialiStyle({
   borderTopLeftRadius: 0,
   borderBottomLeftRadius: 0
+});
+
+const dropdownStyle = kialiStyle({
+  marginBottom: '0.25rem'
 });
 
 class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownProps, NamespaceDropdownState> {
@@ -111,7 +119,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
       )
     ) {
       // We must change the props of namespaces
-      const items = urlNamespaces.map(ns => ({ name: ns } as Namespace));
+      const items = urlNamespaces.map(ns => ({ name: ns }) as Namespace);
       this.props.setActiveNamespaces(items);
     } else if (urlNamespaces.length === 0 && this.props.activeNamespaces.length !== 0) {
       HistoryManager.setParam(URLParam.NAMESPACES, this.props.activeNamespaces.map(item => item.name).join(','));
@@ -129,14 +137,50 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     }
   }
 
+  render(): JSX.Element {
+    return (
+      <TourStop info={GraphTourStops.Namespaces}>
+        <Dropdown
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              ref={toggleRef}
+              data-test="namespace-dropdown"
+              id="namespace-selector"
+              onClick={() => this.onToggle(!this.state.isOpen)}
+              isExpanded={this.state.isOpen}
+              isDisabled={this.props.disabled}
+            >
+              {this.namespaceButtonText()}
+            </MenuToggle>
+          )}
+          isOpen={this.state.isOpen}
+          onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
+        >
+          <DropdownList data-test="namespace-dropdown-list" className={dropdownStyle}>
+            {this.getHeader()}
+            {this.getBody()}
+          </DropdownList>
+        </Dropdown>
+      </TourStop>
+    );
+  }
+
+  onNamespaceToggled = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const namespace = event.target.value;
+    const selectedNamespaces = !!this.state.selectedNamespaces.find(n => n.name === namespace)
+      ? this.state.selectedNamespaces.filter(n => n.name !== namespace)
+      : this.state.selectedNamespaces.concat([{ name: event.target.value } as Namespace]);
+    this.setState({ selectedNamespaces: selectedNamespaces });
+  };
+
   private namespaceButtonText(): JSX.Element {
     if (this.state.selectedNamespaces.length === 0) {
-      return <span>Select Namespaces</span>;
+      return <span>{t('Select Namespaces')}</span>;
     }
 
     return (
       <>
-        <span style={{ paddingRight: '0.75rem' }}>Namespace:</span>
+        <span style={{ paddingRight: '0.75rem' }}>{`${t('Namespace')}:`}</span>
         {this.state.selectedNamespaces.length === 1 ? (
           <span>{this.state.selectedNamespaces[0].name}</span>
         ) : (
@@ -159,13 +203,13 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         <Checkbox
           id="bulk-select-id"
           key="bulk-select-key"
-          aria-label="Select all"
+          aria-label={t('Select all')}
           isChecked={isChecked}
           onChange={() => {
             anySelected ? this.onBulkNone() : this.onBulkAll();
           }}
         ></Checkbox>
-        <span className={optionLabelStyle}>Select all</span>
+        <span className={optionLabelStyle}>{t('Select all')}</span>
       </div>
     );
   }
@@ -180,12 +224,12 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             aria-label="filter-namespace"
             type="text"
             name="namespace-filter"
-            placeholder="Filter by Name..."
+            placeholder={t('Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
-            <Tooltip key="ot_clear_namespace_filter" position="top" content="Clear Filter by Name">
+            <Tooltip key="ot_clear_namespace_filter" position="top" content={t('Clear Filter by Name')}>
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />
               </Button>
@@ -227,42 +271,14 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         <>
           <BoundingClientAwareComponent
             className={namespaceContainerStyle}
-            maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: marginBottom }}
+            maxHeight={{ type: PropertyType.VIEWPORT_HEIGHT_MINUS_TOP, margin: 20 }}
           >
             {namespaces}
           </BoundingClientAwareComponent>
         </>
       );
     }
-    return <div className={optionStyle}>No namespaces found</div>;
-  }
-
-  render(): JSX.Element {
-    return (
-      <TourStop info={GraphTourStops.Namespaces}>
-        <Dropdown
-          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-            <MenuToggle
-              ref={toggleRef}
-              data-test="namespace-dropdown"
-              id="namespace-selector"
-              onClick={() => this.onToggle(!this.state.isOpen)}
-              isExpanded={this.state.isOpen}
-              isDisabled={this.props.disabled}
-            >
-              {this.namespaceButtonText()}
-            </MenuToggle>
-          )}
-          isOpen={this.state.isOpen}
-          onOpenChange={(isOpen: boolean) => this.onToggle(isOpen)}
-        >
-          <DropdownList data-test="namespace-dropdown-list">
-            {this.getHeader()}
-            {this.getBody()}
-          </DropdownList>
-        </Dropdown>
-      </TourStop>
-    );
+    return <div className={optionStyle}>{t('No namespaces found')}</div>;
   }
 
   private onToggle = (isOpen: boolean): void => {
@@ -288,14 +304,6 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
     this.setState({ selectedNamespaces: remaining });
   };
 
-  onNamespaceToggled = (event): void => {
-    const namespace = event.target.value;
-    const selectedNamespaces = !!this.state.selectedNamespaces.find(n => n.name === namespace)
-      ? this.state.selectedNamespaces.filter(n => n.name !== namespace)
-      : this.state.selectedNamespaces.concat([{ name: event.target.value } as Namespace]);
-    this.setState({ selectedNamespaces: selectedNamespaces });
-  };
-
   private onFilterChange = (value: string): void => {
     this.props.setFilter(value);
   };
@@ -316,9 +324,10 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    namespaces: namespaceItemsSelector(state)!,
     activeNamespaces: activeNamespacesSelector(state),
-    filter: namespaceFilterSelector(state)
+    filter: namespaceFilterSelector(state),
+    language: languageSelector(state),
+    namespaces: namespaceItemsSelector(state)!
   };
 };
 

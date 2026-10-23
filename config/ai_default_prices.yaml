@@ -1,0 +1,736 @@
+# Default model pricing (USD per million tokens).
+# Anthropic source: https://platform.claude.com/docs/en/about-claude/pricing#model-pricing
+# OpenAI source:   https://developers.openai.com/api/docs/pricing (Standard tier, short context)
+# Google source:   https://ai.google.dev/gemini-api/docs/pricing (Standard paid tier; text rates where modalities differ)
+# cache_write_cost_per_million = prompt cache writes where published by the provider.
+# cache_read_cost_per_million  = cached input / context caching where published by the provider.
+
+models:
+  # ── Fable / Mythos (limited availability) ───────────────────────────────────
+  - provider: "anthropic"
+    model_id: "claude-fable-5-1"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 10.00
+      output_cost_per_million: 50.00
+      cache_write_cost_per_million: 12.50
+      cache_read_cost_per_million: 0.25
+
+  - provider: "anthropic"
+    model_id: "claude-mythos-preview"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 10.00
+      output_cost_per_million: 50.00
+      cache_write_cost_per_million: 12.50
+      cache_read_cost_per_million: 0.25
+
+  - provider: "anthropic"
+    model_id: "claude-fable-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 10.00
+      output_cost_per_million: 50.00
+      cache_write_cost_per_million: 12.50
+      cache_read_cost_per_million: 1.00
+
+  # ── Opus ────────────────────────────────────────────────────────────────────
+  - provider: "anthropic"
+    model_id: "claude-opus-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-8"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-7"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-6"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-5-20251101"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 25.00
+      cache_write_cost_per_million: 6.25
+      cache_read_cost_per_million: 0.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-1-20250805"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 18.75
+      cache_read_cost_per_million: 1.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-1"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 18.75
+      cache_read_cost_per_million: 1.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-20250514"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 18.75
+      cache_read_cost_per_million: 1.50
+
+  - provider: "anthropic"
+    model_id: "claude-opus-4-0"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 18.75
+      cache_read_cost_per_million: 1.50
+
+  # ── Sonnet ──────────────────────────────────────────────────────────────────
+  - provider: "anthropic"
+    model_id: "claude-sonnet-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 10.00
+      cache_write_cost_per_million: 2.50
+      cache_read_cost_per_million: 0.20
+
+  - provider: "anthropic"
+    model_id: "claude-sonnet-4-6"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 3.00
+      output_cost_per_million: 15.00
+      cache_write_cost_per_million: 3.75
+      cache_read_cost_per_million: 0.30
+
+  - provider: "anthropic"
+    model_id: "claude-sonnet-4-5-20250929"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 3.00
+      output_cost_per_million: 15.00
+      cache_write_cost_per_million: 3.75
+      cache_read_cost_per_million: 0.30
+
+  - provider: "anthropic"
+    model_id: "claude-sonnet-4-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 3.00
+      output_cost_per_million: 15.00
+      cache_write_cost_per_million: 3.75
+      cache_read_cost_per_million: 0.30
+
+  - provider: "anthropic"
+    model_id: "claude-sonnet-4-20250514"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 3.00
+      output_cost_per_million: 15.00
+      cache_write_cost_per_million: 3.75
+      cache_read_cost_per_million: 0.30
+
+  - provider: "anthropic"
+    model_id: "claude-sonnet-4-0"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 3.00
+      output_cost_per_million: 15.00
+      cache_write_cost_per_million: 3.75
+      cache_read_cost_per_million: 0.30
+
+  # ── Haiku ───────────────────────────────────────────────────────────────────
+  - provider: "anthropic"
+    model_id: "claude-haiku-4-5-20251001"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.00
+      output_cost_per_million: 5.00
+      cache_write_cost_per_million: 1.25
+      cache_read_cost_per_million: 0.10
+
+  - provider: "anthropic"
+    model_id: "claude-haiku-4-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.00
+      output_cost_per_million: 5.00
+      cache_write_cost_per_million: 1.25
+      cache_read_cost_per_million: 0.10
+
+  - provider: "anthropic"
+    model_id: "claude-3-5-haiku-20241022"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.80
+      output_cost_per_million: 4.00
+      cache_write_cost_per_million: 1.00
+      cache_read_cost_per_million: 0.08
+
+  # ── OpenAI flagship (Standard tier, short context) ──────────────────────────
+  - provider: "openai"
+    model_id: "gpt-5.6-sol"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 4.00
+      output_cost_per_million: 20.00
+      cache_write_cost_per_million: 5.00
+      cache_read_cost_per_million: 0.40
+
+  - provider: "openai"
+    model_id: "gpt-5.6-terra"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 12.00
+      cache_write_cost_per_million: 2.50
+      cache_read_cost_per_million: 0.20
+
+  - provider: "openai"
+    model_id: "gpt-5.6-luna"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.20
+      output_cost_per_million: 1.20
+      cache_write_cost_per_million: 0.25
+      cache_read_cost_per_million: 0.02
+
+  - provider: "openai"
+    model_id: "gpt-5.5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 30.00
+      cache_read_cost_per_million: 0.50
+
+  - provider: "openai"
+    model_id: "gpt-5.5-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 30.00
+      output_cost_per_million: 180.00
+
+  - provider: "openai"
+    model_id: "gpt-5.4"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.50
+      output_cost_per_million: 15.00
+      cache_read_cost_per_million: 0.25
+
+  - provider: "openai"
+    model_id: "gpt-5.4-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.75
+      output_cost_per_million: 4.50
+      cache_read_cost_per_million: 0.075
+
+  - provider: "openai"
+    model_id: "gpt-5.4-nano"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.20
+      output_cost_per_million: 1.25
+      cache_read_cost_per_million: 0.02
+
+  - provider: "openai"
+    model_id: "gpt-5.4-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 30.00
+      output_cost_per_million: 180.00
+
+  - provider: "openai"
+    model_id: "gpt-5.2"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.75
+      output_cost_per_million: 14.00
+      cache_read_cost_per_million: 0.175
+
+  - provider: "openai"
+    model_id: "gpt-5.2-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 21.00
+      output_cost_per_million: 168.00
+
+  - provider: "openai"
+    model_id: "gpt-5.1"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.25
+      output_cost_per_million: 10.00
+      cache_read_cost_per_million: 0.125
+
+  - provider: "openai"
+    model_id: "gpt-5"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.25
+      output_cost_per_million: 10.00
+      cache_read_cost_per_million: 0.125
+
+  - provider: "openai"
+    model_id: "gpt-5-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.25
+      output_cost_per_million: 2.00
+      cache_read_cost_per_million: 0.025
+
+  - provider: "openai"
+    model_id: "gpt-5-nano"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.05
+      output_cost_per_million: 0.40
+      cache_read_cost_per_million: 0.005
+
+  - provider: "openai"
+    model_id: "gpt-5-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 120.00
+
+  - provider: "openai"
+    model_id: "gpt-4.1"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 8.00
+      cache_read_cost_per_million: 0.50
+
+  - provider: "openai"
+    model_id: "gpt-4.1-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.40
+      output_cost_per_million: 1.60
+      cache_read_cost_per_million: 0.10
+
+  - provider: "openai"
+    model_id: "gpt-4.1-mini-2025-04-14"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.40
+      output_cost_per_million: 1.60
+      cache_read_cost_per_million: 0.10
+
+  - provider: "openai"
+    model_id: "gpt-4.1-nano"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.10
+      output_cost_per_million: 0.40
+      cache_read_cost_per_million: 0.025
+
+  - provider: "openai"
+    model_id: "gpt-4o"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.50
+      output_cost_per_million: 10.00
+      cache_read_cost_per_million: 1.25
+
+  - provider: "openai"
+    model_id: "gpt-4o-2024-05-13"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 15.00
+
+  - provider: "openai"
+    model_id: "gpt-4o-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.15
+      output_cost_per_million: 0.60
+      cache_read_cost_per_million: 0.075
+
+  # ── OpenAI reasoning (o-series) ─────────────────────────────────────────────
+  - provider: "openai"
+    model_id: "o1"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 15.00
+      output_cost_per_million: 60.00
+      cache_read_cost_per_million: 7.50
+
+  - provider: "openai"
+    model_id: "o1-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 150.00
+      output_cost_per_million: 600.00
+
+  - provider: "openai"
+    model_id: "o3-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 20.00
+      output_cost_per_million: 80.00
+
+  - provider: "openai"
+    model_id: "o3"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 8.00
+      cache_read_cost_per_million: 0.50
+
+  - provider: "openai"
+    model_id: "o4-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.10
+      output_cost_per_million: 4.40
+      cache_read_cost_per_million: 0.275
+
+  - provider: "openai"
+    model_id: "o4-mini-2025-04-16"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.10
+      output_cost_per_million: 4.40
+      cache_read_cost_per_million: 0.275
+
+  - provider: "openai"
+    model_id: "o3-mini"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.10
+      output_cost_per_million: 4.40
+      cache_read_cost_per_million: 0.55
+
+  # ── OpenAI cyber (Daybreak) ─────────────────────────────────────────────────
+  - provider: "openai"
+    model_id: "gpt-5.6-cyber"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 12.50
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 15.625
+      cache_read_cost_per_million: 1.25
+
+  - provider: "openai"
+    model_id: "gpt-5.5-cyber"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 12.50
+      output_cost_per_million: 75.00
+      cache_read_cost_per_million: 1.25
+
+  - provider: "openai"
+    model_id: "gpt-daybreak-blue-latest"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 4.00
+      output_cost_per_million: 20.00
+      cache_write_cost_per_million: 5.00
+      cache_read_cost_per_million: 0.40
+
+  - provider: "openai"
+    model_id: "gpt-daybreak-red-latest"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 12.50
+      output_cost_per_million: 75.00
+      cache_write_cost_per_million: 15.625
+      cache_read_cost_per_million: 1.25
+
+  # ── OpenAI specialized ──────────────────────────────────────────────────────
+  - provider: "openai"
+    model_id: "chat-latest"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 5.00
+      output_cost_per_million: 30.00
+      cache_read_cost_per_million: 0.50
+
+  - provider: "openai"
+    model_id: "gpt-5.3-codex"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.75
+      output_cost_per_million: 14.00
+      cache_read_cost_per_million: 0.175
+
+  - provider: "openai"
+    model_id: "gpt-5-search-api"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.25
+      output_cost_per_million: 10.00
+      cache_read_cost_per_million: 0.125
+
+  # ── OpenAI legacy ───────────────────────────────────────────────────────────
+  - provider: "openai"
+    model_id: "gpt-4-turbo-2024-04-09"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 10.00
+      output_cost_per_million: 30.00
+
+  - provider: "openai"
+    model_id: "gpt-4-0613"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 30.00
+      output_cost_per_million: 60.00
+
+  - provider: "openai"
+    model_id: "gpt-3.5-turbo"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.50
+      output_cost_per_million: 1.50
+
+  - provider: "openai"
+    model_id: "gpt-3.5-turbo-0125"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.50
+      output_cost_per_million: 1.50
+
+  - provider: "openai"
+    model_id: "gpt-3.5-turbo-1106"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.00
+      output_cost_per_million: 2.00
+
+  - provider: "openai"
+    model_id: "gpt-3.5-turbo-instruct"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.50
+      output_cost_per_million: 2.00
+
+  - provider: "openai"
+    model_id: "davinci-002"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 2.00
+
+  - provider: "openai"
+    model_id: "babbage-002"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.40
+      output_cost_per_million: 0.40
+
+  # ── Google Gemini 3.x (Standard paid tier) ───────────────────────────────────
+  - provider: "google"
+    model_id: "gemini-3.6-flash"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.50
+      output_cost_per_million: 7.50
+      cache_read_cost_per_million: 0.15
+
+  - provider: "google"
+    model_id: "gemini-3.5-flash"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.50
+      output_cost_per_million: 9.00
+      cache_read_cost_per_million: 0.15
+
+  - provider: "google"
+    model_id: "gemini-3.5-flash-lite"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.30
+      output_cost_per_million: 2.50
+      cache_read_cost_per_million: 0.03
+
+  - provider: "google"
+    model_id: "gemini-3.1-flash-lite"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.25
+      output_cost_per_million: 1.50
+      cache_read_cost_per_million: 0.025
+
+  - provider: "google"
+    model_id: "gemini-3-flash-preview"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.50
+      output_cost_per_million: 3.00
+      cache_read_cost_per_million: 0.05
+
+  - provider: "google"
+    model_id: "gemini-3.1-pro-preview"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 12.00
+      cache_read_cost_per_million: 0.20
+
+  - provider: "google"
+    model_id: "gemini-3.1-pro-preview-customtools"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 12.00
+      cache_read_cost_per_million: 0.20
+
+  # Prompts > 200k tokens (same model IDs, higher tier on the pricing page).
+  - provider: "google"
+    model_id: "gemini-3.1-pro-preview-200k-plus"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 4.00
+      output_cost_per_million: 18.00
+      cache_read_cost_per_million: 0.40
+
+  - provider: "google"
+    model_id: "gemini-3.1-flash-image"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.50
+      output_cost_per_million: 3.00
+
+  - provider: "google"
+    model_id: "gemini-3.1-flash-lite-image"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.25
+      output_cost_per_million: 1.50
+
+  - provider: "google"
+    model_id: "gemini-3-pro-image"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.00
+      output_cost_per_million: 12.00
+
+  # ── Google Gemini 2.5 (Standard paid tier) ────────────────────────────────────
+  - provider: "google"
+    model_id: "gemini-2.5-pro"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.25
+      output_cost_per_million: 10.00
+      cache_read_cost_per_million: 0.125
+
+  - provider: "google"
+    model_id: "gemini-2.5-pro-200k-plus"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.50
+      output_cost_per_million: 15.00
+      cache_read_cost_per_million: 0.25
+
+  - provider: "google"
+    model_id: "gemini-2.5-flash"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.30
+      output_cost_per_million: 2.50
+      cache_read_cost_per_million: 0.03
+
+  - provider: "google"
+    model_id: "gemini-2.5-flash-lite"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.10
+      output_cost_per_million: 0.40
+      cache_read_cost_per_million: 0.01
+
+  - provider: "google"
+    model_id: "gemini-2.5-flash-lite-preview-09-2025"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.10
+      output_cost_per_million: 0.40
+      cache_read_cost_per_million: 0.01
+
+  - provider: "google"
+    model_id: "gemini-2.5-flash-image"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.30
+      output_cost_per_million: 30.00
+
+  - provider: "google"
+    model_id: "gemini-2.5-computer-use-preview-10-2025"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.25
+      output_cost_per_million: 10.00
+
+  - provider: "google"
+    model_id: "gemini-2.5-computer-use-preview-10-2025-200k-plus"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 2.50
+      output_cost_per_million: 15.00
+
+  - provider: "google"
+    model_id: "gemini-robotics-er-1.6-preview"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 1.00
+      output_cost_per_million: 5.00
+
+  # ── Google embeddings (input-only billing) ────────────────────────────────────
+  - provider: "google"
+    model_id: "gemini-embedding-001"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.15
+      output_cost_per_million: 0.00
+
+  - provider: "google"
+    model_id: "gemini-embedding-2"
+    currency: "USD"
+    prices:
+      input_cost_per_million: 0.20
+      output_cost_per_million: 0.00

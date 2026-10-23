@@ -179,7 +179,7 @@ var checkDescriptors = map[string]IstioCheck{
 	},
 	"authorizationpolicy.to.wrongmethod": {
 		Code:     "KIA0102",
-		Message:  "Only HTTP methods and fully-qualified gRPC names are allowed",
+		Message:  "Only HTTP methods and Istio wildcards are allowed",
 		Severity: WarningSeverity,
 	},
 	"authorizationpolicy.nodest.matchingregistry": {
@@ -370,11 +370,6 @@ var checkDescriptors = map[string]IstioCheck{
 	"serviceentries.port.protocol.conflict": {
 		Code:     "KIA1212",
 		Message:  "ServiceEntries have conflicting protocols for the same host and port",
-		Severity: WarningSeverity,
-	},
-	"serviceentries.workloadentries.addressmatch": {
-		Code:     "KIA1201",
-		Message:  "Missing one or more addresses from matching WorkloadEntries",
 		Severity: WarningSeverity,
 	},
 	"sidecar.egress.servicenotfound": {

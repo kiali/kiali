@@ -5,13 +5,11 @@ import (
 
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 
-	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
 type SubsetPresenceChecker struct {
-	Conf           *config.Config
 	DRSubsets      models.DestinationRuleSubsets
 	IdentityDomain string
 	Namespaces     []string
@@ -99,12 +97,18 @@ func (checker SubsetPresenceChecker) Check() ([]*models.IstioCheck, bool) {
 
 func (checker SubsetPresenceChecker) subsetPresent(host string, subset string) bool {
 	vsHost := kubernetes.GetHost(host, checker.VirtualService.Namespace, checker.Namespaces, checker.IdentityDomain)
+	vsHostStr := vsHost.String()
 
-	if subsets, exists := checker.DRSubsets[vsHost.String()]; exists {
-		if drHost, hostExists := subsets[subset]; hostExists {
-			if kubernetes.FilterByHost(vsHost.String(), vsHost.Namespace, drHost.Service, drHost.Namespace, checker.IdentityDomain) {
-				return true
-			}
+	for drHostStr, subsets := range checker.DRSubsets {
+		drHost, hostExists := subsets[subset]
+		if !hostExists {
+			continue
+		}
+		if kubernetes.FilterByHost(vsHostStr, vsHost.Namespace, drHost.Service, drHost.Namespace, checker.IdentityDomain) {
+			return true
+		}
+		if kubernetes.HostWithinWildcardHost(vsHostStr, drHostStr) {
+			return true
 		}
 	}
 

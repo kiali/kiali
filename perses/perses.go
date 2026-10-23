@@ -541,7 +541,7 @@ func (s *Service) checkDashboard(conn PersesConnectionInfo, project, searchPatte
 }
 
 // checkDashboardOpenShift uses the OpenShift monitoring format for dashboard URLs
-// Format: https://external_url/monitoring/v2/dashboards/view?dashboard=istio-control-plane&project=istio-system&refresh=0s
+// Format: https://external_url/monitoring/v2/dashboards/view?dashboard=istio-control-plane-dashboard&project=istio-system&refresh=0s
 func (s *Service) checkDashboardOpenShift(conn PersesConnectionInfo, project, searchPattern string, auth *config.Auth) ([]byte, int, string, error) {
 	// For internal cluster access, use the internal URL directly
 	// For external access, use the console proxy

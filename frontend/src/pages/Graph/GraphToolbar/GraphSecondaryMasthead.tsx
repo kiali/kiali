@@ -6,9 +6,10 @@ import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from '../GraphHelpTour';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { GraphType } from 'types/Graph';
-import { capitalize, findKey, mapValues, startCase } from 'lodash-es';
+import { findKey } from 'lodash-es';
 import { TimeDurationComponent } from '../../../components/Time/TimeDurationComponent';
 import { GraphTraffic } from './GraphTraffic';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type GraphSecondaryMastheadProps = {
   disabled: boolean;
@@ -32,14 +33,20 @@ const rightToolbarStyle = kialiStyle({
   float: 'right'
 });
 
-/**
- *  Key-value pair object representation of GraphType enum.  Values are human-readable versions of enum keys.
- *
- *  Example:  GraphType => {'APP': 'App', 'VERSIONED_APP': 'VersionedApp'}
- */
-const GRAPH_TYPES = mapValues(GraphType, val => `${capitalize(startCase(val))} graph`);
+const GRAPH_TYPE_LABELS: Record<string, string> = {
+  APP: 'App graph',
+  SERVICE: 'Service graph',
+  VERSIONED_APP: 'Versioned app graph',
+  WORKLOAD: 'Workload graph'
+};
 
 export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (props: GraphSecondaryMastheadProps) => {
+  const { t, i18n } = useKialiTranslation();
+  const graphTypes = React.useMemo(
+    () => Object.fromEntries(Object.entries(GRAPH_TYPE_LABELS).map(([key, label]) => [key, t(label)])),
+    [i18n.language, t]
+  );
+
   const setGraphType = (type: string): void => {
     const graphType: GraphType = GraphType[type] as GraphType;
     if (props.graphType !== graphType) {
@@ -67,12 +74,13 @@ export const GraphSecondaryMasthead: React.FC<GraphSecondaryMastheadProps> = (pr
         <TourStop info={GraphTourStops.GraphType}>
           <span className={leftSpacerStyle}>
             <ToolbarDropdown
+              key={i18n.language}
               id={'graph_type_dropdown'}
               disabled={props.disabled || props.isNodeGraph}
               handleSelect={setGraphType}
               value={graphTypeKey}
-              label={GRAPH_TYPES[graphTypeKey]}
-              options={GRAPH_TYPES}
+              label={graphTypes[graphTypeKey]}
+              options={graphTypes}
             />
           </span>
         </TourStop>

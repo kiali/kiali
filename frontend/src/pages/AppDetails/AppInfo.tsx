@@ -15,14 +15,24 @@ import {
   Title,
   TitleSizes
 } from '@patternfly/react-core';
-import { App } from '../../types/App';
+import type { App } from '../../types/App';
 import { Spire } from '../../components/Spire/Spire';
-import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
-import { DurationInSeconds } from 'types/Common';
+import {
+  detailCardStackStyle,
+  detailGridStyle,
+  detailLeftColumnStyle,
+  detailMiniGraphStackItemStyle,
+  detailRightColumnStyle,
+  detailRightStackStyle,
+  flexFillStyle,
+  noShrinkStyle
+} from 'styles/FlexStyles';
+import type { DurationInSeconds } from 'types/Common';
 import { GraphDataSource } from 'services/GraphDataSource';
-import { AppHealth } from 'types/Health';
+import type { AppHealth } from 'types/Health';
 import { MiniGraphCard } from 'pages/Graph/MiniGraphCard';
 import { HealthStatusPopover } from '../../components/Health/HealthStatusPopover';
+import { HealthHistoryCard } from '../../components/Health/HealthHistoryCard';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { t } from 'utils/I18nUtils';
@@ -49,6 +59,50 @@ export class AppInfo extends React.Component<AppInfoProps> {
     if (this.props.duration !== prev.duration || this.props.app !== prev.app) {
       this.fetchBackend();
     }
+  }
+
+  render(): React.ReactNode {
+    const app = this.props.app;
+    const miniGraphSpan = 8;
+
+    return (
+      <div className={flexFillStyle}>
+        <Grid hasGutter={true} className={detailGridStyle}>
+          <GridItem span={4} className={detailLeftColumnStyle}>
+            <Stack className={detailCardStackStyle}>
+              {app && this.renderDetailsCard(app)}
+              {app && this.renderResourcesCard(app)}
+              {app &&
+                app.workloads &&
+                app.workloads.length > 0 &&
+                app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
+                  <StackItem>
+                    <Spire object={app} objectType="app" />
+                  </StackItem>
+                )}
+            </Stack>
+          </GridItem>
+
+          <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
+            <Stack className={detailRightStackStyle}>
+              <StackItem className={detailMiniGraphStackItemStyle}>
+                <MiniGraphCard dataSource={this.graphDataSource} />
+              </StackItem>
+              {app && (
+                <StackItem className={noShrinkStyle}>
+                  <HealthHistoryCard
+                    cluster={app.cluster}
+                    healthType="app"
+                    name={app.name}
+                    namespace={app.namespace.name}
+                  />
+                </StackItem>
+              )}
+            </Stack>
+          </GridItem>
+        </Grid>
+      </div>
+    );
   }
 
   private fetchBackend = (): void => {
@@ -135,36 +189,6 @@ export class AppInfo extends React.Component<AppInfoProps> {
           </CardBody>
         </Card>
       </StackItem>
-    );
-  }
-
-  render(): React.ReactNode {
-    const app = this.props.app;
-    const miniGraphSpan = 8;
-
-    return (
-      <div className={flexFillStyle}>
-        <Grid hasGutter={true} className={detailGridStyle}>
-          <GridItem span={4} className={detailLeftColumnStyle}>
-            <Stack className={detailCardStackStyle}>
-              {app && this.renderDetailsCard(app)}
-              {app && this.renderResourcesCard(app)}
-              {app &&
-                app.workloads &&
-                app.workloads.length > 0 &&
-                app.workloads.some(w => w.spireInfo?.isSpireManaged) && (
-                  <StackItem>
-                    <Spire object={app} objectType="app" />
-                  </StackItem>
-                )}
-            </Stack>
-          </GridItem>
-
-          <GridItem span={miniGraphSpan}>
-            <MiniGraphCard dataSource={this.graphDataSource} />
-          </GridItem>
-        </Grid>
-      </div>
     );
   }
 }

@@ -17,7 +17,6 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func IstioConfigList(
@@ -146,7 +145,6 @@ func IstioConfigDetails(
 			return
 		}
 
-		exportTo := istioConfigDetails.GetExportTo()
 		istioConfigValidations := models.IstioValidations{}
 		istioConfigReferences := models.IstioReferencesMap{}
 
@@ -156,24 +154,13 @@ func IstioConfigDetails(
 				defer func() {
 					close(validationsResult)
 				}()
-				if len(exportTo) != 0 {
-					// validations should be done per exported namespaces to apply exportTo configs
-					loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
-					for _, ns := range loadedNamespaces {
-						if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-							istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, ns.Name, gvk, object)
-							if err != nil {
-								validationsResult <- err
-							}
-							*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-							*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
-						}
-					}
-				}
-				// also validate own namespace
+				// ValidateIstioObject validates the object from its own namespace and
+				// from every namespace it is exported to, matching the background
+				// validation that produces the list-view results.
 				istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, namespace, gvk, object)
 				if err != nil {
 					validationsResult <- err
+					return
 				}
 				*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
 				*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)

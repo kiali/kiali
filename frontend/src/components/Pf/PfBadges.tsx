@@ -2,6 +2,7 @@ import { Badge, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from './PfColors';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export type PFBadgeType = {
   badge: string;
@@ -31,12 +32,12 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   FaultInjectionAbort: {
     badge: 'FI',
     tt: 'Fault Injection: Abort',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   FaultInjectionDelay: {
     badge: 'FI',
     tt: 'Fault Injection: Delay',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
 
   GRPCRoute: { badge: 'gRPC', tt: 'GRPCRoute' } as PFBadgeType,
@@ -62,7 +63,7 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   MirroredWorkload: {
     badge: 'MI',
     tt: 'Mirrored Workload',
-    style: { backgroundColor: PFColors.Purple200 }
+    style: { backgroundColor: PFColors.Purple20 }
   } as PFBadgeType,
   Namespace: { badge: 'NS', tt: 'Namespace', style: { backgroundColor: PFColors.Green600 } } as PFBadgeType,
   NetworkTraffic: {
@@ -80,12 +81,12 @@ export const PFBadges: { [key: string]: PFBadgeType } = Object.freeze({
   RequestRetry: {
     badge: 'RR',
     tt: 'Request Retry',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   RequestTimeout: {
     badge: 'RT',
     tt: 'Request Timeout',
-    style: { backgroundColor: PFColors.Purple500 }
+    style: { backgroundColor: PFColors.Purple40 }
   } as PFBadgeType,
   Rule: { badge: 'R', tt: 'Rule' } as PFBadgeType,
   Service: { badge: 'S', tt: 'Service', style: { backgroundColor: PFColors.LightGreen500 } } as PFBadgeType,
@@ -151,10 +152,12 @@ type PFBadgeProps = {
 };
 
 export const PFBadge: React.FC<PFBadgeProps> = (props: PFBadgeProps) => {
+  const { t } = useKialiTranslation();
   const key = props.keyValue || `pfbadge-${props.badge.badge}`;
   const ttKey = `tt-${key}`;
   const style = { ...props.badge.style, ...props.style };
-  const tt = props.tooltip ?? props.badge.tt;
+  const tooltip = props.tooltip ?? props.badge.tt;
+  const tt = typeof tooltip === 'string' ? t(tooltip) : tooltip;
   const className = props.size === 'sm' ? kialiBadgeSmall : kialiBadge;
 
   const badge = (

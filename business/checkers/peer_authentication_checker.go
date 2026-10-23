@@ -65,7 +65,7 @@ func (m PeerAuthenticationChecker) runChecks(peerAuthn *security_v1.PeerAuthenti
 	if peerAuthn.Spec.Selector != nil {
 		matchLabels = peerAuthn.Spec.Selector.MatchLabels
 	}
-	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(kubernetes.PeerAuthentications, matchLabels, m.WorkloadsPerNamespace))
+	enabledCheckers = append(enabledCheckers, common.SelectorNoWorkloadFoundChecker(kubernetes.PeerAuthentications, peerAuthn.Namespace, matchLabels, m.WorkloadsPerNamespace))
 	isRootNamespace := m.RootNamespaces[peerAuthn.Namespace] == peerAuthn.Namespace
 
 	if isRootNamespace {

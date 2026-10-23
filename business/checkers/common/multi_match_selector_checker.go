@@ -17,6 +17,7 @@ type GenericMultiMatchChecker struct {
 	WorkloadsPerNamespace map[string]models.Workloads
 	Path                  string
 	skipSelSubj           bool
+	skipSelectorLess      bool
 }
 
 func PeerAuthenticationMultiMatchChecker(cluster string, objectGVK schema.GroupVersionKind, pa []*security_v1.PeerAuthentication, workloadsPerNamespace map[string]models.Workloads) GenericMultiMatchChecker {
@@ -73,6 +74,7 @@ func RequestAuthenticationMultiMatchChecker(cluster string, objectGVK schema.Gro
 		WorkloadsPerNamespace: workloadsPerNamespace,
 		Path:                  "spec/selector",
 		skipSelSubj:           true,
+		skipSelectorLess:      true,
 	}
 }
 
@@ -133,7 +135,9 @@ func (ws ReferenceMap) HasMultipleReferences(wk models.IstioValidationKey) bool 
 func (m GenericMultiMatchChecker) Check() models.IstioValidations {
 	validations := models.IstioValidations{}
 
-	validations.MergeValidations(m.analyzeSelectorLessSubjects())
+	if !m.skipSelectorLess {
+		validations.MergeValidations(m.analyzeSelectorLessSubjects())
+	}
 	if !m.skipSelSubj {
 		validations.MergeValidations(m.analyzeSelectorSubjects())
 	}

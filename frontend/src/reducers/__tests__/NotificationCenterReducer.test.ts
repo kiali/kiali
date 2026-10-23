@@ -151,6 +151,68 @@ describe('NotificationCenterReducer reducer', () => {
     });
   });
 
+  it('should discard duplicate when showOnce is true', () => {
+    const date = mockDate(new Date());
+    const initialState = {
+      expanded: false,
+      groups: [
+        {
+          id: 'danger',
+          messages: [
+            {
+              id: 0,
+              seen: true,
+              isAlert: false,
+              content: 'my new message',
+              detail: 'my detail',
+              showDetail: true,
+              type: MessageType.WARNING,
+              count: 1,
+              firstTriggered: undefined,
+              created: date
+            }
+          ],
+          title: 'danger',
+          variant: 'danger' as const
+        }
+      ],
+      nextId: 1
+    };
+    const result = NotificationCenterReducer(
+      initialState,
+      NotificationCenterActions.addMessage('my new message', 'my detail', 'danger', MessageType.WARNING, true, true)
+    );
+    expect(result).toBe(initialState);
+    expect(result.groups[0].messages).toHaveLength(1);
+    expect(result.groups[0].messages[0].count).toBe(1);
+    expect(result.groups[0].messages[0].seen).toBe(true);
+    expect(result.groups[0].messages[0].isAlert).toBe(false);
+    expect(result.nextId).toBe(1);
+  });
+
+  it('should add first occurrence even when showOnce is true', () => {
+    const date = mockDate(new Date());
+    const result = NotificationCenterReducer(
+      {
+        expanded: false,
+        groups: [
+          {
+            id: 'warning',
+            messages: [],
+            title: 'Warning',
+            variant: 'warning'
+          }
+        ],
+        nextId: 0
+      },
+      NotificationCenterActions.addMessage('new warning', '', 'warning', MessageType.WARNING, true, true)
+    );
+    expect(result.groups[0].messages).toHaveLength(1);
+    expect(result.groups[0].messages[0].content).toBe('new warning');
+    expect(result.groups[0].messages[0].created).toEqual(date);
+    expect(result.nextId).toBe(1);
+  });
+
   it('should handle REMOVE_MESSAGE', () => {
     const date = mockDate(new Date());
     expect(

@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { IstioConfigItem } from '../../types/IstioConfigList';
-import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
+import type { IstioConfigItem } from '../../types/IstioConfigList';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -19,6 +20,7 @@ import { PFBadge } from '../Pf/PfBadges';
 import { IstioObjectLink } from '../Link/IstioObjectLink';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { getGVKTypeString, getIstioObjectGVK } from '../../utils/IstioConfigUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type IstioConfigCardProps = {
   items: IstioConfigItem[];
@@ -31,12 +33,13 @@ const emtpytStyle = kialiStyle({
 });
 
 export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConfigCardProps) => {
-  const columns: ThProps[] = [{ title: 'Name' }, { title: 'Status', width: 10 }];
+  const { t } = useKialiTranslation();
+  const columns: ThProps[] = [{ title: t('Name') }, { title: t('Status'), width: 10 }];
 
   const noIstioConfig: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emtpytStyle}>
       <EmptyStateBody className={emtpytStyle} data-test="istio-config-empty">
-        No Istio Config found for {props.name}
+        {t('No Istio Config found for {{name}}', { name: props.name })}
       </EmptyStateBody>
     </EmptyState>
   );
@@ -86,14 +89,14 @@ export const IstioConfigCard: React.FC<IstioConfigCardProps> = (props: IstioConf
   return (
     <Card isCompact={true} id="IstioConfigCard">
       <CardHeader actions={{ actions: <></>, hasNoOffset: false }}>
-        <Title headingLevel="h3" size={TitleSizes.lg}>
-          Istio Config
+        <Title headingLevel="h4" size={TitleSizes.md}>
+          {t('Istio Config')}
         </Title>
       </CardHeader>
 
       <CardBody>
         <SimpleTable
-          label="Istio Config List"
+          label={t('Istio Config List')}
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

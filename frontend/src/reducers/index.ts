@@ -20,11 +20,11 @@ import { IstioStatusStateReducer } from './IstioStatusState';
 import { TracingStateReducer } from './TracingState';
 import { MetricsStatsStateReducer } from './MetricsStatsState';
 import { MeshDataStateReducer } from './MeshDataState';
-import { ChatAiStateReducer } from './ChatAIState';
+import { AiStateReducer } from './ChatAIState';
 
 export const rootReducer = combineReducers<KialiAppState, KialiAppAction>({
+  ai: AiStateReducer,
   authentication: LoginStateReducer,
-  aiChat: ChatAiStateReducer,
   clusters: ClusterStateReducer,
   globalState: GlobalStateReducer,
   graph: GraphDataStateReducer,

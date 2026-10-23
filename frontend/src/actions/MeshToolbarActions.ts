@@ -8,6 +8,7 @@ export const MeshToolbarActions = {
   setHideValue: createStandardAction(ActionKeys.MESH_TOOLBAR_SET_HIDE_VALUE)<string>(),
   // Toggle actions
   toggleGateways: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_GATEWAYS),
+  toggleKiali: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_KIALI),
   toggleLegend: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_LEGEND),
   toggleWaypoints: createAction(ActionKeys.MESH_TOOLBAR_TOGGLE_WAYPOINTS)
 };

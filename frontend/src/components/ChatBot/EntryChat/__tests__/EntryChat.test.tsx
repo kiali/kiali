@@ -29,10 +29,15 @@ rstest.mock('@patternfly/chatbot', () => ({
   }) => (
     <article data-test={dataTest}>
       {name && <span className="message-name">{name}</span>}
-      {content && <span className="message-content">{content}</span>}
-      {extraContent?.beforeMainContent}
-      {extraContent?.afterMainContent}
-      {isLoading && <span aria-label="loading" role="progressbar" />}
+      {isLoading ? (
+        <span aria-label="loading" role="progressbar" />
+      ) : (
+        <>
+          {content && <span className="message-content">{content}</span>}
+          {extraContent?.beforeMainContent}
+          {extraContent?.afterMainContent}
+        </>
+      )}
     </article>
   )
 }));
@@ -104,13 +109,13 @@ describe('EntryChat', () => {
       expect(screen.getByTestId('kiali__chat-entry-ai')).toBeInTheDocument();
     });
 
-    it('renders a loading spinner while the message is streaming', () => {
+    it('renders a loading spinner while the message is streaming and no text has arrived yet', () => {
       store.dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {
             id: 'ai-stream',
             who: 'ai',
-            text: 'Thinking...',
+            text: '',
             isStreaming: true,
             isCancelled: false,
             isTruncated: false
@@ -220,6 +225,63 @@ describe('EntryChat', () => {
       );
       renderEntryChat(0);
       expect(screen.getByText('Cancelled')).toBeInTheDocument();
+    });
+  });
+
+  describe('truncated state', () => {
+    it('renders partial response text before the truncation warning', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-truncated',
+            who: 'ai',
+            text: 'Partial answer',
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: true
+          }
+        })
+      );
+      renderEntryChat(0);
+      const partialAnswer = screen.getByText('Partial answer');
+      const warnings = screen.getAllByText('Response truncated due to output length limit.');
+      expect(warnings).toHaveLength(1);
+      expect(partialAnswer.compareDocumentPosition(warnings[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('does not render a truncation warning when there is no response text', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-truncated-empty',
+            who: 'ai',
+            text: '',
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: true
+          }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.queryByText('Response truncated due to output length limit.')).not.toBeInTheDocument();
+    });
+
+    it('shows streamed text while the response is still loading once tokens arrive', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-stream-truncated',
+            who: 'ai',
+            text: 'Partial answer so far',
+            isCancelled: false,
+            isStreaming: true,
+            isTruncated: false
+          }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.getByText('Partial answer so far')).toBeInTheDocument();
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
     });
   });
 

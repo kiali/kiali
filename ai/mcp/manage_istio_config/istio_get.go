@@ -11,7 +11,6 @@ import (
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *business.Layer, conf *config.Config) (interface{}, int) {
@@ -44,7 +43,6 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 	}
 
 	validationsResult := make(chan error)
-	exportTo := istioConfigDetails.GetExportTo()
 	istioConfigValidations := models.IstioValidations{}
 	istioConfigReferences := models.IstioReferencesMap{}
 
@@ -52,24 +50,13 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 		defer func() {
 			close(validationsResult)
 		}()
-		if len(exportTo) != 0 {
-			// validations should be done per exported namespaces to apply exportTo configs
-			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-			for _, ns := range loadedNamespaces {
-				if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-					istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObject(ctx, cluster, ns.Name, gvk, object)
-					if err != nil {
-						validationsResult <- err
-					}
-					*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
-					*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)
-				}
-			}
-		}
-		// also validate own namespace
+		// ValidateIstioObject validates the object from its own namespace and
+		// from every namespace it is exported to, matching the background
+		// validation that produces the list-view results.
 		istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObject(ctx, cluster, namespace, gvk, object)
 		if err != nil {
 			validationsResult <- err
+			return
 		}
 		*istioConfigValidations = istioConfigValidations.MergeValidations(istioConfigValidationResults)
 		*istioConfigReferences = istioConfigReferences.MergeReferencesMap(istioConfigReferencesResults)

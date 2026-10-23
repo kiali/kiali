@@ -95,10 +95,20 @@ func ConvertTraceMetadata(trace tempopb.TraceSearchMetadata, serviceName string)
 
 // convertOtelSpan used for GRPC format Spans
 func convertOtelSpan(span *tempopb.Span, serviceName, traceID, rootTrace string) jaegerModels.Span {
+	// Tempo subtracts this duration itself and the subtraction is unsigned, so a span whose end
+	// precedes its start arrives already wrapped round. The rule is the same as on the HTTP search
+	// path: at or above 2^63 nanoseconds the value is a wrap rather than a duration.
+	duration := span.DurationNanos
+	if duration >= 1<<63 {
+		log.Warningf("Span [%s] of trace [%s] reports a duration of [%d]ns, which is a wrapped negative; reporting a zero duration",
+			span.SpanID, traceID, duration)
+		duration = 0
+	}
+
 	modelSpan := jaegerModels.Span{
 		SpanID:    jaegerModels.SpanID(span.SpanID),
 		TraceID:   jaegerModels.TraceID(traceID),
-		Duration:  span.DurationNanos / 1000,
+		Duration:  duration / 1000,
 		StartTime: span.StartTimeUnixNano / 1000,
 		// No more mapped data
 		Flags:         0,
@@ -119,11 +129,32 @@ func ConvertSpanSet(span otel.Span, serviceName string, traceId string, rootName
 
 	startTime, err := strconv.ParseUint(span.StartTimeUnixNano, 10, 64)
 	if err != nil {
-		log.Errorf("Error converting start time.")
+		log.Errorf("Could not read the start time %q of span [%s] in trace [%s], skipping span: %s",
+			span.StartTimeUnixNano, span.SpanID, traceId, err)
+		return nil
+	}
+	// A span with no start time is not placed anywhere on a timeline, and reporting it with a
+	// start time of zero places it at the Unix epoch instead - in the trace list, in the
+	// heatmap and in the Metrics-tab span overlay, all of which read this path.
+	if startTime == 0 {
+		log.Errorf("Span [%s] of trace [%s] on service [%s] has no start time. Skipping span",
+			span.SpanID, traceId, serviceName)
+		return nil
 	}
 	duration, err := strconv.ParseUint(span.DurationNanos, 10, 64)
 	if err != nil {
-		log.Errorf("Error converting duration.")
+		log.Errorf("Could not read the duration %q of span [%s] in trace [%s]: %s",
+			span.DurationNanos, span.SpanID, traceId, err)
+	}
+	// Tempo computes this duration itself, as an unsigned subtraction, so a span whose end precedes
+	// its start arrives already wrapped round rather than as two timestamps this function can compare:
+	// 18446744073705551616ns, for instance, is 584 years. Any nanosecond duration at or above 2^63 is
+	// such a wrap and not a duration, because the longest honest one is bounded by the time since the
+	// epoch, which is under 2^61.
+	if duration >= 1<<63 {
+		log.Warningf("Span [%s] of trace [%s] reports a duration of [%d]ns, which is a wrapped negative; reporting a zero duration",
+			span.SpanID, traceId, duration)
+		duration = 0
 	}
 
 	jaegerTraceId := ConvertId(traceId)
@@ -165,6 +196,14 @@ func getDuration(end string, start string) (uint64, error) {
 	if err != nil {
 		log.Errorf("Error converting start date: %s", err.Error())
 		return 0, err
+	}
+	// The subtraction is unsigned, and the OTLP proto only says that the end time is expected to
+	// be at or after the start time. An end before the start wraps the result round to several
+	// hundred years. A zero duration says the span's end cannot be believed and keeps the span,
+	// which is better than dropping it: it still carries its name, its service and its tags.
+	if endInt < startInt {
+		log.Warningf("Span end time [%d] is before its start time [%d], reporting a zero duration", endInt, startInt)
+		return 0, nil
 	}
 	// nano to micro
 	return (endInt - startInt) / 1000, nil

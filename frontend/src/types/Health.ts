@@ -14,7 +14,7 @@ import type { ToleranceConfig } from './ServerConfig';
 import { serverConfig } from '../config';
 import type { HealthAnnotationType } from './HealthAnnotation';
 import type { NamespaceStatus } from './NamespaceInfo';
-import { t } from 'utils/I18nUtils';
+import { formatTrafficStatusLastDuration, t } from 'utils/I18nUtils';
 
 interface HealthConfig {
   items: HealthItem[];
@@ -28,6 +28,7 @@ export const enum HealthItemType {
 
 export interface HealthItem {
   children?: HealthSubItem[];
+  durationLabel?: string;
   status: Status;
   text?: string;
   title: string;
@@ -90,8 +91,34 @@ export interface WorkloadHealthResponse {
   workloadStatus: WorkloadStatus;
 }
 
-const createTrafficTitle = (time: string): string => {
-  return t('Traffic Status (Last {{duration}})', { duration: time });
+export const getHealthItemDisplayTitle = (item: HealthItem): string => {
+  if (item.type === HealthItemType.TRAFFIC_STATUS) {
+    if (item.durationLabel) {
+      return formatTrafficStatusLastDuration(item.durationLabel);
+    }
+
+    return t('Traffic Status');
+  }
+
+  if (item.type === HealthItemType.POD_STATUS) {
+    return t('Pod Status');
+  }
+
+  return item.title;
+};
+
+export const formatHealthSubItemText = (sub: HealthSubItem): string => {
+  if (sub.text === 'Inbound' || sub.text === 'Outbound') {
+    const direction = t(sub.text);
+
+    if (!sub.value || sub.status === NA) {
+      return t('{{direction}}: {{message}}', { direction, message: t('No requests') });
+    }
+
+    return t('{{direction}}: {{percent}}%', { direction, percent: sub.value.toFixed(2) });
+  }
+
+  return sub.text;
 };
 
 /*
@@ -349,7 +376,7 @@ export const getRequestErrorsStatus = (ratio: number, tolerance?: ToleranceConfi
 export const getRequestErrorsSubItem = (thresholdStatus: ThresholdStatus, prefix: string): HealthSubItem => {
   return {
     status: thresholdStatus.status,
-    text: `${prefix}: ${thresholdStatus.status === NA ? 'No requests' : `${thresholdStatus.value.toFixed(2)}%`}`,
+    text: prefix,
     value: thresholdStatus.status === NA ? 0 : thresholdStatus.value
   };
 };
@@ -367,7 +394,10 @@ export abstract class Health {
   // Optional pre-calculated status from the backend
   public backendStatus?: CalculatedHealthStatus;
 
-  constructor(public health: HealthConfig, backendStatus?: CalculatedHealthStatus) {
+  constructor(
+    public health: HealthConfig,
+    backendStatus?: CalculatedHealthStatus
+  ) {
     this.backendStatus = backendStatus;
   }
 
@@ -451,20 +481,18 @@ export class ServiceHealth extends Health {
     if (ctx.hasSidecar || ctx.hasAmbient || isRequestHealthNotEmpty(requests)) {
       // Request errors
       const reqError = calculateErrorRate(ns, srv, 'service', requests);
-      const reqErrorsText =
-        reqError.errorRatio.global.status.status === NA
-          ? 'No requests'
-          : `${reqError.errorRatio.global.status.value.toFixed(2)}%`;
+      const globalStatus = reqError.errorRatio.global.status;
 
       const item: HealthItem = {
         type: HealthItemType.TRAFFIC_STATUS,
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
-        status: reqError.errorRatio.global.status.status,
+        durationLabel: getName(ctx.rateInterval).toLowerCase(),
+        status: globalStatus.status,
+        title: '',
         children: [
           {
-            text: `Inbound: ${reqErrorsText}`,
-            status: reqError.errorRatio.global.status.status,
-            value: reqError.errorRatio.global.status.value
+            text: 'Inbound',
+            status: globalStatus.status,
+            value: globalStatus.status === NA ? 0 : globalStatus.value
           }
         ]
       };
@@ -472,7 +500,7 @@ export class ServiceHealth extends Health {
       items.push(item);
 
       statusConfig = {
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        title: '',
         status: reqError.errorRatio.global.status.status,
         threshold: reqError.errorRatio.global.toleranceConfig,
         value: reqError.errorRatio.global.status.value
@@ -480,9 +508,9 @@ export class ServiceHealth extends Health {
     } else {
       items.push({
         type: HealthItemType.TRAFFIC_STATUS,
-        title: t('Traffic Status'),
         status: NA,
-        text: NA.name
+        text: NA.name,
+        title: ''
       });
     }
     return { items, statusConfig };
@@ -533,8 +561,8 @@ export class AppHealth extends Health {
 
       const item: HealthItem = {
         type: HealthItemType.POD_STATUS,
-        title: t('Pod Status'),
         status: podsStatus,
+        title: '',
         children: children
       };
 
@@ -551,13 +579,14 @@ export class AppHealth extends Health {
 
       const item: HealthItem = {
         type: HealthItemType.TRAFFIC_STATUS,
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        durationLabel: getName(ctx.rateInterval).toLowerCase(),
         status: both,
+        title: '',
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
 
       statusConfig = {
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        title: '',
         status: reqError.errorRatio.global.status.status,
         threshold: reqError.errorRatio.global.toleranceConfig,
         value: reqError.errorRatio.global.status.value
@@ -621,8 +650,8 @@ export class WorkloadHealth extends Health {
 
       const item: HealthItem = {
         type: HealthItemType.POD_STATUS,
-        title: t('Pod Status'),
         status: podsStatus,
+        title: '',
         children: [
           {
             text: `${workloadStatus.name}: ${workloadStatus.availableReplicas} / ${workloadStatus.desiredReplicas}`,
@@ -676,15 +705,16 @@ export class WorkloadHealth extends Health {
 
       const item: HealthItem = {
         type: HealthItemType.TRAFFIC_STATUS,
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        durationLabel: getName(ctx.rateInterval).toLowerCase(),
         status: both,
+        title: '',
         children: [getRequestErrorsSubItem(reqIn, 'Inbound'), getRequestErrorsSubItem(reqOut, 'Outbound')]
       };
 
       items.push(item);
 
       statusConfig = {
-        title: createTrafficTitle(getName(ctx.rateInterval).toLowerCase()),
+        title: '',
         status: reqError.errorRatio.global.status.status,
         threshold: reqError.errorRatio.global.toleranceConfig,
         value: reqError.errorRatio.global.status.value

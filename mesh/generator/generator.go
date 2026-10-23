@@ -157,86 +157,25 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			}
 		}
 
-		// add any Kiali instances
-		for _, ki := range cp.Cluster.KialiInstances {
-			kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
-			mesh.CheckError(err)
-
-			if es.Istio.IstioAPIEnabled {
-				kiali.AddEdge(istiod)
-			}
-
-			// add the Kiali external services...
-			extServicesHasExternal, err := addKialiExternalServices(ctx, kiali, false, meshMap, conf, esVersions, healthData, gi)
-			mesh.CheckError(err)
-			hasExternalServices = hasExternalServices || extServicesHasExternal
-		}
-
-		if hasExternalServices {
-			_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
-			mesh.CheckError(err)
-		}
-
-		// if ambient, add ztunnel
-		if gi.KialiCache.IsAmbientEnabled(cp.Cluster.Name) {
-			ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cp.Cluster.Name, fmt.Sprintf("%s=%s", config.IstioAppLabel, config.Ztunnel))
-			mesh.CheckError(err)
-
-			for _, ztunnel := range ztunnels {
-				var infraData interface{}
-
-				if len(ztunnel.Pods) > 0 {
-					dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
-					// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
-					if dump != nil {
-						infraData = dump.Config
-					}
-				}
-
-				// if we couldn't fetch a ztunnel config, just return labels and annotation
-				if infraData == nil {
-					infraData = struct {
-						Annotations         map[string]string
-						Labels              map[string]string
-						TemplateAnnotations map[string]string
-						TemplateLabels      map[string]string
-					}{
-						Annotations:         ztunnel.Annotations,
-						Labels:              ztunnel.Labels,
-						TemplateAnnotations: ztunnel.TemplateAnnotations,
-						TemplateLabels:      ztunnel.TemplateLabels,
-					}
-				}
-
-				version := models.DefaultRevisionLabel
-				if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
-					version = rev
-				}
-
-				ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeZtunnel, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
+		// add any Kiali instances and their observability dependencies
+		if o.IncludeKiali {
+			for _, ki := range cp.Cluster.KialiInstances {
+				kiali, _, err := addInfra(meshMap, mesh.InfraTypeKiali, cp.Cluster.Name, ki.Namespace, ki.ServiceName, es.Istio, ki.Version, false, "")
 				mesh.CheckError(err)
 
-				// add edge to the managing control plane
-				// Use revision/tag as primary match, version label as tie-breaker for multi-mesh
-				for _, infraNode := range meshMap {
-					if infraNode.InfraType == mesh.InfraTypeIstiod && infraNode.Cluster == ztunnel.Cluster {
-						cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
-						tag := "default"
-						if cp.Tag != nil {
-							tag = cp.Tag.Name
-						}
-						if tag != ztunnelNode.Metadata[mesh.Version] {
-							continue
-						}
-						// Revision/tag matches; use app.kubernetes.io/version as tie-breaker
-						ztunnelVersion := ztunnel.Labels[config.KubernetesVersionLabel]
-						if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
-							continue
-						}
-						infraNode.AddEdge(ztunnelNode)
-						break
-					}
+				if es.Istio.IstioAPIEnabled {
+					kiali.AddEdge(istiod)
 				}
+
+				// add the Kiali external services...
+				extServicesHasExternal, err := addKialiExternalServices(ctx, kiali, false, meshMap, conf, esVersions, healthData, gi)
+				mesh.CheckError(err)
+				hasExternalServices = hasExternalServices || extServicesHasExternal
+			}
+
+			if hasExternalServices {
+				_, _, err = addInfra(meshMap, mesh.InfraTypeCluster, mesh.External, "", "External Deployments", nil, "", true, "")
+				mesh.CheckError(err)
 			}
 		}
 
@@ -341,8 +280,62 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 	}
 
+	// Process ztunnels once per cluster after all control planes are added.
+	clusters := make([]string, 0, len(clusterMap))
+	for cluster := range clusterMap {
+		clusters = append(clusters, cluster)
+	}
+	slices.Sort(clusters)
+	for _, cluster := range clusters {
+		if !gi.KialiCache.IsAmbientEnabled(cluster) {
+			continue
+		}
+
+		ztunnels, err := gi.Business.Workload.GetAllWorkloads(ctx, cluster, fmt.Sprintf("%s=%s", config.IstioAppLabel, config.Ztunnel))
+		mesh.CheckError(err)
+
+		for _, ztunnel := range ztunnels {
+			var infraData interface{}
+
+			if len(ztunnel.Pods) > 0 {
+				dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
+				// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
+				if dump != nil {
+					infraData = dump.Config
+				}
+			}
+
+			// if we couldn't fetch a ztunnel config, just return labels and annotation
+			if infraData == nil {
+				infraData = struct {
+					Annotations         map[string]string
+					Labels              map[string]string
+					TemplateAnnotations map[string]string
+					TemplateLabels      map[string]string
+				}{
+					Annotations:         ztunnel.Annotations,
+					Labels:              ztunnel.Labels,
+					TemplateAnnotations: ztunnel.TemplateAnnotations,
+					TemplateLabels:      ztunnel.TemplateLabels,
+				}
+			}
+
+			version := models.DefaultRevisionLabel
+			if rev, ok := ztunnel.Labels[config.IstioRevisionLabel]; ok {
+				version = rev
+			}
+
+			ztunnelNode, _, err := addInfra(meshMap, mesh.InfraTypeZtunnel, ztunnel.Cluster, ztunnel.Namespace, ztunnel.Name, infraData, version, false, "")
+			mesh.CheckError(err)
+
+			if istiod := findManagingIstiod(meshMap, ztunnel.Cluster, version, ztunnel.Labels[config.KubernetesVersionLabel]); istiod != nil {
+				istiod.AddEdge(ztunnelNode)
+			}
+		}
+	}
+
 	// In local mode, add Kiali as a local infrastructure node since it's not deployed in the cluster
-	if gi.Conf.RunMode == config.RunModeLocal {
+	if o.IncludeKiali && gi.Conf.RunMode == config.RunModeLocal {
 		// Check if Kiali hasn't been added yet from any cluster
 		kialiExists := false
 		for _, node := range meshMap {
@@ -400,7 +393,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 		}
 	}
 
-	if meshDef.ExternalKiali != nil {
+	if o.IncludeKiali && meshDef.ExternalKiali != nil {
 		cluster := meshDef.ExternalKiali.Cluster.Name
 
 		// add external cluster if not already added
@@ -443,6 +436,40 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	}
 
 	return meshMap, nil
+}
+
+// findManagingIstiod returns the istiod node that manages the given ztunnel workload.
+// Revision/tag is the primary match; app.kubernetes.io/version is used as a tie-breaker.
+// When multiple control planes match, the result is deterministic (namespace, then name).
+func findManagingIstiod(meshMap mesh.MeshMap, ztunnelCluster, ztunnelRevision, ztunnelVersion string) *mesh.Node {
+	var candidates []*mesh.Node
+	for _, infraNode := range meshMap {
+		if infraNode.InfraType != mesh.InfraTypeIstiod || infraNode.Cluster != ztunnelCluster {
+			continue
+		}
+		cp := infraNode.Metadata[mesh.InfraData].(models.ControlPlane)
+		tag := models.DefaultRevisionLabel
+		if cp.Tag != nil {
+			tag = cp.Tag.Name
+		}
+		if tag != ztunnelRevision {
+			continue
+		}
+		if ztunnelVersion != "" && cp.Version != nil && cp.Version.Version != "" && ztunnelVersion != cp.Version.Version {
+			continue
+		}
+		candidates = append(candidates, infraNode)
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	slices.SortFunc(candidates, func(a, b *mesh.Node) int {
+		if cmp := strings.Compare(a.Namespace, b.Namespace); cmp != 0 {
+			return cmp
+		}
+		return strings.Compare(a.InfraName, b.InfraName)
+	})
+	return candidates[0]
 }
 
 func addInfra(meshMap mesh.MeshMap, infraType, cluster, namespace, name string, infraData interface{}, version string, isExternal bool, healthData string) (*mesh.Node, bool, error) {

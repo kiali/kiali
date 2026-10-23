@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { ComponentStatus, Status, statusSeverity } from '../../types/IstioStatus';
-import { Namespace } from '../../types/Namespace';
-import { KialiAppState } from '../../store/Store';
+import { Status, statusSeverity } from '../../types/IstioStatus';
+import type { ComponentStatus } from '../../types/IstioStatus';
+import type { Namespace } from '../../types/Namespace';
+import type { KialiAppState } from '../../store/Store';
 import { namespaceItemsSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import {
@@ -26,7 +27,8 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { homeCluster } from '../../config';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
-import { useClusterStatus, ClusterStatusMap } from '../../hooks/clusters';
+import { useClusterStatus } from '../../hooks/clusters';
+import type { ClusterStatusMap } from '../../hooks/clusters';
 
 export type { ClusterStatusMap };
 
@@ -251,11 +253,11 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
     const displayCoreMesh = combinedCoreMesh.slice(0, ISSUE_COUNT_THRESHOLD);
     const displayAddon = sortedAddon.slice(0, ISSUE_COUNT_THRESHOLD);
 
-    const formatLabel = (baseLabel: string, count: number): string => {
+    const formatLabel = (label: string, count: number): string => {
       if (count > ISSUE_COUNT_THRESHOLD) {
-        return t(`${baseLabel} ({{count}} issues)`, { count });
+        return `${label} (${t('{{count}} issue', { count })})`;
       }
-      return t(baseLabel);
+      return label;
     };
 
     return (
@@ -263,7 +265,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         {displayCoreMesh.length > 0 && (
           <>
             <Content component={ContentVariants.h6} className={coreLabelStyle}>
-              {formatLabel(isMultiMesh ? 'Mesh' : 'Core', combinedCount)}
+              {formatLabel(isMultiMesh ? t('Mesh') : t('Core'), combinedCount)}
             </Content>
             <div className={coreListStyle}>
               <IstioStatusList status={displayCoreMesh} cluster={cluster} />
@@ -273,7 +275,7 @@ export const IstioStatusComponent: React.FC<Props> = (props: Props) => {
         {displayAddon.length > 0 && (
           <>
             <Content component={ContentVariants.h6} className={addonLabelStyle}>
-              {formatLabel('Add-ons', addonCount)}
+              {formatLabel(t('Add-ons'), addonCount)}
             </Content>
             <div className={addonListStyle}>
               <IstioStatusList status={displayAddon} cluster={cluster} />
