@@ -9,6 +9,8 @@ import {
 } from '../../utils/inferenceApi';
 import { core1 } from '../../utils/suite-tags';
 
+const isOssmc = (): boolean => process.env.PLAYWRIGHT_OSSMC === 'true';
+
 test.describe('Istio Config list', () => {
   test.beforeEach(async ({ istioConfigPage, page }) => {
     await istioConfigPage.open();
@@ -67,6 +69,7 @@ test.describe('Istio Config list', () => {
   });
 
   test('K8s Inference Pool list', core1, async ({ istioConfigPage }) => {
+    test.skip(isOssmc(), 'Inference Pool list view is skipped in OSSMC');
     const crdInstalledBeforeEnsure = isInferenceApiCrdInstalled();
     if (!crdInstalledBeforeEnsure) {
       ensureInferenceApiCrds();
