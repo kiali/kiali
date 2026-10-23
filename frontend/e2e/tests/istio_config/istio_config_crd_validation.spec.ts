@@ -528,7 +528,9 @@ test.describe('Istio Config CRD validation', () => {
     // The test deletes the demo VirtualService up front. Restore it in afterEach so a failed
     // assertion cannot leak the deletion: Jenkins runs every suite sequentially against one
     // cluster, and all later suites would run without bookinfo traffic.
-    test.afterEach((_fixtures, testInfo) => {
+    test.afterEach(({ page }, testInfo) => {
+      // Playwright requires the first hook argument to be a destructuring pattern.
+      void page;
       deleteIstioConfig('AuthorizationPolicy', crdResourceName(testInfo, 'foo'), 'bookinfo');
       restoreBookinfoNetworking();
     });
