@@ -36,6 +36,14 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
     await istioConfigWizardPage.checkHostnameValidation('addHostname_0');
     await istioConfigWizardPage.typesInInput('addHostname_0', 'website.com');
     await istioConfigWizardPage.typesInInput('addPort_0', '8080');
+    // Exercise the wizard's address section. The value is intentionally not
+    // assignable by istio, which is fine here: this test asserts no validation
+    // status. (In the colliding-gateways test an unassignable address would
+    // leave a persistent AddressNotUsable warning on the survivor and break
+    // its final success assertion.)
+    await istioConfigWizardPage.addHostname();
+    await istioConfigWizardPage.chooseModeFromSelect('Hostname', 'addType_0');
+    await istioConfigWizardPage.typesInInput('addValue_0', 'google.com');
     await istioConfigWizardPage.previewConfiguration();
     await istioConfigWizardPage.createIstioConfig();
     await istioConfigPage.expectObjectListed('K8sGateway', gatewayName, namespace);
@@ -91,10 +99,11 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
         await istioConfigWizardPage.typesInInput('name', name);
         await istioConfigWizardPage.typesInInput('addName_0', 'default');
         await istioConfigWizardPage.typesInInput('addHostname_0', collidingHost);
+        // Listener-only collision (hostname+port+protocol, KIA1501). Do not add
+        // an address: istio marks unassignable Hostname addresses as
+        // AddressNotUsable (a warning check on the surviving gateway), which
+        // would never clear and break the final success assertion below.
         await istioConfigWizardPage.typesInInput('addPort_0', '80');
-        await istioConfigWizardPage.addHostname();
-        await istioConfigWizardPage.chooseModeFromSelect('Hostname', 'addType_0');
-        await istioConfigWizardPage.typesInInput('addValue_0', 'google.com');
         await istioConfigWizardPage.previewConfiguration();
         await istioConfigWizardPage.createIstioConfig();
       };
