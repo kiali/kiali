@@ -28,11 +28,11 @@ The currently supported Kiali release branches (which receive backports and secu
 
 | OSSM  | Branch | Kiali Version |
 |-------|--------|---------------|
+| 3.5   | v2.33  | 2.33          |
 | 3.4   | v2.27  | 2.27          |
 | 3.3   | v2.22  | 2.22          |
 | 3.2   | v2.17  | 2.17          |
 | 3.1   | v2.11  | 2.11          |
-| 3.0   | v2.4   | 2.4           |
 
 In addition, `master` is the active development branch for the next release.
 
