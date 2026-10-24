@@ -238,6 +238,11 @@ export const PreferencesModalComponent: React.FC<PreferencesModalProps> = ({
       value: Language.SPANISH
     },
     {
+      description: getLanguageDescription(Language.FRENCH),
+      label: getLanguageLabel(Language.FRENCH),
+      value: Language.FRENCH
+    },
+    {
       description: getLanguageDescription(Language.CHINESE),
       label: getLanguageLabel(Language.CHINESE),
       value: Language.CHINESE

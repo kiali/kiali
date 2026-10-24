@@ -14,6 +14,8 @@ export const getLanguageLabel = (language: ResolvedLanguage): string => {
       return 'English';
     case Language.SPANISH:
       return 'Español';
+    case Language.FRENCH:
+      return 'Français';
     case Language.CHINESE:
       return '中文';
     case Language.KOREAN:
@@ -28,6 +30,8 @@ export const getLanguageDescription = (language: ResolvedLanguage): string => {
       return 'Display the interface in English.';
     case Language.SPANISH:
       return 'Mostrar la interfaz en español.';
+    case Language.FRENCH:
+      return "Afficher l'interface en français.";
     case Language.CHINESE:
       return '以中文显示界面。';
     case Language.KOREAN:
@@ -40,6 +44,10 @@ const matchBrowserLanguage = (locale: string): ResolvedLanguage | undefined => {
 
   if (normalized.startsWith('es')) {
     return Language.SPANISH;
+  }
+
+  if (normalized.startsWith('fr')) {
+    return Language.FRENCH;
   }
 
   if (normalized.startsWith('zh')) {
