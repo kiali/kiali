@@ -65,24 +65,37 @@ func ClusterHealth(
 			healthTypes = []string{healthType}
 		}
 
-		// If no namespaces specified, get all namespaces for the cluster
-		if len(nss) == 0 {
-			businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
-				return
-			}
-			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
-			for _, ns := range loadedNamespaces {
-				nss = append(nss, ns.Name)
-			}
-		}
-
 		businessLayer, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Initialization error: "+err.Error())
 			return
 		}
+
+		// If no namespaces specified, get all namespaces for the cluster
+		if len(nss) == 0 {
+			loadedNamespaces, err := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			if err != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+				return
+			}
+			for _, ns := range loadedNamespaces {
+				nss = append(nss, ns.Name)
+			}
+		} else {
+			// The namespaces query parameter is user-supplied. The health data is
+			// served from a cache populated by the Kiali ServiceAccount's background
+			// monitor, so the Kubernetes API cannot enforce the user's RBAC here:
+			// validate each requested namespace explicitly and fail closed. Do not
+			// silently drop inaccessible namespaces from a multi-namespace request -
+			// partial data would make the UI show wrong aggregates.
+			for _, ns := range nss {
+				if _, err := businessLayer.Namespace.GetClusterNamespace(r.Context(), ns, cluster); err != nil {
+					RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+					return
+				}
+			}
+		}
+
 		rateInterval := parsed.Duration("rateInterval")
 		result, healthCachedHeader, err := businessLayer.Health.GetNamespaceHealth(r.Context(), nss, cluster, healthTypes, rateInterval)
 		if err != nil {
