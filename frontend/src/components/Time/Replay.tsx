@@ -8,7 +8,7 @@ import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core'
 import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { Slider } from 'components/IstioWizards/Slider/Slider';
+import { Slider } from 'components/Slider';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { toString } from './Utils';
@@ -55,29 +55,6 @@ type ReplaySpeed = {
   speed: IntervalInMilliseconds;
   text: string;
 };
-
-/**
- * Overrides for Replay use of the Slider component.
- * - to avoid the tt occluding other components (like close replay), limit to when mouse is over the slider only,
- * not the tooltip area itself.
- * - to avoid the tooltip getting clipped on the right, add padding to move the shift the "attach" point
- */
-const replaySliderStyle = kialiStyle({
-  $nest: {
-    '& .slider': {
-      $nest: {
-        '& .slider-selection.tick-slider-selection': {
-          background: `${PFColors.Replay}` // should match PFColors.Replay
-        },
-
-        '& .tooltip': {
-          pointerEvents: 'none',
-          paddingRight: '175px'
-        }
-      }
-    }
-  }
-});
 
 // key represents replay interval in milliseconds
 const replayIntervals = {
@@ -244,7 +221,6 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const selectedTime: Date = new Date(this.state.replayWindow.startTime);
     const endTime: TimeInMilliseconds = selectedTime.getTime() + this.state.replayWindow.interval;
     const endString = toString(endTime, { month: undefined, day: undefined, second: '2-digit' });
-    const ticks: number[] = Array.from(Array(this.state.replayFrameCount).keys());
     const now = Date.now();
     const maxTime: Date = new Date(now - this.state.replayWindow.interval);
     const minTime: Date = new Date(
@@ -287,27 +263,20 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         </Tooltip>
 
         <span className={sliderStyle}>
-          <div className={replaySliderStyle}>
-            <Slider
-              key={endString} // on new endTime force new slider because of bug updating tick labels
-              id="replay-slider"
-              orientation="horizontal"
-              min={0}
-              max={this.state.replayFrameCount}
-              maxLimit={this.state.replayFrameCount}
-              step={1}
-              value={this.state.replayFrame}
-              ticks={ticks}
-              tooltip={true}
-              tooltipFormatter={this.formatTooltip}
-              onSlideStop={this.setReplayFrame}
-              input={false}
-              locked={false}
-              showLock={false}
-              mirrored={false}
-              showMirror={false}
-            />
-          </div>
+          <Slider
+            key={endString} // on new endTime force new slider because of bug updating tick labels
+            id="replay-slider"
+            min={0}
+            max={this.state.replayFrameCount}
+            step={1}
+            value={this.state.replayFrame}
+            showTicks={this.state.replayFrameCount > 0}
+            hasTooltipOverThumb={true}
+            tooltipContent={this.formatTooltip(this.state.replayFrame)}
+            onChange={(_event, frame) => this.setReplayFrame(frame)}
+            onValueCommit={this.setReplayFrame}
+            railTrackFill={PFColors.Replay}
+          />
 
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (

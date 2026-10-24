@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { Slider } from './Slider/Slider';
-import { WorkloadOverview } from '../../types/ServiceInfo';
+import { RoutingSlider } from 'components/Slider';
+import type { WorkloadOverview } from '../../types/ServiceInfo';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../Pf/PfColors';
 import {
@@ -14,7 +14,8 @@ import {
 } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
-import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { BalanceScaleIcon, MigrationIcon } from '@patternfly/react-icons';
 
@@ -180,7 +181,7 @@ export class TrafficShifting extends React.Component<Props, State> {
     this.setState(
       prevState => {
         const nodeId: number[] = [];
-        let maxWeight = 100;
+        const maxWeight = 100;
 
         // Reset all mirrored workload but selected one.
         for (let i = 0; i < prevState.workloads.length; i++) {
@@ -271,7 +272,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               {workload.name}
             </div>,
 
-            <Slider
+            <RoutingSlider
               id={`slider-${workload.name}`}
               key={`slider-${workload.name}`}
               tooltip={true}
@@ -280,7 +281,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               value={workload.weight}
               min={0}
               max={workload.maxWeight}
-              maxWidth="195px"
+              maxRailWidth="195px"
               maxLimit={100}
               onSlide={value => {
                 this.onWeight(workload.name, value as number);
@@ -348,7 +349,7 @@ export class TrafficShifting extends React.Component<Props, State> {
                 <PFBadge badge={PFBadges.MirroredWorkload} position={TooltipPosition.top} />
                 {mirroredWorkload.name}
               </div>,
-              <Slider
+              <RoutingSlider
                 id={`slider-mirror-${mirroredWorkload.name}`}
                 key={`slider-mirror-${mirroredWorkload.name}`}
                 tooltip={false}
@@ -357,7 +358,7 @@ export class TrafficShifting extends React.Component<Props, State> {
                 value={mirroredWorkload.weight}
                 min={0}
                 max={100}
-                maxWidth="195px"
+                maxRailWidth="195px"
                 maxLimit={100}
                 onSlide={value => {
                   this.onWeight(mirroredWorkload.name, value as number);
