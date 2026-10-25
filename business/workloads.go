@@ -2544,8 +2544,15 @@ func (in *WorkloadService) GetZtunnelConfig(ctx context.Context, cluster, pod st
 //     conscious decision: it is a name only, the same class of information as the
 //     own-traffic telemetry (e.g. ztunnel access logs) a tenant can already see.
 func filterZtunnelDump(dump *kubernetes.ZtunnelConfigDump, accessibleNamespaces map[string]struct{}) *kubernetes.ZtunnelConfigDump {
+	// Collections are initialized as empty slices so that a completely filtered
+	// result serializes as [] instead of null: the UI tolerates null without
+	// crashing but renders its service/workload count labels incorrectly.
 	filtered := &kubernetes.ZtunnelConfigDump{
-		Config: dump.Config,
+		Certificates: []kubernetes.Certificate{},
+		Config:       dump.Config,
+		Policies:     []any{},
+		Services:     []kubernetes.Service{},
+		Workloads:    []kubernetes.Workload{},
 	}
 
 	for _, workload := range dump.Workloads {

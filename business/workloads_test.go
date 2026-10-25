@@ -2225,6 +2225,18 @@ func TestFilterZtunnelDump(t *testing.T) {
 
 	// Config is kept.
 	assert.Equal("cluster.local", filtered.Config.ClusterDomain)
+
+	// A completely filtered result must serialize the collections as [] rather
+	// than null: the UI tolerates null without crashing but renders its
+	// service/workload count labels incorrectly.
+	emptyFiltered := filterZtunnelDump(dump, map[string]struct{}{})
+	require.NotNil(t, emptyFiltered)
+	marshaled, err := json.Marshal(emptyFiltered)
+	require.NoError(t, err)
+	assert.Contains(string(marshaled), `"workloads":[]`)
+	assert.Contains(string(marshaled), `"services":[]`)
+	assert.Contains(string(marshaled), `"policies":[]`)
+	assert.Contains(string(marshaled), `"certificates":[]`)
 }
 
 // TestGetZtunnelConfigFiltersAndCacheIsUnmutated asserts that GetZtunnelConfig
