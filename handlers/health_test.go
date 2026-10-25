@@ -624,15 +624,18 @@ func TestCacheUpdateAddsNewEntry(t *testing.T) {
 }
 
 // restrictedNamespaceClient wraps a fake client and simulates a user without RBAC
-// access to one namespace: the per-namespace get is denied and the namespace list
-// is filtered (the fake clientset has no RBAC of its own). The distinct cache key
-// prevents the mock factory's SA-identity shortcut (GetSAClients returns the same
-// client instance) from serving the SA's unfiltered namespace list for this user,
-// so the namespace caches reflect exactly what this user can see - the same
-// behavior a real restricted user gets in production.
+// access to one namespace: the namespace LIST is filtered (the fake clientset has
+// no RBAC of its own) and the per-namespace get is denied. The ClusterHealth
+// handler authorizes explicit namespace requests against the user's LIST-based
+// accessible set (GetClusterNamespaces), so the list reactor is what makes the
+// 403 tests below exercise the check. The distinct cache key prevents the mock
+// factory's SA-identity shortcut (GetSAClients returns the same client instance)
+// from serving the SA's unfiltered namespace list for this user, so the cached
+// accessible set reflects exactly what this user can see - the same behavior a
+// real restricted user gets in production.
 type restrictedNamespaceClient struct {
-	kubernetes.UserClientInterface
 	deniedNamespace string
+	kubernetes.UserClientInterface
 }
 
 func (c *restrictedNamespaceClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
@@ -640,6 +643,40 @@ func (c *restrictedNamespaceClient) GetNamespace(namespace string) (*core_v1.Nam
 		return nil, errors.New("namespaces \"" + namespace + "\" is forbidden")
 	}
 	return c.UserClientInterface.GetNamespace(namespace)
+}
+
+// listAuthorizedNamespaceClient wraps a fake client and simulates a user that is
+// authorized through namespace LIST only: the namespace appears in list results
+// but the per-namespace get is denied (e.g. header auth with the default
+// require_namespace_get=false). The ClusterHealth handler must authorize such a
+// user consistently, without depending on whether the per-token namespace cache
+// is warm.
+type listAuthorizedNamespaceClient struct {
+	deniedNamespace string
+	kubernetes.UserClientInterface
+}
+
+func (c *listAuthorizedNamespaceClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+	if namespace == c.deniedNamespace {
+		return nil, errors.New("namespaces \"" + namespace + "\" is forbidden")
+	}
+	return c.UserClientInterface.GetNamespace(namespace)
+}
+
+// newListAuthorizedNamespaceClient wraps the given fake client: the denied
+// namespace stays in list results but its per-namespace get fails.
+func newListAuthorizedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, listedNamespaces []string) *listAuthorizedNamespaceClient {
+	k8s.CacheKey = "list-authorized-user"
+	listed := make([]core_v1.Namespace, 0, len(listedNamespaces))
+	for _, name := range listedNamespaces {
+		listed = append(listed, core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: name}})
+	}
+	if fakeClientset, ok := k8s.KubeClientset.(*kubefake.Clientset); ok {
+		fakeClientset.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, &core_v1.NamespaceList{Items: listed}, nil
+		})
+	}
+	return &listAuthorizedNamespaceClient{deniedNamespace: deniedNamespace, UserClientInterface: k8s}
 }
 
 // newRestrictedNamespaceClient wraps the given fake client, denying the given
@@ -750,4 +787,38 @@ func TestClusterHealthNoParamUnchanged(t *testing.T) {
 	actual, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+}
+
+// TestClusterHealthNamespacesParamListAuthorized ensures a caller that is
+// authorized through namespace LIST (but whose per-namespace GET is denied,
+// e.g. header auth with the default require_namespace_get=false) gets health
+// consistently: the authorization must not depend on whether the per-token
+// namespace cache is warm. This is a regression test for the per-namespace
+// GetClusterNamespace validation, which 403'd such users on every cache miss.
+func TestClusterHealthNamespacesParamListAuthorized(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns-victim", "victim-app"), setupMockData(), setupMockNamespace("ns-victim")}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	// The LIST includes both namespaces; only the per-namespace GET of
+	// ns-victim is denied.
+	ts, kialiCache := setupClustersHealthEndpoint(t, newListAuthorizedNamespaceClient(k8s, "ns-victim", []string{"ns", "ns-victim"}))
+
+	mockClock()
+	conf := config.NewConfig()
+
+	cachedHealth := &models.CachedHealthData{
+		AppHealth:  models.NamespaceAppHealth{},
+		Cluster:    conf.KubernetesConfig.ClusterName,
+		ComputedAt: util.Clock.Now(),
+		Duration:   "2m",
+		Namespace:  "ns-victim",
+	}
+	kialiCache.SetHealth(conf.KubernetesConfig.ClusterName, "ns-victim", cachedHealth)
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health?namespaces=ns-victim")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.Equal(t, "true", resp.Header.Get(HealthCachedHeader))
 }
