@@ -290,6 +290,11 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	var homeUserName string
 	var homeUserGroups []string
 
+	// terminatedZeroAccess tracks whether at least one session was terminated in
+	// this request because its token can no longer view any namespace. See the
+	// cookie-session branch below.
+	terminatedZeroAccess := false
+
 	// In OpenShift auth, it is possible that a session is started by a 3rd party. If that's the case, Kiali
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
@@ -363,11 +368,20 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			}
 			// Re-check namespace visibility on every request: this also terminates
 			// pre-existing sessions of users whose access has dropped to zero,
-			// instead of letting them ride until expiry.
+			// instead of letting them ride until expiry. Only the affected
+			// cluster's session is terminated and validation continues with the
+			// remaining (healthy) sessions: returning the error here would fail
+			// the whole request, and the authentication middleware would then
+			// terminate and revoke every session, including the healthy ones,
+			// logging the user out of the entire multi-cluster setup because one
+			// remote cluster lost access. (Same graceful degradation as the
+			// unauthorized-token branch above.)
 			if err := o.checkTokenCanViewNamespaces(r.Context(), session.Payload.AccessToken, session.Cluster); err != nil {
 				if errors.Is(err, ErrCannotViewNamespaces) {
 					log.Debug("Token saved in session cannot view any namespace. Terminating session...")
 					o.sessionStore.TerminateSession(r, w, session.Cluster)
+					terminatedZeroAccess = true
+					continue
 				}
 				return nil, err
 			}
@@ -436,6 +450,12 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 
 	// TODO: Handle case where user does not have access to kiali's home cluster.
 	if len(userSessions) == 0 {
+		if terminatedZeroAccess {
+			// Every session was terminated because its token can no longer view
+			// any namespace: report the specific, 401-mapped reason instead of a
+			// generic "no valid session found" (which would surface as a 500).
+			return nil, ErrCannotViewNamespaces
+		}
 		return nil, fmt.Errorf("no valid session found")
 	}
 

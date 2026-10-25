@@ -991,3 +991,62 @@ func TestOpenshiftAuthCallbackZeroNamespaceAccess(t *testing.T) {
 			"no session should be created for a zero-access user")
 	}
 }
+
+// TestValidateSessionMulticlusterPartialZeroAccess ensures that losing namespace
+// access on ONE cluster only terminates that cluster's session: the request must
+// still succeed with the healthy sessions instead of failing (which would make
+// the authentication middleware terminate and revoke every session, logging the
+// user out of the entire multi-cluster setup).
+func TestValidateSessionMulticlusterPartialZeroAccess(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The user's access on the west cluster drops to zero (e.g. RoleBindings
+	// removed): the token still authenticates but can no longer view any
+	// namespace there. The east session stays healthy.
+	zeroAccessWest := newOpenshiftAuthTestClient(t, metadataServer, false)
+	zeroAccessWest.Token = "west-zero-access"
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": zeroAccessWest,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err, "the request must succeed with the healthy east session")
+	require.Len(sessions, 1)
+	require.NotNil(sessions["east"])
+	require.Nil(sessions["west"])
+
+	// Only the west session cookie must have been dropped.
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-west" {
+			require.True(c.MaxAge < 0, "zero-access west session should have been dropped")
+		}
+		require.NotEqual(authentication.SessionCookieName+"-east", c.Name,
+			"the healthy east session must not be dropped")
+	}
+}
