@@ -696,7 +696,7 @@ func newRestrictedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace s
 			return true, &core_v1.NamespaceList{Items: allowed}, nil
 		})
 	}
-	return &restrictedNamespaceClient{UserClientInterface: k8s, deniedNamespace: deniedNamespace}
+	return &restrictedNamespaceClient{deniedNamespace: deniedNamespace, UserClientInterface: k8s}
 }
 
 // TestClusterHealthNamespacesParamInaccessible ensures the user-supplied namespaces

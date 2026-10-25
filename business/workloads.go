@@ -120,11 +120,11 @@ type LogEntry struct {
 
 type filterOpts struct {
 	app     regexp.Regexp
-	destWk  regexp.Regexp
 	destNs  regexp.Regexp
-	srcWk   regexp.Regexp
-	srcNs   regexp.Regexp
 	destSvc regexp.Regexp
+	destWk  regexp.Regexp
+	srcNs   regexp.Regexp
+	srcWk   regexp.Regexp
 }
 
 // LogOptions holds query parameter values
@@ -3346,11 +3346,11 @@ func ztunnelFilterPatterns(namespace, name, service string) (filterOpts, error) 
 	}
 
 	return filterOpts{
-		destWk:  *destWk,
 		destNs:  *destNs,
-		srcWk:   *srcWk,
-		srcNs:   *srcNs,
 		destSvc: *destSvc,
+		destWk:  *destWk,
+		srcNs:   *srcNs,
+		srcWk:   *srcWk,
 	}, nil
 }
 

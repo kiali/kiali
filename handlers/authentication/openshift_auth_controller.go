@@ -26,8 +26,13 @@ import (
 )
 
 var (
-	ErrImpersonationDenied = errors.New("impersonation denied: privileged identity")
-	ErrNotInAllowlist      = errors.New("impersonation denied: not in allowlist")
+	// ErrCannotViewNamespaces is returned when a token authenticates against the cluster
+	// but cannot view any namespace. It is a Kubernetes "unauthorized" error so the
+	// authentication middleware rejects the request with HTTP 401, mirroring the OpenID
+	// strategy's behavior for zero-privilege users.
+	ErrCannotViewNamespaces = k8serrors.NewUnauthorized("Cannot view any namespaces. Please read Kiali's RBAC documentation for more details.")
+	ErrImpersonationDenied  = errors.New("impersonation denied: privileged identity")
+	ErrNotInAllowlist       = errors.New("impersonation denied: not in allowlist")
 )
 
 // Kubernetes RBAC has no deny rules — the hardcoded guard and RBAC resourceNames
@@ -81,8 +86,8 @@ type openshiftSessionPayload struct {
 // replace an existing Kiali session. So, it is assumed that the 3rd-party
 // has its own persistence system (similarly to how 'header' auth works).
 type OpenshiftAuthController struct {
-	clusters       []string
 	clientFactory  kubernetes.ClientFactory
+	clusters       []string
 	conf           *config.Config
 	discovery      istio.MeshDiscovery
 	kialiCache     cache.KialiCache
@@ -116,8 +121,8 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 	}
 
 	return &OpenshiftAuthController{
-		clusters:       maps.Keys(clientFactory.GetSAClients()),
 		clientFactory:  clientFactory,
+		clusters:       maps.Keys(clientFactory.GetSAClients()),
 		conf:           conf,
 		discovery:      discovery,
 		kialiCache:     kialiCache,
@@ -130,12 +135,6 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
 	return nil, fmt.Errorf("support for OAuth's implicit flow has been removed")
 }
-
-// ErrCannotViewNamespaces is returned when a token authenticates against the cluster
-// but cannot view any namespace. It is a Kubernetes "unauthorized" error so the
-// authentication middleware rejects the request with HTTP 401, mirroring the OpenID
-// strategy's behavior for zero-privilege users.
-var ErrCannotViewNamespaces = k8serrors.NewUnauthorized("Cannot view any namespaces. Please read Kiali's RBAC documentation for more details.")
 
 // checkTokenCanViewNamespaces verifies that the given token can view at least one
 // namespace on the given cluster, mirroring the OpenID strategy's

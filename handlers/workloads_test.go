@@ -112,7 +112,7 @@ func setupPodLogsEndpoint(t *testing.T, k8s kubernetes.UserClientInterface, conf
 func TestPodLogsZtunnelInaccessibleNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
-	ts := setupPodLogsEndpoint(t, &restrictedNamespaceClient{UserClientInterface: k8s, deniedNamespace: "ns-victim"}, conf)
+	ts := setupPodLogsEndpoint(t, &restrictedNamespaceClient{deniedNamespace: "ns-victim", UserClientInterface: k8s}, conf)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/ns-victim/pods/victim-pod/logs?logType=ztunnel")
 	require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestPodLogsZtunnelInaccessibleNamespace(t *testing.T) {
 func TestPodLogsDefaultInaccessibleNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
-	ts := setupPodLogsEndpoint(t, &restrictedNamespaceClient{UserClientInterface: k8s, deniedNamespace: "ns-victim"}, conf)
+	ts := setupPodLogsEndpoint(t, &restrictedNamespaceClient{deniedNamespace: "ns-victim", UserClientInterface: k8s}, conf)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/ns-victim/pods/victim-pod/logs")
 	require.NoError(t, err)
@@ -177,7 +177,7 @@ func setupConfigDumpZtunnelEndpoint(t *testing.T, k8s kubernetes.UserClientInter
 func TestConfigDumpZtunnelInaccessibleNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
-	ts, _ := setupConfigDumpZtunnelEndpoint(t, &restrictedNamespaceClient{UserClientInterface: k8s, deniedNamespace: "ns-victim"}, conf)
+	ts, _ := setupConfigDumpZtunnelEndpoint(t, &restrictedNamespaceClient{deniedNamespace: "ns-victim", UserClientInterface: k8s}, conf)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/ns-victim/pods/ztunnel-abc/config_dump_ztunnel")
 	require.NoError(t, err)
