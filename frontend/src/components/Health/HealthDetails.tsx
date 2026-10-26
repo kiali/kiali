@@ -4,7 +4,7 @@ import { PFColors } from '../Pf/PfColors';
 import { Title, TitleSizes } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { createIcon } from 'config/KialiIcon';
-import { ToleranceConfig } from 'types/ServerConfig';
+import type { ToleranceConfig } from 'types/ServerConfig';
 import { t } from 'utils/I18nUtils';
 
 interface HealthDetailsProps {
@@ -84,7 +84,7 @@ export const renderTrafficStatus = (health: H.Health): React.ReactNode => {
                 return sub.status !== H.HEALTHY && showItem ? (
                   <li key={subIdx}>
                     <span style={{ marginRight: '0.5rem' }}>{createIcon(sub.status)}</span>
-                    {sub.text}
+                    {H.formatHealthSubItemText(sub)}
                   </li>
                 ) : (
                   <React.Fragment key={subIdx} />
@@ -119,7 +119,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
 
     return showTraffic ? (
       <div key={idx}>
-        {`${item.title}${item.text && item.text.length > 0 ? ': ' : ''} `}
+        {`${H.getHealthItemDisplayTitle(item)}${item.text && item.text.length > 0 ? ': ' : ''} `}
 
         {item.text}
 
@@ -131,7 +131,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
               return showItem ? (
                 <li key={subIdx}>
                   <span style={{ marginRight: '0.5rem' }}>{createIcon(sub.status)}</span>
-                  {sub.text}
+                  {H.formatHealthSubItemText(sub)}
                 </li>
               ) : (
                 <React.Fragment key={subIdx} />
@@ -152,7 +152,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
       renderErrorRate(item, idx)
     ) : (
       <div key={idx}>
-        {<>{`${item.title}${item.text && item.text.length > 0 ? ': ' : ''}`}</>}
+        {<>{`${H.getHealthItemDisplayTitle(item)}${item.text && item.text.length > 0 ? ': ' : ''}`}</>}
 
         {item.text}
 
@@ -163,7 +163,7 @@ export const HealthDetails: React.FC<HealthDetailsProps> = (props: HealthDetails
                 <li key={subIdx}>
                   <span style={{ marginRight: '0.5rem' }}>{createIcon(sub.status)}</span>
 
-                  {sub.text}
+                  {H.formatHealthSubItemText(sub)}
                 </li>
               );
             })}

@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
@@ -171,7 +172,7 @@ export const SourceBuilder: React.FC<Props> = (props: Props) => {
                   {newSourceField}
                 </MenuToggle>
               )}
-              aria-label="Source Field Select"
+              aria-label={t('Source Field Select')}
             >
               <SelectList>
                 {sourceFields.map((option, index) => (

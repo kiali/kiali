@@ -133,7 +133,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   return (
     <Td
       role="gridcell"
-      dataLabel="Details"
+      dataLabel={t('Details')}
       key={`VirtuaItem_Details_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >
@@ -189,7 +189,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <Tooltip
               key="tooltip_missing_label"
               position={TooltipPosition.top}
-              content="Layer 7 service Mesh capabilities in Istio Ambient"
+              content={t('Layer 7 service Mesh capabilities in Istio Ambient')}
             >
               <KialiIcon.Info className={classes(infoStyle, rendererInfoStyle)} />
             </Tooltip>

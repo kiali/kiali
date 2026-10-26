@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { Tabs, type TabProps } from '@patternfly/react-core';
 import { classes } from 'typestyle';
@@ -7,11 +8,13 @@ import { PFColors } from 'components/Pf/PfColors';
 import { isKioskMode } from '../../utils/SearchParamUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { contrastContentNest } from 'styles/ThemeSurfaces';
+import { CustomTimeTabsProvider } from './CustomTimeTabs';
 
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
   activeTab: string;
   className?: string;
+  customTimeTabs?: string[];
   defaultTab: string;
   id: string;
   mountOnEnter?: boolean;
@@ -122,7 +125,7 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
   };
 
   render(): React.ReactNode {
-    return (
+    const content = (
       <div className={classes(flexTabWrapperStyle, this.props.className, tabStyle)}>
         {this.props.actionsToolbar && !isKioskMode() && (
           <div className={actionsToolbarStyle}>{this.props.actionsToolbar}</div>
@@ -144,6 +147,20 @@ export class ParameterizedTabs extends React.Component<TabsProps> {
             : this.props.children.map(child => child)}
         </Tabs>
       </div>
+    );
+
+    return this.props.customTimeTabs && this.props.tabName ? (
+      <CustomTimeTabsProvider
+        names={this.props.customTimeTabs}
+        onSelect={this.props.onSelect}
+        tabMap={this.props.tabMap}
+        tabName={this.props.tabName}
+        tabs={this.props.children}
+      >
+        {content}
+      </CustomTimeTabsProvider>
+    ) : (
+      content
     );
   }
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { FormSelect, FormSelectOption, FormSelectOptionGroup } from '@patternfly/react-core';
 import { conversationEntryIds } from '../../mocks/handlers/chatbot/conversations';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ChatBotMockProps = {
   handleSelectMockConversation: (conversation: string) => void;
@@ -8,6 +9,7 @@ type ChatBotMockProps = {
 };
 
 export const ChatBotMock: React.FC<ChatBotMockProps> = ({ handleSelectMockConversation, selectedMockConversation }) => {
+  const { t } = useKialiTranslation();
   const normalizeConversationId = (conversationId: string): string =>
     conversationId
       .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -40,14 +42,14 @@ export const ChatBotMock: React.FC<ChatBotMockProps> = ({ handleSelectMockConver
     <FormSelect
       value={selectedMockConversation}
       onChange={(_event, value) => handleSelectMockConversation(value)}
-      aria-label="Select mock conversation"
+      aria-label={t('Select mock conversation')}
       width="100%"
     >
       <FormSelectOption
         isPlaceholder={true}
         key="mainSelectorMockConversation"
         value="Select one Mock Conversation"
-        label="Select one Mock Conversation"
+        label={t('Select one Mock Conversation')}
       />
       {Array.from(conversationGroups.entries()).map(([groupKey, conversationIds]) => (
         <FormSelectOptionGroup key={groupKey} label={formatConversationLabel(groupKey)}>

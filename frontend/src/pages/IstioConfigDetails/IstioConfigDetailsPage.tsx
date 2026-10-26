@@ -396,7 +396,7 @@ const IstioConfigDetailsPageComponent: React.FC<IstioConfigDetailsProps> = (prop
           }
 
           const msg: ErrorMsg = {
-            title: 'No Istio object is selected',
+            title: t('No Istio object is selected'),
             description: `${configId.objectName} is not found in the mesh`
           };
 

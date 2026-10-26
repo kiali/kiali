@@ -6,7 +6,7 @@ import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type SessionTimeoutProps = {
   onDismiss: () => void;
@@ -33,6 +33,7 @@ const sessionTimeoutTextStyle = kialiStyle({
 });
 
 export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTimeoutProps) => {
+  const { t } = useKialiTranslation();
   const textForAuthStrategy = (_strategy: AuthStrategy): React.ReactNode => {
     const line1 =
       props.timeOutCountDown <= 0

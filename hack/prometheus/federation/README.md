@@ -1,6 +1,6 @@
 # Istio metric recording rules and federation
 
-Reference artifacts and a **demo lab harness** for the [recording rules and federation guide](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation).
+Reference artifacts and a **demo lab harness** for the [recording rules and federation guide](https://kiali.io/docs/configuration/external-services/metrics/tuning/#option-1-recording-rules-and-federation-recommended).
 
 **Query target:** Kiali always queries **Federated** Prometheus (`external_services.prometheus.url`). Both Edge and Federated Prometheus are production components; mesh metrics reach Federated Prometheus via Edge recording rules and federation. Kiali self-monitoring (`kiali_*`) has three deployment options—see the [KEP](https://github.com/kiali/kiali/blob/master/design/KEPS/metric-rules/proposal.md#kiali-self-monitoring-metrics).
 
@@ -39,7 +39,7 @@ See `kiali-metrics.yml` for per-metric HA aggregation (`sum` vs `max`).
 
 Scripts and sample Prometheus deployments live under `demo/`. `demo/install.sh` targets the **Istio Prometheus add-on** in `istio-system` (kind-ci, minikube, small demos). It patches that Edge Prometheus, deploys a sample `prometheus-federated` in the same namespace, and optionally repoints Kiali.
 
-**Edge Prometheus prerequisite:** The add-on's `prometheus.yml` must already list `recording_rules.yml` under `rule_files` (default: `/etc/config/recording_rules.yml`). The install script patches `configmap/prometheus` → `data.recording_rules.yml` only; it does **not** add `rule_files` entries. `install.sh` verifies this before patching. Other Prometheus deployments (kube-prometheus-stack, Operator CRs, custom paths) are not supported by the demo script—merge `core-recording-rules.yml` and configure `rule_files` yourself per the [kiali.io guide](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-edge-prometheus).
+**Edge Prometheus prerequisite:** The add-on's `prometheus.yml` must already list `recording_rules.yml` under `rule_files` (default: `/etc/config/recording_rules.yml`). The install script patches `configmap/prometheus` → `data.recording_rules.yml` only; it does **not** add `rule_files` entries. `install.sh` verifies this before patching. Other Prometheus deployments (kube-prometheus-stack, Operator CRs, custom paths) are not supported by the demo script—merge `core-recording-rules.yml` and configure `rule_files` yourself per the [kiali.io guide](https://kiali.io/docs/configuration/external-services/metrics/tuning/#recording-rules-edge-prometheus).
 
 ```bash
 # Core Kiali federation only
@@ -58,7 +58,7 @@ Scripts and sample Prometheus deployments live under `demo/`. `demo/install.sh` 
 ./hack/prometheus/federation/demo/install.sh --switch-kiali
 ```
 
-For production, follow the [kiali.io checklist](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#integration-checklist) and apply `core-recording-rules.yml` plus federation `match[]` to your own Prometheus instances.
+For production, follow the [kiali.io checklist](https://kiali.io/docs/configuration/external-services/metrics/tuning/#integration-checklist) and apply `core-recording-rules.yml` plus federation `match[]` to your own Prometheus instances.
 
 ## Reference files
 
@@ -94,4 +94,4 @@ For production, follow the [kiali.io checklist](https://kiali.io/docs/configurat
 5. Point Kiali (`external_services.prometheus.url`) and Perses at the **Federated** Prometheus URL (never the Edge scraper).
 6. If Kiali self-monitoring is enabled, choose a `kiali_*` deployment option (shared Istio edge, dedicated Kiali edge, or direct Federated scrape)—see [KEP](https://github.com/kiali/kiali/blob/master/design/KEPS/metric-rules/proposal.md#kiali-self-monitoring-metrics). For options 1–2, apply `kiali-metrics-recording-rules.yml` on the Kiali edge and federate `kiali-metrics-federation-match.yml` to Federated Prometheus.
 
-**Multicluster:** Repeat steps 1–3 per mesh cluster (each Edge federates locally). Point each cluster's Kiali `external_services.prometheus.url` at that cluster's Federated Prometheus—or at a shared central Federated Prometheus if metrics are consolidated there. See [kiali.io multicluster guidance](https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#integration-checklist).
+**Multicluster:** Repeat steps 1–3 per mesh cluster (each Edge federates locally). Point each cluster's Kiali `external_services.prometheus.url` at that cluster's Federated Prometheus—or at a shared central Federated Prometheus if metrics are consolidated there. See [kiali.io multicluster guidance](https://kiali.io/docs/configuration/external-services/metrics/tuning/#integration-checklist).

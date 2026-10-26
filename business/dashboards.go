@@ -47,6 +47,7 @@ type DashboardsService struct {
 	namespaceLabel  string
 	promClient      prometheus.ClientInterface
 	promConfig      config.PrometheusConfig
+	workload        *models.Workload
 
 	CustomEnabled bool
 }
@@ -102,6 +103,7 @@ func NewDashboardsService(conf *config.Config, grafana *grafana.Service, promCli
 		globalNamespace: conf.Deployment.Namespace,
 		namespaceLabel:  nsLabel,
 		dashboards:      builtInDashboards.OrganizeByName(),
+		workload:        workload,
 	}
 }
 
@@ -188,8 +190,13 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 			if chart.UnitScale != 0.0 {
 				conversionParams.Scale = chart.UnitScale
 			}
-			// Group by labels is concat of what is defined in CR + what is passed as parameters
-			byLabels := append(chart.GroupLabels, params.ByLabels...)
+			// Group by labels is concat of chart GroupLabels + request ByLabels that the chart declares.
+			byLabels := append([]string{}, chart.GroupLabels...)
+			for _, lbl := range params.ByLabels {
+				if chartSupportsAggregationLabel(chart, lbl) {
+					byLabels = append(byLabels, lbl)
+				}
+			}
 			if len(chart.SortLabel) > 0 {
 				// We also need to group by the label used for sorting, if not explicitly present
 				present := false
@@ -209,7 +216,19 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 
 			filledCharts[idx] = models.ConvertChart(chart)
 			metrics := chart.GetMetrics()
+			displayNames := make([]string, 0, len(metrics))
 			for _, ref := range metrics {
+				if ref.DisplayName != "" {
+					displayNames = append(displayNames, ref.DisplayName)
+				}
+				var metricFilters string
+				if ref.IstioMetricLabelPrefix != "" && in.workload != nil {
+					metricFilters = in.buildIstioWorkloadMetricLabels(params.Namespace, ref)
+				} else if ref.UsePodSelector {
+					metricFilters = in.buildWorkloadPodMetricLabels(params.Namespace, ref.Labels)
+				} else {
+					metricFilters = appendPromLabelMatchers(filters, ref.Labels, ref.LabelRegexps)
+				}
 				var converted []models.Metric
 				var err error
 				switch chart.DataType {
@@ -218,13 +237,12 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					if chart.Aggregator != "" {
 						aggregator = chart.Aggregator
 					}
-					metric := promClient.FetchRange(ctx, ref.MetricName, filters, grouping, aggregator, &params.RangeQuery)
+					metric := promClient.FetchRange(ctx, ref.MetricName, metricFilters, grouping, aggregator, &params.RangeQuery)
 					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
 				case dashboards.Rate:
-					metric := promClient.FetchRateRange(ctx, ref.MetricName, []string{filters}, grouping, &params.RangeQuery)
-					converted, err = models.ConvertMetric(ref.DisplayName, metric, conversionParams)
+					converted, err = fetchDashboardRateMetric(ctx, promClient, ref, metricFilters, grouping, &params.RangeQuery, conversionParams)
 				default:
-					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, filters, grouping, &params.RangeQuery)
+					histo := promClient.FetchHistogramRange(ctx, ref.MetricName, metricFilters, grouping, &params.RangeQuery)
 					converted, err = models.ConvertHistogram(ref.DisplayName, histo, conversionParams)
 				}
 
@@ -235,6 +253,7 @@ func (in *DashboardsService) GetDashboard(ctx context.Context, params models.Das
 					filledCharts[idx].Metrics = append(filledCharts[idx].Metrics, converted...)
 				}
 			}
+			filledCharts[idx].Metrics = models.EnsureDisplayNameMetrics(filledCharts[idx].Metrics, displayNames)
 		}(i, item.Chart)
 	}
 
@@ -412,12 +431,135 @@ func (in *DashboardsService) buildLabelsQueryString(namespace string, labelsFilt
 	return labels
 }
 
+// buildWorkloadPodMetricLabels builds a selector for cAdvisor-style metrics scoped to the
+// workload's pods (plus any extra exact label matchers such as container="istio-proxy").
+func (in *DashboardsService) buildWorkloadPodMetricLabels(namespace string, extraLabels map[string]string) string {
+	namespaceLabel := in.namespaceLabel
+	if namespaceLabel == "" {
+		namespaceLabel = defaultNamespaceLabel
+	}
+
+	podNames := make([]string, 0)
+	if in.workload != nil {
+		for _, pod := range in.workload.Pods {
+			if pod == nil || pod.Name == "" {
+				continue
+			}
+			podNames = append(podNames, escapePromLabelValue(pod.Name))
+		}
+		sort.Strings(podNames)
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, `{%s="%s"`, namespaceLabel, namespace)
+	if len(podNames) == 1 {
+		fmt.Fprintf(&b, `,pod="%s"`, podNames[0])
+	} else if len(podNames) > 1 {
+		fmt.Fprintf(&b, `,pod=~"%s"`, strings.Join(podNames, "|"))
+	}
+	keys := make([]string, 0, len(extraLabels))
+	for key := range extraLabels {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(key), escapePromLabelValue(extraLabels[key]))
+	}
+	for labelName, labelValue := range in.promConfig.QueryScope {
+		fmt.Fprintf(&b, `,%s="%s"`, prometheus.SanitizeLabelName(labelName), escapePromLabelValue(labelValue))
+	}
+	b.WriteByte('}')
+	return b.String()
+}
+
+// buildIstioWorkloadMetricLabels builds a Prometheus selector using Istio-intrinsic
+// workload labels instead of scrape-based labels.  The prefix (from
+// IstioMetricLabelPrefix) determines the label names (e.g. "source" produces
+// source_workload, source_workload_namespace).  Per-metric Labels and
+// LabelRegexps are appended.
+func (in *DashboardsService) buildIstioWorkloadMetricLabels(namespace string, ref dashboards.MonitoringDashboardMetric) string {
+	workloadName := ""
+	if in.workload != nil {
+		workloadName = in.workload.Name
+	}
+
+	direction := istioMetricLabelPrefixToDirection(ref.IstioMetricLabelPrefix)
+	lb := NewMetricsLabelsBuilder(direction, in.conf)
+	lb.Workload(workloadName, namespace).QueryScope()
+
+	return appendPromLabelMatchers(lb.Build(), ref.Labels, ref.LabelRegexps)
+}
+
+// chartSupportsAggregationLabel reports whether a chart declares an aggregation for label,
+// so request ByLabels are only applied to charts that can meaningfully group by that label.
+func chartSupportsAggregationLabel(chart dashboards.MonitoringDashboardChart, label string) bool {
+	for _, agg := range chart.Aggregations {
+		if agg.Label == label {
+			return true
+		}
+	}
+	for _, groupLabel := range chart.GroupLabels {
+		if groupLabel == label {
+			return true
+		}
+	}
+	return false
+}
+
+// istioMetricLabelPrefixToDirection maps an IstioMetricLabelPrefix value
+// ("source" or "destination") to the MetricsLabelsBuilder direction.
+func istioMetricLabelPrefixToDirection(prefix string) string {
+	if prefix == "source" {
+		return "outbound"
+	}
+	return "inbound"
+}
+
 // escapePromLabelValue escapes backslashes and double-quotes in a PromQL label value
 // so that user-supplied strings cannot break out of the surrounding "..." literal.
 func escapePromLabelValue(v string) string {
 	v = strings.ReplaceAll(v, `\`, `\\`)
 	v = strings.ReplaceAll(v, `"`, `\"`)
 	return v
+}
+
+// appendPromLabels merges exact label matchers into an existing Prometheus label selector.
+func appendPromLabels(selector string, labels map[string]string) string {
+	return appendPromLabelMatchers(selector, labels, nil)
+}
+
+// appendPromLabelMatchers merges exact (=) and regex (=~) label matchers into a selector.
+func appendPromLabelMatchers(selector string, labels, labelRegexps map[string]string) string {
+	if len(labels) == 0 && len(labelRegexps) == 0 {
+		return selector
+	}
+
+	body := strings.TrimSpace(selector)
+	body = strings.TrimPrefix(body, "{")
+	body = strings.TrimSuffix(body, "}")
+
+	var b strings.Builder
+	b.WriteByte('{')
+	b.WriteString(body)
+
+	appendMatchers := func(matchers map[string]string, op string) {
+		keys := make([]string, 0, len(matchers))
+		for key := range matchers {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			if b.Len() > 1 {
+				b.WriteByte(',')
+			}
+			fmt.Fprintf(&b, `%s%s"%s"`, prometheus.SanitizeLabelName(key), op, escapePromLabelValue(matchers[key]))
+		}
+	}
+	appendMatchers(labels, "=")
+	appendMatchers(labelRegexps, "=~")
+
+	b.WriteByte('}')
+	return b.String()
 }
 
 type istioChart struct {
@@ -717,4 +859,39 @@ func extractDashboardsFromAnnotation(pod models.Pod, annotation string) []string
 		}
 	}
 	return dashboards
+}
+
+func fetchDashboardRateMetric(
+	ctx context.Context,
+	promClient prometheus.ClientInterface,
+	ref dashboards.MonitoringDashboardMetric,
+	filters, grouping string,
+	q *prometheus.RangeQuery,
+	conversionParams models.ConversionParams,
+) ([]models.Metric, error) {
+	metricNames := rateMetricNameCandidates(ref.MetricName)
+	for i, metricName := range metricNames {
+		metric := promClient.FetchRateRange(ctx, metricName, []string{filters}, grouping, q)
+		converted, err := models.ConvertMetric(ref.DisplayName, metric, conversionParams)
+		if err != nil {
+			return nil, err
+		}
+		if len(converted) > 0 || i == len(metricNames)-1 {
+			return converted, nil
+		}
+	}
+	return nil, nil
+}
+
+func rateMetricNameCandidates(metricName string) []string {
+	if metricName == "" {
+		return nil
+	}
+	if strings.HasSuffix(metricName, "_total") {
+		return []string{metricName}
+	}
+	if strings.HasSuffix(metricName, "_rq") {
+		return []string{metricName, metricName + "_total"}
+	}
+	return []string{metricName}
 }

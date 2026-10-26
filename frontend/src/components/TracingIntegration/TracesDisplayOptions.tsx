@@ -1,20 +1,13 @@
 import * as React from 'react';
-import {
-  Checkbox,
-  Dropdown,
-  DropdownList,
-  MenuToggle,
-  MenuToggleElement,
-  Radio,
-  Tooltip,
-  TooltipPosition
-} from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Checkbox, Dropdown, DropdownList, MenuToggle, Radio, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { itemStyleWithoutInfo, menuStyle, titleStyle } from 'styles/DropdownStyles';
 import { HistoryManager, URLParam } from 'app/History';
 import { KialiIcon } from 'config/KialiIcon';
 import { TraceLimit } from 'components/Metrics/TraceLimit';
 import { infoStyle } from 'styles/IconStyle';
 import { serverConfig } from '../../config';
+import { t } from 'utils/I18nUtils';
 
 export interface QuerySettings {
   errorsOnly: boolean;
@@ -96,10 +89,6 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     };
   }
 
-  private onToggle = (isOpen): void => {
-    this.setState({ isOpen: isOpen });
-  };
-
   render(): React.ReactNode {
     const { isOpen } = this.state;
 
@@ -113,7 +102,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             onClick={() => this.onToggle(!isOpen)}
             isExpanded={isOpen}
           >
-            Display
+            {t('Display')}
           </MenuToggle>
         )}
         isOpen={isOpen}
@@ -124,12 +113,16 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
     );
   }
 
+  private onToggle = (isOpen): void => {
+    this.setState({ isOpen: isOpen });
+  };
+
   private getPopoverContent(): React.ReactNode {
     return (
       <div id="traces-display-menu" className={menuStyle}>
         <div style={{ marginTop: '0.5rem' }}>
           <span className={titleStyle} style={{ paddingRight: 0 }}>
-            Filter by percentile
+            {t('Filter by percentile')}
           </span>
           <Tooltip
             key="tooltip_filter_by_percentile"
@@ -137,9 +130,9 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
             content={
               <div style={{ textAlign: 'left' }}>
                 <div>
-                  These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on
-                  span durations. Thus, the filtered traces are the ones where at least one span for the service
-                  satisfies the duration criteria.
+                  {t(
+                    'These percentiles are computed from metrics. To refresh them, reload the page. The filter applies on span durations. Thus, the filtered traces are the ones where at least one span for the service satisfies the duration criteria.'
+                  )}
                 </div>
               </div>
             }
@@ -149,7 +142,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
         </div>
 
         {percentilesOptions.map(item => {
-          let label = item.labelText;
+          let label = item.id === 'all' ? t('All') : item.labelText;
           if (this.computedPercentiles) {
             const val = this.computedPercentiles!.get(item.id);
             if (val) {
@@ -172,14 +165,14 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           );
         })}
 
-        <div className={titleStyle}>Errors</div>
+        <div className={titleStyle}>{t('Errors')}</div>
         <div>
           <label className={itemStyleWithoutInfo}>
             <Checkbox
               id="errors-only"
               name="errors-only"
               isChecked={this.state.errorsOnly}
-              label="Show only traces with errors"
+              label={t('Show only traces with errors')}
               onChange={(_event, checked: boolean) => this.onErrorsOnlyChanged(checked)}
               value="errors-only"
             />
@@ -190,18 +183,18 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
           asRadio={true}
           initialLimit={this.state.limit}
           onLimitChange={this.onLimitChanged}
-          title="Trace limit"
+          title={t('Trace limit')}
           titleClassName={titleStyle}
         />
 
-        <div className={titleStyle}>Value axis</div>
+        <div className={titleStyle}>{t('Value axis')}</div>
         <div>
           <label className={itemStyleWithoutInfo}>
             <Radio
               id="yaxis-full"
               name="yaxis-full"
               isChecked={!this.state.showSpansAverage}
-              label="Full trace duration"
+              label={t('Full trace duration')}
               onChange={() => this.onValueAxisChanged(false)}
               value="yaxis-full"
             />
@@ -213,7 +206,7 @@ export class TracesDisplayOptions extends React.Component<Props, State> {
               id="yaxis-avg"
               name="yaxis-avg"
               isChecked={this.state.showSpansAverage}
-              label="Spans average duration"
+              label={t('Spans average duration')}
               onChange={() => this.onValueAxisChanged(true)}
               value="yaxis-avg"
             />

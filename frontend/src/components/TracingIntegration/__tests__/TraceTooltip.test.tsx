@@ -20,11 +20,11 @@ rstest.mock('components/Charts/CustomTooltip', () => ({
 }));
 
 import { computeFlyoutOrientation, TraceLabel } from '../TraceTooltip';
-import { JaegerTrace } from 'types/TracingInfo';
-import { StatsMatrix } from 'utils/tracing/TraceStats';
+import type { JaegerTrace } from 'types/TracingInfo';
+import type { StatsMatrix } from 'utils/tracing/TraceStats';
 
 const makeTrace = (): JaegerTrace =>
-  (({
+  ({
     traceID: 'abc123',
     traceName: 'test-trace',
     spans: [],
@@ -33,7 +33,7 @@ const makeTrace = (): JaegerTrace =>
     endTime: Date.now() * 1000 + 5000000,
     services: [],
     processes: {}
-  } as unknown) as JaegerTrace);
+  }) as unknown as JaegerTrace;
 
 const makeMatrix = (withValues: boolean): StatsMatrix => {
   const matrix: (number | undefined)[][] = [

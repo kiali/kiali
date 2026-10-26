@@ -64,6 +64,23 @@ type MonitoringDashboardChart struct {
 type MonitoringDashboardMetric struct {
 	MetricName  string `yaml:"metricName"`
 	DisplayName string `yaml:"displayName"`
+	// IstioMetricLabelPrefix, when set to "source" or "destination", replaces
+	// scrape-based label filters with Istio-intrinsic workload labels whose
+	// names are prefixed with this value (e.g. source_workload,
+	// destination_workload_namespace).  Required for metrics like
+	// istio_requests_total whose scrape labels are stripped in federated
+	// Prometheus setups.
+	IstioMetricLabelPrefix string `yaml:"istioMetricLabelPrefix"`
+	// Labels are optional exact Prometheus label matchers merged into the
+	// per-metric query (e.g. container="istio-proxy").
+	Labels map[string]string `yaml:"labels"`
+	// LabelRegexps are optional regex Prometheus label matchers merged into
+	// the per-metric query (e.g. phase=~"Running|Pending").
+	LabelRegexps map[string]string `yaml:"labelRegexps"`
+	// UsePodSelector scopes the query to the workload's pod names instead of
+	// app/version labels.  Needed for cAdvisor metrics such as
+	// container_memory_working_set_bytes that lack app labels.
+	UsePodSelector bool `yaml:"usePodSelector"`
 }
 
 type MonitoringDashboardAggregation struct {

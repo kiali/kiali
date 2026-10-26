@@ -27,8 +27,15 @@ import { INITIAL_METRICS_STATS_STATE } from '../reducers/MetricsStatsState';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { INITIAL_MESH_STATE } from 'reducers/MeshDataState';
 import { webRoot } from 'app/History';
-import { INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
-import { ColorScheme, ContrastMode } from 'types/Common';
+import { INITIAL_AI_RIGHT_VIEW_STATE, INITIAL_CHAT_AI_STATE } from 'reducers/ChatAIState';
+import { Theme } from 'types/Common';
+import {
+  isColorScheme,
+  isContrastMode,
+  isLanguagePreference,
+  isLegacyColorSchemeTheme,
+  isTheme
+} from 'utils/PreferenceValidation';
 
 declare const window;
 
@@ -78,33 +85,27 @@ const globalStatePersistPaths = ['colorScheme', 'contrastMode', 'language', 'the
  * added to GlobalState get sane defaults without breaking existing persisted sessions.
  */
 export const migratePersistedGlobalState = (outboundState: Partial<GlobalState> & { theme?: string }): GlobalState => {
-  const isLegacyColorSchemeTheme = outboundState.theme === 'Light' || outboundState.theme === 'Dark';
-  const legacyColorScheme = isLegacyColorSchemeTheme ? outboundState.theme : undefined;
-  const theme = isLegacyColorSchemeTheme
-    ? 'default'
-    : outboundState.theme === 'default' || outboundState.theme === 'felt'
+  const legacyColorSchemeTheme = isLegacyColorSchemeTheme(outboundState.theme);
+  const legacyColorScheme = legacyColorSchemeTheme ? outboundState.theme : undefined;
+  const theme = legacyColorSchemeTheme
+    ? Theme.DEFAULT
+    : isTheme(outboundState.theme)
       ? outboundState.theme
       : INITIAL_GLOBAL_STATE.theme;
   const rawColorScheme = outboundState.colorScheme;
-  const normalizedColorScheme =
-    rawColorScheme === ColorScheme.LIGHT || rawColorScheme === ColorScheme.DARK || rawColorScheme === ColorScheme.SYSTEM
-      ? rawColorScheme
-      : undefined;
+  const normalizedColorScheme = isColorScheme(rawColorScheme) ? rawColorScheme : undefined;
   const colorScheme = normalizedColorScheme || legacyColorScheme || INITIAL_GLOBAL_STATE.colorScheme;
   const rawContrastMode = outboundState.contrastMode;
-  const contrastMode =
-    rawContrastMode === ContrastMode.GLASS ||
-    rawContrastMode === ContrastMode.HIGH_CONTRAST ||
-    rawContrastMode === ContrastMode.DEFAULT ||
-    rawContrastMode === ContrastMode.SYSTEM
-      ? rawContrastMode
-      : INITIAL_GLOBAL_STATE.contrastMode;
+  const contrastMode = isContrastMode(rawContrastMode) ? rawContrastMode : INITIAL_GLOBAL_STATE.contrastMode;
+  const rawLanguage = outboundState.language;
+  const language = isLanguagePreference(rawLanguage) ? rawLanguage : INITIAL_GLOBAL_STATE.language;
 
   return {
     ...INITIAL_GLOBAL_STATE,
     ...outboundState,
     colorScheme,
     contrastMode,
+    language,
     theme
   };
 };
@@ -156,6 +157,7 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
 const initialStore: KialiAppState = {
   ai: {
     chat: INITIAL_CHAT_AI_STATE,
+    consumption: INITIAL_AI_RIGHT_VIEW_STATE,
     enabled: false
   },
   authentication: INITIAL_LOGIN_STATE,

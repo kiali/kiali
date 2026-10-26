@@ -39,9 +39,9 @@ import {
   isParentOwnedAppearance,
   syncReduxAppearanceFromDocument
 } from 'utils/AppearanceUtils';
-import { i18n } from 'i18n';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import type { ChatAIConfig } from 'types/Chatbot';
+import { initializeLanguage, registerSystemLanguageListener } from 'utils/LanguageUtils';
+import type { AIConfig } from 'types/Chatbot';
 
 interface ReduxStateProps {
   authenticated: boolean;
@@ -53,7 +53,7 @@ interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
   setActiveNamespaces: (namespaces: Namespace[]) => void;
-  setChatAI: (chatAI: ChatAIConfig) => void;
+  setAI: (ai: AIConfig) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -93,6 +93,7 @@ class AuthenticationControllerComponent extends React.Component<
   // before transitioning to the "Loading" page.
   private readonly postLoginMSTillTransition = 3000;
   private promises = new PromisesRegistry();
+  private unregisterSystemLanguageListener?: () => void;
 
   constructor(props: AuthenticationControllerProps) {
     super(props);
@@ -130,6 +131,7 @@ class AuthenticationControllerComponent extends React.Component<
       }
     }
 
+    this.unregisterSystemLanguageListener = registerSystemLanguageListener();
     this.setDocLayout();
   }
 
@@ -153,6 +155,7 @@ class AuthenticationControllerComponent extends React.Component<
 
   componentWillUnmount(): void {
     this.promises.cancelAll();
+    this.unregisterSystemLanguageListener?.();
   }
 
   render(): React.ReactNode {
@@ -207,7 +210,13 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
-      this.props.setChatAI(configs[1].data.ai.chat);
+      this.props.setAI({
+        ...configs[1].data.ai,
+        consumption: configs[1].data.ai.consumption ?? {
+          allowed: false,
+          enabled: false
+        }
+      });
       this.applyUIDefaults();
 
       // Notify the user about Prometheus availability.
@@ -244,15 +253,7 @@ class AuthenticationControllerComponent extends React.Component<
     const uiDefaults = serverConfig.kialiFeatureFlags.uiDefaults;
 
     if (uiDefaults) {
-      // Set I18n language
-      const language = store.getState().globalState.language || uiDefaults.i18n.language;
-
-      // Set language to default English value to force React re-render on language change
-      store.dispatch(GlobalActions.setLanguage('en'));
-
-      i18n.changeLanguage(language).then(() => {
-        store.dispatch(GlobalActions.setLanguage(language));
-      });
+      initializeLanguage();
 
       // Duration (aka metricsPerRefresh)
       if (uiDefaults.metricsPerRefresh) {
@@ -399,7 +400,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
   setTracingInfo: bindActionCreators(TracingActions.setInfo, dispatch),
   setTrafficRates: bindActionCreators(GraphToolbarActions.setTrafficRates, dispatch),
   statusRefresh: bindActionCreators(HelpDropdownActions.statusRefresh, dispatch),
-  setChatAI: bindActionCreators(ChatAIActions.setChatAI, dispatch)
+  setAI: bindActionCreators(ChatAIActions.setAI, dispatch)
 });
 
 export const AuthenticationController = connect(mapStateToProps, mapDispatchToProps)(AuthenticationControllerComponent);

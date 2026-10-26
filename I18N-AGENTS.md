@@ -3,7 +3,10 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
+
+The English catalog (`frontend/public/locales/en/translation.json`) is generated locally by `yarn i18n` and is not committed. English UI text is the i18n key; runtime `fallbackLng: 'en'` displays the key when no English file is present. Commit only translated catalogs.
 
 It is intentionally written in English so contributors, reviewers, and AI assistants can align on the same terminology.
 
@@ -27,6 +30,12 @@ If an existing locale entry conflicts with these conventions, do not mass-rewrit
 ### Keep these unchanged in all locales
 
 Keep product names, feature names, and established technical names in English:
+
+When the UI text is exactly the same as the English **API kind** or product name (for example `Envoy`, `DestinationRule`), **do not wrap it in `t()`**. Use a string literal so `i18next-parser` does not extract it into `translation.json`.
+
+**Human-readable labels** that describe a kind but are not the kind string itself (for example `Destination Rule` with a space, `Authorization Policy`) **should use `t()`** and **should be translated** in locale catalogs. Do not confuse them with `DestinationRule` / `AuthorizationPolicy` in YAML.
+
+Remove redundant `key: key` catalog lines only for literals that are not passed through `t()`.
 
 - `Kiali`
 - `Istio`
@@ -66,6 +75,22 @@ Keep whitespace and punctuation around placeholders intact unless the locale req
 - Prefer direct error messages: `Could not load`, `Not found`, `Unavailable`
 - Avoid over-translating domain concepts when the English term is already the clearest term in the Istio/Kubernetes ecosystem
 
+### Find help: `Abbreviate:` strings (all locales)
+
+Traffic Graph and Mesh Find help (`GraphHelpFind.tsx`, `MeshHelpFind.tsx`) includes usage notes whose i18n keys start with `Abbreviate:`. They document shorthand operands users type in the Find box (for example `cb|circuitbreaker`).
+
+For every locale (`es`, `ko`, `zh`, and future languages):
+
+- Translate only the label word that corresponds to English `Abbreviate` (plus the punctuation that follows it in that language).
+- Keep the entire `alias|operand` list unchanged, in English, including commas and pipe characters.
+
+Examples:
+
+- `es`: `"Abbreviate: ns|namespace, …": "Abreviar: ns|namespace, …"`
+- `zh`: `"Abbreviate: ns|namespace, …": "缩写：ns|namespace, …"`
+
+Leaving the value identical to the English key is acceptable for operands but leaves the help intro untranslated; prefer localizing the label as above.
+
 ## Spanish conventions (`es`)
 
 ### Canonical term choices
@@ -80,6 +105,13 @@ Use these consistently in Spanish UI strings:
   - Avoid `malla`
 - `workload` -> `workload` / `workloads`
   - Avoid alternating with translated variants
+- `listener` -> `Listener` / `Listeners`
+  - Keep in English: Gateway API spec field (`spec.listeners`)
+  - Do not use `escucha`, `oyente`, or other Spanish variants
+- `server` -> `Server` / `Servers`
+  - Keep in English: Istio Gateway form field for listener endpoints
+  - Same rule as `Listener`: API/form field name, not a generic word
+  - Exception: `Server Certificate` -> `Certificado del servidor` (only the descriptive word is translated)
 
 Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
 
@@ -103,11 +135,16 @@ These entries already match the preferred direction and are good references for 
 - `"Mesh": "Mesh"`
 - `"Waypoint": "Waypoint"`
 - `"{{count}} workload_other": "{{count}} workloads"`
+- `"Listeners": "Listeners"`
+- `"Listener List": "Lista de Listeners"`
+- `"Servers": "Servers"`
+- `"Server List": "Lista de Servers"`
+- `"Abbreviate: ns|namespace, svc|service, …": "Abreviar: ns|namespace, svc|service, …"` (see [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales))
 
 ### Spanish do / do not
 
-- Do: `plano de control`, `plano de datos`, `namespace`, `mesh`, `workload`
-- Do not: `espacio de nombres`, `malla`, translated variants of `workload`
+- Do: `plano de control`, `plano de datos`, `namespace`, `mesh`, `workload`, `Listener`, `Server`
+- Do not: `espacio de nombres`, `malla`, translated variants of `workload`, `escucha` / `oyente` for `Listener`, `servidor` for Gateway form `Server` / `Servers`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
 
@@ -115,6 +152,7 @@ Note: the current Spanish locale is only partially aligned. In particular, some 
 
 TODO: validate the Chinese glossary and wording with a native speaker or a reviewer confident in Simplified Chinese technical UI translation. The current `zh` locale is inconsistent and still contains many untranslated English strings.
 
+For `Abbreviate:` Find help lines, follow [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales) (for example `缩写：` in `zh`).
 
 ## When editing locale files
 
@@ -125,6 +163,7 @@ Before changing `translation.json` entries:
 3. Preserve placeholders and technical tokens exactly.
 4. Keep resource names and product names in English.
 5. If a string must diverge for readability, choose the smallest deviation and keep it consistent nearby.
+6. After bulk edits, run `cd frontend && yarn i18n` so committed catalogs use the same key order as `i18next-parser` (`sort: true` in `i18next-parser.config.ts`). Do not hand-reorder keys or use a separate sort script.
 
 ## When in doubt
 

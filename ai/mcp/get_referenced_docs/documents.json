@@ -144,8 +144,8 @@
         "federation",
         "workload aggregation"
       ],
-      "url": "https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/",
-      "title": "Kiali Prometheus Configuration"
+      "url": "https://kiali.io/docs/configuration/external-services/metrics/tuning/",
+      "title": "Kiali Prometheus Tuning"
     }
   ],
   "istio": [

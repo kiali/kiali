@@ -16,7 +16,12 @@ import {
   Checkbox
 } from '@patternfly/react-core';
 import type { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector, namespaceFilterSelector, namespaceItemsSelector } from '../../store/Selectors';
+import {
+  activeNamespacesSelector,
+  languageSelector,
+  namespaceFilterSelector,
+  namespaceItemsSelector
+} from '../../store/Selectors';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { NamespaceThunkActions } from '../../actions/NamespaceThunkActions';
 import type { Namespace } from '../../types/Namespace';
@@ -28,10 +33,12 @@ import {
 import { KialiIcon } from 'config/KialiIcon';
 import { TourStop } from '../Tour/TourStop';
 import { GraphTourStops } from '../../pages/Graph/GraphHelpTour';
+import { t } from 'utils/I18nUtils';
 
 interface ReduxStateProps {
   activeNamespaces: Namespace[];
   filter: string;
+  language: string;
   namespaces: Namespace[];
 }
 
@@ -168,12 +175,12 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
   private namespaceButtonText(): JSX.Element {
     if (this.state.selectedNamespaces.length === 0) {
-      return <span>Select Namespaces</span>;
+      return <span>{t('Select Namespaces')}</span>;
     }
 
     return (
       <>
-        <span style={{ paddingRight: '0.75rem' }}>Namespace:</span>
+        <span style={{ paddingRight: '0.75rem' }}>{`${t('Namespace')}:`}</span>
         {this.state.selectedNamespaces.length === 1 ? (
           <span>{this.state.selectedNamespaces[0].name}</span>
         ) : (
@@ -196,13 +203,13 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         <Checkbox
           id="bulk-select-id"
           key="bulk-select-key"
-          aria-label="Select all"
+          aria-label={t('Select all')}
           isChecked={isChecked}
           onChange={() => {
             anySelected ? this.onBulkNone() : this.onBulkAll();
           }}
         ></Checkbox>
-        <span className={optionLabelStyle}>Select all</span>
+        <span className={optionLabelStyle}>{t('Select all')}</span>
       </div>
     );
   }
@@ -217,12 +224,12 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
             aria-label="filter-namespace"
             type="text"
             name="namespace-filter"
-            placeholder="Filter by Name..."
+            placeholder={t('Filter by Name...')}
             value={this.props.filter}
             onChange={(_event, value: string) => this.onFilterChange(value)}
           />
           {hasFilter && (
-            <Tooltip key="ot_clear_namespace_filter" position="top" content="Clear Filter by Name">
+            <Tooltip key="ot_clear_namespace_filter" position="top" content={t('Clear Filter by Name')}>
               <Button className={closeButtonStyle} onClick={this.clearFilter} isInline>
                 <KialiIcon.Close />
               </Button>
@@ -270,7 +277,7 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
         </>
       );
     }
-    return <div className={optionStyle}>No namespaces found</div>;
+    return <div className={optionStyle}>{t('No namespaces found')}</div>;
   }
 
   private onToggle = (isOpen: boolean): void => {
@@ -316,9 +323,10 @@ class NamespaceDropdownComponent extends React.PureComponent<NamespaceDropdownPr
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    namespaces: namespaceItemsSelector(state)!,
     activeNamespaces: activeNamespacesSelector(state),
-    filter: namespaceFilterSelector(state)
+    filter: namespaceFilterSelector(state),
+    language: languageSelector(state),
+    namespaces: namespaceItemsSelector(state)!
   };
 };
 

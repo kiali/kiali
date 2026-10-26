@@ -4,13 +4,11 @@ import (
 	"context"
 	"strings"
 
-	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
-
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
-	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 )
 
 const ServiceEntryAppenderName = "serviceEntry"
@@ -42,6 +40,32 @@ const ServiceEntryAppenderName = "serviceEntry"
 // many different service requests may be handled by the same service entry definition.  For example,
 // host = *.wikipedia.com would match requests for en.wikipedia.com and de.wikipedia.com. The Istio
 // telemetry produces only one "se-service" node with the wilcard host as the destination_service_name.
+//
+// A note about visibility. The namespace-local representation above is only used when the requesting
+// namespace can see the ServiceEntry. We build a host lookup per (cluster, requesting namespace).
+// Sidecar callers honor the ServiceEntry's exportTo, or meshConfig.defaultServiceExportTo when
+// omitted. meshConfig.serviceEntryVisibility can further restrict that scope when applyToSidecars
+// is enabled. Ambient callers ignore exportTo and defaultServiceExportTo; they use the resolved
+// visibility, defaulting to public when serviceEntryVisibility is not configured.
+// Policies are matched in order against the labels of the original definition namespace,
+// not the requesting namespace. The first matching policy wins, otherwise defaultVisibility applies.
+//
+// We deliberately classify callers by requesting namespace: IsAmbient=true means ambient,
+// otherwise sidecar. This assumes a single dataplane mode per namespace. We do not identify
+// individual caller modes or special-case control-plane namespaces. Consequently, an Envoy
+// gateway, injected sidecar, or opted-out workload in an ambient namespace is treated as
+// ambient, including gateways in control-plane namespaces marked ambient. This approximation
+// can change ServiceEntry attribution for those callers even when applyToSidecars=false;
+// observed traffic is still preserved.
+//
+// applyToSidecars=true also enables the visibility constraint in sidecar-only deployments.
+// Sidecar callers without that opt-in use only the exportTo rules.
+// Compiled policies are reused with the cached mesh snapshot;
+// namespace host lookups are rebuilt as needed for each graph generation.
+//
+// This only controls attribution to a ServiceEntry. A host that is not visible to the requesting
+// namespace is left to normal graph handling, preserving observed traffic. Eligible hosts still
+// use the same namespace-local ServiceEntry representation and aggregation described above.
 type ServiceEntryAppender struct {
 	AccessibleNamespaces graph.AccessibleNamespaces
 	GraphType            string
@@ -93,9 +117,13 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 		return
 	}
 
-	// Fetch mesh once and precompute namespace -> DefaultServiceExportTo for all candidate
+	// The requesting namespace's control plane governs its callers, so use its MeshConfig
+	// even when the ServiceEntry's definition namespace belongs to another control plane.
+	// Match that control plane's policies against the definition namespace's labels.
+	//
+	// Fetch mesh once and precompute namespace -> MeshConfig for all candidate
 	// (cluster, namespace) pairs. This avoids repeated discovery.Mesh() mutex acquisition inside the loop.
-	nsExportTo := make(map[string][]string)
+	nsMeshConfigs := make(map[string]*models.MeshConfig)
 	mesh, err := globalInfo.Business.Mesh.GetMesh(ctx)
 	if err == nil && mesh != nil {
 		byCluster := make(map[string][]string)
@@ -103,8 +131,8 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 			byCluster[n.Cluster] = append(byCluster[n.Cluster], n.Namespace)
 		}
 		for cluster, namespaces := range byCluster {
-			for ns, exportTo := range mesh.BuildNamespaceToExportTo(cluster, namespaces) {
-				nsExportTo[cluster+":"+ns] = exportTo
+			for ns, meshConfig := range mesh.BuildNamespaceToMeshConfig(cluster, namespaces) {
+				nsMeshConfigs[graph.GetClusterSensitiveKey(cluster, ns)] = meshConfig
 			}
 		}
 	}
@@ -112,7 +140,8 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 	// Otherwise, if there are SE hosts defined for the cluster:namespace, check to see if they apply to the node
 	finalCandidates := []*graph.Node{}
 	for _, n := range candidates {
-		if a.loadServiceEntryHosts(n.Cluster, n.Namespace, nsExportTo, globalInfo) {
+		nsMeshConfig := nsMeshConfigs[graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)]
+		if a.loadServiceEntryHosts(ctx, n.Cluster, n.Namespace, nsMeshConfig, globalInfo) {
 			finalCandidates = append(finalCandidates, n)
 		}
 	}
@@ -123,26 +152,54 @@ func (a ServiceEntryAppender) AppendGraph(ctx context.Context, trafficMap graph.
 }
 
 // loadServiceEntryHosts loads serviceEntry hosts for the provided cluster and namespace. Returns true if any are found, otherwise false.
-// nsExportTo is a precomputed map keyed by "cluster:namespace" -> DefaultServiceExportTo to avoid repeated discovery.Mesh() calls.
-func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, nsExportTo map[string][]string, globalInfo *GlobalInfo) bool {
+func (a ServiceEntryAppender) loadServiceEntryHosts(ctx context.Context, cluster, namespace string, meshConfig *models.MeshConfig, globalInfo *GlobalInfo) bool {
 	if !a.isAccessible(cluster, namespace) {
 		return false
 	}
 
 	serviceEntryHosts, found := getServiceEntryHosts(cluster, namespace, globalInfo)
-	defaultServiceExportTo := nsExportTo[cluster+":"+namespace]
-	// When no mesh config is found for this namespace (e.g., unmanaged namespace),
-	// defaultServiceExportTo is nil, which means no default export restriction.
-	// isExportedToNamespace handles nil exportTo by exporting to all namespaces.
 	if !found {
-		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(context.TODO(), cluster, business.IstioConfigCriteria{
+		istioCfg, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster, business.IstioConfigCriteria{
 			IncludeServiceEntries: true,
 		})
 		graph.CheckError(err)
 
-		// ... and then use ExportTo to decide whether the hosts are accessible to the namespace
+		requestingNamespace := a.AccessibleNamespaces[graph.GetClusterSensitiveKey(cluster, namespace)]
+		requestingAmbient := requestingNamespace.IsAmbient
+		var applyVisibility bool
+		var definitionNamespaces map[string]models.Namespace
+		var visibilities map[string]models.ServiceEntryVisibility
+		if meshConfig != nil {
+			visibility := meshConfig.GetServiceEntryVisibility()
+			applyVisibility = visibility != nil && (requestingAmbient || visibility.GetApplyToSidecars())
+			if applyVisibility {
+				visibilities = make(map[string]models.ServiceEntryVisibility)
+				if len(visibility.GetPolicies()) > 0 {
+					definitionNamespaces = getServiceEntryNamespaces(ctx, cluster, globalInfo)
+				}
+			}
+		}
+		// A nil MeshConfig is supported and supplies defaults for unmanaged requesters.
+		policy := meshConfig.ServiceEntryVisibilityPolicy()
+		// Keep the namespace-local graph representation, but only attribute hosts that
+		// this requesting namespace can see. Rejected hosts retain their observed traffic.
 		for _, entry := range istioCfg.ServiceEntries {
-			if entry.Spec.Hosts != nil && isExportedToNamespace(entry, namespace, defaultServiceExportTo) {
+			// Pass raw exports; the shared policy supplies mesh defaults. Validation
+			// (business/istio_validations_service_entry_visibility.go) also widens
+			// unknown export namespaces to avoid cascading missing-host errors.
+			var visible bool
+			if applyVisibility {
+				visibility, resolved := visibilities[entry.Namespace]
+				if !resolved {
+					visibility = policy.ForNamespace(entry.Namespace, definitionNamespaces[entry.Namespace].Labels)
+					visibilities[entry.Namespace] = visibility
+				}
+				visible = visibility.IsVisible(entry.Spec.ExportTo, namespace, requestingAmbient)
+			} else {
+				// Without a visibility policy, ambient defaults to public; sidecars honor exportTo.
+				visible = requestingAmbient || policy.IsExportedTo(entry.Spec.ExportTo, entry.Namespace, namespace)
+			}
+			if entry.Spec.Hosts != nil && visible {
 				location := "MESH_EXTERNAL"
 				if entry.Spec.Location.String() == "MESH_INTERNAL" {
 					location = "MESH_INTERNAL"
@@ -161,6 +218,22 @@ func (a ServiceEntryAppender) loadServiceEntryHosts(cluster, namespace string, n
 		}
 	}
 	return len(serviceEntryHosts) > 0
+}
+
+// getServiceEntryNamespaces caches definition namespaces for one graph build, avoiding
+// repeated namespace scans and label-map construction across requesting namespaces.
+func getServiceEntryNamespaces(ctx context.Context, cluster string, globalInfo *GlobalInfo) map[string]models.Namespace {
+	if namespaces, found := globalInfo.Vendor.ServiceEntryNamespaces[cluster]; found {
+		return namespaces
+	}
+	list, err := globalInfo.Business.Namespace.GetClusterNamespaces(ctx, cluster)
+	graph.CheckError(err)
+	namespaces := make(map[string]models.Namespace, len(list))
+	for _, ns := range list {
+		namespaces[ns.Name] = ns
+	}
+	globalInfo.Vendor.ServiceEntryNamespaces[cluster] = namespaces
+	return namespaces
 }
 
 func (a ServiceEntryAppender) applyServiceEntries(ctx context.Context, trafficMap graph.TrafficMap, candidates []*graph.Node, globalInfo *GlobalInfo, namespaceInfo *AppenderNamespaceInfo) {
@@ -331,14 +404,6 @@ func (a *ServiceEntryAppender) isAccessible(cluster, namespace string) bool {
 	key := graph.GetClusterSensitiveKey(cluster, namespace)
 	_, ok := a.AccessibleNamespaces[key]
 	return ok
-}
-
-func isExportedToNamespace(se *networking_v1.ServiceEntry, namespace string, meshExportTo []string) bool {
-	exportTo := se.Spec.ExportTo
-	if len(exportTo) == 0 {
-		exportTo = meshExportTo
-	}
-	return kubernetes.IsExportedTo(exportTo, se.Namespace, namespace)
 }
 
 // aggregateEdges identifies edges that are going from <node> to <serviceEntryNode> and

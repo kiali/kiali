@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { WorkloadGroupEntry } from '../../types/IstioObjects';
-import { IRow, TableVariant, ThProps } from '@patternfly/react-table';
+import type { WorkloadGroupEntry } from '../../types/IstioObjects';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
 import {
   Card,
   CardBody,
@@ -20,6 +21,7 @@ import { Labels } from '../../components/Label/Labels';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { infoStyle } from 'styles/IconStyle';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadEntriesProps = {
   entries: WorkloadGroupEntry[];
@@ -48,7 +50,8 @@ const iconStyle = kialiStyle({
 });
 
 export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadEntriesProps) => {
-  const columns: ThProps[] = [{ title: 'Name' }];
+  const { t } = useKialiTranslation();
+  const columns: ThProps[] = [{ title: t('Name') }];
 
   const noEntries: React.ReactNode = (
     <EmptyState variant={EmptyStateVariant.sm} className={emptyStyle}>
@@ -107,14 +110,14 @@ export const WorkloadEntries: React.FC<WorkloadEntriesProps> = (props: WorkloadE
   return (
     <Card isCompact={true} id="WorkloadEntriesCard">
       <CardHeader>
-        <Title headingLevel="h5" size={TitleSizes.lg}>
+        <Title headingLevel="h4" size={TitleSizes.md}>
           Workload Entries
         </Title>
       </CardHeader>
 
       <CardBody>
         <SimpleTable
-          label="Workload Entries List"
+          label={t('Workload Entries List')}
           columns={columns}
           rows={rows}
           variant={TableVariant.compact}

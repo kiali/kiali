@@ -1,11 +1,13 @@
 import * as React from 'react';
-import { Server, ServerForm } from '../../../types/IstioObjects';
-import { Tbody, Td, Th, Thead, Tr, Table, ThProps } from '@patternfly/react-table';
+import type { Server, ServerForm } from '../../../types/IstioObjects';
+import type { ThProps } from '@patternfly/react-table';
+import { Tbody, Td, Th, Thead, Tr, Table } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { ServerBuilder, protocols } from './ServerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ServerListProps = {
   onChange: (server: Server[], serverForm: ServerForm[]) => void;
@@ -18,21 +20,23 @@ const noServerStyle = kialiStyle({
   textAlign: 'center'
 });
 
-const columns: ThProps[] = [
-  {
-    title: 'Servers'
-  },
-  {
-    title: ''
-  }
-];
-
 const addServerStyle = kialiStyle({
   marginLeft: '0.5rem',
   marginTop: '0.25rem'
 });
 
 export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) => {
+  const { t } = useKialiTranslation();
+
+  const columns: ThProps[] = [
+    {
+      title: t('Servers')
+    },
+    {
+      title: ''
+    }
+  ];
+
   const onAddServer = (): void => {
     const newServerForm: ServerForm = {
       hosts: [],
@@ -111,7 +115,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
 
   return (
     <>
-      <Table aria-label="Server List">
+      <Table aria-label={t('Server List')}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
@@ -137,7 +141,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
           ) : (
             <Tr>
               <Td colSpan={columns.length}>
-                <div className={noServerStyle}>No Servers defined</div>
+                <div className={noServerStyle}>{t('No Servers defined')}</div>
               </Td>
             </Tr>
           )}
@@ -151,7 +155,7 @@ export const ServerList: React.FC<ServerListProps> = (props: ServerListProps) =>
         onClick={onAddServer}
         className={addServerStyle}
       >
-        Add Server to Servers List
+        {t('Add Server to Servers List')}
       </Button>
     </>
   );

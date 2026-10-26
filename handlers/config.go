@@ -58,16 +58,21 @@ type ChatAIStoreConfig struct {
 }
 
 type AIConfig struct {
-	Enabled bool         `json:"enabled"`
-	ChatAI  ChatAIConfig `json:"chat,omitempty"`
+	Enabled     bool                `json:"enabled"`
+	ChatAI      ChatAIConfig        `json:"chat"`
+	Consumption AIConsumptionConfig `json:"consumption"`
+}
+
+type AIConsumptionConfig struct {
+	Enabled bool `json:"enabled"`
+	Allowed bool `json:"allowed"`
 }
 
 type ChatAIConfig struct {
-	Enabled         bool              `json:"enabled"`
-	Allowed         bool              `json:"allowed"`
-	DefaultProvider string            `json:"defaultProvider"`
-	Providers       []ProviderConfig  `json:"providers"`
-	Store           ChatAIStoreConfig `json:"store"`
+	Enabled         bool             `json:"enabled"`
+	Allowed         bool             `json:"allowed"`
+	DefaultProvider string           `json:"defaultProvider"`
+	Providers       []ProviderConfig `json:"providers"`
 }
 
 type AIModel struct {
@@ -79,29 +84,30 @@ type AIModel struct {
 // PublicConfig is a subset of Kiali configuration that can be exposed to clients to
 // help them interact with the system.
 type PublicConfig struct {
-	AuthStrategy          string                        `json:"authStrategy,omitempty"`
-	AmbientEnabled        bool                          `json:"ambientEnabled,omitempty"`
-	AI                    AIConfig                      `json:"ai,omitempty"`
-	Clusters              map[string]models.KubeCluster `json:"clusters,omitempty"`
-	ClusterWideAccess     bool                          `json:"clusterWideAccess,omitempty"`
-	ControlPlanes         map[string]string             `json:"controlPlanes,omitempty"`
-	Deployment            DeploymentConfig              `json:"deployment,omitempty"`
-	GatewayAPIClasses     []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
-	GatewayAPIEnabled     bool                          `json:"gatewayAPIEnabled,omitempty"`
-	HealthConfig          config.HealthConfig           `json:"healthConfig,omitempty"`
-	IgnoreHomeCluster     bool                          `json:"ignoreHomeCluster,omitempty"`
-	InstallationTag       string                        `json:"installationTag,omitempty"`
-	IstioAnnotations      IstioAnnotations              `json:"istioAnnotations,omitempty"`
-	IstioAPIInstalled     bool                          `json:"istioAPIInstalled,omitempty"`
-	IstioGatewayInstalled bool                          `json:"istioGatewayInstalled,omitempty"`
-	IstioIdentityDomain   string                        `json:"istioIdentityDomain,omitempty"`
-	IstioLabels           config.IstioLabels            `json:"istioLabels,omitempty"`
-	IstioStatusEnabled    bool                          `json:"istioStatusEnabled,omitempty"`
-	KialiFeatureFlags     config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
-	LogLevel              string                        `json:"logLevel,omitempty"`
-	Prometheus            PrometheusConfig              `json:"prometheus,omitempty"`
-	RunConfig             *config.OfflineManifest       `json:"runConfig,omitempty"`
-	RunMode               config.RunMode                `json:"runMode,omitempty"`
+	AuthStrategy               string                        `json:"authStrategy,omitempty"`
+	AmbientEnabled             bool                          `json:"ambientEnabled,omitempty"`
+	AI                         AIConfig                      `json:"ai,omitempty"`
+	Clusters                   map[string]models.KubeCluster `json:"clusters,omitempty"`
+	ClusterWideAccess          bool                          `json:"clusterWideAccess,omitempty"`
+	ControlPlanes              map[string]string             `json:"controlPlanes,omitempty"`
+	Deployment                 DeploymentConfig              `json:"deployment,omitempty"`
+	GatewayAPIClasses          []config.GatewayAPIClass      `json:"gatewayAPIClasses,omitempty"`
+	GatewayAPIEnabled          bool                          `json:"gatewayAPIEnabled,omitempty"`
+	HealthConfig               config.HealthConfig           `json:"healthConfig,omitempty"`
+	HealthStatusMetricsEnabled bool                          `json:"healthStatusMetricsEnabled,omitempty"`
+	IgnoreHomeCluster          bool                          `json:"ignoreHomeCluster,omitempty"`
+	InstallationTag            string                        `json:"installationTag,omitempty"`
+	IstioAnnotations           IstioAnnotations              `json:"istioAnnotations,omitempty"`
+	IstioAPIInstalled          bool                          `json:"istioAPIInstalled,omitempty"`
+	IstioGatewayInstalled      bool                          `json:"istioGatewayInstalled,omitempty"`
+	IstioIdentityDomain        string                        `json:"istioIdentityDomain,omitempty"`
+	IstioLabels                config.IstioLabels            `json:"istioLabels,omitempty"`
+	IstioStatusEnabled         bool                          `json:"istioStatusEnabled,omitempty"`
+	KialiFeatureFlags          config.KialiFeatureFlags      `json:"kialiFeatureFlags,omitempty"`
+	LogLevel                   string                        `json:"logLevel,omitempty"`
+	Prometheus                 PrometheusConfig              `json:"prometheus,omitempty"`
+	RunConfig                  *config.OfflineManifest       `json:"runConfig,omitempty"`
+	RunMode                    config.RunMode                `json:"runMode,omitempty"`
 }
 
 // resolvePublicIdentityDomain returns the identity domain to expose to the
@@ -129,6 +135,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		// guaranteed to remain the same during the Kiali lifespan.
 		promConfig := getPrometheusConfig(conf, prom, logger)
 
+		log.Debugf("AI Info: %+v", conf.AI.Metrics)
 		aiConfig := getAIConfig(conf, r)
 
 		publicConfig := PublicConfig{
@@ -146,15 +153,16 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 				AmbientAnnotationEnabled: config.AmbientAnnotationEnabled,
 				IstioInjectionAnnotation: config.IstioInjectionAnnotation,
 			},
-			HealthConfig:        conf.HealthConfig,
-			IgnoreHomeCluster:   conf.Clustering.IgnoreHomeCluster,
-			IstioStatusEnabled:  conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-			IstioIdentityDomain: resolvePublicIdentityDomain(r.Context(), conf, discovery),
-			IstioLabels:         conf.IstioLabels,
-			KialiFeatureFlags:   conf.KialiFeatureFlags,
-			LogLevel:            log.GetLogLevel(),
-			Prometheus:          promConfig,
-			RunMode:             conf.RunMode,
+			HealthConfig:               conf.HealthConfig,
+			HealthStatusMetricsEnabled: conf.Server.Observability.Metrics.HealthStatus.Enabled,
+			IgnoreHomeCluster:          conf.Clustering.IgnoreHomeCluster,
+			IstioStatusEnabled:         conf.ExternalServices.Istio.ComponentStatuses.Enabled,
+			IstioIdentityDomain:        resolvePublicIdentityDomain(r.Context(), conf, discovery),
+			IstioLabels:                conf.IstioLabels,
+			KialiFeatureFlags:          conf.KialiFeatureFlags,
+			LogLevel:                   log.GetLogLevel(),
+			Prometheus:                 promConfig,
+			RunMode:                    conf.RunMode,
 		}
 
 		if conf.RunMode == config.RunModeOffline {
@@ -221,79 +229,127 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 	}
 }
 
+func isUserAllowed(usernames []string, username string) bool {
+	if len(usernames) > 0 && !slices.Contains(usernames, username) {
+		return false
+	}
+	return true
+}
+
+func getAIConsumptionConfig(conf *config.Config, username string) AIConsumptionConfig {
+	if !conf.AI.Metrics {
+		return AIConsumptionConfig{
+			Enabled: false,
+			Allowed: false,
+		}
+	}
+	return AIConsumptionConfig{
+		Enabled: true,
+		Allowed: isUserAllowed(conf.AI.Consumption.AllowedUsersDashboard, username),
+	}
+}
+
+func getAIChatConfig(conf *config.Config, username string) ChatAIConfig {
+	if !conf.AI.ChatAI.Enabled {
+		return ChatAIConfig{
+			Enabled: false,
+		}
+	}
+	return ChatAIConfig{
+		Enabled: conf.AI.ChatAI.Enabled,
+		Allowed: isUserAllowed(conf.AI.ChatAI.AllowedUsers, username),
+	}
+}
+
 func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
 	if !conf.AI.Enabled {
 		return AIConfig{}
 	}
-	if !conf.AI.ChatAI.Enabled {
-		return AIConfig{
-			Enabled: conf.AI.Enabled,
-			ChatAI: ChatAIConfig{
-				Enabled: false,
-			},
-		}
-	}
-	fallbackUserID := "anonymous"
+
+	username := "anonymous"
 	if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 		authInfo, err := getAuthInfo(r)
 		if err != nil {
 			log.Error("AI initialization error, loading config: " + err.Error())
 			return AIConfig{}
 		}
-		clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]
-		if !ok || clusterAuth == nil {
+		if clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]; !ok || clusterAuth == nil {
 			log.Error("AI initialization error, loading config: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName)
 			return AIConfig{}
 		}
-		fallbackUserID = clusterAuth.Username
-	}
-
-	if len(conf.AI.ChatAI.AllowedUsers) > 0 && !slices.Contains(conf.AI.ChatAI.AllowedUsers, fallbackUserID) {
-		log.Infof("AI initialization: user %q is not allowed to use the ChatAI feature", fallbackUserID)
-		return AIConfig{
-			Enabled: conf.AI.Enabled,
-			ChatAI: ChatAIConfig{
-				Enabled: conf.AI.ChatAI.Enabled,
-				Allowed: false,
-			},
-		}
+		username = resolveChatAIUsername(r, conf, "")
 	}
 
 	aiConfig := AIConfig{
-		Enabled: conf.AI.Enabled,
-		ChatAI: ChatAIConfig{
-			Enabled:         conf.AI.ChatAI.Enabled,
-			Allowed:         true,
-			DefaultProvider: conf.AI.ChatAI.DefaultProvider,
-			Providers:       []ProviderConfig{},
-			Store: ChatAIStoreConfig{
-				Enabled: conf.AI.ChatAI.Enabled && conf.AI.ChatAI.StoreConfig.Enabled,
-			},
-		},
+		Enabled:     conf.AI.Enabled,
+		ChatAI:      getAIChatConfig(conf, username),
+		Consumption: getAIConsumptionConfig(conf, username),
 	}
-	providers := []ProviderConfig{}
-	for _, provider := range conf.AI.ChatAI.Providers {
-		models := []AIModel{}
-		if provider.Enabled {
-			for _, model := range provider.Models {
-				if model.Enabled {
-					models = append(models, AIModel{
-						Name:        model.Name,
-						Model:       model.Model,
-						Description: model.Description,
+
+	if aiConfig.ChatAI.Enabled && aiConfig.ChatAI.Allowed {
+		var budget *config.UserBudgetConfig
+		if conf.AI.Metrics {
+			budget = conf.AI.Consumption.GetBudgetForUser(username)
+		}
+
+		providers := []ProviderConfig{}
+		for _, provider := range conf.AI.ChatAI.Providers {
+			if budget != nil && len(budget.AllowedProviders) > 0 {
+				allowed := false
+				for _, ap := range budget.AllowedProviders {
+					if provider.Type == ap {
+						allowed = true
+						break
+					}
+				}
+				if !allowed {
+					continue
+				}
+			}
+
+			models := []AIModel{}
+			if provider.Enabled {
+				for _, model := range provider.Models {
+					if model.Enabled {
+						if budget != nil && len(budget.AllowedModels) > 0 {
+							allowed := false
+							if provider.Type == config.LightSpeedProvider {
+								allowed = true
+							} else {
+								for _, am := range budget.AllowedModels {
+									if config.MatchModelPattern(am, model.Name) || config.MatchModelPattern(am, model.Model) {
+										allowed = true
+										break
+									}
+								}
+							}
+							if !allowed {
+								continue
+							}
+						}
+
+						models = append(models, AIModel{
+							Name:        model.Name,
+							Model:       model.Model,
+							Description: model.Description,
+						})
+					}
+				}
+				if len(models) > 0 {
+					providers = append(providers, ProviderConfig{
+						Name:         provider.Name,
+						Description:  provider.Description,
+						DefaultModel: provider.DefaultModel,
+						Models:       models,
 					})
 				}
 			}
-			providers = append(providers, ProviderConfig{
-				Name:         provider.Name,
-				Description:  provider.Description,
-				DefaultModel: provider.DefaultModel,
-				Models:       models,
-			})
 		}
+		aiConfig.ChatAI.DefaultProvider = conf.AI.ChatAI.DefaultProvider
+		aiConfig.ChatAI.Providers = providers
 	}
-	aiConfig.ChatAI.Providers = providers
 	return aiConfig
+
 }
 
 type PrometheusPartialConfig struct {

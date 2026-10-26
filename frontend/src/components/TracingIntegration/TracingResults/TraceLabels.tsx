@@ -1,9 +1,10 @@
-import { Label, pluralize } from '@patternfly/react-core';
+import { Label } from '@patternfly/react-core';
 
 import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/TracingInfo';
+import type { Span } from 'types/TracingInfo';
 import { isErrorTag } from 'utils/tracing/TracingHelper';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 /**
  * PF4 adds a wrapper for the label content
@@ -41,16 +42,16 @@ export const TraceLabels = (p: Props): JSX.Element => {
     <>
       <Label style={{ margin: 10 }} color="blue">
         {p.filteredSpans && `${p.filteredSpans.length} / `}
-        {pluralize(p.spans.length, 'Span')}
+        {t('{{count}} Span', { count: p.spans.length })}
       </Label>
       <Label style={{ margin: 10 }} color="blue">
         {p.filteredSpans && `${countServices(p.filteredSpans)} / `}
-        {pluralize(countServices(p.spans), 'App')} involved
+        {t('{{count}} App involved', { count: countServices(p.spans) })}
       </Label>
       {!p.oneline && <br />}
       {errors === 0 ? (
         <Label className={whiteLabelStyle} style={{ margin: 10, backgroundColor: PFColors.Success }}>
-          0 Spans with error
+          {t('{{count}} Span with error', { count: 0 })}
         </Label>
       ) : (
         <Label
@@ -58,7 +59,7 @@ export const TraceLabels = (p: Props): JSX.Element => {
           style={{ margin: 10, backgroundColor: filteredErrors === 0 ? PFColors.Warning : PFColors.Danger }}
         >
           {p.filteredSpans && `${filteredErrors} / `}
-          {pluralize(errors, 'Span')} with error
+          {t('{{count}} Span with error', { count: errors })}
         </Label>
       )}
     </>

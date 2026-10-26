@@ -384,3 +384,14 @@ else
     fi
   fi
 fi
+
+if [ "${IS_OPENSHIFT}" == "true" ]; then
+  ERROR_RATES_MONITOR_NS="${NAMESPACE_ALPHA}"
+  if [ "${INSTALL_BETA}" == "true" ]; then
+    ERROR_RATES_MONITOR_NS="${ERROR_RATES_MONITOR_NS} ${NAMESPACE_BETA}"
+  fi
+  if [ "${INSTALL_GAMMA}" == "true" ]; then
+    ERROR_RATES_MONITOR_NS="${ERROR_RATES_MONITOR_NS} ${NAMESPACE_GAMMA}"
+  fi
+  "${HACK_SCRIPT_DIR}/ensure-openshift-istio-proxies-podmonitor.sh" -c "${CLIENT_EXE}" -n "${ERROR_RATES_MONITOR_NS}"
+fi

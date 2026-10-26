@@ -1,14 +1,14 @@
 import * as React from 'react';
-import { IRow, IAction, ThProps, IRowData } from '@patternfly/react-table';
+import type { IRow, IAction, ThProps, IRowData } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, TooltipPosition } from '@patternfly/react-core';
-import { WorkloadWeight } from '../TrafficShifting';
-import { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
+import type { WorkloadWeight } from '../TrafficShifting';
+import type { Abort, Delay, HTTPRetry } from '../../../types/IstioObjects';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
 import { SimpleTable } from 'components/Table/SimpleTable';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export enum MOVE_TYPE {
   UP,
@@ -43,6 +43,7 @@ const noRulesStyle = kialiStyle({
 });
 
 export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
+  const { t } = useKialiTranslation();
   const matchAllIndex = (rules: Rule[]): number => {
     let matchAll = -1;
 
@@ -199,7 +200,7 @@ export const Rules: React.FC<RulesProps> = (props: RulesProps) => {
       </div>
 
       <SimpleTable
-        label="Rules Created"
+        label={t('Rules Created')}
         columns={columns}
         rows={routeRules}
         actionResolver={actionResolver}

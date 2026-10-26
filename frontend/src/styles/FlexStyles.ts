@@ -98,6 +98,30 @@ export const detailPageTitleStyle = kialiStyle({
   flexShrink: 0
 });
 
+// Right panel column in detail pages when it stacks content above the mini-graph.
+export const detailRightColumnStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0
+});
+
+export const detailRightStackStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  gap: '0.5rem',
+  height: '100%',
+  minHeight: 0
+});
+
+export const detailMiniGraphStackItemStyle = kialiStyle({
+  display: 'flex',
+  flex: 1,
+  flexDirection: 'column',
+  minHeight: 0
+});
+
 // Stack gap used between cards in detail page left columns.
 export const detailCardStackStyle = kialiStyle({
   gap: '0.5rem'

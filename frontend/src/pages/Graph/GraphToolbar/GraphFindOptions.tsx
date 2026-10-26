@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { serverConfig } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
-import { Dropdown, DropdownItem, DropdownList, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type FindKind = 'find' | 'hide';
 
@@ -18,26 +20,13 @@ const menuToggleStyle = kialiStyle({
 
 export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFindOptionsProps) => {
   const { kind, onSelect } = props;
+  const { t } = useKialiTranslation();
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
-  const [options, setOptions] = React.useState<React.ReactNode[]>([]);
 
-  React.useEffect(() => {
-    const getOptionItems = (kind: FindKind): React.ReactFragment[] => {
-      const options =
-        kind === 'find'
-          ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
-          : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
-      return options.map(o => {
-        return (
-          <DropdownItem key={o.description} onClick={() => onSelect(o.expression)}>
-            {o.description}
-          </DropdownItem>
-        );
-      });
-    };
-
-    setOptions(getOptionItems(kind));
-  }, [kind, onSelect]);
+  const presetOptions =
+    kind === 'find'
+      ? serverConfig.kialiFeatureFlags.uiDefaults.graph.findOptions
+      : serverConfig.kialiFeatureFlags.uiDefaults.graph.hideOptions;
 
   const onToggle = (isOpen: boolean): void => {
     setIsOpen(isOpen);
@@ -60,7 +49,13 @@ export const GraphFindOptions: React.FC<GraphFindOptionsProps> = (props: GraphFi
       onOpenChange={(isOpen: boolean) => onToggle(isOpen)}
       popperProps={{ position: 'right' }}
     >
-      <DropdownList>{options}</DropdownList>
+      <DropdownList>
+        {presetOptions.map(o => (
+          <DropdownItem key={o.description} onClick={() => onSelect(o.expression)}>
+            {t(o.description)}
+          </DropdownItem>
+        ))}
+      </DropdownList>
     </Dropdown>
   );
 };

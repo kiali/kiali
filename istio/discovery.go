@@ -179,6 +179,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	if err := mergeMeshConfigs(controlPlaneConf.EffectiveConfig.ConfigMap.Mesh, controlPlane.MeshConfig); err != nil {
 		return err
 	}
+	controlPlane.MeshConfig.PrepareServiceEntryVisibility()
 
 	certConfigMap, err := in.kialiSAClients[controlPlane.Cluster.Name].GetConfigMap(controlPlane.IstiodNamespace, certificatesConfigMapName)
 	if err != nil {

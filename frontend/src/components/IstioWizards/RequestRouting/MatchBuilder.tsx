@@ -1,4 +1,6 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   InputGroup,
@@ -8,10 +10,9 @@ import {
   Dropdown,
   DropdownList,
   DropdownItem,
-  MenuToggleElement,
   MenuToggle
 } from '@patternfly/react-core';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type MatchBuilderProps = {
   category: string;
@@ -44,18 +45,19 @@ export const ANYTHING = '{}';
 
 const opOptions: string[] = [EXACT, PREFIX, REGEX];
 
-const placeholderText = {
-  [HEADERS]: 'Header value...',
-  [URI]: 'Uri value...',
-  [SCHEME]: 'Scheme value...',
-  [METHOD]: 'Method value...',
-  [AUTHORITY]: 'Authority value...'
-};
-
 export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isMatchDropdown, setIsMatchDropdown] = React.useState<boolean>(false);
   const [isOperatorDropdown, setIsOperatorDropdown] = React.useState<boolean>(false);
   const renderOpOptions: string[] = props.category === HEADERS ? [PRESENCE, ...opOptions] : opOptions;
+
+  const placeholderText = {
+    [HEADERS]: t('Header value...'),
+    [URI]: t('Uri value...'),
+    [SCHEME]: t('Scheme value...'),
+    [METHOD]: t('Method value...'),
+    [AUTHORITY]: t('Authority value...')
+  };
 
   return (
     <InputGroup>
@@ -98,7 +100,7 @@ export const MatchBuilder: React.FC<MatchBuilderProps> = (props: MatchBuilderPro
           id="header-name-id"
           value={props.headerName}
           onChange={(_, value) => props.onHeaderNameChange(value)}
-          placeholder="Header name..."
+          placeholder={t('Header name...')}
         />
       )}
 

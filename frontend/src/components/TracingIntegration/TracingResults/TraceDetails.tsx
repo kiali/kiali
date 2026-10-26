@@ -1,35 +1,38 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { tabCardStyle } from 'styles/FlexStyles';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
-import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
+import type { JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { TracingTraceTitle } from './TracingTraceTitle';
 import { GraphType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
+import type {
+  StatsMatrix
+} from 'utils/tracing/TraceStats';
 import {
   averageSpanDuration,
   buildQueriesFromSpans,
   isSimilarTrace,
-  reduceMetricsStats,
-  StatsMatrix
+  reduceMetricsStats
 } from 'utils/tracing/TraceStats';
 import { TraceLabels } from './TraceLabels';
-import { TargetKind } from 'types/Common';
-import { MetricsStatsQuery } from 'types/MetricsOptions';
+import type { TargetKind } from 'types/Common';
+import type { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
-import { TracingUrlProvider } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
 import { map, round } from 'lodash-es';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean, cluster?: string) => void;
@@ -248,7 +251,11 @@ class TraceDetailsComponent extends React.Component<Props> {
             </GridItem>
 
             <GridItem span={6}>
-              <Tooltip content="Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.">
+              <Tooltip
+                content={t(
+                  'Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.'
+                )}
+              >
                 <>
                   <InfoAltIcon /> <strong>Similar traces</strong>
                   <br />

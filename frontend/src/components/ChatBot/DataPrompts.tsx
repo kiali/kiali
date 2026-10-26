@@ -1,4 +1,23 @@
 import type { Prompt } from 'types/Chatbot';
+import { t } from 'utils/I18nUtils';
+
+// Title fields stay English so Prompt.tsx can t(title) at render after a language change.
+// These literals exist so i18next-parser keeps the catalog entries (README external-variable pattern).
+export const dataPromptTitleKeys = [
+  t('Application Health Analysis'),
+  t('Application Troubleshooting'),
+  t('Check Graph Status'),
+  t('Istio Config Review'),
+  t('Istio Object Review'),
+  t('Mesh Health Summary'),
+  t('Namespace Overview'),
+  t('Namespace Troubleshooting'),
+  t('Analyze Overview'),
+  t('Service Health Analysis'),
+  t('Service Troubleshooting'),
+  t('Workload Health Analysis'),
+  t('Workload Troubleshooting')
+];
 
 export const DataPrompts: { [key: string]: Prompt[] } = {
   applications: [

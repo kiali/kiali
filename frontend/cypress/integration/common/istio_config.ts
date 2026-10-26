@@ -241,26 +241,25 @@ Given('a {string} AuthorizationPolicy in the {string} namespace', function (name
   this.targetAuthorizationPolicy = name;
 });
 
-Given('a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster', function (
-  name: string,
-  namespace: string,
-  cluster: string
-) {
-  let cluster_context;
-  if (cluster === 'west') {
-    cluster_context = CLUSTER2_CONTEXT;
-  } else {
-    cluster_context = CLUSTER1_CONTEXT;
+Given(
+  'a {string} AuthorizationPolicy in the {string} namespace in the {string} cluster',
+  function (name: string, namespace: string, cluster: string) {
+    let cluster_context;
+    if (cluster === 'west') {
+      cluster_context = CLUSTER2_CONTEXT;
+    } else {
+      cluster_context = CLUSTER1_CONTEXT;
+    }
+
+    cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, {
+      failOnNonZeroExit: false
+    });
+    cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply --context ${cluster_context} -f  -`);
+
+    this.targetNamespace = namespace;
+    this.targetAuthorizationPolicy = name;
   }
-
-  cy.exec(`kubectl delete AuthorizationPolicy ${name} -n ${namespace} --context ${cluster_context}`, {
-    failOnNonZeroExit: false
-  });
-  cy.exec(`echo '${minimalAuthorizationPolicy(name, namespace)}' | kubectl apply --context ${cluster_context} -f  -`);
-
-  this.targetNamespace = namespace;
-  this.targetAuthorizationPolicy = name;
-});
+);
 
 Given('the AuthorizationPolicy has a from-source rule for {string} namespace', function (namespace: string) {
   cy.exec(
@@ -286,17 +285,16 @@ Given('the AuthorizationPolicy has a to-operation rule with {string} host', func
   );
 });
 
-Given('a {string} DestinationRule in the {string} namespace for {string} host', function (
-  name: string,
-  namespace: string,
-  host: string
-) {
-  cy.exec(`kubectl delete DestinationRule ${name} -n ${namespace}`, { failOnNonZeroExit: false });
-  cy.exec(`echo '${minimalDestinationRule(name, namespace, host)}' | kubectl apply -f -`);
+Given(
+  'a {string} DestinationRule in the {string} namespace for {string} host',
+  function (name: string, namespace: string, host: string) {
+    cy.exec(`kubectl delete DestinationRule ${name} -n ${namespace}`, { failOnNonZeroExit: false });
+    cy.exec(`echo '${minimalDestinationRule(name, namespace, host)}' | kubectl apply -f -`);
 
-  this.targetNamespace = namespace;
-  this.targetDestinationRule = name;
-});
+    this.targetNamespace = namespace;
+    this.targetDestinationRule = name;
+  }
+);
 
 Given('the DestinationRule has a {string} subset for {string} labels', function (subset: string, labels: string) {
   cy.exec(

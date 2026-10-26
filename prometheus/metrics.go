@@ -135,6 +135,11 @@ func vectorToMatrix(ctx context.Context, vector []*model.Sample, t model.Time) m
 	return matrix
 }
 
+// FetchRangeQuery runs an arbitrary PromQL expression as a range query.
+func FetchRangeQuery(ctx context.Context, api prom_v1.API, query string, q *RangeQuery) Metric {
+	return fetchRange(ctx, api, query, q.Range)
+}
+
 func fetchRange(ctx context.Context, api prom_v1.API, query string, bounds prom_v1.Range) Metric {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "fetchRange",

@@ -440,6 +440,8 @@ honnef.co/go/tools v0.0.0-20190102054323-c2f93a96b099/go.mod h1:rf3lG4BRIbNafJWh
 honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc/go.mod h1:rf3lG4BRIbNafJWhAfAdb/ePZxsR/4RtNHQocxwk9r4=
 istio.io/api v1.30.1-0.20260529120535-23c54ad84d6e h1:GPtgMkMjv1bE0m/bhVzoQdPm2abGy24bD7I4mFLJ55k=
 istio.io/api v1.30.1-0.20260529120535-23c54ad84d6e/go.mod h1:+brQWcBHoROuyA6fv8rbgg8Kfn0RCGuqoY0duCMuSLA=
+istio.io/api v1.31.0 h1:qGf/hZwCu5LOPK0jGti38NF71E8Eq4jGyhz/l2xsszU=
+istio.io/api v1.31.0/go.mod h1:+brQWcBHoROuyA6fv8rbgg8Kfn0RCGuqoY0duCMuSLA=
 istio.io/client-go v1.30.1 h1:xOkdcxewkuc0ayw5o/osNINAAZfS9hevmnDq6GThrkU=
 istio.io/client-go v1.30.1/go.mod h1:M6zHgHi2uud1EMrphZ9gcKx+6Wwn3j1UjtHss5TQyA4=
 k8s.io/api v0.36.1 h1:XbL/EMj8K2aJpJtePmqUyQMsM0D4QI2pvl7YKJ20FTY=

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw';
-import { ServerConfig, RunMode } from '../../types/ServerConfig';
+import { RunMode, type ServerConfig } from '../../types/ServerConfig';
 import { getScenarioConfig } from '../scenarios';
-import { ChatAIConfig } from 'types/Chatbot';
+import type { ChatAIConfig } from 'types/Chatbot';
 
 // Cluster config type
 type ClusterConfigType = Record<
@@ -104,7 +104,11 @@ const generateServerConfig = (): ServerConfig => {
     authStrategy: 'anonymous',
     ai: {
       enabled: scenarioConfig.ai?.enabled ?? false,
-      chat: generateChatAIConfig()
+      chat: generateChatAIConfig(),
+      consumption: {
+        enabled: scenarioConfig.ai?.consumption?.enabled ?? false,
+        allowed: scenarioConfig.ai?.consumption?.allowed ?? false
+      }
     },
     clusterWideAccess: true,
     clusters: generateClustersConfig(),
@@ -148,6 +152,7 @@ const generateServerConfig = (): ServerConfig => {
         }
       ]
     },
+    healthStatusMetricsEnabled: false,
     ignoreHomeCluster: false,
     installationTag: 'Kiali Mock',
     istioAPIInstalled: false,
@@ -182,7 +187,7 @@ const generateServerConfig = (): ServerConfig => {
           }
         },
         i18n: {
-          language: 'en',
+          language: '',
           showSelector: true
         },
         list: {

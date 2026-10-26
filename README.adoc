@@ -301,7 +301,7 @@ Requirements:
 - bookinfo demo app
 - error rates demo app
 
-link:./hack/istio/install-testing-demos.sh[This script] can be used install all necessary demo applications for testing and supports deployments on both Openshift and non-Openshift enviroments.
+link:./hack/istio/install-testing-demos.sh[This script] can be used install all necessary demo applications for testing and supports deployments on both Openshift and non-Openshift environments.
 
 [source,shell]
 ----

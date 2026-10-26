@@ -1,4 +1,6 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -7,7 +9,6 @@ import {
   HelperText,
   HelperTextItem,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
@@ -15,12 +16,13 @@ import {
   TextInput
 } from '@patternfly/react-core';
 import { PeerAuthenticationMutualTLSMode } from '../../types/IstioObjects';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 const noPortMtlsStyle = kialiStyle({
   marginTop: '1rem',
@@ -29,11 +31,11 @@ const noPortMtlsStyle = kialiStyle({
 
 const columns: ThProps[] = [
   {
-    title: 'Port Number',
+    title: t('Port Number'),
     width: 20
   },
   {
-    title: 'Mutual TLS Mode',
+    title: t('Mutual TLS Mode'),
     width: 20
   },
   {
@@ -289,7 +291,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
                   {this.state.addNewPortMtls.mtls}
                 </MenuToggle>
               )}
-              aria-label="Port MTLS Mode Select"
+              aria-label={t('Port MTLS Mode Select')}
             >
               <SelectList>
                 {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
@@ -319,7 +321,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
   render(): React.ReactNode {
     return (
       <>
-        <FormGroup label="Workload Selector" fieldId="workloadSelectorSwitch">
+        <FormGroup label={t('Workload Selector')} fieldId="workloadSelectorSwitch">
           <Switch
             id="workloadSelectorSwitch"
             label={' '}
@@ -329,7 +331,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
         </FormGroup>
 
         {this.state.addWorkloadSelector && (
-          <FormGroup fieldId="workloadLabels" label="Labels">
+          <FormGroup fieldId="workloadLabels" label={t('Labels')}>
             <TextInput
               id="gwHosts"
               name="gwHosts"
@@ -343,15 +345,17 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               <HelperText>
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
-                    ? 'One or more labels to select a workload where the PeerAuthentication is applied.'
-                    : 'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'}
+                    ? t('One or more labels to select a workload where the PeerAuthentication is applied.')
+                    : t(
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>
           </FormGroup>
         )}
 
-        <FormGroup label="Mutual TLS Mode" fieldId="mutualTls">
+        <FormGroup label={t('Mutual TLS Mode')} fieldId="mutualTls">
           <Select
             id="mutualTls"
             selected={this.state.mtls}
@@ -377,7 +381,7 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
               </MenuToggle>
             )}
             isOpen={this.state.isMtlsSelectOpen}
-            aria-label="Mutual TLS Mode Select"
+            aria-label={t('Mutual TLS Mode Select')}
           >
             <SelectList>
               {Object.keys(PeerAuthenticationMutualTLSMode).map((option, index) => (
@@ -389,20 +393,20 @@ export class PeerAuthenticationForm extends React.Component<Props, PeerAuthentic
           </Select>
         </FormGroup>
 
-        <FormGroup label="Port Mutual TLS" fieldId="addPortMtls">
+        <FormGroup label={t('Port Mutual TLS')} fieldId="addPortMtls">
           <Switch id="addPortMtls" label={' '} isChecked={this.state.addPortMtls} onChange={this.onChangeAddPortMtls} />
         </FormGroup>
 
         {this.state.addPortMtls && (
-          <FormGroup label="Port Level MTLS" fieldId="portMtlsList">
-            <SimpleTable label="Port Level MTLS" columns={columns} rows={this.rows()} />
+          <FormGroup label={t('Port Level MTLS')} fieldId="portMtlsList">
+            <SimpleTable label={t('Port Level MTLS')} columns={columns} rows={this.rows()} />
 
             {this.props.peerAuthentication.portLevelMtls.length === 0 && (
-              <div className={noPortMtlsStyle}>PeerAuthentication has no Port Mutual TLS defined</div>
+              <div className={noPortMtlsStyle}>{t('PeerAuthentication has no Port Mutual TLS defined')}</div>
             )}
 
             {!this.state.addWorkloadSelector && (
-              <div className={noPortMtlsStyle}>Port Mutual TLS requires a Workload Selector</div>
+              <div className={noPortMtlsStyle}>{t('Port Mutual TLS requires a Workload Selector')}</div>
             )}
           </FormGroup>
         )}

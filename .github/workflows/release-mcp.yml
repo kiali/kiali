@@ -2,7 +2,7 @@ name: Release MCP
 
 # Builds the Kiali image from a release branch and publishes it to
 # quay.io/kiali/kiali_mcp. Versioning is derived from existing Quay tags for
-# that branch line (e.g. v2.27 -> next patch v2.27.N). Tags pushed:
+# that branch line (e.g. v2.33 -> next patch v2.33.N). Tags pushed:
 #   - vX.Y.Z-<git-sha>    (immutable/traceable release version with short git sha)
 #   - vX.Y                (floating minor/branch line — overwrites on each publish)
 #
@@ -16,11 +16,12 @@ on:
   workflow_dispatch:
     inputs:
       release_branch:
-        description: Release branch to publish from (e.g. v2.27)
+        description: Release branch to publish from (e.g. v2.33)
         required: true
-        default: v2.27
+        default: v2.33
         type: choice
         options:
+        - v2.33
         - v2.27
         - v2.22
       skip_publication:
@@ -208,7 +209,7 @@ jobs:
         cache-dependency-path: go.sum
 
     - name: Download frontend build
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: build
         path: frontend/build
@@ -352,14 +353,14 @@ jobs:
 
     - name: Upload debug info artifact
       if: ${{ failure() && (steps.mcpTests.conclusion == 'failure' || steps.coverage.conclusion == 'failure') }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: debug-info-release-mcp-validate
         path: debug-output
 
     - name: Upload mcp_tools junit
       if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: junit-rest-report-release-mcp-validate
         path: tests/integration/junit-rest-report-mcp-tools.xml

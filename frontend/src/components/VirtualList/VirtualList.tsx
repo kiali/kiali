@@ -8,7 +8,7 @@ import { VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, PlusCircleIcon, SearchIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from '../../store/Store';
-import { activeNamespacesSelector } from '../../store/Selectors';
+import { activeNamespacesSelector, languageSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
 import type { Namespace } from '../../types/Namespace';
 import type { SortField } from '../../types/SortFilters';
@@ -65,7 +65,7 @@ const tableContrastStyle = kialiStyle({
 
 type Direction = 'asc' | 'desc' | undefined;
 
-type ReduxProps = { activeNamespaces: Namespace[] };
+type ReduxProps = { activeNamespaces: Namespace[]; language: string };
 
 type VirtualListProps<R> = ReduxProps & {
   actions?: JSX.Element[];
@@ -170,7 +170,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const { rows } = this.props;
     const { sortBy, columns, conf } = this.state;
 
-    const typeDisplay = this.props.type === 'istio' ? 'Istio config' : this.props.type;
+    const typeDisplay = this.props.type === 'istio' ? t('Istio Config') : this.props.type;
 
     const childrenWithProps = React.Children.map(this.props.children, child => {
       // Checking isValidElement is the safe way and avoids a TS error too.
@@ -207,18 +207,22 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
         {conf.caption && <Caption>{conf.caption}</Caption>}
         <Thead>
           <Tr>
-            {columns.map((column, index) => (
-              <Th
-                key={`column_${index}`}
-                dataLabel={column.title}
-                info={column.info}
-                sort={this.getSortParams(column, index, sortBy, this.onSort)}
-                width={column.width}
-                textCenter={column.textCenter}
-              >
-                {column.title}
-              </Th>
-            ))}
+            {columns.map((column, index) => {
+              const title = column.title ? t(column.title) : column.title;
+
+              return (
+                <Th
+                  key={`column_${index}`}
+                  dataLabel={title}
+                  info={column.info}
+                  sort={this.getSortParams(column, index, sortBy, this.onSort)}
+                  width={column.width}
+                  textCenter={column.textCenter}
+                >
+                  {title}
+                </Th>
+              );
+            })}
           </Tr>
         </Thead>
 
@@ -351,7 +355,8 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
 }
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
-  activeNamespaces: activeNamespacesSelector(state)
+  activeNamespaces: activeNamespacesSelector(state),
+  language: languageSelector(state)
 });
 
 export const VirtualList = connect(mapStateToProps)(VirtualListComponent);

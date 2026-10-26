@@ -5,7 +5,7 @@ import type { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 export interface AccessLogModalProps {
   accessLog: AccessLog;
@@ -76,6 +76,7 @@ const tableStyle = kialiStyle({
 });
 
 export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogModalProps) => {
+  const { t } = useKialiTranslation();
   const [description, setDescription] = React.useState<React.ReactNode>(
     <div style={{ width: '100%', textAlign: 'center' }}>
       <dt>Click Field Name for Description</dt>
@@ -640,11 +641,11 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
               <Table className={tableStyle}>
                 <Thead>
                   <Tr className="row-odd">
-                    <Th dataLabel="Specifier" width={30} className="head">
-                      <p>Specifier</p>
+                    <Th dataLabel={t('Specifier')} width={30} className="head">
+                      <p>{t('Specifier')}</p>
                     </Th>
-                    <Th dataLabel="Explanation" width={70} className="head">
-                      <p>Explanation</p>
+                    <Th dataLabel={t('Explanation')} width={70} className="head">
+                      <p>{t('Explanation')}</p>
                     </Th>
                   </Tr>
                 </Thead>
@@ -834,7 +835,7 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
           </>
         );
       default:
-        return <>No documentation available</>;
+        return <>{t('No documentation available')}</>;
     }
   };
   return (

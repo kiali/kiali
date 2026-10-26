@@ -3,7 +3,7 @@
 # Install DEMO lab: Istio metric recording rules + sample Federated Prometheus.
 #
 # For operator integration (real clusters), see:
-#   https://kiali.io/docs/configuration/p8s-jaeger-grafana/prometheus/#recording-rules-and-federation
+#   https://kiali.io/docs/configuration/external-services/metrics/tuning/#option-1-recording-rules-and-federation-recommended
 #
 # This script patches the Istio add-on Edge Prometheus in istio-system and deploys
 # a sample prometheus-federated for learning/CI — not for real clusters.

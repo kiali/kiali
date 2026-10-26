@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -31,6 +32,7 @@ import { getAppLabelName } from 'config/ServerConfig';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
+import { t } from 'utils/I18nUtils';
 
 type AppDetailsState = {
   app?: App;
@@ -144,6 +146,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             }}
             tabMap={paramToTab}
             tabName={tabName}
+            customTimeTabs={['in_metrics', 'out_metrics', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
@@ -186,7 +189,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
         clearChatResourceHealth(this.props.dispatch);
         addError('Could not fetch App Details.', error);
         const msg: ErrorMsg = {
-          title: 'No App is selected',
+          title: t('No App is selected'),
           description: `${this.props.appId.app} is not found in the mesh`
         };
         this.setState({ error: msg });
@@ -231,7 +234,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
 
   private staticTabs(): React.ReactNode[] {
     const overTab = (
-      <Tab title="Overview" eventKey={0} key={'Overview'}>
+      <Tab title={t('Overview')} eventKey={0} key={'Overview'}>
         <AppInfo
           app={this.state.app}
           duration={this.props.duration}
@@ -242,7 +245,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const trafficTab = (
-      <Tab title="Traffic" eventKey={1} key={'Traffic'}>
+      <Tab title={t('Traffic')} eventKey={1} key={'Traffic'}>
         <TrafficDetails
           itemName={this.props.appId.app}
           itemType={MetricsObjectTypes.APP}
@@ -254,7 +257,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const inTab = (
-      <Tab title="Inbound Metrics" eventKey={2} key={'Inbound Metrics'}>
+      <Tab title={t('Inbound Metrics')} eventKey={2} key={'Inbound Metrics'}>
         <IstioMetrics
           cluster={this.state.cluster}
           data-test="inbound-metrics-component"
@@ -269,7 +272,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
     );
 
     const outTab = (
-      <Tab title="Outbound Metrics" eventKey={3} key={'Outbound Metrics'}>
+      <Tab title={t('Outbound Metrics')} eventKey={3} key={'Outbound Metrics'}>
         <IstioMetrics
           cluster={this.state.cluster}
           data-test="outbound-metrics-component"
@@ -300,7 +303,7 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
               : false;
 
           tabsArray.push(
-            <Tab eventKey={4} style={{ textAlign: 'center' }} title={'Traces'} key={tracesTabName}>
+            <Tab eventKey={4} style={{ textAlign: 'center' }} title={t('Traces')} key={tracesTabName}>
               <TracesComponent
                 lastRefreshAt={this.props.lastRefreshAt}
                 namespace={this.props.appId.namespace}

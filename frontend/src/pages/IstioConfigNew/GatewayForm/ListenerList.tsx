@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import type { ThProps} from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Listener } from '../../../types/IstioObjects';
-import { ListenerForm } from '../K8sGatewayForm';
+import type { Listener } from '../../../types/IstioObjects';
+import type { ListenerForm } from '../K8sGatewayForm';
 import {
   ListenerBuilder,
   allowedRoutes,
@@ -15,6 +16,7 @@ import {
   SELECTOR
 } from './ListenerBuilder';
 import { KialiIcon } from 'config/KialiIcon';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ListenerListProps = {
   listeners: Listener[];
@@ -31,37 +33,6 @@ const addListenerStyle = kialiStyle({
   marginLeft: '0.5rem',
   marginTop: '0.25rem'
 });
-
-const columns: ThProps[] = [
-  {
-    title: 'Name',
-    width: 20
-  },
-  {
-    title: 'Hostname',
-    width: 20
-  },
-  {
-    title: 'Port',
-    width: 10
-  },
-  {
-    title: 'Protocol',
-    width: 10
-  },
-  {
-    title: 'From Namespaces',
-    width: 10
-  },
-  {
-    title: 'Labels',
-    width: 25
-  },
-  {
-    title: '',
-    width: 10
-  }
-];
 
 export const addSelectorLabels = (value: string): [boolean, Record<string, string>] => {
   if (value.length === 0) {
@@ -100,6 +71,39 @@ export const addSelectorLabels = (value: string): [boolean, Record<string, strin
 };
 
 export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListProps) => {
+  const { t } = useKialiTranslation();
+
+  const columns: ThProps[] = [
+    {
+      title: t('Name'),
+      width: 20
+    },
+    {
+      title: t('Hostname'),
+      width: 20
+    },
+    {
+      title: t('Port'),
+      width: 10
+    },
+    {
+      title: t('Protocol'),
+      width: 10
+    },
+    {
+      title: t('From Namespaces'),
+      width: 10
+    },
+    {
+      title: t('Labels'),
+      width: 25
+    },
+    {
+      title: '',
+      width: 10
+    }
+  ];
+
   const onAddListener = (): void => {
     const newListener: ListenerForm = {
       hostname: '',
@@ -188,7 +192,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
 
   return (
     <>
-      <Table aria-label="Listener List">
+      <Table aria-label={t('Listener List')}>
         <Thead>
           <Tr>
             {columns.map((column, index) => (
@@ -214,7 +218,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
           ) : (
             <Tr>
               <Td colSpan={columns.length}>
-                <div className={noListenerStyle}>No Listeners defined</div>
+                <div className={noListenerStyle}>{t('No Listeners defined')}</div>
               </Td>
             </Tr>
           )}
@@ -228,7 +232,7 @@ export const ListenerList: React.FC<ListenerListProps> = (props: ListenerListPro
         onClick={onAddListener}
         className={addListenerStyle}
       >
-        Add Listener to Listener List
+        {t('Add Listener to Listener List')}
       </Button>
     </>
   );

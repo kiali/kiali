@@ -12,10 +12,10 @@ import {
   FormGroup,
   GridItem
 } from '@patternfly/react-core';
-import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
+import type { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../../../store/Store';
+import type { KialiAppState } from '../../../store/Store';
 import { findValueSelector, hideValueSelector, edgeLabelsSelector, edgeModeSelector } from '../../../store/Selectors';
 import { GraphToolbarActions } from '../../../actions/GraphToolbarActions';
 import { GraphHelpFind } from '../../../pages/Graph/GraphHelpFind';
@@ -25,18 +25,20 @@ import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { GraphTourStops } from 'pages/Graph/GraphHelpTour';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import { EdgeData, NodeData } from 'pages/Graph/GraphElems';
-import { elems, SelectAnd, SelectExp, selectOr, SelectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
+import type { EdgeData, NodeData } from 'pages/Graph/GraphElems';
+import type { SelectAnd, SelectExp, SelectOr} from 'helpers/GraphHelpers';
+import { elems, selectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash-es';
 import { graphLayout } from 'pages/Graph/Graph';
-import { TimeInMilliseconds } from 'types/Common';
+import type { TimeInMilliseconds } from 'types/Common';
+import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
   edgeLabels: EdgeLabelMode[];
@@ -310,7 +312,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                   onChange={(_event, val) => this.updateFind(val)}
                   defaultValue={this.state.findInputValue}
                   onKeyDownCapture={this.checkSpecialKeyFind}
-                  placeholder="Find..."
+                  placeholder={t('Find...')}
                 />
                 {this.state.findError && (
                   <FormHelperText>
@@ -326,7 +328,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               <FormGroup className={graphFindStyle}>
                 <GraphFindOptions kind="find" onSelect={this.updateFindOption} />
                 {this.props.findValue && (
-                  <Tooltip key="ot_clear_find" position="top" content="Clear Find...">
+                  <Tooltip key="ot_clear_find" position="top" content={t('Clear Find...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}
@@ -353,7 +355,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
                   onChange={(_event, val) => this.updateHide(val)}
                   defaultValue={this.state.hideInputValue}
                   onKeyDownCapture={this.checkSpecialKeyHide}
-                  placeholder="Hide..."
+                  placeholder={t('Hide...')}
                 />
                 {this.state.hideError && (
                   <FormHelperText>
@@ -369,7 +371,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
               <FormGroup className={graphHideStyle}>
                 <GraphFindOptions kind="hide" onSelect={this.updateHideOption} />
                 {this.props.hideValue && (
-                  <Tooltip key="ot_clear_hide" position="top" content="Clear Hide...">
+                  <Tooltip key="ot_clear_hide" position="top" content={t('Clear Hide...')}>
                     <Button
                       className={buttonClearStyle}
                       variant={ButtonVariant.control}
@@ -696,7 +698,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     val: string,
     isFind: boolean
   ): { edgeSelector: SelectOr | undefined; nodeSelector: SelectOr | undefined } => {
-    let preparedVal = this.prepareValue(val);
+    const preparedVal = this.prepareValue(val);
     this.rankAutoEnabled = false;
 
     if (!preparedVal) {
@@ -706,14 +708,14 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
     // generate separate selectors for each disjunctive clause and then stitch them together. This
     // lets us mix node and edge criteria.
     const orClauses = preparedVal.split(' OR ');
-    let orNodeSelector: SelectOr = [];
-    let orEdgeSelector: SelectOr = [];
+    const orNodeSelector: SelectOr = [];
+    const orEdgeSelector: SelectOr = [];
 
     for (const clause of orClauses) {
       const expressions = clause.split(' AND ');
       const conjunctive = expressions.length > 1;
-      let nodeSelector: SelectAnd = [];
-      let edgeSelector: SelectAnd = [];
+      const nodeSelector: SelectAnd = [];
+      const edgeSelector: SelectAnd = [];
       let target;
 
       for (const expression of expressions) {

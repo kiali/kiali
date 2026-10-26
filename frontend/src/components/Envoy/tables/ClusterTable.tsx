@@ -1,16 +1,19 @@
 import * as React from 'react';
-import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { IRow, ISortBy, SortByDirection } from '@patternfly/react-table';
-import { ClusterSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
-import { SortField } from '../../../types/SortFilters';
-import { Namespace } from '../../../types/Namespace';
+import type { SummaryTable} from './BaseTable';
+import { SummaryTableRenderer } from './BaseTable';
+import type { IRow, ISortBy} from '@patternfly/react-table';
+import { SortByDirection } from '@patternfly/react-table';
+import type { ClusterSummary } from '../../../types/IstioObjects';
+import type { ActiveFilter, FilterType} from '../../../types/Filters';
+import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../../types/Filters';
+import type { SortField } from '../../../types/SortFilters';
+import type { Namespace } from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../../types/IstioConfigList';
 
@@ -88,7 +91,7 @@ export class ClusterTable implements SummaryTable {
     return [
       {
         id: 'fqdn',
-        title: 'FQDN',
+        title: t('FQDN'),
         isNumeric: false,
         param: 'fqdn',
         compare: (a, b) => {
@@ -99,7 +102,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'port',
-        title: 'Port',
+        title: t('Port'),
         isNumeric: true,
         param: 'port',
         compare: (a, b) => {
@@ -108,7 +111,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'subset',
-        title: 'Subset',
+        title: t('Subset'),
         isNumeric: false,
         param: 'subset',
         compare: (a, b) => {
@@ -117,7 +120,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'direction',
-        title: 'Direction',
+        title: t('Direction'),
         isNumeric: false,
         param: 'direction',
         compare: (a, b) => {
@@ -126,7 +129,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'type',
-        title: 'Type',
+        title: t('Type'),
         isNumeric: false,
         param: 'type',
         compare: (a, b) => {
@@ -135,7 +138,7 @@ export class ClusterTable implements SummaryTable {
       },
       {
         id: 'dr',
-        title: 'Destination Rule',
+        title: t('Destination Rule'),
         isNumeric: true,
         param: 'dr',
         compare: (a, b) => {
@@ -176,20 +179,20 @@ export class ClusterTable implements SummaryTable {
   head = (): SortableTh[] => {
     return [
       {
-        title: 'Service FQDN',
+        title: t('Service FQDN'),
         sortable: true,
         info: { tooltip: <>Fully Qualified Domain Name</> }
       },
       {
-        title: 'Port',
+        title: t('Port'),
         sortable: true
       },
       {
-        title: 'Subset',
+        title: t('Subset'),
         sortable: true
       },
       {
-        title: 'Direction',
+        title: t('Direction'),
         sortable: true,
         info: {
           tooltip: (
@@ -207,12 +210,12 @@ export class ClusterTable implements SummaryTable {
         }
       },
       {
-        title: 'Type',
+        title: t('Type'),
         sortable: true,
         info: { tooltip: this.render_cluster_type() }
       },
       {
-        title: 'DestinationRule',
+        title: t('DestinationRule'),
         sortable: true
       }
     ];
@@ -258,20 +261,18 @@ export class ClusterTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map(
-        (value: ClusterSummary): IRow => {
-          return {
-            cells: [
-              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false),
-              value.port,
-              value.subset,
-              value.direction,
-              value.type,
-              istioConfigLink(value.destination_rule, dicTypeToGVK[gvkType.DestinationRule])
-            ]
-          };
-        }
-      );
+      .map((value: ClusterSummary): IRow => {
+        return {
+          cells: [
+            serviceLink(value.service_fqdn, this.namespaces, this.namespace, false),
+            value.port,
+            value.subset,
+            value.direction,
+            value.type,
+            istioConfigLink(value.destination_rule, dicTypeToGVK[gvkType.DestinationRule])
+          ]
+        };
+      });
   }
 }
 

@@ -842,6 +842,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@emnapi/core@npm:1.11.3":
+  version: 1.11.3
+  resolution: "@emnapi/core@npm:1.11.3"
+  dependencies:
+    "@emnapi/wasi-threads": "npm:1.2.3"
+    tslib: "npm:^2.4.0"
+  checksum: 10c0/4ca08d349a82d5d2887ccc9e12df630877b0412ddcd59b9faee61e3c3947ccead27a18257a18bfe17abdf2b0709857808ad75d423ac49edd50c32fb140a7ed6e
+  languageName: node
+  linkType: hard
+
 "@emnapi/runtime@npm:1.10.0":
   version: 1.10.0
   resolution: "@emnapi/runtime@npm:1.10.0"
@@ -851,12 +861,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@emnapi/runtime@npm:1.11.3":
+  version: 1.11.3
+  resolution: "@emnapi/runtime@npm:1.11.3"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c0/a00f1020fefb9d4145c367f93a9fddb383a00da8ffd7871e20b19659890379b83aeecb9f84d7d0eda5456343f4a09eb05b0acb5153b0d3d889539dedb1ed87c3
+  languageName: node
+  linkType: hard
+
 "@emnapi/wasi-threads@npm:1.2.1":
   version: 1.2.1
   resolution: "@emnapi/wasi-threads@npm:1.2.1"
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10c0/32fcfa81ab396533b2ec1f4082b1ff779a05d9c836bbbd3f4398405b0e6814c0d9503b7993130e37bc6941dbc1ded49f55e9700ae9ca4e803bab2b5bc5deb331
+  languageName: node
+  linkType: hard
+
+"@emnapi/wasi-threads@npm:1.2.3":
+  version: 1.2.3
+  resolution: "@emnapi/wasi-threads@npm:1.2.3"
+  dependencies:
+    tslib: "npm:^2.4.0"
+  checksum: 10c0/5aed84bc5dbe867973b20406ca1ed95661a4892ecaef80378fdf2d37424b3f7b9c428df8a3e1d82b783a3345a530032bf049e699e1f113ea52203c3e9b4e6ce5
   languageName: node
   linkType: hard
 
@@ -1674,21 +1702,21 @@ __metadata:
     "@eslint-react/eslint-plugin": "npm:^5.18.0"
     "@eslint/js": "npm:^10.0.1"
     "@monaco-editor/react": "npm:^4.7.0"
-    "@patternfly/chatbot": "npm:~6.6.0"
-    "@patternfly/patternfly": "npm:~6.6.0"
-    "@patternfly/react-charts": "npm:~8.6.0"
-    "@patternfly/react-component-groups": "npm:~6.5.0"
-    "@patternfly/react-core": "npm:~6.6.0"
-    "@patternfly/react-drag-drop": "npm:~6.6.0"
-    "@patternfly/react-icons": "npm:~6.6.0"
-    "@patternfly/react-table": "npm:~6.6.0"
-    "@patternfly/react-topology": "npm:~6.6.0"
-    "@rsbuild/core": "npm:^2.0.12"
-    "@rsbuild/plugin-react": "npm:^2.0.1"
+    "@patternfly/chatbot": "npm:~6.7.0"
+    "@patternfly/patternfly": "npm:~6.7.0"
+    "@patternfly/react-charts": "npm:~8.7.0"
+    "@patternfly/react-component-groups": "npm:~6.7.0"
+    "@patternfly/react-core": "npm:~6.7.0"
+    "@patternfly/react-drag-drop": "npm:~6.7.0"
+    "@patternfly/react-icons": "npm:~6.7.0"
+    "@patternfly/react-table": "npm:~6.7.0"
+    "@patternfly/react-topology": "npm:~6.7.0"
+    "@rsbuild/core": "npm:^2.2.9"
+    "@rsbuild/plugin-react": "npm:^2.1.0"
     "@rsbuild/plugin-sass": "npm:^2.0.1"
-    "@rsbuild/plugin-svgr": "npm:^2.0.2"
-    "@rstest/adapter-rsbuild": "npm:^0.10.1"
-    "@rstest/core": "npm:^0.10.3"
+    "@rsbuild/plugin-svgr": "npm:^2.0.5"
+    "@rstest/adapter-rsbuild": "npm:^0.12.1"
+    "@rstest/core": "npm:^0.12.1"
     "@testing-library/jest-dom": "npm:^6.9.1"
     "@testing-library/react": "npm:^14.3.1"
     "@testing-library/user-event": "npm:^14.6.1"
@@ -1750,6 +1778,7 @@ __metadata:
     redux-thunk: "npm:2.4.1"
     regression: "npm:^2.0.1"
     reselect: "npm:4.0.0"
+    sass: "npm:^1.100.0"
     seedrandom: "npm:^3.0.5"
     typesafe-actions: "npm:^4.2.1"
     typescript: "npm:^5.9.0"
@@ -1785,7 +1814,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:^4.6.0, @monaco-editor/react@npm:^4.7.0":
+"@monaco-editor/react@npm:^4.7.0":
   version: 4.7.0
   resolution: "@monaco-editor/react@npm:4.7.0"
   dependencies:
@@ -1812,19 +1841,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/wasm-runtime@npm:1.1.4":
-  version: 1.1.4
-  resolution: "@napi-rs/wasm-runtime@npm:1.1.4"
-  dependencies:
-    "@tybys/wasm-util": "npm:^0.10.1"
-  peerDependencies:
-    "@emnapi/core": ^1.7.1
-    "@emnapi/runtime": ^1.7.1
-  checksum: 10c0/2e88e1955258949ccf2d18c79975821ad38071b465ef126a5e14110977b97868867b016c1ad046e963cccc42c0bd9db6c8ff5fd1ebb61b87bb3487f339041658
-  languageName: node
-  linkType: hard
-
-"@napi-rs/wasm-runtime@npm:^1.1.4":
+"@napi-rs/wasm-runtime@npm:1.1.6, @napi-rs/wasm-runtime@npm:^1.1.4":
   version: 1.1.6
   resolution: "@napi-rs/wasm-runtime@npm:1.1.6"
   dependencies:
@@ -2241,15 +2258,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@patternfly/chatbot@npm:~6.6.0":
-  version: 6.6.0
-  resolution: "@patternfly/chatbot@npm:6.6.0"
+"@patternfly/chatbot@npm:~6.7.0":
+  version: 6.7.1
+  resolution: "@patternfly/chatbot@npm:6.7.1"
   dependencies:
-    "@patternfly/react-code-editor": "npm:^6.1.0"
-    "@patternfly/react-core": "npm:^6.1.0"
-    "@patternfly/react-icons": "npm:^6.1.0"
-    "@patternfly/react-styles": "npm:^6.1.0"
-    "@patternfly/react-table": "npm:^6.1.0"
+    "@patternfly/react-code-editor": "npm:^6.6.0"
+    "@patternfly/react-core": "npm:^6.6.0"
+    "@patternfly/react-icons": "npm:^6.6.0"
+    "@patternfly/react-styles": "npm:^6.6.0"
+    "@patternfly/react-table": "npm:^6.6.0"
     "@segment/analytics-next": "npm:^1.76.0"
     clsx: "npm:^2.1.0"
     path-browserify: "npm:^1.0.1"
@@ -2271,23 +2288,23 @@ __metadata:
       optional: false
     monaco-editor:
       optional: false
-  checksum: 10c0/63d91686237b450ed4c39d997bf490b23b3e19df0a5ce7817a684eb145edf19033bf792374e918c1a391b810390db02be52547eb0e9a84f11d5352ea6488fdbf
+  checksum: 10c0/83a262559063f0c26ddbd744439ce2b15b2d6c7ce462521a502c7ee993600ac4003fa1966cd3bba33b87d64fd198831e895bdfbb603ec14a2438b0105e11897c
   languageName: node
   linkType: hard
 
-"@patternfly/patternfly@npm:~6.6.0":
-  version: 6.6.1
-  resolution: "@patternfly/patternfly@npm:6.6.1"
-  checksum: 10c0/ff05fe2a75dde489e2b8643d4bcd59f9a23d20710c16178721718c77551b75a43aad43da43481f52ef9452c7b46fa6b9dbf15e620d476e70955727982412b053
+"@patternfly/patternfly@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/patternfly@npm:6.7.0"
+  checksum: 10c0/f1be1ae04007566212ef2eab89c279a80d801e53248dc6f4fed532a9727ed0c68ab5f020f5c2bbf8c8f332bcdf7f9587cc3fd769e952ecfc19e763bae8229f34
   languageName: node
   linkType: hard
 
-"@patternfly/react-charts@npm:~8.6.0":
-  version: 8.6.1
-  resolution: "@patternfly/react-charts@npm:8.6.1"
+"@patternfly/react-charts@npm:~8.7.0":
+  version: 8.7.0
+  resolution: "@patternfly/react-charts@npm:8.7.0"
   dependencies:
-    "@patternfly/react-styles": "npm:^6.6.1"
-    "@patternfly/react-tokens": "npm:^6.6.1"
+    "@patternfly/react-styles": "npm:^6.7.0"
+    "@patternfly/react-tokens": "npm:^6.7.0"
     hoist-non-react-statics: "npm:^3.3.2"
     lodash: "npm:^4.17.23"
     tslib: "npm:^2.8.1"
@@ -2349,45 +2366,45 @@ __metadata:
       optional: true
     victory-zoom-container:
       optional: true
-  checksum: 10c0/29a7a087b0d01db9d57c3c6a26eae3b21b690bf23ceec1895952875389ca6cd4c47aafb6ebcaa1b111ae043ed9ed7f82fc285872280723f0ad409c990d8f59b3
+  checksum: 10c0/51bec37a88d8b8e5c33af2dee2a2baaeaf9f1c8ad074eff7d8359111ac8d59e2ae7ef1c397467be33d52a515c5f58802a869064c5f8478cdbc6c264470a1c2a8
   languageName: node
   linkType: hard
 
-"@patternfly/react-code-editor@npm:^6.1.0":
-  version: 6.4.0
-  resolution: "@patternfly/react-code-editor@npm:6.4.0"
+"@patternfly/react-code-editor@npm:^6.6.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-code-editor@npm:6.7.0"
   dependencies:
-    "@monaco-editor/react": "npm:^4.6.0"
-    "@patternfly/react-core": "npm:^6.4.0"
-    "@patternfly/react-icons": "npm:^6.4.0"
-    "@patternfly/react-styles": "npm:^6.4.0"
+    "@monaco-editor/react": "npm:^4.7.0"
+    "@patternfly/react-core": "npm:^6.7.0"
+    "@patternfly/react-icons": "npm:^6.7.0"
+    "@patternfly/react-styles": "npm:^6.7.0"
     react-dropzone: "npm:14.3.5"
     tslib: "npm:^2.8.1"
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
-  checksum: 10c0/42a2a119583c40f451cbcc8f60e4c5958b7c1ea110f2a44a4d79335197dec799e0fb1b75ba75472ff833441b551c25f6ede351ec35c9249e5cdc46aee8ff3a6c
+  checksum: 10c0/ffc3e8aea0ea7ea64c1b61922b54b39af5e12723b25be67ec2b942e29b5cdaa59a6a6881a2845357eb3169898687d29b20d690b78938f2e74023db69d7540be0
   languageName: node
   linkType: hard
 
-"@patternfly/react-component-groups@npm:~6.5.0":
-  version: 6.5.0
-  resolution: "@patternfly/react-component-groups@npm:6.5.0"
+"@patternfly/react-component-groups@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-component-groups@npm:6.7.0"
   dependencies:
-    "@patternfly/react-core": "npm:^6.0.0"
+    "@patternfly/react-core": "npm:^6.6.2"
     "@patternfly/react-icons": "npm:^6.0.0"
     "@patternfly/react-styles": "npm:^6.0.0"
-    "@patternfly/react-table": "npm:^6.0.0"
+    "@patternfly/react-table": "npm:^6.6.2"
     react-jss: "npm:^10.10.0"
   peerDependencies:
-    "@patternfly/react-drag-drop": ^6.0.0
+    "@patternfly/react-drag-drop": ^6.6.2
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
-  checksum: 10c0/cf0a5c6ef78d57611ab013841b38c24b43f32c453fa6e6b2db502f998f81e0fae3d226772296380ca8adf6363991d2776da979646fe814c4c4880a4d9b902e93
+  checksum: 10c0/6cbe984fe6d8fd3fea888093618c042bf18875993b2a40bd5ea352e4006b5d08045cb438a7340d253cf12e854c07ebafd05c4ced81b115b9e62634c3ba5fca53
   languageName: node
   linkType: hard
 
-"@patternfly/react-core@npm:^6.0.0, @patternfly/react-core@npm:^6.1.0, @patternfly/react-core@npm:^6.4.0, @patternfly/react-core@npm:^6.5.1, @patternfly/react-core@npm:^6.6.2, @patternfly/react-core@npm:~6.6.0":
+"@patternfly/react-core@npm:^6.5.1, @patternfly/react-core@npm:^6.6.2":
   version: 6.6.2
   resolution: "@patternfly/react-core@npm:6.6.2"
   dependencies:
@@ -2404,25 +2421,42 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@patternfly/react-drag-drop@npm:~6.6.0":
-  version: 6.6.2
-  resolution: "@patternfly/react-drag-drop@npm:6.6.2"
+"@patternfly/react-core@npm:^6.6.0, @patternfly/react-core@npm:^6.7.0, @patternfly/react-core@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-core@npm:6.7.0"
+  dependencies:
+    "@patternfly/react-icons": "npm:^6.7.0"
+    "@patternfly/react-styles": "npm:^6.7.0"
+    "@patternfly/react-tokens": "npm:^6.7.0"
+    focus-trap: "npm:7.6.6"
+    react-dropzone: "npm:^14.3.5"
+    tslib: "npm:^2.8.1"
+  peerDependencies:
+    react: ^17 || ^18 || ^19
+    react-dom: ^17 || ^18 || ^19
+  checksum: 10c0/4a69b399ab0fc751db471be4a374f28d0fc5be3c72b03768d7ea3e88de18f8fe6e5ec484ae43b904513f8d771f7e4addf713ac71875ab5d058bd3a290978f178
+  languageName: node
+  linkType: hard
+
+"@patternfly/react-drag-drop@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-drag-drop@npm:6.7.0"
   dependencies:
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/modifiers": "npm:^9.0.0"
     "@dnd-kit/sortable": "npm:^10.0.0"
-    "@patternfly/react-core": "npm:^6.6.2"
-    "@patternfly/react-icons": "npm:^6.6.1"
-    "@patternfly/react-styles": "npm:^6.6.1"
+    "@patternfly/react-core": "npm:^6.7.0"
+    "@patternfly/react-icons": "npm:^6.7.0"
+    "@patternfly/react-styles": "npm:^6.7.0"
     resize-observer-polyfill: "npm:^1.5.1"
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
-  checksum: 10c0/c70ac15688b47a88a740c2dc81bafa0a7ceb493f7dbd9898401d06cfd4808ee506d012ed7505a4a067503bedaebcb092fc9bc796ee2fdc107a79b5f40107648d
+  checksum: 10c0/e88bd25a6660fac3dfcc8554c031319cdde27ab82d777b81debaf9bbfb446c880f41d7d2ad1c0f8bb5fc4203ed671d8adb3973da8831f265aa01b044ec80cd5d
   languageName: node
   linkType: hard
 
-"@patternfly/react-icons@npm:^6.0.0, @patternfly/react-icons@npm:^6.1.0, @patternfly/react-icons@npm:^6.4.0, @patternfly/react-icons@npm:^6.5.1, @patternfly/react-icons@npm:^6.6.1, @patternfly/react-icons@npm:~6.6.0":
+"@patternfly/react-icons@npm:^6.0.0, @patternfly/react-icons@npm:^6.5.1, @patternfly/react-icons@npm:^6.6.1":
   version: 6.6.1
   resolution: "@patternfly/react-icons@npm:6.6.1"
   dependencies:
@@ -2434,27 +2468,46 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@patternfly/react-styles@npm:^6.0.0, @patternfly/react-styles@npm:^6.1.0, @patternfly/react-styles@npm:^6.4.0, @patternfly/react-styles@npm:^6.5.1, @patternfly/react-styles@npm:^6.6.1":
+"@patternfly/react-icons@npm:^6.6.0, @patternfly/react-icons@npm:^6.7.0, @patternfly/react-icons@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-icons@npm:6.7.0"
+  dependencies:
+    tslib: "npm:^2.8.1"
+  peerDependencies:
+    react: ^17 || ^18 || ^19
+    react-dom: ^17 || ^18 || ^19
+  checksum: 10c0/bce6416a16ba172024d33be4de310be94987bb975bd846953567406af14189ca36b9c2b1bd9da88a4f81f4891cd4b5667a96e50a135b7546818f7b90da72b4c2
+  languageName: node
+  linkType: hard
+
+"@patternfly/react-styles@npm:^6.0.0, @patternfly/react-styles@npm:^6.5.1, @patternfly/react-styles@npm:^6.6.1":
   version: 6.6.1
   resolution: "@patternfly/react-styles@npm:6.6.1"
   checksum: 10c0/0c50bf72fade26d30e6ff9abe0d2d8dbb5b546fe434067f70665ce704e63767a9f8ea7627871e2c6ce17ea4f475daa931fd420e1f1aee891c1f48b5905e57433
   languageName: node
   linkType: hard
 
-"@patternfly/react-table@npm:^6.0.0, @patternfly/react-table@npm:^6.1.0, @patternfly/react-table@npm:~6.6.0":
-  version: 6.6.2
-  resolution: "@patternfly/react-table@npm:6.6.2"
+"@patternfly/react-styles@npm:^6.6.0, @patternfly/react-styles@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-styles@npm:6.7.0"
+  checksum: 10c0/865afb4a806477dadf71b089359612aed6d23a0426a5d7b44d04964756b8b5d6588dde6994b25716c6427cf37a7d7ef3a8596886f89359ebfc9b9d525aaf1554
+  languageName: node
+  linkType: hard
+
+"@patternfly/react-table@npm:^6.6.0, @patternfly/react-table@npm:^6.6.2, @patternfly/react-table@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-table@npm:6.7.0"
   dependencies:
-    "@patternfly/react-core": "npm:^6.6.2"
-    "@patternfly/react-icons": "npm:^6.6.1"
-    "@patternfly/react-styles": "npm:^6.6.1"
-    "@patternfly/react-tokens": "npm:^6.6.1"
+    "@patternfly/react-core": "npm:^6.7.0"
+    "@patternfly/react-icons": "npm:^6.7.0"
+    "@patternfly/react-styles": "npm:^6.7.0"
+    "@patternfly/react-tokens": "npm:^6.7.0"
     lodash: "npm:^4.18.1"
     tslib: "npm:^2.8.1"
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
-  checksum: 10c0/47f35b5305033f7e918bbe1f60300adeff2525f904a444823c5cfc5979423d380f05fb5b19bb66b882cc94cdfcc3349de2d531fef3d120e66f4aca22d46902bb
+  checksum: 10c0/82a22d0ee3a8ce92a60310cf66e8a48f84e6d204ee6635eba6d3d6e1ae66ee38f16edb71be69341dacce2c67c5dc88708c99f75f3a4096b44411fc5501369e1c
   languageName: node
   linkType: hard
 
@@ -2465,9 +2518,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@patternfly/react-topology@npm:~6.6.0":
-  version: 6.6.0
-  resolution: "@patternfly/react-topology@npm:6.6.0"
+"@patternfly/react-tokens@npm:^6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-tokens@npm:6.7.0"
+  checksum: 10c0/c88c6856db78556b855d606b51c9076e310329f895cd3ad4b9647abb733e4c598bb9a28698d1d56822b59c3f8afac05e4607d1afee11f608f398a0056a5258ec
+  languageName: node
+  linkType: hard
+
+"@patternfly/react-topology@npm:~6.7.0":
+  version: 6.7.0
+  resolution: "@patternfly/react-topology@npm:6.7.0"
   dependencies:
     "@dagrejs/dagre": "npm:1.1.2"
     "@patternfly/react-core": "npm:^6.5.1"
@@ -2485,7 +2545,7 @@ __metadata:
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
-  checksum: 10c0/b1afadce79fdf8bb5d095b4916bd40b9ac35b23953a8f5d52353f7ff0024c799ec1110166930a8f8c6b592b8e63475fa17f3c356b322323a89c24027f197c737
+  checksum: 10c0/7d6e07bcc02c331a4c00cf7b3df2ce452f75196cc23ec72e9612c34dbee978cbecf0fd25db18ba8f546cd36c186fa41a6e1cac6d5785dea146deebb5f5ba102c
   languageName: node
   linkType: hard
 
@@ -2591,11 +2651,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsbuild/core@npm:^2.0.12, @rsbuild/core@npm:~2.0.15":
-  version: 2.0.15
-  resolution: "@rsbuild/core@npm:2.0.15"
+"@rsbuild/core@npm:^2.2.9, @rsbuild/core@npm:~2.2.9":
+  version: 2.2.9
+  resolution: "@rsbuild/core@npm:2.2.9"
   dependencies:
-    "@rspack/core": "npm:~2.0.8"
+    "@rspack/core": "npm:~2.2.7"
     "@swc/helpers": "npm:^0.5.23"
   peerDependencies:
     core-js: ">= 3.0.0"
@@ -2604,11 +2664,11 @@ __metadata:
       optional: true
   bin:
     rsbuild: ./bin/rsbuild.js
-  checksum: 10c0/0aa77a2e4928e1b62b26fa986467d8226a89f2fb0680ae825a36f7e581a976e6bb43debcca4dcdb7fd8d68b05a7f7ef2e5b25b9769afd70ea2a65c1103b59e2e
+  checksum: 10c0/6217af49cfbe80ea9db5e3ad87ec56e3e64e7f68f979793cd1af87cb0fb77879952966629f15e8317d827b5f6b59eecb4f522405a8b018526096b3eaf617f884
   languageName: node
   linkType: hard
 
-"@rsbuild/plugin-react@npm:^2.0.0, @rsbuild/plugin-react@npm:^2.0.1":
+"@rsbuild/plugin-react@npm:^2.0.0, @rsbuild/plugin-react@npm:^2.1.0":
   version: 2.1.0
   resolution: "@rsbuild/plugin-react@npm:2.1.0"
   dependencies:
@@ -2641,9 +2701,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rsbuild/plugin-svgr@npm:^2.0.2":
-  version: 2.0.4
-  resolution: "@rsbuild/plugin-svgr@npm:2.0.4"
+"@rsbuild/plugin-svgr@npm:^2.0.5":
+  version: 2.0.5
+  resolution: "@rsbuild/plugin-svgr@npm:2.0.5"
   dependencies:
     "@rsbuild/plugin-react": "npm:^2.0.0"
     "@svgr/core": "npm:8.1.0"
@@ -2656,98 +2716,130 @@ __metadata:
   peerDependenciesMeta:
     "@rsbuild/core":
       optional: true
-  checksum: 10c0/d549b750f82fd2fc75592742d43f100d8a06d7e2916dbaf09063fbbbc8deff6803f848fc19e0bf6e0be0cb769f712e4abb967a7592b10aa5fa72f7d89f3c4e14
+  checksum: 10c0/0c3f4d21e9680d37956e365bbf60e57ef49c10ca93dbb30106fd7d6890ced2c4543bd36202843ce5d44f325871763d88648464f5909779662779824d4bbbbf0c
   languageName: node
   linkType: hard
 
-"@rspack/binding-darwin-arm64@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-darwin-arm64@npm:2.0.8"
+"@rspack/binding-darwin-arm64@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-darwin-arm64@npm:2.2.7"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rspack/binding-darwin-x64@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-darwin-x64@npm:2.0.8"
+"@rspack/binding-darwin-x64@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-darwin-x64@npm:2.2.7"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-arm64-gnu@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-linux-arm64-gnu@npm:2.0.8"
+"@rspack/binding-linux-arm64-gnu@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-arm64-gnu@npm:2.2.7"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-arm64-musl@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-linux-arm64-musl@npm:2.0.8"
+"@rspack/binding-linux-arm64-musl@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-arm64-musl@npm:2.2.7"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-x64-gnu@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-linux-x64-gnu@npm:2.0.8"
+"@rspack/binding-linux-ppc64-gnu@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-ppc64-gnu@npm:2.2.7"
+  conditions: os=linux & cpu=ppc64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@rspack/binding-linux-riscv64-gnu@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-riscv64-gnu@npm:2.2.7"
+  conditions: os=linux & cpu=riscv64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@rspack/binding-linux-riscv64-musl@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-riscv64-musl@npm:2.2.7"
+  conditions: os=linux & cpu=riscv64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@rspack/binding-linux-s390x-gnu@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-s390x-gnu@npm:2.2.7"
+  conditions: os=linux & cpu=s390x & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@rspack/binding-linux-x64-gnu@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-x64-gnu@npm:2.2.7"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@rspack/binding-linux-x64-musl@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-linux-x64-musl@npm:2.0.8"
+"@rspack/binding-linux-x64-musl@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-linux-x64-musl@npm:2.2.7"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@rspack/binding-wasm32-wasi@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-wasm32-wasi@npm:2.0.8"
+"@rspack/binding-wasm32-wasi@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-wasm32-wasi@npm:2.2.7"
   dependencies:
-    "@emnapi/core": "npm:1.10.0"
-    "@emnapi/runtime": "npm:1.10.0"
-    "@napi-rs/wasm-runtime": "npm:1.1.4"
+    "@emnapi/core": "npm:1.11.3"
+    "@emnapi/runtime": "npm:1.11.3"
+    "@napi-rs/wasm-runtime": "npm:1.1.6"
   conditions: cpu=wasm32
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-arm64-msvc@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-win32-arm64-msvc@npm:2.0.8"
+"@rspack/binding-win32-arm64-msvc@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-win32-arm64-msvc@npm:2.2.7"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-ia32-msvc@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-win32-ia32-msvc@npm:2.0.8"
+"@rspack/binding-win32-ia32-msvc@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-win32-ia32-msvc@npm:2.2.7"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@rspack/binding-win32-x64-msvc@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding-win32-x64-msvc@npm:2.0.8"
+"@rspack/binding-win32-x64-msvc@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding-win32-x64-msvc@npm:2.2.7"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@rspack/binding@npm:2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/binding@npm:2.0.8"
+"@rspack/binding@npm:2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/binding@npm:2.2.7"
   dependencies:
-    "@rspack/binding-darwin-arm64": "npm:2.0.8"
-    "@rspack/binding-darwin-x64": "npm:2.0.8"
-    "@rspack/binding-linux-arm64-gnu": "npm:2.0.8"
-    "@rspack/binding-linux-arm64-musl": "npm:2.0.8"
-    "@rspack/binding-linux-x64-gnu": "npm:2.0.8"
-    "@rspack/binding-linux-x64-musl": "npm:2.0.8"
-    "@rspack/binding-wasm32-wasi": "npm:2.0.8"
-    "@rspack/binding-win32-arm64-msvc": "npm:2.0.8"
-    "@rspack/binding-win32-ia32-msvc": "npm:2.0.8"
-    "@rspack/binding-win32-x64-msvc": "npm:2.0.8"
+    "@rspack/binding-darwin-arm64": "npm:2.2.7"
+    "@rspack/binding-darwin-x64": "npm:2.2.7"
+    "@rspack/binding-linux-arm64-gnu": "npm:2.2.7"
+    "@rspack/binding-linux-arm64-musl": "npm:2.2.7"
+    "@rspack/binding-linux-ppc64-gnu": "npm:2.2.7"
+    "@rspack/binding-linux-riscv64-gnu": "npm:2.2.7"
+    "@rspack/binding-linux-riscv64-musl": "npm:2.2.7"
+    "@rspack/binding-linux-s390x-gnu": "npm:2.2.7"
+    "@rspack/binding-linux-x64-gnu": "npm:2.2.7"
+    "@rspack/binding-linux-x64-musl": "npm:2.2.7"
+    "@rspack/binding-wasm32-wasi": "npm:2.2.7"
+    "@rspack/binding-win32-arm64-msvc": "npm:2.2.7"
+    "@rspack/binding-win32-ia32-msvc": "npm:2.2.7"
+    "@rspack/binding-win32-x64-msvc": "npm:2.2.7"
   dependenciesMeta:
     "@rspack/binding-darwin-arm64":
       optional: true
@@ -2756,6 +2848,14 @@ __metadata:
     "@rspack/binding-linux-arm64-gnu":
       optional: true
     "@rspack/binding-linux-arm64-musl":
+      optional: true
+    "@rspack/binding-linux-ppc64-gnu":
+      optional: true
+    "@rspack/binding-linux-riscv64-gnu":
+      optional: true
+    "@rspack/binding-linux-riscv64-musl":
+      optional: true
+    "@rspack/binding-linux-s390x-gnu":
       optional: true
     "@rspack/binding-linux-x64-gnu":
       optional: true
@@ -2769,15 +2869,15 @@ __metadata:
       optional: true
     "@rspack/binding-win32-x64-msvc":
       optional: true
-  checksum: 10c0/a5a61d6ea25fafb002bbdb6bc2600c4fba1ae1e2da3d4afd86b458eb83bfff413fa2415ecd83ffd7c4e8aa60f2cc90df6793a27e56681a5fdb415d0df428e42b
+  checksum: 10c0/4b524c593a09135b987474a42e391d1d3b6aaf69e1a44dc5bf6c75cf724935186b524eab9a26d0098005a596c869267ebab663f0185bdc0e7f5fdcee9f7e2064
   languageName: node
   linkType: hard
 
-"@rspack/core@npm:~2.0.8":
-  version: 2.0.8
-  resolution: "@rspack/core@npm:2.0.8"
+"@rspack/core@npm:~2.2.7":
+  version: 2.2.7
+  resolution: "@rspack/core@npm:2.2.7"
   dependencies:
-    "@rspack/binding": "npm:2.0.8"
+    "@rspack/binding": "npm:2.2.7"
   peerDependencies:
     "@module-federation/runtime-tools": ^0.24.1 || ^2.0.0
     "@swc/helpers": ^0.5.23
@@ -2786,7 +2886,7 @@ __metadata:
       optional: true
     "@swc/helpers":
       optional: true
-  checksum: 10c0/7862d5e17df9bcf70de1472142df047188a1a87c028481225702af15d69940d9935b91502e05d04f42ccc12fcdd70d6d846222817a2054b18135b4143d483047
+  checksum: 10c0/bb0db3becf848f084882563c49cebad70e2926c7aed9b8212f2939cc0a583777abaa2b3a1747fc30895df246974c70b0560ba63f3db708b72afd00c11e90beae
   languageName: node
   linkType: hard
 
@@ -2803,25 +2903,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rstest/adapter-rsbuild@npm:^0.10.1":
-  version: 0.10.6
-  resolution: "@rstest/adapter-rsbuild@npm:0.10.6"
+"@rstest/adapter-rsbuild@npm:^0.12.1":
+  version: 0.12.1
+  resolution: "@rstest/adapter-rsbuild@npm:0.12.1"
   peerDependencies:
-    "@rsbuild/core": "*"
-    "@rstest/core": ^0.10.6
-  checksum: 10c0/867072f75a5ae7308a5480c3f789e5b2d9aa9121b8a88c6d2ce04d8fa4ebaa2549f151cba5b933c532897f7dd5f9fd58c069913050c182571fc7915e6b09a856
+    "@rsbuild/core": ^1.0.0 || ^2.0.0
+    "@rstest/core": ^0.12.0
+  checksum: 10c0/8ef88202acd90eb2a7992d27c9968d5bb6b1260e89e14528374fed892b1c33900fe1248731bc758889fa491b96da740d3ae554011edd57925cf49898b59bec96
   languageName: node
   linkType: hard
 
-"@rstest/core@npm:^0.10.3":
-  version: 0.10.6
-  resolution: "@rstest/core@npm:0.10.6"
+"@rstest/core@npm:^0.12.1":
+  version: 0.12.1
+  resolution: "@rstest/core@npm:0.12.1"
   dependencies:
-    "@rsbuild/core": "npm:~2.0.15"
+    "@rsbuild/core": "npm:~2.2.9"
     "@types/chai": "npm:^5.2.3"
+    cjs-module-lexer: "npm:^2.2.1"
   peerDependencies:
     happy-dom: ^20.8.3
-    jsdom: "*"
+    jsdom: ">=15.0.0"
   peerDependenciesMeta:
     happy-dom:
       optional: true
@@ -2829,7 +2930,7 @@ __metadata:
       optional: true
   bin:
     rstest: ./bin/rstest.js
-  checksum: 10c0/cdbf7c5a178ca15e2ae296d6fde51f0f0a85efeb2bd63b1a5d37408483297364341e3e9298a1ff3826b262cc88e439c2c8bded16939c264aed4d39270f86ee4a
+  checksum: 10c0/29baecd124bb8946b23d9384c3e150d770e7b399612e0e396fd7ada1aeb1c60d47e9e1161a050cc003d570340eb775ed393af9109774f941d4dc8e6509363c02
   languageName: node
   linkType: hard
 
@@ -3125,15 +3226,6 @@ __metadata:
   peerDependencies:
     "@testing-library/dom": ">=7.21.4"
   checksum: 10c0/75fea130a52bf320d35d46ed54f3eec77e71a56911b8b69a3fe29497b0b9947b2dc80d30f04054ad4ce7f577856ae3e5397ea7dff0ef14944d3909784c7a93fe
-  languageName: node
-  linkType: hard
-
-"@tybys/wasm-util@npm:^0.10.1":
-  version: 0.10.2
-  resolution: "@tybys/wasm-util@npm:0.10.2"
-  dependencies:
-    tslib: "npm:^2.4.0"
-  checksum: 10c0/26165bcd1fd7269f42d7fbe3de318f854a8968de8397e89fc9a423bb3e2da35a52150f382e6323b3367595beb16d9800a6f35971a5599daf76da1742ec3afc25
   languageName: node
   linkType: hard
 
@@ -4999,6 +5091,13 @@ __metadata:
   version: 4.4.0
   resolution: "ci-info@npm:4.4.0"
   checksum: 10c0/44156201545b8dde01aa8a09ee2fe9fc7a73b1bef9adbd4606c9f61c8caeeb73fb7a575c88b0443f7b4edb5ee45debaa59ed54ba5f99698339393ca01349eb3a
+  languageName: node
+  linkType: hard
+
+"cjs-module-lexer@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "cjs-module-lexer@npm:2.2.1"
+  checksum: 10c0/889777eb1e32c4662bf3744fdf09aca444a3f9373d70a8c3d2a575e845e415988912a70a7b5e3c2bf943c7547d930dff641c4e0ff2ee2110ba1daca05b2310cd
   languageName: node
   linkType: hard
 
@@ -12972,6 +13071,23 @@ __metadata:
   bin:
     sass: sass.js
   checksum: 10c0/e2aab47c87b69d2d4f8e48fa665138548069f56a7fd0fc4e15c9bde888b715798e49d33436e873918a8849ca3cc6c141a68618f58e2f3b2e6ec179cc309ca622
+  languageName: node
+  linkType: hard
+
+"sass@npm:^1.100.0":
+  version: 1.105.0
+  resolution: "sass@npm:1.105.0"
+  dependencies:
+    "@parcel/watcher": "npm:^2.4.1"
+    chokidar: "npm:^5.0.0"
+    immutable: "npm:^5.1.5"
+    source-map-js: "npm:>=0.6.2 <2.0.0"
+  dependenciesMeta:
+    "@parcel/watcher":
+      optional: true
+  bin:
+    sass: sass.js
+  checksum: 10c0/ddd6a8cc70d325fe7465036de32cb3506b578e131719c8bcfd4c225e051b7e8f5b231c3be450e293043876db58a247b9c354ecc1ca466a8274e2d9a8d4bc1ae1
   languageName: node
   linkType: hard
 

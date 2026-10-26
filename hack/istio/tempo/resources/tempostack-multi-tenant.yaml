@@ -8,7 +8,7 @@ spec:
   storage:
     secret:
       type: s3
-      name: tempostack-dev-minio
+      name: tempostack-dev-seaweedfs
   observability:
     tracing:
       jaeger_agent_endpoint: 'localhost:6831'

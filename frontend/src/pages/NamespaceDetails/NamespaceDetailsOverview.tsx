@@ -43,7 +43,17 @@ import { NamespaceHealthStatus } from 'pages/Namespaces/NamespaceHealthStatus';
 import type { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { navigateToFilteredList } from '../PageUtils';
-import { detailCardStackStyle, detailGridStyle, detailLeftColumnStyle, flexFillStyle } from 'styles/FlexStyles';
+import {
+  detailCardStackStyle,
+  detailGridStyle,
+  detailLeftColumnStyle,
+  detailMiniGraphStackItemStyle,
+  detailRightColumnStyle,
+  detailRightStackStyle,
+  flexFillStyle,
+  noShrinkStyle
+} from 'styles/FlexStyles';
+import { HealthHistoryCard } from '../../components/Health/HealthHistoryCard';
 
 type Props = {
   canEdit: boolean;
@@ -262,8 +272,20 @@ export class NamespaceDetailsOverview extends React.Component<Props> {
             <GridItem span={4} className={detailLeftColumnStyle}>
               <Stack className={detailCardStackStyle}>{this.renderLeftCard()}</Stack>
             </GridItem>
-            <GridItem span={miniGraphSpan}>
-              <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
+            <GridItem span={miniGraphSpan} className={detailRightColumnStyle}>
+              <Stack className={detailRightStackStyle}>
+                <StackItem className={detailMiniGraphStackItemStyle}>
+                  <MiniGraphCard dataSource={this.graphDataSource} namespaceActions={this.props.namespaceActions} />
+                </StackItem>
+                <StackItem className={noShrinkStyle}>
+                  <HealthHistoryCard
+                    cluster={this.props.nsInfo.cluster}
+                    healthType="namespace"
+                    name={namespace}
+                    namespace={namespace}
+                  />
+                </StackItem>
+              </Stack>
             </GridItem>
           </Grid>
         </div>

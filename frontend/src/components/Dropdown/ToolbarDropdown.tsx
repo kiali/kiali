@@ -1,7 +1,8 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
@@ -19,6 +20,7 @@ const dropdownTitle = kialiStyle({
 type ToolbarDropdownProps = {
   className?: string;
   disabled?: boolean;
+  disabledKeys?: string[];
   handleSelect: (value: string) => void;
   id: string;
   label: string;
@@ -83,7 +85,7 @@ export const ToolbarDropdown: React.FC<ToolbarDropdownProps> = (props: ToolbarDr
             <SelectOption
               id={key}
               key={key}
-              isDisabled={props.disabled}
+              isDisabled={props.disabled || (props.disabledKeys?.includes(key) ?? false)}
               isSelected={key === String(props.value)}
               value={`${key}`}
             >

@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { activeClustersSelector, activeNamespacesSelector, namespacesPerClusterSelector } from '../../store/Selectors';
 import { connect } from 'react-redux';
-import { Namespace } from '../../types/Namespace';
-import { MeshCluster } from '../../types/Mesh';
+import type { Namespace } from '../../types/Namespace';
+import type { MeshCluster } from '../../types/Mesh';
 import {
   ActionGroup,
   Button,
@@ -17,20 +17,24 @@ import {
 } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
-import { GatewayForm, GatewayState, initGateway, isGatewayStateValid } from './GatewayForm';
-import { K8sGatewayForm, K8sGatewayState, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
+import type { GatewayState} from './GatewayForm';
+import { GatewayForm, initGateway, isGatewayStateValid } from './GatewayForm';
+import type { K8sGatewayState} from './K8sGatewayForm';
+import { K8sGatewayForm, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
+import type {
+  K8sReferenceGrantState} from './K8sReferenceGrantForm';
 import {
   K8sReferenceGrantForm,
-  K8sReferenceGrantState,
   initK8sReferenceGrant,
   isK8sReferenceGrantStateValid
 } from './K8sReferenceGrantForm';
-import { SidecarForm, initSidecar, isSidecarStateValid, SidecarState } from './SidecarForm';
+import type { SidecarState } from './SidecarForm';
+import { SidecarForm, initSidecar, isSidecarStateValid } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
 import { KialiIcon } from '../../config/KialiIcon';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import * as API from '../../services/Api';
-import { IstioPermissions } from '../../types/IstioConfigDetails';
+import type { IstioPermissions } from '../../types/IstioConfigDetails';
 import { addError, addInfo, addSuccess, addWarning } from '../../utils/AlertUtils';
 import { router } from '../../app/History';
 import {
@@ -43,28 +47,35 @@ import {
   buildServiceEntry,
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
+import type {
+  AuthorizationPolicyState} from './AuthorizationPolicyForm';
 import {
   AuthorizationPolicyForm,
-  AuthorizationPolicyState,
   initAuthorizationPolicy,
   isAuthorizationPolicyStateValid
 } from './AuthorizationPolicyForm';
-import {
-  PeerAuthenticationForm,
-  initPeerAuthentication,
-  isPeerAuthenticationStateValid,
+import type {
   PeerAuthenticationState
 } from './PeerAuthenticationForm';
 import {
+  PeerAuthenticationForm,
+  initPeerAuthentication,
+  isPeerAuthenticationStateValid
+} from './PeerAuthenticationForm';
+import type {
+  RequestAuthenticationState
+} from './RequestAuthenticationForm';
+import {
   RequestAuthenticationForm,
   initRequestAuthentication,
-  isRequestAuthenticationStateValid,
-  RequestAuthenticationState
+  isRequestAuthenticationStateValid
 } from './RequestAuthenticationForm';
 import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
-import { ServiceEntryForm, initServiceEntry, isServiceEntryValid, ServiceEntryState } from './ServiceEntryForm';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { ServiceEntryState } from './ServiceEntryForm';
+import { ServiceEntryForm, initServiceEntry, isServiceEntryValid } from './ServiceEntryForm';
+import type { ConfigPreviewItem} from 'components/IstioConfigPreview/IstioConfigPreview';
+import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
 import { NamespaceDropdown } from '../../components/Dropdown/NamespaceDropdown';
@@ -73,7 +84,7 @@ import { WizardLabels } from '../../components/IstioWizards/WizardLabels';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { getGVKTypeString } from '../../utils/IstioConfigUtils';
-import { GroupVersionKind } from '../../types/IstioObjects';
+import type { GroupVersionKind } from '../../types/IstioObjects';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { usePreviousValue } from 'utils/ReactUtils';
 import { istioNamespaces } from 'config/ServerConfig';
@@ -121,9 +132,8 @@ export const NEW_ISTIO_RESOURCE = [
 
 const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
   const [annotations, setAnnotations] = React.useState<{ [key: string]: string }>({});
-  const [authorizationPolicy, setAuthorizationPolicy] = React.useState<AuthorizationPolicyState>(
-    initAuthorizationPolicy()
-  );
+  const [authorizationPolicy, setAuthorizationPolicy] =
+    React.useState<AuthorizationPolicyState>(initAuthorizationPolicy());
   const [gateway, setGateway] = React.useState<GatewayState>(initGateway());
   const [istioPermissions, setIstioPermissions] = React.useState<IstioPermissions>({});
   const [itemsPreview, setItemsPreview] = React.useState<ConfigPreviewItem[]>([]);
@@ -132,9 +142,8 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
   const [labels, setLabels] = React.useState<{ [key: string]: string }>({});
   const [name, setName] = React.useState<string>('');
   const [peerAuthentication, setPeerAuthentication] = React.useState<PeerAuthenticationState>(initPeerAuthentication());
-  const [requestAuthentication, setRequestAuthentication] = React.useState<RequestAuthenticationState>(
-    initRequestAuthentication()
-  );
+  const [requestAuthentication, setRequestAuthentication] =
+    React.useState<RequestAuthenticationState>(initRequestAuthentication());
   const [serviceEntry, setServiceEntry] = React.useState<ServiceEntryState>(initServiceEntry());
   const [showAnnotationsWizard, setShowAnnotationsWizard] = React.useState<boolean>(false);
   const [showLabelsWizard, setShowLabelsWizard] = React.useState<boolean>(false);
@@ -586,7 +595,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
               <SidecarForm sidecar={sidecar} onChange={onChangeSidecar} />
             )}
 
-            <FormGroup fieldId="labels" label="Labels">
+            <FormGroup fieldId="labels" label={t('Labels')}>
               <div className={editStyle}>
                 <Labels labels={labels} expanded={true} />
 

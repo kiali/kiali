@@ -457,7 +457,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
           toggle={typeaheadToggle}
           isOpen={this.state.isFilterValueOpen}
-          aria-label="Filter Select Value"
+          aria-label={t('Filter Select Value')}
           className={filterSelectStyle}
           shouldFocusFirstItemOnOpen={false}
         >
@@ -506,7 +506,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
           toggle={selectToggle}
           isOpen={this.state.isFilterValueOpen}
-          aria-label="Filter Select Value"
+          aria-label={t('Filter Select Value')}
           className={filterSelectStyle}
         >
           <SelectList>
@@ -543,7 +543,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
           id="filter_input_value"
           type={currentFilterType.filterType as TextInputTypes}
           value={currentValue}
-          aria-label="Filter Input Value"
+          aria-label={t('Filter Input Value')}
           placeholder={t(currentFilterType.placeholder)}
           onChange={(_event, value) => this.updateCurrentValue(value)}
           onKeyDown={e => this.onValueKeyDown(e)}
@@ -627,7 +627,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                   onOpenChange={isFilterTypeOpen => this.setState({ isFilterTypeOpen })}
                   toggle={filterTypeToggle}
                   isOpen={this.state.isFilterTypeOpen}
-                  aria-label="Filter Select Type"
+                  aria-label={t('Filter Select Type')}
                 >
                   <SelectList>
                     {this.state.filterTypes.map(option => (
@@ -694,7 +694,7 @@ export class StatefulFiltersComponent extends React.Component<StatefulFiltersPro
                     onOpenChange={isFilterValueOpen => this.setState({ isFilterValueOpen })}
                     toggle={filterValueToggle}
                     isOpen={this.state.isFilterValueOpen}
-                    aria-label="Filter Select Value"
+                    aria-label={t('Filter Select Value')}
                   >
                     <SelectList>
                       <SelectOption

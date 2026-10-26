@@ -15,14 +15,14 @@ exports[`Spire component > App type > renders card when app has SPIRE-managed wo
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-18"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -67,14 +67,14 @@ exports[`Spire component > App type > renders card when app has mixed workloads 
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-24"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -119,14 +119,14 @@ exports[`Spire component > App type > renders card when app has multiple SPIRE-m
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-21"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -171,14 +171,14 @@ exports[`Spire component > Service type > renders card when service has SPIRE-ma
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-9"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -223,14 +223,14 @@ exports[`Spire component > Service type > renders card when service has mixed wo
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-12"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -275,14 +275,14 @@ exports[`Spire component > Service type > renders card when service has multiple
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-15"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -327,14 +327,14 @@ exports[`Spire component > Workload type > renders card with multiple identity m
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-6"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div
@@ -427,14 +427,14 @@ exports[`Spire component > Workload type > renders card with single identity mat
       <div
         class="pf-v6-c-card__header-main"
       >
-        <h5
-          class="pf-v6-c-title pf-m-lg"
+        <h4
+          class="pf-v6-c-title pf-m-md"
           data-ouia-component-id="OUIA-Generated-Title-3"
           data-ouia-component-type="PF6/Title"
           data-ouia-safe="true"
         >
           SPIRE
-        </h5>
+        </h4>
       </div>
     </div>
     <div

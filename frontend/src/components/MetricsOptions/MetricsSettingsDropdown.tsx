@@ -25,6 +25,7 @@ import { itemStyleWithoutInfo, titleStyle } from 'styles/DropdownStyles';
 import type { PromLabel } from 'types/Metrics';
 import { KialiIcon } from 'config/KialiIcon';
 import { classes } from 'typestyle';
+import { t } from 'utils/I18nUtils';
 
 interface Props {
   direction: string;
@@ -213,7 +214,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       <Dropdown
         toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
           <MenuToggle ref={toggleRef} onClick={() => this.onToggle(!this.state.isOpen)} isExpanded={this.state.isOpen}>
-            Metrics Settings
+            {t('Metrics Settings')}
           </MenuToggle>
         )}
         isOpen={this.state.isOpen}
@@ -235,7 +236,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
           <Checkbox
             id="bulk-select-id"
             key="bulk-select-key"
-            aria-label="Select all metric/label filters"
+            aria-label={t('Select all metric/label filters')}
             isChecked={this.state.allSelected}
             onChange={() => {
               if (this.state.allSelected) {
@@ -245,7 +246,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
               }
             }}
           />
-          <span className={checkboxSelectAllStyle}>Select all metric/label filters</span>
+          <span className={checkboxSelectAllStyle}>{t('Select all metric/label filters')}</span>
         </div>
         <Divider />
       </div>
@@ -291,7 +292,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             <Checkbox
               id={lblObj.displayName}
               className={checkboxStyle}
-              label={lblObj.displayName}
+              label={t(lblObj.displayName)}
               isChecked={lblObj.checked}
               onChange={(_event, checked) => this.onGroupingChanged(promName, checked)}
             />
@@ -303,7 +304,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
 
     return (
       <>
-        <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>Show metrics by:</label>
+        <label className={classes(titleLabelStyle, titleStyle, labelStyle)}>{t('Show metrics by:')}</label>
         {displayGroupingLabels}
         <div className={spacerStyle} />
       </>
@@ -320,7 +321,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             isChecked={this.state.showAverage && this.props.hasHistogramsAverage}
             isDisabled={!this.props.hasHistogramsAverage}
             onChange={(_event, checked) => this.onHistogramAverageChanged(checked)}
-            label="Average"
+            label={t('Average')}
           />
         </label>
       </div>
@@ -336,7 +337,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
                 isChecked={checked && this.props.hasHistogramsPercentiles}
                 isDisabled={!this.props.hasHistogramsPercentiles}
                 onChange={(_event, checked) => this.onHistogramOptionsChanged(o, checked)}
-                label={`Quantile ${o}`}
+                label={t('Quantile {{quantile}}', { quantile: o })}
               />
             </label>
           </div>
@@ -348,7 +349,7 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
       <>
         <div className={histogramTitleStyle}>
           <label className={classes(titleLabelStyle, titleStyle, labelStyle)} style={{ paddingRight: '0.5rem' }}>
-            Histograms:
+            {t('Histograms:')}
           </label>
 
           <Tooltip
@@ -357,8 +358,9 @@ export class MetricsSettingsDropdown extends React.Component<Props, State> {
             content={
               <div style={{ textAlign: 'left' }}>
                 <div>
-                  "No data available" is displayed for a histogram that does not have telemetry supporting the selected
-                  option. If no histograms support the necessary telemetry, the option will be disabled.
+                  {t(
+                    '"No data available" is displayed for a histogram that does not have telemetry supporting the selected option. If no histograms support the necessary telemetry, the option will be disabled.'
+                  )}
                 </div>
               </div>
             }

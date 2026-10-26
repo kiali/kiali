@@ -243,10 +243,11 @@ func NewMeshConfig() *MeshConfig {
 	}
 }
 
-// MeshConfig wraps the istio.MeshConfig solely to override json Marshaling
-// for some fields. See MarshalJSON for more details.
+// MeshConfig wraps Istio configuration with custom JSON marshaling and prepared
+// ServiceEntry visibility rules for the cached mesh snapshot.
 type MeshConfig struct {
 	*istiov1alpha1.MeshConfig
+	serviceEntryVisibilityPolicy *ServiceEntryVisibilityPolicy
 }
 
 // MarshalJSON we're overriding the default Marshaling because of this issue:
@@ -269,8 +270,8 @@ func (m MeshConfig) MarshalJSON() ([]byte, error) {
 	}
 
 	var meshUnstructured map[string]any
-	if err := json.Unmarshal(originalJSON, &meshUnstructured); err != nil {
-		return nil, err
+	if unmarshalErr := json.Unmarshal(originalJSON, &meshUnstructured); unmarshalErr != nil {
+		return nil, unmarshalErr
 	}
 
 	if _, ok := meshUnstructured["outboundTrafficPolicy"]; ok {

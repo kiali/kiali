@@ -4,14 +4,14 @@ import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-c
 import { Divider, Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
 import { kialiStyle } from 'styles/StyleUtils';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
-import { t } from 'utils/I18nUtils';
+import { useKialiTranslation } from 'utils/I18nUtils';
 import { isControlPlaneAccessible } from '../../utils/MeshUtils';
 import { isTempoService } from '../../utils/tracing/UrlProviders/Tempo';
 import { TempoUrlFormat } from '../../types/StatusState';
-import { MenuItem } from '../../types/Routes';
+import type { MenuItem } from '../../types/Routes';
 
 const externalLinkStyle = kialiStyle({
   $nest: {
@@ -43,11 +43,13 @@ const ExternalLink = ({ href, name }: { href: string; name: string }): React.Rea
 );
 
 type MenuProps = {
+  ai?: boolean;
   externalServices: ExternalServiceInfo[];
   isNavOpen: boolean;
 };
 
 export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
+  const { t } = useKialiTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -108,6 +110,10 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
     };
 
     const renderNavItem = (item: MenuItem): React.ReactNode => {
+      if (item.id === 'ai' && !props.ai) {
+        return null;
+      }
+
       const title = item.title;
 
       if (item.id === 'tracing') {
@@ -144,7 +150,7 @@ export const Menu: React.FC<MenuProps> = (props: MenuProps) => {
   };
 
   return (
-    <Nav aria-label="Nav">
+    <Nav aria-label={t('Nav')}>
       <NavList className={navListStyle}>{renderMenuItems()}</NavList>
     </Nav>
   );

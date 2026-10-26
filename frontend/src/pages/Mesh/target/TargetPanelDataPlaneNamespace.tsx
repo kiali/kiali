@@ -1,16 +1,20 @@
 import * as React from 'react';
 import { kialiStyle } from 'styles/StyleUtils';
-import { targetBodyStyle, TargetPanelCommonProps, targetPanelHR } from './TargetPanelCommon';
+import type { TargetPanelCommonProps} from './TargetPanelCommon';
+import { targetBodyStyle, targetPanelHR } from './TargetPanelCommon';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
-import { OutboundTrafficPolicy, ValidationStatus } from 'types/IstioObjects';
-import { NamespaceAction, NamespaceActions } from '../../Namespaces/NamespaceActions';
-import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
+import type { OutboundTrafficPolicy, ValidationStatus } from 'types/IstioObjects';
+import type { NamespaceAction} from '../../Namespaces/NamespaceActions';
+import { NamespaceActions } from '../../Namespaces/NamespaceActions';
+import type { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
-import { DirectionType, Show } from 'types/Common';
-import { MeshResourceType, switchMeshResourceType } from 'types/Mesh';
+import type { DirectionType} from 'types/Common';
+import { Show } from 'types/Common';
+import type { MeshResourceType} from 'types/Mesh';
+import { switchMeshResourceType } from 'types/Mesh';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
 import { ModeBadge } from 'components/Badge/ModeBadge';
@@ -19,16 +23,18 @@ import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { NamespaceTrafficChart } from '../components/NamespaceTrafficChart';
 import * as API from '../../../services/Api';
-import { IstioMetricsOptions, buildReporter } from 'types/MetricsOptions';
+import type { IstioMetricsOptions} from 'types/MetricsOptions';
+import { buildReporter } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
-import { ApiError } from 'types/Api';
-import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
+import type { ApiError } from 'types/Api';
+import type { Health} from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import { addDanger } from '../../../utils/AlertUtils';
 import { MeshHealthIndicator } from '../components/MeshHealthIndicator';
-import { TLSStatus } from 'types/TLSStatus';
+import type { TLSStatus } from 'types/TLSStatus';
 import { panelHeadingStyle } from 'pages/Graph/SummaryPanelStyle';
-import { Metric } from 'types/Metrics';
+import type { Metric } from 'types/Metrics';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
 import { TargetPanelEditor } from './TargetPanelEditor';
@@ -203,19 +209,19 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             isGroup: true,
             isSeparator: false,
             isDisabled: false,
-            title: 'Show',
+            title: t('Show'),
             children: [
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Graph',
+                title: t('Graph'),
                 action: (ns: string) =>
                   kioskOverviewAction(Show.GRAPH, ns, this.props.duration, this.props.refreshInterval)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Istio Config',
+                title: t('Istio Config'),
                 action: (ns: string) =>
                   kioskOverviewAction(Show.ISTIO_CONFIG, ns, this.props.duration, this.props.refreshInterval)
               }
@@ -227,36 +233,36 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
             isGroup: true,
             isSeparator: false,
             isDisabled: false,
-            title: 'Show',
+            title: t('Show'),
             children: [
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Graph',
+                title: t('Graph'),
                 action: (ns: string) => this.show(Show.GRAPH, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Applications',
+                title: t('Applications'),
                 action: (ns: string) => this.show(Show.APPLICATIONS, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Workloads',
+                title: t('Workloads'),
                 action: (ns: string) => this.show(Show.WORKLOADS, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Services',
+                title: t('Services'),
                 action: (ns: string) => this.show(Show.SERVICES, ns, healthType)
               },
               {
                 isGroup: true,
                 isSeparator: false,
-                title: 'Istio Config',
+                title: t('Istio Config'),
                 action: (ns: string) => this.show(Show.ISTIO_CONFIG, ns, healthType)
               }
             ]
@@ -284,7 +290,7 @@ export class TargetPanelDataPlaneNamespace extends React.Component<
     const labelContent = ns.labels ? (
       <div style={{ color: PFColors.Link, textAlign: 'left', cursor: 'pointer' }}>
         <Tooltip
-          aria-label="Labels list"
+          aria-label={t('Labels list')}
           position={TooltipPosition.right}
           enableFlip={true}
           distance={5}

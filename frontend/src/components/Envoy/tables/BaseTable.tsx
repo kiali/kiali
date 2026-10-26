@@ -1,18 +1,20 @@
 import * as React from 'react';
-import { IRow, ISortBy, SortByDirection, TableVariant, ThProps } from '@patternfly/react-table';
+import type { IRow, ISortBy, SortByDirection, ThProps } from '@patternfly/react-table';
+import { TableVariant } from '@patternfly/react-table';
 import { ClusterSummaryTable, ClusterTable } from './ClusterTable';
 import { RouteSummaryTable, RouteTable } from './RouteTable';
 import { ListenerSummaryTable, ListenerTable } from './ListenerTable';
-import { EnvoyProxyDump } from '../../../types/IstioObjects';
-import { ActiveFiltersInfo, FilterType } from '../../../types/Filters';
+import type { EnvoyProxyDump } from '../../../types/IstioObjects';
+import type { ActiveFiltersInfo, FilterType } from '../../../types/Filters';
 import { StatefulFilters } from '../../Filters/StatefulFilters';
-import { ResourceSorts } from '../EnvoyDetails';
-import { Namespace } from '../../../types/Namespace';
+import type { ResourceSorts } from '../EnvoyDetails';
+import type { Namespace } from '../../../types/Namespace';
 import { ToolbarDropdown } from '../../Dropdown/ToolbarDropdown';
 import { PFBadge, PFBadges } from '../../Pf/PfBadges';
 import { TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { t } from 'utils/I18nUtils';
 
 export interface SummaryTable {
   availableFilters: () => FilterType[];
@@ -77,7 +79,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
 
               <ToolbarDropdown
                 id="envoy_pods_list"
-                tooltip="Display envoy config for the selected pod"
+                tooltip={t('Display envoy config for the selected pod')}
                 handleSelect={key => this.props.setPod(key)}
                 value={this.props.pod}
                 label={this.props.pod}
@@ -91,7 +93,7 @@ export function SummaryTableRenderer<T extends SummaryTable>(): typeof React.Com
           </StatefulFilters>
 
           <SimpleTable
-            label="Summary Table"
+            label={t('Summary Table')}
             columns={this.props.writer.head()}
             rows={this.props.writer.rows()}
             variant={TableVariant.compact}

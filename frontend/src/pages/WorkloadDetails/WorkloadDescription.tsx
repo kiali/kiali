@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Workload } from '../../types/Workload';
+import type { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -7,7 +7,7 @@ import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
-import * as H from '../../types/Health';
+import type * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { isMultiCluster } from '../../config';
@@ -22,6 +22,7 @@ import { gvkType, validationKey } from '../../types/IstioConfigList';
 import { infoStyle } from 'styles/IconStyle';
 import { renderWaypointSimpleLabel } from '../../components/Ambient/WaypointLabel';
 import { getAppLabelName } from 'config/ServerConfig';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type WorkloadDescriptionProps = {
   health?: H.Health;
@@ -69,6 +70,7 @@ const runtimeInfoStyle = kialiStyle({
 });
 
 export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: WorkloadDescriptionProps) => {
+  const { t } = useKialiTranslation();
   const workload = props.workload;
   if (!workload) {
     return <>Loading</>;
@@ -224,7 +226,7 @@ export const WorkloadDescription: React.FC<WorkloadDescriptionProps> = (props: W
           <Alert
             variant="info"
             isInline={true}
-            title="Kiali can only supply limited information for this workload type"
+            title={t('Kiali can only supply limited information for this workload type')}
             style={{ marginTop: '0.25rem' }}
           />
         )}

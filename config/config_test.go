@@ -1077,6 +1077,106 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "",
 		},
+		"consumption budgets valid": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"alice", "bob"},
+						Interval:         WeeklyBudget,
+						MaxCost:          10.50,
+						MaxTokens:        1.0,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+						AllowedModels:    []string{"gpt-4"},
+					},
+					{
+						Usernames:        []string{"*"},
+						Interval:         MonthlyBudget,
+						MaxCost:          50.00,
+						MaxTokens:        5.0,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+					},
+				}
+			},
+			expectErr: "",
+		},
+		"consumption budgets invalid empty usernames": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{},
+						Interval:  WeeklyBudget,
+					},
+				}
+			},
+			expectErr: "usernames must not be empty",
+		},
+		"consumption budgets invalid interval": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  BudgetInterval("yearly"),
+					},
+				}
+			},
+			expectErr: "interval must be either 'weekly' or 'monthly'",
+		},
+		"consumption budgets negative max cost": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  WeeklyBudget,
+						MaxCost:   -5.0,
+					},
+				}
+			},
+			expectErr: "max_cost must be non-negative",
+		},
+		"consumption budgets negative max tokens": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames: []string{"john"},
+						Interval:  WeeklyBudget,
+						MaxTokens: -1.0,
+					},
+				}
+			},
+			expectErr: "max_tokens must be non-negative",
+		},
+		"consumption budgets invalid provider type not in chat providers": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"john"},
+						Interval:         WeeklyBudget,
+						AllowedProviders: []ProviderType{AnthropicProvider},
+					},
+				}
+			},
+			expectErr: "allowed provider \"anthropic\" is not defined in ai.chat.providers",
+		},
+		"consumption budgets invalid model name not in chat provider models": {
+			mutate: func(conf *Config) {
+				conf.AI.Metrics = true
+				conf.AI.Consumption.Budgets = []UserBudgetConfig{
+					{
+						Usernames:        []string{"john"},
+						Interval:         WeeklyBudget,
+						AllowedProviders: []ProviderType{OpenAIProvider},
+						AllowedModels:    []string{"invalid-model"},
+					},
+				}
+			},
+			expectErr: "allowed model \"invalid-model\" is not defined/enabled under any matching provider in ai.chat.providers",
+		},
 	}
 
 	for name, tc := range cases {
@@ -1885,4 +1985,37 @@ func TestObfuscate_OAuth2ClientSecret(t *testing.T) {
 	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Tracing.Auth.OAuth2.ClientSecret))
 	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.Perses.Auth.OAuth2.ClientSecret))
 	assert.Equal(t, "xxx", string(obfuscated.ExternalServices.CustomDashboards.Prometheus.Auth.OAuth2.ClientSecret))
+}
+
+func TestUnmarshal_I18nShowSelectorDeprecation(t *testing.T) {
+	hideLanguageSelectorYAML := `
+kiali_feature_flags:
+  ui_defaults:
+    i18n:
+      show_selector: false
+`
+
+	t.Run("defaults to showing the language selector", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal("")
+		require.NoError(t, err)
+		assert.True(t, conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector)
+		assert.NotContains(t, buf.String(), "DEPRECATION NOTICE")
+	})
+
+	t.Run("logs deprecation when show_selector is false", func(t *testing.T) {
+		var buf bytes.Buffer
+		origLogger := zerolog_log.Logger
+		zerolog_log.Logger = zerolog.New(&buf)
+		defer func() { zerolog_log.Logger = origLogger }()
+
+		conf, err := Unmarshal(hideLanguageSelectorYAML)
+		require.NoError(t, err)
+		assert.False(t, conf.KialiFeatureFlags.UIDefaults.I18n.ShowSelector)
+		assert.Contains(t, buf.String(), "DEPRECATION NOTICE: 'kiali_feature_flags.ui_defaults.i18n.show_selector' has been deprecated")
+	})
 }
