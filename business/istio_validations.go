@@ -68,8 +68,46 @@ type ReferenceChecker interface {
 }
 
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster), nil
+	// The validations cache is populated by the Kiali ServiceAccount, so the
+	// Kubernetes API cannot enforce the user's RBAC here: filter the
+	// validations (and their references) to the namespaces in the user's
+	// accessible set for the cluster. Fail closed when the set cannot be
+	// computed.
+	accessibleNamespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	accessible := make(map[string]struct{}, len(accessibleNamespaces))
+	for _, ns := range accessibleNamespaces {
+		accessible[ns.Name] = struct{}{}
+	}
+
+	validations := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster)
+	filtered := models.IstioValidations{}
+	for key, validation := range validations {
+		// Filter on the KEY's namespace, not the value's: several checkers
+		// (e.g. the gateway multimatch checkers) build the IstioValidation
+		// value without setting its Namespace field, and only the key carries
+		// it reliably. GetValidationsForNamespace matches on the key too.
+		if _, ok := accessible[key.Namespace]; !ok {
+			continue
+		}
+		// Copy before pruning: the map values are pointers into the shared
+		// SA-populated cache and must not be mutated.
+		filteredValidation := *validation
+		// Drop references that point into namespaces outside the accessible
+		// set, so object names in denied namespaces are not disclosed through
+		// references.
+		filteredReferences := make([]models.IstioValidationKey, 0, len(validation.References))
+		for _, ref := range validation.References {
+			if _, ok := accessible[ref.Namespace]; ok {
+				filteredReferences = append(filteredReferences, ref)
+			}
+		}
+		filteredValidation.References = filteredReferences
+		filtered[key] = &filteredValidation
+	}
+	return filtered, nil
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {

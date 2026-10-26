@@ -100,7 +100,7 @@ func ClusterHealth(
 			}
 			for _, ns := range nss {
 				if _, ok := accessible[ns]; !ok {
-					RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: namespace ["+ns+"] is not accessible")
+					respondNamespaceNotAccessible(w, ns)
 					return
 				}
 			}

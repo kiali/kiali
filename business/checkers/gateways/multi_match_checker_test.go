@@ -609,3 +609,40 @@ func TestMatchOnImplicitWildcardMatchingHosts(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
+
+// TestMultimatchValidationValueCarriesNamespace pins the CI regression from
+// PR #10448: the IstioValidation VALUE must carry its namespace. The
+// cluster-wide GetValidations filter (accessible namespaces) reads the value's
+// Namespace field, and an empty one made every collision-flagged gateway lose
+// its validation on /api/istio/config. The scenario mirrors the Istio 1.31
+// bookinfo sample gateway (port 8080, wildcard host, istio=ingressgateway
+// selector) colliding with a wizard-created gateway.
+func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	demoGateway := data.AddServerToGateway(data.CreateServer([]string{"*"}, 8080, "http", "HTTP"),
+		data.CreateEmptyGateway("bookinfo-gateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+
+	wizardGateway := data.AddServerToGateway(data.CreateServer([]string{"website.com"}, 8080, "foobar", "HTTP"),
+		data.CreateEmptyGateway("mygateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+
+	vals := MultiMatchChecker{
+		Conf:     config.Get(),
+		Gateways: []*networking_v1.Gateway{demoGateway, wizardGateway},
+	}.Check()
+
+	assert.NotEmpty(vals)
+	for key, validation := range vals {
+		assert.Equal("bookinfo", key.Namespace)
+		assert.Equal(key.Namespace, validation.Namespace,
+			"multimatch validation value for %s must carry its namespace; an empty value namespace "+
+				"makes the accessible-set filter in GetValidations drop the validation", key.Name)
+	}
+}

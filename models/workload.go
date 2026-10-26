@@ -56,6 +56,30 @@ const (
 	LogTypeZtunnel  LogType = "ztunnel"
 )
 
+// IsValid reports whether the log type is a known value (or empty, which
+// means the default application logs).
+func (t LogType) IsValid() bool {
+	switch t {
+	case "", LogTypeApp, LogTypeProxy, LogTypeWaypoint, LogTypeZtunnel:
+		return true
+	}
+	return false
+}
+
+// UsesKialiSA reports whether this log type is streamed with the Kiali
+// ServiceAccount client rather than the user's own credentials. It is the
+// single predicate for both the client selection in the business layer and
+// the namespace access gate in the handler: the two must stay structurally
+// identical, or the SA-backed path ends up ungated.
+//
+// Note that the ztunnel gate is load-bearing beyond ztunnel pods: when the
+// cache holds no ztunnel pods, the ztunnel branch still streams the
+// requested pod with the SA client, so the gate must not be narrowed to
+// "ztunnel pods exist".
+func (t LogType) UsesKialiSA() bool {
+	return t == LogTypeZtunnel
+}
+
 // WorkloadListItem has the necessary information to display the console workload list
 type WorkloadListItem struct {
 	// Name of the workload

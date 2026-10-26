@@ -80,3 +80,18 @@ type LogLine struct {
 	Test   string    `json:"test"`
 	Time   time.Time `json:"time"`
 }
+
+// NamespaceTagKeys is the single list of tag (and OTel resource attribute)
+// keys that carry a Kubernetes namespace in Istio telemetry: the sidecar
+// source namespace, the ambient source/destination namespaces and the OTel
+// resource attribute for the pod's namespace. It is shared by the span
+// namespace extraction (business.TraceNamespaces) and the Tempo converter's
+// surfacing of namespace-bearing resource attributes as process tags: the two
+// must agree, or Tempo traces lose their namespace information and are then
+// denied by the trace access check (fail closed).
+var NamespaceTagKeys = []string{
+	"istio.destination_namespace",
+	"istio.namespace",
+	"istio.source_namespace",
+	"k8s.namespace.name",
+}

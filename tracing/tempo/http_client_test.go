@@ -16,6 +16,7 @@ import (
 
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model/json"
+	otelJson "github.com/kiali/kiali/tracing/otel/model/json"
 )
 
 const (
@@ -300,4 +301,55 @@ func TestQuery(t *testing.T) {
 	assert.Contains(t, rawQuery3, ".istio.mesh_id = \"mesh_hack\"")
 	assert.Contains(t, rawQuery3, ".custom = \"value\"")
 	assert.Contains(t, rawQuery3, ".istio.cluster_id = \"east\"")
+}
+
+// TestConvertSingleTraceSurfacesNamespaceResourceTags pins the converter
+// extension that span-namespace authorization depends on: the OTel
+// converters only use resource attributes for the service name, so the
+// namespace-bearing ones must be surfaced as Jaeger process tags — otherwise
+// traces whose only namespace information lives in resource attributes
+// (k8s.namespace.name) would be denied by business.TraceNamespaces.
+func TestConvertSingleTraceSurfacesNamespaceResourceTags(t *testing.T) {
+	data := &otelJson.Data{
+		Batches: []otelJson.Batch{{
+			Resource: otelJson.Resource{
+				Attributes: []otelJson.Attribute{
+					{Key: "service.name", Value: otelJson.ValueString{StringValue: "my-app"}},
+					{Key: "k8s.namespace.name", Value: otelJson.ValueString{StringValue: "my-ns"}},
+					{Key: "unrelated.attr", Value: otelJson.ValueString{StringValue: "x"}},
+				},
+			},
+			ScopeSpans: []otelJson.ScopeSpan{{
+				Spans: []otelJson.Span{{
+					TraceID:           "abcdef1234567890",
+					SpanID:            "s1",
+					Name:              "GET /",
+					Kind:              "SPAN_KIND_SERVER",
+					StartTimeUnixNano: "1700000000000000000",
+					EndTimeUnixNano:   "1700000001000000000",
+				}},
+			}},
+		}},
+	}
+
+	resp, err := convertSingleTrace(data, "abcdef1234567890")
+	require.NoError(t, err)
+	require.Len(t, resp.Data, 1)
+
+	spans := resp.Data[0].Spans
+	require.Len(t, spans, 1)
+	require.NotNil(t, spans[0].Process, "the converted span must carry a process")
+
+	var found bool
+	for _, tag := range spans[0].Process.Tags {
+		if tag.Key == "k8s.namespace.name" {
+			found = true
+			require.Equal(t, "my-ns", tag.Value)
+		}
+		if tag.Key == "unrelated.attr" {
+			t.Errorf("unrelated resource attributes must not be surfaced: %v", tag)
+		}
+	}
+	require.True(t, found, "k8s.namespace.name must be surfaced as a process tag")
+	assert.Equal(t, "my-app", spans[0].Process.ServiceName)
 }

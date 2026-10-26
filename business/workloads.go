@@ -119,7 +119,11 @@ type LogEntry struct {
 }
 
 type filterOpts struct {
-	app     regexp.Regexp
+	// app is a pointer because it is only set when a waypoint was found: a
+	// waypoint request that falls through to the requested pod's own logs
+	// (no waypoint attached) must skip app filtering, not dereference a
+	// zero-value regexp.
+	app     *regexp.Regexp
 	destNs  regexp.Regexp
 	destSvc regexp.Regexp
 	destWk  regexp.Regexp
@@ -649,6 +653,9 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration string, l
 	}
 
 	opts.LogType = logType
+	if !opts.LogType.IsValid() {
+		return nil, fmt.Errorf("invalid logType [%s]: valid types are app, proxy, waypoint, ztunnel", logType)
+	}
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -3080,7 +3087,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []string, opts *LogOptions, w http.ResponseWriter) error {
 	var userClient kubernetes.ClientInterface
 	var ok bool
-	if opts.LogType == models.LogTypeZtunnel {
+	if opts.LogType.UsesKialiSA() {
 		// Use the SA because the logs will be filtered by the specific workload logs
 		userClient, ok = in.kialiSAClients[cluster]
 	} else {
@@ -3173,7 +3180,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				continue
 			}
 
-			if opts.LogType == models.LogTypeWaypoint && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
+			if opts.LogType == models.LogTypeWaypoint && opts.filter.app != nil && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
 				continue
 			}
 
@@ -3279,7 +3286,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 					return fmt.Errorf("invalid service name for waypoint log filter: %w", err)
 				}
 				fs := filterOpts{
-					app: *appRe,
+					app: appRe,
 				}
 				opts.filter = fs
 				waypoint := wk.WaypointWorkloads[0]

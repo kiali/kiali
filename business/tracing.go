@@ -3,6 +3,8 @@ package business
 import (
 	"context"
 	"fmt"
+	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -21,20 +23,22 @@ type (
 )
 
 type TracingService struct {
-	app      *AppService
-	conf     *config.Config
-	svc      *SvcService
-	tracing  tracing.ClientInterface
-	workload *WorkloadService
+	app       *AppService
+	conf      *config.Config
+	namespace *NamespaceService
+	svc       *SvcService
+	tracing   tracing.ClientInterface
+	workload  *WorkloadService
 }
 
-func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService, appService *AppService) TracingService {
+func NewTracingService(conf *config.Config, tracing tracing.ClientInterface, svcService *SvcService, workloadService *WorkloadService, appService *AppService, namespaceService *NamespaceService) TracingService {
 	return TracingService{
-		app:      appService,
-		conf:     conf,
-		svc:      svcService,
-		tracing:  tracing,
-		workload: workloadService,
+		app:       appService,
+		conf:      conf,
+		namespace: namespaceService,
+		svc:       svcService,
+		tracing:   tracing,
+		workload:  workloadService,
 	}
 }
 
@@ -81,7 +85,10 @@ func (in *TracingService) getFilteredSpans(ctx context.Context, ns string, app m
 }
 
 func (in *TracingService) GetAppSpans(ctx context.Context, cluster, ns, app string, query models.TracingQuery) ([]model.TracingSpan, error) {
-	tracingName := in.app.GetAppTracingName(ctx, cluster, ns, app)
+	tracingName, err := in.app.GetAppTracingName(ctx, cluster, ns, app)
+	if err != nil {
+		return nil, err
+	}
 	var waypointFilter SpanFilter
 	if tracingName.Lookup != app {
 		waypointFilter = operationSpanFilter(ctx, ns, app)
@@ -293,6 +300,92 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 		r.Data = traces
 	}
 	return r, err
+}
+
+// TraceNamespaces returns the distinct namespaces a trace participates in,
+// extracted from every source Kiali's span model can carry: the istio.*
+// span tags and OTel resource attributes listed in model.NamespaceTagKeys,
+// and the `node_id` tag. Spans without namespace information do not
+// contribute. Sorted for determinism.
+func TraceNamespaces(trace *model.TracingSingleTrace) []string {
+	if trace == nil {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	collect := func(key, value string) {
+		if value != "" && slices.Contains(model.NamespaceTagKeys, key) {
+			seen[value] = struct{}{}
+		}
+	}
+	for _, span := range trace.Data.Spans {
+		for _, tag := range span.Tags {
+			if tag.Key == "node_id" {
+				if v, ok := tag.Value.(string); ok {
+					if ns := namespaceFromNodeID(v); ns != "" {
+						seen[ns] = struct{}{}
+					}
+				}
+				continue
+			}
+			if v, ok := tag.Value.(string); ok {
+				collect(tag.Key, v)
+			}
+		}
+		if span.Process != nil {
+			for _, tag := range span.Process.Tags {
+				if v, ok := tag.Value.(string); ok {
+					collect(tag.Key, v)
+				}
+			}
+		}
+	}
+	namespaces := make([]string, 0, len(seen))
+	for ns := range seen {
+		namespaces = append(namespaces, ns)
+	}
+	sort.Strings(namespaces)
+	return namespaces
+}
+
+// namespaceFromNodeID extracts the namespace from a sidecar/router/waypoint
+// node_id tag: <type>~<ip>~<pod>.<ns>~<ns>.svc.cluster.local. The namespace
+// is the part of the 4th ~ field before the first dot, so custom cluster
+// domains (suffixes of that field) are handled.
+func namespaceFromNodeID(nodeID string) string {
+	parts := strings.Split(nodeID, "~")
+	if len(parts) < 4 {
+		return ""
+	}
+	ns, _, found := strings.Cut(parts[3], ".")
+	if !found {
+		return ""
+	}
+	return ns
+}
+
+// CheckTraceAccess authorizes a fetched trace: the user must be able to
+// access at least one namespace the trace participates in (see
+// TraceNamespaces, resolved against the union of the user's accessible
+// namespaces across clusters). It is the shared authorization for the
+// trace-details endpoint and the get_trace_details MCP tool, so the two
+// cannot drift. A trace with no recognizable namespace information is
+// denied (fail closed) — this hides traces from non-mesh apps whose
+// telemetry carries no namespace information.
+func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.TracingSingleTrace) error {
+	traceNamespaces := TraceNamespaces(trace)
+	if len(traceNamespaces) == 0 {
+		return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
+	}
+	accessible, err := in.namespace.GetNamespaces(ctx)
+	if err != nil {
+		return err
+	}
+	for _, ns := range accessible {
+		if slices.Contains(traceNamespaces, ns.Name) {
+			return nil
+		}
+	}
+	return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
 }
 
 func (in *TracingService) GetTraceDetail(ctx context.Context, traceID string) (trace *model.TracingSingleTrace, err error) {

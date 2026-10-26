@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -111,7 +110,7 @@ func AppMetrics(conf *config.Config, cache cache.KialiCache, discovery *istio.Di
 		app := vars["app"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -141,7 +140,7 @@ func WorkloadMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		workload := vars["workload"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -171,7 +170,7 @@ func ServiceMetrics(conf *config.Config, cache cache.KialiCache, discovery *isti
 		service := vars["service"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -201,31 +200,21 @@ func AggregateMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 		aggregate := vars["aggregate"]
 		aggregateValue := vars["aggregateValue"]
 
-		userClients, err := getUserClients(r, clientFactory)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Unable to get user clients: "+err.Error())
-			return
-		}
-
 		// Since we can't distinguish between clusters here there is no cluster parameter.
-		// Instead we get namespaces from across clusters and pick the oldest one.
-		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
-		namespaces, err := namespaceService.GetNamespaces(r.Context())
+		// The metrics query carries no cluster label either, so the namespace must be
+		// authorized across every SA-visible cluster where it exists (a cluster the user
+		// cannot see must deny the request, or its data would be blended into the
+		// response); the accessible entries feed the oldest-namespace selection.
+		namespaceInfo, err := checkNamespaceAccessAllSAClusters(w, r, conf, cache, discovery, clientFactory, namespace, false)
 		if err != nil {
-			if k8serrors.IsForbidden(err) {
-				RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
-				return
-			}
-			RespondWithError(w, http.StatusInternalServerError, "Unable to list namespaces: "+err.Error())
-			return
+			return // 403/500 already written
 		}
-
-		// Add all namespaces with the same name across clusters.
-		var namespaceInfo []models.Namespace
-		for _, ns := range namespaces {
-			if ns.Name == namespace {
-				namespaceInfo = append(namespaceInfo, ns)
-			}
+		if len(namespaceInfo) == 0 {
+			// Not accessible in any cluster. This also avoids a nil-dereference:
+			// GetOldestNamespace returns nil for an empty slice and the params
+			// extraction below reads CreationTimestamp from it.
+			respondNamespaceNotAccessible(w, namespace)
+			return
 		}
 		oldestNs := GetOldestNamespace(namespaceInfo)
 
@@ -283,7 +272,7 @@ func ControlPlaneMetrics(
 			return
 		}
 
-		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -340,7 +329,7 @@ func ResourceUsageMetrics(conf *config.Config, cache cache.KialiCache, discovery
 		conf := config.Get()
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -387,7 +376,7 @@ func HealthStatusHistory(conf *config.Config, cache cache.KialiCache, discovery 
 			name = vars[entityVar]
 		}
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			return
 		}
@@ -423,7 +412,7 @@ func NamespaceMetrics(conf *config.Config, cache cache.KialiCache, discovery *is
 		namespace := vars["namespace"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			// any returned value nil means error & response already written
 			return
@@ -665,10 +654,19 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 			return
 		}
 
-		queries, warns := prepareStatsQueries(r.Context(), &namespace, raw.Queries)
+		queries, warns, failureKind := prepareStatsQueries(r.Context(), &namespace, raw.Queries)
 		if len(queries) == 0 && warns != nil {
-			// All queries failed to be adjusted => return an error
-			handleErrorResponse(w, warns)
+			// All queries failed to be adjusted => return an error, with the
+			// status reflecting why: a bad query is the client's to fix
+			// (400), an access denial is 403, anything else is 500.
+			switch failureKind {
+			case statsFailureInvalid:
+				RespondWithError(w, http.StatusBadRequest, warns.Error())
+			case statsFailureAccess:
+				RespondWithError(w, http.StatusForbidden, warns.Error())
+			default:
+				RespondWithError(w, http.StatusInternalServerError, warns.Error())
+			}
 			return
 		}
 
@@ -686,23 +684,80 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 	}
 }
 
-func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceService, rawQ []models.MetricsStatsQuery) ([]models.MetricsStatsQuery, *util.Errors) {
+// statsFailureKind classifies why queries were dropped in
+// prepareStatsQueries, so the handler can pick the right status code when no
+// query survives: any invalid query wins (400, a client error to fix), then
+// all-access denials (403), then anything else (500).
+type statsFailureKind int
+
+const (
+	statsFailureNone statsFailureKind = iota
+	statsFailureInternal
+	statsFailureAccess
+	statsFailureInvalid
+)
+
+func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceService, rawQ []models.MetricsStatsQuery) ([]models.MetricsStatsQuery, *util.Errors, statsFailureKind) {
 	// Keep only valid queries (fill errors if needed) and adjust queryTime / interval
 	var errors util.Errors
 	var validQueries []models.MetricsStatsQuery
+	sawInvalid, sawAccess, sawOther := false, false, false
+	// A stats request typically batches many queries for the same namespace:
+	// memoize the per-(namespace, cluster) authorization result so the gate
+	// runs once per distinct target. The NUL separator cannot occur in a
+	// namespace name.
+	type authzResult struct {
+		info *models.Namespace
+		err  error
+	}
+	authzMemo := map[string]authzResult{}
+	authorize := func(q models.MetricsStatsQuery) (*models.Namespace, error) {
+		key := q.Target.Namespace + "\x00" + q.Target.Cluster
+		if memo, ok := authzMemo[key]; ok {
+			return memo.info, memo.err
+		}
+		var namespaceInfo *models.Namespace
+		var err error
+		if q.Target.Cluster == "" {
+			// The stats query adds no cluster label when the target carries no
+			// cluster, so it is not cluster-scoped: gate the namespace across
+			// every SA-visible cluster where it exists, or data from clusters
+			// the user cannot see would be blended into the stats.
+			var accessible []models.Namespace
+			accessible, err = namespace.CheckNamespaceAccessAllClusters(ctx, q.Target.Namespace)
+			if err == nil {
+				namespaceInfo = GetOldestNamespace(accessible)
+			}
+		} else {
+			namespaceInfo, err = namespace.GetClusterNamespace(ctx, q.Target.Namespace, q.Target.Cluster)
+		}
+		authzMemo[key] = authzResult{info: namespaceInfo, err: err}
+		return namespaceInfo, err
+	}
 	for _, q := range rawQ {
 		if valErr := q.Validate(); valErr != nil {
 			errors.Merge(valErr)
+			sawInvalid = true
 			continue
 		}
-		namespaceInfo, err := namespace.GetClusterNamespace(ctx, q.Target.Namespace, config.GetSafeClusterName(q.Target.Cluster))
+		namespaceInfo, err := authorize(q)
+		if err == nil && namespaceInfo == nil {
+			// Exists in no cluster: treat as an access denial.
+			err = business.NewAccessibleNamespaceError("namespace [" + q.Target.Namespace + "] is not accessible")
+		}
 		if err != nil {
 			errors.Add(fmt.Errorf("namespace '%s', cluster: '%s': %v", q.Target.Namespace, q.Target.Cluster, err))
+			if business.IsAccessibleError(err) {
+				sawAccess = true
+			} else {
+				sawOther = true
+			}
 			continue
 		}
 		interval, err := util.AdjustRateInterval(namespaceInfo.CreationTimestamp, q.QueryTime, q.RawInterval)
 		if err != nil {
 			errors.Add(err)
+			sawOther = true
 			continue
 		}
 		q.Interval = interval
@@ -712,7 +767,16 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 		}
 		validQueries = append(validQueries, q)
 	}
-	return validQueries, errors.OrNil()
+
+	failureKind := statsFailureNone
+	if sawInvalid {
+		failureKind = statsFailureInvalid
+	} else if sawAccess && !sawOther {
+		failureKind = statsFailureAccess
+	} else if sawAccess || sawOther {
+		failureKind = statsFailureInternal
+	}
+	return validQueries, errors.OrNil(), failureKind
 }
 
 // isValidPromLabel checks that a label name conforms to the Prometheus data model:

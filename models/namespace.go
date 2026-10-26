@@ -125,7 +125,9 @@ func (nss Namespaces) GetNamespace(namespace, cluster string) *Namespace {
 }
 
 func (nss Namespaces) GetNames() []string {
-	names := make([]string, len(nss))
+	// Capacity only: appending to a slice preallocated with len(nss) would
+	// yield len(nss) leading empty strings before the real names.
+	names := make([]string, 0, len(nss))
 	for _, ns := range nss {
 		names = append(names, ns.Name)
 	}

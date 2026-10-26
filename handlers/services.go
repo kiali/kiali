@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"slices"
-	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -96,19 +94,11 @@ func ClustersServices(
 			return
 		}
 
-		nss := []string{}
-		namespacesFromQueryParams := strings.Split(namespacesQueryParam, ",")
-		loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), p.ClusterName)
-		for _, ns := range loadedNamespaces {
-			// If namespaces have been provided in the query, further filter the results to only include those namespaces.
-			if len(namespacesQueryParam) > 0 {
-				if slices.Contains(namespacesFromQueryParams, ns.Name) {
-					nss = append(nss, ns.Name)
-				}
-			} else {
-				// Otherwise no namespaces have been provided in the query params, so include all namespaces the user has access to.
-				nss = append(nss, ns.Name)
-			}
+		// The accessible namespace names for the cluster, narrowed to the
+		// namespaces query parameter when it is set (fail closed on error).
+		nss, ok := accessibleNamespaceNames(w, r.Context(), businessLayer, p.ClusterName, namespacesQueryParam)
+		if !ok {
+			return
 		}
 
 		clusterServicesList := &models.ClusterServices{

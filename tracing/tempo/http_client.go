@@ -293,7 +293,16 @@ func convertSingleTrace(traces *otelJson.Data, id string) (*model.TracingRespons
 		tracingServiceName = getServiceName(traces.Batches[0].Resource.Attributes)
 		for _, batch := range traces.Batches {
 			serviceName := getServiceName(batch.Resource.Attributes)
-			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)...)
+			spans := converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)
+			// The OTel converters only use resource attributes for the service
+			// name; surface the namespace-bearing ones as process tags so
+			// span-namespace authorization (business.TraceNamespaces) can see
+			// them.
+			nsTags := namespaceResourceTags(batch.Resource.Attributes)
+			for _, span := range spans {
+				span.Process.Tags = append(span.Process.Tags, nsTags...)
+			}
+			jaegerModel.Spans = append(jaegerModel.Spans, spans...)
 		}
 		jaegerModel.Matched = len(jaegerModel.Spans)
 		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
@@ -382,6 +391,22 @@ func hasErrors(trace otelModel.Trace) bool {
 		}
 	}
 	return false
+}
+
+// namespaceResourceTags extracts namespace-bearing OTel resource attributes
+// as Jaeger process tags. The OTel converters drop resource attributes (they
+// only use them for the service name), which would otherwise hide namespace
+// information from span-namespace authorization. The key list is shared with
+// the span namespace extraction (model.NamespaceTagKeys) so the two cannot
+// drift.
+func namespaceResourceTags(attributes []otelJson.Attribute) []jaegerModels.KeyValue {
+	var tags []jaegerModels.KeyValue
+	for _, attr := range attributes {
+		if slices.Contains(model.NamespaceTagKeys, attr.Key) {
+			tags = append(tags, jaegerModels.KeyValue{Key: attr.Key, Value: attr.Value.StringValue})
+		}
+	}
+	return tags
 }
 
 func getServiceName(attributes []otelJson.Attribute) string {

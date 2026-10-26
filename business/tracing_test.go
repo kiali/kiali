@@ -5,9 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
@@ -388,4 +392,95 @@ func TestValidateConfiguration(t *testing.T) {
 	assert.NotNil(validConfig)
 	assert.NotNil(validConfig.Error)
 	assert.Contains(validConfig.Error, "Error creating tracing client")
+}
+
+// TestTraceNamespaces pins the multi-source namespace extraction used to
+// authorize trace details: sidecar tags, ambient tags, node_id and OTel
+// resource attributes surfaced as process tags. Building it on only one
+// source would 403 every trace from the other telemetry modes.
+func TestTraceNamespaces(t *testing.T) {
+	require := require.New(t)
+
+	// Sidecar trace: istio.namespace span tag plus a node_id tag.
+	sidecar := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.namespace", Value: "bookinfo"},
+			{Key: "node_id", Value: "sidecar~172.17.0.20~reviews-6d8996bff-ztg6z.bookinfo~bookinfo.svc.cluster.local"},
+		},
+	}}}}
+	require.Equal([]string{"bookinfo"}, TraceNamespaces(sidecar))
+
+	// node_id alone (older sidecar traces without istio.namespace), including
+	// a custom cluster domain suffix.
+	nodeIDOnly := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "node_id", Value: "router~10.0.0.1~ingress-6d8996bff-ab.my-ns~my-ns.svc.my.domain"},
+		},
+	}}}}
+	require.Equal([]string{"my-ns"}, TraceNamespaces(nodeIDOnly))
+
+	// Ambient trace: source/destination namespace tags (waypoint/ztunnel).
+	ambient := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.source_namespace", Value: "bookinfo"},
+			{Key: "istio.destination_namespace", Value: "istio-system"},
+			{Key: "node_id", Value: "waypoint~172.17.0.21~waypoint-5f7d8c9b-x2kl4.istio-system~istio-system.svc.cluster.local"},
+		},
+	}}}}
+	require.Equal([]string{"bookinfo", "istio-system"}, TraceNamespaces(ambient))
+
+	// OTel resource attributes surfaced as process tags (Tempo/OTel).
+	otelTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "k8s.namespace.name", Value: "otel-ns"},
+		}},
+	}}}}
+	require.Equal([]string{"otel-ns"}, TraceNamespaces(otelTrace))
+
+	// No namespace information at all.
+	none := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{{Key: "dummy", Value: "dummy"}},
+	}}}}
+	require.Empty(TraceNamespaces(none))
+	require.Nil(TraceNamespaces(nil))
+}
+
+// TestCheckTraceAccess pins the trace-details authorization: the user must
+// be able to access at least one participating namespace, and a trace with
+// no recognizable namespace information is denied (fail closed).
+func TestCheckTraceAccess(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	// The SA sees bookinfo and victim-ns; the user can only LIST bookinfo.
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: sa}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	accessibleTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.source_namespace", Value: "bookinfo"},
+			{Key: "istio.destination_namespace", Value: "victim-ns"},
+		},
+	}}}}
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), accessibleTrace))
+
+	inaccessibleTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.source_namespace", Value: "victim-ns"},
+		},
+	}}}}
+	err := layer.Tracing.CheckTraceAccess(context.TODO(), inaccessibleTrace)
+	require.Error(err)
+	require.True(IsAccessibleError(err))
+
+	noNamespaceTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{{Key: "dummy", Value: "dummy"}},
+	}}}}
+	err = layer.Tracing.CheckTraceAccess(context.TODO(), noNamespaceTrace)
+	require.Error(err)
+	require.True(IsAccessibleError(err))
 }

@@ -27,20 +27,19 @@ func ConfigDump(conf *config.Config, kialiCache cache.KialiCache, clientFactory 
 		namespace := params["namespace"]
 		pod := params["pod"]
 
-		userClients, err := getUserClients(r, clientFactory)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		// The Envoy config dump is fetched via istiod port-forward with the
+		// Kiali ServiceAccount, so the Kubernetes API cannot enforce the
+		// user's RBAC: gate the namespace with the canonical check, reusing
+		// the NamespaceService for the proxy status business layer below.
+		namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
+		if namespaceService == nil {
+			return // 500 already written
+		}
+		if _, err := checkNamespaceAccessOn(w, r, namespaceService, namespace, cluster); err != nil {
 			return
 		}
 
-		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
-		_, err = namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
-		if err != nil {
-			handleErrorResponse(w, err)
-			return
-		}
-
-		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), &namespaceService)
+		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), namespaceService)
 		dump, err := proxyStatus.GetConfigDump(cluster, namespace, pod)
 		if err != nil {
 			handleErrorResponse(w, err)
@@ -66,20 +65,19 @@ func ConfigDumpResourceEntries(conf *config.Config, kialiCache cache.KialiCache,
 		pod := params["pod"]
 		resource := params["resource"]
 
-		userClients, err := getUserClients(r, clientFactory)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+		// The Envoy config dump is fetched via istiod port-forward with the
+		// Kiali ServiceAccount, so the Kubernetes API cannot enforce the
+		// user's RBAC: gate the namespace with the canonical check, reusing
+		// the NamespaceService for the proxy status business layer below.
+		namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
+		if namespaceService == nil {
+			return // 500 already written
+		}
+		if _, err := checkNamespaceAccessOn(w, r, namespaceService, namespace, cluster); err != nil {
 			return
 		}
 
-		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
-		_, err = namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
-		if err != nil {
-			handleErrorResponse(w, err)
-			return
-		}
-
-		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), &namespaceService)
+		proxyStatus := business.NewProxyStatusService(conf, kialiCache, discovery, clientFactory.GetSAClients(), namespaceService)
 		dump, err := proxyStatus.GetConfigDumpResourceEntries(r.Context(), cluster, namespace, pod, resource)
 		if err != nil {
 			handleErrorResponse(w, err)

@@ -14,12 +14,17 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kubeclienttesting "k8s.io/client-go/testing"
 
+	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -2178,4 +2183,170 @@ func loadServiceEntry(file string, t *testing.T) *networking_v1.ServiceEntry {
 func yamlFixtureLoaderFor(file string) *validations.YamlFixtureLoader {
 	path := fmt.Sprintf("../tests/data/validations/exportto/cns/%s", file)
 	return &validations.YamlFixtureLoader{Filename: path}
+}
+
+// TestGetValidationsFiltersByAccessibleNamespaces pins the fix for the
+// cluster-wide validations leak: GetValidations serves the SA-populated
+// validations cache, so it must filter the entries (and their references) to
+// the namespaces in the user's accessible set for the cluster.
+func TestGetValidationsFiltersByAccessibleNamespaces(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The SA can see both namespaces; the user can only see bookinfo.
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+
+	allowedKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs-allowed", Cluster: cluster}
+	victimKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "victim-ns", Name: "vs-victim", Cluster: cluster}
+	allowedRef := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster}
+	victimRef := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "victim-ns", Name: "ref-victim", Cluster: cluster}
+
+	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
+		allowedKey: {
+			Name: "vs-allowed", Namespace: "bookinfo", Cluster: cluster,
+			ObjectGVK:  kubernetes.VirtualServices,
+			Valid:      true,
+			References: []models.IstioValidationKey{allowedRef, victimRef},
+		},
+		victimKey: {
+			Name: "vs-victim", Namespace: "victim-ns", Cluster: cluster,
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     true,
+		},
+	}
+	kialiCache.Validations().Replace(cacheContent)
+
+	validations, err := vs.GetValidations(context.TODO(), cluster)
+	require.NoError(err)
+
+	// The victim namespace's validation is filtered out entirely.
+	_, ok := validations[victimKey]
+	assert.False(ok, "validations for a denied namespace must not be returned")
+	victimEntry, ok := validations[allowedKey]
+	require.True(ok, "validations for an accessible namespace must be returned")
+
+	// References into the denied namespace are pruned.
+	require.Len(victimEntry.References, 1)
+	assert.Equal(allowedRef, victimEntry.References[0])
+
+	// The cached entries are shared with other callers and must not be
+	// mutated by the filter.
+	assert.Len(cacheContent[allowedKey].References, 2)
+}
+
+// TestGetValidationsSetComputationErrorFailsClosed pins the fail-closed
+// contract: when the accessible set cannot be computed, GetValidations
+// errors rather than returning the unfiltered SA cache.
+func TestGetValidationsSetComputationErrorFailsClosed(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+	// The user's namespace LIST fails with a non-Forbidden error, so the
+	// accessible set cannot be computed.
+	if cs, ok := user.FakeClient().KubeClientset.(*kubefake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.NewInternalError(fmt.Errorf("apiserver down"))
+		})
+	}
+
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
+		{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs", Cluster: cluster}: {
+			Name: "vs", Namespace: "bookinfo", Cluster: cluster, ObjectGVK: kubernetes.VirtualServices, Valid: true,
+		},
+	})
+
+	_, err := vs.GetValidations(context.TODO(), cluster)
+	require.Error(err)
+}
+
+// TestGetValidationsKeepsGatewayMultimatchValidations reproduces the PR #10448
+// CI failures: the Istio Config list page serves validations from the
+// cluster-wide GetValidations, and every gateway flagged by the KIA0301
+// multimatch checker lost its validation there. The gateway multimatch
+// checkers (and GatewayChecker's group-checks-before-single-checks merge
+// order) used to produce validation values whose Namespace field was empty
+// even though the key carried it, so the accessible-set filter dropped them.
+// This test feeds the real GatewayChecker output for the exact CI scenario —
+// the Istio 1.31 bookinfo sample gateway (port 8080, wildcard host,
+// istio=ingressgateway selector) colliding with a wizard-created gateway —
+// through GetValidations as a user that can see bookinfo.
+func TestGetValidationsKeepsGatewayMultimatchValidations(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The SA and the user can both see bookinfo; the collision is what
+	// triggers the multimatch validation, not a denial.
+	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	demoGateway := data.AddServerToGateway(data.CreateServer([]string{"*"}, 8080, "http", "HTTP"),
+		data.CreateEmptyGateway("bookinfo-gateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+	wizardGateway := data.AddServerToGateway(data.CreateServer([]string{"website.com"}, 8080, "foobar", "HTTP"),
+		data.CreateEmptyGateway("mygateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+
+	gatewayValidations := checkers.GatewayChecker{
+		Cluster:  cluster,
+		Conf:     conf,
+		Gateways: []*networking_v1.Gateway{demoGateway, wizardGateway},
+		WorkloadsPerNamespace: map[string]models.Workloads{
+			"bookinfo": {{WorkloadListItem: models.WorkloadListItem{Labels: map[string]string{"app": "productpage"}}}},
+		},
+	}.Check()
+	require.NotEmpty(gatewayValidations, "the colliding gateways must produce multimatch validations")
+
+	// A latent checker may still build a validation value without its
+	// Namespace field while the key carries it; the filter must key off the
+	// map key, which is authoritative.
+	gatewayValidations.MergeValidations(models.IstioValidations{
+		{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "latent-empty-namespace", Cluster: cluster}: {
+			Name: "latent-empty-namespace", Cluster: cluster, ObjectGVK: kubernetes.K8sGateways, Valid: true,
+		},
+	})
+	kialiCache.Validations().Replace(gatewayValidations)
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	validations, err := vs.GetValidations(context.TODO(), cluster)
+	require.NoError(err)
+
+	for _, name := range []string{"bookinfo-gateway", "mygateway", "latent-empty-namespace"} {
+		key := models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo", Name: name, Cluster: cluster}
+		isSynthetic := name == "latent-empty-namespace"
+		if isSynthetic {
+			key.ObjectGVK = kubernetes.K8sGateways
+		}
+		entry, ok := validations[key]
+		require.True(ok, "validation for the accessible gateway %s must be returned", name)
+		if !isSynthetic {
+			assert.NotEmpty(entry.Checks, "gateway %s must keep its multimatch checks", name)
+		}
+	}
 }

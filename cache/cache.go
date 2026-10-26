@@ -140,6 +140,13 @@ type KialiCache interface {
 	// We cache all namespaces for cluster + cacheKey.
 	SetNamespaces(cacheKey string, namespaces []models.Namespace)
 
+	// SetClusterNamespaces sets the in memory cache of namespaces for a
+	// single cluster. Unlike SetNamespaces, it stores the entry even when
+	// namespaces is empty, so a user with zero accessible namespaces in the
+	// cluster does not recompute the set on every request: the presence of
+	// the entry (GetNamespaces' found flag) is authoritative.
+	SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace)
+
 	// SetNamespace caches a specific namespace by cluster + cacheKey.
 	SetNamespace(cacheKey string, namespace models.Namespace)
 }
@@ -794,6 +801,20 @@ func (c *kialiCacheImpl) SetNamespaces(cacheKey string, namespaces []models.Name
 		}
 		c.namespaceStore.Set(key, ns)
 	}
+}
+
+func (c *kialiCacheImpl) SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace) {
+	c.namespacesLock.Lock()
+	defer c.namespacesLock.Unlock()
+
+	key := namespacesKey{cacheKey: cacheKey, cluster: cluster}
+	ns := make(map[string]models.Namespace, len(namespaces))
+	for _, namespace := range namespaces {
+		ns[namespace.Name] = namespace
+	}
+	// Store even when empty: the presence of the entry is the authoritative
+	// "set computed" signal (see GetNamespaces' found flag).
+	c.namespaceStore.Set(key, ns)
 }
 
 func (c *kialiCacheImpl) SetNamespace(cacheKey string, namespace models.Namespace) {

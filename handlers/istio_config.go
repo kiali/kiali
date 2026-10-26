@@ -447,7 +447,13 @@ func IstioConfigValidationSummary(
 		}
 
 		if len(nss) == 0 {
-			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			// Fail closed: if the accessible set cannot be determined, reject
+			// rather than return an empty (200) result set.
+			loadedNamespaces, errNs := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			if errNs != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+errNs.Error())
+				return
+			}
 			for _, ns := range loadedNamespaces {
 				nss = append(nss, ns.Name)
 			}
@@ -458,7 +464,9 @@ func IstioConfigValidationSummary(
 			istioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cluster, ns)
 			if errValidations != nil {
 				log.FromRequest(r).Error().Msg(errValidations.Error())
-				RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+				// An inaccessible namespace is an authorization failure (403),
+				// not a server error.
+				handleErrorResponse(w, errValidations)
 				return
 			}
 			validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))
