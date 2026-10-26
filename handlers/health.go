@@ -50,10 +50,38 @@ func ClusterHealth(
 			return
 		}
 
+		// The namespaces query parameter is user-supplied. The health data is
+		// computed from data gathered with the Kiali ServiceAccount's clients,
+		// so the Kubernetes API cannot enforce the user's RBAC here: validate
+		// the requested namespaces against the user's accessible namespaces
+		// and fail closed. Use the LIST-based accessible set
+		// (GetClusterNamespaces) as the empty-parameter path, not per-namespace
+		// gets: with require_namespace_get=false (the default) a caller can be
+		// authorized through namespace LIST, and a per-namespace GET check would
+		// make the result depend on whether the per-token namespace cache is
+		// warm - health would flicker between 200 and 403 for such users. Do
+		// not silently drop inaccessible namespaces from a multi-namespace
+		// request - partial data would make the UI show wrong aggregates.
+		accessibleNamespaces, err := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+			return
+		}
+
 		if len(nss) == 0 {
-			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
-			for _, ns := range loadedNamespaces {
+			for _, ns := range accessibleNamespaces {
 				nss = append(nss, ns.Name)
+			}
+		} else {
+			accessible := make(map[string]struct{}, len(accessibleNamespaces))
+			for _, ns := range accessibleNamespaces {
+				accessible[ns.Name] = struct{}{}
+			}
+			for _, ns := range nss {
+				if _, ok := accessible[ns]; !ok {
+					RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: namespace ["+ns+"] is not accessible")
+					return
+				}
 			}
 		}
 		result := models.ClustersNamespaceHealth{

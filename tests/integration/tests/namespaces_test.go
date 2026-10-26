@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -39,12 +38,15 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 	require := require.New(t)
 	params := map[string]string{"rateInterval": "60s"}
 
-	_, code, err := kiali.NamespaceWorkloadHealth("invalid", params)
+	health, code, err := kiali.NamespaceWorkloadHealth("invalid", params)
 
-	// namespace not found instead of internal server error
+	// Namespaces the caller cannot access (including nonexistent ones) are
+	// rejected with 403, fail closed, consistent with the rest of the API:
+	// the handler's accessible-set check must fail closed before any health
+	// data is computed or returned.
 	require.Error(err)
-	require.True(strings.Contains(err.Error(), "namespaces \\\"invalid\\\" not found") || strings.Contains(err.Error(), "Namespace [invalid] is not accessible for Kiali"))
-	require.NotEqual(200, code)
+	require.Equal(403, code)
+	require.Nil(health)
 }
 
 func TestNamespaceHealthApp(t *testing.T) {
