@@ -1,11 +1,12 @@
 import { isMultiCluster } from 'config';
-import type { TFunction } from 'i18next';
 import type { HealthHistoryType } from 'services/Api';
 import type { HealthStatusId } from 'types/Health';
 import { formatHealthHistoryInvestigationBound, type HealthHistoryRange } from './HealthHistoryNavigation';
 import { healthStatusI18nKey } from './HealthStatusRibbonUtils';
 
-const resourceKindLabel = (healthType: HealthHistoryType, t: TFunction): string => {
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
+const resourceKindLabel = (healthType: HealthHistoryType, t: TranslateFn): string => {
   switch (healthType) {
     case 'app':
       return t('application');
@@ -22,7 +23,7 @@ const formatResourceDescription = (
   healthType: HealthHistoryType,
   name: string,
   namespace: string,
-  t: TFunction
+  t: TranslateFn
 ): string => {
   if (healthType === 'namespace') {
     return t("namespace '{{name}}'", { name });
@@ -33,7 +34,7 @@ const formatResourceDescription = (
 };
 
 export const buildHealthHistoryChatQuery = (
-  t: TFunction,
+  t: TranslateFn,
   healthType: HealthHistoryType,
   name: string,
   namespace: string,
