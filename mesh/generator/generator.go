@@ -186,7 +186,9 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				var infraData interface{}
 
 				if len(ztunnel.Pods) > 0 {
-					dump := gi.Business.Workload.GetZtunnelConfig(ztunnel.Cluster, ztunnel.Namespace, ztunnel.Pods[0].Name)
+					// Use the cached dump directly (unfiltered): the mesh graph only uses
+					// the ztunnel pod's own Config here, which contains no tenant data.
+					dump := gi.KialiCache.GetZtunnelDump(ztunnel.Cluster, ztunnel.Pods[0].Name)
 					// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
 					if dump != nil {
 						infraData = dump.Config

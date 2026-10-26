@@ -361,6 +361,17 @@ func PodLogs(
 		namespace := vars["namespace"]
 		pod := vars["pod"]
 
+		// Check that the user has access to the namespace before streaming any logs.
+		// This is required for the ztunnel log type, which fetches the logs with the
+		// Kiali ServiceAccount client (so the Kubernetes API cannot enforce the user's
+		// RBAC); the other log types use the user's own clients and already fail closed
+		// at the API server (pods/log permission). The check is LIST-based: a
+		// GET-based check would newly 403 callers that are authorized through
+		// namespace LIST whenever the per-token namespace cache is cold.
+		if err := checkNamespaceAccessWithList(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
+			return
+		}
+
 		// Get log options
 		opts, err := business.Workload.BuildLogOptionsCriteria(
 			queryParams.Get("container"),
@@ -395,17 +406,32 @@ func ConfigDumpZtunnel(
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := mux.Vars(r)
 
+		cluster := clusterNameFromQuery(conf, r.URL.Query())
+		namespace := params["namespace"]
+		pod := params["pod"]
+
+		// The ztunnel config dump is mesh-wide and is fetched with the Kiali
+		// ServiceAccount client, so the Kubernetes API cannot enforce the user's
+		// RBAC. Check access to the namespace in the URL (the workload's namespace)
+		// before fetching anything; the response is additionally filtered to the
+		// namespaces the user can access. The check is LIST-based (see
+		// checkNamespaceAccessWithList) so that callers authorized through
+		// namespace LIST are not rejected when the namespace cache is cold.
+		if err := checkNamespaceAccessWithList(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
+			return
+		}
+
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Apps initialization error: "+err.Error())
 			return
 		}
 
-		cluster := clusterNameFromQuery(conf, r.URL.Query())
-		namespace := params["namespace"]
-		pod := params["pod"]
-
-		dump := business.Workload.GetZtunnelConfig(cluster, namespace, pod)
+		dump, err := business.Workload.GetZtunnelConfig(r.Context(), cluster, pod)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "Error fetching ztunnel config: "+err.Error())
+			return
+		}
 		RespondWithJSON(w, http.StatusOK, dump)
 	}
 }
