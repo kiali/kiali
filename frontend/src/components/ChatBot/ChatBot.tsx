@@ -18,6 +18,7 @@ import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-dar
 import { defer } from 'lodash-es';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import * as API from 'services/Api';
+import { onOpenAIChat } from 'utils/aiEvents';
 
 const conversationList: { [key: string]: Conversation[] } = {};
 conversationList[CHAT_HISTORY_HEADER] = [];
@@ -165,6 +166,14 @@ export const ChatBot: React.FC = () => {
       },
     []
   );
+
+  useEffect(() => {
+    return onOpenAIChat(() => {
+      if (allowedToUseChatbot) {
+        setChatbotVisible(true);
+      }
+    });
+  }, [allowedToUseChatbot]);
 
   return (
     <div
