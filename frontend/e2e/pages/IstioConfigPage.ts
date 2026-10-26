@@ -656,7 +656,9 @@ export class IstioConfigPage extends BasePage {
         { headers: await ossmcCsrfHeaders(this.page) }
       );
       if (!response.ok()) {
-        throw new Error(`Failed to delete ${config.kind}/${config.name}: ${response.status}`);
+        throw new Error(
+          `Failed to delete ${config.kind}/${config.name}: ${response.status()} ${await response.text()}`
+        );
       }
       await waitForLoadingComplete(this.page);
       return;

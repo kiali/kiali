@@ -125,9 +125,11 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
         await istioConfigPage.open();
         await selectNamespace(page, namespace);
         await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', second);
+        // K8sGateway is Kiali's UI alias; the delete API needs the real GVK
+        // kind, which is Gateway (gateway.networking.k8s.io/v1).
         await istioConfigPage.deleteCurrentConfig({
           group: 'gateway.networking.k8s.io',
-          kind: 'K8sGateway',
+          kind: 'Gateway',
           name: second,
           namespace,
           version: 'v1'
