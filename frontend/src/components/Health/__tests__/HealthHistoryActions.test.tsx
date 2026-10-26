@@ -4,9 +4,21 @@ import { HealthHistoryActions } from '../HealthHistoryActions';
 import { HealthStatusRibbon } from '../HealthStatusRibbon';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import type { Datapoint } from 'types/Metrics';
+import { dispatchOpenAIChat } from 'utils/aiEvents';
+
+const mockDispatch = rstest.fn();
 
 rstest.mock('hooks/redux', () => ({
+  useKialiDispatch: () => mockDispatch,
   useKialiSelector: () => 60
+}));
+
+rstest.mock('components/ChatBot/hooks/useChatAIEnabled', () => ({
+  useChatAIEnabled: () => true
+}));
+
+rstest.mock('utils/aiEvents', () => ({
+  dispatchOpenAIChat: rstest.fn()
 }));
 rstest.mock('components/Link/KialiLink', () => ({
   KialiLink: (props: any) => (
@@ -36,6 +48,11 @@ const formatInvestigationTime = (date: Date, selected: Date): string => {
 
 describe('health history click actions', () => {
   const startTime = Date.UTC(2026, 9, 14, 12) / 1000;
+
+  beforeEach(() => {
+    mockDispatch.mockClear();
+    (dispatchOpenAIChat as ReturnType<typeof rstest.fn>).mockClear?.();
+  });
   const setup = (
     rangeStart = startTime,
     datapoints: Datapoint[] = Array.from({ length: 60 }, (_, index) => [rangeStart + index * 60, 0])
@@ -211,6 +228,21 @@ describe('health history click actions', () => {
     expect(onSelect).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Logs' }));
     expect(onSelect).toHaveBeenCalledWith('logs', { from: (startTime + 900) * 1000, to: (startTime + 2700) * 1000 });
+  });
+
+  it('fills the AI chat prompt with the selected investigation range when Ask AI is clicked', async () => {
+    const { ribbon } = setup();
+    fireEvent.click(ribbon, { clientX: 300 });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Investigation Time Range' }), {
+      target: { value: '1800' }
+    });
+    const range = screen.getByTestId('health-history-investigation-range').textContent ?? '';
+    fireEvent.click(await screen.findByTestId('health-history-ask-ai'));
+    const queryAction = mockDispatch.mock.calls.find(([action]) => action?.payload)?.[0];
+    expect(String(queryAction?.payload)).toContain(range.split(' – ')[0]);
+    expect(String(queryAction?.payload)).toContain(range.split(' – ')[1]);
+    expect(dispatchOpenAIChat).toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
   });
 
   it('supports selecting a time with the keyboard and dismissing without navigation', async () => {

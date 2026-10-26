@@ -6,6 +6,24 @@ import type { HealthHistoryType } from 'services/Api';
 
 export type HealthHistoryRange = Required<BoundsInMilliseconds>;
 
+const timeOptions: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit'
+};
+
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'numeric',
+  year: 'numeric',
+  ...timeOptions
+};
+
+export const formatHealthHistoryInvestigationBound = (boundMs: number, selectedTimeMs: number): string => {
+  const date = new Date(boundMs);
+  const sameDay = date.toDateString() === new Date(selectedTimeMs).toDateString();
+  return sameDay ? date.toLocaleTimeString(undefined, timeOptions) : date.toLocaleString(undefined, dateTimeOptions);
+};
+
 export const getHealthHistoryRange = (timestamp: number, duration: number, now = Date.now()): HealthHistoryRange => {
   const length = duration * 1000;
   // Match the minute shown by the ribbon tooltip and every destination's custom range.

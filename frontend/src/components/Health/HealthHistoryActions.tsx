@@ -11,16 +11,24 @@ import {
   StackItem,
   Tooltip
 } from '@patternfly/react-core';
-import { createIcon, KialiIcon } from 'config/KialiIcon';
-import { statusFromString, type HealthStatusId } from 'types/Health';
+import { ChatAIActions } from 'actions/ChatAIActions';
+import { useChatAIEnabled } from 'components/ChatBot/hooks/useChatAIEnabled';
 import { KialiLink } from 'components/Link/KialiLink';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
-import { useKialiSelector } from 'hooks/redux';
+import { createIcon, KialiIcon } from 'config/KialiIcon';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
+import type { HealthHistoryType } from 'services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
+import { statusFromString, type HealthStatusId } from 'types/Health';
+import { dispatchOpenAIChat } from 'utils/aiEvents';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import type { HealthHistoryType } from 'services/Api';
-import { getHealthHistoryGraphUrl, getHealthHistoryRange } from './HealthHistoryNavigation';
+import { buildHealthHistoryChatQuery } from './healthHistoryAskAI';
+import {
+  formatHealthHistoryInvestigationBound,
+  getHealthHistoryGraphUrl,
+  getHealthHistoryRange
+} from './HealthHistoryNavigation';
 
 type HealthHistoryActionsProps = {
   children: (onSelect: (timestamp: number, position: number, status: HealthStatusId) => void) => React.ReactElement;
@@ -65,25 +73,9 @@ const timeRangeStyle = kialiStyle({
   gap: PFSpacer.sm
 });
 
-const timeOptions: Intl.DateTimeFormatOptions = {
-  hour: '2-digit',
-  minute: '2-digit'
-};
-
-const dateTimeOptions: Intl.DateTimeFormatOptions = {
-  day: 'numeric',
-  month: 'numeric',
-  year: 'numeric',
-  ...timeOptions
-};
-
-const formatTime = (timestamp: number, referenceTimestamp: number): string => {
-  const date = new Date(timestamp);
-  const sameDay = date.toDateString() === new Date(referenceTimestamp).toDateString();
-  return sameDay ? date.toLocaleTimeString(undefined, timeOptions) : date.toLocaleString(undefined, dateTimeOptions);
-};
-
 export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props => {
+  const dispatch = useKialiDispatch();
+  const chatAIEnabled = useChatAIEnabled();
   const { t } = useKialiTranslation();
   const { onSelect, tabs } = React.useContext(CustomTimeTabsContext);
   const graphDuration = useKialiSelector(state => state.userSettings.duration);
@@ -108,6 +100,26 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
     setSelection({ now: Date.now(), position, status, timestamp: Math.floor(timestamp / 60) * 60 });
   }, []);
 
+  const handleAskAI = (): void => {
+    if (!chatAIEnabled || !selection || !range) {
+      return;
+    }
+
+    const query = buildHealthHistoryChatQuery(
+      t,
+      props.healthType,
+      props.name,
+      props.namespace,
+      selection.status,
+      range,
+      selection.timestamp * 1000,
+      props.cluster
+    );
+    dispatch(ChatAIActions.setQuery(query));
+    dispatchOpenAIChat();
+    setSelection(undefined);
+  };
+
   const statusLabel = selection ? t(selection.status === 'NA' ? 'n/a' : selection.status) : '';
 
   return (
@@ -124,7 +136,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
         headerContent={
           selection ? (
             <span className={headerStyle}>
-              {formatTime(selection.timestamp * 1000, selection.now)}
+              {formatHealthHistoryInvestigationBound(selection.timestamp * 1000, selection.now)}
               <Tooltip content={statusLabel}>
                 <span aria-label={statusLabel} data-test="health-history-selected-status" role="img" tabIndex={0}>
                   {createIcon(statusFromString(selection.status))}
@@ -184,8 +196,8 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                       ))}
                     </FormSelect>
                     <div data-test="health-history-investigation-range">
-                      {formatTime(range.from, selection.timestamp * 1000)} –{' '}
-                      {formatTime(range.to, selection.timestamp * 1000)}
+                      {formatHealthHistoryInvestigationBound(range.from, selection.timestamp * 1000)} –{' '}
+                      {formatHealthHistoryInvestigationBound(range.to, selection.timestamp * 1000)}
                     </div>
                   </div>
                 </FormGroup>
@@ -194,6 +206,11 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                 <Divider />
               </StackItem>
               <StackItem className={actionsStyle}>
+                {chatAIEnabled && (
+                  <Button data-test="health-history-ask-ai" isInline onClick={handleAskAI} variant="link">
+                    {t('Ask AI')}
+                  </Button>
+                )}
                 <KialiLink
                   dataTest="health-history-replay"
                   to={getHealthHistoryGraphUrl(
