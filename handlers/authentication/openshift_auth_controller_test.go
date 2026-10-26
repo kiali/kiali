@@ -1050,3 +1050,73 @@ func TestValidateSessionMulticlusterPartialZeroAccess(t *testing.T) {
 			"the healthy east session must not be dropped")
 	}
 }
+
+// TestValidateSessionMulticlusterHomeZeroAccess ensures that losing namespace
+// access on the mandatory HOME cluster is reported as an authentication failure
+// (401) rather than a persistent HTTP 500: the request fails with the specific
+// zero-access reason, and a follow-up request carrying only the healthy remote
+// cookie is also rejected as an authentication error instead of 500ing forever.
+func TestValidateSessionMulticlusterHomeZeroAccess(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The user's access on the HOME cluster (east) drops to zero; the remote
+	// west session stays healthy.
+	zeroAccessEast := newOpenshiftAuthTestClient(t, metadataServer, false)
+	zeroAccessEast.Token = "east-zero-access"
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": zeroAccessEast,
+		"west": westClient,
+	})
+
+	// First request (both cookies): the home session is terminated for zero
+	// access; the request must fail with the 401-mapped zero-access reason, not
+	// a generic "no valid session found for home cluster" 500.
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err)
+	require.ErrorIs(err, authentication.ErrCannotViewNamespaces)
+
+	// The east session cookie must have been dropped; the west cookie must not.
+	for _, c := range w.Result().Cookies() {
+		if c.Name == authentication.SessionCookieName+"-east" {
+			require.True(c.MaxAge < 0, "zero-access home session should have been dropped")
+		}
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"the healthy remote session must not be dropped by this branch")
+	}
+
+	// Follow-up request carrying only the remote cookie: the home session is
+	// simply absent, and the mandatory home-cluster check must reject the
+	// request as an authentication error (401 class), not a persistent 500.
+	r = httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieWest)
+
+	_, err = authController.ValidateSession(r, w)
+	require.Error(err)
+	require.ErrorIs(err, authentication.ErrSessionNotFound)
+}

@@ -290,9 +290,12 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	var homeUserGroups []string
 
 	// terminatedZeroAccess tracks whether at least one session was terminated in
-	// this request because its token can no longer view any namespace. See the
-	// cookie-session branch below.
+	// this request because its token can no longer view any namespace, and
+	// terminatedZeroAccessHome whether that session was the mandatory home
+	// cluster's. See the cookie-session branch below and the home-cluster check
+	// at the end of validation.
 	terminatedZeroAccess := false
+	terminatedZeroAccessHome := false
 
 	// In OpenShift auth, it is possible that a session is started by a 3rd party. If that's the case, Kiali
 	// can receive the OpenShift token of the session via HTTP Headers of via a URL Query string parameter.
@@ -380,6 +383,9 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					log.Debug("Token saved in session cannot view any namespace. Terminating session...")
 					o.sessionStore.TerminateSession(r, w, session.Cluster)
 					terminatedZeroAccess = true
+					if session.Cluster == o.conf.KubernetesConfig.ClusterName {
+						terminatedZeroAccessHome = true
+					}
 					continue
 				}
 				return nil, err
@@ -461,7 +467,18 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	// TODO: Eventually we shouldn't need this check if the user can somehow login to a cluster without logging into the home cluster.
 	// Will probably require selecting which cluster to login to in the UI.
 	if homeClusterUserSession, ok := userSessions[o.conf.KubernetesConfig.ClusterName]; !ok {
-		return nil, fmt.Errorf("no valid session found for home cluster")
+		// The home cluster session is mandatory: without it the user cannot use
+		// Kiali at all. Report an authentication error (HTTP 401) rather than a
+		// generic 500, so the UI handles it as session expiry and the middleware
+		// can terminate any remaining remote sessions. A plain error here would
+		// 500 on every request (including follow-up requests that only carry the
+		// remote cookie), leaving the UI stuck on failing pages with no logout
+		// path. When the home session was terminated in this request because its
+		// token can no longer view any namespace, report the specific reason.
+		if terminatedZeroAccessHome {
+			return nil, ErrCannotViewNamespaces
+		}
+		return nil, fmt.Errorf("session %w: no valid session found for home cluster", ErrSessionNotFound)
 	} else {
 		// Internal header used to propagate the subject of the request for audit purposes
 		r.Header.Set("Kiali-User", homeClusterUserSession.Username)
