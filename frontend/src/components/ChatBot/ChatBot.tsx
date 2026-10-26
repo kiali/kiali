@@ -18,7 +18,6 @@ import { ReactComponent as KialiIconDark } from '../../assets/img/kiali/icon-dar
 import { defer } from 'lodash-es';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import * as API from 'services/Api';
-import { onOpenAIChat } from 'utils/aiEvents';
 
 const conversationList: { [key: string]: Conversation[] } = {};
 conversationList[CHAT_HISTORY_HEADER] = [];
@@ -42,9 +41,9 @@ export const ChatBot: React.FC = () => {
   const providers = useSelector((state: KialiAppState) => state.ai.chat.providers);
   const conversationID = useSelector((state: KialiAppState) => state.ai.chat.conversationID);
   const chatHistory = useSelector((state: KialiAppState) => state.ai.chat.chatHistory);
+  const chatbotVisible = useSelector((state: KialiAppState) => state.ai.chat.chatbotVisible);
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
-  const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
   const toggleBg = isDarkTheme ? 'var(--pf-t--color--gray--90)' : 'var(--pf-t--color--white)';
   const toggleBorder = isDarkTheme ? 'var(--pf-t--color--white)' : 'var(--pf-t--color--gray--90)';
 
@@ -167,14 +166,6 @@ export const ChatBot: React.FC = () => {
     []
   );
 
-  useEffect(() => {
-    return onOpenAIChat(() => {
-      if (allowedToUseChatbot) {
-        setChatbotVisible(true);
-      }
-    });
-  }, [allowedToUseChatbot]);
-
   return (
     <div
       style={{
@@ -193,7 +184,9 @@ export const ChatBot: React.FC = () => {
             : t('Chatbot is not allowed for this user')
         }
         isChatbotVisible={chatbotVisible}
-        onToggleChatbot={() => allowedToUseChatbot && setChatbotVisible(prev => !prev)}
+        onToggleChatbot={() =>
+          allowedToUseChatbot && dispatch(ChatAIActions.setChatbotVisible({ visible: !chatbotVisible }))
+        }
         isRound={true}
         closedToggleIcon={() => (
           <span data-test={isDarkTheme ? 'ai-chatbot-toggle-icon-dark' : 'ai-chatbot-toggle-icon-light'}>
@@ -205,7 +198,7 @@ export const ChatBot: React.FC = () => {
       />
       <Chatbot isVisible={chatbotVisible} displayMode={displayMode}>
         <ChatBotHeader
-          onCloseChat={() => setChatbotVisible(!chatbotVisible)}
+          onCloseChat={() => dispatch(ChatAIActions.setChatbotVisible({ visible: false }))}
           onNewChat={() => setIsNewChatModalOpen(true)}
           onSelectProviderModel={onSelectProviderModel}
         />

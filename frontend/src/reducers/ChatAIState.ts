@@ -20,6 +20,7 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   allowed: false,
   alwaysNavigate: false,
   chatHistory: ImmutableList(),
+  chatbotVisible: false,
   conversationID: '',
   defaultProvider: '',
   displayMode: ChatbotDisplayMode.default,
@@ -61,6 +62,9 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setSelectedModel): {
       return updateState(state, { selectedModel: action.payload.model });
+    }
+    case getType(ChatAIActions.setChatbotVisible): {
+      return updateState(state, { chatbotVisible: action.payload.visible });
     }
     case getType(ChatAIActions.setChatHistoryClear): {
       return updateState(state, { chatHistory: ImmutableList() });

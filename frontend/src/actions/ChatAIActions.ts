@@ -14,6 +14,9 @@ export const setSelectedProvider = createStandardAction(ActionKeys.CHAT_AI_SET_S
   provider: string;
 }>();
 export const setSelectedModel = createStandardAction(ActionKeys.CHAT_AI_SET_SELECTED_MODEL)<{ model: string }>();
+export const setChatbotVisible = createStandardAction(ActionKeys.CHAT_AI_SET_CHATBOT_VISIBLE)<{
+  visible: boolean;
+}>();
 export const setChatHistoryClear = createStandardAction(ActionKeys.CHAT_AI_SET_CHAT_HISTORY_CLEAR)();
 export const setChatHistoryAdd = createStandardAction(ActionKeys.CHAT_AI_SET_CHAT_HISTORY_ADD)<{ entry: ChatEntry }>();
 export const setChatHistoryUpdateById = createStandardAction(ActionKeys.CHAT_AI_SET_CHAT_HISTORY_UPDATE_BY_ID)<{
@@ -49,6 +52,7 @@ export const ChatAIActions = {
   setAlwaysNavigate,
   setInteractionMode,
   setQuery,
+  setChatbotVisible,
   setChatHistoryClear,
   setChatHistoryAdd,
   setChatHistoryUpdateById,

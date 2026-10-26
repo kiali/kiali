@@ -21,7 +21,6 @@ import type { HealthHistoryType } from 'services/Api';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { statusFromString, type HealthStatusId } from 'types/Health';
-import { dispatchOpenAIChat } from 'utils/aiEvents';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { buildHealthHistoryChatQuery } from './healthHistoryAskAI';
 import {
@@ -78,6 +77,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
   const chatAIEnabled = useChatAIEnabled();
   const { t } = useKialiTranslation();
   const { onSelect, tabs } = React.useContext(CustomTimeTabsContext);
+  const chatAllowed = useKialiSelector(state => state.ai.chat.allowed);
   const graphDuration = useKialiSelector(state => state.userSettings.duration);
   const anchorRef = React.useRef<HTMLSpanElement>(null);
   const [selection, setSelection] = React.useState<{
@@ -116,7 +116,9 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
       props.cluster
     );
     dispatch(ChatAIActions.setQuery(query));
-    dispatchOpenAIChat();
+    if (chatAllowed) {
+      dispatch(ChatAIActions.setChatbotVisible({ visible: true }));
+    }
     setSelection(undefined);
   };
 

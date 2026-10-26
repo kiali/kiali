@@ -216,6 +216,7 @@ export interface ChatAIState {
   allowed: boolean;
   alwaysNavigate: boolean;
   chatHistory: ImmutableList<ImmutableMap<string, unknown>>;
+  chatbotVisible: boolean;
   conversationID: string;
   defaultProvider: string;
   displayMode: ChatbotDisplayMode;

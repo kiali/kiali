@@ -4,22 +4,23 @@ import { HealthHistoryActions } from '../HealthHistoryActions';
 import { HealthStatusRibbon } from '../HealthStatusRibbon';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import type { Datapoint } from 'types/Metrics';
-import { dispatchOpenAIChat } from 'utils/aiEvents';
+import { ChatAIActions } from 'actions/ChatAIActions';
 
 const mockDispatch = rstest.fn();
 
 rstest.mock('hooks/redux', () => ({
   useKialiDispatch: () => mockDispatch,
-  useKialiSelector: () => 60
+  useKialiSelector: (selector: (state: unknown) => unknown) =>
+    selector({
+      ai: { chat: { allowed: true } },
+      userSettings: { duration: 60 }
+    })
 }));
 
 rstest.mock('components/ChatBot/hooks/useChatAIEnabled', () => ({
   useChatAIEnabled: () => true
 }));
 
-rstest.mock('utils/aiEvents', () => ({
-  dispatchOpenAIChat: rstest.fn()
-}));
 rstest.mock('components/Link/KialiLink', () => ({
   KialiLink: (props: any) => (
     <a href={props.to} data-test={props.dataTest} onClick={props.onClick}>
@@ -51,7 +52,6 @@ describe('health history click actions', () => {
 
   beforeEach(() => {
     mockDispatch.mockClear();
-    (dispatchOpenAIChat as ReturnType<typeof rstest.fn>).mockClear?.();
   });
   const setup = (
     rangeStart = startTime,
@@ -241,7 +241,7 @@ describe('health history click actions', () => {
     const queryAction = mockDispatch.mock.calls.find(([action]) => action?.payload)?.[0];
     expect(String(queryAction?.payload)).toContain(range.split(' – ')[0]);
     expect(String(queryAction?.payload)).toContain(range.split(' – ')[1]);
-    expect(dispatchOpenAIChat).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setChatbotVisible({ visible: true }));
     await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
   });
 
