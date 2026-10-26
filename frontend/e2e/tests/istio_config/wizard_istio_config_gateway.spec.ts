@@ -125,7 +125,13 @@ test.describe('Istio Config wizard: K8s Gateway API', () => {
         await istioConfigPage.open();
         await selectNamespace(page, namespace);
         await istioConfigPage.openConfigByRow(namespace, 'K8sGateway', second);
-        await istioConfigPage.deleteCurrentConfig();
+        await istioConfigPage.deleteCurrentConfig({
+          group: 'gateway.networking.k8s.io',
+          kind: 'K8sGateway',
+          name: second,
+          namespace,
+          version: 'v1'
+        });
 
         await istioConfigPage.open();
         await selectNamespace(page, namespace);

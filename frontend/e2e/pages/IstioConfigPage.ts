@@ -20,6 +20,7 @@ import {
   waitForIstioObjectDetails as waitForIstioObjectDetailsApi
 } from '../utils/istioConfigApi';
 import { kialiUrl } from '../utils/kialiUrl';
+import { isOssmc, ossmcCsrfHeaders } from '../utils/ossmc';
 
 const TYPE_FILTERS = [
   'AuthorizationPolicy',
@@ -608,7 +609,7 @@ export class IstioConfigPage extends BasePage {
   }
 
   async expectConfigWizard(title: string): Promise<void> {
-    await expect(this.page.locator('h1')).toContainText(title);
+    await expect(this.page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
   }
 
   async typesInInput(id: string, value: string): Promise<void> {
@@ -638,7 +639,28 @@ export class IstioConfigPage extends BasePage {
     await expect(ref).toHaveCount(0);
   }
 
-  async deleteCurrentConfig(): Promise<void> {
+  async deleteCurrentConfig(config: {
+    group: string;
+    kind: string;
+    name: string;
+    namespace: string;
+    version: string;
+  }): Promise<void> {
+    if (isOssmc()) {
+      // OSSMC renders Kiali in kiosk mode, where the detail page hides its
+      // Actions toolbar; delete through the same Kiali API the dropdown uses.
+      const response = await this.page.request.delete(
+        kialiUrl(
+          `/api/namespaces/${config.namespace}/istio/${config.group}/${config.version}/${config.kind}/${config.name}`
+        ),
+        { headers: await ossmcCsrfHeaders(this.page) }
+      );
+      if (!response.ok()) {
+        throw new Error(`Failed to delete ${config.kind}/${config.name}: ${response.status}`);
+      }
+      await waitForLoadingComplete(this.page);
+      return;
+    }
     await this.page.locator('#actions-toggle').click();
     await this.page.locator('#actions').getByText('Delete', { exact: true }).click();
     await this.page.locator('#pf-modal-part-1').getByRole('button', { name: 'Delete' }).click();
