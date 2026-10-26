@@ -224,3 +224,56 @@ func TestConfigDumpZtunnelAccessibleNamespace(t *testing.T) {
 	assert.NotContains(t, string(actual), "svc-victim")
 	assert.NotContains(t, string(actual), "policy-victim")
 }
+
+// TestPodLogsListAuthorizedNamespace ensures a caller that is authorized
+// through namespace LIST (but whose per-namespace GET is denied, e.g. header
+// auth with the default require_namespace_get=false, with legitimate pod-log
+// permission) can still read ordinary pod logs: the guard must not depend on a
+// per-namespace GET or on namespace-cache warmth. Regression test for the
+// GET-based checkNamespaceAccess guard, which 403'd such callers on every
+// cache miss.
+func TestPodLogsListAuthorizedNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns-victim"))
+	// The LIST includes ns-victim; only the per-namespace GET is denied.
+	listAuthorized := newListAuthorizedNamespaceClient(k8s, "ns-victim", []string{"bookinfo", "ns-victim"})
+	streamer := &fakePodLogStreamer{
+		logs:                "2018-01-02T03:34:28+00:00 INFO #1 Log Message\n",
+		UserClientInterface: listAuthorized,
+	}
+	ts := setupPodLogsEndpoint(t, streamer, conf)
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns-victim/pods/victim-pod/logs")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.Contains(t, string(actual), "#1 Log Message")
+}
+
+// TestConfigDumpZtunnelListAuthorizedNamespace ensures the same LIST-authorized
+// caller can fetch the ztunnel config dump for a namespace whose per-namespace
+// GET is denied: the guard must authorize against the LIST-based accessible
+// set, and the dump filter keeps the namespaces in that set.
+func TestConfigDumpZtunnelListAuthorizedNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns-victim"))
+	listAuthorized := newListAuthorizedNamespaceClient(k8s, "ns-victim", []string{"bookinfo", "ns-victim"})
+	ts, kialiCache := setupConfigDumpZtunnelEndpoint(t, listAuthorized, conf)
+
+	dump := &kubernetes.ZtunnelConfigDump{
+		Policies:  []any{map[string]any{"name": "policy-victim", "namespace": "ns-victim"}},
+		Services:  []kubernetes.Service{{Name: "svc-victim", Namespace: "ns-victim"}},
+		Workloads: []kubernetes.Workload{{Name: "wl-victim", Namespace: "ns-victim"}},
+	}
+	kialiCache.SetZtunnelDump(cluster+"ztunnel-abc", dump)
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns-victim/pods/ztunnel-abc/config_dump_ztunnel")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.Contains(t, string(actual), "wl-victim")
+	assert.Contains(t, string(actual), "svc-victim")
+}

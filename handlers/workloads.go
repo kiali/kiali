@@ -383,9 +383,10 @@ func PodLogs(
 		// This is required for the ztunnel log type, which fetches the logs with the
 		// Kiali ServiceAccount client (so the Kubernetes API cannot enforce the user's
 		// RBAC); the other log types use the user's own clients and already fail closed
-		// at the API server, but the check is enforced here for all types for
-		// consistency with the rest of the API.
-		if _, err := checkNamespaceAccess(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
+		// at the API server (pods/log permission). The check is LIST-based: a
+		// GET-based check would newly 403 callers that are authorized through
+		// namespace LIST whenever the per-token namespace cache is cold.
+		if err := checkNamespaceAccessWithList(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
 			return
 		}
 
@@ -504,8 +505,10 @@ func ConfigDumpZtunnel(
 		// ServiceAccount client, so the Kubernetes API cannot enforce the user's
 		// RBAC. Check access to the namespace in the URL (the workload's namespace)
 		// before fetching anything; the response is additionally filtered to the
-		// namespaces the user can access.
-		if _, err := checkNamespaceAccess(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
+		// namespaces the user can access. The check is LIST-based (see
+		// checkNamespaceAccessWithList) so that callers authorized through
+		// namespace LIST are not rejected when the namespace cache is cold.
+		if err := checkNamespaceAccessWithList(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster); err != nil {
 			return
 		}
 
