@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
 import { Provider } from 'react-redux';
-import { RouterProvider, createMemoryRouter } from 'react-router-dom-v5-compat';
+import { RouterProvider, createMemoryRouter } from 'react-router';
 
 import { store } from 'store/ConfigStore';
 import { router } from 'app/History';

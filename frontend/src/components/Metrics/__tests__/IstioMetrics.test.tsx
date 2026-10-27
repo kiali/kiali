@@ -1,12 +1,12 @@
 import { render } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { IstioMetrics } from '../IstioMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';
 import { MetricsObjectTypes } from '../../../types/Metrics';
 import { MounterMocker } from 'services/__mocks__/MounterMocker';
-import { ChartModel, DashboardModel } from 'types/Dashboards';
+import type { ChartModel, DashboardModel } from 'types/Dashboards';
 
 const createMetricChart = (name: string): ChartModel => {
   return {

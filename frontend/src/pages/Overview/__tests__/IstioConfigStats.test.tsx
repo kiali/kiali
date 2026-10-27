@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { Paths } from 'config';
 import type { Mock } from '@rstest/core';
 
@@ -25,6 +25,7 @@ rstest.mock('components/Filters/StatefulFilters', () => ({
 }));
 
 rstest.mock('app/History', () => ({
+  navigateApp: rstest.fn(),
   router: { navigate: rstest.fn() }
 }));
 

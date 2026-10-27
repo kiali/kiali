@@ -166,10 +166,6 @@ const operands: string[] = [
 ];
 
 export class GraphFindComponent extends React.Component<GraphFindProps, GraphFindState> {
-  static contextTypes = {
-    router: (): null => null
-  };
-
   private findAutoComplete: AutoComplete;
   private findInputRef;
   private findElements: GraphElement[] | undefined;

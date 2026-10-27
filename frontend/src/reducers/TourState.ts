@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { TourState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { TourState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { TourActions } from '../actions/TourActions';
 
 export const INITIAL_TOUR_STATE: TourState = {

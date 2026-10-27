@@ -18,7 +18,11 @@ export const useKialiTranslation = (): UseTranslationResponse<string, undefined>
  * @param options (optional) options for traslations
  */
 export const t = (value: string, options?: TOptions): string => {
-  return i18n?.isInitialized ? i18n.t(value, { ns: I18N_NAMESPACE, ...options }) : value;
+  if (!i18n?.isInitialized) {
+    return value;
+  }
+
+  return (i18n.t as (key: string, opts?: TOptions) => string)(value, { ns: I18N_NAMESPACE, ...options });
 };
 
 /**
