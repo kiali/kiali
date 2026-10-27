@@ -1,5 +1,5 @@
-# When ci-full is added after wave 1 already ran, re-run only wave 2 jobs (not the full workflow).
-# Process labels (maintenance, backport needed, etc.) do not trigger Kiali CI — see kiali-ci.yml.
+# Runs Kiali CI wave 2 when ci-full is added after wave 1 (standard workflows only — no rerun-jobs API).
+# Process labels do not trigger Kiali CI; see kiali-ci.yml.
 name: Kiali CI (ci-full label)
 
 on:
@@ -12,164 +12,177 @@ on:
     workflows: [Kiali CI]
     types: [completed]
 
-permissions:
-  actions: write
-  contents: read
-  pull-requests: read
+concurrency:
+  group: kiali-ci-wave2-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+permissions: read-all
 
 jobs:
-  rerun_wave2:
-    name: Re-run wave 2 only
+  gate:
+    name: Check whether to run wave 2
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: |
-      (github.event_name == 'pull_request' && github.event.label.name == 'ci-full') ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request')
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+      target_branch: ${{ steps.check.outputs.target_branch }}
+      build_branch: ${{ steps.check.outputs.build_branch }}
     steps:
-    - name: Re-run skipped wave 2 jobs on the Kiali CI run
-      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-      with:
-        script: |
-          const { owner, repo } = context.repo;
+    - name: Decide if wave 2 should run
+      id: check
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
 
-          const WAVE2_JOB_NAMES = new Set([
-            'Wave 2 gate',
-            'Run frontend AI integration tests',
-            'Run frontend local and offline mode integration tests',
-            'Run tracing frontend integration tests',
-            'Run frontend multicluster primary-remote integration tests',
-            'Run frontend multicluster multi-primary integration tests',
-            'Run frontend multicluster external-kiali integration tests',
-            'Run frontend multi mesh integration tests',
-            'Run backend multicluster external-controlplane integration tests',
-          ]);
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "${{ github.event.label.name }}" != "ci-full" ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> "$GITHUB_OUTPUT"
+          echo "build_branch=refs/pull/${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-          async function pullRequestForWorkflowRun(run) {
-            if (run.pull_requests?.length) {
-              const pr = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: run.pull_requests[0].number,
-              });
-              return pr.data;
-            }
+        if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
+          echo "proceed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-            const headRepo = run.head_repository?.full_name;
-            const headBranch = run.head_branch;
-            if (!headRepo || !headBranch) {
-              return null;
-            }
+        RUN_ID="${{ github.event.workflow_run.id }}"
+        WAVE2_CONCLUSION=$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs" --paginate \
+          -q '.jobs[] | select(.name=="Wave 2 gate") | .conclusion' | head -1 || true)
 
-            const [headOwner] = headRepo.split('/');
-            const { data: prs } = await github.rest.pulls.list({
-              owner,
-              repo,
-              head: `${headOwner}:${headBranch}`,
-              state: 'open',
-            });
-            return prs[0] ?? null;
-          }
+        if [ "$WAVE2_CONCLUSION" = "success" ]; then
+          echo "Wave 2 already ran on Kiali CI run ${RUN_ID}"
+          echo "proceed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-          async function rerunWave2OnRun(runId) {
-            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
-              owner,
-              repo,
-              run_id: runId,
-              per_page: 100,
-            });
+        HEAD_REPO="${{ github.event.workflow_run.head_repository.full_name }}"
+        HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
+        if [ -z "$HEAD_REPO" ] || [ -z "$HEAD_BRANCH" ]; then
+          echo "proceed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-            const wave2Gate = jobs.find((job) => job.name === 'Wave 2 gate');
-            if (!wave2Gate) {
-              core.info(`Run ${runId} has no Wave 2 gate job; nothing to do.`);
-              return;
-            }
+        HEAD_OWNER="${HEAD_REPO%%/*}"
+        PR_JSON=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${HEAD_OWNER}:${HEAD_BRANCH}" --state open \
+          --json number,labels,baseRefName | jq -c '.[0] // empty')
 
-            if (wave2Gate.conclusion === 'success') {
-              core.info(`Wave 2 already succeeded on run ${runId}.`);
-              return;
-            }
+        if [ -z "$PR_JSON" ]; then
+          echo "proceed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-            if (wave2Gate.conclusion !== 'skipped') {
-              core.info(`Wave 2 gate is ${wave2Gate.conclusion}; not re-running.`);
-              return;
-            }
+        HAS_CI_FULL=$(echo "$PR_JSON" | jq -r '.labels[]?.name' | grep -Fx ci-full || true)
+        if [ -z "$HAS_CI_FULL" ]; then
+          echo "proceed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
 
-            const jobIds = jobs
-              .filter((job) => WAVE2_JOB_NAMES.has(job.name) && job.conclusion === 'skipped')
-              .map((job) => job.id);
+        PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+        TARGET_BRANCH=$(echo "$PR_JSON" | jq -r '.baseRefName')
 
-            const codecov = jobs.find((job) => job.name === 'Merge & Upload Coverage to Codecov');
-            if (codecov?.conclusion === 'success') {
-              jobIds.push(codecov.id);
-            }
+        echo "proceed=true" >> "$GITHUB_OUTPUT"
+        echo "target_branch=${TARGET_BRANCH}" >> "$GITHUB_OUTPUT"
+        echo "build_branch=refs/pull/${PR_NUMBER}" >> "$GITHUB_OUTPUT"
 
-            if (jobIds.length === 0) {
-              core.info('No skipped wave 2 jobs to re-run.');
-              return;
-            }
+  test_backend:
+    name: Run backend linters and unit tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/test-lint-backend.yml
+    needs: [gate]
+    with:
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-            core.info(`Re-running ${jobIds.length} job(s) on Kiali CI run ${runId}`);
-            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-jobs', {
-              owner,
-              repo,
-              run_id: runId,
-              job_ids: jobIds,
-            });
-          }
+  build_frontend:
+    name: Build frontend
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/build-frontend.yml
+    needs: [gate]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-          async function findKialiCiRun(headSha) {
-            const workflows = await github.rest.actions.listRepoWorkflows({ owner, repo });
-            const kialiCi = workflows.data.workflows.find((w) => w.path === '.github/workflows/kiali-ci.yml');
-            if (!kialiCi) {
-              core.setFailed('Kiali CI workflow (.github/workflows/kiali-ci.yml) not found');
-              return null;
-            }
+  build_backend:
+    name: Build backend
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/build-backend.yml
+    needs: [gate, test_backend, build_frontend]
+    with:
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-              owner,
-              repo,
-              workflow_id: kialiCi.id,
-              head_sha: headSha,
-              event: 'pull_request',
-              per_page: 20,
-            });
+  integration_tests_frontend_chat:
+    name: Run frontend AI integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-chat.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-            const meaningful = runs.filter((run) => run.conclusion !== 'skipped');
-            return meaningful[0] ?? runs[0] ?? null;
-          }
+  integration_tests_frontend_local_offline:
+    name: Run frontend local and offline mode integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-          if (context.eventName === 'pull_request') {
-            const pr = context.payload.pull_request;
-            const run = await findKialiCiRun(pr.head.sha);
-            if (!run) {
-              core.setFailed(
-                `No Kiali CI run for ${pr.head.sha}. Push a commit or reopen the PR to start CI first.`,
-              );
-              return;
-            }
+  integration_tests_frontend_tempo:
+    name: Run tracing frontend integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-tempo.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-            if (run.status === 'in_progress' || run.status === 'queued' || run.status === 'waiting') {
-              core.info(
-                `Kiali CI run ${run.id} is still ${run.status}; wave 2 will be triggered when it completes (workflow_run).`,
-              );
-              return;
-            }
+  integration_tests_frontend_multicluster_primary_remote:
+    name: Run frontend multicluster primary-remote integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-            await rerunWave2OnRun(run.id);
-            return;
-          }
+  integration_tests_frontend_multicluster_multi_primary:
+    name: Run frontend multicluster multi-primary integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-          const run = context.payload.workflow_run;
-          const pr = await pullRequestForWorkflowRun(run);
-          if (!pr) {
-            core.info('Could not resolve PR for workflow run; skipping.');
-            return;
-          }
+  integration_tests_frontend_multicluster_external_kiali:
+    name: Run frontend multicluster external-kiali integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-          const hasCiFull = pr.labels.some((label) => label.name === 'ci-full');
-          if (!hasCiFull) {
-            core.info('PR does not have ci-full label; skipping.');
-            return;
-          }
+  integration_tests_frontend_multi_mesh:
+    name: Run frontend multi mesh integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
 
-          await rerunWave2OnRun(run.id);
+  integration_tests_backend_multicluster_external_controlplane:
+    name: Run backend multicluster external-controlplane integration tests
+    if: needs.gate.outputs.proceed == 'true'
+    uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
+    needs: [gate, build_backend]
+    with:
+      target_branch: ${{ needs.gate.outputs.target_branch }}
+      build_branch: ${{ needs.gate.outputs.build_branch }}
