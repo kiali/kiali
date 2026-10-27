@@ -1,0 +1,12 @@
+- name: "troubleshooting"
+  description: "Collects mesh problems from get_mesh_status (control plane, data plane namespaces, observability stack, and connectivity). For each unhealthy namespace, lists services, workloads, apps, ArgoCD applications, and Istio config in that namespace. Unhealthy resources and invalid Istio objects are critical sub-problems; Istio objects Kiali did not validate are warnings. A separate istio_objects issue lists invalid or unvalidated Istio objects that are not already reported on another issue. Returns a dashboard of issues. Optional namespace and clusterName limit the scan. Use this when the user asks to troubleshoot or find errors in the mesh."
+  toolset: [default, mcp]
+  input_schema:
+    type: "object"
+    properties:
+      namespace:
+        type: "string"
+        description: "Optional namespace to limit the error scan. If omitted, checks all accessible namespaces."
+      clusterName:
+        type: "string"
+        description: "Optional cluster name to scan. If omitted, defaults to the cluster name in the Kiali configuration (KubeConfig)."

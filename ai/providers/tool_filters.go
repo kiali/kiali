@@ -47,6 +47,9 @@ func IsDefaultToolExposed(conf *config.Config, providerName string, toolName str
 	if _, ok := mcp.DefaultToolHandlers[toolName]; !ok {
 		return false
 	}
+	if mcp.TotallyExcludedToolNames[toolName] {
+		return false
+	}
 	if conf == nil {
 		return true
 	}

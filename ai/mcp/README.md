@@ -20,6 +20,7 @@ This directory contains the Model Context Protocol (MCP) tools that enable the K
   - [list_or_get_resources](#10-list_or_get_resources)
   - [manage_istio_config_read](#11-manage_istio_config_read)
   - [manage_istio_config](#12-manage_istio_config)
+  - [troubleshooting](#13-troubleshooting)
 - [Tool Definitions (YAML)](#tool-definitions-yaml)
 - [Tool Execution Flow](#tool-execution-flow)
   - [ExcludedToolNames](#excludedtoolnames)
@@ -323,6 +324,20 @@ Create, patch, or delete Istio configuration. Always use `confirmed: false` firs
   "data": "apiVersion: networking.istio.io/v1\nkind: DestinationRule\nmetadata:\n  name: reviews\nspec:\n  host: reviews\n  trafficPolicy:\n    loadBalancer:\n      simple: LEAST_CONN\n"
 }
 ```
+
+---
+
+### 13. `troubleshooting`
+
+Collects mesh problems from `get_mesh_status` (control plane, data plane namespaces, observability stack, and connectivity) and returns a dashboard of issues. Duplicate targets are reported once.
+
+**Parameters**:
+- `namespace` (string, optional): Limit the scan to one namespace. If omitted, checks all accessible namespaces.
+- `clusterName` (string, optional): Cluster name. Default: Kiali config cluster.
+
+**Returns**: a JSON array of issues. When `ai.troubleshooting.ai_support.enabled` and the caller is allowed, each sub-problem includes `suggestedPrompt` and `suggestedActions`. Otherwise `suggestedActions` is omitted.
+
+The Kiali UI calls this through `POST /api/ai/troubleshooting`. An empty body runs the scan. `action` plus `prompt` submits an Ask/Fix click and requires `ai.troubleshooting.ai_support.enabled`.
 
 ---
 

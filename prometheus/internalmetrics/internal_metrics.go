@@ -44,6 +44,10 @@ const (
 	labelType             = "type"
 	labelUsername         = "username"
 	labelWithServiceNodes = "with_service_nodes"
+
+	// AIRequestChat and AIRequestTroubleshooting separate token series for the two AI endpoints.
+	AIRequestChat            = "chat"
+	AIRequestTroubleshooting = "troubleshooting"
 )
 
 // MetricsType defines all of Kiali's own internal metrics.
@@ -548,13 +552,13 @@ func collectCounterByProviderModel(vec *prometheus.CounterVec, match func(map[st
 
 // GetCurrentPeriodUsage returns live CounterVec values for the current week or month.
 // These update in-process on each chat, without waiting for Prometheus to scrape.
-func GetCurrentPeriodUsage(username string, weekly bool) []PeriodUsageRow {
+func GetCurrentPeriodUsage(username string, weekly bool, request string) []PeriodUsageRow {
 	if username == "" {
 		return nil
 	}
 	now := time.Now()
 	match := func(labels map[string]string) bool {
-		if labels[labelUsername] != username || labels[labelRequest] != "chat" {
+		if labels[labelUsername] != username || labels[labelRequest] != request {
 			return false
 		}
 		if weekly {
@@ -837,19 +841,19 @@ func GetCacheHitsTotalMetric(cache string) prometheus.Counter {
 	})
 }
 
-func GetAIRequestsTotalMetric(provider string, model string) prometheus.Counter {
+func GetAIRequestsTotalMetric(provider string, model string, request string) prometheus.Counter {
 	return Metrics.AIRequestsTotal.With(prometheus.Labels{
 		labelProvider: provider,
 		labelModel:    model,
-		labelRequest:  "chat",
+		labelRequest:  request,
 	})
 }
 
-func GetAIRequestDurationPrometheusTimer(provider string, model string) *prometheus.Timer {
+func GetAIRequestDurationPrometheusTimer(provider string, model string, request string) *prometheus.Timer {
 	timer := prometheus.NewTimer(Metrics.AIRequestDurationSeconds.With(prometheus.Labels{
 		labelProvider: provider,
 		labelModel:    model,
-		labelRequest:  "chat",
+		labelRequest:  request,
 	}))
 	return timer
 }
@@ -994,12 +998,15 @@ func GetHealthStatusMetric() *prometheus.GaugeVec {
 // that charts can be sliced and aggregated by any combination of those dimensions.
 // Counters with a zero value are skipped to avoid creating unused label sets.
 // The call also updates the in-memory totals map and event log used by the usage summary API.
-func RecordAITokens(username, provider, model string, promptTokens, completionTokens, totalTokens int64) {
+func RecordAITokens(username, provider, model, request string, promptTokens, completionTokens, totalTokens int64) {
+	if request == "" {
+		request = AIRequestChat
+	}
 	labels := prometheus.Labels{
 		labelModel:    model,
 		labelProvider: provider,
 		labelUsername: username,
-		labelRequest:  "chat",
+		labelRequest:  request,
 	}
 	if promptTokens > 0 {
 		Metrics.AIPromptTokensTotal.With(labels).Add(float64(promptTokens))
@@ -1023,7 +1030,7 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 			labelUsername: username,
 			labelProvider: provider,
 			labelModel:    model,
-			labelRequest:  "chat",
+			labelRequest:  request,
 			"year":        isoYearStr,
 			"week":        weekStr,
 		}
@@ -1039,7 +1046,7 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 			labelUsername: username,
 			labelProvider: provider,
 			labelModel:    model,
-			labelRequest:  "chat",
+			labelRequest:  request,
 			"year":        calYearStr,
 			"month":       monthStr,
 		}
@@ -1053,11 +1060,11 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 	}
 
 	// Update cumulative totals used by the usage summary API.
-	key := username + "\x00" + provider + "\x00" + model + "\x00" + "chat"
+	key := username + "\x00" + provider + "\x00" + model + "\x00" + request
 	aiTokenTotalsMu.Lock()
 	entry, ok := aiTokenTotals[key]
 	if !ok {
-		entry = &AITokenEntry{Model: model, Provider: provider, Request: "chat", Username: username}
+		entry = &AITokenEntry{Model: model, Provider: provider, Request: request, Username: username}
 		aiTokenTotals[key] = entry
 	}
 	entry.CompletionTokens += completionTokens
@@ -1079,7 +1086,7 @@ func RecordAITokens(username, provider, model string, promptTokens, completionTo
 		Model:            model,
 		PromptTokens:     promptTokens,
 		Provider:         provider,
-		Request:          "chat",
+		Request:          request,
 		Timestamp:        time.Now(),
 		TotalTokens:      totalTokens,
 		Username:         username,

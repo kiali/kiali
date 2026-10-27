@@ -123,10 +123,26 @@ type ProviderConfig struct {
 
 // AIConfig defines configuration for the AI subsystem
 type AIConfig struct {
-	Enabled     bool                `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	ChatAI      ChatAIConfig        `yaml:"chat,omitempty" json:"chat,omitempty"`
-	Metrics     bool                `yaml:"metrics,omitempty" json:"metrics,omitempty"`
-	Consumption AIConsumptionConfig `yaml:"consumption,omitempty" json:"consumption,omitempty"`
+	Enabled         bool                  `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	ChatAI          ChatAIConfig          `yaml:"chat,omitempty" json:"chat,omitempty"`
+	Metrics         bool                  `yaml:"metrics,omitempty" json:"metrics,omitempty"`
+	Consumption     AIConsumptionConfig   `yaml:"consumption,omitempty" json:"consumption,omitempty"`
+	Troubleshooting TroubleshootingConfig `yaml:"troubleshooting,omitempty" json:"troubleshooting,omitempty"`
+}
+
+// TroubleshootingConfig is the mesh-issue dashboard served by POST /api/ai/troubleshooting.
+type TroubleshootingConfig struct {
+	AISupport    TroubleshootingAISupport `yaml:"ai_support,omitempty" json:"ai_support,omitempty"`
+	AllowedUsers []string                 `yaml:"allowed_users,omitempty" json:"allowed_users,omitempty"`
+	Enabled      bool                     `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+}
+
+// TroubleshootingAISupport gates Ask/Fix actions on the troubleshooting dashboard.
+// The dashboard scan itself does not require this flag.
+type TroubleshootingAISupport struct {
+	Enabled      bool           `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	AllowedUsers []string       `yaml:"allowed_users,omitempty" json:"allowed_users,omitempty"`
+	Provider     ProviderConfig `yaml:"provider,omitempty" json:"provider,omitempty"`
 }
 
 // AIConsumptionConfig defines configuration for the AI consumption subsystem
@@ -276,6 +292,10 @@ func NewAIConfig() AIConfig {
 		},
 		Enabled: false,
 		Metrics: false,
+		Troubleshooting: TroubleshootingConfig{
+			AllowedUsers: []string{},
+			Enabled:      false,
+		},
 	}
 }
 
@@ -417,8 +437,26 @@ func (conf *Config) ValidateAI() error {
 		if err := conf.AI.Consumption.ValidateConsumption(&conf.AI.ChatAI); err != nil {
 			return err
 		}
+		if err := conf.AI.Troubleshooting.AISupport.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
+}
+
+// Validate requires a usable provider when Ask/Fix support is enabled.
+// The provider must define at least one model, and default_model must be one of those models.
+func (support *TroubleshootingAISupport) Validate() error {
+	if !support.Enabled {
+		return nil
+	}
+	if strings.TrimSpace(support.Provider.Name) == "" {
+		return fmt.Errorf("ai.troubleshooting.ai_support.provider is required when ai.troubleshooting.ai_support.enabled is true")
+	}
+	if !support.Provider.Enabled {
+		return fmt.Errorf("ai.troubleshooting.ai_support.provider %q must be enabled", support.Provider.Name)
+	}
+	return validateProviderConfig("ai.troubleshooting.ai_support.provider", &support.Provider)
 }
 
 // migrateDeprecatedChatAI moves settings from the deprecated top-level "chat_ai" yaml
@@ -470,22 +508,12 @@ func (chatAI *ChatAIConfig) ValidateChatAI() error {
 	}
 
 	defaultProviderFound := false
-	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
-		AnthropicProvider:  {DefaultProviderConfigType},
-		GoogleProvider:     {ProviderConfigGemini},
-		LightSpeedProvider: {DefaultProviderConfigType},
-		OpenAIProvider:     {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
-	}
-
 	seenNames := make(map[string]struct{})
 
 	for i := range chatAI.Providers {
 		p := &chatAI.Providers[i]
 		if !p.Enabled {
 			continue
-		}
-		if err := normalizeAndValidateToolFilter(fmt.Sprintf("chat_ai.providers[%q].tools", p.Name), &p.Tools); err != nil {
-			return err
 		}
 		if _, exists := seenNames[p.Name]; exists {
 			return fmt.Errorf("chat_ai.providers contains duplicate name %q", p.Name)
@@ -503,76 +531,99 @@ func (chatAI *ChatAIConfig) ValidateChatAI() error {
 			continue
 		}
 
-		if p.Type == "" || p.Type == DefaultProviderType {
-			log.Infof("chat_ai.providers[%q].type is empty; defaulting to %q", p.Name, OpenAIProvider)
-			p.Type = OpenAIProvider
-		}
-		if _, valid := validCompatibleProviderTypes[p.Type]; !valid {
-			return fmt.Errorf("chat_ai.providers[%q].type %q is invalid or not supported. Available types are: %v", p.Name, p.Type, validCompatibleProviderTypes[p.Type])
-		}
-
-		if p.Config == "" {
-			defaultValue := DefaultProviderConfigType
-			if p.Type == GoogleProvider {
-				defaultValue = ProviderConfigGemini
-			}
-			log.Infof("chat_ai.providers[%q].config is empty; defaulting to %q for provider type %s", p.Name, defaultValue, p.Type)
-			p.Config = defaultValue
-		}
-
-		if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
-			return fmt.Errorf("chat_ai.providers[%q].config %q is invalid. Available configs are: %v", p.Name, p.Config, validCompatibleProviderTypes[p.Type])
-		}
-
-		// LightSpeed is a special case:
-		//   - No models, default_model, or API key are needed — authentication is
-		//     handled per-request via the Kiali user's Kubernetes bearer token.
-		//   - Only the provider-level endpoint is required.
-		//   - config defaults to DefaultProviderConfigType when empty (handled above).
-		//   - A synthetic model entry (named after the provider) is auto-created so
-		//     the frontend always has at least one selectable model.
-		if p.Type == LightSpeedProvider {
-			if p.Endpoint == "" {
-				return fmt.Errorf("chat_ai.providers[%q] of type %q requires an endpoint", p.Name, LightSpeedProvider)
-			}
-			if len(p.Models) == 0 {
-				p.Models = []AIModel{{Name: p.Name, Enabled: true}}
-				p.DefaultModel = p.Name
-			}
-			continue
-		}
-
-		if p.DefaultModel == "" {
-			return fmt.Errorf("chat_ai.providers[%q].default_model is required", p.Name)
-		}
-
-		defaultModelFound := false
-		providerModelNames := make(map[string]struct{})
-		for _, m := range p.Models {
-			if _, exists := providerModelNames[m.Name]; exists {
-				return fmt.Errorf("chat_ai.providers[%q].models contains duplicate name %q", p.Name, m.Name)
-			}
-			providerModelNames[m.Name] = struct{}{}
-
-			if m.Name == p.DefaultModel {
-				defaultModelFound = true
-				if !m.Enabled {
-					return fmt.Errorf("chat_ai.providers[%q].default_model %q must be enabled", p.Name, p.DefaultModel)
-				}
-			}
-
-			if m.Key == "" && p.Key == "" && m.Enabled {
-				return fmt.Errorf("chat_ai.providers[%q].models[%q] requires a key when provider key is empty", p.Name, m.Name)
-			}
-		}
-
-		if !defaultModelFound {
-			return fmt.Errorf("chat_ai.providers[%q].default_model %q not found in models", p.Name, p.DefaultModel)
+		if err := validateProviderConfig(fmt.Sprintf("chat_ai.providers[%q]", p.Name), p); err != nil {
+			return err
 		}
 	}
 
 	if !defaultProviderFound {
 		return fmt.Errorf("chat_ai.default_provider %q not found in providers", chatAI.DefaultProvider)
+	}
+
+	return nil
+}
+
+func validateProviderConfig(path string, p *ProviderConfig) error {
+	if err := normalizeAndValidateToolFilter(path+".tools", &p.Tools); err != nil {
+		return err
+	}
+
+	validCompatibleProviderTypes := map[ProviderType][]ProviderConfigType{
+		AnthropicProvider:  {DefaultProviderConfigType},
+		GoogleProvider:     {ProviderConfigGemini},
+		LightSpeedProvider: {DefaultProviderConfigType},
+		OpenAIProvider:     {DefaultProviderConfigType, OpenAIProviderConfigAzure, ProviderConfigGemini},
+	}
+
+	if p.Type == "" || p.Type == DefaultProviderType {
+		log.Infof("%s.type is empty; defaulting to %q", path, OpenAIProvider)
+		p.Type = OpenAIProvider
+	}
+	if _, valid := validCompatibleProviderTypes[p.Type]; !valid {
+		return fmt.Errorf("%s.type %q is invalid or not supported. Available types are: %v", path, p.Type, validCompatibleProviderTypes[p.Type])
+	}
+
+	if p.Config == "" {
+		defaultValue := DefaultProviderConfigType
+		if p.Type == GoogleProvider {
+			defaultValue = ProviderConfigGemini
+		}
+		log.Infof("%s.config is empty; defaulting to %q for provider type %s", path, defaultValue, p.Type)
+		p.Config = defaultValue
+	}
+
+	if !slices.Contains(validCompatibleProviderTypes[p.Type], p.Config) {
+		return fmt.Errorf("%s.config %q is invalid. Available configs are: %v", path, p.Config, validCompatibleProviderTypes[p.Type])
+	}
+
+	// LightSpeed is a special case:
+	//   - No models, default_model, or API key are needed — authentication is
+	//     handled per-request via the Kiali user's Kubernetes bearer token.
+	//   - Only the provider-level endpoint is required.
+	//   - config defaults to DefaultProviderConfigType when empty (handled above).
+	//   - A synthetic model entry (named after the provider) is auto-created so
+	//     the frontend always has at least one selectable model.
+	if p.Type == LightSpeedProvider {
+		if p.Endpoint == "" {
+			return fmt.Errorf("%s of type %q requires an endpoint", path, LightSpeedProvider)
+		}
+		if len(p.Models) == 0 {
+			p.Models = []AIModel{{Name: p.Name, Enabled: true}}
+			p.DefaultModel = p.Name
+		}
+		return nil
+	}
+
+	if len(p.Models) == 0 {
+		return fmt.Errorf("%s.models must contain at least one model", path)
+	}
+
+	if p.DefaultModel == "" {
+		return fmt.Errorf("%s.default_model is required", path)
+	}
+
+	defaultModelFound := false
+	providerModelNames := make(map[string]struct{})
+	for _, m := range p.Models {
+		if _, exists := providerModelNames[m.Name]; exists {
+			return fmt.Errorf("%s.models contains duplicate name %q", path, m.Name)
+		}
+		providerModelNames[m.Name] = struct{}{}
+
+		if m.Name == p.DefaultModel {
+			defaultModelFound = true
+			if !m.Enabled {
+				return fmt.Errorf("%s.default_model %q must be enabled", path, p.DefaultModel)
+			}
+		}
+
+		if m.Key == "" && p.Key == "" && m.Enabled {
+			return fmt.Errorf("%s.models[%q] requires a key when provider key is empty", path, m.Name)
+		}
+	}
+
+	if !defaultModelFound {
+		return fmt.Errorf("%s.default_model %q not found in models", path, p.DefaultModel)
 	}
 
 	return nil

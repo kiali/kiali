@@ -1177,6 +1177,83 @@ func TestValidateAI(t *testing.T) {
 			},
 			expectErr: "allowed model \"invalid-model\" is not defined/enabled under any matching provider in ai.chat.providers",
 		},
+		"troubleshooting ai support disabled allows an empty provider": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = false
+			},
+			expectErr: "",
+		},
+		"troubleshooting ai support requires a provider": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = true
+			},
+			expectErr: "ai.troubleshooting.ai_support.provider is required",
+		},
+		"troubleshooting ai support provider must be enabled": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = true
+				conf.AI.Troubleshooting.AISupport.Provider = ProviderConfig{
+					Name:         "troubleshooting",
+					Type:         OpenAIProvider,
+					Config:       DefaultProviderConfigType,
+					Enabled:      false,
+					DefaultModel: "model-1",
+					Key:          "provider-key",
+					Models: []AIModel{
+						{Name: "model-1", Enabled: true},
+					},
+				}
+			},
+			expectErr: "must be enabled",
+		},
+		"troubleshooting ai support requires at least one model": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = true
+				conf.AI.Troubleshooting.AISupport.Provider = ProviderConfig{
+					Name:         "troubleshooting",
+					Type:         OpenAIProvider,
+					Config:       DefaultProviderConfigType,
+					Enabled:      true,
+					DefaultModel: "model-1",
+					Key:          "provider-key",
+				}
+			},
+			expectErr: "models must contain at least one model",
+		},
+		"troubleshooting ai support default model must be in the list": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = true
+				conf.AI.Troubleshooting.AISupport.Provider = ProviderConfig{
+					Name:         "troubleshooting",
+					Type:         OpenAIProvider,
+					Config:       DefaultProviderConfigType,
+					Enabled:      true,
+					DefaultModel: "missing",
+					Key:          "provider-key",
+					Models: []AIModel{
+						{Name: "model-1", Enabled: true},
+					},
+				}
+			},
+			expectErr: "default_model \"missing\" not found in models",
+		},
+		"troubleshooting ai support valid provider": {
+			mutate: func(conf *Config) {
+				conf.AI.Troubleshooting.AISupport.Enabled = true
+				conf.AI.Troubleshooting.AISupport.Provider = ProviderConfig{
+					Name:         "troubleshooting",
+					Type:         OpenAIProvider,
+					Config:       DefaultProviderConfigType,
+					Enabled:      true,
+					DefaultModel: "model-1",
+					Key:          "provider-key",
+					Models: []AIModel{
+						{Name: "model-1", Enabled: true},
+					},
+				}
+			},
+			expectErr: "",
+		},
 	}
 
 	for name, tc := range cases {
