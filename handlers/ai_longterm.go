@@ -53,6 +53,7 @@ func fetchCurrentPeriodHourly(
 	interval config.BudgetInterval,
 	from, since time.Time,
 	stepSecs int,
+	request string,
 	promClient prometheus.ClientInterface,
 ) *aiUsageResponse {
 	if promClient == nil {
@@ -71,10 +72,10 @@ func fetchCurrentPeriodHourly(
 		metricTotal = "kiali_ai_tokens_monthly_total"
 		metricPrompt = "kiali_ai_prompt_tokens_monthly_total"
 		metricCompletion = "kiali_ai_completion_tokens_monthly_total"
-		queryLabels = fmt.Sprintf("username=%q,request=%q,year=%q,month=%q", username, "chat", strconv.Itoa(now.Year()), strconv.Itoa(int(now.Month())))
+		queryLabels = fmt.Sprintf("username=%q%s,year=%q,month=%q", username, aiRequestSelector(request), strconv.Itoa(now.Year()), strconv.Itoa(int(now.Month())))
 	} else {
 		year, week := now.ISOWeek()
-		queryLabels = fmt.Sprintf("username=%q,request=%q,year=%q,week=%q", username, "chat", strconv.Itoa(year), strconv.Itoa(week))
+		queryLabels = fmt.Sprintf("username=%q%s,year=%q,week=%q", username, aiRequestSelector(request), strconv.Itoa(year), strconv.Itoa(week))
 	}
 	selector := fmt.Sprintf("{%s}", queryLabels)
 
@@ -380,10 +381,7 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 	}
 	userModelMap := map[userModelKey]*userModelAccum{}
 
-	selector := ""
-	if username != "" {
-		selector = fmt.Sprintf(`{username=%q}`, username)
-	}
+	selector := usageMetricSelector(username, requestStr)
 
 	queryMetric := func(metricName string) model.Vector {
 		var query string
@@ -437,7 +435,7 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 			req := string(s.Metric[model.LabelName("request")])
 			yearStr := string(s.Metric[model.LabelName("year")])
 
-			if req != requestStr {
+			if !matchesAIRequest(req, requestStr) {
 				continue
 			}
 			if username != "" && string(s.Metric[model.LabelName("username")]) != username {
@@ -644,7 +642,7 @@ func getAILongTermUsageData(r *http.Request, conf *config.Config, windowStr, req
 				aiModel := string(s.Metric[model.LabelName("ai_model")])
 				req := string(s.Metric[model.LabelName("request")])
 
-				if req != requestStr {
+				if !matchesAIRequest(req, requestStr) {
 					continue
 				}
 				if username != "" && string(s.Metric[model.LabelName("username")]) != username {

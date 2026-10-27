@@ -18,7 +18,7 @@ import (
 // AIChatConversation represents a user's cached conversation with metadata
 type AIChatConversation struct {
 	Conversation map[string]*types.Conversation // map key is conversationID
-	UsageMetrics map[string]*types.UsageMetric  // map key is provider|model
+	UsageMetrics map[string]*types.UsageMetric  // map key is provider|model|request
 	LastAccessed time.Time                      // When last retrieved by user this session
 	mu           sync.RWMutex                   // Protects LastAccessed field
 }
@@ -150,11 +150,11 @@ func (s *AIStoreImpl) SetConversation(sessionID string, conversationID string, c
 	return nil
 }
 
-func usageMetricKey(provider string, model string) string {
-	return provider + "|" + model
+func usageMetricKey(provider string, model string, request string) string {
+	return provider + "|" + model + "|" + request
 }
 
-func (s *AIStoreImpl) RecordUsage(sessionID string, provider string, model string, usage types.TokenUsage) error {
+func (s *AIStoreImpl) RecordUsage(sessionID string, provider string, model string, request string, usage types.TokenUsage) error {
 	if !usage.HasTokens() {
 		return nil
 	}
@@ -181,15 +181,19 @@ func (s *AIStoreImpl) RecordUsage(sessionID string, provider string, model strin
 		sessionConversation.UsageMetrics = make(map[string]*types.UsageMetric)
 	}
 
-	key := usageMetricKey(provider, model)
+	if request == "" {
+		request = "chat"
+	}
+	key := usageMetricKey(provider, model, request)
 	metric, found := sessionConversation.UsageMetrics[key]
 	if !found {
 		now := time.Now()
 		metric = &types.UsageMetric{
-			UserID:   sessionID,
-			Provider: provider,
 			Model:    model,
+			Provider: provider,
+			Request:  request,
 			Since:    now,
+			UserID:   sessionID,
 		}
 		sessionConversation.UsageMetrics[key] = metric
 	}
@@ -233,6 +237,9 @@ func (s *AIStoreImpl) GetUsageMetrics(sessionID string) []types.UsageMetric {
 	}
 
 	sort.Slice(metrics, func(i, j int) bool {
+		if metrics[i].Request != metrics[j].Request {
+			return metrics[i].Request < metrics[j].Request
+		}
 		if metrics[i].Provider != metrics[j].Provider {
 			return metrics[i].Provider < metrics[j].Provider
 		}
@@ -385,8 +392,13 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 		maxMemory = 1024
 	}
 
+	// Chat and troubleshooting share the in-memory session, so either feature
+	// keeps the store alive when store_config is enabled.
+	sessionStoreEnabled := cfg.AI.ChatAI.StoreConfig.Enabled &&
+		(cfg.AI.ChatAI.Enabled || (cfg.AI.Troubleshooting.Enabled && cfg.AI.Troubleshooting.AISupport.Enabled))
+
 	return &AiStoreConfig{
-		Enabled:           cfg.AI.ChatAI.Enabled && cfg.AI.ChatAI.StoreConfig.Enabled,
+		Enabled:           sessionStoreEnabled,
 		InactivityTimeout: inactivityTimeout,
 		MaxCacheMemoryMB:  maxMemory,
 		ReduceWithAI:      cfg.AI.ChatAI.StoreConfig.ReduceWithAI,
