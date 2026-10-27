@@ -266,6 +266,7 @@ The AI uses MCP tools to interact with Kiali and the mesh:
 - `list_traces`: Lists distributed traces for a service. Use `get_trace_details` for a single trace hierarchy.
 - `manage_istio_config_read`: List/get Istio config (read-only).
 - `manage_istio_config`: Create/patch/delete Istio config with confirmation flow.
+- `troubleshooting`: Collects mesh problems from `get_mesh_status` into an issue dashboard. Optional `namespace` and `clusterName`.
 
 For detailed tool documentation, see `ai/mcp/README.md`.
 
