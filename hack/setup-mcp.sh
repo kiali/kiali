@@ -10,7 +10,7 @@
 #
 # The script deploys one of two MCP server images:
 #   kubernetes  - quay.io/containers/kubernetes_mcp_server
-#   openshift   - quay.io/redhat-user-workloads/crt-nshift-lightspeed-tenant/openshift-mcp-server
+#   openshift   - quay.io/redhat-user-workloads/ocp-mcp-server-tenant/openshift-mcp-server-release-03
 #
 # Prerequisites:
 #   - A running Kubernetes/OpenShift cluster accessible via kubectl / oc
@@ -40,7 +40,7 @@ DEFAULT_ISTIO_NAMESPACE="istio-system"
 DEFAULT_TIMEOUT="300"
 
 KUBERNETES_MCP_SERVER_IMAGE="quay.io/containers/kubernetes_mcp_server"
-OPENSHIFT_MCP_SERVER_IMAGE="quay.io/redhat-user-workloads/crt-nshift-lightspeed-tenant/openshift-mcp-server"
+OPENSHIFT_MCP_SERVER_IMAGE="quay.io/redhat-user-workloads/ocp-mcp-server-tenant/openshift-mcp-server-release-03"
 
 # Runtime variables
 _VERBOSE="false"
