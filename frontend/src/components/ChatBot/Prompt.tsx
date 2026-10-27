@@ -45,6 +45,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
   const chatHistory = useSelector((s: KialiAppState) => s.ai.chat.chatHistory);
   const query: string = useSelector((s: KialiAppState) => s.ai.chat.query);
+  const pendingPrompt = useSelector((s: KialiAppState) => s.ai.chat.pendingPrompt);
   const conversationID: string = useSelector((s: KialiAppState) => s.ai.chat.conversationID);
   const selectedProvider: string = useSelector((s: KialiAppState) => s.ai.chat.selectedProvider);
   const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chat.selectedModel);
@@ -132,213 +133,234 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     [dispatch]
   );
 
+  const submitQuery = React.useCallback(
+    (message: string) => {
+      const text = message.trim();
+      if (!text) {
+        return;
+      }
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            text,
+            who: 'user'
+          }
+        })
+      );
+      const chatEntryID = uniqueId('ChatEntry_');
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: chatEntryID,
+            text: '',
+            who: 'ai',
+            isCancelled: false,
+            isStreaming: true,
+            isTruncated: false,
+            references: [],
+            tools: ImmutableMap(),
+            actions: []
+          }
+        })
+      );
+      scrollIntoView();
+
+      const request: ChatRequest = {
+        conversation_id: conversationID,
+        interaction_mode: interactionMode,
+        query: pageContext ? `Context: ${pageContext}\n\n${text}` : text
+      };
+
+      const streamResponse = async (): Promise<void> => {
+        const controller = new AbortController();
+        setStreamController(controller);
+        const response = await API.postChatAI(selectedProvider, selectedModel, request, controller.signal);
+        // Problem with the Fetch
+        if (response.status !== 200) {
+          dispatch(
+            ChatAIActions.setChatHistoryUpdateById({
+              id: chatEntryID,
+              entry: {
+                error: getFetchErrorMessage({ response }),
+                who: 'ai',
+                isStreaming: false,
+                isTruncated: false
+              }
+            })
+          );
+          return;
+        }
+        // Continue streaming the response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let responseText = '';
+
+        // Throttle response text updates to prevent excessive re-renders during streaming
+        const dispatchTokens = throttle(
+          (text: string) =>
+            dispatch(
+              ChatAIActions.setChatHistoryUpdateById({
+                entry: {
+                  text: text
+                },
+                id: chatEntryID
+              })
+            ),
+          100,
+          { leading: false, trailing: true }
+        );
+
+        // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
+        let buffer = '';
+
+        // Manage Tools
+        const toolKeyToID = new Map<string, string>();
+        const makeToolKey = (toolName: string, args: unknown): string => `${toolName}:${JSON.stringify(args)}`;
+
+        while (true) {
+          const { value, done } = (await reader?.read()) ?? { value: null, done: true };
+          if (done) {
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          // Keep last line in buffer for next
+          buffer = lines.pop() ?? '';
+
+          for (const chunk of lines.filter(s => s.startsWith('data: '))) {
+            const line = chunk.slice(5).trim();
+            let json;
+            try {
+              json = JSON.parse(line);
+            } catch (error) {
+              console.error(`Failed to parse JSON string "${line}"`, error);
+              continue;
+            }
+            if (json && json.event && json.data) {
+              if (json.event === 'start') {
+                dispatch(ChatAIActions.setConversationID({ id: json.data.conversation_id }));
+              } else if (json.event === 'token') {
+                responseText += json.data.token;
+                dispatchTokens(responseText);
+              } else if (json.event === 'end') {
+                dispatchTokens(responseText);
+                dispatchTokens.flush();
+                const actions = json.data.actions ?? [];
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateById({
+                    entry: {
+                      actions,
+                      isStreaming: false,
+                      isTruncated: json.data.truncated === true,
+                      references: json.data.referenced_documents
+                    },
+                    id: chatEntryID
+                  })
+                );
+                if (alwaysNavigate) {
+                  const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
+                  if (navigationAction) {
+                    router.navigate(navigationAction.payload);
+                  }
+                }
+              } else if (json.event === 'tool_call') {
+                const { args, id, name: toolName } = json.data;
+                toolKeyToID.set(makeToolKey(toolName, args), id);
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateTool({
+                    id: chatEntryID,
+                    tool: {
+                      args,
+                      isRunning: true,
+                      name: toolName
+                    },
+                    toolID: id
+                  })
+                );
+              } else if (json.event === 'tool_result') {
+                const { content, id, status } = json.data;
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateTool({
+                    id: chatEntryID,
+                    tool: {
+                      content,
+                      isRunning: false,
+                      status
+                    },
+                    toolID: id
+                  })
+                );
+              } else if (json.event === 'error') {
+                dispatchTokens(responseText);
+                dispatchTokens.flush();
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateById({
+                    entry: {
+                      error: getFetchErrorMessage({ json: { detail: json.data } }),
+                      isStreaming: false
+                    },
+                    id: chatEntryID
+                  })
+                );
+              } else {
+                console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
+              }
+            }
+          }
+        }
+        // Notify dashboard components so they can refresh token usage stats.
+        dispatchAIResponseReceived();
+      };
+      streamResponse().catch(streamError => {
+        if (streamError.name !== 'AbortError') {
+          dispatch(
+            ChatAIActions.setChatHistoryUpdateById({
+              id: chatEntryID,
+              entry: {
+                error: getFetchErrorMessage(streamError),
+                isStreaming: false,
+                isTruncated: false,
+                who: 'ai'
+              }
+            })
+          );
+        }
+        scrollIntoView();
+      });
+      // Clear prompt input and return focus to it
+      dispatch(ChatAIActions.setQuery(''));
+      textareaRef.current?.focus();
+    },
+    [
+      conversationID,
+      dispatch,
+      interactionMode,
+      scrollIntoView,
+      pageContext,
+      selectedProvider,
+      selectedModel,
+      alwaysNavigate
+    ]
+  );
+
   const onSubmit = React.useCallback(() => {
     if (!query || query.trim().length === 0) {
       setValidated('error');
       return;
     }
-    dispatch(
-      ChatAIActions.setChatHistoryAdd({
-        entry: {
-          text: query,
-          who: 'user'
-        }
-      })
-    );
-    const chatEntryID = uniqueId('ChatEntry_');
-    dispatch(
-      ChatAIActions.setChatHistoryAdd({
-        entry: {
-          id: chatEntryID,
-          text: '',
-          who: 'ai',
-          isCancelled: false,
-          isStreaming: true,
-          isTruncated: false,
-          references: [],
-          tools: ImmutableMap(),
-          actions: []
-        }
-      })
-    );
-    scrollIntoView();
+    submitQuery(query);
+  }, [query, submitQuery]);
 
-    const request: ChatRequest = {
-      conversation_id: conversationID,
-      interaction_mode: interactionMode,
-      query: pageContext ? `Context: ${pageContext}\n\n${query}` : query
-    };
-
-    const streamResponse = async (): Promise<void> => {
-      const controller = new AbortController();
-      setStreamController(controller);
-      const response = await API.postChatAI(selectedProvider, selectedModel, request, controller.signal);
-      // Problem with the Fetch
-      if (response.status !== 200) {
-        dispatch(
-          ChatAIActions.setChatHistoryUpdateById({
-            id: chatEntryID,
-            entry: {
-              error: getFetchErrorMessage({ response }),
-              who: 'ai',
-              isStreaming: false,
-              isTruncated: false
-            }
-          })
-        );
-        return;
-      }
-      // Continue streaming the response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let responseText = '';
-
-      // Throttle response text updates to prevent excessive re-renders during streaming
-      const dispatchTokens = throttle(
-        (text: string) =>
-          dispatch(
-            ChatAIActions.setChatHistoryUpdateById({
-              entry: {
-                text: text
-              },
-              id: chatEntryID
-            })
-          ),
-        100,
-        { leading: false, trailing: true }
-      );
-
-      // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
-      let buffer = '';
-
-      // Manage Tools
-      const toolKeyToID = new Map<string, string>();
-      const makeToolKey = (toolName: string, args: unknown): string => `${toolName}:${JSON.stringify(args)}`;
-
-      while (true) {
-        const { value, done } = (await reader?.read()) ?? { value: null, done: true };
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        // Keep last line in buffer for next
-        buffer = lines.pop() ?? '';
-
-        for (const chunk of lines.filter(s => s.startsWith('data: '))) {
-          const line = chunk.slice(5).trim();
-          let json;
-          try {
-            json = JSON.parse(line);
-          } catch (error) {
-            console.error(`Failed to parse JSON string "${line}"`, error);
-            continue;
-          }
-          if (json && json.event && json.data) {
-            if (json.event === 'start') {
-              dispatch(ChatAIActions.setConversationID({ id: json.data.conversation_id }));
-            } else if (json.event === 'token') {
-              responseText += json.data.token;
-              dispatchTokens(responseText);
-            } else if (json.event === 'end') {
-              dispatchTokens(responseText);
-              dispatchTokens.flush();
-              const actions = json.data.actions ?? [];
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateById({
-                  entry: {
-                    actions,
-                    isStreaming: false,
-                    isTruncated: json.data.truncated === true,
-                    references: json.data.referenced_documents
-                  },
-                  id: chatEntryID
-                })
-              );
-              if (alwaysNavigate) {
-                const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
-                if (navigationAction) {
-                  router.navigate(navigationAction.payload);
-                }
-              }
-            } else if (json.event === 'tool_call') {
-              const { args, id, name: toolName } = json.data;
-              toolKeyToID.set(makeToolKey(toolName, args), id);
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateTool({
-                  id: chatEntryID,
-                  tool: {
-                    args,
-                    isRunning: true,
-                    name: toolName
-                  },
-                  toolID: id
-                })
-              );
-            } else if (json.event === 'tool_result') {
-              const { content, id, status } = json.data;
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateTool({
-                  id: chatEntryID,
-                  tool: {
-                    content,
-                    isRunning: false,
-                    status
-                  },
-                  toolID: id
-                })
-              );
-            } else if (json.event === 'error') {
-              dispatchTokens(responseText);
-              dispatchTokens.flush();
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateById({
-                  entry: {
-                    error: getFetchErrorMessage({ json: { detail: json.data } }),
-                    isStreaming: false
-                  },
-                  id: chatEntryID
-                })
-              );
-            } else {
-              console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
-            }
-          }
-        }
-      }
-      // Notify dashboard components so they can refresh token usage stats.
-      dispatchAIResponseReceived();
-    };
-    streamResponse().catch(streamError => {
-      if (streamError.name !== 'AbortError') {
-        dispatch(
-          ChatAIActions.setChatHistoryUpdateById({
-            id: chatEntryID,
-            entry: {
-              error: getFetchErrorMessage(streamError),
-              isStreaming: false,
-              isTruncated: false,
-              who: 'ai'
-            }
-          })
-        );
-      }
-      scrollIntoView();
-    });
-    // Clear prompt input and return focus to it
-    dispatch(ChatAIActions.setQuery(''));
-    textareaRef.current?.focus();
-  }, [
-    conversationID,
-    dispatch,
-    interactionMode,
-    query,
-    scrollIntoView,
-    pageContext,
-    selectedProvider,
-    selectedModel,
-    alwaysNavigate
-  ]);
+  // The panel stays unmounted until it is visible, so a prompt requested elsewhere
+  // (for example a troubleshooting suggestion) is sent once the chatbot opens.
+  React.useEffect(() => {
+    if (!pendingPrompt) {
+      return;
+    }
+    const text = pendingPrompt.text;
+    dispatch(ChatAIActions.clearPendingPrompt());
+    submitQuery(text);
+  }, [dispatch, pendingPrompt, submitQuery]);
 
   const streamingResponseID: string | undefined = isStreaming ? (chatHistory.last()?.get('id') as string) : undefined;
 

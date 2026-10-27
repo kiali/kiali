@@ -15,10 +15,17 @@ import {
   GridItem,
   Spinner,
   Title,
-  TitleSizes
+  TitleSizes,
+  ToggleGroup,
+  ToggleGroupItem,
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem
 } from '@patternfly/react-core';
 import { TableVariant } from '@patternfly/react-table';
 import type { IRow } from '@patternfly/react-table';
+import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { LocalTime } from 'components/Time/LocalTime';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import type { SortableTh } from 'components/Table/SimpleTable';
@@ -27,7 +34,13 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { formatCost, formatTokensInMillions } from 'types/Chatbot';
-import type { AITimeSeriesEntry, ChatSessionUsageMetric, ChatSessionUsageResponse } from 'types/Chatbot';
+import type {
+  AIRequestKind,
+  AITimeSeriesEntry,
+  ChatSessionUsageMetric,
+  ChatSessionUsageResponse,
+  UsageValueKind
+} from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { onAIResponseReceived } from 'utils/aiEvents';
@@ -75,6 +88,12 @@ const noteStyle = kialiStyle({
 
 const columnTitleStyle = kialiStyle({
   marginBottom: PFSpacer.sm
+});
+
+const chartToolbarStyle = kialiStyle({
+  marginTop: PFSpacer.xl,
+  paddingLeft: PFSpacer.lg,
+  paddingRight: PFSpacer.lg
 });
 
 const overlaySessionOnWeekSeries = (
@@ -133,7 +152,28 @@ const currentWeekSeries = (
   return overlaySessionOnWeekSeries(weeklySeries.length > 0 ? weeklySeries : hourlySeries, session);
 };
 
+const requestTypeOrder = (request: string): number => {
+  if (request === 'chat') {
+    return 0;
+  }
+  if (request === 'troubleshooting') {
+    return 1;
+  }
+  return 2;
+};
+
+const requestTypeLabel = (request: string): string => {
+  if (request === 'troubleshooting') {
+    return t('Troubleshooting');
+  }
+  if (request === 'chat') {
+    return t('Chat');
+  }
+  return request;
+};
+
 const columns: SortableTh[] = [
+  { title: t('Request type'), sortable: false },
   { title: t('Provider'), sortable: false },
   { title: t('Model'), sortable: false },
   { title: t('Requests'), sortable: false },
@@ -191,29 +231,37 @@ export const AIUsage: React.FC = () => {
   const [budget, setBudget] = React.useState<ChatSessionUsageResponse['budget'] | null>(null);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string>('');
+  const [requestKind, setRequestKind] = React.useState<AIRequestKind>('all');
+  const [valueKind, setValueKind] = React.useState<UsageValueKind>('tokens');
 
-  const loadMetrics = React.useCallback(async (showSpinner = false): Promise<void> => {
-    if (showSpinner) {
-      setLoading(true);
-    }
-    try {
-      const response = await API.getAISessionUsage();
-      setSession(response.data.session || []);
-      setUsage(response.data.metrics);
-      setCurrentPeriod(response.data.currentPeriod);
-      setBudget(response.data.budget);
-      setError('');
-    } catch (err) {
-      setError(API.getErrorString(err as any));
-    } finally {
+  const loadMetrics = React.useCallback(
+    async (showSpinner = false): Promise<void> => {
       if (showSpinner) {
-        setLoading(false);
+        setLoading(true);
       }
-    }
-  }, []);
+      try {
+        const response = await API.getAISessionUsage(undefined, requestKind);
+        setSession(response.data.session || []);
+        setUsage(response.data.metrics);
+        setCurrentPeriod(response.data.currentPeriod);
+        setBudget(response.data.budget);
+        setError('');
+      } catch (err) {
+        setError(API.getErrorString(err as any));
+      } finally {
+        if (showSpinner) {
+          setLoading(false);
+        }
+      }
+    },
+    [requestKind]
+  );
 
+  const initialLoad = React.useRef(true);
   React.useEffect(() => {
-    void loadMetrics(true);
+    const showSpinner = initialLoad.current;
+    initialLoad.current = false;
+    void loadMetrics(showSpinner);
   }, [loadMetrics]);
 
   React.useEffect(() => {
@@ -246,12 +294,35 @@ export const AIUsage: React.FC = () => {
       .sort()[0];
   }, [session]);
 
-  const rows: IRow[] = React.useMemo(
-    () =>
-      [...session]
-        .sort((left, right) => right.total_tokens - left.total_tokens)
-        .map(metric => ({
+  const rows: IRow[] = React.useMemo(() => {
+    const grouped = new Map<string, ChatSessionUsageMetric[]>();
+    [...session]
+      .sort((left, right) => {
+        const leftRequest = left.request || 'chat';
+        const rightRequest = right.request || 'chat';
+        if (leftRequest !== rightRequest) {
+          return requestTypeOrder(leftRequest) - requestTypeOrder(rightRequest);
+        }
+        return right.total_tokens - left.total_tokens;
+      })
+      .forEach(metric => {
+        const request = metric.request || 'chat';
+        const group = grouped.get(request) ?? [];
+        group.push(metric);
+        grouped.set(request, group);
+      });
+
+    const tableRows: IRow[] = [];
+    grouped.forEach((metrics, request) => {
+      metrics.forEach((metric, index) => {
+        tableRows.push({
           cells: [
+            index === 0
+              ? {
+                  props: { rowSpan: metrics.length, style: { verticalAlign: 'middle' } },
+                  title: requestTypeLabel(request)
+                }
+              : null,
             metric.provider,
             metric.model,
             metric.request_count.toLocaleString(),
@@ -261,10 +332,12 @@ export const AIUsage: React.FC = () => {
             <LocalTime time={metric.since} />,
             <LocalTime time={metric.last_updated} />
           ],
-          key: `${metric.provider}-${metric.model}`
-        })),
-    [session]
-  );
+          key: `${request}-${metric.provider}-${metric.model}`
+        });
+      });
+    });
+    return tableRows;
+  }, [session]);
 
   const sessionEmptyState = (
     <EmptyState headingLevel="h4" titleText={t('No token stats yet')}>
@@ -321,6 +394,57 @@ export const AIUsage: React.FC = () => {
           )}
 
           {metricsEnabled && budget?.has_budget && <Divider component="div" />}
+          {metricsEnabled && (
+            <div className={chartToolbarStyle} data-test="ai-usage-chart-toolbar">
+              <Toolbar>
+                <ToolbarContent>
+                  <ToolbarGroup align={{ default: 'alignEnd' }}>
+                    <ToolbarItem>
+                      <div data-test="ai-usage-tokens-cost-toggle">
+                        <ToggleGroup aria-label={t('Budget metric')} isCompact>
+                          <ToggleGroupItem
+                            aria-label={t('Tokens')}
+                            isSelected={valueKind === 'tokens'}
+                            onClick={() => setValueKind('tokens')}
+                            text={t('Tokens')}
+                          />
+                          <ToggleGroupItem
+                            aria-label={t('Cost')}
+                            isSelected={valueKind === 'cost'}
+                            onClick={() => setValueKind('cost')}
+                            text={t('Cost')}
+                          />
+                        </ToggleGroup>
+                      </div>
+                    </ToolbarItem>
+                    <ToolbarItem variant="separator" />
+                    <ToolbarItem>
+                      <div data-test="ai-usage-request-dd">
+                        <ToolbarDropdown
+                          id="ai-usage-request-kind"
+                          handleSelect={value => setRequestKind(value as AIRequestKind)}
+                          label={
+                            requestKind === 'chat'
+                              ? t('Chat')
+                              : requestKind === 'troubleshooting'
+                                ? t('Troubleshooting')
+                                : t('All')
+                          }
+                          options={{
+                            all: t('All'),
+                            chat: t('Chat'),
+                            troubleshooting: t('Troubleshooting')
+                          }}
+                          tooltip={t('Request type')}
+                          value={requestKind}
+                        />
+                      </div>
+                    </ToolbarItem>
+                  </ToolbarGroup>
+                </ToolbarContent>
+              </Toolbar>
+            </div>
+          )}
           <Grid hasGutter className={galleryStyle} data-test="ai-usage-session-grid">
             <GridItem span={12} lg={metricsEnabled ? 6 : 12}>
               <Title headingLevel="h2" size={TitleSizes.xl} className={columnTitleStyle}>
@@ -400,7 +524,11 @@ export const AIUsage: React.FC = () => {
                     'This chart shows Prometheus usage for the current week, from the start of the week through now. New Chat AI requests are included as soon as they are recorded.'
                   )}
                 </div>
-                <CurrentWeekThresholdChart budget={budget} series={currentWeekSeries(currentPeriod, usage, session)} />
+                <CurrentWeekThresholdChart
+                  budget={budget}
+                  series={currentWeekSeries(currentPeriod, usage, session)}
+                  valueKind={valueKind}
+                />
               </GridItem>
             )}
           </Grid>
@@ -414,6 +542,7 @@ export const AIUsage: React.FC = () => {
                   hideTimeRange
                   summary={usage?.summary ?? null}
                   timeSeries={usage?.timeSeries ?? null}
+                  valueKind={valueKind}
                 />
               </AIStatsErrorBoundary>
             </>

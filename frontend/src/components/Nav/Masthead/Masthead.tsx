@@ -10,6 +10,7 @@ import { HelpDropdown } from './HelpDropdown';
 import { PfSpinner } from 'components/Pf/PfSpinner';
 import { OfflineStatus } from './OfflineStatus';
 import { NotificationCenterBadge } from 'components/NotificationCenter/NotificationCenterBadge';
+import { TroubleshootingStatus } from './TroubleshootingStatus';
 
 const centerItemStyle = kialiStyle({
   alignSelf: 'center'
@@ -29,6 +30,7 @@ export const MastheadItems: React.FC = () => {
               <IstioStatus />
             </ToolbarItem>
           )}
+          <TroubleshootingStatus />
 
           <ToolbarItem className={centerItemStyle}>
             <PfSpinner />

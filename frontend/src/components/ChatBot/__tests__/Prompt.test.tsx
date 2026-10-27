@@ -76,6 +76,7 @@ describe('Prompt error handling', () => {
   beforeEach(() => {
     rstest.clearAllMocks();
     store.dispatch(ChatAIActions.setChatHistoryClear());
+    store.dispatch(ChatAIActions.clearPendingPrompt());
     (API.getChatPrompts as Mock).mockResolvedValue({ data: [] });
   });
 
@@ -143,6 +144,27 @@ describe('Prompt error handling', () => {
     await waitFor(() => {
       const lastEntry = store.getState().ai.chat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
       expect(lastEntry?.get('error')).toBeUndefined();
+    });
+  });
+
+  it('sends a prompt requested from outside the chatbot', async () => {
+    (API.postChatAI as Mock).mockResolvedValue({
+      status: 200,
+      body: null
+    });
+
+    renderPrompt();
+
+    await act(async () => {
+      store.dispatch(ChatAIActions.setPendingPrompt('Why is productpage failing?'));
+    });
+
+    await waitFor(() => {
+      const userEntry = store.getState().ai.chat.chatHistory.first() as ImmutableMap<string, unknown> | undefined;
+      expect(userEntry?.get('who')).toBe('user');
+      expect(userEntry?.get('text')).toBe('Why is productpage failing?');
+      expect(store.getState().ai.chat.pendingPrompt).toBeUndefined();
+      expect(API.postChatAI).toHaveBeenCalled();
     });
   });
 });

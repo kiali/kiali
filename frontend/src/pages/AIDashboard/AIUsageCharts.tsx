@@ -1,15 +1,5 @@
 import * as React from 'react';
-import {
-  Card,
-  CardBody,
-  CardTitle,
-  EmptyState,
-  EmptyStateBody,
-  Flex,
-  ToggleGroup,
-  ToggleGroupItem,
-  Tooltip
-} from '@patternfly/react-core';
+import { Card, CardBody, CardTitle, EmptyState, EmptyStateBody, Flex, Tooltip } from '@patternfly/react-core';
 import {
   Chart,
   ChartAxis,
@@ -24,7 +14,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { helpIconStyle } from 'styles/IconStyle';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AITimeSeriesEntry, ChatSessionUsageBudget, formatCost, formatTokensInMillions } from 'types/Chatbot';
+import { formatCost, formatTokensInMillions } from 'types/Chatbot';
+import type { AITimeSeriesEntry, ChatSessionUsageBudget, UsageValueKind } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { TOKEN_METRIC_COLORS } from './AIStats/colorPalette';
 
@@ -55,10 +46,6 @@ const budgetValueStyle = kialiStyle({
 
 const tooltipBodyStyle = kialiStyle({
   textAlign: 'left'
-});
-
-const metricToggleStyle = kialiStyle({
-  marginBottom: PFSpacer.sm
 });
 
 const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
@@ -278,34 +265,23 @@ const formatTick = (value: Date): string =>
 type CurrentWeekThresholdChartProps = {
   budget: ChatSessionUsageBudget | null;
   series: AITimeSeriesEntry[] | undefined;
+  valueKind: UsageValueKind;
 };
 
-export const CurrentWeekThresholdChart: React.FC<CurrentWeekThresholdChartProps> = ({ budget, series }) => {
+export const CurrentWeekThresholdChart: React.FC<CurrentWeekThresholdChartProps> = ({ budget, series, valueKind }) => {
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const width = useContainerWidth(wrapRef) || 400;
   const points = React.useMemo(
     () => snapToBudgetUsed(padWeekDomain(aggregateCumulative(series)), budget),
     [budget, series]
   );
-  const hasTokenBudget = (budget?.max_tokens ?? 0) > 0;
-  const hasCostBudget = (budget?.max_cost ?? 0) > 0;
-  const [metric, setMetric] = React.useState<'tokens' | 'cost'>(hasTokenBudget ? 'tokens' : 'cost');
-
-  React.useEffect(() => {
-    if (metric === 'tokens' && !hasTokenBudget && hasCostBudget) {
-      setMetric('cost');
-    }
-    if (metric === 'cost' && !hasCostBudget && hasTokenBudget) {
-      setMetric('tokens');
-    }
-  }, [hasCostBudget, hasTokenBudget, metric]);
 
   const lineData = points.map(point => ({
-    name: metric === 'tokens' ? t('Tokens') : t('Cost'),
+    name: valueKind === 'tokens' ? t('Tokens') : t('Cost'),
     x: new Date(point.timestamp),
-    y: metric === 'tokens' ? point.totalTokens : point.cost
+    y: valueKind === 'tokens' ? point.totalTokens : point.cost
   }));
-  const thresholdY = metric === 'tokens' ? (budget?.max_tokens ?? 0) : (budget?.max_cost ?? 0);
+  const thresholdY = valueKind === 'tokens' ? (budget?.max_tokens ?? 0) : (budget?.max_cost ?? 0);
   const firstX = lineData[0]?.x;
   const lastX = lineData[lineData.length - 1]?.x;
   const thresholdData =
@@ -316,31 +292,12 @@ export const CurrentWeekThresholdChart: React.FC<CurrentWeekThresholdChartProps>
         ]
       : [];
   const maxY = Math.max(thresholdY, ...lineData.map(d => d.y), 0);
-  const formatY = (value: number): string => (metric === 'tokens' ? formatTokensInMillions(value) : formatCost(value));
+  const formatY = (value: number): string =>
+    valueKind === 'tokens' ? formatTokensInMillions(value) : formatCost(value);
 
   return (
     <Card data-test="current-week-threshold-chart">
       <CardBody>
-        {(hasTokenBudget || hasCostBudget) && (
-          <ToggleGroup aria-label={t('Budget metric')} className={metricToggleStyle} isCompact>
-            {hasTokenBudget && (
-              <ToggleGroupItem
-                aria-label={t('Tokens')}
-                isSelected={metric === 'tokens'}
-                onClick={() => setMetric('tokens')}
-                text={t('Tokens')}
-              />
-            )}
-            {hasCostBudget && (
-              <ToggleGroupItem
-                aria-label={t('Cost')}
-                isSelected={metric === 'cost'}
-                onClick={() => setMetric('cost')}
-                text={t('Cost')}
-              />
-            )}
-          </ToggleGroup>
-        )}
         {lineData.length === 0 ? (
           <EmptyState headingLevel="h4" titleText={t('No usage recorded this period yet')}>
             <EmptyStateBody>

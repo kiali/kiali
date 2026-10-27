@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import type { AIRightView, AIState, ChatAIState } from '../store/Store';
+import type { AIRightView, AIState, ChatAIState, TroubleshootingAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
@@ -7,10 +7,22 @@ import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
 import type { ChatAIConfig } from 'types/Chatbot';
+import { readHiddenSubProblemIds } from 'utils/TroubleshootingStorage';
 
 export const INITIAL_AI_RIGHT_VIEW_STATE: AIRightView = {
   allowed: false,
   enabled: false
+};
+
+export const INITIAL_TROUBLESHOOTING_STATE: TroubleshootingAIState = {
+  ai_support: INITIAL_AI_RIGHT_VIEW_STATE,
+  allowed: false,
+  enabled: false,
+  error: '',
+  hiddenSubProblemIds: readHiddenSubProblemIds(),
+  issues: [],
+  loaded: false,
+  openAnalyses: 0
 };
 
 /** @deprecated use INITIAL_AI_RIGHT_VIEW_STATE */
@@ -72,6 +84,17 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     case getType(ChatAIActions.setQuery): {
       return updateState(state, { query: action.payload });
     }
+    case getType(ChatAIActions.setPendingPrompt): {
+      return updateState(state, {
+        pendingPrompt: {
+          nonce: (state.pendingPrompt?.nonce ?? 0) + 1,
+          text: action.payload
+        }
+      });
+    }
+    case getType(ChatAIActions.clearPendingPrompt): {
+      return updateState(state, { pendingPrompt: undefined });
+    }
     case getType(ChatAIActions.setChatHistoryUpdateById): {
       const index = state.chatHistory.findIndex((entry: any) => entry.get('id') === action.payload.id);
       const history = index > -1 ? state.chatHistory.mergeIn([index], action.payload.entry) : state.chatHistory;
@@ -132,6 +155,55 @@ export const AiConsumptionStateReducer = (
   }
 };
 
+export const AiTroubleshootingStateReducer = (
+  state: TroubleshootingAIState = INITIAL_TROUBLESHOOTING_STATE,
+  action: KialiAppAction
+): TroubleshootingAIState => {
+  switch (action.type) {
+    case getType(ChatAIActions.setAI): {
+      const troubleshooting = action.payload.troubleshooting ?? INITIAL_TROUBLESHOOTING_STATE;
+      // Hidden ids are a user preference, so a config refresh must not clear them.
+      return updateState(state, {
+        ai_support: {
+          allowed: troubleshooting.ai_support?.allowed ?? false,
+          enabled: troubleshooting.ai_support?.enabled ?? false
+        },
+        allowed: troubleshooting.allowed,
+        enabled: troubleshooting.enabled
+      });
+    }
+    case getType(ChatAIActions.setTroubleshootingAnalysisOpen): {
+      const openAnalyses = Math.max(0, (state.openAnalyses ?? 0) + (action.payload ? 1 : -1));
+      if (openAnalyses === state.openAnalyses) {
+        return state;
+      }
+      return updateState(state, { openAnalyses });
+    }
+    case getType(ChatAIActions.setTroubleshootingIssues):
+      return updateState(state, { error: '', issues: action.payload ?? [], loaded: true });
+    case getType(ChatAIActions.setTroubleshootingError):
+      return updateState(state, { error: action.payload, loaded: true });
+    case getType(ChatAIActions.hideTroubleshootingSubProblem): {
+      const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
+      if (hiddenSubProblemIds.includes(action.payload)) {
+        return state;
+      }
+      return updateState(state, { hiddenSubProblemIds: [...hiddenSubProblemIds, action.payload] });
+    }
+    case getType(ChatAIActions.showTroubleshootingSubProblem): {
+      const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
+      if (!hiddenSubProblemIds.includes(action.payload)) {
+        return state;
+      }
+      return updateState(state, {
+        hiddenSubProblemIds: hiddenSubProblemIds.filter(id => id !== action.payload)
+      });
+    }
+    default:
+      return state;
+  }
+};
+
 const INITIAL_AI_ENABLED_STATE = false;
 
 // The overall "AI" feature master switch. Today ChatAI is the only AI feature, so it mirrors
@@ -151,5 +223,6 @@ const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: Kia
 export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
   chat: ChatAiStateReducer,
   consumption: AiConsumptionStateReducer,
-  enabled: AiEnabledReducer
+  enabled: AiEnabledReducer,
+  troubleshooting: AiTroubleshootingStateReducer
 });
