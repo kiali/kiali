@@ -40,6 +40,7 @@ import {
   syncReduxAppearanceFromDocument
 } from 'utils/AppearanceUtils';
 import { ChatAIActions } from 'actions/ChatAIActions';
+import { loadTroubleshootingScan } from 'services/AiTroubleshooting';
 import { initializeLanguage, registerSystemLanguageListener } from 'utils/LanguageUtils';
 import type { AIConfig } from 'types/Chatbot';
 
@@ -52,8 +53,8 @@ interface ReduxStateProps {
 interface ReduxDispatchProps {
   addMessage: (content: string, detail: string, groupId: string, msgType: MessageType, isAlert: boolean) => void;
   checkCredentials: () => void;
-  setActiveNamespaces: (namespaces: Namespace[]) => void;
   setAI: (ai: AIConfig) => void;
+  setActiveNamespaces: (namespaces: Namespace[]) => void;
   setDuration: (duration: DurationInSeconds) => void;
   setLandingRoute: (route: string | undefined) => void;
   setNamespaces: (namespaces: Namespace[], receivedAt: Date) => void;
@@ -210,13 +211,17 @@ class AuthenticationControllerComponent extends React.Component<
 
       this.props.setNamespaces(configs[0].data, new Date());
       setServerConfig(configs[1].data);
+      const aiConfig = configs[1].data.ai;
       this.props.setAI({
-        ...configs[1].data.ai,
-        consumption: configs[1].data.ai.consumption ?? {
+        ...aiConfig,
+        consumption: aiConfig.consumption ?? {
           allowed: false,
           enabled: false
         }
       });
+      if (aiConfig.troubleshooting?.enabled && aiConfig.troubleshooting.allowed) {
+        void loadTroubleshootingScan(store.dispatch);
+      }
       this.applyUIDefaults();
 
       // Notify the user about Prometheus availability.

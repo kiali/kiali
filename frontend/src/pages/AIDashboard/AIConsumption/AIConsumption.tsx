@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Bullseye, EmptyState, EmptyStateBody, Grid, GridItem, Spinner } from '@patternfly/react-core';
 import * as API from 'services/Api';
 import { formatTokensInMillions } from 'types/Chatbot';
-import type { AIUsageResponse, UsageValueKind } from 'types/Chatbot';
+import type { AIRequestKind, AIUsageResponse, UsageValueKind } from 'types/Chatbot';
 import { Chart, ChartAxis, ChartBar, ChartStack, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
 import { getLineChartData } from '../AIStats/calculationData';
 import { onAIResponseReceived } from 'utils/aiEvents';
@@ -78,6 +78,7 @@ export const AIConsumption: React.FC = () => {
   const [limit, setLimit] = React.useState<number>(5);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string>('');
+  const [requestKind, setRequestKind] = React.useState<AIRequestKind>('all');
   const [valueKind, setValueKind] = React.useState<UsageValueKind>('cost');
 
   const getApiRange = React.useCallback((win: string, fVal: number, tVal: number): { from: number; since: number } => {
@@ -106,7 +107,7 @@ export const AIConsumption: React.FC = () => {
           undefined,
           undefined,
           undefined,
-          undefined,
+          requestKind,
           win as 'weekly' | 'monthly',
           Math.floor(apiRange.from / 1000),
           Math.floor(apiRange.since / 1000),
@@ -128,7 +129,7 @@ export const AIConsumption: React.FC = () => {
         setLoading(false);
       }
     },
-    [getApiRange]
+    [getApiRange, requestKind]
   );
 
   React.useEffect(() => {
@@ -196,8 +197,10 @@ export const AIConsumption: React.FC = () => {
           setFromVal(newFrom);
           setToVal(newTo);
         }}
+        onRequestKindChange={setRequestKind}
         onValueKindChange={setValueKind}
         onWindowChange={handleWindowChange}
+        requestKind={requestKind}
         title={rangeTitle}
         toVal={toVal}
         valueKind={valueKind}

@@ -92,10 +92,15 @@ export type ModelAI = {
   name: string;
 };
 
+export type TroubleshootingAIConfig = AIrights & {
+  ai_support: AIrights;
+};
+
 export type AIConfig = {
   chat: ChatAIConfig;
   consumption: AIrights;
   enabled: boolean;
+  troubleshooting: TroubleshootingAIConfig;
 };
 
 export type AIrights = {
@@ -179,6 +184,7 @@ export type ChatSessionUsageMetric = {
   model: string;
   prompt_tokens: number;
   provider: string;
+  request?: string;
   request_count: number;
   since: string;
   total_tokens: number;
@@ -229,6 +235,8 @@ export type AITimeSeriesEntry = {
 
 export type TokenMetric = 'totalTokens' | 'promptTokens' | 'completionTokens';
 
+export type AIRequestKind = 'all' | 'chat' | 'troubleshooting';
+
 export type UsageValueKind = 'cost' | 'tokens';
 
 export type AITopModelRow = {
@@ -262,4 +270,49 @@ export type AIUsageResponse = {
   };
   tokenUnit: 'millions';
   topSummary?: AITopSummary;
+};
+
+export type TroubleshootingSuggestedAction = {
+  command?: string;
+  description: string;
+  prompt?: string;
+  type: string;
+  yaml?: string;
+};
+
+export type TroubleshootingValidationCheck = {
+  code: string;
+  message: string;
+  path?: string;
+  severity?: string;
+  suggestedPrompt?: string;
+};
+
+export type TroubleshootingIstioObject = {
+  group: string;
+  kind: string;
+  name: string;
+  namespace: string;
+  version: string;
+};
+
+export type TroubleshootingSubProblem = {
+  checks?: TroubleshootingValidationCheck[];
+  id: string;
+  impact: string;
+  issue: string;
+  istioObject?: TroubleshootingIstioObject;
+  severity?: string;
+  suggestedActions?: TroubleshootingSuggestedAction[];
+  suggestedPrompt?: string;
+  target: string;
+};
+
+/** Issue list returned by POST /api/ai/troubleshooting. */
+export type TroubleshootingIssue = {
+  category: string;
+  description?: string;
+  id: string;
+  problem: string;
+  subProblems: TroubleshootingSubProblem[];
 };

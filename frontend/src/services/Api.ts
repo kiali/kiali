@@ -10,7 +10,7 @@ import type { DurationInSeconds, Password, TimeInSeconds, UserName } from '../ty
 import { HTTP_VERBS } from '../types/Common';
 import type { DashboardModel } from 'types/Dashboards';
 import type { GrafanaInfo } from '../types/GrafanaInfo';
-import type { AIUsageResponse, ChatSessionUsageResponse } from '../types/Chatbot';
+import type { AIUsageResponse, ChatSessionUsageResponse, TroubleshootingIssue } from '../types/Chatbot';
 import type { GraphDefinition, GraphElementsQuery, NodeParamsType } from '../types/Graph';
 import { NodeType } from '../types/Graph';
 import type {
@@ -1620,8 +1620,31 @@ export const deleteChatConversations = (conversationIDs: string): Promise<ApiRes
   return newRequest<Record<string, string>>(HTTP_VERBS.DELETE, urls.chatDeleteConversations, { conversationIDs }, {});
 };
 
-export const getAISessionUsage = (n?: number): Promise<ApiResponse<ChatSessionUsageResponse>> => {
-  const params: { [key: string]: string } = { _ts: Date.now().toString() };
+export const getAITroubleshooting = (): Promise<ApiResponse<TroubleshootingIssue[]>> => {
+  return newRequest<TroubleshootingIssue[]>(HTTP_VERBS.POST, urls.aiTroubleshooting, {}, {});
+};
+
+export const postTroubleshootingChat = (chatRequest: ChatRequest, signal?: AbortSignal): Promise<Response> => {
+  const url = apiProxy ? `${apiProxy}/${urls.aiTroubleshootingChat}` : urls.aiTroubleshootingChat;
+  const headers = getHeaders(HTTP_VERBS.POST, false) as Record<string, string>;
+  headers['Content-Type'] = 'application/json';
+  headers['Accept'] = 'text/event-stream';
+  headers['media-type'] = 'application/json';
+  headers['Cache-Control'] = 'no-cache';
+  return fetch(url, {
+    method: HTTP_VERBS.POST,
+    headers: headers as HeadersInit,
+    body: JSON.stringify(chatRequest),
+    signal: signal,
+    credentials: 'include'
+  });
+};
+
+export const getAISessionUsage = (
+  n?: number,
+  request: 'all' | 'chat' | 'troubleshooting' = 'all'
+): Promise<ApiResponse<ChatSessionUsageResponse>> => {
+  const params: { [key: string]: string } = { _ts: Date.now().toString(), request };
   if (n) {
     params.n = n.toString();
   }
@@ -1639,7 +1662,7 @@ export const getAIUsage = (
   consumption?: boolean,
   limit?: number
 ): Promise<ApiResponse<AIUsageResponse>> => {
-  const params: { [key: string]: string } = { request: request || 'chat' };
+  const params: { [key: string]: string } = { request: request || 'all' };
 
   if (window) {
     params.window = window;

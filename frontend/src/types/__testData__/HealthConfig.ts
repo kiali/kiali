@@ -18,6 +18,14 @@ export const healthConfig = {
     consumption: {
       enabled: false,
       allowed: false
+    },
+    troubleshooting: {
+      enabled: false,
+      allowed: false,
+      ai_support: {
+        enabled: false,
+        allowed: false
+      }
     }
   },
   clusters: {},

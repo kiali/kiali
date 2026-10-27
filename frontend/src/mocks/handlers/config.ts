@@ -108,6 +108,14 @@ const generateServerConfig = (): ServerConfig => {
       consumption: {
         enabled: scenarioConfig.ai?.consumption?.enabled ?? false,
         allowed: scenarioConfig.ai?.consumption?.allowed ?? false
+      },
+      troubleshooting: {
+        enabled: false,
+        allowed: false,
+        ai_support: {
+          enabled: false,
+          allowed: false
+        }
       }
     },
     clusterWideAccess: true,
