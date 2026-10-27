@@ -32,7 +32,7 @@ import { GraphFindOptions } from './GraphFindOptions';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
 import type { EdgeData, NodeData } from 'pages/Graph/GraphElems';
-import type { SelectAnd, SelectExp, SelectOr} from 'helpers/GraphHelpers';
+import type { SelectAnd, SelectExp, SelectOr } from 'helpers/GraphHelpers';
 import { elems, selectOr, setObserved, toSafeFieldName } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash-es';
@@ -164,10 +164,6 @@ const operands: string[] = [
 ];
 
 export class GraphFindComponent extends React.Component<GraphFindProps, GraphFindState> {
-  static contextTypes = {
-    router: (): null => null
-  };
-
   private findAutoComplete: AutoComplete;
   private findInputRef;
   private findElements: GraphElement[] | undefined;
@@ -411,7 +407,8 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
   private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
         if (next) {
@@ -420,6 +417,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
           this.setState({ findInputValue: next, findError: undefined });
         }
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitFind();
@@ -471,7 +469,8 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
   private checkSpecialKeyHide = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.hideAutoComplete.next();
 
@@ -482,6 +481,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
         }
 
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitHide();
@@ -883,7 +883,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
 
         return { target: 'node', selector: isNegation ? [[agg, app, svc, wl]] : [[agg], [app], [svc], [wl]] };
       }
-      case 'node':
+      case 'node': {
         let nodeType = val.toLowerCase();
         switch (nodeType) {
           case 'op':
@@ -914,6 +914,7 @@ export class GraphFindComponent extends React.Component<GraphFindProps, GraphFin
             );
         }
         return undefined;
+      }
       case 'ns':
       case 'namespace':
         return { target: 'node', selector: { prop: NodeAttr.namespace, op: op, val: val } };

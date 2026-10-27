@@ -1,6 +1,7 @@
-import { getType } from 'typesafe-actions';
-import { LoginState as LoginStateInterface, LoginStatus } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { LoginState as LoginStateInterface } from '../store/Store';
+import { LoginStatus } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { LoginActions } from '../actions/LoginActions';
 import { updateState } from '../utils/Reducer';
 
@@ -36,7 +37,7 @@ export const LoginStateReducer = (
         status: LoginStatus.loggedIn,
         session: action.payload.session
       };
-    case getType(LoginActions.loginFailure):
+    case getType(LoginActions.loginFailure): {
       let message = 'Error connecting to Kiali';
 
       const response_data = action.payload.error.response.data;
@@ -53,6 +54,7 @@ export const LoginStateReducer = (
         message: message,
         status: LoginStatus.error
       };
+    }
     case getType(LoginActions.logoutSuccess):
       return INITIAL_LOGIN_STATE;
     case getType(LoginActions.sessionExpired):

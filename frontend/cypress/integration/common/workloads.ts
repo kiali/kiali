@@ -69,6 +69,8 @@ const activateFilter = (state: string): void => {
 Given('a healthy workload in the cluster', function () {
   this.targetNamespace = 'bookinfo';
   this.targetWorkload = 'productpage-v1';
+
+  waitForWorkloadHealthStatus(this.targetNamespace, this.targetWorkload, 'Healthy');
 });
 
 //When you use this, you need to annotate test by @sleep-app-scaleup-after to revert this change after the test

@@ -11,7 +11,6 @@ import {
   Tab,
   Tabs
 } from '@patternfly/react-core';
-import type { WorkloadOverview } from '../../types/ServiceInfo';
 import * as API from '../../services/Api';
 import { addError, addSuccess } from '../../utils/AlertUtils';
 import { RequestRouting } from './RequestRouting';
@@ -78,7 +77,6 @@ import type { TimeoutRetryRoute } from './RequestTimeouts';
 import { RequestTimeouts } from './RequestTimeouts';
 import type { CircuitBreakerState } from './CircuitBreaker';
 import { CircuitBreaker } from './CircuitBreaker';
-import { isEqual } from 'lodash-es';
 import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import type { ApiResponse } from 'types/Api';
@@ -188,7 +186,10 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
   }
 
   componentDidUpdate(prevProps: ServiceWizardProps): void {
-    if (prevProps.show !== this.props.show || !this.compareWorkloads(prevProps.workloads, this.props.workloads)) {
+    // Only (re)initialize when the wizard opens/closes. Parent refreshes that change
+    // workload props while open must not wipe in-progress form or YAML preview state;
+    // React 18 makes those refreshes more likely to land mid-wizard.
+    if (prevProps.show !== this.props.show) {
       const isViewOnly = serverConfig.deployment.viewOnlyMode;
       let isMainWizardValid: boolean;
 
@@ -394,20 +395,6 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       this.setState(nextState);
     }
   }
-
-  compareWorkloads = (prev: WorkloadOverview[], current: WorkloadOverview[]): boolean => {
-    if (prev.length !== current.length) {
-      return false;
-    }
-
-    for (let i = 0; i < prev.length; i++) {
-      if (!current.some(w => isEqual(w, prev[i]))) {
-        return false;
-      }
-    }
-
-    return true;
-  };
 
   onClose = (changed: boolean): void => {
     this.setState(emptyServiceWizardState(fqdnServiceName(this.props.serviceName, this.props.namespace)));
@@ -855,19 +842,19 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.DestinationRule],
           items: [this.state.previews.dr],
-          title: t('Destination Rule')
+          title: 'Destination Rule'
         });
       }
 
       if (this.state.previews.gw) {
-        items.push({ objectGVK: dicTypeToGVK[gvkType.Gateway], items: [this.state.previews.gw], title: t('Gateway') });
+        items.push({ objectGVK: dicTypeToGVK[gvkType.Gateway], items: [this.state.previews.gw], title: 'Gateway' });
       }
 
       if (this.state.previews.k8sgateway) {
         items.push({
           objectGVK: dicTypeToGVK[gvkType.K8sGateway],
           items: [this.state.previews.k8sgateway],
-          title: t('K8s Gateway')
+          title: 'K8s Gateway'
         });
       }
 
@@ -875,7 +862,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.K8sHTTPRoute],
           items: [this.state.previews.k8shttproute],
-          title: t('K8s HTTPRoute')
+          title: 'K8s HTTPRoute'
         });
       }
 
@@ -883,7 +870,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.K8sGRPCRoute],
           items: [this.state.previews.k8sgrpcroute],
-          title: t('K8s GRPCRoute')
+          title: 'K8s GRPCRoute'
         });
       }
 
@@ -891,7 +878,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.PeerAuthentication],
           items: [this.state.previews.pa],
-          title: t('Peer Authentication')
+          title: 'Peer Authentication'
         });
       }
 
@@ -899,7 +886,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.VirtualService],
           items: [this.state.previews.vs],
-          title: t('VirtualService')
+          title: 'VirtualService'
         });
       }
     }

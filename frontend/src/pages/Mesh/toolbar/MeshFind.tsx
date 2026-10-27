@@ -26,17 +26,8 @@ import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import type {
-  SelectAnd,
-  SelectExp,
-  SelectOr} from 'helpers/GraphHelpers';
-import {
-  setObserved,
-  elems,
-  selectOr,
-  descendents,
-  toSafeFieldName
-} from 'helpers/GraphHelpers';
+import type { SelectAnd, SelectExp, SelectOr } from 'helpers/GraphHelpers';
+import { setObserved, elems, selectOr, descendents, toSafeFieldName } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash-es';
 import type { MeshEdgeData, MeshNodeData } from 'types/Mesh';
 import { MeshAttr, MeshInfraType } from 'types/Mesh';
@@ -113,10 +104,6 @@ const meshHideStyle = kialiStyle({
 const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'namespace', 'infratype'];
 
 export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
-  static contextTypes = {
-    router: (): null => null
-  };
-
   private findAutoComplete: AutoComplete;
   private findInputRef;
   private findElements: GraphElement[] | undefined;
@@ -351,7 +338,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
 
@@ -362,6 +350,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         }
 
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitFind();
@@ -413,7 +402,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   private checkSpecialKeyHide = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.hideAutoComplete.next();
 
@@ -424,6 +414,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         }
 
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitHide();
@@ -775,7 +766,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       case 'namespace':
         return { target: 'node', selector: { prop: MeshAttr.namespace, op: op, val: val } };
       case 'type':
-      case 'infratype':
+      case 'infratype': {
         const infraType = val.toLowerCase();
         switch (infraType) {
           case MeshInfraType.DATAPLANE:
@@ -800,6 +791,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
             );
         }
         return undefined;
+      }
       //
       // edges..
       // currently N/A

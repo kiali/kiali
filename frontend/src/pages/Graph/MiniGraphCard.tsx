@@ -13,7 +13,7 @@ import {
   TitleSizes
 } from '@patternfly/react-core';
 import type { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
-import { URLParam, location, router } from '../../app/History';
+import { URLParam, location, navigateApp } from '../../app/History';
 import type { GraphDataSource } from '../../services/GraphDataSource';
 import type { DecoratedGraphElements, SummaryData } from '../../types/Graph';
 import { EdgeMode, GraphLayout, GraphType, NodeType, UNKNOWN } from '../../types/Graph';
@@ -368,7 +368,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
         }
       }
 
-      router.navigate(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
+      navigateApp(`${location.getPathname()}?${urlParams.toString()}`, { replace: true });
     }
   };
 
@@ -417,7 +417,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
     if (isParentKiosk(this.props.kiosk)) {
       kioskNavigateAction(href);
     } else {
-      router.navigate(href);
+      navigateApp(href);
     }
   };
 
@@ -448,11 +448,15 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
     const graphUrl = `/graph/namespaces?${params.toString()}`;
 
-    if (isParentKiosk(this.props.kiosk)) {
-      kioskNavigateAction(graphUrl);
-    } else {
-      router.navigate(graphUrl);
-    }
+    this.setState({ isKebabOpen: false }, () => {
+      setTimeout(() => {
+        if (isParentKiosk(this.props.kiosk)) {
+          kioskNavigateAction(graphUrl);
+        } else {
+          navigateApp(graphUrl);
+        }
+      }, 0);
+    });
   };
 
   private onViewNodeGraph = (): void => {
@@ -489,12 +493,20 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
       trafficRates: this.props.dataSource.fetchParameters.trafficRates
     };
 
-    // To ensure updated components get the updated URL, update the URL first and then the state
-    if (isParentKiosk(this.props.kiosk)) {
-      kioskNavigateAction(makeNodeGraphUrlFromParams(urlParams));
-    } else {
-      router.navigate(makeNodeGraphUrlFromParams(urlParams));
-    }
+    // Close the kebab before navigating. With React 18 + PatternFly 6, navigating while the
+    // dropdown is unmounting can leave the URL updated without rendering the graph route.
+    // flushSync (via navigateApp) forces the route commit after the kebab has closed.
+    const graphUrl = makeNodeGraphUrlFromParams(urlParams);
+    this.setState({ isKebabOpen: false }, () => {
+      // Allow PF6 MenuToggle to finish closing before committing the route.
+      setTimeout(() => {
+        if (isParentKiosk(this.props.kiosk)) {
+          kioskNavigateAction(graphUrl);
+        } else {
+          navigateApp(graphUrl);
+        }
+      }, 50);
+    });
   };
 
   private toggleTimeOptionsVisibility = (): void => {

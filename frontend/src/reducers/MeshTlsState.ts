@@ -1,6 +1,6 @@
-import { getType } from 'typesafe-actions';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { TLSStatus } from '../types/TLSStatus';
+import { getType } from 'types/typesafeActionsLegacy';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import type { TLSStatus } from '../types/TLSStatus';
 import { MeshTlsActions } from '../actions/MeshTlsActions';
 
 export const INITIAL_MESH_TLS_STATE: TLSStatus = {

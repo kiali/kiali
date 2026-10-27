@@ -1,7 +1,8 @@
-import { ActionType, createStandardAction } from 'typesafe-actions';
-import { SummaryData, EdgeMode, GraphDefinition, NodeParamsType, RankResult, GraphLayout } from '../types/Graph';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createStandardAction } from 'types/typesafeActionsLegacy';
+import type { SummaryData, EdgeMode, GraphDefinition, NodeParamsType, RankResult, GraphLayout } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
-import { TimeInMilliseconds } from 'types/Common';
+import type { TimeInMilliseconds } from 'types/Common';
 
 export const GraphActions = {
   setEdgeMode: createStandardAction(ActionKeys.GRAPH_SET_EDGE_MODE)<EdgeMode>(),

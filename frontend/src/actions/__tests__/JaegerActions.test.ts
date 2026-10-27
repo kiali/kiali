@@ -1,5 +1,5 @@
 import { TracingActions } from '../TracingActions';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 
 describe('JaegerActions', () => {
   it('should "update url" action', () => {
