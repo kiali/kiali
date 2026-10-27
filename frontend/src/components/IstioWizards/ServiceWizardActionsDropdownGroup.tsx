@@ -49,6 +49,9 @@ const optionDisabledStyle = kialiStyle({
 export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> = (props: Props) => {
   const updateLabel = getWizardUpdateLabel(props.virtualServices, props.k8sHTTPRoutes, props.k8sGRPCRoutes);
   const isViewOnly = serverConfig.deployment.viewOnlyMode;
+  // Topology context menus unmount on pointerdown (before click). Fire once from
+  // mousedown/click so Create/Delete actions still run when the menu closes.
+  const lastTriggerRef = React.useRef(0);
 
   const hasTrafficRouting = (): boolean => {
     return hasServiceDetailsTrafficRouting(
@@ -59,12 +62,32 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     );
   };
 
-  const handleActionClick = (eventKey: string): void => {
-    if (props.onAction) {
-      props.onAction(eventKey as WizardAction, updateLabel.length === 0 ? 'create' : 'update');
+  const triggerAction = React.useCallback(
+    (eventKey: string): void => {
+      const now = Date.now();
+      if (now - lastTriggerRef.current < 400) {
+        return;
+      }
+      lastTriggerRef.current = now;
+      if (props.onAction) {
+        props.onAction(eventKey as WizardAction, updateLabel.length === 0 ? 'create' : 'update');
+      }
+      dismissContextMenu();
+    },
+    [props, updateLabel]
+  );
+
+  const triggerDelete = React.useCallback((): void => {
+    const now = Date.now();
+    if (now - lastTriggerRef.current < 400) {
+      return;
+    }
+    lastTriggerRef.current = now;
+    if (props.onDelete) {
+      props.onDelete(DELETE_TRAFFIC_ROUTING);
     }
     dismissContextMenu();
-  };
+  }, [props]);
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean, hasExistingTrafficRouting: boolean): string => {
     if (isViewOnly && !hasExistingTrafficRouting) {
@@ -111,7 +134,20 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         key={eventKey}
         component="button"
         isDisabled={!enabledItem}
-        onClick={() => handleActionClick(eventKey)}
+        onMouseDown={(e: React.MouseEvent): void => {
+          if (e.button === 0 && enabledItem) {
+            e.preventDefault();
+            e.stopPropagation();
+            triggerAction(eventKey);
+          }
+        }}
+        onClick={(e: React.MouseEvent): void => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (enabledItem) {
+            triggerAction(eventKey);
+          }
+        }}
         data-test={eventKey}
       >
         {t(WIZARD_TITLES[eventKey].title)}
@@ -143,9 +179,18 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     <DropdownItem
       key={DELETE_TRAFFIC_ROUTING}
       component="button"
-      onClick={() => {
-        if (props.onDelete) {
-          props.onDelete(DELETE_TRAFFIC_ROUTING);
+      onMouseDown={(e: React.MouseEvent): void => {
+        if (e.button === 0 && !deleteDisabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerDelete();
+        }
+      }}
+      onClick={(e: React.MouseEvent): void => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!deleteDisabled) {
+          triggerDelete();
         }
         dismissContextMenu();
       }}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { MeshInfraType, MeshNodeType } from 'types/Mesh';
 import { Status } from 'types/IstioStatus';
 import { createStore } from 'redux';

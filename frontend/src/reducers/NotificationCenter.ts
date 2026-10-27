@@ -1,7 +1,8 @@
-import { MessageType, type NotificationMessage } from '../types/NotificationCenter';
+import type { NotificationMessage } from '../types/NotificationCenter';
+import { MessageType } from '../types/NotificationCenter';
 import type { NotificationCenterState } from '../store/Store';
 import type { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { NotificationCenterActions } from '../actions/NotificationCenterActions';
 import { updateState } from '../utils/Reducer';
 import { LoginActions } from '../actions/LoginActions';

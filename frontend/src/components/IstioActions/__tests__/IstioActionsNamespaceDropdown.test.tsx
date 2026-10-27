@@ -9,8 +9,8 @@ rstest.mock('hooks/redux', () => ({
   useKialiSelector: (selector: any) => selector({ globalState: { kiosk: '' } })
 }));
 
-rstest.mock('react-router-dom-v5-compat', () => {
-  const actual = (rstest as any).requireActual('react-router-dom-v5-compat');
+rstest.mock('react-router', () => {
+  const actual = (rstest as any).requireActual('react-router');
   return {
     ...actual,
     useNavigate: () => mockNavigate

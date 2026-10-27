@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
-import { WorkloadId } from 'types/Workload';
+import { useParams } from 'react-router';
+import type { WorkloadId } from 'types/Workload';
 import { WorkloadDetailsPage } from 'pages/WorkloadDetails/WorkloadDetailsPage';
 
 /**
