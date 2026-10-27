@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
-import { ServiceId } from 'types/ServiceInfo';
+import { useParams } from 'react-router';
+import type { ServiceId } from 'types/ServiceInfo';
 import { ServiceDetailsPage } from 'pages/ServiceDetails/ServiceDetailsPage';
 
 /**

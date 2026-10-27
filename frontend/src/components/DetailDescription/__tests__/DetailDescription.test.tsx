@@ -1,6 +1,6 @@
 import { render, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 
 let mockKioskValue = '';
 
@@ -21,7 +21,7 @@ rstest.mock('config/ServerConfig', () => ({
 
 import { store } from '../../../store/ConfigStore';
 import { DetailDescription } from '../DetailDescription';
-import { AppWorkload } from '../../../types/App';
+import type { AppWorkload } from '../../../types/App';
 
 let postMessageSpy: ReturnType<typeof rstest.spyOn>;
 

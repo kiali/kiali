@@ -1,5 +1,5 @@
 import type { AxiosHeaders } from 'axios';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { LoginActions } from '../LoginActions';
 import { LoginThunkActions } from '../LoginThunkActions';
 import { LoginStatus } from '../../store/Store';

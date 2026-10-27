@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { NamespacesListState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { NamespacesListState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { NamespacesListActions } from '../actions/NamespacesListActions';
 
 export const INITIAL_NAMESPACES_LIST_STATE: NamespacesListState = {

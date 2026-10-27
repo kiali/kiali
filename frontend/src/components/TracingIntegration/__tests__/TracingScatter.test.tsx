@@ -21,6 +21,7 @@ rstest.mock('actions/TracingThunkActions', () => ({
 
 rstest.mock('app/History', () => ({
   HistoryManager: { getParam: () => undefined },
+  navigateApp: rstest.fn(),
   URLParam: { TRACING_TRACE_ID: 'traceId' }
 }));
 
@@ -43,12 +44,12 @@ rstest.mock('../TraceTooltip', () => ({
 }));
 
 import { TracingScatterComponent } from '../TracingScatter';
-import { JaegerTrace } from 'types/TracingInfo';
+import type { JaegerTrace } from 'types/TracingInfo';
 
 const getChartProps = (): any => capturedChartProps;
 
 const makeTrace = (id = 'abc123'): JaegerTrace =>
-  (({
+  ({
     traceID: id,
     traceName: 'test-trace',
     spans: [],
@@ -57,7 +58,7 @@ const makeTrace = (id = 'abc123'): JaegerTrace =>
     endTime: Date.now() * 1000 + 5000000,
     services: [],
     processes: {}
-  } as unknown) as JaegerTrace);
+  }) as unknown as JaegerTrace;
 
 const makeProps = (
   overrides: object = {}

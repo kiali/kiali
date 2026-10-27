@@ -1,6 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { CustomMetrics } from '../CustomMetrics';
 import * as API from '../../../services/Api';
 import { store } from '../../../store/ConfigStore';

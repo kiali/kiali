@@ -1,4 +1,5 @@
-import { type ActionType, createAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction } from 'types/typesafeActionsLegacy';
 import type { MessageType } from '../types/NotificationCenter';
 import { ActionKeys } from './ActionKeys';
 

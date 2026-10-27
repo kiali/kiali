@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { IRow, ISortBy, OnSort, SortByDirection, ThProps } from '@patternfly/react-table';
+import type { ISortBy, OnSort, SortByDirection, ThProps } from '@patternfly/react-table';
 import { Caption, Table, TableGridBreakpoint, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { HistoryManager, URLParam } from '../../app/History';
 import type { RenderResource, Resource, ResourceType } from './Config';
@@ -183,7 +183,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
       return child;
     });
 
-    const rowItems: IRow[] = rows.map((row, index) => {
+    const rowItems = rows.map((row, index) => {
       return (
         <VirtualItem
           key={`vItem_${index}`}

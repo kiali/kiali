@@ -1,4 +1,5 @@
-import { createStore, applyMiddleware, combineReducers, type Store } from 'redux';
+import type { Store } from 'redux';
+import { createStore, applyMiddleware, combineReducers } from 'redux';
 import { NotificationCenterActions } from '../NotificationCenterActions';
 import { NotificationCenterThunkActions } from '../NotificationCenterThunkActions';
 import type { NotificationCenterState } from '../../store/Store';
@@ -13,10 +14,11 @@ interface TestState {
 }
 
 const createTestStore = (initialGroups?: any[]): { idsByGroup: Map<string, number[]>; store: Store<TestState> } => {
-  const store: Store<TestState> = createStore(
+  const store = createStore(
     combineReducers({ notificationCenter: NotificationCenterReducer }),
+    undefined,
     applyMiddleware(thunk)
-  );
+  ) as Store<TestState>;
   if (initialGroups) {
     // Populate groups by dispatching addMessage for each message in each group,
     // then collect the assigned IDs so tests can assert on them.

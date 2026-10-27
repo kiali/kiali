@@ -1,5 +1,6 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { Namespace } from '../types/Namespace';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { Namespace } from '../types/Namespace';
 import { ActionKeys } from './ActionKeys';
 
 export const NamespaceActions = {
@@ -8,11 +9,13 @@ export const NamespaceActions = {
   setFilter: createStandardAction(ActionKeys.NAMESPACE_SET_FILTER)<string>(),
   requestStarted: createAction(ActionKeys.NAMESPACE_REQUEST_STARTED),
   requestFailed: createAction(ActionKeys.NAMESPACE_FAILED),
-  receiveList: createAction(ActionKeys.NAMESPACE_SUCCESS, resolve => (newList: Namespace[], receivedAt: Date) =>
-    resolve({
-      list: newList,
-      receivedAt: receivedAt
-    })
+  receiveList: createAction(
+    ActionKeys.NAMESPACE_SUCCESS,
+    resolve => (newList: Namespace[], receivedAt: Date) =>
+      resolve({
+        list: newList,
+        receivedAt: receivedAt
+      })
   )
 };
 

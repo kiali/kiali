@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import { renderBadgedLink } from '../SummaryLink';
-import { GraphNodeData, NodeType } from '../../../types/Graph';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import type { GraphNodeData } from '../../../types/Graph';
+import { NodeType } from '../../../types/Graph';
+import { MemoryRouter } from 'react-router';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';

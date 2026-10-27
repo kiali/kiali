@@ -9,7 +9,7 @@ import { createIcon, KialiIcon } from 'config/KialiIcon';
 import { inlineIconRowStyle } from 'styles/FlexStyles';
 import { infoStyle } from 'styles/IconStyle';
 import { moreInfoLinkStyle } from 'components/Validations/WorkloadConfigValidation';
-import { Link } from 'react-router-dom-v5-compat';
+import { Link } from 'react-router';
 import { PFColors } from 'components/Pf/PfColors';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { useEnvoyMemorySummary } from 'hooks/useEnvoyMemorySummary';

@@ -1,8 +1,8 @@
 import { updateState } from '../utils/Reducer';
-import { KialiAppAction } from '../actions/KialiAppAction';
-import { getType } from 'typesafe-actions';
+import type { KialiAppAction } from '../actions/KialiAppAction';
+import { getType } from 'types/typesafeActionsLegacy';
 import { TracingActions } from '../actions/TracingActions';
-import { TracingInfo, JaegerTrace, TracingCheck } from 'types/TracingInfo';
+import type { TracingInfo, JaegerTrace, TracingCheck } from 'types/TracingInfo';
 
 export const INITIAL_TRACING_STATE: TracingState = {};
 

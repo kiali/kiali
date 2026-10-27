@@ -1,6 +1,9 @@
-import * as ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { globalStyle } from 'styles/GlobalStyle';
-import { RouterProvider } from 'react-router-dom-v5-compat';
+// Must use react-router/dom so RouterProvider wires ReactDOM.flushSync.
+// Without it, navigate(..., { flushSync: true }) is a no-op and React 18 can
+// update the URL while leaving the previous route mounted (Cypress flakes).
+import { RouterProvider } from 'react-router/dom';
 import { rootBasename, router, setRouter } from 'app/History';
 import { pathRoutes } from 'routes';
 import { App } from 'app/App';
@@ -59,7 +62,7 @@ const renderApp = (): void => {
     router.navigate(`/${window.location.search}`, { replace: true });
   }
 
-  ReactDOM.render(<RouterProvider router={router} />, document.getElementById('root') as HTMLElement);
+  createRoot(document.getElementById('root') as HTMLElement).render(<RouterProvider router={router} />);
 };
 
 if (process.env.NODE_ENV !== 'production' && process.env.REACT_APP_MOCK_API === 'true') {

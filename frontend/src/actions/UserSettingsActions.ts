@@ -1,10 +1,12 @@
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeRange } from '../types/Common';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeRange } from '../types/Common';
 import { ActionKeys } from './ActionKeys';
 
 export const UserSettingsActions = {
-  navCollapse: createAction(ActionKeys.NAV_COLLAPSE, resolve => (collapsed: boolean) =>
-    resolve({ collapse: collapsed })
+  navCollapse: createAction(
+    ActionKeys.NAV_COLLAPSE,
+    resolve => (collapsed: boolean) => resolve({ collapse: collapsed })
   ),
   setDuration: createStandardAction(ActionKeys.SET_DURATION)<DurationInSeconds>(),
   setTimeRange: createStandardAction(ActionKeys.SET_TIME_RANGE)<TimeRange>(),
