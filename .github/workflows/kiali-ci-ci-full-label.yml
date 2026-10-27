@@ -1,0 +1,175 @@
+# When ci-full is added after wave 1 already ran, re-run only wave 2 jobs (not the full workflow).
+# Process labels (maintenance, backport needed, etc.) do not trigger Kiali CI — see kiali-ci.yml.
+name: Kiali CI (ci-full label)
+
+on:
+  pull_request:
+    types: [labeled]
+    branches:
+    - master
+    - v*.*
+  workflow_run:
+    workflows: [Kiali CI]
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: read
+  pull-requests: read
+
+jobs:
+  rerun_wave2:
+    name: Re-run wave 2 only
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: |
+      (github.event_name == 'pull_request' && github.event.label.name == 'ci-full') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request')
+    steps:
+    - name: Re-run skipped wave 2 jobs on the Kiali CI run
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+
+          const WAVE2_JOB_NAMES = new Set([
+            'Wave 2 gate',
+            'Run frontend AI integration tests',
+            'Run frontend local and offline mode integration tests',
+            'Run tracing frontend integration tests',
+            'Run frontend multicluster primary-remote integration tests',
+            'Run frontend multicluster multi-primary integration tests',
+            'Run frontend multicluster external-kiali integration tests',
+            'Run frontend multi mesh integration tests',
+            'Run backend multicluster external-controlplane integration tests',
+          ]);
+
+          async function pullRequestForWorkflowRun(run) {
+            if (run.pull_requests?.length) {
+              const pr = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: run.pull_requests[0].number,
+              });
+              return pr.data;
+            }
+
+            const headRepo = run.head_repository?.full_name;
+            const headBranch = run.head_branch;
+            if (!headRepo || !headBranch) {
+              return null;
+            }
+
+            const [headOwner] = headRepo.split('/');
+            const { data: prs } = await github.rest.pulls.list({
+              owner,
+              repo,
+              head: `${headOwner}:${headBranch}`,
+              state: 'open',
+            });
+            return prs[0] ?? null;
+          }
+
+          async function rerunWave2OnRun(runId) {
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner,
+              repo,
+              run_id: runId,
+              per_page: 100,
+            });
+
+            const wave2Gate = jobs.find((job) => job.name === 'Wave 2 gate');
+            if (!wave2Gate) {
+              core.info(`Run ${runId} has no Wave 2 gate job; nothing to do.`);
+              return;
+            }
+
+            if (wave2Gate.conclusion === 'success') {
+              core.info(`Wave 2 already succeeded on run ${runId}.`);
+              return;
+            }
+
+            if (wave2Gate.conclusion !== 'skipped') {
+              core.info(`Wave 2 gate is ${wave2Gate.conclusion}; not re-running.`);
+              return;
+            }
+
+            const jobIds = jobs
+              .filter((job) => WAVE2_JOB_NAMES.has(job.name) && job.conclusion === 'skipped')
+              .map((job) => job.id);
+
+            const codecov = jobs.find((job) => job.name === 'Merge & Upload Coverage to Codecov');
+            if (codecov?.conclusion === 'success') {
+              jobIds.push(codecov.id);
+            }
+
+            if (jobIds.length === 0) {
+              core.info('No skipped wave 2 jobs to re-run.');
+              return;
+            }
+
+            core.info(`Re-running ${jobIds.length} job(s) on Kiali CI run ${runId}`);
+            await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/rerun-jobs', {
+              owner,
+              repo,
+              run_id: runId,
+              job_ids: jobIds,
+            });
+          }
+
+          async function findKialiCiRun(headSha) {
+            const workflows = await github.rest.actions.listRepoWorkflows({ owner, repo });
+            const kialiCi = workflows.data.workflows.find((w) => w.path === '.github/workflows/kiali-ci.yml');
+            if (!kialiCi) {
+              core.setFailed('Kiali CI workflow (.github/workflows/kiali-ci.yml) not found');
+              return null;
+            }
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner,
+              repo,
+              workflow_id: kialiCi.id,
+              head_sha: headSha,
+              event: 'pull_request',
+              per_page: 20,
+            });
+
+            const meaningful = runs.filter((run) => run.conclusion !== 'skipped');
+            return meaningful[0] ?? runs[0] ?? null;
+          }
+
+          if (context.eventName === 'pull_request') {
+            const pr = context.payload.pull_request;
+            const run = await findKialiCiRun(pr.head.sha);
+            if (!run) {
+              core.setFailed(
+                `No Kiali CI run for ${pr.head.sha}. Push a commit or reopen the PR to start CI first.`,
+              );
+              return;
+            }
+
+            if (run.status === 'in_progress' || run.status === 'queued' || run.status === 'waiting') {
+              core.info(
+                `Kiali CI run ${run.id} is still ${run.status}; wave 2 will be triggered when it completes (workflow_run).`,
+              );
+              return;
+            }
+
+            await rerunWave2OnRun(run.id);
+            return;
+          }
+
+          const run = context.payload.workflow_run;
+          const pr = await pullRequestForWorkflowRun(run);
+          if (!pr) {
+            core.info('Could not resolve PR for workflow run; skipping.');
+            return;
+          }
+
+          const hasCiFull = pr.labels.some((label) => label.name === 'ci-full');
+          if (!hasCiFull) {
+            core.info('PR does not have ci-full label; skipping.');
+            return;
+          }
+
+          await rerunWave2OnRun(run.id);
