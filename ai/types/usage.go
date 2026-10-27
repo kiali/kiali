@@ -36,15 +36,16 @@ func NewTokenUsage(promptTokens, completionTokens, totalTokens int64) TokenUsage
 	}
 }
 
-// UsageMetric stores aggregated usage data for one session/provider/model tuple.
+// UsageMetric stores aggregated usage data for one session, request type, provider, and model.
 type UsageMetric struct {
-	UserID           string    `json:"user_id"`
-	Provider         string    `json:"provider"`
-	Model            string    `json:"model"`
-	RequestCount     int64     `json:"request_count"`
-	PromptTokens     int64     `json:"prompt_tokens"`
 	CompletionTokens int64     `json:"completion_tokens"`
-	TotalTokens      int64     `json:"total_tokens"`
-	Since            time.Time `json:"since"`
 	LastUpdated      time.Time `json:"last_updated"`
+	Model            string    `json:"model"`
+	PromptTokens     int64     `json:"prompt_tokens"`
+	Provider         string    `json:"provider"`
+	Request          string    `json:"request"`
+	RequestCount     int64     `json:"request_count"`
+	Since            time.Time `json:"since"`
+	TotalTokens      int64     `json:"total_tokens"`
+	UserID           string    `json:"user_id"`
 }

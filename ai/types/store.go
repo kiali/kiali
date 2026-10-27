@@ -7,7 +7,7 @@ type AIStore interface {
 	GenerateConversationID() string
 	GetConversation(sessionID string, conversationID string) (*Conversation, bool)
 	GetUsageMetrics(sessionID string) []UsageMetric
-	RecordUsage(sessionID string, provider string, model string, usage TokenUsage) error
+	RecordUsage(sessionID string, provider string, model string, request string, usage TokenUsage) error
 	ReduceThreshold() int
 	ReduceWithAI() bool
 	SetConversation(sessionID string, conversationID string, conversation *Conversation) error

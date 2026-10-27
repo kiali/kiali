@@ -64,7 +64,7 @@ func (f *fakeStore) SetConversation(sessionID string, conversationID string, con
 	return nil
 }
 
-func (f *fakeStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+func (f *fakeStore) RecordUsage(_ string, _ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 
