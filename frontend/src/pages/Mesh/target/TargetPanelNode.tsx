@@ -46,7 +46,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
           <WaypointGatewayCanaryPanel
             cluster={data.cluster}
             namespace={data.namespace}
-            split={data.infraData?.waypointTrafficSplit as WaypointTrafficSplit | undefined}
+            split={data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined}
             workload={data.infraName}
           />
         )}
