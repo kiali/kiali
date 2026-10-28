@@ -24,6 +24,16 @@ export const formatHealthHistoryInvestigationBound = (boundMs: number, selectedT
   return sameDay ? date.toLocaleTimeString(undefined, timeOptions) : date.toLocaleString(undefined, dateTimeOptions);
 };
 
+/** Full date and time for AI prompts so past days are not mistaken for today. */
+export const formatHealthHistoryChatTimestamp = (boundMs: number): string => {
+  return new Date(boundMs).toLocaleString(undefined, dateTimeOptions);
+};
+
+/** End of a chat prompt range: time only; the start timestamp carries the date. */
+export const formatHealthHistoryChatRangeTo = (boundMs: number): string => {
+  return new Date(boundMs).toLocaleTimeString(undefined, timeOptions);
+};
+
 export const getHealthHistoryRange = (timestamp: number, duration: number, now = Date.now()): HealthHistoryRange => {
   const length = duration * 1000;
   // Match the minute shown by the ribbon tooltip and every destination's custom range.
