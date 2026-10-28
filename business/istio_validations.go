@@ -243,9 +243,13 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 }
 
 // prunedValidationsFor returns the cached validations of the single object
-// identified by objectGVK and name, with references into namespaces outside
-// the user's accessible set pruned (see pruneInaccessibleReferences). Fail
-// closed when the set cannot be computed.
+// identified by objectGVK and name, with entries in namespaces outside the
+// user's accessible set removed and the remaining entries' references pruned
+// (see pruneInaccessibleReferences). FilterBySingleType keeps every entry of
+// every other resource type, so the accessible-set filter on the entry keys
+// is what prevents denied-namespace entries from being returned — the same
+// filter the cluster-wide GetValidations applies. Fail closed when the set
+// cannot be computed.
 func (in *IstioValidationsService) prunedValidationsFor(ctx context.Context, cluster string, objectGVK schema.GroupVersionKind, name string) (models.IstioValidations, error) {
 	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
 	if err != nil {
@@ -255,6 +259,9 @@ func (in *IstioValidationsService) prunedValidationsFor(ctx context.Context, clu
 	filtered := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster).FilterBySingleType(objectGVK, name)
 	pruned := models.IstioValidations{}
 	for key, validation := range filtered {
+		if _, ok := accessible[key.Namespace]; !ok {
+			continue
+		}
 		pruned[key] = pruneInaccessibleReferences(validation, accessible)
 	}
 	return pruned, nil

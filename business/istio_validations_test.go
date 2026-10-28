@@ -2414,7 +2414,11 @@ func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
 // TestGetValidationsForWorkloadPrunesReferences covers the Service/Workload
 // single-object read paths (they share prunedValidationsFor): references into
 // denied namespaces must be pruned there too, not only on the cluster-wide
-// and namespace-scoped list paths.
+// and namespace-scoped list paths. FilterBySingleType retains every entry of
+// every other resource type, so the fixture also carries a denied-namespace
+// VirtualService entry: it must not be returned (entries are filtered on the
+// accessible set, the same way GetValidations does), while an entry of the
+// same type in the accessible namespace is kept.
 func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -2433,12 +2437,29 @@ func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
 	allowedRef := models.IstioValidationKey{ObjectGVK: workloadGVK, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster}
 	victimRef := models.IstioValidationKey{ObjectGVK: workloadGVK, Namespace: "victim-ns", Name: "ref-victim", Cluster: cluster}
 
+	// A VirtualService in the denied namespace: FilterBySingleType retains
+	// other types regardless of name, so without the accessible-set filter on
+	// the entry keys this entry would be returned to the user.
+	virtualServiceGVK := kubernetes.VirtualServices
+	victimEntryKey := models.IstioValidationKey{ObjectGVK: virtualServiceGVK, Namespace: "victim-ns", Name: "victim-vs", Cluster: cluster}
+	allowedEntryKey := models.IstioValidationKey{ObjectGVK: virtualServiceGVK, Namespace: "bookinfo", Name: "allowed-vs", Cluster: cluster}
+
 	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
 		workloadKey: {
 			Name: "reviews-v1", Namespace: "bookinfo", Cluster: cluster,
 			ObjectGVK:  workloadGVK,
 			Valid:      true,
 			References: []models.IstioValidationKey{allowedRef, victimRef},
+		},
+		victimEntryKey: {
+			Name: "victim-vs", Namespace: "victim-ns", Cluster: cluster,
+			ObjectGVK: virtualServiceGVK,
+			Valid:     true,
+		},
+		allowedEntryKey: {
+			Name: "allowed-vs", Namespace: "bookinfo", Cluster: cluster,
+			ObjectGVK: virtualServiceGVK,
+			Valid:     true,
 		},
 	}
 	kialiCache.Validations().Replace(cacheContent)
@@ -2451,6 +2472,11 @@ func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
 	require.True(ok, "the workload validation must be returned for the accessible namespace")
 	require.Len(entry.References, 1)
 	assert.Equal(allowedRef, entry.References[0])
+
+	// Entries outside the accessible set are dropped, other-type entries in
+	// the accessible namespace are kept.
+	assert.NotContains(validations, victimEntryKey, "a denied-namespace entry of another type must not be returned")
+	assert.Contains(validations, allowedEntryKey, "an accessible-namespace entry of another type must be returned")
 
 	// The cached entry is shared with other callers and must not be mutated.
 	assert.Len(cacheContent[workloadKey].References, 2)
