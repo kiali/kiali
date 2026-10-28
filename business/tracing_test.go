@@ -3,8 +3,10 @@ package business
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
+	"github.com/kiali/kiali/tracing/tracingtest"
 )
 
 func getLayer(t *testing.T, conf *config.Config) *Layer {
@@ -501,7 +504,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 			{Key: "node_id", Value: "sidecar~172.17.0.20~reviews-6d8996bff-ztg6z.bookinfo~bookinfo.svc.cluster.local"},
 		},
 	}}}}
-	scope := extractTraceNamespaceScope(sidecar)
+	scope := extractTraceNamespaceScope(&sidecar.Data)
 	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-a"])
 	require.Empty(scope.unscoped)
 
@@ -511,7 +514,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 			{Key: "istio.namespace", Value: "bookinfo"},
 		},
 	}}}}
-	scope = extractTraceNamespaceScope(unscoped)
+	scope = extractTraceNamespaceScope(&unscoped.Data)
 	require.Empty(scope.byCluster)
 	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.unscoped)
 
@@ -523,7 +526,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 			{Key: "k8s.namespace.name", Value: "otel-ns"},
 		}},
 	}}}}
-	scope = extractTraceNamespaceScope(otelTrace)
+	scope = extractTraceNamespaceScope(&otelTrace.Data)
 	require.Equal(map[string]struct{}{"otel-ns": {}}, scope.byCluster["cluster-b"])
 	require.Empty(scope.unscoped)
 
@@ -537,7 +540,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 			{Key: "istio.namespace", Value: "sleep"},
 		}},
 	}}}
-	scope = extractTraceNamespaceScope(mixed)
+	scope = extractTraceNamespaceScope(&mixed.Data)
 	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-a"])
 	require.Equal(map[string]struct{}{"sleep": {}}, scope.unscoped)
 
@@ -552,7 +555,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 		},
 		Spans: []jaegerModels.Span{{ProcessID: "p1"}},
 	}}
-	scope = extractTraceNamespaceScope(jaegerTrace)
+	scope = extractTraceNamespaceScope(&jaegerTrace.Data)
 	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-b"])
 	require.Empty(scope.unscoped)
 
@@ -562,7 +565,7 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 			{Key: "istio.cluster_id", Value: "cluster-a"},
 		},
 	}}}}
-	require.True(extractTraceNamespaceScope(clusterOnly).empty())
+	require.True(extractTraceNamespaceScope(&clusterOnly.Data).empty())
 }
 
 // TestCheckTraceAccessClusterAware pins the cluster-aware trace-details
@@ -695,4 +698,159 @@ func TestCheckTraceAccessClusterAware(t *testing.T) {
 	err = layer.Tracing.CheckTraceAccess(context.TODO(), noClientTrace)
 	require.Error(err)
 	require.True(IsAccessibleError(err))
+}
+
+// TestTraceInNamespace pins the namespace-scoped trace list authorization:
+// a trace is kept only when at least one span is attributed to the
+// requested namespace, with the same cluster pairing CheckTraceAccess
+// applies (attributed spans count only for their cluster, cluster-less
+// spans count for any cluster, no namespace information fails closed).
+func TestTraceInNamespace(t *testing.T) {
+	bookinfoTrace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.source_namespace", Value: "bookinfo"},
+		},
+	}}}
+
+	// Cluster-less namespace match.
+	require.True(t, traceInNamespace(bookinfoTrace, "cluster-a", "bookinfo"))
+
+	// The requested cluster's attribution matches.
+	attributed := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "cluster-a"},
+			{Key: "istio.source_namespace", Value: "bookinfo"},
+		},
+	}}}
+	require.True(t, traceInNamespace(attributed, "cluster-a", "bookinfo"))
+
+	// The same namespace attributed to a different cluster does not match.
+	require.False(t, traceInNamespace(attributed, "cluster-b", "bookinfo"))
+
+	// A different namespace in the requested cluster does not match.
+	otherNamespace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "cluster-a"},
+			{Key: "istio.source_namespace", Value: "victim-ns"},
+		},
+	}}}
+	require.False(t, traceInNamespace(otherNamespace, "cluster-a", "bookinfo"))
+
+	// node_id namespaces count (older sidecar traces).
+	nodeIDTrace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "node_id", Value: "sidecar~172.17.0.20~reviews-6d8996bff-ztg6z.bookinfo~bookinfo.svc.cluster.local"},
+		},
+	}}}
+	require.True(t, traceInNamespace(nodeIDTrace, "cluster-a", "bookinfo"))
+
+	// An empty cluster matches any cluster attribution by name.
+	require.True(t, traceInNamespace(attributed, "", "bookinfo"))
+
+	// No namespace information at all: fail closed.
+	noNamespace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{{Key: "dummy", Value: "dummy"}},
+	}}}
+	require.False(t, traceInNamespace(noNamespace, "cluster-a", "bookinfo"))
+}
+
+// TestGetAppTracesFiltersByNamespace pins the trace list authorization on
+// the read path: whatever service name the caller-supplied app name produced
+// (a name carrying another namespace's identity domain skips namespace
+// qualification in buildTracingServiceName), the traces actually returned
+// must have a span in the requested namespace. This is the app-path guard
+// for the GetAppTracingName NotFound fallback, which preserves the raw
+// caller-supplied name.
+func TestGetAppTracesFiltersByNamespace(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.Tracing.Enabled = true
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The mock backend is queried with whatever service name the (here
+	// fully qualified, foreign-namespace) caller-supplied app name produced,
+	// and returns traces belonging to three namespaces.
+	traceClient := new(tracingtest.TracingClientMock)
+	traceClient.On("GetAppTraces", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&model.TracingResponse{
+		Data: []jaegerModels.Trace{
+			// A trace participating in the requested namespace: kept.
+			{Spans: []jaegerModels.Span{{
+				Tags: []jaegerModels.KeyValue{
+					{Key: "istio.source_namespace", Value: "bookinfo"},
+					{Key: "istio.destination_namespace", Value: "victim-ns"},
+				},
+			}}},
+			// A victim-only trace: dropped.
+			{Spans: []jaegerModels.Span{{
+				Tags: []jaegerModels.KeyValue{
+					{Key: "istio.source_namespace", Value: "victim-ns"},
+				},
+			}}},
+			// A trace with no namespace information: dropped (fail closed).
+			{Spans: []jaegerModels.Span{{
+				Tags: []jaegerModels.KeyValue{{Key: "dummy", Value: "dummy"}},
+			}}},
+		},
+	}, nil)
+
+	sa := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	user := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, traceClient, kialiCache, conf, nil, discovery, nil)
+
+	// The caller-supplied app name carries the identity domain of another
+	// namespace, so buildTracingServiceName passes it through unqualified.
+	app := "private-app.victim-ns.svc.cluster.local"
+	traces, err := layer.Tracing.GetAppTraces(context.TODO(), "bookinfo", app, app, models.TracingQuery{Cluster: cluster})
+	require.NoError(err)
+	require.Len(traces.Data, 1)
+	require.Equal([]jaegerModels.KeyValue{
+		{Key: "istio.source_namespace", Value: "bookinfo"},
+		{Key: "istio.destination_namespace", Value: "victim-ns"},
+	}, traces.Data[0].Spans[0].Tags)
+	traceClient.AssertExpectations(t)
+}
+
+// TestGetErrorTracesFiltersByNamespace pins the error-traces count
+// authorization: the endpoint takes the raw caller-supplied app name, so the
+// count must be computed over the namespace-authorized traces only.
+func TestGetErrorTracesFiltersByNamespace(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.Tracing.Enabled = true
+	cluster := conf.KubernetesConfig.ClusterName
+
+	traceClient := new(tracingtest.TracingClientMock)
+	traceClient.On("GetAppTraces", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&model.TracingResponse{
+		Data: []jaegerModels.Trace{
+			// In the requested namespace: counted.
+			{Spans: []jaegerModels.Span{{
+				Tags: []jaegerModels.KeyValue{{Key: "istio.namespace", Value: "bookinfo"}},
+			}}},
+			// Victim-only: not counted.
+			{Spans: []jaegerModels.Span{{
+				Tags: []jaegerModels.KeyValue{{Key: "istio.namespace", Value: "victim-ns"}},
+			}}},
+		},
+	}, nil)
+
+	sa := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	user := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, traceClient, kialiCache, conf, nil, discovery, nil)
+
+	count, err := layer.Tracing.GetErrorTraces(context.TODO(), cluster, "bookinfo", "private-app.victim-ns.svc.cluster.local", time.Minute)
+	require.NoError(err)
+	require.Equal(1, count)
+	traceClient.AssertExpectations(t)
 }

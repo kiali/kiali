@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strings"
@@ -194,6 +195,8 @@ func wkdSpanFilter(ctx context.Context, ns string, tracingName models.TracingNam
 // GetAppTraces returns the traces for an app
 // TracingName is the name to be used to query the tracing backend (Using the waypoint name in Ambient)
 // App name is the name to filter the traces (When different)
+// The returned traces are authorized per trace against the requested
+// namespace (see filterTracesByNamespace), not by trusting the search name.
 func (in *TracingService) GetAppTraces(ctx context.Context, ns, tracingName, app string, query models.TracingQuery) (*model.TracingResponse, error) {
 	client, err := in.client()
 	if err != nil {
@@ -217,6 +220,9 @@ func (in *TracingService) GetAppTraces(ctx context.Context, ns, tracingName, app
 	}
 	if err != nil {
 		return nil, err
+	}
+	if r != nil {
+		r.Data = filterTracesByNamespace(r.Data, query.Cluster, ns)
 	}
 
 	return r, nil
@@ -310,7 +316,10 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 // CheckTraceAccess. Spans without namespace information do not contribute.
 // Sorted for determinism.
 func TraceNamespaces(trace *model.TracingSingleTrace) []string {
-	scope := extractTraceNamespaceScope(trace)
+	if trace == nil {
+		return nil
+	}
+	scope := extractTraceNamespaceScope(&trace.Data)
 	seen := make(map[string]struct{}, len(scope.unscoped))
 	for ns := range scope.unscoped {
 		seen[ns] = struct{}{}
@@ -353,8 +362,9 @@ func (s *traceNamespaceScope) empty() bool {
 // `node_id` tag) with the span's cluster attribution (the model.ClusterTagKeys
 // tags) when present. A span without cluster attribution contributes its
 // namespaces to unscoped. Spans without namespace information do not
-// contribute.
-func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespaceScope {
+// contribute. It takes the raw Jaeger-model trace so both the single-trace
+// (details) and the list authorizations can share it.
+func extractTraceNamespaceScope(trace *jaegerModels.Trace) *traceNamespaceScope {
 	scope := &traceNamespaceScope{
 		byCluster: map[string]map[string]struct{}{},
 		unscoped:  map[string]struct{}{},
@@ -362,7 +372,7 @@ func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespace
 	if trace == nil {
 		return scope
 	}
-	for _, span := range trace.Data.Spans {
+	for _, span := range trace.Spans {
 		processTags := spanProcessTags(trace, span)
 		cluster := spanCluster(span, processTags)
 		add := func(namespace string) {
@@ -406,11 +416,11 @@ func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespace
 // process information there and leave the span's Process nil). Without the
 // map lookup, process-level OTel attributes (k8s.namespace.name,
 // k8s.cluster.name) would be invisible on Jaeger backends.
-func spanProcessTags(trace *model.TracingSingleTrace, span jaegerModels.Span) []jaegerModels.KeyValue {
+func spanProcessTags(trace *jaegerModels.Trace, span jaegerModels.Span) []jaegerModels.KeyValue {
 	if span.Process != nil {
 		return span.Process.Tags
 	}
-	if process, ok := trace.Data.Processes[span.ProcessID]; ok {
+	if process, ok := trace.Processes[span.ProcessID]; ok {
 		return process.Tags
 	}
 	return nil
@@ -478,7 +488,7 @@ func namespaceFromNodeID(nodeID string) string {
 // every user; the denial path logs a debug message when that mismatch is
 // the apparent cause.
 func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.TracingSingleTrace) error {
-	scope := extractTraceNamespaceScope(trace)
+	scope := extractTraceNamespaceScope(&trace.Data)
 	if scope.empty() {
 		return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
 	}
@@ -543,6 +553,58 @@ func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.Tra
 	return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
 }
 
+// traceInNamespace reports whether at least one span of the trace is
+// attributed to the given namespace on the given cluster. It uses the same
+// namespace/cluster extraction and pairing as CheckTraceAccess: a span
+// carrying cluster attribution (the model.ClusterTagKeys tags) counts only
+// for that cluster, spans without cluster attribution count for any cluster.
+// An empty cluster matches any cluster attribution by name. A trace whose
+// spans carry no namespace information does not match (fail closed, like
+// CheckTraceAccess).
+func traceInNamespace(trace *jaegerModels.Trace, cluster, namespace string) bool {
+	scope := extractTraceNamespaceScope(trace)
+	if _, ok := scope.unscoped[namespace]; ok {
+		return true
+	}
+	if cluster == "" {
+		for _, namespaces := range scope.byCluster {
+			if _, ok := namespaces[namespace]; ok {
+				return true
+			}
+		}
+		return false
+	}
+	namespaces, ok := scope.byCluster[cluster]
+	if !ok {
+		return false
+	}
+	_, ok = namespaces[namespace]
+	return ok
+}
+
+// filterTracesByNamespace keeps only the traces with at least one span
+// attributed to the namespace (see traceInNamespace). It authorizes the
+// namespace-scoped trace lists and span views: the search name sent to the
+// tracing backend is derived from caller-supplied names, and a name that
+// contains the identity domain (or a backend with the namespace selector
+// disabled, whose telemetry service names are not namespace-qualified at
+// all) can target a service in any namespace, so the returned traces are
+// authorized per trace instead of trusting the search name. The requested
+// namespace — not the user's whole accessible set — is the anchor: the list
+// answers "what is in this view".
+func filterTracesByNamespace(traces []jaegerModels.Trace, cluster, namespace string) []jaegerModels.Trace {
+	if len(traces) == 0 {
+		return traces
+	}
+	kept := make([]jaegerModels.Trace, 0, len(traces))
+	for i := range traces {
+		if traceInNamespace(&traces[i], cluster, namespace) {
+			kept = append(kept, traces[i])
+		}
+	}
+	return kept
+}
+
 func (in *TracingService) GetTraceDetail(ctx context.Context, traceID string) (trace *model.TracingSingleTrace, err error) {
 	client, err := in.client()
 	if err != nil {
@@ -551,13 +613,30 @@ func (in *TracingService) GetTraceDetail(ctx context.Context, traceID string) (t
 	return client.GetTraceDetail(ctx, traceID)
 }
 
+// GetErrorTraces returns the number of error traces for the app in the
+// namespace. The count is authorized per trace against the requested
+// namespace (see filterTracesByNamespace): the search name is derived from
+// the caller-supplied app name, which can target a service in any namespace
+// (see GetAppTraces), so the backend's raw count cannot be trusted.
 func (in *TracingService) GetErrorTraces(ctx context.Context, cluster, ns, app string, duration time.Duration) (errorTraces int, err error) {
 	client, err := in.client()
 	if err != nil {
 		return 0, err
 	}
 	serviceName := in.buildTracingServiceName(ctx, cluster, ns, app)
-	return client.GetErrorTraces(ctx, ns, serviceName, duration)
+	now := time.Now()
+	query := models.TracingQuery{
+		Cluster: cluster,
+		Start:   now.Add(-duration),
+		End:     now,
+		Tags:    map[string]string{"error": "true"},
+	}
+	maps.Copy(query.Tags, in.conf.ExternalServices.Tracing.QueryScope)
+	traces, err := client.GetAppTraces(ctx, ns, serviceName, query)
+	if err != nil {
+		return 0, err
+	}
+	return len(filterTracesByNamespace(traces.Data, cluster, ns)), nil
 }
 
 func (in *TracingService) GetStatus(ctx context.Context) (accessible bool, err error) {

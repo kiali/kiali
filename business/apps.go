@@ -620,10 +620,13 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 		// NotFound when no workload carries the app label, which covers apps
 		// scaled to zero, recently deleted apps (traces outlive them) and VM
 		// apps without WorkloadEntries. The namespace is authorized by the
-		// handler gate before this runs, and the lookup name stays
-		// namespace-scoped, so the fallback is not a security problem. Any
-		// other error (including an access denial) must propagate: returning
-		// the raw caller-supplied name here would fail open.
+		// handler gate before this runs, and the traces returned for the
+		// fallback name are authorized per trace against the requested
+		// namespace (see filterTracesByNamespace), so a caller-supplied name
+		// that carries another namespace's identity domain cannot use the
+		// fallback to reach that namespace's traces. Any other error
+		// (including an access denial) must propagate: returning the raw
+		// caller-supplied name here would fail open.
 		if !k8serrors.IsNotFound(err) {
 			return models.TracingName{}, err
 		}
