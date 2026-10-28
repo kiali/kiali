@@ -125,16 +125,29 @@ func pruneInaccessibleReferences(validation *models.IstioValidation, accessible 
 	return &filteredValidation
 }
 
-// accessibleReferences returns only the references that point into namespaces
-// in the accessible set. A nil input stays nil so the pruning does not change
-// the response shape of entries without references.
+// referenceAccessible reports whether a reference may be returned to the
+// user: references to non-namespaced objects (e.g. the reserved "mesh"
+// gateway, Namespace == "") disclose no namespace and are kept, while
+// namespaced references must point into the user's accessible set. Both
+// pruning helpers go through it so they cannot drift.
+func referenceAccessible(namespace string, accessible map[string]struct{}) bool {
+	if namespace == "" {
+		return true
+	}
+	_, ok := accessible[namespace]
+	return ok
+}
+
+// accessibleReferences returns only the references that may be shown to the
+// user (see referenceAccessible). A nil input stays nil so the pruning does
+// not change the response shape of entries without references.
 func accessibleReferences(references []models.IstioValidationKey, accessible map[string]struct{}) []models.IstioValidationKey {
 	if references == nil {
 		return nil
 	}
 	filteredReferences := make([]models.IstioValidationKey, 0, len(references))
 	for _, ref := range references {
-		if _, ok := accessible[ref.Namespace]; ok {
+		if referenceAccessible(ref.Namespace, accessible) {
 			filteredReferences = append(filteredReferences, ref)
 		}
 	}
@@ -142,10 +155,11 @@ func accessibleReferences(references []models.IstioValidationKey, accessible map
 }
 
 // pruneInaccessibleObjectReferences returns a copy of the on-demand
-// validation references with entries pointing into namespaces outside the
-// accessible set removed, so object, service and workload names in denied
-// namespaces are not disclosed through the references map. Copy before
-// pruning: the values may be shared with other callers.
+// validation references with entries the user may not see removed, so
+// object, service and workload names in denied namespaces are not disclosed
+// through the references map. Non-namespaced references are kept (see
+// referenceAccessible). Copy before pruning: the values may be shared with
+// other callers.
 func pruneInaccessibleObjectReferences(references *models.IstioReferences, accessible map[string]struct{}) *models.IstioReferences {
 	if references == nil {
 		return nil
@@ -156,17 +170,17 @@ func pruneInaccessibleObjectReferences(references *models.IstioReferences, acces
 		WorkloadReferences: make([]models.WorkloadReference, 0, len(references.WorkloadReferences)),
 	}
 	for _, ref := range references.ObjectReferences {
-		if _, ok := accessible[ref.Namespace]; ok {
+		if referenceAccessible(ref.Namespace, accessible) {
 			filtered.ObjectReferences = append(filtered.ObjectReferences, ref)
 		}
 	}
 	for _, ref := range references.ServiceReferences {
-		if _, ok := accessible[ref.Namespace]; ok {
+		if referenceAccessible(ref.Namespace, accessible) {
 			filtered.ServiceReferences = append(filtered.ServiceReferences, ref)
 		}
 	}
 	for _, ref := range references.WorkloadReferences {
-		if _, ok := accessible[ref.Namespace]; ok {
+		if referenceAccessible(ref.Namespace, accessible) {
 			filtered.WorkloadReferences = append(filtered.WorkloadReferences, ref)
 		}
 	}

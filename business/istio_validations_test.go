@@ -2461,7 +2461,10 @@ func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
 // freshly computed validations and references map are served directly to the
 // requesting user, so references into denied namespaces must be pruned there
 // too — the same protection the cache read paths apply. The shared cache must
-// keep the unpruned entry (it serves every user).
+// keep the unpruned entry (it serves every user). Both a positive control
+// (an accessible reference survives) and negatives (denied-namespace
+// references are dropped) are asserted, so an over-pruning regression cannot
+// pass vacuously.
 func TestValidateIstioObjectPrunesReferences(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -2469,16 +2472,24 @@ func TestValidateIstioObjectPrunesReferences(t *testing.T) {
 	config.Set(conf)
 	cluster := conf.KubernetesConfig.ClusterName
 
-	// A DestinationRule in bookinfo pointing at a service in sleep. The
-	// on-demand reference checker resolves hosts against the SA-side service
-	// list, which spans every namespace regardless of the user's accessible
-	// set — so without pruning, the references map discloses the service name
-	// in the denied namespace.
+	// Two DestinationRules in bookinfo: one resolving a service in the
+	// accessible namespace (positive control), one resolving a service in the
+	// denied namespace (the on-demand reference checker resolves hosts
+	// against the SA-side service list, which spans every namespace). A
+	// VirtualService whose gateways span both namespaces and the reserved
+	// non-namespaced "mesh" gateway covers the object references.
 	objects := []runtime.Object{
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("sleep"),
 		kubetest.FakeNamespace("istio-system"),
 		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.Service{
+			ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"},
+			Spec: core_v1.ServiceSpec{
+				Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+				Selector: map[string]string{"app": "reviews"},
+			},
+		},
 		&core_v1.Service{
 			ObjectMeta: v1.ObjectMeta{Name: "sleep-svc", Namespace: "sleep"},
 			Spec: core_v1.ServiceSpec{
@@ -2488,7 +2499,21 @@ func TestValidateIstioObjectPrunesReferences(t *testing.T) {
 		},
 		&networking_v1.DestinationRule{
 			ObjectMeta: v1.ObjectMeta{Name: "reviews-dr", Namespace: "bookinfo"},
+			Spec:       apinetworkingv1.DestinationRule{Host: "reviews.bookinfo.svc.cluster.local"},
+		},
+		&networking_v1.DestinationRule{
+			ObjectMeta: v1.ObjectMeta{Name: "sleep-dr", Namespace: "bookinfo"},
 			Spec:       apinetworkingv1.DestinationRule{Host: "sleep-svc.sleep.svc.cluster.local"},
+		},
+		&networking_v1.VirtualService{
+			ObjectMeta: v1.ObjectMeta{Name: "gateway-vs", Namespace: "bookinfo"},
+			Spec: apinetworkingv1.VirtualService{
+				Hosts:    []string{"reviews"},
+				Gateways: []string{"bookinfo/gw-allowed", "sleep/gw-denied", "mesh"},
+				Http: []*apinetworkingv1.HTTPRoute{{Route: []*apinetworkingv1.HTTPRouteDestination{{
+					Destination: &apinetworkingv1.Destination{Host: "reviews.bookinfo.svc.cluster.local"},
+				}}}},
+			},
 		},
 	}
 
@@ -2512,32 +2537,181 @@ func TestValidateIstioObjectPrunesReferences(t *testing.T) {
 	require.NoError(err)
 	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
 
-	validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.DestinationRules, "reviews-dr")
+	serviceReferenceNamespaces := func(gvk schema.GroupVersionKind, name string) []string {
+		validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", gvk, name)
+		require.NoError(err)
+
+		objectKey := models.IstioValidationKey{ObjectGVK: gvk, Namespace: "bookinfo", Name: name, Cluster: cluster}
+		_, ok := validations[objectKey]
+		require.True(ok, "the requested object's validation must be returned")
+		_, ok = svc.kialiCache.Validations().Items()[objectKey]
+		require.True(ok, "the validation must be written to the shared cache")
+
+		referenceKey := models.IstioReferenceKey{ObjectGVK: gvk, Namespace: "bookinfo", Name: name}
+		objectReferences, ok := references[referenceKey]
+		require.True(ok, "the requested object's references must be returned")
+		namespaces := make([]string, 0, len(objectReferences.ServiceReferences))
+		for _, ref := range objectReferences.ServiceReferences {
+			namespaces = append(namespaces, ref.Namespace)
+		}
+		return namespaces
+	}
+
+	// Service references: the accessible one survives (positive control),
+	// the denied one is pruned.
+	assert.Contains(serviceReferenceNamespaces(kubernetes.DestinationRules, "reviews-dr"), "bookinfo",
+		"the accessible service reference must survive the pruning")
+	assert.NotContains(serviceReferenceNamespaces(kubernetes.DestinationRules, "sleep-dr"), "sleep",
+		"service references into the denied namespace must not be returned")
+
+	// Object references: the accessible gateway and the non-namespaced
+	// reserved "mesh" gateway survive; the denied-namespace gateway is
+	// pruned.
+	_, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.VirtualServices, "gateway-vs")
 	require.NoError(err)
-
-	drKey := models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "bookinfo", Name: "reviews-dr", Cluster: cluster}
-	_, ok := validations[drKey]
-	require.True(ok, "the requested object's validation must be returned")
-	_, ok = svc.kialiCache.Validations().Items()[drKey]
-	require.True(ok, "the validation must be written to the shared cache")
-
-	// The returned references map is the observable exposure: the host
-	// resolves against the SA-side service list (every namespace), so without
-	// pruning it discloses the service name in the denied namespace.
-	referenceKey := models.IstioReferenceKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "bookinfo", Name: "reviews-dr"}
-	objectReferences, ok := references[referenceKey]
+	vsReferences, ok := references[models.IstioReferenceKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "gateway-vs"}]
 	require.True(ok, "the requested object's references must be returned")
-	serviceNamespaces := make([]string, 0, len(objectReferences.ServiceReferences))
-	for _, ref := range objectReferences.ServiceReferences {
-		serviceNamespaces = append(serviceNamespaces, ref.Namespace)
+	objectRefNamespaces := make(map[string]string, len(vsReferences.ObjectReferences))
+	for _, ref := range vsReferences.ObjectReferences {
+		objectRefNamespaces[ref.Name] = ref.Namespace
 	}
-	assert.NotContains(serviceNamespaces, "sleep", "service references into the denied namespace must not be returned")
+	assert.Equal("bookinfo", objectRefNamespaces["gw-allowed"], "the accessible gateway reference must survive the pruning")
+	require.Contains(objectRefNamespaces, "mesh", "the non-namespaced mesh gateway reference must be kept")
+	assert.Equal("", objectRefNamespaces["mesh"], "the mesh gateway reference is non-namespaced")
+	assert.NotContains(objectRefNamespaces, "gw-denied", "gateway references into the denied namespace must not be returned")
+}
 
-	// The returned validation's references are pruned to the accessible set
-	// as well (defense in depth: the on-demand config list is user-scoped, so
-	// cross-namespace validation references are not expected to arise).
-	validation := validations[drKey]
-	for _, ref := range validation.References {
-		assert.Equal("bookinfo", ref.Namespace, "references into the denied namespace must not be returned")
+// TestValidateIstioObjectKeepsMeshGatewayReference pins the fix for the
+// reference-pruning regression: a VirtualService bound to the reserved
+// "mesh" gateway produces a non-namespaced reference (Namespace == ""), and
+// pruning must keep it — a reference with no namespace discloses no
+// namespace, so there is nothing to protect. Dropping it removed legitimate
+// information from the config details page.
+func TestValidateIstioObjectKeepsMeshGatewayReference(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("sleep"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.Service{
+			ObjectMeta: v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"},
+			Spec: core_v1.ServiceSpec{
+				Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080, Protocol: "TCP"}},
+				Selector: map[string]string{"app": "reviews"},
+			},
+		},
+		&networking_v1.VirtualService{
+			ObjectMeta: v1.ObjectMeta{Name: "mesh-vs", Namespace: "bookinfo"},
+			Spec: apinetworkingv1.VirtualService{
+				Hosts:    []string{"reviews"},
+				Gateways: []string{"mesh"},
+				Http: []*apinetworkingv1.HTTPRoute{{Route: []*apinetworkingv1.HTTPRouteDestination{{
+					Destination: &apinetworkingv1.Destination{Host: "reviews.bookinfo.svc.cluster.local"},
+				}}}},
+			},
+		},
 	}
+
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "sleep"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	_, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.VirtualServices, "mesh-vs")
+	require.NoError(err)
+	vsReferences, ok := references[models.IstioReferenceKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "mesh-vs"}]
+	require.True(ok, "the requested object's references must be returned")
+
+	var meshFound bool
+	for _, ref := range vsReferences.ObjectReferences {
+		if ref.Name == "mesh" {
+			meshFound = true
+			assert.Equal("", ref.Namespace, "the mesh gateway reference is non-namespaced")
+			assert.Equal(kubernetes.Gateways, ref.ObjectGVK, "the mesh gateway reference points at a Gateway")
+		}
+	}
+	assert.True(meshFound, "the reserved mesh gateway reference must be kept by the pruning")
+}
+
+// TestReferencePruningHelpers unit-tests the reference pruning helpers
+// directly: references into accessible namespaces and non-namespaced
+// references are kept, references into denied namespaces are dropped, and
+// the input is never mutated (the values may be shared with other callers).
+// The on-demand path cannot produce cross-namespace workload references for
+// a restricted user (workload fetching is scoped to the user's accessible
+// namespaces), so the WorkloadReferences pruning is covered here rather
+// than through ValidateIstioObject.
+func TestReferencePruningHelpers(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	accessible := map[string]struct{}{"bookinfo": {}}
+
+	// The validation-key slice helper.
+	validationRefs := []models.IstioValidationKey{
+		{Name: "allowed", Namespace: "bookinfo"},
+		{Name: "mesh", Namespace: ""},
+		{Name: "denied", Namespace: "sleep"},
+	}
+	kept := accessibleReferences(validationRefs, accessible)
+	require.Len(kept, 2)
+	assert.Equal("allowed", kept[0].Name)
+	assert.Equal("mesh", kept[1].Name)
+	// Nil input stays nil.
+	assert.Nil(accessibleReferences(nil, accessible))
+	// The input is not mutated.
+	require.Len(validationRefs, 3)
+
+	// The on-demand references-map helper, all three reference kinds.
+	objectRefs := &models.IstioReferences{
+		ObjectReferences: []models.IstioReference{
+			{Name: "gw-allowed", Namespace: "bookinfo", ObjectGVK: kubernetes.Gateways},
+			{Name: "mesh", Namespace: "", ObjectGVK: kubernetes.Gateways},
+			{Name: "gw-denied", Namespace: "sleep", ObjectGVK: kubernetes.Gateways},
+		},
+		ServiceReferences: []models.ServiceReference{
+			{Name: "reviews", Namespace: "bookinfo"},
+			{Name: "sleep-svc", Namespace: "sleep"},
+		},
+		WorkloadReferences: []models.WorkloadReference{
+			{Name: "reviews-v1", Namespace: "bookinfo"},
+			{Name: "sleep-v1", Namespace: "sleep"},
+		},
+	}
+	pruned := pruneInaccessibleObjectReferences(objectRefs, accessible)
+	require.Len(pruned.ObjectReferences, 2)
+	assert.Equal("gw-allowed", pruned.ObjectReferences[0].Name)
+	assert.Equal("mesh", pruned.ObjectReferences[1].Name)
+	require.Len(pruned.ServiceReferences, 1)
+	assert.Equal("reviews", pruned.ServiceReferences[0].Name)
+	require.Len(pruned.WorkloadReferences, 1)
+	assert.Equal("reviews-v1", pruned.WorkloadReferences[0].Name)
+
+	// The input is not mutated (copy before prune).
+	require.Len(objectRefs.ObjectReferences, 3)
+	require.Len(objectRefs.ServiceReferences, 2)
+	require.Len(objectRefs.WorkloadReferences, 2)
+
+	// Nil input stays nil.
+	assert.Nil(pruneInaccessibleObjectReferences(nil, accessible))
 }

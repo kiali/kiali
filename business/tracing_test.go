@@ -541,6 +541,21 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-a"])
 	require.Equal(map[string]struct{}{"sleep": {}}, scope.unscoped)
 
+	// Jaeger JSON shape: the span's Process is nil and the process tags
+	// live in the trace-level Processes map, keyed by the span's ProcessID.
+	jaegerTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{
+		Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+			"p1": {Tags: []jaegerModels.KeyValue{
+				{Key: "k8s.cluster.name", Value: "cluster-b"},
+				{Key: "k8s.namespace.name", Value: "bookinfo"},
+			}},
+		},
+		Spans: []jaegerModels.Span{{ProcessID: "p1"}},
+	}}
+	scope = extractTraceNamespaceScope(jaegerTrace)
+	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-b"])
+	require.Empty(scope.unscoped)
+
 	// Cluster tags without namespace information contribute nothing.
 	clusterOnly := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
 		Tags: []jaegerModels.KeyValue{
@@ -650,6 +665,27 @@ func TestCheckTraceAccessClusterAware(t *testing.T) {
 		},
 	)
 	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), crossClusterTrace))
+
+	// Jaeger JSON shape: the process tags (carrying the cluster and
+	// namespace attribution) live in the trace-level Processes map, keyed by
+	// the span's ProcessID, and the span's Process is nil. Attributed to the
+	// home cluster the trace is allowed; attributed to the remote cluster,
+	// where the user has an empty LIST, it is denied.
+	jaegerTrace := func(cluster string) *model.TracingSingleTrace {
+		return &model.TracingSingleTrace{Data: jaegerModels.Trace{
+			Processes: map[jaegerModels.ProcessID]jaegerModels.Process{
+				"p1": {Tags: []jaegerModels.KeyValue{
+					{Key: "k8s.cluster.name", Value: cluster},
+					{Key: "k8s.namespace.name", Value: "bookinfo"},
+				}},
+			},
+			Spans: []jaegerModels.Span{{ProcessID: "p1"}},
+		}}
+	}
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), jaegerTrace(home)))
+	err = layer.Tracing.CheckTraceAccess(context.TODO(), jaegerTrace(remote))
+	require.Error(err)
+	require.True(IsAccessibleError(err))
 
 	// A cluster the user has no client for: denied (fail closed).
 	noClientTrace := traceWith([]jaegerModels.KeyValue{

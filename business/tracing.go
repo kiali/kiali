@@ -363,7 +363,8 @@ func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespace
 		return scope
 	}
 	for _, span := range trace.Data.Spans {
-		cluster := spanCluster(span)
+		processTags := spanProcessTags(trace, span)
+		cluster := spanCluster(span, processTags)
 		add := func(namespace string) {
 			if namespace == "" {
 				return
@@ -390,21 +391,36 @@ func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespace
 				}
 			}
 		}
-		if span.Process != nil {
-			for _, tag := range span.Process.Tags {
-				if v, ok := tag.Value.(string); ok && slices.Contains(model.NamespaceTagKeys, tag.Key) {
-					add(v)
-				}
+		for _, tag := range processTags {
+			if v, ok := tag.Value.(string); ok && slices.Contains(model.NamespaceTagKeys, tag.Key) {
+				add(v)
 			}
 		}
 	}
 	return scope
 }
 
+// spanProcessTags returns the span's process tags: the inline Process when
+// set (the Tempo converter populates it), otherwise the trace-level
+// Processes map entry for the span's ProcessID (Jaeger JSON responses keep
+// process information there and leave the span's Process nil). Without the
+// map lookup, process-level OTel attributes (k8s.namespace.name,
+// k8s.cluster.name) would be invisible on Jaeger backends.
+func spanProcessTags(trace *model.TracingSingleTrace, span jaegerModels.Span) []jaegerModels.KeyValue {
+	if span.Process != nil {
+		return span.Process.Tags
+	}
+	if process, ok := trace.Data.Processes[span.ProcessID]; ok {
+		return process.Tags
+	}
+	return nil
+}
+
 // spanCluster returns the cluster the span's telemetry is attributed to,
 // from the span tags or the process tags (OTel resource attributes surfaced
-// by the converters). Empty when the span carries no cluster attribution.
-func spanCluster(span jaegerModels.Span) string {
+// by the converters; see spanProcessTags). Empty when the span carries no
+// cluster attribution.
+func spanCluster(span jaegerModels.Span, processTags []jaegerModels.KeyValue) string {
 	clusterFromTags := func(tags []jaegerModels.KeyValue) string {
 		for _, tag := range tags {
 			if slices.Contains(model.ClusterTagKeys, tag.Key) {
@@ -418,10 +434,7 @@ func spanCluster(span jaegerModels.Span) string {
 	if cluster := clusterFromTags(span.Tags); cluster != "" {
 		return cluster
 	}
-	if span.Process != nil {
-		return clusterFromTags(span.Process.Tags)
-	}
-	return ""
+	return clusterFromTags(processTags)
 }
 
 // namespaceFromNodeID extracts the namespace from a sidecar/router/waypoint
@@ -455,6 +468,15 @@ func namespaceFromNodeID(nodeID string) string {
 // recognizable namespace information is denied (fail closed) — this hides
 // traces from non-mesh apps whose telemetry carries no namespace
 // information.
+//
+// Cluster attribution is matched against Kiali's cluster names, which by
+// default equal the Istio cluster IDs (Kiali derives its home cluster name
+// from istiod's CLUSTER_ID, and the Tempo TraceQL queries filter on
+// .istio.cluster_id with the same names). An explicitly configured
+// kubernetes_config.cluster_name or cluster_name_overrides that diverges
+// from the Istio cluster IDs denies every cluster-attributed trace, for
+// every user; the denial path logs a debug message when that mismatch is
+// the apparent cause.
 func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.TracingSingleTrace) error {
 	scope := extractTraceNamespaceScope(trace)
 	if scope.empty() {
@@ -494,6 +516,29 @@ func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.Tra
 				return nil
 			}
 		}
+	}
+
+	// The request is denied. When none of the clusters the trace is
+	// attributed to matches any of the user's cluster names, the likely
+	// cause is telemetry cluster IDs diverging from Kiali's cluster names
+	// (an explicit kubernetes_config.cluster_name or cluster_name_overrides);
+	// surface that in the debug log, without changing the result.
+	unknownClusters := make([]string, 0, len(scope.byCluster))
+	for cluster := range scope.byCluster {
+		if _, known := accessibleByCluster[cluster]; !known {
+			unknownClusters = append(unknownClusters, cluster)
+		}
+	}
+	if len(scope.byCluster) > 0 && len(unknownClusters) == len(scope.byCluster) {
+		knownClusters := make([]string, 0, len(accessibleByCluster))
+		for cluster := range accessibleByCluster {
+			knownClusters = append(knownClusters, cluster)
+		}
+		sort.Strings(knownClusters)
+		sort.Strings(unknownClusters)
+		log.FromContext(ctx).Debug().Msgf(
+			"Trace denied: its cluster attribution [%s] matches none of Kiali's cluster names [%s]; the telemetry's istio.cluster_id values may not match the configured cluster names.",
+			strings.Join(unknownClusters, ", "), strings.Join(knownClusters, ", "))
 	}
 	return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
 }
