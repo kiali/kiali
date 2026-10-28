@@ -1,0 +1,26 @@
+name: Kiali CI ci-full label
+
+# Runs Kiali CI when the ci-full label is added. Process labels (e.g. backport needed)
+# must not trigger the main Kiali CI workflow — see kiali-ci.yml pull_request types.
+on:
+  pull_request:
+    types: [labeled]
+    branches:
+    - master
+    - v*.*
+    paths-ignore:
+    - "design/**"
+    - "**/*.md"
+    - "**/*.adoc"
+
+concurrency:
+  group: kiali-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  kiali-ci:
+    if: github.event.label.name == 'ci-full'
+    uses: ./.github/workflows/kiali-ci.yml
+    secrets: inherit
