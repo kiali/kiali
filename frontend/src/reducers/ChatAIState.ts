@@ -19,6 +19,7 @@ export const INITIAL_AI_METRICS_STATE = INITIAL_AI_RIGHT_VIEW_STATE;
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   allowed: false,
   alwaysNavigate: false,
+  chatContext: '',
   chatHistory: ImmutableList(),
   chatbotVisible: false,
   conversationID: '',
@@ -67,7 +68,10 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return updateState(state, { chatbotVisible: action.payload.visible });
     }
     case getType(ChatAIActions.setChatHistoryClear): {
-      return updateState(state, { chatHistory: ImmutableList() });
+      return updateState(state, { chatHistory: ImmutableList(), chatContext: '' });
+    }
+    case getType(ChatAIActions.setChatContext): {
+      return updateState(state, { chatContext: action.payload });
     }
     case getType(ChatAIActions.setChatHistoryAdd): {
       const history = state.chatHistory.push(ImmutableMap(action.payload.entry));

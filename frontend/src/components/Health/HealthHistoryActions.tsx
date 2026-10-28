@@ -13,6 +13,7 @@ import {
 } from '@patternfly/react-core';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { useChatAIEnabled } from 'components/ChatBot/hooks/useChatAIEnabled';
+import { isKiosk } from 'components/Kiosk/KioskActions';
 import { KialiLink } from 'components/Link/KialiLink';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import { createIcon, KialiIcon } from 'config/KialiIcon';
@@ -22,7 +23,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { statusFromString, type HealthStatusId } from 'types/Health';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { buildHealthHistoryChatQuery } from './healthHistoryAskAI';
+import { buildHealthHistoryChatContext, buildHealthHistoryChatQuery } from './healthHistoryAskAI';
 import {
   formatHealthHistoryInvestigationBound,
   getHealthHistoryGraphUrl,
@@ -78,6 +79,8 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
   const { t } = useKialiTranslation();
   const { onSelect, tabs } = React.useContext(CustomTimeTabsContext);
   const chatAllowed = useKialiSelector(state => state.ai.chat.allowed);
+  const kiosk = useKialiSelector(state => state.globalState.kiosk);
+  const chatAvailable = chatAIEnabled && chatAllowed && !isKiosk(kiosk);
   const graphDuration = useKialiSelector(state => state.userSettings.duration);
   const anchorRef = React.useRef<HTMLSpanElement>(null);
   const [selection, setSelection] = React.useState<{
@@ -100,8 +103,8 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
     setSelection({ now: Date.now(), position, status, timestamp: Math.floor(timestamp / 60) * 60 });
   }, []);
 
-  const handleAskAI = (): void => {
-    if (!chatAIEnabled || !selection || !range) {
+  const handleTroubleshootWithAI = (): void => {
+    if (!chatAvailable || !selection || !range) {
       return;
     }
 
@@ -115,10 +118,19 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
       selection.timestamp * 1000,
       props.cluster
     );
+    const chatContext = buildHealthHistoryChatContext(
+      t,
+      props.healthType,
+      props.name,
+      props.namespace,
+      selection.status,
+      range,
+      props.cluster
+    );
+    dispatch(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
+    dispatch(ChatAIActions.setChatContext(chatContext));
     dispatch(ChatAIActions.setQuery(query));
-    if (chatAllowed) {
-      dispatch(ChatAIActions.setChatbotVisible({ visible: true }));
-    }
+    dispatch(ChatAIActions.setChatbotVisible({ visible: true }));
     setSelection(undefined);
   };
 
@@ -208,9 +220,14 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                 <Divider />
               </StackItem>
               <StackItem className={actionsStyle}>
-                {chatAIEnabled && (
-                  <Button data-test="health-history-ask-ai" isInline onClick={handleAskAI} variant="link">
-                    {t('Ask AI')}
+                {chatAvailable && (
+                  <Button
+                    data-test="health-history-troubleshoot-ai"
+                    isInline
+                    onClick={handleTroubleshootWithAI}
+                    variant="link"
+                  >
+                    {t('Troubleshoot with AI')}
                   </Button>
                 )}
                 <KialiLink

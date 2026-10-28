@@ -29,6 +29,7 @@ export const setChatHistoryUpdateTool = createStandardAction(ActionKeys.CHAT_AI_
   toolID: string;
 }>();
 export const setQuery = createStandardAction(ActionKeys.CHAT_AI_SET_QUERY)<string>();
+export const setChatContext = createStandardAction(ActionKeys.CHAT_AI_SET_CONTEXT)<string>();
 export const setOpenTool = createStandardAction(ActionKeys.CHAT_AI_SET_OPEN_TOOL)<{
   chatEntryIndex: number;
   id: string;
@@ -51,6 +52,7 @@ export const ChatAIActions = {
   setAIChat,
   setAlwaysNavigate,
   setInteractionMode,
+  setChatContext,
   setQuery,
   setChatbotVisible,
   setChatHistoryClear,
