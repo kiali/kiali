@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
@@ -2348,5 +2349,195 @@ func TestGetValidationsKeepsGatewayMultimatchValidations(t *testing.T) {
 		if !isSynthetic {
 			assert.NotEmpty(entry.Checks, "gateway %s must keep its multimatch checks", name)
 		}
+	}
+}
+
+// TestGetValidationsForNamespacePrunesReferences pins the fix for the third
+// review finding on PR #10448: the namespace-scoped validations read path
+// (/api/namespaces/{ns}/istio?validate=true) must prune references into
+// denied namespaces exactly like the cluster-wide GetValidations, or
+// cross-namespace object names leak through the references of otherwise
+// accessible entries.
+func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The SA can see both namespaces; the user can only see bookinfo.
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	allowedKey := models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo", Name: "gw-allowed", Cluster: cluster}
+	victimKey := models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "victim-ns", Name: "gw-victim", Cluster: cluster}
+	allowedRef := models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster}
+	victimRef := models.IstioValidationKey{ObjectGVK: kubernetes.Gateways, Namespace: "victim-ns", Name: "ref-victim", Cluster: cluster}
+
+	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
+		allowedKey: {
+			Name: "gw-allowed", Namespace: "bookinfo", Cluster: cluster,
+			ObjectGVK:  kubernetes.Gateways,
+			Valid:      true,
+			References: []models.IstioValidationKey{allowedRef, victimRef},
+		},
+		victimKey: {
+			Name: "gw-victim", Namespace: "victim-ns", Cluster: cluster,
+			ObjectGVK: kubernetes.Gateways,
+			Valid:     true,
+		},
+	}
+	kialiCache.Validations().Replace(cacheContent)
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	validations, err := vs.GetValidationsForNamespace(context.TODO(), cluster, "bookinfo")
+	require.NoError(err)
+
+	// The denied namespace's entry is not returned (namespace-scoped).
+	_, ok := validations[victimKey]
+	assert.False(ok, "validations for a namespace other than the requested one must not be returned")
+	entry, ok := validations[allowedKey]
+	require.True(ok, "validations for the requested accessible namespace must be returned")
+
+	// References into the denied namespace are pruned.
+	require.Len(entry.References, 1)
+	assert.Equal(allowedRef, entry.References[0])
+
+	// The cached entries are shared with other callers and must not be
+	// mutated by the pruning.
+	assert.Len(cacheContent[allowedKey].References, 2)
+}
+
+// TestGetValidationsForWorkloadPrunesReferences covers the Service/Workload
+// single-object read paths (they share prunedValidationsFor): references into
+// denied namespaces must be pruned there too, not only on the cluster-wide
+// and namespace-scoped list paths.
+func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	workloadGVK := schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}
+	workloadKey := models.IstioValidationKey{ObjectGVK: workloadGVK, Namespace: "bookinfo", Name: "reviews-v1", Cluster: cluster}
+	allowedRef := models.IstioValidationKey{ObjectGVK: workloadGVK, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster}
+	victimRef := models.IstioValidationKey{ObjectGVK: workloadGVK, Namespace: "victim-ns", Name: "ref-victim", Cluster: cluster}
+
+	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
+		workloadKey: {
+			Name: "reviews-v1", Namespace: "bookinfo", Cluster: cluster,
+			ObjectGVK:  workloadGVK,
+			Valid:      true,
+			References: []models.IstioValidationKey{allowedRef, victimRef},
+		},
+	}
+	kialiCache.Validations().Replace(cacheContent)
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	validations, err := vs.GetValidationsForWorkload(context.TODO(), cluster, "bookinfo", "reviews-v1")
+	require.NoError(err)
+
+	entry, ok := validations[workloadKey]
+	require.True(ok, "the workload validation must be returned for the accessible namespace")
+	require.Len(entry.References, 1)
+	assert.Equal(allowedRef, entry.References[0])
+
+	// The cached entry is shared with other callers and must not be mutated.
+	assert.Len(cacheContent[workloadKey].References, 2)
+}
+
+// TestValidateIstioObjectPrunesReferences covers the on-demand single-object
+// validation that backs the config details response (validate=true): the
+// freshly computed validations and references map are served directly to the
+// requesting user, so references into denied namespaces must be pruned there
+// too — the same protection the cache read paths apply. The shared cache must
+// keep the unpruned entry (it serves every user).
+func TestValidateIstioObjectPrunesReferences(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// A DestinationRule in bookinfo pointing at a service in sleep. The
+	// on-demand reference checker resolves hosts against the SA-side service
+	// list, which spans every namespace regardless of the user's accessible
+	// set — so without pruning, the references map discloses the service name
+	// in the denied namespace.
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("sleep"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		&core_v1.Service{
+			ObjectMeta: v1.ObjectMeta{Name: "sleep-svc", Namespace: "sleep"},
+			Spec: core_v1.ServiceSpec{
+				Ports:    []core_v1.ServicePort{{Name: "http", Port: 80, Protocol: "TCP"}},
+				Selector: map[string]string{"app": "sleep"},
+			},
+		},
+		&networking_v1.DestinationRule{
+			ObjectMeta: v1.ObjectMeta{Name: "reviews-dr", Namespace: "bookinfo"},
+			Spec:       apinetworkingv1.DestinationRule{Host: "sleep-svc.sleep.svc.cluster.local"},
+		},
+	}
+
+	// The SA can see both namespaces; the user can only see bookinfo.
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "sleep"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.DestinationRules, "reviews-dr")
+	require.NoError(err)
+
+	drKey := models.IstioValidationKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "bookinfo", Name: "reviews-dr", Cluster: cluster}
+	_, ok := validations[drKey]
+	require.True(ok, "the requested object's validation must be returned")
+	_, ok = svc.kialiCache.Validations().Items()[drKey]
+	require.True(ok, "the validation must be written to the shared cache")
+
+	// The returned references map is the observable exposure: the host
+	// resolves against the SA-side service list (every namespace), so without
+	// pruning it discloses the service name in the denied namespace.
+	referenceKey := models.IstioReferenceKey{ObjectGVK: kubernetes.DestinationRules, Namespace: "bookinfo", Name: "reviews-dr"}
+	objectReferences, ok := references[referenceKey]
+	require.True(ok, "the requested object's references must be returned")
+	serviceNamespaces := make([]string, 0, len(objectReferences.ServiceReferences))
+	for _, ref := range objectReferences.ServiceReferences {
+		serviceNamespaces = append(serviceNamespaces, ref.Namespace)
+	}
+	assert.NotContains(serviceNamespaces, "sleep", "service references into the denied namespace must not be returned")
+
+	// The returned validation's references are pruned to the accessible set
+	// as well (defense in depth: the on-demand config list is user-scoped, so
+	// cross-namespace validation references are not expected to arise).
+	validation := validations[drKey]
+	for _, ref := range validation.References {
+		assert.Equal("bookinfo", ref.Namespace, "references into the denied namespace must not be returned")
 	}
 }

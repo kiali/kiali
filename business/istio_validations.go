@@ -73,13 +73,9 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 	// validations (and their references) to the namespaces in the user's
 	// accessible set for the cluster. Fail closed when the set cannot be
 	// computed.
-	accessibleNamespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
 	if err != nil {
 		return nil, err
-	}
-	accessible := make(map[string]struct{}, len(accessibleNamespaces))
-	for _, ns := range accessibleNamespaces {
-		accessible[ns.Name] = struct{}{}
 	}
 
 	validations := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster)
@@ -92,22 +88,89 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 		if _, ok := accessible[key.Namespace]; !ok {
 			continue
 		}
-		// Copy before pruning: the map values are pointers into the shared
-		// SA-populated cache and must not be mutated.
-		filteredValidation := *validation
-		// Drop references that point into namespaces outside the accessible
-		// set, so object names in denied namespaces are not disclosed through
-		// references.
-		filteredReferences := make([]models.IstioValidationKey, 0, len(validation.References))
-		for _, ref := range validation.References {
-			if _, ok := accessible[ref.Namespace]; ok {
-				filteredReferences = append(filteredReferences, ref)
-			}
-		}
-		filteredValidation.References = filteredReferences
-		filtered[key] = &filteredValidation
+		filtered[key] = pruneInaccessibleReferences(validation, accessible)
 	}
 	return filtered, nil
+}
+
+// accessibleNamespaceSet resolves the user's accessible namespaces for the
+// cluster into a lookup set used to authorization-filter SA-backed
+// validations. Fails closed when the set cannot be computed. The per-cluster
+// path is used rather than the GetNamespaces union: the namespace gates in
+// the callers resolve and cache exactly this token+cluster entry, so this is
+// a cache hit in any topology (the union could also warm unrelated clusters'
+// entries on a cold token cache, only to filter them away), and a cluster
+// with no user client surfaces as an AccessibleNamespaceError (403, "no
+// client means denied") rather than an empty set.
+func (in *IstioValidationsService) accessibleNamespaceSet(ctx context.Context, cluster string) (map[string]struct{}, error) {
+	accessibleNamespaces, err := in.namespace.getClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	accessible := make(map[string]struct{}, len(accessibleNamespaces))
+	for _, ns := range accessibleNamespaces {
+		accessible[ns.Name] = struct{}{}
+	}
+	return accessible, nil
+}
+
+// pruneInaccessibleReferences returns a copy of the validation with
+// references that point into namespaces outside the accessible set removed,
+// so object names in denied namespaces are not disclosed through references.
+// The map values are pointers into the shared SA-populated cache and must not
+// be mutated, hence the copy.
+func pruneInaccessibleReferences(validation *models.IstioValidation, accessible map[string]struct{}) *models.IstioValidation {
+	filteredValidation := *validation
+	filteredValidation.References = accessibleReferences(validation.References, accessible)
+	return &filteredValidation
+}
+
+// accessibleReferences returns only the references that point into namespaces
+// in the accessible set. A nil input stays nil so the pruning does not change
+// the response shape of entries without references.
+func accessibleReferences(references []models.IstioValidationKey, accessible map[string]struct{}) []models.IstioValidationKey {
+	if references == nil {
+		return nil
+	}
+	filteredReferences := make([]models.IstioValidationKey, 0, len(references))
+	for _, ref := range references {
+		if _, ok := accessible[ref.Namespace]; ok {
+			filteredReferences = append(filteredReferences, ref)
+		}
+	}
+	return filteredReferences
+}
+
+// pruneInaccessibleObjectReferences returns a copy of the on-demand
+// validation references with entries pointing into namespaces outside the
+// accessible set removed, so object, service and workload names in denied
+// namespaces are not disclosed through the references map. Copy before
+// pruning: the values may be shared with other callers.
+func pruneInaccessibleObjectReferences(references *models.IstioReferences, accessible map[string]struct{}) *models.IstioReferences {
+	if references == nil {
+		return nil
+	}
+	filtered := models.IstioReferences{
+		ObjectReferences:   make([]models.IstioReference, 0, len(references.ObjectReferences)),
+		ServiceReferences:  make([]models.ServiceReference, 0, len(references.ServiceReferences)),
+		WorkloadReferences: make([]models.WorkloadReference, 0, len(references.WorkloadReferences)),
+	}
+	for _, ref := range references.ObjectReferences {
+		if _, ok := accessible[ref.Namespace]; ok {
+			filtered.ObjectReferences = append(filtered.ObjectReferences, ref)
+		}
+	}
+	for _, ref := range references.ServiceReferences {
+		if _, ok := accessible[ref.Namespace]; ok {
+			filtered.ServiceReferences = append(filtered.ServiceReferences, ref)
+		}
+	}
+	for _, ref := range references.WorkloadReferences {
+		if _, ok := accessible[ref.Namespace]; ok {
+			filtered.WorkloadReferences = append(filtered.WorkloadReferences, ref)
+		}
+	}
+	return &filtered
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {
@@ -117,10 +180,20 @@ func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Contex
 		return nil, err
 	}
 
+	// The validations cache is populated by the Kiali ServiceAccount, so the
+	// Kubernetes API cannot enforce the user's RBAC on the references attached
+	// to the returned entries: prune references into namespaces outside the
+	// user's accessible set, the same way the cluster-wide GetValidations
+	// does. Fail closed when the set cannot be computed.
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
 	namespaceValidations := models.IstioValidations{}
 	for validationKey, validation := range in.kialiCache.Validations().Items() {
 		if validationKey.Namespace == namespace && validationKey.Cluster == cluster {
-			namespaceValidations[validationKey] = validation
+			namespaceValidations[validationKey] = pruneInaccessibleReferences(validation, accessible)
 		}
 	}
 	return namespaceValidations, nil
@@ -139,8 +212,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
+	return in.prunedValidationsFor(ctx, cluster, schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service)
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -153,8 +225,25 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	return in.prunedValidationsFor(ctx, cluster, schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload)
+}
+
+// prunedValidationsFor returns the cached validations of the single object
+// identified by objectGVK and name, with references into namespaces outside
+// the user's accessible set pruned (see pruneInaccessibleReferences). Fail
+// closed when the set cannot be computed.
+func (in *IstioValidationsService) prunedValidationsFor(ctx context.Context, cluster string, objectGVK schema.GroupVersionKind, name string) (models.IstioValidations, error) {
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster).FilterBySingleType(objectGVK, name)
+	pruned := models.IstioValidations{}
+	for key, validation := range filtered {
+		pruned[key] = pruneInaccessibleReferences(validation, accessible)
+	}
+	return pruned, nil
 }
 
 type validationNamespaceInfo struct {
@@ -847,6 +936,23 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 
 	for k, v := range validations {
 		in.kialiCache.Validations().Set(k, v)
+	}
+
+	// This result is served directly to the requesting user (the config
+	// details, update and delete responses), so prune references into
+	// namespaces outside the user's accessible set — the same protection the
+	// cache read paths (GetValidations and friends) apply. The shared cache
+	// above keeps the unpruned entry: pruning is a per-user, read-path
+	// concern. Fail closed when the set cannot be computed.
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, nil, err
+	}
+	for key, validation := range validations {
+		validations[key] = pruneInaccessibleReferences(validation, accessible)
+	}
+	for key, references := range istioReferences {
+		istioReferences[key] = pruneInaccessibleObjectReferences(references, accessible)
 	}
 
 	return validations, istioReferences, nil
