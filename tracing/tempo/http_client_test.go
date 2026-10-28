@@ -353,3 +353,53 @@ func TestConvertSingleTraceSurfacesNamespaceResourceTags(t *testing.T) {
 	require.True(t, found, "k8s.namespace.name must be surfaced as a process tag")
 	assert.Equal(t, "my-app", spans[0].Process.ServiceName)
 }
+
+// TestConvertSingleTraceSurfacesClusterResourceTags pins the converter
+// extension the cluster-aware trace authorization depends on: the
+// cluster-bearing OTel resource attribute (k8s.cluster.name) must be
+// surfaced as a Jaeger process tag — otherwise Tempo traces lose their
+// cluster attribution and their namespaces fall back to name-only
+// authorization in CheckTraceAccess.
+func TestConvertSingleTraceSurfacesClusterResourceTags(t *testing.T) {
+	data := &otelJson.Data{
+		Batches: []otelJson.Batch{{
+			Resource: otelJson.Resource{
+				Attributes: []otelJson.Attribute{
+					{Key: "service.name", Value: otelJson.ValueString{StringValue: "my-app"}},
+					{Key: "k8s.cluster.name", Value: otelJson.ValueString{StringValue: "cluster-b"}},
+					{Key: "unrelated.attr", Value: otelJson.ValueString{StringValue: "x"}},
+				},
+			},
+			ScopeSpans: []otelJson.ScopeSpan{{
+				Spans: []otelJson.Span{{
+					TraceID:           "abcdef1234567890",
+					SpanID:            "s1",
+					Name:              "GET /",
+					Kind:              "SPAN_KIND_SERVER",
+					StartTimeUnixNano: "1700000000000000000",
+					EndTimeUnixNano:   "1700000001000000000",
+				}},
+			}},
+		}},
+	}
+
+	resp, err := convertSingleTrace(data, "abcdef1234567890")
+	require.NoError(t, err)
+	require.Len(t, resp.Data, 1)
+
+	spans := resp.Data[0].Spans
+	require.Len(t, spans, 1)
+	require.NotNil(t, spans[0].Process, "the converted span must carry a process")
+
+	var found bool
+	for _, tag := range spans[0].Process.Tags {
+		if tag.Key == "k8s.cluster.name" {
+			found = true
+			require.Equal(t, "cluster-b", tag.Value)
+		}
+		if tag.Key == "unrelated.attr" {
+			t.Errorf("unrelated resource attributes must not be surfaced: %v", tag)
+		}
+	}
+	require.True(t, found, "k8s.cluster.name must be surfaced as a process tag")
+}

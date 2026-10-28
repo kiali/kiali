@@ -484,3 +484,179 @@ func TestCheckTraceAccess(t *testing.T) {
 	require.Error(err)
 	require.True(IsAccessibleError(err))
 }
+
+// TestExtractTraceNamespaceScope pins the cluster-aware namespace
+// extraction: namespace information is paired with the span's cluster
+// attribution when present (model.ClusterTagKeys) and collected as
+// cluster-less otherwise.
+func TestExtractTraceNamespaceScope(t *testing.T) {
+	require := require.New(t)
+
+	// Sidecar span with cluster attribution: istio.cluster_id pairs with
+	// both the istio.namespace tag and the node_id namespace.
+	sidecar := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "cluster-a"},
+			{Key: "istio.namespace", Value: "bookinfo"},
+			{Key: "node_id", Value: "sidecar~172.17.0.20~reviews-6d8996bff-ztg6z.bookinfo~bookinfo.svc.cluster.local"},
+		},
+	}}}}
+	scope := extractTraceNamespaceScope(sidecar)
+	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-a"])
+	require.Empty(scope.unscoped)
+
+	// Span without cluster attribution: the namespace is cluster-less.
+	unscoped := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+	}}}}
+	scope = extractTraceNamespaceScope(unscoped)
+	require.Empty(scope.byCluster)
+	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.unscoped)
+
+	// OTel resource attributes surfaced as process tags: k8s.cluster.name
+	// pairs with k8s.namespace.name.
+	otelTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "k8s.cluster.name", Value: "cluster-b"},
+			{Key: "k8s.namespace.name", Value: "otel-ns"},
+		}},
+	}}}}
+	scope = extractTraceNamespaceScope(otelTrace)
+	require.Equal(map[string]struct{}{"otel-ns": {}}, scope.byCluster["cluster-b"])
+	require.Empty(scope.unscoped)
+
+	// Mixed trace: one attributed span and one cluster-less span.
+	mixed := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{
+		{Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "cluster-a"},
+			{Key: "istio.namespace", Value: "bookinfo"},
+		}},
+		{Tags: []jaegerModels.KeyValue{
+			{Key: "istio.namespace", Value: "sleep"},
+		}},
+	}}}
+	scope = extractTraceNamespaceScope(mixed)
+	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.byCluster["cluster-a"])
+	require.Equal(map[string]struct{}{"sleep": {}}, scope.unscoped)
+
+	// Cluster tags without namespace information contribute nothing.
+	clusterOnly := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "cluster-a"},
+		},
+	}}}}
+	require.True(extractTraceNamespaceScope(clusterOnly).empty())
+}
+
+// TestCheckTraceAccessClusterAware pins the cluster-aware trace-details
+// authorization: a namespace the telemetry attributes to a cluster
+// (istio.cluster_id / k8s.cluster.name) must be accessible to the user in
+// that cluster — access to a same-named namespace in another cluster must
+// not authorize the trace. Cluster-less namespaces keep the name-based
+// rule, since sidecar telemetry often carries no cluster tag.
+func TestCheckTraceAccessClusterAware(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	home := conf.KubernetesConfig.ClusterName
+	const remote = "cluster-b"
+
+	// Both clusters have a bookinfo namespace. The user can see it in the
+	// home cluster only; in the remote cluster their LIST is empty.
+	homeSA := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	homeSA.Token = "home-sa-token"
+	remoteSA := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	remoteSA.Token = "remote-sa-token"
+	homeUser := kubetest.NewNamespaceRestrictedClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")), "user-token", []string{"bookinfo"})
+	remoteUser := kubetest.NewNamespaceRestrictedClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")), "user-token", nil)
+
+	saClients := map[string]kubernetes.ClientInterface{home: homeSA, remote: remoteSA}
+	userClients := map[string]kubernetes.UserClientInterface{home: homeUser, remote: remoteUser}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	traceWith := func(spans ...[]jaegerModels.KeyValue) *model.TracingSingleTrace {
+		trace := &model.TracingSingleTrace{Data: jaegerModels.Trace{}}
+		for _, tags := range spans {
+			trace.Data.Spans = append(trace.Data.Spans, jaegerModels.Span{Tags: tags})
+		}
+		return trace
+	}
+
+	// The reported scenario: the trace is attributed to the remote cluster,
+	// where the user cannot see bookinfo. Access to bookinfo in the home
+	// cluster must not authorize it.
+	remoteTrace := traceWith([]jaegerModels.KeyValue{
+		{Key: "istio.cluster_id", Value: remote},
+		{Key: "istio.namespace", Value: "bookinfo"},
+	})
+	err := layer.Tracing.CheckTraceAccess(context.TODO(), remoteTrace)
+	require.Error(err)
+	require.True(IsAccessibleError(err))
+
+	// The OTel cluster attribute scopes the same way.
+	remoteOTelTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "k8s.cluster.name", Value: remote},
+			{Key: "k8s.namespace.name", Value: "bookinfo"},
+		}},
+	}}}}
+	err = layer.Tracing.CheckTraceAccess(context.TODO(), remoteOTelTrace)
+	require.Error(err)
+	require.True(IsAccessibleError(err))
+
+	// The same trace attributed to the home cluster: allowed.
+	homeTrace := traceWith([]jaegerModels.KeyValue{
+		{Key: "istio.cluster_id", Value: home},
+		{Key: "istio.namespace", Value: "bookinfo"},
+	})
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), homeTrace))
+
+	// Cluster-less spans keep the name-based rule: allowed via home.
+	unscopedTrace := traceWith([]jaegerModels.KeyValue{
+		{Key: "istio.namespace", Value: "bookinfo"},
+	})
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), unscopedTrace))
+
+	// A trace with both attributed (remote) and cluster-less spans is
+	// authorized through the fallback: failing closed on partially
+	// attributed traces would deny legitimate sidecar telemetry.
+	mixedTrace := traceWith(
+		[]jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: remote},
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+		[]jaegerModels.KeyValue{
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+	)
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), mixedTrace))
+
+	// A cross-cluster trace participating in an accessible (home) and an
+	// inaccessible (remote) cluster: at least one accessible participating
+	// namespace authorizes it, consistent with the trace list endpoints
+	// returning whole traces.
+	crossClusterTrace := traceWith(
+		[]jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: home},
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+		[]jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: remote},
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+	)
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), crossClusterTrace))
+
+	// A cluster the user has no client for: denied (fail closed).
+	noClientTrace := traceWith([]jaegerModels.KeyValue{
+		{Key: "istio.cluster_id", Value: "cluster-c"},
+		{Key: "istio.namespace", Value: "bookinfo"},
+	})
+	err = layer.Tracing.CheckTraceAccess(context.TODO(), noClientTrace)
+	require.Error(err)
+	require.True(IsAccessibleError(err))
+}

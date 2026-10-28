@@ -305,39 +305,23 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 // TraceNamespaces returns the distinct namespaces a trace participates in,
 // extracted from every source Kiali's span model can carry: the istio.*
 // span tags and OTel resource attributes listed in model.NamespaceTagKeys,
-// and the `node_id` tag. Spans without namespace information do not
-// contribute. Sorted for determinism.
+// and the `node_id` tag. Cluster attribution is ignored here; see
+// extractTraceNamespaceScope for the cluster-aware view used by
+// CheckTraceAccess. Spans without namespace information do not contribute.
+// Sorted for determinism.
 func TraceNamespaces(trace *model.TracingSingleTrace) []string {
-	if trace == nil {
+	scope := extractTraceNamespaceScope(trace)
+	seen := make(map[string]struct{}, len(scope.unscoped))
+	for ns := range scope.unscoped {
+		seen[ns] = struct{}{}
+	}
+	for _, namespaces := range scope.byCluster {
+		for ns := range namespaces {
+			seen[ns] = struct{}{}
+		}
+	}
+	if len(seen) == 0 {
 		return nil
-	}
-	seen := make(map[string]struct{})
-	collect := func(key, value string) {
-		if value != "" && slices.Contains(model.NamespaceTagKeys, key) {
-			seen[value] = struct{}{}
-		}
-	}
-	for _, span := range trace.Data.Spans {
-		for _, tag := range span.Tags {
-			if tag.Key == "node_id" {
-				if v, ok := tag.Value.(string); ok {
-					if ns := namespaceFromNodeID(v); ns != "" {
-						seen[ns] = struct{}{}
-					}
-				}
-				continue
-			}
-			if v, ok := tag.Value.(string); ok {
-				collect(tag.Key, v)
-			}
-		}
-		if span.Process != nil {
-			for _, tag := range span.Process.Tags {
-				if v, ok := tag.Value.(string); ok {
-					collect(tag.Key, v)
-				}
-			}
-		}
 	}
 	namespaces := make([]string, 0, len(seen))
 	for ns := range seen {
@@ -345,6 +329,99 @@ func TraceNamespaces(trace *model.TracingSingleTrace) []string {
 	}
 	sort.Strings(namespaces)
 	return namespaces
+}
+
+// traceNamespaceScope is the namespace-participation view of a trace used
+// for authorization: the namespaces the telemetry attributes to a specific
+// cluster, and the namespaces it does not attribute to any cluster.
+type traceNamespaceScope struct {
+	// byCluster maps a cluster to the namespaces the trace participates in
+	// on that cluster (from spans carrying cluster attribution via
+	// model.ClusterTagKeys).
+	byCluster map[string]map[string]struct{}
+
+	// unscoped holds the namespaces from spans without cluster attribution.
+	unscoped map[string]struct{}
+}
+
+func (s *traceNamespaceScope) empty() bool {
+	return len(s.byCluster) == 0 && len(s.unscoped) == 0
+}
+
+// extractTraceNamespaceScope walks every span of the trace and pairs each
+// span's namespace information (the model.NamespaceTagKeys tags and the
+// `node_id` tag) with the span's cluster attribution (the model.ClusterTagKeys
+// tags) when present. A span without cluster attribution contributes its
+// namespaces to unscoped. Spans without namespace information do not
+// contribute.
+func extractTraceNamespaceScope(trace *model.TracingSingleTrace) *traceNamespaceScope {
+	scope := &traceNamespaceScope{
+		byCluster: map[string]map[string]struct{}{},
+		unscoped:  map[string]struct{}{},
+	}
+	if trace == nil {
+		return scope
+	}
+	for _, span := range trace.Data.Spans {
+		cluster := spanCluster(span)
+		add := func(namespace string) {
+			if namespace == "" {
+				return
+			}
+			if cluster == "" {
+				scope.unscoped[namespace] = struct{}{}
+				return
+			}
+			set, ok := scope.byCluster[cluster]
+			if !ok {
+				set = map[string]struct{}{}
+				scope.byCluster[cluster] = set
+			}
+			set[namespace] = struct{}{}
+		}
+		for _, tag := range span.Tags {
+			if v, ok := tag.Value.(string); ok {
+				if tag.Key == "node_id" {
+					add(namespaceFromNodeID(v))
+					continue
+				}
+				if slices.Contains(model.NamespaceTagKeys, tag.Key) {
+					add(v)
+				}
+			}
+		}
+		if span.Process != nil {
+			for _, tag := range span.Process.Tags {
+				if v, ok := tag.Value.(string); ok && slices.Contains(model.NamespaceTagKeys, tag.Key) {
+					add(v)
+				}
+			}
+		}
+	}
+	return scope
+}
+
+// spanCluster returns the cluster the span's telemetry is attributed to,
+// from the span tags or the process tags (OTel resource attributes surfaced
+// by the converters). Empty when the span carries no cluster attribution.
+func spanCluster(span jaegerModels.Span) string {
+	clusterFromTags := func(tags []jaegerModels.KeyValue) string {
+		for _, tag := range tags {
+			if slices.Contains(model.ClusterTagKeys, tag.Key) {
+				if v, ok := tag.Value.(string); ok && v != "" {
+					return v
+				}
+			}
+		}
+		return ""
+	}
+	if cluster := clusterFromTags(span.Tags); cluster != "" {
+		return cluster
+	}
+	if span.Process != nil {
+		return clusterFromTags(span.Process.Tags)
+	}
+	return ""
 }
 
 // namespaceFromNodeID extracts the namespace from a sidecar/router/waypoint
@@ -364,25 +441,58 @@ func namespaceFromNodeID(nodeID string) string {
 }
 
 // CheckTraceAccess authorizes a fetched trace: the user must be able to
-// access at least one namespace the trace participates in (see
-// TraceNamespaces, resolved against the union of the user's accessible
-// namespaces across clusters). It is the shared authorization for the
-// trace-details endpoint and the get_trace_details MCP tool, so the two
-// cannot drift. A trace with no recognizable namespace information is
-// denied (fail closed) — this hides traces from non-mesh apps whose
-// telemetry carries no namespace information.
+// access at least one namespace the trace participates in. Where the
+// telemetry attributes a namespace to a cluster (the model.ClusterTagKeys
+// tags: the `istio.cluster_id` span tag, the `k8s.cluster.name` OTel
+// resource attribute), the namespace must be accessible to the user in that
+// specific cluster — a namespace the user can only see in another cluster
+// does not authorize a trace attributed elsewhere. Namespaces without
+// cluster attribution are authorized by name against any cluster: the
+// telemetry cannot be scoped more precisely, and failing closed on them
+// would deny traces whose sidecar spans carry no cluster tag. It is the
+// shared authorization for the trace-details endpoint and the
+// get_trace_details MCP tool, so the two cannot drift. A trace with no
+// recognizable namespace information is denied (fail closed) — this hides
+// traces from non-mesh apps whose telemetry carries no namespace
+// information.
 func (in *TracingService) CheckTraceAccess(ctx context.Context, trace *model.TracingSingleTrace) error {
-	traceNamespaces := TraceNamespaces(trace)
-	if len(traceNamespaces) == 0 {
+	scope := extractTraceNamespaceScope(trace)
+	if scope.empty() {
 		return NewAccessibleNamespaceError("trace does not reference any accessible namespace")
 	}
 	accessible, err := in.namespace.GetNamespaces(ctx)
 	if err != nil {
 		return err
 	}
+	// Group the accessible set by cluster. The union is assembled from the
+	// per-cluster per-token cache entries, so this adds no computation over
+	// what the name-only check already fetched.
+	accessibleByCluster := make(map[string]map[string]struct{})
 	for _, ns := range accessible {
-		if slices.Contains(traceNamespaces, ns.Name) {
-			return nil
+		set, ok := accessibleByCluster[ns.Cluster]
+		if !ok {
+			set = make(map[string]struct{})
+			accessibleByCluster[ns.Cluster] = set
+		}
+		set[ns.Name] = struct{}{}
+	}
+	// Cluster-attributed namespaces require access to that namespace in
+	// that cluster.
+	for cluster, namespaces := range scope.byCluster {
+		if set, ok := accessibleByCluster[cluster]; ok {
+			for ns := range namespaces {
+				if _, ok := set[ns]; ok {
+					return nil
+				}
+			}
+		}
+	}
+	// Cluster-less namespaces fall back to name matching in any cluster.
+	for ns := range scope.unscoped {
+		for _, set := range accessibleByCluster {
+			if _, ok := set[ns]; ok {
+				return nil
+			}
 		}
 	}
 	return NewAccessibleNamespaceError("trace does not reference any accessible namespace")

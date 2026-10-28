@@ -95,3 +95,15 @@ var NamespaceTagKeys = []string{
 	"istio.source_namespace",
 	"k8s.namespace.name",
 }
+
+// ClusterTagKeys is the single list of tag (and OTel resource attribute)
+// keys that carry the cluster a span's telemetry belongs to: the istio
+// cluster ID tag and the OTel semconv for the cluster name. It is shared by
+// the cluster-aware trace access check (business.TracingService) and the
+// Tempo converter's surfacing of cluster-bearing resource attributes as
+// process tags: the two must agree, or Tempo traces lose their cluster
+// attribution and their namespaces fall back to name-only authorization.
+var ClusterTagKeys = []string{
+	"istio.cluster_id",
+	"k8s.cluster.name",
+}

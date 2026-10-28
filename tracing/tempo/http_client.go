@@ -295,10 +295,10 @@ func convertSingleTrace(traces *otelJson.Data, id string) (*model.TracingRespons
 			serviceName := getServiceName(batch.Resource.Attributes)
 			spans := converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)
 			// The OTel converters only use resource attributes for the service
-			// name; surface the namespace-bearing ones as process tags so
-			// span-namespace authorization (business.TraceNamespaces) can see
-			// them.
-			nsTags := namespaceResourceTags(batch.Resource.Attributes)
+			// name; surface the namespace- and cluster-bearing ones as process
+			// tags so span authorization (business.TraceNamespaces and the
+			// cluster-aware CheckTraceAccess) can see them.
+			nsTags := authorizationResourceTags(batch.Resource.Attributes)
 			for _, span := range spans {
 				span.Process.Tags = append(span.Process.Tags, nsTags...)
 			}
@@ -393,16 +393,18 @@ func hasErrors(trace otelModel.Trace) bool {
 	return false
 }
 
-// namespaceResourceTags extracts namespace-bearing OTel resource attributes
-// as Jaeger process tags. The OTel converters drop resource attributes (they
-// only use them for the service name), which would otherwise hide namespace
-// information from span-namespace authorization. The key list is shared with
-// the span namespace extraction (model.NamespaceTagKeys) so the two cannot
-// drift.
-func namespaceResourceTags(attributes []otelJson.Attribute) []jaegerModels.KeyValue {
+// authorizationResourceTags extracts the OTel resource attributes used for
+// span authorization as Jaeger process tags: the namespace-bearing keys
+// (model.NamespaceTagKeys) and the cluster-bearing keys
+// (model.ClusterTagKeys). The OTel converters drop resource attributes
+// (they only use them for the service name), which would otherwise hide
+// namespace and cluster information from the trace access check. The key
+// lists are shared with the span extraction in business/tracing.go so the
+// two cannot drift.
+func authorizationResourceTags(attributes []otelJson.Attribute) []jaegerModels.KeyValue {
 	var tags []jaegerModels.KeyValue
 	for _, attr := range attributes {
-		if slices.Contains(model.NamespaceTagKeys, attr.Key) {
+		if slices.Contains(model.NamespaceTagKeys, attr.Key) || slices.Contains(model.ClusterTagKeys, attr.Key) {
 			tags = append(tags, jaegerModels.KeyValue{Key: attr.Key, Value: attr.Value.StringValue})
 		}
 	}
