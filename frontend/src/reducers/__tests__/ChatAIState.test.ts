@@ -165,7 +165,7 @@ describe('AiTroubleshootingStateReducer', () => {
     expect(refreshed.enabled).toBe(true);
   });
 
-  it('counts open analysis modals and keeps the count when AI config is refreshed', () => {
+  it('tracks whether a troubleshooting analysis is open and keeps that when AI config is refreshed', () => {
     const opened = AiTroubleshootingStateReducer(
       INITIAL_TROUBLESHOOTING_STATE,
       ChatAIActions.setTroubleshootingAnalysisOpen(true)
@@ -173,16 +173,62 @@ describe('AiTroubleshootingStateReducer', () => {
     expect(opened.openAnalyses).toBe(1);
 
     const second = AiTroubleshootingStateReducer(opened, ChatAIActions.setTroubleshootingAnalysisOpen(true));
-    expect(second.openAnalyses).toBe(2);
+    expect(second).toBe(opened);
 
-    const closed = AiTroubleshootingStateReducer(second, ChatAIActions.setTroubleshootingAnalysisOpen(false));
-    expect(closed.openAnalyses).toBe(1);
-
-    const refreshed = AiTroubleshootingStateReducer(closed, ChatAIActions.setAI(aiConfig));
+    const refreshed = AiTroubleshootingStateReducer(opened, ChatAIActions.setAI(aiConfig));
     expect(refreshed.openAnalyses).toBe(1);
 
-    const none = AiTroubleshootingStateReducer(closed, ChatAIActions.setTroubleshootingAnalysisOpen(false));
-    expect(none.openAnalyses).toBe(0);
-    expect(AiTroubleshootingStateReducer(none, ChatAIActions.setTroubleshootingAnalysisOpen(false))).toBe(none);
+    const closed = AiTroubleshootingStateReducer(refreshed, ChatAIActions.setTroubleshootingAnalysisOpen(false));
+    expect(closed.openAnalyses).toBe(0);
+    expect(AiTroubleshootingStateReducer(closed, ChatAIActions.setTroubleshootingAnalysisOpen(false))).toBe(closed);
+  });
+
+  it('stores troubleshooting conversations so a closed drawer can restore one', () => {
+    const started = AiTroubleshootingStateReducer(
+      INITIAL_TROUBLESHOOTING_STATE,
+      ChatAIActions.startTroubleshootingConversation({
+        description: 'productpage',
+        problem: 'Requests fail',
+        prompt: 'Why?'
+      })
+    );
+    expect(started.drawerExpanded).toBe(true);
+    expect(started.openAnalyses).toBe(1);
+    expect(started.conversations.map(conversation => conversation.problem)).toEqual(['Requests fail']);
+    const conversationId = started.activeConversationId ?? '';
+
+    const withMessage = AiTroubleshootingStateReducer(
+      started,
+      ChatAIActions.addTroubleshootingConversationMessage({
+        conversationId,
+        message: { id: 0, text: '', truncated: false, who: 'ai', working: true }
+      })
+    );
+    const answered = AiTroubleshootingStateReducer(
+      withMessage,
+      ChatAIActions.patchTroubleshootingConversationMessage({
+        conversationId,
+        messageId: 0,
+        patch: { text: 'Check the pods', working: false }
+      })
+    );
+    expect(answered.conversations[0].messages[0].text).toBe('Check the pods');
+
+    const closed = AiTroubleshootingStateReducer(answered, ChatAIActions.setTroubleshootingDrawerExpanded(false));
+    expect(closed.drawerExpanded).toBe(false);
+    expect(closed.openAnalyses).toBe(0);
+    expect(closed.activeConversationId).toBe(conversationId);
+    expect(closed.conversations[0].messages[0].text).toBe('Check the pods');
+
+    const reopened = AiTroubleshootingStateReducer(
+      closed,
+      ChatAIActions.selectTroubleshootingConversation(conversationId)
+    );
+    expect(reopened.drawerExpanded).toBe(true);
+    expect(reopened.openAnalyses).toBe(1);
+
+    const refreshed = AiTroubleshootingStateReducer(reopened, ChatAIActions.setAI(aiConfig));
+    expect(refreshed.conversations).toEqual(reopened.conversations);
+    expect(refreshed.drawerExpanded).toBe(true);
   });
 });

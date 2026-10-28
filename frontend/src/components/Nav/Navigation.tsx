@@ -30,6 +30,7 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
+import { TroubleshootingDrawer } from 'components/TroubleshootingDrawer/TroubleshootingDrawer';
 import { ChatBot } from 'components/ChatBot/ChatBot';
 import { ParentAppearanceSync } from 'components/Kiosk/ParentAppearanceSync';
 
@@ -164,7 +165,9 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     >
       {kioskMode && <ParentAppearanceSync />}
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
-        <RenderPage isGraph={isGraph()} />
+        <TroubleshootingDrawer>
+          <RenderPage isGraph={isGraph()} />
+        </TroubleshootingDrawer>
       </PageSection>
       {!kioskMode && props.chatbotEnabled && <ChatBot />}
     </Page>

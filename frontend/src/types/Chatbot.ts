@@ -316,3 +316,37 @@ export type TroubleshootingIssue = {
   problem: string;
   subProblems: TroubleshootingSubProblem[];
 };
+
+/** One turn in a troubleshooting drawer conversation. */
+export type TroubleshootingConversationMessage = {
+  error?: string;
+  id: number;
+  text: string;
+  truncated: boolean;
+  who: 'ai' | 'user';
+  working: boolean;
+};
+
+export type TroubleshootingConversationMessagePatch = Partial<
+  Pick<TroubleshootingConversationMessage, 'error' | 'text' | 'truncated' | 'working'>
+>;
+
+/** A troubleshooting chat kept so the drawer can reopen it. */
+export type TroubleshootingConversation = {
+  // Id returned by the AI stream. Follow-up replies continue this backend conversation.
+  backendConversationId?: string;
+  createdAt: number;
+  description?: string;
+  id: string;
+  messages: TroubleshootingConversationMessage[];
+  problem: string;
+  prompt: string;
+  subProblem?: TroubleshootingSubProblem;
+};
+
+export type StartTroubleshootingConversationPayload = {
+  description?: string;
+  problem: string;
+  prompt: string;
+  subProblem?: TroubleshootingSubProblem;
+};
