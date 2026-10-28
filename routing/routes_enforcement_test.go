@@ -106,7 +106,7 @@ var exemptRoutes = map[string]string{
 	"MeshTls":                   "mesh-wide mTLS status; not namespace-scoped",
 	"MeshControlPlanes":         "control-plane visibility via filterAccessibleControlPlanes (fail closed)",
 	"MeshGraph":                 "mesh-access gate + filterAccessibleControlPlanes",
-	"IstioStatus":               "control-plane component status; not namespace-scoped",
+	"IstioStatus":               "control-plane entries kept for all users; autodiscovered gateway entries filtered by the accessible set (filterStatusForUser); body-checked in business tests",
 	"Diagnose":                  "gated by HasMeshAccess (accessible-set based)",
 	"Tracing check":             "gated by HasMeshAccess (accessible-set based)",
 	"GraphNamespaces":           "graph engine filters namespaces by the accessible set",

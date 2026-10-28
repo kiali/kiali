@@ -206,14 +206,27 @@ func (in *WorkloadService) GetGateways(ctx context.Context) (models.Workloads, e
 		return gateways, nil
 	}
 
+	// The gateway cache is shared by every user, so it is populated with the
+	// SA-visible gateways of every Kiali-accessible cluster. A user-scoped
+	// fetch here would make the cached content depend on which user warmed
+	// it: a broad user's gateways would leak to restricted ones, and a
+	// restricted user would truncate the list for everyone until the cache
+	// expires. Consumers filter the cached list per user.
 	gateways := models.Workloads{}
-	for cluster := range in.userClients {
-		workloads, err := in.GetAllWorkloads(ctx, cluster, "")
+	for cluster := range in.kialiSAClients {
+		saNamespaces, err := in.businessLayer.Namespace.GetKialiSAClusterNamespaces(ctx, cluster)
+		if err != nil {
+			log.Debugf("GetGateways: Error getting SA namespaces for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		namespaces := sliceutil.Map(saNamespaces, func(ns models.Namespace) string {
+			return ns.Name
+		})
+		workloads, err := in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, "", nil)
 		if err != nil {
 			log.Debugf("GetGateways: Error fetching workloads for cluster=[%s]: %s", cluster, err.Error())
 			continue
 		}
-
 		clusterGateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
 			return w.IsGatewayWorkload()
 		})
@@ -996,23 +1009,6 @@ func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, co
 // fetchWorkloadsFromCluster returns all cluster workloads for the specified namespaces. The caller must have access to all of
 // the specified namespaces or it is an error. If <namespaces> is empty it returns the workloads for all accessible namespaces.
 func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, fetchNamespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
-	var pods []core_v1.Pod
-	var repcon []core_v1.ReplicationController
-	var dep []apps_v1.Deployment
-	var repset []apps_v1.ReplicaSet
-	var depcon []osapps_v1.DeploymentConfig
-	var fulset []apps_v1.StatefulSet
-	var jbs []batch_v1.Job
-	var cronjbs []batch_v1.CronJob
-	var daeset []apps_v1.DaemonSet
-	var wgroups []*networking_v1.WorkloadGroup
-	var wentries []*networking_v1.WorkloadEntry
-	var sidecars []*networking_v1.Sidecar
-
-	ws := models.Workloads{}
-
-	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
-
 	accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		return nil, err
@@ -1031,7 +1027,34 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return ns.Name
 	})
 
-	// we've already established the user has access to the namespaces; use SA client to obtain namespace resource info
+	return in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, labelSelector, waypoints)
+}
+
+// fetchWorkloadsInNamespaces fetches the workloads of the given namespaces
+// using the Kiali ServiceAccount clients and the kube cache. It performs no
+// access check of its own: the caller resolves — and, on user-facing paths,
+// authorizes — the namespace list. The shared gateway cache uses it with the
+// SA-visible namespace set so that the cached content does not depend on
+// which user happened to warm it.
+func (in *WorkloadService) fetchWorkloadsInNamespaces(ctx context.Context, cluster string, namespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep []apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon []osapps_v1.DeploymentConfig
+	var fulset []apps_v1.StatefulSet
+	var jbs []batch_v1.Job
+	var cronjbs []batch_v1.CronJob
+	var daeset []apps_v1.DaemonSet
+	var wgroups []*networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
+	var sidecars []*networking_v1.Sidecar
+
+	ws := models.Workloads{}
+
+	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
+
+	// we've already established the caller has access to the namespaces; use SA client to obtain namespace resource info
 	client, ok := in.kialiSAClients[cluster]
 	if !ok {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)

@@ -28,6 +28,7 @@ func NewIstioStatusService(
 	userClients map[string]kubernetes.UserClientInterface,
 	workloads *WorkloadService,
 	health *HealthService,
+	namespace *NamespaceService,
 ) IstioStatusService {
 	return IstioStatusService{
 		cache:               cache,
@@ -35,6 +36,7 @@ func NewIstioStatusService(
 		discovery:           discovery,
 		health:              health,
 		homeClusterSAClient: homeClusterSAClient,
+		namespace:           namespace,
 		tracing:             tracing,
 		userClients:         userClients,
 		workloads:           workloads,
@@ -49,6 +51,7 @@ type IstioStatusService struct {
 	discovery           istio.MeshDiscovery
 	health              *HealthService
 	homeClusterSAClient kubernetes.ClientInterface
+	namespace           *NamespaceService
 	tracing             *TracingService
 	userClients         map[string]kubernetes.UserClientInterface
 	workloads           *WorkloadService
@@ -108,7 +111,7 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 	}
 
 	if istioStatus, ok := iss.cache.GetIstioStatus(); ok {
-		return istioStatus, nil
+		return iss.filterStatusForUser(ctx, istioStatus)
 	}
 
 	// Fetch mesh once and build lookup maps to avoid repeated calls
@@ -136,7 +139,62 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 
 	iss.cache.SetIstioStatus(result)
 
-	return result, nil
+	return iss.filterStatusForUser(ctx, result)
+}
+
+// filterStatusForUser removes the status entries the requesting user cannot
+// see. The autodiscovered gateways are tenant data — they live in arbitrary
+// namespaces and the shared status and gateway caches hold them SA-wide — so
+// a namespace-bearing entry outside the control-plane namespaces is kept
+// only when the user can access its namespace in its cluster. Control-plane
+// entries (istiod and the configured component namespaces) are kept for
+// every user: the control plane's status is mesh-wide information Kiali
+// exposes deliberately, like the mesh endpoints do. Entries without a
+// namespace (addons, managed-cluster istiod placeholders) disclose no
+// namespace and are kept.
+func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status kubernetes.IstioComponentStatus) (kubernetes.IstioComponentStatus, error) {
+	if len(status) == 0 {
+		return status, nil
+	}
+	accessible, err := iss.namespace.GetNamespaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// The NUL separator cannot occur in a namespace name.
+	accessiblePairs := make(map[string]struct{}, len(accessible))
+	for _, ns := range accessible {
+		accessiblePairs[ns.Cluster+"\x00"+ns.Name] = struct{}{}
+	}
+
+	mesh, err := iss.discovery.Mesh(ctx)
+	if err != nil {
+		return nil, err
+	}
+	controlPlaneNamespaces := make(map[string]struct{})
+	for _, ns := range getComponentNamespaces(iss.conf) {
+		controlPlaneNamespaces[ns] = struct{}{}
+	}
+	for _, cp := range mesh.ControlPlanes {
+		if cp.IstiodNamespace != "" {
+			controlPlaneNamespaces[cp.IstiodNamespace] = struct{}{}
+		}
+	}
+
+	filtered := make(kubernetes.IstioComponentStatus, 0, len(status))
+	for _, component := range status {
+		if component.Namespace == "" {
+			filtered = append(filtered, component)
+			continue
+		}
+		if _, ok := controlPlaneNamespaces[component.Namespace]; ok {
+			filtered = append(filtered, component)
+			continue
+		}
+		if _, ok := accessiblePairs[component.Cluster+"\x00"+component.Namespace]; ok {
+			filtered = append(filtered, component)
+		}
+	}
+	return filtered, nil
 }
 
 func (iss *IstioStatusService) getIstioComponentStatus(ctx context.Context, cluster string, mesh *models.Mesh, namespaceMeshMap namespaceMeshMap) (kubernetes.IstioComponentStatus, error) {

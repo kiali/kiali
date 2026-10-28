@@ -10,12 +10,15 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
@@ -904,4 +907,118 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 
 	}
 	return conf
+}
+
+// gatewayDeployment builds a deployment that IsGatewayWorkload detects as a
+// gateway (the istioctl labeling).
+func gatewayDeployment(namespace, name string) *apps_v1.Deployment {
+	return &apps_v1.Deployment{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{"app": name},
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Selector: &meta_v1.LabelSelector{
+				MatchLabels: map[string]string{"istio": "ingressgateway"},
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Labels: map[string]string{"istio": "ingressgateway"},
+				},
+			},
+		},
+	}
+}
+
+// TestGetGatewaysPopulatesSharedCacheSAWide pins that the shared gateway
+// cache is populated with the SA-visible gateways, not the warming user's
+// accessible subset: the cache serves every user, so a user-scoped fetch
+// would truncate the list for broader users (and leak to narrower ones).
+func TestGetGatewaysPopulatesSharedCacheSAWide(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// Gateway workloads in the accessible namespace and in a namespace the
+	// user cannot see. The SA sees both.
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("victim-ns"),
+		gatewayDeployment("bookinfo", "gw-allowed"),
+		gatewayDeployment("victim-ns", "gw-victim"),
+	}
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	user := kubetest.NewNamespaceRestrictedClient(kubetest.NewFakeK8sClient(objects...), "user-token", []string{"bookinfo"})
+
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	// The restricted user warms the shared cache.
+	gateways, err := layer.Workload.GetGateways(context.TODO())
+	require.NoError(err)
+
+	gatewayNamespaces := make(map[string]string, len(gateways))
+	for _, gw := range gateways {
+		gatewayNamespaces[gw.Name] = gw.Namespace
+	}
+	assert.Equal("bookinfo", gatewayNamespaces["gw-allowed"], "the accessible namespace's gateway must be cached")
+	assert.Equal("victim-ns", gatewayNamespaces["gw-victim"], "the SA-visible denied namespace's gateway must be cached too: the cache is SA-scoped")
+}
+
+// TestGetStatusFiltersCachedGatewayEntriesForUser pins the istio status
+// authorization at the cached read path: the shared status cache holds the
+// SA-wide gateway list (whatever user warmed it), so the entries returned to
+// a restricted user must be filtered. Control-plane entries are kept without
+// access (mesh-wide information, like the mesh endpoints expose), entries
+// without a namespace are kept (they disclose none), and a gateway in a
+// namespace the user cannot access is dropped.
+func TestGetStatusFiltersCachedGatewayEntriesForUser(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.Istio.ComponentStatuses.Enabled = true
+	// The configured control-plane namespace: its entries are kept for every
+	// user regardless of namespace access.
+	conf.ExternalServices.Istio.ComponentStatuses.Components = []config.ComponentStatus{
+		{AppLabel: "istiod", IsCore: true, Namespace: "istio-system"},
+	}
+	cluster := conf.KubernetesConfig.ClusterName
+
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns", "istio-system"}, []string{"bookinfo"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	// A broader user's request computed and cached the status; the gateway
+	// entries in it span the SA-visible namespaces.
+	kialiCache.SetIstioStatus(kubernetes.IstioComponentStatus{
+		{Cluster: cluster, Name: "istiod", Namespace: "istio-system", Status: kubernetes.ComponentHealthy, IsCore: true},
+		{Cluster: cluster, Name: "gw-allowed", Namespace: "bookinfo", Status: kubernetes.ComponentHealthy},
+		{Cluster: cluster, Name: "gw-victim", Namespace: "victim-ns", Status: kubernetes.ComponentHealthy},
+		{Cluster: cluster, Name: "prometheus", Status: kubernetes.ComponentHealthy},
+	})
+
+	status, err := layer.IstioStatus.GetStatus(context.TODO())
+	require.NoError(err)
+
+	componentNames := make(map[string]bool, len(status))
+	for _, component := range status {
+		componentNames[component.Name] = true
+	}
+	assert.True(componentNames["istiod"], "the control-plane entry must be kept without access to its namespace")
+	assert.True(componentNames["gw-allowed"], "the accessible namespace's gateway must be kept")
+	assert.True(componentNames["prometheus"], "the namespace-less addon entry must be kept")
+	assert.False(componentNames["gw-victim"], "a denied namespace's gateway entry must not be returned")
 }
