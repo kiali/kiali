@@ -26,7 +26,6 @@ import type {
   TroubleshootingValidationCheck
 } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
-import { TroubleshootingProblemInfo } from './TroubleshootingProblemInfo';
 
 const headerStyle = kialiStyle({
   alignItems: 'center',
@@ -126,16 +125,6 @@ const analysisQuery = (subProblem: TroubleshootingSubProblem, prompt: string): s
   return `${context}\n\n${prompt}`;
 };
 
-const titleIconVariant = (severity?: string): 'danger' | 'info' | 'warning' => {
-  if (severity === 'critical') {
-    return 'danger';
-  }
-  if (severity === 'warning') {
-    return 'warning';
-  }
-  return 'info';
-};
-
 export const TroubleshootingSubProblemCard: React.FC<{ subProblem: TroubleshootingSubProblem }> = ({ subProblem }) => {
   const dispatch = useDispatch();
   const actions = subProblem.suggestedActions ?? [];
@@ -198,12 +187,10 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
   const analyzeAction = (action: TroubleshootingSuggestedAction): React.ReactNode => (
     <TroubleshootingAnalyze
       description={subProblem.target}
+      problem={`[${subProblem.id}] ${subProblem.issue}`}
       prompt={analysisQuery(subProblem, analyzePrompt(action))}
-      title={`[${subProblem.id}] ${subProblem.issue}`}
-      titleIconVariant={titleIconVariant(subProblem.severity)}
-    >
-      <TroubleshootingProblemInfo subProblem={subProblem} />
-    </TroubleshootingAnalyze>
+      subProblem={subProblem}
+    />
   );
 
   const showBody = Boolean(impact || askChatbotAction || checks.length > 0);
