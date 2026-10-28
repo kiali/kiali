@@ -38,7 +38,7 @@ import { NodeDecorator } from './NodeDecorator';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import type { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
-import { findNamespaceWaypointSplit, waypointNodeCanaryBadge } from 'utils/WaypointTrafficUtils';
+import { findNamespaceWaypointSplit, withWaypointCanarySecondaryLabel } from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -392,19 +392,20 @@ export const setNodeLabel = (
   }
 
   node.label = content.shift();
-  if (content.length > 0) {
-    data.secondaryLabel = content.join(':');
-  }
+  // Always reset secondaryLabel; otherwise leftover text (e.g. waypoint role) piles up
+  // each time setNodeLabel re-runs on the same node data (display option toggles).
+  data.secondaryLabel = content.length > 0 ? content.join(':') : undefined;
 
   if (data.isWaypoint && !isBox && data.workload && data.namespace) {
-    let canaryLine = data.waypointCanaryLabel;
-    if (!canaryLine) {
-      const split = findNamespaceWaypointSplit(settings.activeNamespaces, data.namespace, data.cluster);
-      canaryLine = waypointNodeCanaryBadge(data.workload, data.namespace, split);
-    }
-    if (canaryLine) {
-      data.secondaryLabel = data.secondaryLabel ? `${data.secondaryLabel} · ${canaryLine}` : canaryLine;
-    }
+    // Weight % only when Traffic Distribution edge labels are enabled (same idea as edge %).
+    data.secondaryLabel = withWaypointCanarySecondaryLabel({
+      backendLabel: data.waypointCanaryLabel,
+      includeWeight: settings.edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+      secondaryLabel: data.secondaryLabel,
+      split: findNamespaceWaypointSplit(settings.activeNamespaces, data.namespace, data.cluster),
+      workload: data.workload,
+      workloadNamespace: data.namespace
+    });
   }
 
   data.hideContextMenuKebab = true;

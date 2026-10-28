@@ -2472,8 +2472,8 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		}
 
 		// If the pod is a waypoint proxy, check if it is attached to a namespace or to a service account, and get the affected workloads
-		if isWaypoint && criteria.IncludeWaypoints {
-			if w.WaypointFor() != config.WaypointForNone {
+		if isWaypoint && w.WaypointFor() != config.WaypointForNone {
+			if criteria.IncludeWaypoints {
 				includeServices := false
 				if w.WaypointFor() == config.WaypointForService || w.WaypointFor() == config.WaypointForAll {
 					includeServices = true
@@ -2484,8 +2484,9 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				if includeServices {
 					w.WaypointServices = waypointServices
 				}
-				w.WaypointTrafficSplit = gatewayWaypointTrafficSplit(ctx, in, criteria.Cluster, w.Namespace, w.Name)
 			}
+			// Cheap namespace-cache lookup; available even when IncludeWaypoints is false (e.g. mesh map).
+			w.WaypointTrafficSplit = gatewayWaypointTrafficSplit(ctx, in, criteria.Cluster, w.Namespace, w.Name)
 		}
 
 		// Populate ServiceAccountNames from pods (needed for other operations)

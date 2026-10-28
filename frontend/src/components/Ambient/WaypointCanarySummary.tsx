@@ -6,7 +6,16 @@ import type { WaypointTrafficSplit } from '../../types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
 import * as API from '../../services/Api';
 import { PFSpacer } from 'styles/PfSpacer';
+import { PFColors } from 'components/Pf/PfColors';
+import { findGatewayWaypointSplit } from 'utils/WaypointTrafficUtils';
+import { kialiStyle } from 'styles/StyleUtils';
 import { WaypointTrafficSplitDonut } from './WaypointTrafficSplitDonut';
+
+const panelSectionHRStyle = kialiStyle({
+  border: 0,
+  borderTop: `1px solid ${PFColors.BorderColor100}`,
+  margin: `${PFSpacer.md} 0`
+});
 
 const waypointHref = (namespace: string, name: string, cluster?: string): string => {
   let href = `/namespaces/${namespace}/workloads/${name}`;
@@ -36,10 +45,8 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
 
   return (
     <div data-test="waypoint-canary-info-panel">
-      <Content component={ContentVariants.small} style={{ display: 'block', marginBottom: PFSpacer.md }}>
-        {t(
-          'New ambient mesh connections are distributed between the primary and canary waypoint proxies according to these weights.'
-        )}
+      <Content component={ContentVariants.h6} style={{ display: 'block', marginBottom: PFSpacer.md }}>
+        {t('Canary waypoints')}
       </Content>
       <WaypointTrafficSplitDonut
         split={split}
@@ -133,6 +140,67 @@ export const NamespaceWaypointCanarySplit: React.FC<NamespaceWaypointCanarySplit
     >
       <WaypointCanaryPropertyList split={split} />
     </ul>
+  );
+};
+
+type WaypointGatewayCanaryPanelProps = {
+  cluster?: string;
+  namespace: string;
+  /** Prefer split from the topology node when the backend already attached it. */
+  split?: WaypointTrafficSplit;
+  workload: string;
+};
+
+/**
+ * Side-panel block for a waypoint gateway: resolves canary split (from prop or namespaces)
+ * and renders the shared donut + description.
+ */
+export const WaypointGatewayCanaryPanel: React.FC<WaypointGatewayCanaryPanelProps> = ({
+  cluster,
+  namespace,
+  split: splitProp,
+  workload
+}) => {
+  const [fetchedSplit, setFetchedSplit] = React.useState<WaypointTrafficSplit | undefined>();
+  const hasPropSplit = !!splitProp?.canary;
+
+  React.useEffect(() => {
+    if (hasPropSplit) {
+      return;
+    }
+    let cancelled = false;
+    API.getNamespaces()
+      .then(response => {
+        if (cancelled) {
+          return;
+        }
+        setFetchedSplit(findGatewayWaypointSplit(response.data, workload, namespace, cluster));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFetchedSplit(undefined);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasPropSplit, workload, namespace, cluster]);
+
+  const split = hasPropSplit ? splitProp : fetchedSplit;
+  if (!split?.canary) {
+    return null;
+  }
+
+  return (
+    <>
+      <WaypointCanaryInfoPanel
+        split={split}
+        workloadCluster={cluster}
+        workloadName={workload}
+        workloadNamespace={namespace}
+      />
+      <hr className={panelSectionHRStyle} />
+    </>
   );
 };
 
