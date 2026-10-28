@@ -376,7 +376,11 @@ func extractTraceNamespaceScope(trace *jaegerModels.Trace) *traceNamespaceScope 
 		processTags := spanProcessTags(trace, span)
 		cluster := spanCluster(span, processTags)
 		add := func(namespace string) {
-			if namespace == "" {
+			// Tempo search answers render a selected-but-absent attribute as
+			// the literal string "nil" (observed on Tempo 2.10); that is a
+			// missing-value marker, not a namespace, so it must not
+			// contribute a phantom "nil" namespace to the scope.
+			if namespace == "" || namespace == "nil" {
 				return
 			}
 			if cluster == "" {
@@ -429,12 +433,14 @@ func spanProcessTags(trace *jaegerModels.Trace, span jaegerModels.Span) []jaeger
 // spanCluster returns the cluster the span's telemetry is attributed to,
 // from the span tags or the process tags (OTel resource attributes surfaced
 // by the converters; see spanProcessTags). Empty when the span carries no
-// cluster attribution.
+// cluster attribution. The literal "nil" counts as absent: Tempo search
+// answers render selected-but-absent attributes that way (observed on
+// Tempo 2.10), and it is a missing-value marker, not a cluster name.
 func spanCluster(span jaegerModels.Span, processTags []jaegerModels.KeyValue) string {
 	clusterFromTags := func(tags []jaegerModels.KeyValue) string {
 		for _, tag := range tags {
 			if slices.Contains(model.ClusterTagKeys, tag.Key) {
-				if v, ok := tag.Value.(string); ok && v != "" {
+				if v, ok := tag.Value.(string); ok && v != "" && v != "nil" {
 					return v
 				}
 			}

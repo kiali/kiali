@@ -566,6 +566,22 @@ func TestExtractTraceNamespaceScope(t *testing.T) {
 		},
 	}}}}
 	require.True(extractTraceNamespaceScope(&clusterOnly.Data).empty())
+
+	// Tempo search answers render a selected-but-absent attribute as the
+	// literal string "nil" (observed on Tempo 2.10): that must not contribute
+	// a phantom "nil" namespace, and a "nil" cluster tag must count as absent
+	// (its namespaces fall back to cluster-less).
+	nilMarker := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "istio.cluster_id", Value: "nil"},
+			{Key: "k8s.namespace.name", Value: "nil"},
+			{Key: "istio.namespace", Value: "bookinfo"},
+		},
+	}}}}
+	scope = extractTraceNamespaceScope(&nilMarker.Data)
+	require.Empty(scope.byCluster, "the nil cluster marker must count as absent")
+	require.Equal(map[string]struct{}{"bookinfo": {}}, scope.unscoped)
+	require.NotContains(scope.unscoped, "nil")
 }
 
 // TestCheckTraceAccessClusterAware pins the cluster-aware trace-details
@@ -852,5 +868,62 @@ func TestGetErrorTracesFiltersByNamespace(t *testing.T) {
 	count, err := layer.Tracing.GetErrorTraces(context.TODO(), cluster, "bookinfo", "private-app.victim-ns.svc.cluster.local", time.Minute)
 	require.NoError(err)
 	require.Equal(1, count)
+	traceClient.AssertExpectations(t)
+}
+
+// TestGetAppTracesKeepsResourceAttributedTempoTraces pins the Tempo list
+// path against the regression where traces whose namespace exists only as
+// the OTel resource attribute (k8s.namespace.name) disappeared from the
+// lists while remaining accessible through the trace details: the TraceQL
+// selects now ask for the authorization attributes and the search-response
+// conversion preserves them as span tags, so the per-trace filter must keep
+// the legitimate trace and drop the denied one.
+func TestGetAppTracesKeepsResourceAttributedTempoTraces(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.Tracing.Enabled = true
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The shape a Tempo search answer has after conversion: the namespace
+	// and cluster information lives in the span tags (resource attributes
+	// reported unqualified), with no istio.* namespace attributes.
+	tempoTrace := func(namespace string) jaegerModels.Trace {
+		return jaegerModels.Trace{Spans: []jaegerModels.Span{{
+			Tags: []jaegerModels.KeyValue{
+				{Key: "service.name", Value: "my-app"},
+				{Key: "k8s.namespace.name", Value: namespace},
+				{Key: "k8s.cluster.name", Value: cluster},
+			},
+		}}}
+	}
+	traceClient := new(tracingtest.TracingClientMock)
+	traceClient.On("GetAppTraces", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&model.TracingResponse{
+		Data: []jaegerModels.Trace{
+			tempoTrace("bookinfo"),  // legitimate: the requested namespace
+			tempoTrace("victim-ns"), // denied: another tenant's namespace
+		},
+	}, nil)
+
+	sa := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	user := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, traceClient, kialiCache, conf, nil, discovery, nil)
+
+	traces, err := layer.Tracing.GetAppTraces(context.TODO(), "bookinfo", "my-app", "my-app", models.TracingQuery{Cluster: cluster})
+	require.NoError(err)
+	require.Len(traces.Data, 1)
+
+	tags := make(map[string]string)
+	for _, tag := range traces.Data[0].Spans[0].Tags {
+		if v, ok := tag.Value.(string); ok {
+			tags[tag.Key] = v
+		}
+	}
+	require.Equal("bookinfo", tags["k8s.namespace.name"], "the surviving trace must be the requested namespace's, not the denied one")
 	traceClient.AssertExpectations(t)
 }

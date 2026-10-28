@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/tracing/jaeger/model"
 	"github.com/kiali/kiali/tracing/jaeger/model/json"
 	otelJson "github.com/kiali/kiali/tracing/otel/model/json"
 )
@@ -260,9 +262,10 @@ func TestQuery(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, rawQuery, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	// Verify it contains all the selects
-	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, .istio.destination_workload, .istio.destination_namespace, .istio.destination_instance_name, .istio.destination_canonical_service, .istio.source_workload, .istio.source_namespace, .istio.source_instance_name, .istio.source_canonical_service, resource.hostname, name)")
-	// Verify it doesn't contain the cluster tag
-	assert.NotContains(t, rawQuery, models.IstioClusterTag)
+	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, .istio.destination_workload, .istio.destination_namespace, .istio.destination_instance_name, .istio.destination_canonical_service, .istio.source_workload, .istio.source_namespace, .istio.source_instance_name, .istio.source_canonical_service, resource.hostname, .istio.namespace, .istio.cluster_id, resource.k8s.namespace.name, resource.k8s.cluster.name, name)")
+	// Verify it doesn't contain the cluster tag as a query predicate (the
+	// authorization attribute may still appear among the selects).
+	assert.NotContains(t, rawQuery, models.IstioClusterTag+" =")
 	// Verify it contains spans limit
 	assert.Contains(t, rawQuery, "spss=10")
 	// Verify it contains start
@@ -402,4 +405,92 @@ func TestConvertSingleTraceSurfacesClusterResourceTags(t *testing.T) {
 		}
 	}
 	require.True(t, found, "k8s.cluster.name must be surfaced as a process tag")
+}
+
+// TestTraceSelectsCoverAuthorizationAttributes pins the contract between
+// the TraceQL select list and the per-trace list authorization
+// (business.traceInNamespace): every namespace- or cluster-bearing attribute
+// the extraction recognizes must be selected by the search query, in the
+// form Tempo reports it (span attributes unqualified, OTel resource
+// attributes selected as resource.<name> and reported unqualified). A trace
+// whose namespace exists only as a resource attribute is accessible through
+// the details (the full trace carries resource attributes) and must stay in
+// the lists too.
+func TestTraceSelectsCoverAuthorizationAttributes(t *testing.T) {
+	assert := assert.New(t)
+
+	// The span-attribute selects arrive with their bare key.
+	for _, key := range append(slices.Clone(model.NamespaceTagKeys), model.ClusterTagKeys...) {
+		switch key {
+		case "k8s.namespace.name", "k8s.cluster.name":
+			assert.Contains(traceSelects, "resource."+key, "the resource attribute %s must be selected", key)
+		default:
+			assert.Contains(traceSelects, "."+key, "the span attribute %s must be selected", key)
+		}
+	}
+}
+
+// TestConvertBatchTracePreservesAuthorizationAttributes pins the
+// search-response conversion side of the same contract: attributes selected
+// by the query (including the OTel resource attributes, which Tempo reports
+// unqualified) must survive into the Jaeger span tags that
+// business.traceInNamespace reads. Without them, a resource-attributed trace
+// would be dropped from the trace lists while remaining accessible through
+// the trace details.
+func TestConvertBatchTracePreservesAuthorizationAttributes(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	// A Tempo search answer whose spans carry the authorization attributes:
+	// namespace only as the (resource) k8s.namespace.name, plus cluster
+	// attribution. This is the shape traceSelects asks the backend for.
+	searchResponse := `{
+		"traces": [{
+			"traceID": "abcdef1234567890abcdef1234567890",
+			"rootServiceName": "my-app",
+			"rootTraceName": "GET /",
+			"startTimeUnixNano": "1700000000000000000",
+			"durationMs": 42,
+			"spanSet": {
+				"matched": 1,
+				"spans": [{
+					"spanID": "s1",
+					"startTimeUnixNano": "1700000000000000000",
+					"durationNanos": "42000000",
+					"attributes": [
+						{"key": "service.name", "value": {"stringValue": "my-app"}},
+						{"key": "k8s.namespace.name", "value": {"stringValue": "bookinfo"}},
+						{"key": "k8s.cluster.name", "value": {"stringValue": "cluster-a"}}
+					]
+				}]
+			}
+		}]
+	}`
+
+	httpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(strings.NewReader(searchResponse)),
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+		}
+	})}
+
+	tempoClient, err := NewOtelClient(context.TODO())
+	require.NoError(err)
+
+	q := models.TracingQuery{Start: time.Time{}, End: time.Time{}, Limit: 0, Cluster: ""}
+	response, err := tempoClient.GetAppTracesHTTP(context.Background(), httpClient, getBaseUrl(), "my-app", q)
+	require.NoError(err)
+	require.Len(response.Data, 1)
+
+	spans := response.Data[0].Spans
+	require.NotEmpty(t, spans)
+	tags := make(map[string]string)
+	for _, tag := range spans[0].Tags {
+		if v, ok := tag.Value.(string); ok {
+			tags[tag.Key] = v
+		}
+	}
+	assert.Equal("bookinfo", tags["k8s.namespace.name"], "the namespace resource attribute must survive conversion as a span tag")
+	assert.Equal("cluster-a", tags["k8s.cluster.name"], "the cluster resource attribute must survive conversion as a span tag")
 }
