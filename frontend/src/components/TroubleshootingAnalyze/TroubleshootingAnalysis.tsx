@@ -1,12 +1,16 @@
 import { Alert, Button, Spinner, TextArea } from '@patternfly/react-core';
 import * as React from 'react';
+import { useStore } from 'react-redux';
+import { ChatAIActions } from 'actions/ChatAIActions';
 import { ChatMessageMarkdown } from 'components/ChatBot/EntryChat/ChatMessageMarkdown';
 import { getFetchErrorMessage } from 'components/ChatBot/error';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import * as API from 'services/Api';
+import type { KialiAppState } from 'store/Store';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontWeight } from 'styles/PfTypography';
-import type { ChatRequest } from 'types/Chatbot';
+import type { ChatRequest, TroubleshootingConversation, TroubleshootingConversationMessage } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { dispatchAIResponseReceived } from 'utils/aiEvents';
 
@@ -29,9 +33,10 @@ const userLabelStyle = kialiStyle({
 const composerStyle = kialiStyle({
   alignItems: 'flex-end',
   display: 'flex',
-  flex: 1,
+  flexShrink: 0,
   gap: PFSpacer.sm,
-  minWidth: 0
+  minWidth: 0,
+  width: '100%'
 });
 
 const inputStyle = kialiStyle({
@@ -46,15 +51,6 @@ type StreamEvent = {
     truncated?: boolean;
   };
   event?: string;
-};
-
-type AnalysisMessage = {
-  error?: string;
-  id: number;
-  text: string;
-  truncated: boolean;
-  who: 'ai' | 'user';
-  working: boolean;
 };
 
 const readErrorMessage = async (response: Response): Promise<string> => {
@@ -138,27 +134,28 @@ const scrollableParent = (node: HTMLElement | null): HTMLElement | null => {
 
 type TroubleshootingAnalysisProps = {
   children?: (parts: { composer: React.ReactNode; thread: React.ReactNode }) => React.ReactNode;
-  query: string;
+  conversationId: string;
 };
 
-export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = ({ children, query }) => {
+const EMPTY_MESSAGES: TroubleshootingConversationMessage[] = [];
+
+const nextMessageId = (messages: TroubleshootingConversationMessage[]): number =>
+  messages.reduce((max, message) => Math.max(max, message.id), -1) + 1;
+
+const readConversation = (state: KialiAppState, conversationId: string): TroubleshootingConversation | undefined =>
+  (state.ai.troubleshooting.conversations ?? []).find(conversation => conversation.id === conversationId);
+
+export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = ({ children, conversationId }) => {
+  const dispatch = useKialiDispatch();
+  const store = useStore<KialiAppState>();
+  const conversation = useKialiSelector(state => readConversation(state, conversationId));
+  const messages = conversation?.messages ?? EMPTY_MESSAGES;
   const [draft, setDraft] = React.useState('');
-  const [messages, setMessages] = React.useState<AnalysisMessage[]>([]);
-  const conversationRef = React.useRef<string | undefined>(undefined);
   const endRef = React.useRef<HTMLDivElement>(null);
   const lastScrollTopRef = React.useRef(0);
-  const nextIDRef = React.useRef(0);
-  const queryRef = React.useRef(query);
   const requestRef = React.useRef<AbortController | undefined>(undefined);
   const stickToBottomRef = React.useRef(true);
   const threadRef = React.useRef<HTMLDivElement>(null);
-
-  if (queryRef.current !== query) {
-    queryRef.current = query;
-    conversationRef.current = undefined;
-    nextIDRef.current = 0;
-    setMessages([]);
-  }
 
   const scrollToEnd = React.useCallback((): void => {
     if (!stickToBottomRef.current) {
@@ -214,23 +211,41 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
     };
   }, [scrollToEnd]);
 
-  const patchMessage = React.useCallback((id: number, patch: Partial<AnalysisMessage>): void => {
-    setMessages(current => current.map(message => (message.id === id ? { ...message, ...patch } : message)));
-  }, []);
+  const patchMessage = React.useCallback(
+    (id: number, patch: Partial<TroubleshootingConversationMessage>): void => {
+      dispatch(
+        ChatAIActions.patchTroubleshootingConversationMessage({
+          conversationId,
+          messageId: id,
+          patch
+        })
+      );
+    },
+    [conversationId, dispatch]
+  );
 
-  const rememberConversation = React.useCallback((id: string): void => {
-    conversationRef.current = id;
-  }, []);
+  const appendMessage = React.useCallback(
+    (message: Omit<TroubleshootingConversationMessage, 'id'>): number => {
+      const current = readConversation(store.getState(), conversationId);
+      const id = nextMessageId(current?.messages ?? []);
+      dispatch(
+        ChatAIActions.addTroubleshootingConversationMessage({
+          conversationId,
+          message: { ...message, id }
+        })
+      );
+      return id;
+    },
+    [conversationId, dispatch, store]
+  );
 
   const streamReply = React.useCallback(
     async (text: string, signal: AbortSignal, isCancelled: () => boolean): Promise<void> => {
-      const id = nextIDRef.current;
-      nextIDRef.current += 1;
-      setMessages(current => [...current, { id, text: '', truncated: false, who: 'ai', working: true }]);
-
+      const id = appendMessage({ text: '', truncated: false, who: 'ai', working: true });
       const request: ChatRequest = { interaction_mode: 'troubleshoot', query: text };
-      if (conversationRef.current) {
-        request.conversation_id = conversationRef.current;
+      const backendConversationId = readConversation(store.getState(), conversationId)?.backendConversationId;
+      if (backendConversationId) {
+        request.conversation_id = backendConversationId;
       }
       const response = await API.postTroubleshootingChat(request, signal);
       if (isCancelled()) {
@@ -247,9 +262,14 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
             patchMessage(id, { text: answer });
           }
         },
-        conversation => {
+        backendId => {
           if (!isCancelled()) {
-            rememberConversation(conversation);
+            dispatch(
+              ChatAIActions.setTroubleshootingBackendConversationId({
+                backendConversationId: backendId,
+                conversationId
+              })
+            );
           }
         },
         signal
@@ -259,19 +279,28 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
         dispatchAIResponseReceived();
       }
     },
-    [patchMessage, rememberConversation]
+    [appendMessage, conversationId, dispatch, patchMessage, store]
   );
 
   React.useEffect(() => {
+    const current = readConversation(store.getState(), conversationId);
+    // A restored conversation already has its transcript. Only the first open streams the prompt.
+    if (!current || current.messages.length > 0 || current.prompt.trim() === '') {
+      return;
+    }
     const controller = new AbortController();
     requestRef.current = controller;
     let cancelled = false;
 
-    streamReply(query, controller.signal, () => cancelled).catch(streamError => {
+    streamReply(current.prompt, controller.signal, () => cancelled).catch(streamError => {
       if (cancelled || streamError?.name === 'AbortError') {
         return;
       }
-      const id = nextIDRef.current - 1;
+      const latest = readConversation(store.getState(), conversationId);
+      const id = latest?.messages[latest.messages.length - 1]?.id;
+      if (id === undefined) {
+        return;
+      }
       patchMessage(id, {
         error: streamError instanceof Error ? streamError.message : getFetchErrorMessage(streamError).message,
         working: false
@@ -283,16 +312,18 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
     return () => {
       cancelled = true;
       controller.abort();
+      dispatch(ChatAIActions.finishTroubleshootingConversationStream(conversationId));
     };
-  }, [patchMessage, query, streamReply]);
+  }, [conversationId, dispatch, patchMessage, store, streamReply]);
 
-  // Follow-up replies replace the controller. Unmount, including modal close and
-  // Cancel, must abort whichever request is still streaming.
+  // Follow-up replies replace the controller. Closing the drawer must abort whichever request is still streaming
+  // and keep the transcript that already arrived.
   React.useEffect(() => {
     return () => {
       requestRef.current?.abort();
+      dispatch(ChatAIActions.finishTroubleshootingConversationStream(conversationId));
     };
-  }, []);
+  }, [conversationId, dispatch]);
 
   const working = messages.some(message => message.working);
   const canReply = !working && draft.trim() !== '';
@@ -302,10 +333,8 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
     if (working || text === '') {
       return;
     }
-    const id = nextIDRef.current;
-    nextIDRef.current += 1;
     stickToBottomRef.current = true;
-    setMessages(current => [...current, { id, text, truncated: false, who: 'user', working: false }]);
+    appendMessage({ text, truncated: false, who: 'user', working: false });
     setDraft('');
     const controller = new AbortController();
     requestRef.current = controller;
@@ -313,7 +342,11 @@ export const TroubleshootingAnalysis: React.FC<TroubleshootingAnalysisProps> = (
       if (streamError?.name === 'AbortError') {
         return;
       }
-      const aiID = nextIDRef.current - 1;
+      const latest = readConversation(store.getState(), conversationId);
+      const aiID = latest?.messages[latest.messages.length - 1]?.id;
+      if (aiID === undefined) {
+        return;
+      }
       patchMessage(aiID, {
         error: streamError instanceof Error ? streamError.message : getFetchErrorMessage(streamError).message,
         working: false

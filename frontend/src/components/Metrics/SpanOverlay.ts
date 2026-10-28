@@ -1,15 +1,16 @@
 import { PFColors } from 'components/Pf/PfColors';
 import * as API from 'services/Api';
-import { TimeRange, durationToBounds, guardTimeRange } from 'types/Common';
+import type { TimeRange } from 'types/Common';
+import { durationToBounds, guardTimeRange } from 'types/Common';
 import { addError } from 'utils/AlertUtils';
-import { Span, TracingQuery } from 'types/Tracing';
+import type { Span, TracingQuery } from 'types/Tracing';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { LineInfo } from 'types/VictoryChartInfo';
-import { Overlay, OverlayInfo } from 'types/Overlay';
+import type { LineInfo } from 'types/VictoryChartInfo';
+import type { Overlay, OverlayInfo } from 'types/Overlay';
 import { toOverlay } from 'utils/VictoryChartsUtils';
 import { defaultMetricsDuration } from './Helper';
 
-export type JaegerLineInfo = LineInfo & { traceId?: string; spanId?: string };
+export type JaegerLineInfo = LineInfo & { spanId?: string; traceId?: string };
 
 type FetchOptions = {
   cluster?: string;
@@ -26,15 +27,15 @@ export class SpanOverlay {
 
   constructor(public onChange: (overlay?: Overlay<JaegerLineInfo>) => void) {}
 
-  reset() {
+  reset(): void {
     this.spans = [];
   }
 
-  setSpans(spans: Span[]) {
+  setSpans(spans: Span[]): void {
     this.spans = spans;
   }
 
-  fetch(opts: FetchOptions) {
+  fetch(opts: FetchOptions): void {
     const boundsMillis = guardTimeRange(opts.range, durationToBounds, b => b);
     const defaultFrom = new Date().getTime() - defaultMetricsDuration * 1000;
     const q: TracingQuery = {
@@ -54,8 +55,8 @@ export class SpanOverlay {
       opts.targetKind === MetricsObjectTypes.APP
         ? API.getAppSpans
         : opts.targetKind === MetricsObjectTypes.SERVICE
-        ? API.getServiceSpans
-        : API.getWorkloadSpans;
+          ? API.getServiceSpans
+          : API.getWorkloadSpans;
     apiCall(opts.namespace, opts.target, q, opts.cluster)
       .then(res => {
         this.lastFetchError = false;

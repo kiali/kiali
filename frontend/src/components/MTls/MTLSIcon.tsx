@@ -60,7 +60,12 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
     : {};
 
   return (
-    <Tooltip aria-label={t('mTLS status')} position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
+    <Tooltip
+      aria-label={t('mTLS status')}
+      position={props.tooltipPosition}
+      enableFlip={true}
+      content={props.tooltipText}
+    >
       {IconComponent ? (
         useCircle ? (
           <span className={props.iconClassName} style={circleStyle}>

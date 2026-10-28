@@ -612,7 +612,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                               <Tooltip
                                 key="show_hide_log_help"
                                 position="top"
-                                content={t('Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).')}
+                                content={t(
+                                  'Show only, or Hide all, matching log entries. Match by case-sensitive substring (default) or regular expression (as set in the kebab menu).'
+                                )}
                               >
                                 <KialiIcon.Info className={infoStyle} />
                               </Tooltip>
@@ -741,7 +743,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                       key={`al-tt-tl`}
                       position={TooltipPosition.auto}
                       entryDelay={1000}
-                      content={t("A filtered subset of log entries from the ztunnel's (ambient node proxy) pod logs, relevant to the selected workload pod")}
+                      content={t(
+                        "A filtered subset of log entries from the ztunnel's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                      )}
                     >
                       <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={proxyContainerColor} />
                     </Tooltip>
@@ -769,7 +773,9 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                           key={`al-tt-tl`}
                           position={TooltipPosition.auto}
                           entryDelay={1000}
-                          content={t("A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod")}
+                          content={t(
+                            "A filtered - by app name - subset of log entries from the waypoint's (ambient node proxy) pod logs, relevant to the selected workload pod"
+                          )}
                         >
                           <KialiIcon.Info key={`al-i-ki`} className={checkInfoIcon} color={waypointContainerColor} />
                         </Tooltip>

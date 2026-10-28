@@ -4,8 +4,14 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, Button, ButtonVariant, pluralize } from '@patternfly/react-core';
 import { SelectList, SelectOption } from '@patternfly/react-core';
 import { URLParam } from '../../app/History';
-import { JaegerTrace, RichSpanData, EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo } from 'types/TracingInfo';
-import { KialiAppState } from 'store/Store';
+import type {
+  JaegerTrace,
+  RichSpanData,
+  EnvoySpanInfo,
+  OpenTracingHTTPInfo,
+  OpenTracingTCPInfo
+} from 'types/TracingInfo';
+import type { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphActions } from 'actions/GraphActions';
 import { PFColors } from 'components/Pf/PfColors';
@@ -13,14 +19,15 @@ import { findChildren, findParent, formatDuration } from 'utils/tracing/TracingH
 import { FormattedTraceInfo, shortIDStyle } from 'components/TracingIntegration/TracingResults/FormattedTraceInfo';
 import { SimpleSelect } from 'components/Select/SimpleSelect';
 import { summaryFont, summaryTitle } from './SummaryPanelCommon';
-import { NodeParamsType, GraphType, SummaryData, NodeAttr, FocusNode } from 'types/Graph';
-import { KialiDispatch } from 'types/Redux';
+import type { NodeParamsType, SummaryData, FocusNode } from 'types/Graph';
+import { GraphType, NodeAttr } from 'types/Graph';
+import type { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { responseFlags } from 'utils/ResponseFlags';
 import { KialiLink } from '../../components/Link/KialiLink';
-import { Visualization, Node } from '@patternfly/react-topology';
+import type { Visualization, Node } from '@patternfly/react-topology';
 import { elems, selectAnd } from 'helpers/GraphHelpers';
-import { ExternalServiceInfo } from '../../types/StatusState';
+import type { ExternalServiceInfo } from '../../types/StatusState';
 import { isMultiCluster } from '../../config';
 import { KialiIcon } from 'config/KialiIcon';
 import { GetTracingUrlProvider } from '../../utils/tracing/UrlProviders';
@@ -94,11 +101,10 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
   }
 
   render(): React.ReactNode {
-    let node: any = {};
     let nodeData: any = {};
 
     if (this.props.data.summaryType === 'node') {
-      node = this.props.data.summaryTarget;
+      const node = this.props.data.summaryTarget;
       nodeData = node.getData();
     }
 
@@ -107,8 +113,8 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           nodeData.workload
             ? `/workloads/${nodeData.workload}`
             : nodeData.service
-            ? `/services/${nodeData.service}`
-            : `/applications/${nodeData.app!}`
+              ? `/services/${nodeData.service}`
+              : `/applications/${nodeData.app!}`
         }?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}${
           nodeData.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(nodeData.cluster)}` : ''
         }`
@@ -231,8 +237,8 @@ class SummaryPanelTraceDetailsComponent extends React.Component<Props, State> {
           nodeData.workload
             ? `/workloads/${nodeData.workload}`
             : nodeData.service
-            ? `/services/${nodeData.service}`
-            : `/applications/${nodeData.app!}`
+              ? `/services/${nodeData.service}`
+              : `/applications/${nodeData.app!}`
         }?tab=traces&${URLParam.TRACING_TRACE_ID}=${this.props.trace.traceID}&${URLParam.TRACING_SPAN_ID}=${
           span.spanID
         }${span.cluster && isMultiCluster ? `&${URLParam.CLUSTERNAME}=${encodeURIComponent(span.cluster)}` : ''}`

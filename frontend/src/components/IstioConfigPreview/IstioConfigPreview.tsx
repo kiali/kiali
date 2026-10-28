@@ -1,17 +1,8 @@
 import * as React from 'react';
-import {
-  Button,
-  ButtonVariant,
-  Tab,
-  TabProps,
-  Tabs,
-  Toolbar,
-  ToolbarGroup,
-  ToolbarItem,
-  Tooltip
-} from '@patternfly/react-core';
+import type { TabProps } from '@patternfly/react-core';
+import { Button, ButtonVariant, Tab, Tabs, Toolbar, ToolbarGroup, ToolbarItem, Tooltip } from '@patternfly/react-core';
 import { Modal } from '@patternfly/react-core/deprecated';
-import {
+import type {
   AuthorizationPolicy,
   DestinationRule,
   Gateway,
@@ -215,25 +206,25 @@ export class IstioConfigPreview extends React.Component<Props, State> {
           this.props.actions
             ? this.props.actions
             : this.props.readOnly
-            ? [
-                <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
-                  {t('Close')}
-                </Button>
-              ]
-            : [
-                <Button
-                  key={this.props.opTarget}
-                  variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
-                  isDisabled={this.props.disableAction}
-                  onClick={this.onConfirm}
-                  data-test={this.props.opTarget}
-                >
-                  {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
-                </Button>,
-                <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
-                  {t('Cancel')}
-                </Button>
-              ]
+              ? [
+                  <Button key="close" variant={ButtonVariant.primary} onClick={this.props.onClose}>
+                    {t('Close')}
+                  </Button>
+                ]
+              : [
+                  <Button
+                    key={this.props.opTarget}
+                    variant={this.props.opTarget === 'delete' ? 'danger' : 'primary'}
+                    isDisabled={this.props.disableAction}
+                    onClick={this.onConfirm}
+                    data-test={this.props.opTarget}
+                  >
+                    {t(this.props.opTarget[0]?.toUpperCase() + this.props.opTarget?.substring(1))}
+                  </Button>,
+                  <Button key="cancel" variant={ButtonVariant.secondary} onClick={this.props.onClose}>
+                    {t('Cancel')}
+                  </Button>
+                ]
         }
       >
         <Toolbar>

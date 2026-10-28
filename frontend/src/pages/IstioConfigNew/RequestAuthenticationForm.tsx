@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
-import { JWTRule } from '../../types/IstioObjects';
+import type { JWTRule } from '../../types/IstioObjects';
 import { JwtRuleBuilder } from './RequestAuthorizationForm/JwtRuleBuilder';
 import { JwtRuleList } from './RequestAuthorizationForm/JwtRuleList';
 import { isValid } from 'utils/Common';
@@ -177,7 +177,9 @@ export class RequestAuthenticationForm extends React.Component<Props, RequestAut
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
                     ? t('One or more labels to select a workload where the RequestAuthentication is applied.')
-                    : t('Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.')}
+                    : t(
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

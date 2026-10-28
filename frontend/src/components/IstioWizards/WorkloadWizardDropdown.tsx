@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { DropdownList, MenuToggle, MenuToggleElement, TooltipPosition } from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { DropdownList, MenuToggle, TooltipPosition } from '@patternfly/react-core';
 import { Dropdown } from '@patternfly/react-core';
 import { serverConfig } from '../../config';
-import { Workload } from '../../types/Workload';
+import type { Workload } from '../../types/Workload';
 import {
   WIZARD_DISABLE_AUTO_INJECTION,
   WIZARD_ENABLE_AUTO_INJECTION,
@@ -92,13 +93,13 @@ export const WorkloadWizardDropdown: React.FC<Props> = (props: Props) => {
             dropdown
           )
         : !supportedWorkload
-        ? renderDisabledDropdownOption(
-            'tooltip_wizard_actions',
-            TooltipPosition.top,
-            t('This type of workload is read-only'),
-            dropdown
-          )
-        : dropdown}
+          ? renderDisabledDropdownOption(
+              'tooltip_wizard_actions',
+              TooltipPosition.top,
+              t('This type of workload is read-only'),
+              dropdown
+            )
+          : dropdown}
     </>
   );
 };

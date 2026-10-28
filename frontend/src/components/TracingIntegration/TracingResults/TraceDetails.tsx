@@ -1,34 +1,34 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { Button, ButtonVariant, Card, CardBody, Grid, GridItem, Tooltip } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { tabCardStyle } from 'styles/FlexStyles';
 import { InfoAltIcon, WarningTriangleIcon } from '@patternfly/react-icons';
-import { JaegerTrace, RichSpanData } from 'types/TracingInfo';
+import type { JaegerTrace, RichSpanData } from 'types/TracingInfo';
 import { TracingTraceTitle } from './TracingTraceTitle';
 import { GraphType } from 'types/Graph';
 import { FormattedTraceInfo, shortIDStyle } from './FormattedTraceInfo';
 import { PFColors } from 'components/Pf/PfColors';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { getTraceId } from 'utils/SearchParamUtils';
 import { average } from 'utils/MathUtils';
+import type { StatsMatrix } from 'utils/tracing/TraceStats';
 import {
   averageSpanDuration,
   buildQueriesFromSpans,
   isSimilarTrace,
-  reduceMetricsStats,
-  StatsMatrix
+  reduceMetricsStats
 } from 'utils/tracing/TraceStats';
 import { TraceLabels } from './TraceLabels';
-import { TargetKind } from 'types/Common';
-import { MetricsStatsQuery } from 'types/MetricsOptions';
+import type { TargetKind } from 'types/Common';
+import type { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
 import { renderTraceHeatMap } from './StatsComparison';
 import { HeatMap, healthColorMap } from 'components/HeatMap/HeatMap';
 import { formatDuration, isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
-import { TracingUrlProvider } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
 import { map, round } from 'lodash-es';
 import { t } from 'utils/I18nUtils';
 
@@ -85,6 +85,97 @@ class TraceDetailsComponent extends React.Component<Props> {
     if (this.props.trace && !sameSpans(prevProps.trace?.spans || [], this.props.trace.spans)) {
       this.fetchComparisonMetrics(this.props.trace.spans);
     }
+  }
+
+  render(): JSX.Element | null {
+    const { trace, otherTraces } = this.props;
+
+    if (!trace) {
+      return null;
+    }
+
+    const formattedTrace = new FormattedTraceInfo(trace);
+
+    // Compute a bunch of stats
+    const avgSpanDuration = averageSpanDuration(trace);
+    const similarTraces = otherTraces.filter(t => t.traceID !== trace.traceID && isSimilarTrace(t, trace));
+
+    const comparisonLink =
+      similarTraces.length > 0
+        ? this.props.tracingURLProvider?.ComparisonUrl(trace.traceID, ...map(similarTraces, t => t.traceID))
+        : undefined;
+
+    return (
+      <Card isCompact className={tabCardStyle}>
+        <TracingTraceTitle
+          formattedTrace={formattedTrace}
+          externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
+          graphURL={this.getGraphURL(trace.traceID)}
+          comparisonURL={comparisonLink}
+          traceId={trace.traceID}
+        />
+        <CardBody>
+          <Grid className={gridStyle}>
+            <GridItem span={3}>
+              <TraceLabels spans={trace.spans} oneline={false} />
+            </GridItem>
+
+            <GridItem span={3}>
+              <Tooltip content={<>The full trace duration is (trace end time) - (trace start time).</>}>
+                <strong>Full duration: </strong>
+              </Tooltip>
+
+              {formatDuration(trace.duration)}
+              <br />
+
+              <Tooltip
+                content={
+                  <>
+                    The average duration of all spans within the trace. It differs from full duration, as spans can run
+                    in parallel, or there can be dead time between spans.
+                  </>
+                }
+              >
+                <strong>Spans average duration: </strong>
+              </Tooltip>
+
+              {avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}
+              <br />
+              <br />
+
+              {this.props.statsMatrix && (
+                <>
+                  <strong>Compared with metrics: </strong>
+                  {renderTraceHeatMap(this.props.statsMatrix, false)}
+                  {!this.props.isStatsMatrixComplete && (
+                    <>
+                      <WarningTriangleIcon /> Incomplete data, check Span Details
+                    </>
+                  )}
+                </>
+              )}
+            </GridItem>
+
+            <GridItem span={6}>
+              <Tooltip
+                content={t(
+                  'Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.'
+                )}
+              >
+                <>
+                  <InfoAltIcon /> <strong>Similar traces</strong>
+                  <br />
+                </>
+              </Tooltip>
+
+              {similarTraces.length > 0
+                ? this.renderSimilarHeatmap(similarTraces, trace.duration, avgSpanDuration)
+                : 'No similar traces found'}
+            </GridItem>
+          </Grid>
+        </CardBody>
+      </Card>
+    );
   }
 
   private fetchComparisonMetrics(spans: RichSpanData[]): void {
@@ -178,93 +269,6 @@ class TraceDetailsComponent extends React.Component<Props> {
       />
     );
   };
-
-  render(): JSX.Element | null {
-    const { trace, otherTraces } = this.props;
-
-    if (!trace) {
-      return null;
-    }
-
-    const formattedTrace = new FormattedTraceInfo(trace);
-
-    // Compute a bunch of stats
-    const avgSpanDuration = averageSpanDuration(trace);
-    const similarTraces = otherTraces.filter(t => t.traceID !== trace.traceID && isSimilarTrace(t, trace));
-
-    const comparisonLink =
-      similarTraces.length > 0
-        ? this.props.tracingURLProvider?.ComparisonUrl(trace.traceID, ...map(similarTraces, t => t.traceID))
-        : undefined;
-
-    return (
-      <Card isCompact className={tabCardStyle}>
-        <TracingTraceTitle
-          formattedTrace={formattedTrace}
-          externalURL={this.props.tracingURLProvider?.TraceUrl(trace)}
-          graphURL={this.getGraphURL(trace.traceID)}
-          comparisonURL={comparisonLink}
-          traceId={trace.traceID}
-        />
-        <CardBody>
-          <Grid className={gridStyle}>
-            <GridItem span={3}>
-              <TraceLabels spans={trace.spans} oneline={false} />
-            </GridItem>
-
-            <GridItem span={3}>
-              <Tooltip content={<>The full trace duration is (trace end time) - (trace start time).</>}>
-                <strong>Full duration: </strong>
-              </Tooltip>
-
-              {formatDuration(trace.duration)}
-              <br />
-
-              <Tooltip
-                content={
-                  <>
-                    The average duration of all spans within the trace. It differs from full duration, as spans can run
-                    in parallel, or there can be dead time between spans.
-                  </>
-                }
-              >
-                <strong>Spans average duration: </strong>
-              </Tooltip>
-
-              {avgSpanDuration ? formatDuration(avgSpanDuration) : 'n/a'}
-              <br />
-              <br />
-
-              {this.props.statsMatrix && (
-                <>
-                  <strong>Compared with metrics: </strong>
-                  {renderTraceHeatMap(this.props.statsMatrix, false)}
-                  {!this.props.isStatsMatrixComplete && (
-                    <>
-                      <WarningTriangleIcon /> Incomplete data, check Span Details
-                    </>
-                  )}
-                </>
-              )}
-            </GridItem>
-
-            <GridItem span={6}>
-              <Tooltip content={t('Traces are identified as similar based on counting the number of spans and the occurrences of operation names. Only traces currently on the chart are processed.')}>
-                <>
-                  <InfoAltIcon /> <strong>Similar traces</strong>
-                  <br />
-                </>
-              </Tooltip>
-
-              {similarTraces.length > 0
-                ? this.renderSimilarHeatmap(similarTraces, trace.duration, avgSpanDuration)
-                : 'No similar traces found'}
-            </GridItem>
-          </Grid>
-        </CardBody>
-      </Card>
-    );
-  }
 }
 
 const mapStateToProps = (state: KialiAppState, props: OwnProps): StateProps => {

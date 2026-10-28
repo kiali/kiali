@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
-import { ControlPlane } from '../../types/Mesh';
-import { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { ControlPlane } from '../../types/Mesh';
+import type { AuthorizationPolicy, Sidecar } from 'types/IstioObjects';
 import { PromisesRegistry } from 'utils/CancelablePromises';
-import { DurationInSeconds } from 'types/Common';
-import { ConfigPreviewItem, IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { DurationInSeconds } from 'types/Common';
+import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
+import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { addDanger, addError, addSuccess } from 'utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
 import * as API from 'services/Api';
@@ -325,8 +326,8 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       this.props.kind === 'canary'
         ? 'Switch'
         : this.props.opTarget.length > 0
-        ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
-        : '';
+          ? `${this.props.opTarget.charAt(0).toLocaleUpperCase()}${this.props.opTarget.slice(1)}`
+          : '';
 
     const colorAction = ['enable', 'disable', 'create'].includes(this.props.opTarget)
       ? ButtonVariant.primary
@@ -336,10 +337,10 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
       this.props.kind === 'policy'
         ? ' Traffic Policies'
         : this.props.kind === 'injection'
-        ? ' Auto Injection'
-        : this.props.kind === 'ambient'
-        ? ' Ambient'
-        : ` to ${canaryVersion}`
+          ? ' Auto Injection'
+          : this.props.kind === 'ambient'
+            ? ' Ambient'
+            : ` to ${canaryVersion}`
     }?`;
 
     return (
