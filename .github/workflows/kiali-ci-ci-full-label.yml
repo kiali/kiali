@@ -1,5 +1,9 @@
-# Runs Kiali CI wave 2 when ci-full is added after wave 1 (standard workflows only — no rerun-jobs API).
-# Process labels do not trigger Kiali CI; see kiali-ci.yml.
+# Runs Kiali CI wave 2 when the ci-full label is added after the main Kiali CI
+# workflow has already started (or finished). Process labels do not trigger
+# Kiali CI; see kiali-ci.yml.
+#
+# Job names are prefixed with [ci-full] so skipped runs for other labels do not
+# collide with required status checks from Kiali CI.
 name: Kiali CI (ci-full label)
 
 on:
@@ -8,181 +12,112 @@ on:
     branches:
     - master
     - v*.*
-  workflow_run:
-    workflows: [Kiali CI]
-    types: [completed]
 
 concurrency:
-  group: kiali-ci-wave2-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+  group: kiali-ci-wave2-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: true
 
 permissions: read-all
 
 jobs:
-  gate:
-    name: Check whether to run wave 2
+  initialize:
+    permissions:
+      contents: read
+    name: "[ci-full] Initialize"
+    if: github.event.label.name == 'ci-full'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      proceed: ${{ steps.check.outputs.proceed }}
-      target_branch: ${{ steps.check.outputs.target_branch }}
-      build_branch: ${{ steps.check.outputs.build_branch }}
+      target-branch: ${{ github.base_ref }}
+      build-branch: ${{ env.branch-pr }}
     steps:
-    - name: Decide if wave 2 should run
-      id: check
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        set -euo pipefail
-
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
-          if [ "${{ github.event.label.name }}" != "ci-full" ]; then
-            echo "proceed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "proceed=true" >> "$GITHUB_OUTPUT"
-          echo "target_branch=${{ github.event.pull_request.base.ref }}" >> "$GITHUB_OUTPUT"
-          echo "build_branch=refs/pull/${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        if [ "${{ github.event.workflow_run.conclusion }}" != "success" ]; then
-          echo "proceed=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        RUN_ID="${{ github.event.workflow_run.id }}"
-        WAVE2_CONCLUSION=$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs" --paginate \
-          -q '.jobs[] | select(.name=="Wave 2 gate") | .conclusion' | head -1 || true)
-
-        if [ "$WAVE2_CONCLUSION" = "success" ]; then
-          echo "Wave 2 already ran on Kiali CI run ${RUN_ID}"
-          echo "proceed=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        HEAD_REPO="${{ github.event.workflow_run.head_repository.full_name }}"
-        HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
-        if [ -z "$HEAD_REPO" ] || [ -z "$HEAD_BRANCH" ]; then
-          echo "proceed=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        HEAD_OWNER="${HEAD_REPO%%/*}"
-        PR_JSON=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${HEAD_OWNER}:${HEAD_BRANCH}" --state open \
-          --json number,labels,baseRefName | jq -c '.[0] // empty')
-
-        if [ -z "$PR_JSON" ]; then
-          echo "proceed=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        HAS_CI_FULL=$(echo "$PR_JSON" | jq -r '.labels[]?.name' | grep -Fx ci-full || true)
-        if [ -z "$HAS_CI_FULL" ]; then
-          echo "proceed=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-        TARGET_BRANCH=$(echo "$PR_JSON" | jq -r '.baseRefName')
-
-        echo "proceed=true" >> "$GITHUB_OUTPUT"
-        echo "target_branch=${TARGET_BRANCH}" >> "$GITHUB_OUTPUT"
-        echo "build_branch=refs/pull/${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+    - run: echo "target-branch -> ${{ github.base_ref }}"
+    - run: |
+        echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
+        echo "build-branch -> refs/pull/${{ github.ref_name }}"
 
   test_backend:
-    name: Run backend linters and unit tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run backend linters and unit tests"
     uses: ./.github/workflows/test-lint-backend.yml
-    needs: [gate]
+    needs: [initialize]
     with:
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   build_frontend:
-    name: Build frontend
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Build frontend"
     uses: ./.github/workflows/build-frontend.yml
-    needs: [gate]
+    needs: [initialize]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   build_backend:
-    name: Build backend
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Build backend"
     uses: ./.github/workflows/build-backend.yml
-    needs: [gate, test_backend, build_frontend]
+    needs: [initialize, test_backend, build_frontend]
     with:
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_chat:
-    name: Run frontend AI integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend AI integration tests"
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_local_offline:
-    name: Run frontend local and offline mode integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend local and offline mode integration tests"
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_tempo:
-    name: Run tracing frontend integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run tracing frontend integration tests"
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_primary_remote:
-    name: Run frontend multicluster primary-remote integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend multicluster primary-remote integration tests"
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_multi_primary:
-    name: Run frontend multicluster multi-primary integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend multicluster multi-primary integration tests"
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multicluster_external_kiali:
-    name: Run frontend multicluster external-kiali integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend multicluster external-kiali integration tests"
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_frontend_multi_mesh:
-    name: Run frontend multi mesh integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run frontend multi mesh integration tests"
     uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
 
   integration_tests_backend_multicluster_external_controlplane:
-    name: Run backend multicluster external-controlplane integration tests
-    if: needs.gate.outputs.proceed == 'true'
+    name: "[ci-full] Run backend multicluster external-controlplane integration tests"
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
-    needs: [gate, build_backend]
+    needs: [initialize, build_backend]
     with:
-      target_branch: ${{ needs.gate.outputs.target_branch }}
-      build_branch: ${{ needs.gate.outputs.build_branch }}
+      target_branch: ${{ needs.initialize.outputs.target-branch }}
+      build_branch: ${{ needs.initialize.outputs.build-branch }}
