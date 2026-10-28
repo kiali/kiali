@@ -17,6 +17,7 @@ import { classes } from 'typestyle';
 import {
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
+  isEnvoyMemoryMetricMissing,
   envoyMemoryMetricHelp,
   envoyMemoryThresholdHelp,
   estimateEnvoyConfigMemoryBytes,
@@ -286,7 +287,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                             bodyContent={
                               <div className={helpBodyStyle}>
                                 {envoyMemoryThresholdHelp(summary)}
-                                {summary.cause !== 'ok' && (
+                                {summary.cause !== 'ok' && !isEnvoyMemoryMetricMissing(summary) && (
                                   <p className={linkRowStyle}>
                                     <IstioConfigurationScopingLink
                                       dataTest="envoy-memory-status-scoping-link"
@@ -306,11 +307,13 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                           </Popover>
                         </span>
                       }
-                      variant={summary.cause === 'ok' ? 'success' : 'warning'}
+                      variant={
+                        isEnvoyMemoryMetricMissing(summary) ? 'info' : summary.cause === 'ok' ? 'success' : 'warning'
+                      }
                     >
                       <div className={statusCauseStyle}>
-                        {createIcon(envoyMemoryCauseStatus(summary.cause))}
-                        {envoyMemoryCauseLabel(summary.cause)}
+                        {createIcon(envoyMemoryCauseStatus(summary.cause, summary.memoryMaxBytes))}
+                        {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
                       </div>
                     </Alert>
 
