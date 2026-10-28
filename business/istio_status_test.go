@@ -1022,3 +1022,76 @@ func TestGetStatusFiltersCachedGatewayEntriesForUser(t *testing.T) {
 	assert.True(componentNames["prometheus"], "the namespace-less addon entry must be kept")
 	assert.False(componentNames["gw-victim"], "a denied namespace's gateway entry must not be returned")
 }
+
+// TestGetStatusControlPlaneExemptionIsClusterScoped pins that the
+// discovered control-plane exemption is keyed by (cluster, namespace): a
+// namespace that hosts a control plane in one cluster may be an ordinary
+// tenant namespace in another, and the collision must not exempt the other
+// cluster's entries. The configured component namespaces stay a deliberate
+// global exemption (the operator declares them by name only).
+func TestGetStatusControlPlaneExemptionIsClusterScoped(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	conf.ExternalServices.Istio.ComponentStatuses.Enabled = true
+	conf.ExternalServices.Istio.IstioAPIEnabled = true
+	// A configured component namespace: a global exemption by design.
+	conf.ExternalServices.Istio.ComponentStatuses.Components = []config.ComponentStatus{
+		{AppLabel: "comp", IsCore: true, Namespace: "configured-ns"},
+	}
+	home := conf.KubernetesConfig.ClusterName
+	const remote = "cluster-b"
+
+	// The user can access bookinfo in the home cluster only; in the remote
+	// cluster their LIST is empty (direct namespace access is denied).
+	homeSA := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("shared"))
+	homeSA.Token = "home-sa-token"
+	remoteSA := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("shared"))
+	remoteSA.Token = "remote-sa-token"
+	homeUser := kubetest.NewNamespaceRestrictedClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("shared")), "user-token", []string{"bookinfo"})
+	remoteUser := kubetest.NewNamespaceRestrictedClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("shared")), "user-token", nil)
+
+	saClients := map[string]kubernetes.ClientInterface{home: homeSA, remote: remoteSA}
+	userClients := map[string]kubernetes.UserClientInterface{home: homeUser, remote: remoteUser}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	// The mesh hosts a control plane in the home cluster's "shared"
+	// namespace. The remote cluster also has a "shared" namespace — with an
+	// ordinary tenant gateway in it.
+	layer.IstioStatus.discovery = &istiotest.FakeDiscovery{MeshReturn: models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:         &models.KubeCluster{Name: home},
+			IstiodNamespace: "shared",
+		}},
+	}}
+
+	kialiCache.SetIstioStatus(kubernetes.IstioComponentStatus{
+		// The control plane itself: kept via the (cluster, namespace) pair.
+		{Cluster: home, Name: "istiod", Namespace: "shared", Status: kubernetes.ComponentHealthy, IsCore: true},
+		// The collision: a tenant gateway in the remote cluster's same-named
+		// namespace. The user is denied there, and the remote "shared" is not
+		// a control-plane namespace — the entry must be dropped.
+		{Cluster: remote, Name: "gw-tenant-collision", Namespace: "shared", Status: kubernetes.ComponentHealthy},
+		// Positive control: an accessible namespace's gateway is kept.
+		{Cluster: home, Name: "gw-allowed", Namespace: "bookinfo", Status: kubernetes.ComponentHealthy},
+		// The configured component namespace is a global exemption: kept
+		// even in the remote cluster the user cannot see.
+		{Cluster: remote, Name: "gw-configured", Namespace: "configured-ns", Status: kubernetes.ComponentHealthy},
+	})
+
+	status, err := layer.IstioStatus.GetStatus(context.TODO())
+	require.NoError(err)
+
+	componentNames := make(map[string]bool, len(status))
+	for _, component := range status {
+		componentNames[component.Name] = true
+	}
+	assert.True(componentNames["istiod"], "the control plane in the home cluster's shared namespace must be kept")
+	assert.True(componentNames["gw-allowed"], "the accessible namespace's gateway must be kept")
+	assert.True(componentNames["gw-configured"], "the configured component namespace is a global exemption and must be kept")
+	assert.False(componentNames["gw-tenant-collision"], "a tenant gateway in another cluster's same-named namespace must not be exempted")
+}

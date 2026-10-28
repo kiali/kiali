@@ -147,11 +147,14 @@ func (iss *IstioStatusService) GetStatus(ctx context.Context) (kubernetes.IstioC
 // namespaces and the shared status and gateway caches hold them SA-wide — so
 // a namespace-bearing entry outside the control-plane namespaces is kept
 // only when the user can access its namespace in its cluster. Control-plane
-// entries (istiod and the configured component namespaces) are kept for
-// every user: the control plane's status is mesh-wide information Kiali
-// exposes deliberately, like the mesh endpoints do. Entries without a
-// namespace (addons, managed-cluster istiod placeholders) disclose no
-// namespace and are kept.
+// entries are kept for every user: the control plane's status is mesh-wide
+// information Kiali exposes deliberately, like the mesh endpoints do. The
+// istiod namespaces discovered from the mesh exempt only the cluster that
+// hosts the control plane — a same-named namespace in another cluster is
+// ordinary tenant space and is not exempt — while the configured component
+// namespaces are a deliberate global exemption (the operator declares them
+// by name, without cluster identity). Entries without a namespace (addons,
+// managed-cluster istiod placeholders) disclose no namespace and are kept.
 func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status kubernetes.IstioComponentStatus) (kubernetes.IstioComponentStatus, error) {
 	if len(status) == 0 {
 		return status, nil
@@ -170,14 +173,20 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 	if err != nil {
 		return nil, err
 	}
-	controlPlaneNamespaces := make(map[string]struct{})
-	for _, ns := range getComponentNamespaces(iss.conf) {
-		controlPlaneNamespaces[ns] = struct{}{}
-	}
+	// Discovered control-plane namespaces are cluster-scoped: a namespace
+	// that hosts a control plane in one cluster may be an ordinary tenant
+	// namespace in another, and must not exempt the latter's entries.
+	controlPlanePairs := make(map[string]struct{})
 	for _, cp := range mesh.ControlPlanes {
-		if cp.IstiodNamespace != "" {
-			controlPlaneNamespaces[cp.IstiodNamespace] = struct{}{}
+		if cp.Cluster != nil && cp.IstiodNamespace != "" {
+			controlPlanePairs[cp.Cluster.Name+"\x00"+cp.IstiodNamespace] = struct{}{}
 		}
+	}
+	// Configured component namespaces are a deliberate global exemption:
+	// the operator declares them by name, without cluster identity.
+	configuredNamespaces := make(map[string]struct{})
+	for _, ns := range getComponentNamespaces(iss.conf) {
+		configuredNamespaces[ns] = struct{}{}
 	}
 
 	filtered := make(kubernetes.IstioComponentStatus, 0, len(status))
@@ -186,7 +195,11 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 			filtered = append(filtered, component)
 			continue
 		}
-		if _, ok := controlPlaneNamespaces[component.Namespace]; ok {
+		if _, ok := controlPlanePairs[component.Cluster+"\x00"+component.Namespace]; ok {
+			filtered = append(filtered, component)
+			continue
+		}
+		if _, ok := configuredNamespaces[component.Namespace]; ok {
 			filtered = append(filtered, component)
 			continue
 		}
