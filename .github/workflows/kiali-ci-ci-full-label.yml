@@ -2,6 +2,9 @@
 # workflow has already started (or finished). Process labels do not trigger
 # Kiali CI; see kiali-ci.yml.
 #
+# Rebuilds frontend/backend (needed as artifacts for wave 2) but skips unit
+# tests/linters already covered by wave 1.
+#
 # Job names are prefixed with [ci-full] so skipped runs for other labels do not
 # collide with required status checks from Kiali CI.
 name: Kiali CI (ci-full label)
@@ -36,13 +39,6 @@ jobs:
         echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
         echo "build-branch -> refs/pull/${{ github.ref_name }}"
 
-  test_backend:
-    name: "[ci-full] Run backend linters and unit tests"
-    uses: ./.github/workflows/test-lint-backend.yml
-    needs: [initialize]
-    with:
-      build_branch: ${{ needs.initialize.outputs.build-branch }}
-
   build_frontend:
     name: "[ci-full] Build frontend"
     uses: ./.github/workflows/build-frontend.yml
@@ -54,7 +50,7 @@ jobs:
   build_backend:
     name: "[ci-full] Build backend"
     uses: ./.github/workflows/build-backend.yml
-    needs: [initialize, test_backend, build_frontend]
+    needs: [initialize, build_frontend]
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
