@@ -31,7 +31,13 @@ import type { TracingState } from 'reducers/TracingState';
 import type { MetricsStatsState } from 'reducers/MetricsStatsState';
 import type { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import type { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
-import type { ChatInteractionMode, ChatResourceHealth, ProviderAI, TroubleshootingIssue } from 'types/Chatbot';
+import type {
+  ChatInteractionMode,
+  ChatResourceHealth,
+  ProviderAI,
+  TroubleshootingConversation,
+  TroubleshootingIssue
+} from 'types/Chatbot';
 import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 // Store is the Redux Data store
@@ -209,14 +215,19 @@ export interface AIState {
 }
 
 export interface TroubleshootingAIState extends AIRightView {
+  // Conversation shown in the drawer. Kept when the drawer closes so it can be restored.
+  activeConversationId?: string;
   ai_support: AIRightView;
+  // Troubleshooting chats started from Analyze, newest first.
+  conversations: TroubleshootingConversation[];
+  drawerExpanded: boolean;
   error: string;
   // Subproblem ids the user chose to hide. Survives troubleshooting refetches.
   hiddenSubProblemIds: string[];
   issues: TroubleshootingIssue[];
   // True after the first scan attempt, including a failed one.
   loaded: boolean;
-  // Analysis modals currently open. Troubleshooting refresh waits until this is 0.
+  // 1 while the troubleshooting drawer is showing a conversation. Refresh waits until this is 0.
   openAnalyses: number;
 }
 

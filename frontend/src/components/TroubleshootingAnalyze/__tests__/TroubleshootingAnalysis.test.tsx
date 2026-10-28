@@ -1,6 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { Mock } from '@rstest/core';
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
 
+import type { KialiAppAction } from 'actions/KialiAppAction';
+import { AiTroubleshootingStateReducer, INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
 import * as API from 'services/Api';
 import { TroubleshootingAnalysis } from '../TroubleshootingAnalysis';
 
@@ -21,6 +25,46 @@ const sseResponse = (events: string[], status = 200): Response => {
   return new Response(stream, { status });
 };
 
+const conversationId = 'troubleshooting-1';
+
+const analysisState = (): {
+  ai: {
+    troubleshooting: typeof INITIAL_TROUBLESHOOTING_STATE;
+  };
+} => ({
+  ai: {
+    troubleshooting: {
+      ...INITIAL_TROUBLESHOOTING_STATE,
+      activeConversationId: conversationId,
+      conversations: [
+        {
+          createdAt: 0,
+          id: conversationId,
+          messages: [],
+          problem: 'Analyze reviews',
+          prompt: 'Analyze reviews'
+        }
+      ],
+      drawerExpanded: true
+    }
+  }
+});
+
+const analysisReducer = (state = analysisState(), action: KialiAppAction): ReturnType<typeof analysisState> => ({
+  ...state,
+  ai: {
+    troubleshooting: AiTroubleshootingStateReducer(state.ai.troubleshooting, action)
+  }
+});
+
+const renderAnalysis = (): void => {
+  render(
+    <Provider store={createStore(analysisReducer)}>
+      <TroubleshootingAnalysis conversationId={conversationId} />
+    </Provider>
+  );
+};
+
 describe('TroubleshootingAnalysis', () => {
   beforeEach(() => {
     rstest.clearAllMocks();
@@ -36,7 +80,7 @@ describe('TroubleshootingAnalysis', () => {
       ])
     );
 
-    render(<TroubleshootingAnalysis query="Analyze reviews" />);
+    renderAnalysis();
 
     expect(screen.getByTestId('ai-troubleshooting-analysis-status')).toHaveTextContent(
       'Kiali AI troubleshooting working...'
@@ -71,7 +115,7 @@ describe('TroubleshootingAnalysis', () => {
       );
     });
 
-    render(<TroubleshootingAnalysis query="Analyze reviews" />);
+    renderAnalysis();
 
     await waitFor(() => {
       expect(screen.getByText('Which host should I check?')).toBeInTheDocument();
@@ -105,7 +149,7 @@ describe('TroubleshootingAnalysis', () => {
       })
     );
 
-    render(<TroubleshootingAnalysis query="Analyze reviews" />);
+    renderAnalysis();
 
     expect(await screen.findByText('AI support is not enabled for troubleshooting')).toBeInTheDocument();
     await waitFor(() => {

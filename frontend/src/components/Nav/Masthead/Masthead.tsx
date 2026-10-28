@@ -30,7 +30,6 @@ export const MastheadItems: React.FC = () => {
               <IstioStatus />
             </ToolbarItem>
           )}
-          <TroubleshootingStatus />
 
           <ToolbarItem className={centerItemStyle}>
             <PfSpinner />
@@ -38,6 +37,8 @@ export const MastheadItems: React.FC = () => {
         </ToolbarGroup>
 
         <ToolbarGroup align={{ default: 'alignEnd' }}>
+          <TroubleshootingStatus />
+
           <ToolbarItem>
             <NotificationCenterBadge />
           </ToolbarItem>

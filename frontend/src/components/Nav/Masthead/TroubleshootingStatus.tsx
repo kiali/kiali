@@ -1,6 +1,13 @@
 import * as React from 'react';
-import { Content, Label, ToolbarItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { ExclamationCircleIcon, ExclamationTriangleIcon } from '@patternfly/react-icons';
+import {
+  Content,
+  NotificationBadge,
+  NotificationBadgeVariant,
+  ToolbarItem,
+  Tooltip,
+  TooltipPosition
+} from '@patternfly/react-core';
+import { ExclamationCircleIcon, ExclamationTriangleIcon, OptimizeIcon } from '@patternfly/react-icons';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -8,6 +15,7 @@ import { Paths } from 'config';
 import { KialiLink } from 'components/Link/KialiLink';
 import { meshLinkStyle } from 'components/IstioStatus/IstioStatus';
 import { PFColors } from 'components/Pf/PfColors';
+import { useTroubleshootingDrawer } from 'hooks/useTroubleshootingDrawer';
 import {
   summarizeTroubleshootingIssues,
   troubleshootingDetail
@@ -56,6 +64,30 @@ const warningIconStyle = kialiStyle({
   marginTop: PFSpacer.xs
 });
 
+const badgeStatusStyle = (status: 'danger' | 'warning'): string => {
+  const token = status === 'danger' ? 'danger' : 'warning';
+  return kialiStyle({
+    backgroundColor: `var(--pf-t--global--color--status--${token}--default)`,
+    color: `var(--pf-t--global--text--color--status--on-${token}--default)`,
+    $nest: {
+      '&:hover': {
+        backgroundColor: `var(--pf-t--global--color--status--${token}--hover)`,
+        color: `var(--pf-t--global--text--color--status--on-${token}--hover)`
+      },
+      '&.pf-m-clicked': {
+        backgroundColor: `var(--pf-t--global--color--status--${token}--clicked)`,
+        color: `var(--pf-t--global--text--color--status--on-${token}--clicked)`
+      },
+      '& .pf-v6-c-button__icon': {
+        color: `var(--pf-t--global--icon--color--status--on-${token}--default)`
+      }
+    }
+  });
+};
+
+const criticalBadgeStyle = badgeStatusStyle('danger');
+const warningBadgeStyle = badgeStatusStyle('warning');
+
 const tooltipStyle = kialiStyle({
   $nest: {
     '& .pf-v6-c-tooltip__content': {
@@ -82,6 +114,7 @@ const issueIsCritical = (issue: TroubleshootingIssue): boolean =>
 export const TroubleshootingStatus: React.FC = () => {
   const { pathname } = useLocation();
   const [tooltipNonce, setTooltipNonce] = React.useState(0);
+  const { expanded, toggle } = useTroubleshootingDrawer();
   const troubleshooting = useSelector((state: KialiAppState) => state.ai.troubleshooting);
   const allowed = !!(troubleshooting?.enabled && troubleshooting.allowed && troubleshooting.loaded);
   const issues = troubleshooting?.issues ?? [];
@@ -92,7 +125,6 @@ export const TroubleshootingStatus: React.FC = () => {
   }
 
   const critical = summary.critical > 0;
-  const status: 'danger' | 'warning' = critical ? 'danger' : 'warning';
   const dataTest = critical ? 'troubleshooting-status-danger' : 'troubleshooting-status-warning';
   const displayedIssues = issues.slice(0, ISSUE_COUNT_THRESHOLD);
 
@@ -128,21 +160,39 @@ export const TroubleshootingStatus: React.FC = () => {
     </Content>
   );
 
+  const badge = (
+    <span>
+      <NotificationBadge
+        aria-label={t('Troubleshooting')}
+        attentionIcon={<OptimizeIcon />}
+        className={critical ? criticalBadgeStyle : warningBadgeStyle}
+        count={summary.problems}
+        data-test={dataTest}
+        icon={<OptimizeIcon />}
+        isExpanded={expanded}
+        onClick={toggle}
+        variant={critical ? NotificationBadgeVariant.attention : NotificationBadgeVariant.unread}
+      />
+    </span>
+  );
+
   return (
     <ToolbarItem className={centerItemStyle}>
-      <Tooltip
-        className={tooltipStyle}
-        content={tooltipContent}
-        data-test="troubleshooting-status-tooltip"
-        enableFlip={true}
-        key={`${pathname}-${tooltipNonce}`}
-        maxWidth="25rem"
-        position={TooltipPosition.top}
-      >
-        <Label data-test={dataTest} status={status}>
-          {t('Troubleshooting')}
-        </Label>
-      </Tooltip>
+      {expanded ? (
+        badge
+      ) : (
+        <Tooltip
+          className={tooltipStyle}
+          content={tooltipContent}
+          data-test="troubleshooting-status-tooltip"
+          enableFlip={true}
+          key={`${pathname}-${tooltipNonce}`}
+          maxWidth="25rem"
+          position={TooltipPosition.bottom}
+        >
+          {badge}
+        </Tooltip>
+      )}
     </ToolbarItem>
   );
 };

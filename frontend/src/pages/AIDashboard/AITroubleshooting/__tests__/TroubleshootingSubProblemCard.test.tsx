@@ -5,7 +5,11 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { createStore } from 'redux';
 
 import { ChatAIActions } from 'actions/ChatAIActions';
+import type { KialiAppAction } from 'actions/KialiAppAction';
+import { TroubleshootingDrawer } from 'components/TroubleshootingDrawer/TroubleshootingDrawer';
+import { AiTroubleshootingStateReducer, INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
 import * as API from 'services/Api';
+import type { TroubleshootingSubProblem } from 'types/Chatbot';
 import { TroubleshootingSubProblemCard } from '../TroubleshootingSubProblemCard';
 
 rstest.mock('services/Api', () => ({
@@ -18,6 +22,53 @@ const subProblem = {
   issue: 'productpage errors',
   suggestedPrompt: 'Why is productpage failing?',
   target: 'productpage'
+};
+
+const analysisState = (): {
+  ai: {
+    chat: { allowed: boolean; enabled: boolean };
+    enabled: boolean;
+    troubleshooting: typeof INITIAL_TROUBLESHOOTING_STATE;
+  };
+  globalState: { kiosk: string };
+} => ({
+  ai: {
+    chat: { allowed: false, enabled: false },
+    enabled: true,
+    troubleshooting: {
+      ...INITIAL_TROUBLESHOOTING_STATE,
+      ai_support: { allowed: true, enabled: true },
+      allowed: true,
+      enabled: true,
+      hiddenSubProblemIds: [] as string[]
+    }
+  },
+  globalState: { kiosk: '' }
+});
+
+const analysisReducer = (state = analysisState(), action: KialiAppAction): ReturnType<typeof analysisState> => ({
+  ...state,
+  ai: {
+    ...state.ai,
+    troubleshooting: AiTroubleshootingStateReducer(state.ai.troubleshooting, action)
+  }
+});
+
+const renderAnalysis = (
+  nextSubProblem: TroubleshootingSubProblem
+): ReturnType<typeof render> & { store: ReturnType<typeof createStore> } => {
+  const store = createStore(analysisReducer);
+  return {
+    store,
+    ...render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <TroubleshootingSubProblemCard subProblem={nextSubProblem} />
+          <TroubleshootingDrawer />
+        </MemoryRouter>
+      </Provider>
+    )
+  };
 };
 
 const renderCard = (
@@ -181,37 +232,13 @@ describe('TroubleshootingSubProblemCard', () => {
   });
 
   it('opens a troubleshooting analysis from the Question action', () => {
-    const store = createStore(
-      (
-        state = {
-          ai: {
-            chat: { allowed: false, enabled: false },
-            enabled: true,
-            troubleshooting: {
-              ai_support: { allowed: true, enabled: true },
-              allowed: true,
-              enabled: true,
-              hiddenSubProblemIds: [] as string[]
-            }
-          },
-          globalState: { kiosk: '' }
-        }
-      ) => state
-    );
-
-    render(
-      <Provider store={store}>
-        <TroubleshootingSubProblemCard
-          subProblem={{
-            ...subProblem,
-            suggestedActions: [
-              { description: 'Ask the AI to analyze productpage', type: 'Question' },
-              { command: 'kubectl get pods', description: 'Check pods', type: 'Advice' }
-            ]
-          }}
-        />
-      </Provider>
-    );
+    renderAnalysis({
+      ...subProblem,
+      suggestedActions: [
+        { description: 'Ask the AI to analyze productpage', type: 'Question' },
+        { command: 'kubectl get pods', description: 'Check pods', type: 'Advice' }
+      ]
+    });
 
     expect(screen.queryByRole('button', { name: 'Question' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Review' })).not.toBeInTheDocument();
@@ -231,42 +258,18 @@ describe('TroubleshootingSubProblemCard', () => {
   });
 
   it('analyzes an istio object from the action prompt', () => {
-    const store = createStore(
-      (
-        state = {
-          ai: {
-            chat: { allowed: false, enabled: false },
-            enabled: true,
-            troubleshooting: {
-              ai_support: { allowed: true, enabled: true },
-              allowed: true,
-              enabled: true,
-              hiddenSubProblemIds: [] as string[]
-            }
-          },
-          globalState: { kiosk: '' }
+    renderAnalysis({
+      ...subProblem,
+      suggestedPrompt: undefined,
+      suggestedActions: [
+        {
+          description: 'Analyze the YAML of VirtualService reviews',
+          prompt:
+            'Analyze the YAML of Istio object istio/networking.istio.io/v1/VirtualService/reviews in namespace bookinfo. Fetch it with manage_istio_config_read action get, object="reviews".',
+          type: 'Analyze'
         }
-      ) => state
-    );
-
-    render(
-      <Provider store={store}>
-        <TroubleshootingSubProblemCard
-          subProblem={{
-            ...subProblem,
-            suggestedPrompt: undefined,
-            suggestedActions: [
-              {
-                description: 'Analyze the YAML of VirtualService reviews',
-                prompt:
-                  'Analyze the YAML of Istio object istio/networking.istio.io/v1/VirtualService/reviews in namespace bookinfo. Fetch it with manage_istio_config_read action get, object="reviews".',
-                type: 'Analyze'
-              }
-            ]
-          }}
-        />
-      </Provider>
-    );
+      ]
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
 
@@ -278,110 +281,60 @@ describe('TroubleshootingSubProblemCard', () => {
     );
   });
 
-  it('cancels the analysis stream when the modal is closed', () => {
+  it('stops the analysis stream when the drawer is closed and keeps the conversation', () => {
     let signal: AbortSignal | undefined;
     (API.postTroubleshootingChat as Mock).mockImplementation((_request: unknown, nextSignal: AbortSignal) => {
       signal = nextSignal;
       return new Promise(() => undefined);
     });
-    const analysisOpen: boolean[] = [];
-    const store = createStore(
-      (
-        state = {
-          ai: {
-            chat: { allowed: false, enabled: false },
-            enabled: true,
-            troubleshooting: {
-              ai_support: { allowed: true, enabled: true },
-              allowed: true,
-              enabled: true,
-              hiddenSubProblemIds: [] as string[]
-            }
-          },
-          globalState: { kiosk: '' }
-        }
-      ) => state
-    );
-    const originalDispatch = store.dispatch;
-    store.dispatch = (action => {
-      if (action.type === ChatAIActions.setTroubleshootingAnalysisOpen(true).type) {
-        analysisOpen.push((action as unknown as { payload: boolean }).payload);
-      }
-      return originalDispatch(action);
-    }) as typeof store.dispatch;
 
-    render(
-      <Provider store={store}>
-        <TroubleshootingSubProblemCard
-          subProblem={{
-            ...subProblem,
-            suggestedActions: [{ description: 'Analyze productpage', type: 'Analyze' }]
-          }}
-        />
-      </Provider>
-    );
+    const { store } = renderAnalysis({
+      ...subProblem,
+      suggestedActions: [{ description: 'Analyze productpage', type: 'Analyze' }]
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
-    expect(analysisOpen).toEqual([true]);
+    const state = store.getState() as ReturnType<typeof analysisState>;
+    expect(state.ai.troubleshooting.drawerExpanded).toBe(true);
+    expect(state.ai.troubleshooting.openAnalyses).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: /Show more/ }));
     expect(screen.getByTestId('ai-troubleshooting-analysis-summary')).toHaveTextContent('Requests fail');
-    expect(screen.getByRole('dialog')).toHaveTextContent('[SP1] productpage errors');
-
+    expect(screen.getByTestId('ai-troubleshooting-drawer')).toHaveTextContent('[SP1] productpage errors');
     expect(screen.getByTestId('ai-troubleshooting-analysis-input')).toBeInTheDocument();
+    expect(screen.getByTestId('troubleshooting-history-list')).not.toBeVisible();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
-    expect(analysisOpen).toEqual([true, false]);
+    expect((store.getState() as ReturnType<typeof analysisState>).ai.troubleshooting.drawerExpanded).toBe(false);
+    expect((store.getState() as ReturnType<typeof analysisState>).ai.troubleshooting.conversations).toHaveLength(1);
     expect(signal?.aborted).toBe(true);
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('ai-troubleshooting-analysis')).not.toBeInTheDocument();
   });
 
-  it('shows validation checks in the analysis modal', () => {
-    const store = createStore(
-      (
-        state = {
-          ai: {
-            chat: { allowed: false, enabled: false },
-            enabled: true,
-            troubleshooting: {
-              ai_support: { allowed: true, enabled: true },
-              allowed: true,
-              enabled: true,
-              hiddenSubProblemIds: [] as string[]
-            }
-          },
-          globalState: { kiosk: '' }
+  it('shows validation checks in the analysis drawer', () => {
+    renderAnalysis({
+      ...subProblem,
+      checks: [
+        {
+          code: 'KIA1101',
+          message: "DestinationWeight on route doesn't have a valid service (host not found)",
+          path: 'spec/http[0]/route[2]/destination/host',
+          severity: 'warning'
+        },
+        {
+          code: 'KIA1107',
+          message: 'Subset not found',
+          path: 'spec/http[0]/route[1]/destination',
+          severity: 'warning'
         }
-      ) => state
-    );
-
-    render(
-      <Provider store={store}>
-        <TroubleshootingSubProblemCard
-          subProblem={{
-            ...subProblem,
-            checks: [
-              {
-                code: 'KIA1101',
-                message: "DestinationWeight on route doesn't have a valid service (host not found)",
-                path: 'spec/http[0]/route[2]/destination/host',
-                severity: 'warning'
-              },
-              {
-                code: 'KIA1107',
-                message: 'Subset not found',
-                path: 'spec/http[0]/route[1]/destination',
-                severity: 'warning'
-              }
-            ],
-            suggestedActions: [{ description: 'Analyze the virtual service', type: 'Analyze' }]
-          }}
-        />
-      </Provider>
-    );
+      ],
+      suggestedActions: [{ description: 'Analyze the virtual service', type: 'Analyze' }]
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    fireEvent.click(screen.getByRole('button', { name: /Show more/ }));
 
-    const dialog = screen.getByRole('dialog');
+    const dialog = screen.getByTestId('ai-troubleshooting-drawer');
     expect(dialog).toHaveTextContent('[KIA1101]');
     expect(dialog).toHaveTextContent(
       "DestinationWeight on route doesn't have a valid service (host not found) (spec/http[0]/route[2]/destination/host)"
