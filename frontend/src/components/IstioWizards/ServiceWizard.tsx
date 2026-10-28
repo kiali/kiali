@@ -177,6 +177,10 @@ const advancedOptionsStyle = kialiStyle({
   marginTop: '0.5rem'
 });
 
+const serviceWizardConfirmModalTitleId = 'service-wizard-confirm-modal-title';
+const serviceWizardModalTitleId = 'service-wizard-modal-title';
+const serviceWizardModalDescriptionId = 'service-wizard-modal-description';
+
 export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWizardState> {
   constructor(props: ServiceWizardProps) {
     super(props);
@@ -935,8 +939,13 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
 
     return (
       <>
-        <Modal variant={ModalVariant.small} isOpen={this.state.confirmationModal} onClose={() => this.onClose(false)}>
-          <ModalHeader title={titleAction} />
+        <Modal
+          aria-labelledby={serviceWizardConfirmModalTitleId}
+          variant={ModalVariant.small}
+          isOpen={this.state.confirmationModal}
+          onClose={() => this.onClose(false)}
+        >
+          <ModalHeader labelId={serviceWizardConfirmModalTitleId} title={titleAction} />
           <ModalBody>
             <>
               {this.props.update
@@ -966,7 +975,8 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         <Modal
           maxWidth={'641px'}
           variant={ModalVariant.medium}
-          aria-label={titleModal}
+          aria-labelledby={serviceWizardModalTitleId}
+          {...(modalDescription ? { 'aria-describedby': serviceWizardModalDescriptionId } : {})}
           data-test={`${this.props.type}_modal`}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
@@ -976,7 +986,12 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
             }
           }}
         >
-          <ModalHeader title={titleModal} description={modalDescription} />
+          <ModalHeader
+            descriptorId={serviceWizardModalDescriptionId}
+            labelId={serviceWizardModalTitleId}
+            title={titleModal}
+            description={modalDescription}
+          />
           <ModalBody>
             {this.props.type === WIZARD_REQUEST_ROUTING && (
               <RequestRouting

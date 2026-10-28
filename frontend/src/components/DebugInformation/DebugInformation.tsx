@@ -41,6 +41,8 @@ enum CopyStatus {
   OLD_COPY // We copied the prev output, but there are changes in the KialiAppState
 }
 
+const debugInformationModalTitleId = 'debug-information-modal-title';
+
 type ReduxProps = {
   appState: KialiAppState;
 };
@@ -282,8 +284,14 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
   };
 
   return (
-    <Modal className={modalStyle} variant={ModalVariant.medium} isOpen={props.isOpen} onClose={props.onClose}>
-      <ModalHeader title={t('Debug information')} />
+    <Modal
+      aria-labelledby={debugInformationModalTitleId}
+      className={modalStyle}
+      variant={ModalVariant.medium}
+      isOpen={props.isOpen}
+      onClose={props.onClose}
+    >
+      <ModalHeader labelId={debugInformationModalTitleId} title={t('Debug information')} />
       <ModalBody>
         {copyStatus === CopyStatus.COPIED && (
           <Alert

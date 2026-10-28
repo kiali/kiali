@@ -50,6 +50,8 @@ type State = {
   sidecars: Sidecar[];
 };
 
+const namespaceTrafficPoliciesConfirmModalTitleId = 'namespace-traffic-policies-confirm-modal-title';
+
 export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPoliciesProps, State> {
   private promises = new PromisesRegistry();
 
@@ -371,8 +373,13 @@ export class NamespaceTrafficPolicies extends React.Component<NamespaceTrafficPo
           />
         )}
 
-        <Modal variant={ModalVariant.small} isOpen={this.state.confirmationModal} onClose={this.onHideConfirmModal}>
-          <ModalHeader title={title} />
+        <Modal
+          aria-labelledby={namespaceTrafficPoliciesConfirmModalTitleId}
+          variant={ModalVariant.small}
+          isOpen={this.state.confirmationModal}
+          onClose={this.onHideConfirmModal}
+        >
+          <ModalHeader labelId={namespaceTrafficPoliciesConfirmModalTitleId} title={title} />
           <ModalBody>
             {this.props.kind === 'injection' ? (
               <>

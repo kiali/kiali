@@ -176,7 +176,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
                 id={'drform-duration-dd'}
                 disabled={false}
                 duration={duration}
-                prefix={t('Last')}
+                lastLabel
                 setDuration={handleSetDuration}
                 tooltip={t('Metric time period per refresh')}
                 tooltipPosition={TooltipPosition.top}

@@ -231,6 +231,8 @@ const buildTooltipContent = (cluster: string, namespace: string, serviceName: st
   );
 };
 
+const serviceInsightsManageMetricsModalTitleId = 'service-insights-manage-metrics-modal-title';
+
 export const ServiceInsights: React.FC = () => {
   const { t } = useKialiTranslation();
   const { lastRefreshAt } = useRefreshInterval();
@@ -691,13 +693,13 @@ export const ServiceInsights: React.FC = () => {
 
       <Modal
         id="service-insights-manage-columns-modal"
+        aria-labelledby={serviceInsightsManageMetricsModalTitleId}
         data-test="service-insights-manage-columns-modal"
-        aria-label={t('Manage metrics')}
         variant={ModalVariant.small}
         isOpen={isManageColumnsOpen}
         onClose={onCancelManageColumns}
       >
-        <ModalHeader title={t('Manage metrics')} />
+        <ModalHeader labelId={serviceInsightsManageMetricsModalTitleId} title={t('Manage metrics')} />
         <ModalBody>
           <p style={{ marginTop: 0 }}>
             {t(

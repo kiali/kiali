@@ -91,6 +91,8 @@ const iconStyle = kialiStyle({
   marginLeft: '0.25rem'
 });
 
+const istioConfigPreviewModalTitleId = 'istio-config-preview-modal-title';
+
 // From react-patternfly library (not exported in the library)
 type TabElement = React.ReactElement<TabProps, React.JSXElementConstructor<TabProps>>;
 type TabsChild = TabElement | boolean | null | undefined;
@@ -209,12 +211,13 @@ export class IstioConfigPreview extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <Modal
+        aria-labelledby={istioConfigPreviewModalTitleId}
         width={'75%'}
         isOpen={this.state.modalOpen}
         onClose={this.props.onClose}
         onKeyDown={e => (this.props.onKeyPress ? this.props.onKeyPress(e) : {})}
       >
-        <ModalHeader title={this.props.title} />
+        <ModalHeader labelId={istioConfigPreviewModalTitleId} title={this.props.title} />
         <ModalBody>
           <Toolbar>
             <ToolbarGroup

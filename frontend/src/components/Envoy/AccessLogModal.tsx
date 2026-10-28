@@ -7,6 +7,8 @@ import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
+const accessLogModalTitleId = 'access-log-modal-title';
+
 export interface AccessLogModalProps {
   accessLog: AccessLog;
   accessLogMessage: string;
@@ -839,8 +841,15 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
     }
   };
   return (
-    <Modal className={modalStyle} disableFocusTrap={true} isOpen={true} onClose={props.onClose}>
+    <Modal
+      aria-labelledby={accessLogModalTitleId}
+      className={modalStyle}
+      disableFocusTrap={true}
+      isOpen={true}
+      onClose={props.onClose}
+    >
       <ModalHeader
+        labelId={accessLogModalTitleId}
         title={
           props.isZtunnel
             ? t('ztunnel Access Log Entry')

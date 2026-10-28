@@ -180,6 +180,8 @@ const MaxLinesOptions = {
   '25000': '25000 lines'
 };
 
+const jsonLogModalTitleId = 'json-log-modal-title';
+
 const modalStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
@@ -1118,13 +1120,14 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
   private getJSONLogModal = (): React.ReactNode => {
     return (
       <Modal
+        aria-labelledby={jsonLogModalTitleId}
         data-test="json-modal"
         className={modalStyle}
         disableFocusTrap={true}
         isOpen={this.state.isJSONModalOpen}
         onClose={this.closeJSONModal}
       >
-        <ModalHeader title={t('JSON Log Entry')} />
+        <ModalHeader labelId={jsonLogModalTitleId} title={t('JSON Log Entry')} />
         <ModalBody>
           {this.state.showCopyMessage && (
             <Alert

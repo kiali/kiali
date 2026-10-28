@@ -208,7 +208,12 @@ export class WizardLabels extends React.Component<Props, State> {
 
     return (
       <>
-        <Modal variant={ModalVariant.large} isOpen={this.props.showAnotationsWizard} onClose={this.onClose}>
+        <Modal
+          aria-labelledby={titleId}
+          variant={ModalVariant.large}
+          isOpen={this.props.showAnotationsWizard}
+          onClose={this.onClose}
+        >
           <ModalHeader labelId={titleId} title={title} />
           <ModalBody>
             <Table variant={TableVariant.compact}>

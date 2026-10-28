@@ -20,6 +20,8 @@ import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
+const istioActionsConfirmDeleteModalTitleId = 'istio-actions-confirm-delete-modal-title';
+
 type IstioActionDropdownProps = {
   canDelete: boolean;
   objectKind?: string;
@@ -92,8 +94,13 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
         <DropdownList>{[deleteActionWrapper]}</DropdownList>
       </Dropdown>
 
-      <Modal variant={ModalVariant.small} isOpen={showConfirmModal} onClose={hideConfirmModal}>
-        <ModalHeader title={t('Confirm Delete')} />
+      <Modal
+        aria-labelledby={istioActionsConfirmDeleteModalTitleId}
+        variant={ModalVariant.small}
+        isOpen={showConfirmModal}
+        onClose={hideConfirmModal}
+      >
+        <ModalHeader labelId={istioActionsConfirmDeleteModalTitleId} title={t('Confirm Delete')} />
         <ModalBody>
           <Content component={ContentVariants.p}>
             {t(

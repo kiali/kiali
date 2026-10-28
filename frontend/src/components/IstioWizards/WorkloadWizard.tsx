@@ -4,6 +4,8 @@ import { WIZARD_TITLES } from './WizardActions';
 import { Button, ButtonVariant, Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 
+const workloadWizardModalTitleId = 'workload-wizard-modal-title';
+
 // NOTE: This class is not used but I will keep it in the repo as skeleton as we'll add again WorkloadWizards for other
 export class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizardState> {
   constructor(props: WorkloadWizardProps) {
@@ -48,12 +50,15 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     return (
       <>
         <Modal
+          aria-labelledby={workloadWizardModalTitleId}
           width={'75%'}
-          aria-label={t('workload wizard')}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
         >
-          <ModalHeader title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''} />
+          <ModalHeader
+            labelId={workloadWizardModalTitleId}
+            title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''}
+          />
           <ModalBody>
             <>{t('Workload Wizard Skeleton')}</>
           </ModalBody>

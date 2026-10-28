@@ -27,6 +27,8 @@ import { CheckerTracingConfig } from './CheckerTracingConfig';
 import { HelpIcon } from '@patternfly/react-icons';
 import { helpPopover } from '../../pages/Mesh/target/TargetPanelControlPlane';
 
+const traceConfigurationModalTitleId = 'trace-configuration-modal-title';
+
 type ReduxProps = {
   externalServices: ExternalServiceInfo[];
   kiosk: string;
@@ -170,12 +172,13 @@ export const TraceConfigurationModalComp: React.FC<TraceConfigurationModalProps>
 
   return (
     <Modal
+      aria-labelledby={traceConfigurationModalTitleId}
       variant={ModalVariant.medium}
       isOpen={props.isOpen}
       onClose={props.onClose}
       data-test="modal-configuration-tester"
     >
-      <ModalHeader title={t('Configuration Tester')} />
+      <ModalHeader labelId={traceConfigurationModalTitleId} title={t('Configuration Tester')} />
       <ModalBody>
         <ParameterizedTabs
           id="basic-tabs"

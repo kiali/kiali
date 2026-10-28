@@ -5,8 +5,12 @@ import type { LoginSession } from '../../store/Store';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize } from 'styles/PfTypography';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
+
+const sessionTimeoutModalTitleId = 'session-timeout-modal-title';
 
 type SessionTimeoutProps = {
   onDismiss: () => void;
@@ -19,7 +23,7 @@ type SessionTimeoutProps = {
 const sessionTimeoutContentStyle = kialiStyle({
   alignItems: 'flex-start',
   display: 'flex',
-  gap: '1rem'
+  gap: PFSpacer.md
 });
 
 const sessionTimeoutIconStyle = kialiStyle({
@@ -28,8 +32,8 @@ const sessionTimeoutIconStyle = kialiStyle({
 
 const sessionTimeoutTextStyle = kialiStyle({
   flex: 1,
-  fontSize: '1rem',
-  marginBottom: '1.5rem'
+  fontSize: PFFontSize.default,
+  marginBottom: PFSpacer.md
 });
 
 export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTimeoutProps) => {
@@ -67,8 +71,14 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   ];
 
   return (
-    <Modal data-test="session-timeout-modal" isOpen={props.show} onClose={defaultAction} width="40%">
-      <ModalHeader title={t('Session Timeout')} />
+    <Modal
+      aria-labelledby={sessionTimeoutModalTitleId}
+      data-test="session-timeout-modal"
+      isOpen={props.show}
+      onClose={defaultAction}
+      width="40%"
+    >
+      <ModalHeader labelId={sessionTimeoutModalTitleId} title={t('Session Timeout')} />
       <ModalBody className={sessionTimeoutContentStyle}>
         <span className={sessionTimeoutIconStyle}>
           <KialiIcon.Warning size="xl" color={PFColors.Warning} />

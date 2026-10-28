@@ -11,6 +11,8 @@ import {
 import type { DestinationRuleC, K8sGRPCRoute, K8sHTTPRoute, VirtualService } from '../../types/IstioObjects';
 import { t } from 'utils/I18nUtils';
 
+const confirmDeleteTrafficRoutingModalTitleId = 'confirm-delete-traffic-routing-modal-title';
+
 type Props = {
   destinationRules: DestinationRuleC[];
   isOpen: boolean;
@@ -82,12 +84,13 @@ export const ConfirmDeleteTrafficRoutingModal: React.FunctionComponent<Props> = 
 
   return (
     <Modal
+      aria-labelledby={confirmDeleteTrafficRoutingModalTitleId}
       variant={ModalVariant.small}
       isOpen={props.isOpen}
       onClose={props.onCancel}
       data-test="delete-traffic-routing-modal"
     >
-      <ModalHeader title={t('Confirm Delete Traffic Routing ?')} />
+      <ModalHeader labelId={confirmDeleteTrafficRoutingModalTitleId} title={t('Confirm Delete Traffic Routing ?')} />
       <ModalBody>{getDeleteMessage()}</ModalBody>
       <ModalFooter>
         <Button key="confirm" variant={ButtonVariant.danger} onClick={props.onConfirm} data-test={'confirm-delete'}>
