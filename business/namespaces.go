@@ -262,6 +262,21 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 	}
 
 	// here is called GetControlPlaneNamespaces instead of IsControlPlane for performance reasons
+	namespaces = in.decorateNamespaces(ctx, namespaces, cluster)
+
+	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
+
+	return namespaces, nil
+}
+
+// decorateNamespaces applies the SA-sourced decorations (control plane,
+// revision, ambient) to an already-cast namespace collection. It is the
+// shared tail of getNamespacesByCluster and GetSAClusterNamespaces: the
+// decorations come from the mesh discovery and the Kiali cache, never from
+// the requesting user's visibility, so both paths produce identically
+// decorated namespaces.
+func (in *NamespaceService) decorateNamespaces(ctx context.Context, namespaces []models.Namespace, cluster string) []models.Namespace {
+	// here is called GetControlPlaneNamespaces instead of IsControlPlane for performance reasons
 	cpnList := in.discovery.GetControlPlaneNamespaces(ctx, cluster)
 	cpnSet := make(map[string]struct{}, len(cpnList))
 	for _, n := range cpnList {
@@ -311,9 +326,24 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		}
 	}
 
-	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
+	return namespaces
+}
 
-	return namespaces, nil
+// GetSAClusterNamespaces returns the namespaces visible to the Kiali
+// ServiceAccount for the cluster, with the same decorations as
+// GetClusterNamespaces. Where GetClusterNamespaces intersects the SA list
+// with the requesting user's visibility, this returns the full SA set: it
+// backs computations that must match the background validators (which run
+// with SA visibility) regardless of who triggered them, so their results
+// can populate the shared validation cache that every user reads through
+// the per-user filtering.
+func (in *NamespaceService) GetSAClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
+	namespaces, err := in.GetKialiSAClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	// GetKialiSAClusterNamespaces already applied the discovery selectors.
+	return in.decorateNamespaces(ctx, namespaces, cluster), nil
 }
 
 // GetClusterNamespaces is just a convenience routine that filters GetNamespaces for a particular cluster

@@ -350,6 +350,23 @@ type validationInfo struct {
 // different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
 // arrays will be initialized to empty.
 func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
+	return in.newValidationInfo(ctx, clusters, changeMap, false)
+}
+
+// newValidationInfoSA builds the validationInfo with the Kiali
+// ServiceAccount's namespace visibility instead of the requesting user's.
+// It backs the on-demand single-object validation: that result is written
+// into the shared validation cache, which is otherwise populated by the
+// background reconciler running with SA visibility, so computing it with
+// the requesting user's visibility would both miss cross-namespace checks
+// that fire for every other user (a warning visible in the list view would
+// vanish in the details view) and overwrite SA-computed cache entries with
+// user-scoped ones.
+func (in *IstioValidationsService) newValidationInfoSA(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
+	return in.newValidationInfo(ctx, clusters, changeMap, true)
+}
+
+func (in *IstioValidationsService) newValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap, saVisibility bool) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
 		observability.Attribute("package", "business"),
@@ -377,16 +394,28 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 
 	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
-		namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+		var namespaces []models.Namespace
+		var workloads models.Workloads
+		if saVisibility {
+			namespaces, err = in.namespace.GetSAClusterNamespaces(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+			// The SA-scoped workload fetch: the same inputs the background
+			// reconciler's SA layer produces through GetAllWorkloads.
+			waypoints := in.workload.GetWaypoints(ctx)
+			workloads, err = in.workload.fetchWorkloadsInNamespaces(ctx, cluster, getNsNames(namespaces), "", waypoints)
+		} else {
+			namespaces, err = in.namespace.GetClusterNamespaces(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+			workloads, err = in.workload.GetAllWorkloads(ctx, cluster, "")
+		}
 		if err != nil {
 			return nil, err
 		}
 		vInfo.nsMap[cluster] = namespaces
-
-		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
-		if err != nil {
-			return nil, err
-		}
 		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
 
 		identityDomain := ResolveClusterIdentityDomain(mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
@@ -821,8 +850,14 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		},
 		"Single object validation time")
 
-	// validating a single object is not particularly efficient, it still requires a lot of up-front setup
-	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList(), nil)
+	// validating a single object is not particularly efficient, it still requires a lot of up-front setup.
+	// The validation info is built with the Kiali SA's visibility, matching
+	// the background reconciler that populates the shared validation cache:
+	// the requesting user's visibility would miss cross-namespace checks
+	// that fire for every other user, and the result is written into the
+	// shared cache below. The per-user pruning at the end of this function
+	// still narrows the response to what the requesting user can see.
+	vInfo, err := in.newValidationInfoSA(ctx, in.namespace.GetKialiSAClusterList(), nil)
 	if err != nil {
 		return nil, models.IstioReferencesMap{}, err
 	}
@@ -861,7 +896,12 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
-	clusterIstioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
+	// The raw, unfiltered config fetch: GetIstioConfigList filters its
+	// result by the requesting user's accessible namespaces, which would
+	// hide cross-namespace conflicts from the checkers (the same divergence
+	// the SA visibility above fixes for the namespace and workload maps).
+	// The per-user pruning at the end of this function narrows the response.
+	clusterIstioConfigList, err := in.istioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return nil, istioReferences, err
 	}
@@ -956,6 +996,9 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	}
 
 	for k, v := range validations {
+		// The computation used SA visibility, so what lands in the shared
+		// cache is consistent with the background reconciler's entries —
+		// it can only refresh them, never degrade them for other users.
 		in.kialiCache.Validations().Set(k, v)
 	}
 

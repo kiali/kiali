@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kubeclienttesting "k8s.io/client-go/testing"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/cache"
@@ -2740,4 +2741,90 @@ func TestReferencePruningHelpers(t *testing.T) {
 
 	// Nil input stays nil.
 	assert.Nil(pruneInaccessibleObjectReferences(nil, accessible))
+}
+
+// TestValidateIstioObjectSAVisibilityKeepsCrossNamespaceChecks pins the
+// on-demand validation's SA visibility: the validation info is built from
+// the Kiali ServiceAccount's namespace set (the same inputs the background
+// reconciler uses), so a cross-namespace check that fires in the list view
+// also fires in the details view for a restricted user. Before the fix, the
+// detail path built its inputs from the user's accessible set, the
+// multimatch checker could not see the denied namespace's gateway, and the
+// warning visible in the list vanished in the details. The reference into
+// the denied namespace is still pruned from the user's response, and the
+// shared cache keeps the unpruned SA-computed entry.
+func TestValidateIstioObjectSAVisibilityKeepsCrossNamespaceChecks(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The reported repro: two K8s Gateways with the same listener hostname,
+	// one in the accessible namespace, one in the denied namespace.
+	gwAllowed := data.CreateEmptyK8sGateway("multitest-a", "bookinfo")
+	gwAllowed.Spec.Listeners = []k8s_networking_v1.Listener{data.CreateListener("http", "multitest.example.com", 80, "HTTP")}
+	gwDenied := data.CreateEmptyK8sGateway("multitest-b", "ambient-demo")
+	gwDenied.Spec.Listeners = []k8s_networking_v1.Listener{data.CreateListener("http", "multitest.example.com", 80, "HTTP")}
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("ambient-demo"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		gwAllowed,
+		gwDenied,
+	}
+
+	// The SA can see both namespaces; the user can only see bookinfo. The
+	// user client must report the Gateway API as available (the config
+	// listing gates the K8s Gateway fetch on it).
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	sa.GatewayAPIEnabled = true
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	userFake.GatewayAPIEnabled = true
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "ambient-demo"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	validations, _, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.K8sGateways, "multitest-a")
+	require.NoError(err)
+
+	objectKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "multitest-a", Cluster: cluster}
+	validation, ok := validations[objectKey]
+	require.True(ok, "the requested object's validation must be returned")
+
+	// The cross-namespace multimatch check fires: the computation saw the
+	// denied namespace's gateway through the SA's visibility.
+	checkCodes := make([]string, 0, len(validation.Checks))
+	for _, check := range validation.Checks {
+		checkCodes = append(checkCodes, check.Code)
+	}
+	assert.Contains(checkCodes, "KIA1501", "the cross-namespace listener conflict must be detected with SA visibility")
+
+	// The reference into the denied namespace is pruned from the user's
+	// response, but the shared cache keeps the unpruned SA-computed entry.
+	for _, ref := range validation.References {
+		assert.NotEqual("ambient-demo", ref.Namespace, "references into the denied namespace must not be returned")
+	}
+	cached, ok := svc.kialiCache.Validations().Items()[objectKey]
+	require.True(ok, "the validation must be written to the shared cache")
+	cachedRefNamespaces := make([]string, 0, len(cached.References))
+	for _, ref := range cached.References {
+		cachedRefNamespaces = append(cachedRefNamespaces, ref.Namespace)
+	}
+	assert.Contains(cachedRefNamespaces, "ambient-demo", "the shared cache keeps the unpruned SA-computed reference")
 }
