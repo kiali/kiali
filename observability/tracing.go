@@ -65,6 +65,10 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(TracerName()),
 			semconv.ServiceNamespaceKey.String(conf.Deployment.Namespace),
+			// The canonical k8s namespace attribute: the trace authorization
+			// reads it (and service.namespace) to authorize Kiali's own
+			// traces for users who can access the namespace Kiali runs in.
+			attribute.String("k8s.namespace.name", conf.Deployment.Namespace),
 			// In order for kiali to dog food its own traces, this attribute is set. When determining if an app's
 			// traces match its workload, the business logic will parse this hostname attribute.
 			attribute.String("hostname", TracerName()),

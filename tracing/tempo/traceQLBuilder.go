@@ -51,6 +51,7 @@ var traceSelects = []string{
 	".istio.cluster_id",
 	"resource.k8s.namespace.name",
 	"resource.k8s.cluster.name",
+	"resource.service.namespace",
 	"name",
 }
 

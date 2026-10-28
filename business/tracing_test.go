@@ -927,3 +927,46 @@ func TestGetAppTracesKeepsResourceAttributedTempoTraces(t *testing.T) {
 	require.Equal("bookinfo", tags["k8s.namespace.name"], "the surviving trace must be the requested namespace's, not the denied one")
 	traceClient.AssertExpectations(t)
 }
+
+// TestTraceAuthorizationServiceNamespace pins that the OTel semantic
+// convention service.namespace authorizes a trace on both paths: Kiali's
+// own self-tracing (and any conventionally instrumented application)
+// carries the namespace only as that resource attribute. On the details
+// path it is surfaced as a process tag; on the Tempo search path it arrives
+// as a span tag selected by the query.
+func TestTraceAuthorizationServiceNamespace(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// The user can access istio-system only (where the Kiali server runs).
+	sa, user := newAccessibleSetClients([]string{"istio-system", "victim-ns"}, []string{"istio-system"})
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+
+	// The details-path shape: the OTel resource attributes surfaced as
+	// process tags by the Tempo single-trace converter.
+	selfTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "service.name", Value: "kiali.istio-system"},
+			{Key: "service.namespace", Value: "istio-system"},
+			{Key: "k8s.cluster.name", Value: cluster},
+		}},
+	}}}}
+	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), selfTrace))
+
+	// The list-path shape: the attribute as a span tag, as the Tempo search
+	// conversion delivers it.
+	listTrace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Tags: []jaegerModels.KeyValue{
+			{Key: "service.name", Value: "kiali.istio-system"},
+			{Key: "service.namespace", Value: "istio-system"},
+		},
+	}}}
+	require.True(traceInNamespace(listTrace, cluster, "istio-system"))
+	require.False(traceInNamespace(listTrace, cluster, "victim-ns"))
+}
