@@ -1920,6 +1920,7 @@ func NewRoutes(
 		//
 		// Responses:
 		//    400: badRequestError
+		//    403: forbiddenError
 		//    503: serviceUnavailableError
 		//    500: internalError
 		//    200: metricsStatsResponse

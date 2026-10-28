@@ -396,6 +396,35 @@ func TestMetricsStatsInvalidQueryReturns400(t *testing.T) {
 	assert.Equal(http.StatusBadRequest, resp.StatusCode, string(actual))
 }
 
+// TestMetricsStatsUnrecognizedBodyReturns400 pins that a body which does not
+// match the MetricsStatsQueries schema does not silently produce 200 with
+// empty stats: the JSON decoder ignores unknown fields, so such a body decodes
+// to zero queries, which must be rejected. This stays distinct from the
+// all-denied case, which keeps returning 403 (see
+// TestMetricsStatsAllDeniedReturns403).
+func TestMetricsStatsUnrecognizedBodyReturns400(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	deps := setupEndpointDepsWithClient(t, k8s)
+	ts := serveGatedHandler(t, deps, "/api/stats/metrics", MetricsStats(deps.conf, deps.kialiCache, deps.discovery, deps.cfm, deps.prom))
+
+	for name, body := range map[string]string{
+		"unrecognized fields": `{"commands":[{"target":{"namespace":"bookinfo"}}]}`,
+		"empty query list":    `{"queries":[]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			resp, err := http.Post(ts.URL+"/api/stats/metrics", "application/json", strings.NewReader(body))
+			require.NoError(err)
+			actual, _ := io.ReadAll(resp.Body)
+
+			assert.Equal(http.StatusBadRequest, resp.StatusCode, string(actual))
+			assert.Contains(string(actual), "at least one query")
+		})
+	}
+}
+
 // TestIstioConfigDetailsInaccessibleNamespace covers the gated route the
 // behavioral sweep cannot reach (its path requires a valid Istio GVK, which
 // the sweep's dummy substitution cannot provide): the business gate in

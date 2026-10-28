@@ -653,6 +653,14 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 			RespondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		// A body that does not match the schema decodes to zero queries (the
+		// decoder ignores unknown fields); answering that with 200 and empty
+		// stats would silently mask malformed requests. This is distinct from
+		// "all queries denied", which fails below with the warnings attached.
+		if len(raw.Queries) == 0 {
+			RespondWithError(w, http.StatusBadRequest, "request body must contain at least one query")
+			return
+		}
 
 		queries, warns, failureKind := prepareStatsQueries(r.Context(), &namespace, raw.Queries)
 		if len(queries) == 0 && warns != nil {
