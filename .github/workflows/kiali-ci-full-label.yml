@@ -1,4 +1,4 @@
-name: Kiali CI ci-full label
+name: Kiali CI full label
 
 # Runs Kiali CI when the ci-full label is added. Process labels (e.g. backport needed)
 # must not trigger the main Kiali CI workflow — see kiali-ci.yml pull_request types.
