@@ -251,7 +251,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api/test/metrics/health/status",
-			handlers.HealthStatusMetricsHandler(),
+			handlers.HealthStatusMetricsHandler(conf, kialiCache, discovery, clientFactory),
 			true,
 		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose

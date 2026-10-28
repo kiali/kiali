@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 )
 
@@ -57,54 +58,59 @@ func TestHealthCacheMetricsHandler(t *testing.T) {
 }
 
 func TestHealthStatusMetricsHandler(t *testing.T) {
-	// Create a test HTTP request
-	req := httptest.NewRequest("GET", "/api/test/metrics/health/status", nil)
-	w := httptest.NewRecorder()
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("test-namespace"))
+	deps := setupEndpointDepsWithClient(t, k8s)
+	ts := serveGatedHandler(t, deps, "/api/test/metrics/health/status", HealthStatusMetricsHandler(deps.conf, deps.kialiCache, deps.discovery, deps.cfm))
 
-	// Call the handler
-	handler := HealthStatusMetricsHandler()
-	handler.ServeHTTP(w, req)
+	// No health data has been cached, so the metrics array is empty.
+	internalmetrics.GetHealthStatusMetric().Reset()
 
-	// Check response
-	assert.Equal(t, http.StatusOK, w.Code)
+	resp, err := http.Get(ts.URL + "/api/test/metrics/health/status")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var response HealthStatusMetrics
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	require.NoError(t, err)
-
-	// Verify the response structure
-	// Metrics array can be empty if no health data has been cached yet, but should not be nil
-	assert.GreaterOrEqual(t, len(response.Metrics), 0)
+	assert.Empty(t, response.Metrics)
 }
 
 func TestHealthStatusMetricsHandlerWithData(t *testing.T) {
-	// Setup: Add some test health status metrics
+	// The SA sees both namespaces; the user can only access test-namespace, so
+	// the gauge entries for victim-ns must be filtered out of the response.
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("test-namespace"), kubetest.FakeNamespace("victim-ns"))
+	deps := setupEndpointDepsWithSAs(t,
+		newRestrictedNamespaceClient(k8s, "victim-ns", []string{"test-namespace", "victim-ns"}),
+		kubetest.FakeNamespace("test-namespace"), kubetest.FakeNamespace("victim-ns"))
+	ts := serveGatedHandler(t, deps, "/api/test/metrics/health/status", HealthStatusMetricsHandler(deps.conf, deps.kialiCache, deps.discovery, deps.cfm))
+
+	// Setup: Add test health status metrics. The cluster must be the user's
+	// home cluster for the (cluster, namespace) pair to be accessible.
 	gaugeVec := internalmetrics.GetHealthStatusMetric()
 
 	// Clean up any existing test data first
 	gaugeVec.Reset()
 
 	// Add test data
-	gaugeVec.WithLabelValues("test-cluster", "test-namespace", "app", "test-app").Set(0)    // Healthy
-	gaugeVec.WithLabelValues("test-cluster", "test-namespace", "app", "failing-app").Set(3) // Failure
+	cluster := deps.conf.KubernetesConfig.ClusterName
+	gaugeVec.WithLabelValues(cluster, "test-namespace", "app", "test-app").Set(0)    // Healthy
+	gaugeVec.WithLabelValues(cluster, "test-namespace", "app", "failing-app").Set(3) // Failure
+	gaugeVec.WithLabelValues(cluster, "victim-ns", "app", "secret-app").Set(3)       // Denied namespace
 
-	// Create a test HTTP request
-	req := httptest.NewRequest("GET", "/api/test/metrics/health/status", nil)
-	w := httptest.NewRecorder()
+	resp, err := http.Get(ts.URL + "/api/test/metrics/health/status")
+	require.NoError(t, err)
+	defer resp.Body.Close()
 
-	// Call the handler
-	handler := HealthStatusMetricsHandler()
-	handler.ServeHTTP(w, req)
-
-	// Check response
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	var response HealthStatusMetrics
-	err := json.Unmarshal(w.Body.Bytes(), &response)
+	err = json.NewDecoder(resp.Body).Decode(&response)
 	require.NoError(t, err)
 
-	// Verify we have at least 2 metrics
-	assert.GreaterOrEqual(t, len(response.Metrics), 2)
+	// Only the two accessible-namespace entries are returned.
+	require.Len(t, response.Metrics, 2)
 
 	// Find our test metrics
 	var healthyApp, failingApp *HealthStatusMetricItem
@@ -120,7 +126,7 @@ func TestHealthStatusMetricsHandlerWithData(t *testing.T) {
 
 	// Verify the healthy app metric
 	require.NotNil(t, healthyApp, "test-app metric should exist")
-	assert.Equal(t, "test-cluster", healthyApp.Cluster)
+	assert.Equal(t, cluster, healthyApp.Cluster)
 	assert.Equal(t, "test-namespace", healthyApp.Namespace)
 	assert.Equal(t, "app", healthyApp.HealthType)
 	assert.Equal(t, "test-app", healthyApp.Name)
@@ -128,7 +134,7 @@ func TestHealthStatusMetricsHandlerWithData(t *testing.T) {
 
 	// Verify the failing app metric
 	require.NotNil(t, failingApp, "failing-app metric should exist")
-	assert.Equal(t, "test-cluster", failingApp.Cluster)
+	assert.Equal(t, cluster, failingApp.Cluster)
 	assert.Equal(t, "test-namespace", failingApp.Namespace)
 	assert.Equal(t, "app", failingApp.HealthType)
 	assert.Equal(t, "failing-app", failingApp.Name)
