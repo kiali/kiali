@@ -199,7 +199,7 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap, namespaces?: Na
 
   if (infraType === MeshInfraType.WAYPOINT && !isBox) {
     const split =
-      (data.infraData?.waypointTrafficSplit as WaypointTrafficSplit | undefined) ??
+      (data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined) ??
       findGatewayWaypointSplit(namespaces ?? [], infraName, data.namespace, data.cluster);
     data.secondaryLabel = withWaypointCanarySecondaryLabel({
       includeWeight: false,
