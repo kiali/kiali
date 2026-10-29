@@ -68,6 +68,17 @@ type ReferenceChecker interface {
 }
 
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
+	// A cluster the requesting user has no client for (no session on it, in
+	// non-impersonation mode) has nothing to validate for them: return the
+	// empty set rather than an error, matching the cluster-scoped istio
+	// config list this is attached to (the sibling /api/istio/validations
+	// route already degrades to an empty summary for the same condition).
+	// Namespace-scoped reads keep failing closed with 403 via
+	// accessibleNamespaceSet.
+	if in.userClients[cluster] == nil {
+		return models.IstioValidations{}, nil
+	}
+
 	// The validations cache is populated by the Kiali ServiceAccount, so the
 	// Kubernetes API cannot enforce the user's RBAC here: filter the
 	// validations (and their references) to the namespaces in the user's

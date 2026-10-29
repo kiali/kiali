@@ -2205,7 +2205,9 @@ func TestGetValidationsFiltersByAccessibleNamespaces(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
 
-	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	// The cluster-scoped read needs the user's clients: it returns the empty
+	// set for a cluster the user has no client on.
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
 
 	allowedKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs-allowed", Cluster: cluster}
 	victimKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "victim-ns", Name: "vs-victim", Cluster: cluster}
@@ -2268,7 +2270,7 @@ func TestGetValidationsSetComputationErrorFailsClosed(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
 
-	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
 	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
 		{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs", Cluster: cluster}: {
 			Name: "vs", Namespace: "bookinfo", Cluster: cluster, ObjectGVK: kubernetes.VirtualServices, Valid: true,
@@ -2335,7 +2337,7 @@ func TestGetValidationsKeepsGatewayMultimatchValidations(t *testing.T) {
 	})
 	kialiCache.Validations().Replace(gatewayValidations)
 
-	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
 	validations, err := vs.GetValidations(context.TODO(), cluster)
 	require.NoError(err)
 
@@ -2827,4 +2829,29 @@ func TestValidateIstioObjectSAVisibilityKeepsCrossNamespaceChecks(t *testing.T) 
 		cachedRefNamespaces = append(cachedRefNamespaces, ref.Namespace)
 	}
 	assert.Contains(cachedRefNamespaces, "ambient-demo", "the shared cache keeps the unpruned SA-computed reference")
+}
+
+// TestGetValidationsNoUserClientReturnsEmpty ensures the cluster-scoped
+// validations read degrades to the empty set (not an error) for a cluster the
+// requesting user has no client for, matching the cluster-scoped istio config
+// list it is attached to. The SA clients still cover the cluster.
+func TestGetValidationsNoUserClientReturnsEmpty(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	home := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+	layer := NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{
+			home:   kubetest.NewFakeK8sClient(kubetest.FakeNamespace("test")),
+			remote: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("test")),
+		}).
+		Build()
+	// Drop the user's remote session (the services share the clients map).
+	delete(layer.IstioConfig.userClients, remote)
+
+	validations, err := layer.Validations.GetValidations(context.TODO(), remote)
+	assert.Nil(err)
+	assert.Empty(validations)
 }
