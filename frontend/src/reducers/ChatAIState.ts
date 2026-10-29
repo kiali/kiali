@@ -1,12 +1,23 @@
-import type { ChatAIState } from '../store/Store';
+import { combineReducers } from 'redux';
+import type { AIRightView, AIState, ChatAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 import { ChatbotDisplayMode } from '@patternfly/chatbot';
+import type { ChatAIConfig } from 'types/Chatbot';
+
+export const INITIAL_AI_RIGHT_VIEW_STATE: AIRightView = {
+  allowed: false,
+  enabled: false
+};
+
+/** @deprecated use INITIAL_AI_RIGHT_VIEW_STATE */
+export const INITIAL_AI_METRICS_STATE = INITIAL_AI_RIGHT_VIEW_STATE;
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
+  allowed: false,
   alwaysNavigate: false,
   chatHistory: ImmutableList(),
   conversationID: '',
@@ -22,19 +33,26 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   selectedProvider: ''
 };
 
-// This Reducer allows changes to the 'globalState' portion of Redux Store
+function applyAIChatConfig(state: ChatAIState, chat: ChatAIConfig): ChatAIState {
+  const providers = chat.providers ?? [];
+  const defaultProvider = providers.find(provider => provider.name === chat.defaultProvider);
+  return updateState(state, {
+    allowed: chat.allowed,
+    enabled: chat.enabled,
+    providers,
+    defaultProvider: chat.defaultProvider,
+    selectedProvider: chat.defaultProvider,
+    selectedModel: defaultProvider?.defaultModel || defaultProvider?.models[0]?.name
+  });
+}
+
+// This Reducer manages the 'ai.chat' portion of Redux Store
 export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, action: KialiAppAction): ChatAIState => {
   switch (action.type) {
-    case getType(ChatAIActions.setChatAI):
-      return updateState(state, {
-        enabled: action.payload.enabled,
-        providers: action.payload.providers,
-        defaultProvider: action.payload.defaultProvider,
-        selectedProvider: action.payload.defaultProvider,
-        selectedModel:
-          action.payload.providers.find(provider => provider.name === action.payload.defaultProvider)?.defaultModel ||
-          action.payload.providers.find(provider => provider.name === action.payload.defaultProvider)?.models[0].name
-      });
+    case getType(ChatAIActions.setAI):
+      return applyAIChatConfig(state, action.payload.chat);
+    case getType(ChatAIActions.setAIChat):
+      return applyAIChatConfig(state, action.payload);
     case getType(ChatAIActions.setConversationID): {
       return updateState(state, { conversationID: action.payload.id ?? '' });
     }
@@ -96,3 +114,42 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return state;
   }
 };
+
+export const AiConsumptionStateReducer = (
+  state: AIRightView = INITIAL_AI_RIGHT_VIEW_STATE,
+  action: KialiAppAction
+): AIRightView => {
+  switch (action.type) {
+    case getType(ChatAIActions.setAI): {
+      const consumption = action.payload.consumption ?? INITIAL_AI_RIGHT_VIEW_STATE;
+      return updateState(state, {
+        allowed: consumption.allowed,
+        enabled: consumption.enabled
+      });
+    }
+    default:
+      return state;
+  }
+};
+
+const INITIAL_AI_ENABLED_STATE = false;
+
+// The overall "AI" feature master switch. Today ChatAI is the only AI feature, so it mirrors
+// the ChatAI "enabled" flag, but it is kept separate so other AI features can toggle it independently.
+const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: KialiAppAction): boolean => {
+  switch (action.type) {
+    case getType(ChatAIActions.setAI):
+      return action.payload.enabled;
+    case getType(ChatAIActions.setAIChat):
+      return action.payload.enabled;
+    default:
+      return state;
+  }
+};
+
+// This Reducer allows changes to the 'ai' portion of Redux Store
+export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
+  chat: ChatAiStateReducer,
+  consumption: AiConsumptionStateReducer,
+  enabled: AiEnabledReducer
+});

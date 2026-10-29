@@ -2,6 +2,8 @@ package authorization
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	api_security_v1 "istio.io/api/security/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -68,6 +70,12 @@ func (n NoHostChecker) validateHost(ruleIdx int, to []*api_security_v1.Rule_To) 
 		}
 
 		for hostIdx, h := range t.Operation.Hosts {
+			// Istio matches operation.hosts against the HTTP Host/Authority header
+			// (Exact/Prefix/Suffix/Presence), not the service registry. Skip registry
+			// checks for wildcards and external DNS Host headers.
+			if isHTTPHostHeaderMatcher(h, namespace, n.Namespaces) {
+				continue
+			}
 			fqdn := kubernetes.GetHost(h, namespace, n.Namespaces, n.IdentityDomain)
 			if !n.hasMatchingService(fqdn, namespace) {
 				path := fmt.Sprintf("spec/rules[%d]/to[%d]/operation/hosts[%d]", ruleIdx, toIdx, hostIdx)
@@ -108,5 +116,31 @@ func (n NoHostChecker) hasMatchingService(host kubernetes.Host, itemNamespace st
 		return true
 	}
 
+	return false
+}
+
+// isHTTPHostHeaderMatcher reports whether host is an Istio AuthZ Host-header matcher that
+// should not be validated against the service registry.
+func isHTTPHostHeaderMatcher(host, policyNamespace string, clusterNamespaces []string) bool {
+	h := strings.TrimSpace(host)
+	if h == "" {
+		return false
+	}
+	if h == "*" {
+		return true
+	}
+	if strings.HasPrefix(h, "*") || strings.HasSuffix(h, "*") {
+		return true
+	}
+	if strings.Count(h, ".") >= 2 {
+		return true
+	}
+	if strings.Count(h, ".") == 1 {
+		parts := strings.SplitN(h, ".", 2)
+		// Registry-check only known service.namespace shorthand (namespace is the policy
+		// namespace or a cluster namespace). All other single-dot hosts (api.info, app.tech,
+		// wrong.org) are treated as HTTP Host headers and are not registry-validated.
+		return parts[1] != policyNamespace && !slices.Contains(clusterNamespaces, parts[1])
+	}
 	return false
 }

@@ -154,6 +154,29 @@ Before({ tags: '@loggers-app' }, () => {
   install_demoapp('loggers');
 });
 
+// OpenShift user-workload Prometheus scrapes Istio proxies via a namespaced
+// PodMonitor. Cypress bookinfo reinstall deletes the namespace and drops it.
+Before({ tags: '@core-caching' }, () => {
+  if (IN_OFFLINE_MODE || Cypress.env('OPENSHIFT_BOOKINFO_MONITORING_ENSURED')) {
+    return;
+  }
+
+  const tagFilter = (Cypress.env('TAGS') ?? '') as string;
+  if (!tagFilter.includes('@core-caching')) {
+    return;
+  }
+
+  cy.exec('kubectl api-versions | grep --quiet "route.openshift.io";', { failOnNonZeroExit: false }).then(result => {
+    if (result.exitCode === 0) {
+      cy.exec('../hack/istio/ensure-openshift-istio-proxies-podmonitor.sh -c oc -n bookinfo', {
+        failOnNonZeroExit: false,
+        timeout: 120000
+      });
+    }
+    Cypress.env('OPENSHIFT_BOOKINFO_MONITORING_ENSURED', true);
+  });
+});
+
 // This hook enables Kiali caching when it isn't already on. Because the
 // enable path leaves caching turned on (no teardown), @core-caching must
 // be the LAST tag group in composite cypress:run / cypress:run:junit

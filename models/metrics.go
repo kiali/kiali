@@ -286,6 +286,46 @@ func ConvertMetric(name string, from prometheus.Metric, conversionParams Convers
 	return convertMatrix(from.Matrix, name, "", conversionParams), nil
 }
 
+// EnsureDisplayNameMetrics adds zero-filled series for configured display names that
+// are missing from Prometheus results so multi-metric charts always show every series.
+func EnsureDisplayNameMetrics(series []Metric, displayNames []string) []Metric {
+	if len(displayNames) <= 1 {
+		return series
+	}
+
+	present := make(map[string]bool, len(series))
+	for _, s := range series {
+		if s.Name != "" {
+			present[s.Name] = true
+		}
+	}
+
+	var refDatapoints []Datapoint
+	for _, s := range series {
+		if len(s.Datapoints) > 0 {
+			refDatapoints = s.Datapoints
+			break
+		}
+	}
+
+	for _, displayName := range displayNames {
+		if displayName == "" || present[displayName] {
+			continue
+		}
+		datapoints := make([]Datapoint, len(refDatapoints))
+		for i, dp := range refDatapoints {
+			datapoints[i] = Datapoint{Timestamp: dp.Timestamp, Value: 0}
+		}
+		series = append(series, Metric{
+			Datapoints: datapoints,
+			Labels:     map[string]string{},
+			Name:       displayName,
+		})
+	}
+
+	return series
+}
+
 func convertMatrix(from pmod.Matrix, name, stat string, conversionParams ConversionParams) []Metric {
 	series := make([]Metric, len(from))
 	if len(conversionParams.SortLabel) > 0 {

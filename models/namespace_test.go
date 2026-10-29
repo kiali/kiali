@@ -64,3 +64,14 @@ func TestNamespaceRevision(t *testing.T) {
 		})
 	}
 }
+
+func TestNamespaceNamesMatchesPattern(t *testing.T) {
+	names := models.NamespaceNames{"bookinfo", "bookinfo2", "production"}
+
+	require.True(t, names.MatchesPattern("bookinfo"))
+	require.True(t, names.MatchesPattern("bookinfo*"))
+	require.True(t, names.MatchesPattern("*info"))
+	require.True(t, names.MatchesPattern("*"))
+	require.False(t, names.MatchesPattern("wrong"))
+	require.False(t, names.MatchesPattern("nomatch*"))
+}

@@ -133,7 +133,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
   return (
     <Td
       role="gridcell"
-      dataLabel="Details"
+      dataLabel={t('Details')}
       key={`VirtuaItem_Details_${item.namespace}_${item.name}`}
       style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}
     >
@@ -189,7 +189,7 @@ export const details: Renderer<AppListItem | WorkloadListItem | ServiceListItem>
             <Tooltip
               key="tooltip_missing_label"
               position={TooltipPosition.top}
-              content="Layer 7 service Mesh capabilities in Istio Ambient"
+              content={t('Layer 7 service Mesh capabilities in Istio Ambient')}
             >
               <KialiIcon.Info className={classes(infoStyle, rendererInfoStyle)} />
             </Tooltip>
@@ -507,10 +507,18 @@ export const nsItem: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
 
 export const nsType: Renderer<NamespaceInfo> = (ns: NamespaceInfo) => {
   const isDataPlane = isDataPlaneNamespace(ns);
+  const revisions = ns.isControlPlane ? getNamespaceRevisions(ns) : [];
+  const cpRevisions = revisions.length > 0 ? revisions : undefined;
 
   return (
     <Td role="gridcell" dataLabel="Type" key={`VirtuaItem_Type_${ns.name}`} style={{ verticalAlign: 'middle' }}>
-      {ns.isControlPlane ? <ControlPlaneBadge /> : isDataPlane ? <DataPlaneBadge /> : <NotPartOfMeshBadge />}
+      {ns.isControlPlane ? (
+        <ControlPlaneBadge revisions={cpRevisions} />
+      ) : isDataPlane ? (
+        <DataPlaneBadge />
+      ) : (
+        <NotPartOfMeshBadge />
+      )}
     </Td>
   );
 };

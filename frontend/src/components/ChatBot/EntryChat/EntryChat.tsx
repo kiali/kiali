@@ -1,8 +1,8 @@
-import { Message, SourcesCardProps } from '@patternfly/chatbot';
+import { Message, type SourcesCardProps } from '@patternfly/chatbot';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { ChatEntry, ReferencedDoc } from 'types/Chatbot';
+import type { KialiAppState } from 'store/Store';
+import type { ChatEntry, ReferencedDoc } from 'types/Chatbot';
 import { copyToClipboard } from './clipboard';
 import { Alert } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
@@ -10,8 +10,8 @@ import { ResponseTools } from './ResponseTools';
 import userAvatar from '../../../assets/img/kiali/ai/img_avatar-light.svg';
 import aiAvatar from '../../../assets/img/kiali/ai/img-ai-lightbkg.svg';
 import aiAvatarDark from '../../../assets/img/kiali/ai/img-ai-darkbkg.svg';
-import { useKialiTheme } from 'utils/ThemeUtils';
-import { Theme } from 'types/Common';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
+import { ColorScheme } from 'types/Common';
 import { Actions } from './Actions';
 import { ChatMessageMarkdown } from './ChatMessageMarkdown';
 
@@ -20,9 +20,9 @@ type EntryChatProps = {
 };
 
 export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
-  const entryObject = useSelector((state: KialiAppState) => state.aiChat.chatHistory.getIn([entryIndex])) as any;
+  const entryObject = useSelector((state: KialiAppState) => state.ai.chat.chatHistory.getIn([entryIndex])) as any;
   const entry = entryObject.toJS() as ChatEntry;
-  const isDarkTheme = useKialiTheme() === Theme.DARK;
+  const isDarkTheme = useKialiColorScheme() === ColorScheme.DARK;
 
   if (entry.who === 'user' && entry.hidden) {
     return null;
@@ -61,6 +61,18 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         openLinkInNewTab={true}
       />
     ) : null;
+    const truncatedAlert = entry.isTruncated ? (
+      <Alert
+        isInline
+        isPlain
+        title={
+          safeContent
+            ? t('Response truncated due to output length limit.')
+            : t('Response could not be generated within the output length limit.')
+        }
+        variant="warning"
+      />
+    ) : null;
 
     return (
       <Message
@@ -71,11 +83,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         content={markdownContent ? undefined : safeContent}
         data-test="kiali__chat-entry-ai"
         extraContent={{
-          ...(markdownContent
-            ? {
-                beforeMainContent: <>{markdownContent}</>
-              }
-            : {}),
+          ...(markdownContent ? { beforeMainContent: markdownContent } : {}),
           afterMainContent: (
             <>
               {entry.error && (
@@ -89,6 +97,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
                 </Alert>
               )}
               {entry.isCancelled && <Alert isInline isPlain title={t('Cancelled')} variant="info" />}
+              {truncatedAlert}
               {entry.tools && <ResponseTools entryIndex={entryIndex} />}
               {hasActions && <Actions entryIndex={entryIndex} />}
             </>
@@ -96,7 +105,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         }}
         hasRoundAvatar={false}
         isCompact
-        isLoading={entry.isStreaming && !entry.isCancelled && !entry.error}
+        isLoading={entry.isStreaming && !entry.isCancelled && !entry.error && !safeContent}
         name="Kiali AI"
         role="bot"
         sources={sources}

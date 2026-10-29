@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Aggregator } from 'types/MetricsOptions';
+import type { Aggregator } from 'types/MetricsOptions';
 
 import { URLParam, HistoryManager } from '../../app/History';
 import { ToolbarDropdown } from '../Dropdown/ToolbarDropdown';
@@ -20,7 +20,12 @@ export class MetricsRawAggregation extends React.Component<Props> {
 
   private aggregator: Aggregator;
 
-  static initialAggregator = (): Aggregator => {
+  constructor(props: Props) {
+    super(props);
+    this.aggregator = MetricsRawAggregation.initialAggregator();
+  }
+
+  static initialAggregator(): Aggregator {
     const opParam = HistoryManager.getParam(URLParam.AGGREGATOR);
 
     if (opParam !== undefined) {
@@ -28,11 +33,6 @@ export class MetricsRawAggregation extends React.Component<Props> {
     }
 
     return 'sum';
-  };
-
-  constructor(props: Props) {
-    super(props);
-    this.aggregator = MetricsRawAggregation.initialAggregator();
   }
 
   onAggregatorChanged = (aggregator: string): void => {
@@ -47,7 +47,7 @@ export class MetricsRawAggregation extends React.Component<Props> {
         id={'metrics_filter_aggregator'}
         disabled={false}
         handleSelect={this.onAggregatorChanged}
-        nameDropdown={'Pods aggregation'}
+        nameDropdown={'Pod Aggregation'}
         value={this.aggregator}
         label={MetricsRawAggregation.Aggregators[this.aggregator]}
         options={MetricsRawAggregation.Aggregators}

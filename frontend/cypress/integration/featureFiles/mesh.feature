@@ -29,7 +29,10 @@ Feature: Kiali Mesh page
   @lpinterop
   # TODO: offline - number of infra nodes don't match up because no grafana/tracing.
   Scenario: See mesh
-    When user sees mesh side panel
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user sees mesh side panel
     Then user sees expected mesh infra
 
   @core-caching
@@ -43,24 +46,36 @@ Feature: Kiali Mesh page
   @lpinterop
   # TODO: offline - no grafana.
   Scenario: Grafana Infra
-    When user selects mesh node with label "Grafana"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
 
   @perses
   Scenario: Perses Infra
-    When user selects mesh node with label "Perses"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Perses"
     Then user sees "Perses" node side panel
 
   @core-caching
   # TODO: offline - no tracing.
   Scenario: Tracing Infra
-    When user selects tracing mesh node
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects tracing mesh node
     Then user sees tracing node side panel
 
   @core-caching
   @lpinterop
   Scenario: Prometheus Infra
-    When user selects mesh node with label "Prometheus"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "Prometheus"
     Then user sees "Prometheus" node side panel
 
   @core-caching
@@ -84,6 +99,22 @@ Feature: Kiali Mesh page
     When user selects mesh node with label "istio-system"
     Then user sees "istio-system" namespace side panel
     Then user does not see "dataplane namespaces: 0" in mesh body
+
+  @core-2
+  Scenario: User enables kiali
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects mesh node with label "kiali"
+    Then user sees "kiali" node side panel
+
+  @core-2
+  Scenario: Kiali and observability are hidden by default
+    Then user does not see a "kiali" mesh node
+    And user does not see a "grafana" mesh node
+    And user does not see a "metricStore" mesh node
+    And user does not see a "traceStore" mesh node
+    And user does not see a "perses" mesh node
 
   # TODO: offline - must gather does not collect gateway-api resources which are what the integration tests use to create gateways.
   @bookinfo-app
@@ -141,7 +172,10 @@ Feature: Kiali Mesh page
   @component-health-upscale
   @core-2
   Scenario: Grafana Infra unreachable
-    When user scales to "0" the "grafana" in namespace "istio-system"
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user scales to "0" the "grafana" in namespace "istio-system"
     Then the user refreshes the page
     When user selects mesh node with label "Grafana"
     Then user sees "Grafana" node side panel
@@ -169,7 +203,10 @@ Feature: Kiali Mesh page
   @core-caching
   # TODO: offline - no tracing
   Scenario: User opens and interacts with the Trace Configuration modal
-    When user selects tracing mesh node
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
+    And user selects tracing mesh node
     And user opens the Trace Configuration modal
     Then user sees the Trace Configuration modal
     And user sees the Discovery and Tester tabs
@@ -195,6 +232,9 @@ Feature: Kiali Mesh page
 
   @external-kiali
   Scenario: External-kiali: see only kiali for mgmt cluster
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
     Then user sees 1 "kiali" nodes on the "mgmt" cluster
     And user sees 0 "dataplane" nodes on the "mgmt" cluster
     And user sees 0 "istiod" nodes on the "mgmt" cluster
@@ -202,6 +242,9 @@ Feature: Kiali Mesh page
 
   @smoke
   Scenario: Local-kiali: see kiali node in local mode
+    When user "opens" display menu
+    And user "enables" mesh display option "kiali"
+    And user "closes" display menu
     And user sees the "kiali" node connected to the 1 "istiod" nodes
 
   @multi-cluster

@@ -4,7 +4,7 @@ import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { UserSettingsActions } from '../../actions/UserSettingsActions';
 import { HistoryManager, location, URLParam } from '../../app/History';
 import { useKialiDispatch, useKialiSelector } from '../../hooks/redux';
-import { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeRange } from '../../types/Common';
 import { DurationDropdownComponent } from '../Dropdown/DurationDropdown';
 import { RefreshComponent } from '../Refresh/Refresh';
 import { TimeRangeComp } from './TimeRangeComponent';
@@ -177,7 +177,7 @@ export const TimeDurationModal: React.FC<Props> = (props: Props) => {
               id={'drform-duration-dd'}
               disabled={false}
               duration={duration}
-              prefix={t('Last')}
+              lastLabel
               setDuration={handleSetDuration}
               tooltip={t('Metric time period per refresh')}
               tooltipPosition={TooltipPosition.top}

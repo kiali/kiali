@@ -2,13 +2,13 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { DurationDropdown } from '../Dropdown/DurationDropdown';
 import { Refresh } from 'components/Refresh/Refresh';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { durationSelector, replayActiveSelector } from 'store/Selectors';
-import { DurationInSeconds } from 'types/Common';
+import type { DurationInSeconds } from 'types/Common';
 import { TooltipPosition, Button, ButtonVariant } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { bindActionCreators } from 'redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -46,7 +46,7 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
   };
 
   const durationTooltip = props.replayActive ? t('Metric time period per frame') : t('Metric time period per refresh');
-  const [prefix, suffix] = props.replayActive ? [undefined, t('Traffic')] : [t('Last'), undefined];
+  const replaySuffix = props.replayActive ? t('Traffic') : undefined;
 
   return (
     <div className={timeDurationStyle}>
@@ -65,8 +65,8 @@ const TimeDurationComp: React.FC<TimeControlsProps> = (props: TimeControlsProps)
       <DurationDropdown
         id="time_range_duration"
         disabled={props.disabled}
-        prefix={prefix}
-        suffix={suffix}
+        lastLabel={!props.replayActive}
+        suffix={replaySuffix}
         tooltip={durationTooltip}
         tooltipPosition={TooltipPosition.left}
       />

@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
+	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -58,6 +60,22 @@ func TestTwoSidecarsWithoutSelectorDifferentNamespaces(t *testing.T) {
 		[]*networking_v1.Sidecar{
 			data.CreateSidecar("sidecar1", "bookinfo"),
 			data.CreateSidecar("sidecar2", "bookinfo2"),
+		},
+		workloads(),
+	).Check()
+
+	assert.Empty(validations)
+}
+
+func TestTwoRequestAuthenticationsWithoutSelector(t *testing.T) {
+	assert := assert.New(t)
+
+	validations := RequestAuthenticationMultiMatchChecker(
+		config.Get().KubernetesConfig.ClusterName,
+		kubernetes.RequestAuthentications,
+		[]*security_v1.RequestAuthentication{
+			{ObjectMeta: metav1.ObjectMeta{Name: "jwt1", Namespace: "bookinfo"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "jwt2", Namespace: "bookinfo"}},
 		},
 		workloads(),
 	).Check()

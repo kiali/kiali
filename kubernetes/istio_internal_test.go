@@ -96,9 +96,15 @@ func TestValidPortAppProtocolMatcher(t *testing.T) {
 	s1 := "http"
 	s2 := "mysql"
 	s3 := "grpc-web"
+	s4 := "kubernetes.io/h2c"
+	s5 := "kubernetes.io/ws"
+	s6 := "kubernetes.io/wss"
 	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s1))
 	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s2))
 	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s3))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s4))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s5))
+	assert.True(t, MatchPortAppProtocolWithValidProtocols(&s6))
 }
 
 func TestInvalidPortAppProtocolMatcher(t *testing.T) {

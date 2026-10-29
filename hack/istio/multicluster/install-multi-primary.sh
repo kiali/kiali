@@ -1,5 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2155
+set -e
 
 ##############################################################################
 # install-multi-primary.sh
@@ -36,8 +37,7 @@ create_remote_secret() {
     fi
     echo "Choosing to use: [${secretname}]"
   fi
-  REMOTE_SECRET="$("${ISTIOCTL}" create-remote-secret --name "${clustername}" ${secretname})"
-  if [ "$?" != "0" ]; then
+  if ! REMOTE_SECRET="$("${ISTIOCTL}" create-remote-secret --name "${clustername}" ${secretname})"; then
     echo "Failed to generate remote secret for cluster [${clustername}]"
     exit 1
   fi

@@ -21,6 +21,7 @@ import { isValidPort } from './ListenerBuilder';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTable } from 'components/Table/SimpleTable';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ServerBuilderProps = {
   index: number;
@@ -28,21 +29,6 @@ type ServerBuilderProps = {
   onRemoveServer: (i: number) => void;
   server: ServerForm;
 };
-
-const columns: ThProps[] = [
-  {
-    title: 'Port Number',
-    width: 20
-  },
-  {
-    title: 'Port Name',
-    width: 20
-  },
-  {
-    title: 'Protocol',
-    width: 20
-  }
-];
 
 export const protocols = ['HTTP', 'HTTPS', 'GRPC', 'HTTP2', 'MONGO', 'TCP', 'TLS'];
 const tlsModes = ['PASSTHROUGH', 'SIMPLE', 'MUTUAL', 'AUTO_PASSTHROUGH', 'ISTIO_MUTUAL', 'OPTIONAL_MUTUAL'];
@@ -83,8 +69,24 @@ const deleteButtonStyle = kialiStyle({
 });
 
 export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isProtocolSelectOpen, setIsProtocolSelectOpen] = React.useState<boolean>(false);
   const [isTlsModeSelectOpen, setIsTlsModeSelectOpen] = React.useState<boolean>(false);
+
+  const columns: ThProps[] = [
+    {
+      title: t('Port Number'),
+      width: 20
+    },
+    {
+      title: t('Port Name'),
+      width: 20
+    },
+    {
+      title: t('Protocol'),
+      width: 20
+    }
+  ];
 
   const onAddHosts = (_event: React.FormEvent, value: string): void => {
     props.onChange(
@@ -163,7 +165,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
               {props.server.protocol}
             </MenuToggle>
           )}
-          aria-label="Protocol Select"
+          aria-label={t('Protocol Select')}
         >
           <SelectList>
             {protocols.map((option, index) => (
@@ -182,7 +184,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
   return (
     <Tr>
       <Td>
-        <FormGroup label="Hosts" isRequired={true} fieldId="gateway-selector">
+        <FormGroup label={t('Hosts')} isRequired={true} fieldId="gateway-selector">
           <TextInput
             value={props.server.hosts.join(',')}
             isRequired={true}
@@ -198,19 +200,19 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
             <HelperText>
               <HelperTextItem>
                 {isValid(areValidHosts(props.server.hosts))
-                  ? 'One or more hosts exposed by this Gateway.'
-                  : 'Invalid hosts for this Gateway. Enter one or more hosts separated by comma.'}
+                  ? t('One or more hosts exposed by this Gateway.')
+                  : t('Invalid hosts for this Gateway. Enter one or more hosts separated by comma.')}
               </HelperTextItem>
             </HelperText>
           </FormHelperText>
         </FormGroup>
 
-        <FormGroup label="Port" isRequired={true} fieldId="server-port" style={{ padding: '0.5rem 0' }}>
-          <SimpleTable label="Port Level MTLS" className={tableStyle} columns={columns} rows={portRows} />
+        <FormGroup label={t('Port')} isRequired={true} fieldId="server-port" style={{ padding: '0.5rem 0' }}>
+          <SimpleTable label={t('Port Level MTLS')} className={tableStyle} columns={columns} rows={portRows} />
         </FormGroup>
 
         {showTls && (
-          <FormGroup label="TLS Mode" isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
+          <FormGroup label={t('TLS Mode')} isRequired={true} fieldId="addTlsMode" style={{ margin: '0.5rem 0' }}>
             <Select
               id="addTlsMode"
               isOpen={isTlsModeSelectOpen}
@@ -228,7 +230,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
                   {props.server.tlsMode}
                 </MenuToggle>
               )}
-              aria-label="TLS Mode Select"
+              aria-label={t('TLS Mode Select')}
             >
               <SelectList>
                 {tlsModes.map((option, index) => (
@@ -244,7 +246,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         {showTls && (props.server.tlsMode === 'SIMPLE' || props.server.tlsMode === 'MUTUAL') && (
           <>
             <FormGroup
-              label="Server Certificate"
+              label={t('Server Certificate')}
               style={{ margin: '0.5rem 0' }}
               isRequired={true}
               fieldId="server-certificate"
@@ -264,14 +266,14 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
                 <FormHelperText>
                   <HelperText>
                     <HelperTextItem>
-                      The path to the file holding the server-side TLS certificate to use.
+                      {t('The path to the file holding the server-side TLS certificate to use.')}
                     </HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
             </FormGroup>
 
-            <FormGroup label="Private Key" isRequired={true} fieldId="private-key" style={{ margin: '0.5rem 0' }}>
+            <FormGroup label={t('Private Key')} isRequired={true} fieldId="private-key" style={{ margin: '0.5rem 0' }}>
               <TextInput
                 value={props.server.tlsPrivateKey}
                 isRequired={true}
@@ -286,7 +288,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
               {!isValid(props.server.tlsPrivateKey.length > 0) && (
                 <FormHelperText>
                   <HelperText>
-                    <HelperTextItem>The path to the file holding the server’s private key.</HelperTextItem>
+                    <HelperTextItem>{t("The path to the file holding the server's private key.")}</HelperTextItem>
                   </HelperText>
                 </FormHelperText>
               )}
@@ -295,7 +297,7 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         )}
 
         {showTls && props.server.tlsMode === 'MUTUAL' && (
-          <FormGroup label="CA Certificate" style={{ margin: '0.5rem 0' }} isRequired={true} fieldId="ca-certificate">
+          <FormGroup label={t('CA Certificate')} style={{ margin: '0.5rem 0' }} isRequired={true} fieldId="ca-certificate">
             <TextInput
               value={props.server.tlsCaCertificate}
               isRequired={true}
@@ -311,8 +313,9 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
               <FormHelperText>
                 <HelperText>
                   <HelperTextItem>
-                    The path to a file containing certificate authority certificates to use in verifying a presented
-                    client side certificate.
+                    {t(
+                      'The path to a file containing certificate authority certificates to use in verifying a presented client side certificate.'
+                    )}
                   </HelperTextItem>
                 </HelperText>
               </FormHelperText>

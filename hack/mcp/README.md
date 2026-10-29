@@ -14,6 +14,7 @@ The MCP server exposes Kiali's API as tools that AI assistants (e.g. OpenShift L
   - [Options](#options)
   - [Examples](#examples)
 - [Deployment Manifests](#deployment-manifests)
+- [Related documentation](#related-documentation)
 
 ---
 
@@ -88,3 +89,11 @@ All templates live in [`hack/mcp/deployment/`](deployment/) and use `${VARIABLE}
 | [`config_openshift.toml`](deployment/config_openshift.toml) | OLS config template for the `openshift` provider |
 
 The config files use `${KIALI_URL}` as their only dynamic placeholder, which is substituted from `--istio-namespace` at install time.
+
+---
+
+## Related documentation
+
+- MCP tools, integration tests, and **Release MCP pin validation** (including validate-without-publish): [`ai/mcp/README.md`](../../ai/mcp/README.md#release-mcp-and-pin-validation)
+- LightSpeed local stack (MCP + OLS): [`ai/providers/lightspeed/DEVELOPMENT.md`](../../ai/providers/lightspeed/DEVELOPMENT.md)
+- Endpoint coverage check: [`check-mcp-endpoint-coverage.sh`](check-mcp-endpoint-coverage.sh)

@@ -26,16 +26,22 @@ Feature: Kiali AI Chatbot
     And the user clicks the "Minimize" header button
     Then the AI chatbot window should be closed
 
-  Scenario: The chatbot toggle icon reflects the active theme
-    Given the theme is explicitly set to light
-    Then the AI chatbot toggle should show the light theme icon
-    When the user switches to dark theme
-    Then the AI chatbot toggle should show the dark theme icon
-    When the user switches to light theme
-    Then the AI chatbot toggle should show the light theme icon
+  Scenario: The chatbot toggle icon reflects the active color scheme
+    Given the color scheme is explicitly set to light
+    Then the AI chatbot toggle should show the light color scheme icon
+    When the user switches to dark color scheme
+    Then the AI chatbot toggle should show the dark color scheme icon
+    When the user switches to light color scheme
+    Then the AI chatbot toggle should show the light color scheme icon
 
   Scenario: The AI chatbot toggle button is visible
     Then the AI chatbot toggle button should be visible
+
+  Scenario: The AI chatbot toggle is disabled and warns the user when they are not allowed to use it
+    Given the user is not allowed to use the AI chatbot
+    Then the AI chatbot toggle tooltip should say "Chatbot is not allowed for this user"
+    When user clicks the AI chatbot toggle
+    Then the AI chatbot window should be closed
 
   Scenario: The AI chatbot can be opened
     When user clicks the AI chatbot toggle

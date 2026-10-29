@@ -15,6 +15,7 @@ import {
   waitForTracesViaApi
 } from '../../utils/tracingHelpers';
 import { openDetailsTab } from '../../utils/detailsPage';
+import { workloadDetailUrlPattern } from '../../utils/ossmc';
 import { waypointOnly } from '../../utils/suite-tags';
 
 test.describe('Waypoint (bookinfo)', () => {
@@ -64,7 +65,7 @@ test.describe('Waypoint (bookinfo)', () => {
     await openDetailsTab(page, 'Overview');
     await workloadDetailsPage.expectL7WaypointLink('waypoint');
     await workloadDetailsPage.clickL7WaypointLink('waypoint');
-    await expect(page).toHaveURL(/\/workloads\/waypoint/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('waypoint'));
   });
 
   test('Waypoint workload details are valid', waypointOnly, async ({ workloadDetailsPage }) => {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	apinetworkingv1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -496,6 +497,72 @@ func meshWithDefaultExportTo(conf *config.Config, exportTo string) *models.Mesh 
 	return m
 }
 
+func TestSetNonLocalMTLSConfigDefaultsAutoMtlsTrue(t *testing.T) {
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	svc := IstioValidationsService{}
+
+	t.Run("nil EnableAutoMtls defaults to true", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false}, "bookinfo")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: false}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{EnableAutoMtls: nil},
+				},
+				RootNamespace: "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.True(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
+
+	t.Run("unmanaged namespace defaults to true", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"unmanaged": false}, "unmanaged")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: false}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig:        models.NewMeshConfig(),
+				RootNamespace:     "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.True(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
+
+	t.Run("explicit false is preserved", func(t *testing.T) {
+		require := require.New(t)
+		vInfo := mockValidationInfo(conf, map[string]bool{"bookinfo": false}, "bookinfo")
+		vInfo.nsInfo.mtlsDetails = &kubernetes.MTLSDetails{EnabledAutoMtls: true}
+		vInfo.mesh = &models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{Name: cluster, IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: "bookinfo", Cluster: cluster}},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						EnableAutoMtls: &wrapperspb.BoolValue{Value: false},
+					},
+				},
+				RootNamespace: "istio-system",
+			}},
+		}
+
+		require.NoError(svc.setNonLocalMTLSConfig(&vInfo))
+		require.False(vInfo.nsInfo.mtlsDetails.EnabledAutoMtls)
+	})
+}
+
 func mockValidationInfo(conf *config.Config, namespaces map[string]bool, namespace string) validationInfo {
 	ns := []models.Namespace{}
 	for k, v := range namespaces {
@@ -962,6 +1029,194 @@ func TestValidateIstioObjectInUnmanagedNamespace(t *testing.T) {
 	})
 }
 
+// Regression test for https://github.com/kiali/kiali/issues/10410 :
+// a VirtualService without exportTo, whose route targets a host defined only by
+// a ServiceEntry exported to a subset of namespaces, gets KIA1101 from the
+// background validation (the list view) because namespaces that cannot see the
+// ServiceEntry cannot resolve the host. ValidateIstioObject (the details view)
+// must produce the same result instead of validating only from the object's own
+// namespace, and reading the details must not clear the cached background error.
+func TestValidateIstioObjectMatchesBackgroundForExportTo(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	ownNS := "default"
+	otherNS := "bookinfo"
+
+	egressVS := &networking_v1.VirtualService{
+		ObjectMeta: v1.ObjectMeta{Name: "egress-vs", Namespace: ownNS},
+		Spec: apinetworkingv1.VirtualService{
+			Hosts: []string{"external.example.com"},
+			Http: []*apinetworkingv1.HTTPRoute{{
+				Route: []*apinetworkingv1.HTTPRouteDestination{{
+					Destination: &apinetworkingv1.Destination{Host: "external.example.com"},
+				}},
+			}},
+		},
+	}
+	externalSE := &networking_v1.ServiceEntry{
+		ObjectMeta: v1.ObjectMeta{Name: "external-example-com", Namespace: ownNS},
+		Spec: apinetworkingv1.ServiceEntry{
+			ExportTo:   []string{".", "istio-system"},
+			Hosts:      []string{"external.example.com"},
+			Resolution: apinetworkingv1.ServiceEntry_DNS,
+		},
+	}
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace(ownNS),
+		kubetest.FakeNamespace(otherNS),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		egressVS, externalSE,
+	}
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	kialiCache := cache.NewTestingCache(t, k8s, *conf)
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{{
+			Cluster:           &models.KubeCluster{IsKialiHome: true},
+			IstiodNamespace:   "istio-system",
+			MeshConfig:        models.NewMeshConfig(),
+			RootNamespace:     "istio-system",
+			ManagedNamespaces: []models.Namespace{{Name: ownNS}, {Name: otherNS}, {Name: "istio-system"}},
+		}},
+	}
+	discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+	vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+	// Background validation: from bookinfo the ServiceEntry is not visible, so
+	// the VirtualService route host does not resolve and the merged result is
+	// invalid with KIA1101.
+	vInfo, err := vs.NewValidationInfo(context.Background(), []string{cluster}, nil)
+	require.NoError(err)
+	validationPerformed, backgroundValidations, err := vs.Validate(context.Background(), cluster, vInfo)
+	require.NoError(err)
+	require.True(validationPerformed)
+
+	vsKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: ownNS, Name: "egress-vs", Cluster: cluster}
+	require.Contains(backgroundValidations, vsKey)
+	require.False(backgroundValidations[vsKey].Valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", backgroundValidations[vsKey].Checks[0]))
+
+	vs.kialiCache.Validations().Replace(backgroundValidations)
+
+	// The details view must report the same result (previously it validated only
+	// from the object's own namespace, where the ServiceEntry is visible, and
+	// returned valid).
+	detailValidations, _, err := vs.ValidateIstioObject(context.Background(), cluster, ownNS, kubernetes.VirtualServices, "egress-vs")
+	require.NoError(err)
+	require.Contains(detailValidations, vsKey)
+	require.False(detailValidations[vsKey].Valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", detailValidations[vsKey].Checks[0]))
+
+	// And it must not clear the cached background error.
+	cached := vs.kialiCache.Validations().Items()
+	require.Contains(cached, vsKey)
+	assert.False(cached[vsKey].Valid)
+}
+
+// TestValidateIstioObjectGatewayScopedRoute covers issue #10410's scenario: a
+// tls route scoped via per-match gateways to an egress gateway applies only to
+// that gateway, so its destination must resolve against the ServiceEntries
+// visible from the gateway's namespace, not from every namespace the
+// VirtualService is exported to.
+func TestValidateIstioObjectGatewayScopedRoute(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	ownNS := "default"
+
+	// scenario runs the background and the single-object validation for the
+	// egress VirtualService against a ServiceEntry exported with the given scope.
+	scenario := func(seExportTo []string) (*models.IstioValidation, *models.IstioValidation) {
+		egressVS := &networking_v1.VirtualService{
+			ObjectMeta: v1.ObjectMeta{Name: "egress-vs", Namespace: ownNS},
+			Spec: apinetworkingv1.VirtualService{
+				Hosts: []string{"external.example.com"},
+				Tls: []*apinetworkingv1.TLSRoute{{
+					Match: []*apinetworkingv1.TLSMatchAttributes{{
+						SniHosts: []string{"external.example.com"},
+						Gateways: []string{"istio-egressgateway.istio-system.svc.cluster.local"},
+					}},
+					Route: []*apinetworkingv1.RouteDestination{{
+						Destination: &apinetworkingv1.Destination{Host: "external.example.com"},
+					}},
+				}},
+			},
+		}
+		externalSE := &networking_v1.ServiceEntry{
+			ObjectMeta: v1.ObjectMeta{Name: "external-example-com", Namespace: ownNS},
+			Spec: apinetworkingv1.ServiceEntry{
+				ExportTo:   seExportTo,
+				Hosts:      []string{"external.example.com"},
+				Resolution: apinetworkingv1.ServiceEntry_DNS,
+			},
+		}
+
+		objects := []runtime.Object{
+			kubetest.FakeNamespace(ownNS),
+			kubetest.FakeNamespace("bookinfo"),
+			kubetest.FakeNamespace("istio-system"),
+			&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+			egressVS, externalSE,
+		}
+		k8s := kubetest.NewFakeK8sClient(objects...)
+		kialiCache := cache.NewTestingCache(t, k8s, *conf)
+		mesh := models.Mesh{
+			ControlPlanes: []models.ControlPlane{{
+				Cluster:           &models.KubeCluster{IsKialiHome: true},
+				IstiodNamespace:   "istio-system",
+				MeshConfig:        models.NewMeshConfig(),
+				RootNamespace:     "istio-system",
+				ManagedNamespaces: []models.Namespace{{Name: ownNS}, {Name: "bookinfo"}, {Name: "istio-system"}},
+			}},
+		}
+		discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
+		vs := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(kialiCache).WithDiscovery(discovery).Build().Validations
+
+		vInfo, err := vs.NewValidationInfo(context.Background(), []string{cluster}, nil)
+		require.NoError(err)
+		validationPerformed, backgroundValidations, err := vs.Validate(context.Background(), cluster, vInfo)
+		require.NoError(err)
+		require.True(validationPerformed)
+
+		detailValidations, _, err := vs.ValidateIstioObject(context.Background(), cluster, ownNS, kubernetes.VirtualServices, "egress-vs")
+		require.NoError(err)
+
+		vsKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: ownNS, Name: "egress-vs", Cluster: cluster}
+		require.Contains(backgroundValidations, vsKey)
+		require.Contains(detailValidations, vsKey)
+		return backgroundValidations[vsKey], detailValidations[vsKey]
+	}
+
+	// The ServiceEntry is exported to the egress gateway's namespace: the
+	// mesh-bound sidecars in bookinfo never apply the gateway-scoped route, so
+	// the restricted ServiceEntry must not be reported as missing (the pre-fix
+	// false positive).
+	background, detail := scenario([]string{".", "istio-system"})
+	assert.True(background.Valid)
+	assert.True(detail.Valid)
+	for _, check := range background.Checks {
+		assert.NotEqual("KIA1101", check.Code)
+	}
+	for _, check := range detail.Checks {
+		assert.NotEqual("KIA1101", check.Code)
+	}
+
+	// When the ServiceEntry is not exported to the gateway's namespace either,
+	// the error is reported from the gateway's namespace perspective.
+	background, detail = scenario([]string{"."})
+	assert.False(background.Valid)
+	assert.False(detail.Valid)
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", background.Checks[0]))
+	assert.NoError(validations.ConfirmIstioCheckMessage("virtualservices.nohost.hostnotfound", detail.Checks[0]))
+}
+
 func TestFilterExportToNamespacesVS(t *testing.T) {
 	assert := assert.New(t)
 	conf := config.NewConfig()
@@ -1329,6 +1584,8 @@ func TestAmbientFilterExportToNamespacesSE(t *testing.T) {
 	vInfo.mesh = testMesh(conf)
 	filteredSEs := v.filterSEExportToNamespaces(currentIstioObjects, &vInfo)
 	var expectedSE []*networking_v1.ServiceEntry
+	// The sidecar requester honors exports even when the definition namespace is ambient.
+	expectedSE = append(expectedSE, se1to3)
 	expectedSE = append(expectedSE, se2tothis)
 	expectedSE = append(expectedSE, se3to2)
 	expectedSE = append(expectedSE, se3toall)

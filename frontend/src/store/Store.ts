@@ -37,11 +37,14 @@ import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 // Store is the Redux Data store
 
 export interface GlobalState {
+  readonly colorScheme: string;
+  readonly contrastMode: string;
   readonly isPageVisible: boolean;
   readonly kiosk: KioskMode;
   readonly kioskData?: KioskData;
   readonly language: string;
   readonly loadingCounter: number;
+  readonly systemAppearanceRevision: number;
   readonly theme: string;
 }
 
@@ -160,6 +163,7 @@ export interface MeshToolbarState {
   findValue: string;
   hideValue: string;
   showGateways: boolean;
+  showKiali: boolean;
   showLegend: boolean;
   showWaypoints: boolean;
 }
@@ -197,7 +201,19 @@ export interface TourState {
   activeTour?: TourInfo;
 }
 
+export interface AIState {
+  chat: ChatAIState;
+  consumption: AIRightView;
+  enabled: boolean;
+}
+
+export interface AIRightView {
+  allowed: boolean;
+  enabled: boolean;
+}
+
 export interface ChatAIState {
+  allowed: boolean;
   alwaysNavigate: boolean;
   chatHistory: ImmutableList<ImmutableMap<string, unknown>>;
   conversationID: string;
@@ -217,8 +233,8 @@ export interface ChatAIState {
 export interface KialiAppState {
   // Global state === across multiple pages
   // could also be session state
-  /** Chatbot Settings */
-  aiChat: ChatAIState;
+  /** AI Settings */
+  ai: AIState;
   appsList: AppsListState;
   /** Page Settings */
   authentication: LoginState;

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -180,7 +182,12 @@ func (oc *OtelHTTPClient) queryTracesHTTP(ctx context.Context, client http.Clien
 	if err != nil {
 		limit = 0
 	}
-	response, _ := unmarshal(ctx, resp, u)
+	// Handle a failed unmarshal rather than dropping it, so a backend that is not Tempo gives a
+	// meaningful error.
+	response, errUnmarshal := unmarshal(ctx, resp, u)
+	if errUnmarshal != nil {
+		return &model.TracingResponse{}, errUnmarshal
+	}
 
 	return oc.transformTrace(ctx, response, error, limit)
 }
@@ -215,10 +222,34 @@ func (oc *OtelHTTPClient) transformTrace(ctx context.Context, traces *otelModel.
 	return &response, nil
 }
 
+// The keys a Tempo search answer carries. It always has at least one of them, including when it
+// matched nothing.
+const (
+	keyTraces  = "traces"
+	keyMetrics = "metrics"
+)
+
 func unmarshal(ctx context.Context, r []byte, u *url.URL) (*otelModel.Traces, error) {
+	zl := getLoggerFromContextHTTPTempo(ctx)
+
+	// Fail when the body is not shaped like a Tempo search answer, so the caller gets an error
+	// rather than a result: the model's fields are all optional, so any JSON object decodes into
+	// it cleanly and comes out as no traces.
+	var envelope map[string]json.RawMessage
+	if errEnvelope := json.Unmarshal(r, &envelope); errEnvelope != nil {
+		zl.Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errEnvelope, u)
+		return nil, errEnvelope
+	}
+	if envelope[keyTraces] == nil && envelope[keyMetrics] == nil {
+		errShape := fmt.Errorf("[HTTP Tempo] not a Tempo search response: it has none of %q and %q, only %q",
+			keyTraces, keyMetrics, slices.Sorted(maps.Keys(envelope)))
+		zl.Error().Msgf("%s [URL: %v]", errShape, u)
+		return nil, errShape
+	}
+
 	var response otelModel.Traces
 	if errMarshal := json.Unmarshal(r, &response); errMarshal != nil {
-		getLoggerFromContextHTTPTempo(ctx).Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
+		zl.Error().Msgf("[HTTP Tempo] Error unmarshalling Tempo API response: %s [URL: %v]", errMarshal, u)
 		return nil, errMarshal
 	}
 

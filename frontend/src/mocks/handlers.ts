@@ -2,6 +2,7 @@
 import { appHandlers } from './handlers/apps';
 import { authHandlers } from './handlers/auth';
 import { chatbotHandlers } from './handlers/chatbot/chatbot';
+import { statsHandlers } from './handlers/chatbot/stats';
 import { configHandlers } from './handlers/config';
 import { healthHandlers } from './handlers/health';
 import { istioHandlers } from './handlers/istio';
@@ -19,6 +20,7 @@ export const handlers = [
   ...appHandlers,
   ...authHandlers,
   ...chatbotHandlers,
+  ...statsHandlers,
   ...configHandlers,
   ...healthHandlers,
   ...istioHandlers,

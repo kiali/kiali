@@ -1,3 +1,4 @@
+// Assisted-by: OpenAI Codex
 import * as React from 'react';
 import { connect } from 'react-redux';
 import type { DispatchProp } from 'react-redux';
@@ -186,6 +187,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
             }}
             tabMap={tabIndex}
             tabName={tabName}
+            customTimeTabs={['metrics', 'traces']}
             defaultTab={defaultTab}
             activeTab={this.state.currentTab}
             mountOnEnter={true}
@@ -285,7 +287,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
         clearChatResourceHealth(this.props.dispatch);
         addError('Could not fetch Service Details.', error);
         const msg: ErrorMsg = {
-          title: 'No Service is selected',
+          title: t('No Service is selected'),
           description: `${this.props.serviceId.service} is not found in the mesh`
         };
         this.setState({ error: msg });
@@ -313,7 +315,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
 
   private renderTabs(): React.ReactNode[] {
     const overTab = (
-      <Tab eventKey={0} title="Overview" key="Overview">
+      <Tab eventKey={0} title={t('Overview')} key="Overview">
         <ServiceInfo
           cluster={this.state.cluster ? this.state.cluster : ''}
           namespace={this.props.serviceId.namespace}
@@ -330,7 +332,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     );
 
     const trafficTab = (
-      <Tab eventKey={1} title="Traffic" key={trafficTabName}>
+      <Tab eventKey={1} title={t('Traffic')} key={trafficTabName}>
         <TrafficDetails
           itemName={this.props.serviceId.service}
           itemType={MetricsObjectTypes.SERVICE}
@@ -342,7 +344,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
     );
 
     const inTab = (
-      <Tab eventKey={2} title="Inbound Metrics" key="Inbound Metrics">
+      <Tab eventKey={2} title={t('Inbound Metrics')} key="Inbound Metrics">
         <IstioMetrics
           cluster={this.state.cluster}
           direction={'inbound'}
@@ -363,7 +365,7 @@ class ServiceDetailsPageComponent extends React.Component<ServiceDetailsProps, S
           ? true
           : false;
       tabsArray.push(
-        <Tab eventKey={3} title="Traces" key="Traces">
+        <Tab eventKey={3} title={t('Traces')} key="Traces">
           <TracesComponent
             lastRefreshAt={this.props.lastRefreshAt}
             namespace={this.props.serviceId.namespace}

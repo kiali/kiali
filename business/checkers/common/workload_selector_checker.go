@@ -8,14 +8,16 @@ import (
 )
 
 type GenericNoWorkloadFoundChecker struct {
+	Namespace             string
 	ObjectGVK             schema.GroupVersionKind
 	SelectorLabels        map[string]string
 	WorkloadsPerNamespace map[string]models.Workloads
 	Path                  string
 }
 
-func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
+func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, namespace string, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
+		Namespace:             namespace,
 		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -23,8 +25,9 @@ func SelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorL
 	}
 }
 
-func WorkloadSelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
+func WorkloadSelectorNoWorkloadFoundChecker(objectGVK schema.GroupVersionKind, namespace string, selectorLabels map[string]string, workloadsPerNamespace map[string]models.Workloads) GenericNoWorkloadFoundChecker {
 	return GenericNoWorkloadFoundChecker{
+		Namespace:             namespace,
 		ObjectGVK:             objectGVK,
 		SelectorLabels:        selectorLabels,
 		WorkloadsPerNamespace: workloadsPerNamespace,
@@ -47,7 +50,14 @@ func (wsc GenericNoWorkloadFoundChecker) Check() ([]*models.IstioCheck, bool) {
 func (wsc GenericNoWorkloadFoundChecker) hasMatchingWorkload(labelSelector map[string]string) bool {
 	selector := labels.SelectorFromSet(labelSelector)
 
-	for _, workloads := range wsc.WorkloadsPerNamespace {
+	workloadsByNamespace := wsc.WorkloadsPerNamespace
+	if wsc.Namespace != "" {
+		workloadsByNamespace = map[string]models.Workloads{
+			wsc.Namespace: wsc.WorkloadsPerNamespace[wsc.Namespace],
+		}
+	}
+
+	for _, workloads := range workloadsByNamespace {
 		for _, wl := range workloads {
 			wlLabelSet := labels.Set(wl.Labels)
 			if selector.Matches(wlLabelSet) {

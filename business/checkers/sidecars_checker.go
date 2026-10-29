@@ -91,7 +91,7 @@ func (s SidecarChecker) runChecks(sidecar *networking_v1.Sidecar) models.IstioVa
 	}
 
 	enabledCheckers := []Checker{
-		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, selectorLabels, s.WorkloadsPerNamespace),
+		common.WorkloadSelectorNoWorkloadFoundChecker(kubernetes.Sidecars, sidecar.Namespace, selectorLabels, s.WorkloadsPerNamespace),
 		sidecars.EgressHostChecker{IdentityDomain: s.IdentityDomain, KubeServiceHosts: s.KubeServiceHosts, ServiceEntries: serviceHosts, Sidecar: sidecar},
 		sidecars.NewGlobalChecker(s.RootNamespaces[sidecar.Namespace], sidecar),
 		sidecars.OutboundTrafficPolicyModeChecker{Sidecar: sidecar},

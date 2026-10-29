@@ -1,12 +1,13 @@
 import * as React from 'react';
-import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { useKialiTheme } from 'utils/ThemeUtils';
-import { Theme } from 'types/Common';
+import type { TooltipPosition } from '@patternfly/react-core';
+import { Tooltip } from '@patternfly/react-core';
+import { PFColors } from 'components/Pf/PfColors';
 import { MTLSIconTypes } from './MTLSIconTypes';
 import { ReactComponent as FullLockIcon } from '../../assets/img/mtls/mtls-status-full.svg';
 import { ReactComponent as HollowLockIcon } from '../../assets/img/mtls/mtls-status-partial.svg';
 import { ReactComponent as InheritArrowIcon } from '../../assets/img/mtls/mtls-inherit-arrow.svg';
 import { LockOpenIcon } from '@patternfly/react-icons';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type MTLSIconProps = {
   backgroundColor?: string;
@@ -18,10 +19,9 @@ type MTLSIconProps = {
 };
 
 export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
-  const darkTheme = useKialiTheme() === Theme.DARK;
-
-  const defaultColor = darkTheme ? '#d1d1d1' : '#72767b';
-  const iconColor = props.color ?? defaultColor;
+  const { t } = useKialiTranslation();
+  // Use a semantic token so the icon tracks light/dark/glass/high-contrast automatically.
+  const iconColor = props.color ?? PFColors.Color200;
 
   const circleBackgroundColor = props.backgroundColor;
 
@@ -29,12 +29,12 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
     props.icon === MTLSIconTypes.LOCK_FULL
       ? FullLockIcon
       : props.icon === MTLSIconTypes.LOCK_HOLLOW
-      ? HollowLockIcon
-      : props.icon === MTLSIconTypes.LOCK_OPEN
-      ? LockOpenIcon
-      : props.icon === MTLSIconTypes.ARROW_DOWN
-      ? InheritArrowIcon
-      : undefined;
+        ? HollowLockIcon
+        : props.icon === MTLSIconTypes.LOCK_OPEN
+          ? LockOpenIcon
+          : props.icon === MTLSIconTypes.ARROW_DOWN
+            ? InheritArrowIcon
+            : undefined;
 
   const useCircle = !!circleBackgroundColor;
   const circleStyle: React.CSSProperties = useCircle
@@ -60,7 +60,7 @@ export const MTLSIcon: React.FC<MTLSIconProps> = (props: MTLSIconProps) => {
     : {};
 
   return (
-    <Tooltip aria-label="mTLS status" position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
+    <Tooltip aria-label={t('mTLS status')} position={props.tooltipPosition} enableFlip={true} content={props.tooltipText}>
       {IconComponent ? (
         useCircle ? (
           <span className={props.iconClassName} style={circleStyle}>

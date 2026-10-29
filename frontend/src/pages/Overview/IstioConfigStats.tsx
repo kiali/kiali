@@ -67,6 +67,20 @@ const getStatusIcon = (status: IstioConfigStatusLabel): React.ReactNode => {
   }
 };
 
+// Translate status labels with literal keys so i18next-parser can extract them.
+const translateIstioConfigStatus = (status: IstioConfigStatusLabel): string => {
+  switch (status) {
+    case IstioConfigStatusLabel.Warning:
+      return t('Warning');
+    case IstioConfigStatusLabel.NotValid:
+      return t('Not Valid');
+    case IstioConfigStatusLabel.NotValidated:
+      return t('Not Validated');
+    default:
+      return status;
+  }
+};
+
 // Maximum number of items to show in the popover
 const MAX_POPOVER_ITEMS = 3;
 
@@ -107,7 +121,7 @@ export const IstioConfigStats: React.FC = () => {
                 icon={getStatusIcon(item.status)}
                 style={{ '--pf-v6-c-label--m-outline--BorderColor': borderColor } as React.CSSProperties}
               >
-                {t(item.status)}
+                {translateIstioConfigStatus(item.status)}
               </Label>
             </div>
           );
@@ -119,7 +133,7 @@ export const IstioConfigStats: React.FC = () => {
               onClick={() => FilterSelected.resetFilters()}
               className={classes(linkStyle)}
             >
-              {t(viewAllText)}
+              {viewAllText}
             </KialiLink>
           </div>
         )}
@@ -160,7 +174,7 @@ export const IstioConfigStats: React.FC = () => {
                     <KialiIcon.ExclamationTriangle /> {t('Istio configs')}
                   </span>
                 }
-                bodyContent={renderPopoverContent(warningIssues, 'View warning Istio configs', WARNING_FILTERS)}
+                bodyContent={renderPopoverContent(warningIssues, t('View warning Istio configs'), WARNING_FILTERS)}
               >
                 <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-warnings">
                   <span className={linkStyle}>{istioConfigStats.warnings}</span>
@@ -177,7 +191,7 @@ export const IstioConfigStats: React.FC = () => {
                     <KialiIcon.ExclamationCircle /> {t('Istio configs')}
                   </span>
                 }
-                bodyContent={renderPopoverContent(errorIssues, 'View invalid Istio configs', ERROR_FILTERS)}
+                bodyContent={renderPopoverContent(errorIssues, t('View invalid Istio configs'), ERROR_FILTERS)}
               >
                 <div className={classes(statItemStyle, clickableStyle)} data-test="istio-configs-errors">
                   <span className={linkStyle}>{istioConfigStats.errors}</span>

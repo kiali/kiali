@@ -48,7 +48,7 @@ type PrepareNextTurnFunc func(
 //
 // maxToolIterations caps the number of tool-call iterations (LLM call + tool
 // execution round) before the loop is force-aborted. It comes from
-// config.ChatAI.MaxToolIterations.
+// config.AI.ChatAI.MaxToolIterations.
 //
 // Returns (responseContent, actions, docs, aborted).  aborted=true means an
 // error was already streamed to onChunk and the caller should return immediately.

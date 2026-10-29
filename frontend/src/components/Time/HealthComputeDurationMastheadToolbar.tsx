@@ -3,7 +3,7 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { HistoryManager, URLParam } from 'app/History';
 import { useKialiDispatch } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { t } from 'utils/I18nUtils';
+import { formatLastDuration } from 'utils/I18nUtils';
 import { getHealthComputeDurationLabel, healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 
 const durationLabelStyle = kialiStyle({
@@ -43,7 +43,7 @@ export const HealthComputeDurationMastheadToolbar: React.FC<HealthComputeDuratio
 
   return (
     <div className={rightToolbarStyle}>
-      <span className={durationLabelStyle}>{t('Last {{duration}}', { duration: durationLabel })}</span>
+      <span className={durationLabelStyle}>{formatLastDuration(durationLabel)}</span>
       {children}
     </div>
   );

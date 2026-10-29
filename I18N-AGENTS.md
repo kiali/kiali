@@ -3,7 +3,10 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
+
+The English catalog (`frontend/public/locales/en/translation.json`) is generated locally by `yarn i18n` and is not committed. English UI text is the i18n key; runtime `fallbackLng: 'en'` displays the key when no English file is present. Commit only translated catalogs.
 
 It is intentionally written in English so contributors, reviewers, and AI assistants can align on the same terminology.
 
@@ -80,6 +83,13 @@ Use these consistently in Spanish UI strings:
   - Avoid `malla`
 - `workload` -> `workload` / `workloads`
   - Avoid alternating with translated variants
+- `listener` -> `Listener` / `Listeners`
+  - Keep in English: Gateway API spec field (`spec.listeners`)
+  - Do not use `escucha`, `oyente`, or other Spanish variants
+- `server` -> `Server` / `Servers`
+  - Keep in English: Istio Gateway form field for listener endpoints
+  - Same rule as `Listener`: API/form field name, not a generic word
+  - Exception: `Server Certificate` -> `Certificado del servidor` (only the descriptive word is translated)
 
 Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
 
@@ -103,11 +113,15 @@ These entries already match the preferred direction and are good references for 
 - `"Mesh": "Mesh"`
 - `"Waypoint": "Waypoint"`
 - `"{{count}} workload_other": "{{count}} workloads"`
+- `"Listeners": "Listeners"`
+- `"Listener List": "Lista de Listeners"`
+- `"Servers": "Servers"`
+- `"Server List": "Lista de Servers"`
 
 ### Spanish do / do not
 
-- Do: `plano de control`, `plano de datos`, `namespace`, `mesh`, `workload`
-- Do not: `espacio de nombres`, `malla`, translated variants of `workload`
+- Do: `plano de control`, `plano de datos`, `namespace`, `mesh`, `workload`, `Listener`, `Server`
+- Do not: `espacio de nombres`, `malla`, translated variants of `workload`, `escucha` / `oyente` for `Listener`, `servidor` for Gateway form `Server` / `Servers`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
 

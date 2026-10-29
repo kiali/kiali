@@ -99,6 +99,23 @@ func TestHasMatchingReferenceGrant(t *testing.T) {
 	assert.True(HasMatchingReferenceGrant("bookinfo", "default", K8sHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
 	assert.False(HasMatchingReferenceGrant("bookinfo", "test", K8sHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
 	assert.False(HasMatchingReferenceGrant("default", "bookinfo", K8sHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{createReferenceGrant("test", "default", "bookinfo"), createReferenceGrant("test", "bookinfo2", "bookinfo")}))
+
+	// Match the second From entry (previously only Spec.From[0] was checked)
+	multiFrom := createReferenceGrant("multi", "default", "other")
+	multiFrom.Spec.From = append(multiFrom.Spec.From, k8s_networking_v1beta1.ReferenceGrantFrom{
+		Kind:      k8s_networking_v1beta1.Kind(K8sHTTPRoutes.Kind),
+		Group:     k8s_networking_v1beta1.GroupName,
+		Namespace: k8s_networking_v1.Namespace("bookinfo"),
+	})
+	assert.True(HasMatchingReferenceGrant("bookinfo", "default", K8sHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{multiFrom}))
+
+	// Match the second To entry (previously only Spec.To[0] was checked)
+	multiTo := createReferenceGrant("multi-to", "default", "bookinfo")
+	multiTo.Spec.To = []k8s_networking_v1beta1.ReferenceGrantTo{
+		{Kind: "Secret"},
+		{Kind: ServiceType},
+	}
+	assert.True(HasMatchingReferenceGrant("bookinfo", "default", K8sHTTPRouteType, ServiceType, []*k8s_networking_v1beta1.ReferenceGrant{multiTo}))
 }
 
 func createVirtualService(namespace string, hosts []string) *networking_v1.VirtualService {

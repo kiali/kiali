@@ -1,7 +1,7 @@
 additional_display_details:
-- title: API Documentation
-  annotation: kiali.io/api-spec
+- annotation: kiali.io/api-spec
   icon_annotation: kiali.io/api-type
+  title: API Documentation
 health_config:
   rate:
   - kind: service

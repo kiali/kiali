@@ -22,6 +22,29 @@ When('viewing the detail for {string}', (object: string) => {
   cy.get(linkSelector()).contains(object).should('be.visible').click();
 });
 
+When(
+  'user is at the details page for the K8sGateway {string} in the {string} namespace',
+  (name: string, namespace: string) => {
+    cy.visit({
+      url: `${Cypress.config('baseUrl')}/console/namespaces/${namespace}/istio/gateway.networking.k8s.io/v1/Gateway/${name}`,
+      qs: { refresh: '0' }
+    });
+    ensureKialiFinishedLoading();
+  }
+);
+
+Then('the details page does not include any error or warning', () => {
+  ensureKialiFinishedLoading();
+
+  cy.get('main').within(() => {
+    cy.get('[data-test="icon-error-validation"]').should('not.exist');
+    cy.get('[data-test="icon-warning-validation"]').should('not.exist');
+  });
+
+  cy.get('.pf-v6-c-alert.pf-m-danger').should('not.exist');
+  cy.get('.pf-v6-c-alert.pf-m-warning').should('not.exist');
+});
+
 When('user deletes k8sgateway named {string} and the resource is no longer available', (name: string) => {
   cy.exec(`kubectl delete gateways.gateway.networking.k8s.io ${name} -n bookinfo`, { failOnNonZeroExit: false });
   ensureKialiFinishedLoading();
@@ -78,6 +101,16 @@ When('user checks validation of the hostname {string} input', (id: string) => {
   cy.inputValidation(id, '*.hostname.*.com', false); // but not wildcards in the middle
   cy.inputValidation(id, '*', false); // or just a wildcard
   cy.inputValidation(id, 'HOST.com', false); // capital letters are not allowed
+});
+
+When('user checks validation of the gateway IP address {string} input', (id: string) => {
+  cy.inputValidation(id, 'invalid', false);
+  cy.inputValidation(id, '192.168.1.1', true);
+});
+
+When('user checks validation of the gateway hostname address {string} input', (id: string) => {
+  cy.inputValidation(id, 'bookinfo-istio-system', false);
+  cy.inputValidation(id, 'example.com', true);
 });
 
 When('user adds a server to a server list', () => {

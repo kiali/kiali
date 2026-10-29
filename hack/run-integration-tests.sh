@@ -45,6 +45,7 @@ PLAYWRIGHT_MULTI_MESH="playwright-multi-mesh"
 HELM_CHARTS_DIR=""
 ISTIO_VERSION=""
 KIALI_VERSION=""
+KIALI_IMAGE_NAME=""
 KEYCLOAK_LIMIT_MEMORY=""
 KEYCLOAK_REQUESTS_MEMORY=""
 SAIL_OPERATOR_CHART_VERSION=""
@@ -59,6 +60,7 @@ TESTS_ONLY="false"
 WAYPOINT="false"
 WITH_VIDEO="false"
 KIALI_PID=""
+PERSES_PORT_FORWARD_PID=""
 OFFLINE_SEEDED_TRAFFIC_ROUTING_ASSET=""
 
 cleanup_offline_seeded_traffic_routing() {
@@ -78,6 +80,28 @@ cleanup_kiali() {
     kill "${KIALI_PID}" 2>/dev/null || true
     wait "${KIALI_PID}" 2>/dev/null || true
     KIALI_PID=""
+  fi
+}
+
+start_perses_port_forward() {
+  if kubectl get svc perses -n istio-system &>/dev/null; then
+    infomsg "Starting Perses port-forward on localhost:4000"
+    kubectl port-forward -n istio-system svc/perses 4000:8080 &
+    PERSES_PORT_FORWARD_PID=$!
+    for _ in $(seq 1 30); do
+      if curl -s --fail "http://localhost:4000/api/v1/health" > /dev/null 2>&1; then
+        infomsg "Perses port-forward is ready"
+        return 0
+      fi
+      sleep 1
+    done
+    infomsg "WARNING: Perses port-forward may not be ready"
+  fi
+}
+
+stop_perses_port_forward() {
+  if [ -n "${PERSES_PORT_FORWARD_PID}" ]; then
+    kill "${PERSES_PORT_FORWARD_PID}" 2>/dev/null || true
   fi
 }
 
@@ -123,6 +147,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     -kv|--kiali-version)
       KIALI_VERSION="${2}"
+      shift;shift
+      ;;
+    -kin|--kiali-image-name)
+      KIALI_IMAGE_NAME="${2}"
       shift;shift
       ;;
     -klm|--keycloak-limit-memory)
@@ -242,8 +270,12 @@ Valid command line arguments:
     Default: The latest release
   -kv|--kiali-version <version>
     Kiali image version to deploy during cluster setup. Use "dev" for a local dev image
-    (default). Use a release tag such as "v2.27" to deploy quay.io/kiali/kiali instead.
+    (default). Use a release tag such as "v2.27" to deploy a published image instead.
     Default: dev
+  -kin|--kiali-image-name <name>
+    Container image name (without tag) when --kiali-version is not "dev".
+    Examples: quay.io/kiali/kiali (default), quay.io/kiali/kiali_mcp.
+    Default: quay.io/kiali/kiali
   -klm|--keycloak-limit-memory <value>
     Set the keycloak resources limit memory in the keycloak helm charts. Ex. 1Gi
   -krm|--keycloak-requests-memory <value>
@@ -369,6 +401,12 @@ else
   KIALI_VERSION_ARG=""
 fi
 
+if [ -n "${KIALI_IMAGE_NAME}" ]; then
+  KIALI_IMAGE_NAME_ARG="--kiali-image-name ${KIALI_IMAGE_NAME}"
+else
+  KIALI_IMAGE_NAME_ARG=""
+fi
+
 if [ -n "${HELM_CHARTS_DIR}" ]; then
   HELM_CHARTS_DIR_ARG="--helm-charts-dir ${HELM_CHARTS_DIR}"
 else
@@ -393,7 +431,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 KIALI_URL=""
 # Generate the kiali url. Will wait for kiali service's ingress to have an ip so this can timeout.
 setKialiURL() {
-  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali
+  kubectl wait --for=jsonpath='{.status.loadBalancer.ingress}' -n istio-system service/kiali --timeout=5m
   local ingress_ip
   ingress_ip="$(kubectl get svc kiali -n istio-system -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')"
   KIALI_URL="http://${ingress_ip}/kiali"
@@ -403,11 +441,18 @@ detectRaceConditions() {
   local kubecontext=$1
 
   local context_arg=${kubecontext:+--context ${kubecontext}}
-  if ! kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -vzq "WARNING: DATA RACE"; then
+  local kiali_logs
+  kiali_logs="$(kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system 2>/dev/null)"
+  if [ -z "${kiali_logs}" ]; then
+    # Kubelet rotates container logs (10MB by default); a busy Kiali under a full
+    # Playwright run can rotate right at test end, leaving an empty log. An empty
+    # log proves nothing either way, so warn and skip rather than fail.
+    echo "WARN: Kiali logs are empty (possibly rotated); skipping data race detection"
+  elif grep -q "WARNING: DATA RACE" <<< "${kiali_logs}"; then
     echo "ERROR: Data race detected in Kiali logs!"
     echo "Showing a preview of Kiali logs with data race warnings:"
     echo "=========================================="
-    kubectl ${context_arg} logs -l app.kubernetes.io/name=kiali --tail=-1 --all-containers -n istio-system | grep -A5 -B5 "WARNING: DATA RACE" || true
+    echo "${kiali_logs}" | grep -A5 -B5 "WARNING: DATA RACE" || true
     echo "=========================================="
     echo "Integration tests failed due to a data race in Kiali."
     echo "Download and review the Kiali server logs for more details."
@@ -678,7 +723,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     if [ "${TESTS_ONLY}" == "false" ]; then
       AUTH_PARAM="--auth-strategy anonymous"
     fi
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${KIALI_IMAGE_NAME_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -759,8 +804,11 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
     exit 0
   fi
 
+  start_perses_port_forward
+
   cd "${SCRIPT_DIR}"/../frontend
   yarn run cypress:run
+  stop_perses_port_forward
   detectRaceConditions
 elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
   ensureCypressReady
@@ -911,12 +959,15 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
     exit 0
   fi
 
+  start_perses_port_forward
+
   cd "${SCRIPT_DIR}"/../frontend
   set +e
   TEST_GROUP="@crd-validation or @perses" yarn run cypress:run:test-group:junit
   CYPRESS_EXIT=$?
   set -e
   yarn run cypress:combine:reports
+  stop_perses_port_forward
   detectRaceConditions
   exit ${CYPRESS_EXIT}
 elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
@@ -1109,7 +1160,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     # Setup single cluster with multi mesh
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false

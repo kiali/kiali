@@ -14,6 +14,7 @@ import { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isGatewayHostValid, isValidIp } from '../../../utils/IstioConfigUtils';
 import { KialiIcon } from 'config/KialiIcon';
+import { useKialiTranslation } from 'utils/I18nUtils';
 
 type AddressBuilderProps = {
   address: Address;
@@ -37,6 +38,7 @@ export const isValidAddress = (address: Address): boolean => {
 export const addressTypes = ['IPAddress', 'Hostname'];
 
 export const AddressBuilder: React.FC<AddressBuilderProps> = (props: AddressBuilderProps) => {
+  const { t } = useKialiTranslation();
   const [isTypeSelectOpen, setIsTypeSelectOpen] = React.useState<boolean>(false);
 
   const onAddValue = (_event: React.FormEvent, value: string): void => {
@@ -68,7 +70,7 @@ export const AddressBuilder: React.FC<AddressBuilderProps> = (props: AddressBuil
               {props.address.type}
             </MenuToggle>
           )}
-          aria-label="Address Type Select"
+          aria-label={t('Address Type Select')}
         >
           <SelectList>
             {addressTypes.map((option, index) => (

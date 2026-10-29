@@ -26,7 +26,7 @@ import { cardStyle, cardBodyStyle, iconStyle } from './OverviewStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import * as API from 'services/Api';
 import { statusFromString } from 'types/Health';
-import { ServiceLatency, ServiceRequests, ServiceThroughput } from 'types/Overview';
+import type { ServiceLatency, ServiceRequests, ServiceThroughput } from 'types/Overview';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { useRefreshInterval } from 'hooks/refresh';
 import { OverviewCardErrorState, OverviewCardLoadingState } from './OverviewCardState';
@@ -435,8 +435,8 @@ export const ServiceInsights: React.FC = () => {
     if (config.data.length === 0) {
       return (
         <div className={emptyStateStyle}>
-          <div>{t(config.emptyTitle)}</div>
-          <div>{t(config.emptyMessage)}</div>
+          <div>{config.emptyTitle}</div>
+          <div>{config.emptyMessage}</div>
         </div>
       );
     }
@@ -451,7 +451,7 @@ export const ServiceInsights: React.FC = () => {
           <tr>
             <th className={tableHeaderStyle}>{t('Name')}</th>
             <th className={tableHeaderStyle}>
-              <span>{t(config.columnTitle)}</span>
+              <span>{config.columnTitle}</span>
               <LongArrowAltDownIcon className={sortIconDisabledStyle} aria-hidden={true} />
             </th>
           </tr>
@@ -481,9 +481,9 @@ export const ServiceInsights: React.FC = () => {
     return renderServiceTable({
       data: latencies,
       dataTestId: 'service-insights-latencies-table',
-      emptyTitle: 'Latencies not available',
-      emptyMessage: 'No HTTP traffic or response time metrics are unavailable',
-      columnTitle: 'Latency',
+      emptyTitle: t('Latencies not available'),
+      emptyMessage: t('No HTTP traffic or response time metrics are unavailable'),
+      columnTitle: t('Latency'),
       keyPrefix: 'latency',
       renderValueCell: svc => (
         <>
@@ -498,9 +498,9 @@ export const ServiceInsights: React.FC = () => {
     return renderServiceTable({
       data: rates,
       dataTestId: 'service-insights-rates-table',
-      emptyTitle: 'Error Rates not available',
-      emptyMessage: 'No HTTP traffic or health cache is disabled',
-      columnTitle: 'Errors',
+      emptyTitle: t('Error Rates not available'),
+      emptyMessage: t('No HTTP traffic or health cache is disabled'),
+      columnTitle: t('Errors'),
       keyPrefix: 'rate',
       renderValueCell: svc => (
         <Tooltip content={formatRequestRate(t, svc.requestRate ?? 0)} position={TooltipPosition.top}>
@@ -517,9 +517,9 @@ export const ServiceInsights: React.FC = () => {
     return renderServiceTable({
       data: throughput,
       dataTestId: 'service-insights-traffic-table',
-      emptyTitle: 'Throughput not available',
-      emptyMessage: 'No throughput metrics are available',
-      columnTitle: 'Throughput',
+      emptyTitle: t('Throughput not available'),
+      emptyMessage: t('No throughput metrics are available'),
+      columnTitle: t('Throughput'),
       keyPrefix: 'traffic',
       renderValueCell: svc => (
         <Tooltip

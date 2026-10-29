@@ -1,9 +1,8 @@
-import { ChatAIConfig } from './Chatbot';
-import { DurationInSeconds } from './Common';
-import { MeshCluster } from './Mesh';
+import type { AIConfig } from './Chatbot';
+import type { DurationInSeconds } from './Common';
+import type { MeshCluster } from './Mesh';
 
-export type IstioLabelKey = 'appLabelName'
-  | 'versionLabelName';
+export type IstioLabelKey = 'appLabelName' | 'versionLabelName';
 
 interface DeploymentConfig {
   viewOnlyMode: boolean;
@@ -160,9 +159,9 @@ export type OfflineRunConfig = {
 };
 
 export interface ServerConfig {
+  ai: AIConfig;
   ambientEnabled: boolean;
   authStrategy: string;
-  chatAI: ChatAIConfig;
   clusterWideAccess: boolean;
   clusters: { [key: string]: MeshCluster }; // cluster => MeshCluster
   controlPlanes: { [key: string]: string }; // cluster => namespace
@@ -170,6 +169,7 @@ export interface ServerConfig {
   gatewayAPIClasses: GatewayAPIClass[];
   gatewayAPIEnabled: boolean;
   healthConfig: HealthConfig;
+  healthStatusMetricsEnabled: boolean;
   ignoreHomeCluster: boolean;
   installationTag?: string;
   istioAPIInstalled: boolean;

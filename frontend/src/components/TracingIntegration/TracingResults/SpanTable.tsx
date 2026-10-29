@@ -1,14 +1,15 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { Button, ButtonVariant, EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
-import { SortByDirection, IRow, IRowData, IAction, TableVariant, ISortBy, OnSort } from '@patternfly/react-table';
+import type { IRow, IRowData, IAction, ISortBy, OnSort } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
 import { compareNullable } from 'components/FilterList/FilterHelper';
-import { MetricsStats } from 'types/Metrics';
-import { KialiAppState } from 'store/Store';
-import { MetricsStatsQuery } from 'types/MetricsOptions';
+import type { MetricsStats } from 'types/Metrics';
+import type { KialiAppState } from 'store/Store';
+import type { MetricsStatsQuery } from 'types/MetricsOptions';
 import { MetricsStatsThunkActions } from 'actions/MetricsStatsThunkActions';
-import { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
+import type { EnvoySpanInfo, OpenTracingHTTPInfo, OpenTracingTCPInfo, RichSpanData } from 'types/TracingInfo';
 import { isWaypointProxySpan, sameSpans } from 'utils/tracing/TracingHelper';
 import { buildQueriesFromSpans } from 'utils/tracing/TraceStats';
 import { getParamsSeparator, getSpanId } from '../../../utils/SearchParamUtils';
@@ -19,20 +20,26 @@ import { responseFlags } from 'utils/ResponseFlags';
 import { renderMetricsComparison } from './StatsComparison';
 import { router } from 'app/History';
 import { isParentKiosk, kioskNavigateAction, kioskTracingAction } from '../../Kiosk/KioskActions';
-import { TracingUrlProvider } from 'types/Tracing';
+import type { TracingUrlProvider } from 'types/Tracing';
 import { KialiIcon } from 'config/KialiIcon';
-import { SimpleTable, SortableTh } from 'components/Table/SimpleTable';
-import { Theme } from '../../../types/Common';
+import type { SortableTh } from 'components/Table/SimpleTable';
+import { SimpleTable } from 'components/Table/SimpleTable';
+import { ColorScheme } from '../../../types/Common';
+import { mapAppearanceFromState, resolveColorScheme } from '../../../utils/AppearanceUtils';
+import { languageSelector } from 'store/Selectors';
+import { t } from 'utils/I18nUtils';
 
 type ReduxProps = {
   loadMetricsStats: (queries: MetricsStatsQuery[], isCompact: boolean) => void;
 };
 
 type StateProps = {
+  colorScheme: string;
   kiosk: string;
+  language: string;
   metricsStats: Map<string, MetricsStats>;
   provider?: string;
-  theme: string;
+  systemAppearanceRevision: number;
 };
 
 type Props = ReduxProps &
@@ -123,35 +130,13 @@ const getClassName = (
       ? selectedErrorStyle
       : selectedStyle
     : isError
-    ? highlight
-      ? highlightErrorStyle
-      : dangerErrorStyle
-    : highlight
-    ? highlightStyle
-    : undefined;
+      ? highlight
+        ? highlightErrorStyle
+        : dangerErrorStyle
+      : highlight
+        ? highlightStyle
+        : undefined;
 };
-
-const columns: SortableCompareTh<RichSpanData>[] = [
-  {
-    title: 'Timeline',
-    sortable: true,
-    compare: (a, b) => a.startTime - b.startTime
-  },
-  {
-    title: 'App / Workload',
-    sortable: true,
-    compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
-  },
-  {
-    title: 'Summary',
-    sortable: false
-  },
-  {
-    title: 'Statistics',
-    sortable: true,
-    compare: (a, b) => a.duration - b.duration
-  }
-];
 
 class SpanTableComponent extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -182,16 +167,16 @@ class SpanTableComponent extends React.Component<Props, State> {
       this.setState({ sortIndex: index, sortDirection: sortDirection });
 
     const noSpans: React.ReactNode = (
-      <EmptyState headingLevel="h5" titleText="No spans found" variant={EmptyStateVariant.full}>
-        <EmptyStateBody>No spans match the current filters</EmptyStateBody>
+      <EmptyState headingLevel="h5" titleText={t('No spans found')} variant={EmptyStateVariant.full}>
+        <EmptyStateBody>{t('No spans match the current filters')}</EmptyStateBody>
       </EmptyState>
     );
 
     return (
       <SimpleTable
-        label="Span List"
+        label={t('Span List')}
         className={tableStyle}
-        columns={columns}
+        columns={this.getColumns()}
         rows={this.rows()}
         emptyState={noSpans}
         onSort={onSort}
@@ -202,6 +187,28 @@ class SpanTableComponent extends React.Component<Props, State> {
     );
   }
 
+  private getColumns = (): SortableCompareTh<RichSpanData>[] => [
+    {
+      title: t('Timeline'),
+      sortable: true,
+      compare: (a, b) => a.startTime - b.startTime
+    },
+    {
+      title: t('App / Workload'),
+      sortable: true,
+      compare: (a, b) => compareNullable(a.workload, b.workload, (a2, b2) => a2.localeCompare(b2))
+    },
+    {
+      title: t('Summary'),
+      sortable: false
+    },
+    {
+      title: t('Statistics'),
+      sortable: true,
+      compare: (a, b) => a.duration - b.duration
+    }
+  ];
+
   private fetchComparisonMetrics(items: RichSpanData[]): void {
     const queries = buildQueriesFromSpans(items, false, this.shouldIncludeWaypoint());
     this.props.loadMetricsStats(queries, false);
@@ -211,7 +218,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     !!this.props.includeWaypoint || this.props.items.some(item => isWaypointProxySpan(item));
 
   private rows = (): IRow[] => {
-    const compare = columns[this.state.sortIndex].compare;
+    const compare = this.getColumns()[this.state.sortIndex].compare;
     const sorted = compare
       ? this.props.items.sort(this.state.sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
       : this.props.items;
@@ -222,7 +229,7 @@ class SpanTableComponent extends React.Component<Props, State> {
   private buildRow = (item: RichSpanData): IRow => {
     const isExpanded = this.isExpanded(item.spanID);
     const isSpan = item.spanID === getSpanId();
-    const darkTheme = this.props.theme === Theme.DARK;
+    const darkTheme = resolveColorScheme(this.props.colorScheme) === ColorScheme.DARK;
     return {
       cells: [
         <>
@@ -254,7 +261,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         title: <h1 aria-hidden="true">{`Application (${item.app})`}</h1>
       },
       {
-        title: 'Inbound Metrics',
+        title: t('Inbound Metrics'),
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=in_metrics`;
           if (parentKiosk) {
@@ -265,7 +272,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         }
       },
       {
-        title: 'Outbound Metrics',
+        title: t('Outbound Metrics'),
         onClick: () => {
           const href = `${item.linkToApp}${getParamsSeparator(rowData.item.linkToApp)}tab=out_metrics`;
           if (parentKiosk) {
@@ -286,7 +293,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           title: <h1 aria-hidden="true">{`Workload (${item.workload})`}</h1>
         },
         {
-          title: 'Logs',
+          title: t('Logs'),
           onClick: () => {
             const href = `${item.linkToWorkload}?tab=logs`;
             if (parentKiosk) {
@@ -297,7 +304,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Inbound Metrics',
+          title: t('Inbound Metrics'),
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=in_metrics`;
             if (parentKiosk) {
@@ -308,7 +315,7 @@ class SpanTableComponent extends React.Component<Props, State> {
           }
         },
         {
-          title: 'Outbound Metrics',
+          title: t('Outbound Metrics'),
           onClick: () => {
             const href = `${item.linkToWorkload}${getParamsSeparator(rowData.item.linkToWorkload)}tab=out_metrics`;
             if (parentKiosk) {
@@ -371,7 +378,7 @@ class SpanTableComponent extends React.Component<Props, State> {
       <>
         {!this.props.fromWaypoint && (
           <>
-            <strong key={`${key}-app`}>Application: </strong>
+            <strong key={`${key}-app`}>{`${t('Application')}:`} </strong>
             {(item.linkToApp && (
               <KialiLink key={`${key}-link-app`} to={item.linkToApp}>
                 {item.app}
@@ -382,7 +389,7 @@ class SpanTableComponent extends React.Component<Props, State> {
             <br key={`${key}-br`} />
           </>
         )}
-        <strong key={`${key}-wl`}>Workload: </strong>
+        <strong key={`${key}-wl`}>{`${t('Workload')}:`} </strong>
         {(item.linkToWorkload && (
           <KialiLink key={`${key}-link-wl`} to={item.linkToWorkload}>
             {item.workload}
@@ -392,7 +399,7 @@ class SpanTableComponent extends React.Component<Props, State> {
 
         {this.isExpanded(item.spanID) && (
           <div key={`${key}-expanded-br-1`}>
-            <strong key={`${key}-expanded-pod`}>Pod: </strong>
+            <strong key={`${key}-expanded-pod`}>{`${t('Pod')}:`} </strong>
             {item.pod || 'unknown'}
           </div>
         )}
@@ -409,12 +416,12 @@ class SpanTableComponent extends React.Component<Props, State> {
         {item.info.hasError && (
           <div key={`${key}-err`}>
             <KialiIcon.ExclamationCircle key={`${key}-err-ic`} className={errorIconStyle} />
-            <strong key={`${key}-err-msg`}>This span reported an error</strong>
+            <strong key={`${key}-err-msg`}>{t('This span reported an error')}</strong>
           </div>
         )}
 
         <div key={`${key}-op`}>
-          <strong key={`${key}-op-title`}>Operation: </strong>
+          <strong key={`${key}-op-title`}>{`${t('Operation')}:`} </strong>
           {flag ? (
             <span key={`${key}-op-name`}>
               {item.operationName} ({flag} <KialiIcon.ExclamationCircle key={`${key}-dan-ic`} />)
@@ -425,7 +432,7 @@ class SpanTableComponent extends React.Component<Props, State> {
         </div>
 
         <div key={`${key}-comp`}>
-          <strong key={`${key}-comp=-title`}>Component: </strong>
+          <strong key={`${key}-comp=-title`}>{`${t('Component')}:`} </strong>
           {item.component}
         </div>
 
@@ -550,7 +557,7 @@ class SpanTableComponent extends React.Component<Props, State> {
     return (
       <div key={key}>
         <div key={`${key}-dur-div`}>
-          <strong key={`${key}-dur-title`}>Duration: </strong>
+          <strong key={`${key}-dur-title`}>{`${t('Duration')}:`} </strong>
           {formatDuration(item.duration)}
         </div>
 
@@ -569,9 +576,10 @@ class SpanTableComponent extends React.Component<Props, State> {
 
 const mapStateToProps = (state: KialiAppState): StateProps => ({
   kiosk: state.globalState.kiosk,
+  language: languageSelector(state),
   metricsStats: state.metricsStats.data,
   provider: state.tracingState.info?.provider,
-  theme: state.globalState.theme
+  ...mapAppearanceFromState(state)
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxProps => ({

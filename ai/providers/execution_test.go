@@ -90,7 +90,7 @@ func TestExecuteToolCallsInParallel_FilteredToolIsRejected(t *testing.T) {
 	require.NoError(t, mcp.LoadTools())
 
 	ki := newTestKialiInterface(t)
-	ki.Conf.ChatAI.Providers = []config.ProviderConfig{
+	ki.Conf.AI.ChatAI.Providers = []config.ProviderConfig{
 		{
 			Name:  "provider-1",
 			Tools: config.ToolFilterConfig{DisabledTools: []string{"get_referenced_docs"}},

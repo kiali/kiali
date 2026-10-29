@@ -382,12 +382,26 @@ func MatchPortNameWithValidProtocols(portName string) bool {
 	return false
 }
 
+// kubernetesAppProtocols are Kubernetes-standard appProtocol values that Istio recognizes
+// for protocol selection (see istio pkg/config/kube/conversion.go).
+var kubernetesAppProtocols = [...]string{
+	"kubernetes.io/h2c",
+	"kubernetes.io/ws",
+	"kubernetes.io/wss",
+}
+
 func MatchPortAppProtocolWithValidProtocols(appProtocol *string) bool {
 	if appProtocol == nil || *appProtocol == "" {
 		return false
 	}
+	proto := strings.ToLower(*appProtocol)
 	for _, protocol := range portProtocols {
-		if strings.ToLower(*appProtocol) == protocol {
+		if proto == protocol {
+			return true
+		}
+	}
+	for _, protocol := range kubernetesAppProtocols {
+		if proto == protocol {
 			return true
 		}
 	}

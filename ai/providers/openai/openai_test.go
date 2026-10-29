@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
@@ -110,13 +111,17 @@ func newOpenAITestKialiInterface(sessionID string) *mcputil.KialiInterface {
 
 // openaiTextSSE returns a minimal SSE stream with a single text response.
 func openaiTextSSE(id, content string) string {
+	return openaiTextSSEWithFinishReason(id, content, "stop")
+}
+
+func openaiTextSSEWithFinishReason(id, content, finishReason string) string {
 	chunk1 := fmt.Sprintf(
 		`{"id":%q,"object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":%q},"finish_reason":null}]}`,
 		id, content,
 	)
 	chunk2 := fmt.Sprintf(
-		`{"id":%q,"object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}`,
-		id,
+		`{"id":%q,"object":"chat.completion.chunk","created":1700000000,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":%q}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}`,
+		id, finishReason,
 	)
 	return "data: " + chunk1 + "\n\n" +
 		"data: " + chunk2 + "\n\n" +
@@ -322,6 +327,56 @@ func TestOpenAI_SendChat_MultiTurnPreservesHistory(t *testing.T) {
 	// system + first user + first assistant + second user + second assistant
 	require.Len(t, stored.Conversation, 5)
 	assert.Equal(t, "Second answer", stored.Conversation[4].Content)
+}
+
+func TestOpenAI_SendChat_LengthFinishReason_SetsTruncatedEndEvent(t *testing.T) {
+	server, _ := newOpenAISequenceServer(t, []string{
+		openaiTextSSEWithFinishReason("chatcmpl-trunc", "Partial answer", "length"),
+	})
+	defer server.Close()
+
+	provider := newOpenAITestProvider(server.URL)
+	store := &openaiTestStore{enabled: true}
+	kialiInterface := newOpenAITestKialiInterface("session-1")
+
+	var chunks []string
+	provider.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		kialiInterface.Request,
+		types.AIRequest{ConversationID: "conv-trunc", Query: "hello"},
+		kialiInterface, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
+	assert.Contains(t, allChunks, "Partial answer")
+
+	stored := store.conversations["session-1:conv-trunc"]
+	require.NotNil(t, stored)
+	require.Len(t, stored.Conversation, 1)
+	assert.Equal(t, "system", stored.Conversation[0].Role)
+}
+
+func TestOpenAI_SendChat_LengthFinishReasonWithoutText_SetsTruncatedEndEvent(t *testing.T) {
+	server, _ := newOpenAISequenceServer(t, []string{
+		openaiTextSSEWithFinishReason("chatcmpl-trunc-empty", "", "length"),
+	})
+	defer server.Close()
+
+	provider := newOpenAITestProvider(server.URL)
+	store := &openaiTestStore{enabled: true}
+	kialiInterface := newOpenAITestKialiInterface("session-1")
+
+	var chunks []string
+	provider.SendChat(
+		func(chunk string) { chunks = append(chunks, chunk) },
+		kialiInterface.Request,
+		types.AIRequest{ConversationID: "conv-trunc-empty", Query: "hello"},
+		kialiInterface, store,
+	)
+
+	allChunks := strings.Join(chunks, "")
+	assert.Contains(t, allChunks, `"truncated":true`)
 }
 
 // openaiNonStreamingResponse builds a plain JSON completion response (for ReduceConversation).

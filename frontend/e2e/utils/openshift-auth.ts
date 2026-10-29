@@ -52,10 +52,12 @@ async function clickAuthProviderIfPresent(page: Page, authProvider?: string): Pr
   if (!authProvider) {
     return;
   }
-  const idp = page.getByText(authProvider, { exact: true });
-  if (await idp.isVisible({ timeout: 15_000 }).catch(() => false)) {
-    await idp.click();
-  }
+  // Wait for the IdP link instead of probing with isVisible(), which returns
+  // immediately and silently skips the click when the page has not rendered
+  // the IdP list yet. A click timeout means there is no selection page
+  // (active session or single-IdP redirect).
+  const idp = page.getByRole('link', { name: authProvider, exact: true });
+  await idp.click({ timeout: 15_000 }).catch(() => undefined);
 }
 
 export function playwrightCredentials(): {

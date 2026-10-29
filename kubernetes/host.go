@@ -219,15 +219,27 @@ func HasMatchingVirtualServices(host Host, virtualServices []*networking_v1.Virt
 	return false
 }
 
-// HasMatchingReferenceGrant returns true when the From matches to given fromNamespace and fromKind and To matched given toNamespace and toKind.
+// HasMatchingReferenceGrant returns true when any From entry matches fromNamespace/fromKind
+// and any To entry matches toKind for a ReferenceGrant in toNamespace.
 func HasMatchingReferenceGrant(fromNamespace string, toNamespace string, fromKind string, toKind string, referenceGrants []*k8s_networking_v1beta1.ReferenceGrant) bool {
 	for _, rGrant := range referenceGrants {
-		if len(rGrant.Spec.From) > 0 && len(rGrant.Spec.To) > 0 &&
-			string(rGrant.Spec.From[0].Namespace) == fromNamespace &&
-			rGrant.Namespace == toNamespace &&
-			string(rGrant.Spec.From[0].Kind) == fromKind &&
-			string(rGrant.Spec.To[0].Kind) == toKind {
-			return true
+		if rGrant == nil || rGrant.Namespace != toNamespace {
+			continue
+		}
+		fromMatch := false
+		for _, from := range rGrant.Spec.From {
+			if string(from.Namespace) == fromNamespace && string(from.Kind) == fromKind {
+				fromMatch = true
+				break
+			}
+		}
+		if !fromMatch {
+			continue
+		}
+		for _, to := range rGrant.Spec.To {
+			if string(to.Kind) == toKind {
+				return true
+			}
 		}
 	}
 	return false

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
@@ -344,15 +345,22 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics := make(models.MetricsMap)
 	var err error
 	var converted []models.Metric
+	// Ztunnel metrics may come directly from Prometheus or from federated
+	// workload: recording rules. Use stable app and namespace labels and do
+	// not group by pod so the dashboard works with either series shape. The
+	// metrics must have app="ztunnel" in the IstioMetricsQuery namespace to be
+	// included.
+	ztunnelLabels := fmt.Sprintf(`{app="ztunnel",namespace=%q}`, q.Namespace)
+	ztunnelContainerLabels := fmt.Sprintf(`{namespace=%q,container="istio-proxy"}`, q.Namespace)
 
 	// ZTunnel connections
-	metric := in.prom.FetchRateRange(ctx, "istio_tcp_connections_opened_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric := in.prom.FetchRateRange(ctx, "istio_tcp_connections_opened_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_opened_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_connections"] = converted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_connections_closed_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_connections_closed_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("istio_tcp_connections_closed_total", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -368,7 +376,7 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_versions"] = converted
 
 	// Ztunnel memory usage ztunnel_memory_usage
-	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", ztunnelContainerLabels, "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("container_memory_working_set_bytes", metric, models.ConversionParams{Scale: 0.000001})
 	if err != nil {
 		return nil, err
@@ -376,8 +384,8 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_memory_usage"] = converted
 
 	// Ztunnel ztunnel_cpu_usage
-	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total{pod=~\"ztunnel-.*\"}[%s])", q.RateInterval)
-	metric = in.prom.FetchRange(ctx, metricName, "", "pod", "sum", &q.RangeQuery)
+	metricName := fmt.Sprintf("irate(container_cpu_usage_seconds_total%s[%s])", ztunnelContainerLabels, q.RateInterval)
+	metric = in.prom.FetchRange(ctx, metricName, "", "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric(metricName, metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -385,13 +393,13 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_cpu_usage"] = converted
 
 	// ztunnel_bytes_transmitted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Received"})
 	if err != nil {
 		return nil, err
 	}
 	metrics["ztunnel_bytes_transmitted"] = converted
-	metric = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{"{pod=~\"ztunnel-.*\"}"}, "pod", &q.RangeQuery)
+	metric = in.prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{ztunnelLabels}, "", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_bytes_transmitted", metric, models.ConversionParams{Scale: 0.001, LabelPrefix: "Sent"})
 	if err != nil {
 		return nil, err
@@ -399,7 +407,7 @@ func (in *MetricsService) GetZtunnelMetrics(ctx context.Context, q models.IstioM
 	metrics["ztunnel_bytes_transmitted"] = append(metrics["ztunnel_bytes_transmitted"], converted...)
 
 	// ztunnel_workload_manager
-	metric = in.prom.FetchRange(ctx, "workload_manager_active_proxy_count", "{pod=~\"ztunnel-.*\"}", "pod", "sum", &q.RangeQuery)
+	metric = in.prom.FetchRange(ctx, "workload_manager_active_proxy_count", ztunnelLabels, "", "sum", &q.RangeQuery)
 	converted, err = models.ConvertMetric("ztunnel_workload_manager", metric, models.ConversionParams{Scale: 1})
 	if err != nil {
 		return nil, err
@@ -433,4 +441,38 @@ func (in *MetricsService) GetResourceMetrics(ctx context.Context, q models.Istio
 	metrics["cpu_usage"] = converted
 
 	return metrics, nil
+}
+
+func healthStatusHistoryLookbackSeconds(stepSecs int64, conf *config.Config) int64 {
+	lookback := stepSecs
+	scrapeSecs := 30
+	thanosConf := conf.ExternalServices.Prometheus.ThanosProxy
+	if thanosConf.Enabled && thanosConf.ScrapeInterval != "" {
+		if d, err := time.ParseDuration(thanosConf.ScrapeInterval); err == nil && d > 0 {
+			scrapeSecs = int(d.Seconds())
+		}
+	}
+	if scrapeSecs < 1 {
+		scrapeSecs = 30
+	}
+	cap := int64(2 * scrapeSecs)
+	if cap > 0 && cap < lookback {
+		lookback = cap
+	}
+	if lookback < 1 {
+		lookback = 1
+	}
+	return lookback
+}
+
+func (in *MetricsService) GetHealthStatusHistory(ctx context.Context, cluster, namespace, healthType, name string, q *prometheus.RangeQuery) ([]models.Metric, error) {
+	labels := fmt.Sprintf(`{cluster=%q,namespace=%q,health_type=%q,name=%q}`, cluster, namespace, healthType, name)
+	stepSecs := int64(q.Step.Seconds())
+	lookbackSecs := healthStatusHistoryLookbackSeconds(stepSecs, in.conf)
+	// Range history uses ~100 points (see frontend step sizing). max_over_time uses a lookback
+	// capped at ~2x Prometheus scrape interval so long gaps without scrapes stay empty in the
+	// matrix and the UI can render them as n/a. Outer max deduplicates HA replicas.
+	query := fmt.Sprintf(`max(max_over_time(kiali_health_status%s[%ds]))`, labels, lookbackSecs)
+	metric := prometheus.FetchRangeQuery(ctx, in.prom.API(), query, q)
+	return models.ConvertMetric("kiali_health_status", metric, models.ConversionParams{Scale: 1})
 }

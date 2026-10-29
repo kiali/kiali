@@ -39,6 +39,9 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
         >
           <form
             class="pf-v6-c-form"
+            data-ouia-component-id="OUIA-Generated-Form-2"
+            data-ouia-component-type="PF6/Form"
+            data-ouia-safe="true"
             data-test="login-form"
             novalidate=""
           >
@@ -47,6 +50,9 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
             />
             <div
               class="pf-v6-c-form__group"
+              data-ouia-component-id="OUIA-Generated-FormGroup-3"
+              data-ouia-component-type="PF6/FormGroup"
+              data-ouia-safe="true"
             >
               <div
                 class="pf-v6-c-form__group-label"
@@ -64,7 +70,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
                     aria-hidden="true"
                     class="pf-v6-c-form__label-required"
                   >
-                     
+                     
                     *
                   </span>
                 </label>
@@ -78,7 +84,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    data-ouia-component-id="OUIA-Generated-TextInputBase-1"
+                    data-ouia-component-id="OUIA-Generated-TextInputBase-6"
                     data-ouia-component-type="PF6/TextInput"
                     data-ouia-safe="true"
                     id="token"
@@ -100,7 +106,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
                 >
                   <button
                     class="pf-v6-c-button pf-m-primary"
-                    data-ouia-component-id="OUIA-Generated-Button-primary-1"
+                    data-ouia-component-id="OUIA-Generated-Button-primary-7"
                     data-ouia-component-type="PF6/Button"
                     data-ouia-safe="true"
                     style="width: 100%;"
@@ -127,9 +133,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
         <ul
           class="pf-v6-c-list pf-m-inline"
         >
-          <li
-            class=""
-          >
+          <li>
             <span>
               <a
                 href="https://www.kiali.io/"
@@ -139,9 +143,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
               </a>
             </span>
           </li>
-          <li
-            class=""
-          >
+          <li>
             <span>
               <a
                 href="https://github.com/kiali/kiali"

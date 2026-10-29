@@ -78,6 +78,47 @@ func TestInvalidServiceEntry(t *testing.T) {
 	tb.AssertValidationAt(1, models.WarningSeverity, "spec/tls[1]/route[0]/destination", "virtualservices.subsetpresent.subsetnotfound")
 }
 
+func TestSubsetPresentWildcardDestinationRule(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	dr := &networking_v1.DestinationRule{
+		ObjectMeta: metav1.ObjectMeta{Name: "reviews-wildcard", Namespace: "bookinfo"},
+		Spec: api_networking_v1.DestinationRule{
+			Host: "*.local",
+			Subsets: []*api_networking_v1.Subset{
+				{Name: "v1", Labels: map[string]string{"version": "v1"}},
+			},
+		},
+	}
+	vs := &networking_v1.VirtualService{
+		ObjectMeta: metav1.ObjectMeta{Name: "reviews-route", Namespace: "bookinfo"},
+		Spec: api_networking_v1.VirtualService{
+			Hosts: []string{"reviews"},
+			Http: []*api_networking_v1.HTTPRoute{
+				{
+					Route: []*api_networking_v1.HTTPRouteDestination{
+						{Destination: &api_networking_v1.Destination{Host: "reviews", Subset: "v1"}},
+					},
+				},
+			},
+		},
+	}
+
+	nsNames := []string{"bookinfo"}
+	identityDomain := config.ResolveIdentityDomain(conf.ExternalServices.Istio.IstioIdentityDomain, "")
+	vals, valid := SubsetPresenceChecker{
+		IdentityDomain: identityDomain,
+		Namespaces:     nsNames,
+		DRSubsets:      prepareSubsetMap([]*networking_v1.DestinationRule{dr}, nsNames, identityDomain),
+		VirtualService: vs,
+	}.Check()
+
+	assert := assert.New(t)
+	assert.True(valid)
+	assert.Empty(vals)
+}
+
 func subsetPresenceCheckerPrep(scenario string, t *testing.T) ([]*models.IstioCheck, bool) {
 	conf := config.NewConfig()
 	config.Set(conf)

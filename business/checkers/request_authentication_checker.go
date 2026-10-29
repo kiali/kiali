@@ -35,7 +35,7 @@ func (m RequestAuthenticationChecker) runChecks(requestAuthn *security_v1.Reques
 		matchLabels = requestAuthn.Spec.Selector.MatchLabels
 	}
 	enabledCheckers := []Checker{
-		common.SelectorNoWorkloadFoundChecker(kubernetes.RequestAuthentications, matchLabels, m.WorkloadsPerNamespace),
+		common.SelectorNoWorkloadFoundChecker(kubernetes.RequestAuthentications, requestAuthn.Namespace, matchLabels, m.WorkloadsPerNamespace),
 	}
 
 	for _, checker := range enabledCheckers {

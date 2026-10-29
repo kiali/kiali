@@ -14,9 +14,9 @@ type ActionsProps = {
 
 export const Actions: React.FC<ActionsProps> = ({ entryIndex }) => {
   const entryObject = useSelector((state: KialiAppState) =>
-    state.aiChat.chatHistory.getIn([entryIndex])
+    state.ai.chat.chatHistory.getIn([entryIndex])
   ) as ImmutableMap<string, unknown>;
-  const alwaysNavigate = useSelector((state: KialiAppState) => state.aiChat.alwaysNavigate);
+  const alwaysNavigate = useSelector((state: KialiAppState) => state.ai.chat.alwaysNavigate);
   const entry = entryObject.toJS();
   const fileAction = (entry.actions as Action[]).filter(action => action.kind === 'file');
   const navigationAction = (entry.actions as Action[]).filter(action => action.kind === 'navigation');

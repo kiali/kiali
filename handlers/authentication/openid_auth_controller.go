@@ -180,21 +180,21 @@ func (c OpenIdAuthController) GetAuthCallbackHandler(fallbackHandler http.Handle
 // do a redirection from Kiali to the OpenId server to initiate authentication.
 func (c OpenIdAuthController) PostRoutes(router *mux.Router) {
 	// swagger:route GET /auth/openid_redirect auth openidRedirect
-	// ---
+	//
 	// Endpoint to redirect the browser of the user to the authentication
 	// endpoint of the configured OpenId provider.
 	//
-	//     Consumes:
-	//     - application/json
+	// Consumes:
+	// - application/json
 	//
-	//     Produces:
-	//     - application/html
+	// Produces:
+	// - application/html
 	//
-	//     Schemes: http, https
+	// Schemes: http, https
 	//
-	// responses:
-	//      500: internalError
-	//      200: noContent
+	// Responses:
+	//   500: internalError
+	//   200: noContent
 	router.
 		Methods("GET").
 		Path("/api/auth/openid_redirect").

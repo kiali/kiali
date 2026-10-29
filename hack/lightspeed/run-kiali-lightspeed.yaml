@@ -1,6 +1,7 @@
 chat_ai:
   enabled: true
   default_provider: "LightSpeed"
+  max_tool_iterations: 5
   providers:
   - name: "LightSpeed"
     description: "OpenShift LightSpeed"

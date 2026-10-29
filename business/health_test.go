@@ -695,6 +695,31 @@ func TestFillAppRequestRates_BothHTTP(t *testing.T) {
 	assert.NotEmpty(destApp.Requests.Inbound, "dest app should have inbound when both are HTTP-capable")
 }
 
+func TestFillAppRequestRates_WaypointReporter(t *testing.T) {
+	assert := assert.New(t)
+
+	srcApp := &models.AppHealth{Requests: models.NewEmptyRequestHealth()}
+	destApp := &models.AppHealth{Requests: models.NewEmptyRequestHealth()}
+	allHealth := models.NamespaceAppHealth{"productpage": srcApp, "reviews": destApp}
+	appHTTPTraffic := map[string]bool{"productpage": true, "reviews": true}
+	rates := model.Vector{&model.Sample{
+		Metric: model.Metric{
+			"destination_canonical_service": "reviews",
+			"source_canonical_service":      "productpage",
+			"request_protocol":              "http",
+			"response_code":                 "200",
+			"reporter":                      "waypoint",
+		},
+		Value:     model.SampleValue(7),
+		Timestamp: model.Now(),
+	}}
+
+	fillAppRequestRates(allHealth, rates, appHTTPTraffic)
+
+	assert.Equal(map[string]map[string]float64{"http": {"200": 7}}, srcApp.Requests.Outbound)
+	assert.Equal(map[string]map[string]float64{"http": {"200": 7}}, destApp.Requests.Inbound)
+}
+
 // TestFillAppRequestRates_NeitherHTTP tests that when neither source nor destination is
 // HTTP-capable, no traffic is aggregated.
 func TestFillAppRequestRates_NeitherHTTP(t *testing.T) {
@@ -1037,6 +1062,32 @@ func TestGetNamespaceAppHealthFromWorkloads(t *testing.T) {
 	assert.Len(health, 1)
 	assert.Contains(health, "reviews")
 	assert.Len(health["reviews"].WorkloadStatuses, 2)
+	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
+}
+
+func TestGetNamespaceAppHealthFromWorkloadsWithWaypoint(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	prom := new(prometheustest.PromClientMock)
+	queryTime := time.Date(2017, 1, 15, 0, 0, 0, 0, time.UTC)
+	prom.MockAllRequestRates(context.Background(), "ns", conf.KubernetesConfig.ClusterName, "1m", queryTime, otherRatesIn)
+	hs := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Health
+	workloads := models.Workloads{&models.Workload{
+		WorkloadListItem: models.WorkloadListItem{
+			Name: "reviews-v1", Namespace: "ns", Labels: map[string]string{"app": "reviews", "version": "v1"},
+		},
+		WaypointWorkloads: []models.WorkloadReferenceInfo{{Name: "waypoint", Namespace: "ns"}},
+	}}
+	criteria := NamespaceHealthCriteria{
+		Cluster: conf.KubernetesConfig.ClusterName, Namespace: "ns", RateInterval: "1m", QueryTime: queryTime, IncludeMetrics: true,
+	}
+
+	health, err := hs.GetNamespaceAppHealthFromWorkloads(context.TODO(), criteria, workloads)
+
+	assert.NoError(err)
+	assert.Contains(health, "reviews")
 	prom.AssertNumberOfCalls(t, "GetAllRequestRates", 1)
 }
 

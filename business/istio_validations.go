@@ -127,13 +127,15 @@ type validationNamespaceInfo struct {
 }
 
 type validationClusterInfo struct {
-	cluster          string                      // the cluster being validated
-	deployments      []apps_v1.Deployment        // K8s deployments for the cluster (all namespaces)
-	identityDomain   string                      // resolved Istio identity domain for this cluster's control plane
-	istioConfig      *models.IstioConfigList     // config for the cluster (all namespaces)
-	kubeServiceHosts kubernetes.KubeServiceHosts // pre-built host lookup from K8s services
-	rootNamespaces   map[string]string           // namespace => rootNamespace, pre-computed from ControlPlaneForNamespace
-	services         []core_v1.Service           // K8s services for the cluster (all namespaces)
+	cluster                string                        // the cluster being validated
+	deployments            []apps_v1.Deployment          // K8s deployments for the cluster (all namespaces)
+	identityDomain         string                        // resolved Istio identity domain for this cluster's control plane
+	istioConfig            *models.IstioConfigList       // config for the cluster (all namespaces)
+	kubeServiceHosts       kubernetes.KubeServiceHosts   // pre-built host lookup from K8s services
+	namespaceMeshConfigs   map[string]*models.MeshConfig // requesting namespace => effective mesh snapshot
+	rootNamespaces         map[string]string             // namespace => rootNamespace, pre-computed from ControlPlaneForNamespace
+	serviceEntryVisibility *serviceEntryVisibilityCache  // derived state for this validation pass
+	services               []core_v1.Service             // K8s services for the cluster (all namespaces)
 }
 
 // changeMap key values are determined by the validation logic, and typically identifies a config object,
@@ -370,14 +372,17 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 	// Uses ControlPlaneForNamespace directly (not BuildNamespaceToMeshConfig) because a namespace
 	// should be validated even if cp.MeshConfig is nil.
 	rootNamespaces := make(map[string]string, len(nsNames))
+	namespaceMeshConfigs := make(map[string]*models.MeshConfig, len(nsNames))
 	if vInfo.mesh != nil {
 		for _, ns := range nsNames {
 			if cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, ns); cp != nil && err == nil {
 				rootNamespaces[ns] = cp.RootNamespace
+				namespaceMeshConfigs[ns] = cp.MeshConfig
 			}
 		}
 	}
 	vInfo.clusterInfo.rootNamespaces = rootNamespaces
+	vInfo.clusterInfo.namespaceMeshConfigs = namespaceMeshConfigs
 
 	// if change detection is enabled then decide if we need to run the checkers
 	if vInfo.changeDetectionEnabled() {
@@ -422,6 +427,11 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 		validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, perObjectIgnores))
 	}
+
+	// Declaration checks do not depend on which namespaces can see an entry.
+	// Run once over the cluster config, including entries hidden from every caller.
+	declarationChecker := checkers.ServiceEntryDeclarationChecker{Cluster: cluster, Namespaces: vInfo.nsMap[cluster], ServiceEntries: vInfo.clusterInfo.istioConfig.ServiceEntries}
+	validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{declarationChecker}, in.conf, perObjectIgnores))
 
 	// Service port-mapping validations are independent of per-namespace Istio config and run once per cluster.
 	// Pods are fetched only when checkers run (not during change detection) and scoped to managed namespaces.
@@ -470,8 +480,8 @@ func toWorkloadMap(workloads models.Workloads) map[string]models.Workloads {
 // detectClusterConfigChange checks the version values for all of the relevant cluster config, updating
 // as needed, and returns whether a change was detected.
 func detectClusterConfigChange(vInfo *validationInfo) bool {
-	change := false
 	cluster := vInfo.clusterInfo.cluster
+	change := vInfo.update("SEV", cluster, "", "", vInfo.serviceEntryVisibility().version())
 
 	// loop through the services and gather up their resourceVersions
 	for _, s := range vInfo.clusterInfo.services {
@@ -613,10 +623,10 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 		checkers.K8sGRPCRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sGRPCRoutes: istioConfigList.K8sGRPCRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sHTTPRouteChecker{Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, K8sGateways: istioConfigList.K8sGateways, K8sHTTPRoutes: istioConfigList.K8sHTTPRoutes, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces, Services: services},
 		checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
-		checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, WorkloadsPerNamespace: workloadsPerNamespace},
+		checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IsGatewayToNamespace: gatewayToNamespace, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, ValidatingNamespace: vInfo.nsInfo.namespace.Name, WorkloadsPerNamespace: workloadsPerNamespace},
 		checkers.NewPeerAuthenticationChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, *mtlsDetails, mtlsDetails.PeerAuthentications, workloadsPerNamespace),
 		checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace},
-		checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, Namespaces: namespaces, ServiceEntries: istioConfigList.ServiceEntries, WorkloadEntries: istioConfigList.WorkloadEntries},
+		checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, ServiceEntries: istioConfigList.ServiceEntries},
 		checkers.NewSidecarChecker(cluster, conf, identityDomain, vInfo.clusterInfo.rootNamespaces, namespaces, kubeServiceHosts, istioConfigList.ServiceEntries, istioConfigList.Sidecars, workloadsPerNamespace),
 		checkers.TelemetryChecker{Namespaces: namespaces, Telemetries: istioConfigList.Telemetries},
 		checkers.VirtualServiceChecker{Cluster: cluster, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, ImportScope: importScope, Namespaces: namespaces, VirtualServices: istioConfigList.VirtualServices},
@@ -673,11 +683,6 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		cluster:        cluster,
 		identityDomain: ResolveClusterIdentityDomain(vInfo.mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain),
 	}
-	vInfo.nsInfo = &validationNamespaceInfo{
-		namespace:   ns,
-		mtlsDetails: &kubernetes.MTLSDetails{},
-	}
-
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		return nil, istioReferences, fmt.Errorf("unable to get kube cache for cluster [%s]: %w", cluster, err)
@@ -712,19 +717,109 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	if err != nil {
 		return nil, istioReferences, err
 	}
-	filterIstioConfigByManagedNamespaces(clusterIstioConfigList, vInfo.mesh, cluster, getNsNames(vInfo.nsMap[cluster]))
+	nsNames := getNsNames(vInfo.nsMap[cluster])
+	filterIstioConfigByManagedNamespaces(clusterIstioConfigList, vInfo.mesh, cluster, nsNames)
 	vInfo.clusterInfo.istioConfig = clusterIstioConfigList
 
-	if err := in.setNamespaceIstioConfig(vInfo); err != nil {
-		log.Trace(err)
-		return nil, istioReferences, nil
+	rootNamespaces := make(map[string]string, len(nsNames))
+	namespaceMeshConfigs := make(map[string]*models.MeshConfig, len(nsNames))
+	if vInfo.mesh != nil {
+		for _, ns := range nsNames {
+			if cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, ns); cp != nil && err == nil {
+				rootNamespaces[ns] = cp.RootNamespace
+				namespaceMeshConfigs[ns] = cp.MeshConfig
+			}
+		}
+	}
+	vInfo.clusterInfo.rootNamespaces = rootNamespaces
+	vInfo.clusterInfo.namespaceMeshConfigs = namespaceMeshConfigs
+
+	// Validate the object from its own namespace and, for the types supporting
+	// exportTo, from every other managed namespace the object is visible in. The
+	// background validation (see Validate) validates each managed namespace with
+	// that namespace's exportTo visibility; running the same set of perspectives
+	// here keeps the on-demand result and the shared validation cache in
+	// agreement, so that reading an object's details does not clear an error that
+	// only manifests outside the object's own namespace (e.g. a route host defined
+	// by a ServiceEntry not exported to the namespaces the object is visible in).
+	validationNamespaces := in.validationNamespacesFor(vInfo, cluster, ns, objectGVK, object)
+
+	perObjectIgnores := buildObjectIgnoreValidations(vInfo, cluster)
+	validations := models.IstioValidations{}
+	for i := range validationNamespaces {
+		vInfo.nsInfo = &validationNamespaceInfo{
+			namespace:   &validationNamespaces[i],
+			mtlsDetails: &kubernetes.MTLSDetails{},
+		}
+
+		if err := in.setNamespaceIstioConfig(vInfo); err != nil {
+			log.Trace(err)
+			return nil, istioReferences, nil
+		}
+
+		if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
+			log.Trace(err)
+			return nil, istioReferences, nil
+		}
+
+		objectCheckers, referenceChecker, err := in.getSingleObjectCheckers(vInfo, cluster, validationNamespaces[i].Name, objectGVK)
+		if err != nil {
+			log.Trace(err)
+			return nil, istioReferences, err
+		}
+
+		if referenceChecker != nil {
+			istioReferences = istioReferences.MergeReferencesMap(runObjectReferenceChecker(ctx, in.conf, referenceChecker))
+		}
+
+		if objectCheckers == nil {
+			break
+		}
+
+		validations = validations.MergeValidations(runObjectCheckers(ctx, objectCheckers, in.conf, perObjectIgnores).FilterByKey(objectGVK, object))
 	}
 
-	if err := in.setNonLocalMTLSConfig(vInfo); err != nil {
-		log.Trace(err)
-		return nil, istioReferences, nil
+	if objectGVK == kubernetes.ServiceEntries {
+		// Preserve declaration results even when visibility removes the object
+		// from every namespace-specific list used by conflict/reference checkers.
+		for _, entry := range clusterIstioConfigList.ServiceEntries {
+			if entry.Namespace == namespace && entry.Name == object {
+				declarationChecker := checkers.ServiceEntryDeclarationChecker{Cluster: cluster, Namespaces: vInfo.nsMap[cluster], ServiceEntries: []*networking_v1.ServiceEntry{entry}}
+				validations.MergeValidations(runObjectCheckers(ctx, []checkers.ObjectChecker{declarationChecker}, in.conf, perObjectIgnores))
+				break
+			}
+		}
 	}
 
+	// FilterByKey matches on GVK and name only; keep just the requested object's
+	// entry so that same-named objects in other namespaces are neither returned
+	// nor overwritten in the shared cache below.
+	objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object, Cluster: cluster}
+	if validation, found := validations[objectKey]; found {
+		validations = models.IstioValidations{objectKey: validation}
+	} else {
+		validations = models.IstioValidations{}
+	}
+	referenceKey := models.IstioReferenceKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object}
+	if objectReferences, found := istioReferences[referenceKey]; found {
+		istioReferences = models.IstioReferencesMap{referenceKey: objectReferences}
+	} else {
+		istioReferences = models.IstioReferencesMap{}
+	}
+
+	for k, v := range validations {
+		in.kialiCache.Validations().Set(k, v)
+	}
+
+	return validations, istioReferences, nil
+}
+
+// getSingleObjectCheckers returns the object checkers and reference checker used
+// to validate a single object from the point of view of the given namespace.
+// vInfo.nsInfo must be set to that namespace and populated with
+// setNamespaceIstioConfig and setNonLocalMTLSConfig before calling, since the
+// exportTo visibility applied to the config lists depends on it.
+func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo, cluster, namespace string, objectGVK schema.GroupVersionKind) ([]checkers.ObjectChecker, ReferenceChecker, error) {
 	namespaces := vInfo.nsMap[cluster]
 	nsNames := getNsNames(namespaces)
 	istioConfigList := vInfo.nsInfo.istioConfig
@@ -733,33 +828,24 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	rbacDetails := vInfo.nsInfo.rbacDetails
 	services := vInfo.clusterInfo.services
 	kubeServiceHosts := vInfo.clusterInfo.kubeServiceHosts
-	var objectCheckers []checkers.ObjectChecker
-	var referenceChecker ReferenceChecker
 	conf := in.conf
 	identityDomain := vInfo.clusterInfo.identityDomain
+	rootNamespaces := vInfo.clusterInfo.rootNamespaces
 
-	rootNamespaces := make(map[string]string, len(nsNames))
-	if vInfo.mesh != nil {
-		for _, ns := range nsNames {
-			if cp, err := vInfo.mesh.ControlPlaneForNamespace(cluster, ns); cp != nil && err == nil {
-				rootNamespaces[ns] = cp.RootNamespace
-			}
-		}
-	}
+	var objectCheckers []checkers.ObjectChecker
+	var referenceChecker ReferenceChecker
 
 	policyAllowAny, err := in.isPolicyAllowAny(vInfo)
 	if err != nil {
-		log.Trace(err)
-		return nil, istioReferences, nil
+		return nil, nil, err
 	}
 
 	gatewayToNamespace, err := in.isGatewayToNamespace(vInfo)
 	if err != nil {
-		log.Trace(err)
-		return nil, istioReferences, nil
+		return nil, nil, err
 	}
 
-	noServiceChecker := checkers.NoServiceChecker{Conf: conf, IdentityDomain: identityDomain, Cluster: cluster, Namespaces: namespaces, IstioConfigList: istioConfigList, WorkloadsPerNamespace: workloadsPerNamespace, AuthorizationDetails: rbacDetails, KubeServiceHosts: kubeServiceHosts, Services: services, PolicyAllowAny: policyAllowAny}
+	noServiceChecker := checkers.NoServiceChecker{AuthorizationDetails: rbacDetails, Cluster: cluster, Conf: conf, IdentityDomain: identityDomain, IsGatewayToNamespace: gatewayToNamespace, IstioConfigList: istioConfigList, KubeServiceHosts: kubeServiceHosts, Namespaces: namespaces, PolicyAllowAny: policyAllowAny, Services: services, ValidatingNamespace: namespace, WorkloadsPerNamespace: workloadsPerNamespace}
 	importScope := in.buildImportScope(vInfo, nsNames, identityDomain)
 
 	switch objectGVK {
@@ -777,7 +863,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{noServiceChecker, destinationRulesChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
 		referenceChecker = references.DestinationRuleReferences{Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, Services: services, VirtualServices: istioConfigList.VirtualServices, WorkloadsPerNamespace: workloadsPerNamespace}
 	case kubernetes.ServiceEntries:
-		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, ServiceEntries: istioConfigList.ServiceEntries, Namespaces: namespaces, WorkloadEntries: istioConfigList.WorkloadEntries}
+		serviceEntryChecker := checkers.ServiceEntryChecker{Cluster: cluster, ImportScope: importScope, ServiceEntries: istioConfigList.ServiceEntries}
 		objectCheckers = []checkers.ObjectChecker{serviceEntryChecker}
 		referenceChecker = references.ServiceEntryReferences{AuthorizationPolicies: rbacDetails.AuthorizationPolicies, Conf: conf, DestinationRules: istioConfigList.DestinationRules, IdentityDomain: identityDomain, KubeServiceHosts: kubeServiceHosts, Namespace: namespace, Namespaces: nsNames, ServiceEntries: istioConfigList.ServiceEntries, Sidecars: istioConfigList.Sidecars}
 	case kubernetes.Sidecars:
@@ -861,23 +947,111 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	case kubernetes.K8sUDPRoutes:
 		// Validation on K8sUDPRoutes is not expected
 	default:
-		err = fmt.Errorf("object type not found: %v", objectGVK.String())
+		return nil, nil, fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
-	if referenceChecker != nil {
-		istioReferences = runObjectReferenceChecker(ctx, in.conf, referenceChecker)
+	return objectCheckers, referenceChecker, nil
+}
+
+// validationNamespacesFor returns the namespaces a single-object validation
+// should run from: the object's own namespace first, followed by every other
+// managed namespace the object is exported to. This mirrors the per-namespace
+// loop of the background validation (see Validate), so an object gets the same
+// result whether it is validated by the background sweep or on demand.
+func (in *IstioValidationsService) validationNamespacesFor(vInfo *validationInfo, cluster string, own *models.Namespace, objectGVK schema.GroupVersionKind, object string) []models.Namespace {
+	namespaces := []models.Namespace{*own}
+
+	// Only VirtualServices, DestinationRules and ServiceEntries support exportTo;
+	// other objects are not visible outside their own namespace.
+	if objectGVK != kubernetes.VirtualServices && objectGVK != kubernetes.DestinationRules && objectGVK != kubernetes.ServiceEntries {
+		return namespaces
 	}
 
-	if objectCheckers == nil {
-		return models.IstioValidations{}, istioReferences, err
+	clusterIstioConfig := vInfo.clusterInfo.istioConfig
+	if clusterIstioConfig == nil {
+		return namespaces
 	}
 
-	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
-	for k, v := range validations {
-		in.kialiCache.Validations().Set(k, v)
+	if objectGVK == kubernetes.ServiceEntries {
+		for _, entry := range clusterIstioConfig.ServiceEntries {
+			if entry.Namespace != own.Name || entry.Name != object {
+				continue
+			}
+			visibility := vInfo.serviceEntryVisibility()
+			for _, ns := range vInfo.nsMap[cluster] {
+				if ns.Name == own.Name {
+					continue
+				}
+				if _, managed := vInfo.clusterInfo.rootNamespaces[ns.Name]; managed && visibility.isVisible(entry, ns.Name) {
+					namespaces = append(namespaces, ns)
+				}
+			}
+			break
+		}
+		return namespaces
 	}
 
-	return validations, istioReferences, nil
+	exportTo, found := objectExportTo(clusterIstioConfig, objectGVK, own.Name, object)
+	if !found {
+		// The object is not in the cluster config yet (e.g. the config cache has
+		// not caught up with a recent change); fall back to the own namespace only.
+		return namespaces
+	}
+
+	// Mesh-wide default exportTo for the object's namespace, if configured.
+	var meshExportTo []string
+	if vInfo.mesh != nil {
+		if nsMeshConfig := vInfo.mesh.BuildNamespaceToMeshConfig(cluster, []string{own.Name})[own.Name]; nsMeshConfig != nil {
+			switch objectGVK {
+			case kubernetes.VirtualServices:
+				meshExportTo = nsMeshConfig.DefaultVirtualServiceExportTo
+			case kubernetes.DestinationRules:
+				meshExportTo = nsMeshConfig.DefaultDestinationRuleExportTo
+			case kubernetes.ServiceEntries:
+				meshExportTo = nsMeshConfig.DefaultServiceExportTo
+			}
+		}
+	}
+
+	for _, ns := range vInfo.nsMap[cluster] {
+		if ns.Name == own.Name {
+			continue
+		}
+		if _, managed := vInfo.clusterInfo.rootNamespaces[ns.Name]; !managed {
+			continue
+		}
+		if in.isExportedObjectIncluded(exportTo, meshExportTo, own.Name, vInfo, ns.Name) {
+			namespaces = append(namespaces, ns)
+		}
+	}
+
+	return namespaces
+}
+
+// objectExportTo returns the exportTo of the given object and whether the object
+// was found in the cluster-wide config list.
+func objectExportTo(configList *models.IstioConfigList, objectGVK schema.GroupVersionKind, namespace, object string) ([]string, bool) {
+	switch objectGVK {
+	case kubernetes.VirtualServices:
+		for _, vs := range configList.VirtualServices {
+			if vs.Namespace == namespace && vs.Name == object {
+				return vs.Spec.ExportTo, true
+			}
+		}
+	case kubernetes.DestinationRules:
+		for _, dr := range configList.DestinationRules {
+			if dr.Namespace == namespace && dr.Name == object {
+				return dr.Spec.ExportTo, true
+			}
+		}
+	case kubernetes.ServiceEntries:
+		for _, se := range configList.ServiceEntries {
+			if se.Namespace == namespace && se.Name == object {
+				return se.Spec.ExportTo, true
+			}
+		}
+	}
+	return nil, false
 }
 
 func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config, perObjectIgnores models.ObjectIgnoreValidations) models.IstioValidations {
@@ -1142,7 +1316,7 @@ func (in *IstioValidationsService) filterVSExportToNamespaces(vsList []*networki
 		// When no mesh config is found (unmanaged namespace), meshExportTo stays nil.
 		// isExportedObjectIncluded treats empty exportTo + empty meshExportTo as
 		// "exported to all namespaces", matching Istio's default behavior.
-		if in.isExportedObjectIncluded(vs.Spec.ExportTo, meshExportTo, vs.Namespace, vInfo) {
+		if in.isExportedObjectIncluded(vs.Spec.ExportTo, meshExportTo, vs.Namespace, vInfo, vInfo.nsInfo.namespace.Name) {
 			result = append(result, vs)
 		}
 	}
@@ -1169,47 +1343,38 @@ func (in *IstioValidationsService) filterDRExportToNamespaces(dr []*networking_v
 		if nsMeshConfigs != nil && nsMeshConfigs[d.Namespace] != nil {
 			meshExportTo = nsMeshConfigs[d.Namespace].DefaultDestinationRuleExportTo
 		}
-		if in.isExportedObjectIncluded(d.Spec.ExportTo, meshExportTo, d.Namespace, vInfo) {
+		if in.isExportedObjectIncluded(d.Spec.ExportTo, meshExportTo, d.Namespace, vInfo, vInfo.nsInfo.namespace.Name) {
 			result = append(result, d)
 		}
 	}
 	return result
 }
 
+// filterSEExportToNamespaces supplies only ServiceEntries visible to the current
+// requester. Declaration checks use the unfiltered cluster list separately.
 func (in *IstioValidationsService) filterSEExportToNamespaces(se []*networking_v1.ServiceEntry, vInfo *validationInfo) []*networking_v1.ServiceEntry {
 	if vInfo.nsInfo.namespace == nil {
 		return se
 	}
-	cluster := vInfo.clusterInfo.cluster
-	var nsMeshConfigs map[string]*models.MeshConfig
-	if vInfo.mesh != nil {
-		nsNames := make([]string, 0, len(se))
-		for _, s := range se {
-			nsNames = append(nsNames, s.Namespace)
-		}
-		nsMeshConfigs = vInfo.mesh.BuildNamespaceToMeshConfig(cluster, nsNames)
-	}
-
+	visibility := vInfo.serviceEntryVisibility()
 	var result []*networking_v1.ServiceEntry
-	for _, s := range se {
-		var meshExportTo []string
-		if nsMeshConfigs != nil && nsMeshConfigs[s.Namespace] != nil {
-			meshExportTo = nsMeshConfigs[s.Namespace].DefaultServiceExportTo
-		}
-		if in.isExportedObjectIncluded(s.Spec.ExportTo, meshExportTo, s.Namespace, vInfo) {
-			result = append(result, s)
+	for _, entry := range se {
+		if visibility.isVisible(entry, vInfo.nsInfo.namespace.Name) {
+			result = append(result, entry)
 		}
 	}
 	return result
 }
 
-func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, meshExportTo []string, objectNamespace string, vInfo *validationInfo) bool {
+// isExportedObjectIncluded returns whether an object living in objectNamespace and
+// carrying the given exportTo (or the mesh default one) is visible from
+// viewerNamespace.
+func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, meshExportTo []string, objectNamespace string, vInfo *validationInfo, viewerNamespace string) bool {
 	// Ambient mode namespace does not support ExportTo, so export only to own namespace
 	cluster := vInfo.clusterInfo.cluster
-	namespace := vInfo.nsInfo.namespace.Name
 	allNamespaces := vInfo.nsMap[cluster]
 	if isAmbient(allNamespaces, objectNamespace) {
-		return objectNamespace == namespace
+		return objectNamespace == viewerNamespace
 	}
 	if len(exportTo) == 0 {
 		// using mesh defaultExportTo values
@@ -1218,7 +1383,7 @@ func (in *IstioValidationsService) isExportedObjectIncluded(exportTo []string, m
 	if len(exportTo) > 0 {
 		for _, exportToNs := range exportTo {
 			// take only namespaces where it is exported to, or if it is exported to all namespaces, or export to own namespace
-			if checkExportTo(exportToNs, namespace, objectNamespace, allNamespaces) {
+			if checkExportTo(exportToNs, viewerNamespace, objectNamespace, allNamespaces) {
 				return true
 			}
 		}
@@ -1292,19 +1457,19 @@ func buildNamespaceToExportTo(mesh *models.Mesh, cluster string, services []core
 // setNonLocalMTLSConfig updates vInfo.nsInfo.mtlsDetails.EnabledAutoMtls based on the control plane
 // that manages the namespace being validated (multi-primary support).
 func (in *IstioValidationsService) setNonLocalMTLSConfig(vInfo *validationInfo) error {
-	cluster := vInfo.clusterInfo.cluster
-	namespace := vInfo.nsInfo.namespace.Name
-	// Error is intentionally ignored: ControlPlaneForNamespace returns an error for
-	// unmanaged namespaces (no injection/ambient labels). This is a lookup miss, not a
-	// failure. Unmanaged namespaces can still have valid Istio config that needs validation;
-	// auto-mTLS simply stays at its zero value, which the validation pipeline handles.
-	cp, _ := vInfo.mesh.ControlPlaneForNamespace(cluster, namespace)
-	if cp == nil {
+	if vInfo.nsInfo == nil || vInfo.nsInfo.mtlsDetails == nil {
 		return nil
 	}
-	if cp.MeshConfig != nil && cp.MeshConfig.EnableAutoMtls != nil {
-		vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = cp.MeshConfig.EnableAutoMtls.Value
+	cluster, namespace := "", ""
+	if vInfo.clusterInfo != nil {
+		cluster = vInfo.clusterInfo.cluster
 	}
+	if vInfo.nsInfo.namespace != nil {
+		namespace = vInfo.nsInfo.namespace.Name
+	}
+	// Istio defaults enableAutoMtls to true when unset. Reuse autoMTLSFromMesh so KIA0105
+	// matches the Namespaces TLS badge and does not false-positive on inherited mesh PERMISSIVE.
+	vInfo.nsInfo.mtlsDetails.EnabledAutoMtls = autoMTLSFromMesh(vInfo.mesh, cluster, namespace)
 	return nil
 }
 

@@ -11,8 +11,9 @@ import (
 
 func newTestConfig(providers []config.ProviderConfig) *config.Config {
 	conf := config.NewConfig()
-	conf.ChatAI.Enabled = true
-	conf.ChatAI.Providers = providers
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.Providers = providers
 	return conf
 }
 

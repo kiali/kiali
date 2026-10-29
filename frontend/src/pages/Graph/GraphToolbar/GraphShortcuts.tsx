@@ -20,7 +20,7 @@ const shortcuts: Shortcut[] = [
 
 const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
   return (
-    <div style={{ display: 'flex', marginBottom: '10px' }}>
+    <div key={shortcut.shortcut} style={{ display: 'flex', marginBottom: '10px' }}>
       <div style={{ flex: '45%' }}>
         <Label variant="outline">{shortcut.shortcut}</Label>
       </div>
@@ -32,10 +32,8 @@ const makeShortcut = (shortcut: Shortcut): React.ReactNode => {
 
 export const GraphShortcuts = (): React.ReactNode => (
   <>
-    {shortcuts.map(
-      (s: Shortcut): React.ReactNode => {
-        return makeShortcut(s);
-      }
-    )}
+    {shortcuts.map((s: Shortcut): React.ReactNode => {
+      return makeShortcut(s);
+    })}
   </>
 );

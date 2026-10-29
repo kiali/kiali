@@ -4,9 +4,9 @@ import { FileDetailsLabel } from '@patternfly/chatbot';
 import { Button, Stack, StackItem } from '@patternfly/react-core';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { t } from 'utils/I18nUtils';
-import { Action } from 'types/Chatbot';
-import { Theme } from 'types/Common';
-import { useKialiTheme } from 'utils/ThemeUtils';
+import type { Action } from 'types/Chatbot';
+import { ColorScheme } from 'types/Common';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { load } from 'js-yaml';
 import * as API from 'services/Api';
 import axios from 'axios';
@@ -29,8 +29,8 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
   const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
-  const theme = useKialiTheme();
-  const isDarkTheme = theme === Theme.DARK;
+  const colorScheme = useKialiColorScheme();
+  const isDarkTheme = colorScheme === ColorScheme.DARK;
 
   React.useEffect(() => {
     setYamlText(action.payload ?? '');
@@ -50,10 +50,10 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
     action.operation === 'create'
       ? t('Create')
       : action.operation === 'patch'
-      ? t('Patch')
-      : action.operation === 'delete'
-      ? t('Delete')
-      : t('Apply');
+        ? t('Patch')
+        : action.operation === 'delete'
+          ? t('Delete')
+          : t('Apply');
 
   const onApply = async (): Promise<void> => {
     if (!canApply || !action.operation) {
@@ -153,8 +153,8 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
       const msg = axios.isAxiosError(e)
         ? e?.response?.data?.error || e?.message || String(e)
         : e instanceof Error
-        ? e.message
-        : String(e);
+          ? e.message
+          : String(e);
       dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {

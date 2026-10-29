@@ -1,17 +1,16 @@
 import * as React from 'react';
 import { Tab, Tooltip } from '@patternfly/react-core';
-import { Edge, GraphElement, Node } from '@patternfly/react-topology';
+import type { GraphElement, Node } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
 import { RateTableGrpc, RateTableHttp, RateTableTcp } from '../../components/SummaryPanel/RateTable';
 import { RequestChart, StreamChart } from '../../components/SummaryPanel/RpsChart';
-import { SummaryPanelPropType, NodeType, TrafficRate, Protocol, UNKNOWN, NodeAttr } from '../../types/Graph';
+import type { SummaryPanelPropType } from '../../types/Graph';
+import { NodeType, TrafficRate, Protocol, UNKNOWN, NodeAttr } from '../../types/Graph';
+import type { TrafficRateGrpc, TrafficRateHttp, TrafficRateTcp } from '../../utils/TrafficRate';
 import {
   getAccumulatedTrafficRateGrpc,
   getAccumulatedTrafficRateHttp,
-  getAccumulatedTrafficRateTcp,
-  TrafficRateGrpc,
-  TrafficRateHttp,
-  TrafficRateTcp
+  getAccumulatedTrafficRateTcp
 } from '../../utils/TrafficRate';
 import * as API from '../../services/Api';
 import {
@@ -23,11 +22,13 @@ import {
   getDatapoints,
   summaryPanelWidth,
   getTitle,
-  noTrafficStyle
+  noTrafficStyle,
+  renderTopologySummary
 } from './SummaryPanelCommon';
 import { buildReporter } from '../../types/MetricsOptions';
-import { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
-import { CancelablePromise, makeCancelablePromise } from '../../utils/CancelablePromises';
+import type { IstioMetricsMap, Datapoint, Labels } from '../../types/Metrics';
+import type { CancelablePromise } from '../../utils/CancelablePromises';
+import { makeCancelablePromise } from '../../utils/CancelablePromises';
 import { KialiIcon } from 'config/KialiIcon';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { KialiLink } from 'components/Link/KialiLink';
@@ -35,9 +36,10 @@ import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { edgesIn, edgesInOut, edgesOut, elems, select, selectOr } from 'helpers/GraphHelpers';
 import { descendents } from 'helpers/GraphHelpers';
 import { panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
-import { ApiResponse } from 'types/Api';
+import type { ApiResponse } from 'types/Api';
 import { serverConfig } from 'config';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';
+import { t } from 'utils/I18nUtils';
 
 type SummaryPanelNamespaceBoxMetricsState = {
   grpcReceivedIn: Datapoint[];
@@ -102,11 +104,6 @@ const defaultState: SummaryPanelNamespaceBoxState = {
   namespaceBox: null,
   ...defaultMetricsState
 };
-
-const topologyStyle = kialiStyle({
-  marginLeft: '0.25rem',
-  marginRight: '0.5rem'
-});
 
 const namespaceStyle = kialiStyle({
   display: 'flex',
@@ -185,37 +182,37 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         <div className={panelHeadingStyle}>
           {getTitle('Namespace')}
           {this.renderNamespace(namespace, cluster)}
-          {this.renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
+          {renderTopologySummary(numSvc, numWorkloads, numApps, numVersions, numEdges)}
         </div>
 
         <div className={summaryBodyTabs}>
           <SimpleTabs id="graph_summary_tabs" defaultTab={0} style={{ paddingBottom: '0.5rem' }}>
             <Tooltip
               id="tooltip-inbound"
-              content="Traffic entering from another namespace."
+              content={t('Traffic entering from another namespace.')}
               entryDelay={1250}
               triggerRef={tooltipInboundRef}
             />
 
             <Tooltip
               id="tooltip-outbound"
-              content="Traffic exiting to another namespace."
+              content={t('Traffic exiting to another namespace.')}
               entryDelay={1250}
               triggerRef={tooltipOutboundRef}
             />
 
             <Tooltip
               id="tooltip-total"
-              content="All inbound, outbound and internal namespace traffic."
+              content={t('All inbound, outbound and internal namespace traffic.')}
               entryDelay={1250}
               triggerRef={tooltipTotalRef}
             />
 
-            <Tab style={summaryFont} title="Inbound" eventKey={0} ref={tooltipInboundRef}>
+            <Tab style={summaryFont} title={t('Inbound')} eventKey={0} ref={tooltipInboundRef}>
               <div style={summaryFont}>
                 {grpcIn.rate === 0 && httpIn.rate === 0 && tcpIn.rate === 0 && (
                   <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No inbound traffic.
+                    <KialiIcon.Info /> {t('No inbound traffic.')}
                   </div>
                 )}
 
@@ -230,7 +227,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
                 {httpIn.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpIn.rate}
                     rate3xx={httpIn.rate3xx}
                     rate4xx={httpIn.rate4xx}
@@ -247,11 +244,11 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               </div>
             </Tab>
 
-            <Tab style={summaryFont} title="Outbound" eventKey={1} ref={tooltipOutboundRef}>
+            <Tab style={summaryFont} title={t('Outbound')} eventKey={1} ref={tooltipOutboundRef}>
               <div style={summaryFont}>
                 {grpcOut.rate === 0 && httpOut.rate === 0 && tcpOut.rate === 0 && (
                   <div className={noTrafficStyle}>
-                    <KialiIcon.Info /> No outbound traffic.
+                    <KialiIcon.Info /> {t('No outbound traffic.')}
                   </div>
                 )}
 
@@ -266,7 +263,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
                 {httpOut.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpOut.rate}
                     rate3xx={httpOut.rate3xx}
                     rate4xx={httpOut.rate4xx}
@@ -283,7 +280,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
               </div>
             </Tab>
 
-            <Tab style={summaryFont} title="Total" eventKey={2} ref={tooltipTotalRef}>
+            <Tab style={summaryFont} title={t('Total')} eventKey={2} ref={tooltipTotalRef}>
               <div style={summaryFont}>
                 {grpcTotal.rate === 0 && httpTotal.rate === 0 && tcpTotal.rate === 0 && (
                   <div className={noTrafficStyle}>
@@ -302,7 +299,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
 
                 {httpTotal.rate > 0 && (
                   <RateTableHttp
-                    title="HTTP (requests per second):"
+                    title={`${t('HTTP (requests per second)')}:`}
                     rate={httpTotal.rate}
                     rate3xx={httpTotal.rate3xx}
                     rate4xx={httpTotal.rate4xx}
@@ -332,10 +329,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     const namespace = data[NodeAttr.namespace];
     const cluster = data[NodeAttr.cluster];
 
-    let inboundEdges: Edge[] | any;
-    let outboundEdges: Edge[] | any;
-    let totalEdges: Edge[] | any;
-
     const controller = (namespaceBox as Node).getController();
     const { nodes } = elems(controller);
 
@@ -345,14 +338,16 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     ]) as Node[];
 
     // inbound edges are from a different namespace or a different cluster
-    inboundEdges = edgesOut(outsideNodes, boxed);
+    const inboundEdges = edgesOut(outsideNodes, boxed);
 
     // outbound edges are to a different namespace or a different cluster
-    outboundEdges = edgesIn(outsideNodes, boxed);
+    const outboundEdges = edgesIn(outsideNodes, boxed);
 
     // total edges are inbound + edges from boxed workload|app|root nodes (i.e. not injected service nodes or box nodes)
-    totalEdges = [...inboundEdges];
-    totalEdges.push(...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[]));
+    const totalEdges = [
+      ...inboundEdges,
+      ...edgesOut(select(boxed, { prop: NodeAttr.workload, op: 'truthy' }) as Node[])
+    ];
 
     return {
       grpcIn: getAccumulatedTrafficRateGrpc(inboundEdges),
@@ -399,45 +394,6 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     );
   };
 
-  private renderTopologySummary = (
-    numSvc: number,
-    numWorkloads: number,
-    numApps: number,
-    numVersions: number,
-    numEdges: number
-  ): React.ReactNode => (
-    <>
-      {numApps > 0 && (
-        <div>
-          <KialiIcon.Applications className={topologyStyle} />
-          {numApps.toString()} {numApps === 1 ? 'app ' : 'apps '}
-          {numVersions > 0 && `(${numVersions} versions)`}
-        </div>
-      )}
-
-      {numSvc > 0 && (
-        <div>
-          <KialiIcon.Services className={topologyStyle} />
-          {numSvc.toString()} {numSvc === 1 ? 'service' : 'services'}
-        </div>
-      )}
-
-      {numWorkloads > 0 && (
-        <div>
-          <KialiIcon.Workloads className={topologyStyle} />
-          {numWorkloads.toString()} {numWorkloads === 1 ? 'workload' : 'workloads'}
-        </div>
-      )}
-
-      {numEdges > 0 && (
-        <div>
-          <KialiIcon.Topology className={topologyStyle} />
-          {numEdges.toString()} {numEdges === 1 ? 'edge' : 'edges'}
-        </div>
-      )}
-    </>
-  );
-
   private renderCharts = (): React.ReactNode => {
     const props: SummaryPanelPropType = this.props;
     const elem = props.data.summaryTarget as GraphElement;
@@ -467,13 +423,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {grpcTotal.rate > 0 && isGrpcRequests && (
           <>
             <RequestChart
-              label="gRPC - Inbound Request Traffic"
+              label={t('gRPC - Inbound Request Traffic')}
               dataRps={this.state.grpcRequestIn}
               dataErrors={this.state.grpcRequestErrIn}
             />
 
             <RequestChart
-              label="gRPC - Outbound Request Traffic"
+              label={t('gRPC - Outbound Request Traffic')}
               dataRps={this.state.grpcRequestOut}
               dataErrors={this.state.grpcRequestErrOut}
             />
@@ -483,14 +439,14 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {grpcTotal.rate > 0 && !isGrpcRequests && (
           <>
             <StreamChart
-              label="gRPC - Inbound Traffic"
+              label={t('gRPC - Inbound Traffic')}
               receivedRates={this.state.grpcReceivedIn}
               sentRates={this.state.grpcSentIn}
               unit="messages"
             />
 
             <StreamChart
-              label="gRPC - Outbound Traffic"
+              label={t('gRPC - Outbound Traffic')}
               receivedRates={this.state.grpcReceivedOut}
               sentRates={this.state.grpcSentOut}
               unit="messages"
@@ -501,13 +457,13 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {httpTotal.rate > 0 && (
           <>
             <RequestChart
-              label="HTTP - Inbound Request Traffic"
+              label={t('HTTP - Inbound Request Traffic')}
               dataRps={this.state.httpRequestIn}
               dataErrors={this.state.httpRequestErrIn}
             />
 
             <RequestChart
-              label="HTTP - Outbound Request Traffic"
+              label={t('HTTP - Outbound Request Traffic')}
               dataRps={this.state.httpRequestOut}
               dataErrors={this.state.httpRequestErrOut}
             />
@@ -517,14 +473,14 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
         {tcpTotal.rate > 0 && (
           <>
             <StreamChart
-              label="TCP - Inbound Traffic"
+              label={t('TCP - Inbound Traffic')}
               receivedRates={this.state.tcpReceivedIn}
               sentRates={this.state.tcpSentIn}
               unit="bytes"
             />
 
             <StreamChart
-              label="TCP - Outbound Traffic"
+              label={t('TCP - Outbound Traffic')}
               receivedRates={this.state.tcpReceivedOut}
               sentRates={this.state.tcpSentOut}
               unit="bytes"
@@ -563,7 +519,7 @@ export class SummaryPanelNamespaceBox extends React.Component<SummaryPanelPropTy
     let promiseIn: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
     let promiseOut: Promise<ApiResponse<IstioMetricsMap>> = Promise.resolve({ data: {} });
 
-    let filters: string[] = [];
+    const filters: string[] = [];
 
     if (grpcTotal.rate > 0 && !isGrpcRequests) {
       filters.push('grpc_sent', 'grpc_received');

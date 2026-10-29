@@ -1,18 +1,24 @@
 import { Given, When, Then } from '@badeball/cypress-cucumber-preprocessor';
+import { detailPageQueryParams } from './graph';
 import { ensureKialiFinishedLoading } from './transition';
 
 const CLUSTER1_CONTEXT = Cypress.env('CLUSTER1_CONTEXT');
 const CLUSTER2_CONTEXT = Cypress.env('CLUSTER2_CONTEXT');
 
 Given('user opens the namespace {string} and {string} service details page', (namespace: string, service: string) => {
-  // Forcing "Pause" to not cause unhandled promises from the browser when cypress is testing
-  cy.visit({ url: `/console/namespaces/${namespace}/services/${service}?refresh=0` });
+  cy.visit({
+    url: `/console/namespaces/${namespace}/services/${service}`,
+    qs: detailPageQueryParams()
+  });
 });
 
 Given(
   'user opens the namespace {string} and the {string} {string} service details page',
   (namespace: string, cluster: string, service: string) => {
-    cy.visit({ url: `/console/namespaces/${namespace}/services/${service}?refresh=0&clusterName=${cluster}` });
+    cy.visit({
+      url: `/console/namespaces/${namespace}/services/${service}`,
+      qs: detailPageQueryParams({ clusterName: cluster })
+    });
   }
 );
 

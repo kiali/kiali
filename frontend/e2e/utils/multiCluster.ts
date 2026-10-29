@@ -309,7 +309,11 @@ export const clickMiniGraphNode = async (
     nodeId = node!.id;
   }).toPass({ intervals: [3_000], timeout: 60_000 });
   if (type === 'app') {
-    await page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`).click();
+    // App boxes render as group nodes whose bounding-box center is routinely crossed by an
+    // edge path, so a real pointer click there hits the edge instead of the group. Dispatch
+    // the click on the group element itself.
+    const group = page.locator(`[data-layer-id="groups"] [data-id="${nodeId}"]`);
+    await group.evaluate(el => el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })));
   } else {
     await page.locator(`[data-id="${nodeId}"]`).click();
   }

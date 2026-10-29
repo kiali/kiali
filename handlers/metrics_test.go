@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/gorilla/mux"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -1039,4 +1041,283 @@ func setupMocked(t *testing.T) (*prometheus.Client, *prometheustest.PromAPIMock,
 	client.Inject(api)
 
 	return client, api, k
+}
+
+func setupHealthStatusHistoryEndpoint(t *testing.T, enabled bool) (*httptest.Server, *prometheustest.PromAPIMock) {
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+	return setupHealthStatusHistoryEndpointForRoute(
+		t, enabled, "workload", "workload",
+		"/api/namespaces/{namespace}/workloads/{workload}/health/history",
+		k8s,
+	)
+}
+
+func setupHealthStatusHistoryEndpointForRoute(
+	t *testing.T,
+	enabled bool,
+	healthType, entityVar, routePath string,
+	k8s kubernetes.UserClientInterface,
+) (*httptest.Server, *prometheustest.PromAPIMock) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KubernetesConfig.ClusterName = "cluster-default"
+	conf.Server.Observability.Metrics.HealthStatus.Enabled = enabled
+	config.Set(conf)
+
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+
+	xapi := new(prometheustest.PromAPIMock)
+	prom, err := prometheus.NewClient(*conf, k8s.GetToken())
+	require.NoError(t, err)
+	prom.Inject(xapi)
+
+	handler := WithFakeAuthInfo(conf, HealthStatusHistory(conf, cache, discovery, cf, prom, healthType, entityVar))
+
+	mr := mux.NewRouter()
+	mr.HandleFunc(routePath, handler)
+
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	return ts, xapi
+}
+
+func TestHealthStatusHistoryDisabled(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, false)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when health status metrics are disabled")
+	})
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns/workloads/reviews-v1/health/history")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	assert.Contains(t, string(actual), "Health status metrics are not enabled")
+}
+
+func TestHealthStatusHistoryDefault(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	query := `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="workload",name="reviews-v1"}[15s]))`
+
+	ts1 := model.TimeFromUnix(1700000000)
+	ts2 := model.TimeFromUnix(1700000015)
+	matrix := model.Matrix{
+		&model.SampleStream{
+			Metric: model.Metric{},
+			Values: []model.SamplePair{
+				{Timestamp: ts1, Value: 1},
+				{Timestamp: ts2, Value: 2},
+			},
+		},
+	}
+
+	now := time.Now()
+	delta := 15 * time.Second
+	var rangeSentinel uint32
+
+	api.On(
+		"QueryRange",
+		mock.Anything,
+		query,
+		mock.AnythingOfType("v1.Range"),
+	).Run(func(args mock.Arguments) {
+		assert.IsType(t, prom_v1.Range{}, args[2])
+		r := args[2].(prom_v1.Range)
+		atomic.AddUint32(&rangeSentinel, 1)
+		assert.Equal(t, 15*time.Second, r.Step)
+		assert.WithinDuration(t, now, r.End, delta)
+		assert.WithinDuration(t, now.Add(-30*time.Minute), r.Start, delta)
+	}).Return(matrix, nil)
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/ns/workloads/reviews-v1/health/history")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.NotZero(t, rangeSentinel)
+
+	var metrics []struct {
+		Name       string             `json:"name"`
+		Datapoints []model.SamplePair `json:"datapoints"`
+	}
+	require.NoError(t, json.Unmarshal(actual, &metrics))
+	require.Len(t, metrics, 1)
+	assert.Equal(t, "kiali_health_status", metrics[0].Name)
+	require.Len(t, metrics[0].Datapoints, 2)
+	assert.Equal(t, ts1, metrics[0].Datapoints[0].Timestamp)
+	assert.Equal(t, model.SampleValue(1), metrics[0].Datapoints[0].Value)
+	assert.Equal(t, ts2, metrics[0].Datapoints[1].Timestamp)
+	assert.Equal(t, model.SampleValue(2), metrics[0].Datapoints[1].Value)
+}
+
+func TestHealthStatusHistoryRoutes(t *testing.T) {
+	cases := []struct {
+		name       string
+		healthType string
+		entityVar  string
+		routePath  string
+		url        string
+		query      string
+	}{
+		{
+			name:       "workload",
+			healthType: "workload",
+			entityVar:  "workload",
+			routePath:  "/api/namespaces/{namespace}/workloads/{workload}/health/history",
+			url:        "/api/namespaces/ns/workloads/reviews-v1/health/history",
+			query:      `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="workload",name="reviews-v1"}[15s]))`,
+		},
+		{
+			name:       "app",
+			healthType: "app",
+			entityVar:  "app",
+			routePath:  "/api/namespaces/{namespace}/apps/{app}/health/history",
+			url:        "/api/namespaces/ns/apps/reviews/health/history",
+			query:      `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="app",name="reviews"}[15s]))`,
+		},
+		{
+			name:       "service",
+			healthType: "service",
+			entityVar:  "service",
+			routePath:  "/api/namespaces/{namespace}/services/{service}/health/history",
+			url:        "/api/namespaces/ns/services/reviews/health/history",
+			query:      `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="service",name="reviews"}[15s]))`,
+		},
+		{
+			name:       "namespace",
+			healthType: "namespace",
+			entityVar:  "",
+			routePath:  "/api/namespaces/{namespace}/health/history",
+			url:        "/api/namespaces/ns/health/history",
+			query:      `max(max_over_time(kiali_health_status{cluster="cluster-default",namespace="ns",health_type="namespace",name="ns"}[15s]))`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"))
+			ts, api := setupHealthStatusHistoryEndpointForRoute(t, true, tc.healthType, tc.entityVar, tc.routePath, k8s)
+
+			var rangeSentinel uint32
+			api.SpyArgumentsAndReturnEmpty(func(args mock.Arguments) {
+				assert.Equal(t, tc.query, args[1].(string))
+				atomic.AddUint32(&rangeSentinel, 1)
+			})
+
+			resp, err := http.Get(ts.URL + tc.url)
+			require.NoError(t, err)
+			t.Cleanup(func() { resp.Body.Close() })
+
+			actual, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+			assert.NotZero(t, rangeSentinel)
+		})
+	}
+}
+
+func TestHealthStatusHistoryInaccessibleNamespace(t *testing.T) {
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("ns"),
+		kubetest.FakeNamespace("my_namespace"),
+	)
+	ts, api := setupHealthStatusHistoryEndpointForRoute(
+		t, true, "workload", "workload",
+		"/api/namespaces/{namespace}/workloads/{workload}/health/history",
+		&nsForbidden{k8s, "my_namespace"},
+	)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call for inaccessible namespace")
+	})
+
+	resp, err := http.Get(ts.URL + "/api/namespaces/my_namespace/workloads/my-workload/health/history")
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+func TestHealthStatusHistoryRejectsIstioParam(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has unsupported Istio params")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("reporter", "source")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "unsupported query parameter 'reporter'")
+}
+
+func TestHealthStatusHistoryRejectsUnknownParam(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has unknown params")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("filters[]", "request_count")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "unsupported query parameter 'filters[]'")
+}
+
+func TestHealthStatusHistoryRejectsZeroStep(t *testing.T) {
+	ts, api := setupHealthStatusHistoryEndpoint(t, true)
+
+	api.On("QueryRange", mock.Anything, mock.Anything, mock.Anything).Maybe().Run(func(args mock.Arguments) {
+		t.Error("unexpected Prometheus call when request has step=0")
+	})
+
+	req, err := http.NewRequest("GET", ts.URL+"/api/namespaces/ns/workloads/reviews-v1/health/history", nil)
+	require.NoError(t, err)
+	q := req.URL.Query()
+	q.Add("step", "0")
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	actual, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Contains(t, string(actual), "query parameter 'step' must be positive")
 }

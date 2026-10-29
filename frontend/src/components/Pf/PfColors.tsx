@@ -39,10 +39,9 @@ export enum PFColors {
   Orange50 = 'var(--pf-t--color--orange--10)',
   Orange300 = 'var(--pf-t--color--orange--30)',
   Orange400 = 'var(--pf-t--color--orange--40)',
-  Purple100 = 'var(--pf-t--color--purple--10)',
-  Purple200 = 'var(--pf-t--color--purple--20)',
-  Purple300 = 'var(--pf-t--color--purple--30)',
-  Purple500 = 'var(--pf-t--color--purple--40)',
+  Purple20 = 'var(--pf-t--color--purple--20)',
+  Purple40 = 'var(--pf-t--color--purple--40)',
+  Purple50 = 'var(--pf-t--color--purple--50)',
   Red50 = 'var(--pf-t--color--red--10)',
   Red100 = 'var(--pf-t--color--red--10)',
   Red200 = 'var(--pf-t--color--red--20)',
@@ -51,11 +50,11 @@ export enum PFColors {
 
   // semantic kiali colors
   Active = 'var(--pf-t--color--blue--50)',
-  Badge = 'var(	pf-t--color--blue--30)',
+  Badge = 'var(--pf-t--color--blue--30)',
   Replay = 'var(--pf-t--global--color--brand--100)',
   Link = 'var(--pf-t--global--text--color--link--default)',
   LinkTooltipDarkTheme = 'var(--pf-t--global--text--color--link--100)',
-  LinkTooltipLightTheme = 'var(--pf-t--color--blue--20)', // code broken, should be --pf-t--global--dark--text--color--link--100
+  LinkTooltipLightTheme = 'var(--pf-t--global--text--color--link--100)',
 
   // status colors https://www.patternfly.org/design-foundations/colors/#status-and-state-colors
   Custom = 'var(--pf-t--global--color--status--custom--default)',
@@ -66,14 +65,17 @@ export enum PFColors {
 
   // chart-specific color values, for rates charts where 4xx is really Danger not Warning
   ChartDanger = 'var(--pf-t--chart--color--red-orange--500)',
-  ChartOther = 'var(--pf-v6-global--palette-black-1000)',
+  ChartOther = 'var(--pf-t--color--gray--95)',
   ChartWarning = 'var(--pf-t--chart--color--red-orange--400)',
 
   // PF background colors (compatible with dark mode)
   BackgroundColor100 = 'var(--pf-t--global--background--color--primary--default)',
   BackgroundColor150 = 'var(--pf-t--global--background--color--tertiary--default)',
   BackgroundColor200 = 'var(--pf-t--global--background--color--secondary--default)',
+  BackgroundColorGlass = 'var(--pf-t--global--background--color--glass--primary--default)',
   BackgroundColorLight300 = 'var(--pf-t--global--background--color--secondary--default)',
+  // Solid fill for non-glass content over glass pages; stays opaque when primary turns translucent.
+  BackgroundColorSticky = 'var(--pf-t--global--background--color--sticky--default)',
 
   // PF standard colors (compatible with dark mode)
   Color100 = 'var(--pf-t--color--black)',

@@ -1,15 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { t } from 'utils/I18nUtils';
-import { Chatbot, ChatbotToggle, Conversation } from '@patternfly/chatbot';
+import type { Conversation } from '@patternfly/chatbot';
+import { Chatbot, ChatbotToggle } from '@patternfly/chatbot';
 import '@patternfly/chatbot/dist/css/main.css';
-import { Theme } from 'types/Common';
-import { useKialiTheme } from 'utils/ThemeUtils';
+import { ColorScheme } from 'types/Common';
+import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { ChatBotHeader } from './ChatBotHeader';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { ChatBotFooter } from './ChatBotFooter';
 import { ChatBotMock } from './ChatBotMock';
-import { ExtendedMessage } from 'types/Chatbot';
+import type { ExtendedMessage } from 'types/Chatbot';
 import { ChatBotContent } from './ChatBotContent';
 import { CHAT_HISTORY_HEADER } from 'config/Constants';
 import { ReactComponent as KialiIconLight } from '../../assets/img/kiali/icon-lightbkg.svg';
@@ -30,15 +31,16 @@ const resetConversationState = (): void => {
 
 export const ChatBot: React.FC = () => {
   const dispatch = useDispatch();
-  const theme = useKialiTheme();
-  const isDarkTheme = theme === Theme.DARK;
+  const colorScheme = useKialiColorScheme();
+  const isDarkTheme = colorScheme === ColorScheme.DARK;
   const ClosedToggleIcon = isDarkTheme ? KialiIconDark : KialiIconLight;
-  const displayMode = useSelector((state: KialiAppState) => state.aiChat.displayMode);
-  const selectedProvider = useSelector((state: KialiAppState) => state.aiChat.selectedProvider);
-  const selectedModel = useSelector((state: KialiAppState) => state.aiChat.selectedModel);
-  const providers = useSelector((state: KialiAppState) => state.aiChat.providers);
-  const conversationID = useSelector((state: KialiAppState) => state.aiChat.conversationID);
-  const chatHistory = useSelector((state: KialiAppState) => state.aiChat.chatHistory);
+  const allowedToUseChatbot = useSelector((state: KialiAppState) => state.ai.chat.allowed);
+  const displayMode = useSelector((state: KialiAppState) => state.ai.chat.displayMode);
+  const selectedProvider = useSelector((state: KialiAppState) => state.ai.chat.selectedProvider);
+  const selectedModel = useSelector((state: KialiAppState) => state.ai.chat.selectedModel);
+  const providers = useSelector((state: KialiAppState) => state.ai.chat.providers);
+  const conversationID = useSelector((state: KialiAppState) => state.ai.chat.conversationID);
+  const chatHistory = useSelector((state: KialiAppState) => state.ai.chat.chatHistory);
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
@@ -53,6 +55,7 @@ export const ChatBot: React.FC = () => {
     backgroundColor: toggleBg,
     border: `1px solid ${toggleBorder}`
   } as React.CSSProperties;
+
   // Mock API
   const isMockApi = process.env.REACT_APP_MOCK_API === 'true';
   const [selectedMockConversation, setSelectedMockConversation] = useState<string>('Select one Mock Conversation');
@@ -173,9 +176,15 @@ export const ChatBot: React.FC = () => {
       }}
     >
       <ChatbotToggle
-        tooltipLabel={chatbotVisible ? t('Minimize') : t('Chat with AI')}
+        tooltipLabel={
+          allowedToUseChatbot
+            ? chatbotVisible
+              ? t('Minimize')
+              : t('Chat with AI')
+            : t('Chatbot is not allowed for this user')
+        }
         isChatbotVisible={chatbotVisible}
-        onToggleChatbot={() => setChatbotVisible(prev => !prev)}
+        onToggleChatbot={() => allowedToUseChatbot && setChatbotVisible(prev => !prev)}
         isRound={true}
         closedToggleIcon={() => (
           <span data-test={isDarkTheme ? 'ai-chatbot-toggle-icon-dark' : 'ai-chatbot-toggle-icon-light'}>
