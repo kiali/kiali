@@ -736,6 +736,7 @@
   "Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.": "Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.",
   "Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.": "La memoria se marca como alta cuando la memoria asignada supera {{threshold}} (umbral absoluto por defecto para {{proxyType}}; no hay límite de memoria del proxy). Se considera configuración grande cuando los clusters activos superan {{clusters}}.",
   "Memory limit": "Memory limit",
+  "Memory metrics not available": "Memory metrics not available",
   "Memory Status": "Estado de memoria",
   "Memory vs active connections": "Memoria vs conexiones activas",
   "Menu of node options": "Menú de opciones del nodo",

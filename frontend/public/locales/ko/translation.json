@@ -712,6 +712,7 @@
   "Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.": "할당된 메모리가 {{threshold}}를 초과하면 메모리가 높음으로 표시됩니다(container_spec_memory_limit_bytes 또는 sidecar.istio.io/proxyMemoryLimit에 정의된 proxy 메모리 한도 {{limit}}의 {{limitPercent}}%). 활성 cluster가 {{clusters}}를 초과하면 구성이 큰 것으로 간주됩니다.",
   "Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.": "할당된 메모리가 {{threshold}}를 초과하면 메모리가 높음으로 표시됩니다({{proxyType}}의 기본 절대 임계값; proxy 메모리 제한이 설정되지 않음). 활성 cluster가 {{clusters}}를 초과하면 구성이 큰 것으로 간주됩니다.",
   "Memory limit": "메모리 한도",
+  "Memory metrics not available": "Memory metrics not available",
   "Memory Status": "메모리 상태",
   "Memory vs active connections": "메모리 및 활성 연결",
   "Menu of node options": "노드 옵션 메뉴",

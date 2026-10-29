@@ -736,6 +736,7 @@
   "Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.": "当已分配内存超过 {{threshold}}（为 container_spec_memory_limit_bytes 或 sidecar.istio.io/proxyMemoryLimit 所定义的 proxy 内存上限 {{limit}} 的 {{limitPercent}}%）时，内存会被标记为偏高。当活跃 cluster 数超过 {{clusters}} 时，视为配置规模较大。",
   "Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.": "当已分配内存超过 {{threshold}} 时，内存会被标记为偏高（{{proxyType}} 的默认绝对阈值；未设置 proxy 内存上限）。当活跃 cluster 数超过 {{clusters}} 时，视为配置规模较大。",
   "Memory limit": "Memory limit",
+  "Memory metrics not available": "Memory metrics not available",
   "Memory Status": "内存状态",
   "Memory vs active connections": "内存与活跃连接",
   "Menu of node options": "节点选项菜单",
