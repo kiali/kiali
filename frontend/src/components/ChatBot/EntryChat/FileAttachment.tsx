@@ -18,8 +18,6 @@ import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { load } from 'js-yaml';
 import * as API from 'services/Api';
 import axios from 'axios';
-
-const chatbotYamlModalTitleId = 'chatbot-yaml-modal-title';
 import { useDispatch } from 'react-redux';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { uniqueId } from 'lodash-es';
@@ -37,6 +35,7 @@ const toJsonString = (yamlText: string): string => {
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName, onSendMessage }) => {
   const dispatch = useDispatch();
+  const modalTitleId = React.useId();
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
   const colorScheme = useKialiColorScheme();
@@ -188,13 +187,13 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
     <div key={fileName}>
       <FileDetailsLabel fileName={fileName} onClick={toggle} />
       <Modal
-        aria-labelledby={chatbotYamlModalTitleId}
+        aria-labelledby={modalTitleId}
         ouiaId="chatbot-yaml-modal"
         variant={ModalVariant.large}
         isOpen={isModalOpen}
         onClose={toggle}
       >
-        <ModalHeader labelId={chatbotYamlModalTitleId} title={action.title || fileName} />
+        <ModalHeader labelId={modalTitleId} title={action.title || fileName} />
         <ModalBody>
           <Stack hasGutter>
             <StackItem>
