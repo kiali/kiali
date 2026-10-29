@@ -83,22 +83,26 @@ type LogLine struct {
 
 // NamespaceTagKeys is the single list of tag (and OTel resource attribute)
 // keys that carry a Kubernetes namespace in Istio telemetry: the sidecar
-// source namespace, the ambient source/destination namespaces, the OTel
-// resource attributes for the pod's namespace (k8s.namespace.name, set by
-// collectors with k8s enrichment) and for the service's namespace
-// (service.namespace, the OTel semantic convention the OTel SDKs set by
-// default — Kiali's own self-tracing and any conventionally instrumented
-// application carries it). It is shared by the span namespace extraction
-// (business.TraceNamespaces) and the Tempo converter's surfacing of
-// namespace-bearing resource attributes as process tags: the two must
+// source namespace, the ambient source/destination namespaces and the OTel
+// resource attribute for the pod's namespace (k8s.namespace.name, set by
+// collectors with k8s enrichment). It is shared by the span namespace
+// extraction (business.TraceNamespaces) and the Tempo converter's surfacing
+// of namespace-bearing resource attributes as process tags: the two must
 // agree, or Tempo traces lose their namespace information and are then
 // denied by the trace access check (fail closed).
+//
+// Every key must be set by the infrastructure (Istio sidecars, ztunnel, the
+// collector's k8s enrichment), reflecting the span's actual placement.
+// Application-controlled conventions must not be added: service.namespace
+// (the OTel semantic convention for a logical service grouping) is
+// deliberately absent — it is unrelated to Kubernetes placement, so a
+// deployment setting it to something other than the pod's namespace would
+// authorize traces through a label the application chooses.
 var NamespaceTagKeys = []string{
 	"istio.destination_namespace",
 	"istio.namespace",
 	"istio.source_namespace",
 	"k8s.namespace.name",
-	"service.namespace",
 }
 
 // ClusterTagKeys is the single list of tag (and OTel resource attribute)

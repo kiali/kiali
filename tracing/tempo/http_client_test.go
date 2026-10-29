@@ -262,7 +262,7 @@ func TestQuery(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Contains(t, rawQuery, fmt.Sprintf(".service.name = \"%s\"", serviceName))
 	// Verify it contains all the selects
-	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, .istio.destination_workload, .istio.destination_namespace, .istio.destination_instance_name, .istio.destination_canonical_service, .istio.source_workload, .istio.source_namespace, .istio.source_instance_name, .istio.source_canonical_service, resource.hostname, .istio.namespace, .istio.cluster_id, resource.k8s.namespace.name, resource.k8s.cluster.name, resource.service.namespace, name)")
+	assert.Contains(t, rawQuery, "select(status, .service_name, .node_id, .component, .upstream_cluster, .http.method, .response_flags, .istio.destination_workload, .istio.destination_namespace, .istio.destination_instance_name, .istio.destination_canonical_service, .istio.source_workload, .istio.source_namespace, .istio.source_instance_name, .istio.source_canonical_service, resource.hostname, .istio.namespace, .istio.cluster_id, resource.k8s.namespace.name, resource.k8s.cluster.name, name)")
 	// Verify it doesn't contain the cluster tag as a query predicate (the
 	// authorization attribute may still appear among the selects).
 	assert.NotContains(t, rawQuery, models.IstioClusterTag+" =")
@@ -420,12 +420,10 @@ func TestTraceSelectsCoverAuthorizationAttributes(t *testing.T) {
 	assert := assert.New(t)
 
 	// The attributes that live at the resource level in the OTel data model
-	// (the k8s.* enrichment and the service.namespace semantic convention);
-	// every other key is a span attribute.
+	// (the k8s.* enrichment); every other key is a span attribute.
 	resourceAttributes := map[string]bool{
 		"k8s.cluster.name":   true,
 		"k8s.namespace.name": true,
-		"service.namespace":  true,
 	}
 
 	for _, key := range append(slices.Clone(model.NamespaceTagKeys), model.ClusterTagKeys...) {

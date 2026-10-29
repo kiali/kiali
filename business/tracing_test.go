@@ -928,13 +928,13 @@ func TestGetAppTracesKeepsResourceAttributedTempoTraces(t *testing.T) {
 	traceClient.AssertExpectations(t)
 }
 
-// TestTraceAuthorizationServiceNamespace pins that the OTel semantic
-// convention service.namespace authorizes a trace on both paths: Kiali's
-// own self-tracing (and any conventionally instrumented application)
-// carries the namespace only as that resource attribute. On the details
-// path it is surfaced as a process tag; on the Tempo search path it arrives
-// as a span tag selected by the query.
-func TestTraceAuthorizationServiceNamespace(t *testing.T) {
+// TestTraceAuthorizationIgnoresServiceNamespace pins that the OTel semantic
+// convention service.namespace — a logical service grouping, not Kubernetes
+// placement — is not read for authorization: it is application-controlled,
+// so a value that happens to equal an accessible namespace must not
+// authorize a trace placed elsewhere. Kiali's own self-tracing carries the
+// canonical k8s.namespace.name resource attribute and remains authorized.
+func TestTraceAuthorizationIgnoresServiceNamespace(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
@@ -948,25 +948,53 @@ func TestTraceAuthorizationServiceNamespace(t *testing.T) {
 	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
 	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
 
-	// The details-path shape: the OTel resource attributes surfaced as
+	// A trace carrying only service.namespace is not attributable and is
+	// denied (fail closed), even though its value equals the accessible
+	// namespace. Details-path shape: the resource attributes surfaced as
 	// process tags by the Tempo single-trace converter.
-	selfTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+	onlyServiceNamespace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
 		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
 			{Key: "service.name", Value: "kiali.istio-system"},
 			{Key: "service.namespace", Value: "istio-system"},
 			{Key: "k8s.cluster.name", Value: cluster},
 		}},
 	}}}}
+	require.Error(layer.Tracing.CheckTraceAccess(context.TODO(), onlyServiceNamespace))
+
+	// The reviewer's scenario: the canonical attribute places the span in
+	// the denied namespace while the app-controlled one names the accessible
+	// namespace. The canonical attribution must decide — the trace is denied.
+	mislabeled := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "service.name", Value: "kiali.victim-ns"},
+			{Key: "service.namespace", Value: "istio-system"},
+			{Key: "k8s.namespace.name", Value: "victim-ns"},
+			{Key: "k8s.cluster.name", Value: cluster},
+		}},
+	}}}}
+	require.Error(layer.Tracing.CheckTraceAccess(context.TODO(), mislabeled))
+
+	// Kiali's own self-tracing shape: the canonical k8s.namespace.name
+	// resource attribute authorizes it for users who can access the
+	// namespace Kiali runs in.
+	selfTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+		Process: &jaegerModels.Process{Tags: []jaegerModels.KeyValue{
+			{Key: "service.name", Value: "kiali.istio-system"},
+			{Key: "service.namespace", Value: "istio-system"},
+			{Key: "k8s.namespace.name", Value: "istio-system"},
+			{Key: "k8s.cluster.name", Value: cluster},
+		}},
+	}}}}
 	require.NoError(layer.Tracing.CheckTraceAccess(context.TODO(), selfTrace))
 
 	// The list-path shape: the attribute as a span tag, as the Tempo search
-	// conversion delivers it.
+	// conversion delivers it. It does not place the trace in any namespace.
 	listTrace := &jaegerModels.Trace{Spans: []jaegerModels.Span{{
 		Tags: []jaegerModels.KeyValue{
 			{Key: "service.name", Value: "kiali.istio-system"},
 			{Key: "service.namespace", Value: "istio-system"},
 		},
 	}}}
-	require.True(traceInNamespace(listTrace, cluster, "istio-system"))
+	require.False(traceInNamespace(listTrace, cluster, "istio-system"))
 	require.False(traceInNamespace(listTrace, cluster, "victim-ns"))
 }
