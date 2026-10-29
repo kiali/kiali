@@ -5,13 +5,29 @@ import { expectClusterColumnHidden, openDetailsTab } from '../utils/detailsPage'
 import { expectDetailsTrafficTab } from '../utils/detailsTraffic';
 import { expectMiniGraphReady } from '../utils/graphTopology';
 import { restartWorkload } from '../utils/sidecarInjection';
+import { consoleWorkloadDetailPath } from '../utils/ossmc';
 import { waitForLoadingComplete } from '../utils/transition';
 import { isOssmc } from '../utils/kialiConfig';
+import { kialiUrl } from '../utils/kialiUrl';
 
 type SidecarAction = 'disable_auto_injection' | 'enable_auto_injection' | 'remove_auto_injection';
 
 export class WorkloadDetailsPage extends BasePage {
   async open(namespace: string, workload: string, query: Record<string, string> = {}): Promise<void> {
+    if (isOssmc()) {
+      // The console routes workload details by kind (/k8s/ns/<ns>/daemonsets/<name>
+      // vs /deployments/<name>), so resolve the kind from the Kiali API first —
+      // the plain kialiUrl() translation cannot know it.
+      const response = await this.page.request.get(kialiUrl(`/api/namespaces/${namespace}/workloads/${workload}`));
+      if (!response.ok()) {
+        throw new Error(`Failed to resolve workload ${namespace}/${workload}: ${response.status()}`);
+      }
+      const kind = ((await response.json()) as { gvk?: { Kind?: string } }).gvk?.Kind ?? 'Deployment';
+      const params = new URLSearchParams({ refresh: '0', ...query });
+      await this.page.goto(kialiUrl(`${consoleWorkloadDetailPath(namespace, kind, workload)}?${params.toString()}`));
+      await waitForLoadingComplete(this.page);
+      return;
+    }
     await gotoConsolePage(this.page, `namespaces/${namespace}/workloads/${workload}`, query);
   }
 

@@ -525,19 +525,29 @@ test.describe('Istio Config CRD validation', () => {
   test.describe('bookinfo networking', () => {
     test.describe.configure({ mode: 'serial' });
 
+    // The test deletes the demo VirtualService up front. Restore it in afterEach so a failed
+    // assertion cannot leak the deletion: Jenkins runs every suite sequentially against one
+    // cluster, and all later suites would run without bookinfo traffic.
+    test.afterEach(({ page }, testInfo) => {
+      // Playwright requires the first hook argument to be a destructuring pattern.
+      void page;
+      deleteIstioConfig('AuthorizationPolicy', crdResourceName(testInfo, 'foo'), 'bookinfo');
+      restoreBookinfoNetworking();
+    });
+
     test('KIA0104 validation', crdValidationOnly, async ({ istioConfigPage, page }, testInfo) => {
       const name = crdResourceName(testInfo, 'foo');
       ensureDemoApp('bookinfo');
       deleteIstioConfig('VirtualService', 'bookinfo', 'bookinfo');
       applyAuthorizationPolicy(name, 'bookinfo');
-      patchAuthorizationPolicyToOperationHost(name, 'bookinfo', 'missing.hostname');
+      // Single-dot hosts whose suffix is not a known namespace are treated as HTTP Host
+      // header matchers and skipped by the checker; "bookinfo" keeps it registry-validated.
+      patchAuthorizationPolicyToOperationHost(name, 'bookinfo', 'missing.bookinfo');
 
       await istioConfigPage.open();
       await istioConfigPage.refreshList();
       await selectNamespace(page, 'bookinfo');
       await istioConfigPage.expectValidationStatus('bookinfo', 'AuthorizationPolicy', name, 'warning');
-      deleteIstioConfig('AuthorizationPolicy', name, 'bookinfo');
-      restoreBookinfoNetworking();
     });
   });
 });

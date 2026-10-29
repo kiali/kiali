@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../../fixtures/kialiFixtures';
 import { prepareBookinfoWaypoint } from '../../utils/waypointHelpers';
+import { workloadDetailUrlPattern } from '../../utils/ossmc';
 import { waypointOnly } from '../../utils/suite-tags';
 
 test.describe('Waypoint demo-namespace details', () => {
@@ -27,7 +28,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-forservice', 'curl-client');
     await workloadDetailsPage.expectL7WaypointLink('waypoint');
     await workloadDetailsPage.clickL7WaypointLink('waypoint');
-    await expect(page).toHaveURL(/\/workloads\/waypoint/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('waypoint'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectEnrolledWaypointTable({
@@ -45,7 +46,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-differentns', 'curl-client');
     await workloadDetailsPage.expectL7WaypointLink('egress-gateway');
     await workloadDetailsPage.clickL7WaypointLink('egress-gateway');
-    await expect(page).toHaveURL(/\/workloads\/egress-gateway/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('egress-gateway'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectEnrolledWaypointTable({
@@ -63,7 +64,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-forall', 'curl-client');
     await workloadDetailsPage.expectL7WaypointLink('cgw');
     await workloadDetailsPage.clickL7WaypointLink('cgw');
-    await expect(page).toHaveURL(/\/workloads\/cgw/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('cgw'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectEnrolledWaypointTable({
@@ -89,7 +90,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-forworkload', 'echo-server');
     await workloadDetailsPage.expectL7WaypointLink('bwaypoint');
     await workloadDetailsPage.clickL7WaypointLink('bwaypoint');
-    await expect(page).toHaveURL(/\/workloads\/bwaypoint/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('bwaypoint'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Workloads');
     await workloadDetailsPage.expectEnrolledWaypointTable({
@@ -107,7 +108,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-override', 'curl-client');
     await workloadDetailsPage.expectL7WaypointLink('waypoint');
     await workloadDetailsPage.clickL7WaypointLink('waypoint');
-    await expect(page).toHaveURL(/\/workloads\/waypoint/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('waypoint'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectEnrolledWaypointTable({
@@ -123,7 +124,7 @@ test.describe('Waypoint demo-namespace details', () => {
     await workloadDetailsPage.open('waypoint-override', 'echo-server');
     await workloadDetailsPage.expectL7WaypointLink('use-this');
     await workloadDetailsPage.clickL7WaypointLink('use-this');
-    await expect(page).toHaveURL(/\/workloads\/use-this/);
+    await expect(page).toHaveURL(workloadDetailUrlPattern('use-this'));
     await workloadDetailsPage.openWaypointTab();
     await workloadDetailsPage.openWaypointSubtab('Services');
     await workloadDetailsPage.expectEnrolledWaypointTable({
