@@ -2855,3 +2855,95 @@ func TestGetValidationsNoUserClientReturnsEmpty(t *testing.T) {
 	assert.Nil(err)
 	assert.Empty(validations)
 }
+
+// TestValidateIstioObjectFallsBackToCachedValidationOnRemoteFailure pins the
+// robustness contract of the on-demand single-object validation: building the
+// SA-wide validation info reads every SA-visible cluster, so an unrelated
+// remote-cluster failure (here, its namespace LIST erroring) must not fail the
+// details view of an object on a healthy cluster. The shared cache's
+// last-known-good entry is served instead, pruned to the user's accessible
+// namespaces, and the shared cache itself is left untouched.
+func TestValidateIstioObjectFallsBackToCachedValidationOnRemoteFailure(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("victim-ns"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+	}
+
+	// The remote cluster's namespace API fails with a non-Forbidden error, so
+	// the SA set computation — and with it the validation info build — errors.
+	remoteClient := kubetest.NewFakeK8sClient(objects...)
+	if cs, ok := remoteClient.KubeClientset.(*kubefake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.NewInternalError(fmt.Errorf("remote apiserver down"))
+		})
+	}
+
+	// The SA can see both namespaces on the healthy home cluster; the user
+	// can only see bookinfo.
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa, remote: remoteClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "victim-ns"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	// The shared cache holds the background reconciler's last-known-good
+	// entry for the object, with references into both an accessible and a
+	// denied namespace.
+	objectKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs", Cluster: cluster}
+	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
+		objectKey: {
+			Name: "vs", Namespace: "bookinfo", Cluster: cluster,
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     false,
+			Checks:    []*models.IstioCheck{{Code: "KIA0501", Message: "cached check", Severity: models.ErrorSeverity}},
+			References: []models.IstioValidationKey{
+				{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster},
+				{ObjectGVK: kubernetes.VirtualServices, Namespace: "victim-ns", Name: "ref-denied", Cluster: cluster},
+			},
+		},
+	})
+
+	// The remote failure must not fail the home object's validation.
+	validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.VirtualServices, "vs")
+	require.NoError(err, "an unrelated remote-cluster failure must not fail the details view")
+
+	// The cached entry is served, pruned to the user's accessible namespaces.
+	validation, ok := validations[objectKey]
+	require.True(ok, "the cached validation must be served on the remote failure")
+	assert.False(validation.Valid)
+	assert.Len(validation.Checks, 1)
+	refNames := make([]string, 0, len(validation.References))
+	for _, ref := range validation.References {
+		refNames = append(refNames, ref.Namespace)
+	}
+	assert.Contains(refNames, "bookinfo")
+	assert.NotContains(refNames, "victim-ns", "the fallback must prune references into denied namespaces")
+	assert.Empty(references, "object references are not cached and come back empty on the fallback")
+
+	// The shared cache is untouched: still the unpruned entry.
+	cached, ok := kialiCache.Validations().Items()[objectKey]
+	require.True(ok)
+	assert.Len(cached.References, 2, "the fallback must not rewrite the shared cache entry")
+}

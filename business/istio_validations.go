@@ -870,6 +870,22 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	// still narrows the response to what the requesting user can see.
 	vInfo, err := in.newValidationInfoSA(ctx, in.namespace.GetKialiSAClusterList(), nil)
 	if err != nil {
+		// Gathering the SA-wide validation inputs reads every SA-visible
+		// cluster, so one unreachable remote (its namespace cache entry
+		// expired, its API down) fails this call — and with it the details
+		// response for an object on a healthy cluster. Serve the shared
+		// cache's last-known-good entry for the object instead, pruned for
+		// this user like every cache read path. It may be stale (bounded by
+		// the reconcile interval) and its references come back empty (they
+		// are not cached per-object), but nothing is written back, so the
+		// shared cache keeps whatever the background reconciler last
+		// computed. With no cached entry there is nothing better to serve:
+		// surface the original error.
+		log.Warningf("Error gathering validation info for [%s/%s], falling back to its cached validation: %s", namespace, object, err)
+		objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object, Cluster: cluster}
+		if cached, found := in.kialiCache.Validations().Get(objectKey); found {
+			return in.pruneValidationsForUser(ctx, cluster, models.IstioValidations{objectKey: cached}, models.IstioReferencesMap{})
+		}
 		return nil, models.IstioReferencesMap{}, err
 	}
 
@@ -1019,6 +1035,15 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	// cache read paths (GetValidations and friends) apply. The shared cache
 	// above keeps the unpruned entry: pruning is a per-user, read-path
 	// concern. Fail closed when the set cannot be computed.
+	return in.pruneValidationsForUser(ctx, cluster, validations, istioReferences)
+}
+
+// pruneValidationsForUser narrows validations and their references to the
+// requesting user's accessible namespaces for the cluster, the same
+// protection the cache read paths apply. The values may point into the
+// shared SA-populated cache; the prune helpers copy rather than mutate. Fail
+// closed when the accessible set cannot be computed.
+func (in *IstioValidationsService) pruneValidationsForUser(ctx context.Context, cluster string, validations models.IstioValidations, istioReferences models.IstioReferencesMap) (models.IstioValidations, models.IstioReferencesMap, error) {
 	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
 	if err != nil {
 		return nil, nil, err
@@ -1029,7 +1054,6 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	for key, references := range istioReferences {
 		istioReferences[key] = pruneInaccessibleObjectReferences(references, accessible)
 	}
-
 	return validations, istioReferences, nil
 }
 
