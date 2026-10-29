@@ -2,7 +2,6 @@
 
 exports[`#LoginPage render correctly > should render LoginPage 1`] = `
 <div>
-  
   <div
     class="pf-v6-c-login kiali_f1atptrz"
   >
@@ -26,20 +25,19 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
         >
           <h2
             class="pf-v6-c-title pf-m-3xl"
-            data-ouia-component-id="OUIA-Generated-Title-1"
+            data-ouia-component-id="OUIA-Generated-Title-:r0:"
             data-ouia-component-type="PF6/Title"
             data-ouia-safe="true"
           >
             Log in Kiali
           </h2>
-          
         </div>
         <div
           class="pf-v6-c-login__main-body"
         >
           <form
             class="pf-v6-c-form"
-            data-ouia-component-id="OUIA-Generated-Form-2"
+            data-ouia-component-id="OUIA-Generated-Form-:r1:"
             data-ouia-component-type="PF6/Form"
             data-ouia-safe="true"
             data-test="login-form"
@@ -50,7 +48,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
             />
             <div
               class="pf-v6-c-form__group"
-              data-ouia-component-id="OUIA-Generated-FormGroup-3"
+              data-ouia-component-id="OUIA-Generated-FormGroup-:r2:"
               data-ouia-component-type="PF6/FormGroup"
               data-ouia-safe="true"
             >
@@ -84,7 +82,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
                 >
                   <input
                     aria-invalid="false"
-                    data-ouia-component-id="OUIA-Generated-TextInputBase-6"
+                    data-ouia-component-id="OUIA-Generated-TextInputBase-:r5:"
                     data-ouia-component-type="PF6/TextInput"
                     data-ouia-safe="true"
                     id="token"
@@ -106,7 +104,7 @@ exports[`#LoginPage render correctly > should render LoginPage 1`] = `
                 >
                   <button
                     class="pf-v6-c-button pf-m-primary"
-                    data-ouia-component-id="OUIA-Generated-Button-primary-7"
+                    data-ouia-component-id="OUIA-Generated-Button-primary-:r6:"
                     data-ouia-component-type="PF6/Button"
                     data-ouia-safe="true"
                     style="width: 100%;"

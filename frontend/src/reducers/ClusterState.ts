@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { ClusterState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { ClusterState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { ClusterActions } from '../actions/ClusterAction';
 import { serverConfig } from '../config';
 
@@ -15,7 +15,7 @@ export const ClusterStateReducer = (
   action: KialiAppAction
 ): ClusterState => {
   switch (action.type) {
-    case getType(ClusterActions.toggleActiveCluster):
+    case getType(ClusterActions.toggleActiveCluster): {
       const clusterIndex = state.activeClusters.findIndex(cluster => cluster.name === action.payload.name);
       if (clusterIndex === -1) {
         return updateState(state, {
@@ -26,6 +26,7 @@ export const ClusterStateReducer = (
         activeClusters.splice(clusterIndex, 1);
         return updateState(state, { activeClusters });
       }
+    }
 
     case getType(ClusterActions.setActiveClusters):
       return updateState(state, { activeClusters: action.payload });

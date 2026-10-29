@@ -15,12 +15,13 @@ import {
   LoginPage as LoginNext,
   TextInput
 } from '@patternfly/react-core';
-import { KialiAppState, LoginSession, LoginStatus } from '../../store/Store';
+import type { KialiAppState, LoginSession } from '../../store/Store';
+import { LoginStatus } from '../../store/Store';
 import { AuthStrategy } from '../../types/Auth';
 import { authenticationConfig, kialiLogoDark } from '../../config';
 import { LoginThunkActions } from '../../actions/LoginThunkActions';
 import { isAuthStrategyOAuth } from '../../config/AuthenticationConfig';
-import { KialiDispatch } from '../../types/Redux';
+import type { KialiDispatch } from '../../types/Redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
 import { webRoot } from 'app/History';
@@ -61,10 +62,6 @@ const loginStyle = kialiStyle({
 });
 
 export class LoginPageComponent extends React.Component<LoginProps, LoginState> {
-  static contextTypes = {
-    store: (): null => null
-  };
-
   constructor(props: LoginProps) {
     super(props);
 
@@ -222,7 +219,7 @@ export class LoginPageComponent extends React.Component<LoginProps, LoginState> 
       </>
     );
 
-    let loginPane: React.ReactFragment;
+    let loginPane: React.ReactNode;
     if (authenticationConfig.strategy === AuthStrategy.token) {
       loginPane = (
         <Form data-test="login-form">

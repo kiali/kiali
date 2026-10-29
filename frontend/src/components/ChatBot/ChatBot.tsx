@@ -61,7 +61,7 @@ export const ChatBot: React.FC = () => {
   const [selectedMockConversation, setSelectedMockConversation] = useState<string>('Select one Mock Conversation');
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState<boolean>(false);
   const chatHistoryEndRef = React.useRef<HTMLDivElement | null>(null);
-  const scrollIntoView = React.useCallback((behavior = 'smooth') => {
+  const scrollIntoView = React.useCallback((behavior: ScrollBehavior = 'smooth') => {
     defer(() => {
       chatHistoryEndRef?.current?.scrollIntoView({ behavior });
     });

@@ -14,7 +14,7 @@ import {
   Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
-import type { TOptions } from 'i18next';
+import type { TFunction } from 'i18next';
 import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { CogIcon, LongArrowAltDownIcon } from '@patternfly/react-icons';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -202,7 +202,7 @@ const formatErrorRate = (rate: number): string => {
   return `${(rate * 100).toFixed(2)}%`;
 };
 
-const formatRequestRate = (t: (key: string, opts?: TOptions) => string, reqPerSec: number): string => {
+const formatRequestRate = (t: TFunction, reqPerSec: number): string => {
   if (reqPerSec >= 1000) {
     return t('{{rate}}k req/s', { rate: (reqPerSec / 1000).toFixed(2) });
   }

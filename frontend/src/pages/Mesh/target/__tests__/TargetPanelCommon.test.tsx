@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { MeshInfraType, MeshNodeType } from 'types/Mesh';
 import { Status } from 'types/IstioStatus';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 import { serverConfig } from 'config';
-import { renderNodeHeader, shouldRefreshData, renderHealthStatus, TargetPanelCommonProps } from '../TargetPanelCommon';
+import type { TargetPanelCommonProps } from '../TargetPanelCommon';
+import { renderNodeHeader, shouldRefreshData, renderHealthStatus } from '../TargetPanelCommon';
 
 rstest.mock('@patternfly/react-topology', () => ({
   Controller: rstest.fn(),
@@ -153,7 +154,7 @@ describe('TargetPanelCommon', () => {
         target: { elem: {} },
         updateTime: 1000,
         ...overrides
-      } as any);
+      }) as any;
 
     it('returns true when updateTime changes', () => {
       const prev = makeProps({ updateTime: 1000 });

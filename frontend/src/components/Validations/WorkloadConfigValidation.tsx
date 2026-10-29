@@ -1,16 +1,17 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
+import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { ExclamationTriangleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 import { isIstioNamespace } from 'config/ServerConfig';
-import { ValidationTypes, ObjectValidation } from 'types/IstioObjects';
+import type { ObjectValidation } from 'types/IstioObjects';
+import { ValidationTypes } from 'types/IstioObjects';
 import { PFColors } from '../Pf/PfColors';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { classes } from 'typestyle';
 import { infoStyle } from '../../styles/IconStyle';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from '../../styles/StyleUtils';
-import { Link } from 'react-router-dom-v5-compat';
+import { Link } from 'react-router';
 
 type WorkloadConfigValidationProps = {
   className?: string;

@@ -1,6 +1,7 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import { ActionType, createAction, createStandardAction } from 'typesafe-actions';
-import { GraphType, EdgeLabelMode, TrafficRate, RankMode } from '../types/Graph';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
+import type { GraphType, EdgeLabelMode, TrafficRate, RankMode } from '../types/Graph';
 import { ActionKeys } from './ActionKeys';
 
 export const GraphToolbarActions = {

@@ -12,38 +12,32 @@ import {
   FormGroup,
   GridItem
 } from '@patternfly/react-core';
-import { Controller, Graph, GraphElement } from '@patternfly/react-topology';
+import type { Controller, Graph, GraphElement } from '@patternfly/react-topology';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { KialiAppState } from '../../../store/Store';
+import type { KialiAppState } from '../../../store/Store';
 import { meshFindValueSelector, meshHideValueSelector } from '../../../store/Selectors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { TourStop } from 'components/Tour/TourStop';
 import { MeshTourStops } from 'pages/Mesh/MeshHelpTour';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiDispatch } from 'types/Redux';
 import { AutoComplete } from 'utils/AutoComplete';
 import { HEALTHY, NA, NOT_READY } from 'types/Health';
 import { location, HistoryManager, URLParam } from '../../../app/History';
 import { isValid } from 'utils/Common';
-import {
-  setObserved,
-  elems,
-  SelectAnd,
-  SelectExp,
-  selectOr,
-  SelectOr,
-  descendents,
-  toSafeFieldName
-} from 'helpers/GraphHelpers';
+import type { SelectAnd, SelectExp, SelectOr } from 'helpers/GraphHelpers';
+import { setObserved, elems, selectOr, descendents, toSafeFieldName } from 'helpers/GraphHelpers';
 import { isArray } from 'lodash-es';
-import { MeshAttr, MeshEdgeData, MeshInfraType, MeshNodeData } from 'types/Mesh';
+import type { MeshEdgeData, MeshNodeData } from 'types/Mesh';
+import { MeshAttr, MeshInfraType } from 'types/Mesh';
 import { MeshToolbarActions } from 'actions/MeshToolbarActions';
 import { MeshFindOptions } from './MeshFindOptions';
 import { MeshHelpFind } from '../MeshHelpFind';
 import { layoutMesh } from '../Mesh';
-import { MeshLayoutType, MeshLayout } from '../layouts/LayoutFactory';
-import { TimeInMilliseconds } from 'types/Common';
+import type { MeshLayout } from '../layouts/LayoutFactory';
+import { MeshLayoutType } from '../layouts/LayoutFactory';
+import type { TimeInMilliseconds } from 'types/Common';
 import { t } from 'utils/I18nUtils';
 
 type ReduxStateProps = {
@@ -110,10 +104,6 @@ const meshHideStyle = kialiStyle({
 const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'namespace', 'infratype'];
 
 export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
-  static contextTypes = {
-    router: (): null => null
-  };
-
   private findAutoComplete: AutoComplete;
   private findInputRef;
   private findElements: GraphElement[] | undefined;
@@ -348,7 +338,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   private checkSpecialKeyFind = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.findAutoComplete.next();
 
@@ -359,6 +350,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         }
 
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitFind();
@@ -410,7 +402,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
   private checkSpecialKeyHide = (event: React.KeyboardEvent): void => {
     const keyCode = event.keyCode ? event.keyCode : event.which;
     switch (keyCode) {
-      case 9: // tab (autocomplete)
+      case 9: {
+        // tab (autocomplete)
         event.preventDefault();
         const next = this.hideAutoComplete.next();
 
@@ -421,6 +414,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
         }
 
         break;
+      }
       case 13: // return (submit)
         event.preventDefault();
         this.submitHide();
@@ -616,7 +610,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     val: string,
     isFind: boolean
   ): { edgeSelector: SelectOr | undefined; nodeSelector: SelectOr | undefined } => {
-    let preparedVal = this.prepareValue(val);
+    const preparedVal = this.prepareValue(val);
     if (!preparedVal) {
       return { nodeSelector: undefined, edgeSelector: undefined };
     }
@@ -624,14 +618,14 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
     // generate separate selectors for each disjunctive clause and then stitch them together. This
     // lets us mix node and edge criteria.
     const orClauses = preparedVal.split(' OR ');
-    let orNodeSelector: SelectOr = [];
-    let orEdgeSelector: SelectOr = [];
+    const orNodeSelector: SelectOr = [];
+    const orEdgeSelector: SelectOr = [];
 
     for (const clause of orClauses) {
       const expressions = clause.split(' AND ');
       const conjunctive = expressions.length > 1;
-      let nodeSelector: SelectAnd = [];
-      let edgeSelector: SelectAnd = [];
+      const nodeSelector: SelectAnd = [];
+      const edgeSelector: SelectAnd = [];
       let target;
 
       for (const expression of expressions) {
@@ -772,8 +766,8 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
       case 'namespace':
         return { target: 'node', selector: { prop: MeshAttr.namespace, op: op, val: val } };
       case 'type':
-      case 'infratype':
-        let infraType = val.toLowerCase();
+      case 'infratype': {
+        const infraType = val.toLowerCase();
         switch (infraType) {
           case MeshInfraType.DATAPLANE:
           case MeshInfraType.GRAFANA:
@@ -797,6 +791,7 @@ export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindSt
             );
         }
         return undefined;
+      }
       //
       // edges..
       // currently N/A
