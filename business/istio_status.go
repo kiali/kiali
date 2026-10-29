@@ -163,10 +163,9 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 	if err != nil {
 		return nil, err
 	}
-	// The NUL separator cannot occur in a namespace name.
 	accessiblePairs := make(map[string]struct{}, len(accessible))
 	for _, ns := range accessible {
-		accessiblePairs[ns.Cluster+"\x00"+ns.Name] = struct{}{}
+		accessiblePairs[models.ClusterNamespaceKey(ns.Cluster, ns.Name)] = struct{}{}
 	}
 
 	mesh, err := iss.discovery.Mesh(ctx)
@@ -179,7 +178,7 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 	controlPlanePairs := make(map[string]struct{})
 	for _, cp := range mesh.ControlPlanes {
 		if cp.Cluster != nil && cp.IstiodNamespace != "" {
-			controlPlanePairs[cp.Cluster.Name+"\x00"+cp.IstiodNamespace] = struct{}{}
+			controlPlanePairs[models.ClusterNamespaceKey(cp.Cluster.Name, cp.IstiodNamespace)] = struct{}{}
 		}
 	}
 	// Configured component namespaces are a deliberate global exemption:
@@ -195,7 +194,7 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 			filtered = append(filtered, component)
 			continue
 		}
-		if _, ok := controlPlanePairs[component.Cluster+"\x00"+component.Namespace]; ok {
+		if _, ok := controlPlanePairs[models.ClusterNamespaceKey(component.Cluster, component.Namespace)]; ok {
 			filtered = append(filtered, component)
 			continue
 		}
@@ -203,7 +202,7 @@ func (iss *IstioStatusService) filterStatusForUser(ctx context.Context, status k
 			filtered = append(filtered, component)
 			continue
 		}
-		if _, ok := accessiblePairs[component.Cluster+"\x00"+component.Namespace]; ok {
+		if _, ok := accessiblePairs[models.ClusterNamespaceKey(component.Cluster, component.Namespace)]; ok {
 			filtered = append(filtered, component)
 		}
 	}

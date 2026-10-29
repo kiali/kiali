@@ -2216,13 +2216,17 @@ func TestGetValidationsFiltersByAccessibleNamespaces(t *testing.T) {
 
 	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
 		allowedKey: {
-			Name: "vs-allowed", Namespace: "bookinfo", Cluster: cluster,
+			Cluster:    cluster,
+			Name:       "vs-allowed",
+			Namespace:  "bookinfo",
 			ObjectGVK:  kubernetes.VirtualServices,
-			Valid:      true,
 			References: []models.IstioValidationKey{allowedRef, victimRef},
+			Valid:      true,
 		},
 		victimKey: {
-			Name: "vs-victim", Namespace: "victim-ns", Cluster: cluster,
+			Cluster:   cluster,
+			Name:      "vs-victim",
+			Namespace: "victim-ns",
 			ObjectGVK: kubernetes.VirtualServices,
 			Valid:     true,
 		},
@@ -2273,7 +2277,7 @@ func TestGetValidationsSetComputationErrorFailsClosed(t *testing.T) {
 	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
 	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
 		{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs", Cluster: cluster}: {
-			Name: "vs", Namespace: "bookinfo", Cluster: cluster, ObjectGVK: kubernetes.VirtualServices, Valid: true,
+			Cluster: cluster, Name: "vs", Namespace: "bookinfo", ObjectGVK: kubernetes.VirtualServices, Valid: true,
 		},
 	})
 
@@ -2332,7 +2336,7 @@ func TestGetValidationsKeepsGatewayMultimatchValidations(t *testing.T) {
 	// map key, which is authoritative.
 	gatewayValidations.MergeValidations(models.IstioValidations{
 		{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "latent-empty-namespace", Cluster: cluster}: {
-			Name: "latent-empty-namespace", Cluster: cluster, ObjectGVK: kubernetes.K8sGateways, Valid: true,
+			Cluster: cluster, Name: "latent-empty-namespace", ObjectGVK: kubernetes.K8sGateways, Valid: true,
 		},
 	})
 	kialiCache.Validations().Replace(gatewayValidations)
@@ -2382,13 +2386,17 @@ func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
 
 	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
 		allowedKey: {
-			Name: "gw-allowed", Namespace: "bookinfo", Cluster: cluster,
+			Cluster:    cluster,
+			Name:       "gw-allowed",
+			Namespace:  "bookinfo",
 			ObjectGVK:  kubernetes.Gateways,
-			Valid:      true,
 			References: []models.IstioValidationKey{allowedRef, victimRef},
+			Valid:      true,
 		},
 		victimKey: {
-			Name: "gw-victim", Namespace: "victim-ns", Cluster: cluster,
+			Cluster:   cluster,
+			Name:      "gw-victim",
+			Namespace: "victim-ns",
 			ObjectGVK: kubernetes.Gateways,
 			Valid:     true,
 		},
@@ -2449,18 +2457,24 @@ func TestGetValidationsForWorkloadPrunesReferences(t *testing.T) {
 
 	cacheContent := map[models.IstioValidationKey]*models.IstioValidation{
 		workloadKey: {
-			Name: "reviews-v1", Namespace: "bookinfo", Cluster: cluster,
+			Cluster:    cluster,
+			Name:       "reviews-v1",
+			Namespace:  "bookinfo",
 			ObjectGVK:  workloadGVK,
-			Valid:      true,
 			References: []models.IstioValidationKey{allowedRef, victimRef},
+			Valid:      true,
 		},
 		victimEntryKey: {
-			Name: "victim-vs", Namespace: "victim-ns", Cluster: cluster,
+			Cluster:   cluster,
+			Name:      "victim-vs",
+			Namespace: "victim-ns",
 			ObjectGVK: virtualServiceGVK,
 			Valid:     true,
 		},
 		allowedEntryKey: {
-			Name: "allowed-vs", Namespace: "bookinfo", Cluster: cluster,
+			Cluster:   cluster,
+			Name:      "allowed-vs",
+			Namespace: "bookinfo",
 			ObjectGVK: virtualServiceGVK,
 			Valid:     true,
 		},
@@ -2914,14 +2928,16 @@ func TestValidateIstioObjectFallsBackToCachedValidationOnRemoteFailure(t *testin
 	objectKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "vs", Cluster: cluster}
 	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
 		objectKey: {
-			Name: "vs", Namespace: "bookinfo", Cluster: cluster,
-			ObjectGVK: kubernetes.VirtualServices,
-			Valid:     false,
 			Checks:    []*models.IstioCheck{{Code: "KIA0501", Message: "cached check", Severity: models.ErrorSeverity}},
+			Cluster:   cluster,
+			Name:      "vs",
+			Namespace: "bookinfo",
+			ObjectGVK: kubernetes.VirtualServices,
 			References: []models.IstioValidationKey{
 				{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "ref-allowed", Cluster: cluster},
 				{ObjectGVK: kubernetes.VirtualServices, Namespace: "victim-ns", Name: "ref-denied", Cluster: cluster},
 			},
+			Valid: false,
 		},
 	})
 

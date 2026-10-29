@@ -22,6 +22,7 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
 )
@@ -188,14 +189,13 @@ func HealthStatusMetricsHandler(conf *config.Config, kialiCache cache.KialiCache
 		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
 		accessible, err := namespaceService.GetNamespaces(r.Context())
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			respondNamespaceAccessError(w, err)
 			return
 		}
-		// The NUL separator cannot occur in a namespace name.
 		accessiblePairs := make(map[string]struct{}, len(accessible))
 		accessibleNames := make(map[string]struct{}, len(accessible))
 		for _, ns := range accessible {
-			accessiblePairs[ns.Cluster+"\x00"+ns.Name] = struct{}{}
+			accessiblePairs[models.ClusterNamespaceKey(ns.Cluster, ns.Name)] = struct{}{}
 			accessibleNames[ns.Name] = struct{}{}
 		}
 
@@ -210,7 +210,7 @@ func HealthStatusMetricsHandler(conf *config.Config, kialiCache cache.KialiCache
 				}
 				continue
 			}
-			if _, ok := accessiblePairs[item.Cluster+"\x00"+item.Namespace]; ok {
+			if _, ok := accessiblePairs[models.ClusterNamespaceKey(item.Cluster, item.Namespace)]; ok {
 				filtered = append(filtered, item)
 			}
 		}

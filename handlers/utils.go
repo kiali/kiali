@@ -102,7 +102,6 @@ func checkNamespaceAccessWithList(
 ) (*models.Namespace, error) {
 	namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
 	if namespaceService == nil {
-		// Response already written.
 		return nil, errors.New("unable to create user clients")
 	}
 	return checkNamespaceAccessOn(w, r, namespaceService, namespace, cluster)
@@ -122,15 +121,14 @@ func checkNamespaceAccessAllSAClusters(
 	w http.ResponseWriter,
 	r *http.Request,
 	conf *config.Config,
-	cache cache.KialiCache,
+	kialiCache cache.KialiCache,
 	discovery istio.MeshDiscovery,
 	clientFactory kubernetes.ClientFactory,
 	namespace string,
 	absentIsNotFound bool,
 ) ([]models.Namespace, error) {
-	namespaceService := namespaceServiceForRequest(w, r, conf, cache, discovery, clientFactory)
+	namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
 	if namespaceService == nil {
-		// Response already written.
 		return nil, errors.New("unable to create user clients")
 	}
 

@@ -410,7 +410,10 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 	// Apply discovery selector filtering
 	namespaces = istio.FilterNamespacesWithDiscoverySelectors(namespaces, istio.GetDiscoverySelectorsForCluster(ctx, in.discovery, cluster, in.conf))
 
-	in.kialiCache.SetNamespaces(saCacheKey, namespaces)
+	// SetClusterNamespaces also caches an empty SA set: the entry's presence
+	// is the "set computed" signal, so a cluster where the SA sees no
+	// namespaces is not recomputed on every call.
+	in.kialiCache.SetClusterNamespaces(saCacheKey, cluster, namespaces)
 
 	return namespaces, nil
 }

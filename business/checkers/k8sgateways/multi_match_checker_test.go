@@ -229,11 +229,12 @@ func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
 		Cluster:     config.DefaultClusterID,
 	}.Check()
 
-	assert.NotEmpty(vals)
+	// Both colliding gateways must be flagged: pin the count so a checker
+	// that silently produces fewer entries fails.
+	assert.Len(vals, 2)
 	for key, validation := range vals {
 		assert.Equal("bookinfo", key.Namespace)
 		assert.Equal(key.Namespace, validation.Namespace,
-			"multimatch validation value for %s must carry its namespace; an empty value namespace "+
-				"makes the accessible-set filter in GetValidations drop the validation", key.Name)
+			"multimatch validation value for %s must carry its namespace, matching its key", key.Name)
 	}
 }

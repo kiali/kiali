@@ -641,7 +641,9 @@ func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
 		Gateways: []*networking_v1.Gateway{demoGateway, wizardGateway},
 	}.Check()
 
-	assert.NotEmpty(vals)
+	// Both colliding gateways must be flagged: pin the count so a checker
+	// that silently produces fewer entries fails.
+	assert.Len(vals, 2)
 	for key, validation := range vals {
 		assert.Equal("bookinfo", key.Namespace)
 		assert.Equal(key.Namespace, validation.Namespace,

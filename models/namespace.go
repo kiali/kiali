@@ -134,6 +134,13 @@ func (nss Namespaces) GetNames() []string {
 	return names
 }
 
+// ClusterNamespaceKey builds a composite map key for a (cluster, namespace)
+// pair. The NUL separator cannot occur in either name, so distinct pairs
+// cannot collide.
+func ClusterNamespaceKey(cluster, namespace string) string {
+	return cluster + "\x00" + namespace
+}
+
 func (nsn NamespaceNames) Includes(namespace string) bool {
 	for _, ns := range nsn {
 		if ns == namespace {

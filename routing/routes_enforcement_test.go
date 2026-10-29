@@ -242,6 +242,15 @@ var sweepExceptions = map[string]string{
 	"IstioConfigDetails":  "the path requires a valid Istio GVK, which the sweep's dummy substitution cannot provide; covered by TestIstioConfigDetailsInaccessibleNamespace (handlers)",
 }
 
+// panicToleratedRoutes are routes whose accessible-namespace positive control
+// panics past the gate in deeper, unmocked code. For these the control only
+// proves "the gate did not deny"; any route NOT listed here must answer
+// without panicking, so a handler that dies before responding cannot pass as
+// a green control unnoticed.
+var panicToleratedRoutes = map[string]string{
+	"PodLogs": "the log streaming forwards to the dummy pod, which does not exist in the sweep's fakes",
+}
+
 // sweepQuery holds the minimal query parameters a gated route needs to reach
 // its gate (unknown parameters are rejected with 400 before it).
 var sweepQuery = map[string]string{
@@ -411,14 +420,20 @@ func TestGatedRouteBehavioralSweep(t *testing.T) {
 				"the 403 must originate from the namespace gate")
 
 			// Positive control: the same request for the accessible
-			// namespace must NOT be a 403. A panic is acceptable here (it
-			// means the request got past the gate into deeper, unmocked
-			// code), but a 403 would mean the gate wrongly denies an
-			// accessible namespace.
+			// namespace must NOT be a 403. A panic is reported: without the
+			// no-panic assertion a handler that dies before answering would
+			// look identical to a pass, and the control would prove only
+			// "the gate didn't deny".
 			accessiblePath := strings.ReplaceAll(route.Pattern, "{namespace}", "bookinfo")
 			accessiblePath = paramSubstitutionRe.ReplaceAllString(accessiblePath, "dummy")
 			accessibleQuery := strings.ReplaceAll(sweepQuery[name], "victim-ns", "bookinfo")
-			wAccessible := requestRouteWithRecover(t, conf, route, accessiblePath, accessibleQuery)
+			wAccessible, panicked := requestRouteWithRecover(t, conf, route, accessiblePath, accessibleQuery)
+			if _, tolerated := panicToleratedRoutes[name]; tolerated {
+				assert.True(panicked || wAccessible != nil, "accessible-namespace request for %s neither panicked nor answered", route.Name)
+			} else {
+				assert.False(panicked,
+					"accessible-namespace request for %s panicked past the gate; the positive control only proves the gate did not deny; if the panic is expected in deeper unmocked code, document it in panicToleratedRoutes", route.Name)
+			}
 			if wAccessible != nil {
 				assert.NotEqual(http.StatusForbidden, wAccessible.Code,
 					"gated route %s must not deny the accessible namespace; body: %s",
@@ -451,16 +466,18 @@ func requestRoute(t *testing.T, conf *config.Config, route *Route, path, query s
 }
 
 // requestRouteWithRecover is requestRoute that tolerates a panic in the
-// handler (deeper, unmocked code past the gate) by returning nil: the
-// positive control only cares that the gate itself did not deny.
-func requestRouteWithRecover(t *testing.T, conf *config.Config, route *Route, path, query string) (w *httptest.ResponseRecorder) {
+// handler (deeper, unmocked code past the gate) by returning a nil recorder
+// and reporting the panic, so the positive control can distinguish "the
+// gate passed" from "the handler died before answering".
+func requestRouteWithRecover(t *testing.T, conf *config.Config, route *Route, path, query string) (w *httptest.ResponseRecorder, panicked bool) {
 	t.Helper()
 	defer func() {
 		if recover() != nil {
 			w = nil
+			panicked = true
 		}
 	}()
-	return requestRoute(t, conf, route, path, query)
+	return requestRoute(t, conf, route, path, query), false
 }
 
 // paramSubstitutionRe matches the remaining mux path parameters after the

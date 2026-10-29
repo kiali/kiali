@@ -914,9 +914,9 @@ func addonAddMockUrls(baseUrl string, conf *config.Config, overrideUrl bool) *co
 func gatewayDeployment(namespace, name string) *apps_v1.Deployment {
 	return &apps_v1.Deployment{
 		ObjectMeta: meta_v1.ObjectMeta{
+			Labels:    map[string]string{"app": name},
 			Name:      name,
 			Namespace: namespace,
-			Labels:    map[string]string{"app": name},
 		},
 		Spec: apps_v1.DeploymentSpec{
 			Selector: &meta_v1.LabelSelector{

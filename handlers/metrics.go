@@ -671,7 +671,11 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 			case statsFailureInvalid:
 				RespondWithError(w, http.StatusBadRequest, warns.Error())
 			case statsFailureAccess:
-				RespondWithError(w, http.StatusForbidden, warns.Error())
+				// The kind is only statsFailureAccess when every failure is a
+				// denial, so the aggregate is wholly an access error: route it
+				// through the shared gate mapper so the status and message
+				// prefix cannot diverge from the other namespace gates.
+				respondNamespaceAccessError(w, business.NewAccessibleNamespaceError(warns.Error()))
 			default:
 				RespondWithError(w, http.StatusInternalServerError, warns.Error())
 			}
@@ -712,15 +716,14 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 	sawInvalid, sawAccess, sawOther := false, false, false
 	// A stats request typically batches many queries for the same namespace:
 	// memoize the per-(namespace, cluster) authorization result so the gate
-	// runs once per distinct target. The NUL separator cannot occur in a
-	// namespace name.
+	// runs once per distinct target.
 	type authzResult struct {
 		err  error
 		info *models.Namespace
 	}
 	authzMemo := map[string]authzResult{}
 	authorize := func(q models.MetricsStatsQuery) (*models.Namespace, error) {
-		key := q.Target.Namespace + "\x00" + q.Target.Cluster
+		key := models.ClusterNamespaceKey(q.Target.Cluster, q.Target.Namespace)
 		if memo, ok := authzMemo[key]; ok {
 			return memo.info, memo.err
 		}

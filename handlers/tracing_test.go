@@ -53,6 +53,39 @@ func (f *fakeTraceDetailClient) GetServices(ctx context.Context) ([]string, erro
 	return nil, nil
 }
 
+// denyingTraceClient fails the test on any tracing backend call: the
+// namespace gate must reject the request before the backend is queried
+// (the backend has no RBAC of its own, so an escaped call means
+// unauthorized data was fetched).
+type denyingTraceClient struct {
+	t *testing.T
+}
+
+func (d *denyingTraceClient) GetAppTraces(ctx context.Context, ns, app string, query models.TracingQuery) (*model.TracingResponse, error) {
+	d.t.Errorf("GetAppTraces escaped the namespace gate")
+	return nil, nil
+}
+
+func (d *denyingTraceClient) GetTraceDetail(ctx context.Context, traceID string) (*model.TracingSingleTrace, error) {
+	d.t.Errorf("GetTraceDetail escaped the namespace gate")
+	return nil, nil
+}
+
+func (d *denyingTraceClient) GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (int, error) {
+	d.t.Errorf("GetErrorTraces escaped the namespace gate")
+	return 0, nil
+}
+
+func (d *denyingTraceClient) GetServiceStatus(ctx context.Context) (bool, error) {
+	d.t.Errorf("GetServiceStatus escaped the namespace gate")
+	return true, nil
+}
+
+func (d *denyingTraceClient) GetServices(ctx context.Context) ([]string, error) {
+	d.t.Errorf("GetServices escaped the namespace gate")
+	return nil, nil
+}
+
 func setupTracingEndpoint(t *testing.T, userClient kubernetes.UserClientInterface, traceClient tracing.ClientInterface, pattern string, handlerFactory func(conf *config.Config, kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, prom prometheus.ClientInterface, cpm business.ControlPlaneMonitor, traceClientLoader func() tracing.ClientInterface, grafana *grafana.Service, discovery *istio.Discovery) http.HandlerFunc) *httptest.Server {
 	t.Helper()
 	conf := config.NewConfig()
@@ -146,7 +179,7 @@ func TestTraceDetailsNoNamespaceInfo(t *testing.T) {
 // check at all on this path).
 func TestAppTracesInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
-	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), nil, "/api/namespaces/{namespace}/apps/{app}/traces", AppTraces)
+	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), &denyingTraceClient{t: t}, "/api/namespaces/{namespace}/apps/{app}/traces", AppTraces)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/victim-ns/apps/reviews/traces")
 	require.NoError(t, err)
@@ -160,7 +193,7 @@ func TestAppTracesInaccessibleNamespace(t *testing.T) {
 // handler gate is the only authorization.
 func TestErrorTracesInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
-	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), nil, "/api/namespaces/{namespace}/apps/{app}/errortraces", ErrorTraces)
+	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), &denyingTraceClient{t: t}, "/api/namespaces/{namespace}/apps/{app}/errortraces", ErrorTraces)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/victim-ns/apps/reviews/errortraces?duration=600")
 	require.NoError(t, err)
@@ -173,7 +206,7 @@ func TestErrorTracesInaccessibleNamespace(t *testing.T) {
 // namespace before any tracing backend call.
 func TestAppSpansInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
-	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), nil, "/api/namespaces/{namespace}/apps/{app}/spans", AppSpans)
+	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), &denyingTraceClient{t: t}, "/api/namespaces/{namespace}/apps/{app}/spans", AppSpans)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/victim-ns/apps/reviews/spans")
 	require.NoError(t, err)
@@ -186,7 +219,7 @@ func TestAppSpansInaccessibleNamespace(t *testing.T) {
 // now has an explicit gate on top of the indirect name-resolution gate.
 func TestServiceTracesInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
-	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), nil, "/api/namespaces/{namespace}/services/{service}/traces", ServiceTraces)
+	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), &denyingTraceClient{t: t}, "/api/namespaces/{namespace}/services/{service}/traces", ServiceTraces)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/victim-ns/services/productpage/traces")
 	require.NoError(t, err)
@@ -200,7 +233,7 @@ func TestServiceTracesInaccessibleNamespace(t *testing.T) {
 // gate.
 func TestWorkloadTracesInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
-	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), nil, "/api/namespaces/{namespace}/workloads/{workload}/traces", WorkloadTraces)
+	ts := setupTracingEndpoint(t, newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"}), &denyingTraceClient{t: t}, "/api/namespaces/{namespace}/workloads/{workload}/traces", WorkloadTraces)
 
 	resp, err := http.Get(ts.URL + "/api/namespaces/victim-ns/workloads/reviews-v1/traces")
 	require.NoError(t, err)

@@ -631,7 +631,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	// in it so the list should return empty.
 	k8s.Token = "test"
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
-	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
+	configService.kialiCache.SetClusterNamespaces("test", "Kubernetes", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,

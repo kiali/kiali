@@ -101,7 +101,9 @@ func AppTraces(
 		}
 		tracingName, err := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error resolving tracing name: "+err.Error())
+			// GetAppTracingName propagates access denials (only NotFound keeps
+			// the caller-supplied fallback), so those must map to 403, not 500.
+			handleErrorResponse(w, err, "Error resolving tracing name: "+err.Error())
 			return
 		}
 		traces, err := business.Tracing.GetAppTraces(r.Context(), namespace, tracingName.Lookup, app, q)
