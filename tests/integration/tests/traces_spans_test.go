@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -43,9 +44,12 @@ func TestWrongTracesType(t *testing.T) {
 func TestWrongNamespaceTraces(t *testing.T) {
 	require := require.New(t)
 	name := "details"
-	traces, _, _ := kiali.Traces("apps", name, "wrong")
-	require.Empty(traces.Data)
-	require.Empty(traces.Errors)
+	// "wrong" is not an accessible namespace, so the request is rejected
+	// before the tracing backend is queried.
+	traces, statusCode, err := kiali.Traces("apps", name, "wrong")
+	require.Equal(http.StatusForbidden, statusCode)
+	require.NotNil(err)
+	require.Nil(traces)
 }
 
 func TestServiceSpans(t *testing.T) {
@@ -81,7 +85,11 @@ func TestWrongTypeSpans(t *testing.T) {
 func TestWrongNamespaceSpans(t *testing.T) {
 	require := require.New(t)
 	name := "details-v1"
-	spans, _, _ := kiali.Spans("apps", name, "wrong")
+	// "wrong" is not an accessible namespace, so the request is rejected
+	// before the tracing backend is queried.
+	spans, statusCode, err := kiali.Spans("apps", name, "wrong")
+	require.Equal(http.StatusForbidden, statusCode)
+	require.NotNil(err)
 	require.Empty(spans)
 }
 
