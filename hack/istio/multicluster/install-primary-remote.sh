@@ -102,8 +102,25 @@ ${CLIENT_EXE} --context=${CLUSTER2_CONTEXT} label namespace ${ISTIO_NAMESPACE} t
 
 DISCOVERY_ADDRESS=$(${CLIENT_EXE} --context=${CLUSTER1_CONTEXT} -n ${ISTIO_NAMESPACE} get svc istio-eastwestgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 
-MC_WEST_YAML=$(mktemp)
-cat <<EOF > "$MC_WEST_YAML"
+# For kind we need to use the container IP otherwise the unresolvable localhost will be used.
+SERVER_FLAG=""
+if [ "${MANAGE_KIND}" == "true" ]; then
+    CLUSTER2_CONTAINER_IP=$(${CLIENT_EXE} get nodes "${CLUSTER2_NAME}"-control-plane --context "${CLUSTER2_CONTEXT}" -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}')
+    SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
+fi
+
+if [ "${SAIL}" == "false" ]; then
+  # Classic istioctl primary-remote path (supports Istio RCs that Sail does not publish).
+  ${ISTIOCTL} install -y --force=true --context="${CLUSTER2_CONTEXT}" \
+    --set profile=remote \
+    --set components.base.enabled=true \
+    --set values.istiodRemote.injectionPath=/inject/cluster/${CLUSTER2_NAME}/net/${NETWORK2_ID} \
+    --set values.global.remotePilotAddress=${DISCOVERY_ADDRESS}
+  ${CLIENT_EXE} apply -f ${ISTIO_DIR}/samples/addons/prometheus.yaml -n ${ISTIO_NAMESPACE} --context="${CLUSTER2_CONTEXT}"
+  ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+else
+  MC_WEST_YAML=$(mktemp)
+  cat <<EOF > "$MC_WEST_YAML"
 spec:
   profile: remote
   namespace: ${ISTIO_NAMESPACE}
@@ -113,36 +130,31 @@ spec:
     global:
       remotePilotAddress: ${DISCOVERY_ADDRESS}
 EOF
-# The remote cluster has no local istiod (profile: remote). Install the Istio CR without
-# addons first so that Sail can reconcile and create the remote RBAC before create-remote-secret
-# runs (if istioctl creates the RBAC first, Sail loses ownership of those resources).
-install_istio -a "" --patch-file "${MC_WEST_YAML}" --wait "false"
+  # The remote cluster has no local istiod (profile: remote). Install the Istio CR without
+  # addons first so that Sail can reconcile and create the remote RBAC before create-remote-secret
+  # runs (if istioctl creates the RBAC first, Sail loses ownership of those resources).
+  install_istio -a "" --patch-file "${MC_WEST_YAML}" --wait "false"
 
-# We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
-# If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
-# also creates the RBAC and if that happens Sail can't take ownership of those resources.
-wait_for_remote_istio_pending_secret "${CLUSTER2_CONTEXT}" "default" 60
+  # We need the istio reconcile to get to the point where it has created the remote RBAC but fails on pinging the primary's istiod.
+  # If we don't wait until the RBAC is created by istio, then the Sail reconiliation will fail because istioctl create-remote-secret
+  # also creates the RBAC and if that happens Sail can't take ownership of those resources.
+  wait_for_remote_istio_pending_secret "${CLUSTER2_CONTEXT}" "default" 60
 
-# For kind we need to use the container IP otherwise the unresolvable localhost will be used.
-SERVER_FLAG=""
-if [ "${MANAGE_KIND}" == "true" ]; then
-    CLUSTER2_CONTAINER_IP=$(${CLIENT_EXE} get nodes "${CLUSTER2_NAME}"-control-plane --context "${CLUSTER2_CONTEXT}" -o jsonpath='{.status.addresses[?(@.type == "InternalIP")].address}')
-    SERVER_FLAG="--server=https://${CLUSTER2_CONTAINER_IP}:6443"
+  ${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
+
+  # Once the remote secret is created, the primary's istiod connects to the remote cluster and
+  # the remote Istio CR transitions to Ready. Only then is the Istio validating webhook on the
+  # remote cluster functional. Wait for Ready, then install the prometheus addon directly.
+  # Addons like prometheus may include Istio resources (e.g. PeerAuthentication) that would
+  # fail if applied before the webhook is operational.
+  kubectl --context="${CLUSTER2_CONTEXT}" wait --for=condition=Ready istios/default --timeout=5m
+  istio_version=$(kubectl --context="${CLUSTER2_CONTEXT}" get istios default -o jsonpath='{.spec.version}')
+  addon_version="${istio_version:1:4}"
+  echo "Installing prometheus addon on remote cluster (Istio ${addon_version:-default})"
+  curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${addon_version}/samples/addons/prometheus.yaml" | \
+    yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
+    kubectl apply --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" -f -
 fi
-${ISTIOCTL} create-remote-secret --context=${CLUSTER2_CONTEXT} --name=${CLUSTER2_NAME} ${SERVER_FLAG} | ${CLIENT_EXE} apply -f - --context="${CLUSTER1_CONTEXT}"
-
-# Once the remote secret is created, the primary's istiod connects to the remote cluster and
-# the remote Istio CR transitions to Ready. Only then is the Istio validating webhook on the
-# remote cluster functional. Wait for Ready, then install the prometheus addon directly.
-# Addons like prometheus may include Istio resources (e.g. PeerAuthentication) that would
-# fail if applied before the webhook is operational.
-kubectl --context="${CLUSTER2_CONTEXT}" wait --for=condition=Ready istios/default --timeout=5m
-istio_version=$(kubectl --context="${CLUSTER2_CONTEXT}" get istios default -o jsonpath='{.spec.version}')
-addon_version="${istio_version:1:4}"
-echo "Installing prometheus addon on remote cluster (Istio ${addon_version:-default})"
-curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-${addon_version}/samples/addons/prometheus.yaml" | \
-  yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
-  kubectl apply --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" -f -
 
 helm install istio-eastwestgateway gateway \
   --repo https://blob.istio.io/istio-release/charts \
