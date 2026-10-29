@@ -3066,3 +3066,76 @@ func TestValidateIstioObjectDegradesToNoValidationWhenNothingCached(t *testing.T
 	require.Empty(validations, "with no cached entry the details are served without a validation")
 	require.Empty(references)
 }
+
+// TestValidateIstioObjectSAVisibilityWarmsWaypointCacheSAWide pins the
+// waypoint half of the SA visibility: the SA branch of newValidationInfo
+// must fetch waypoints with the Kiali SA's namespace visibility (mirroring
+// GetGateways), not the requesting user's. The shared waypoint cache and the
+// validations computed from it feed the shared validation cache — a
+// restricted user's on-demand validation must not truncate the waypoint set
+// to their accessible namespaces.
+func TestValidateIstioObjectSAVisibilityWarmsWaypointCacheSAWide(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	// A waypoint workload in the denied namespace: the user cannot see it,
+	// the SA can. The GatewayLabel selector fetches it and the managed
+	// label makes IsWaypointWorkload true; the labels are on the metadata,
+	// the selector and the pod template, matching a real Istio waypoint
+	// deployment.
+	waypointLabels := map[string]string{
+		config.GatewayLabel:  "waypoint",
+		config.WaypointLabel: config.WaypointLabelValue,
+	}
+	waypoint := &apps_v1.Deployment{
+		ObjectMeta: v1.ObjectMeta{Name: "waypoint", Namespace: "victim-ns", Labels: waypointLabels},
+		Spec: apps_v1.DeploymentSpec{
+			Selector: &v1.LabelSelector{MatchLabels: waypointLabels},
+			Template: core_v1.PodTemplateSpec{ObjectMeta: v1.ObjectMeta{Labels: waypointLabels}},
+		},
+	}
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("victim-ns"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+		waypoint,
+	}
+
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "victim-ns"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	// Any supported type triggers the validation-input build; the requested
+	// object itself is irrelevant to the waypoint side effect.
+	_, _, err = svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.VirtualServices, "vs")
+	require.NoError(err)
+
+	waypoints, ok := kialiCache.GetWaypoints()
+	require.True(ok, "the validation-input build must warm the shared waypoint cache")
+	waypointNamespaces := make([]string, 0, len(waypoints))
+	for _, wp := range waypoints {
+		waypointNamespaces = append(waypointNamespaces, wp.Namespace)
+	}
+	assert.Contains(waypointNamespaces, "victim-ns",
+		"the waypoint set must be SA-scoped: the denied namespace's waypoint is included")
+}

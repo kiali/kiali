@@ -2643,6 +2643,43 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	return waypoints
 }
 
+// GetSAWaypoints returns the waypoint workloads of every Kiali-accessible
+// cluster, scoped to the Kiali ServiceAccount's namespace visibility. It
+// backs the SA-visibility validation computations (newValidationInfo's SA
+// branch), whose results are written into the shared validation cache that
+// is otherwise populated by the background reconciler running with SA
+// visibility: a user-scoped waypoint set there would falsify the
+// waypoint-related checks (KIA1313) for every other user, the same
+// shared-cache-depends-on-warming-user class GetGateways guards against.
+// It does not read the shared waypoint cache: that cache is also warmed
+// user-scoped by GetWaypoints' callers, so a warm entry does not guarantee
+// SA scope (and newValidationInfo clears it right before calling this
+// anyway). Do not use this for user-facing decoration — the per-user
+// GetWaypoints applies there.
+func (in *WorkloadService) GetSAWaypoints(ctx context.Context) models.Workloads {
+	waypoints := models.Workloads{}
+	for cluster := range in.kialiSAClients {
+		saNamespaces, err := in.businessLayer.Namespace.GetKialiSAClusterNamespaces(ctx, cluster)
+		if err != nil {
+			log.Debugf("GetSAWaypoints: Error getting SA namespaces for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		namespaces := sliceutil.Map(saNamespaces, func(ns models.Namespace) string {
+			return ns.Name
+		})
+		// We are determining the waypoints, so we just pass an empty list of waypoints
+		workloads, err := in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, config.GatewayLabel, nil)
+		if err != nil {
+			log.Debugf("GetSAWaypoints: Error fetching workloads for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		clusterWaypoints := sliceutil.Filter(workloads, func(w *models.Workload) bool { return w.IsWaypointWorkload() })
+		waypoints = append(waypoints, clusterWaypoints...)
+	}
+	in.cache.SetWaypoints(waypoints)
+	return waypoints
+}
+
 // waypointRefsValidationDigest returns a stable digest of resolved waypoint references for change detection.
 func waypointRefsValidationDigest(refs []models.WorkloadReferenceInfo) string {
 	if len(refs) == 0 {

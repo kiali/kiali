@@ -516,11 +516,14 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 }
 
 // namespaceFromAccessibleSet returns the named namespace from the accessible
-// set, or an AccessibleNamespaceError when it is not part of the set.
+// set, or an AccessibleNamespaceError when it is not part of the set. The
+// input slice aliases the shared cached set ("do not mutate"), so the
+// returned namespace is a copy.
 func namespaceFromAccessibleSet(namespaces []models.Namespace, namespace, cluster string) (*models.Namespace, error) {
 	for i := range namespaces {
 		if namespaces[i].Name == namespace {
-			return &namespaces[i], nil
+			ns := namespaces[i]
+			return &ns, nil
 		}
 	}
 	return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")

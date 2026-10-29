@@ -612,11 +612,14 @@ func TestMatchOnImplicitWildcardMatchingHosts(t *testing.T) {
 
 // TestMultimatchValidationValueCarriesNamespace pins the CI regression from
 // PR #10448: the IstioValidation VALUE must carry its namespace. The
-// cluster-wide GetValidations filter (accessible namespaces) reads the value's
-// Namespace field, and an empty one made every collision-flagged gateway lose
-// its validation on /api/istio/config. The scenario mirrors the Istio 1.31
-// bookinfo sample gateway (port 8080, wildcard host, istio=ingressgateway
-// selector) colliding with a wizard-created gateway.
+// cluster-wide GetValidations filter reads the map KEY's namespace, which is
+// authoritative (TestGetValidationsKeepsGatewayMultimatchValidations keeps an
+// entry whose value lacks it) — but a value without its namespace is
+// malformed, and it was the original cause of the CI drop: the pre-fix
+// filter read the value's Namespace field, so every collision-flagged
+// gateway lost its validation on /api/istio/config. The scenario mirrors the
+// Istio 1.31 bookinfo sample gateway (port 8080, wildcard host,
+// istio=ingressgateway selector) colliding with a wizard-created gateway.
 func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
 	conf := config.NewConfig()
 	config.Set(conf)
@@ -642,7 +645,6 @@ func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
 	for key, validation := range vals {
 		assert.Equal("bookinfo", key.Namespace)
 		assert.Equal(key.Namespace, validation.Namespace,
-			"multimatch validation value for %s must carry its namespace; an empty value namespace "+
-				"makes the accessible-set filter in GetValidations drop the validation", key.Name)
+			"multimatch validation value for %s must carry its namespace, matching its key", key.Name)
 	}
 }

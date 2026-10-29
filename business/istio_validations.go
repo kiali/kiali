@@ -413,8 +413,11 @@ func (in *IstioValidationsService) newValidationInfo(ctx context.Context, cluste
 				return nil, err
 			}
 			// The SA-scoped workload fetch: the same inputs the background
-			// reconciler's SA layer produces through GetAllWorkloads.
-			waypoints := in.workload.GetWaypoints(ctx)
+			// reconciler's SA layer produces through GetAllWorkloads. The
+			// waypoints must be SA-scoped too: a user-scoped set would
+			// falsify the waypoint-related checks in a result that is
+			// written into the shared validation cache.
+			waypoints := in.workload.GetSAWaypoints(ctx)
 			workloads, err = in.workload.fetchWorkloadsInNamespaces(ctx, cluster, getNsNames(namespaces), "", waypoints)
 		} else {
 			namespaces, err = in.namespace.GetClusterNamespaces(ctx, cluster)

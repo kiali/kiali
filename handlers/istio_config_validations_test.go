@@ -69,14 +69,21 @@ func TestIstioConfigListAllValidationsFiltered(t *testing.T) {
 	conf := config.NewConfig()
 	cluster := conf.KubernetesConfig.ClusterName
 
-	k8s := kubetest.NewFakeK8sClient(
+	// Distinct fakes for the SA and the user: the restricted client's LIST
+	// reactor is prepended on its fake's clientset, so sharing one fake
+	// would filter the SA's namespace listing too. The namespaces exist in
+	// both fakes (the SA can see them), but the user's LIST only includes
+	// bookinfo.
+	sa := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("bookinfo"),
 		kubetest.FakeNamespace("victim-ns"),
 	)
-	// The namespaces exist (they are in the fake), but the user's LIST only
-	// includes bookinfo.
-	userClient := newRestrictedNamespaceClient(k8s, "victim-ns", []string{"bookinfo"})
-	ts, kialiCache := setupIstioConfigListAllEndpoint(t, k8s, userClient)
+	userFake := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("victim-ns"),
+	)
+	userClient := newRestrictedNamespaceClient(userFake, "victim-ns", []string{"bookinfo"})
+	ts, kialiCache := setupIstioConfigListAllEndpoint(t, sa, userClient)
 
 	// Seed the SA-populated validations cache with entries in both
 	// namespaces; the bookinfo entry references an object in the victim

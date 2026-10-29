@@ -79,7 +79,10 @@ func IstioConfigList(
 				istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
 			}
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
+				// A denied namespace surfaces as an AccessibleNamespaceError:
+				// 403 like every other namespace-scoped read on this endpoint,
+				// not a 500.
+				handleErrorResponse(w, err)
 				return
 			}
 
