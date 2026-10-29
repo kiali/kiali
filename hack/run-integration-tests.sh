@@ -448,7 +448,7 @@ detectRaceConditions() {
     # Playwright run can rotate right at test end, leaving an empty log. An empty
     # log proves nothing either way, so warn and skip rather than fail.
     echo "WARN: Kiali logs are empty (possibly rotated); skipping data race detection"
-  elif echo "${kiali_logs}" | grep -q "WARNING: DATA RACE"; then
+  elif grep -q "WARNING: DATA RACE" <<< "${kiali_logs}"; then
     echo "ERROR: Data race detected in Kiali logs!"
     echo "Showing a preview of Kiali logs with data race warnings:"
     echo "=========================================="
