@@ -848,6 +848,15 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return nil, istioReferences, err
 	}
 
+	// Types without an object checker or reference checker (see
+	// noValidationGVKs) have nothing to validate and nothing to
+	// reference-compute: skip the SA-wide validation-input preparation
+	// entirely, so an unrelated remote-cluster failure cannot fail their
+	// details view — and the expensive input build is not paid for nothing.
+	if !objectValidationSupported(objectGVK) {
+		return models.IstioValidations{}, istioReferences, nil
+	}
+
 	// time this function execution so we can capture how long it takes to fully validate this istio object
 	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectGVK.String(), object)
 	defer internalmetrics.ObserveDurationAndLogResults(
@@ -879,14 +888,19 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		// the reconcile interval) and its references come back empty (they
 		// are not cached per-object), but nothing is written back, so the
 		// shared cache keeps whatever the background reconciler last
-		// computed. With no cached entry there is nothing better to serve:
-		// surface the original error.
+		// computed. With no cached entry — types without a checker never
+		// write one, and a newly created object may not be cached yet —
+		// serve the details without a validation rather than fail the page:
+		// missing validation means unknown, not valid, and the response has
+		// the same shape these requests return when everything is healthy.
+		// Only this cross-cluster input-gathering failure degrades; the
+		// errors below stay fatal.
 		log.Warningf("Error gathering validation info for [%s/%s], falling back to its cached validation: %s", namespace, object, err)
 		objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object, Cluster: cluster}
 		if cached, found := in.kialiCache.Validations().Get(objectKey); found {
 			return in.pruneValidationsForUser(ctx, cluster, models.IstioValidations{objectKey: cached}, models.IstioReferencesMap{})
 		}
-		return nil, models.IstioReferencesMap{}, err
+		return models.IstioValidations{}, models.IstioReferencesMap{}, nil
 	}
 
 	vInfo.clusterInfo = &validationClusterInfo{
@@ -1062,6 +1076,28 @@ func (in *IstioValidationsService) pruneValidationsForUser(ctx context.Context, 
 // vInfo.nsInfo must be set to that namespace and populated with
 // setNamespaceIstioConfig and setNonLocalMTLSConfig before calling, since the
 // exportTo visibility applied to the config lists depends on it.
+// noValidationGVKs lists the object types that getSingleObjectCheckers has
+// neither an object checker nor a reference checker for. The on-demand
+// single-object validation consults this list (objectValidationSupported)
+// to skip the SA-wide validation-input preparation for them: there is
+// nothing to compute, and the input build reads remote clusters whose
+// unrelated failure must not fail the details view. Keep in sync with the
+// no-checker cases in getSingleObjectCheckers' switch.
+var noValidationGVKs = map[schema.GroupVersionKind]struct{}{
+	kubernetes.EnvoyFilters:      {},
+	kubernetes.TrafficExtensions: {},
+	kubernetes.K8sTCPRoutes:      {},
+	kubernetes.K8sTLSRoutes:      {},
+	kubernetes.K8sUDPRoutes:      {},
+}
+
+// objectValidationSupported reports whether the given object type has an
+// object checker or a reference checker in the single-object validation.
+func objectValidationSupported(objectGVK schema.GroupVersionKind) bool {
+	_, unsupported := noValidationGVKs[objectGVK]
+	return !unsupported
+}
+
 func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo, cluster, namespace string, objectGVK schema.GroupVersionKind) ([]checkers.ObjectChecker, ReferenceChecker, error) {
 	namespaces := vInfo.nsMap[cluster]
 	nsNames := getNsNames(namespaces)
@@ -1150,10 +1186,12 @@ func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo
 	case kubernetes.RequestAuthentications:
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
-	case kubernetes.EnvoyFilters:
-		// Validation on EnvoyFilters are not yet in place
-	case kubernetes.TrafficExtensions:
-		// Validation on TrafficExtensions is not expected
+	case kubernetes.EnvoyFilters, kubernetes.TrafficExtensions, kubernetes.K8sTCPRoutes, kubernetes.K8sTLSRoutes, kubernetes.K8sUDPRoutes:
+		// No object checker and no reference checker for these types (the
+		// EnvoyFilter one is not yet in place; the rest are not expected).
+		// They are listed in noValidationGVKs, which ValidateIstioObject
+		// consults to skip the validation-input preparation entirely — keep
+		// the two in sync.
 	case kubernetes.WasmPlugins:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
@@ -1183,12 +1221,6 @@ func (in *IstioValidationsService) getSingleObjectCheckers(vInfo *validationInfo
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
 		}
-	case kubernetes.K8sTCPRoutes:
-		// Validation on K8sTCPRoutes is not expected
-	case kubernetes.K8sTLSRoutes:
-		// Validation on K8sTLSRoutes is not expected
-	case kubernetes.K8sUDPRoutes:
-		// Validation on K8sUDPRoutes is not expected
 	default:
 		return nil, nil, fmt.Errorf("object type not found: %v", objectGVK.String())
 	}

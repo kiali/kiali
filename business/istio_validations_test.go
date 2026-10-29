@@ -2947,3 +2947,122 @@ func TestValidateIstioObjectFallsBackToCachedValidationOnRemoteFailure(t *testin
 	require.True(ok)
 	assert.Len(cached.References, 2, "the fallback must not rewrite the shared cache entry")
 }
+
+// TestValidateIstioObjectSkipsInputPrepForNoCheckerTypes pins the no-checker
+// skip: types without an object checker or reference checker (EnvoyFilters,
+// TrafficExtensions, the TCP/TLS/UDP route types) must not pay the SA-wide
+// validation-input build at all, so an unrelated remote-cluster failure
+// cannot fail their details view — the remote is never contacted. The
+// reactor counts the remote's namespace lists; the skip keeps the count
+// unchanged.
+func TestValidateIstioObjectSkipsInputPrepForNoCheckerTypes(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+	}
+
+	remoteLists := 0
+	remoteClient := kubetest.NewFakeK8sClient(objects...)
+	if cs, ok := remoteClient.KubeClientset.(*kubefake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			remoteLists++
+			return true, nil, errors.NewInternalError(fmt.Errorf("remote apiserver down"))
+		})
+	}
+
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa, remote: remoteClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	// Snapshot after the cache construction (its informer warmup may list).
+	remoteLists = 0
+	for _, gvk := range []schema.GroupVersionKind{
+		kubernetes.EnvoyFilters,
+		kubernetes.TrafficExtensions,
+		kubernetes.K8sTCPRoutes,
+		kubernetes.K8sTLSRoutes,
+		kubernetes.K8sUDPRoutes,
+	} {
+		validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", gvk, "obj")
+		require.NoError(err, "a no-checker type (%s) must not fail on a remote outage", gvk.String())
+		require.Empty(validations, "a no-checker type (%s) has no validation to return", gvk.String())
+		require.Empty(references, "a no-checker type (%s) has no references to return", gvk.String())
+	}
+	require.Zero(remoteLists, "the SA-wide input build must be skipped for no-checker types: the remote cluster is never contacted")
+}
+
+// TestValidateIstioObjectDegradesToNoValidationWhenNothingCached pins the
+// no-cache branch of the remote-failure fallback: a supported type whose
+// validation entry is not in the shared cache (a newly created object, or
+// anything before the reconciler's first successful cycle) must not fail the
+// details view when an unrelated remote cluster errors — the details are
+// served without a validation. Missing validation means unknown, not valid.
+func TestValidateIstioObjectDegradesToNoValidationWhenNothingCached(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+	cluster := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+
+	objects := []runtime.Object{
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("istio-system"),
+		&core_v1.ConfigMap{ObjectMeta: v1.ObjectMeta{Name: "istio", Namespace: "istio-system"}},
+	}
+
+	remoteClient := kubetest.NewFakeK8sClient(objects...)
+	if cs, ok := remoteClient.KubeClientset.(*kubefake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, nil, errors.NewInternalError(fmt.Errorf("remote apiserver down"))
+		})
+	}
+
+	sa := kubetest.NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	userFake := kubetest.NewFakeK8sClient(objects...)
+	user := kubetest.NewNamespaceRestrictedClient(userFake, "user-token", []string{"bookinfo"})
+
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa, remote: remoteClient}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := &istiotest.FakeDiscovery{MeshReturn: models.Mesh{ControlPlanes: []models.ControlPlane{{
+		Cluster:           &models.KubeCluster{IsKialiHome: true},
+		IstiodNamespace:   "istio-system",
+		ManagedNamespaces: []models.Namespace{{Name: "bookinfo"}, {Name: "istio-system"}},
+		MeshConfig:        models.NewMeshConfig(),
+		RootNamespace:     "istio-system",
+	}}}}
+	grafanaSvc, err := grafana.NewService(conf, userClients[cluster])
+	require.NoError(err)
+	svc := newLayer(userClients, saClients, nil, nil, kialiCache, conf, grafanaSvc, discovery, &FakeControlPlaneMonitor{}).Validations
+
+	// Nothing seeded into the shared cache: a freshly created object.
+	validations, references, err := svc.ValidateIstioObject(context.TODO(), cluster, "bookinfo", kubernetes.VirtualServices, "fresh-vs")
+	require.NoError(err, "an unrelated remote-cluster failure must not fail the details view")
+	require.Empty(validations, "with no cached entry the details are served without a validation")
+	require.Empty(references)
+}
