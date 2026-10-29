@@ -121,14 +121,17 @@ func TestControlPlanes(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
-	clients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient()}
+	clients := map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system")),
+	}
 	cf := kubetest.NewFakeClientFactory(conf, clients)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
 	mesh := models.Mesh{
 		ControlPlanes: []models.ControlPlane{
 			{
-				Cluster:         &models.KubeCluster{Name: "east"},
-				ManagedClusters: []*models.KubeCluster{{Name: "east"}},
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IstiodNamespace: "istio-system",
+				ManagedClusters: []*models.KubeCluster{{Name: conf.KubernetesConfig.ClusterName}},
 			},
 		},
 	}
@@ -158,6 +161,57 @@ func TestControlPlanes(t *testing.T) {
 	require.NoError(json.Unmarshal(body, &controlPlaneResponse))
 
 	require.Len(controlPlaneResponse, 1)
+}
+
+// TestControlPlanesInaccessibleNamespace guards the fail-closed control plane
+// filter: a control plane whose istiod namespace is not in the user's
+// accessible set must not be returned (previously any non-Forbidden error —
+// including an inaccessible namespace — kept the control plane).
+func TestControlPlanesInaccessibleNamespace(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	// The istio-system namespace exists, but the user's LIST excludes it.
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	clients := map[string]kubernetes.UserClientInterface{
+		conf.KubernetesConfig.ClusterName: kubetest.NewNamespaceRestrictedClient(k8s, "restricted-user", []string{"bookinfo"}, "istio-system"),
+	}
+	cf := kubetest.NewFakeClientFactory(conf, clients)
+	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	mesh := models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster:         &models.KubeCluster{Name: conf.KubernetesConfig.ClusterName},
+				IstiodNamespace: "istio-system",
+				ManagedClusters: []*models.KubeCluster{{Name: conf.KubernetesConfig.ClusterName}},
+			},
+		},
+	}
+	discovery := &istiotest.FakeDiscovery{
+		MeshReturn: mesh,
+	}
+	cpm := &business.FakeControlPlaneMonitor{}
+	prom, err := prometheus.NewClient(*conf, clients[conf.KubernetesConfig.ClusterName].GetToken())
+	require.NoError(err)
+	traceLoader := func() tracing.ClientInterface { return nil }
+	grafanaSvc, err := grafana.NewService(conf, clients[conf.KubernetesConfig.ClusterName])
+	require.NoError(err)
+
+	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
+	handler := handlers.WithAuthInfo(authInfo, handlers.ControlPlanes(cache, cf, conf, discovery, cpm, prom, traceLoader, grafanaSvc))
+	r := httptest.NewRequest("GET", "/api/mesh/controlplanes", nil)
+	w := httptest.NewRecorder()
+
+	handler(w, r)
+
+	resp := w.Result()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	require.Equal(200, resp.StatusCode)
+
+	var controlPlaneResponse []models.ControlPlane
+	require.NoError(json.Unmarshal(body, &controlPlaneResponse))
+	require.Empty(controlPlaneResponse)
 }
 
 func TestControlPlanesUnauthorized(t *testing.T) {
