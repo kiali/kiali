@@ -647,7 +647,10 @@ func (iv IstioValidations) SummarizeValidation(ns string, cluster string) *Istio
 		Cluster:   cluster,
 	}
 	for k, v := range iv {
-		if k.Namespace == ns && k.Cluster == cluster && k.ObjectGVK.Kind != "workload" {
+		// Only count Istio / Gateway API config objects. Service, workload, and app
+		// validations use an empty Group and must not inflate the Istio Config summary
+		// shown on Namespace Details (see https://github.com/kiali/kiali/issues/10473).
+		if k.Namespace == ns && k.Cluster == cluster && k.ObjectGVK.Group != "" {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}
