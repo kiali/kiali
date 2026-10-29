@@ -699,10 +699,10 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 type statsFailureKind int
 
 const (
-	statsFailureNone statsFailureKind = iota
+	statsFailureAccess statsFailureKind = iota
 	statsFailureInternal
-	statsFailureAccess
 	statsFailureInvalid
+	statsFailureNone
 )
 
 func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceService, rawQ []models.MetricsStatsQuery) ([]models.MetricsStatsQuery, *util.Errors, statsFailureKind) {
@@ -715,8 +715,8 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 	// runs once per distinct target. The NUL separator cannot occur in a
 	// namespace name.
 	type authzResult struct {
-		info *models.Namespace
 		err  error
+		info *models.Namespace
 	}
 	authzMemo := map[string]authzResult{}
 	authorize := func(q models.MetricsStatsQuery) (*models.Namespace, error) {
