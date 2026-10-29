@@ -30,16 +30,19 @@ test.describe('Mesh page core-caching', () => {
 
   test('Grafana Infra', coreCachingOnly, async ({ meshPage }) => {
     test.skip(!hasGrafanaDeployment(), 'Grafana deployment is not installed in istio-system');
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectMeshNodeByLabel('Grafana');
     await meshPage.expectNodeSidePanel('Grafana');
   });
 
   test('Tracing Infra', coreCachingOnly, async ({ meshPage }) => {
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectTracingNode();
     await meshPage.expectTracingSidePanel();
   });
 
   test('Prometheus Infra', coreCachingOnly, async ({ meshPage }) => {
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectMeshNodeByLabel('Prometheus');
     await meshPage.expectNodeSidePanel('Prometheus');
   });
@@ -86,6 +89,7 @@ test.describe('Mesh page core-caching', () => {
   });
 
   test('User opens and interacts with the Trace Configuration modal', coreCachingOnly, async ({ meshPage }) => {
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectTracingNode();
     await meshPage.openTraceConfigurationModal();
     await meshPage.expectTraceConfigurationModal();

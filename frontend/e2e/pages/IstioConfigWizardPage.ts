@@ -5,7 +5,7 @@ import { waitForLoadingComplete } from '../utils/transition';
 
 export class IstioConfigWizardPage extends BasePage {
   async expectConfigWizard(title: string): Promise<void> {
-    await expect(this.page.locator('h1')).toContainText(title);
+    await expect(this.page.getByRole('heading', { name: title, level: 1 })).toBeVisible();
   }
 
   async addListener(): Promise<void> {

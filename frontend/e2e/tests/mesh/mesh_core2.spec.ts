@@ -24,6 +24,7 @@ test.describe('Mesh page core-2', () => {
     test.skip(!hasGrafanaDeployment(), 'Grafana deployment is not installed in istio-system');
 
     await meshPage.open();
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectMeshNodeByLabel('Grafana');
     await meshPage.expectNodeSidePanel('Grafana');
     test.skip(

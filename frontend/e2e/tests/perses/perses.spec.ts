@@ -16,6 +16,7 @@ test.describe('Perses integration', () => {
 
   test('Perses Infra', persesOnly, async ({ meshPage }) => {
     await meshPage.open();
+    await meshPage.enableKialiInfraDiscovery();
     await meshPage.selectMeshNodeByLabel('Perses');
     await meshPage.expectNodeSidePanel('Perses');
   });

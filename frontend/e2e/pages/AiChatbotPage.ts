@@ -88,19 +88,32 @@ export class AiChatbotPage extends BasePage {
   async ensureLightTheme(): Promise<void> {
     const html = this.page.locator('html');
     if (await html.evaluate(el => el.classList.contains('pf-v6-theme-dark'))) {
-      await this.page.getByRole('button', { name: 'Light theme' }).click();
-      await expect(html).not.toHaveClass(/pf-v6-theme-dark/);
+      await this.setColorSchemeViaPreferences('Light');
     }
-    await this.page.evaluate(() => window.localStorage.removeItem('KIALI_THEME'));
+    await expect(html).not.toHaveClass(/pf-v6-theme-dark/);
+  }
+
+  // The masthead theme toggle buttons were replaced by the Preferences modal
+  // (user dropdown -> Preferences -> Color scheme).
+  private async setColorSchemeViaPreferences(colorScheme: 'Dark' | 'Light'): Promise<void> {
+    await this.page.locator('[data-test="user-dropdown"]').getByRole('button').click();
+    await this.getBySel('preferences').click();
+    const modal = this.getBySel('preferences-modal');
+    await expect(modal).toBeVisible();
+    await modal.locator('[data-test="color-scheme-select"]').click();
+    // Options carry a description, so match on the label fragment rather than the full accessible name.
+    await this.page.getByRole('option', { name: colorScheme }).click();
+    await this.getBySel('preferences-close').click();
+    await expect(modal).toHaveCount(0);
   }
 
   async switchToDarkTheme(): Promise<void> {
-    await this.page.getByRole('button', { name: 'Dark theme' }).click();
+    await this.setColorSchemeViaPreferences('Dark');
     await expect(this.page.locator('html')).toHaveClass(/pf-v6-theme-dark/);
   }
 
   async switchToLightTheme(): Promise<void> {
-    await this.page.getByRole('button', { name: 'Light theme' }).click();
+    await this.setColorSchemeViaPreferences('Light');
     await expect(this.page.locator('html')).not.toHaveClass(/pf-v6-theme-dark/);
   }
 

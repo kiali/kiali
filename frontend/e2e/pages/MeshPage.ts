@@ -567,13 +567,29 @@ export class MeshPage extends BasePage {
 
   async setMeshDisplayOption(option: string, enabled: boolean): Promise<void> {
     const lower = option.toLowerCase();
-    const optionId = lower === 'gateways' ? 'filterGateways' : lower === 'waypoints' ? 'filterWaypoints' : option;
+    const optionId =
+      lower === 'gateways'
+        ? 'filterGateways'
+        : lower === 'waypoints'
+          ? 'filterWaypoints'
+          : lower === 'kiali'
+            ? 'filterKiali'
+            : option;
     const input = this.page.locator(`div#mesh-display-menu input#${optionId}`);
     if (enabled) {
       await input.check();
     } else {
       await input.uncheck();
     }
+  }
+
+  // External observability services (Grafana, Prometheus, tracing, Perses, Kiali) are only
+  // discovered when the "Show Kiali" display option is enabled (off by default).
+  async enableKialiInfraDiscovery(): Promise<void> {
+    await this.toggleMeshDisplayMenu(true);
+    await this.setMeshDisplayOption('kiali', true);
+    await this.toggleMeshDisplayMenu(false);
+    await this.waitForLoad();
   }
 
   async openTraceConfigurationModal(): Promise<void> {
