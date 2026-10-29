@@ -12,7 +12,9 @@ import {
 } from '@patternfly/react-core';
 import { MigrationIcon, LockIcon as PFLockIcon, LockOpenIcon } from '@patternfly/react-icons';
 import { Slider } from './Slider';
+import { PFColors } from 'components/Pf/PfColors';
 import { sliderMirroredStyle } from './SliderStyle';
+import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 
 const noop = Function.prototype;
@@ -49,8 +51,14 @@ const inputStyle = kialiStyle({
 });
 
 const inputGroupStyle = kialiStyle({
+  marginLeft: PFSpacer.sm,
   paddingRight: '4px',
   width: 'fit-content'
+});
+
+const endActionsStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex'
 });
 
 export const RoutingSlider: React.FC<RoutingSliderProps> = ({
@@ -77,11 +85,15 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   const [tooltipValue, setTooltipValue] = React.useState(value);
 
   React.useEffect(() => {
-    setLocalValue(value);
-    setTooltipValue(value);
-  }, [value]);
+    const effectiveMax = Math.min(max, maxLimit);
+    const clamped = Math.max(min, Math.min(effectiveMax, value));
+    setLocalValue(clamped);
+    setTooltipValue(clamped);
+  }, [value, max, maxLimit, min]);
 
-  const clamp = (v: number): number => Math.max(min, Math.min(max, v));
+  const effectiveMax = Math.min(max, maxLimit);
+
+  const clamp = (v: number): number => Math.max(min, Math.min(effectiveMax, v));
 
   const handleChange = (_event: SliderOnChangeEvent, sliderValue: number): void => {
     const newValue = clamp(sliderValue);
@@ -154,8 +166,10 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       min={min}
       max={maxLimit}
       maxRailWidth={maxRailWidth}
+      railTrackFill={mirrored ? PFColors.Purple20 : undefined}
       step={step}
       value={localValue}
+      valueCap={effectiveMax < maxLimit ? effectiveMax : undefined}
       isDisabled={locked}
       showBoundaries={false}
       hasTooltipOverThumb={tooltip}
@@ -163,11 +177,11 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       onChange={handleChange}
       onValueCommit={committed => onSlideStop(committed)}
       endActions={
-        <>
+        <div className={endActionsStyle} onMouseUp={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
           {inputAction}
           {mirrorAction}
           {lockAction}
-        </>
+        </div>
       }
     />
   );

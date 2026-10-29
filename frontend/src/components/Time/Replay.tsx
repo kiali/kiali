@@ -271,6 +271,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
             step={1}
             value={this.state.replayFrame}
             showTicks={this.state.replayFrameCount > 0}
+            showBoundaries={false}
             hasTooltipOverThumb={true}
             tooltipContent={this.formatTooltip(this.state.replayFrame)}
             onChange={(_event, frame) => this.setReplayFrame(frame)}
