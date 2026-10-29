@@ -195,6 +195,15 @@ The critical call is `getLayer(r, ...)` in `handlers/utils.go`. It:
 
 Request bodies are limited to 10 MB via `boundedReadAll` / `http.MaxBytesReader`.
 
+### Namespace access checks in handlers
+
+Every handler that serves mesh data must enforce the user's namespace access, consistently with all other handlers (issue #10443). The two established patterns:
+
+- **Namespace-scoped routes** (`/api/namespaces/{ns}/...`, or a `namespaces` query parameter): resolve the namespace(s) through `layer.Namespace.GetClusterNamespace` or the `accessibleNamespaceNames` helper (`handlers/utils.go`) **before** any fetch. Inaccessible namespaces fail closed with 403 — never serve data, and never return an empty 200 when the accessible set itself could not be computed (that is an error).
+- **Cluster-scoped routes** (`/api/clusters/...`, `clusterName` query parameter): when the user has no client for the named cluster (no session on it, in non-impersonation multicluster mode), return the empty result rather than a 500 — this is what the sibling list endpoints do. Results for session clusters are filtered by the user's accessible namespaces.
+
+The business layer owns the filtering for shared SA-computed data (validations, gateways, health) — handlers should go through it rather than reading `kialiCache` or SA clients directly. The full rule set and its rationale live in the "Namespace Access Control" section of `docs/agents/auth-and-security.md`.
+
 ## API Versioning and Base Path
 
 All API routes are prefixed with `/api`. There is **no versioning path segment** — the API is explicitly documented as internal and subject to change without backward-compatibility guarantees (see `kiali.go` swagger metadata and `kiali_internal_api.md`).
