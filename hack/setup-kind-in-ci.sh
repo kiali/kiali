@@ -268,6 +268,12 @@ fi
 export ISTIO_VERSION
 
 # Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
+# Args for install-istio-via-istioctl.sh when a concrete version was requested (incl. RCs).
+ISTIOCTL_VERSION_ARG=""
+if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]]; then
+  ISTIOCTL_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
+fi
+
 if [ -n "${GITHUB_ENV:-}" ] && [ -n "${ISTIO_VERSION}" ]; then
   echo "ISTIO_VERSION=${ISTIO_VERSION}" >> "${GITHUB_ENV}"
 fi
@@ -478,12 +484,12 @@ setup_kind_singlecluster() {
       else
         # -net is giving issues trying to access the services inside the cluster with HTTP code 56
         # At least with Ambient 1.21
-        "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
+        "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -gae true ${hub_arg:-} -cp ambient
       fi
   elif [ "${SAIL}" == "true" ]; then
     install_istio
   else
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae true ${hub_arg:-}
   fi
 
   local tracing_use_waypoint_name
@@ -653,7 +659,7 @@ setup_kind_tempo() {
       local hub_arg="--image-hub default"
     fi
 
-    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
+    "${SCRIPT_DIR}"/istio/install-istio-via-istioctl.sh --reduce-resources true --client-exe-path "$(which kubectl)" ${ISTIOCTL_VERSION_ARG} -cn "cluster-default" -mid "mesh-default" -net "network-default" -gae "true" ${hub_arg:-} -a "prometheus grafana" -s values.meshConfig.defaultConfig.tracing.zipkin.address="tempo-cr-distributor.tempo:9411"
   fi
 
   local tracing_use_waypoint_name

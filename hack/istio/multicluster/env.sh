@@ -40,24 +40,143 @@ switch_cluster() {
   fi
 }
 
-# Find the hack script to be used to install istio
-ISTIO_INSTALL_SCRIPT="${SCRIPT_DIR}/../install-istio-via-sail.sh"
+# Find the hack script to be used to install istio (Sail by default; istioctl when SAIL=false)
+ISTIO_INSTALL_SCRIPT_SAIL="${SCRIPT_DIR}/../install-istio-via-sail.sh"
+ISTIO_INSTALL_SCRIPT_ISTIOCTL="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 
-if [ -x "${ISTIO_INSTALL_SCRIPT}" ]; then
-  echo "Istio install script: ${ISTIO_INSTALL_SCRIPT}"
+if [ -x "${ISTIO_INSTALL_SCRIPT_SAIL}" ]; then
+  echo "Istio Sail install script: ${ISTIO_INSTALL_SCRIPT_SAIL}"
 else
-  echo "Cannot find the Istio install script at: ${ISTIO_INSTALL_SCRIPT}"
+  echo "Cannot find the Istio Sail install script at: ${ISTIO_INSTALL_SCRIPT_SAIL}"
   exit 1
 fi
 
 install_istio() {
-  local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
-  local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
-  local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
+  if [ "${SAIL}" != "false" ]; then
+    local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
+    local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
+    local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}
 
-  "${ISTIO_INSTALL_SCRIPT}" "$@" ${image_tag_arg} ${image_hub_arg} ${version_arg}
-  if [ "$?" != "0" ]; then
-    echo "Failed to install Istio"
+    "${ISTIO_INSTALL_SCRIPT_SAIL}" "$@" ${image_tag_arg} ${image_hub_arg} ${version_arg}
+    if [ "$?" != "0" ]; then
+      echo "Failed to install Istio"
+      exit 1
+    fi
+    return 0
+  fi
+
+  if [ ! -x "${ISTIO_INSTALL_SCRIPT_ISTIOCTL}" ]; then
+    echo "Cannot find the Istio istioctl install script at: ${ISTIO_INSTALL_SCRIPT_ISTIOCTL}"
+    exit 1
+  fi
+
+  # Translate Sail-oriented args (--patch-file / -a) into istioctl script flags.
+  local addons="prometheus grafana jaeger"
+  local patch_file=""
+  local config_profile=""
+  local extra_sets=()
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -a|--addons)
+        addons="$2"
+        shift; shift
+        ;;
+      -pf|--patch-file)
+        patch_file="$2"
+        shift; shift
+        ;;
+      -w|--wait)
+        # install-istio-via-istioctl.sh has no --wait; accept and ignore for API parity with Sail.
+        shift; shift
+        ;;
+      -cp|--config-profile)
+        config_profile="$2"
+        shift; shift
+        ;;
+      -s|--set)
+        extra_sets+=(--set "$2")
+        shift; shift
+        ;;
+      *)
+        echo "WARNING: Ignoring unsupported install_istio arg for istioctl path: $1"
+        shift
+        ;;
+    esac
+  done
+
+  local cluster_name=""
+  local network=""
+  local mesh_id="${MESH_ID:-}"
+  local remote_pilot=""
+  local injection_path=""
+  if [ -n "${patch_file}" ] && [ -f "${patch_file}" ]; then
+    cluster_name="$(yq -r '.spec.values.global.multiCluster.clusterName // ""' "${patch_file}")"
+    network="$(yq -r '.spec.values.global.network // ""' "${patch_file}")"
+    local patch_mesh_id
+    patch_mesh_id="$(yq -r '.spec.values.global.meshID // ""' "${patch_file}")"
+    if [ -n "${patch_mesh_id}" ]; then
+      mesh_id="${patch_mesh_id}"
+    fi
+    local profile
+    profile="$(yq -r '.spec.profile // ""' "${patch_file}")"
+    if [ -n "${profile}" ]; then
+      config_profile="${profile}"
+    fi
+    remote_pilot="$(yq -r '.spec.values.global.remotePilotAddress // ""' "${patch_file}")"
+    injection_path="$(yq -r '.spec.values.istiodRemote.injectionPath // ""' "${patch_file}")"
+    if [ "$(yq -r '.spec.values.pilot.env.EXTERNAL_ISTIOD // ""' "${patch_file}")" == "true" ]; then
+      extra_sets+=(--set "values.pilot.env.EXTERNAL_ISTIOD=true")
+    fi
+  fi
+
+  # Use distinct names from create_crossnetwork_gateway()'s string vars to avoid SC2178/SC2128.
+  local istioctl_version_args=()
+  if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]]; then
+    istioctl_version_args=(--istio-version "${ISTIO_VERSION}")
+  fi
+  local istioctl_image_tag_args=()
+  local istioctl_image_hub_args=()
+  if [ -n "${ISTIO_TAG}" ]; then
+    istioctl_image_tag_args=(--image-tag "${ISTIO_TAG}")
+  fi
+  if [ -n "${ISTIO_HUB}" ]; then
+    istioctl_image_hub_args=(--image-hub "${ISTIO_HUB}")
+  fi
+
+  local cmd=(
+    "${ISTIO_INSTALL_SCRIPT_ISTIOCTL}"
+    --client-exe-path "${CLIENT_EXE}"
+    --istioctl "${ISTIOCTL}"
+    --istio-dir "${ISTIO_DIR}"
+    --namespace "${ISTIO_NAMESPACE}"
+    --addons "${addons}"
+    "${istioctl_version_args[@]}"
+    "${istioctl_image_tag_args[@]}"
+    "${istioctl_image_hub_args[@]}"
+  )
+  if [ -n "${mesh_id}" ]; then
+    cmd+=(--mesh-id "${mesh_id}")
+  fi
+  if [ -n "${cluster_name}" ]; then
+    cmd+=(--cluster-name "${cluster_name}")
+  fi
+  if [ -n "${network}" ]; then
+    cmd+=(--network "${network}")
+  fi
+  if [ -n "${config_profile}" ]; then
+    cmd+=(--config-profile "${config_profile}")
+  fi
+  if [ -n "${remote_pilot}" ]; then
+    extra_sets+=(--set "values.global.remotePilotAddress=${remote_pilot}")
+  fi
+  if [ -n "${injection_path}" ]; then
+    extra_sets+=(--set "values.istiodRemote.injectionPath=${injection_path}")
+  fi
+  cmd+=("${extra_sets[@]}")
+
+  echo "Installing Istio via istioctl: ${cmd[*]}"
+  if ! "${cmd[@]}"; then
+    echo "Failed to install Istio via istioctl"
     exit 1
   fi
 }

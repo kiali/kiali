@@ -13,7 +13,7 @@ BACKEND_EXTERNAL_CONTROLPLANE="backend-external-controlplane"
 BOOKINFO_ONLY="false"
 CLUSTER_TYPE="kind"
 CLUSTER2_AMBIENT="true"
-SAIL=""
+SAIL="true"
 FRONTEND="frontend"
 FRONTEND_AMBIENT="frontend-ambient"
 FRONTEND_CORE_1="frontend-core-1"
@@ -263,9 +263,9 @@ Valid command line arguments:
     If true, only setup the test environment and exit without running the tests.
     Default: false
   -s|--sail <true|false>
-    If true, install Istio using Sail (default for multicluster scripts).
-    If false, install Istio using istioctl where supported.
-    Default: unset (suite-dependent; for frontend-multi-primary ambient, Sail remains the default unless you pass false)
+    If true, install Istio using the Sail Operator.
+    If false, install Istio using istioctl (needed for Istio RCs not published in Sail).
+    Default: true
   -st|--stern <true|false>
     If true, will setup stern logging binary.
     Default: false
@@ -392,11 +392,7 @@ else
   HELM_CHARTS_DIR_ARG=""
 fi
 
-if [ -n "${SAIL}" ]; then
-  SAIL_ARG="--sail ${SAIL}"
-else
-  SAIL_ARG=""
-fi
+SAIL_ARG="--sail ${SAIL}"
 
 # Install go-junit-report if not already installed
 if ! command -v go-junit-report &> /dev/null; then
@@ -633,7 +629,7 @@ if [ "${TEST_SUITE}" == "${BACKEND}" ]; then
     if [ "${TESTS_ONLY}" == "false" ]; then
       AUTH_PARAM="--auth-strategy anonymous"
     fi
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --sail true ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${KIALI_IMAGE_NAME_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${KIALI_VERSION_ARG} ${KIALI_IMAGE_NAME_ARG} ${HELM_CHARTS_DIR_ARG} ${AUTH_PARAM}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -665,11 +661,11 @@ elif [ "${TEST_SUITE}" == "${BACKEND_EXTERNAL_CONTROLPLANE}" ]; then
     if [ "${CLUSTER_TYPE}" == "kind" ]; then
       export CLUSTER1_CONTEXT=kind-controlplane
       export CLUSTER2_CONTEXT=kind-dataplane
-      "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+      "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG}
     elif [ "${CLUSTER_TYPE}" == "minikube" ]; then
       export CLUSTER1_CONTEXT=controlplane
       export CLUSTER2_CONTEXT=dataplane
-      "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+      "${SCRIPT_DIR}"/setup-minikube-in-ci.sh --multicluster "external-controlplane" ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG}
     fi
 
     # Switch to the dataplane cluster before installing the demo apps because
@@ -697,7 +693,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
@@ -724,7 +720,7 @@ elif [ "${TEST_SUITE}" == "${AI_CHATBOT}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-ai "true"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --enable-ai "true"
 
     # Install demo apps (skip beta namespace -- not needed by chatbot tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
@@ -749,7 +745,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_1}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"
@@ -778,7 +774,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_2}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Install demo apps (skip beta namespace -- not needed by core-2 tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --install-errorrates-beta false
@@ -810,7 +806,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_CACHING}" ]; then
     # Set up the cluster and Istio but skip Kiali deployment so that demo
     # apps are present before Kiali starts.  This lets the health cache
     # pre-compute bookinfo health on its first refresh.
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --deploy-kiali false
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true" --deploy-kiali false
 
     # Install only bookinfo — the only demo app needed by @core-caching scenarios
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only true
@@ -849,7 +845,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_CORE_OPTIONAL}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG} --install-perses "true"
 
     # Install only bookinfo + sleep (crd-validation/perses tests don't need error-rates or loggers).
     # Skipping error-rates (11 pods) and loggers (2 pods) saves ~26 sidecar containers.
@@ -884,7 +880,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_AMBIENT}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true --sail true ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${ISTIO_VERSION_ARG} --ambient true ${SAIL_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --ambient true --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -912,7 +908,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_PRIMARY_REMOTE}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "primary-remote" ${ISTIO_VERSION_ARG} --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG}
   fi
 
   ensureKialiServerReady
@@ -1018,7 +1014,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_EXTERNAL_KIALI}" ]; then
   fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --auth-strategy openid --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --multicluster "external-kiali" ${ISTIO_VERSION_ARG} --auth-strategy openid --tempo ${TEMPO} ${HELM_CHARTS_DIR_ARG} ${SAIL_ARG} $MEMORY_LIMIT_ARG $MEMORY_REQUEST_ARG
   fi
 
   ensureKialiServerReady
@@ -1043,7 +1039,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_TEMPO}" ]; then
   ensureCypressReady
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true --sail true --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --tempo true ${SAIL_ARG} --auth-strategy token ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --bookinfo-only ${BOOKINFO_ONLY}
@@ -1068,7 +1064,7 @@ elif [ "${TEST_SUITE}" == "${FRONTEND_MULTI_MESH}" ]; then
 
   if [ "${TESTS_ONLY}" == "false" ]; then
     # Setup single cluster with multi mesh
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps (skip beta namespace -- not needed by multi-mesh tests)
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --use-gateway-api true --install-errorrates-beta false
@@ -1110,7 +1106,7 @@ elif [ "${TEST_SUITE}" == "${LOCAL}" ]; then
   fi
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} --deploy-kiali false ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl" --bookinfo-only ${BOOKINFO_ONLY}
   fi
@@ -1177,7 +1173,7 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   infomsg "Found kiali binary at ${GOPATH}/bin/kiali"
 
   if [ "${TESTS_ONLY}" == "false" ]; then
-    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token --sail true ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
+    "${SCRIPT_DIR}"/setup-kind-in-ci.sh --auth-strategy token ${SAIL_ARG} ${ISTIO_VERSION_ARG} ${HELM_CHARTS_DIR_ARG}
 
     # Install demo apps
     "${SCRIPT_DIR}"/istio/install-testing-demos.sh -c "kubectl"

@@ -17,6 +17,11 @@ on:
         required: false
         type: boolean
         default: false
+      sail:
+        description: "If true, install Istio with Sail. If false, use istioctl (supports Istio RCs)."
+        required: false
+        type: string
+        default: "true"
 
 env:
   TARGET_BRANCH: ${{ inputs.target_branch }}
@@ -87,7 +92,7 @@ jobs:
         if [ -n "${{ inputs.istio_version }}" ]; then
           ISTIO_VERSION_ARG="--istio-version ${{ inputs.istio_version }}"
         fi
-        timeout 45m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --setup-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG}
+        timeout 45m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --setup-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG} $(if [ -n "${{ inputs.sail }}" ]; then echo "--sail ${{ inputs.sail }}"; fi)
 
     - name: Run Cypress multi-mesh tests
       run: |
@@ -95,7 +100,7 @@ jobs:
         if [ -n "${{ inputs.istio_version }}" ]; then
           ISTIO_VERSION_ARG="--istio-version ${{ inputs.istio_version }}"
         fi
-        timeout 15m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --tests-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG}
+        timeout 15m hack/run-integration-tests.sh --test-suite frontend-multi-mesh --tests-only true --stern ${{ inputs.stern_logs }} ${ISTIO_VERSION_ARG} $(if [ -n "${{ inputs.sail }}" ]; then echo "--sail ${{ inputs.sail }}"; fi)
 
     - name: Stop resource sampler
       if: always()
