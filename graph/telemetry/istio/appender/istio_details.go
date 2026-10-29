@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const IstioAppenderName = "istio"
@@ -47,7 +48,14 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		return
 	}
 
-	gwWorkloads, workloadMap := populateWorkloadMap(ctx, globalInfo.Business, globalInfo.Clusters, trafficMap)
+	// populateWorkloadMap also runs a cluster-wide fetch per cluster: restrict
+	// it to the clusters the user has a client for, like the fetch loops below.
+	// A session-less cluster's fetch resolves no accessible namespaces and
+	// would only run cluster-wide cache lists to filter the results away.
+	fetchClusters := sliceutil.Filter(globalInfo.Clusters, func(c models.KubeCluster) bool {
+		return a.AccessibleNamespaces.HasCluster(c.Name)
+	})
+	gwWorkloads, workloadMap := populateWorkloadMap(ctx, globalInfo.Business, fetchClusters, trafficMap)
 
 	// Fetch cluster-wide service lists once per cluster for use by addLabels.
 	for _, cluster := range globalInfo.Clusters {
