@@ -1013,6 +1013,56 @@ func TestGetClusterNamespaceWarmEntryAuthoritative(t *testing.T) {
 	assert.Equal(t, userGetsBefore, *c.userGets, "user get calls must not increase on warm-entry denials")
 }
 
+// TestGetClusterNamespaceWarmLookupStaysIndexed pins the performance shape of
+// the warm path: resolving a namespace against a warm accessible set must be
+// an indexed O(1) read, not a materialization of the whole set. The check is
+// called repeatedly (per request, per cluster fan-out), so a per-lookup set
+// copy scales garbage production with the set size — at 500 namespaces a
+// materialization is ~52 KiB per lookup. Allocation counts are deterministic,
+// so the size-independence pin is exact up to a small slack; the absolute
+// per-op cost is not asserted because it includes the fixed config.Get copy
+// every span-bearing call pays, which is independent of the set size.
+func TestGetClusterNamespaceWarmLookupStaysIndexed(t *testing.T) {
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// The lookup under test reads the cache, not the cluster, so the warm set
+	// is populated directly at two sizes and the per-op allocation compared.
+	measure := func(setSize int) int64 {
+		warm := make([]models.Namespace, 0, setSize)
+		for i := 0; i < setSize; i++ {
+			warm = append(warm, models.Namespace{Name: fmt.Sprintf("ns-%03d", i), Cluster: cluster})
+		}
+		kialiCache.SetClusterNamespaces(user.GetCacheKey(), cluster, warm)
+
+		ns, err := nsservice.GetClusterNamespace(context.TODO(), "ns-050", cluster)
+		require.NoError(t, err)
+		assert.Equal(t, "ns-050", ns.Name)
+
+		res := testing.Benchmark(func(b *testing.B) {
+			b.ReportAllocs()
+			for i := 0; i < b.N; i++ {
+				_, _ = nsservice.GetClusterNamespace(context.TODO(), "ns-050", cluster)
+			}
+		})
+		return res.AllocedBytesPerOp()
+	}
+
+	small := measure(100)
+	large := measure(500)
+
+	if diff := large - small; diff > 1024 || diff < -1024 {
+		t.Errorf("warm GetClusterNamespace allocation grows with the set size: %d bytes/op at 100 namespaces vs %d at 500; the accessible set is being materialized per lookup", small, large)
+	}
+}
+
 // TestGetClusterNamespaceConcurrentColdCacheCoalesces pins the singleflight
 // behavior: concurrent lookups on a cold cache compute the set once.
 // coldLookupCost measures how many namespace list calls a single cold

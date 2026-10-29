@@ -97,6 +97,16 @@ type KialiCache interface {
 	// GetNamespaces returns all namespaces for the cluster/cacheKey from the in memory cache.
 	GetNamespaces(cluster string, cacheKey string) ([]models.Namespace, bool)
 
+	// ResolveClusterNamespace resolves the namespace against the warm
+	// accessible-set entry for the cluster/cacheKey in a single read: inSet
+	// reports whether the namespace is part of the set, setCached whether a
+	// set entry exists at all (an empty entry counts — its presence is the
+	// authoritative "set computed" signal). The pair distinguishes an
+	// uncached set, which the caller must compute, from a cached set that
+	// does not contain the namespace, which is an access denial — without
+	// materializing the set.
+	ResolveClusterNamespace(cluster string, cacheKey string, namespace string) (ns models.Namespace, inSet bool, setCached bool)
+
 	// ClearWaypoints removes the cached waypoint list so the next GetWaypoints refreshes from the cluster.
 	ClearWaypoints()
 	GetWaypoints() (models.Workloads, bool)
@@ -768,6 +778,20 @@ func (c *kialiCacheImpl) GetNamespaces(cluster string, cacheKey string) ([]model
 	namespaces, found := c.namespaceStore.Get(key)
 
 	return maps.Values(namespaces), found
+}
+
+func (c *kialiCacheImpl) ResolveClusterNamespace(cluster string, cacheKey string, namespace string) (models.Namespace, bool, bool) {
+	c.namespacesLock.RLock()
+	defer c.namespacesLock.RUnlock()
+
+	key := namespacesKey{cacheKey: cacheKey, cluster: cluster}
+	namespaces, setCached := c.namespaceStore.Get(key)
+	if !setCached {
+		return models.Namespace{}, false, false
+	}
+
+	ns, inSet := namespaces[namespace]
+	return ns, inSet, true
 }
 
 func (c *kialiCacheImpl) RefreshTokenNamespaces(cluster string) {

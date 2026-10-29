@@ -263,6 +263,46 @@ func TestGetNamespaces(t *testing.T) {
 	require.False(found)
 }
 
+// TestResolveClusterNamespace pins the three-way distinction the indexed
+// lookup depends on: a namespace in a cached set, a namespace absent from a
+// cached set (an access denial), and no cached set at all (the caller must
+// compute it). An empty cached set is still a cached set.
+func TestResolveClusterNamespace(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east"}})
+
+	ns, inSet, setCached := cache.ResolveClusterNamespace("east", "token", "test")
+	require.True(setCached)
+	require.True(inSet)
+	require.Equal("test", ns.Name)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token", "other")
+	require.True(setCached)
+	require.False(inSet)
+
+	// An empty set is cached: presence of the entry is the "set computed"
+	// signal, so this is a denial, not an uncached set.
+	cache.SetClusterNamespaces("token2", "east", nil)
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token2", "test")
+	require.True(setCached)
+	require.False(inSet)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token3", "test")
+	require.False(setCached)
+	require.False(inSet)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("west", "token", "test")
+	require.False(setCached)
+	require.False(inSet)
+}
+
 func TestRefreshTokenNamespaces(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()

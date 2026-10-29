@@ -503,11 +503,30 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	)
 	defer end()
 
-	// A cluster with no user client surfaces as an AccessibleNamespaceError
-	// from getClusterNamespacesForCluster (403 at the handlers). The warm
-	// cluster entry is authoritative there: a namespace absent from it is
-	// simply not accessible — no recompute — which keeps repeated denials
-	// cheap (one cache lookup) in both modes.
+	// The client is resolved here, rather than left to
+	// getClusterNamespacesForCluster, because the indexed read below needs
+	// the cache key. A cluster with no user client is the same
+	// AccessibleNamespaceError the computation path produces.
+	client, ok := in.userClients[cluster]
+	if !ok {
+		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
+	}
+
+	// Resolve against the per-(token, cluster) accessible-set cache in one
+	// indexed read: a warm set answers authorization outright — hit or
+	// denial — without materializing the set, which list flows check once
+	// per namespace and would otherwise scale with the set size. Only a
+	// token+cluster pair with no warm entry computes the set; that
+	// computation is coalesced by getClusterNamespacesForCluster's
+	// singleflight, and the warm entry stays authoritative: a namespace
+	// absent from it is simply not accessible — no recompute — in both modes.
+	if ns, inSet, setCached := in.kialiCache.ResolveClusterNamespace(cluster, client.GetCacheKey(), namespace); setCached {
+		if inSet {
+			return &ns, nil
+		}
+		return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
+	}
+
 	clusterNamespaces, err := in.getClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil, err
