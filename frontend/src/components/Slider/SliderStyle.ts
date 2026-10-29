@@ -1,11 +1,14 @@
-import type * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
-const railTrackFillVar = (color: string): React.CSSProperties =>
-  ({
-    '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor': color
-  }) as React.CSSProperties;
+export const sliderRailFillCssVar = '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor';
+
+const sliderRailFillVars = (color: string): Record<string, string> => ({
+  [sliderRailFillCssVar]: color
+});
+
+const mirroredThumbRing =
+  '0 0 0 2px var(--pf-t--global--background--color--primary--default), 0 0 0 3px var(--pf-t--color--purple--20)';
 
 export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =>
   kialiStyle({
@@ -18,7 +21,7 @@ export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =
         flex: '1 1 auto',
         minWidth: 0,
         width: '100%',
-        ...(railTrackFill ? railTrackFillVar(railTrackFill) : {})
+        ...(railTrackFill ? sliderRailFillVars(railTrackFill) : {})
       },
 
       // Match legacy bootstrap-slider layout: cap rail width only, not the % input / action buttons.
@@ -26,16 +29,22 @@ export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =
         flex: '1 1 auto',
         maxWidth: maxWidth,
         minWidth: '4rem'
-      }
+      },
+
+      '& .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__main, & .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__rail, & .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__thumb':
+        {
+          cursor: 'pointer'
+        }
     }
   });
 
 export const sliderMirroredStyle = kialiStyle({
   $nest: {
-    '& .pf-v6-c-slider__thumb': {
-      backgroundColor: PFColors.Purple20
-    },
+    '& .pf-v6-c-slider': sliderRailFillVars(PFColors.Purple20),
 
-    '& .pf-v6-c-slider': railTrackFillVar(PFColors.Purple20)
+    '& .pf-v6-c-slider__thumb': {
+      backgroundColor: PFColors.Purple20,
+      boxShadow: mirroredThumbRing
+    }
   }
 });

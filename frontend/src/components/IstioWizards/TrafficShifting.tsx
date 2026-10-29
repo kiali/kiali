@@ -104,46 +104,56 @@ export class TrafficShifting extends React.Component<Props, State> {
   onWeight = (workloadName: string, newWeight: number): void => {
     this.setState(
       prevState => {
+        const workloads = prevState.workloads.map(w => ({ ...w }));
         const nodeId: number[] = [];
         let maxWeight = 100;
 
         // Calculate maxWeight from locked nodes
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          if (prevState.workloads[i].locked) {
-            maxWeight -= prevState.workloads[i].weight;
+        for (let i = 0; i < workloads.length; i++) {
+          if (workloads[i].locked) {
+            maxWeight -= workloads[i].weight;
           }
+        }
+        maxWeight = Math.max(0, maxWeight);
+
+        const changedIndex = workloads.findIndex(w => w.name === workloadName);
+        if (changedIndex >= 0) {
+          const nodeMax = workloads[changedIndex].maxWeight;
+          newWeight = Math.max(0, Math.min(nodeMax, newWeight));
         }
 
         // Set new weight; remember rest of the nodes
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          if (prevState.workloads[i].name === workloadName) {
-            prevState.workloads[i].weight = newWeight;
+        for (let i = 0; i < workloads.length; i++) {
+          if (workloads[i].name === workloadName) {
+            workloads[i].weight = newWeight;
             // Don't update maxWeight if node is mirrored
-            if (!prevState.workloads[i].mirrored) {
+            if (!workloads[i].mirrored) {
               maxWeight -= newWeight;
             }
-          } else if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
+          } else if (!workloads[i].locked && !workloads[i].mirrored) {
             // Only adjust those nodes that are not locked
             nodeId.push(i);
           }
         }
 
+        maxWeight = Math.max(0, maxWeight);
+
         // Distribute pending weights
         let sumWeights = 0;
         for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.workloads[nodeId[j]].weight > maxWeight) {
-            prevState.workloads[nodeId[j]].weight = maxWeight - sumWeights;
+          if (sumWeights + workloads[nodeId[j]].weight > maxWeight) {
+            workloads[nodeId[j]].weight = Math.max(0, maxWeight - sumWeights);
           }
-          sumWeights += prevState.workloads[nodeId[j]].weight;
+          sumWeights += workloads[nodeId[j]].weight;
         }
 
         // Adjust last element
         if (nodeId.length > 0 && sumWeights < maxWeight) {
-          prevState.workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+          workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
         }
 
         return {
-          workloads: prevState.workloads
+          workloads
         };
       },
       () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
@@ -151,47 +161,84 @@ export class TrafficShifting extends React.Component<Props, State> {
   };
 
   onLock = (workloadName: string, locked: boolean): void => {
-    this.setState(prevState => {
-      let maxWeights = 100;
-      for (let i = 0; i < prevState.workloads.length; i++) {
-        if (prevState.workloads[i].name === workloadName) {
-          prevState.workloads[i].locked = locked;
+    this.setState(
+      prevState => {
+        const workloads = prevState.workloads.map(w => ({ ...w }));
+
+        for (let i = 0; i < workloads.length; i++) {
+          if (workloads[i].name === workloadName) {
+            workloads[i].locked = locked;
+          }
         }
 
-        // Calculate maxWeights from locked nodes
-        if (prevState.workloads[i].locked) {
-          maxWeights -= prevState.workloads[i].weight;
+        let maxWeights = 100;
+        for (let i = 0; i < workloads.length; i++) {
+          if (workloads[i].locked) {
+            maxWeights -= workloads[i].weight;
+          }
         }
-      }
+        maxWeights = Math.max(0, maxWeights);
 
-      // Update non locked nodes maxWeight
-      for (let i = 0; i < prevState.workloads.length; i++) {
-        if (!prevState.workloads[i].locked && !prevState.workloads[i].mirrored) {
-          prevState.workloads[i].maxWeight = maxWeights;
+        // Update non locked nodes maxWeight and clamp weights that exceed the new cap
+        for (let i = 0; i < workloads.length; i++) {
+          if (!workloads[i].locked && !workloads[i].mirrored) {
+            workloads[i].maxWeight = maxWeights;
+            if (workloads[i].weight > maxWeights) {
+              workloads[i].weight = maxWeights;
+            }
+          }
         }
-      }
 
-      return {
-        workloads: prevState.workloads
-      };
-    });
+        // When unlocking, assign remaining traffic so non-mirrored weights still sum to 100 %
+        if (!locked) {
+          let lockedSum = 0;
+          let unlockedSum = 0;
+          for (let i = 0; i < workloads.length; i++) {
+            if (workloads[i].mirrored) {
+              continue;
+            }
+            if (workloads[i].locked) {
+              lockedSum += workloads[i].weight;
+            } else {
+              unlockedSum += workloads[i].weight;
+            }
+          }
+          const deficit = 100 - lockedSum - unlockedSum;
+          if (deficit > 0) {
+            const unlockedIndex = workloads.findIndex(w => w.name === workloadName);
+            if (unlockedIndex >= 0 && !workloads[unlockedIndex].mirrored && !workloads[unlockedIndex].locked) {
+              workloads[unlockedIndex].weight = Math.min(
+                workloads[unlockedIndex].maxWeight,
+                workloads[unlockedIndex].weight + deficit
+              );
+            }
+          }
+        }
+
+        return {
+          workloads
+        };
+      },
+      () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
+    );
   };
 
   onMirror = (workloadName: string, mirrored: boolean): void => {
     this.setState(
       prevState => {
+        const workloads = prevState.workloads.map(w => ({ ...w }));
         const nodeId: number[] = [];
         const maxWeight = 100;
 
         // Reset all mirrored workload but selected one.
-        for (let i = 0; i < prevState.workloads.length; i++) {
-          prevState.workloads[i].mirrored = false;
-          prevState.workloads[i].locked = false;
-          if (mirrored && prevState.workloads[i].name === workloadName) {
-            prevState.workloads[i].mirrored = mirrored;
-            prevState.workloads[i].locked = false;
+        for (let i = 0; i < workloads.length; i++) {
+          workloads[i].mirrored = false;
+          workloads[i].locked = false;
+          if (mirrored && workloads[i].name === workloadName) {
+            workloads[i].mirrored = mirrored;
+            workloads[i].locked = false;
           }
-          if (!prevState.workloads[i].mirrored) {
+          if (!workloads[i].mirrored) {
             nodeId.push(i);
           }
         }
@@ -199,21 +246,27 @@ export class TrafficShifting extends React.Component<Props, State> {
         // Distribute pending weights
         let sumWeights = 0;
         for (let j = 0; j < nodeId.length; j++) {
-          if (sumWeights + prevState.workloads[nodeId[j]].weight > maxWeight) {
-            prevState.workloads[nodeId[j]].weight = maxWeight - sumWeights;
+          if (sumWeights + workloads[nodeId[j]].weight > maxWeight) {
+            workloads[nodeId[j]].weight = Math.max(0, maxWeight - sumWeights);
           }
-          sumWeights += prevState.workloads[nodeId[j]].weight;
+          sumWeights += workloads[nodeId[j]].weight;
         }
 
         // Adjust last element
         if (nodeId.length > 0 && sumWeights < maxWeight) {
-          prevState.workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+          workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+        }
+
+        for (let i = 0; i < workloads.length; i++) {
+          if (!workloads[i].locked && !workloads[i].mirrored) {
+            workloads[i].maxWeight = 100;
+          }
         }
 
         return {
           // Auto-expand section when mirroring is enabled
           mirroringSectionExpanded: mirrored ? true : prevState.mirroringSectionExpanded,
-          workloads: prevState.workloads
+          workloads
         };
       },
       () => this.props.onChange(this.checkTotalWeight(), this.state.workloads, false)
@@ -352,7 +405,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               <RoutingSlider
                 id={`slider-mirror-${mirroredWorkload.name}`}
                 key={`slider-mirror-${mirroredWorkload.name}`}
-                tooltip={false}
+                tooltip={true}
                 input={true}
                 inputFormat="%"
                 value={mirroredWorkload.weight}
