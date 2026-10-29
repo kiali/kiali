@@ -360,7 +360,7 @@ func TestExecute_BackendError_Returns503(t *testing.T) {
 	fake := &fakeTracingClient{detailErr: errors.New("tempo unavailable")}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusServiceUnavailable {
 		t.Errorf("expected 503, got %d: %v", code, res)
@@ -374,7 +374,7 @@ func TestExecute_TraceNotFound_Returns404(t *testing.T) {
 	fake := &fakeTracingClient{traceDetail: nil, detailErr: nil}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusNotFound {
 		t.Errorf("expected 404, got %d: %v", code, res)
@@ -393,7 +393,7 @@ func TestExecute_EmptySpansWithErrors_Returns404(t *testing.T) {
 	}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusNotFound {
 		t.Errorf("expected 404 for empty spans with errors, got %d: %v", code, res)
@@ -431,7 +431,7 @@ func TestExecute_ValidTrace_Returns200WithHierarchy(t *testing.T) {
 	}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %v", code, res)
@@ -479,7 +479,7 @@ func TestExecute_InaccessibleTrace_Returns403(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	ki := &mcputil.KialiInterface{Request: req, BusinessLayer: layer, Conf: conf}
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusForbidden {
 		t.Errorf("expected 403, got %d: %v", code, res)
@@ -506,7 +506,7 @@ func TestExecute_AccessibleTrace_Returns200(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/", nil)
 	ki := &mcputil.KialiInterface{Request: req, BusinessLayer: layer, Conf: conf}
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusOK {
 		t.Errorf("expected 200, got %d: %v", code, res)

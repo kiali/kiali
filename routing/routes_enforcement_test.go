@@ -254,6 +254,15 @@ var sweepQuery = map[string]string{
 // a request for a namespace the user cannot access must be denied (403).
 // The SA clients are deliberately unfiltered so the SA-vs-user distinction
 // is real (the SA sees the namespace, the user does not).
+//
+// Scope: the sweep exercises GET routes only — the gated set is GET-only
+// today, because namespace-scoped non-GET routes are writes, which rely on
+// the cluster's own RBAC rather than Kiali's namespace gate. Its route
+// table comes from NewRoutes, so strategy-conditional routes (the OpenShift
+// auth-redirect and callback routes, registered only under the openshift
+// auth strategy) are not swept; they are authentication routes carrying no
+// namespace data, and TestRouteInventoryComplete still requires them to be
+// classified.
 // sweepSetup builds the route table with a restricted user (victim-ns
 // exists and the SA sees it, but the user's LIST excludes it and their
 // per-namespace GET is denied) and unfiltered SA clients, so the SA-vs-user
