@@ -53,6 +53,10 @@ func (rules ObjectIgnoreValidations) Merge(other ObjectIgnoreValidations) {
 type NamespaceValidations map[string]IstioValidations
 
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
+// Its field order (ObjectGVK, Name, Namespace, Cluster) predates the project's
+// alphabetical struct-field ordering rule and is a deliberate, accepted
+// exception: literals across the checkers follow this order, and reordering
+// the fields would churn every checker for no functional gain.
 type IstioValidationKey struct {
 	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
 	Name      string                  `json:"name"`

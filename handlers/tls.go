@@ -50,7 +50,9 @@ func NamespaceTls(
 		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, queryparams.ClusterName(conf, query))
 		if err != nil {
 			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			// An inaccessible namespace is an authorization failure (403),
+			// not a server error.
+			handleErrorResponse(w, err)
 			return
 		}
 

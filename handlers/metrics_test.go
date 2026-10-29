@@ -303,10 +303,16 @@ func TestAggregateMetricsWithParams(t *testing.T) {
 }
 
 func TestAggregateMetricsInaccessibleNamespace(t *testing.T) {
-	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}},
+	)
 	k.OpenShift = true
 
-	ts, _ := setupAggregateMetricsEndpointWithClient(t, &noPrivClient{k})
+	// The namespace exists (it is in the fake), but the user's LIST excludes
+	// it: a genuinely restricted user. This also guards against the previous
+	// nil-dereference panic when the namespace was not accessible anywhere.
+	ts, _ := setupAggregateMetricsEndpointWithClient(t, newRestrictedNamespaceClient(k, "my_namespace", []string{"ns"}))
 
 	url := ts.URL + "/api/namespaces/my_namespace/aggregates/my_aggregate/my_aggregate_value/metrics"
 	resp, err := http.Get(url)
@@ -431,6 +437,7 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	baseClient := kubetest.NewFakeK8sClient(
 		kubetest.FakeNamespace("ns1"),
 		kubetest.FakeNamespace("ns2"),
+		kubetest.FakeNamespace("nsNil"),
 	)
 	prom, err := prometheus.NewClient(*config.NewConfig(), baseClient.GetToken())
 	if err != nil {
@@ -438,10 +445,21 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	}
 	prom.Inject(xapi)
 
-	k := &nsForbidden{baseClient, "nsNil"}
+	// nsNil exists (it is in the fake), but the user's LIST excludes it: a
+	// genuinely denied namespace, not an absent one. The SA clients are
+	// separate and unfiltered — with the legacy mock (SA = user client) the
+	// restricted reactor would hide nsNil from the SA too, and the query
+	// (which has no Target.Cluster, so it uses CheckNamespaceAccessAllClusters)
+	// would take the "exists nowhere" path instead of the denial path.
+	k := newRestrictedNamespaceClient(baseClient, "nsNil", []string{"ns1", "ns2"})
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k)
+	cf.WithSAClient(conf.KubernetesConfig.ClusterName,
+		kubetest.FakeNamespace("ns1"),
+		kubetest.FakeNamespace("ns2"),
+		kubetest.FakeNamespace("nsNil"),
+	)
 	cache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(cf.Clients), cache, conf)
+	discovery := istio.NewDiscovery(cf.GetSAClients(), cache, conf)
 
 	req := httptest.NewRequest("GET", "/foo", nil)
 	authInfo := map[string]*api.AuthInfo{conf.KubernetesConfig.ClusterName: {Token: "test"}}
@@ -449,7 +467,6 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	userClients, err := getUserClients(req, cf)
 	require.NoError(err)
 	namespace := business.NewNamespaceService(cache, conf, discovery, cf.GetSAClients(), userClients)
-	w := httptest.NewRecorder()
 	queryTime := time.Date(2020, 10, 22, 0, 0, 0, 0, time.UTC).Unix()
 
 	rawQ := []models.MetricsStatsQuery{
@@ -503,12 +520,12 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 		},
 	}
 
-	queries, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
+	queries, errs, failureKind := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.NotNil(errs)
 	errsStr := errs.Strings()
 	require.Len(errsStr, 1)
-	assert.Equal("namespace 'nsNil', cluster: '': no privileges", errsStr[0])
+	assert.Equal("namespace 'nsNil', cluster: '': namespace [nsNil] is not accessible in every cluster where it exists", errsStr[0])
 	require.Len(queries, 3)
 	assert.Equal("ns1", queries[0].Target.Namespace)
 	assert.Equal("3h", queries[0].Interval)
@@ -516,7 +533,8 @@ func TestPrepareStatsQueriesPartialError(t *testing.T) {
 	assert.Equal("30m", queries[1].Interval)
 	assert.Equal("ns2", queries[2].Target.Namespace)
 	assert.Equal("30m", queries[2].Interval)
-	assert.Equal(http.StatusOK, w.Code)
+	// The failure is an access denial, not a validation error.
+	assert.Equal(statsFailureAccess, failureKind)
 }
 
 func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
@@ -536,7 +554,6 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 	userClients, err := getUserClients(req, cf)
 	require.NoError(err)
 	namespace := business.NewNamespaceService(cache, conf, discovery, cf.GetSAClients(), userClients)
-	w := httptest.NewRecorder()
 
 	rawQ := []models.MetricsStatsQuery{{
 		Target: models.Target{
@@ -551,13 +568,13 @@ func TestPrepareStatsQueriesNoErrorIntervalAdjusted(t *testing.T) {
 		RawQueryTime: queryTime.Unix(),
 	}}
 
-	queries, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
+	queries, errs, failureKind := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.Nil(errs)
 	assert.Len(queries, 1)
 	assert.Equal("ns3", queries[0].Target.Namespace)
 	assert.Equal("3600s", queries[0].Interval) // 3h adjusted to 1h (3600s) due to namespace creation date
-	assert.Equal(http.StatusOK, w.Code)
+	assert.Equal(statsFailureNone, failureKind)
 }
 
 func TestValidateBadRequest(t *testing.T) {
@@ -590,11 +607,13 @@ func TestValidateBadRequest(t *testing.T) {
 		RawQueryTime: queryTime.Unix(),
 	}}
 
-	_, errs := prepareStatsQueries(req.Context(), &namespace, rawQ)
+	_, errs, failureKind := prepareStatsQueries(req.Context(), &namespace, rawQ)
 
 	assert.NotNil(errs)
 	assert.Contains(errs.Error(), "bad request")
 	assert.Len(errs.Strings(), 2)
+	// All failures are query validation errors: the handler maps this to 400.
+	assert.Equal(statsFailureInvalid, failureKind)
 }
 
 func TestWorkloadMetricsDefault(t *testing.T) {
@@ -809,7 +828,9 @@ func TestWorkloadMetricsBadRateFunc(t *testing.T) {
 func TestWorkloadMetricsInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns"),
 		kubetest.FakeNamespace("my_namespace"))
-	ts, _ := setupWorkloadMetricsEndpointWithClient(t, &nsForbidden{k8s, "my_namespace"})
+	// The namespace exists (it is in the fake), but the user's LIST excludes
+	// it and the per-namespace GET is denied: a genuinely restricted user.
+	ts, _ := setupWorkloadMetricsEndpointWithClient(t, newRestrictedNamespaceClient(k8s, "my_namespace", []string{"ns", "my_namespace"}))
 
 	url := ts.URL + "/api/namespaces/my_namespace/workloads/my_workload/metrics"
 	resp, err := http.Get(url)
@@ -967,7 +988,9 @@ func TestNamespaceMetricsWithParams(t *testing.T) {
 
 func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("my_namespace"))
-	ts, _ := setupNamespaceMetricsEndpointWithClient(t, &noPrivClient{k8s})
+	// The namespace exists (it is in the fake), but the user's LIST excludes
+	// it: a genuinely restricted user.
+	ts, _ := setupNamespaceMetricsEndpointWithClient(t, newRestrictedNamespaceClient(k8s, "my_namespace", []string{}))
 
 	url := ts.URL + "/api/namespaces/my_namespace/metrics"
 
@@ -977,6 +1000,26 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 	}
 
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+// TestNamespaceMetricsSetComputationError pins the fail-closed contract:
+// when the accessible set cannot be computed at all (e.g. the namespace LIST
+// against the API server fails), the endpoint rejects with 500 rather than
+// serving data.
+func TestNamespaceMetricsSetComputationError(t *testing.T) {
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("my_namespace"))
+	// noPrivClient denies both LIST and GET, so the accessible set cannot be
+	// computed.
+	ts, _ := setupNamespaceMetricsEndpointWithClient(t, &noPrivClient{k8s})
+
+	url := ts.URL + "/api/namespaces/my_namespace/metrics"
+
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {

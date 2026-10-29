@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -262,7 +263,16 @@ func convertSingleTrace(traces *otelJson.Data, id string) (*model.TracingRespons
 		tracingServiceName = getServiceName(traces.Batches[0].Resource.Attributes)
 		for _, batch := range traces.Batches {
 			serviceName := getServiceName(batch.Resource.Attributes)
-			jaegerModel.Spans = append(jaegerModel.Spans, converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)...)
+			spans := converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)
+			// The OTel converters only use resource attributes for the service
+			// name; surface the namespace- and cluster-bearing ones as process
+			// tags so span authorization (business.traceNamespaces and the
+			// cluster-aware CheckTraceAccess) can see them.
+			nsTags := authorizationResourceTags(batch.Resource.Attributes)
+			for _, span := range spans {
+				span.Process.Tags = append(span.Process.Tags, nsTags...)
+			}
+			jaegerModel.Spans = append(jaegerModel.Spans, spans...)
 		}
 		jaegerModel.Matched = len(jaegerModel.Spans)
 		jaegerModel.Processes = map[jaegerModels.ProcessID]jaegerModels.Process{}
@@ -297,25 +307,7 @@ func (oc *OtelHTTPClient) prepareTraceQL(ctx context.Context, u *url.URL, tracin
 		}
 	}
 
-	selects := []string{
-		"status",
-		".service_name",
-		".node_id",
-		".component",
-		".upstream_cluster",
-		".http.method",
-		".response_flags",
-		".istio.destination_workload",
-		".istio.destination_namespace",
-		".istio.destination_instance_name",
-		".istio.destination_canonical_service",
-		".istio.source_workload",
-		".istio.source_namespace",
-		".istio.source_instance_name",
-		".istio.source_canonical_service",
-		"resource.hostname",
-		"name",
-	}
+	selects := traceSelects
 	trace := TraceQL{operator1: Subquery{queryPart}, operand: AND, operator2: Subquery{}}
 	queryQL := fmt.Sprintf("%s| %s", printOperator(trace), printSelect(selects))
 
@@ -351,6 +343,24 @@ func hasErrors(trace otelModel.Trace) bool {
 		}
 	}
 	return false
+}
+
+// authorizationResourceTags extracts the OTel resource attributes used for
+// span authorization as Jaeger process tags: the namespace-bearing keys
+// (model.NamespaceTagKeys) and the cluster-bearing keys
+// (model.ClusterTagKeys). The OTel converters drop resource attributes
+// (they only use them for the service name), which would otherwise hide
+// namespace and cluster information from the trace access check. The key
+// lists are shared with the span extraction in business/tracing.go so the
+// two cannot drift.
+func authorizationResourceTags(attributes []otelJson.Attribute) []jaegerModels.KeyValue {
+	var tags []jaegerModels.KeyValue
+	for _, attr := range attributes {
+		if slices.Contains(model.NamespaceTagKeys, attr.Key) || slices.Contains(model.ClusterTagKeys, attr.Key) {
+			tags = append(tags, jaegerModels.KeyValue{Key: attr.Key, Value: attr.Value.StringValue})
+		}
+	}
+	return tags
 }
 
 func getServiceName(attributes []otelJson.Attribute) string {
