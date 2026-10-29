@@ -35,7 +35,7 @@ const toJsonString = (yamlText: string): string => {
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName, onSendMessage }) => {
   const dispatch = useDispatch();
-  const modalTitleId = React.useId();
+  const [modalTitleId] = React.useState(() => `chatbot-yaml-modal-title-${uniqueId()}`);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
   const colorScheme = useKialiColorScheme();
