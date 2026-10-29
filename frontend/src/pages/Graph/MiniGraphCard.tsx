@@ -15,7 +15,7 @@ import {
 import type { Edge, EdgeModel, Node, NodeModel } from '@patternfly/react-topology';
 import { URLParam, location, navigateApp } from '../../app/History';
 import type { GraphDataSource } from '../../services/GraphDataSource';
-import type { DecoratedGraphElements, SummaryData } from '../../types/Graph';
+import type { DecoratedGraphElements, RankMode, SummaryData } from '../../types/Graph';
 import { EdgeMode, GraphLayout, GraphType, NodeType, UNKNOWN } from '../../types/Graph';
 import type { GraphUrlParams } from 'components/Nav/NavUtils';
 import { makeNodeGraphUrlFromParams } from 'components/Nav/NavUtils';
@@ -42,7 +42,7 @@ import { WorkloadWizardActionsDropdownGroup } from 'components/IstioWizards/Work
 import type { Workload } from 'types/Workload';
 import type { NamespaceAction } from 'pages/Namespaces/NamespaceActions';
 import { NamespaceActionsDropdownGroup } from 'pages/Namespaces/NamespaceActionsDropdownGroup';
-import type { GraphRefs } from './GraphPage';
+import type { GraphData, GraphRefs } from './GraphPage';
 import { EmptyGraphLayout } from 'pages/Graph/EmptyGraphLayout';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
@@ -80,6 +80,11 @@ const graphContainerStyle = kialiStyle({
   flexDirection: 'column'
 });
 
+// Stable identities: TopologyContent's updateModel effect depends on these props, so inline
+// literals would re-run the effect (and re-layout the graph) on every render.
+const EMPTY_RANK_BY: RankMode[] = [];
+const NOOP_SET_RANK_RESULT = (): void => {};
+
 type ReduxDispatchProps = {
   setEdgeMode: (edgeMode: EdgeMode) => void;
   setLayout: (layout: GraphLayout) => void;
@@ -112,6 +117,12 @@ type MiniGraphCardState = {
 };
 
 class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGraphCardState> {
+  // The graphData prop must keep a stable identity across renders that don't change the underlying
+  // data. TopologyContent's updateModel effect re-runs (and re-layouts the graph, which calls
+  // onReady -> setState -> re-render) whenever graphData changes identity; combined with a
+  // per-render object literal this becomes an infinite render loop that starves router updates.
+  private graphDataMemo?: { graphData: GraphData; inputs: unknown[] };
+
   constructor(props: MiniGraphCardProps) {
     super(props);
     this.state = {
@@ -251,16 +262,7 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                 <Graph
                   edgeLabels={this.props.dataSource.fetchParameters.edgeLabels}
                   edgeMode={EdgeMode.ALL}
-                  graphData={{
-                    elements: this.state.graphData,
-                    elementsChanged: true,
-                    errorMessage: !!this.props.dataSource.errorMessage ? this.props.dataSource.errorMessage : undefined,
-                    isError: this.props.dataSource.isError,
-                    isLoading: isLoading,
-                    loaded: true,
-                    fetchParams: this.props.dataSource.fetchParameters,
-                    timestamp: this.props.dataSource.graphTimestamp
-                  }}
+                  graphData={this.buildGraphData(isLoading)}
                   isMiniGraph={true}
                   layout={GraphLayout.Dagre}
                   onDeleteTrafficRouting={this.handleDeleteTrafficRouting}
@@ -268,10 +270,10 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
                   onLaunchWizard={this.handleLaunchWizard}
                   onNodeTap={this.handleNodeTap}
                   onReady={this.handleReady}
-                  rankBy={[]}
+                  rankBy={EMPTY_RANK_BY}
                   setEdgeMode={this.props.setEdgeMode}
                   setLayout={this.props.setLayout}
-                  setRankResult={() => {}}
+                  setRankResult={NOOP_SET_RANK_RESULT}
                   setUpdateTime={this.props.setUpdateTime}
                   updateSummary={this.props.updateSummary}
                   showLegend={false}
@@ -298,6 +300,35 @@ class MiniGraphCardComponent extends React.Component<MiniGraphCardProps, MiniGra
 
   private refresh = (): void => {
     this.setState({ graphData: this.props.dataSource.graphData, isLoading: this.props.dataSource.isLoading });
+  };
+
+  private buildGraphData = (isLoading: boolean): GraphData => {
+    const dataSource = this.props.dataSource;
+    const inputs: unknown[] = [
+      this.state.graphData,
+      isLoading,
+      dataSource.errorMessage,
+      dataSource.isError,
+      dataSource.fetchParameters,
+      dataSource.graphTimestamp
+    ];
+
+    if (this.graphDataMemo && inputs.every((input, i) => input === this.graphDataMemo!.inputs[i])) {
+      return this.graphDataMemo.graphData;
+    }
+
+    const graphData: GraphData = {
+      elements: this.state.graphData,
+      elementsChanged: true,
+      errorMessage: !!dataSource.errorMessage ? dataSource.errorMessage : undefined,
+      isError: dataSource.isError,
+      isLoading: isLoading,
+      loaded: true,
+      fetchParams: dataSource.fetchParameters,
+      timestamp: dataSource.graphTimestamp
+    };
+    this.graphDataMemo = { graphData, inputs };
+    return graphData;
   };
 
   private handleReady = (refs: GraphRefs | undefined, isReady: boolean): void => {
