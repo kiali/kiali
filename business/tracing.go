@@ -13,6 +13,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/observability"
+	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
 	"github.com/kiali/kiali/tracing/jaeger/model"
 	jaegerModels "github.com/kiali/kiali/tracing/jaeger/model/json"
@@ -308,14 +309,14 @@ func (in *TracingService) GetWorkloadTraces(ctx context.Context, ns, workload st
 	return r, err
 }
 
-// TraceNamespaces returns the distinct namespaces a trace participates in,
+// traceNamespaces returns the distinct namespaces a trace participates in,
 // extracted from every source Kiali's span model can carry: the istio.*
 // span tags and OTel resource attributes listed in model.NamespaceTagKeys,
 // and the `node_id` tag. Cluster attribution is ignored here; see
 // extractTraceNamespaceScope for the cluster-aware view used by
 // CheckTraceAccess. Spans without namespace information do not contribute.
 // Sorted for determinism.
-func TraceNamespaces(trace *model.TracingSingleTrace) []string {
+func traceNamespaces(trace *model.TracingSingleTrace) []string {
 	if trace == nil {
 		return nil
 	}
@@ -625,6 +626,12 @@ func (in *TracingService) GetTraceDetail(ctx context.Context, traceID string) (t
 // the caller-supplied app name, which can target a service in any namespace
 // (see GetAppTraces), so the backend's raw count cannot be trusted.
 func (in *TracingService) GetErrorTraces(ctx context.Context, cluster, ns, app string, duration time.Duration) (errorTraces int, err error) {
+	// The query itself is timed by GetAppTraces (the "AppTraces" label);
+	// this timer keeps the error-trace count distinguishable from ordinary
+	// trace searches in the TracingProcessingTime metric.
+	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ErrorTraces")
+	defer internalmetrics.ObserveDurationAndLogResults(ctx, in.conf, promtimer, "TracingProcessingTime", nil, "ErrorTraces")
+
 	client, err := in.client()
 	if err != nil {
 		return 0, err

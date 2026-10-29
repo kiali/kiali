@@ -146,9 +146,6 @@ type KialiCache interface {
 	// cluster does not recompute the set on every request: the presence of
 	// the entry (GetNamespaces' found flag) is authoritative.
 	SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace)
-
-	// SetNamespace caches a specific namespace by cluster + cacheKey.
-	SetNamespace(cacheKey string, namespace models.Namespace)
 }
 
 type kialiCacheImpl struct {
@@ -188,7 +185,7 @@ type kialiCacheImpl struct {
 	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per cacheKey + cluster as a map[string]namespace where string is the namespace name
-	// so you can easily deref the namespace in GetNamespace and SetNamespace. The downside to this is that
+	// so you can easily deref the namespace in GetNamespace. The downside to this is that
 	// we need an additional lock for the namespace map that gets returned from the store to ensure it is threadsafe.
 	namespaceStore store.Store[namespacesKey, map[string]models.Namespace]
 
@@ -814,20 +811,6 @@ func (c *kialiCacheImpl) SetClusterNamespaces(cacheKey string, cluster string, n
 	}
 	// Store even when empty: the presence of the entry is the authoritative
 	// "set computed" signal (see GetNamespaces' found flag).
-	c.namespaceStore.Set(key, ns)
-}
-
-func (c *kialiCacheImpl) SetNamespace(cacheKey string, namespace models.Namespace) {
-	c.namespacesLock.Lock()
-	defer c.namespacesLock.Unlock()
-
-	key := namespacesKey{cacheKey: cacheKey, cluster: namespace.Cluster}
-	ns, found := c.namespaceStore.Get(key)
-	if !found {
-		ns = make(map[string]models.Namespace)
-	}
-
-	ns[namespace.Name] = namespace
 	c.namespaceStore.Set(key, ns)
 }
 

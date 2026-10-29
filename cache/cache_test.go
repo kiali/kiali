@@ -220,7 +220,7 @@ func TestIsAmbientIsThreadSafe(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSetNamespace(t *testing.T) {
+func TestGetNamespace(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
@@ -230,32 +230,14 @@ func TestSetNamespace(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
-	cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}}})
 
 	ns, found := cache.GetNamespace("east", "token", "test")
 	require.True(found)
 	require.Equal(map[string]string{"app": "test"}, ns.Labels)
-}
 
-func TestSetNamespaceIsThreadSafe(t *testing.T) {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
-	conf.KubernetesConfig.ClusterName = "east"
-	kubernetes.SetConfig(t, *conf)
-
-	client := kubetest.NewFakeK8sClient()
-	cache := cache.NewTestingCache(t, client, *conf)
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
-		}()
-	}
-	wg.Wait()
+	_, found = cache.GetNamespace("east", "token", "other")
+	require.False(found)
 }
 
 func TestGetNamespaces(t *testing.T) {

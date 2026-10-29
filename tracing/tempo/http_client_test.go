@@ -311,7 +311,7 @@ func TestQuery(t *testing.T) {
 // converters only use resource attributes for the service name, so the
 // namespace-bearing ones must be surfaced as Jaeger process tags — otherwise
 // traces whose only namespace information lives in resource attributes
-// (k8s.namespace.name) would be denied by business.TraceNamespaces.
+// (k8s.namespace.name) would be denied by business.traceNamespaces.
 func TestConvertSingleTraceSurfacesNamespaceResourceTags(t *testing.T) {
 	data := &otelJson.Data{
 		Batches: []otelJson.Batch{{

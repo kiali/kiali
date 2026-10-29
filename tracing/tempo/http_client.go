@@ -296,7 +296,7 @@ func convertSingleTrace(traces *otelJson.Data, id string) (*model.TracingRespons
 			spans := converter.ConvertSpans(batch.ScopeSpans[0].Spans, serviceName, id)
 			// The OTel converters only use resource attributes for the service
 			// name; surface the namespace- and cluster-bearing ones as process
-			// tags so span authorization (business.TraceNamespaces and the
+			// tags so span authorization (business.traceNamespaces and the
 			// cluster-aware CheckTraceAccess) can see them.
 			nsTags := authorizationResourceTags(batch.Resource.Attributes)
 			for _, span := range spans {

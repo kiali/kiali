@@ -86,7 +86,7 @@ type LogLine struct {
 // source namespace, the ambient source/destination namespaces and the OTel
 // resource attribute for the pod's namespace (k8s.namespace.name, set by
 // collectors with k8s enrichment). It is shared by the span namespace
-// extraction (business.TraceNamespaces) and the Tempo converter's surfacing
+// extraction (business.traceNamespaces) and the Tempo converter's surfacing
 // of namespace-bearing resource attributes as process tags: the two must
 // agree, or Tempo traces lose their namespace information and are then
 // denied by the trace access check (fail closed).

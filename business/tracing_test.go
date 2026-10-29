@@ -411,7 +411,7 @@ func TestTraceNamespaces(t *testing.T) {
 			{Key: "node_id", Value: "sidecar~172.17.0.20~reviews-6d8996bff-ztg6z.bookinfo~bookinfo.svc.cluster.local"},
 		},
 	}}}}
-	require.Equal([]string{"bookinfo"}, TraceNamespaces(sidecar))
+	require.Equal([]string{"bookinfo"}, traceNamespaces(sidecar))
 
 	// node_id alone (older sidecar traces without istio.namespace), including
 	// a custom cluster domain suffix.
@@ -420,7 +420,7 @@ func TestTraceNamespaces(t *testing.T) {
 			{Key: "node_id", Value: "router~10.0.0.1~ingress-6d8996bff-ab.my-ns~my-ns.svc.my.domain"},
 		},
 	}}}}
-	require.Equal([]string{"my-ns"}, TraceNamespaces(nodeIDOnly))
+	require.Equal([]string{"my-ns"}, traceNamespaces(nodeIDOnly))
 
 	// Ambient trace: source/destination namespace tags (waypoint/ztunnel).
 	ambient := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
@@ -430,7 +430,7 @@ func TestTraceNamespaces(t *testing.T) {
 			{Key: "node_id", Value: "waypoint~172.17.0.21~waypoint-5f7d8c9b-x2kl4.istio-system~istio-system.svc.cluster.local"},
 		},
 	}}}}
-	require.Equal([]string{"bookinfo", "istio-system"}, TraceNamespaces(ambient))
+	require.Equal([]string{"bookinfo", "istio-system"}, traceNamespaces(ambient))
 
 	// OTel resource attributes surfaced as process tags (Tempo/OTel).
 	otelTrace := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
@@ -438,14 +438,14 @@ func TestTraceNamespaces(t *testing.T) {
 			{Key: "k8s.namespace.name", Value: "otel-ns"},
 		}},
 	}}}}
-	require.Equal([]string{"otel-ns"}, TraceNamespaces(otelTrace))
+	require.Equal([]string{"otel-ns"}, traceNamespaces(otelTrace))
 
 	// No namespace information at all.
 	none := &model.TracingSingleTrace{Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
 		Tags: []jaegerModels.KeyValue{{Key: "dummy", Value: "dummy"}},
 	}}}}
-	require.Empty(TraceNamespaces(none))
-	require.Nil(TraceNamespaces(nil))
+	require.Empty(traceNamespaces(none))
+	require.Nil(traceNamespaces(nil))
 }
 
 // TestCheckTraceAccess pins the trace-details authorization: the user must
