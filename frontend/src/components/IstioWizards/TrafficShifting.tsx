@@ -141,9 +141,9 @@ export class TrafficShifting extends React.Component<Props, State> {
         const nodeId: number[] = [];
         let maxWeight = 100;
 
-        // Calculate maxWeight from locked nodes
+        // Calculate maxWeight from locked nodes (mirrored weights are outside the 100 % pool)
         for (let i = 0; i < workloads.length; i++) {
-          if (workloads[i].locked) {
+          if (workloads[i].locked && !workloads[i].mirrored) {
             maxWeight -= workloads[i].weight;
           }
         }
@@ -206,7 +206,7 @@ export class TrafficShifting extends React.Component<Props, State> {
 
         let maxWeights = 100;
         for (let i = 0; i < workloads.length; i++) {
-          if (workloads[i].locked) {
+          if (workloads[i].locked && !workloads[i].mirrored) {
             maxWeights -= workloads[i].weight;
           }
         }

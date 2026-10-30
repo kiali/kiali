@@ -65,4 +65,43 @@ describe('Slider', () => {
 
     expect(container.querySelector('[data-test="replay-slider"]')).toBeTruthy();
   });
+
+  it('does not call onValueCommit on unrelated keyUp', () => {
+    const onValueCommit = rstest.fn();
+
+    const { container } = render(
+      <Slider min={0} max={100} value={20} onChange={pfSliderOnChange} onValueCommit={onValueCommit} />
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    fireEvent.keyUp(wrapper, { key: 'Tab' });
+
+    expect(onValueCommit).not.toHaveBeenCalled();
+  });
+
+  it('calls onValueCommit on slider adjustment keys', () => {
+    const onValueCommit = rstest.fn();
+
+    const { container } = render(
+      <Slider min={0} max={100} value={20} onChange={pfSliderOnChange} onValueCommit={onValueCommit} />
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    fireEvent.keyUp(wrapper, { key: 'ArrowRight' });
+
+    expect(onValueCommit).toHaveBeenCalledWith(20);
+  });
+
+  it('does not call onValueCommit when disabled', () => {
+    const onValueCommit = rstest.fn();
+
+    const { container } = render(
+      <Slider isDisabled min={0} max={100} value={20} onChange={pfSliderOnChange} onValueCommit={onValueCommit} />
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    fireEvent.keyUp(wrapper, { key: 'ArrowRight' });
+
+    expect(onValueCommit).not.toHaveBeenCalled();
+  });
 });

@@ -268,7 +268,7 @@ export class RequestRouting extends React.Component<Props, State> {
   onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]): void => {
     this.setState({
       workloadWeights: workloads,
-      validationMsg: !valid ? t(MSG_WEIGHTS_NOT_VALID) : ''
+      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
     });
   };
 
@@ -356,7 +356,9 @@ export class RequestRouting extends React.Component<Props, State> {
               };
             });
           }}
-          validationMsg={this.state.validationMsg}
+          validationMsg={
+            this.state.validationMsg === MSG_WEIGHTS_NOT_VALID ? t(MSG_WEIGHTS_NOT_VALID) : this.state.validationMsg
+          }
           onAddRule={this.onAddRule}
         />
         <Rules rules={this.state.rules} onRemoveRule={this.onRemoveRule} onMoveRule={this.onMoveRule} />
