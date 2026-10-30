@@ -2,8 +2,12 @@ import * as React from 'react';
 import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import { Slider as PFSlider, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { classes } from 'typestyle';
-import { capSliderValue } from './sliderValue';
 import { sliderRailFillCssVar, sliderStyle } from './SliderStyle';
+
+const capSliderValue = (value: number, min: number, valueCap?: number): number => {
+  const capped = valueCap === undefined ? value : Math.min(valueCap, value);
+  return Math.max(min, capped);
+};
 
 const SLIDER_COMMIT_KEYS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'End', 'Home']);
 
