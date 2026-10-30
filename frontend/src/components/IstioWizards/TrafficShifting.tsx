@@ -13,8 +13,6 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
-import { wizardValidationFooterStyle } from './WizardHelp';
-import { classes } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
@@ -64,8 +62,10 @@ const emptyStateStyle = kialiStyle({
   padding: '1rem'
 });
 
-const weightSumValidationStyle = kialiStyle({
-  color: PFColors.Red500
+const validationStyle = kialiStyle({
+  marginBottom: '0.5rem',
+  color: PFColors.Red500,
+  textAlign: 'right'
 });
 
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
@@ -497,10 +497,7 @@ export class TrafficShifting extends React.Component<Props, State> {
         )}
 
         {this.props.showValid && !isValid && (
-          <div
-            className={classes(wizardValidationFooterStyle, weightSumValidationStyle)}
-            data-test="traffic-shifting-weight-validation"
-          >
+          <div className={validationStyle} data-test="traffic-shifting-weight-validation">
             {t(MSG_WEIGHTS_NOT_VALID)}
           </div>
         )}

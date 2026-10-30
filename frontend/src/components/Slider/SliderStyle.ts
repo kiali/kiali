@@ -7,8 +7,7 @@ const sliderRailFillVars = (color: string): Record<string, string> => ({
   [sliderRailFillCssVar]: color
 });
 
-const mirroredThumbRing =
-  '0 0 0 2px var(--pf-t--global--background--color--primary--default), 0 0 0 3px var(--pf-t--color--purple--20)';
+const mirroredThumbRing = `0 0 0 2px var(--pf-t--global--background--color--primary--default), 0 0 0 3px ${PFColors.Mirroring}`;
 
 export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =>
   kialiStyle({
@@ -24,7 +23,7 @@ export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =
         ...(railTrackFill ? sliderRailFillVars(railTrackFill) : {})
       },
 
-      // Match legacy bootstrap-slider layout: cap rail width only, not the % input / action buttons.
+      // Limit rail width; end actions (% input, lock/mirror buttons) stay outside this cap.
       '& .pf-v6-c-slider__main': {
         flex: '1 1 auto',
         maxWidth: maxWidth,
@@ -40,10 +39,10 @@ export const sliderStyle = (maxWidth?: string, railTrackFill?: string): string =
 
 export const sliderMirroredStyle = kialiStyle({
   $nest: {
-    '& .pf-v6-c-slider': sliderRailFillVars(PFColors.Purple20),
+    '& .pf-v6-c-slider': sliderRailFillVars(PFColors.Mirroring),
 
     '& .pf-v6-c-slider__thumb': {
-      backgroundColor: PFColors.Purple20,
+      backgroundColor: PFColors.Mirroring,
       boxShadow: mirroredThumbRing
     }
   }
