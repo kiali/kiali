@@ -40,19 +40,17 @@ switch_cluster() {
   fi
 }
 
-# Find the hack script to be used to install istio (Sail by default; istioctl when SAIL=false)
+# Find the hack scripts used to install istio (Sail by default; istioctl when SAIL=false).
+# Existence is checked in install_istio() after --sail is parsed.
 ISTIO_INSTALL_SCRIPT_SAIL="${SCRIPT_DIR}/../install-istio-via-sail.sh"
 ISTIO_INSTALL_SCRIPT_ISTIOCTL="${SCRIPT_DIR}/../install-istio-via-istioctl.sh"
 
-if [ -x "${ISTIO_INSTALL_SCRIPT_SAIL}" ]; then
-  echo "Istio Sail install script: ${ISTIO_INSTALL_SCRIPT_SAIL}"
-else
-  echo "Cannot find the Istio Sail install script at: ${ISTIO_INSTALL_SCRIPT_SAIL}"
-  exit 1
-fi
-
 install_istio() {
   if [ "${SAIL}" != "false" ]; then
+    if [ ! -x "${ISTIO_INSTALL_SCRIPT_SAIL}" ]; then
+      echo "Cannot find the Istio Sail install script at: ${ISTIO_INSTALL_SCRIPT_SAIL}"
+      exit 1
+    fi
     local image_tag_arg=${ISTIO_TAG:+--set ".spec.values.pilot.tag=\"${ISTIO_TAG}\""}
     local image_hub_arg=${ISTIO_HUB:+--set ".spec.values.pilot.hub=\"${ISTIO_HUB}\""}
     local version_arg=${ISTIO_VERSION:+--set ".spec.version=\"v${ISTIO_VERSION}\""}

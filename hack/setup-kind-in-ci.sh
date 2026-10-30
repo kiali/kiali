@@ -271,8 +271,10 @@ export ISTIO_VERSION
 
 # Persist the resolved ISTIO_VERSION for subsequent GitHub Actions steps
 # Args for install-istio-via-istioctl.sh when a concrete version was requested (incl. RCs).
+# Do not pass aliases like "1.28-latest" or "*-dev": download-istio resolves those to a real
+# directory (istio-1.28.x), and --istio-version with the alias would look for a missing dir.
 ISTIOCTL_VERSION_ARG=""
-if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]]; then
+if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]] && [[ "${ISTIO_VERSION}" != *-latest ]]; then
   ISTIOCTL_VERSION_ARG="--istio-version ${ISTIO_VERSION}"
 fi
 
@@ -884,7 +886,7 @@ setup_kind_multicluster() {
     kubectl rollout status deployment prometheus -n istio-system --context kind-east
     kubectl rollout status deployment prometheus -n istio-system --context kind-west
   elif [ "${MULTICLUSTER}" == "${PRIMARY_REMOTE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
+    "${SCRIPT_DIR}"/istio/multicluster/install-primary-remote.sh --kiali-enabled false --manage-kind true -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-east"
     cluster2_context="kind-west"
     cluster1_name="east"
@@ -897,7 +899,7 @@ setup_kind_multicluster() {
     if [ -n "${certs_dir}" ]; then
       external_certs_dir_arg="--certs-dir ${certs_dir}"
     fi
-    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}"
+    "${SCRIPT_DIR}"/istio/multicluster/install-external-kiali.sh --kiali-enabled false --manage-kind true ${external_certs_dir_arg} -dorp docker -te ${TEMPO} --istio-dir "${istio_dir}" "${kind_node_image[@]}" "${hub_arg[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-mgmt"
     cluster2_context="kind-mesh"
     cluster1_name="mgmt"
@@ -905,7 +907,13 @@ setup_kind_multicluster() {
     ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}"
+    # This setup waits on Sail Istio CRs (istios/default, istios/external-istiod).
+    # istioctl does not create those CRs, so sail=false is not supported yet.
+    if [ "${SAIL}" == "false" ]; then
+      echo "ERROR: --multicluster external-controlplane requires Sail (sail=true). istioctl/RC installs are not supported for this suite yet."
+      exit 1
+    fi
+    "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
     cluster1_name="controlplane"

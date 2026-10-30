@@ -36,8 +36,8 @@ Options:
     Whether to set up a multicluster environment
     and which kind of multicluster environment to setup.
     Default: <none>
--s|--sail
-    Install Istio with the Sail Operator.
+-s|--sail <true|false>
+    Install Istio with the Sail Operator (true) or istioctl (false).
     Default: <false>
 HELP
 }
@@ -65,7 +65,14 @@ while [[ $# -gt 0 ]]; do
       fi
       shift;shift
       ;;
-    -s|--sail)                     SAIL="true";              shift;shift; ;;
+    -s|--sail)
+      SAIL="$2"
+      if [ "${SAIL}" != "true" ] && [ "${SAIL}" != "false" ]; then
+        echo "--sail option must be one of 'true' or 'false'"
+        exit 1
+      fi
+      shift;shift
+      ;;
     *) echo "Unknown argument: [$key]. Aborting."; helpmsg; exit 1 ;;
   esac
 done
