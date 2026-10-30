@@ -150,6 +150,13 @@ func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseW
 // session. This lookup propagates the selected cluster's errors, so callers can
 // tell "cannot determine" (the returned error) from "definitively zero access"
 // (ErrCannotViewNamespaces).
+//
+// Zero access is concluded ONLY from a computed-empty accessible set, never from
+// the error kind of a failed computation: the set computation lists with the
+// Kiali ServiceAccount first, so a Forbidden from it says nothing about the
+// user's access, and a user whose namespace LIST is denied can still hold
+// per-namespace GET access (the computation falls back to per-namespace GETs).
+// A user with no visibility at all produces an empty set, not an error.
 func (o *OpenshiftAuthController) checkTokenCanViewNamespaces(ctx context.Context, token, cluster string) error {
 	authInfo := &api.AuthInfo{Token: token}
 	userClient, err := o.clientFactory.GetClient(authInfo, cluster)
@@ -164,13 +171,6 @@ func (o *OpenshiftAuthController) checkTokenCanViewNamespaces(ctx context.Contex
 	// anonymous access, so it's not feasible to use the version API for token verification.
 	nsList, err := namespaceService.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
-		// An RBAC rejection on the namespace API is a definitive zero-visibility
-		// answer (the token authenticates but cannot view any namespace), not an
-		// availability problem: report it as zero access so the session is
-		// handled by that path rather than as an indeterminate failure.
-		if k8serrors.IsForbidden(err) || k8serrors.IsUnauthorized(err) {
-			return ErrCannotViewNamespaces
-		}
 		return err
 	}
 
