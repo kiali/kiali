@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { WorkloadOverview } from '../../types/ServiceInfo';
-import { Rules, MOVE_TYPE, Rule } from './RequestRouting/Rules';
+import type { WorkloadOverview } from '../../types/ServiceInfo';
+import type { Rule } from './RequestRouting/Rules';
+import { Rules, MOVE_TYPE } from './RequestRouting/Rules';
 import { RuleBuilder } from './RequestRouting/RuleBuilder';
 import { ANYTHING, EXACT, HEADERS, PRESENCE } from './RequestRouting/MatchBuilder';
-import { MSG_WEIGHTS_NOT_VALID, WorkloadWeight } from './TrafficShifting';
+import type { WorkloadWeight } from './TrafficShifting';
+import { MSG_WEIGHTS_NOT_VALID } from './TrafficShifting';
 import { getDefaultWeights } from './WizardActions';
-import { FaultInjectionRoute } from './FaultInjection';
-import { TimeoutRetryRoute } from './RequestTimeouts';
+import type { FaultInjectionRoute } from './FaultInjection';
+import type { TimeoutRetryRoute } from './RequestTimeouts';
 import { t } from 'utils/I18nUtils';
 
 type Props = {
@@ -266,7 +268,7 @@ export class RequestRouting extends React.Component<Props, State> {
   onSelectWeights = (valid: boolean, workloads: WorkloadWeight[]): void => {
     this.setState({
       workloadWeights: workloads,
-      validationMsg: !valid ? MSG_WEIGHTS_NOT_VALID : ''
+      validationMsg: !valid ? t(MSG_WEIGHTS_NOT_VALID) : ''
     });
   };
 

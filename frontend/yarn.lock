@@ -1732,7 +1732,6 @@ __metadata:
     "@types/react-virtualized": "npm:9.x"
     axios: "npm:^1.19.0"
     axios-mock-adapter: "npm:^2.1.0"
-    bootstrap-slider-without-jquery: "npm:10.0.0"
     cypress: "npm:^15.16.0"
     cypress-multi-reporters: "npm:^2.0.5"
     deep-freeze: "npm:0.0.1"
@@ -4738,13 +4737,6 @@ __metadata:
   version: 1.0.0
   resolution: "boolbase@npm:1.0.0"
   checksum: 10c0/e4b53deb4f2b85c52be0e21a273f2045c7b6a6ea002b0e139c744cb6f95e9ec044439a52883b0d74dedd1ff3da55ed140cfdddfed7fb0cccbed373de5dce1bcf
-  languageName: node
-  linkType: hard
-
-"bootstrap-slider-without-jquery@npm:10.0.0":
-  version: 10.0.0
-  resolution: "bootstrap-slider-without-jquery@npm:10.0.0"
-  checksum: 10c0/520f313b33cac86547352882469afb22c2f1f505ffa15bb5e09b83f6b90ab54828e9c76c83495973ce52dc2778b3205b168d39222be7c0f495a9fe4525e9822d
   languageName: node
   linkType: hard
 
