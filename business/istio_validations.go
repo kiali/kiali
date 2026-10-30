@@ -822,6 +822,14 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 // ValidateIstioObject validates a single Istio object of the given type with the given name found in the given namespace. Note that
 // even validating a single object requires a fair amount of information, as it may interact with many other configs.
 func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+	return in.ValidateIstioObjectFromNamespace(ctx, cluster, namespace, namespace, objectGVK, object)
+}
+
+// ValidateIstioObjectFromNamespace keeps the object's identity separate from the
+// namespace whose exportTo visibility is used by the checkers. The details
+// handler on this branch validates explicitly exported objects from each target
+// namespace; narrowing must still select the object in its owning namespace.
+func (in *IstioValidationsService) ValidateIstioObjectFromNamespace(ctx context.Context, cluster, objectNamespace, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
@@ -839,6 +847,13 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	ns, err := in.namespace.GetClusterNamespace(ctx, namespace, cluster)
 	if err != nil {
 		return nil, istioReferences, err
+	}
+
+	// The viewpoint's authorization does not grant access to the object itself.
+	if objectNamespace != namespace {
+		if _, err := in.namespace.GetClusterNamespace(ctx, objectNamespace, cluster); err != nil {
+			return nil, istioReferences, err
+		}
 	}
 
 	// Types without an object checker or reference checker (see
@@ -889,7 +904,7 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		// Only this cross-cluster input-gathering failure degrades; the
 		// errors below stay fatal.
 		log.Warningf("Error gathering validation info for [%s/%s], falling back to its cached validation: %s", namespace, object, err)
-		objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object, Cluster: cluster}
+		objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object, Cluster: cluster}
 		if cached, found := in.kialiCache.Validations().Get(objectKey); found {
 			return in.pruneValidationsForUser(ctx, cluster, models.IstioValidations{objectKey: cached}, models.IstioReferencesMap{})
 		}
@@ -1089,29 +1104,27 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
 		}
 	default:
-		err = fmt.Errorf("object type not found: %v", objectGVK.String())
+		return nil, istioReferences, fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
 	if referenceChecker != nil {
 		istioReferences = runObjectReferenceChecker(ctx, in.conf, referenceChecker)
 	}
 
-	if objectCheckers == nil {
-		return models.IstioValidations{}, istioReferences, err
-	}
-
+	// Reference-only types must also reach exact-object narrowing and pruning:
+	// their references were computed from SA-wide configuration.
 	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
 
 	// FilterByKey matches on GVK and name only; keep just the requested object's
 	// entry so that same-named objects in other namespaces are neither returned
 	// nor overwritten in the shared cache below.
-	objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object, Cluster: cluster}
+	objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object, Cluster: cluster}
 	if validation, found := validations[objectKey]; found {
 		validations = models.IstioValidations{objectKey: validation}
 	} else {
 		validations = models.IstioValidations{}
 	}
-	referenceKey := models.IstioReferenceKey{ObjectGVK: objectGVK, Namespace: namespace, Name: object}
+	referenceKey := models.IstioReferenceKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object}
 	if objectReferences, found := istioReferences[referenceKey]; found {
 		istioReferences = models.IstioReferencesMap{referenceKey: objectReferences}
 	} else {

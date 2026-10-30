@@ -164,7 +164,7 @@ func IstioConfigDetails(
 					loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 					for _, ns := range loadedNamespaces {
 						if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-							istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, ns.Name, gvk, object)
+							istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObjectFromNamespace(r.Context(), cluster, namespace, ns.Name, gvk, object)
 							if err != nil {
 								validationsResult <- err
 							}

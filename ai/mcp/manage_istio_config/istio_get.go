@@ -57,7 +57,7 @@ func IstioGet(ctx context.Context, args map[string]interface{}, businessLayer *b
 			loadedNamespaces, _ := businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 			for _, ns := range loadedNamespaces {
 				if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-					istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObject(ctx, cluster, ns.Name, gvk, object)
+					istioConfigValidationResults, istioConfigReferencesResults, err := businessLayer.Validations.ValidateIstioObjectFromNamespace(ctx, cluster, namespace, ns.Name, gvk, object)
 					if err != nil {
 						validationsResult <- err
 					}
