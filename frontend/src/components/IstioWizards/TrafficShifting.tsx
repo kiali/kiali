@@ -18,7 +18,6 @@ import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { BalanceScaleIcon, MigrationIcon } from '@patternfly/react-icons';
-import { rebalanceUnlockedWeights } from './trafficShiftingWeights';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -70,6 +69,39 @@ const validationStyle = kialiStyle({
 });
 
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
+
+export const rebalanceUnlockedWeights = (workloads: WorkloadWeight[]): void => {
+  let maxWeight = 100;
+  const nodeId: number[] = [];
+
+  for (let i = 0; i < workloads.length; i++) {
+    if (workloads[i].locked && !workloads[i].mirrored) {
+      maxWeight -= workloads[i].weight;
+    }
+  }
+  maxWeight = Math.max(0, maxWeight);
+
+  for (let i = 0; i < workloads.length; i++) {
+    if (!workloads[i].locked && !workloads[i].mirrored) {
+      nodeId.push(i);
+    }
+  }
+
+  let sumWeights = 0;
+  for (let j = 0; j < nodeId.length; j++) {
+    if (sumWeights + workloads[nodeId[j]].weight > maxWeight) {
+      workloads[nodeId[j]].weight = Math.max(0, maxWeight - sumWeights);
+    }
+    sumWeights += workloads[nodeId[j]].weight;
+  }
+
+  if (nodeId.length > 0 && sumWeights < maxWeight) {
+    workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+  }
+};
+
+export const sumNonMirroredWeights = (workloads: WorkloadWeight[]): number =>
+  workloads.filter(w => !w.mirrored).reduce((sum, w) => sum + w.weight, 0);
 
 export class TrafficShifting extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -470,7 +502,7 @@ export class TrafficShifting extends React.Component<Props, State> {
 
         {this.props.showValid && !isValid && (
           <div className={validationStyle} data-test="traffic-shifting-weight-validation">
-            {t(MSG_WEIGHTS_NOT_VALID)}
+            {t('The sum of all non-mirrored weights must be 100 %')}
           </div>
         )}
       </>

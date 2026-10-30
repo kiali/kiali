@@ -81,14 +81,12 @@ const frameInterval: IntervalInMilliseconds = 10000; // clock advances 10s per f
 
 const controlStyle = kialiStyle({
   display: 'flex',
-  alignItems: 'center',
-  marginTop: '0.125rem'
+  alignItems: 'center'
 });
 
 const controlButtonStyle = kialiStyle({
   marginLeft: '33%',
   paddingRight: '0.5rem',
-  height: '37px', // 37px to match speed button height
   display: 'flex',
   alignItems: 'center'
 });
@@ -96,8 +94,7 @@ const controlButtonStyle = kialiStyle({
 const frameStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
-  paddingRight: '1rem',
-  height: '37px' // 37px to match button height
+  paddingRight: '1rem'
 });
 
 const isCustomStyle = kialiStyle({
@@ -122,18 +119,6 @@ const replaySliderColumnStyle = kialiStyle({
   marginRight: '0.75rem',
   minWidth: 0,
   width: '100%'
-});
-
-const replaySliderTooltipStyle = kialiStyle({
-  $nest: {
-    '& .pf-v6-c-tooltip': {
-      pointerEvents: 'none'
-    },
-
-    '& .pf-v6-c-tooltip .pf-v6-c-tooltip__content': {
-      marginRight: '10.9375rem'
-    }
-  }
 });
 
 const speedStyle = kialiStyle({
@@ -285,24 +270,22 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         </Tooltip>
 
         <span className={replaySliderColumnStyle}>
-          <span className={replaySliderTooltipStyle}>
-            <Slider
-              key={endString} // on new endTime force new slider because of bug updating tick labels
-              dataTest="replay-slider"
-              id="replay-slider"
-              min={0}
-              max={this.state.replayFrameCount}
-              step={1}
-              value={displayFrame}
-              showTicks={this.state.replayFrameCount > 0}
-              showBoundaries={false}
-              hasTooltipOverThumb={true}
-              tooltipContent={this.formatTooltip(displayFrame)}
-              onChange={this.handleReplaySliderChange}
-              onValueCommit={this.handleReplaySliderCommit}
-              railTrackFill={PFColors.Replay}
-            />
-          </span>
+          <Slider
+            key={endString} // on new endTime force new slider because of bug updating tick labels
+            dataTest="replay-slider"
+            id="replay-slider"
+            min={0}
+            max={this.state.replayFrameCount}
+            step={1}
+            value={displayFrame}
+            showTicks={this.state.replayFrameCount > 0}
+            showBoundaries={false}
+            hasTooltipOverThumb={true}
+            tooltipContent={this.formatTooltip(displayFrame)}
+            onChange={this.handleReplaySliderChange}
+            onValueCommit={this.handleReplaySliderCommit}
+            railTrackFill={PFColors.Replay}
+          />
 
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (

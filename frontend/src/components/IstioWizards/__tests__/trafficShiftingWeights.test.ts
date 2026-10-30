@@ -1,5 +1,4 @@
-import type { WorkloadWeight } from '../TrafficShifting';
-import { rebalanceUnlockedWeights, sumNonMirroredWeights } from '../trafficShiftingWeights';
+import { rebalanceUnlockedWeights, sumNonMirroredWeights, type WorkloadWeight } from '../TrafficShifting';
 
 const workload = (name: string, weight: number, overrides: Partial<WorkloadWeight> = {}): WorkloadWeight => ({
   locked: false,
