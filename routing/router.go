@@ -122,7 +122,7 @@ func NewRouter(
 		}
 		authController = openIDAuth
 	case config.AuthStrategyOpenshift:
-		openshiftAuth, err := authentication.NewOpenshiftAuthController(conf, clientFactory)
+		openshiftAuth, err := authentication.NewOpenshiftAuthController(conf, clientFactory, kialiCache, discovery)
 		if err != nil {
 			zl.Error().Msgf("Error creating OpenshiftAuthController: %v", err)
 			return nil, err
