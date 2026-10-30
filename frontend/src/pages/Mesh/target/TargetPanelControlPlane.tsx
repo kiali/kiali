@@ -36,6 +36,8 @@ import { TargetPanelEditor } from './TargetPanelEditor';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { noShrinkStyle } from 'styles/FlexStyles';
 import type { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
@@ -67,6 +69,13 @@ const defaultState: TargetPanelControlPlaneState = {
   status: undefined,
   tlsStatus: undefined
 };
+
+const headerRowStyle = kialiStyle({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: PFSpacer.sm,
+  justifyContent: 'space-between'
+});
 
 const controlPlaneAnnotation = 'topology.istio.io/controlPlaneClusters';
 
@@ -241,7 +250,12 @@ export class TargetPanelControlPlane extends React.Component<
         data-test={`${data.infraName}-mesh-target`}
         className={classes(panelStyle, targetPanelStyle)}
       >
-        <div className={panelHeadingStyle}>{renderNodeHeader(data, {})}</div>
+        <div className={classes(panelHeadingStyle, headerRowStyle)}>
+          <div>{renderNodeHeader(data, {})}</div>
+          <div className={noShrinkStyle}>
+            <IstioDashboardsDropdownLoader kind="control-plane" />
+          </div>
+        </div>
         <div className={targetBodyStyle}>
           {controlPlane.tag && <div>{t('Tag: {{tag}}', { tag: controlPlane.tag.name })}</div>}
 

@@ -6,7 +6,11 @@ import {
   targetPanelHR,
   targetPanelStyle
 } from './TargetPanelCommon';
-import { MeshNodeData, NodeTarget, isExternal } from 'types/Mesh';
+import { MeshInfraType, MeshNodeData, NodeTarget, isExternal } from 'types/Mesh';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { kialiStyle } from 'styles/StyleUtils';
+import { noShrinkStyle } from 'styles/FlexStyles';
+import { PFSpacer } from 'styles/PfSpacer';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -19,6 +23,13 @@ import { addError } from '../../../utils/AlertUtils';
 import { computePrometheusRateParams } from '../../../services/Prometheus';
 import { IstioMetricsOptions, buildReporter } from '../../../types/MetricsOptions';
 import { isPrometheusAvailable, serverConfig } from '../../../config';
+
+const headerRowStyle = kialiStyle({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: PFSpacer.sm,
+  justifyContent: 'space-between'
+});
 
 type TargetPanelMetricsProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -79,7 +90,14 @@ export const TargetPanelMetrics: React.FC<TargetPanelMetricsProps<MeshNodeData>>
 
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
-      <div className={panelHeadingStyle}>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
+      <div className={classes(panelHeadingStyle, headerRowStyle)}>
+        <div>{renderNodeHeader(data, { nameOnly: isExternal(data.cluster) })}</div>
+        {data.infraType === MeshInfraType.ZTUNNEL && (
+          <div className={noShrinkStyle}>
+            <IstioDashboardsDropdownLoader kind="ztunnel" />
+          </div>
+        )}
+      </div>
       <div className={targetBodyStyle}>
         <span>{t('Version: {{version}}', { version: data.version || t(UNKNOWN) })}</span>
         {targetPanelHR}
