@@ -3,7 +3,9 @@ import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import { Slider as PFSlider, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { capSliderValue } from './sliderValue';
-import { sliderRailFillCssVar, sliderRailFillStyle, sliderStyle } from './SliderStyle';
+import { sliderRailFillCssVar, sliderStyle } from './SliderStyle';
+
+const SLIDER_COMMIT_KEYS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'End', 'Home']);
 
 export type SliderProps = {
   className?: string;
@@ -118,6 +120,7 @@ export const Slider: React.FC<SliderProps> = ({
   }, [applyThumbPosition, displayValue]);
 
   React.useLayoutEffect(() => {
+    // PatternFly overrides rail fill in some themes; set the CSS variable on the slider root directly.
     const applyRailFillAndThumb = (): void => {
       const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
       if (!sliderRoot) {
@@ -213,13 +216,20 @@ export const Slider: React.FC<SliderProps> = ({
     }
   };
 
+  const handleWrapperKeyUp = (event: React.KeyboardEvent): void => {
+    if (!onValueCommit || isDisabled || !SLIDER_COMMIT_KEYS.has(event.key)) {
+      return;
+    }
+    handleRelease();
+  };
+
   return (
     <div
       ref={wrapperRef}
       data-test={dataTest}
-      className={classes(sliderStyle(maxRailWidth), railTrackFill && sliderRailFillStyle(railTrackFill), className)}
+      className={classes(sliderStyle(maxRailWidth), className)}
       onPointerDown={onValueCommit ? handleWrapperPointerDown : undefined}
-      onKeyUp={onValueCommit ? handleRelease : undefined}
+      onKeyUp={onValueCommit ? handleWrapperKeyUp : undefined}
     >
       {showRailTooltip && thumbTooltipReady ? (
         <Tooltip

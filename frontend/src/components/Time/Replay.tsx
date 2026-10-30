@@ -202,7 +202,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
       this.updateRefresher();
     }
 
-    if (this.state.status !== 'initialized') {
+    if (this.state.status !== 'initialized' && this.state.scrubbingFrame === undefined) {
       const frameQueryTime = ReplayComponent.frameToQueryTime(this.state.replayFrame, this.state.replayWindow);
       if (frameQueryTime !== this.props.replayQueryTime) {
         this.props.setReplayQueryTime(frameQueryTime);
@@ -346,7 +346,10 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
   };
 
   private handleReplaySliderChange = (_event: SliderOnChangeEvent, frame: number): void => {
-    this.setState({ scrubbingFrame: frame });
+    this.setState(prevState => ({
+      scrubbingFrame: frame,
+      status: prevState.status === 'playing' ? 'paused' : prevState.status
+    }));
   };
 
   private handleReplaySliderCommit = (frame: number): void => {

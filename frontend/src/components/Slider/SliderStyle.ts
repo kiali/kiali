@@ -3,10 +3,6 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 export const sliderRailFillCssVar = '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor';
 
-const sliderRailFillNest = (color: string): Record<string, string> => ({
-  [sliderRailFillCssVar]: color
-});
-
 const mirroredThumbRing = `0 0 0 2px var(--pf-t--global--background--color--primary--default), 0 0 0 3px ${PFColors.Mirroring}`;
 
 const pfSliderInteractiveCursor = {
@@ -15,13 +11,6 @@ const pfSliderInteractiveCursor = {
       cursor: 'pointer'
     }
 };
-
-export const sliderRailFillStyle = (color: string): string =>
-  kialiStyle({
-    $nest: {
-      '& .pf-v6-c-slider': sliderRailFillNest(color)
-    }
-  });
 
 export const sliderStyle = (maxWidth?: string): string =>
   kialiStyle({

@@ -35,4 +35,14 @@ describe('rebalanceUnlockedWeights', () => {
 
     expect(sumNonMirroredWeights(workloads)).toBe(100);
   });
+
+  it('does not treat locked mirrored weight as part of the 100 % pool', () => {
+    const workloads = [workload('a', 40, { locked: true, mirrored: true }), workload('b', 60)];
+
+    rebalanceUnlockedWeights(workloads);
+
+    expect(workloads[1].maxWeight).toBe(100);
+    expect(workloads[1].weight).toBe(100);
+    expect(sumNonMirroredWeights(workloads)).toBe(100);
+  });
 });
