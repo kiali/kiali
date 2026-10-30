@@ -13,6 +13,8 @@ import {
   TooltipPosition
 } from '@patternfly/react-core';
 import { getDefaultWeights } from './WizardActions';
+import { wizardValidationFooterStyle } from './WizardHelp';
+import { classes } from 'typestyle';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
@@ -40,12 +42,6 @@ type State = {
   workloads: WorkloadWeight[];
 };
 
-const validationStyle = kialiStyle({
-  marginBottom: '0.5rem',
-  color: PFColors.Red100,
-  textAlign: 'right'
-});
-
 const evenlyButtonStyle = kialiStyle({
   // Push the button to the right
   marginLeft: 'auto',
@@ -66,6 +62,10 @@ const mirroringSectionStyle = kialiStyle({
 
 const emptyStateStyle = kialiStyle({
   padding: '1rem'
+});
+
+const weightSumValidationStyle = kialiStyle({
+  color: PFColors.Red500
 });
 
 export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
@@ -160,6 +160,36 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
+  rebalanceUnlockedWeights = (workloads: WorkloadWeight[]): void => {
+    let maxWeight = 100;
+    const nodeId: number[] = [];
+
+    for (let i = 0; i < workloads.length; i++) {
+      if (workloads[i].locked && !workloads[i].mirrored) {
+        maxWeight -= workloads[i].weight;
+      }
+    }
+    maxWeight = Math.max(0, maxWeight);
+
+    for (let i = 0; i < workloads.length; i++) {
+      if (!workloads[i].locked && !workloads[i].mirrored) {
+        nodeId.push(i);
+      }
+    }
+
+    let sumWeights = 0;
+    for (let j = 0; j < nodeId.length; j++) {
+      if (sumWeights + workloads[nodeId[j]].weight > maxWeight) {
+        workloads[nodeId[j]].weight = Math.max(0, maxWeight - sumWeights);
+      }
+      sumWeights += workloads[nodeId[j]].weight;
+    }
+
+    if (nodeId.length > 0 && sumWeights < maxWeight) {
+      workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
+    }
+  };
+
   onLock = (workloadName: string, locked: boolean): void => {
     this.setState(
       prevState => {
@@ -187,6 +217,10 @@ export class TrafficShifting extends React.Component<Props, State> {
               workloads[i].weight = maxWeights;
             }
           }
+        }
+
+        if (locked) {
+          this.rebalanceUnlockedWeights(workloads);
         }
 
         // When unlocking, assign remaining traffic so non-mirrored weights still sum to 100 %
@@ -462,7 +496,14 @@ export class TrafficShifting extends React.Component<Props, State> {
           </ExpandableSection>
         )}
 
-        {this.props.showValid && !isValid && <div className={validationStyle}>{MSG_WEIGHTS_NOT_VALID}</div>}
+        {this.props.showValid && !isValid && (
+          <div
+            className={classes(wizardValidationFooterStyle, weightSumValidationStyle)}
+            data-test="traffic-shifting-weight-validation"
+          >
+            {t(MSG_WEIGHTS_NOT_VALID)}
+          </div>
+        )}
       </>
     );
   }

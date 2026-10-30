@@ -1,14 +1,37 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from '../../config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
 import { infoStyle } from 'styles/IconStyle';
+
+/** Red validation label beside wizard action buttons (e.g. Add Route Rule). */
+export const wizardValidationInlineStyle = kialiStyle({
+  color: PFColors.Red100,
+  display: 'inline',
+  marginRight: '1.25rem'
+});
+
+/** Red validation label in wizard body content (e.g. rule table rows). */
+export const wizardValidationBodyStyle = kialiStyle({
+  color: PFColors.Red100,
+  marginTop: '0.75rem'
+});
+
+/** Red validation label above modal footer actions (e.g. traffic shifting weights). */
+export const wizardValidationFooterStyle = kialiStyle({
+  color: PFColors.Red100,
+  marginBottom: '0.5rem',
+  marginTop: '0.75rem',
+  textAlign: 'right',
+  width: '100%'
+});
 
 const importantTooltip = kialiStyle({
   fontWeight: 700
 });
 
-export const wizardTooltip = (tooltipContent: React.ReactFragment) => {
+export const wizardTooltip = (tooltipContent: React.ReactFragment): React.ReactElement => {
   return (
     <Tooltip position={TooltipPosition.right} content={<div style={{ textAlign: 'left' }}>{tooltipContent}</div>}>
       <KialiIcon.Info className={infoStyle} />

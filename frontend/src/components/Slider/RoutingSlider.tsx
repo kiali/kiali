@@ -96,7 +96,7 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   const clamp = (v: number): number => Math.max(min, Math.min(effectiveMax, v));
 
   const handleChange = (_event: SliderOnChangeEvent, sliderValue: number): void => {
-    const newValue = clamp(sliderValue);
+    const newValue = sliderValue >= effectiveMax ? effectiveMax : clamp(sliderValue);
     setLocalValue(newValue);
     setTooltipValue(newValue);
     onSlide(newValue);
@@ -110,6 +110,9 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   };
 
   const handleInputBlur = (): void => {
+    if (locked) {
+      return;
+    }
     onSlideStop(localValue);
   };
 
@@ -122,7 +125,10 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
         className={lockButtonStyle}
         isDisabled={mirrored}
         variant={ButtonVariant.plain}
-        onClick={() => onLock(!locked)}
+        onClick={e => {
+          e.stopPropagation();
+          onLock(!locked);
+        }}
       />
     </Tooltip>
   ) : null;
@@ -177,7 +183,12 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       onChange={handleChange}
       onValueCommit={committed => onSlideStop(committed)}
       endActions={
-        <div className={endActionsStyle} onMouseUp={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+        <div
+          className={endActionsStyle}
+          onMouseDown={e => e.stopPropagation()}
+          onMouseUp={e => e.stopPropagation()}
+          onTouchEnd={e => e.stopPropagation()}
+        >
           {inputAction}
           {mirrorAction}
           {lockAction}
