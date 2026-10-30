@@ -55,6 +55,44 @@ cleanup_offline_seeded_traffic_routing() {
   fi
 }
 
+# Sail/OSSM must-gather discovers mesh member namespaces; classic istioctl installs often only
+# gather the control plane. Offline cypress needs bookinfo (and peers) in the dump either way.
+supplement_must_gather_namespace() {
+  local must_gather_dir="${1}"
+  local ns="${2}"
+
+  if ! kubectl get namespace "${ns}" &>/dev/null; then
+    infomsg "Skipping must-gather supplement for missing namespace: ${ns}"
+    return 0
+  fi
+
+  local namespaces_dir
+  namespaces_dir="$(find "${must_gather_dir}" -type d -name namespaces 2>/dev/null | head -n 1)"
+  if [ -z "${namespaces_dir}" ]; then
+    namespaces_dir="${must_gather_dir}/namespaces"
+  fi
+
+  if [ -d "${namespaces_dir}/${ns}" ] && find "${namespaces_dir}/${ns}" -name '*.yaml' -o -name '*.yml' 2>/dev/null | grep -q .; then
+    infomsg "must-gather already includes namespace ${ns}"
+    return 0
+  fi
+
+  infomsg "Supplementing must-gather with namespace ${ns} (needed for istioctl / non-Sail installs)"
+  mkdir -p "${namespaces_dir}/${ns}"
+  kubectl get namespace "${ns}" -o yaml > "${namespaces_dir}/${ns}/namespace.yaml"
+  # Dump namespaced resources as individual YAML docs so the offline client can parse them.
+  local res
+  for res in \
+      services pods deployments replicasets daemonsets statefulsets \
+      configmaps serviceaccounts \
+      destinationrules virtualservices gateways sidecars peerauthentications \
+      authorizationpolicies requestauthentications serviceentries workloadentries telemetries; do
+    if kubectl get "${res}" -n "${ns}" -o name 2>/dev/null | grep -q .; then
+      kubectl get "${res}" -n "${ns}" -o yaml > "${namespaces_dir}/${ns}/${res}.yaml" 2>/dev/null || true
+    fi
+  done
+}
+
 cleanup_kiali() {
   cleanup_offline_seeded_traffic_routing
   if [ -n "${KIALI_PID}" ]; then
@@ -1195,6 +1233,18 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
   # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
   docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+
+  # With Sail, must-gather usually includes mesh member namespaces. With istioctl it often only
+  # collects istio-system — supplement so offline tests still see bookinfo.
+  if ! kubectl get namespace bookinfo &>/dev/null; then
+    echo "ERROR: bookinfo namespace is required for offline tests but was not found in the cluster."
+    echo "Run the local suite first (or omit --tests-only) so demos are installed."
+    exit 1
+  fi
+  supplement_must_gather_namespace "${MUST_GATHER_DIR}" "bookinfo"
+  for _extra_ns in alpha beta gamma sleep; do
+    supplement_must_gather_namespace "${MUST_GATHER_DIR}" "${_extra_ns}"
+  done
 
   "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
   cleanup_offline_seeded_traffic_routing
