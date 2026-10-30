@@ -5,12 +5,14 @@ import type { KialiDispatch } from 'types/Redux';
 import type { KialiAppState } from 'store/Store';
 import { replayQueryTimeSelector, durationSelector } from 'store/Selectors';
 import { Tooltip, ButtonVariant, Button, Content } from '@patternfly/react-core';
+import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds } from 'types/Common';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { Slider } from 'components/Slider';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
+import { classes } from 'typestyle';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
@@ -48,6 +50,7 @@ type ReplayState = {
   replayFrameCount: number;
   replaySpeed: IntervalInMilliseconds;
   replayWindow: ReplayWindow;
+  scrubbingFrame?: number;
   status: ReplayStatus;
 };
 
@@ -79,7 +82,8 @@ const frameInterval: IntervalInMilliseconds = 10000; // clock advances 10s per f
 
 const controlStyle = kialiStyle({
   display: 'flex',
-  alignItems: 'center'
+  alignItems: 'center',
+  marginTop: '0.125rem'
 });
 
 const controlButtonStyle = kialiStyle({
@@ -110,9 +114,57 @@ const replayStyle = kialiStyle({
   gap: '0.5rem'
 });
 
-const sliderStyle = kialiStyle({
+const replaySliderColumnStyle = kialiStyle({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: '1 1 auto',
+  gap: 0,
+  marginLeft: '0.75rem',
+  minWidth: 0,
+  width: '100%'
+});
+
+const replaySliderTrackStyle = kialiStyle({
   width: '100%',
-  marginLeft: '0.75rem'
+  $nest: {
+    '& .pf-v6-c-slider': {
+      gap: 0,
+      rowGap: 0
+    },
+
+    '& .pf-v6-c-slider__main': {
+      marginBottom: 0
+    },
+
+    // PF renders numeric tick labels in a row below the rail; replay uses the thumb tooltip instead.
+    '& .pf-v6-c-slider__tick-labels': {
+      display: 'none',
+      height: 0,
+      margin: 0,
+      minHeight: 0,
+      overflow: 'hidden',
+      padding: 0
+    },
+
+    '& .pf-v6-c-slider__ticks': {
+      marginBottom: 0,
+      marginTop: 0,
+      minHeight: 0,
+      paddingBottom: 0
+    }
+  }
+});
+
+const replaySliderTooltipStyle = kialiStyle({
+  $nest: {
+    '& .pf-v6-c-tooltip': {
+      pointerEvents: 'none'
+    },
+
+    '& .pf-v6-c-tooltip .pf-v6-c-tooltip__content': {
+      marginRight: '10.9375rem'
+    }
+  }
 });
 
 const speedStyle = kialiStyle({
@@ -228,6 +280,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     );
 
     const dropdownOptions = this.state.isCustomStartTime ? replayIntervals : replayLastIntervals;
+    const displayFrame = this.state.scrubbingFrame ?? this.state.replayFrame;
 
     return (
       <div className={replayStyle}>
@@ -262,22 +315,25 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
           </Button>
         </Tooltip>
 
-        <span className={sliderStyle}>
-          <Slider
-            key={endString} // on new endTime force new slider because of bug updating tick labels
-            id="replay-slider"
-            min={0}
-            max={this.state.replayFrameCount}
-            step={1}
-            value={this.state.replayFrame}
-            showTicks={this.state.replayFrameCount > 0}
-            showBoundaries={false}
-            hasTooltipOverThumb={true}
-            tooltipContent={this.formatTooltip(this.state.replayFrame)}
-            onChange={(_event, frame) => this.setReplayFrame(frame)}
-            onValueCommit={this.setReplayFrame}
-            railTrackFill={PFColors.Replay}
-          />
+        <span className={replaySliderColumnStyle}>
+          <span className={classes(replaySliderTrackStyle, replaySliderTooltipStyle)}>
+            <Slider
+              key={endString} // on new endTime force new slider because of bug updating tick labels
+              dataTest="replay-slider"
+              id="replay-slider"
+              min={0}
+              max={this.state.replayFrameCount}
+              step={1}
+              value={displayFrame}
+              showTicks={this.state.replayFrameCount > 0}
+              showBoundaries={false}
+              hasTooltipOverThumb={true}
+              tooltipContent={this.formatTooltip(displayFrame)}
+              onChange={this.handleReplaySliderChange}
+              onValueCommit={this.handleReplaySliderCommit}
+              railTrackFill={PFColors.Replay}
+            />
+          </span>
 
           <span className={controlStyle}>
             {this.state.status === 'playing' ? (
@@ -309,7 +365,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
               </Tooltip>
             )}
 
-            <Content className={frameStyle}>{this.formatFrame(this.state.replayFrame)}</Content>
+            <Content className={frameStyle}>{this.formatFrame(displayFrame)}</Content>
 
             {replaySpeeds.map((s, i, a) => this.speedButton(s, i === a.length - 1))}
           </span>
@@ -335,6 +391,14 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     const elapsed = `${zeroPadMin}${elapsedMin}:${zeroPadSec}${elapsedSec}`;
 
     return elapsed;
+  };
+
+  private handleReplaySliderChange = (_event: SliderOnChangeEvent, frame: number): void => {
+    this.setState({ scrubbingFrame: frame });
+  };
+
+  private handleReplaySliderCommit = (frame: number): void => {
+    this.setState({ scrubbingFrame: undefined }, () => this.setReplayFrame(frame));
   };
 
   private toggleCustomStartTime = (): void => {
@@ -390,7 +454,8 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
     this.setState({
       replayFrame: 0,
       replayFrameCount: frameCount,
-      replayWindow: replayWindow
+      replayWindow: replayWindow,
+      scrubbingFrame: undefined
     });
   };
 

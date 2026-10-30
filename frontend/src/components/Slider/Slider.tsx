@@ -2,10 +2,12 @@ import * as React from 'react';
 import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import { Slider as PFSlider, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { classes } from 'typestyle';
+import { capSliderValue } from './sliderValue';
 import { sliderRailFillCssVar, sliderStyle } from './SliderStyle';
 
 export type SliderProps = {
   className?: string;
+  dataTest?: string;
   endActions?: React.ReactNode;
   hasTooltipOverThumb?: boolean;
   id?: string;
@@ -26,6 +28,7 @@ export type SliderProps = {
 
 export const Slider: React.FC<SliderProps> = ({
   className,
+  dataTest,
   endActions,
   hasTooltipOverThumb,
   id,
@@ -46,18 +49,12 @@ export const Slider: React.FC<SliderProps> = ({
   const latestValueRef = React.useRef(value);
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const thumbTriggerRef = React.useRef<HTMLElement | null>(null);
+  const commitListenerRef = React.useRef<(() => void) | null>(null);
   const [railHovered, setRailHovered] = React.useState(false);
   const [thumbTooltipReady, setThumbTooltipReady] = React.useState(false);
 
-  const capValue = (v: number): number => {
-    const capped = valueCap === undefined ? v : Math.min(valueCap, v);
-    return Math.max(min, capped);
-  };
+  const displayValue = capSliderValue(value, min, valueCap);
 
-  const displayValue = capValue(value);
-
-  const onChangeRef = React.useRef(onChange);
-  onChangeRef.current = onChange;
   const onValueCommitRef = React.useRef(onValueCommit);
   onValueCommitRef.current = onValueCommit;
 
@@ -73,10 +70,6 @@ export const Slider: React.FC<SliderProps> = ({
 
     const wrapper = wrapperRef.current;
     const main = wrapper.querySelector<HTMLElement>('.pf-v6-c-slider__main');
-    const thumb = wrapper.querySelector<HTMLElement>('.pf-v6-c-slider__thumb');
-
-    thumbTriggerRef.current = thumb ?? null;
-    setThumbTooltipReady(thumb !== null && thumb !== undefined);
 
     if (!main) {
       return;
@@ -92,7 +85,17 @@ export const Slider: React.FC<SliderProps> = ({
       main.removeEventListener('mouseenter', onEnter);
       main.removeEventListener('mouseleave', onLeave);
     };
-  }, [showRailTooltip, id, value]);
+  }, [showRailTooltip, id]);
+
+  React.useLayoutEffect(() => {
+    if (!showRailTooltip || !wrapperRef.current) {
+      return;
+    }
+
+    const thumb = wrapperRef.current.querySelector<HTMLElement>('.pf-v6-c-slider__thumb');
+    thumbTriggerRef.current = thumb ?? null;
+    setThumbTooltipReady(thumb !== null && thumb !== undefined);
+  }, [showRailTooltip, id, displayValue]);
 
   const applyThumbPosition = React.useCallback(
     (valueForPosition: number): void => {
@@ -133,32 +136,83 @@ export const Slider: React.FC<SliderProps> = ({
     latestValueRef.current = displayValue;
   }, [displayValue]);
 
+  React.useEffect(() => {
+    return () => {
+      if (commitListenerRef.current) {
+        commitListenerRef.current();
+        commitListenerRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleRelease = (): void => {
+    if (isDisabled) {
+      return;
+    }
+    onValueCommitRef.current?.(latestValueRef.current);
+  };
+
+  const clearCommitListener = (): void => {
+    if (commitListenerRef.current) {
+      commitListenerRef.current();
+      commitListenerRef.current = null;
+    }
+  };
+
+  const registerCommitOnPointerUp = (): void => {
+    if (!onValueCommit || isDisabled || commitListenerRef.current) {
+      return;
+    }
+
+    const onUp = (): void => {
+      clearCommitListener();
+      handleRelease();
+    };
+
+    const onPointerUp = (): void => onUp();
+    window.addEventListener('pointerup', onPointerUp, true);
+    window.addEventListener('touchend', onPointerUp, true);
+
+    commitListenerRef.current = (): void => {
+      window.removeEventListener('pointerup', onPointerUp, true);
+      window.removeEventListener('touchend', onPointerUp, true);
+    };
+  };
+
+  const handleWrapperPointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (!onValueCommit || isDisabled) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest('button') || target.closest('input')) {
+      return;
+    }
+
+    registerCommitOnPointerUp();
+  };
+
   const handleChange = (event: SliderOnChangeEvent, newValue: number): void => {
     if (isDisabled) {
       return;
     }
-    const capped = valueCap !== undefined && newValue >= valueCap ? valueCap : capValue(newValue);
+    const capped = valueCap !== undefined && newValue >= valueCap ? valueCap : capSliderValue(newValue, min, valueCap);
     latestValueRef.current = capped;
     onChange(event, capped);
+    registerCommitOnPointerUp();
     if (capped !== newValue) {
       applyThumbPosition(capped);
       requestAnimationFrame(() => applyThumbPosition(capped));
     }
   };
 
-  const handleRelease = (): void => {
-    if (isDisabled) {
-      return;
-    }
-    onValueCommit?.(latestValueRef.current);
-  };
-
   return (
     <div
       ref={wrapperRef}
+      data-test={dataTest}
       className={classes(sliderStyle(maxRailWidth, railTrackFill), className)}
-      onMouseUp={onValueCommit ? handleRelease : undefined}
-      onTouchEnd={onValueCommit ? handleRelease : undefined}
+      onPointerDown={onValueCommit ? handleWrapperPointerDown : undefined}
+      onKeyUp={onValueCommit ? handleRelease : undefined}
     >
       {showRailTooltip && thumbTooltipReady ? (
         <Tooltip

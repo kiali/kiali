@@ -16,6 +16,7 @@ import { PFColors } from 'components/Pf/PfColors';
 import { sliderMirroredStyle } from './SliderStyle';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
+import { t } from 'utils/I18nUtils';
 
 const noop = Function.prototype;
 
@@ -103,7 +104,14 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   };
 
   const handleInputChange = (_event: React.FormEvent<HTMLInputElement>, val: string | number): void => {
-    const newValue = clamp(Number(val) || 0);
+    if (typeof val === 'string' && val.trim() === '') {
+      return;
+    }
+    const parsed = Number(val);
+    if (!Number.isFinite(parsed)) {
+      return;
+    }
+    const newValue = clamp(parsed);
     setLocalValue(newValue);
     setTooltipValue(newValue);
     onSlide(newValue);
@@ -116,19 +124,29 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
     onSlideStop(localValue);
   };
 
-  const thumbTooltipContent = `${tooltipValue} ${inputFormat}${mirrored ? ' mirrored traffic' : ''}`;
+  const handleLockClick = (event: React.MouseEvent): void => {
+    event.stopPropagation();
+    onLock(!locked);
+  };
+
+  const handleMirrorClick = (): void => {
+    onMirror(!mirrored);
+  };
+
+  const thumbTooltipContent = mirrored
+    ? t('{{value}} {{format}} mirrored traffic', { value: tooltipValue, format: inputFormat })
+    : `${tooltipValue} ${inputFormat}`.trim();
+
+  const lockTooltipContent = locked ? t('Unlock Weight for this Workload') : t('Lock Weight for this Workload');
 
   const lockAction = showLock ? (
-    <Tooltip position={TooltipPosition.top} content={<>{locked ? 'Unlock' : 'Lock'} Weight for this Workload</>}>
+    <Tooltip position={TooltipPosition.top} content={<>{lockTooltipContent}</>}>
       <Button
         icon={locked ? <PFLockIcon /> : <LockOpenIcon />}
         className={lockButtonStyle}
         isDisabled={mirrored}
         variant={ButtonVariant.plain}
-        onClick={e => {
-          e.stopPropagation();
-          onLock(!locked);
-        }}
+        onClick={handleLockClick}
       />
     </Tooltip>
   ) : null;
@@ -136,13 +154,13 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
   const mirrorAction = showMirror ? (
     <Tooltip
       position={TooltipPosition.top}
-      content={<>{mirrored ? 'Cancel mirroring traffic to this workload' : 'Mirror traffic to this workload'}</>}
+      content={<>{mirrored ? t('Cancel mirroring traffic to this workload') : t('Mirror traffic to this workload')}</>}
     >
       <Button
         icon={<MigrationIcon />}
         className={lockButtonStyle}
         variant={ButtonVariant.plain}
-        onClick={() => onMirror(!mirrored)}
+        onClick={handleMirrorClick}
       />
     </Tooltip>
   ) : null;
@@ -152,8 +170,8 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       <InputGroupItem>
         <TextInput
           className={inputStyle}
-          id="slider-text"
-          aria-label="slider-text"
+          id={`${id}-text`}
+          aria-label={t('Traffic weight')}
           value={localValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
@@ -188,6 +206,7 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
           onMouseDown={e => e.stopPropagation()}
           onMouseUp={e => e.stopPropagation()}
           onTouchEnd={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
         >
           {inputAction}
           {mirrorAction}
