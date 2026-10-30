@@ -3,7 +3,7 @@ import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import { Slider as PFSlider, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { capSliderValue } from './sliderValue';
-import { sliderRailFillCssVar, sliderStyle } from './SliderStyle';
+import { sliderRailFillStyle, sliderStyle } from './SliderStyle';
 
 export type SliderProps = {
   className?: string;
@@ -118,19 +118,8 @@ export const Slider: React.FC<SliderProps> = ({
   }, [applyThumbPosition, displayValue]);
 
   React.useLayoutEffect(() => {
-    const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
-    if (!sliderRoot) {
-      return;
-    }
-
-    if (railTrackFill) {
-      sliderRoot.style.setProperty(sliderRailFillCssVar, railTrackFill);
-    } else {
-      sliderRoot.style.removeProperty(sliderRailFillCssVar);
-    }
-
     syncSliderThumbPosition();
-  }, [displayValue, max, min, railTrackFill, id, value, syncSliderThumbPosition]);
+  }, [displayValue, max, min, id, value, syncSliderThumbPosition]);
 
   React.useEffect(() => {
     latestValueRef.current = displayValue;
@@ -210,7 +199,7 @@ export const Slider: React.FC<SliderProps> = ({
     <div
       ref={wrapperRef}
       data-test={dataTest}
-      className={classes(sliderStyle(maxRailWidth, railTrackFill), className)}
+      className={classes(sliderStyle(maxRailWidth), railTrackFill && sliderRailFillStyle(railTrackFill), className)}
       onPointerDown={onValueCommit ? handleWrapperPointerDown : undefined}
       onKeyUp={onValueCommit ? handleRelease : undefined}
     >
