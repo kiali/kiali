@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/config"
@@ -74,7 +75,9 @@ func (aHandler *AuthenticationHandler) Handle(next http.Handler) http.Handler {
 		case config.AuthStrategyToken, config.AuthStrategyOpenId, config.AuthStrategyOpenshift, config.AuthStrategyHeader:
 			sessions, err := aHandler.authController.ValidateSession(r, w)
 			if err != nil {
-				if errors.Is(err, authentication.ErrSessionNotFound) {
+				// Namespace-access checks return Kubernetes unauthorized errors.
+				// Treat them as session expiry so the UI and cleanup follow the 401 path.
+				if errors.Is(err, authentication.ErrSessionNotFound) || k8serrors.IsUnauthorized(err) {
 					statusCode = http.StatusUnauthorized
 				} else {
 					log.Errorf("Failed to validate session: %s", err.Error())
