@@ -166,6 +166,7 @@ Key fields:
 | `Rates.Ambient` | string | `"total"` | `"none"` \| `"total"` \| `"waypoint"` \| `"ztunnel"` |
 | `BoxBy` | string | `"none"` | `"app"` \| `"cluster"` \| `"namespace"` \| `"none"` |
 | `Appenders` | `RequestedAppenders` | all | Comma-separated appender names, or all |
+| `AccessibleNamespaces` | `AccessibleNamespaces` | — | The requesting user's accessible namespaces, keyed by `cluster/namespace`. Authoritative scoping for appender fetches |
 | `SessionID` | string | — | Browser session cookie value (for cache keying) |
 | `RefreshInterval` | `time.Duration` | — | Requested background refresh interval |
 
@@ -285,6 +286,8 @@ type Appender[T any] interface {
 - `ServiceLists` — service lists per namespace
 - `WorkloadLists` — workload lists per namespace
 - `WorkloadMap` — workload-to-node mapping (finalizers only)
+
+**Namespace authorization in appenders**: `globalInfo.Clusters` spans every Kiali-visible cluster, but the user only holds clients for the clusters they have a session on. Any appender doing cluster-wide fetches (the `IstioAppender`'s service lists and Istio config, the `ServiceEntryAppender`, the `WorkloadEntryAppender`) must carry `TelemetryOptions.AccessibleNamespaces` and skip clusters without a user client — `AccessibleNamespaces.HasCluster(name)` reports whether one exists. An unguarded cluster-wide fetch panics in `graph.CheckError` and fails the whole graph with a 500 for any user not logged into every cluster. Nodes from skipped clusters render without that appender's decoration. New appenders must follow the same pattern; see "Namespace Access Control" in `docs/agents/auth-and-security.md`.
 
 ### Appender execution order
 

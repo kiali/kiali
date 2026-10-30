@@ -186,7 +186,7 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		// Check if the namespace exists on the cluster in multi-cluster mode.
 		// TODO: Remove this once other business methods stop looping over all clusters.
-		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err)) && len(in.userClients) > 1 {
+		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err) || IsAccessibleError(err)) && len(in.userClients) > 1 {
 			return &models.IstioConfigList{}, nil
 		}
 		return nil, err
@@ -267,7 +267,14 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 
 	userClient := in.userClients[cluster]
 	if userClient == nil {
-		return nil, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+		// A cluster the requesting user has no client for (no session on it,
+		// in non-impersonation mode) lists nothing for them: return the empty
+		// list rather than an error, matching the other cluster-scoped list
+		// endpoints. The data below comes from the SA-backed cache, but the
+		// callers filter it by the user's accessible namespaces, which are
+		// empty for a cluster the user has no client on.
+		log.FromContext(ctx).Debug().Msgf("No user client for cluster [%s]: returning empty Istio config list", cluster)
+		return istioConfigList, nil
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""

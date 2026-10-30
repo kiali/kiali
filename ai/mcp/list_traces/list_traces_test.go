@@ -379,7 +379,13 @@ func TestExecute_WithTraces_Returns200WithSummary(t *testing.T) {
 				ProcessID:     "p1",
 				StartTime:     1000,
 				Duration:      5000,
-				Tags:          []jaegerModels.KeyValue{{Key: "http.status_code", Type: "string", Value: "200"}},
+				// The trace lists are authorized per trace against the
+				// requested namespace; a span without namespace information
+				// would be filtered out (fail closed).
+				Tags: []jaegerModels.KeyValue{
+					{Key: "http.status_code", Type: "string", Value: "200"},
+					{Key: "istio.namespace", Type: "string", Value: "bookinfo"},
+				},
 			},
 		},
 	}

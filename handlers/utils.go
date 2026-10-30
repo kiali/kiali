@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/business"
@@ -23,32 +24,53 @@ import (
 
 const defaultPatchType = "merge"
 
-// checkNamespaceAccess is used when the service will query across all clusters for the namespace.
-// It will return an error if the user does not have access to the namespace on all of the clusters.
-func checkNamespaceAccess(
+// respondNamespaceAccessError writes 403 for an access denial and 500 when
+// the accessible set could not be computed (fail closed). It is the single
+// mapping used by every namespace gate so the status text cannot diverge
+// between endpoints.
+func respondNamespaceAccessError(w http.ResponseWriter, err error) {
+	if business.IsAccessibleError(err) {
+		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+		return
+	}
+	RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+}
+
+// respondNamespaceNotAccessible writes the 403 for a namespace that is not
+// in the accessible set (used where there is no error value to wrap).
+func respondNamespaceNotAccessible(w http.ResponseWriter, namespace string) {
+	RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: namespace ["+namespace+"] is not accessible")
+}
+
+// namespaceServiceForRequest builds the request user's NamespaceService,
+// writing the 500 and returning nil if the user clients cannot be created.
+func namespaceServiceForRequest(
 	w http.ResponseWriter,
 	r *http.Request,
 	conf *config.Config,
-	cache cache.KialiCache,
+	kialiCache cache.KialiCache,
 	discovery istio.MeshDiscovery,
 	clientFactory kubernetes.ClientFactory,
-	namespace string,
-	cluster string,
-) (*models.Namespace, error) {
+) *business.NamespaceService {
 	userClients, err := getUserClients(r, clientFactory)
 	if err != nil {
 		log.Errorf("Unable to create user clients from token: %s", err)
 		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
-		return nil, err
+		return nil
 	}
-
-	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
-	return checkNamespaceAccessWithService(w, r, &namespaceService, namespace, cluster)
+	ns := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+	return &ns
 }
 
-// checkNamespaceAccessWithService is used when the service will query across all clusters for the namespace.
-// It will return an error if the user does not have access to the namespace on all of the clusters.
-func checkNamespaceAccessWithService(
+// checkNamespaceAccessOn is the core of the canonical namespace gate: it
+// authorizes the user for the given namespace against their accessible set
+// via the given NamespaceService (GetClusterNamespace, which is resolved from
+// the namespace LIST — or from per-namespace GETs when require_namespace_get
+// is enabled — and cached per token). It returns the namespace metadata
+// (callers need CreationTimestamp for rate-interval bounding) or an error,
+// with the error response already written: 403 when the namespace is not in
+// the accessible set, 500 when the set cannot be computed (fail closed).
+func checkNamespaceAccessOn(
 	w http.ResponseWriter,
 	r *http.Request,
 	namespaceService *business.NamespaceService,
@@ -57,23 +79,17 @@ func checkNamespaceAccessWithService(
 ) (*models.Namespace, error) {
 	ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
 	if err != nil {
-		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+		respondNamespaceAccessError(w, err)
 		return nil, err
 	}
-
 	return ns, nil
 }
 
-// checkNamespaceAccessWithList authorizes the user for the given namespace
-// against their accessible namespace set (NamespaceService.GetClusterNamespaces),
-// which is computed from the namespace LIST (or from per-namespace GETs when
-// require_namespace_get is enabled) and cached per token.
-//
-// Unlike checkNamespaceAccess, it does not fall through to a per-namespace GET
-// on a cache miss, so callers that are authorized through namespace LIST are
-// not intermittently rejected when the per-token namespace cache expires. Use
-// this for new call sites; the GET-based resolution of checkNamespaceAccess is
-// pre-existing behavior on older endpoints, to be reconciled separately.
+// checkNamespaceAccessWithList is the canonical handler gate for handlers
+// that do not already hold a business layer: it builds the request's
+// NamespaceService and applies checkNamespaceAccessOn. Handlers that already
+// built a layer can pass its Namespace service to checkNamespaceAccessOn
+// directly.
 func checkNamespaceAccessWithList(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -83,76 +99,81 @@ func checkNamespaceAccessWithList(
 	clientFactory kubernetes.ClientFactory,
 	namespace string,
 	cluster string,
-) error {
-	userClients, err := getUserClients(r, clientFactory)
-	if err != nil {
-		log.Errorf("Unable to create user clients from token: %s", err)
-		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
-		return err
+) (*models.Namespace, error) {
+	namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
+	if namespaceService == nil {
+		return nil, errors.New("unable to create user clients")
 	}
-
-	namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
-	accessibleNamespaces, err := namespaceService.GetClusterNamespaces(r.Context(), cluster)
-	if err != nil {
-		// Fail closed: if the accessible set cannot be determined, reject.
-		RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
-		return err
-	}
-
-	for _, ns := range accessibleNamespaces {
-		if ns.Name == namespace {
-			return nil
-		}
-	}
-
-	err = fmt.Errorf("namespace [%s] is not accessible in cluster [%s]", namespace, cluster)
-	RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
-	return err
+	return checkNamespaceAccessOn(w, r, namespaceService, namespace, cluster)
 }
 
-// checkNamespaceAccessMultiCluster returns namespace metadata from every cluster where the
-// namespace exists and the user can access it. Missing namespaces on a cluster are skipped.
-// It writes 403 when access is denied, 404 when the namespace is absent on all clusters.
-func checkNamespaceAccessMultiCluster(
+// checkNamespaceAccessAllSAClusters authorizes the user for the given
+// namespace across every SA-visible cluster (see
+// NamespaceService.CheckNamespaceAccessAllClusters). Use it for handlers
+// whose underlying query is not cluster-scoped (e.g. Prometheus queries
+// built without a cluster label) — for those, a cluster the user cannot see
+// must deny the request rather than be skipped, or that cluster's data
+// would be served. It returns the namespace entries from the clusters where
+// it is accessible. It writes 403 when denied, 500 on home-cluster errors,
+// and 404 when absentIsNotFound is set and the namespace exists in no
+// cluster.
+func checkNamespaceAccessAllSAClusters(
 	w http.ResponseWriter,
 	r *http.Request,
 	conf *config.Config,
-	cache cache.KialiCache,
+	kialiCache cache.KialiCache,
 	discovery istio.MeshDiscovery,
 	clientFactory kubernetes.ClientFactory,
 	namespace string,
+	absentIsNotFound bool,
 ) ([]models.Namespace, error) {
-	var nsInfo []models.Namespace
-	userClients, err := getUserClients(r, clientFactory)
+	namespaceService := namespaceServiceForRequest(w, r, conf, kialiCache, discovery, clientFactory)
+	if namespaceService == nil {
+		return nil, errors.New("unable to create user clients")
+	}
+
+	accessible, err := namespaceService.CheckNamespaceAccessAllClusters(r.Context(), namespace)
 	if err != nil {
-		log.Errorf("Unable to create user clients from token: %s", err)
-		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
+		respondNamespaceAccessError(w, err)
 		return nil, err
 	}
 
-	namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
-
-	for _, cluster := range namespaceService.GetClusterList() {
-		// Do not use checkNamespaceAccessWithService here because it writes a
-		// forbidden response before we can ignore a namespace that is simply
-		// absent from this cluster.
-		ns, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
-		if err != nil {
-			if k8serrors.IsNotFound(err) {
-				continue
-			}
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
-			return nil, nil
-		}
-		nsInfo = append(nsInfo, *ns)
-	}
-
-	if len(nsInfo) == 0 {
+	if len(accessible) == 0 && absentIsNotFound {
 		RespondWithError(w, http.StatusNotFound, "Namespace ["+namespace+"] was not found in any cluster")
 		return nil, nil
 	}
 
-	return nsInfo, nil
+	return accessible, nil
+}
+
+// accessibleNamespaceNames returns the user's accessible namespace names for
+// the cluster, narrowed to namespacesParam (a comma-separated list) when it
+// is set. It writes a 500 and returns false if the accessible set cannot be
+// computed (fail closed).
+func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer *business.Layer, cluster, namespacesParam string) ([]string, bool) {
+	accessible, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		// Fail closed: if the accessible set cannot be determined, reject
+		// rather than return an empty (200) result set.
+		RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+		return nil, false
+	}
+
+	names := make([]string, 0, len(accessible))
+	if namespacesParam == "" {
+		for _, ns := range accessible {
+			names = append(names, ns.Name)
+		}
+		return names, true
+	}
+
+	requested := strings.Split(namespacesParam, ",")
+	for _, ns := range accessible {
+		if slices.Contains(requested, ns.Name) {
+			names = append(names, ns.Name)
+		}
+	}
+	return names, true
 }
 
 // GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the

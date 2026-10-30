@@ -10,8 +10,12 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	clientsetfake "k8s.io/client-go/kubernetes/fake"
+	kubeclienttesting "k8s.io/client-go/testing"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/prometheus/prometheustest"
@@ -468,12 +472,54 @@ func TestGetAppTracingNameNoWaypoints(t *testing.T) {
 
 	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
 
-	tracingName := svc.GetAppTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "Namespace", "httpbin")
+	tracingName, err := svc.GetAppTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "Namespace", "httpbin")
+	require.NoError(err)
 
 	require.Equal("httpbin", tracingName.App)
 	assert.Equal("httpbin", tracingName.Lookup)
 	assert.Empty(tracingName.WaypointName)
 	assert.Empty(tracingName.WaypointNamespace)
+}
+
+// TestGetAppTracingNameNotFoundKeepsFallback pins the NotFound-preserving
+// behavior: GetAppDetails returns NotFound when no workload carries the app
+// label (scaled to zero, deleted, VM apps) and the caller-supplied fallback
+// keeps traces working for them.
+func TestGetAppTracingNameNotFoundKeepsFallback(t *testing.T) {
+	conf := config.NewConfig()
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Namespace"))
+	svc := setupAppService(t, map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: k8s})
+
+	tracingName, err := svc.GetAppTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "Namespace", "no-such-app")
+	require.NoError(t, err)
+	assert.Equal(t, "no-such-app", tracingName.App)
+	assert.Equal(t, "no-such-app", tracingName.Lookup)
+}
+
+// TestGetAppTracingNameAccessErrorPropagates pins the fail-open fix: an
+// access denial (or any non-NotFound error) must propagate instead of being
+// replaced by the raw caller-supplied app name.
+func TestGetAppTracingNameAccessErrorPropagates(t *testing.T) {
+	conf := config.NewConfig()
+	// A user whose LIST excludes the namespace entirely.
+	sa := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Namespace"))
+	user := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("Namespace"))
+	user.CacheKey = "restricted-user"
+	if cs, ok := user.KubeClientset.(*clientsetfake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, &core_v1.NamespaceList{}, nil
+		})
+	}
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: sa}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	layer := newLayer(userClients, saClients, nil, nil, kialiCache, conf, nil, discovery, nil)
+	svc := layer.App
+
+	_, err := svc.GetAppTracingName(context.TODO(), conf.KubernetesConfig.ClusterName, "Namespace", "httpbin")
+	require.Error(t, err)
+	assert.True(t, IsAccessibleError(err))
 }
 
 func TestJoinMap(t *testing.T) {

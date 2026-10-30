@@ -58,6 +58,8 @@ svc := MyService{
 
 Flag: any struct with fields in non-alphabetical order. Reference: `AGENTS.md`.
 
+**Accepted exception:** `models.IstioValidationKey` keeps its historical field order (`ObjectGVK, Name, Namespace, Cluster`), and its literals follow that order throughout the checkers. Do not flag or reorder these.
+
 ### Comments
 
 Comments must explain **why**, not **what**. Describing what the code does is redundant — the code itself says that.
@@ -93,9 +95,12 @@ if err != nil {
 
 `handleErrorResponse()` handles the full mapping:
 - `business.IsAccessibleError(err)` → 403
+- `k8s errors.IsForbidden(err)` (API server rejected the user's own credentials) → 403
 - `k8s errors.IsNotFound(err)` → 404
 - `errors.IsServiceUnavailable(err)` → 503
-- Everything else → 500
+- Everything else → 500 (including k8s Unauthorized — never 401: the frontend's global axios interceptor ends the session on any 401, and k8s Unauthorized can come from a remote-cluster credential rather than the user's session)
+
+**Accepted exception — the canonical namespace gate:** the gate helpers in `handlers/utils.go` (`respondNamespaceAccessError`, `respondNamespaceNotAccessible`) deliberately write the 403/500 themselves instead of going through `handleErrorResponse()`: the gate must produce one fixed message ("Cannot access namespace data: …") so the status text cannot diverge between endpoints, and set-computation failures map to a flat 500 per the plan's error-code contract for the canonical gate (a NotFound or ServiceUnavailable during set computation is still "could not determine access" → 500). Do not flag the gate helpers for bypassing `handleErrorResponse()`; do flag other handlers that hand-roll status codes the gate helpers already cover.
 
 Flag: handlers that manually set error HTTP status codes instead of using `handleErrorResponse()`.
 
@@ -177,5 +182,7 @@ Flag: `ReduxProps` type definitions with fields in non-alphabetical order.
 
 | Date | Change | Trigger |
 |------|--------|---------|
+| 2026-10-29 | Document the canonical namespace gate's 403/500 contract as an accepted exception to the handleErrorResponse rule; add k8s Forbidden→403 and Unauthorized-stays-500 to the mapping list | PR #10448 review (cross-unit finding #1) |
+| 2026-10-29 | Document `models.IstioValidationKey` field order as accepted exception to struct ordering rule | PR #10448 review (IMP-7) |
 | 2026-04-24 | Refresh: verify existing conventions current, no changes needed | /code-reviewer:setup (refresh) |
 | 2026-04-08 | Initial generation | /code-reviewer:setup |

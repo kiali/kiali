@@ -125,11 +125,20 @@ func (nss Namespaces) GetNamespace(namespace, cluster string) *Namespace {
 }
 
 func (nss Namespaces) GetNames() []string {
-	names := make([]string, len(nss))
+	// Capacity only: appending to a slice preallocated with len(nss) would
+	// yield len(nss) leading empty strings before the real names.
+	names := make([]string, 0, len(nss))
 	for _, ns := range nss {
 		names = append(names, ns.Name)
 	}
 	return names
+}
+
+// ClusterNamespaceKey builds a composite map key for a (cluster, namespace)
+// pair. The NUL separator cannot occur in either name, so distinct pairs
+// cannot collide.
+func ClusterNamespaceKey(cluster, namespace string) string {
+	return cluster + "\x00" + namespace
 }
 
 func (nsn NamespaceNames) Includes(namespace string) bool {

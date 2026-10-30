@@ -33,7 +33,6 @@ const (
 type ClientInterface interface {
 	GetAppTraces(ctx context.Context, ns, app string, query models.TracingQuery) (traces *model.TracingResponse, err error)
 	GetTraceDetail(ctx context.Context, traceId string) (*model.TracingSingleTrace, error)
-	GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (errorTraces int, err error)
 	GetServiceStatus(ctx context.Context) (available bool, err error)
 	GetServices(ctx context.Context) ([]string, error)
 }
@@ -258,30 +257,6 @@ func (in *Client) GetTraceDetail(ctx context.Context, strTraceID string) (*model
 		}
 	}
 	return in.grpcClient.GetTrace(ctx, strTraceID)
-}
-
-// GetErrorTraces fetches number of traces in error for the given app
-func (in *Client) GetErrorTraces(ctx context.Context, ns, app string, duration time.Duration) (int, error) {
-	// Note: grpc vs http switch is performed in subsequent call 'GetAppTraces'
-	now := time.Now()
-	query := models.TracingQuery{
-		Start: now.Add(-duration),
-		End:   now,
-		Tags:  map[string]string{"error": "true"},
-	}
-	for key, value := range config.Get().ExternalServices.Tracing.QueryScope {
-		query.Tags[key] = value
-	}
-
-	// create a timer to time the tracing query. Note that we will always take the measurement even on failure
-	promtimer := internalmetrics.GetTracingProcessingTimePrometheusTimer("ErrorTraces")
-	defer internalmetrics.ObserveDurationAndLogResults(ctx, config.Get(), promtimer, "TracingProcessingTime", nil, "ErrorTraces")
-
-	traces, err := in.GetAppTraces(ctx, ns, app, query)
-	if err != nil {
-		return 0, err
-	}
-	return len(traces.Data), nil
 }
 
 func (in *Client) GetServiceStatus(ctx context.Context) (bool, error) {

@@ -80,7 +80,10 @@ func IstioConfigList(
 				istioConfig.IstioValidations, err = business.Validations.GetValidations(r.Context(), cluster)
 			}
 			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Error while getting validations: "+err.Error())
+				// A denied namespace surfaces as an AccessibleNamespaceError:
+				// 403 like every other namespace-scoped read on this endpoint,
+				// not a 500.
+				handleErrorResponse(w, err)
 				return
 			}
 
@@ -161,7 +164,7 @@ func IstioConfigDetails(
 					loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 					for _, ns := range loadedNamespaces {
 						if sliceutil.SomeString(exportTo, ns.Name) && ns.Name != namespace {
-							istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObject(r.Context(), cluster, ns.Name, gvk, object)
+							istioConfigValidationResults, istioConfigReferencesResults, err := business.Validations.ValidateIstioObjectFromNamespace(r.Context(), cluster, namespace, ns.Name, gvk, object)
 							if err != nil {
 								validationsResult <- err
 							}
@@ -460,7 +463,13 @@ func IstioConfigValidationSummary(
 		}
 
 		if len(nss) == 0 {
-			loadedNamespaces, _ := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			// Fail closed: if the accessible set cannot be determined, reject
+			// rather than return an empty (200) result set.
+			loadedNamespaces, errNs := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
+			if errNs != nil {
+				RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+errNs.Error())
+				return
+			}
 			for _, ns := range loadedNamespaces {
 				nss = append(nss, ns.Name)
 			}
@@ -471,7 +480,9 @@ func IstioConfigValidationSummary(
 			istioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cluster, ns)
 			if errValidations != nil {
 				log.FromRequest(r).Error().Msg(errValidations.Error())
-				RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
+				// An inaccessible namespace is an authorization failure (403),
+				// not a server error.
+				handleErrorResponse(w, errValidations)
 				return
 			}
 			validationSummaries = append(validationSummaries, *istioConfigValidationResults.SummarizeValidation(ns, cluster))

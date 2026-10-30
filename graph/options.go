@@ -114,6 +114,19 @@ type AccessibleNamespace struct {
 // AccessibleNamepaces is a map with Key: ClusterSensitive namespace Key, Value: *AccessibleNamespace
 type AccessibleNamespaces map[ClusterSensitiveKey]*AccessibleNamespace
 
+// HasCluster reports whether the user has at least one accessible namespace in
+// the cluster, which implies a user client exists for it. Graph appenders use
+// this to skip clusters the requesting user has no session for: a cluster-wide
+// fetch has no client to run on there and must be skipped, not fail the graph.
+func (a AccessibleNamespaces) HasCluster(cluster string) bool {
+	for _, ns := range a {
+		if ns.Cluster == cluster {
+			return true
+		}
+	}
+	return false
+}
+
 // TelemetryOptions are those supplied to Telemetry Vendors
 type TelemetryOptions struct {
 	AccessibleNamespaces AccessibleNamespaces

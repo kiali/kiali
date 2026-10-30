@@ -385,7 +385,11 @@ func runBenchmark(b *testing.B, s benchScenario) {
 	for i := 0; i < b.N; i++ {
 		gi := graph.NewGlobalInfo(biz, nil, conf, clusters, NewGlobalIstioInfo())
 		gi.Clusters = clusters
-		a := IstioAppender{}
+		a := IstioAppender{
+			AccessibleNamespaces: graph.AccessibleNamespaces{
+				graph.GetClusterSensitiveKey(conf.KubernetesConfig.ClusterName, "testNamespace"): {Cluster: conf.KubernetesConfig.ClusterName, Name: "testNamespace"},
+			},
+		}
 		a.AppendGraph(context.Background(), trafficMap, gi, nil)
 	}
 }

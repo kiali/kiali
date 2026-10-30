@@ -50,7 +50,7 @@ func newLayer(
 	temporaryLayer.App = NewAppService(temporaryLayer, conf, cache, prom, grafana, userClients)
 	temporaryLayer.Health = NewHealthService(temporaryLayer, conf, cache, prom, userClients)
 	temporaryLayer.IstioConfig = IstioConfigService{conf: conf, userClients: userClients, saClients: kialiSAClients, kialiCache: cache, businessLayer: temporaryLayer, controlPlaneMonitor: cpm}
-	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload, &temporaryLayer.Health)
+	temporaryLayer.IstioStatus = NewIstioStatusService(cache, conf, discovery, kialiSAClients[homeClusterName], &temporaryLayer.Tracing, userClients, &temporaryLayer.Workload, &temporaryLayer.Health, &temporaryLayer.Namespace)
 	temporaryLayer.Namespace = NewNamespaceService(cache, conf, discovery, kialiSAClients, userClients)
 	temporaryLayer.Mesh = NewMeshService(conf, discovery, kialiSAClients)
 	temporaryLayer.ProxyStatus = NewProxyStatusService(conf, cache, discovery, kialiSAClients, &temporaryLayer.Namespace)
@@ -60,7 +60,7 @@ func newLayer(
 	temporaryLayer.TLS = TLSService{conf: conf, discovery: discovery, userClients: userClients, kialiCache: cache, businessLayer: temporaryLayer}
 	temporaryLayer.Validations = NewValidationsService(conf, &temporaryLayer.IstioConfig, cache, &temporaryLayer.Mesh, &temporaryLayer.Namespace, &temporaryLayer.Svc, userClients, &temporaryLayer.Workload)
 	temporaryLayer.Workload = *NewWorkloadService(cache, conf, grafana, kialiSAClients, temporaryLayer, prom, userClients)
-	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload, &temporaryLayer.App)
+	temporaryLayer.Tracing = NewTracingService(conf, traceClient, &temporaryLayer.Svc, &temporaryLayer.Workload, &temporaryLayer.App, &temporaryLayer.Namespace)
 	return temporaryLayer
 }
 

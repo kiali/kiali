@@ -44,9 +44,10 @@ func CustomDashboard(
 			return
 		}
 
-		info, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
+		// The canonical gate writes the error response itself; the previous
+		// checkNamespaceAccessWithService call wrote a second response here.
+		info, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return
 		}
 
@@ -151,7 +152,7 @@ func AppDashboard(
 		app := vars["app"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			return
 		}
@@ -198,9 +199,8 @@ func ServiceDashboard(
 			return
 		}
 
-		namespaceInfo, err := checkNamespaceAccessWithService(w, r, &layer.Namespace, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
-			RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 			return
 		}
 
@@ -248,7 +248,7 @@ func WorkloadDashboard(
 		workload := vars["workload"]
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, err := checkNamespaceAccess(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
+		namespaceInfo, err := checkNamespaceAccessWithList(w, r, conf, cache, discovery, clientFactory, namespace, cluster)
 		if err != nil {
 			return
 		}
@@ -286,9 +286,17 @@ func ZtunnelDashboard(
 
 		cluster := queryparams.ClusterName(conf, r.URL.Query())
 
-		namespaceInfo, _ := checkNamespaceAccessMultiCluster(w, r, conf, cache, discovery, clientFactory, namespace)
+		// The ztunnel metrics query carries no cluster label, so this must be
+		// authorized across every SA-visible cluster where the namespace
+		// exists (a cluster the user cannot see must deny the request, or
+		// its data would be blended into the response).
+		namespaceInfo, err := checkNamespaceAccessAllSAClusters(w, r, conf, cache, discovery, clientFactory, namespace, true)
+		if err != nil {
+			// 403/500 already written.
+			return
+		}
 		if namespaceInfo == nil {
-			// any returned value nil means error & response already written
+			// 404 (absent in every cluster) already written.
 			return
 		}
 

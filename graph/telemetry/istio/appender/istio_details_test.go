@@ -86,7 +86,11 @@ func TestCBAll(t *testing.T) {
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
-	a := IstioAppender{}
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
@@ -150,7 +154,11 @@ func TestCBSubset(t *testing.T) {
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
-	a := IstioAppender{}
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
@@ -200,7 +208,11 @@ func TestVS(t *testing.T) {
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
-	a := IstioAppender{}
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(7, len(trafficMap))
@@ -259,7 +271,11 @@ func TestVSWithRoutingBadges(t *testing.T) {
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
-	a := IstioAppender{}
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	assert.Equal(true, trafficMap[fooSvcNodeId].Metadata[graph.HasTrafficShifting])
@@ -297,8 +313,49 @@ func TestSEInAppBox(t *testing.T) {
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}}
 	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
 
-	a := IstioAppender{}
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
 	a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 
 	check.Equal("fooApp", trafficMap[serviceEntryNode.ID].App)
+}
+
+// TestSkipsClustersWithoutUserClient ensures the appender skips clusters the
+// requesting user has no client for (no session on that cluster) instead of
+// failing the whole graph: globalInfo.Clusters spans every Kiali-visible
+// cluster, but the business layer only holds user clients for the session's
+// clusters, and the cluster-wide fetches error on a missing client.
+func TestSkipsClustersWithoutUserClient(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	trafficMap, _, _, _, _, _, _, _ := setupTrafficMap()
+
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	// Two discovery clusters; the user only has a session (user client) on the home cluster.
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
+
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+		},
+	}
+
+	// Must not panic: the unguarded appender fails here via CheckError on the remote cluster.
+	assert.NotPanics(func() {
+		a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
+	})
+
+	// The accessible cluster's fetches ran; the inaccessible cluster contributed nothing.
+	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
+	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster")
 }

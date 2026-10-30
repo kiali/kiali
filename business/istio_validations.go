@@ -68,8 +68,134 @@ type ReferenceChecker interface {
 }
 
 func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster string) (models.IstioValidations, error) {
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster), nil
+	// A cluster the requesting user has no client for (no session on it, in
+	// non-impersonation mode) has nothing to validate for them: return the
+	// empty set rather than an error, matching the cluster-scoped istio
+	// config list this is attached to (the sibling /api/istio/validations
+	// route already degrades to an empty summary for the same condition).
+	// Namespace-scoped reads keep failing closed with 403 via
+	// accessibleNamespaceSet.
+	if in.userClients[cluster] == nil {
+		return models.IstioValidations{}, nil
+	}
+
+	// The validations cache is populated by the Kiali ServiceAccount, so the
+	// Kubernetes API cannot enforce the user's RBAC here: filter the
+	// validations (and their references) to the namespaces in the user's
+	// accessible set for the cluster. Fail closed when the set cannot be
+	// computed.
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	validations := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster)
+	filtered := models.IstioValidations{}
+	for key, validation := range validations {
+		// Filter on the KEY's namespace, not the value's: several checkers
+		// (e.g. the gateway multimatch checkers) build the IstioValidation
+		// value without setting its Namespace field, and only the key carries
+		// it reliably. GetValidationsForNamespace matches on the key too.
+		if _, ok := accessible[key.Namespace]; !ok {
+			continue
+		}
+		filtered[key] = pruneInaccessibleReferences(validation, accessible)
+	}
+	return filtered, nil
+}
+
+// accessibleNamespaceSet resolves the user's accessible namespaces for the
+// cluster into a lookup set used to authorization-filter SA-backed
+// validations. Fails closed when the set cannot be computed. The per-cluster
+// path is used rather than the GetNamespaces union: the namespace gates in
+// the callers resolve and cache exactly this token+cluster entry, so this is
+// a cache hit in any topology (the union could also warm unrelated clusters'
+// entries on a cold token cache, only to filter them away), and a cluster
+// with no user client surfaces as an AccessibleNamespaceError (403, "no
+// client means denied") rather than an empty set.
+func (in *IstioValidationsService) accessibleNamespaceSet(ctx context.Context, cluster string) (map[string]struct{}, error) {
+	accessibleNamespaces, err := in.namespace.getClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+	accessible := make(map[string]struct{}, len(accessibleNamespaces))
+	for _, ns := range accessibleNamespaces {
+		accessible[ns.Name] = struct{}{}
+	}
+	return accessible, nil
+}
+
+// pruneInaccessibleReferences returns a copy of the validation with
+// references that point into namespaces outside the accessible set removed,
+// so object names in denied namespaces are not disclosed through references.
+// The map values are pointers into the shared SA-populated cache and must not
+// be mutated, hence the copy.
+func pruneInaccessibleReferences(validation *models.IstioValidation, accessible map[string]struct{}) *models.IstioValidation {
+	filteredValidation := *validation
+	filteredValidation.References = accessibleReferences(validation.References, accessible)
+	return &filteredValidation
+}
+
+// referenceAccessible reports whether a reference may be returned to the
+// user: references to non-namespaced objects (e.g. the reserved "mesh"
+// gateway, Namespace == "") disclose no namespace and are kept, while
+// namespaced references must point into the user's accessible set. Both
+// pruning helpers go through it so they cannot drift.
+func referenceAccessible(namespace string, accessible map[string]struct{}) bool {
+	if namespace == "" {
+		return true
+	}
+	_, ok := accessible[namespace]
+	return ok
+}
+
+// accessibleReferences returns only the references that may be shown to the
+// user (see referenceAccessible). A nil input stays nil so the pruning does
+// not change the response shape of entries without references.
+func accessibleReferences(references []models.IstioValidationKey, accessible map[string]struct{}) []models.IstioValidationKey {
+	if references == nil {
+		return nil
+	}
+	filteredReferences := make([]models.IstioValidationKey, 0, len(references))
+	for _, ref := range references {
+		if referenceAccessible(ref.Namespace, accessible) {
+			filteredReferences = append(filteredReferences, ref)
+		}
+	}
+	return filteredReferences
+}
+
+// pruneInaccessibleObjectReferences returns a copy of the on-demand
+// validation references with entries the user may not see removed, so
+// object, service and workload names in denied namespaces are not disclosed
+// through the references map. Non-namespaced references are kept (see
+// referenceAccessible). Copy before pruning: the values may be shared with
+// other callers.
+func pruneInaccessibleObjectReferences(references *models.IstioReferences, accessible map[string]struct{}) *models.IstioReferences {
+	if references == nil {
+		return nil
+	}
+	filtered := models.IstioReferences{
+		ObjectReferences:   make([]models.IstioReference, 0, len(references.ObjectReferences)),
+		ServiceReferences:  make([]models.ServiceReference, 0, len(references.ServiceReferences)),
+		WorkloadReferences: make([]models.WorkloadReference, 0, len(references.WorkloadReferences)),
+	}
+	for _, ref := range references.ObjectReferences {
+		if referenceAccessible(ref.Namespace, accessible) {
+			filtered.ObjectReferences = append(filtered.ObjectReferences, ref)
+		}
+	}
+	for _, ref := range references.ServiceReferences {
+		if referenceAccessible(ref.Namespace, accessible) {
+			filtered.ServiceReferences = append(filtered.ServiceReferences, ref)
+		}
+	}
+	for _, ref := range references.WorkloadReferences {
+		if referenceAccessible(ref.Namespace, accessible) {
+			filtered.WorkloadReferences = append(filtered.WorkloadReferences, ref)
+		}
+	}
+	return &filtered
 }
 
 func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Context, cluster, namespace string) (models.IstioValidations, error) {
@@ -79,10 +205,20 @@ func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Contex
 		return nil, err
 	}
 
+	// The validations cache is populated by the Kiali ServiceAccount, so the
+	// Kubernetes API cannot enforce the user's RBAC on the references attached
+	// to the returned entries: prune references into namespaces outside the
+	// user's accessible set, the same way the cluster-wide GetValidations
+	// does. Fail closed when the set cannot be computed.
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
 	namespaceValidations := models.IstioValidations{}
 	for validationKey, validation := range in.kialiCache.Validations().Items() {
 		if validationKey.Namespace == namespace && validationKey.Cluster == cluster {
-			namespaceValidations[validationKey] = validation
+			namespaceValidations[validationKey] = pruneInaccessibleReferences(validation, accessible)
 		}
 	}
 	return namespaceValidations, nil
@@ -101,8 +237,7 @@ func (in *IstioValidationsService) GetValidationsForService(ctx context.Context,
 		return nil, fmt.Errorf("service [namespace: %s] [name: %s] doesn't exist for Validations", namespace, service)
 	}
 
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service), nil
+	return in.prunedValidationsFor(ctx, cluster, schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}, service)
 }
 
 func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context, cluster, namespace, workload string) (models.IstioValidations, error) {
@@ -115,8 +250,32 @@ func (in *IstioValidationsService) GetValidationsForWorkload(ctx context.Context
 		return nil, err
 	}
 
-	validations := in.kialiCache.Validations().Items()
-	return models.IstioValidations(validations).FilterByCluster(cluster).FilterBySingleType(schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload), nil
+	return in.prunedValidationsFor(ctx, cluster, schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}, workload)
+}
+
+// prunedValidationsFor returns the cached validations of the single object
+// identified by objectGVK and name, with entries in namespaces outside the
+// user's accessible set removed and the remaining entries' references pruned
+// (see pruneInaccessibleReferences). FilterBySingleType keeps every entry of
+// every other resource type, so the accessible-set filter on the entry keys
+// is what prevents denied-namespace entries from being returned — the same
+// filter the cluster-wide GetValidations applies. Fail closed when the set
+// cannot be computed.
+func (in *IstioValidationsService) prunedValidationsFor(ctx context.Context, cluster string, objectGVK schema.GroupVersionKind, name string) (models.IstioValidations, error) {
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	filtered := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster).FilterBySingleType(objectGVK, name)
+	pruned := models.IstioValidations{}
+	for key, validation := range filtered {
+		if _, ok := accessible[key.Namespace]; !ok {
+			continue
+		}
+		pruned[key] = pruneInaccessibleReferences(validation, accessible)
+	}
+	return pruned, nil
 }
 
 type validationNamespaceInfo struct {
@@ -200,6 +359,23 @@ type validationInfo struct {
 // different clusters, or different namespaces for a cluster. Initially unused structures/maps will be set to nil, and
 // arrays will be initialized to empty.
 func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
+	return in.newValidationInfo(ctx, clusters, changeMap, false)
+}
+
+// newValidationInfoSA builds the validationInfo with the Kiali
+// ServiceAccount's namespace visibility instead of the requesting user's.
+// It backs the on-demand single-object validation: that result is written
+// into the shared validation cache, which is otherwise populated by the
+// background reconciler running with SA visibility, so computing it with
+// the requesting user's visibility would both miss cross-namespace checks
+// that fire for every other user (a warning visible in the list view would
+// vanish in the details view) and overwrite SA-computed cache entries with
+// user-scoped ones.
+func (in *IstioValidationsService) newValidationInfoSA(ctx context.Context, clusters []string, changeMap ValidationChangeMap) (*validationInfo, error) {
+	return in.newValidationInfo(ctx, clusters, changeMap, true)
+}
+
+func (in *IstioValidationsService) newValidationInfo(ctx context.Context, clusters []string, changeMap ValidationChangeMap, saVisibility bool) (*validationInfo, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "newValidationInfo",
 		observability.Attribute("package", "business"),
@@ -227,16 +403,31 @@ func (in *IstioValidationsService) NewValidationInfo(ctx context.Context, cluste
 
 	// gather base info, mapped by cluster
 	for _, cluster := range clusters {
-		namespaces, err := in.namespace.GetClusterNamespaces(ctx, cluster)
+		var namespaces []models.Namespace
+		var workloads models.Workloads
+		if saVisibility {
+			namespaces, err = in.namespace.GetSAClusterNamespaces(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+			// The SA-scoped workload fetch: the same inputs the background
+			// reconciler's SA layer produces through GetAllWorkloads. The
+			// waypoints must be SA-scoped too: a user-scoped set would
+			// falsify the waypoint-related checks in a result that is
+			// written into the shared validation cache.
+			waypoints := in.workload.GetSAWaypoints(ctx)
+			workloads, err = in.workload.fetchWorkloadsInNamespaces(ctx, cluster, getNsNames(namespaces), "", waypoints)
+		} else {
+			namespaces, err = in.namespace.GetClusterNamespaces(ctx, cluster)
+			if err != nil {
+				return nil, err
+			}
+			workloads, err = in.workload.GetAllWorkloads(ctx, cluster, "")
+		}
 		if err != nil {
 			return nil, err
 		}
 		vInfo.nsMap[cluster] = namespaces
-
-		workloads, err := in.workload.GetAllWorkloads(ctx, cluster, "")
-		if err != nil {
-			return nil, err
-		}
 		vInfo.wlMap[cluster] = toWorkloadMap(workloads)
 
 		identityDomain := ResolveClusterIdentityDomain(mesh, cluster, in.conf.ExternalServices.Istio.IstioIdentityDomain)
@@ -631,6 +822,14 @@ func (in *IstioValidationsService) getAllObjectCheckers(vInfo *validationInfo) (
 // ValidateIstioObject validates a single Istio object of the given type with the given name found in the given namespace. Note that
 // even validating a single object requires a fair amount of information, as it may interact with many other configs.
 func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, cluster, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
+	return in.ValidateIstioObjectFromNamespace(ctx, cluster, namespace, namespace, objectGVK, object)
+}
+
+// ValidateIstioObjectFromNamespace keeps the object's identity separate from the
+// namespace whose exportTo visibility is used by the checkers. The details
+// handler on this branch validates explicitly exported objects from each target
+// namespace; narrowing must still select the object in its owning namespace.
+func (in *IstioValidationsService) ValidateIstioObjectFromNamespace(ctx context.Context, cluster, objectNamespace, namespace string, objectGVK schema.GroupVersionKind, object string) (models.IstioValidations, models.IstioReferencesMap, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioObjectValidations",
 		observability.Attribute("package", "business"),
@@ -650,6 +849,22 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		return nil, istioReferences, err
 	}
 
+	// The viewpoint's authorization does not grant access to the object itself.
+	if objectNamespace != namespace {
+		if _, err := in.namespace.GetClusterNamespace(ctx, objectNamespace, cluster); err != nil {
+			return nil, istioReferences, err
+		}
+	}
+
+	// Types without an object checker or reference checker (see
+	// noValidationGVKs) have nothing to validate and nothing to
+	// reference-compute: skip the SA-wide validation-input preparation
+	// entirely, so an unrelated remote-cluster failure cannot fail their
+	// details view — and the expensive input build is not paid for nothing.
+	if !objectValidationSupported(objectGVK) {
+		return models.IstioValidations{}, istioReferences, nil
+	}
+
 	// time this function execution so we can capture how long it takes to fully validate this istio object
 	timer := internalmetrics.GetSingleValidationProcessingTimePrometheusTimer(namespace, objectGVK.String(), object)
 	defer internalmetrics.ObserveDurationAndLogResults(
@@ -663,10 +878,37 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		},
 		"Single object validation time")
 
-	// validating a single object is not particularly efficient, it still requires a lot of up-front setup
-	vInfo, err := in.NewValidationInfo(ctx, in.namespace.GetClusterList(), nil)
+	// validating a single object is not particularly efficient, it still requires a lot of up-front setup.
+	// The validation info is built with the Kiali SA's visibility, matching
+	// the background reconciler that populates the shared validation cache:
+	// the requesting user's visibility would miss cross-namespace checks
+	// that fire for every other user, and the result is written into the
+	// shared cache below. The per-user pruning at the end of this function
+	// still narrows the response to what the requesting user can see.
+	vInfo, err := in.newValidationInfoSA(ctx, in.namespace.GetKialiSAClusterList(), nil)
 	if err != nil {
-		return nil, models.IstioReferencesMap{}, err
+		// Gathering the SA-wide validation inputs reads every SA-visible
+		// cluster, so one unreachable remote (its namespace cache entry
+		// expired, its API down) fails this call — and with it the details
+		// response for an object on a healthy cluster. Serve the shared
+		// cache's last-known-good entry for the object instead, pruned for
+		// this user like every cache read path. It may be stale (bounded by
+		// the reconcile interval) and its references come back empty (they
+		// are not cached per-object), but nothing is written back, so the
+		// shared cache keeps whatever the background reconciler last
+		// computed. With no cached entry — types without a checker never
+		// write one, and a newly created object may not be cached yet —
+		// serve the details without a validation rather than fail the page:
+		// missing validation means unknown, not valid, and the response has
+		// the same shape these requests return when everything is healthy.
+		// Only this cross-cluster input-gathering failure degrades; the
+		// errors below stay fatal.
+		log.Warningf("Error gathering validation info for [%s/%s], falling back to its cached validation: %s", namespace, object, err)
+		objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object, Cluster: cluster}
+		if cached, found := in.kialiCache.Validations().Get(objectKey); found {
+			return in.pruneValidationsForUser(ctx, cluster, models.IstioValidations{objectKey: cached}, models.IstioReferencesMap{})
+		}
+		return models.IstioValidations{}, models.IstioReferencesMap{}, nil
 	}
 
 	vInfo.clusterInfo = &validationClusterInfo{
@@ -708,7 +950,12 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
-	clusterIstioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
+	// The raw, unfiltered config fetch: GetIstioConfigList filters its
+	// result by the requesting user's accessible namespaces, which would
+	// hide cross-namespace conflicts from the checkers (the same divergence
+	// the SA visibility above fixes for the namespace and workload maps).
+	// The per-user pruning at the end of this function narrows the response.
+	clusterIstioConfigList, err := in.istioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return nil, istioReferences, err
 	}
@@ -821,10 +1068,12 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 	case kubernetes.RequestAuthentications:
 		requestAuthnChecker := checkers.RequestAuthenticationChecker{Cluster: cluster, RequestAuthentications: istioConfigList.RequestAuthentications, WorkloadsPerNamespace: workloadsPerNamespace}
 		objectCheckers = []checkers.ObjectChecker{requestAuthnChecker, newAmbientPolicyChecker(cluster, namespaces, workloadsPerNamespace, rbacDetails.AuthorizationPolicies, istioConfigList, services, identityDomain)}
-	case kubernetes.EnvoyFilters:
-		// Validation on EnvoyFilters are not yet in place
-	case kubernetes.TrafficExtensions:
-		// Validation on TrafficExtensions is not expected
+	case kubernetes.EnvoyFilters, kubernetes.TrafficExtensions, kubernetes.K8sTCPRoutes, kubernetes.K8sTLSRoutes, kubernetes.K8sUDPRoutes:
+		// No object checker and no reference checker for these types (the
+		// EnvoyFilter one is not yet in place; the rest are not expected).
+		// They are listed in noValidationGVKs, which ValidateIstioObject
+		// consults to skip the validation-input preparation entirely — keep
+		// the two in sync.
 	case kubernetes.WasmPlugins:
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.WasmPluginChecker{Namespaces: namespaces, WasmPlugins: istioConfigList.WasmPlugins},
@@ -854,30 +1103,90 @@ func (in *IstioValidationsService) ValidateIstioObject(ctx context.Context, clus
 		objectCheckers = []checkers.ObjectChecker{
 			checkers.K8sReferenceGrantChecker{Cluster: cluster, K8sReferenceGrants: istioConfigList.K8sReferenceGrants, Namespaces: namespaces},
 		}
-	case kubernetes.K8sTCPRoutes:
-		// Validation on K8sTCPRoutes is not expected
-	case kubernetes.K8sTLSRoutes:
-		// Validation on K8sTLSRoutes is not expected
-	case kubernetes.K8sUDPRoutes:
-		// Validation on K8sUDPRoutes is not expected
 	default:
-		err = fmt.Errorf("object type not found: %v", objectGVK.String())
+		return nil, istioReferences, fmt.Errorf("object type not found: %v", objectGVK.String())
 	}
 
 	if referenceChecker != nil {
 		istioReferences = runObjectReferenceChecker(ctx, in.conf, referenceChecker)
 	}
 
-	if objectCheckers == nil {
-		return models.IstioValidations{}, istioReferences, err
+	// Reference-only types must also reach exact-object narrowing and pruning:
+	// their references were computed from SA-wide configuration.
+	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
+
+	// FilterByKey matches on GVK and name only; keep just the requested object's
+	// entry so that same-named objects in other namespaces are neither returned
+	// nor overwritten in the shared cache below.
+	objectKey := models.IstioValidationKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object, Cluster: cluster}
+	if validation, found := validations[objectKey]; found {
+		validations = models.IstioValidations{objectKey: validation}
+	} else {
+		validations = models.IstioValidations{}
+	}
+	referenceKey := models.IstioReferenceKey{ObjectGVK: objectGVK, Namespace: objectNamespace, Name: object}
+	if objectReferences, found := istioReferences[referenceKey]; found {
+		istioReferences = models.IstioReferencesMap{referenceKey: objectReferences}
+	} else {
+		istioReferences = models.IstioReferencesMap{}
 	}
 
-	validations := runObjectCheckers(ctx, objectCheckers, conf, buildObjectIgnoreValidations(vInfo, cluster)).FilterByKey(objectGVK, object)
 	for k, v := range validations {
+		// The computation used SA visibility, so what lands in the shared
+		// cache is consistent with the background reconciler's entries —
+		// it can only refresh them, never degrade them for other users.
 		in.kialiCache.Validations().Set(k, v)
 	}
 
+	// This result is served directly to the requesting user (the config
+	// details, update and delete responses), so prune references into
+	// namespaces outside the user's accessible set — the same protection the
+	// cache read paths (GetValidations and friends) apply. The shared cache
+	// above keeps the unpruned entry: pruning is a per-user, read-path
+	// concern. Fail closed when the set cannot be computed.
+	return in.pruneValidationsForUser(ctx, cluster, validations, istioReferences)
+}
+
+// pruneValidationsForUser narrows validations and their references to the
+// requesting user's accessible namespaces for the cluster, the same
+// protection the cache read paths apply. The values may point into the
+// shared SA-populated cache; the prune helpers copy rather than mutate. Fail
+// closed when the accessible set cannot be computed.
+func (in *IstioValidationsService) pruneValidationsForUser(ctx context.Context, cluster string, validations models.IstioValidations, istioReferences models.IstioReferencesMap) (models.IstioValidations, models.IstioReferencesMap, error) {
+	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
+	if err != nil {
+		return nil, nil, err
+	}
+	for key, validation := range validations {
+		validations[key] = pruneInaccessibleReferences(validation, accessible)
+	}
+	for key, references := range istioReferences {
+		istioReferences[key] = pruneInaccessibleObjectReferences(references, accessible)
+	}
 	return validations, istioReferences, nil
+}
+
+// noValidationGVKs lists the object types that the single-object validation
+// has neither an object checker nor a reference checker for (see the switch
+// in ValidateIstioObject). ValidateIstioObject consults this list
+// (objectValidationSupported) to skip the SA-wide validation-input
+// preparation for them: there is nothing to compute, and the input build
+// reads remote clusters whose unrelated failure must not fail the details
+// view. Keep in sync with the no-checker cases in ValidateIstioObject's
+// switch.
+var noValidationGVKs = map[schema.GroupVersionKind]struct{}{
+	kubernetes.EnvoyFilters:      {},
+	kubernetes.TrafficExtensions: {},
+	kubernetes.K8sTCPRoutes:      {},
+	kubernetes.K8sTLSRoutes:      {},
+	kubernetes.K8sUDPRoutes:      {},
+}
+
+// objectValidationSupported reports whether the given object type has an
+// object checker or a reference checker in the single-object validation.
+func objectValidationSupported(objectGVK schema.GroupVersionKind) bool {
+	_, unsupported := noValidationGVKs[objectGVK]
+	return !unsupported
 }
 
 func runObjectCheckers(ctx context.Context, objectCheckers []checkers.ObjectChecker, conf *config.Config, perObjectIgnores models.ObjectIgnoreValidations) models.IstioValidations {

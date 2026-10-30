@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,6 +21,7 @@ import (
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
+	"github.com/kiali/kiali/istio/istiotest"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
@@ -279,6 +282,73 @@ func TestGetNamespacesGetInternalErrorPropagates(t *testing.T) {
 	assert.True(t, errors.IsInternalError(err))
 }
 
+// A home-cluster LIST error must fail GetNamespaces, while a remote-cluster
+// LIST error is skipped (picker semantics) and the home cluster's namespaces
+// are still returned.
+func TestGetNamespacesListErrorHomeFailsRemoteSkipped(t *testing.T) {
+	cases := map[string]struct {
+		failingCluster string
+		expectedErr    bool
+		expectedNS     []string
+	}{
+		"home cluster list error fails the request": {
+			failingCluster: "east",
+			expectedErr:    true,
+		},
+		"remote cluster list error is skipped": {
+			failingCluster: "west",
+			expectedErr:    false,
+			expectedNS:     []string{"bookinfo"},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "east"
+
+			// In cluster-wide-access mode the accessible set is the intersection
+			// of the SA list and the user list, so the SA must also see bookinfo.
+			saClients := map[string]kubernetes.ClientInterface{
+				"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+				"west": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+			}
+
+			// Distinct cache keys keep the SA-identity shortcut in
+			// getNamespacesUsingKialiSA from serving the SA's unfiltered list.
+			userEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+			userEast.CacheKey = "east-user"
+			userWest := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+			userWest.CacheKey = "west-user"
+			userClients := map[string]kubernetes.UserClientInterface{
+				"east": userEast,
+				"west": userWest,
+			}
+
+			// The failing cluster's LIST returns an internal error, the kind
+			// that must not be swallowed into an empty result.
+			failingCS := userClients[tc.failingCluster].(*kubetest.FakeK8sClient).KubeClientset.(*clientsetfake.Clientset)
+			failingCS.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+				return true, nil, errors.NewInternalError(fmt.Errorf("apiserver down"))
+			})
+
+			kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+			discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+			nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+			namespaces, err := nsservice.GetNamespaces(context.TODO())
+			if tc.expectedErr {
+				require.Error(err)
+				require.True(errors.IsInternalError(err))
+				return
+			}
+			require.NoError(err)
+			require.ElementsMatch(tc.expectedNS, nsNames(namespaces))
+		})
+	}
+}
+
 // Get namespace
 func TestGetNamespace(t *testing.T) {
 	conf := config.NewConfig()
@@ -439,11 +509,9 @@ func TestGetNamespacesCached(t *testing.T) {
 		"west": kubetest.NewFakeK8sClient(),
 	}
 	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
-	cache.SetNamespaces(
-		k8s.GetToken(),
-		// gamma only exists in the cache.
-		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}, {Name: "gamma", Cluster: "west"}},
-	)
+	// gamma only exists in the cache.
+	cache.SetClusterNamespaces(k8s.GetToken(), "east", []models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}})
+	cache.SetClusterNamespaces(k8s.GetToken(), "west", []models.Namespace{{Name: "gamma", Cluster: "west"}})
 
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
@@ -477,14 +545,8 @@ func TestGetNamespacesDifferentTokens(t *testing.T) {
 		"west": west,
 	}
 	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
-	cache.SetNamespaces(
-		east.GetToken(),
-		[]models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}},
-	)
-	cache.SetNamespaces(
-		west.GetToken(),
-		[]models.Namespace{{Name: "gamma", Cluster: "west"}},
-	)
+	cache.SetClusterNamespaces(east.GetToken(), "east", []models.Namespace{{Name: "bookinfo", Cluster: "east"}, {Name: "alpha", Cluster: "east"}, {Name: "beta", Cluster: "east"}})
+	cache.SetClusterNamespaces(west.GetToken(), "west", []models.Namespace{{Name: "gamma", Cluster: "west"}})
 
 	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
 	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
@@ -609,9 +671,11 @@ func TestGetKialiSAClusterNamespacesCached(t *testing.T) {
 
 	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
 
-	// Pre-populate cache with SA namespaces (including "gamma" which isn't in the actual client)
-	kialiCache.SetNamespaces(
-		saEast.GetToken(),
+	// Pre-populate cache with SA namespaces (including "gamma" which isn't in the actual client).
+	// The SA set is cached under its own prefixed key (see GetKialiSAClusterNamespaces).
+	kialiCache.SetClusterNamespaces(
+		"kiali-sa:"+saEast.GetToken(),
+		"east",
 		[]models.Namespace{
 			{Name: "bookinfo", Cluster: "east"},
 			{Name: "gamma", Cluster: "east"},
@@ -655,40 +719,47 @@ func TestGetKialiSAClusterNamespacesUnknownCluster(t *testing.T) {
 	require.Error(err)
 }
 
-type forbiddenFake struct{ kubernetes.UserClientInterface }
-
-func (f *forbiddenFake) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	return nil, fmt.Errorf("forbidden")
-}
-
-// Tests that GetNamespaces won't return a namespace with the same name from another cluster
-// if the user doesn't have access to that cluster but the namespace is cached.
+// Tests that GetClusterNamespace won't return a namespace with the same name
+// from another cluster if the namespace is not in the user's accessible set
+// for that cluster, even when the namespace is cached (visible) for another
+// cluster the user can access and exists on the denied cluster (the SA can
+// see it there).
 func TestGetNamespacesForbiddenCached(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 
-	k8s := setupNamespaceServiceWithNs()
-
-	// Two clusters: one the user has access to, one they don't.
-	clients := map[string]kubernetes.UserClientInterface{
-		"east": &forbiddenFake{k8s},
-		"west": k8s,
+	// The SA can see bookinfo on both clusters.
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+		"west": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
 	}
-	cache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
-	cache.SetNamespaces(
-		k8s.GetToken(),
-		// Bookinfo is cached for the west cluster that the user has access to
-		// but NOT for the east cluster that the user doesn't have access to.
-		[]models.Namespace{{Name: "bookinfo", Cluster: "west"}},
-	)
 
-	discovery := istio.NewDiscovery(kubernetes.ConvertFromUserClients(clients), cache, conf)
-	nsservice := NewNamespaceService(cache, conf, discovery, kubernetes.ConvertFromUserClients(clients), clients)
-	// Try to get the bookinfo namespace from the home cluster.
-	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
+	// The user can only see bookinfo on west: their east LIST is empty. The
+	// distinct cache key prevents the SA-identity shortcut in
+	// getNamespacesUsingKialiSA from serving the SA's unfiltered list.
+	userEast := kubetest.NewFakeK8sClient()
+	userEast.CacheKey = "restricted-user"
+	userWest := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	userWest.CacheKey = "west-user"
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": userEast,
+		"west": userWest,
+	}
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// The namespace is in the user's accessible set on west...
+	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "west")
+	require.NoError(err)
+	// ...but must not be returned for east, where the user's accessible set
+	// is empty even though the namespace exists there (the SA sees it).
+	_, err = nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "east")
 	require.Error(err)
+	require.True(IsAccessibleError(err))
 }
 
 // Tests that you can list namespaces when you have one openshift and one vanilla cluster.
@@ -758,8 +829,9 @@ func TestGetNamespacesSameTokenDifferentImpersonation(t *testing.T) {
 
 	// Populate cache as user A with a narrow list.
 	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
-	kialiCache.SetNamespaces(
+	kialiCache.SetClusterNamespaces(
 		userA.GetCacheKey(),
+		"east",
 		[]models.Namespace{{Name: "ns-a-only", Cluster: "east"}},
 	)
 
@@ -818,4 +890,430 @@ func TestGetNamespacesImpersonationDoesNotSkipRBACIntersection(t *testing.T) {
 	}
 	require.Contains(names, "allowed")
 	require.NotContains(names, "forbidden", "impersonated user should not see namespaces beyond their RBAC")
+}
+
+// listCallCounter returns a reactor that counts namespace list calls and
+// falls through to the underlying fake clientset.
+func listCallCounter(count *int) func(kubeclienttesting.Action) (bool, runtime.Object, error) {
+	return func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		if action.GetVerb() == "list" && action.GetResource().Resource == "namespaces" {
+			*count++
+		}
+		return false, nil, nil
+	}
+}
+
+// getCallCounter returns a reactor that counts namespace get calls and falls
+// through to the underlying fake clientset.
+func getCallCounter(count *int) func(kubeclienttesting.Action) (bool, runtime.Object, error) {
+	return func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		if action.GetVerb() == "get" && action.GetResource().Resource == "namespaces" {
+			*count++
+		}
+		return false, nil, nil
+	}
+}
+
+// newAccessibleSetClients builds separate SA and user fake clients. The SA
+// client sees all the given namespaces; the user client's LIST is restricted
+// to allowedNamespaces (its per-namespace GET still works, so the restriction
+// is purely LIST-based). The distinct tokens prevent the SA-identity shortcut
+// in getNamespacesUsingKialiSA from serving the SA's unfiltered list.
+func newAccessibleSetClients(allNamespaces, allowedNamespaces []string) (sa *kubetest.FakeK8sClient, user *kubetest.NamespaceRestrictedClient) {
+	saObjects := make([]runtime.Object, 0, len(allNamespaces))
+	for _, name := range allNamespaces {
+		saObjects = append(saObjects, kubetest.FakeNamespace(name))
+	}
+	sa = kubetest.NewFakeK8sClient(saObjects...)
+	sa.Token = "sa-token"
+
+	// The user client sees the same objects but its LIST is restricted to the
+	// allowed namespaces (no GET denials: the restriction is purely
+	// LIST-based). The distinct cache key prevents the SA-identity shortcut
+	// in getNamespacesUsingKialiSA from serving the SA's unfiltered list.
+	userFake := kubetest.NewFakeK8sClient(saObjects...)
+	user = kubetest.NewNamespaceRestrictedClient(userFake, "user-token", allowedNamespaces)
+	return sa, user
+}
+
+// countingNamespaceService builds a NamespaceService over separate SA and
+// user clients (see newAccessibleSetClients), with reactors counting the
+// namespace list and get calls made against each clientset. The counters are
+// shared pointers so a baseline measured on one service can be compared
+// against a separately built one.
+type countingNamespaceService struct {
+	sa                           *kubetest.FakeK8sClient
+	saLists, userLists, userGets *int
+	svc                          *NamespaceService
+}
+
+func newCountingNamespaceService(t *testing.T, allNamespaces, allowedNamespaces []string) *countingNamespaceService {
+	t.Helper()
+	sa, user := newAccessibleSetClients(allNamespaces, allowedNamespaces)
+
+	c := &countingNamespaceService{
+		sa:        sa,
+		saLists:   new(int),
+		userLists: new(int),
+		userGets:  new(int),
+	}
+	if cs, ok := sa.KubeClientset.(*clientsetfake.Clientset); ok {
+		cs.PrependReactor("*", "namespaces", listCallCounter(c.saLists))
+	}
+	if cs, ok := user.FakeClient().KubeClientset.(*clientsetfake.Clientset); ok {
+		cs.PrependReactor("*", "namespaces", listCallCounter(c.userLists))
+		cs.PrependReactor("*", "namespaces", getCallCounter(c.userGets))
+	}
+
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	ns := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+	c.svc = &ns
+	return c
+}
+
+// TestGetClusterNamespaceCacheWarmthInvariant pins the core #10443 fix: the
+// primitive's answer must not depend on per-token cache warmth. Cold, warm
+// (after the set is computed) and expired (after RefreshTokenNamespaces)
+// lookups must give identical answers in both require_namespace_get modes.
+func TestGetClusterNamespaceCacheWarmthInvariant(t *testing.T) {
+	for _, strict := range []bool{false, true} {
+		t.Run(fmt.Sprintf("strict=%t", strict), func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.KialiFeatureFlags.Authz.RequireNamespaceGet = strict
+
+			// The user can LIST bookinfo and alpha only.
+			sa, user := newAccessibleSetClients(
+				[]string{"bookinfo", "alpha", "beta"},
+				[]string{"bookinfo", "alpha"},
+			)
+			if cs, ok := user.FakeClient().KubeClientset.(*clientsetfake.Clientset); ok {
+				if strict {
+					// In strict mode the accessible set comes from per-namespace
+					// GETs; deny beta to make it inaccessible there too.
+					cs.PrependReactor("get", "namespaces", forbidGetNamespace("beta"))
+				} else {
+					// The #7125 profile in default mode: LIST includes alpha
+					// but the per-namespace GET on it is denied. LIST implies
+					// access, so alpha must still resolve — the old primitive
+					// failed this on a cold cache (bare GET fallback).
+					cs.PrependReactor("get", "namespaces", forbidGetNamespace("alpha"))
+				}
+			}
+
+			saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: sa}
+			userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: user}
+			kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+			discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+			nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+			cluster := conf.KubernetesConfig.ClusterName
+
+			assertLookup := func() {
+				ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", cluster)
+				require.NoError(t, err)
+				assert.Equal(t, "bookinfo", ns.Name)
+
+				ns, err = nsservice.GetClusterNamespace(context.TODO(), "alpha", cluster)
+				require.NoError(t, err)
+				assert.Equal(t, "alpha", ns.Name)
+
+				_, err = nsservice.GetClusterNamespace(context.TODO(), "beta", cluster)
+				require.Error(t, err)
+				assert.True(t, IsAccessibleError(err), "expected an accessible error, got: %v", err)
+			}
+
+			assertLookup()                             // cold
+			assertLookup()                             // warm
+			kialiCache.RefreshTokenNamespaces(cluster) // expire
+			assertLookup()                             // recomputed: same answers
+		})
+	}
+}
+
+// TestGetClusterNamespaceUnknownCluster pins N7: a cluster with no user
+// client is an access denial (403), not an internal error (500).
+func TestGetClusterNamespaceUnknownCluster(t *testing.T) {
+	conf := config.NewConfig()
+	sa, _ := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: sa}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	_, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", "no-such-cluster")
+	require.Error(t, err)
+	assert.True(t, IsAccessibleError(err))
+}
+
+// TestGetClusterNamespaceWarmEntryAuthoritative pins N2: once the cluster
+// entry is warm, lookups for denied or nonexistent namespaces must not
+// recompute the set (one cache lookup only). Otherwise any authenticated
+// user could trigger strict-mode load against the API server at will.
+func TestGetClusterNamespaceWarmEntryAuthoritative(t *testing.T) {
+	c := newCountingNamespaceService(t, []string{"bookinfo"}, []string{"bookinfo"})
+	cluster := config.NewConfig().KubernetesConfig.ClusterName
+
+	// Cold lookup: computes and caches the set.
+	_, err := c.svc.GetClusterNamespace(context.TODO(), "bookinfo", cluster)
+	require.NoError(t, err)
+	require.Greater(t, *c.saLists, 0)
+
+	// Warm entry: 50 lookups for random nonexistent namespaces must not
+	// trigger a single additional API call.
+	saListsBefore, userListsBefore, userGetsBefore := *c.saLists, *c.userLists, *c.userGets
+	for i := 0; i < 50; i++ {
+		_, err := c.svc.GetClusterNamespace(context.TODO(), fmt.Sprintf("nonexistent-%d", i), cluster)
+		require.Error(t, err)
+		assert.True(t, IsAccessibleError(err))
+	}
+	assert.Equal(t, saListsBefore, *c.saLists, "SA list calls must not increase on warm-entry denials")
+	assert.Equal(t, userListsBefore, *c.userLists, "user list calls must not increase on warm-entry denials")
+	assert.Equal(t, userGetsBefore, *c.userGets, "user get calls must not increase on warm-entry denials")
+}
+
+// TestGetClusterNamespaceWarmLookupStaysIndexed pins the performance shape of
+// the warm path: resolving a namespace against a warm accessible set must be
+// an indexed O(1) read, not a materialization of the whole set. The check is
+// called repeatedly (per request, per cluster fan-out), so a per-lookup set
+// copy scales garbage production with the set size. Allocation counts are
+// deterministic, so the size-independence pin is exact up to a small slack;
+// the absolute per-op count is not asserted because it includes fixed
+// allocations every span-bearing call pays, which are independent of the set
+// size.
+func TestGetClusterNamespaceWarmLookupStaysIndexed(t *testing.T) {
+	if raceDetectorEnabled {
+		t.Skip("allocation counts are not deterministic under the race detector")
+	}
+
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// The lookup under test reads the cache, not the cluster, so the warm set
+	// is populated directly at two sizes and the per-op allocation compared.
+	measure := func(setSize int) float64 {
+		warm := make([]models.Namespace, 0, setSize)
+		for i := 0; i < setSize; i++ {
+			warm = append(warm, models.Namespace{Name: fmt.Sprintf("ns-%03d", i), Cluster: cluster})
+		}
+		kialiCache.SetClusterNamespaces(user.GetCacheKey(), cluster, warm)
+
+		ns, err := nsservice.GetClusterNamespace(context.TODO(), "ns-050", cluster)
+		require.NoError(t, err)
+		assert.Equal(t, "ns-050", ns.Name)
+
+		// AllocsPerRun counts allocations per call: deterministic, unlike the
+		// byte totals testing.Benchmark reports, and cheap — a fixed number
+		// of iterations instead of auto-scaled benchmark rounds.
+		return testing.AllocsPerRun(20, func() {
+			_, _ = nsservice.GetClusterNamespace(context.TODO(), "ns-050", cluster)
+		})
+	}
+
+	small := measure(100)
+	large := measure(500)
+
+	// The indexed read allocates a constant number of objects (the matched
+	// namespace copy); a materialized set would scale with the set size.
+	assert.LessOrEqual(t, large-small, 2.0,
+		"warm GetClusterNamespace allocation grows with the set size: %.0f allocs/op at 100 namespaces vs %.0f at 500; the accessible set is being materialized per lookup", small, large)
+}
+
+// TestGetClusterNamespaceConcurrentColdCacheCoalesces pins the singleflight
+// behavior: concurrent lookups on a cold cache compute the set once.
+// coldLookupCost measures how many namespace list calls a single cold
+// accessible-set computation makes on the SA and user clientsets (the SA
+// list plus whatever the discovery machinery lists). Call-count assertions
+// compare against this baseline rather than hardcoding the per-computation
+// cost.
+func coldLookupCost(t *testing.T, allNamespaces, allowedNamespaces []string, lookup string) (saCost, userCost int) {
+	t.Helper()
+	c := newCountingNamespaceService(t, allNamespaces, allowedNamespaces)
+
+	// The lookup's outcome is irrelevant here (for the zero-namespace
+	// variant it is a denial); only the API call cost is measured.
+	_, _ = c.svc.GetClusterNamespace(context.TODO(), lookup, config.NewConfig().KubernetesConfig.ClusterName)
+	return *c.saLists, *c.userLists
+}
+
+func TestGetClusterNamespaceConcurrentColdCacheCoalesces(t *testing.T) {
+	// The cost of a single cold computation, measured on an identical setup.
+	singleSaCost, singleUserCost := coldLookupCost(t, []string{"bookinfo"}, []string{"bookinfo"}, "bookinfo")
+
+	c := newCountingNamespaceService(t, []string{"bookinfo"}, []string{"bookinfo"})
+	cluster := config.NewConfig().KubernetesConfig.ClusterName
+
+	// Block the SA namespace list so the leader cannot finish its
+	// computation: the followers then pile into the in-flight singleflight
+	// call instead of racing the leader to completion and hitting the warm
+	// cache. Without coalescing every follower would enter this reactor
+	// itself, and the list count below would exceed one computation.
+	listEntered := make(chan struct{})
+	var enterOnce sync.Once
+	release := make(chan struct{})
+	if cs, ok := c.sa.KubeClientset.(*clientsetfake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			enterOnce.Do(func() { close(listEntered) })
+			<-release
+			return false, nil, nil
+		})
+	}
+
+	const concurrency = 20
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ns, err := c.svc.GetClusterNamespace(context.TODO(), "bookinfo", cluster)
+			if assert.NoError(t, err) {
+				assert.Equal(t, "bookinfo", ns.Name)
+			}
+		}()
+	}
+
+	// Wait until the leader is blocked inside the reactor, then give the
+	// followers time to reach the in-flight call before releasing it. The
+	// release timing cannot cause a false failure: a follower arriving after
+	// the release finds the warm entry and still costs no extra list.
+	<-listEntered
+	time.Sleep(100 * time.Millisecond)
+	close(release)
+	wg.Wait()
+
+	assert.Equal(t, singleSaCost, *c.saLists, "concurrent cold lookups must cost exactly one set computation (SA)")
+	assert.Equal(t, singleUserCost, *c.userLists, "concurrent cold lookups must cost exactly one set computation (user)")
+}
+
+// TestGetClusterNamespaceZeroAccessibleUserCachesEmptyEntry pins the
+// empty-result caching: a user with zero accessible namespaces in the
+// cluster does not recompute the (empty) set on subsequent requests.
+func TestGetClusterNamespaceZeroAccessibleUserCachesEmptyEntry(t *testing.T) {
+	// The cost of a single cold computation, measured on an identical setup.
+	singleSaCost, singleUserCost := coldLookupCost(t, []string{"bookinfo", "alpha"}, nil, "bookinfo")
+
+	c := newCountingNamespaceService(t, []string{"bookinfo", "alpha"}, nil)
+	cluster := config.NewConfig().KubernetesConfig.ClusterName
+
+	for i := 0; i < 3; i++ {
+		_, err := c.svc.GetClusterNamespace(context.TODO(), "bookinfo", cluster)
+		require.Error(t, err)
+		assert.True(t, IsAccessibleError(err))
+	}
+
+	assert.Equal(t, singleSaCost, *c.saLists, "the empty accessible set must be computed (and cached) exactly once")
+	assert.Equal(t, singleUserCost, *c.userLists)
+}
+
+// TestGetNamespacesStrictModeSkipsDeletedNamespace pins N6: in strict mode a
+// namespace deleted between the SA LIST and the user's GET (NotFound) is
+// skipped rather than failing the whole set computation with a 500.
+func TestGetNamespacesStrictModeSkipsDeletedNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KialiFeatureFlags.Authz.RequireNamespaceGet = true
+
+	sa, user := newAccessibleSetClients([]string{"bookinfo", "alpha"}, []string{"bookinfo", "alpha"})
+	if cs, ok := user.FakeClient().KubeClientset.(*clientsetfake.Clientset); ok {
+		cs.PrependReactor("get", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			if ga, ok := action.(kubeclienttesting.GetAction); ok && ga.GetName() == "alpha" {
+				return true, nil, errors.NewNotFound(core_v1.Resource("namespaces"), "alpha")
+			}
+			return false, nil, nil
+		})
+	}
+
+	saClients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: sa}
+	userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(t, err)
+	assert.Equal(t, []string{"bookinfo"}, nsNames(namespaces))
+}
+
+// TestGetClusterNamespaceClusterWideAccessDisabled covers the
+// cluster-wide-access=false path: the accessible set comes from the
+// configured accessible namespaces fetched with per-namespace GETs.
+func TestGetClusterNamespaceClusterWideAccessDisabled(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+
+	k8s := setupNamespaceServiceWithNs()
+	nsservice := setupNamespaceService(t, k8s, conf)
+	cluster := conf.KubernetesConfig.ClusterName
+
+	ns, err := nsservice.GetClusterNamespace(context.TODO(), "bookinfo", cluster)
+	require.NoError(t, err)
+	assert.Equal(t, "bookinfo", ns.Name)
+
+	// alpha exists on the cluster but is not an accessible namespace.
+	_, err = nsservice.GetClusterNamespace(context.TODO(), "alpha", cluster)
+	require.Error(t, err)
+	assert.True(t, IsAccessibleError(err))
+}
+
+// TestAnonymousModeSACacheKeyIsolated pins the fix for the anonymous-mode
+// cache collision: in anonymous (or RBAC-disabled) mode the user client IS
+// the SA client and shares its cache key, so the SA's own namespace set —
+// which is undecorated (no control-plane, revision or ambient markers) —
+// must be cached under a distinct key. Otherwise, when the SA set is
+// computed first (e.g. by CheckNamespaceAccessAllClusters), the user's
+// accessible set would serve the undecorated list for the cache TTL and the
+// picker/overview/mesh pages would lose istio-system's control-plane
+// markers.
+func TestAnonymousModeSACacheKeyIsolated(t *testing.T) {
+	for _, saFirst := range []bool{false, true} {
+		t.Run(fmt.Sprintf("sa-first=%t", saFirst), func(t *testing.T) {
+			assert := assert.New(t)
+			require := require.New(t)
+
+			conf := config.NewConfig()
+			cluster := conf.KubernetesConfig.ClusterName
+
+			// Anonymous mode: the same client is both the user and the SA.
+			k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"), kubetest.FakeNamespace("bookinfo"))
+			clients := map[string]kubernetes.UserClientInterface{cluster: k8s}
+			saClients := kubernetes.ConvertFromUserClients(clients)
+
+			discovery := &istiotest.FakeDiscovery{GetControlPlaneNamespacesReturn: []string{"istio-system"}}
+			kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+			nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, clients)
+
+			if saFirst {
+				// e.g. CheckNamespaceAccessAllClusters computes the SA set
+				// before the user set.
+				saNs, err := nsservice.GetKialiSAClusterNamespaces(context.TODO(), cluster)
+				require.NoError(err)
+				require.NotEmpty(saNs)
+			}
+
+			userNs, err := nsservice.GetClusterNamespaces(context.TODO(), cluster)
+			require.NoError(err)
+
+			var istioSystem *models.Namespace
+			for i := range userNs {
+				if userNs[i].Name == "istio-system" {
+					istioSystem = &userNs[i]
+				}
+			}
+			require.NotNil(istioSystem, "istio-system must be in the user's accessible set")
+			assert.True(istioSystem.IsControlPlane,
+				"the user's accessible set must keep its control-plane decoration even when the SA set was computed first")
+		})
+	}
 }

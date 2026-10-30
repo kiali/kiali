@@ -631,7 +631,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	// in it so the list should return empty.
 	k8s.Token = "test"
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
-	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
+	configService.kialiCache.SetClusterNamespaces("test", "Kubernetes", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,
@@ -876,4 +876,51 @@ func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
 	require.NoError(err)
 	assert.Equal("product-vs", updatedVirtualService.VirtualService.Name)
 	assert.Equal(0, len(configService.kialiCache.Validations().Items()))
+}
+
+// TestGetIstioConfigListNoUserClientReturnsEmpty ensures that a cluster the
+// requesting user has no client for (no session on it, in non-impersonation
+// mode) yields an empty list rather than a "K8s Client not found" error: the
+// cluster-scoped list endpoints must degrade like their siblings
+// (clusters/apps, clusters/workloads), not 500. The SA client still sees the
+// cluster, so the empty result must come from the missing user client and not
+// from missing data.
+func TestGetIstioConfigListNoUserClientReturnsEmpty(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	home := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+
+	// Both clusters hold the same fixtures: a namespace and two gateways.
+	newClient := func() kubernetes.UserClientInterface {
+		fakeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+		for _, g := range fakeGetGateways() {
+			fakeObjects = append(fakeObjects, g.DeepCopyObject())
+		}
+		k8s := kubetest.NewFakeK8sClient(fakeObjects...)
+		k8s.OpenShift = true
+		return k8s
+	}
+
+	layer := NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{home: newClient(), remote: newClient()}).
+		Build()
+	// Drop the user's remote session: the SA clients still cover both
+	// clusters, the user clients only the home cluster.
+	delete(layer.IstioConfig.userClients, remote)
+
+	criteria := IstioConfigCriteria{IncludeGateways: true}
+
+	// The remote cluster lists nothing for the user: empty result, no error.
+	list, err := layer.IstioConfig.GetIstioConfigList(context.TODO(), remote, criteria)
+	assert.Nil(err)
+	assert.NotNil(list)
+	assert.Equal(0, len(list.Gateways))
+
+	// The home cluster still lists normally.
+	list, err = layer.IstioConfig.GetIstioConfigList(context.TODO(), home, criteria)
+	assert.Nil(err)
+	assert.Equal(2, len(list.Gateways))
 }

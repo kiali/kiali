@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -9,11 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	core_v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kubeclienttesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
@@ -22,18 +23,6 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 )
-
-type nsForbidden struct {
-	kubernetes.UserClientInterface
-	forbiddenNamespace string
-}
-
-func (n *nsForbidden) GetNamespace(name string) (*core_v1.Namespace, error) {
-	if name == n.forbiddenNamespace {
-		return nil, errors.New("no privileges")
-	}
-	return n.UserClientInterface.GetNamespace(name)
-}
 
 func TestClusterNameFromQuery(t *testing.T) {
 	assert := assert.New(t)
@@ -49,92 +38,106 @@ func TestClusterNameFromQuery(t *testing.T) {
 	assert.Equal(conf.KubernetesConfig.ClusterName, queryparams.ClusterName(conf, query))
 }
 
-func TestCheckNamespaceAccessWithService(t *testing.T) {
-	cases := map[string]struct {
-		client       kubernetes.ClientInterface
-		expectedCode int
-		expectErr    bool
-	}{
-		"No errors returned with access": {
-			client: kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}),
-		},
-		"No access returns 403": {
-			client: &nsForbidden{
-				forbiddenNamespace:  "test",
-				UserClientInterface: kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "test"}}),
-			},
-			expectedCode: 403,
-			expectErr:    true,
-		},
-	}
-	for name, tc := range cases {
-		t.Run(name, func(t *testing.T) {
-			require := require.New(t)
-
-			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
-
-			conf := config.NewConfig()
-			cache := cache.NewTestingCache(t, tc.client, *conf)
-			discovery := &istiotest.FakeDiscovery{}
-			clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: tc.client}
-			userClients := map[string]kubernetes.UserClientInterface{conf.KubernetesConfig.ClusterName: tc.client.(kubernetes.UserClientInterface)}
-			service := business.NewNamespaceService(cache, conf, discovery, clients, userClients)
-
-			_, err := checkNamespaceAccessWithService(w, r, &service, "test", conf.KubernetesConfig.ClusterName)
-			if tc.expectErr {
-				require.Error(err)
-			} else {
-				require.NoError(err)
-			}
-
-			if tc.expectedCode > 0 {
-				require.Equal(tc.expectedCode, w.Code)
-			}
+// newInternalErrorListClient wraps the fake client so namespace LIST calls
+// fail with a non-Forbidden (internal) error.
+func newInternalErrorListClient(k8s *kubetest.FakeK8sClient) *kubetest.FakeK8sClient {
+	if cs, ok := k8s.KubeClientset.(*kubefake.Clientset); ok {
+		cs.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, nil, k8serrors.NewInternalError(fmt.Errorf("apiserver down"))
 		})
 	}
+	return k8s
 }
 
-func TestCheckNamespaceAccessMultiCluster(t *testing.T) {
+func TestCheckNamespaceAccessAllSAClusters(t *testing.T) {
 	const namespace = "ztunnel"
 
+	// The shared rule iterates the SA cluster list: the SA clients say where
+	// the namespace exists, and the user must then be able to see it in
+	// every such cluster. The SA and user clients are deliberately separate
+	// fakes so a cluster can model "the SA sees it, the user does not".
 	cases := map[string]struct {
 		expectedCode     int
 		expectedClusters []string
-		hubClient        kubernetes.UserClientInterface
-		spokeClient      kubernetes.UserClientInterface
+		hubUser          kubernetes.UserClientInterface
+		spokeUser        kubernetes.UserClientInterface
+		hubSA            kubernetes.UserClientInterface
+		spokeSA          kubernetes.UserClientInterface
 	}{
 		"ignores missing namespace on remote": {
-			hubClient:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
-			spokeClient:      kubetest.NewFakeK8sClient(),
+			hubUser:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser:        kubetest.NewFakeK8sClient(),
+			hubSA:            kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeSA:          kubetest.NewFakeK8sClient(),
 			expectedCode:     http.StatusOK,
 			expectedClusters: []string{"hub"},
 		},
 		"ignores missing namespace on hub": {
-			hubClient:        kubetest.NewFakeK8sClient(),
-			spokeClient:      kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubUser:          kubetest.NewFakeK8sClient(),
+			spokeUser:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubSA:            kubetest.NewFakeK8sClient(),
+			spokeSA:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
 			expectedCode:     http.StatusOK,
 			expectedClusters: []string{"spoke"},
 		},
 		"collects namespace from each cluster that has it": {
-			hubClient:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
-			spokeClient:      kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubUser:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubSA:            kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeSA:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
 			expectedCode:     http.StatusOK,
 			expectedClusters: []string{"hub", "spoke"},
 		},
 		"returns forbidden when access denied on a cluster": {
-			hubClient: kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
-			spokeClient: &nsForbidden{
-				UserClientInterface: kubetest.NewFakeK8sClient(),
-				forbiddenNamespace:  namespace,
-			},
+			// The SA sees the namespace on both clusters; the user's spoke
+			// LIST excludes it, so the user is denied on spoke.
+			hubUser: kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser: newRestrictedNamespaceClient(
+				kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+				namespace,
+				[]string{"bookinfo"},
+			),
+			hubSA:            kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeSA:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			expectedCode:     http.StatusForbidden,
+			expectedClusters: nil,
+		},
+		"returns forbidden when user has no client for a cluster where the SA sees the namespace": {
+			// No spoke user client at all (e.g. per-cluster login not done):
+			// counts as denied for an unscoped query.
+			hubUser:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser:        nil,
+			hubSA:            kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeSA:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
 			expectedCode:     http.StatusForbidden,
 			expectedClusters: nil,
 		},
 		"returns not found when missing on all clusters": {
-			hubClient:        kubetest.NewFakeK8sClient(),
-			spokeClient:      kubetest.NewFakeK8sClient(),
+			hubUser:          kubetest.NewFakeK8sClient(),
+			spokeUser:        kubetest.NewFakeK8sClient(),
+			hubSA:            kubetest.NewFakeK8sClient(),
+			spokeSA:          kubetest.NewFakeK8sClient(),
 			expectedCode:     http.StatusNotFound,
+			expectedClusters: nil,
+		},
+		"returns 500 when the home cluster SA set cannot be computed": {
+			// The home cluster's namespace LIST fails with a non-Forbidden
+			// error: an honest 500, not a denial.
+			hubUser:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubSA:            newInternalErrorListClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace))),
+			spokeSA:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			expectedCode:     http.StatusInternalServerError,
+			expectedClusters: nil,
+		},
+		"returns forbidden when a remote cluster SA set cannot be computed": {
+			// An unscoped query cannot skip a remote cluster it cannot
+			// evaluate: that would be fail-open, so it is treated as denied.
+			hubUser:          kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeUser:        kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			hubSA:            kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace)),
+			spokeSA:          newInternalErrorListClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace(namespace))),
+			expectedCode:     http.StatusForbidden,
 			expectedClusters: nil,
 		},
 	}
@@ -145,25 +148,42 @@ func TestCheckNamespaceAccessMultiCluster(t *testing.T) {
 
 			conf := config.NewConfig()
 			conf.KubernetesConfig.ClusterName = "hub"
-			clients := map[string]kubernetes.UserClientInterface{
-				"hub":   tc.hubClient,
-				"spoke": tc.spokeClient,
+			userClients := map[string]kubernetes.UserClientInterface{
+				"hub": tc.hubUser,
 			}
-			clientFactory := kubetest.NewFakeClientFactory(conf, clients)
-			kialiCache := cache.NewTestingCacheWithClients(t, kubernetes.ConvertFromUserClients(clients), *conf)
+			if tc.spokeUser != nil {
+				userClients["spoke"] = tc.spokeUser
+			}
+			saUserClients := map[string]kubernetes.UserClientInterface{
+				"hub":   tc.hubSA,
+				"spoke": tc.spokeSA,
+			}
+			saClients := kubernetes.ConvertFromUserClients(saUserClients)
+
+			clientFactory := kubetest.NewFakeClientFactory(conf, userClients)
+			clientFactory.SAClients = saClients
+			kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
 			discovery := &istiotest.FakeDiscovery{}
 
 			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
 			authInfo := map[string]*api.AuthInfo{
-				"hub":   {Token: "hub-token"},
-				"spoke": {Token: "spoke-token"},
+				"hub": {Token: "hub-token"},
+			}
+			if tc.spokeUser != nil {
+				authInfo["spoke"] = &api.AuthInfo{Token: "spoke-token"}
 			}
 			req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 			w := httptest.NewRecorder()
 
-			namespaces, err := checkNamespaceAccessMultiCluster(w, req, conf, kialiCache, discovery, clientFactory, namespace)
+			namespaces, err := checkNamespaceAccessAllSAClusters(w, req, conf, kialiCache, discovery, clientFactory, namespace, true)
 
-			require.NoError(err)
+			// Denials return the error alongside the written response; a
+			// miss-everywhere 404 does not.
+			if tc.expectedCode == http.StatusForbidden || tc.expectedCode >= http.StatusInternalServerError {
+				require.Error(err)
+			} else {
+				require.NoError(err)
+			}
 			require.Equal(tc.expectedCode, w.Code)
 			if tc.expectedClusters == nil {
 				require.Nil(namespaces)
