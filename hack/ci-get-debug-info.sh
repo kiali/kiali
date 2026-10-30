@@ -34,7 +34,7 @@ Valid command line arguments:
     Specify the kubectl context to use.
     If not provided, the current context is used.
   --include-tracing:
-    Include Tempo, MinIO, and Tempo operator diagnostics.
+    Include Tempo, tracing storage, and Tempo operator diagnostics.
   -h|--help:
     Display this help message
 HELPMSG
