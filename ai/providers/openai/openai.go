@@ -120,6 +120,11 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 			if ctx.Err() == nil && (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) {
 				providers.Log(p, providers.LogLevelDebug, "Content", "OpenAI stream completed with internal SDK context cleanup — not an error")
 			} else {
+				// Keep tokens already reported for this turn so a later abort still
+				// records them on the session.
+				if sawTurnUsage {
+					usage.Add(turnUsage)
+				}
 				return text, nil, enrichAPIError(err)
 			}
 		}
@@ -196,7 +201,9 @@ func (p *OpenAIProvider) SendChat(onChunk func(chunk string), r *http.Request, r
 
 	responseContent, actions, referencedDocs, aborted := providers.RunChatLoop(p, ctx, kialiInterface, onChunk, streamTurn, prepareNextTurn, p.conf.AI.ChatAI.MaxToolIterations)
 	if aborted {
-		return types.TokenUsage{}
+		// Tool-limit and stream failures still consumed tokens. Return them so the
+		// handler can store session usage the same way a completed chat does.
+		return usage
 	}
 
 	if responseTruncated {

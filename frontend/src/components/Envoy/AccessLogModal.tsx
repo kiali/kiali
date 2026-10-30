@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Button, ButtonVariant, Split, SplitItem } from '@patternfly/react-core';
 import { Modal } from '@patternfly/react-core/deprecated';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AccessLog } from 'types/IstioObjects';
+import type { AccessLog } from 'types/IstioObjects';
 import { PFColors } from 'components/Pf/PfColors';
 import { classes } from 'typestyle';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
@@ -847,8 +847,8 @@ export const AccessLogModal: React.FC<AccessLogModalProps> = (props: AccessLogMo
         props.isZtunnel
           ? t('ztunnel Access Log Entry')
           : props.isWaypoint
-          ? t('Waypoint Access log Entry')
-          : t('Envoy Access Log Entry')
+            ? t('Waypoint Access log Entry')
+            : t('Envoy Access Log Entry')
       }
       isOpen={true}
       onClose={props.onClose}

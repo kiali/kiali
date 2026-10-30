@@ -1,6 +1,6 @@
 import { serverConfig } from '../config/ServerConfig';
-import { IstioConfigDetails } from '../types/IstioConfigDetails';
-import {
+import type { IstioConfigDetails } from '../types/IstioConfigDetails';
+import type {
   ConnectionPoolSettings,
   GroupVersionKind,
   IstioObject,
@@ -10,7 +10,8 @@ import {
   Validations
 } from '../types/IstioObjects';
 import { isObject, mergeWith } from 'lodash-es';
-import { dicTypeToGVK, gvkType, IstioConfigItem } from 'types/IstioConfigList';
+import type { IstioConfigItem } from 'types/IstioConfigList';
+import { dicTypeToGVK, gvkType } from 'types/IstioConfigList';
 
 // Guard against prototype pollution via crafted keys in deep-merged objects.
 const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
@@ -46,7 +47,8 @@ export const getIstioObject = (istioObjectDetails?: IstioConfigDetails | IstioCo
 const k8sHostRegexp = /^(\*\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const nsRegexp = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[-a-z0-9]([-a-z0-9]*[a-z0-9])?)*$/;
 const hostRegexp = /(?=^.{4,253}$)(^((?!-)(([a-zA-Z0-9-]{0,62}[a-zA-Z0-9])|\*)\.)+[a-zA-Z]{2,63}$)/;
-const ipRegexp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
+const ipRegexp =
+  /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$/;
 const durationRegexp = /^[\d]+\.?[\d]*(h|m|s|ms)$/;
 
 // K8s gateway hosts have only dnsName
@@ -92,8 +94,8 @@ export const isServerHostValid = (serverHost: string, nsMandatory: boolean): boo
   // parts[0] is a dns
   let dnsValid = true;
   let hostValid = true;
-  let dns = '';
-  let host = '';
+  let dns: string;
+  let host: string;
   if (parts.length === 2) {
     dns = parts[0];
     host = parts[1];
@@ -118,7 +120,7 @@ export const isValidIp = (ip: string): boolean => {
 export const isValidUrl = (url: string): boolean => {
   try {
     new URL(url);
-  } catch (_) {
+  } catch {
     return false;
   }
   return true;

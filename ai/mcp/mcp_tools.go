@@ -28,6 +28,7 @@ import (
 	"github.com/kiali/kiali/ai/mcp/list_traces"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config_read"
+	"github.com/kiali/kiali/ai/mcp/troubleshooting"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/log"
 )
@@ -46,6 +47,12 @@ var (
 var ExcludedToolNames = map[string]bool{
 	"get_referenced_docs": true,
 	"get_action_ui":       true,
+}
+
+// TotallyExcludedToolNames are registered tools that chat must not offer or run.
+// They stay callable by product features such as the troubleshooting dashboard.
+var TotallyExcludedToolNames = map[string]bool{
+	"troubleshooting": true,
 }
 
 // MetricToolNames are MCP tools that require Prometheus.
@@ -208,6 +215,8 @@ func (t ToolDef) Call(kialiInterface *mcputil.KialiInterface, args map[string]in
 		return get_referenced_docs.Execute(kialiInterface, args)
 	case "get_metrics":
 		return get_metrics.Execute(kialiInterface, args)
+	case "troubleshooting":
+		return troubleshooting.Execute(kialiInterface, args)
 	default:
 		return nil, http.StatusNotFound
 	}

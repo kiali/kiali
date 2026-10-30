@@ -44,6 +44,13 @@ export const ChatBot: React.FC = () => {
   const [newProvider, setNewProvider] = useState<string>('');
   const [newModel, setNewModel] = useState<string>('');
   const [chatbotVisible, setChatbotVisible] = useState<boolean>(false);
+  const pendingPrompt = useSelector((state: KialiAppState) => state.ai.chat.pendingPrompt);
+  const [openedPromptNonce, setOpenedPromptNonce] = useState<number | undefined>();
+  // Open the panel when another page asks to send a prompt, and keep it open after that prompt is consumed.
+  if (pendingPrompt && allowedToUseChatbot && openedPromptNonce !== pendingPrompt.nonce) {
+    setOpenedPromptNonce(pendingPrompt.nonce);
+    setChatbotVisible(true);
+  }
   const toggleBg = isDarkTheme ? 'var(--pf-t--color--gray--90)' : 'var(--pf-t--color--white)';
   const toggleBorder = isDarkTheme ? 'var(--pf-t--color--white)' : 'var(--pf-t--color--gray--90)';
 

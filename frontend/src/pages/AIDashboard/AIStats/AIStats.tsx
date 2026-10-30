@@ -1,12 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, CardTitle, EmptyState, EmptyStateBody, Grid, GridItem } from '@patternfly/react-core';
-import {
-  AIUsageResponse,
-  ChatSessionUsageBudget,
-  formatCost,
-  formatTokensInMillions,
-  UsageValueKind
-} from 'types/Chatbot';
+import { formatCost, formatTokensInMillions } from 'types/Chatbot';
+import type { AIUsageResponse, ChatSessionUsageBudget, UsageValueKind } from 'types/Chatbot';
 import {
   Chart,
   ChartAxis,
@@ -22,7 +17,7 @@ import { getDonutDataBy, getLineChartData, getStackThresholdChartData } from './
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { AIKPI } from './AIKPI';
 import { AIStatsHeader } from './AIStatsHeader';
-import { DurationInSeconds } from 'types/Common';
+import type { DurationInSeconds } from 'types/Common';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
@@ -67,6 +62,7 @@ export type AIStatsProps = {
   onWindowChange?: (window: DurationInSeconds, step: DurationInSeconds) => void;
   summary: AIUsageResponse['summary'] | null;
   timeSeries: AIUsageResponse['timeSeries'] | null;
+  valueKind?: UsageValueKind;
   window?: DurationInSeconds;
 };
 
@@ -76,6 +72,7 @@ export const AIStats: React.FC<AIStatsProps> = ({
   onWindowChange,
   summary,
   timeSeries,
+  valueKind = 'tokens',
   window = 86400
 }) => {
   const { t } = useKialiTranslation();
@@ -88,7 +85,6 @@ export const AIStats: React.FC<AIStatsProps> = ({
 
   const [providersOptions, setProvidersOptions] = React.useState<string[]>(['All']);
   const [providerVisible, setProviderVisible] = React.useState<string>('All');
-  const [valueKind, setValueKind] = React.useState<UsageValueKind>('tokens');
 
   React.useEffect(() => {
     const providers = (summary?.byProvider ?? []).map(p => p.provider).filter((p): p is string => !!p && p !== 'total');
@@ -96,7 +92,7 @@ export const AIStats: React.FC<AIStatsProps> = ({
     setProviderVisible('All');
   }, [summary]);
 
-  const handleWindowChange = (newWindow: DurationInSeconds, newStep: DurationInSeconds) => {
+  const handleWindowChange = (newWindow: DurationInSeconds, newStep: DurationInSeconds): void => {
     onWindowChange?.(newWindow, newStep);
   };
 
@@ -161,9 +157,7 @@ export const AIStats: React.FC<AIStatsProps> = ({
                 : t('Consumption of LLM')
             }
             hideTimeRange={hideTimeRange}
-            onValueKindChange={setValueKind}
             onWindowChange={handleWindowChange}
-            valueKind={valueKind}
             window={window}
           />
         </GridItem>

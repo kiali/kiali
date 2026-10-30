@@ -2083,6 +2083,55 @@ func NewRoutes(
 			handlers.ChatMCP(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
 			true,
 		},
+		// swagger:route POST /ai/troubleshooting aiTroubleshooting
+		//
+		// Endpoint to list mesh troubleshooting issues, or submit a UI ask/Fix action
+		//
+		// Produces:
+		// - application/json
+		//
+		// Schemes: http, https
+		//
+		// Responses:
+		//    500: internalError
+		//    503: serviceUnavailableError
+		//    404: notFoundError
+		//    403: forbiddenError
+		//    400: badRequestError
+		//    200: noContent
+		//
+		{
+			"Troubleshooting",
+			log.ChatAILogName,
+			"POST",
+			"/api/ai/troubleshooting",
+			handlers.Troubleshooting(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
+			true,
+		},
+		// swagger:route POST /ai/troubleshooting/chat aiTroubleshootingChat
+		//
+		// Endpoint to stream a troubleshooting diagnosis from the configured AI provider
+		//
+		// Produces:
+		// - text/event-stream
+		//
+		// Schemes: http, https
+		//
+		// Responses:
+		//    500: internalError
+		//    503: serviceUnavailableError
+		//    403: forbiddenError
+		//    400: badRequestError
+		//    200: noContent
+		//
+		{
+			"TroubleshootingChat",
+			log.ChatAILogName,
+			"POST",
+			"/api/ai/troubleshooting/chat",
+			handlers.TroubleshootingChat(conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery),
+			true,
+		},
 		// swagger:route DELETE /chat/conversations ChatConversations
 		//
 		// Endpoint to delete AI chat conversations
@@ -2129,7 +2178,8 @@ func NewRoutes(
 		},
 		// swagger:route GET /api/ai/usage chat aiChatUsage
 		// ---
-		// Endpoint to get token usage statistics for the current cluster
+		// Endpoint to get token usage statistics for the current cluster.
+		// Query param request is chat, troubleshooting, or all. all and omitted include both.
 		//
 		// Produces:
 		// - application/json

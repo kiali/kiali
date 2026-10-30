@@ -50,7 +50,7 @@ func (s *openaiTestStore) SetConversation(sessionID, conversationID string, c *t
 	return nil
 }
 
-func (s *openaiTestStore) RecordUsage(_ string, _ string, _ string, _ types.TokenUsage) error {
+func (s *openaiTestStore) RecordUsage(_ string, _ string, _ string, _ string, _ types.TokenUsage) error {
 	return nil
 }
 func (s *openaiTestStore) GetUsageMetrics(_ string) []types.UsageMetric { return nil }

@@ -157,9 +157,7 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
     onVisibleChange?.(visible);
   };
 
-  const valueAriaLabel = entryKey
-    ? t('Annotation value for {{key}}', { key: entryKey })
-    : t('Value');
+  const valueAriaLabel = entryKey ? t('Annotation value for {{key}}', { key: entryKey }) : t('Value');
 
   const title = entryKey || t('Value');
 
@@ -392,16 +390,17 @@ export const WorkloadAnnotationsWizard: React.FC<WorkloadAnnotationsWizardProps>
     onSave(toRecord(controllerEntries), toRecord(templateEntries));
   };
 
-  const makeChangeHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (
-    index: number,
-    entry: Entry
-  ): void => {
-    setter(prev => prev.map((e, i) => (i === index ? entry : e)));
-  };
+  const makeChangeHandler =
+    (setter: React.Dispatch<React.SetStateAction<Entry[]>>) =>
+    (index: number, entry: Entry): void => {
+      setter(prev => prev.map((e, i) => (i === index ? entry : e)));
+    };
 
-  const makeRemoveHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (index: number): void => {
-    setter(prev => prev.filter((_, i) => i !== index));
-  };
+  const makeRemoveHandler =
+    (setter: React.Dispatch<React.SetStateAction<Entry[]>>) =>
+    (index: number): void => {
+      setter(prev => prev.filter((_, i) => i !== index));
+    };
 
   const makeAddHandler = (setter: React.Dispatch<React.SetStateAction<Entry[]>>) => (): void => {
     setter(prev => [...prev, ['', '']]);

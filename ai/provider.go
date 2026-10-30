@@ -2,6 +2,7 @@ package ai
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/kiali/kiali/ai/mcp"
 	"github.com/kiali/kiali/ai/providers"
@@ -22,7 +23,23 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	if err != nil {
 		return nil, err
 	}
+	return newAIProvider(conf, provider, modelName)
+}
 
+// NewAIProviderFromConfig builds an AI provider from an explicit provider config.
+// Troubleshooting chat uses this so it talks to ai.troubleshooting.ai_support.provider
+// instead of a provider selected from the chat list.
+func NewAIProviderFromConfig(conf *config.Config, provider *config.ProviderConfig, modelName string) (providers.AIProvider, error) {
+	if err := mcp.LoadTools(); err != nil {
+		return nil, err
+	}
+	if provider == nil || !provider.Enabled || strings.TrimSpace(provider.Name) == "" {
+		return nil, fmt.Errorf("provider %q not found or disabled", providerName(provider))
+	}
+	return newAIProvider(conf, provider, modelName)
+}
+
+func newAIProvider(conf *config.Config, provider *config.ProviderConfig, modelName string) (providers.AIProvider, error) {
 	model, err := getModel(*provider, modelName)
 	if err != nil {
 		return nil, err
@@ -46,6 +63,17 @@ func ResolveUsageMetadata(conf *config.Config, providerName string, modelName st
 	if err != nil {
 		return nil, err
 	}
+	return resolveUsageMetadata(provider, modelName)
+}
+
+func ResolveUsageMetadataFromConfig(provider *config.ProviderConfig, modelName string) (*aiTypes.UsageMetric, error) {
+	if provider == nil || !provider.Enabled {
+		return nil, fmt.Errorf("provider %q not found or disabled", providerName(provider))
+	}
+	return resolveUsageMetadata(provider, modelName)
+}
+
+func resolveUsageMetadata(provider *config.ProviderConfig, modelName string) (*aiTypes.UsageMetric, error) {
 	model, err := getModel(*provider, modelName)
 	if err != nil {
 		return nil, err
@@ -55,6 +83,13 @@ func ResolveUsageMetadata(conf *config.Config, providerName string, modelName st
 		Provider: string(provider.Type),
 		Model:    model.Model,
 	}, nil
+}
+
+func providerName(provider *config.ProviderConfig) string {
+	if provider == nil {
+		return ""
+	}
+	return strings.TrimSpace(provider.Name)
 }
 
 func getProvider(conf *config.Config, providerName string) (*config.ProviderConfig, error) {

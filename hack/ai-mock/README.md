@@ -66,7 +66,7 @@ Show all options:
 
 #### Metrics injected
 
-**Base counters** (labels: `username`, `ai_provider`, `ai_model`, `request`):
+**Base counters** (labels: `username`, `ai_provider`, `ai_model`, `request`). Each provider is written twice, once with `request="chat"` and once with `request="troubleshooting"`. Troubleshooting volumes are a different fraction of the chat volumes for each provider, so the two series separate on a chart:
 - `kiali_ai_prompt_tokens_total`
 - `kiali_ai_completion_tokens_total`
 - `kiali_ai_total_tokens_total` (always `prompt + completion`)
@@ -142,7 +142,7 @@ Building the metric injection tool...
 Running the metric injection tool with args: -port 14000
 Injecting AI metrics to http://localhost:14000/api/v1/write...
 Prepared metrics for openai/gpt-4 (anonymous)
-Successfully injected 468 time series for 6 provider(s) (0 skipped).
+Successfully injected 936 time series for 16 request series (0 skipped).
 ```
 
 You can then query these metrics in your local Kiali instance or Prometheus UI.

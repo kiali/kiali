@@ -7,13 +7,10 @@ import {
   ToolbarItem,
   Title,
   TitleSizes,
-  ToolbarGroup,
-  ToggleGroup,
-  ToggleGroupItem
+  ToolbarGroup
 } from '@patternfly/react-core';
 
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
-import type { UsageValueKind } from 'types/Chatbot';
 import { formatLastDuration, useKialiTranslation } from 'utils/I18nUtils';
 
 const ALL_DURATION_OPTIONS: { label: string; value: number }[] = [
@@ -58,11 +55,9 @@ export const getDefaultStep = (windowSecs: number): number => {
 export const AIStatsHeader: React.FC<{
   heading?: string;
   hideTimeRange?: boolean;
-  onValueKindChange: (kind: UsageValueKind) => void;
   onWindowChange: (window: number, step: number) => void;
-  valueKind: UsageValueKind;
   window: number;
-}> = ({ heading, hideTimeRange = false, onValueKindChange, onWindowChange, valueKind, window }) => {
+}> = ({ heading, hideTimeRange = false, onWindowChange, window }) => {
   const { t } = useKialiTranslation();
   const durationOptions = React.useMemo(
     () =>
@@ -73,56 +68,35 @@ export const AIStatsHeader: React.FC<{
 
   return (
     <Grid>
-      <GridItem span={9}>
+      <GridItem span={hideTimeRange ? 12 : 9}>
         <Title headingLevel={hideTimeRange ? 'h2' : 'h1'} size={TitleSizes['4xl']}>
           {heading ?? t('Consumption of LLM')}
         </Title>
       </GridItem>
-      <GridItem span={3}>
-        <Toolbar id="ai-stats-header-toolbar-group">
-          <ToolbarContent>
-            <ToolbarGroup align={{ default: 'alignEnd' }}>
-              {!hideTimeRange && (
-                <>
-                  <ToolbarItem>
-                    <ToolbarDropdown
-                      id="ai-stats-duration-dd"
-                      handleSelect={value => {
-                        const newDuration = Number(value);
-                        const newStep = getDefaultStep(newDuration);
-                        onWindowChange(newDuration, newStep);
-                      }}
-                      value={window}
-                      label={formatLastDuration(selectedDurationLabel)}
-                      options={durationOptions}
-                      tooltip={t('Metric time period')}
-                    />
-                  </ToolbarItem>
-                  <ToolbarItem variant="separator" />
-                </>
-              )}
-              <ToolbarItem>
-                <div data-test="ai-usage-tokens-cost-toggle">
-                  <ToggleGroup aria-label={t('Budget metric')} isCompact>
-                    <ToggleGroupItem
-                      aria-label={t('Tokens')}
-                      isSelected={valueKind === 'tokens'}
-                      onClick={() => onValueKindChange('tokens')}
-                      text={t('Tokens')}
-                    />
-                    <ToggleGroupItem
-                      aria-label={t('Cost')}
-                      isSelected={valueKind === 'cost'}
-                      onClick={() => onValueKindChange('cost')}
-                      text={t('Cost')}
-                    />
-                  </ToggleGroup>
-                </div>
-              </ToolbarItem>
-            </ToolbarGroup>
-          </ToolbarContent>
-        </Toolbar>
-      </GridItem>
+      {!hideTimeRange && (
+        <GridItem span={3}>
+          <Toolbar id="ai-stats-header-toolbar-group">
+            <ToolbarContent>
+              <ToolbarGroup align={{ default: 'alignEnd' }}>
+                <ToolbarItem>
+                  <ToolbarDropdown
+                    id="ai-stats-duration-dd"
+                    handleSelect={value => {
+                      const newDuration = Number(value);
+                      const newStep = getDefaultStep(newDuration);
+                      onWindowChange(newDuration, newStep);
+                    }}
+                    value={window}
+                    label={formatLastDuration(selectedDurationLabel)}
+                    options={durationOptions}
+                    tooltip={t('Metric time period')}
+                  />
+                </ToolbarItem>
+              </ToolbarGroup>
+            </ToolbarContent>
+          </Toolbar>
+        </GridItem>
+      )}
     </Grid>
   );
 };

@@ -1,6 +1,6 @@
 import { round } from 'lodash-es';
 import moment from 'moment';
-import {
+import type {
   EnvoySpanInfo,
   JaegerTrace,
   KeyValuePair,
@@ -10,7 +10,8 @@ import {
   Span
 } from 'types/TracingInfo';
 import { retrieveTimeRange } from 'components/Time/TimeRangeHelper';
-import { guardTimeRange, durationToBounds, DurationInSeconds } from 'types/Common';
+import type { DurationInSeconds } from 'types/Common';
+import { guardTimeRange, durationToBounds } from 'types/Common';
 import { spansSort } from './TraceTransform';
 
 export const defaultTracingDuration: DurationInSeconds = 600;
@@ -371,10 +372,10 @@ export const extractSpanInfo = (
     type === 'envoy'
       ? extractEnvoySpanInfo(span)
       : type === 'http'
-      ? extractOpenTracingHTTPInfo(span)
-      : type === 'tcp'
-      ? extractOpenTracingTCPInfo(span)
-      : extractOpenTracingBaseInfo(span);
+        ? extractOpenTracingHTTPInfo(span)
+        : type === 'tcp'
+          ? extractOpenTracingTCPInfo(span)
+          : extractOpenTracingBaseInfo(span);
   return { info, type };
 };
 
