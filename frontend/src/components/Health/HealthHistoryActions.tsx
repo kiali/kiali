@@ -112,10 +112,9 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
       t,
       props.healthType,
       props.name,
-      props.namespace,
       selection.status,
-      range,
       selection.timestamp * 1000,
+      options[String(duration)],
       props.cluster
     );
     const chatContext = buildHealthHistoryChatContext(
@@ -227,7 +226,7 @@ export const HealthHistoryActions: React.FC<HealthHistoryActionsProps> = props =
                     onClick={handleTroubleshootWithAI}
                     variant="link"
                   >
-                    {t('Troubleshoot with AI')}
+                    {t('AI Chat')}
                   </Button>
                 )}
                 <KialiLink

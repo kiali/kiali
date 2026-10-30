@@ -152,14 +152,20 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       if (value.trim().length > 0) {
         setValidated('default');
       }
+      // Health-history supplemental context is only valid for the pre-filled prompt.
+      // Clear it as soon as the user edits or clears that text.
+      if (chatContext && value !== query) {
+        dispatch(ChatAIActions.setChatContext(''));
+      }
       dispatch(ChatAIActions.setQuery(value));
       requestAnimationFrame(() => syncMessageBarTextareaLayout(textareaRef.current));
     },
-    [dispatch, syncMessageBarTextareaLayout]
+    [chatContext, dispatch, query, syncMessageBarTextareaLayout]
   );
 
   const onPromptSelect = React.useCallback(
     (promptQuery: string) => {
+      dispatch(ChatAIActions.setChatContext(''));
       dispatch(ChatAIActions.setQuery(promptQuery));
       textareaRef.current?.focus();
     },

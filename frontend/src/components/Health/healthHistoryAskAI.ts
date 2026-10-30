@@ -81,31 +81,23 @@ export const buildHealthHistoryChatQuery = (
   t: TranslateFn,
   healthType: HealthHistoryType,
   name: string,
-  namespace: string,
   status: HealthStatusId,
-  range: HealthHistoryRange,
-  _selectedTimeMs: number,
+  selectedTimeMs: number,
+  durationLabel: string,
   cluster?: string
 ): string => {
-  const resource = formatResourceDescription(healthType, name, namespace, t);
+  const kind = resourceKindLabel(healthType, t);
   const clusterSuffix = cluster && isMultiCluster ? t(" in cluster '{{cluster}}'", { cluster }) : '';
-  const options = {
-    clusterSuffix,
-    from: formatHealthHistoryChatTimestamp(range.from),
-    resource,
-    status: t(healthStatusI18nKey(status)),
-    to: formatHealthHistoryChatRangeTo(range.to)
-  };
-
-  if (status === 'Healthy') {
-    return t(
-      'The health history shows status "{{status}}" from {{from}} to {{to}} for {{resource}}{{clusterSuffix}}. Investigate whether any notable events, changes, or anomalies occurred during this period.',
-      options
-    );
-  }
 
   return t(
-    'The health history shows status "{{status}}" from {{from}} to {{to}} for {{resource}}{{clusterSuffix}}. What likely caused this and what should I investigate?',
-    options
+    "The '{{name}}' {{kind}}{{clusterSuffix}} had '{{status}}' status at {{selectedTime}}. Investigate the surrounding {{duration}} for notable events, changes, or anomalies.",
+    {
+      clusterSuffix,
+      duration: durationLabel,
+      kind,
+      name,
+      selectedTime: formatHealthHistoryChatTimestamp(selectedTimeMs),
+      status: t(healthStatusI18nKey(status))
+    }
   );
 };
