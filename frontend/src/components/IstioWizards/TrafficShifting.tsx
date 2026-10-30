@@ -18,6 +18,7 @@ import type { SortableTh } from 'components/Table/SimpleTable';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { BalanceScaleIcon, MigrationIcon } from '@patternfly/react-icons';
+import { rebalanceUnlockedWeights } from './trafficShiftingWeights';
 
 type Props = {
   initWeights: WorkloadWeight[];
@@ -160,36 +161,6 @@ export class TrafficShifting extends React.Component<Props, State> {
     );
   };
 
-  rebalanceUnlockedWeights = (workloads: WorkloadWeight[]): void => {
-    let maxWeight = 100;
-    const nodeId: number[] = [];
-
-    for (let i = 0; i < workloads.length; i++) {
-      if (workloads[i].locked && !workloads[i].mirrored) {
-        maxWeight -= workloads[i].weight;
-      }
-    }
-    maxWeight = Math.max(0, maxWeight);
-
-    for (let i = 0; i < workloads.length; i++) {
-      if (!workloads[i].locked && !workloads[i].mirrored) {
-        nodeId.push(i);
-      }
-    }
-
-    let sumWeights = 0;
-    for (let j = 0; j < nodeId.length; j++) {
-      if (sumWeights + workloads[nodeId[j]].weight > maxWeight) {
-        workloads[nodeId[j]].weight = Math.max(0, maxWeight - sumWeights);
-      }
-      sumWeights += workloads[nodeId[j]].weight;
-    }
-
-    if (nodeId.length > 0 && sumWeights < maxWeight) {
-      workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
-    }
-  };
-
   onLock = (workloadName: string, locked: boolean): void => {
     this.setState(
       prevState => {
@@ -220,7 +191,7 @@ export class TrafficShifting extends React.Component<Props, State> {
         }
 
         if (locked) {
-          this.rebalanceUnlockedWeights(workloads);
+          rebalanceUnlockedWeights(workloads);
         }
 
         // When unlocking, assign remaining traffic so non-mirrored weights still sum to 100 %
@@ -247,6 +218,7 @@ export class TrafficShifting extends React.Component<Props, State> {
               );
             }
           }
+          rebalanceUnlockedWeights(workloads);
         }
 
         return {
