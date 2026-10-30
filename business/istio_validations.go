@@ -114,7 +114,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 // with no user client surfaces as an AccessibleNamespaceError (403, "no
 // client means denied") rather than an empty set.
 func (in *IstioValidationsService) accessibleNamespaceSet(ctx context.Context, cluster string) (map[string]struct{}, error) {
-	accessibleNamespaces, err := in.namespace.getClusterNamespacesForCluster(ctx, cluster)
+	accessibleNamespaces, err := in.namespace.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}

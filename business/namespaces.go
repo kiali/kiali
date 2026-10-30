@@ -100,14 +100,21 @@ func (in *NamespaceService) GetKialiSAClusterList() []string {
 // identical across instances.
 var namespaceSetFlight singleflight.Group
 
-// getClusterNamespacesForCluster returns the user's accessible namespaces
+// GetClusterNamespacesForCluster returns the user's accessible namespaces
 // for a single cluster, checking and filling the per-token cache for that
 // cluster only. The result — including an empty one — is cached, so the
 // presence of the cache entry is authoritative for the token's TTL (no
 // recompute on subsequent requests, denied or not). Concurrent computations
 // for the same (token, cluster) are coalesced. Do not mutate the returned
 // slice: it is shared between concurrent callers.
-func (in *NamespaceService) getClusterNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
+//
+// Unlike GetNamespaces (and the GetClusterNamespaces convenience filter over
+// it), which follow picker semantics — a remote cluster whose set cannot be
+// computed is skipped, yielding no namespaces and no error — this propagates
+// the error for the requested cluster, home or remote. Use it when the answer
+// is load-bearing (e.g. deciding whether a session still has any access)
+// rather than a best-effort listing.
+func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	// A cluster with no user client is an access denial, not an internal
 	// error: callers map AccessibleNamespaceError to 403.
 	client, ok := in.userClients[cluster]
@@ -185,10 +192,10 @@ func (in *NamespaceService) GetNamespaces(ctx context.Context) ([]models.Namespa
 			wg.Add(1)
 			go func(c string) {
 				defer wg.Done()
-				// getClusterNamespacesForCluster checks the per-token cache
+				// GetClusterNamespacesForCluster checks the per-token cache
 				// first and filters namespaces using discovery selectors; we
 				// don't have to do either here.
-				list, err := in.getClusterNamespacesForCluster(ctx, c)
+				list, err := in.GetClusterNamespacesForCluster(ctx, c)
 				resultsCh <- result{cluster: c, ns: list, err: err}
 			}(cluster)
 		}
@@ -453,9 +460,9 @@ func (in *NamespaceService) CheckNamespaceAccessAllClusters(ctx context.Context,
 
 		// The namespace exists in this cluster: the user must be able to see
 		// it here. A cluster with no user client also surfaces as an
-		// AccessibleNamespaceError from getClusterNamespacesForCluster, which
+		// AccessibleNamespaceError from GetClusterNamespacesForCluster, which
 		// the error handling below treats as denied.
-		userNamespaces, err := in.getClusterNamespacesForCluster(ctx, cluster)
+		userNamespaces, err := in.GetClusterNamespacesForCluster(ctx, cluster)
 		if err != nil {
 			if cluster == homeCluster {
 				return nil, err
@@ -507,7 +514,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	defer end()
 
 	// The client is resolved here, rather than left to
-	// getClusterNamespacesForCluster, because the indexed read below needs
+	// GetClusterNamespacesForCluster, because the indexed read below needs
 	// the cache key. A cluster with no user client is the same
 	// AccessibleNamespaceError the computation path produces.
 	client, ok := in.userClients[cluster]
@@ -520,7 +527,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// denial — without materializing the set, which list flows check once
 	// per namespace and would otherwise scale with the set size. Only a
 	// token+cluster pair with no warm entry computes the set; that
-	// computation is coalesced by getClusterNamespacesForCluster's
+	// computation is coalesced by GetClusterNamespacesForCluster's
 	// singleflight, and the warm entry stays authoritative: a namespace
 	// absent from it is simply not accessible — no recompute — in both modes.
 	if ns, inSet, setCached := in.kialiCache.ResolveClusterNamespace(cluster, client.GetCacheKey(), namespace); setCached {
@@ -530,7 +537,7 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 		return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
 	}
 
-	clusterNamespaces, err := in.getClusterNamespacesForCluster(ctx, cluster)
+	clusterNamespaces, err := in.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
