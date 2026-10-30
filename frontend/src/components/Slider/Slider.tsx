@@ -55,7 +55,11 @@ export const Slider: React.FC<SliderProps> = ({
   };
 
   const displayValue = capValue(value);
-  const useCappedThumbPosition = valueCap !== undefined && valueCap < max;
+
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+  const onValueCommitRef = React.useRef(onValueCommit);
+  onValueCommitRef.current = onValueCommit;
 
   const showRailTooltip = Boolean(hasTooltipOverThumb && tooltipContent);
 
@@ -90,6 +94,26 @@ export const Slider: React.FC<SliderProps> = ({
     };
   }, [showRailTooltip, id, value]);
 
+  const applyThumbPosition = React.useCallback(
+    (valueForPosition: number): void => {
+      const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
+      if (!sliderRoot || max <= min) {
+        return;
+      }
+
+      const percent = `${((valueForPosition - min) / (max - min)) * 100}%`;
+      sliderRoot.style.setProperty('--pf-v6-c-slider--value', percent);
+
+      const thumb = sliderRoot.querySelector<HTMLElement>('.pf-v6-c-slider__thumb');
+      thumb?.style.setProperty('--pf-v6-c-slider--value', percent);
+    },
+    [max, min]
+  );
+
+  const syncSliderThumbPosition = React.useCallback((): void => {
+    applyThumbPosition(displayValue);
+  }, [applyThumbPosition, displayValue]);
+
   React.useLayoutEffect(() => {
     const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
     if (!sliderRoot) {
@@ -101,37 +125,31 @@ export const Slider: React.FC<SliderProps> = ({
     } else {
       sliderRoot.style.removeProperty(sliderRailFillCssVar);
     }
-  }, [railTrackFill, id, value]);
 
-  React.useLayoutEffect(() => {
-    if (!useCappedThumbPosition || max <= min) {
-      return;
-    }
-
-    const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
-    if (!sliderRoot) {
-      return;
-    }
-
-    const percent = ((displayValue - min) / (max - min)) * 100;
-    sliderRoot.style.setProperty('--pf-v6-c-slider--value', `${percent}%`);
-
-    return () => {
-      sliderRoot.style.removeProperty('--pf-v6-c-slider--value');
-    };
-  }, [displayValue, max, min, useCappedThumbPosition, id]);
+    syncSliderThumbPosition();
+  }, [displayValue, max, min, railTrackFill, id, value, syncSliderThumbPosition]);
 
   React.useEffect(() => {
     latestValueRef.current = displayValue;
   }, [displayValue]);
 
   const handleChange = (event: SliderOnChangeEvent, newValue: number): void => {
-    const capped = capValue(newValue);
+    if (isDisabled) {
+      return;
+    }
+    const capped = valueCap !== undefined && newValue >= valueCap ? valueCap : capValue(newValue);
     latestValueRef.current = capped;
     onChange(event, capped);
+    if (capped !== newValue) {
+      applyThumbPosition(capped);
+      requestAnimationFrame(() => applyThumbPosition(capped));
+    }
   };
 
   const handleRelease = (): void => {
+    if (isDisabled) {
+      return;
+    }
     onValueCommit?.(latestValueRef.current);
   };
 
