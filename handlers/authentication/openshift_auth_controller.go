@@ -142,6 +142,14 @@ func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseW
 // ServiceAccount tokens without any RoleBinding) must not get a Kiali session.
 // The namespace list is cached per token (CacheTokenNamespaceDuration), so the cost
 // of this check on per-request session validation is bounded.
+//
+// The per-cluster lookup is used, not the aggregate GetNamespaces: the aggregate
+// follows picker semantics (a remote cluster whose set cannot be computed is
+// skipped, yielding an empty list and no error), which would turn a transient
+// remote API failure into "zero namespace visibility" and terminate a valid
+// session. This lookup propagates the selected cluster's errors, so callers can
+// tell "cannot determine" (the returned error) from "definitively zero access"
+// (ErrCannotViewNamespaces).
 func (o *OpenshiftAuthController) checkTokenCanViewNamespaces(ctx context.Context, token, cluster string) error {
 	authInfo := &api.AuthInfo{Token: token}
 	userClient, err := o.clientFactory.GetClient(authInfo, cluster)
@@ -154,8 +162,15 @@ func (o *OpenshiftAuthController) checkTokenCanViewNamespaces(ctx context.Contex
 
 	// Using the namespaces API to check if token is valid. In Kubernetes, the version API seems to allow
 	// anonymous access, so it's not feasible to use the version API for token verification.
-	nsList, err := namespaceService.GetNamespaces(ctx)
+	nsList, err := namespaceService.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
+		// An RBAC rejection on the namespace API is a definitive zero-visibility
+		// answer (the token authenticates but cannot view any namespace), not an
+		// availability problem: report it as zero access so the session is
+		// handled by that path rather than as an indeterminate failure.
+		if k8serrors.IsForbidden(err) || k8serrors.IsUnauthorized(err) {
+			return ErrCannotViewNamespaces
+		}
 		return err
 	}
 
@@ -370,14 +385,21 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			}
 			// Re-check namespace visibility on every request: this also terminates
 			// pre-existing sessions of users whose access has dropped to zero,
-			// instead of letting them ride until expiry. Only the affected
-			// cluster's session is terminated and validation continues with the
-			// remaining (healthy) sessions: returning the error here would fail
-			// the whole request, and the authentication middleware would then
-			// terminate and revoke every session, including the healthy ones,
-			// logging the user out of the entire multi-cluster setup because one
-			// remote cluster lost access. (Same graceful degradation as the
-			// unauthorized-token branch above.)
+			// instead of letting them ride until expiry. Zero access is only
+			// actioned when it is positively established (the accessible set was
+			// computed and is empty): a lookup that could not be computed (e.g. a
+			// transient API failure on a cold cache) is not a zero-access verdict.
+			// For a remote cluster such a failure skips the session for the
+			// current request — the same graceful degradation as the
+			// unauthorized-token branch above, and the session is retried on the
+			// next request once the cluster recovers. Returning the error for a
+			// remote cluster would fail the whole request, and for
+			// authentication-class errors the middleware would then terminate and
+			// revoke every session, including the healthy ones. The home cluster
+			// keeps the fail-loud behavior: its session is mandatory, so an
+			// indeterminate home lookup fails the request (the middleware does
+			// not terminate sessions for non-authentication errors, so a
+			// transient home failure does not log the user out).
 			if err := o.checkTokenCanViewNamespaces(r.Context(), session.Payload.AccessToken, session.Cluster); err != nil {
 				if errors.Is(err, ErrCannotViewNamespaces) {
 					log.Debug("Token saved in session cannot view any namespace. Terminating session...")
@@ -388,7 +410,11 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					}
 					continue
 				}
-				return nil, err
+				if session.Cluster == o.conf.KubernetesConfig.ClusterName {
+					return nil, err
+				}
+				log.Warningf("Skipping session for cluster [%s]: namespace visibility could not be determined: %s", session.Cluster, err)
+				continue
 			}
 			if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 				homeUserName = user.Name
