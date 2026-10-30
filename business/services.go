@@ -677,6 +677,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	if s.IsAmbient && len(waypointWk) > 0 {
 		s.WaypointWorkloads = waypointWk
 	}
+	userClient, clientOk := in.userClients[cluster]
+	if clientOk {
+		if nsModel, nsFound := in.kialiCache.GetNamespace(cluster, userClient.GetCacheKey(), namespace); nsFound {
+			s.WaypointTrafficSplit = waypointTrafficSplitForService(&svc, &nsModel)
+		}
+	}
 
 	return &s, nil
 }
@@ -752,18 +758,40 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 		if !waypointForFound || waypointFor != config.WaypointForNone {
 			key := fmt.Sprintf("%s_%s_%s", svc.Cluster, waypoint.Namespace, waypoint.Name)
 			if waypointWorkload != nil && !workloadsMap[key] {
-				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{
+					Name:         waypoint.Name,
+					Namespace:    waypoint.Namespace,
+					Cluster:      waypoint.Cluster,
+					Type:         waypointWorkload.WaypointFor(),
+					WaypointRole: models.WaypointRolePrimary,
+				})
 				workloadsMap[key] = true
 			}
+		}
+	}
+
+	userClient, clientOk := in.userClients[svc.Cluster]
+	if clientOk {
+		if nsModel, nsFound := in.kialiCache.GetNamespace(svc.Cluster, userClient.GetCacheKey(), svc.Namespace); nsFound {
+			split := waypointTrafficSplitForService(svc, &nsModel)
+			waypointsAll := in.businessLayer.Workload.GetWaypoints(ctx)
+			workloadsList = appendCanaryWaypointRef(workloadsList, split, waypointsAll)
 		}
 	}
 
 	return workloadsList
 }
 
+// ListWaypointCapturedServices returns services that use the gateway as primary or canary waypoint.
+func (in *SvcService) ListWaypointCapturedServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
+	primary := in.ListWaypointServices(ctx, name, namespace, cluster, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary, 0)
+	canary := in.ListWaypointServices(ctx, name, namespace, cluster, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary, -1)
+	return mergeWaypointServiceRefs(primary, canary)
+}
+
 // ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
 // It should return just one (If there are more, that might be a validation error)
-func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster, useLabel, useNamespaceLabel, role string, canaryWeight int) []models.ServiceReferenceInfo {
 	var serviceInfoList []models.ServiceReferenceInfo
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
@@ -777,13 +805,24 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 	if err == nil {
 		for _, ns := range namespaces {
 			svcList := &core_v1.ServiceList{}
-			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{config.WaypointUseLabel: name})); err != nil {
+			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{useLabel: name})); err != nil {
 				log.Infof("Error getting services %s", err.Error())
 			} else {
 				for _, service := range svcList.Items {
 					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
-					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
-						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
+					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[useNamespaceLabel] == namespace) {
+						weight := canaryWeight
+						if role == models.WaypointRoleCanary && weight < 0 {
+							weight = models.ParseWaypointCanaryWeight(service.Annotations)
+						}
+						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{
+							Name:         service.Name,
+							Namespace:    service.Namespace,
+							LabelType:    "service",
+							Cluster:      cluster,
+							WaypointRole: role,
+							CanaryWeight: weight,
+						})
 						servicesMap[key] = true
 					}
 				}

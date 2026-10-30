@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { IRow, ISortBy, OnSort, SortByDirection, TableVariant } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
+import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';
 import { SimpleTable } from '../Table/SimpleTable';
 import {
   EmptyState,
@@ -13,8 +14,8 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
-import { SortableCompareTh } from './ZtunnelConfig';
-import { WaypointInfo, WorkloadInfo } from '../../types/Workload';
+import type { SortableCompareTh } from './ZtunnelConfig';
+import type { WaypointInfo, WorkloadInfo } from '../../types/Workload';
 import { isMultiCluster } from '../../config';
 import { KialiLink } from '../Link/KialiLink';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
@@ -63,7 +64,7 @@ const labeledBy = (
   </Tooltip>
 );
 
-const columns: SortableCompareTh<WorkloadInfo>[] = [
+const baseColumns: SortableCompareTh<WorkloadInfo>[] = [
   {
     title: t('Name'),
     sortable: true,
@@ -80,9 +81,17 @@ const columns: SortableCompareTh<WorkloadInfo>[] = [
   }
 ];
 
+const roleColumn: SortableCompareTh<WorkloadInfo> = {
+  title: t('Waypoint role'),
+  sortable: false
+};
+
 export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: WaypointWorkloadsProps) => {
   const [sortBy, setSortBy] = React.useState(0);
   const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
+
+  const showRole = props.workloads?.some(w => w.waypointRole);
+  const columns = showRole ? [...baseColumns, roleColumn] : baseColumns;
 
   const compare = columns[sortBy].compare;
   const sorted = compare
@@ -110,15 +119,27 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
     );
   };
 
+  const formatRole = (element: WaypointInfo): string => {
+    if (!element.waypointRole) {
+      return '';
+    }
+    if (element.waypointRole === 'canary' && element.canaryWeight) {
+      return `${element.waypointRole} (${element.canaryWeight}%)`;
+    }
+    return element.waypointRole;
+  };
+
   const rows: IRow[] = sorted
     ? sorted.map(element => {
-        return {
-          cells: [
-            renderItem(element.namespace, element.name, props.type, element.cluster),
-            element.namespace,
-            element.labelType
-          ]
-        };
+        const cells = [
+          renderItem(element.namespace, element.name, props.type, element.cluster),
+          element.namespace,
+          element.labelType
+        ];
+        if (showRole) {
+          cells.push(formatRole(element));
+        }
+        return { cells };
       })
     : [];
 

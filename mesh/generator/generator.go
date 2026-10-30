@@ -195,15 +195,17 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 				}
 
 				infraData := struct {
-					Annotations         map[string]string
-					Labels              map[string]string
-					TemplateAnnotations map[string]string
-					TemplateLabels      map[string]string
+					Annotations          map[string]string
+					Labels               map[string]string
+					TemplateAnnotations  map[string]string
+					TemplateLabels       map[string]string
+					WaypointTrafficSplit *models.WaypointTrafficSplit `json:"WaypointTrafficSplit,omitempty"`
 				}{
-					Annotations:         wp.Annotations,
-					Labels:              wp.Labels,
-					TemplateAnnotations: wp.TemplateAnnotations,
-					TemplateLabels:      wp.TemplateLabels,
+					Annotations:          wp.Annotations,
+					Labels:               wp.Labels,
+					TemplateAnnotations:  wp.TemplateAnnotations,
+					TemplateLabels:       wp.TemplateLabels,
+					WaypointTrafficSplit: wp.WaypointTrafficSplit,
 				}
 
 				wpNode, _, err := addInfra(meshMap, mesh.InfraTypeWaypoint, wp.Cluster, wp.Namespace, wp.Name, infraData, version, false, "")

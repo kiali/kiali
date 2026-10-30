@@ -104,6 +104,8 @@ type ServiceDetails struct {
 	SubServices       []*ServiceOverview      `json:"subServices"`
 	Validations       IstioValidations        `json:"validations"`
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
+
+	WaypointTrafficSplit *WaypointTrafficSplit `json:"waypointTrafficSplit,omitempty"`
 }
 
 type (
@@ -148,6 +150,10 @@ type ServiceReferenceInfo struct {
 	// required: true
 	// example: bookinfo
 	Namespace string `json:"namespace"`
+
+	WaypointRole string `json:"waypointRole,omitempty"`
+
+	CanaryWeight int `json:"canaryWeight,omitempty"`
 }
 
 func (so *ServiceOverview) ParseToService() *Service {

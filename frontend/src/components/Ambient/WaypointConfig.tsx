@@ -1,7 +1,21 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
-import { Workload } from 'types/Workload';
-import { Card, CardBody, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
+import { TableVariant } from '@patternfly/react-table';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import type { Workload } from 'types/Workload';
+import {
+  Card,
+  CardBody,
+  CardHeader,
+  CardTitle,
+  Content,
+  ContentVariants,
+  Grid,
+  GridItem,
+  Tab,
+  Tabs,
+  Title,
+  TitleSizes
+} from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { activeTab } from '../../components/Tab/Tabs';
 import { tabCardStyle, constrainedScrollStyle, flexCardStyle, flexFillStyle } from 'styles/FlexStyles';
@@ -16,11 +30,38 @@ import { SimpleTable } from '../Table/SimpleTable';
 import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 import { WaypointForLabel, WaypointType } from '../../types/Ambient';
 import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
+import { WaypointCanaryInfoPanel } from './WaypointCanarySummary';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize } from 'styles/PfTypography';
+import { cardBodyStyle, cardStyle } from '../../pages/Overview/OverviewStyles';
+import { kialiStyle } from 'styles/StyleUtils';
 
-const resources: string[] = ['service', 'workload', 'information'];
-
-const waypointTabs = ['service', 'workload', 'information'];
+const waypointOverviewTab = 'overview';
 const tabName = 'waypointTab';
+
+const normalizeWaypointTabParam = (tab: string): string => (tab === 'information' ? waypointOverviewTab : tab);
+
+const waypointTabResources = (waypointFor: string): string[] => {
+  const resources = [waypointOverviewTab];
+  if (waypointFor === WaypointType.Service || waypointFor === WaypointType.All) {
+    resources.push(WaypointType.Service);
+  }
+  if (waypointFor === WaypointType.Workload || waypointFor === WaypointType.All) {
+    resources.push(WaypointType.Workload);
+  }
+  return resources;
+};
+
+const defaultWaypointTab = (waypointFor: string): string => {
+  switch (waypointFor) {
+    case WaypointType.None:
+      return waypointOverviewTab;
+    case WaypointType.Workload:
+      return WaypointType.Workload;
+    default:
+      return waypointOverviewTab;
+  }
+};
 
 type WaypointConfigProps = {
   workload: Workload;
@@ -36,6 +77,19 @@ export const isWaypointFor = (wk: Workload): string => {
       return WaypointType.Workload;
     default:
       return WaypointType.Service;
+  }
+};
+
+const waypointForScopeLabel = (scope: string): string => {
+  switch (scope) {
+    case WaypointType.All:
+      return t('All');
+    case WaypointType.None:
+      return t('None');
+    case WaypointType.Workload:
+      return t('Workload');
+    default:
+      return t('Service');
   }
 };
 
@@ -59,31 +113,69 @@ const showProxyStatus = (workload: Workload): React.ReactNode => {
     };
   });
 
-  return <SimpleTable label={t('Proxy Status')} columns={cols} rows={rows} />;
+  return <SimpleTable columns={cols} label={t('Envoy status')} rows={rows} variant={TableVariant.compact} />;
 };
+
+const renderEnvoyStatusSection = (workload: Workload): React.ReactNode => {
+  return (
+    <>
+      <Title
+        className={envoyStatusHeadingStyle}
+        data-test="waypoint-envoy-status-heading"
+        headingLevel="h5"
+        size={TitleSizes.md}
+      >
+        {t('Envoy status')}
+      </Title>
+      <Content className={envoyStatusHelpStyle} component={ContentVariants.small}>
+        {t('Envoy xDS sync (CDS, LDS, EDS, RDS) for each pod running this waypoint proxy.')}
+      </Content>
+      <div className={envoyStatusTableWrapStyle}>{showProxyStatus(workload)}</div>
+    </>
+  );
+};
+
+const overviewTabContentStyle = kialiStyle({
+  padding: PFSpacer.md
+});
+
+const waypointForScopeStyle = kialiStyle({
+  fontSize: 'var(--pf-t--global--font--size--body--default)',
+  fontWeight: 'var(--pf-t--global--font--weight--body--default)',
+  marginTop: PFSpacer.xs
+});
+
+const envoyStatusHeadingStyle = kialiStyle({
+  marginBottom: PFSpacer.sm
+});
+
+const envoyStatusHelpStyle = kialiStyle({
+  display: 'block',
+  fontSize: PFFontSize.small,
+  marginBottom: PFSpacer.md
+});
+
+const envoyStatusTableWrapStyle = kialiStyle({
+  marginTop: PFSpacer.sm
+});
 
 export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointConfigProps) => {
   const { t } = useKialiTranslation();
   const waypointFor = isWaypointFor(props.workload);
-  let defaultTab: string;
-  switch (waypointFor) {
-    case WaypointType.None:
-      defaultTab = 'information';
-      break;
-    case WaypointType.Workload:
-      defaultTab = WaypointType.Workload;
-      break;
-    default:
-      defaultTab = WaypointType.Service;
-  }
-  const [activeKey, setActiveKey] = React.useState(waypointTabs.indexOf(activeTab(tabName, defaultTab)));
-  const [resource, setResource] = React.useState(activeTab(tabName, defaultTab));
+  const tabResources = waypointTabResources(waypointFor);
+  const defaultTab = defaultWaypointTab(waypointFor);
+  const initialResource = normalizeWaypointTabParam(activeTab(tabName, defaultTab));
+  const initialActiveKey = Math.max(0, tabResources.indexOf(initialResource));
 
-  const currentTabIndexRef = React.useRef();
-  const resourceRef = React.useRef();
+  const [activeKey, setActiveKey] = React.useState(initialActiveKey);
+  const [resource, setResource] = React.useState(tabResources.includes(initialResource) ? initialResource : defaultTab);
+
+  const currentTabIndexRef = React.useRef<number | undefined>(undefined);
+  const resourceRef = React.useRef<string | undefined>(undefined);
 
   React.useEffect(() => {
-    const currentTabIndex = waypointTabs.indexOf(activeTab(tabName, defaultTab));
+    const urlTab = normalizeWaypointTabParam(activeTab(tabName, defaultTab));
+    const currentTabIndex = tabResources.indexOf(urlTab);
 
     if (
       resourceRef.current !== undefined &&
@@ -94,16 +186,14 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
       if (currentTabIndex !== activeKey) {
         setActiveKey(currentTabIndex);
       }
-      // @ts-ignore
       currentTabIndexRef.current = currentTabIndex;
-      // @ts-ignore
       resourceRef.current = resource;
     }
-  }, [resource, activeKey, defaultTab]);
+  }, [resource, activeKey, defaultTab, tabResources]);
 
   const waypointHandleTabClick = (_event: React.MouseEvent, tabIndex: string | number): void => {
     const resourceIdx: number = +tabIndex;
-    const targetResource: string = resources[resourceIdx];
+    const targetResource: string = tabResources[resourceIdx];
 
     if (targetResource !== resource) {
       setResource(targetResource);
@@ -119,9 +209,46 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
 
   const tabs: JSX.Element[] = [];
 
+  tabs.push(
+    <Tab eventKey={tabs.length} key={waypointOverviewTab} title={t('Overview')}>
+      <div className={overviewTabContentStyle}>
+        <Grid hasGutter>
+          <GridItem span={props.workload.waypointTrafficSplit?.canary ? 6 : 12}>
+            <Card className={cardStyle} data-test="waypoint-envoy-status-card">
+              <CardHeader>
+                <CardTitle data-test="waypointfor-title">{t('Waypoint for')}</CardTitle>
+                <div className={waypointForScopeStyle} data-test="waypointfor-scope">
+                  {waypointForScopeLabel(waypointFor)}
+                </div>
+              </CardHeader>
+              <CardBody className={cardBodyStyle}>{renderEnvoyStatusSection(props.workload)}</CardBody>
+            </Card>
+          </GridItem>
+          {props.workload.waypointTrafficSplit?.canary && (
+            <GridItem span={6}>
+              <Card className={cardStyle} data-test="waypoint-traffic-split-card">
+                <CardHeader>
+                  <CardTitle>{t('Waypoint traffic split')}</CardTitle>
+                </CardHeader>
+                <CardBody className={cardBodyStyle}>
+                  <WaypointCanaryInfoPanel
+                    split={props.workload.waypointTrafficSplit}
+                    workloadCluster={props.workload.cluster}
+                    workloadName={props.workload.name}
+                    workloadNamespace={props.workload.namespace}
+                  />
+                </CardBody>
+              </Card>
+            </GridItem>
+          )}
+        </Grid>
+      </div>
+    </Tab>
+  );
+
   if (waypointFor === WaypointType.Service || waypointFor === WaypointType.All) {
-    const servicesTab = (
-      <Tab title={t('Services')} eventKey={0} key={waypointFor}>
+    tabs.push(
+      <Tab eventKey={tabs.length} key="services" title={t('Services')}>
         <Card className={classes(flexCardStyle, tabCardStyle)}>
           <CardBody>
             <div>
@@ -136,12 +263,11 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
         </Card>
       </Tab>
     );
-    tabs.push(servicesTab);
   }
 
   if (waypointFor === WaypointType.Workload || waypointFor === WaypointType.All) {
-    const workloadsTab = (
-      <Tab title={t('Workloads')} eventKey={1} key={waypointFor}>
+    tabs.push(
+      <Tab eventKey={tabs.length} key="workloads" title={t('Workloads')}>
         <Card className={classes(flexCardStyle, tabCardStyle)}>
           <CardBody>
             <div>
@@ -156,31 +282,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
         </Card>
       </Tab>
     );
-    tabs.push(workloadsTab);
   }
-
-  const infoTab = (
-    <Tab title={t('Info')} eventKey={2} key="information">
-      <Card className={classes(flexCardStyle, tabCardStyle)}>
-        <CardBody>
-          <div>
-            <div style={{ marginBottom: '1.25rem' }}>
-              <Title
-                headingLevel="h5"
-                size={TitleSizes.md}
-                style={{ marginBottom: '1em' }}
-                data-test="waypointfor-title"
-              >
-                Waypoint for: {waypointFor}
-              </Title>
-              {showProxyStatus(props.workload)}
-            </div>
-          </div>
-        </CardBody>
-      </Card>
-    </Tab>
-  );
-  tabs.push(infoTab);
 
   return (
     <div className={classes(flexFillStyle, constrainedScrollStyle)}>
@@ -191,6 +293,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
           onSelect={waypointHandleTabClick}
           mountOnEnter={true}
           unmountOnExit={true}
+          isSubtab={true}
         >
           {tabs}
         </Tabs>
