@@ -14,64 +14,57 @@ const identityT = (key: string, options?: Record<string, unknown>): string => {
 };
 
 describe('buildHealthHistoryChatQuery', () => {
-  const timestamp = Date.UTC(2026, 9, 15, 12, 0, 23) / 1000;
-  const now = Date.UTC(2026, 9, 15, 13);
-  const range = getHealthHistoryRange(timestamp, 600, now);
+  const selectedTimeMs = Date.UTC(2026, 9, 15, 12, 0, 0);
+  const durationLabel = '10 minutes';
 
-  it('builds a query for the selected investigation range', () => {
+  it('builds a single prompt from selected time, status, and duration', () => {
     const query = buildHealthHistoryChatQuery(
       identityT,
       'service',
       'reviews',
-      'bookinfo',
       'Degraded',
-      range,
-      timestamp * 1000
+      selectedTimeMs,
+      durationLabel
     );
 
-    expect(query).toContain('Degraded');
-    expect(query).toContain('reviews');
-    expect(query).toContain('bookinfo');
-    expect(query).toContain(formatHealthHistoryChatTimestamp(range.from));
-    expect(query).toContain(formatHealthHistoryChatRangeTo(range.to));
-    expect(query).toContain('The health history shows status');
-    expect(query).toContain('What likely caused this');
-    expect(query).not.toContain('MCP tools');
-  });
-
-  it('uses a shorter prompt when the selected status is healthy', () => {
-    const query = buildHealthHistoryChatQuery(
-      identityT,
-      'workload',
-      'waypoint',
-      'bookinfo',
-      'Healthy',
-      range,
-      timestamp * 1000
-    );
-
-    expect(query).toContain(formatHealthHistoryChatTimestamp(range.from));
-    expect(query).toContain(formatHealthHistoryChatRangeTo(range.to));
-    expect(query).toContain(
-      'Investigate whether any notable events, changes, or anomalies occurred during this period.'
-    );
+    expect(query).toContain("The 'reviews' service");
+    expect(query).toContain("'Degraded'");
+    expect(query).toContain(formatHealthHistoryChatTimestamp(selectedTimeMs));
+    expect(query).toContain('surrounding 10 minutes');
+    expect(query).toContain('notable events, changes, or anomalies');
     expect(query).not.toContain('What likely caused this');
     expect(query).not.toContain('MCP tools');
   });
 
-  it('describes a namespace resource without repeating the namespace label', () => {
+  it('uses the same prompt template when the selected status is healthy', () => {
+    const query = buildHealthHistoryChatQuery(
+      identityT,
+      'workload',
+      'waypoint',
+      'Healthy',
+      selectedTimeMs,
+      durationLabel
+    );
+
+    expect(query).toContain("The 'waypoint' workload");
+    expect(query).toContain("'Healthy'");
+    expect(query).toContain(formatHealthHistoryChatTimestamp(selectedTimeMs));
+    expect(query).toContain('surrounding 10 minutes');
+    expect(query).not.toContain('MCP tools');
+  });
+
+  it('describes a namespace resource by name and kind', () => {
     const query = buildHealthHistoryChatQuery(
       identityT,
       'namespace',
       'bookinfo',
-      'bookinfo',
       'Healthy',
-      range,
-      timestamp * 1000
+      selectedTimeMs,
+      '30 minutes'
     );
 
-    expect(query).toContain("namespace 'bookinfo'");
-    expect(query).not.toContain("in namespace 'bookinfo'");
+    expect(query).toContain("The 'bookinfo' namespace");
+    expect(query).toContain('surrounding 30 minutes');
   });
 });
 
@@ -86,6 +79,7 @@ describe('buildHealthHistoryChatContext', () => {
     expect(context).toContain('Health history investigation');
     expect(context).toContain('reviews');
     expect(context).toContain(formatHealthHistoryChatTimestamp(range.from));
+    expect(context).toContain(formatHealthHistoryChatRangeTo(range.to));
     expect(context).toContain('get_metrics (resourceType service');
     expect(context).toContain('list_traces (serviceName');
   });

@@ -234,7 +234,7 @@ describe('health history click actions', () => {
     expect(onSelect).toHaveBeenCalledWith('logs', { from: (startTime + 900) * 1000, to: (startTime + 2700) * 1000 });
   });
 
-  it('fills the AI chat prompt and opens troubleshoot mode when Troubleshoot with AI is clicked', async () => {
+  it('fills the AI chat prompt and opens troubleshoot mode when AI Chat is clicked', async () => {
     const { ribbon } = setup();
     fireEvent.click(ribbon, { clientX: 300 });
     fireEvent.change(screen.getByRole('combobox', { name: 'Investigation Time Range' }), {
@@ -245,9 +245,10 @@ describe('health history click actions', () => {
     const contextCall = mockDispatch.mock.calls.find(([action]) => action?.type === ActionKeys.CHAT_AI_SET_CONTEXT);
     const payload = String(queryCall?.[0]?.payload);
     const contextPayload = String(contextCall?.[0]?.payload);
-    expect(payload).toContain(
-      'Investigate whether any notable events, changes, or anomalies occurred during this period'
-    );
+    expect(payload).toContain('reviews-v1');
+    expect(payload).toContain('workload');
+    expect(payload).toContain('30 minutes');
+    expect(payload).toContain('notable events, changes, or anomalies');
     expect(payload).not.toContain('MCP tools');
     expect(contextPayload).toContain('Health history investigation');
     expect(contextPayload).toContain('get_metrics');
@@ -257,7 +258,7 @@ describe('health history click actions', () => {
     await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
   });
 
-  it('hides Troubleshoot with AI when chat is not allowed for the user', async () => {
+  it('hides AI Chat when chat is not allowed for the user', async () => {
     mockSelectorState.ai.chat.allowed = false;
     const { ribbon } = setup();
     fireEvent.click(ribbon, { clientX: 300 });
