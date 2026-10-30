@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -293,8 +294,9 @@ func TestStrategyHeaderOidcWithImpersonationAuthentication(t *testing.T) {
 }
 
 type fakeAuthController struct {
-	sessions authentication.UserSessions
-	err      error
+	err        error
+	sessions   authentication.UserSessions
+	terminated bool
 }
 
 func (f *fakeAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*authentication.UserSessionData, error) {
@@ -302,6 +304,7 @@ func (f *fakeAuthController) Authenticate(r *http.Request, w http.ResponseWriter
 }
 
 func (f *fakeAuthController) TerminateSession(r *http.Request, w http.ResponseWriter) error {
+	f.terminated = true
 	return nil
 }
 
@@ -457,4 +460,36 @@ type rejectClient struct{ kubernetes.UserClientInterface }
 
 func (r *rejectClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
 	return nil, fmt.Errorf("Rejecting")
+}
+
+func TestAuthenticationHandlerValidationErrors(t *testing.T) {
+	cases := map[string]struct {
+		err       error
+		status    int
+		terminate bool
+	}{
+		"zero namespace access":         {err: authentication.ErrCannotViewNamespaces, status: http.StatusUnauthorized, terminate: true},
+		"wrapped zero namespace access": {err: fmt.Errorf("namespace check: %w", authentication.ErrCannotViewNamespaces), status: http.StatusUnauthorized, terminate: true},
+		"expired token":                 {err: k8serrors.NewUnauthorized("token expired"), status: http.StatusUnauthorized, terminate: true},
+		"missing session":               {err: fmt.Errorf("session: %w", authentication.ErrSessionNotFound), status: http.StatusUnauthorized, terminate: true},
+		"temporary API failure":         {err: k8serrors.NewServiceUnavailable("temporary API failure"), status: http.StatusInternalServerError},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.Auth.Strategy = config.AuthStrategyOpenshift
+			controller := &fakeAuthController{err: tc.err}
+			handler := NewAuthenticationHandler(conf, controller, nil, nil, nil)
+			next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				t.Error("failed session validation must not reach the protected handler")
+			})
+			request := httptest.NewRequest(http.MethodGet, "/api/namespaces", nil)
+			response := httptest.NewRecorder()
+
+			handler.Handle(next).ServeHTTP(response, request)
+
+			assert.Equal(t, tc.status, response.Code)
+			assert.Equal(t, tc.terminate, controller.terminated, "only authentication failures should trigger session cleanup")
+		})
+	}
 }

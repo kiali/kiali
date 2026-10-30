@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -62,6 +63,52 @@ func checkNamespaceAccessWithService(
 	}
 
 	return ns, nil
+}
+
+// checkNamespaceAccessWithList authorizes the user for the given namespace
+// against their accessible namespace set (NamespaceService.GetClusterNamespaces),
+// which is computed from the namespace LIST (or from per-namespace GETs when
+// require_namespace_get is enabled) and cached per token.
+//
+// Unlike checkNamespaceAccess, it does not fall through to a per-namespace GET
+// on a cache miss, so callers that are authorized through namespace LIST are
+// not intermittently rejected when the per-token namespace cache expires. Use
+// this for new call sites; the GET-based resolution of checkNamespaceAccess is
+// pre-existing behavior on older endpoints, to be reconciled separately.
+func checkNamespaceAccessWithList(
+	w http.ResponseWriter,
+	r *http.Request,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	discovery istio.MeshDiscovery,
+	clientFactory kubernetes.ClientFactory,
+	namespace string,
+	cluster string,
+) error {
+	userClients, err := getUserClients(r, clientFactory)
+	if err != nil {
+		log.Errorf("Unable to create user clients from token: %s", err)
+		RespondWithError(w, http.StatusInternalServerError, "An error occurred while attempting to use your session token. Check your session token and the Kiali server logs.")
+		return err
+	}
+
+	namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+	accessibleNamespaces, err := namespaceService.GetClusterNamespaces(r.Context(), cluster)
+	if err != nil {
+		// Fail closed: if the accessible set cannot be determined, reject.
+		RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+		return err
+	}
+
+	for _, ns := range accessibleNamespaces {
+		if ns.Name == namespace {
+			return nil
+		}
+	}
+
+	err = fmt.Errorf("namespace [%s] is not accessible in cluster [%s]", namespace, cluster)
+	RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
+	return err
 }
 
 // checkNamespaceAccessMultiCluster is used when the service will query across all clusters for the namespace.
