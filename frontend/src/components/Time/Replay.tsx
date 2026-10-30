@@ -12,7 +12,6 @@ import { UserSettingsActions } from 'actions/UserSettingsActions';
 import { Slider } from 'components/Slider';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { classes } from 'typestyle';
 import { toString } from './Utils';
 import { serverConfig } from 'config';
 import { PFColors } from 'components/Pf/PfColors';
@@ -120,39 +119,9 @@ const replaySliderColumnStyle = kialiStyle({
   flex: '1 1 auto',
   gap: 0,
   marginLeft: '0.75rem',
+  marginRight: '0.75rem',
   minWidth: 0,
   width: '100%'
-});
-
-const replaySliderTrackStyle = kialiStyle({
-  width: '100%',
-  $nest: {
-    '& .pf-v6-c-slider': {
-      gap: 0,
-      rowGap: 0
-    },
-
-    '& .pf-v6-c-slider__main': {
-      marginBottom: 0
-    },
-
-    // PF renders numeric tick labels in a row below the rail; replay uses the thumb tooltip instead.
-    '& .pf-v6-c-slider__tick-labels': {
-      display: 'none',
-      height: 0,
-      margin: 0,
-      minHeight: 0,
-      overflow: 'hidden',
-      padding: 0
-    },
-
-    '& .pf-v6-c-slider__ticks': {
-      marginBottom: 0,
-      marginTop: 0,
-      minHeight: 0,
-      paddingBottom: 0
-    }
-  }
 });
 
 const replaySliderTooltipStyle = kialiStyle({
@@ -316,7 +285,7 @@ class ReplayComponent extends React.PureComponent<ReplayProps, ReplayState> {
         </Tooltip>
 
         <span className={replaySliderColumnStyle}>
-          <span className={classes(replaySliderTrackStyle, replaySliderTooltipStyle)}>
+          <span className={replaySliderTooltipStyle}>
             <Slider
               key={endString} // on new endTime force new slider because of bug updating tick labels
               dataTest="replay-slider"
