@@ -59,8 +59,9 @@ Feature: Kiali Waypoint related features
     And validates waypoint Info data for "service"
 
   Scenario: [Workload details - ztunnel] The workload details for a ztunnel are valid
-    Given user is at the details page for the daemonset "ztunnel/ztunnel" located in the "" cluster
-    Then the user cannot see the "missing-sidecar" badge for "ztunnel" workload in "istio-system" namespace
+    # Opens whichever ns actually has the ztunnel DaemonSet (istio-system with istioctl, ztunnel with Sail).
+    Given user is at the details page for the ztunnel daemonset located in the "" cluster
+    Then the user cannot see the "missing-sidecar" badge for the ztunnel workload
     And the proxy status is "healthy"
     And the user sees the ztunnel services table
     And the user validates the Ztunnel tab for the "bookinfo" namespace

@@ -225,11 +225,25 @@ fi
 
 echo "==== INSTALL ADDONS ON CLUSTER #1 [${CLUSTER1_NAME}] - ${CLUSTER1_CONTEXT}"
 ADDONS="prometheus grafana jaeger"
+# Dual-path version discovery (Sail CR → ISTIO_VERSION → istiod image). Works with sail=true and sail=false.
+istio_version=$(${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" get istios -l kiali.io/testing -o jsonpath='{.items[0].spec.version}' 2>/dev/null || true)
+if [ -z "${istio_version}" ]; then
+  istio_version=$(${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" get istios -o jsonpath='{.items[0].spec.version}' 2>/dev/null || true)
+fi
+if [ -z "${istio_version}" ] && [ -n "${ISTIO_VERSION}" ]; then
+  istio_version="${ISTIO_VERSION}"
+fi
+if [ -z "${istio_version}" ]; then
+  istio_version=$(${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" get deploy istiod -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | awk -F: '{print $NF}' || true)
+fi
+# Normalize to major.minor (e.g. v1.32.0 / 1.32.0-rc.0 -> 1.32)
+addon_version="$(echo "${istio_version}" | sed -E 's/^v?([0-9]+\.[0-9]+).*/\1/')"
+if ! echo "${addon_version}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+  echo "ERROR: Unable to resolve Istio major.minor for addon install (got: '${istio_version}')"
+  exit 1
+fi
+echo "Installing addons from Istio release-${addon_version} samples"
 for addon in ${ADDONS}; do
-    istio_version=$(${CLIENT_EXE} --context="${CLUSTER2_CONTEXT}" -n "${ISTIO_NAMESPACE}" get istios -l kiali.io/testing -o jsonpath='{.items[0].spec.version}')
-    # Verison comes in the form v1.23.0 but we want 1.23
-    # Remove the 'v' and remove the .0 from 1.23.0 and we should be left with 1.23
-    addon_version="${istio_version:1:4}"
     curl -s "https://raw.githubusercontent.com/istio/istio/refs/heads/release-$addon_version/samples/addons/$addon.yaml" | \
       yq "select(.metadata) | .metadata.namespace = \"${ISTIO_NAMESPACE}\"" - | \
       kubectl --context="${CLUSTER1_CONTEXT}" apply -n "${ISTIO_NAMESPACE}" -f -

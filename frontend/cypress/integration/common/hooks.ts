@@ -337,10 +337,35 @@ metadata:
   namespace: istio-system
 `;
 
+// Dual-path: Sail exposes an Istio CR that owns istiod env; classic istioctl has no CR —
+// SHARED_MESH_CONFIG must be set on the istiod Deployment directly.
+const hasSailIstioCR = (): Cypress.Chainable<boolean> => {
+  return cy.exec('kubectl get istio default', { failOnNonZeroExit: false }).then(result => {
+    return result.exitCode === 0;
+  });
+};
+
+const setSharedMeshConfigEnv = (configMapName: string | null): Cypress.Chainable => {
+  return hasSailIstioCR().then(sail => {
+    if (sail) {
+      const value = configMapName === null ? 'null' : `"${configMapName}"`;
+      const patch = `{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": ${value}}}}}}`;
+      return cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`, {
+        failOnNonZeroExit: configMapName !== null
+      });
+    }
+    if (configMapName === null) {
+      return cy.exec('kubectl set env deployment/istiod -n istio-system SHARED_MESH_CONFIG-', {
+        failOnNonZeroExit: false
+      });
+    }
+    return cy.exec(`kubectl set env deployment/istiod -n istio-system SHARED_MESH_CONFIG=${configMapName}`);
+  });
+};
+
 function restoreMeshConfigAfterSharedMeshConfig(): void {
   cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl delete -f -`, { failOnNonZeroExit: false });
-  const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": null}}}}}';
-  cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`, { failOnNonZeroExit: false });
+  setSharedMeshConfigEnv(null);
 }
 
 Before({ tags: '@shared-mesh-config' }, () => {
@@ -354,8 +379,7 @@ Before({ tags: '@shared-mesh-config' }, () => {
     const podName = result.stdout;
 
     cy.exec(`echo "${istioSharedMeshConfigMap}" | kubectl apply -f -`);
-    const patch = '{"spec": {"values": {"pilot": {"env": {"SHARED_MESH_CONFIG": "istio-user"}}}}}';
-    cy.exec(`kubectl patch istio default --type='merge' -p '${patch}'`).then(() => {
+    setSharedMeshConfigEnv('istio-user').then(() => {
       const maxTries = 15;
       let tries = 0;
       const doRequest = (): void => {
