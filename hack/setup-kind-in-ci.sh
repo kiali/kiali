@@ -907,12 +907,7 @@ setup_kind_multicluster() {
     ignore_home_cluster="true"
     kubectl rollout status deployment prometheus -n istio-system --context kind-mesh
   elif [ "${MULTICLUSTER}" == "${EXTERNAL_CONTROLPLANE}" ]; then
-    # This setup waits on Sail Istio CRs (istios/default, istios/external-istiod).
-    # istioctl does not create those CRs, so sail=false is not supported yet.
-    if [ "${SAIL}" == "false" ]; then
-      echo "ERROR: --multicluster external-controlplane requires Sail (sail=true). istioctl/RC installs are not supported for this suite yet."
-      exit 1
-    fi
+    # setup-external-controlplane.sh branches on SAIL: Sail CRs when true, classic istioctl when false.
     "${SCRIPT_DIR}"/istio/multicluster/setup-external-controlplane.sh "${kind_node_image[@]}" "${istio_version_arg[@]}" "${SAIL_ARG[@]}"
     cluster1_context="kind-controlplane"
     cluster2_context="kind-dataplane"
