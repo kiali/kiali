@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"golang.org/x/exp/slices"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/kiali/kiali/cache"
@@ -606,7 +607,7 @@ func (in *AppService) fetchNamespaceApps(ctx context.Context, namespace string, 
 
 // GetAppTracingName returns the tracing app name
 // If the app has any Waypoint, the information is included, as it will be the search name used by the tracing backend
-func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) models.TracingName {
+func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace, app string) (models.TracingName, error) {
 	criteria := AppCriteria{
 		Namespace: namespace, AppName: app, IncludeIstioResources: false, IncludeHealth: false, Cluster: cluster,
 	}
@@ -615,8 +616,21 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 	// Fetch and build app
 	appDetails, err := in.GetAppDetails(ctx, criteria)
 	if err != nil {
-		log.FromContext(ctx).Error().Msgf("Error for getting tracing name for app [%s]: %v", app, err)
-		return tracingName
+		// NotFound keeps the caller-supplied fallback: GetAppDetails returns
+		// NotFound when no workload carries the app label, which covers apps
+		// scaled to zero, recently deleted apps (traces outlive them) and VM
+		// apps without WorkloadEntries. The namespace is authorized by the
+		// handler gate before this runs, and the traces returned for the
+		// fallback name are authorized per trace against the requested
+		// namespace (see filterTracesByNamespace), so a caller-supplied name
+		// that carries another namespace's identity domain cannot use the
+		// fallback to reach that namespace's traces. Any other error
+		// (including an access denial) must propagate: returning the raw
+		// caller-supplied name here would fail open.
+		if !k8serrors.IsNotFound(err) {
+			return models.TracingName{}, err
+		}
+		return tracingName, nil
 	}
 	for _, wk := range appDetails.Workloads {
 		if len(wk.WaypointWorkloads) > 0 {
@@ -640,5 +654,5 @@ func (in *AppService) GetAppTracingName(ctx context.Context, cluster, namespace,
 			break
 		}
 	}
-	return tracingName
+	return tracingName, nil
 }

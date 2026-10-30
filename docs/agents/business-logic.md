@@ -126,6 +126,8 @@ Gateway API: `IncludeK8sGateways`, `IncludeK8sGRPCRoutes`, `IncludeK8sHTTPRoutes
 
 Two string filter fields narrow results further: `LabelSelector` (a raw label selector string applied to all fetched resources) and `WorkloadSelector` (when non-empty, suppresses `VirtualServices`, `DestinationRules`, `ServiceEntries`, and `WorkloadEntries` — resource types not applicable to workload-selector-scoped config. Istio `Gateways` and Gateway API resources are not suppressed by this field).
 
+**Namespace authorization**: the exported `GetIstioConfigList` filters its result by the requesting user's accessible namespaces for the cluster. The unexported `getIstioConfigList` performs **no** user filtering — it exists for SA-visibility computations (e.g. the on-demand `ValidateIstioObject`) and any new caller of it must resolve and authorize the namespace list itself. Both degrade to the empty list when the user has no client for the cluster (a session-less cluster in non-impersonation multicluster mode) rather than erroring; genuine failures (missing SA client, missing kube cache) still error.
+
 ### `IstioValidationsService` (`business/istio_validations.go`)
 
 Orchestrates Istio configuration validation by:
@@ -133,6 +135,8 @@ Orchestrates Istio configuration validation by:
 1. Collecting the full Istio config for the requested namespaces (via `IstioConfigService`).
 2. Running all applicable checker implementations (from `business/checkers/`) in parallel.
 3. Merging results into `models.IstioValidations` and caching them.
+
+**Namespace authorization**: the shared validation cache is populated by the `ValidationsReconciler` (`controller/validations.go`) running on an SA layer, so the Kubernetes API cannot enforce user RBAC on it. Read paths (`GetValidations`, `GetValidationsForNamespace`, and the per-object detail responses) filter the entries *and their references* to the user's accessible set; the cluster-scoped `GetValidations` returns the empty set for a cluster the user has no client on. The on-demand `ValidateIstioObject` recomputes with **SA visibility** (`newValidationInfoSA` + the unexported `getIstioConfigList`) so what it writes into the shared cache is consistent with the background reconciler's entries — a user-scoped computation written into the shared cache would degrade validations for everyone else. See "Namespace Access Control" in `docs/agents/auth-and-security.md`.
 
 ### `IstioStatusService` (`business/istio_status.go`)
 
@@ -151,6 +155,13 @@ Computes the mesh-wide and per-namespace mTLS status by inspecting PeerAuthentic
 ### `NamespaceService` (`business/namespaces.go`)
 
 Lists namespaces accessible to the caller's token across all clusters, applies label filters from Kiali config, and caches results per token.
+
+The service exposes **two distinct visibility scopes — never mix them up**:
+
+- `GetNamespaces` / `GetClusterNamespaces` / `GetClusterNamespace` — the **requesting user's** accessible set (LIST result ∩ SA discovery-selector set, per-token cache). All user-facing reads and every authorization check go through these.
+- `GetKialiSAClusterNamespaces` (undecorated) and `GetSAClusterNamespaces` (decorated like the user view) — the **Kiali ServiceAccount's** set. Used for SA-side computations (background reconcilers, the gateway cache, on-demand validation refresh) whose results must not depend on which user triggered them.
+
+`GetNamespaces` iterates the user's clients only: a cluster the user holds no client for (no session, in non-impersonation multicluster mode) contributes nothing, so an empty per-cluster result there is normal, not an error. See the "Namespace Access Control" section of `docs/agents/auth-and-security.md` for the authorization rules every path through this service must uphold.
 
 ### `ProxyStatusService` (`business/proxy_status.go`) and `ProxyLoggingService` (`business/proxy_logging.go`)
 
@@ -241,7 +252,7 @@ type IstioValidation struct {
 
 ## Cache Architecture
 
-**`cache/cache.go`** defines `KialiCache` — a singleton used across all requests. It is backed by the Kiali service-account token so it has access to all namespaces regardless of the caller's RBAC. Callers are responsible for filtering returned objects to what the user's token can access.
+**`cache/cache.go`** defines `KialiCache` — a singleton used across all requests. It is backed by the Kiali service-account token so it has access to all namespaces regardless of the caller's RBAC. Callers are responsible for filtering returned objects to what the user's token can access: filter per user at return time (entries *and* references), and never write user-scoped results back into the shared caches. The full rules are in the "Namespace Access Control" section of `docs/agents/auth-and-security.md`.
 
 ### What is cached
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -367,7 +369,7 @@ func TestClustersHealthPartialCacheMiss(t *testing.T) {
 	assert.Equal(t, "false", resp.Header.Get(HealthCachedHeader))
 }
 
-func setupClustersHealthEndpoint(t *testing.T, k8s *kubetest.FakeK8sClient) (*httptest.Server, cache.KialiCache) {
+func setupClustersHealthEndpoint(t *testing.T, k8s kubernetes.UserClientInterface) (*httptest.Server, cache.KialiCache) {
 	conf := config.NewConfig()
 	prom := new(prometheustest.PromClientMock)
 
@@ -618,4 +620,167 @@ func TestCacheUpdateAddsNewEntry(t *testing.T) {
 	require.NotNil(t, retrieved.WorkloadHealth["workload1"])
 	require.NotNil(t, retrieved.WorkloadHealth["workload2"])
 	assert.Equal(t, int32(2), retrieved.WorkloadHealth["workload2"].WorkloadStatus.DesiredReplicas)
+}
+
+// newRestrictedNamespaceClient wraps the fake client as a user without
+// access to the denied namespace: the namespace stays in the fake (it
+// exists, the SA can see it) but the user's LIST excludes it and the
+// per-namespace GET is denied.
+func newRestrictedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, allNamespaces []string) *kubetest.NamespaceRestrictedClient {
+	allowed := slices.DeleteFunc(slices.Clone(allNamespaces), func(n string) bool { return n == deniedNamespace })
+	return kubetest.NewNamespaceRestrictedClient(k8s, "restricted-user", allowed, deniedNamespace)
+}
+
+// newListAuthorizedNamespaceClient wraps the fake client as a user that is
+// authorized through namespace LIST only (the #7125 profile): the namespace
+// appears in list results but the per-namespace get is denied. Handlers must
+// authorize such a user consistently, without depending on whether the
+// per-token namespace cache is warm.
+func newListAuthorizedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, listedNamespaces []string) *kubetest.NamespaceRestrictedClient {
+	return kubetest.NewNamespaceRestrictedClient(k8s, "list-authorized-user", listedNamespaces, deniedNamespace)
+}
+
+// TestNamespaceFakesReturnForbidden asserts the restricted and list-authorized
+// fakes produce real k8s Forbidden status errors. The accessible-set
+// computation distinguishes error kinds (a non-Forbidden error from a
+// per-namespace GET aborts the whole set computation in strict mode), so a
+// plain error would make strict-mode tests fail with 500 instead of the
+// intended 403.
+func TestNamespaceFakesReturnForbidden(t *testing.T) {
+	err := kubetest.ForbiddenNamespace("ns-victim")
+	require.Error(t, err)
+	assert.True(t, k8serrors.IsForbidden(err))
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	restricted := newRestrictedNamespaceClient(k8s, "ns-victim", []string{"bookinfo", "ns-victim"})
+	_, err = restricted.GetNamespace("ns-victim")
+	assert.True(t, k8serrors.IsForbidden(err))
+
+	listAuthorized := newListAuthorizedNamespaceClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns-victim")), "ns-victim", []string{"bookinfo", "ns-victim"})
+	_, err = listAuthorized.GetNamespace("ns-victim")
+	assert.True(t, k8serrors.IsForbidden(err))
+}
+
+// TestClusterHealthNamespacesParamInaccessible ensures the user-supplied namespaces
+// parameter is authorized: a user without access to the namespace gets a 403 even
+// when the namespace's health is present in the (ServiceAccount-populated) cache.
+func TestClusterHealthNamespacesParamInaccessible(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns-victim", "victim-app"), setupMockData(), setupMockNamespace("ns-victim")}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, kialiCache := setupClustersHealthEndpoint(t, newRestrictedNamespaceClient(k8s, "ns-victim", []string{"ns", "ns-victim"}))
+
+	mockClock()
+	conf := config.NewConfig()
+
+	// Pre-populate the health cache for the victim namespace (simulating what the
+	// ServiceAccount background monitor does): the data is there, but the user
+	// must not be able to read it.
+	cachedHealth := &models.CachedHealthData{
+		AppHealth:  models.NamespaceAppHealth{},
+		Cluster:    conf.KubernetesConfig.ClusterName,
+		ComputedAt: util.Clock.Now(),
+		Duration:   "2m",
+		Namespace:  "ns-victim",
+	}
+	kialiCache.SetHealth(conf.KubernetesConfig.ClusterName, "ns-victim", cachedHealth)
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health?namespaces=ns-victim")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode, string(actual))
+	assert.Empty(t, resp.Header.Get(HealthCachedHeader))
+}
+
+// TestClusterHealthNamespacesParamAccessible ensures the happy path is preserved:
+// a user with access to the namespace still gets its (cached) health.
+func TestClusterHealthNamespacesParamAccessible(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), setupMockData()}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, kialiCache := setupClustersHealthEndpoint(t, newRestrictedNamespaceClient(k8s, "ns-victim", []string{"ns"}))
+
+	mockClock()
+	conf := config.NewConfig()
+
+	cachedHealth := &models.CachedHealthData{
+		AppHealth:  models.NamespaceAppHealth{},
+		Cluster:    conf.KubernetesConfig.ClusterName,
+		ComputedAt: util.Clock.Now(),
+		Duration:   "2m",
+		Namespace:  "ns",
+	}
+	kialiCache.SetHealth(conf.KubernetesConfig.ClusterName, "ns", cachedHealth)
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health?namespaces=ns")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.Equal(t, "true", resp.Header.Get(HealthCachedHeader))
+}
+
+// TestClusterHealthNamespacesParamMixed ensures a multi-namespace request with one
+// inaccessible namespace is rejected entirely - no partial results.
+func TestClusterHealthNamespacesParamMixed(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), fakeService("ns-victim", "victim-app"), setupMockData(), setupMockNamespace("ns-victim")}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupClustersHealthEndpoint(t, newRestrictedNamespaceClient(k8s, "ns-victim", []string{"ns", "ns-victim"}))
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health?namespaces=ns,ns-victim")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode, string(actual))
+}
+
+// TestClusterHealthNoParamUnchanged guards the empty-parameter path: it keeps its
+// RBAC filtering (GetClusterNamespaces) and still returns 200.
+func TestClusterHealthNoParamUnchanged(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns", "reviews"), setupMockData()}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	ts, _ := setupClustersHealthEndpoint(t, newRestrictedNamespaceClient(k8s, "ns-victim", []string{"ns"}))
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+}
+
+// TestClusterHealthNamespacesParamListAuthorized ensures a caller that is
+// authorized through namespace LIST (but whose per-namespace GET is denied,
+// e.g. header auth with the default require_namespace_get=false) gets health
+// consistently: the authorization must not depend on whether the per-token
+// namespace cache is warm. This is a regression test for the per-namespace
+// GetClusterNamespace validation, which 403'd such users on every cache miss.
+func TestClusterHealthNamespacesParamListAuthorized(t *testing.T) {
+	kubeObjects := []runtime.Object{fakeService("ns-victim", "victim-app"), setupMockData(), setupMockNamespace("ns-victim")}
+	k8s := kubetest.NewFakeK8sClient(kubeObjects...)
+	k8s.OpenShift = true
+	// The LIST includes both namespaces; only the per-namespace GET of
+	// ns-victim is denied.
+	ts, kialiCache := setupClustersHealthEndpoint(t, newListAuthorizedNamespaceClient(k8s, "ns-victim", []string{"ns", "ns-victim"}))
+
+	mockClock()
+	conf := config.NewConfig()
+
+	cachedHealth := &models.CachedHealthData{
+		AppHealth:  models.NamespaceAppHealth{},
+		Cluster:    conf.KubernetesConfig.ClusterName,
+		ComputedAt: util.Clock.Now(),
+		Duration:   "2m",
+		Namespace:  "ns-victim",
+	}
+	kialiCache.SetHealth(conf.KubernetesConfig.ClusterName, "ns-victim", cachedHealth)
+
+	resp, err := http.Get(ts.URL + "/api/clusters/health?namespaces=ns-victim")
+	require.NoError(t, err)
+	actual, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, string(actual))
+	assert.Equal(t, "true", resp.Header.Get(HealthCachedHeader))
 }
