@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { IRow, IAction, ThProps, IRowData } from '@patternfly/react-table';
+import type { IRow, IAction, ThProps, IRowData } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../Pf/PfColors';
 import { EmptyState, EmptyStateBody, EmptyStateVariant, TooltipPosition } from '@patternfly/react-core';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ROUTE_RULES_TOOLTIP, wizardTooltip } from '../WizardHelp';
-import { K8sRouteBackendRef } from '../K8sTrafficShifting';
+import type { K8sRouteBackendRef } from '../K8sTrafficShifting';
 import { SimpleTable } from 'components/Table/SimpleTable';
 import { useKialiTranslation } from 'utils/I18nUtils';
 

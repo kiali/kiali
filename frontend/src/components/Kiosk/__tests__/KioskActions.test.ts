@@ -77,7 +77,7 @@ describe('sendParentMessage (via kioskNavigateAction)', () => {
     const origin = 'https://console.example.com';
     store.dispatch(GlobalActions.setKiosk(origin));
 
-    const mockTop = ({ postMessage: rstest.fn() } as unknown) as Window;
+    const mockTop = { postMessage: rstest.fn() } as unknown as Window;
     const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
 
     Object.defineProperty(window, 'top', { value: mockTop, configurable: true });

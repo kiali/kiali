@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { Edge, Node } from '@patternfly/react-topology';
-import { DecoratedGraphNodeData, GraphType, NodeType, SummaryPanelPropType, TrafficRate } from 'types/Graph';
+import type { Edge, Node } from '@patternfly/react-topology';
+import type { DecoratedGraphNodeData, SummaryPanelPropType} from 'types/Graph';
+import { GraphType, NodeType, TrafficRate } from 'types/Graph';
 import { SummaryPanelNodeTraffic } from '../SummaryPanelNodeTraffic';
 
 rstest.mock('../../../components/SummaryPanel/InOutRateTable', () => ({

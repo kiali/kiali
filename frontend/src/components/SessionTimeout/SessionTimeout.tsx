@@ -1,13 +1,16 @@
 import * as React from 'react';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Modal } from '@patternfly/react-core/deprecated';
-import { AuthStrategy } from '../../types/Auth';
-import { LoginSession } from '../../store/Store';
+import { Button, ButtonVariant, Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core';
+import type { AuthStrategy } from '../../types/Auth';
+import type { LoginSession } from '../../store/Store';
 import { authenticationConfig } from '../../config/AuthenticationConfig';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize } from 'styles/PfTypography';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
+
+const sessionTimeoutModalTitleId = 'session-timeout-modal-title';
 
 type SessionTimeoutProps = {
   onDismiss: () => void;
@@ -17,10 +20,20 @@ type SessionTimeoutProps = {
   timeOutCountDown: number;
 };
 
-const sessionTimeoutStyle = kialiStyle({
-  marginBottom: '1.5rem',
-  fontSize: '18px',
-  lineHeight: 1.4
+const sessionTimeoutContentStyle = kialiStyle({
+  alignItems: 'flex-start',
+  display: 'flex',
+  gap: PFSpacer.md
+});
+
+const sessionTimeoutIconStyle = kialiStyle({
+  flexShrink: 0
+});
+
+const sessionTimeoutTextStyle = kialiStyle({
+  flex: 1,
+  fontSize: PFFontSize.default,
+  marginBottom: PFSpacer.md
 });
 
 export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTimeoutProps) => {
@@ -29,9 +42,9 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
     const line1 =
       props.timeOutCountDown <= 0
         ? t('Your session has expired.')
-        : `Your session will expire in ${props.timeOutCountDown.toFixed()} seconds.`;
+        : t('Your session will expire in {{seconds}} seconds.', { seconds: props.timeOutCountDown.toFixed() });
 
-    const line2 = 'You will need to re-login. Please save your changes, if any.';
+    const line2 = t('You will need to re-login. Please save your changes, if any.');
 
     return (
       <>
@@ -44,8 +57,8 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
   const defaultAction = props.onDismiss;
 
   const buttons = [
-    <Button variant={ButtonVariant.primary} onClick={props.onDismiss}>
-      OK
+    <Button key="ok" variant={ButtonVariant.primary} onClick={props.onDismiss}>
+      {t('OK')}
     </Button>,
     <Button
       data-test="session-timeout-logout-btn"
@@ -53,26 +66,27 @@ export const SessionTimeout: React.FC<SessionTimeoutProps> = (props: SessionTime
       variant={ButtonVariant.secondary}
       onClick={props.onLogout}
     >
-      Log Out
+      {t('Log Out')}
     </Button>
   ];
 
   return (
     <Modal
+      aria-labelledby={sessionTimeoutModalTitleId}
       data-test="session-timeout-modal"
       isOpen={props.show}
       onClose={defaultAction}
-      actions={buttons}
-      title={t('Session Timeout')}
       width="40%"
     >
-      <span>
-        <KialiIcon.Warning size="xl" color={PFColors.Warning} />
-      </span>
+      <ModalHeader labelId={sessionTimeoutModalTitleId} title={t('Session Timeout')} />
+      <ModalBody className={sessionTimeoutContentStyle}>
+        <span className={sessionTimeoutIconStyle}>
+          <KialiIcon.Warning size="xl" color={PFColors.Warning} />
+        </span>
 
-      <span style={{ float: 'right', width: '80%' }} className={sessionTimeoutStyle}>
-        {textForAuthStrategy(authenticationConfig.strategy)}
-      </span>
+        <span className={sessionTimeoutTextStyle}>{textForAuthStrategy(authenticationConfig.strategy)}</span>
+      </ModalBody>
+      <ModalFooter>{buttons}</ModalFooter>
     </Modal>
   );
 };

@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { Card, CardBody, CardTitle, EmptyState, EmptyStateBody, Grid, GridItem } from '@patternfly/react-core';
-import {
+import type {
   AIUsageResponse,
   ChatSessionUsageBudget,
-  formatCost,
-  formatTokensInMillions,
   UsageValueKind
+} from 'types/Chatbot';
+import {
+  formatCost,
+  formatTokensInMillions
 } from 'types/Chatbot';
 import {
   Chart,
@@ -22,7 +24,7 @@ import { getDonutDataBy, getLineChartData, getStackThresholdChartData } from './
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { AIKPI } from './AIKPI';
 import { AIStatsHeader } from './AIStatsHeader';
-import { DurationInSeconds } from 'types/Common';
+import type { DurationInSeconds } from 'types/Common';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';

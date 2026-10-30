@@ -32,8 +32,8 @@ const LIVE_LABEL = '#151515';
  *  - `legendData`   — data prop for VictoryLegend (symbols + label styles)
  *  - `clickEvents`  — events prop for VictoryLegend (data + labels targets)
  */
-import { TokenMetric } from 'types/Chatbot';
-import { DurationInSeconds } from 'types/Common';
+import type { TokenMetric } from 'types/Chatbot';
+import type { DurationInSeconds } from 'types/Common';
 
 export const useProviderLegend = (
   providersOptions: string[],

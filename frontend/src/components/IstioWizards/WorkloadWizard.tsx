@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { WIZARD_TITLES, WorkloadWizardProps, WorkloadWizardState } from './WizardActions';
-import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Modal } from '@patternfly/react-core/deprecated';
+import type { WorkloadWizardProps, WorkloadWizardState } from './WizardActions';
+import { WIZARD_TITLES } from './WizardActions';
+import { Button, ButtonVariant, Modal, ModalBody, ModalFooter, ModalHeader } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
+
+const workloadWizardModalTitleId = 'workload-wizard-modal-title';
 
 // NOTE: This class is not used but I will keep it in the repo as skeleton as we'll add again WorkloadWizards for other
 export class WorkloadWizard extends React.Component<WorkloadWizardProps, WorkloadWizardState> {
@@ -48,12 +50,19 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
     return (
       <>
         <Modal
+          aria-labelledby={workloadWizardModalTitleId}
           width={'75%'}
-          title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''}
-          aria-label={t('workload wizard')}
           isOpen={this.state.showWizard}
           onClose={() => this.onClose(false)}
-          actions={[
+        >
+          <ModalHeader
+            labelId={workloadWizardModalTitleId}
+            title={this.props.type.length > 0 ? WIZARD_TITLES[this.props.type].modalTitle : ''}
+          />
+          <ModalBody>
+            <>{t('Workload Wizard Skeleton')}</>
+          </ModalBody>
+          <ModalFooter>
             <Button
               isDisabled={!this.isValid(this.state)}
               key="confirm"
@@ -61,13 +70,11 @@ export class WorkloadWizard extends React.Component<WorkloadWizardProps, Workloa
               onClick={this.onCreateUpdate}
             >
               {t('Create')}
-            </Button>,
+            </Button>
             <Button key="cancel" variant={ButtonVariant.secondary} onClick={() => this.onClose(false)}>
               {t('Cancel')}
             </Button>
-          ]}
-        >
-          <>Workload Wizard Skeleton</>
+          </ModalFooter>
         </Modal>
       </>
     );

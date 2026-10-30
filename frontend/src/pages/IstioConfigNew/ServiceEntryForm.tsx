@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { MAX_PORT, MIN_PORT, Port, ServiceEntrySpec } from '../../types/IstioObjects';
+import type { Port, ServiceEntrySpec } from '../../types/IstioObjects';
+import { MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -8,14 +11,13 @@ import {
   HelperText,
   HelperTextItem,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
   TextInput
 } from '@patternfly/react-core';
 import { isGatewayHostValid } from '../../utils/IstioConfigUtils';
-import { ThProps, IRow } from '@patternfly/react-table';
+import type { ThProps, IRow } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import { isValid } from 'utils/Common';

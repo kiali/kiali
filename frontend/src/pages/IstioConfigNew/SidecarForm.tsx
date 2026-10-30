@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../components/Pf/PfColors';
 import {
@@ -252,7 +252,9 @@ export class SidecarForm extends React.Component<Props, SidecarState> {
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
                     ? t('One or more labels to select a workload where the Sidecar is applied.')
-                    : t('Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.')}
+                    : t(
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

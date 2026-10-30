@@ -366,7 +366,7 @@ When('user visits the apps list page for {string} namespace', (namespace: string
 
 Then('health cache metrics should show at least {int} hit', (minHits: number) => {
   cy.get('@healthCacheMetricsBefore').then(beforeObj => {
-    const before = (beforeObj as unknown) as HealthCacheMetrics;
+    const before = beforeObj as unknown as HealthCacheMetrics;
 
     cy.request({ url: 'api/test/metrics/health/cache' }).then(resp => {
       expect(resp.status).to.eq(200);

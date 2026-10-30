@@ -167,7 +167,7 @@ When('choosing to delete it', () => {
   } else {
     cy.get('#actions-toggle').should('be.visible').click();
     cy.get('#actions').contains('Delete').should('be.visible').click();
-    cy.get('#pf-modal-part-1').find('button').contains('Delete').should('be.visible').click();
+    cy.getBySel('confirm-delete').should('be.visible').click();
   }
 });
 

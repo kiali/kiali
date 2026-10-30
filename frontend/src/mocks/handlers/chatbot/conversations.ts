@@ -1,4 +1,4 @@
-import { ChatResponse } from '../../../types/Chatbot';
+import type { ChatResponse } from '../../../types/Chatbot';
 import { conversationModuleEntries } from './conversations.index';
 
 const normalizeConversationModule = (module: unknown): Partial<ChatResponse> => {

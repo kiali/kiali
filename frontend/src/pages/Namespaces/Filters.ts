@@ -1,13 +1,15 @@
 import { t } from 'utils/I18nUtils';
-import {
+import type {
   ActiveFiltersInfo,
-  FILTER_ACTION_APPEND,
-  AllFilterTypes,
   RunnableFilter,
   FilterValue
 } from '../../types/Filters';
+import {
+  FILTER_ACTION_APPEND,
+  AllFilterTypes
+} from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, statusFromString } from '../../types/Health';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 import { getNamespaceMode, isDataPlaneNamespace } from 'utils/NamespaceUtils';
@@ -183,9 +185,8 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
-    const { noFilter, showInNotReady, showInError, showInWarning, showInSuccess, showInNA } = summarizeHealthFilters(
-      filters
-    );
+    const { noFilter, showInNotReady, showInError, showInWarning, showInSuccess, showInNA } =
+      summarizeHealthFilters(filters);
 
     if (noFilter) {
       return true;

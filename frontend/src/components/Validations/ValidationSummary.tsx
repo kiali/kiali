@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { StatusCondition, ValidationTypes } from '../../types/IstioObjects';
+import type { StatusCondition} from '../../types/IstioObjects';
+import { ValidationTypes } from '../../types/IstioObjects';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Validation } from './Validation';
@@ -124,7 +125,12 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = (props: Valid
     );
 
   return (
-    <Tooltip aria-label={t('Validations list')} position={TooltipPosition.auto} enableFlip={true} content={tooltipContent}>
+    <Tooltip
+      aria-label={t('Validations list')}
+      position={TooltipPosition.auto}
+      enableFlip={true}
+      content={tooltipContent}
+    >
       {tooltipBase}
     </Tooltip>
   );

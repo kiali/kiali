@@ -1,18 +1,20 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   FormGroup,
   FormHelperText,
   HelperText,
   HelperTextItem,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
   Switch,
   TextInput
 } from '@patternfly/react-core';
-import { RuleBuilder, Rule } from './AuthorizationPolicyForm/RuleBuilder';
+import type { Rule } from './AuthorizationPolicyForm/RuleBuilder';
+import { RuleBuilder } from './AuthorizationPolicyForm/RuleBuilder';
 import { RuleList } from './AuthorizationPolicyForm/RuleList';
 import { isValid } from 'utils/Common';
 import { t, useKialiTranslation } from 'utils/I18nUtils';
@@ -69,14 +71,8 @@ export const AuthorizationPolicyForm: React.FC<Props> = (props: Props) => {
   const [isPolicySelectOpen, setIsPolicySelectOpen] = React.useState(false);
   const [isActionSelectOpen, setIsActionSelectOpen] = React.useState(false);
 
-  const {
-    action,
-    addWorkloadSelector,
-    policy,
-    rules,
-    workloadSelector,
-    workloadSelectorValid
-  } = props.authorizationPolicy;
+  const { action, addWorkloadSelector, policy, rules, workloadSelector, workloadSelectorValid } =
+    props.authorizationPolicy;
 
   const onChangeWorkloadSelector = (_event: React.FormEvent, value: boolean): void => {
     onAuthorizationChange({ addWorkloadSelector: value });

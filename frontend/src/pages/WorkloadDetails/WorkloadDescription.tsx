@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Workload } from '../../types/Workload';
+import type { Workload } from '../../types/Workload';
 import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -7,7 +7,7 @@ import { Labels } from '../../components/Label/Labels';
 import { LocalTime } from '../../components/Time/LocalTime';
 import { TextOrLink } from '../../components/Link/TextOrLink';
 import { renderAPILogo, renderRuntimeLogo } from '../../components/Logo/Logos';
-import * as H from '../../types/Health';
+import type * as H from '../../types/Health';
 import { KialiIcon } from '../../config/KialiIcon';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { isMultiCluster } from '../../config';

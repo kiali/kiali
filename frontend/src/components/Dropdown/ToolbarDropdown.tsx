@@ -1,7 +1,8 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
