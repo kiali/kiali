@@ -43,6 +43,12 @@ describe('Slider', () => {
     expect(pfSliderOnChange).toHaveBeenCalledWith(expect.anything(), 40);
   });
 
+  it('does not pass a value below min to PatternFly Slider', () => {
+    render(<Slider min={0} max={100} value={-5} valueCap={100} onChange={pfSliderOnChange} />);
+
+    expect(document.querySelector('[data-test="pf-slider-change"]')?.textContent).toBe('0');
+  });
+
   it('calls onValueCommit on pointer release after interaction', () => {
     const onValueCommit = rstest.fn();
 
