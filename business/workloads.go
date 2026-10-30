@@ -122,11 +122,11 @@ type LogEntry struct {
 
 type filterOpts struct {
 	app     regexp.Regexp
-	destWk  regexp.Regexp
 	destNs  regexp.Regexp
-	srcWk   regexp.Regexp
-	srcNs   regexp.Regexp
 	destSvc regexp.Regexp
+	destWk  regexp.Regexp
+	srcNs   regexp.Regexp
+	srcWk   regexp.Regexp
 }
 
 // LogOptions holds query parameter values
@@ -2335,7 +2335,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				for _, zPod := range ztunnelPods {
 					// There should be a ztunnel pod per node
 					// The information should be the same, but choosing the pod could help to verify the information is synchronized
-					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Namespace, zPod.Name)
+					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Name)
 					if zPodConfig != nil {
 						w.AddPodsProtocol(*zPodConfig)
 					}
@@ -2371,8 +2371,97 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 	return wl, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
 }
 
-func (in *WorkloadService) GetZtunnelConfig(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
-	return in.cache.GetZtunnelDump(cluster, namespace, pod)
+// GetZtunnelConfig returns the ztunnel config dump for the given ztunnel pod,
+// filtered to the namespaces the requesting user can access. The dump itself is
+// mesh-wide and is fetched with the Kiali ServiceAccount client, so it must never
+// be returned unfiltered. The unfiltered dump stays in the cache; filtering copies.
+func (in *WorkloadService) GetZtunnelConfig(ctx context.Context, cluster, pod string) (*kubernetes.ZtunnelConfigDump, error) {
+	dump := in.cache.GetZtunnelDump(cluster, pod)
+	if dump == nil {
+		return nil, nil
+	}
+
+	accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		// Fail closed: if the accessible namespace set cannot be determined, return
+		// an error rather than risk leaking cross-namespace data.
+		return nil, fmt.Errorf("unable to determine the namespaces accessible to the user: %w", err)
+	}
+
+	accessible := make(map[string]struct{}, len(accessibleNamespaces))
+	for _, ns := range accessibleNamespaces {
+		accessible[ns.Name] = struct{}{}
+	}
+
+	return filterZtunnelDump(dump, accessible), nil
+}
+
+// filterZtunnelDump returns a new ZtunnelConfigDump containing only the entries of
+// the given dump that belong to the accessible namespaces. The input dump is shared
+// cache state and is never modified: the result is always a new object with newly
+// allocated slices (never appends into the cached slices), so concurrent requests
+// cannot contaminate each other's responses.
+//
+//   - Workloads and Services are kept when their Namespace is accessible.
+//   - Policies are untyped (the ztunnel /config_dump schema is not stable across
+//     versions). Each policy carries a flat "namespace" field; entries whose
+//     namespace cannot be parsed are dropped (fail closed). Note this means a future
+//     ztunnel version that changes the policy shape makes all policies vanish for
+//     tenants - acceptable for a security fix, but a shape change must be verified
+//     when upgrading the supported Istio versions.
+//   - Certificates are dropped: it could not be verified that they only describe the
+//     ztunnel pod itself, and the UI does not render them.
+//   - Config describes the ztunnel pod itself (its own addresses and settings), not
+//     tenant data; it is kept as-is.
+//   - Kept Services entries carry Waypoint.Destination (a "namespace/hostname" string)
+//     which can name a waypoint in a namespace the user cannot see. This is a
+//     conscious decision: it is a name only, the same class of information as the
+//     own-traffic telemetry (e.g. ztunnel access logs) a tenant can already see.
+func filterZtunnelDump(dump *kubernetes.ZtunnelConfigDump, accessibleNamespaces map[string]struct{}) *kubernetes.ZtunnelConfigDump {
+	// Collections are initialized as empty slices so that a completely filtered
+	// result serializes as [] instead of null: the UI tolerates null without
+	// crashing but renders its service/workload count labels incorrectly.
+	filtered := &kubernetes.ZtunnelConfigDump{
+		Certificates: []kubernetes.Certificate{},
+		Config:       dump.Config,
+		Policies:     []any{},
+		Services:     []kubernetes.Service{},
+		Workloads:    []kubernetes.Workload{},
+	}
+
+	for _, workload := range dump.Workloads {
+		if _, ok := accessibleNamespaces[workload.Namespace]; ok {
+			filtered.Workloads = append(filtered.Workloads, workload)
+		}
+	}
+
+	for _, service := range dump.Services {
+		if _, ok := accessibleNamespaces[service.Namespace]; ok {
+			filtered.Services = append(filtered.Services, service)
+		}
+	}
+
+	for _, policy := range dump.Policies {
+		if namespace, ok := ztunnelPolicyNamespace(policy); ok {
+			if _, accessible := accessibleNamespaces[namespace]; accessible {
+				filtered.Policies = append(filtered.Policies, policy)
+			}
+		}
+	}
+
+	return filtered
+}
+
+// ztunnelPolicyNamespace extracts the namespace of a policy entry from the raw
+// ztunnel config dump JSON. Policies are flat objects with a lowercase "namespace"
+// key (verified against ztunnel 1.31.1); anything else fails closed.
+func ztunnelPolicyNamespace(policy any) (string, bool) {
+	policyMap, ok := policy.(map[string]any)
+	if !ok {
+		return "", false
+	}
+	namespace, ok := policyMap["namespace"].(string)
+	return namespace, ok
 }
 
 // GetWaypoints: Return the list of waypoint workloads.  This looks for all k8s gateways and then tests their labels. Note
@@ -3013,19 +3102,9 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 		pods := in.cache.GetZtunnelPods(cluster)
 		// This is needed for the K8S client
 		opts.Container = models.IstioProxy
-		wkDstPattern := fmt.Sprintf(`dst\.workload=("?%s"?)`, name)
-		nsDstPattern := fmt.Sprintf(`dst\.namespace=("?%s"?)`, namespace)
-		wkSrcPattern := fmt.Sprintf(`src\.workload=("?%s"?)`, name)
-		nsSrcPattern := fmt.Sprintf(`src\.namespace=("?%s"?)`, namespace)
-		svcPattern := fmt.Sprintf(`dst\.service=("?%s.%s.?)`, service, namespace)
-
-		// The ztunnel line should include the pod and the namespace
-		fs := filterOpts{
-			destWk:  *regexp.MustCompile(wkDstPattern),
-			destNs:  *regexp.MustCompile(nsDstPattern),
-			srcWk:   *regexp.MustCompile(wkSrcPattern),
-			srcNs:   *regexp.MustCompile(nsSrcPattern),
-			destSvc: *regexp.MustCompile(svcPattern),
+		fs, err := ztunnelFilterPatterns(namespace, name, service)
+		if err != nil {
+			return err
 		}
 		opts.filter = fs
 		for _, pod := range pods {
@@ -3064,6 +3143,59 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 	}
 	names = append(names, name)
 	return in.streamParsedLogs(cluster, namespace, names, opts, w)
+}
+
+// ztunnelFilterPatterns builds the anchored regular expressions used to filter ztunnel
+// access log lines for the given namespace, workload (pod) name and service name.
+//
+// ztunnel access log lines are key=value pairs separated by spaces, with values
+// optionally double-quoted (ztunnel 1.31+ quotes them; older versions do not).
+// Every pattern is anchored to the full field value so that a namespace or pod name
+// that is a prefix of another name (e.g. "tenant-v" vs "tenant-victim") cannot match
+// the longer name: workload and namespace values must be followed by a quote,
+// whitespace or end-of-line. The service pattern anchors the "service.namespace."
+// labels at the start of the value and consumes the rest of the FQDN with [^"\s]*,
+// because the value continues with "svc.cluster.local" and a (\s|$) anchor right
+// after the labels could never match.
+func ztunnelFilterPatterns(namespace, name, service string) (filterOpts, error) {
+	escapedName := regexp.QuoteMeta(name)
+	escapedNamespace := regexp.QuoteMeta(namespace)
+	escapedService := regexp.QuoteMeta(service)
+
+	wkDstPattern := fmt.Sprintf(`dst\.workload=("%s"|%s)(\s|$)`, escapedName, escapedName)
+	nsDstPattern := fmt.Sprintf(`dst\.namespace=("%s"|%s)(\s|$)`, escapedNamespace, escapedNamespace)
+	wkSrcPattern := fmt.Sprintf(`src\.workload=("%s"|%s)(\s|$)`, escapedName, escapedName)
+	nsSrcPattern := fmt.Sprintf(`src\.namespace=("%s"|%s)(\s|$)`, escapedNamespace, escapedNamespace)
+	svcPattern := fmt.Sprintf(`dst\.service=("%s\.%s\.|%s\.%s\.)[^"\s]*`, escapedService, escapedNamespace, escapedService, escapedNamespace)
+
+	destWk, err := regexp.Compile(wkDstPattern)
+	if err != nil {
+		return filterOpts{}, fmt.Errorf("invalid workload name for log filter: %w", err)
+	}
+	destNs, err := regexp.Compile(nsDstPattern)
+	if err != nil {
+		return filterOpts{}, fmt.Errorf("invalid namespace for log filter: %w", err)
+	}
+	srcWk, err := regexp.Compile(wkSrcPattern)
+	if err != nil {
+		return filterOpts{}, fmt.Errorf("invalid workload name for log filter: %w", err)
+	}
+	srcNs, err := regexp.Compile(nsSrcPattern)
+	if err != nil {
+		return filterOpts{}, fmt.Errorf("invalid namespace for log filter: %w", err)
+	}
+	destSvc, err := regexp.Compile(svcPattern)
+	if err != nil {
+		return filterOpts{}, fmt.Errorf("invalid service name for log filter: %w", err)
+	}
+
+	return filterOpts{
+		destNs:  *destNs,
+		destSvc: *destSvc,
+		destWk:  *destWk,
+		srcNs:   *srcNs,
+		srcWk:   *srcWk,
+	}, nil
 }
 
 // AND filter

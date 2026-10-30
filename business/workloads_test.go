@@ -1871,3 +1871,258 @@ func TestGetWorkloadListWithCustomKindThatMatchesCoreKind(t *testing.T) {
 	assert.Equal("custom-controller-123", workloads[0].Name)
 	assert.Equal("DaemonSet", workloads[0].WorkloadGVK.Kind)
 }
+
+// FakePodLogsZtunnelPrefixNamespaces returns ztunnel access log lines for two
+// namespaces where one name is a prefix of the other ("bookinfo" and
+// "bookinfo-evil"), with workload names sharing prefixes ("v" vs "victim-*"),
+// in both the quoted and unquoted value forms. These lines reproduce the
+// prefix-matching leak: with unanchored filter patterns, a user filtering for
+// namespace "bookinfo" and a one-letter pod name "v" would see them.
+func FakePodLogsZtunnelPrefixNamespaces() *kubernetes.PodLogs {
+	return &kubernetes.PodLogs{
+		Logs: `2024-07-02T13:41:03.203349Z	info	access	connection complete	src.addr=10.244.0.123:43847 src.workload="victim-app-1" src.namespace="bookinfo-evil" src.identity="spiffe://cluster.local/ns/bookinfo-evil/sa/default" dst.addr=10.244.0.117:3306 dst.service="victim-svc.bookinfo-evil.svc.cluster.local" dst.workload="victim-db-1" dst.namespace="bookinfo-evil" dst.identity="spiffe://cluster.local/ns/bookinfo-evil/sa/default" direction="inbound" bytes_sent=250 bytes_recv=206 duration="1ms"
+2024-07-02T13:41:03.203467Z	info	access	connection complete	src.addr=10.244.0.120:36632 src.workload=victim-app-2 src.namespace=bookinfo-evil src.identity="spiffe://cluster.local/ns/bookinfo-evil/sa/default" dst.addr=10.244.0.117:15008 dst.service=victim-svc.bookinfo-evil.svc.cluster.local dst.workload=victim-db-2 dst.namespace=bookinfo-evil dst.identity="spiffe://cluster.local/ns/bookinfo-evil/sa/default" direction="outbound" bytes_sent=208 bytes_recv=281 duration="1ms"
+2024-07-02T13:41:04.502606Z	info	access	connection complete	src.addr=10.244.0.7:37222 src.workload="votes-v1-abcde" src.namespace="bookinfo" dst.addr=10.244.0.101:9080 dst.service="votes.bookinfo.svc.cluster.local" dst.workload="victim-app-1" dst.namespace="bookinfo" direction="inbound" bytes_sent=2913 bytes_recv=293 duration="2ms"
+`,
+	}
+}
+
+// TestZtunnelFilterPatternsExactMatch asserts the anchored patterns match lines
+// with the exact namespace/workload/service names, in both quoted and unquoted
+// value forms.
+func TestZtunnelFilterPatternsExactMatch(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	filter, err := ztunnelFilterPatterns("bookinfo", "details-v1-cf74bb974-wg44w", "details")
+	require.NoError(err)
+
+	// (srcNs && srcWk) clause, quoted and unquoted forms.
+	assert.True(filterMatches(`[ztunnel] src.addr=1.2.3.4:1 src.workload="details-v1-cf74bb974-wg44w" src.namespace="bookinfo" dst.workload="other" dst.namespace="other-ns"`, filter))
+	assert.True(filterMatches(`[ztunnel] src.addr=1.2.3.4:1 src.workload=details-v1-cf74bb974-wg44w src.namespace=bookinfo dst.workload=other dst.namespace=other-ns`, filter))
+	// (destNs && destWk) clause.
+	assert.True(filterMatches(`[ztunnel] src.workload="other" src.namespace="other-ns" dst.workload="details-v1-cf74bb974-wg44w" dst.namespace="bookinfo"`, filter))
+	// destSvc clause, quoted and unquoted forms.
+	assert.True(filterMatches(`[ztunnel] src.workload="other" src.namespace="other-ns" dst.service="details.bookinfo.svc.cluster.local"`, filter))
+	assert.True(filterMatches(`[ztunnel] src.workload="other" src.namespace="other-ns" dst.service=details.bookinfo.svc.cluster.local`, filter))
+}
+
+// TestZtunnelFilterPatternsPrefixPodName asserts a one-letter / prefix pod name
+// with the victim namespace returns zero lines: the workload patterns are
+// anchored to the full field value.
+func TestZtunnelFilterPatternsPrefixPodName(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	// Filter for pod name "v" in the victim namespace: must not match any
+	// workload whose name merely starts with "v".
+	filter, err := ztunnelFilterPatterns("bookinfo-evil", "v", "v")
+	require.NoError(err)
+
+	lines := []string{
+		`[ztunnel] src.workload="victim-app-1" src.namespace="bookinfo-evil" dst.workload="victim-db-1" dst.namespace="bookinfo-evil" dst.service="victim-svc.bookinfo-evil.svc.cluster.local"`,
+		`[ztunnel] src.workload=victim-app-2 src.namespace=bookinfo-evil dst.workload=victim-db-2 dst.namespace=bookinfo-evil dst.service=victim-svc.bookinfo-evil.svc.cluster.local`,
+	}
+	for _, line := range lines {
+		assert.False(filterMatches(line, filter), line)
+	}
+}
+
+// TestZtunnelFilterPatternsPrefixNamespace asserts a namespace whose name is a
+// prefix of another namespace's name does not leak the latter's lines. This is
+// the case that survives a handler-level namespace check alone if the anchoring
+// is missing, so it is asserted for all five patterns.
+func TestZtunnelFilterPatternsPrefixNamespace(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	filter, err := ztunnelFilterPatterns("bookinfo", "details-v1-cf74bb974-wg44w", "details")
+	require.NoError(err)
+
+	// Lines about "bookinfo-evil" (its name starts with "bookinfo"): none of the
+	// five patterns may match them, through either the src or dst fields.
+	lines := []string{
+		`[ztunnel] src.workload="evil-app-1" src.namespace="bookinfo-evil" dst.workload="details-v1-cf74bb974-wg44w" dst.namespace="bookinfo-evil" dst.service="evil-svc.bookinfo-evil.svc.cluster.local"`,
+		`[ztunnel] src.workload=evil-app-2 src.namespace=bookinfo-evil dst.workload=details-v1-cf74bb974-wg44w dst.namespace=bookinfo-evil dst.service=evil-svc.bookinfo-evil.svc.cluster.local`,
+		`[ztunnel] src.workload="details-v1-cf74bb974-wg44w" src.namespace="bookinfo-evil" dst.workload="evil-app-1" dst.namespace="bookinfo-evil"`,
+		`[ztunnel] src.workload="evil-app-1" src.namespace="bookinfo" dst.workload="evil-app-2" dst.namespace="bookinfo-evil" dst.service="details.bookinfo-evil.svc.cluster.local"`,
+	}
+	for _, line := range lines {
+		assert.False(filterMatches(line, filter), line)
+	}
+}
+
+// TestZtunnelFilterPatternsServicePattern asserts the service pattern positively
+// first (a pattern that matches nothing passes negative-only tests, and the
+// existing TestGetZtunnelPodLogsProxy will not catch it because its lines match
+// via the (destNs && destWk) clause), then the negatives.
+func TestZtunnelFilterPatternsServicePattern(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	filter, err := ztunnelFilterPatterns("n", "some-pod", "s")
+	require.NoError(err)
+
+	// Positive: a filter for service "s" in namespace "n" must match the service
+	// FQDN in both quoted and unquoted forms.
+	assert.True(filterMatches(`[ztunnel] dst.service="s.n.svc.cluster.local"`, filter))
+	assert.True(filterMatches(`[ztunnel] dst.service=s.n.svc.cluster.local`, filter))
+
+	// Negative: different service, different namespace, or a namespace whose
+	// name merely starts with "n".
+	assert.False(filterMatches(`[ztunnel] dst.service="s2.n.svc.cluster.local"`, filter))
+	assert.False(filterMatches(`[ztunnel] dst.service="s.n2.svc.cluster.local"`, filter))
+	assert.False(filterMatches(`[ztunnel] dst.service="s.n-evil.svc.cluster.local"`, filter))
+	assert.False(filterMatches(`[ztunnel] dst.service="s2.n-evil.svc.cluster.local"`, filter))
+	// A service name that merely starts with "s" must not match either.
+	assert.False(filterMatches(`[ztunnel] dst.service="s2-other.n.svc.cluster.local"`, filter))
+}
+
+// TestGetZtunnelPodLogsPrefixNamespace reproduces the prefix-namespace attack
+// end-to-end through StreamPodLogs: a user filtering for namespace "bookinfo"
+// (a prefix of "bookinfo-evil") with a one-letter pod name "v" must get zero
+// lines, while the exact names still return the lines.
+func TestGetZtunnelPodLogsPrefixNamespace(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.IstioLabels.AppLabelName = "app"
+	conf.IstioLabels.VersionLabelName = "version"
+	kubernetes.SetConfig(t, *conf)
+
+	kubeObjs := []runtime.Object{
+		FakePodSyncedWithDeployments(conf),
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}},
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo-evil"}},
+	}
+	for _, obj := range FakeZtunnelDaemonSet(conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	for _, obj := range FakeZtunnelPods(conf) {
+		o := obj
+		kubeObjs = append(kubeObjs, &o)
+	}
+	k8s := &logStreamer{
+		logs:                FakePodLogsZtunnelPrefixNamespaces().Logs,
+		UserClientInterface: kubetest.NewFakeK8sClient(kubeObjs...),
+	}
+	svc := setupWorkloadService(t, k8s, conf)
+
+	// The attacker's filter: their own namespace "bookinfo" and a one-letter pod
+	// prefix "v". Under the old unanchored patterns every line of the fixture
+	// matched; with the anchored patterns nothing does.
+	podLogs := callStreamPodLogs(svc, "bookinfo", "v", "v", "v", &LogOptions{LogType: models.LogTypeZtunnel, PodLogOptions: corev1.PodLogOptions{Container: "details"}})
+	require.Equal(0, len(podLogs.Entries))
+
+	// Filtering for the exact names still returns the lines (positive control).
+	podLogs = callStreamPodLogs(svc, "bookinfo-evil", "victim-app-1", "victim-app-1", "victim-app-1", &LogOptions{LogType: models.LogTypeZtunnel, PodLogOptions: corev1.PodLogOptions{Container: "details"}})
+	require.Equal(1, len(podLogs.Entries))
+	assert.Contains(podLogs.Entries[0].Message, `src.workload="victim-app-1"`)
+}
+
+// ztunnelFilterTestDump builds a dump with entries in three namespaces for the
+// filter tests.
+func ztunnelFilterTestDump() *kubernetes.ZtunnelConfigDump {
+	return &kubernetes.ZtunnelConfigDump{
+		Certificates: []kubernetes.Certificate{
+			{Identity: "spiffe://cluster.local/ns/bookinfo/sa/default", State: "READY"},
+		},
+		Config: kubernetes.Config{ClusterDomain: "cluster.local"},
+		Policies: []any{
+			map[string]any{"name": "policy-bookinfo", "namespace": "bookinfo"},
+			map[string]any{"name": "policy-victim", "namespace": "victim-ns"},
+			map[string]any{"name": "policy-no-namespace"},
+			"not-a-map",
+		},
+		Services: []kubernetes.Service{
+			{Name: "svc-bookinfo", Namespace: "bookinfo"},
+			{Name: "svc-victim", Namespace: "victim-ns"},
+		},
+		Workloads: []kubernetes.Workload{
+			{Name: "wl-bookinfo", Namespace: "bookinfo"},
+			{Name: "wl-victim", Namespace: "victim-ns"},
+		},
+	}
+}
+
+// TestFilterZtunnelDump asserts the dump filter keeps only accessible-namespace
+// entries, drops certificates, fails closed on unparsable policies, and keeps
+// the Config (ztunnel pod's own settings) as-is.
+func TestFilterZtunnelDump(t *testing.T) {
+	assert := assert.New(t)
+
+	dump := ztunnelFilterTestDump()
+	accessible := map[string]struct{}{"bookinfo": {}}
+
+	filtered := filterZtunnelDump(dump, accessible)
+
+	// Workloads and Services: only the accessible namespace's entries, kept
+	// byte-for-byte.
+	require.Len(t, filtered.Workloads, 1)
+	assert.Equal(kubernetes.Workload{Name: "wl-bookinfo", Namespace: "bookinfo"}, filtered.Workloads[0])
+	require.Len(t, filtered.Services, 1)
+	assert.Equal(kubernetes.Service{Name: "svc-bookinfo", Namespace: "bookinfo"}, filtered.Services[0])
+
+	// Policies: accessible namespace kept; inaccessible, missing-namespace and
+	// unparsable entries dropped (fail closed).
+	require.Len(t, filtered.Policies, 1)
+	assert.Equal(map[string]any{"name": "policy-bookinfo", "namespace": "bookinfo"}, filtered.Policies[0])
+
+	// Certificates are omitted.
+	assert.Empty(filtered.Certificates)
+
+	// Config is kept.
+	assert.Equal("cluster.local", filtered.Config.ClusterDomain)
+
+	// A completely filtered result must serialize the collections as [] rather
+	// than null: the UI tolerates null without crashing but renders its
+	// service/workload count labels incorrectly.
+	emptyFiltered := filterZtunnelDump(dump, map[string]struct{}{})
+	require.NotNil(t, emptyFiltered)
+	marshaled, err := json.Marshal(emptyFiltered)
+	require.NoError(t, err)
+	assert.Contains(string(marshaled), `"workloads":[]`)
+	assert.Contains(string(marshaled), `"services":[]`)
+	assert.Contains(string(marshaled), `"policies":[]`)
+	assert.Contains(string(marshaled), `"certificates":[]`)
+}
+
+// TestGetZtunnelConfigFiltersAndCacheIsUnmutated asserts that GetZtunnelConfig
+// filters the dump to the user's accessible namespaces AND that the cached,
+// shared dump is never mutated: a direct GetZtunnelDump afterwards must still
+// return the complete dump.
+func TestGetZtunnelConfigFiltersAndCacheIsUnmutated(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+	// The fake client only holds the "bookinfo" namespace: that is the full
+	// accessible set for this user.
+	k8s := kubetest.NewFakeK8sClient(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}})
+	prom := new(prometheustest.PromClientMock)
+	prom.MockMetricsForLabels(context.Background(), []string{})
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).WithProm(prom).Build().Workload
+
+	dump := ztunnelFilterTestDump()
+	svc.cache.SetZtunnelDump(cluster+"ztunnel-test", dump)
+
+	filtered, err := svc.GetZtunnelConfig(context.TODO(), cluster, "ztunnel-test")
+	require.NoError(err)
+	require.NotNil(filtered)
+
+	// Filtered to the accessible namespace only.
+	assert.Len(filtered.Workloads, 1)
+	assert.Len(filtered.Services, 1)
+	assert.Len(filtered.Policies, 1)
+	assert.Empty(filtered.Certificates)
+
+	// The cache still holds the full, unfiltered dump.
+	cached := svc.cache.GetZtunnelDump(cluster, "ztunnel-test")
+	require.NotNil(cached)
+	assert.Len(cached.Workloads, 2)
+	assert.Len(cached.Services, 2)
+	assert.Len(cached.Policies, 4)
+	assert.Len(cached.Certificates, 1)
+}

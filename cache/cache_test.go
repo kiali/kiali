@@ -303,7 +303,7 @@ func TestZtunnelDump(t *testing.T) {
 	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
-	initData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
+	initData := cache.GetZtunnelDump("cluster-default", "ztunnel-7hml8")
 	require.Nil(initData)
 
 	zTunnelData, err := os.Open("../kubernetes/testdata/ztunnel-config.json")
@@ -314,9 +314,9 @@ func TestZtunnelDump(t *testing.T) {
 	errD := json.NewDecoder(zTunnelData).Decode(&configD)
 	require.NoError(errD)
 
-	cache.SetZtunnelDump("cluster-defaultistio-systemztunnel-7hml8", configD)
+	cache.SetZtunnelDump("cluster-defaultztunnel-7hml8", configD)
 
-	cacheData := cache.GetZtunnelDump("cluster-default", "istio-system", "ztunnel-7hml8")
+	cacheData := cache.GetZtunnelDump("cluster-default", "ztunnel-7hml8")
 	require.NotNil(cacheData)
 	require.Equal(cacheData.Workloads[1].Name, "details-v1-7c5d957895-pwqdh")
 	require.Equal(cacheData.Workloads[1].Protocol, "HBONE")
