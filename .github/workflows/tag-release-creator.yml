@@ -6,7 +6,7 @@ on:
       tag_branches:
         description: Branches to tag (Separate branches by commas)
         required: true
-        default: v2.4,v2.11,v2.17,v2.22
+        default: v2.11,v2.17,v2.22,v2.27,v2.33
         type: string
 
 permissions: read-all
