@@ -41,8 +41,8 @@ export type RoutingSliderProps = {
 };
 
 const lockButtonStyle = kialiStyle({
-  paddingLeft: '8px',
-  paddingRight: '8px'
+  paddingLeft: '0.5rem',
+  paddingRight: '0.5rem'
 });
 
 const inputStyle = kialiStyle({
@@ -52,7 +52,7 @@ const inputStyle = kialiStyle({
 
 const inputGroupStyle = kialiStyle({
   marginLeft: PFSpacer.sm,
-  paddingRight: '4px',
+  paddingRight: '0.25rem',
   width: 'fit-content'
 });
 
@@ -172,7 +172,7 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       min={min}
       max={maxLimit}
       maxRailWidth={maxRailWidth}
-      railTrackFill={mirrored ? PFColors.Purple20 : undefined}
+      railTrackFill={mirrored ? PFColors.Mirroring : undefined}
       step={step}
       value={localValue}
       valueCap={effectiveMax < maxLimit ? effectiveMax : undefined}
