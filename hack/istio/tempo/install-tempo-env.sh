@@ -109,7 +109,7 @@ HELPMSG
 done
 
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-MINIO_FILE="${SCRIPT_DIR}/minio.yaml"
+SEAWEEDFS_FILE="${SCRIPT_DIR}/seaweedfs.yaml"
 
 CLIENT_EXE=`which ${CLIENT_EXE_NAME}`
 if [ "$?" = "0" ]; then
@@ -152,15 +152,20 @@ install_tempo() {
     $CLIENT_EXE create namespace ${TEMPO_NS}
   fi
 
-  echo -e "Installing minio and create secret \n"
-  ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${MINIO_FILE}
+  echo -e "Installing SeaweedFS and create secret \n"
+  ${CLIENT_EXE} apply --namespace ${TEMPO_NS} -f ${SEAWEEDFS_FILE}
+  echo "Waiting for SeaweedFS storage to be ready..."
+  if ! ${CLIENT_EXE} rollout status deployment/seaweedfs -n ${TEMPO_NS} --timeout=5m; then
+    echo "ERROR: Tracing storage is unavailable; aborting Tempo installation."
+    exit 1
+  fi
 
-  # Create secret for minio
-  ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-minio \
+  # Create secret for SeaweedFS
+  ${CLIENT_EXE} create secret generic -n ${TEMPO_NS} tempostack-dev-seaweedfs \
     --from-literal=bucket="tempo-data" \
-    --from-literal=endpoint="http://minio:9000" \
-    --from-literal=access_key_id="minio" \
-    --from-literal=access_key_secret="minio123"
+    --from-literal=endpoint="http://seaweedfs:8333" \
+    --from-literal=access_key_id="seaweedfs" \
+    --from-literal=access_key_secret="seaweedfs123"
 
   if [ "${METHOD}" == "operator" ]; then
 
@@ -193,7 +198,7 @@ spec:
   storage:
     secret:
       type: s3
-      name: tempostack-dev-minio
+      name: tempostack-dev-seaweedfs
   template:
     distributor:
       tls:
@@ -221,7 +226,7 @@ spec:
   storage:
     secret:
       type: s3
-      name: tempostack-dev-minio
+      name: tempostack-dev-seaweedfs
   template:
     queryFrontend:
       component:
@@ -252,7 +257,7 @@ if [ "${DELETE_TEMPO}" == "true" ]; then
   echo -e "Deleting tempo \n"
   ${CLIENT_EXE} delete -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
   ${CLIENT_EXE} delete -f https://github.com/grafana/tempo-operator/releases/latest/download/tempo-operator.yaml
-  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-minio
+  ${CLIENT_EXE} delete secret -n ${TEMPO_NS} tempostack-dev-seaweedfs
   ${CLIENT_EXE} delete TempoStack cr -n ${TEMPO_NS}
   if [ "${IS_OPENSHIFT}" == "true" ]; then
     $CLIENT_EXE delete project ${TEMPO_NS}
