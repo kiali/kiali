@@ -60,17 +60,40 @@ install_ambient_on_cluster() {
 
     # Install Istio using the istioctl install script with ambient profile and multicluster configuration.
     # NOTE: We rely on switch_cluster() to ensure kubectl/oc is pointed at the right cluster.
+    # --reduce-resources matches single-cluster ambient CI (setup-kind-in-ci.sh); without it the
+    # second kind cluster often times out waiting for istio-cni-node / ztunnel under resource pressure.
     echo "Installing Istio with ambient profile and multicluster configuration..."
+    local istioctl_version_args=()
+    if [ -n "${ISTIO_VERSION}" ] && [[ "${ISTIO_VERSION}" != *-dev ]] && [[ "${ISTIO_VERSION}" != *-latest ]]; then
+      istioctl_version_args=(--istio-version "${ISTIO_VERSION}")
+    fi
+    local istioctl_bin_args=()
+    if [ -n "${ISTIOCTL:-}" ] && [ -x "${ISTIOCTL}" ]; then
+      istioctl_bin_args=(--istioctl "${ISTIOCTL}")
+    fi
+    local istio_dir_args=()
+    if [ -n "${ISTIO_DIR:-}" ] && [ -d "${ISTIO_DIR}" ]; then
+      istio_dir_args=(--istio-dir "${ISTIO_DIR}")
+    fi
     if ! "${ISTIO_INSTALL_SCRIPT}" \
-      --client-exe kubectl \
+      --client-exe-path "$(which kubectl)" \
       --config-profile ambient \
+      --reduce-resources true \
       --mesh-id "${MESH_ID}" \
       --cluster-name "${cluster_name}" \
       --network "${network}" \
       --addons "prometheus grafana jaeger" \
+      "${istioctl_version_args[@]}" \
+      "${istioctl_bin_args[@]}" \
+      "${istio_dir_args[@]}" \
       --set "values.pilot.env.AMBIENT_ENABLE_MULTI_NETWORK=true" \
       --set "values.pilot.env.AMBIENT_ENABLE_BAGGAGE=true"; then
       echo "Failed to install Istio with ambient profile using istioctl"
+      echo "==== DEBUG: istio-cni-node / ztunnel on ${context} ===="
+      kubectl --context="${context}" get ds,pods -n istio-system -o wide || true
+      kubectl --context="${context}" describe ds istio-cni-node -n istio-system 2>/dev/null | tail -80 || true
+      kubectl --context="${context}" describe ds ztunnel -n istio-system 2>/dev/null | tail -80 || true
+      kubectl --context="${context}" logs -n istio-system -l k8s-app=istio-cni-node --tail=50 2>/dev/null || true
       exit 1
     fi
   fi
