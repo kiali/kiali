@@ -18,6 +18,8 @@ const statusMap: Record<number, { color: string; label: HealthStatusId }> = {
 
 const naStatus = { color: NA.color, label: NA.id as HealthStatusId };
 
+export const healthStatusI18nKey = (id: HealthStatusId): string => (id === NA.id ? 'n/a' : id);
+
 const ONE_DAY_SECONDS = 86400;
 
 export const formatAxisTimeLabel = (ts: number, totalDuration: number, today: Date): string => {

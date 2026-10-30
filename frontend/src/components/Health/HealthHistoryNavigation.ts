@@ -6,6 +6,34 @@ import type { HealthHistoryType } from 'services/Api';
 
 export type HealthHistoryRange = Required<BoundsInMilliseconds>;
 
+const timeOptions: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit'
+};
+
+const dateTimeOptions: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'numeric',
+  year: 'numeric',
+  ...timeOptions
+};
+
+export const formatHealthHistoryInvestigationBound = (boundMs: number, selectedTimeMs: number): string => {
+  const date = new Date(boundMs);
+  const sameDay = date.toDateString() === new Date(selectedTimeMs).toDateString();
+  return sameDay ? date.toLocaleTimeString(undefined, timeOptions) : date.toLocaleString(undefined, dateTimeOptions);
+};
+
+/** Full date and time for AI prompts so past days are not mistaken for today. */
+export const formatHealthHistoryChatTimestamp = (boundMs: number): string => {
+  return new Date(boundMs).toLocaleString(undefined, dateTimeOptions);
+};
+
+/** End of a chat prompt range: time only; the start timestamp carries the date. */
+export const formatHealthHistoryChatRangeTo = (boundMs: number): string => {
+  return new Date(boundMs).toLocaleTimeString(undefined, timeOptions);
+};
+
 export const getHealthHistoryRange = (timestamp: number, duration: number, now = Date.now()): HealthHistoryRange => {
   const length = duration * 1000;
   // Match the minute shown by the ribbon tooltip and every destination's custom range.

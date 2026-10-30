@@ -4,10 +4,25 @@ import { HealthHistoryActions } from '../HealthHistoryActions';
 import { HealthStatusRibbon } from '../HealthStatusRibbon';
 import { CustomTimeTabsContext } from 'components/Tab/CustomTimeTabs';
 import type { Datapoint } from 'types/Metrics';
+import { ChatAIActions } from 'actions/ChatAIActions';
+import { ActionKeys } from 'actions/ActionKeys';
+
+const mockDispatch = rstest.fn();
+const mockSelectorState = {
+  ai: { chat: { allowed: true } },
+  globalState: { kiosk: '' },
+  userSettings: { duration: 60 }
+};
 
 rstest.mock('hooks/redux', () => ({
-  useKialiSelector: () => 60
+  useKialiDispatch: () => mockDispatch,
+  useKialiSelector: (selector: (state: unknown) => unknown) => selector(mockSelectorState)
 }));
+
+rstest.mock('components/ChatBot/hooks/useChatAIEnabled', () => ({
+  useChatAIEnabled: () => true
+}));
+
 rstest.mock('components/Link/KialiLink', () => ({
   KialiLink: (props: any) => (
     <a href={props.to} data-test={props.dataTest} onClick={props.onClick}>
@@ -36,6 +51,12 @@ const formatInvestigationTime = (date: Date, selected: Date): string => {
 
 describe('health history click actions', () => {
   const startTime = Date.UTC(2026, 9, 14, 12) / 1000;
+
+  beforeEach(() => {
+    mockDispatch.mockClear();
+    mockSelectorState.ai.chat.allowed = true;
+    mockSelectorState.globalState.kiosk = '';
+  });
   const setup = (
     rangeStart = startTime,
     datapoints: Datapoint[] = Array.from({ length: 60 }, (_, index) => [rangeStart + index * 60, 0])
@@ -211,6 +232,38 @@ describe('health history click actions', () => {
     expect(onSelect).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Logs' }));
     expect(onSelect).toHaveBeenCalledWith('logs', { from: (startTime + 900) * 1000, to: (startTime + 2700) * 1000 });
+  });
+
+  it('fills the AI chat prompt and opens troubleshoot mode when AI Chat is clicked', async () => {
+    const { ribbon } = setup();
+    fireEvent.click(ribbon, { clientX: 300 });
+    fireEvent.change(screen.getByRole('combobox', { name: 'Investigation Time Range' }), {
+      target: { value: '1800' }
+    });
+    fireEvent.click(await screen.findByTestId('health-history-troubleshoot-ai'));
+    const queryCall = mockDispatch.mock.calls.find(([action]) => action?.type === ActionKeys.CHAT_AI_SET_QUERY);
+    const contextCall = mockDispatch.mock.calls.find(([action]) => action?.type === ActionKeys.CHAT_AI_SET_CONTEXT);
+    const payload = String(queryCall?.[0]?.payload);
+    const contextPayload = String(contextCall?.[0]?.payload);
+    expect(payload).toContain('reviews-v1');
+    expect(payload).toContain('workload');
+    expect(payload).toContain('30 minutes');
+    expect(payload).toContain('notable events, changes, or anomalies');
+    expect(payload).not.toContain('MCP tools');
+    expect(contextPayload).toContain('Health history investigation');
+    expect(contextPayload).toContain('get_metrics');
+    expect(payload).toMatch(/\d/);
+    expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
+    expect(mockDispatch).toHaveBeenCalledWith(ChatAIActions.setChatbotVisible({ visible: true }));
+    await waitFor(() => expect(screen.queryByTestId('health-history-actions')).not.toBeInTheDocument());
+  });
+
+  it('hides AI Chat when chat is not allowed for the user', async () => {
+    mockSelectorState.ai.chat.allowed = false;
+    const { ribbon } = setup();
+    fireEvent.click(ribbon, { clientX: 300 });
+    await screen.findByTestId('health-history-actions');
+    expect(screen.queryByTestId('health-history-troubleshoot-ai')).not.toBeInTheDocument();
   });
 
   it('supports selecting a time with the keyboard and dismissing without navigation', async () => {

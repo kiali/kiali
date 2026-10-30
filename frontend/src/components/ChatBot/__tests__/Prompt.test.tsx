@@ -41,26 +41,42 @@ rstest.mock('../EntryChat/ToolModal', () => ({
   ToolModal: () => null
 }));
 
-// Lightweight MessageBar stub: renders a send button that calls onSendMessage on click.
+// Lightweight MessageBar stub: textarea + send button for prompt/context tests.
 rstest.mock('@patternfly/chatbot', () => {
   const ReactModule = require('react');
   return {
     ChatbotDisplayMode: { default: 'default', docked: 'docked', embedded: 'embedded', fullscreen: 'fullscreen' },
     MessageBar: ({
+      innerRef,
       isSendButtonDisabled,
-      onSendMessage
+      onChange,
+      onSendMessage,
+      value
     }: {
+      innerRef?: React.RefObject<HTMLTextAreaElement>;
       isSendButtonDisabled?: boolean;
+      onChange?: (e: { target: { value: string } }) => void;
       onSendMessage?: () => void;
+      value?: string;
     }) =>
       ReactModule.createElement(
-        'button',
-        {
-          'data-test': 'mock-send-button',
-          disabled: isSendButtonDisabled,
-          onClick: onSendMessage
-        },
-        'Send'
+        ReactModule.Fragment,
+        null,
+        ReactModule.createElement('textarea', {
+          'data-test': 'mock-prompt-input',
+          onChange: (e: { target: { value: string } }) => onChange?.(e),
+          ref: innerRef,
+          value: value ?? ''
+        }),
+        ReactModule.createElement(
+          'button',
+          {
+            'data-test': 'mock-send-button',
+            disabled: isSendButtonDisabled,
+            onClick: onSendMessage
+          },
+          'Send'
+        )
       )
   };
 });
@@ -144,5 +160,47 @@ describe('Prompt error handling', () => {
       const lastEntry = store.getState().ai.chat.chatHistory.last() as ImmutableMap<string, unknown> | undefined;
       expect(lastEntry?.get('error')).toBeUndefined();
     });
+  });
+});
+
+describe('Prompt health-history chat context', () => {
+  beforeEach(() => {
+    rstest.clearAllMocks();
+    store.dispatch(ChatAIActions.setChatHistoryClear());
+    store.dispatch(ChatAIActions.setChatContext(''));
+    store.dispatch(ChatAIActions.setQuery(''));
+    (API.getChatPrompts as Mock).mockResolvedValue({ data: [] });
+  });
+
+  it('clears supplemental chat context when the user edits the pre-filled prompt', async () => {
+    store.dispatch(ChatAIActions.setChatContext('Health history investigation: MCP tools'));
+    store.dispatch(ChatAIActions.setQuery('Pre-filled health history prompt'));
+
+    const { getByTestId } = renderPrompt();
+
+    expect(store.getState().ai.chat.chatContext).toContain('Health history investigation');
+
+    await act(async () => {
+      fireEvent.change(getByTestId('mock-prompt-input'), {
+        target: { value: 'Pre-filled health history prompt edited' }
+      });
+    });
+
+    expect(store.getState().ai.chat.chatContext).toBe('');
+    expect(store.getState().ai.chat.query).toBe('Pre-filled health history prompt edited');
+  });
+
+  it('clears supplemental chat context when the user clears the pre-filled prompt', async () => {
+    store.dispatch(ChatAIActions.setChatContext('Health history investigation: MCP tools'));
+    store.dispatch(ChatAIActions.setQuery('Pre-filled health history prompt'));
+
+    const { getByTestId } = renderPrompt();
+
+    await act(async () => {
+      fireEvent.change(getByTestId('mock-prompt-input'), { target: { value: '' } });
+    });
+
+    expect(store.getState().ai.chat.chatContext).toBe('');
+    expect(store.getState().ai.chat.query).toBe('');
   });
 });
