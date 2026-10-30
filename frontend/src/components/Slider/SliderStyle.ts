@@ -1,7 +1,7 @@
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 
-const sliderRailFillCssVar = '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor';
+export const sliderRailFillCssVar = '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor';
 
 const sliderRailFillNest = (color: string): Record<string, string> => ({
   [sliderRailFillCssVar]: color
@@ -55,8 +55,6 @@ export const sliderStyle = (maxWidth?: string): string =>
 
 export const sliderMirroredStyle = kialiStyle({
   $nest: {
-    '& .pf-v6-c-slider': sliderRailFillNest(PFColors.Mirroring),
-
     '& .pf-v6-c-slider__thumb': {
       backgroundColor: PFColors.Mirroring,
       boxShadow: mirroredThumbRing

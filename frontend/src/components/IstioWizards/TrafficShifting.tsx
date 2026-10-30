@@ -68,7 +68,7 @@ const validationStyle = kialiStyle({
   textAlign: 'right'
 });
 
-export const MSG_WEIGHTS_NOT_VALID = 'The sum of all non-mirrored weights must be 100 %';
+export const MSG_WEIGHTS_NOT_VALID = t('The sum of all non-mirrored weights must be 100 %');
 
 export const rebalanceUnlockedWeights = (workloads: WorkloadWeight[]): void => {
   let maxWeight = 100;
@@ -502,7 +502,7 @@ export class TrafficShifting extends React.Component<Props, State> {
 
         {this.props.showValid && !isValid && (
           <div className={validationStyle} data-test="traffic-shifting-weight-validation">
-            {t('The sum of all non-mirrored weights must be 100 %')}
+            {t(MSG_WEIGHTS_NOT_VALID)}
           </div>
         )}
       </>

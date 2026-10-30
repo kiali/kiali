@@ -12,6 +12,7 @@ import {
 } from '@patternfly/react-core';
 import { MigrationIcon, LockIcon as PFLockIcon, LockOpenIcon } from '@patternfly/react-icons';
 import { Slider } from './Slider';
+import { PFColors } from 'components/Pf/PfColors';
 import { sliderMirroredStyle } from './SliderStyle';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -189,6 +190,7 @@ export const RoutingSlider: React.FC<RoutingSliderProps> = ({
       min={min}
       max={maxLimit}
       maxRailWidth={maxRailWidth}
+      railTrackFill={mirrored ? PFColors.Mirroring : undefined}
       step={step}
       value={localValue}
       valueCap={effectiveMax < maxLimit ? effectiveMax : undefined}

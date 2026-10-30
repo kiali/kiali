@@ -3,7 +3,7 @@ import type { SliderOnChangeEvent } from '@patternfly/react-core';
 import { Slider as PFSlider, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { capSliderValue } from './sliderValue';
-import { sliderRailFillStyle, sliderStyle } from './SliderStyle';
+import { sliderRailFillCssVar, sliderRailFillStyle, sliderStyle } from './SliderStyle';
 
 export type SliderProps = {
   className?: string;
@@ -118,8 +118,26 @@ export const Slider: React.FC<SliderProps> = ({
   }, [applyThumbPosition, displayValue]);
 
   React.useLayoutEffect(() => {
-    syncSliderThumbPosition();
-  }, [displayValue, max, min, id, value, syncSliderThumbPosition]);
+    const applyRailFillAndThumb = (): void => {
+      const sliderRoot = wrapperRef.current?.querySelector<HTMLElement>('.pf-v6-c-slider');
+      if (!sliderRoot) {
+        return;
+      }
+
+      if (railTrackFill) {
+        sliderRoot.style.setProperty(sliderRailFillCssVar, railTrackFill);
+      } else {
+        sliderRoot.style.removeProperty(sliderRailFillCssVar);
+      }
+
+      syncSliderThumbPosition();
+    };
+
+    applyRailFillAndThumb();
+    const rafId = requestAnimationFrame(applyRailFillAndThumb);
+
+    return () => cancelAnimationFrame(rafId);
+  }, [displayValue, max, min, railTrackFill, id, value, syncSliderThumbPosition]);
 
   React.useEffect(() => {
     latestValueRef.current = displayValue;
