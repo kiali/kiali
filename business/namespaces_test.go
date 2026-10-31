@@ -349,6 +349,56 @@ func TestGetNamespacesListErrorHomeFailsRemoteSkipped(t *testing.T) {
 	}
 }
 
+// GetClusterNamespacesForCluster propagates a remote cluster's set-computation
+// error, unlike GetNamespaces (picker semantics), which skips it: callers use
+// this lookup when the answer is load-bearing (e.g. session validation must be
+// able to distinguish "cannot determine" from "zero access").
+func TestGetClusterNamespacesForClusterPropagatesRemoteErrors(t *testing.T) {
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+
+	// In cluster-wide-access mode the accessible set is the intersection of the
+	// SA list and the user list, so the SA must also see bookinfo — and the SA
+	// side stays healthy: only the user's LIST on the remote cluster fails.
+	saClients := map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+		"west": kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo")),
+	}
+
+	// Distinct cache keys keep the SA-identity shortcut in
+	// getNamespacesUsingKialiSA from serving the SA's unfiltered list.
+	userEast := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	userEast.CacheKey = "east-user"
+	userWest := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	userWest.CacheKey = "west-user"
+	userClients := map[string]kubernetes.UserClientInterface{
+		"east": userEast,
+		"west": userWest,
+	}
+
+	westCS := userWest.KubeClientset.(*clientsetfake.Clientset)
+	westCS.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		return true, nil, errors.NewInternalError(fmt.Errorf("apiserver down"))
+	})
+
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	nsservice := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	// The aggregate skips the failing remote cluster (picker semantics)...
+	namespaces, err := nsservice.GetNamespaces(context.TODO())
+	require.NoError(err)
+	require.ElementsMatch([]string{"bookinfo"}, nsNames(namespaces))
+
+	// ...while the per-cluster lookup propagates its error, for the cluster it
+	// was asked about, home or remote.
+	_, err = nsservice.GetClusterNamespacesForCluster(context.TODO(), "west")
+	require.Error(err)
+	require.True(errors.IsInternalError(err))
+}
+
 // Get namespace
 func TestGetNamespace(t *testing.T) {
 	conf := config.NewConfig()
