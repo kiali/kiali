@@ -20,6 +20,8 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	clientsetfake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	kubeclienttesting "k8s.io/client-go/testing"
 
@@ -1119,4 +1121,457 @@ func TestValidateSessionMulticlusterHomeZeroAccess(t *testing.T) {
 	_, err = authController.ValidateSession(r, w)
 	require.Error(err)
 	require.ErrorIs(err, authentication.ErrSessionNotFound)
+}
+
+// failNamespaceList prepends a reactor to the client's Kubernetes clientset so
+// namespace LIST calls return the given error, modeling a namespace API
+// failure on that cluster (e.g. a 503 or an RBAC rejection).
+func failNamespaceList(client *kubetest.FakeK8sClient, err error) {
+	client.KubeClientset.(*clientsetfake.Clientset).PrependReactor("list", "namespaces",
+		func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+			return true, nil, err
+		})
+}
+
+// TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession
+// ensures that a namespace set that cannot be COMPUTED for a remote cluster
+// (e.g. a transient API failure on a cold cache) is not misread as zero
+// namespace visibility: the remote session is skipped for the current request
+// but its cookie is left alone, so the session is retried once the cluster
+// recovers. Terminating the cookie here would turn a transient failure into a
+// persistent logout from that cluster.
+func TestValidateSessionMulticlusterRemoteNamespaceLookupFailureKeepsSession(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The west cluster's namespace API starts failing. A distinct token keeps
+	// the per-token cache cold for the swapped client, so the lookup runs
+	// against the failing API.
+	failingWest := newOpenshiftAuthTestClient(t, metadataServer, true)
+	failingWest.Token = "west-failing"
+	failNamespaceList(failingWest, k8serrors.NewServiceUnavailable("namespace API unavailable"))
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": failingWest,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err, "an indeterminate remote lookup must not fail the request")
+	require.Len(sessions, 1)
+	require.NotNil(sessions["east"])
+	require.Nil(sessions["west"])
+
+	for _, c := range w.Result().Cookies() {
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"the west session cookie must not be terminated by an indeterminate lookup failure")
+		require.NotEqual(authentication.SessionCookieName+"-east", c.Name,
+			"the healthy east session must not be dropped")
+	}
+
+	// Once the west cluster recovers, the same cookies yield both sessions
+	// again: the session was preserved through the outage, not consumed.
+	recoveredWest := newOpenshiftAuthTestClient(t, metadataServer, true)
+	recoveredWest.Token = "west-recovered"
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": eastClient,
+		"west": recoveredWest,
+	})
+
+	r = httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err = authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 2)
+	require.NotNil(sessions["east"])
+	require.NotNil(sessions["west"])
+}
+
+// setupTwoClusterSessions performs the common multicluster session-validation
+// test setup: a controller on home cluster "east" with a remote "west", and
+// valid login sessions for both clusters. The metadata server and client
+// factory are returned so tests can build additional clients (swapped in via
+// SetClients) and separate SA clients (via the SAClients field) between login
+// and validation.
+func setupTwoClusterSessions(t *testing.T) (*authentication.OpenshiftAuthController, *kubetest.K8SClientFactoryMock, *httptest.Server, *http.Cookie, *http.Cookie) {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	// This is a global var that is accessed in inside of the auth controller.
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	return authController, clientFactory, metadataServer, sessionCookieEast, sessionCookieWest
+}
+
+// healthySAClients returns one healthy SA client per cluster, each seeing the
+// bookinfo namespace, for tests that separate the SA identity from the user
+// clients (the mock's default makes them the same client, which cannot model
+// an SA failure or a user-only denial).
+func healthySAClients(clusters ...string) map[string]kubernetes.ClientInterface {
+	sa := make(map[string]kubernetes.ClientInterface, len(clusters))
+	for _, cluster := range clusters {
+		sa[cluster] = kubetest.NewFakeK8sClient(fakeNamespace("bookinfo"))
+	}
+	return sa
+}
+
+// forbiddenListError returns the error a fake client's namespace LIST reactor
+// uses to model an RBAC denial.
+func forbiddenListError() error {
+	return k8serrors.NewForbidden(schema.GroupResource{Group: "", Resource: "namespaces"}, "", nil)
+}
+
+// TestValidateSessionMulticlusterRemoteUserDeniedEverywhereTerminatesSession
+// ensures the indeterminate-failure tolerance does not keep zero-visibility
+// sessions alive: a user whose remote LIST is denied and who holds no
+// per-namespace GET access computes an empty accessible set — a definitive
+// verdict — and that cluster's session is terminated. The SA is separate and
+// healthy, so the denial is the user's own.
+func TestValidateSessionMulticlusterRemoteUserDeniedEverywhereTerminatesSession(t *testing.T) {
+	require := require.New(t)
+
+	authController, clientFactory, metadataServer, sessionCookieEast, sessionCookieWest := setupTwoClusterSessions(t)
+
+	clientFactory.SAClients = healthySAClients("east", "west")
+
+	// The user's LIST on west is denied, and the fake holds no namespace they
+	// could GET: the per-namespace GET fallback finds nothing.
+	deniedWest := newOpenshiftAuthTestClient(t, metadataServer, false)
+	deniedWest.Token = "west-denied"
+	failNamespaceList(deniedWest, forbiddenListError())
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": clientFactory.Clients["east"],
+		"west": deniedWest,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err, "the request must succeed with the healthy east session")
+	require.Len(sessions, 1)
+	require.NotNil(sessions["east"])
+	require.Nil(sessions["west"])
+
+	dropped := slicetest.FindOrFail(t, w.Result().Cookies(), func(c *http.Cookie) bool {
+		return c.Name == authentication.SessionCookieName+"-west"
+	})
+	require.True(dropped.MaxAge < 0, "the zero-visibility west session should have been dropped")
+}
+
+// TestValidateSessionMulticlusterUserDeniedListWithGetAccessKeepsSession
+// ensures a namespace LIST denial is not by itself a zero-visibility verdict:
+// a user who cannot LIST namespaces but holds per-namespace GET access (the
+// classic namespace-multi-tenant grant) computes a non-empty accessible set
+// through the per-namespace GET fallback, and the session stays valid.
+func TestValidateSessionMulticlusterUserDeniedListWithGetAccessKeepsSession(t *testing.T) {
+	require := require.New(t)
+
+	authController, clientFactory, metadataServer, sessionCookieEast, sessionCookieWest := setupTwoClusterSessions(t)
+
+	clientFactory.SAClients = healthySAClients("east", "west")
+
+	// The user's LIST on west is denied, but they can still GET bookinfo (the
+	// fake holds it): the fallback yields a non-empty accessible set.
+	getOnlyWest := newOpenshiftAuthTestClient(t, metadataServer, true)
+	getOnlyWest.Token = "west-get-only"
+	failNamespaceList(getOnlyWest, forbiddenListError())
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": clientFactory.Clients["east"],
+		"west": getOnlyWest,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 2)
+	require.NotNil(sessions["east"])
+	require.NotNil(sessions["west"])
+
+	require.Len(w.Result().Cookies(), 0, "no session cookie should be touched")
+}
+
+// TestValidateSessionSAListDeniedHomeFailsLoudPreservesSession ensures an SA
+// failure is never read as a verdict about the user: when the Kiali
+// ServiceAccount's namespace LIST is denied on the home cluster (e.g. its
+// permissions were revoked), the request fails with the underlying error and
+// the session cookies are preserved — the user still has access.
+func TestValidateSessionSAListDeniedHomeFailsLoudPreservesSession(t *testing.T) {
+	require := require.New(t)
+
+	authController, clientFactory, metadataServer, sessionCookieEast, sessionCookieWest := setupTwoClusterSessions(t)
+
+	// The SA's LIST is denied on the home cluster; the user clients stay
+	// healthy. A fresh east user client keeps the per-token cache cold so the
+	// computation actually consults the SA.
+	forbiddenSAEast := kubetest.NewFakeK8sClient(fakeNamespace("bookinfo"))
+	failNamespaceList(forbiddenSAEast, forbiddenListError())
+	clientFactory.SAClients = map[string]kubernetes.ClientInterface{
+		"east": forbiddenSAEast,
+		"west": kubetest.NewFakeK8sClient(fakeNamespace("bookinfo")),
+	}
+
+	freshEast := newOpenshiftAuthTestClient(t, metadataServer, true)
+	freshEast.Token = "east-fresh"
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": freshEast,
+		"west": clientFactory.Clients["west"],
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err, "an SA failure on the home cluster must fail the request")
+	require.NotErrorIs(err, authentication.ErrCannotViewNamespaces,
+		"an SA failure is not a verdict about the user's access")
+
+	for _, c := range w.Result().Cookies() {
+		require.NotEqual(authentication.SessionCookieName+"-east", c.Name,
+			"the home session cookie must survive an SA failure")
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"the west session must not be dropped by an SA failure")
+	}
+}
+
+// TestValidateSessionSAListDeniedRemoteSkipsSession ensures an SA failure on a
+// remote cluster is treated as indeterminate, like any other computation
+// failure: the session is skipped for the current request and the cookie is
+// preserved.
+func TestValidateSessionSAListDeniedRemoteSkipsSession(t *testing.T) {
+	require := require.New(t)
+
+	authController, clientFactory, metadataServer, sessionCookieEast, sessionCookieWest := setupTwoClusterSessions(t)
+
+	forbiddenSAWest := kubetest.NewFakeK8sClient(fakeNamespace("bookinfo"))
+	failNamespaceList(forbiddenSAWest, forbiddenListError())
+	clientFactory.SAClients = map[string]kubernetes.ClientInterface{
+		"east": kubetest.NewFakeK8sClient(fakeNamespace("bookinfo")),
+		"west": forbiddenSAWest,
+	}
+
+	freshWest := newOpenshiftAuthTestClient(t, metadataServer, true)
+	freshWest.Token = "west-fresh"
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": clientFactory.Clients["east"],
+		"west": freshWest,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	sessions, err := authController.ValidateSession(r, w)
+	require.NoError(err)
+	require.Len(sessions, 1)
+	require.NotNil(sessions["east"])
+	require.Nil(sessions["west"])
+
+	for _, c := range w.Result().Cookies() {
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"the west session cookie must survive an SA failure")
+	}
+}
+
+// TestValidateSessionMulticlusterHomeNamespaceLookupFailureFailsLoud ensures
+// that an indeterminate lookup on the mandatory HOME cluster fails the request
+// (the home session cannot simply be skipped) without terminating any session
+// cookie: a transient home-cluster failure is one failed request, not a logout.
+func TestValidateSessionMulticlusterHomeNamespaceLookupFailureFailsLoud(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The home cluster's namespace API starts failing; the remote stays healthy.
+	failingEast := newOpenshiftAuthTestClient(t, metadataServer, true)
+	failingEast.Token = "east-failing"
+	failNamespaceList(failingEast, k8serrors.NewServiceUnavailable("namespace API unavailable"))
+	clientFactory.SetClients(map[string]kubernetes.UserClientInterface{
+		"east": failingEast,
+		"west": westClient,
+	})
+
+	r := httptest.NewRequest("GET", "/api/some/authenticated/url", nil)
+	w := httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err, "an indeterminate HOME lookup must fail the request")
+	require.NotErrorIs(err, authentication.ErrCannotViewNamespaces,
+		"an availability failure is not a zero-visibility verdict")
+
+	for _, c := range w.Result().Cookies() {
+		require.NotEqual(authentication.SessionCookieName+"-east", c.Name,
+			"the home session cookie must survive a transient lookup failure")
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"the healthy west session must not be dropped")
+	}
+}
+
+// TestValidateSessionBearerTokenUserDeniedEverywhere pins the zero-privilege
+// verdict for 3rd-party tokens: a token whose namespace LIST is denied and
+// which holds no per-namespace GET access computes an empty accessible set and
+// is rejected with ErrCannotViewNamespaces (HTTP 401 at the middleware). The
+// SA is separate and healthy, so the denial is the token's own.
+func TestValidateSessionBearerTokenUserDeniedEverywhere(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	// The token authenticates (the "~" user exists) but can view nothing: the
+	// LIST is denied and there is no namespace it could GET. A distinct token
+	// keeps the SA-identity shortcut in getNamespacesUsingKialiSA from serving
+	// the SA's unfiltered list.
+	client := newOpenshiftAuthTestClient(t, metadataServer, false)
+	client.Token = "user-token"
+	failNamespaceList(client, forbiddenListError())
+	clients := map[string]kubernetes.UserClientInterface{"east": client}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	clientFactory.SAClients = healthySAClients("east")
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	r := httptest.NewRequest("GET", "/api/namespaces", nil)
+	r.Header.Set("Authorization", "Bearer test-token")
+	w := httptest.NewRecorder()
+
+	_, err := authController.ValidateSession(r, w)
+	require.Error(err)
+	require.ErrorIs(err, authentication.ErrCannotViewNamespaces)
+}
+
+// TestOpenshiftAuthCallbackNamespaceLookupFailure ensures that a transient
+// namespace API failure at LOGIN time is surfaced as the actual error, not
+// misreported as "Cannot view any namespaces" (which is reserved for the
+// zero-visibility verdict).
+func TestOpenshiftAuthCallbackNamespaceLookupFailure(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.LoginToken.SigningKey = "kiali67890123456"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+
+	// The home cluster must be present for the cache; the login targets the
+	// remote west cluster, whose namespace API is failing.
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	failNamespaceList(westClient, k8serrors.NewServiceUnavailable("namespace API unavailable"))
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	util.Clock = util.RealClock{}
+
+	router := mux.NewRouter()
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/api/auth/redirect/west", nil)
+	router.Methods("GET").Path("/api/auth/redirect/{cluster}").HandlerFunc(authController.OpenshiftAuthRedirect)
+	router.ServeHTTP(w, r)
+
+	cookies := w.Result().Cookies()
+	require.Len(cookies, 1)
+	nonce := cookies[0]
+
+	w = httptest.NewRecorder()
+	form := url.Values{}
+	form.Add("code", "anycode")
+	r = httptest.NewRequest("POST", "/api/auth/callback/west", strings.NewReader(form.Encode()))
+	r.AddCookie(nonce)
+	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	router.Methods("POST").Path("/api/auth/callback/{cluster}").HandlerFunc(authController.OpenshiftAuthCallback)
+	router.ServeHTTP(w, r)
+
+	result := w.Result()
+	require.Equal(http.StatusFound, result.StatusCode)
+
+	location, err := url.Parse(result.Header.Get("Location"))
+	require.NoError(err)
+	require.Contains(location.Query().Get("openshift_error"), "namespace API unavailable")
+	require.NotContains(location.Query().Get("openshift_error"), "Cannot view any namespaces")
+
+	// No session cookie must have been created.
+	for _, c := range result.Cookies() {
+		require.NotEqual(authentication.SessionCookieName+"-west", c.Name,
+			"no session should be created while the namespace API is failing")
+	}
 }
