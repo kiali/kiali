@@ -1339,6 +1339,13 @@ func Get() (conf *Config) {
 	return &copy
 }
 
+// IsTracingEnabled reports whether server tracing is enabled without copying the global Config.
+func IsTracingEnabled() bool {
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	return configuration.Server.Observability.Tracing.Enabled
+}
+
 // Set the global Config
 // This function should not be called outside of main or tests.
 // If possible keep config unmutated and use globals and/or appstate package for mutable states to avoid concurrent writes risk.

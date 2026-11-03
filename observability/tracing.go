@@ -131,7 +131,7 @@ func Attribute(key string, val interface{}) attribute.KeyValue {
 // Automatically includes X-Request-Id as a span attribute if available in context.
 func StartSpan(ctx context.Context, funcName string, attrs ...attribute.KeyValue) (context.Context, EndFunc) {
 	var span trace.Span
-	if config.Get().Server.Observability.Tracing.Enabled {
+	if config.IsTracingEnabled() {
 		// Add X-Request-Id as span attribute if available in context
 		if headers := utilcontext.GetRequestHeadersContext(ctx); headers != nil && headers.IsValid() {
 			attrs = append(attrs, Attribute("request_id", headers.XRequestID))
