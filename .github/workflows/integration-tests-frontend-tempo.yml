@@ -66,9 +66,10 @@ jobs:
 
     - name: Get debug info when integration tests fail
       if: failure()
+      timeout-minutes: 5
       run: |
         mkdir debug-output
-        hack/ci-get-debug-info.sh --output-directory debug-output
+        hack/ci-get-debug-info.sh --output-directory debug-output --include-tracing
 
     - name: Upload debug info artifact
       if: failure()
