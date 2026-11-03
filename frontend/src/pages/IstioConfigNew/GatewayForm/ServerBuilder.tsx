@@ -1,4 +1,6 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -7,15 +9,15 @@ import {
   HelperText,
   HelperTextItem,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
   TextInput
 } from '@patternfly/react-core';
-import { IRow, Td, ThProps, Tr } from '@patternfly/react-table';
+import type { IRow, ThProps} from '@patternfly/react-table';
+import { Td, Tr } from '@patternfly/react-table';
 import { isGatewayHostValid } from '../../../utils/IstioConfigUtils';
-import { ServerForm } from '../../../types/IstioObjects';
+import type { ServerForm } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isValidPort } from './ListenerBuilder';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -297,7 +299,12 @@ export const ServerBuilder: React.FC<ServerBuilderProps> = (props: ServerBuilder
         )}
 
         {showTls && props.server.tlsMode === 'MUTUAL' && (
-          <FormGroup label={t('CA Certificate')} style={{ margin: '0.5rem 0' }} isRequired={true} fieldId="ca-certificate">
+          <FormGroup
+            label={t('CA Certificate')}
+            style={{ margin: '0.5rem 0' }}
+            isRequired={true}
+            fieldId="ca-certificate"
+          >
             <TextInput
               value={props.server.tlsCaCertificate}
               isRequired={true}

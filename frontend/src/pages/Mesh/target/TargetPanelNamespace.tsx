@@ -1,8 +1,9 @@
 import * as React from 'react';
-import { Node, NodeModel } from '@patternfly/react-topology';
+import type { Node, NodeModel } from '@patternfly/react-topology';
 import { kialiStyle } from 'styles/StyleUtils';
+import type {
+  TargetPanelCommonProps} from './TargetPanelCommon';
 import {
-  TargetPanelCommonProps,
   renderInfraSummary,
   shouldRefreshData,
   targetBodyStyle,
@@ -13,13 +14,16 @@ import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { Paths, serverConfig } from 'config';
-import { ValidationStatus } from 'types/IstioObjects';
-import { NamespaceAction, NamespaceActions } from '../../Namespaces/NamespaceActions';
-import { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
+import type { ValidationStatus } from 'types/IstioObjects';
+import type { NamespaceAction} from '../../Namespaces/NamespaceActions';
+import { NamespaceActions } from '../../Namespaces/NamespaceActions';
+import type { NamespaceInfo, NamespaceStatus } from 'types/NamespaceInfo';
 import { NamespaceMTLSStatus } from 'components/MTls/NamespaceMTLSStatus';
 import { ResourceHealthStatus } from '../components/ResourceHealthStatus';
-import { DirectionType, Show } from 'types/Common';
-import { MeshResourceType, switchMeshResourceType } from 'types/Mesh';
+import type { DirectionType} from 'types/Common';
+import { Show } from 'types/Common';
+import type { MeshResourceType} from 'types/Mesh';
+import { switchMeshResourceType } from 'types/Mesh';
 import { PromisesRegistry } from 'utils/CancelablePromises';
 import { ControlPlaneDonut } from '../components/ControlPlaneDonut';
 import { isParentKiosk, kioskOverviewAction } from 'components/Kiosk/KioskActions';
@@ -31,20 +35,22 @@ import { ValidationSummaryLink } from 'components/Link/ValidationSummaryLink';
 import { ValidationSummary } from 'components/Validations/ValidationSummary';
 import { NamespaceTrafficChart } from '../components/NamespaceTrafficChart';
 import * as API from '../../../services/Api';
-import { IstioMetricsOptions, buildReporter } from 'types/MetricsOptions';
+import type { IstioMetricsOptions} from 'types/MetricsOptions';
+import { buildReporter } from 'types/MetricsOptions';
 import { computePrometheusRateParams } from 'services/Prometheus';
-import { ApiError } from 'types/Api';
+import type { ApiError } from 'types/Api';
 import { t } from 'utils/I18nUtils';
-import { DEGRADED, FAILURE, HEALTHY, Health, NOT_READY } from 'types/Health';
+import type { Health} from 'types/Health';
+import { DEGRADED, FAILURE, HEALTHY, NOT_READY } from 'types/Health';
 import { router } from '../../../app/History';
 import { addDanger, addError } from '../../../utils/AlertUtils';
 import { MeshHealthIndicator } from '../components/MeshHealthIndicator';
-import { TLSStatus } from 'types/TLSStatus';
-import { Metric } from 'types/Metrics';
+import type { TLSStatus } from 'types/TLSStatus';
+import type { Metric } from 'types/Metrics';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { isRemoteCluster } from './TargetPanelControlPlane';
-import { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
+import type { BoxTarget, ControlPlane, NamespaceNodeData } from 'types/Mesh';
 import { MeshInfraType } from 'types/Mesh';
 import { INJECTION_LABEL_REV, isIstioNamespace } from 'config/ServerConfig';
 import { getNamespaceDetailUrl } from 'utils/NamespaceUtils';

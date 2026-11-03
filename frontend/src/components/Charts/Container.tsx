@@ -1,8 +1,8 @@
-import { DomainTuple } from 'victory-core';
+import type { DomainTuple } from 'victory-core';
 import { format as d3Format } from 'd3-format';
 import { getFormatter } from 'utils/Formatter';
-import { RichDataPoint } from 'types/VictoryChartInfo';
-import { VictoryVoronoiContainerProps } from 'victory-voronoi-container';
+import type { RichDataPoint } from 'types/VictoryChartInfo';
+import type { VictoryVoronoiContainerProps } from 'victory-voronoi-container';
 
 type BrushDomain = { x: DomainTuple; y: DomainTuple };
 
@@ -50,15 +50,15 @@ export const getVoronoiContainerProps = (
 
         return `${obj.datum.name} (${obj.datum.y.length} datapoints)
           ${formatValue('avg', obj.datum, avg)}, ${formatValue('min', obj.datum, obj.datum._min)}, ${formatValue(
-          'max',
-          obj.datum,
-          obj.datum._max
-        )}
+            'max',
+            obj.datum,
+            obj.datum._max
+          )}
           ${formatValue('p25', obj.datum, obj.datum._q1)}, ${formatValue(
-          'p50',
-          obj.datum,
-          obj.datum._median
-        )}, ${formatValue('p75', obj.datum, obj.datum._q3)}`;
+            'p50',
+            obj.datum,
+            obj.datum._median
+          )}, ${formatValue('p75', obj.datum, obj.datum._q3)}`;
       }
 
       return formatValue(obj.datum.name, obj.datum, obj.datum.y, obj.datum.y0);

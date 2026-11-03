@@ -1,14 +1,14 @@
 import { ResizeHeightObserver } from '../ResizeHeightObserver';
 
 function makeEntry(height: number): ResizeObserverEntry {
-  return ({ contentRect: { height } } as unknown) as ResizeObserverEntry;
+  return { contentRect: { height } } as unknown as ResizeObserverEntry;
 }
 
 let fireResize: (entries: ResizeObserverEntry[]) => void;
 
 class MockResizeObserver {
   constructor(cb: ResizeObserverCallback) {
-    const self = (this as unknown) as ResizeObserver;
+    const self = this as unknown as ResizeObserver;
     fireResize = (entries): void => cb(entries, self);
   }
   observe(): void {}
@@ -20,7 +20,7 @@ describe('ResizeHeightObserver', () => {
   const originalRO = global.ResizeObserver;
 
   beforeEach(() => {
-    global.ResizeObserver = (MockResizeObserver as unknown) as typeof ResizeObserver;
+    global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
   });
 
   afterEach(() => {

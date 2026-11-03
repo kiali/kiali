@@ -1,4 +1,6 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   InputGroup,
@@ -8,7 +10,6 @@ import {
   Dropdown,
   DropdownList,
   DropdownItem,
-  MenuToggleElement,
   MenuToggle
 } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';

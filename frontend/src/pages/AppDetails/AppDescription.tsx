@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { App } from '../../types/App';
+import type { App } from '../../types/App';
 import { Alert, Card, CardBody, CardHeader, Title, TitleSizes, TooltipPosition } from '@patternfly/react-core';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { isMultiCluster, serverConfig } from '../../config';
 import { Labels } from '../../components/Label/Labels';
 import { kialiStyle } from 'styles/StyleUtils';
-import * as H from '../../types/Health';
+import type * as H from '../../types/Health';
 import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';

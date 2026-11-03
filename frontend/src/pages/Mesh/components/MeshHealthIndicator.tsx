@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { Status } from 'types/Health';
-import { Paths } from 'config';
-import { ActiveFilter, DEFAULT_LABEL_OPERATION } from 'types/Filters';
+import type { Status } from 'types/Health';
+import type { Paths } from 'config';
+import type { ActiveFilter} from 'types/Filters';
+import { DEFAULT_LABEL_OPERATION } from 'types/Filters';
 import { healthFilter } from 'components/Filters/CommonFilters';
 import { FilterSelected } from 'components/Filters/StatefulFilters';
 import { healthIndicatorStyle } from 'styles/HealthStyle';

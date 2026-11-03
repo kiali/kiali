@@ -1,4 +1,4 @@
-import { DecoratedGraphElements, DecoratedGraphNodeWrapper } from '../../types/Graph';
+import type { DecoratedGraphElements, DecoratedGraphNodeWrapper } from '../../types/Graph';
 
 export enum ScoringCriteria {
   InboundEdges = 'InboundEdges',
@@ -22,7 +22,7 @@ function scoreByEdges(
     }
   });
 
-  let scores = new Map<string, number | undefined>();
+  const scores = new Map<string, number | undefined>();
   elements.nodes?.forEach(node => {
     // Nodes without edges get a default score of 0.
     let score = 0;
@@ -73,7 +73,7 @@ export function scoreNodes(
     };
   }
 
-  let totalScore = new Map<string, number | undefined>();
+  const totalScore = new Map<string, number | undefined>();
   // TODO: This can probably be parallelized.
   for (const criteria of criterias) {
     let scoreForCriteria: Map<string, number | undefined> = new Map<string, number | undefined>();
@@ -97,7 +97,7 @@ export function scoreNodes(
   }
 
   const scoredNodes = elements.nodes?.map(node => {
-    let score = totalScore.has(node.data.id) ? totalScore.get(node.data.id) : undefined;
+    const score = totalScore.has(node.data.id) ? totalScore.get(node.data.id) : undefined;
     return { ...node, score: score } as ScoredNode;
   });
 
@@ -155,9 +155,10 @@ export function scoreNodes(
 
 // normalizeRanks normalizes the ranks for the given nodes so that ranks for
 // all the nodes fall between 1..100.
-function normalizeRanks(
-  elements: Readonly<DecoratedGraphElements>
-): { normalizedElements: DecoratedGraphElements; upperBound: number } {
+function normalizeRanks(elements: Readonly<DecoratedGraphElements>): {
+  normalizedElements: DecoratedGraphElements;
+  upperBound: number;
+} {
   const { nodes, edges } = elements;
   if (nodes === undefined) {
     return { normalizedElements: elements, upperBound: 0 };

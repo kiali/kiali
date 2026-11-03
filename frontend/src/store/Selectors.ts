@@ -1,16 +1,15 @@
 import { createSelector } from 'reselect';
-import { KialiAppState } from './Store';
-import { TimeRange } from '../types/Common';
-import { Namespace } from '../types/Namespace';
-import { MeshCluster } from '../types/Mesh';
-import { EdgeLabelMode, EdgeMode, GraphType, RankMode, TrafficRate } from '../types/Graph';
-import { ComponentStatus } from '../types/IstioStatus';
+import type { KialiAppState } from './Store';
+import type { TimeRange } from '../types/Common';
+import type { Namespace } from '../types/Namespace';
+import type { MeshCluster } from '../types/Mesh';
+import type { EdgeLabelMode, EdgeMode, GraphType, RankMode, TrafficRate } from '../types/Graph';
+import type { ComponentStatus } from '../types/IstioStatus';
 // These memoized selectors are from Redux Reselect package
 
 type Selector<T> = (state: KialiAppState) => T;
 
-const createIdentitySelector = <T>(selector: Selector<T>): Selector<T> =>
-  createSelector(selector, (x: T): T => x);
+const createIdentitySelector = <T>(selector: Selector<T>): Selector<T> => createSelector(selector, (x: T): T => x);
 
 // select the proper field from Redux State
 const activeNamespaces = (state: KialiAppState): Namespace[] => state.namespaces.activeNamespaces;

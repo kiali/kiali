@@ -1,6 +1,7 @@
 import { toValidDuration } from '../config/ServerConfig';
-import { BoundsInMilliseconds } from 'types/Common';
-import { RouteObject, createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
+import type { BoundsInMilliseconds } from 'types/Common';
+import type { RouteObject} from 'react-router-dom-v5-compat';
+import { createBrowserRouter, createHashRouter, createMemoryRouter } from 'react-router-dom-v5-compat';
 
 export const createRouter = (routes: RouteObject[], basename?: string): any => {
   const baseName = basename ?? rootBasename;
@@ -8,8 +9,8 @@ export const createRouter = (routes: RouteObject[], basename?: string): any => {
   return process.env.TEST_RUNNER
     ? createMemoryRouter(routes, { basename: baseName })
     : historyMode === 'hash'
-    ? createHashRouter(routes, { basename: baseName })
-    : createBrowserRouter(routes, { basename: baseName });
+      ? createHashRouter(routes, { basename: baseName })
+      : createBrowserRouter(routes, { basename: baseName });
 };
 
 export const webRoot = (window as any).WEB_ROOT ?? '/';

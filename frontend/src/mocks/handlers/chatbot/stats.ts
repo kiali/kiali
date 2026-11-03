@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import {
+import type {
   AITimeSeriesEntry,
   AITimeSeriesPoint,
   AITokenRow,

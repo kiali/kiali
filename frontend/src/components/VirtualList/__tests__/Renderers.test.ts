@@ -22,7 +22,7 @@ rstest.mock('../Config', () => ({}));
 
 import { getKioskParamsForListItem } from '../Renderers';
 import type { Resource, TResource } from '../Config';
-import { WorkloadListItem } from '../../../types/Workload';
+import type { WorkloadListItem } from '../../../types/Workload';
 
 const workloadConfig: Resource = { name: 'workloads', columns: [] };
 const serviceConfig: Resource = { name: 'services', columns: [] };
@@ -60,39 +60,39 @@ describe('getKioskParamsForListItem', () => {
   });
 
   it('returns type=External for external services', () => {
-    const externalService = ({
+    const externalService = {
       name: 'ext-svc',
       namespace: 'bookinfo',
       serviceRegistry: 'External'
-    } as unknown) as TResource;
+    } as unknown as TResource;
 
     expect(getKioskParamsForListItem(externalService, serviceConfig)).toBe('type=External');
   });
 
   it('returns undefined for regular services', () => {
-    const regularService = ({
+    const regularService = {
       name: 'productpage',
       namespace: 'bookinfo',
       serviceRegistry: 'Kubernetes'
-    } as unknown) as TResource;
+    } as unknown as TResource;
 
     expect(getKioskParamsForListItem(regularService, serviceConfig)).toBeUndefined();
   });
 
   it('returns undefined for applications', () => {
-    const app = ({
+    const app = {
       name: 'my-app',
       namespace: 'bookinfo'
-    } as unknown) as TResource;
+    } as unknown as TResource;
 
     expect(getKioskParamsForListItem(app, appConfig)).toBeUndefined();
   });
 
   it('returns undefined for workloads config with items missing gvk', () => {
-    const itemWithoutGvk = ({
+    const itemWithoutGvk = {
       name: 'my-item',
       namespace: 'bookinfo'
-    } as unknown) as TResource;
+    } as unknown as TResource;
 
     expect(getKioskParamsForListItem(itemWithoutGvk, workloadConfig)).toBeUndefined();
   });

@@ -289,8 +289,8 @@ const generateMeshGraphData = (): Record<string, unknown> => {
           scenarioConfig.ambientEnabled && ns !== 'default'
             ? { 'istio.io/dataplane-mode': 'ambient' }
             : ns === 'default'
-            ? {}
-            : { 'istio-injection': 'enabled' }
+              ? {}
+              : { 'istio-injection': 'enabled' }
       }));
 
     nodes.push({

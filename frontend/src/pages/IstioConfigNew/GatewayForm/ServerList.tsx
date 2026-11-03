@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Server, ServerForm } from '../../../types/IstioObjects';
-import { Tbody, Td, Th, Thead, Tr, Table, ThProps } from '@patternfly/react-table';
+import type { Server, ServerForm } from '../../../types/IstioObjects';
+import type { ThProps } from '@patternfly/react-table';
+import { Tbody, Td, Th, Thead, Tr, Table } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';

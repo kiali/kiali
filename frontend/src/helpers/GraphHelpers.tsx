@@ -1,6 +1,7 @@
-import { Controller, Edge, GraphElement, isEdge, isNode, Node, NodeModel } from '@patternfly/react-topology';
+import type { Controller, Edge, GraphElement, Node, NodeModel } from '@patternfly/react-topology';
+import { isEdge, isNode } from '@patternfly/react-topology';
 import { action } from 'mobx';
-import { DecoratedGraphEdgeWrapper, DecoratedGraphElements, DecoratedGraphNodeWrapper } from 'types/Graph';
+import type { DecoratedGraphEdgeWrapper, DecoratedGraphElements, DecoratedGraphNodeWrapper } from 'types/Graph';
 
 export const toSafeFieldName = (fieldName: string): string => {
   const alnumString = /^[a-zA-Z0-9]*$/;
@@ -106,20 +107,7 @@ export const ancestors = (node: Node): GraphElement[] => {
 };
 
 export type SelectOp =
-  | '='
-  | '!='
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | '!*='
-  | '!$='
-  | '!^='
-  | '*='
-  | '$='
-  | '^='
-  | 'falsy'
-  | 'truthy';
+  '=' | '!=' | '>' | '<' | '>=' | '<=' | '!*=' | '!$=' | '!^=' | '*=' | '$=' | '^=' | 'falsy' | 'truthy';
 export type SelectExp = {
   op?: SelectOp;
   prop: string;

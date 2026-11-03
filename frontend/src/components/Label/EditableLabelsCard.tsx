@@ -150,7 +150,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   };
 
   const { sorted, istioCount } = prioritizeIstio ? partitionByIstio(labels ?? {}) : { sorted: labels, istioCount: 0 };
-  const effectiveNumLabels = prioritizeIstioCount ? istioCount : numLabels ?? 5;
+  const effectiveNumLabels = prioritizeIstioCount ? istioCount : (numLabels ?? 5);
   const labelEntries = Object.entries(sorted ?? {});
   if (!prioritizeIstio) {
     labelEntries.sort(([a], [b]) => a.localeCompare(b));

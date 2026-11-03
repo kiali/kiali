@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Address } from '../../../types/IstioObjects';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import type { Address } from '../../../types/IstioObjects';
+import type { ThProps} from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { AddressBuilder } from './AddressBuilder';

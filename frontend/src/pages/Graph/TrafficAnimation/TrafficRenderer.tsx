@@ -1,15 +1,19 @@
 import * as React from 'react';
-import { Point, clamp, distance } from '../../../utils/MathUtils';
+import type { Point} from '../../../utils/MathUtils';
+import { clamp, distance } from '../../../utils/MathUtils';
+import type {
+  TrafficPointRenderer
+} from './TrafficPointRenderer';
 import {
   getMoveAnimation,
   TrafficPointCircleRenderer,
-  TrafficPointDiamondRenderer,
-  TrafficPointRenderer
+  TrafficPointDiamondRenderer
 } from './TrafficPointRenderer';
 import { Protocol } from '../../../types/Graph';
 import { timerConfig, tcpTimerConfig } from './AnimationTimerConfig';
-import { Controller, Edge, EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
-import { EdgeData } from 'pages/Graph/GraphElems';
+import type { Controller, Edge} from '@patternfly/react-topology';
+import { EdgeAnimationSpeed, EdgeStyle } from '@patternfly/react-topology';
+import type { EdgeData } from 'pages/Graph/GraphElems';
 import { PFColors } from 'components/Pf/PfColors';
 import { setObserved } from 'helpers/GraphHelpers';
 import { serverConfig } from 'config';
@@ -153,8 +157,8 @@ export class TrafficPointGenerator {
         this.type !== TrafficEdgeType.RPS
           ? getTrafficPointRendererForTcp(edge, animationDurationSeconds, percentVisible)
           : this.errorRate > 0
-          ? getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible)
-          : getTrafficPointRendererForRpsSuccess(edge, animationDurationSeconds, percentVisible);
+            ? getTrafficPointRendererForRpsError(edge, animationDurationSeconds, percentVisible)
+            : getTrafficPointRendererForRpsSuccess(edge, animationDurationSeconds, percentVisible);
 
       const delayInterval = animationDuration / renderedPointsOnEdge;
       const moveAnimation = getMoveAnimation(edge, percentVisible);
