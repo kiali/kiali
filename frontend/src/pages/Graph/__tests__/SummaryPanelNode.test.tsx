@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../../../types/Graph';
 import { SummaryPanelNodeComponent, SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
@@ -75,18 +76,26 @@ describe('SummaryPanelNodeComponent', () => {
     expect(container).toBeTruthy();
   });
 
-  it('renders workload entry links', () => {
-    nodeData = { ...nodeData, workload: 'ratings-v1', hasWorkloadEntry: [{ name: 'first_we' }, { name: 'second_we' }] };
-    const { container } = renderPanel();
-    const weLinks = container.querySelectorAll('a[href*="WorkloadEntry"]');
-    expect(weLinks.length).toBe(2);
-  });
+  it.each([
+    { entries: [{ name: 'first_we' }], countText: '1 workload entry' },
+    { entries: [{ name: 'first_we' }, { name: 'second_we' }], countText: '2 workload entries' }
+  ])('shows $countText in a popover with resource links', async ({ entries, countText }) => {
+    nodeData = { ...nodeData, workload: 'ratings-v1', hasWorkloadEntry: entries };
+    const user = userEvent.setup();
+    renderPanel();
 
-  it('renders expandable dropdown for workload entries', () => {
-    nodeData = { ...nodeData, workload: 'ratings-v1', hasWorkloadEntry: [{ name: 'first_we' }, { name: 'second_we' }] };
-    const { container } = renderPanel();
-    expect(screen.getByRole('button', { name: /2 workload entries/i })).toBeInTheDocument();
-    expect(container.querySelectorAll('a[href*="WorkloadEntry"]').length).toBe(2);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'first_we' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: countText }));
+
+    const popover = await screen.findByRole('dialog');
+    expect(within(popover).getByText('Workload Entries')).toBeInTheDocument();
+    for (const entry of entries) {
+      expect(within(popover).getByRole('link', { name: entry.name })).toHaveAttribute(
+        'href',
+        `/namespaces/bookinfo/istio/networking.istio.io/v1/WorkloadEntry/${entry.name}`
+      );
+    }
   });
 
   it('renders a single link to workload', () => {
@@ -94,6 +103,97 @@ describe('SummaryPanelNodeComponent', () => {
     const { container } = renderPanel();
     const wlLinks = container.querySelectorAll('a[href*="workload"]');
     expect(wlLinks.length).toBe(1);
+  });
+
+  it('shows the VS host count inline and opens its popover with the keyboard', async () => {
+    nodeData = {
+      ...nodeData,
+      hasRequestRouting: true,
+      hasVS: { hostnames: ['ratings.bookinfo.svc.cluster.local'] }
+    };
+    const user = userEvent.setup();
+    renderPanel();
+
+    const trigger = screen.getByRole('button', { name: '1 host' });
+    expect(screen.getByText('Has Request Routing')).toHaveTextContent('Has Request Routing (1 host)');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    trigger.focus();
+    await user.keyboard('{Enter}');
+
+    const popover = await screen.findByRole('dialog');
+    expect(within(popover).getByText('VirtualService Hosts')).toBeInTheDocument();
+    expect(within(popover).getByText('ratings.bookinfo.svc.cluster.local')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('lists multiple VS hosts in the popover, including the wildcard description', async () => {
+    nodeData = {
+      ...nodeData,
+      hasRequestRouting: true,
+      hasVS: { hostnames: ['ratings.bookinfo.svc.cluster.local', '*'] }
+    };
+    const user = userEvent.setup();
+    renderPanel();
+
+    expect(screen.getByText('Has Request Routing')).toHaveTextContent('Has Request Routing (2 hosts)');
+    await user.click(screen.getByRole('button', { name: '2 hosts' }));
+
+    const popover = await screen.findByRole('dialog');
+    expect(within(popover).getByText('ratings.bookinfo.svc.cluster.local')).toBeInTheDocument();
+    expect(within(popover).getByText('* (all hosts)')).toBeInTheDocument();
+  });
+
+  it('shows the fallback VirtualService hosts inline in a popover', async () => {
+    nodeData = { ...nodeData, hasVS: { hostnames: ['ratings.bookinfo.svc.cluster.local', '*'] } };
+    const user = userEvent.setup();
+    renderPanel();
+
+    expect(screen.getByText('Has Virtual Service')).toHaveTextContent('Has Virtual Service (2 hosts)');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '2 hosts' }));
+
+    const popover = await screen.findByRole('dialog');
+    expect(within(popover).getByText('VirtualService Hosts')).toBeInTheDocument();
+    expect(within(popover).getByText('ratings.bookinfo.svc.cluster.local')).toBeInTheDocument();
+    expect(within(popover).getByText('* (all hosts)')).toBeInTheDocument();
+  });
+
+  it.each(['ingressInfo', 'egressInfo', 'gatewayAPIInfo'] as const)(
+    'shows %s gateway hosts inline in a popover',
+    async gatewayType => {
+      nodeData = {
+        ...nodeData,
+        isGateway: { [gatewayType]: { hostnames: ['bookinfo.example.com', '*'] } },
+        isK8sGatewayAPI: gatewayType === 'gatewayAPIInfo'
+      };
+      const user = userEvent.setup();
+      renderPanel();
+
+      expect(screen.getByText('Is Gateway', { exact: false })).toHaveTextContent(
+        `Is Gateway${gatewayType === 'gatewayAPIInfo' ? ' (K8s GW API)' : ''} (2 hosts)`
+      );
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: '2 hosts' }));
+
+      const popover = await screen.findByRole('dialog');
+      expect(within(popover).getByText('Gateway Hosts')).toBeInTheDocument();
+      expect(within(popover).getByText('bookinfo.example.com')).toBeInTheDocument();
+      expect(within(popover).getByText('* (all hosts)')).toBeInTheDocument();
+    }
+  );
+
+  it.each([
+    { name: 'missing', hostnames: undefined },
+    { name: 'empty', hostnames: [] }
+  ])('omits the VS host-count link when hostnames are $name', ({ hostnames }) => {
+    nodeData = { ...nodeData, hasRequestRouting: true, hasVS: { hostnames } };
+    renderPanel();
+
+    expect(screen.getByText('Has Request Routing')).toBeInTheDocument();
+    expect(screen.queryByTestId('vs-hosts-popover-toggle')).not.toBeInTheDocument();
   });
 
   it('shows rank N/A when node rank undefined', () => {

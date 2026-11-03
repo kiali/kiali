@@ -14,12 +14,15 @@ import { KialiIcon } from 'config/KialiIcon';
 import { clickHandler, getOptions } from 'pages/Graph/ContextMenu/NodeContextMenu';
 import type { MenuToggleElement } from '@patternfly/react-core';
 import {
+  Button,
+  ButtonVariant,
   Dropdown,
   DropdownGroup,
   DropdownItem,
   DropdownList,
-  ExpandableSection,
   MenuToggle,
+  Popover,
+  PopoverPosition,
   Tab
 } from '@patternfly/react-core';
 import { SummaryPanelNodeTraffic } from './SummaryPanelNodeTraffic';
@@ -28,6 +31,7 @@ import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import type { TracingState } from 'reducers/TracingState';
 import { classes } from 'typestyle';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import type { ServiceDetailsInfo } from 'types/ServiceInfo';
 import { LoadingWizardActionsDropdownGroup } from 'components/IstioWizards/LoadingWizardActionsDropdownGroup';
@@ -84,22 +88,22 @@ export type SummaryPanelNodeComponentProps = ReduxProps &
     serviceDetails: ServiceDetailsInfo | null | undefined;
   };
 
-const expandableSectionStyle = kialiStyle({
-  fontSize: 'var(--graph-side-panel--font-size)',
-  paddingLeft: '1rem',
-  $nest: {
-    '& > div': {
-      marginLeft: '2rem',
-      marginTop: '0 !important',
-      $nest: {
-        '& div': {
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
-        }
-      }
-    }
-  }
+const badgeSummaryTextStyle = kialiStyle({
+  paddingLeft: PFSpacer.xs
+});
+
+const itemCountStyle = kialiStyle({
+  whiteSpace: 'nowrap'
+});
+
+const itemCountButtonStyle = kialiStyle({
+  fontSize: 'inherit'
+});
+
+const itemsPopoverStyle = kialiStyle({
+  maxHeight: '16rem',
+  overflowWrap: 'anywhere',
+  overflowY: 'auto'
 });
 
 const nodeInfoStyle = kialiStyle({
@@ -107,8 +111,6 @@ const nodeInfoStyle = kialiStyle({
   alignItems: 'center',
   marginTop: '0.25rem'
 });
-
-const workloadExpandableSectionStyle = classes(expandableSectionStyle, kialiStyle({ display: 'inline' }));
 
 const dropdownMenuStyle = kialiStyle({
   maxHeight: '400px',
@@ -306,7 +308,7 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
     const weGVK = dicTypeToGVK[gvkType.WorkloadEntry];
 
     const workloadEntryLinks = nodeData.hasWorkloadEntry.map(we => (
-      <div>
+      <div key={we.name}>
         {
           getLink(nodeData, NodeType.WORKLOAD, () => ({
             link: `/namespaces/${encodeURIComponent(nodeData.namespace)}/istio/${weGVK.Group}/${weGVK.Version}/${
@@ -323,62 +325,84 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
       <>
         {getBadge(nodeData, NodeType.WORKLOAD)}
 
-        <ExpandableSection
-          toggleText={
-            nodeData.hasWorkloadEntry.length === 1
-              ? '1 workload entry'
-              : `${nodeData.hasWorkloadEntry.length} workload entries`
-          }
-          className={workloadExpandableSectionStyle}
-        >
-          <div style={{ marginLeft: '3.5em' }}>{workloadEntryLinks}</div>
-        </ExpandableSection>
+        {this.renderCountPopover(
+          `${nodeData.hasWorkloadEntry.length} ${
+            nodeData.hasWorkloadEntry.length === 1 ? t('workload entry') : t('workload entries')
+          }`,
+          t('Workload Entries'),
+          workloadEntryLinks,
+          'workload-entries-popover-toggle'
+        )}
       </>
     );
   };
 
   private renderGatewayHostnames = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
     if (nodeData.isGateway?.ingressInfo?.hostnames && nodeData.isGateway?.ingressInfo?.hostnames.length > 0) {
-      return this.renderHostnamesSection(nodeData.isGateway?.ingressInfo?.hostnames);
+      return this.renderHostnamesPopover(
+        nodeData.isGateway.ingressInfo.hostnames,
+        t('Gateway Hosts'),
+        'gateway-hosts-popover-toggle'
+      );
     }
 
     if (nodeData.isGateway?.egressInfo?.hostnames && nodeData.isGateway?.egressInfo?.hostnames.length > 0) {
-      return this.renderHostnamesSection(nodeData.isGateway?.egressInfo?.hostnames);
+      return this.renderHostnamesPopover(
+        nodeData.isGateway.egressInfo.hostnames,
+        t('Gateway Hosts'),
+        'gateway-hosts-popover-toggle'
+      );
     }
 
     if (nodeData.isGateway?.gatewayAPIInfo?.hostnames && nodeData.isGateway?.gatewayAPIInfo?.hostnames.length > 0) {
-      return this.renderHostnamesSection(nodeData.isGateway?.gatewayAPIInfo?.hostnames);
+      return this.renderHostnamesPopover(
+        nodeData.isGateway.gatewayAPIInfo.hostnames,
+        t('Gateway Hosts'),
+        'gateway-hosts-popover-toggle'
+      );
     }
 
     return null;
   };
 
-  private renderVsHostnames = (nodeData: DecoratedGraphNodeData): React.ReactNode => {
-    const hostnames = nodeData.hasVS?.hostnames;
-    if (!hostnames) {
-      return null;
-    }
-    return this.renderHostnamesSection(hostnames);
-  };
+  private renderVsHostnamesPopover = (hostnames: string[]): React.ReactNode =>
+    this.renderHostnamesPopover(hostnames, t('VirtualService Hosts'), 'vs-hosts-popover-toggle');
 
-  private renderHostnamesSection = (hostnames: string[]): React.ReactNode => {
-    const numberOfHostnames = hostnames.length;
-    let toggleText = `${numberOfHostnames} hosts`;
-
-    if (numberOfHostnames === 1) {
-      toggleText = '1 host';
-    }
-
-    return (
-      <ExpandableSection toggleText={toggleText} className={expandableSectionStyle}>
-        {hostnames.map(hostname => (
-          <div key={hostname} title={hostname}>
-            {hostname === '*' ? '* (all hosts)' : hostname}
-          </div>
-        ))}
-      </ExpandableSection>
+  private renderHostnamesPopover = (hostnames: string[], title: string, dataTest: string): React.ReactNode =>
+    this.renderCountPopover(
+      `${hostnames.length} ${hostnames.length === 1 ? t('host') : t('hosts')}`,
+      title,
+      hostnames.map(hostname => <div key={hostname}>{hostname === '*' ? t('* (all hosts)') : hostname}</div>),
+      dataTest
     );
-  };
+
+  private renderCountPopover = (
+    countText: string,
+    title: string,
+    content: React.ReactNode,
+    dataTest: string
+  ): React.ReactNode => (
+    <span className={itemCountStyle}>
+      {' ('}
+      <Popover
+        position={PopoverPosition.left}
+        headerContent={title}
+        closeBtnAriaLabel={t('Close')}
+        bodyContent={<div className={itemsPopoverStyle}>{content}</div>}
+      >
+        <Button
+          variant={ButtonVariant.link}
+          isInline
+          className={itemCountButtonStyle}
+          aria-haspopup="dialog"
+          data-test={dataTest}
+        >
+          {countText}
+        </Button>
+      </Popover>
+      {')'}
+    </span>
+  );
 
   private renderTrafficOnly(): React.ReactNode {
     return (
@@ -473,15 +497,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         )}
 
         {hasVS && !hasTrafficScenario && (
-          <>
-            <div>
-              <KialiIcon.VirtualService />
-              <span style={{ paddingLeft: '0.25rem' }}>
-                Has Virtual Service{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
-              </span>
-            </div>
-            {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
-          </>
+          <div>
+            <KialiIcon.VirtualService />
+            <span className={badgeSummaryTextStyle}>
+              {t('Has Virtual Service')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {shouldRenderVsHostnames && this.renderVsHostnamesPopover(nodeData.hasVS!.hostnames!)}
+            </span>
+          </div>
         )}
 
         {hasMirroring && (
@@ -515,15 +538,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         )}
 
         {hasRequestRouting && (
-          <>
-            <div>
-              <KialiIcon.RequestRouting />
-              <span style={{ paddingLeft: '0.25rem' }}>
-                Has Request Routing{this.renderK8sGatewayAPI(isK8sGatewayAPI)}
-              </span>
-            </div>
-            {shouldRenderVsHostnames && this.renderVsHostnames(nodeData)}
-          </>
+          <div>
+            <KialiIcon.RequestRouting />
+            <span className={badgeSummaryTextStyle}>
+              {t('Has Request Routing')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {shouldRenderVsHostnames && this.renderVsHostnamesPopover(nodeData.hasVS!.hostnames!)}
+            </span>
+          </div>
         )}
 
         {hasFaultInjection && (
@@ -563,13 +585,14 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
         )}
 
         {isGateway && (
-          <>
-            <div>
-              <KialiIcon.Gateway />
-              <span style={{ paddingLeft: '0.25rem' }}>Is Gateway{this.renderK8sGatewayAPI(isK8sGatewayAPI)}</span>
-            </div>
-            {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
-          </>
+          <div>
+            <KialiIcon.Gateway />
+            <span className={badgeSummaryTextStyle}>
+              {t('Is Gateway')}
+              {this.renderK8sGatewayAPI(isK8sGatewayAPI)}
+              {shouldRenderGatewayHostnames && this.renderGatewayHostnames(nodeData)}
+            </span>
+          </div>
         )}
 
         {shouldRenderRank && (
