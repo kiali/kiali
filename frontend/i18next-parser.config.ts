@@ -34,7 +34,7 @@ const i18nextParserConfig = {
     default: ['JavascriptLexer']
   },
 
-  locales: ['en', 'es', 'ko', 'zh'],
+  locales: ['en', 'es', 'fr', 'ko', 'zh'],
   // Locales whose catalogs are written by i18next-parser.
   // `en` is generated locally for reference and is gitignored; commit translated catalogs only.
 

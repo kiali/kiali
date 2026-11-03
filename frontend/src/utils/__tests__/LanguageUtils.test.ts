@@ -115,7 +115,7 @@ describe('LanguageUtils', () => {
 
     it('falls back to the default preference when stored language is invalid', () => {
       setI18nDefaults('');
-      store.dispatch(GlobalActions.setLanguage('fr'));
+      store.dispatch(GlobalActions.setLanguage('de'));
 
       expect(getKialiLanguagePreference()).toBe(Language.SYSTEM);
     });
@@ -127,10 +127,17 @@ describe('LanguageUtils', () => {
     });
 
     it('resolves system preference from browser languages', () => {
-      intlSpy = mockIntlLocale('fr-FR');
+      intlSpy = mockIntlLocale('de-DE');
       setNavigatorLocales(['es-ES', 'en-US'], 'es-ES');
 
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.SPANISH);
+    });
+
+    it('resolves French from browser locales', () => {
+      intlSpy = mockIntlLocale('fr-FR');
+      setNavigatorLocales(['fr-FR'], 'fr-FR');
+
+      expect(resolveLanguage(Language.SYSTEM)).toBe(Language.FRENCH);
     });
 
     it('prefers the OS locale over browser language preferences', () => {
@@ -142,8 +149,8 @@ describe('LanguageUtils', () => {
 
     it('falls back to server language for unsupported browser locales', () => {
       setI18nDefaults(Language.CHINESE);
-      intlSpy = mockIntlLocale('fr-FR');
-      setNavigatorLocales(['fr-FR'], 'fr-FR');
+      intlSpy = mockIntlLocale('de-DE');
+      setNavigatorLocales(['de-DE'], 'de-DE');
 
       expect(getSystemLanguage()).toBe(Language.CHINESE);
       expect(resolveLanguage(Language.SYSTEM)).toBe(Language.CHINESE);
@@ -152,7 +159,7 @@ describe('LanguageUtils', () => {
     it('falls back to the server language for invalid preferences', () => {
       setI18nDefaults(Language.KOREAN);
 
-      expect(resolveLanguage('fr')).toBe(Language.KOREAN);
+      expect(resolveLanguage('de')).toBe(Language.KOREAN);
     });
   });
 
