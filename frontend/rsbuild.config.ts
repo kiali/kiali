@@ -67,6 +67,19 @@ export default defineConfig({
     },
     tsconfigPath: './tsconfig.json'
   },
+  resolve: {
+    // PatternFly components must share one react-core instance because each copy
+    // creates its own React contexts. Transitive dependencies such as react-topology
+    // can resolve another copy even when their version ranges overlap with ours.
+    // When a graph context menu and its items use different copies, selections do
+    // not reach the menu's close handler, leaving it open over wizard modals.
+    // Keep this safeguard even after deduplicating the lockfile: future dependency
+    // updates can reintroduce multiple copies. Resolve all react-core imports to
+    // the project-root copy supplied by our direct dependency; this does not
+    // automatically select the highest installed version.
+    // Assisted-by: Codex
+    dedupe: ['@patternfly/react-core']
+  },
   tools: {
     cssExtract: {
       loaderOptions: {
