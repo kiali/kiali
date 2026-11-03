@@ -7,6 +7,10 @@ run:
   - exclude_frontend
   modules-download-mode: readonly
 linters:
+  settings:
+    govet:
+      disable:
+      - inline
   exclusions:
     generated: lax
     presets:
