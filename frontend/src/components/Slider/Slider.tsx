@@ -56,6 +56,8 @@ export const Slider: React.FC<SliderProps> = ({
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const thumbTriggerRef = React.useRef<HTMLElement | null>(null);
   const commitListenerRef = React.useRef<(() => void) | null>(null);
+  const pointerDownRef = React.useRef(false);
+  const [pfValueKey, setPfValueKey] = React.useState(0);
   const [railHovered, setRailHovered] = React.useState(false);
   const [thumbTooltipReady, setThumbTooltipReady] = React.useState(false);
 
@@ -159,6 +161,24 @@ export const Slider: React.FC<SliderProps> = ({
     };
   }, []);
 
+  React.useEffect(() => {
+    if (!onValueCommit) {
+      return;
+    }
+
+    const clearPointerDown = (): void => {
+      pointerDownRef.current = false;
+    };
+
+    window.addEventListener('pointerup', clearPointerDown, true);
+    window.addEventListener('touchend', clearPointerDown, true);
+
+    return () => {
+      window.removeEventListener('pointerup', clearPointerDown, true);
+      window.removeEventListener('touchend', clearPointerDown, true);
+    };
+  }, [onValueCommit]);
+
   const handleRelease = (): void => {
     if (isDisabled) {
       return;
@@ -203,7 +223,7 @@ export const Slider: React.FC<SliderProps> = ({
       return;
     }
 
-    registerCommitOnPointerUp();
+    pointerDownRef.current = true;
   };
 
   const handleChange = (event: SliderOnChangeEvent, newValue: number): void => {
@@ -213,10 +233,17 @@ export const Slider: React.FC<SliderProps> = ({
     const capped = valueCap !== undefined && newValue >= valueCap ? valueCap : capSliderValue(newValue, min, valueCap);
     latestValueRef.current = capped;
     onChange(event, capped);
-    registerCommitOnPointerUp();
+    if (onValueCommit) {
+      if (!pointerDownRef.current) {
+        onValueCommitRef.current?.(capped);
+      } else {
+        registerCommitOnPointerUp();
+      }
+    }
     if (capped !== newValue) {
       applyThumbPosition(capped);
       requestAnimationFrame(() => applyThumbPosition(capped));
+      setPfValueKey(prev => prev + 1);
     }
   };
 
@@ -247,6 +274,7 @@ export const Slider: React.FC<SliderProps> = ({
         />
       ) : null}
       <PFSlider
+        key={pfValueKey}
         id={id}
         min={min}
         max={max}

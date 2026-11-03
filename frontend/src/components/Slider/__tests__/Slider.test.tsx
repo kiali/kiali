@@ -64,6 +64,21 @@ describe('Slider', () => {
     expect(onValueCommit).toHaveBeenCalledWith(80);
   });
 
+  it('calls onValueCommit on rail click after pointerup when onChange runs last', () => {
+    const onValueCommit = rstest.fn();
+
+    const { container } = render(
+      <Slider min={0} max={100} value={20} onChange={pfSliderOnChange} onValueCommit={onValueCommit} />
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    fireEvent.pointerDown(wrapper);
+    fireEvent.pointerUp(window);
+    fireEvent.click(document.querySelector('[data-test="pf-slider-change"]')!);
+
+    expect(onValueCommit).toHaveBeenCalledWith(80);
+  });
+
   it('renders data-test when dataTest is set', () => {
     const { container } = render(
       <Slider dataTest="replay-slider" min={0} max={10} value={1} onChange={pfSliderOnChange} />

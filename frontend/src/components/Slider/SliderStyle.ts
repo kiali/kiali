@@ -37,7 +37,13 @@ export const sliderStyle = (maxWidth?: string): string =>
 
       '& .pf-v6-c-slider__steps': {
         height: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        pointerEvents: 'none'
+      },
+
+      // Ticks sit above the rail; let rail clicks through without hiding tick markers.
+      '& .pf-v6-c-slider__step': {
+        pointerEvents: 'none'
       }
     }
   });

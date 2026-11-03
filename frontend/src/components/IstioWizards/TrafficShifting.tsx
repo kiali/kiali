@@ -151,7 +151,7 @@ export class TrafficShifting extends React.Component<Props, State> {
 
         const changedIndex = workloads.findIndex(w => w.name === workloadName);
         if (changedIndex >= 0) {
-          const nodeMax = workloads[changedIndex].maxWeight;
+          const nodeMax = workloads[changedIndex].mirrored ? 100 : workloads[changedIndex].maxWeight;
           newWeight = Math.max(0, Math.min(nodeMax, newWeight));
         }
 
@@ -295,9 +295,22 @@ export class TrafficShifting extends React.Component<Props, State> {
           workloads[nodeId[nodeId.length - 1]].weight += maxWeight - sumWeights;
         }
 
+        let maxWeights = 100;
         for (let i = 0; i < workloads.length; i++) {
-          if (!workloads[i].locked && !workloads[i].mirrored) {
+          if (workloads[i].locked && !workloads[i].mirrored) {
+            maxWeights -= workloads[i].weight;
+          }
+        }
+        maxWeights = Math.max(0, maxWeights);
+
+        for (let i = 0; i < workloads.length; i++) {
+          if (workloads[i].mirrored) {
             workloads[i].maxWeight = 100;
+          } else if (!workloads[i].locked) {
+            workloads[i].maxWeight = maxWeights;
+            if (workloads[i].weight > maxWeights) {
+              workloads[i].weight = maxWeights;
+            }
           }
         }
 
