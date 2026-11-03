@@ -189,14 +189,14 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 	var b strings.Builder
 
 	b.WriteString("**Performance (CPU/Memory) — usage vs requests/limits**\n\n")
-	b.WriteString(fmt.Sprintf("- **Cluster**: `%s`\n", resp.Cluster))
-	b.WriteString(fmt.Sprintf("- **Namespace**: `%s`\n", resp.Namespace))
+	fmt.Fprintf(&b, "- **Cluster**: `%s`\n", resp.Cluster)
+	fmt.Fprintf(&b, "- **Namespace**: `%s`\n", resp.Namespace)
 	if resp.Workload != "" {
-		b.WriteString(fmt.Sprintf("- **Workload**: `%s`\n", resp.Workload))
+		fmt.Fprintf(&b, "- **Workload**: `%s`\n", resp.Workload)
 	}
-	b.WriteString(fmt.Sprintf("- **Pod**: `%s` (resolved from: `%s`)\n", resp.PodName, resp.Resolved))
-	b.WriteString(fmt.Sprintf("- **Window**: `%s`\n", resp.TimeRange))
-	b.WriteString(fmt.Sprintf("- **Query time**: `%s`\n\n", resp.QueryTime.UTC().Format(time.RFC3339)))
+	fmt.Fprintf(&b, "- **Pod**: `%s` (resolved from: `%s`)\n", resp.PodName, resp.Resolved)
+	fmt.Fprintf(&b, "- **Window**: `%s`\n", resp.TimeRange)
+	fmt.Fprintf(&b, "- **Query time**: `%s`\n\n", resp.QueryTime.UTC().Format(time.RFC3339))
 
 	// Render as fixed-width text in indented code blocks.
 	// This is reliably readable with react-markdown without needing GFM tables.
@@ -267,7 +267,7 @@ func renderHumanSummary(resp PodPerformanceResponse) string {
 		for _, k := range keys {
 			msg := resp.Errors[k]
 			// Keep this short; the table already conveys N/A.
-			b.WriteString(fmt.Sprintf("- **%s**: %s\n", k, msg))
+			fmt.Fprintf(&b, "- **%s**: %s\n", k, msg)
 		}
 	}
 
