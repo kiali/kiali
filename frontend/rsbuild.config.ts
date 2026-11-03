@@ -77,7 +77,6 @@ export default defineConfig({
     // updates can reintroduce multiple copies. Resolve all react-core imports to
     // the project-root copy supplied by our direct dependency; this does not
     // automatically select the highest installed version.
-    // Assisted-by: Codex
     dedupe: ['@patternfly/react-core']
   },
   tools: {

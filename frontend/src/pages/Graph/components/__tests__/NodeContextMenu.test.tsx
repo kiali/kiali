@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DropdownGroup, DropdownItem } from '@patternfly/react-core';
 import { ContextMenu } from '@patternfly/react-topology';
