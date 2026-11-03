@@ -31,10 +31,20 @@ export const hasAtLeastOneClass = (expectedClasses: string[]): (($el: HTMLElemen
  * Kiali standalone: /console/namespaces/{ns}/services/{svc}
  * OSSMC:            /k8s/ns/{ns}/services/{svc}/ossmconsole
  * Canonical result: /namespaces/{ns}/services/{svc}
+ *
+ * OSSMC renders istio config detail pages on the Console's native resource
+ * page, whose URL uses OpenShift's group~version~Kind reference form
+ * (/k8s/ns/{ns}/{group}~{version}~{Kind}/{name}/ossmconsole). Map that back
+ * to Kiali's /istio/{group}/{version}/{Kind}/{name} form so assertions can
+ * compare both. The regex only matches segments with two tildes, which occur
+ * solely in these resource references.
  */
 export const normalizeKialiPath = (pathname: string): string => {
   if (Cypress.env('OSSMC')) {
-    return pathname.replace(/\/ossmconsole$/, '').replace(/^\/k8s\/ns\//, '/namespaces/');
+    return pathname
+      .replace(/\/ossmconsole$/, '')
+      .replace(/^\/k8s\/ns\//, '/namespaces/')
+      .replace(/\/([^/~]+)~([^/~]+)~([^/~]+)\//, '/istio/$1/$2/$3/');
   }
   return pathname.replace(/^\/console/, '');
 };
