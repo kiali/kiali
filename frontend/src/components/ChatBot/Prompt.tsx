@@ -16,10 +16,15 @@ import { dispatchAIResponseReceived } from 'utils/aiEvents';
 import {
   Button,
   ButtonVariant,
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
   MenuToggle,
+  Select,
+  SelectGroup,
+  SelectList,
+  SelectOption,
   Tooltip
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
@@ -35,10 +40,14 @@ import { buildPageContext, formatChatRequestQuery } from './pageContext';
 import { buildPromptContext, buildPromptVariables, enrichPromptContext, substitutePrompts } from './promptContext';
 
 type PromptProps = {
+  onSelectProviderModel: (
+    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined
+  ) => void;
   scrollIntoView: () => void;
 };
 
-export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
+export const Prompt = React.memo(({ onSelectProviderModel, scrollIntoView }: PromptProps) => {
   const { t } = useKialiTranslation();
   const dispatch = useDispatch();
   const [validated, setValidated] = React.useState<'default' | 'error'>('default');
@@ -52,6 +61,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chat.alwaysNavigate);
   const interactionMode = useSelector((s: KialiAppState) => s.ai.chat.interactionMode);
   const chatContext = useSelector((s: KialiAppState) => s.ai.chat.chatContext);
+  const providers = useSelector((s: KialiAppState) => s.ai.chat.providers);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
@@ -173,15 +183,55 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     [dispatch]
   );
 
+  // A mode change cannot continue the previous backend conversation.
+  const restartConversationForMode = React.useCallback(
+    (mode: ChatInteractionMode): boolean => {
+      if (mode === interactionMode) {
+        return false;
+      }
+      if (chatHistory.size === 0) {
+        dispatch(ChatAIActions.setInteractionMode({ interactionMode: mode }));
+        return false;
+      }
+      streamController.abort();
+      if (conversationID !== '') {
+        API.deleteChatConversations(conversationID).catch(() => {});
+      }
+      dispatch(ChatAIActions.setConversationID({ id: undefined }));
+      dispatch(ChatAIActions.setChatHistoryClear());
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: uniqueId('ChatDivider_'),
+            mode,
+            who: 'divider'
+          }
+        })
+      );
+      dispatch(ChatAIActions.setInteractionMode({ interactionMode: mode }));
+      return true;
+    },
+    [chatHistory.size, conversationID, dispatch, interactionMode, streamController]
+  );
+
   const submitQuery = React.useCallback(
-    (message: string) => {
+    (
+      message: string,
+      options?: { conversationId?: string; hideUser?: boolean; interactionMode?: ChatInteractionMode }
+    ) => {
       const text = message.trim();
       if (!text) {
         return;
       }
+      const mode = options?.interactionMode ?? interactionMode;
+      if (options?.interactionMode && options.interactionMode !== interactionMode) {
+        dispatch(ChatAIActions.setInteractionMode({ interactionMode: options.interactionMode }));
+      }
+      const requestConversationId = options?.conversationId !== undefined ? options.conversationId : conversationID;
       dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {
+            hidden: options?.hideUser,
             text,
             who: 'user'
           }
@@ -206,8 +256,8 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       scrollIntoView();
 
       const request: ChatRequest = {
-        conversation_id: conversationID,
-        interaction_mode: interactionMode,
+        conversation_id: requestConversationId,
+        interaction_mode: mode,
         query: formatChatRequestQuery(text, pageContext, chatContext)
       };
 
@@ -399,10 +449,32 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     if (!pendingPrompt) {
       return;
     }
-    const text = pendingPrompt.text;
+    const { interactionMode: requestedMode, intro, text } = pendingPrompt;
     dispatch(ChatAIActions.clearPendingPrompt());
-    submitQuery(text);
-  }, [dispatch, pendingPrompt, submitQuery]);
+    const restarted = requestedMode !== undefined && restartConversationForMode(requestedMode);
+    if (intro) {
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            actions: [],
+            id: uniqueId('ChatEntry_'),
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: false,
+            references: [],
+            text: intro,
+            tools: ImmutableMap(),
+            who: 'ai'
+          }
+        })
+      );
+    }
+    submitQuery(text, {
+      conversationId: restarted ? '' : undefined,
+      hideUser: Boolean(intro),
+      interactionMode: requestedMode
+    });
+  }, [dispatch, pendingPrompt, restartConversationForMode, submitQuery]);
 
   const streamingResponseID: string | undefined = isStreaming ? (chatHistory.last()?.get('id') as string) : undefined;
 
@@ -426,17 +498,17 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   );
 
   const [isModeDropdownOpen, setIsModeDropdownOpen] = React.useState(false);
+  const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
 
   const handleModeSelect = React.useCallback(
     (_event: React.MouseEvent<Element> | undefined, value: string | number | undefined) => {
       const newMode = value as ChatInteractionMode;
-      if (chatHistory.size > 0 && newMode !== interactionMode) {
-        console.info(`Interaction mode changed to ${newMode}. The assistant will adopt the new approach.`);
+      if (newMode && newMode !== interactionMode) {
+        restartConversationForMode(newMode);
       }
-      dispatch(ChatAIActions.setInteractionMode({ interactionMode: newMode }));
       setIsModeDropdownOpen(false);
     },
-    [dispatch, chatHistory.size, interactionMode]
+    [interactionMode, restartConversationForMode]
   );
 
   const modePlaceholder = interactionMode === 'ask' ? t('Ask a question...') : t('Describe the issue...');
@@ -549,7 +621,54 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           }
         `}</style>
         <MessageBar
-          additionalActions={interactionModeDropdown}
+          additionalActions={
+            <>
+              {interactionModeDropdown}
+              {selectedProvider && selectedModel && (
+                <Select
+                  isOpen={isModelMenuOpen}
+                  selected={`${selectedProvider}:${selectedModel}`}
+                  shouldFocusToggleOnSelect
+                  onOpenChange={setIsModelMenuOpen}
+                  onSelect={(event, value) => {
+                    onSelectProviderModel(event, value);
+                    setIsModelMenuOpen(false);
+                  }}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle
+                      ref={toggleRef}
+                      aria-label={t('Select model')}
+                      data-test="chatbot-model-selector"
+                      isExpanded={isModelMenuOpen}
+                      onClick={() => setIsModelMenuOpen(open => !open)}
+                      variant="plainText"
+                    >
+                      {selectedModel}
+                    </MenuToggle>
+                  )}
+                >
+                  {providers.map((provider, index) => (
+                    <React.Fragment key={provider.name}>
+                      <SelectGroup label={provider.name} labelHeadingLevel="h3">
+                        <SelectList>
+                          {provider.models.map(model => (
+                            <SelectOption
+                              key={`${provider.name}:${model.name}`}
+                              value={`${provider.name}:${model.name}`}
+                              isSelected={provider.name === selectedProvider && model.name === selectedModel}
+                            >
+                              {model.name}
+                            </SelectOption>
+                          ))}
+                        </SelectList>
+                      </SelectGroup>
+                      {index < providers.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </Select>
+              )}
+            </>
+          }
           alwayShowSendButton
           data-testid="chatbot-message-bar-input"
           forceMultilineLayout

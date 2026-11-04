@@ -1624,22 +1624,6 @@ export const getAITroubleshooting = (): Promise<ApiResponse<TroubleshootingIssue
   return newRequest<TroubleshootingIssue[]>(HTTP_VERBS.POST, urls.aiTroubleshooting, {}, {});
 };
 
-export const postTroubleshootingChat = (chatRequest: ChatRequest, signal?: AbortSignal): Promise<Response> => {
-  const url = apiProxy ? `${apiProxy}/${urls.aiTroubleshootingChat}` : urls.aiTroubleshootingChat;
-  const headers = getHeaders(HTTP_VERBS.POST, false) as Record<string, string>;
-  headers['Content-Type'] = 'application/json';
-  headers['Accept'] = 'text/event-stream';
-  headers['media-type'] = 'application/json';
-  headers['Cache-Control'] = 'no-cache';
-  return fetch(url, {
-    method: HTTP_VERBS.POST,
-    headers: headers as HeadersInit,
-    body: JSON.stringify(chatRequest),
-    signal: signal,
-    credentials: 'include'
-  });
-};
-
 export const getAISessionUsage = (
   n?: number,
   request: 'all' | 'chat' | 'troubleshooting' = 'all'

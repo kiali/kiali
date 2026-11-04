@@ -1,10 +1,10 @@
-import { Map as ImmutableMap } from 'immutable';
+import type { Map as ImmutableMap } from 'immutable';
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Label, LabelGroup, Spinner } from '@patternfly/react-core';
 import { BanIcon, CodeIcon, ExternalLinkAltIcon, InfoCircleIcon } from '@patternfly/react-icons';
-import { KialiAppState } from 'store/Store';
-import { Tool } from 'types/Chatbot';
+import type { KialiAppState } from 'store/Store';
+import type { Tool } from 'types/Chatbot';
 import { ChatAIActions } from 'actions/ChatAIActions';
 
 type ToolProps = {

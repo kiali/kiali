@@ -12,7 +12,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { AIConsumptionHeader } from './AIConsumptionHeader';
 import { AIKPI } from '../AIStats/AIKPI';
 import { AIConsumptionTables } from './AIConsumptionTables';
-import { formatAICost, formatConsumptionRangeTitle } from '../aiDashboardUtils';
+import { formatAICost, formatConsumptionRangeTitle, useContainerWidth } from '../aiDashboardUtils';
 
 const chartBoxStyle = kialiStyle({
   boxSizing: 'border-box',
@@ -24,23 +24,6 @@ const chartBoxStyle = kialiStyle({
   paddingRight: PFSpacer.lg,
   width: '95%'
 });
-
-/** Returns the pixel width of a container div, updated via ResizeObserver. */
-const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
-  const [width, setWidth] = React.useState(0);
-  React.useEffect(() => {
-    if (!ref.current) return;
-    const initial = ref.current.offsetWidth || Math.floor(ref.current.getBoundingClientRect().width);
-    if (initial > 0) setWidth(initial);
-    const observer = new ResizeObserver(entries => {
-      const w = Math.floor(entries[0].contentRect.width);
-      if (w > 0) setWidth(w);
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-};
 
 const getDefaultRange = (window: string): { fromVal: number; toVal: number } => {
   const now = new Date();
@@ -267,8 +250,8 @@ export const AIConsumption: React.FC = () => {
                       }
                     />
                     <ChartStack>
-                      {seriesData.map((points, i) => (
-                        <ChartBar key={i} data={points} />
+                      {seriesData.map(points => (
+                        <ChartBar key={points[0]?.name ?? 'bar'} data={points} />
                       ))}
                     </ChartStack>
                   </Chart>

@@ -1,8 +1,14 @@
-import type { MessageProps } from '@patternfly/chatbot';
 import type { Map as ImmutableMap } from 'immutable';
 import type { HealthStatusId } from 'types/Health';
 
 export type ChatInteractionMode = 'ask' | 'troubleshoot';
+
+// A prompt requested from outside the chatbot. intro is a bot message shown before the query is sent.
+export type PendingChatPrompt = {
+  interactionMode?: ChatInteractionMode;
+  intro?: string;
+  text: string;
+};
 
 export type ErrorType = {
   message?: string;
@@ -52,22 +58,9 @@ export type ModelResponse = {
   embedding_model: string;
 };
 
-export type AlertMessage = {
-  message: string;
-  title: string;
-  variant: 'success' | 'danger' | 'warning' | 'info' | 'custom';
-};
-
 export type ReferencedDoc = {
   doc_title: string;
   doc_url: string;
-};
-
-export type ExtendedMessage = Omit<MessageProps, 'ref'> & {
-  actions?: Action[];
-  collapse?: boolean;
-  referenced_docs: ReferencedDoc[];
-  scrollToHere?: boolean;
 };
 
 export type Prompt = {
@@ -92,15 +85,10 @@ export type ModelAI = {
   name: string;
 };
 
-export type TroubleshootingAIConfig = AIrights & {
-  ai_support: AIrights;
-};
-
 export type AIConfig = {
   chat: ChatAIConfig;
   consumption: AIrights;
   enabled: boolean;
-  troubleshooting: TroubleshootingAIConfig;
 };
 
 export type AIrights = {
@@ -152,7 +140,13 @@ type ChatEntryAI = {
   who: 'ai';
 };
 
-export type ChatEntry = ChatEntryAI | ChatEntryUser;
+type ChatEntryDivider = {
+  id: string;
+  mode: ChatInteractionMode;
+  who: 'divider';
+};
+
+export type ChatEntry = ChatEntryAI | ChatEntryDivider | ChatEntryUser;
 
 export type ChatResourceHealth = {
   clusterName?: string;
@@ -315,38 +309,4 @@ export type TroubleshootingIssue = {
   id: string;
   problem: string;
   subProblems: TroubleshootingSubProblem[];
-};
-
-/** One turn in a troubleshooting drawer conversation. */
-export type TroubleshootingConversationMessage = {
-  error?: string;
-  id: number;
-  text: string;
-  truncated: boolean;
-  who: 'ai' | 'user';
-  working: boolean;
-};
-
-export type TroubleshootingConversationMessagePatch = Partial<
-  Pick<TroubleshootingConversationMessage, 'error' | 'text' | 'truncated' | 'working'>
->;
-
-/** A troubleshooting chat kept so the drawer can reopen it. */
-export type TroubleshootingConversation = {
-  // Id returned by the AI stream. Follow-up replies continue this backend conversation.
-  backendConversationId?: string;
-  createdAt: number;
-  description?: string;
-  id: string;
-  messages: TroubleshootingConversationMessage[];
-  problem: string;
-  prompt: string;
-  subProblem?: TroubleshootingSubProblem;
-};
-
-export type StartTroubleshootingConversationPayload = {
-  description?: string;
-  problem: string;
-  prompt: string;
-  subProblem?: TroubleshootingSubProblem;
 };

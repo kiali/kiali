@@ -62,7 +62,7 @@ export const AIStatsHeader: React.FC<{
   const durationOptions = React.useMemo(
     () =>
       Object.fromEntries(ALL_DURATION_OPTIONS.map(option => [String(option.value), formatLastDuration(option.label)])),
-    [t]
+    []
   );
   const selectedDurationLabel = ALL_DURATION_OPTIONS.find(option => option.value === window)?.label ?? String(window);
 

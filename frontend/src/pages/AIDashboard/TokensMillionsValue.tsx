@@ -4,10 +4,10 @@ import { formatTokensInMillions } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 
 type TokensMillionsValueProps = {
-  /** Raw token count, unless `fromMillions` is set. */
-  value: number;
   /** True when `value` is already expressed in millions of tokens. */
   fromMillions?: boolean;
+  /** Raw token count, unless `fromMillions` is set. */
+  value: number;
 };
 
 const exactTokenCount = (value: number, fromMillions: boolean): number =>

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
+import type { Map as ImmutableMap, List as ImmutableList } from 'immutable';
 import { ChatbotContent, ChatbotWelcomePrompt, MessageBox } from '@patternfly/chatbot';
 import type { WelcomePrompt } from '@patternfly/chatbot/dist/esm/ChatbotWelcomePrompt/ChatbotWelcomePrompt';
 import { useDispatch, useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { EntryChat } from './EntryChat/EntryChat';
 import { t } from 'utils/I18nUtils';
 import { ChatAIActions } from 'actions/ChatAIActions';
@@ -40,7 +40,7 @@ export const ChatBotContent: React.FC<ChatBotContentProps> = ({ chatHistoryEndRe
           />
         )}
         {chatHistory.map((entry, i) => (
-          <EntryChat entryIndex={i} key={(entry.get('id') as string) ?? i} />
+          <EntryChat entryIndex={i} key={(entry.get('id') as string) ?? `${entry.get('who')}-${entry.get('text')}`} />
         ))}
         <div ref={chatHistoryEndRef} />
       </MessageBox>

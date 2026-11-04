@@ -112,12 +112,7 @@ describe('AiTroubleshootingStateReducer', () => {
       store: { enabled: false }
     },
     consumption: { allowed: false, enabled: false },
-    enabled: true,
-    troubleshooting: {
-      ai_support: { allowed: false, enabled: false },
-      allowed: true,
-      enabled: true
-    }
+    enabled: true
   };
 
   it('stores hidden subproblem ids and keeps them when AI config is refreshed', () => {
@@ -132,10 +127,29 @@ describe('AiTroubleshootingStateReducer', () => {
 
     const refreshed = AiTroubleshootingStateReducer(hidden, ChatAIActions.setAI(aiConfig));
     expect(refreshed.hiddenSubProblemIds).toEqual(['sub-1']);
-    expect(refreshed.enabled).toBe(true);
 
     const shown = AiTroubleshootingStateReducer(refreshed, ChatAIActions.showTroubleshootingSubProblem('sub-1'));
     expect(shown.hiddenSubProblemIds).toEqual([]);
+  });
+
+  it('hides and shows a parent problem together with its subproblems', () => {
+    const hidden = AiTroubleshootingStateReducer(
+      { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: ['already'] },
+      ChatAIActions.hideTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1', 'sub-2'] })
+    );
+    expect(hidden.hiddenSubProblemIds).toEqual(['already', 'parent', 'sub-1', 'sub-2']);
+
+    const again = AiTroubleshootingStateReducer(
+      hidden,
+      ChatAIActions.hideTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1'] })
+    );
+    expect(again).toBe(hidden);
+
+    const shown = AiTroubleshootingStateReducer(
+      hidden,
+      ChatAIActions.showTroubleshootingIssue({ id: 'parent', subProblemIds: ['sub-1', 'sub-2'] })
+    );
+    expect(shown.hiddenSubProblemIds).toEqual(['already']);
   });
 
   it('stores the troubleshooting scan and keeps it when AI config is refreshed', () => {
@@ -162,73 +176,5 @@ describe('AiTroubleshootingStateReducer', () => {
 
     const refreshed = AiTroubleshootingStateReducer(failed, ChatAIActions.setAI(aiConfig));
     expect(refreshed.issues).toEqual(issues);
-    expect(refreshed.enabled).toBe(true);
-  });
-
-  it('tracks whether a troubleshooting analysis is open and keeps that when AI config is refreshed', () => {
-    const opened = AiTroubleshootingStateReducer(
-      INITIAL_TROUBLESHOOTING_STATE,
-      ChatAIActions.setTroubleshootingAnalysisOpen(true)
-    );
-    expect(opened.openAnalyses).toBe(1);
-
-    const second = AiTroubleshootingStateReducer(opened, ChatAIActions.setTroubleshootingAnalysisOpen(true));
-    expect(second).toBe(opened);
-
-    const refreshed = AiTroubleshootingStateReducer(opened, ChatAIActions.setAI(aiConfig));
-    expect(refreshed.openAnalyses).toBe(1);
-
-    const closed = AiTroubleshootingStateReducer(refreshed, ChatAIActions.setTroubleshootingAnalysisOpen(false));
-    expect(closed.openAnalyses).toBe(0);
-    expect(AiTroubleshootingStateReducer(closed, ChatAIActions.setTroubleshootingAnalysisOpen(false))).toBe(closed);
-  });
-
-  it('stores troubleshooting conversations so a closed drawer can restore one', () => {
-    const started = AiTroubleshootingStateReducer(
-      INITIAL_TROUBLESHOOTING_STATE,
-      ChatAIActions.startTroubleshootingConversation({
-        description: 'productpage',
-        problem: 'Requests fail',
-        prompt: 'Why?'
-      })
-    );
-    expect(started.drawerExpanded).toBe(true);
-    expect(started.openAnalyses).toBe(1);
-    expect(started.conversations.map(conversation => conversation.problem)).toEqual(['Requests fail']);
-    const conversationId = started.activeConversationId ?? '';
-
-    const withMessage = AiTroubleshootingStateReducer(
-      started,
-      ChatAIActions.addTroubleshootingConversationMessage({
-        conversationId,
-        message: { id: 0, text: '', truncated: false, who: 'ai', working: true }
-      })
-    );
-    const answered = AiTroubleshootingStateReducer(
-      withMessage,
-      ChatAIActions.patchTroubleshootingConversationMessage({
-        conversationId,
-        messageId: 0,
-        patch: { text: 'Check the pods', working: false }
-      })
-    );
-    expect(answered.conversations[0].messages[0].text).toBe('Check the pods');
-
-    const closed = AiTroubleshootingStateReducer(answered, ChatAIActions.setTroubleshootingDrawerExpanded(false));
-    expect(closed.drawerExpanded).toBe(false);
-    expect(closed.openAnalyses).toBe(0);
-    expect(closed.activeConversationId).toBe(conversationId);
-    expect(closed.conversations[0].messages[0].text).toBe('Check the pods');
-
-    const reopened = AiTroubleshootingStateReducer(
-      closed,
-      ChatAIActions.selectTroubleshootingConversation(conversationId)
-    );
-    expect(reopened.drawerExpanded).toBe(true);
-    expect(reopened.openAnalyses).toBe(1);
-
-    const refreshed = AiTroubleshootingStateReducer(reopened, ChatAIActions.setAI(aiConfig));
-    expect(refreshed.conversations).toEqual(reopened.conversations);
-    expect(refreshed.drawerExpanded).toBe(true);
   });
 });

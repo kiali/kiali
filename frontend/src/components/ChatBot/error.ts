@@ -1,4 +1,4 @@
-import { ErrorType } from 'types/Chatbot';
+import type { ErrorType } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 
 export type FetchError = {

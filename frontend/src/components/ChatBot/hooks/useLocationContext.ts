@@ -8,22 +8,17 @@ export const useLocationContext = (): [
   string | undefined,
   string | undefined
 ] => {
-  const [kind, setKind] = React.useState<string>();
-  const [name, setName] = React.useState<string>();
-  const [namespace, setNamespace] = React.useState<string>();
-  const [istio, setIstio] = React.useState<string>();
-  const [clusterName, setClusterName] = React.useState<string>();
-
   const location = useLocation();
   const path = location?.pathname;
+  const search = location?.search;
 
-  React.useEffect(() => {
+  return React.useMemo(() => {
     let newKind = '';
     let newName = '';
     let newNamespace = '';
     let newIstio = '';
 
-    const searchParams = new URLSearchParams(location.search);
+    const searchParams = new URLSearchParams(search);
     const newClusterName = searchParams.get('clusterName') || '';
     const nsParams = searchParams.getAll('namespace');
     const nssParams = searchParams.getAll('namespaces');
@@ -87,12 +82,12 @@ export const useLocationContext = (): [
       }
     }
 
-    setKind(newKind || undefined);
-    setName(newName || undefined);
-    setNamespace(newNamespace || undefined);
-    setIstio(newIstio || undefined);
-    setClusterName(newClusterName || undefined);
-  }, [location.search, path]);
-
-  return [kind, name, namespace, istio, clusterName];
+    return [
+      newKind || undefined,
+      newName || undefined,
+      newNamespace || undefined,
+      newIstio || undefined,
+      newClusterName || undefined
+    ];
+  }, [path, search]);
 };

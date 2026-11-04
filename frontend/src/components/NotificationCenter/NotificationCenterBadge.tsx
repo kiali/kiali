@@ -1,19 +1,29 @@
 import { NotificationBadge, NotificationBadgeVariant } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
-import { KialiAppState } from 'store/Store';
-import { MessageType, NotificationGroup, NotificationMessage } from 'types/NotificationCenter';
-import { KialiDispatch } from 'types/Redux';
+import type { KialiAppState } from 'store/Store';
+import { MessageType, type NotificationGroup, type NotificationMessage } from 'types/NotificationCenter';
+import type { KialiDispatch } from 'types/Redux';
+import {
+  partitionTroubleshootingIssues,
+  summarizeTroubleshootingIssues
+} from 'pages/AIDashboard/AITroubleshooting/partitionTroubleshooting';
 import { NotificationAlerts } from './NotificationAlerts';
+import { ChatAIActions } from 'actions/ChatAIActions';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 
 type ReduxStateProps = {
   alerts: NotificationMessage[];
+  chatbotVisible?: boolean;
+  isExpanded?: boolean;
   needsAttention: boolean;
   newMessageCount: number;
+  troubleshootingCount?: number;
+  troubleshootingNeedsAttention?: boolean;
 };
 
 type ReduxDispatchProps = {
+  hideChat?: () => void;
   onDismissNotification: (NotificationMessage, boolean) => void;
   toggleNotificationCenter: () => void;
 };
@@ -24,10 +34,12 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
   props: NotificationCenterBadgeProps
 ) => {
   const { t } = useKialiTranslation();
+  const count = props.newMessageCount + (props.troubleshootingCount ?? 0);
+  const needsAttention = props.needsAttention || !!props.troubleshootingNeedsAttention;
 
   let variant = NotificationBadgeVariant.read;
-  if (props.newMessageCount > 0) {
-    if (props.needsAttention) {
+  if (count > 0) {
+    if (needsAttention) {
       variant = NotificationBadgeVariant.attention;
     } else {
       variant = NotificationBadgeVariant.unread;
@@ -38,9 +50,17 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
     <>
       <NotificationBadge
         aria-label={t('Notifications')}
-        count={props.newMessageCount}
-        isExpanded={this}
+        count={count}
+        data-test="notifications-badge"
+        isExpanded={props.isExpanded}
         onClick={() => {
+          if (props.chatbotVisible) {
+            props.hideChat?.();
+            if (!props.isExpanded) {
+              props.toggleNotificationCenter();
+            }
+            return;
+          }
           props.toggleNotificationCenter();
         }}
         variant={variant}
@@ -59,7 +79,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 
   const attentionTypes = [MessageType.DANGER, MessageType.WARNING];
 
-  return state.notificationCenter.groups
+  const notifications = state.notificationCenter.groups
     .reduce((unreadMessages: NotificationMessage[], group: NotificationGroup) => {
       return unreadMessages.concat(
         group.messages.reduce((unreadMessagesInGroup: NotificationMessage[], message: NotificationMessage) => {
@@ -81,6 +101,21 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
       },
       { alerts: [], needsAttention: false, newMessageCount: 0 }
     );
+
+  const issues = state.ai?.enabled && state.ai.troubleshooting?.loaded ? (state.ai.troubleshooting.issues ?? []) : [];
+  const visibleIssues = partitionTroubleshootingIssues(
+    issues,
+    state.ai?.troubleshooting?.hiddenSubProblemIds ?? []
+  ).visible;
+  const summary = summarizeTroubleshootingIssues(visibleIssues);
+
+  return {
+    ...notifications,
+    chatbotVisible: !!state.ai?.chat?.visible,
+    isExpanded: state.notificationCenter.expanded,
+    troubleshootingCount: summary.problems,
+    troubleshootingNeedsAttention: summary.critical > 0
+  };
 };
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
@@ -92,6 +127,7 @@ const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => {
         dispatch(NotificationCenterActions.hideNotification(message.id));
       }
     },
+    hideChat: () => dispatch(ChatAIActions.setChatVisible(false)),
     toggleNotificationCenter: () => dispatch(NotificationCenterActions.toggleNotificationCenter())
   };
 };

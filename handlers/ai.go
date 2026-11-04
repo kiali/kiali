@@ -142,7 +142,7 @@ const troubleshootingToolName = "troubleshooting"
 
 // Troubleshooting handles POST /api/ai/troubleshooting.
 // An empty action/prompt runs the troubleshooting MCP tool (mesh scan).
-// action and prompt are accepted for UI ask/Fix clicks when AI support is enabled.
+// The scan is available when AI is enabled. Ask and Fix use the same rights as chat.
 func Troubleshooting(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -156,8 +156,8 @@ func Troubleshooting(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.AI.Enabled || !conf.AI.Troubleshooting.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "Troubleshooting is not enabled")
+		if !conf.AI.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "AI is not enabled")
 			return
 		}
 
@@ -174,10 +174,6 @@ func Troubleshooting(
 		req.ClusterName = strings.TrimSpace(req.ClusterName)
 
 		username := resolveChatAIUsername(r, conf, "")
-		if !isUserAllowed(conf.AI.Troubleshooting.AllowedUsers, username) {
-			RespondWithError(w, http.StatusForbidden, "You are not allowed to use the troubleshooting feature")
-			return
-		}
 
 		if req.Action != "" || req.Prompt != "" {
 			handleTroubleshootingAction(w, conf, username, req)
@@ -225,12 +221,8 @@ func handleTroubleshootingAction(w http.ResponseWriter, conf *config.Config, use
 		RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid action %q: must be %q or %q", req.Action, troubleshooting.UIActionAsk, troubleshooting.UIActionFix))
 		return
 	}
-	if !conf.AI.Troubleshooting.AISupport.Enabled {
-		RespondWithError(w, http.StatusForbidden, "AI support is not enabled for troubleshooting")
-		return
-	}
-	if !isUserAllowed(conf.AI.Troubleshooting.AISupport.AllowedUsers, username) {
-		RespondWithError(w, http.StatusForbidden, "You are not allowed to use AI support for troubleshooting")
+	if !conf.AI.ChatAI.Enabled || !isUserAllowed(conf.AI.ChatAI.AllowedUsers, username) {
+		RespondWithError(w, http.StatusForbidden, "You are not allowed to use the chat feature")
 		return
 	}
 	RespondWithError(w, http.StatusNotImplemented, "AI support prompt execution is not implemented yet")
@@ -302,6 +294,8 @@ func ChatAI(
 			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
+		// Troubleshoot mode keeps the request label the removed troubleshooting chat handler recorded.
+		requestKind := chatMetricRequest(req.InteractionMode)
 		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 			authInfo, err := getAuthInfo(r)
 			if err != nil {
@@ -366,8 +360,8 @@ func ChatAI(
 					}
 				}
 
-				// 3. Check if budget is reached
-				if reached, reason := CheckBudgetReached(r.Context(), conf, username, prom, internalmetrics.AIRequestChat); reached {
+				// 3. Check if budget is reached for the series this call will increment.
+				if reached, reason := CheckBudgetReached(r.Context(), conf, username, prom, requestKind); reached {
 					RespondWithError(w, http.StatusForbidden, fmt.Sprintf("AI request blocked: %s", reason))
 					return
 				}
@@ -390,8 +384,17 @@ func ChatAI(
 			}
 		}
 
-		streamAIChat(w, r, conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery, provider, providerName, modelName, usageProviderName, usageModelName, username, sessionID, internalmetrics.AIRequestChat, req)
+		streamAIChat(w, r, conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery, provider, providerName, modelName, usageProviderName, usageModelName, username, sessionID, requestKind, req)
 	}
+}
+
+// chatMetricRequest is the Prometheus request label for a chat call.
+// Ask mode, and a missing mode, stay on the chat series. Troubleshoot mode uses the troubleshooting series.
+func chatMetricRequest(mode aiTypes.ChatInteractionMode) string {
+	if mode == aiTypes.ChatInteractionModeTroubleshoot {
+		return internalmetrics.AIRequestTroubleshooting
+	}
+	return internalmetrics.AIRequestChat
 }
 
 func streamAIChat(
@@ -467,134 +470,11 @@ func streamAIChat(
 	recordChatAIUsage(conf, aiStore, sessionID, username, usageProviderName, usageModelName, requestKind, usage)
 }
 
-// TroubleshootingChat handles POST /api/ai/troubleshooting/chat.
-// It streams a diagnosis using the troubleshooting provider and the troubleshoot system prompt.
-// Callers must be allowed to use the troubleshooting dashboard, and troubleshooting must be enabled.
-func TroubleshootingChat(
-	conf *config.Config,
-	kialiCache cache.KialiCache,
-	aiStore aiTypes.AIStore,
-	clientFactory kubernetes.ClientFactory,
-	prom prometheus.ClientInterface,
-	cpm business.ControlPlaneMonitor,
-	traceClientLoader func() tracing.ClientInterface,
-	grafana *grafana.Service,
-	perses *perses.Service,
-	discovery *istio.Discovery,
-) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.AI.Enabled || !conf.AI.Troubleshooting.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "Troubleshooting is not enabled")
-			return
-		}
-
-		var req aiTypes.AIRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
-			return
-		}
-		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
-			authInfo, err := getAuthInfo(r)
-			if err != nil {
-				RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-				return
-			}
-			if clusterAuth, ok := authInfo[conf.KubernetesConfig.ClusterName]; !ok || clusterAuth == nil {
-				RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("AI initialization error: auth info not found for cluster %q", conf.KubernetesConfig.ClusterName))
-				return
-			}
-		}
-
-		username := resolveChatAIUsername(r, conf, "")
-		if !isUserAllowed(conf.AI.Troubleshooting.AllowedUsers, username) {
-			RespondWithError(w, http.StatusForbidden, "You are not allowed to use the troubleshooting feature")
-			return
-		}
-		if !conf.AI.Troubleshooting.AISupport.Enabled {
-			RespondWithError(w, http.StatusForbidden, "AI support is not enabled for troubleshooting")
-			return
-		}
-
-		providerCfg := &conf.AI.Troubleshooting.AISupport.Provider
-		providerName := providerCfg.Name
-		modelName := providerCfg.DefaultModel
-		req.InteractionMode = aiTypes.ChatInteractionModeTroubleshoot
-
-		sessionID := resolveChatAISessionID(r, conf, username)
-		if conf.AI.Metrics {
-			budget := conf.AI.Consumption.GetBudgetForUser(username)
-			if budget != nil {
-				if len(budget.AllowedProviders) > 0 {
-					allowed := false
-					providerType := configuredProviderType(conf, providerName)
-					for _, ap := range budget.AllowedProviders {
-						if providerType == ap {
-							allowed = true
-							break
-						}
-					}
-					if !allowed {
-						RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Provider %q is not allowed by your budget configuration", providerName))
-						return
-					}
-				}
-				if len(budget.AllowedModels) > 0 {
-					allowed := false
-					for _, am := range budget.AllowedModels {
-						if config.MatchModelPattern(am, modelName) {
-							allowed = true
-							break
-						}
-						if cp := findEnabledAIProvider(conf, providerName); cp != nil {
-							for _, cm := range cp.Models {
-								if cm.Name == modelName && config.MatchModelPattern(am, cm.Model) {
-									allowed = true
-									break
-								}
-							}
-						}
-					}
-					if !allowed {
-						RespondWithError(w, http.StatusForbidden, fmt.Sprintf("Model %q is not allowed by your budget configuration", modelName))
-						return
-					}
-				}
-				if reached, reason := CheckBudgetReached(r.Context(), conf, username, prom, internalmetrics.AIRequestTroubleshooting); reached {
-					RespondWithError(w, http.StatusForbidden, fmt.Sprintf("AI request blocked: %s", reason))
-					return
-				}
-			}
-		}
-
-		provider, err := ai.NewAIProviderFromConfig(conf, providerCfg, modelName)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-			return
-		}
-		usageProviderName := providerName
-		usageModelName := modelName
-		if usageMetadata, err := ai.ResolveUsageMetadataFromConfig(providerCfg, modelName); err == nil && usageMetadata != nil {
-			if usageMetadata.Provider != "" {
-				usageProviderName = usageMetadata.Provider
-			}
-			if usageMetadata.Model != "" {
-				usageModelName = usageMetadata.Model
-			}
-		}
-
-		streamAIChat(w, r, conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery, provider, providerName, modelName, usageProviderName, usageModelName, username, sessionID, internalmetrics.AIRequestTroubleshooting, req)
-	}
-}
-
 func findEnabledAIProvider(conf *config.Config, providerName string) *config.ProviderConfig {
 	for i := range conf.AI.ChatAI.Providers {
 		if conf.AI.ChatAI.Providers[i].Name == providerName && conf.AI.ChatAI.Providers[i].Enabled {
 			return &conf.AI.ChatAI.Providers[i]
 		}
-	}
-	provider := &conf.AI.Troubleshooting.AISupport.Provider
-	if provider.Enabled && provider.Name == providerName {
-		return provider
 	}
 	return nil
 }

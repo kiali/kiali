@@ -35,6 +35,26 @@ describe('partitionTroubleshootingIssues', () => {
     expect(parent.subProblems).toHaveLength(2);
   });
 
+  it('hides a parent and every subproblem when the parent id is hidden', () => {
+    const parent = issue('parent', [
+      { id: 'visible', impact: 'ok', issue: 'shown', severity: 'warning', target: 'reviews-v1' },
+      { id: 'kept', impact: 'bad', issue: 'stored', severity: 'critical', target: 'reviews-v2' }
+    ]);
+
+    const partitioned = partitionTroubleshootingIssues([parent], ['parent']);
+
+    expect(partitioned.visible).toEqual([]);
+    expect(partitioned.hidden).toEqual([parent]);
+  });
+
+  it('hides a parent that has no subproblems', () => {
+    const parent = issue('parent', []);
+    const partitioned = partitionTroubleshootingIssues([parent], ['parent']);
+
+    expect(partitioned.visible).toEqual([]);
+    expect(partitioned.hidden).toEqual([parent]);
+  });
+
   it('moves a parent to the hidden list when every subproblem is hidden', () => {
     const parent = issue('parent', [{ id: 'hidden', impact: 'bad', issue: 'stored', target: 'reviews' }]);
     const partitioned = partitionTroubleshootingIssues([parent], ['hidden']);

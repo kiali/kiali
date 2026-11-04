@@ -33,20 +33,16 @@ export const AIKPI: React.FC<AIKPIProps> = ({
   summary,
   valueKind = 'tokens'
 }) => {
-  const [activeProviders, setActiveProviders] = React.useState<Set<string>>(new Set());
-
-  // Reset when the provider list changes (new data load).
-  const providerList = summary.byProvider.map(p => p.provider ?? '');
-  React.useEffect(() => {
-    setActiveProviders(new Set());
-  }, [providerList.join(',')]);
+  const [activeProviders, setActiveProviders] = React.useState<Set<string>>(() => new Set());
 
   // Providers that are actual data providers (not the synthetic 'total').
   const specificProviders = summary.byProvider.map(p => p.provider ?? '').filter(p => p !== 'total');
+  const specificProviderSet = new Set(specificProviders);
+  const filteredActiveProviders = Array.from(activeProviders).filter(p => specificProviderSet.has(p));
 
   const handleClick = (clickedProvider: string): void => {
     setActiveProviders(prev => {
-      const next = new Set(prev);
+      const next = new Set(Array.from(prev).filter(p => specificProviderSet.has(p)));
 
       if (clickedProvider === 'total') {
         onProviderChange('All');
@@ -72,7 +68,7 @@ export const AIKPI: React.FC<AIKPIProps> = ({
   };
 
   const isActive = (provider: string): boolean =>
-    provider === 'total' ? activeProviders.size === 0 : activeProviders.has(provider);
+    provider === 'total' ? filteredActiveProviders.length === 0 : filteredActiveProviders.includes(provider);
 
   const totalEntry = summary.byProvider.find(p => p.provider === 'total');
 
