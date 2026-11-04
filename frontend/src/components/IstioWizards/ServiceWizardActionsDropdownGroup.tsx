@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { DropdownGroup, DropdownItem, Tooltip, TooltipPosition } from '@patternfly/react-core';
 import { serverConfig } from 'config';
-import { DestinationRule, getWizardUpdateLabel, K8sHTTPRoute, K8sGRPCRoute, VirtualService } from 'types/IstioObjects';
-import { canDelete, ResourcePermissions } from 'types/Permissions';
+import type { DestinationRule, K8sHTTPRoute, K8sGRPCRoute, VirtualService } from 'types/IstioObjects';
+import { getWizardUpdateLabel } from 'types/IstioObjects';
+import type { ResourcePermissions } from 'types/Permissions';
+import { canDelete } from 'types/Permissions';
+import type { WizardAction, WizardMode } from './WizardActions';
 import {
   SERVICE_WIZARD_ACTIONS,
   WIZARD_K8S_REQUEST_ROUTING,
   WIZARD_K8S_GRPC_REQUEST_ROUTING,
   WIZARD_TITLES,
-  WizardAction,
-  WizardMode,
   WIZARD_REQUEST_ROUTING,
   WIZARD_FAULT_INJECTION,
   WIZARD_TRAFFIC_SHIFTING,
@@ -20,6 +21,7 @@ import { hasServiceDetailsTrafficRouting } from '../../types/ServiceInfo';
 import { groupMenuStyle, titleStyle } from 'styles/DropdownStyles';
 import { kialiStyle } from 'styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
+import { dismissContextMenu } from 'utils/ContextMenuUtils';
 
 export const DELETE_TRAFFIC_ROUTING = 'delete_traffic_routing';
 
@@ -61,6 +63,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
     if (props.onAction) {
       props.onAction(eventKey as WizardAction, updateLabel.length === 0 ? 'create' : 'update');
     }
+    dismissContextMenu();
   };
 
   const getDropdownItemTooltipMessage = (isGatewayAPI: boolean, hasExistingTrafficRouting: boolean): string => {
@@ -144,6 +147,7 @@ export const ServiceWizardActionsDropdownGroup: React.FunctionComponent<Props> =
         if (props.onDelete) {
           props.onDelete(DELETE_TRAFFIC_ROUTING);
         }
+        dismissContextMenu();
       }}
       isDisabled={deleteDisabled}
       data-test={DELETE_TRAFFIC_ROUTING}
