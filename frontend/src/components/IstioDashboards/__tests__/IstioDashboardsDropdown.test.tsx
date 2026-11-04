@@ -89,7 +89,12 @@ describe('IstioDashboardsDropdownLoader', () => {
     render(<IstioDashboardsDropdownLoader kind="ztunnel" />);
 
     expect(await screen.findByTestId('istio-dashboards-toggle')).toBeInTheDocument();
-    expect(loadMock).toHaveBeenCalledWith('ztunnel');
+    expect(loadMock).toHaveBeenCalledWith({
+      kind: 'ztunnel',
+      namespace: undefined,
+      object: undefined,
+      objectType: undefined
+    });
   });
 
   it('renders nothing when loading returns no links', async () => {

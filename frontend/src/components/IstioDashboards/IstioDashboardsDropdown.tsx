@@ -9,13 +9,12 @@ import {
   MenuToggleElement
 } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
-import { PFSpacer } from 'styles/PfSpacer';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import type { ExternalLink } from 'types/Dashboards';
 import {
   istioDashboardViewTitle,
   loadIstioDashboardLinks,
-  type IstioDashboardKind,
+  type IstioDashboardLoadOptions,
   type IstioDashboardTool
 } from 'utils/IstioDashboardUtils';
 import { ReactComponent as GrafanaLogo } from '../../assets/img/mesh/grafana.svg';
@@ -29,13 +28,7 @@ type IstioDashboardsDropdownProps = {
 const logoStyle = kialiStyle({
   flexShrink: 0,
   height: '1rem',
-  marginRight: PFSpacer.xs,
   width: '1rem'
-});
-
-const groupLabelStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'inline-flex'
 });
 
 type ToolGroupProps = {
@@ -52,19 +45,12 @@ const ToolGroup: React.FC<ToolGroupProps> = ({ Logo, links, tool }: ToolGroupPro
   const toolId = tool.toLowerCase();
 
   return (
-    <DropdownGroup
-      key={tool}
-      label={
-        <span className={groupLabelStyle}>
-          <Logo aria-hidden={true} className={logoStyle} />
-          {tool}
-        </span>
-      }
-    >
+    <DropdownGroup key={tool} label={tool}>
       {links.map((link, idx) => (
         <DropdownItem
           key={link.url}
           data-test={`istio-dashboard-link-${toolId}-${idx}`}
+          icon={<Logo aria-hidden={true} className={logoStyle} />}
           isExternalLink
           rel="noopener noreferrer"
           title={istioDashboardViewTitle(link.name, tool)}
@@ -107,22 +93,27 @@ export const IstioDashboardsDropdown: React.FC<IstioDashboardsDropdownProps> = (
       )}
     >
       <DropdownList>
-        <ToolGroup Logo={PersesLogo} links={persesLinks} tool="Perses" />
-        {persesLinks.length > 0 && grafanaLinks.length > 0 && <Divider />}
         <ToolGroup Logo={GrafanaLogo} links={grafanaLinks} tool="Grafana" />
+        {grafanaLinks.length > 0 && persesLinks.length > 0 && <Divider />}
+        <ToolGroup Logo={PersesLogo} links={persesLinks} tool="Perses" />
       </DropdownList>
     </Dropdown>
   );
 };
 
-export const IstioDashboardsDropdownLoader: React.FC<{ kind: IstioDashboardKind }> = ({ kind }) => {
+export const IstioDashboardsDropdownLoader: React.FC<IstioDashboardLoadOptions> = ({
+  kind,
+  namespace,
+  object,
+  objectType
+}: IstioDashboardLoadOptions) => {
   const [grafanaLinks, setGrafanaLinks] = React.useState<ExternalLink[]>([]);
   const [persesLinks, setPersesLinks] = React.useState<ExternalLink[]>([]);
 
   React.useEffect(() => {
     let cancelled = false;
 
-    loadIstioDashboardLinks(kind).then(links => {
+    loadIstioDashboardLinks({ kind, namespace, object, objectType }).then(links => {
       if (!cancelled) {
         setGrafanaLinks(links.grafanaLinks);
         setPersesLinks(links.persesLinks);
@@ -132,7 +123,7 @@ export const IstioDashboardsDropdownLoader: React.FC<{ kind: IstioDashboardKind 
     return () => {
       cancelled = true;
     };
-  }, [kind]);
+  }, [kind, namespace, object, objectType]);
 
   return <IstioDashboardsDropdown grafanaLinks={grafanaLinks} persesLinks={persesLinks} />;
 };

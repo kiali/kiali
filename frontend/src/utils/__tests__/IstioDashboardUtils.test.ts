@@ -5,8 +5,10 @@ import {
   ISTIO_CONTROL_PLANE_DASHBOARD,
   ISTIO_MESH_DASHBOARD,
   ISTIO_PERFORMANCE_DASHBOARD,
-  ISTIO_WASM_EXTENSION_DASHBOARD
+  ISTIO_WASM_EXTENSION_DASHBOARD,
+  ISTIO_WORKLOAD_DASHBOARD
 } from 'types/GrafanaInfo';
+import { MetricsObjectTypes } from 'types/Metrics';
 import {
   filterIstioDashboardLinks,
   isSafeHttpUrl,
@@ -44,6 +46,11 @@ const performanceLink: ExternalLink = {
 };
 const wasmLink: ExternalLink = { name: ISTIO_WASM_EXTENSION_DASHBOARD, url: 'https://grafana/wasm', variables: {} };
 const ztunnelLink: ExternalLink = { name: ISTIO_ZTUNNEL_DASHBOARD, url: 'https://grafana/ztunnel', variables: {} };
+const workloadLink: ExternalLink = {
+  name: ISTIO_WORKLOAD_DASHBOARD,
+  url: 'https://grafana/workload',
+  variables: { namespace: 'var-namespace', workload: 'var-workload' }
+};
 
 describe('IstioDashboardUtils', () => {
   describe('isSafeHttpUrl', () => {
@@ -151,6 +158,26 @@ describe('IstioDashboardUtils', () => {
       grafanaSpy.mockResolvedValue({ status: 204 } as never);
 
       await expect(loadIstioDashboardLinks('control-plane')).resolves.toEqual({ grafanaLinks: [], persesLinks: [] });
+    });
+
+    it('builds workload dashboard URLs and keeps the mesh dashboard', async () => {
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockResolvedValue({
+        status: 200,
+        data: { externalLinks: [workloadLink, meshLink, controlPlaneLink] }
+      } as never);
+
+      const result = await loadIstioDashboardLinks({
+        kind: 'workload',
+        namespace: 'bookinfo',
+        object: 'productpage-v1',
+        objectType: MetricsObjectTypes.WORKLOAD
+      });
+
+      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_WORKLOAD_DASHBOARD, ISTIO_MESH_DASHBOARD]);
+      expect(result.grafanaLinks[0].url).toContain('var-workload=productpage-v1');
+      expect(result.grafanaLinks[0].url).toContain('var-namespace=bookinfo');
+      expect(result.grafanaLinks[1].url).toBe(meshLink.url);
     });
 
     it('does not fail the other tool when Grafana fetch fails', async () => {

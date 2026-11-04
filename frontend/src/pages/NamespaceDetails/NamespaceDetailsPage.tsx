@@ -33,20 +33,17 @@ import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioD
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
-import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
-import { kialiStyle } from 'styles/StyleUtils';
-import { PFSpacer } from 'styles/PfSpacer';
+import {
+  detailPageTitleStyle,
+  detailTitleRowStyle,
+  detailTitleMainStyle,
+  detailTabActionsStyle
+} from 'styles/FlexStyles';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 import type { HealthStatusId } from 'types/Health';
-
-const actionsToolbarStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  gap: PFSpacer.sm
-});
 
 type ReduxProps = {
   duration: DurationInSeconds;
@@ -144,7 +141,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     const actionsToolbar =
       dashboardsDropdown || hasActions ? (
-        <div className={actionsToolbarStyle}>
+        <div className={detailTabActionsStyle}>
           {dashboardsDropdown}
           {hasActions && (
             <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
