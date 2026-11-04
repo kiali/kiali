@@ -31,7 +31,7 @@ import { namespacesToString } from 'types/Namespace';
 import { activeNamespacesSelector } from 'store/Selectors';
 import { derivePromptCategory } from './promptCategory';
 import { useChatResourceHealth } from './hooks/useChatResourceHealth';
-import { buildPageContext } from './pageContext';
+import { buildPageContext, formatChatRequestQuery } from './pageContext';
 import { buildPromptContext, buildPromptVariables, enrichPromptContext, substitutePrompts } from './promptContext';
 
 type PromptProps = {
@@ -50,6 +50,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chat.selectedModel);
   const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chat.alwaysNavigate);
   const interactionMode = useSelector((s: KialiAppState) => s.ai.chat.interactionMode);
+  const chatContext = useSelector((s: KialiAppState) => s.ai.chat.chatContext);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
@@ -58,11 +59,39 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   const isStreaming = !!chatHistory.last()?.get('isStreaming');
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const promptTextareaMaxHeightPx = React.useMemo(() => {
+    const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return 8 * (Number.isFinite(rootFontSize) ? rootFontSize : 16);
+  }, []);
+
+  const syncMessageBarTextareaLayout = React.useCallback(
+    (field: HTMLTextAreaElement | null): void => {
+      if (!field) {
+        return;
+      }
+
+      const wrapper = field.parentElement;
+      wrapper?.style.removeProperty('height');
+      wrapper?.style.setProperty('margin-block', '0');
+
+      if (field.value.trim().length === 0) {
+        field.style.removeProperty('height');
+        field.style.overflowY = 'hidden';
+        return;
+      }
+
+      field.style.height = '0px';
+      const nextHeight = Math.min(field.scrollHeight, promptTextareaMaxHeightPx);
+      field.style.height = `${nextHeight}px`;
+      field.style.overflowY = field.scrollHeight > promptTextareaMaxHeightPx ? 'auto' : 'hidden';
+    },
+    [promptTextareaMaxHeightPx]
+  );
 
   // MessageBar manages its own internal state and only uses `value` as
   // initial state, so we need to sync the textarea when Redux query
   // changes externally (e.g. welcome prompt click).
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (textareaRef.current && textareaRef.current.value !== query) {
       const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
         window.HTMLTextAreaElement.prototype,
@@ -70,8 +99,12 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       )?.set;
       nativeInputValueSetter?.call(textareaRef.current, query);
       textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+      const end = query.length;
+      textareaRef.current.setSelectionRange(end, end);
     }
-  }, [query]);
+    const field = textareaRef.current;
+    requestAnimationFrame(() => syncMessageBarTextareaLayout(field));
+  }, [query, syncMessageBarTextareaLayout]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -119,13 +152,20 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
       if (value.trim().length > 0) {
         setValidated('default');
       }
+      // Health-history supplemental context is only valid for the pre-filled prompt.
+      // Clear it as soon as the user edits or clears that text.
+      if (chatContext && value !== query) {
+        dispatch(ChatAIActions.setChatContext(''));
+      }
       dispatch(ChatAIActions.setQuery(value));
+      requestAnimationFrame(() => syncMessageBarTextareaLayout(textareaRef.current));
     },
-    [dispatch]
+    [chatContext, dispatch, query, syncMessageBarTextareaLayout]
   );
 
   const onPromptSelect = React.useCallback(
     (promptQuery: string) => {
+      dispatch(ChatAIActions.setChatContext(''));
       dispatch(ChatAIActions.setQuery(promptQuery));
       textareaRef.current?.focus();
     },
@@ -166,7 +206,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     const request: ChatRequest = {
       conversation_id: conversationID,
       interaction_mode: interactionMode,
-      query: pageContext ? `Context: ${pageContext}\n\n${query}` : query
+      query: formatChatRequestQuery(query, pageContext, chatContext)
     };
 
     const streamResponse = async (): Promise<void> => {
@@ -327,6 +367,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     });
     // Clear prompt input and return focus to it
     dispatch(ChatAIActions.setQuery(''));
+    dispatch(ChatAIActions.setChatContext(''));
     textareaRef.current?.focus();
   }, [
     conversationID,
@@ -335,6 +376,7 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     query,
     scrollIntoView,
     pageContext,
+    chatContext,
     selectedProvider,
     selectedModel,
     alwaysNavigate
@@ -377,6 +419,51 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
 
   const modePlaceholder = interactionMode === 'ask' ? t('Ask a question...') : t('Describe the issue...');
 
+  const interactionModeDropdown = (
+    <Dropdown
+      isOpen={isModeDropdownOpen}
+      onOpenChange={setIsModeDropdownOpen}
+      onSelect={handleModeSelect}
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle
+          ref={toggleRef}
+          data-testid="chatbot-interaction-mode-toggle"
+          isExpanded={isModeDropdownOpen}
+          onClick={() => setIsModeDropdownOpen(prev => !prev)}
+          variant="plainText"
+          style={{
+            fontSize: '0.875rem',
+            fontWeight: 500
+          }}
+          icon={interactionMode === 'ask' ? <CommentDotsIcon /> : <WrenchIcon />}
+        >
+          <span style={{ marginRight: '4px' }}>{interactionMode === 'ask' ? t('Ask') : t('Troubleshoot')}</span>
+        </MenuToggle>
+      )}
+    >
+      <DropdownList>
+        <DropdownItem
+          key="ask"
+          value="ask"
+          icon={<CommentDotsIcon aria-hidden />}
+          description={t('Standard question and answer')}
+          isSelected={interactionMode === 'ask'}
+        >
+          <span>{t('Ask')}</span>
+        </DropdownItem>
+        <DropdownItem
+          key="troubleshoot"
+          value="troubleshoot"
+          icon={<WrenchIcon aria-hidden />}
+          description={t('Focused troubleshooting assistance')}
+          isSelected={interactionMode === 'troubleshoot'}
+        >
+          <span>{t('Troubleshoot')}</span>
+        </DropdownItem>
+      </DropdownList>
+    </Dropdown>
+  );
+
   return (
     <div>
       {resolvedPrompts.length > 0 && query.trim().length === 0 && (
@@ -410,67 +497,40 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           ))}
         </div>
       )}
-      <div style={{ position: 'relative' }} className="chatbot-message-bar-wrapper">
+      <div className="chatbot-message-bar-wrapper">
         <style>{`
+          .chatbot-message-bar-wrapper .pf-chatbot__message-bar {
+            padding: var(--pf-t--global--spacer--sm);
+          }
+          .chatbot-message-bar-wrapper .pf-chatbot__message-bar-input {
+            flex: 1 1 100%;
+            min-width: 0;
+            padding: 0;
+          }
           .chatbot-message-bar-wrapper .pf-chatbot__message-textarea {
-            margin-bottom: 2rem !important;
+            height: auto !important;
+            margin: 0 !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+          }
+          .chatbot-message-bar-wrapper .pf-chatbot__message-textarea textarea {
+            box-sizing: border-box;
+            line-height: 1.375;
+            min-height: 1.5rem;
+            overflow-x: hidden;
+            padding: 0.5rem 0.75rem !important;
+            resize: none;
+            width: 100%;
+          }
+          .chatbot-message-bar-wrapper .pf-chatbot__message-bar-actions.pf-m-grouped {
+            padding-block-start: var(--pf-t--global--spacer--xs);
           }
         `}</style>
-        <div
-          style={{
-            position: 'absolute',
-            left: '8px',
-            bottom: '8px',
-            zIndex: 2,
-            pointerEvents: 'auto'
-          }}
-        >
-          <Dropdown
-            isOpen={isModeDropdownOpen}
-            onOpenChange={setIsModeDropdownOpen}
-            onSelect={handleModeSelect}
-            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
-              <MenuToggle
-                ref={toggleRef}
-                data-testid="chatbot-interaction-mode-toggle"
-                isExpanded={isModeDropdownOpen}
-                onClick={() => setIsModeDropdownOpen(prev => !prev)}
-                variant="plainText"
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 500
-                }}
-                icon={interactionMode === 'ask' ? <CommentDotsIcon /> : <WrenchIcon />}
-              >
-                <span style={{ marginRight: '4px' }}>{interactionMode === 'ask' ? t('Ask') : t('Troubleshoot')}</span>
-              </MenuToggle>
-            )}
-          >
-            <DropdownList>
-              <DropdownItem
-                key="ask"
-                value="ask"
-                icon={<CommentDotsIcon aria-hidden />}
-                description={t('Standard question and answer')}
-                isSelected={interactionMode === 'ask'}
-              >
-                <span>{t('Ask')}</span>
-              </DropdownItem>
-              <DropdownItem
-                key="troubleshoot"
-                value="troubleshoot"
-                icon={<WrenchIcon aria-hidden />}
-                description={t('Focused troubleshooting assistance')}
-                isSelected={interactionMode === 'troubleshoot'}
-              >
-                <span>{t('Troubleshoot')}</span>
-              </DropdownItem>
-            </DropdownList>
-          </Dropdown>
-        </div>
         <MessageBar
+          additionalActions={interactionModeDropdown}
           alwayShowSendButton
           data-testid="chatbot-message-bar-input"
+          forceMultilineLayout
           handleStopButton={() => onStreamCancel()}
           hasAttachButton={false}
           hasStopButton={isStreaming}
