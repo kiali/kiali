@@ -58,21 +58,14 @@ type ChatAIStoreConfig struct {
 }
 
 type AIConfig struct {
-	Enabled         bool                    `json:"enabled"`
-	ChatAI          ChatAIConfig            `json:"chat"`
-	Consumption     AIrights                `json:"consumption"`
-	Troubleshooting TroubleshootingAIConfig `json:"troubleshooting"`
+	ChatAI      ChatAIConfig `json:"chat"`
+	Consumption AIrights     `json:"consumption"`
+	Enabled     bool         `json:"enabled"`
 }
 
 type AIrights struct {
 	Enabled bool `json:"enabled"`
 	Allowed bool `json:"allowed"`
-}
-
-type TroubleshootingAIConfig struct {
-	Enabled    bool     `json:"enabled"`
-	Allowed    bool     `json:"allowed"`
-	AI_support AIrights `json:"ai_support"`
 }
 
 type ChatAIConfig struct {
@@ -256,26 +249,6 @@ func getAIConsumptionConfig(conf *config.Config, username string) AIrights {
 	}
 }
 
-func getAITroubleshootingConfig(conf *config.Config, username string) TroubleshootingAIConfig {
-	if !conf.AI.Troubleshooting.Enabled {
-		return TroubleshootingAIConfig{
-			Enabled:    false,
-			Allowed:    false,
-			AI_support: AIrights{Enabled: false, Allowed: false},
-		}
-	}
-	allowed := isUserAllowed(conf.AI.Troubleshooting.AllowedUsers, username)
-	support := conf.AI.Troubleshooting.AISupport
-	return TroubleshootingAIConfig{
-		Enabled: true,
-		Allowed: allowed,
-		AI_support: AIrights{
-			Enabled: support.Enabled,
-			Allowed: allowed && support.Enabled && isUserAllowed(support.AllowedUsers, username),
-		},
-	}
-}
-
 func getAIChatConfig(conf *config.Config, username string) ChatAIConfig {
 	if !conf.AI.ChatAI.Enabled {
 		return ChatAIConfig{
@@ -308,10 +281,9 @@ func getAIConfig(conf *config.Config, r *http.Request) AIConfig {
 	}
 
 	aiConfig := AIConfig{
-		Enabled:         conf.AI.Enabled,
-		ChatAI:          getAIChatConfig(conf, username),
-		Consumption:     getAIConsumptionConfig(conf, username),
-		Troubleshooting: getAITroubleshootingConfig(conf, username),
+		Enabled:     conf.AI.Enabled,
+		ChatAI:      getAIChatConfig(conf, username),
+		Consumption: getAIConsumptionConfig(conf, username),
 	}
 
 	if aiConfig.ChatAI.Enabled && aiConfig.ChatAI.Allowed {

@@ -8,13 +8,11 @@ import {
   TitleSizes
 } from '@patternfly/react-core';
 import * as React from 'react';
-import { useSelector } from 'react-redux';
 import { Refresh } from 'components/Refresh/Refresh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
-import { useKialiDispatch } from 'hooks/redux';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { useManualRefreshState, useRefreshInterval } from 'hooks/refresh';
 import { loadTroubleshootingScan } from 'services/AiTroubleshooting';
-import type { KialiAppState } from 'store/Store';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { t } from 'utils/I18nUtils';
@@ -96,16 +94,15 @@ export const AITroubleshooting: React.FC = () => {
   const dispatch = useKialiDispatch();
   const loaded = useManualRefreshState();
   const { lastRefreshAt } = useRefreshInterval();
-  const error = useSelector((state: KialiAppState) => state.ai.troubleshooting.error);
-  const hiddenSubProblemIds = useSelector((state: KialiAppState) => state.ai.troubleshooting.hiddenSubProblemIds);
-  const issues = useSelector((state: KialiAppState) => state.ai.troubleshooting.issues);
-  const openAnalyses = useSelector((state: KialiAppState) => state.ai.troubleshooting.openAnalyses);
-  const scanLoaded = useSelector((state: KialiAppState) => state.ai.troubleshooting.loaded);
+  const error = useKialiSelector(state => state.ai.troubleshooting.error);
+  const hiddenSubProblemIds = useKialiSelector(state => state.ai.troubleshooting.hiddenSubProblemIds);
+  const issues = useKialiSelector(state => state.ai.troubleshooting.issues);
+  const scanLoaded = useKialiSelector(state => state.ai.troubleshooting.loaded);
   const [loading, setLoading] = React.useState(!scanLoaded && issues.length === 0);
   const [hiddenExpanded, setHiddenExpanded] = React.useState(false);
 
   React.useEffect(() => {
-    if (!loaded || openAnalyses > 0) {
+    if (!loaded) {
       return;
     }
     let cancelled = false;
@@ -120,7 +117,7 @@ export const AITroubleshooting: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [dispatch, lastRefreshAt, loaded, openAnalyses]);
+  }, [dispatch, lastRefreshAt, loaded]);
 
   React.useEffect(() => {
     writeHiddenSubProblemIds(hiddenSubProblemIds);
@@ -141,7 +138,7 @@ export const AITroubleshooting: React.FC = () => {
         </Title>
       )}
       <div className={refreshSlotStyle}>
-        <Refresh id="ai-troubleshooting-refresh" disabled={openAnalyses > 0} manageURL={true} />
+        <Refresh id="ai-troubleshooting-refresh" disabled={false} manageURL={true} />
       </div>
     </div>
   );
@@ -185,7 +182,7 @@ export const AITroubleshooting: React.FC = () => {
           >
             <div className={hiddenIssuesStyle}>
               {hidden.map(issue => (
-                <TroubleshootingIssueCard issue={issue} key={`hidden-${issue.id}`} />
+                <TroubleshootingIssueCard hidden issue={issue} key={`hidden-${issue.id}`} />
               ))}
             </div>
           </ExpandableSection>

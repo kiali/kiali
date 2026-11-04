@@ -25,7 +25,9 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
-  InfoCircleIcon
+  InfoCircleIcon,
+  RhUiAiErrorIcon,
+  RhUiAiExperienceIcon
 } from '@patternfly/react-icons';
 import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -38,11 +40,25 @@ import type { NotificationGroup, NotificationMessage } from 'types/NotificationC
 import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
+import { Paths } from 'config';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
 import moment from 'moment';
+import { partitionTroubleshootingIssues } from 'pages/AIDashboard/AITroubleshooting/partitionTroubleshooting';
+import type { TroubleshootingIssue } from 'types/Chatbot';
+
+const TROUBLESHOOTING_GROUP_ID = 'ai-troubleshooting';
+
+const troubleshootingLinkStyle = kialiStyle({
+  paddingBlock: PFSpacer.sm,
+  paddingInline: PFSpacer.md
+});
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
+  troubleshootingIssues: TroubleshootingIssue[];
 };
 
 type ReduxDispatchProps = {
@@ -70,7 +86,9 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     return unseenGroups;
   };
 
-  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(getUnseenGroups(props.groups));
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(() => getUnseenGroups(props.groups));
+  const [troubleshootingCollapsed, setTroubleshootingCollapsed] = useState(true);
+  const troubleshootingExpanded = props.troubleshootingIssues.length > 0 && !troubleshootingCollapsed;
 
   interface ActionsMenu {
     [toggleId: string]: boolean;
@@ -216,7 +234,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     <NotificationDrawer ref={drawerRef}>
       <NotificationDrawerHeader
         closeButtonAriaLabel={t('Close')}
-        count={getNumberUnread()}
+        count={getNumberUnread() + props.troubleshootingIssues.length}
         onClose={() => props.toggleNotificationCenter()}
         title={t('Notifications')}
         unreadText={t('unread')}
@@ -244,6 +262,64 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
       </NotificationDrawerHeader>
       <NotificationDrawerBody>
         <NotificationDrawerGroupList>
+          {props.troubleshootingIssues.length > 0 && (
+            <NotificationDrawerGroup
+              count={props.troubleshootingIssues.length}
+              isExpanded={troubleshootingExpanded}
+              key={TROUBLESHOOTING_GROUP_ID}
+              onExpand={(_, isExpanded) => setTroubleshootingCollapsed(!isExpanded)}
+              title={
+                <span>
+                  <RhUiAiExperienceIcon style={{ marginRight: '0.5em' }} />
+                  {t('Troubleshooting')}
+                </span>
+              }
+            >
+              {troubleshootingExpanded && (
+                <div className={troubleshootingLinkStyle}>
+                  <KialiLink
+                    dataTest="troubleshooting-notification-link"
+                    onClick={() => props.toggleNotificationCenter()}
+                    to={`/${Paths.AI}?tab=troubleshooting`}
+                  >
+                    {props.troubleshootingIssues.length === 1
+                      ? t('See the 1 problem in dashboard')
+                      : t('See the {{count}} problems in dashboard', {
+                          count: props.troubleshootingIssues.length
+                        })}
+                  </KialiLink>
+                </div>
+              )}
+              <NotificationDrawerList isHidden={!troubleshootingExpanded}>
+                {props.troubleshootingIssues.map(issue => {
+                  const critical = (issue.subProblems ?? []).some(subProblem => subProblem.severity === 'critical');
+                  const variant = critical ? 'danger' : 'warning';
+                  const detail = (issue.subProblems ?? [])
+                    .map(subProblem => subProblem.issue || subProblem.impact)
+                    .filter(Boolean)
+                    .join('\n');
+                  return (
+                    <NotificationDrawerListItem
+                      data-test="troubleshooting-notification-problem"
+                      key={issue.id}
+                      variant={variant}
+                    >
+                      <NotificationDrawerListItemHeader
+                        icon={<RhUiAiErrorIcon />}
+                        title={issue.problem}
+                        variant={variant}
+                      />
+                      {detail && (
+                        <NotificationDrawerListItemBody>
+                          <div style={{ marginLeft: '1.6em', paddingLeft: 0, whiteSpace: 'pre-wrap' }}>{detail}</div>
+                        </NotificationDrawerListItemBody>
+                      )}
+                    </NotificationDrawerListItem>
+                  );
+                })}
+              </NotificationDrawerList>
+            </NotificationDrawerGroup>
+          )}
           {props.groups.map(group => (
             <NotificationDrawerGroup
               key={group.id}
@@ -317,7 +393,14 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    groups: state.notificationCenter.groups
+    groups: state.notificationCenter.groups,
+    troubleshootingIssues:
+      state.ai?.enabled && state.ai.troubleshooting?.loaded
+        ? partitionTroubleshootingIssues(
+            state.ai.troubleshooting.issues ?? [],
+            state.ai.troubleshooting.hiddenSubProblemIds ?? []
+          ).visible
+        : []
   };
 };
 

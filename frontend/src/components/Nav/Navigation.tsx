@@ -30,13 +30,14 @@ import { useKialiTranslation } from 'utils/I18nUtils';
 import { useKialiColorScheme } from 'utils/AppearanceUtils';
 import { isKiosk } from '../Kiosk/KioskActions';
 import { NotificationCenter } from 'components/NotificationCenter/NotificationCenter';
-import { TroubleshootingDrawer } from 'components/TroubleshootingDrawer/TroubleshootingDrawer';
+import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { ChatBot } from 'components/ChatBot/ChatBot';
 import { ParentAppearanceSync } from 'components/Kiosk/ParentAppearanceSync';
 
 type ReduxStateProps = {
   ai: boolean;
   chatbotEnabled: boolean;
+  chatbotVisible: boolean;
   colorScheme: string;
   externalServices: ExternalServiceInfo[];
   kiosk: string;
@@ -46,6 +47,7 @@ type ReduxStateProps = {
 };
 
 type ReduxDispatchProps = {
+  hideNotificationCenter: () => void;
   setNavCollapsed: (collapse: boolean) => void;
 };
 
@@ -65,6 +67,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
 
   const { t } = useKialiTranslation();
   const { pathname } = useLocation();
+  const { chatbotVisible, hideNotificationCenter, showNotificationCenter } = props;
 
   React.useEffect((): void => {
     let pageTitle = serverConfig.installationTag ?? 'Kiali';
@@ -76,10 +79,17 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     document.title = pageTitle;
   }, []);
 
+  // The chatbot docks on the right, so it takes the space the notification drawer uses.
+  React.useEffect(() => {
+    if (chatbotVisible && showNotificationCenter) {
+      hideNotificationCenter();
+    }
+  }, [chatbotVisible, hideNotificationCenter, showNotificationCenter]);
+
   // Keep page content aligned when the notification drawer is collapsed. Focus or
   // automation can scroll drawer__main horizontally into the reserved panel slot.
   React.useEffect(() => {
-    if (props.showNotificationCenter) {
+    if (showNotificationCenter) {
       return;
     }
 
@@ -92,7 +102,7 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
     resetDrawerScroll();
     const id = requestAnimationFrame(resetDrawerScroll);
     return () => cancelAnimationFrame(id);
-  }, [props.showNotificationCenter, pathname]);
+  }, [showNotificationCenter, pathname]);
 
   const isGraph = (): boolean => {
     return pathname.startsWith('/graph') || pathname.startsWith('/mesh');
@@ -160,22 +170,26 @@ export const NavigationComponent: React.FC<NavigationProps> = (props: Navigation
       masthead={masthead}
       sidebar={Sidebar}
       notificationDrawer={<NotificationCenter />}
-      isNotificationDrawerExpanded={props.showNotificationCenter}
+      isNotificationDrawerExpanded={showNotificationCenter && !chatbotVisible}
       onPageResize={(_, { mobileView, windowSize }) => onPageResize({ mobileView, windowSize })}
     >
       {kioskMode && <ParentAppearanceSync />}
       <PageSection hasBodyWrapper={false} className={flexBoxColumnStyle}>
-        <TroubleshootingDrawer>
+        {!kioskMode && props.chatbotEnabled ? (
+          <ChatBot>
+            <RenderPage isGraph={isGraph()} />
+          </ChatBot>
+        ) : (
           <RenderPage isGraph={isGraph()} />
-        </TroubleshootingDrawer>
+        )}
       </PageSection>
-      {!kioskMode && props.chatbotEnabled && <ChatBot />}
     </Page>
   );
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
   chatbotEnabled: state.ai.enabled && state.ai.chat.enabled,
+  chatbotVisible: !!state.ai.chat?.visible,
   ai: state.ai.enabled,
   externalServices: state.statusState.externalServices,
   kiosk: state.globalState.kiosk,
@@ -186,6 +200,9 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => ({
 });
 
 const mapDispatchToProps = (dispatch: KialiDispatch): ReduxDispatchProps => ({
+  hideNotificationCenter: () => {
+    dispatch(NotificationCenterActions.toggleNotificationCenter());
+  },
   setNavCollapsed: (collapse: boolean) => dispatch(UserSettingsThunkActions.setNavCollapsed(collapse))
 });
 

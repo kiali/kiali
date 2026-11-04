@@ -335,9 +335,9 @@ Collects mesh problems from `get_mesh_status` (control plane, data plane namespa
 - `namespace` (string, optional): Limit the scan to one namespace. If omitted, checks all accessible namespaces.
 - `clusterName` (string, optional): Cluster name. Default: Kiali config cluster.
 
-**Returns**: a JSON array of issues. When `ai.troubleshooting.ai_support.enabled` and the caller is allowed, each sub-problem includes `suggestedPrompt` and `suggestedActions`. Otherwise `suggestedActions` is omitted.
+**Returns**: a JSON array of issues. When chat is enabled and the caller is allowed to use chat, each sub-problem includes `suggestedPrompt` and `suggestedActions`. Otherwise `suggestedActions` is omitted.
 
-The Kiali UI calls this through `POST /api/ai/troubleshooting`. An empty body runs the scan. `action` plus `prompt` submits an Ask/Fix click and requires `ai.troubleshooting.ai_support.enabled`.
+The Kiali UI calls this through `POST /api/ai/troubleshooting`. An empty body runs the scan when AI is enabled. `action` plus `prompt` submits an Ask/Fix click and requires the same rights as chat.
 
 ---
 

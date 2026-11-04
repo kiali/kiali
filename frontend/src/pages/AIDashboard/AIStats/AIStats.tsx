@@ -21,6 +21,7 @@ import type { DurationInSeconds } from 'types/Common';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from 'components/Pf/PfColors';
+import { useContainerWidth } from '../aiDashboardUtils';
 
 const chartsStyle = kialiStyle({
   marginTop: PFSpacer.md
@@ -38,23 +39,6 @@ const donutBoxStyle = kialiStyle({
   minWidth: 0,
   width: '100%'
 });
-
-/** Returns the pixel width of a container div, updated via ResizeObserver. */
-const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
-  const [width, setWidth] = React.useState(0);
-  React.useEffect(() => {
-    if (!ref.current) return;
-    const initial = ref.current.offsetWidth || Math.floor(ref.current.getBoundingClientRect().width);
-    if (initial > 0) setWidth(initial);
-    const observer = new ResizeObserver(entries => {
-      const w = Math.floor(entries[0].contentRect.width);
-      if (w > 0) setWidth(w);
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-};
 
 export type AIStatsProps = {
   budget?: ChatSessionUsageBudget | null;
@@ -83,14 +67,21 @@ export const AIStats: React.FC<AIStatsProps> = ({
   const lineWidth = useContainerWidth(lineRef) || 400;
   const stackWidth = useContainerWidth(stackRef) || 400;
 
-  const [providersOptions, setProvidersOptions] = React.useState<string[]>(['All']);
-  const [providerVisible, setProviderVisible] = React.useState<string>('All');
-
-  React.useEffect(() => {
+  const providersOptions = React.useMemo(() => {
     const providers = (summary?.byProvider ?? []).map(p => p.provider).filter((p): p is string => !!p && p !== 'total');
-    setProvidersOptions(['All', ...providers]);
-    setProviderVisible('All');
+    return ['All', ...providers];
   }, [summary]);
+  const [selectedProvider, setSelectedProvider] = React.useState<string>('All');
+  const providerVisible = React.useMemo(() => {
+    if (selectedProvider === 'All') {
+      return 'All';
+    }
+    const valid = selectedProvider
+      .split(',')
+      .map(p => p.trim())
+      .filter(p => providersOptions.includes(p));
+    return valid.length > 0 ? valid.join(',') : 'All';
+  }, [providersOptions, selectedProvider]);
 
   const handleWindowChange = (newWindow: DurationInSeconds, newStep: DurationInSeconds): void => {
     onWindowChange?.(newWindow, newStep);
@@ -164,7 +155,7 @@ export const AIStats: React.FC<AIStatsProps> = ({
         <GridItem span={12} lg={8}>
           <AIKPI
             metric="totalTokens"
-            onProviderChange={setProviderVisible}
+            onProviderChange={setSelectedProvider}
             summary={summary ?? { byModel: [], byProvider: [] }}
             valueKind={valueKind}
           />
@@ -223,8 +214,8 @@ export const AIStats: React.FC<AIStatsProps> = ({
                     />
                     <ChartAxis dependentAxis showGrid tickFormat={(tick: number) => formatValue(tick)} />
                     <ChartGroup>
-                      {seriesData.map((points, i) => (
-                        <ChartLine key={i} data={points} />
+                      {seriesData.map(points => (
+                        <ChartLine key={points[0]?.name ?? 'line'} data={points} />
                       ))}
                     </ChartGroup>
                   </Chart>
@@ -260,8 +251,8 @@ export const AIStats: React.FC<AIStatsProps> = ({
                     <ChartAxis style={{ tickLabels: { angle: -30, fontSize: 8 } }} tickValues={stackTicks} />
                     <ChartAxis dependentAxis showGrid tickFormat={(tick: number) => formatValue(tick)} />
                     <ChartStack>
-                      {stackSeries.map((points, i) => (
-                        <ChartBar key={i} data={points} />
+                      {stackSeries.map(points => (
+                        <ChartBar key={points[0]?.name ?? 'bar'} data={points} />
                       ))}
                     </ChartStack>
                     {thresholdData.length > 0 && (

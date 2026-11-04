@@ -13,8 +13,9 @@ export type TroubleshootingListSummary = {
   warning: number;
 };
 
-// A parent with both hidden and visible subproblems is copied into both lists.
-// Parents with no subproblems stay in the visible list.
+// A hidden parent id hides that problem and every subproblem.
+// Otherwise a parent with both hidden and visible subproblems is copied into both lists.
+// Parents with no subproblems stay visible unless their own id is hidden.
 export const partitionTroubleshootingIssues = (
   issues: TroubleshootingIssue[],
   hiddenIds: readonly string[]
@@ -24,6 +25,11 @@ export const partitionTroubleshootingIssues = (
   const visible: TroubleshootingIssue[] = [];
 
   issues.forEach(issue => {
+    if (hiddenSet.has(issue.id)) {
+      hidden.push(issue);
+      return;
+    }
+
     const subProblems = issue.subProblems ?? [];
     if (subProblems.length === 0) {
       visible.push(issue);

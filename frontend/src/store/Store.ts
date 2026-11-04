@@ -34,11 +34,10 @@ import type { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
 import type {
   ChatInteractionMode,
   ChatResourceHealth,
+  PendingChatPrompt,
   ProviderAI,
-  TroubleshootingConversation,
   TroubleshootingIssue
 } from 'types/Chatbot';
-import type { ChatbotDisplayMode } from '@patternfly/chatbot';
 
 // Store is the Redux Data store
 
@@ -214,21 +213,13 @@ export interface AIState {
   troubleshooting: TroubleshootingAIState;
 }
 
-export interface TroubleshootingAIState extends AIRightView {
-  // Conversation shown in the drawer. Kept when the drawer closes so it can be restored.
-  activeConversationId?: string;
-  ai_support: AIRightView;
-  // Troubleshooting chats started from Analyze, newest first.
-  conversations: TroubleshootingConversation[];
-  drawerExpanded: boolean;
+export interface TroubleshootingAIState {
   error: string;
   // Subproblem ids the user chose to hide. Survives troubleshooting refetches.
   hiddenSubProblemIds: string[];
   issues: TroubleshootingIssue[];
   // True after the first scan attempt, including a failed one.
   loaded: boolean;
-  // 1 while the troubleshooting drawer is showing a conversation. Refresh waits until this is 0.
-  openAnalyses: number;
 }
 
 export interface AIRightView {
@@ -241,23 +232,21 @@ export interface ChatAIState {
   alwaysNavigate: boolean;
   chatContext: string;
   chatHistory: ImmutableList<ImmutableMap<string, unknown>>;
-  chatbotVisible: boolean;
   conversationID: string;
   defaultProvider: string;
-  displayMode: ChatbotDisplayMode;
   enabled: boolean;
   interactionMode: ChatInteractionMode;
   openTool: ImmutableMap<string, any>;
   // Prompt requested from outside the panel. A new nonce lets the same text be sent again.
-  pendingPrompt?: {
+  pendingPrompt?: PendingChatPrompt & {
     nonce: number;
-    text: string;
   };
   providers: ProviderAI[];
   query: string;
   resourceHealth?: ChatResourceHealth;
   selectedModel: string;
   selectedProvider: string;
+  visible: boolean;
 }
 
 // This defines the Kiali Global Application State

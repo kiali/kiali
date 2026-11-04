@@ -1,4 +1,4 @@
-import { Map as ImmutableMap } from 'immutable';
+import type { Map as ImmutableMap } from 'immutable';
 import * as React from 'react';
 import { Trans } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,7 +20,7 @@ import {
 } from '@patternfly/react-core';
 import { BanIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import { CopyAction } from './CopyAction';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { t } from 'utils/I18nUtils';
 

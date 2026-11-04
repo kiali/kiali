@@ -45,7 +45,8 @@ const (
 	labelUsername         = "username"
 	labelWithServiceNodes = "with_service_nodes"
 
-	// AIRequestChat and AIRequestTroubleshooting separate token series for the two AI endpoints.
+	// AIRequestChat and AIRequestTroubleshooting separate token series by chat interaction mode.
+	// Ask mode records chat. Troubleshoot mode records troubleshooting.
 	AIRequestChat            = "chat"
 	AIRequestTroubleshooting = "troubleshooting"
 )

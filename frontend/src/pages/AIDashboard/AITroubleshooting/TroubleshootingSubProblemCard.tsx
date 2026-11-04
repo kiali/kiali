@@ -5,18 +5,17 @@ import {
   EyeIcon,
   EyeSlashIcon,
   InfoCircleIcon,
-  OutlinedCommentsIcon,
-  OutlinedQuestionCircleIcon
+  OutlinedQuestionCircleIcon,
+  RhUiAiSearchIcon,
+  RhUiAiTroubleshootIcon
 } from '@patternfly/react-icons';
 import * as React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { isKiosk } from 'components/Kiosk/KioskActions';
 import { GetIstioObjectUrl } from 'components/Link/IstioObjectLink';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
-import { TroubleshootingAnalyze } from 'components/TroubleshootingAnalyze/TroubleshootingAnalyze';
-import type { KialiAppState } from 'store/Store';
+import { useAIInteraction } from 'hooks/aiInteraction';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontWeight } from 'styles/PfTypography';
@@ -126,19 +125,13 @@ const analysisQuery = (subProblem: TroubleshootingSubProblem, prompt: string): s
 };
 
 export const TroubleshootingSubProblemCard: React.FC<{ subProblem: TroubleshootingSubProblem }> = ({ subProblem }) => {
-  const dispatch = useDispatch();
+  const dispatch = useKialiDispatch();
+  const { askChat, canSendPrompt, chatAllowed, troubleshoot } = useAIInteraction();
   const actions = subProblem.suggestedActions ?? [];
   const suggestedPrompt = subProblem.suggestedPrompt;
   const impact = subProblem.impact;
 
-  const hidden = useSelector((state: KialiAppState) =>
-    state.ai.troubleshooting.hiddenSubProblemIds.includes(subProblem.id)
-  );
-  // Same gates that mount the chatbot and let this user send messages.
-  const chatAllowed = useSelector(
-    (state: KialiAppState) =>
-      state.ai.enabled && state.ai.chat.enabled && state.ai.chat.allowed && !isKiosk(state.globalState.kiosk)
-  );
+  const hidden = useKialiSelector(state => state.ai.troubleshooting.hiddenSubProblemIds.includes(subProblem.id));
 
   const handleToggleHidden = (): void => {
     dispatch(
@@ -151,28 +144,26 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
   const hideLabel = hidden ? t('Show problem') : t('Hide problem');
   const checks = subProblem.checks ?? [];
 
-  const askButton = (prompt: string, label: string): React.ReactNode => (
-    <Tooltip content={chatAllowed ? prompt : t('Chatbot is not allowed for this user')}>
-      <span>
-        <Button
-          aria-label={label}
-          data-test="ai-troubleshooting-ask-chatbot"
-          icon={<OutlinedCommentsIcon />}
-          isDisabled={!chatAllowed}
-          onClick={() => {
-            if (!chatAllowed) {
-              return;
-            }
-            dispatch(ChatAIActions.setPendingPrompt(prompt));
-          }}
-          size="sm"
-          variant="secondary"
-        >
-          {t('Ask chatbot')}
-        </Button>
-      </span>
-    </Tooltip>
-  );
+  const askButton = (prompt: string, label: string): React.ReactNode => {
+    const canAsk = canSendPrompt(prompt);
+    return (
+      <Tooltip content={chatAllowed ? prompt : t('Chatbot is not allowed for this user')}>
+        <span>
+          <Button
+            aria-label={label}
+            data-test="ai-troubleshooting-ask-chatbot"
+            icon={<RhUiAiSearchIcon />}
+            isDisabled={!canAsk}
+            onClick={() => askChat(prompt)}
+            size="sm"
+            variant="secondary"
+          >
+            {t('Ask chatbot')}
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  };
 
   const checkAskLabel = (check: TroubleshootingValidationCheck): string =>
     check.path
@@ -184,14 +175,34 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
 
   const analyzePrompt = (action: TroubleshootingSuggestedAction): string => action.prompt || suggestedPrompt || '';
 
-  const analyzeAction = (action: TroubleshootingSuggestedAction): React.ReactNode => (
-    <TroubleshootingAnalyze
-      description={subProblem.target}
-      problem={`[${subProblem.id}] ${subProblem.issue}`}
-      prompt={analysisQuery(subProblem, analyzePrompt(action))}
-      subProblem={subProblem}
-    />
-  );
+  const analyzeAction = (action: TroubleshootingSuggestedAction): React.ReactNode => {
+    const prompt = analysisQuery(subProblem, analyzePrompt(action));
+    const canOpen = canSendPrompt(prompt);
+
+    return (
+      <Tooltip content={canOpen ? prompt : t('AI troubleshooting is not available')}>
+        <span>
+          <Button
+            aria-label={t('Analyze')}
+            data-test="ai-troubleshooting-analyze"
+            icon={<RhUiAiTroubleshootIcon />}
+            isDisabled={!canOpen}
+            onClick={() =>
+              troubleshoot({
+                description: subProblem.target,
+                problem: `[${subProblem.id}] ${subProblem.issue}`,
+                prompt
+              })
+            }
+            size="sm"
+            variant="secondary"
+          >
+            {t('Analyze')}
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  };
 
   const showBody = Boolean(impact || askChatbotAction || checks.length > 0);
 

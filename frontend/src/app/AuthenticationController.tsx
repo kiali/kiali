@@ -219,7 +219,7 @@ class AuthenticationControllerComponent extends React.Component<
           enabled: false
         }
       });
-      if (aiConfig.troubleshooting?.enabled && aiConfig.troubleshooting.allowed) {
+      if (aiConfig.enabled) {
         void loadTroubleshootingScan(store.dispatch);
       }
       this.applyUIDefaults();

@@ -3,7 +3,6 @@ import type { Mock } from '@rstest/core';
 import { Provider } from 'react-redux';
 import { createStore, type Store } from 'redux';
 
-import { ChatAIActions } from 'actions/ChatAIActions';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { triggerRefresh } from 'hooks/refresh';
 import { AiTroubleshootingStateReducer, INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
@@ -110,37 +109,6 @@ describe('AITroubleshooting', () => {
     });
   });
 
-  it('skips troubleshooting refresh while an analysis modal is open and refreshes when it closes', async () => {
-    (API.getAITroubleshooting as Mock).mockResolvedValue({
-      data: [{ ...reviewsIssue, subProblems: [] }]
-    });
-
-    const { store } = renderTroubleshooting();
-
-    expect(await screen.findByText(/Reviews is unhealthy/)).toBeInTheDocument();
-    expect(API.getAITroubleshooting).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      store.dispatch(ChatAIActions.setTroubleshootingAnalysisOpen(true));
-    });
-
-    expect(screen.getByRole('button', { name: 'Refresh' })).toBeDisabled();
-
-    await act(async () => {
-      triggerRefresh();
-    });
-    expect(API.getAITroubleshooting).toHaveBeenCalledTimes(1);
-
-    await act(async () => {
-      store.dispatch(ChatAIActions.setTroubleshootingAnalysisOpen(false));
-    });
-
-    await waitFor(() => {
-      expect(API.getAITroubleshooting).toHaveBeenCalledTimes(2);
-    });
-    expect(screen.getByRole('button', { name: 'Refresh' })).toBeEnabled();
-  });
-
   it('splits a parent across the visible and hidden lists and keeps the hide after refetch', async () => {
     (API.getAITroubleshooting as Mock).mockResolvedValue({ data: [reviewsIssue] });
 
@@ -184,6 +152,32 @@ describe('AITroubleshooting', () => {
     });
     expect(screen.getByRole('button', { name: /Hidden problems: 1 problem detected/ })).toBeInTheDocument();
     expect(screen.getByText(/Visible subproblem/)).toBeInTheDocument();
+  });
+
+  it('hides a parent problem together with every subproblem', async () => {
+    (API.getAITroubleshooting as Mock).mockResolvedValue({ data: [reviewsIssue] });
+
+    renderTroubleshooting();
+
+    expect(await screen.findByText(/Visible subproblem/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Hide this problem' }));
+
+    const collapsed = await screen.findByRole('region', { hidden: true });
+    expect(collapsed).toHaveTextContent('Visible subproblem');
+    expect(collapsed).toHaveTextContent('Hidden subproblem');
+    expect(screen.getByRole('button', { name: /Hidden problems: 1 problem detected/ })).toBeInTheDocument();
+    const visibleIssue = screen.queryAllByTestId('ai-troubleshooting-issue').find(issue => !collapsed.contains(issue));
+    expect(visibleIssue).toBeUndefined();
+
+    fireEvent.click(screen.getByRole('button', { name: /Hidden problems: 1 problem detected/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show this problem' }));
+
+    expect(screen.getByText(/Visible subproblem/)).toBeInTheDocument();
+    expect(screen.getByText(/Hidden subproblem/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Hidden problems/ })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(readHiddenSubProblemIds()).toEqual([]);
+    });
   });
 
   it('puts a stored subproblem id into the hidden list on the next fetch', async () => {

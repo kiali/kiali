@@ -18,6 +18,7 @@ import { formatCost, formatTokensInMillions } from 'types/Chatbot';
 import type { AITimeSeriesEntry, ChatSessionUsageBudget, UsageValueKind } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { TOKEN_METRIC_COLORS } from './AIStats/colorPalette';
+import { useContainerWidth } from './aiDashboardUtils';
 
 const bulletHeight = 96;
 
@@ -47,28 +48,6 @@ const budgetValueStyle = kialiStyle({
 const tooltipBodyStyle = kialiStyle({
   textAlign: 'left'
 });
-
-const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
-  const [width, setWidth] = React.useState(0);
-  React.useEffect(() => {
-    if (!ref.current) {
-      return;
-    }
-    const initial = ref.current.offsetWidth || Math.floor(ref.current.getBoundingClientRect().width);
-    if (initial > 0) {
-      setWidth(initial);
-    }
-    const observer = new ResizeObserver(entries => {
-      const w = Math.floor(entries[0].contentRect.width);
-      if (w > 0) {
-        setWidth(w);
-      }
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-};
 
 export const budgetUsedPercent = (max: number, remaining: number): number => {
   if (max <= 0) {

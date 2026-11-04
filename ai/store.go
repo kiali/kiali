@@ -392,10 +392,7 @@ func LoadAIStoreConfig(cfg *config.Config) *AiStoreConfig { // Parse duration st
 		maxMemory = 1024
 	}
 
-	// Chat and troubleshooting share the in-memory session, so either feature
-	// keeps the store alive when store_config is enabled.
-	sessionStoreEnabled := cfg.AI.ChatAI.StoreConfig.Enabled &&
-		(cfg.AI.ChatAI.Enabled || (cfg.AI.Troubleshooting.Enabled && cfg.AI.Troubleshooting.AISupport.Enabled))
+	sessionStoreEnabled := cfg.AI.ChatAI.StoreConfig.Enabled && cfg.AI.ChatAI.Enabled
 
 	return &AiStoreConfig{
 		Enabled:           sessionStoreEnabled,

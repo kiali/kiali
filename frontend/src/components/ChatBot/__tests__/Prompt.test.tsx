@@ -17,6 +17,7 @@ rstest.mock('lodash-es', () => ({
 }));
 
 rstest.mock('services/Api', () => ({
+  deleteChatConversations: rstest.fn(),
   postChatAI: rstest.fn(),
   getChatPrompts: rstest.fn()
 }));
@@ -84,7 +85,7 @@ rstest.mock('@patternfly/chatbot', () => {
 const renderPrompt = (): ReturnType<typeof render> =>
   render(
     <Provider store={store}>
-      <Prompt scrollIntoView={rstest.fn()} />
+      <Prompt onSelectProviderModel={rstest.fn()} scrollIntoView={rstest.fn()} />
     </Provider>
   );
 
@@ -93,6 +94,8 @@ describe('Prompt error handling', () => {
     rstest.clearAllMocks();
     store.dispatch(ChatAIActions.setChatHistoryClear());
     store.dispatch(ChatAIActions.clearPendingPrompt());
+    store.dispatch(ChatAIActions.setConversationID({ id: undefined }));
+    store.dispatch(ChatAIActions.setInteractionMode({ interactionMode: 'ask' }));
     (API.getChatPrompts as Mock).mockResolvedValue({ data: [] });
   });
 
@@ -181,6 +184,124 @@ describe('Prompt error handling', () => {
       expect(userEntry?.get('text')).toBe('Why is productpage failing?');
       expect(store.getState().ai.chat.pendingPrompt).toBeUndefined();
       expect(API.postChatAI).toHaveBeenCalled();
+    });
+  });
+
+  it('switches the chatbot selector to ask when an ask prompt is requested', async () => {
+    (API.postChatAI as Mock).mockResolvedValue({
+      status: 200,
+      body: null
+    });
+
+    store.dispatch(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
+    renderPrompt();
+
+    await act(async () => {
+      store.dispatch(
+        ChatAIActions.setPendingPrompt({
+          interactionMode: 'ask',
+          text: 'Why is productpage failing?'
+        })
+      );
+    });
+
+    await waitFor(() => {
+      const history = store.getState().ai.chat.chatHistory;
+      const userEntry = history.get(0) as ImmutableMap<string, unknown> | undefined;
+      expect(userEntry?.get('who')).toBe('user');
+      expect(store.getState().ai.chat.interactionMode).toBe('ask');
+      expect(API.deleteChatConversations).not.toHaveBeenCalled();
+      expect(API.postChatAI).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          interaction_mode: 'ask',
+          query: expect.stringContaining('Why is productpage failing?')
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  it('starts a new conversation when the mode changes and a conversation already exists', async () => {
+    (API.postChatAI as Mock).mockResolvedValue({
+      status: 200,
+      body: null
+    });
+    (API.deleteChatConversations as Mock).mockResolvedValue({});
+
+    store.dispatch(ChatAIActions.setChatHistoryAdd({ entry: { who: 'user', text: 'earlier question' } }));
+    store.dispatch(ChatAIActions.setConversationID({ id: 'old-conversation' }));
+    store.dispatch(ChatAIActions.setInteractionMode({ interactionMode: 'troubleshoot' }));
+    renderPrompt();
+
+    await act(async () => {
+      store.dispatch(
+        ChatAIActions.setPendingPrompt({
+          interactionMode: 'ask',
+          text: 'Why is productpage failing?'
+        })
+      );
+    });
+
+    await waitFor(() => {
+      const history = store.getState().ai.chat.chatHistory;
+      const divider = history.get(0) as ImmutableMap<string, unknown> | undefined;
+      expect(divider?.get('who')).toBe('divider');
+      expect(divider?.get('mode')).toBe('ask');
+      expect(history.some(entry => entry?.get('text') === 'earlier question')).toBe(false);
+      expect(store.getState().ai.chat.interactionMode).toBe('ask');
+      expect(store.getState().ai.chat.conversationID).toBe('');
+      expect(API.deleteChatConversations).toHaveBeenCalledWith('old-conversation');
+      expect(API.postChatAI).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          conversation_id: '',
+          interaction_mode: 'ask',
+          query: expect.stringContaining('Why is productpage failing?')
+        }),
+        expect.anything()
+      );
+    });
+  });
+
+  it('explains a troubleshooting prompt with a bot message and sends it in troubleshoot mode', async () => {
+    (API.postChatAI as Mock).mockResolvedValue({
+      status: 200,
+      body: null
+    });
+
+    renderPrompt();
+
+    await act(async () => {
+      store.dispatch(
+        ChatAIActions.setPendingPrompt({
+          interactionMode: 'troubleshoot',
+          intro: 'We are going to try to fix productpage errors.',
+          text: 'Why is productpage failing?'
+        })
+      );
+    });
+
+    await waitFor(() => {
+      const history = store.getState().ai.chat.chatHistory;
+      const intro = history.get(0) as ImmutableMap<string, unknown> | undefined;
+      const userEntry = history.get(1) as ImmutableMap<string, unknown> | undefined;
+      expect(intro?.get('who')).toBe('ai');
+      expect(intro?.get('text')).toBe('We are going to try to fix productpage errors.');
+      expect(userEntry?.get('who')).toBe('user');
+      expect(userEntry?.get('hidden')).toBe(true);
+      expect(store.getState().ai.chat.interactionMode).toBe('troubleshoot');
+      expect(API.postChatAI).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          interaction_mode: 'troubleshoot',
+          query: expect.stringContaining('Why is productpage failing?')
+        }),
+        expect.anything()
+      );
     });
   });
 });

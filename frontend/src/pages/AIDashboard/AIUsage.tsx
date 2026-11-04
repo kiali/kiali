@@ -257,10 +257,10 @@ export const AIUsage: React.FC = () => {
     [requestKind]
   );
 
-  const initialLoad = React.useRef(true);
+  const initialLoadRef = React.useRef(true);
   React.useEffect(() => {
-    const showSpinner = initialLoad.current;
-    initialLoad.current = false;
+    const showSpinner = initialLoadRef.current;
+    initialLoadRef.current = false;
     void loadMetrics(showSpinner);
   }, [loadMetrics]);
 
@@ -326,11 +326,11 @@ export const AIUsage: React.FC = () => {
             metric.provider,
             metric.model,
             metric.request_count.toLocaleString(),
-            <TokensMillionsValue value={metric.prompt_tokens} />,
-            <TokensMillionsValue value={metric.completion_tokens} />,
-            <TokensMillionsValue value={metric.total_tokens} />,
-            <LocalTime time={metric.since} />,
-            <LocalTime time={metric.last_updated} />
+            <TokensMillionsValue key="prompt" value={metric.prompt_tokens} />,
+            <TokensMillionsValue key="completion" value={metric.completion_tokens} />,
+            <TokensMillionsValue key="total" value={metric.total_tokens} />,
+            <LocalTime key="since" time={metric.since} />,
+            <LocalTime key="updated" time={metric.last_updated} />
           ],
           key: `${request}-${metric.provider}-${metric.model}`
         });
