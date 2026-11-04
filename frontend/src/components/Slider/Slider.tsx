@@ -11,6 +11,19 @@ const capSliderValue = (value: number, min: number, valueCap?: number): number =
 
 const SLIDER_COMMIT_KEYS = new Set(['ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'End', 'Home']);
 
+const blurFocusedThumbOnOtherSliders = (wrapper: HTMLElement): void => {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !active.classList.contains('pf-v6-c-slider__thumb')) {
+    return;
+  }
+
+  const focusedSlider = active.closest('.pf-v6-c-slider');
+  const thisSlider = wrapper.querySelector('.pf-v6-c-slider');
+  if (focusedSlider && thisSlider && focusedSlider !== thisSlider) {
+    active.blur();
+  }
+};
+
 export type SliderProps = {
   className?: string;
   dataTest?: string;
@@ -57,6 +70,7 @@ export const Slider: React.FC<SliderProps> = ({
   const thumbTriggerRef = React.useRef<HTMLElement | null>(null);
   const commitListenerRef = React.useRef<(() => void) | null>(null);
   const pointerDownRef = React.useRef(false);
+  const pendingPfRemountRef = React.useRef(false);
   const [pfValueKey, setPfValueKey] = React.useState(0);
   const [railHovered, setRailHovered] = React.useState(false);
   const [thumbTooltipReady, setThumbTooltipReady] = React.useState(false);
@@ -68,6 +82,38 @@ export const Slider: React.FC<SliderProps> = ({
 
   const showRailTooltip = Boolean(hasTooltipOverThumb && tooltipContent);
 
+  const remountPfSlider = (): void => {
+    setThumbTooltipReady(false);
+    thumbTriggerRef.current = null;
+    setPfValueKey(prev => prev + 1);
+  };
+
+  React.useEffect(() => {
+    if (isDisabled) {
+      setRailHovered(false);
+    }
+  }, [isDisabled]);
+
+  React.useEffect(() => {
+    if (!showRailTooltip) {
+      return;
+    }
+
+    const onDocumentPointerDown = (event: PointerEvent): void => {
+      const wrapper = wrapperRef.current;
+      if (!wrapper) {
+        return;
+      }
+      if (!wrapper.contains(event.target as Node)) {
+        setRailHovered(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', onDocumentPointerDown, true);
+
+    return () => document.removeEventListener('pointerdown', onDocumentPointerDown, true);
+  }, [showRailTooltip]);
+
   React.useLayoutEffect(() => {
     if (!showRailTooltip || !wrapperRef.current) {
       thumbTriggerRef.current = null;
@@ -77,23 +123,42 @@ export const Slider: React.FC<SliderProps> = ({
     }
 
     const wrapper = wrapperRef.current;
-    const main = wrapper.querySelector<HTMLElement>('.pf-v6-c-slider__main');
 
-    if (!main) {
-      return;
-    }
+    const handleMouseOver = (event: MouseEvent): void => {
+      if (isDisabled) {
+        return;
+      }
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest('.pf-v6-c-slider__main')) {
+        return;
+      }
+      setRailHovered(true);
+    };
 
-    const onEnter = (): void => setRailHovered(true);
-    const onLeave = (): void => setRailHovered(false);
+    const handleMouseOut = (event: MouseEvent): void => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const main = target.closest('.pf-v6-c-slider__main');
+      if (!main || !wrapper.contains(main)) {
+        return;
+      }
+      const related = event.relatedTarget;
+      if (related instanceof Node && main.contains(related)) {
+        return;
+      }
+      setRailHovered(false);
+    };
 
-    main.addEventListener('mouseenter', onEnter);
-    main.addEventListener('mouseleave', onLeave);
+    wrapper.addEventListener('mouseover', handleMouseOver);
+    wrapper.addEventListener('mouseout', handleMouseOut);
 
     return () => {
-      main.removeEventListener('mouseenter', onEnter);
-      main.removeEventListener('mouseleave', onLeave);
+      wrapper.removeEventListener('mouseover', handleMouseOver);
+      wrapper.removeEventListener('mouseout', handleMouseOut);
     };
-  }, [showRailTooltip, id]);
+  }, [showRailTooltip, id, isDisabled]);
 
   React.useLayoutEffect(() => {
     if (!showRailTooltip || !wrapperRef.current) {
@@ -103,7 +168,18 @@ export const Slider: React.FC<SliderProps> = ({
     const thumb = wrapperRef.current.querySelector<HTMLElement>('.pf-v6-c-slider__thumb');
     thumbTriggerRef.current = thumb ?? null;
     setThumbTooltipReady(thumb !== null && thumb !== undefined);
-  }, [showRailTooltip, id, displayValue]);
+  }, [showRailTooltip, id, displayValue, pfValueKey]);
+
+  React.useLayoutEffect(() => {
+    if (!showRailTooltip || !thumbTooltipReady || !wrapperRef.current) {
+      return;
+    }
+
+    const main = wrapperRef.current.querySelector<HTMLElement>('.pf-v6-c-slider__main');
+    if (main?.matches(':hover')) {
+      setRailHovered(true);
+    }
+  }, [pfValueKey, showRailTooltip, thumbTooltipReady]);
 
   const applyThumbPosition = React.useCallback(
     (valueForPosition: number): void => {
@@ -161,23 +237,49 @@ export const Slider: React.FC<SliderProps> = ({
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!onValueCommit) {
+  const flushPendingPfRemount = (): void => {
+    if (pendingPfRemountRef.current) {
+      pendingPfRemountRef.current = false;
+      remountPfSlider();
+    }
+  };
+
+  React.useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
       return;
     }
 
+    const onPointerDownCapture = (event: PointerEvent): void => {
+      const target = event.target as HTMLElement;
+      if (target.closest('button') || target.closest('input')) {
+        return;
+      }
+      blurFocusedThumbOnOtherSliders(wrapper);
+      pointerDownRef.current = true;
+    };
+
+    wrapper.addEventListener('pointerdown', onPointerDownCapture, true);
+
+    return () => wrapper.removeEventListener('pointerdown', onPointerDownCapture, true);
+  }, [id]);
+
+  React.useEffect(() => {
     const clearPointerDown = (): void => {
       pointerDownRef.current = false;
+      flushPendingPfRemount();
     };
 
     window.addEventListener('pointerup', clearPointerDown, true);
     window.addEventListener('touchend', clearPointerDown, true);
+    window.addEventListener('pointercancel', clearPointerDown, true);
 
     return () => {
       window.removeEventListener('pointerup', clearPointerDown, true);
       window.removeEventListener('touchend', clearPointerDown, true);
+      window.removeEventListener('pointercancel', clearPointerDown, true);
     };
-  }, [onValueCommit]);
+  }, []);
 
   const handleRelease = (): void => {
     if (isDisabled) {
@@ -204,26 +306,19 @@ export const Slider: React.FC<SliderProps> = ({
     };
 
     const onPointerUp = (): void => onUp();
+    const onPointerCancel = (): void => {
+      clearCommitListener();
+    };
+
     window.addEventListener('pointerup', onPointerUp, true);
     window.addEventListener('touchend', onPointerUp, true);
+    window.addEventListener('pointercancel', onPointerCancel, true);
 
     commitListenerRef.current = (): void => {
       window.removeEventListener('pointerup', onPointerUp, true);
       window.removeEventListener('touchend', onPointerUp, true);
+      window.removeEventListener('pointercancel', onPointerCancel, true);
     };
-  };
-
-  const handleWrapperPointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (!onValueCommit || isDisabled) {
-      return;
-    }
-
-    const target = event.target as HTMLElement;
-    if (target.closest('button') || target.closest('input')) {
-      return;
-    }
-
-    pointerDownRef.current = true;
   };
 
   const handleChange = (event: SliderOnChangeEvent, newValue: number): void => {
@@ -243,7 +338,11 @@ export const Slider: React.FC<SliderProps> = ({
     if (capped !== newValue) {
       applyThumbPosition(capped);
       requestAnimationFrame(() => applyThumbPosition(capped));
-      setPfValueKey(prev => prev + 1);
+      if (pointerDownRef.current) {
+        pendingPfRemountRef.current = true;
+      } else {
+        remountPfSlider();
+      }
     }
   };
 
@@ -259,11 +358,11 @@ export const Slider: React.FC<SliderProps> = ({
       ref={wrapperRef}
       data-test={dataTest}
       className={classes(sliderStyle(maxRailWidth), className)}
-      onPointerDown={onValueCommit ? handleWrapperPointerDown : undefined}
       onKeyUp={onValueCommit ? handleWrapperKeyUp : undefined}
     >
       {showRailTooltip && thumbTooltipReady ? (
         <Tooltip
+          key={`${id ?? 'slider'}-${pfValueKey}`}
           triggerRef={thumbTriggerRef}
           trigger="manual"
           isVisible={railHovered}

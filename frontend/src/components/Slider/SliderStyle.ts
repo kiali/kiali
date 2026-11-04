@@ -3,7 +3,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 
 export const sliderRailFillCssVar = '--pf-v6-c-slider__rail-track--before--fill--BackgroundColor';
 
-const mirroredThumbRing = `0 0 0 2px var(--pf-t--global--background--color--primary--default), 0 0 0 3px ${PFColors.Mirroring}`;
+const mirroredThumbRing = `0 0 0 2px ${PFColors.BackgroundColor100}, 0 0 0 3px ${PFColors.Mirroring}`;
 
 const pfSliderInteractiveCursor = {
   '& .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__main, & .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__rail, & .pf-v6-c-slider:not(.pf-m-disabled) .pf-v6-c-slider__thumb':
