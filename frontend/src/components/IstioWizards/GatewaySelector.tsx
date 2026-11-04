@@ -231,7 +231,7 @@ export class GatewaySelector extends React.Component<Props, GatewaySelectorState
               />
             </FormGroup>
             {!this.state.newGateway && (
-              <FormGroup fieldId="selectGateway" label={t('Gateway')}>
+              <FormGroup fieldId="selectGateway" label="Gateway">
                 {this.props.gateways.length > 0 && (
                   <Select
                     id="selectGateway"

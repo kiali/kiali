@@ -53,7 +53,7 @@ export const legendData = (): GraphLegendItem[] => {
   const nodeBadges = [
     { label: t('Circuit Breaker'), icon: badgeCircuitBreakerImage },
     { label: t('Fault Injection'), icon: badgeFaultInjectionImage },
-    { label: t('Gateway'), icon: badgeGatewaysImage },
+    { label: 'Gateway', icon: badgeGatewaysImage },
     { label: t('Mirroring'), icon: badgeMirroringImage },
     { label: t('Missing Sidecar'), icon: badgeMissingSidecarImage },
     { label: t('Request Timeout'), icon: badgeRequestTimeoutImage },
@@ -64,7 +64,7 @@ export const legendData = (): GraphLegendItem[] => {
   ];
 
   if (serverConfig.ambientEnabled) {
-    nodeBadges.push({ label: t('Waypoint'), icon: badgeWaypointImage });
+    nodeBadges.push({ label: 'Waypoint', icon: badgeWaypointImage });
   }
 
   return [

@@ -356,7 +356,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && shouldShowEnvoyWorkloadTab(this.state.workload)) {
       const envoyTab = (
-        <Tab title={t('Envoy')} eventKey={10} key="Envoy">
+        <Tab title="Envoy" eventKey={10} key="Envoy">
           {this.state.workload && (
             <EnvoyDetails
               lastRefreshAt={this.props.lastRefreshAt}
@@ -373,7 +373,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && this.state.workload.isZtunnel) {
       const ztunnelTab = (
-        <Tab title={t('Ztunnel')} eventKey={11} key="Ztunnel">
+        <Tab title="Ztunnel" eventKey={11} key="Ztunnel">
           {this.state.workload && (
             <ZtunnelConfig
               lastRefreshAt={this.props.lastRefreshAt}
@@ -390,7 +390,7 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
 
     if (this.state.workload && this.state.workload.isWaypoint) {
       const waypointTab = (
-        <Tab title={t('Waypoint')} eventKey={12} key="Waypoint">
+        <Tab title="Waypoint" eventKey={12} key="Waypoint">
           {this.state.workload && <WaypointConfig workload={this.state.workload} />}
         </Tab>
       );

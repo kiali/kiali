@@ -17,17 +17,12 @@ import {
 } from '@patternfly/react-core';
 import { RenderContent } from '../../components/Nav/Page';
 import { kialiStyle } from 'styles/StyleUtils';
-import type { GatewayState} from './GatewayForm';
+import type { GatewayState } from './GatewayForm';
 import { GatewayForm, initGateway, isGatewayStateValid } from './GatewayForm';
-import type { K8sGatewayState} from './K8sGatewayForm';
+import type { K8sGatewayState } from './K8sGatewayForm';
 import { K8sGatewayForm, initK8sGateway, isK8sGatewayStateValid } from './K8sGatewayForm';
-import type {
-  K8sReferenceGrantState} from './K8sReferenceGrantForm';
-import {
-  K8sReferenceGrantForm,
-  initK8sReferenceGrant,
-  isK8sReferenceGrantStateValid
-} from './K8sReferenceGrantForm';
+import type { K8sReferenceGrantState } from './K8sReferenceGrantForm';
+import { K8sReferenceGrantForm, initK8sReferenceGrant, isK8sReferenceGrantStateValid } from './K8sReferenceGrantForm';
 import type { SidecarState } from './SidecarForm';
 import { SidecarForm, initSidecar, isSidecarStateValid } from './SidecarForm';
 import { Paths, serverConfig } from '../../config';
@@ -47,24 +42,19 @@ import {
   buildServiceEntry,
   buildSidecar
 } from '../../components/IstioWizards/WizardActions';
-import type {
-  AuthorizationPolicyState} from './AuthorizationPolicyForm';
+import type { AuthorizationPolicyState } from './AuthorizationPolicyForm';
 import {
   AuthorizationPolicyForm,
   initAuthorizationPolicy,
   isAuthorizationPolicyStateValid
 } from './AuthorizationPolicyForm';
-import type {
-  PeerAuthenticationState
-} from './PeerAuthenticationForm';
+import type { PeerAuthenticationState } from './PeerAuthenticationForm';
 import {
   PeerAuthenticationForm,
   initPeerAuthentication,
   isPeerAuthenticationStateValid
 } from './PeerAuthenticationForm';
-import type {
-  RequestAuthenticationState
-} from './RequestAuthenticationForm';
+import type { RequestAuthenticationState } from './RequestAuthenticationForm';
 import {
   RequestAuthenticationForm,
   initRequestAuthentication,
@@ -74,7 +64,7 @@ import { isValidK8SName } from '../../helpers/ValidationHelpers';
 import { DefaultSecondaryMasthead } from '../../components/DefaultSecondaryMasthead/DefaultSecondaryMasthead';
 import type { ServiceEntryState } from './ServiceEntryForm';
 import { ServiceEntryForm, initServiceEntry, isServiceEntryValid } from './ServiceEntryForm';
-import type { ConfigPreviewItem} from 'components/IstioConfigPreview/IstioConfigPreview';
+import type { ConfigPreviewItem } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { IstioConfigPreview } from 'components/IstioConfigPreview/IstioConfigPreview';
 import { isValid } from 'utils/Common';
 import { ClusterDropdown } from './ClusterDropdown';
@@ -338,7 +328,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
           break;
         case getGVKTypeString(gvkType.Gateway):
           items.push({
-            title: t('Gateway'),
+            title: 'Gateway',
             objectGVK: props.objectGVK,
             items: [buildGateway(annotations, labels, name, ns.name, gateway)]
           });
@@ -380,7 +370,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
           break;
         case getGVKTypeString(gvkType.Sidecar):
           items.push({
-            title: t('Sidecar'),
+            title: 'Sidecar',
             objectGVK: props.objectGVK,
             items: [buildSidecar(annotations, labels, name, ns.name, sidecar)]
           });
