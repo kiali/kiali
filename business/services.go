@@ -370,6 +370,7 @@ func (in *SvcService) buildKubernetesServices(ctx context.Context, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(in.conf, item.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
+			Annotations:            item.Annotations,
 			Labels:                 item.Labels,
 			Selector:               item.Spec.Selector,
 			IstioReferences:        svcReferences,
@@ -814,14 +815,21 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 						weight := canaryWeight
 						if role == models.WaypointRoleCanary && weight < 0 {
 							weight = models.ParseWaypointCanaryWeight(service.Annotations)
+							if weight <= 0 {
+								weight = models.ParseWaypointCanaryWeight(ns.Annotations)
+							}
+						}
+						if weight < 0 {
+							weight = 0
 						}
 						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{
+							CanaryWeight: weight,
+							Cluster:      cluster,
+							LabelType:    "service",
 							Name:         service.Name,
 							Namespace:    service.Namespace,
-							LabelType:    "service",
-							Cluster:      cluster,
+							RoleWeight:   waypointRoleDisplayWeightForNamespaceModel(role, service.Labels, service.Annotations, service.Namespace, &ns, weight),
 							WaypointRole: role,
-							CanaryWeight: weight,
 						})
 						servicesMap[key] = true
 					}
@@ -831,6 +839,72 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 	}
 
 	return serviceInfoList
+}
+
+// GatewayTrafficSplitFromEnrolledServices resolves canary split from service-level waypoint labels
+// that reference the gateway (used when namespace labels do not define the split).
+func (in *SvcService) GatewayTrafficSplitFromEnrolledServices(ctx context.Context, gatewayName, gatewayNamespace, cluster string) *models.WaypointTrafficSplit {
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return nil
+	}
+	userClient, ok := in.userClients[cluster]
+	if !ok {
+		return nil
+	}
+
+	labelSelectors := []struct {
+		useLabel          string
+		useNamespaceLabel string
+	}{
+		{config.WaypointUseLabel, config.WaypointUseNamespaceLabel},
+		{config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel},
+	}
+
+	candidates := make([]*models.WaypointTrafficSplit, 0)
+	seen := make(map[string]bool)
+
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	if err != nil {
+		return nil
+	}
+
+	for _, sel := range labelSelectors {
+		for _, ns := range namespaces {
+			svcList := &core_v1.ServiceList{}
+			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{sel.useLabel: gatewayName})); err != nil {
+				log.Infof("GatewayTrafficSplitFromEnrolledServices: error listing services: %s", err.Error())
+				continue
+			}
+			for _, item := range svcList.Items {
+				key := fmt.Sprintf("%s_%s_%s", item.Name, item.Namespace, cluster)
+				if seen[key] {
+					continue
+				}
+				if item.Namespace != gatewayNamespace && item.Labels[sel.useNamespaceLabel] != gatewayNamespace {
+					continue
+				}
+				seen[key] = true
+
+				nsModel, nsFound := in.kialiCache.GetNamespace(cluster, userClient.GetCacheKey(), item.Namespace)
+				if !nsFound {
+					continue
+				}
+				split := waypointTrafficSplitForService(&models.Service{
+					Cluster:     cluster,
+					Name:        item.Name,
+					Namespace:   item.Namespace,
+					Labels:      item.Labels,
+					Annotations: item.Annotations,
+				}, &nsModel)
+				if split != nil && split.Canary != nil && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
+					candidates = append(candidates, split)
+				}
+			}
+		}
+	}
+
+	return models.PickGatewayWaypointTrafficSplit(candidates)
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

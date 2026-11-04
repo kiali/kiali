@@ -185,7 +185,7 @@ export const WaypointTrafficSplitDonut: React.FC<Props> = ({
                   }}
                 />
                 <span className={legendLabelStyle}>
-                  {slice.role === 'primary' ? t('Primary waypoint') : t('Canary waypoint')}
+                  {slice.role === 'primary' ? t('Primary') : t('Canary')}
                   {` (${slice.share}%)`}
                 </span>
               </div>

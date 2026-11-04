@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -15,13 +16,14 @@ const (
 
 // WaypointTrafficSplit describes primary and optional canary waypoint gateways for a resource.
 type WaypointTrafficSplit struct {
+	Canary *WaypointBinding `json:"canary,omitempty"`
+	// CanaryWeight is the canary share of new mesh connections (0-100).
 	CanaryWeight int `json:"canaryWeight"`
 	// ConfigLevel is namespace or service (where the canary labels apply).
-	ConfigLevel string `json:"configLevel,omitempty"`
-	// Primary share of new mesh connections (0-100); remainder goes to canary when canary is set.
-	PrimaryWeight int              `json:"primaryWeight"`
-	Canary        *WaypointBinding `json:"canary,omitempty"`
-	Primary       WaypointBinding  `json:"primary"`
+	ConfigLevel string          `json:"configLevel,omitempty"`
+	Primary     WaypointBinding `json:"primary"`
+	// PrimaryWeight is the primary share of new mesh connections (0-100); remainder goes to canary when set.
+	PrimaryWeight int `json:"primaryWeight"`
 }
 
 // WaypointBinding references a waypoint gateway workload.
@@ -95,6 +97,53 @@ func ResolveWaypointTrafficSplit(cluster, defaultNamespace string, labels, annot
 		Role:      WaypointRoleCanary,
 	}
 	return split
+}
+
+// GatewayBindingMatches reports whether a gateway workload identity matches a binding.
+func GatewayBindingMatches(binding WaypointBinding, gatewayName, gatewayNamespace string) bool {
+	return binding.Name == gatewayName && binding.Namespace == gatewayNamespace
+}
+
+// GatewaySplitReferencesGateway is true when the split names the gateway as primary or canary.
+func GatewaySplitReferencesGateway(split *WaypointTrafficSplit, gatewayName, gatewayNamespace string) bool {
+	if split == nil {
+		return false
+	}
+	if GatewayBindingMatches(split.Primary, gatewayName, gatewayNamespace) {
+		return true
+	}
+	if split.Canary != nil && GatewayBindingMatches(*split.Canary, gatewayName, gatewayNamespace) {
+		return true
+	}
+	return false
+}
+
+func gatewaySplitScore(split *WaypointTrafficSplit) int {
+	if split == nil {
+		return 0
+	}
+	if split.Canary != nil && split.CanaryWeight > 0 {
+		return 3
+	}
+	if split.Canary != nil {
+		return 2
+	}
+	return 1
+}
+
+// PickGatewayWaypointTrafficSplit selects the richest split among namespace configs (deterministic).
+func PickGatewayWaypointTrafficSplit(candidates []*WaypointTrafficSplit) *WaypointTrafficSplit {
+	if len(candidates) == 0 {
+		return nil
+	}
+	sort.SliceStable(candidates, func(i, j int) bool {
+		si, sj := gatewaySplitScore(candidates[i]), gatewaySplitScore(candidates[j])
+		if si != sj {
+			return si > sj
+		}
+		return candidates[i].ConfigLevel < candidates[j].ConfigLevel
+	})
+	return candidates[0]
 }
 
 // WaypointCanaryNodeLabel returns graph label text for a waypoint gateway workload.

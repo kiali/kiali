@@ -121,6 +121,18 @@ describe('TargetPanelCommon', () => {
       expect(container.textContent).not.toContain('hidden-ns');
       expect(container.textContent).not.toContain('hidden-cluster');
     });
+
+    it('includes namespace in the title when includeNamespaceInName is true', () => {
+      const data = makeNodeData({
+        infraName: 'waypoint',
+        infraType: MeshInfraType.WAYPOINT,
+        namespace: 'waypoint-forworkload'
+      }) as any;
+      const { getByText } = render(<>{renderNodeHeader(data, { nameOnly: true, includeNamespaceInName: true })}</>, {
+        wrapper: Wrapper
+      });
+      expect(getByText('waypoint (waypoint-forworkload)')).toBeTruthy();
+    });
   });
 
   describe('renderHealthStatus', () => {

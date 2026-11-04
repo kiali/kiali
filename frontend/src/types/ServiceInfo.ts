@@ -25,11 +25,11 @@ export type ServiceId = {
 };
 
 export type ServiceInfo = {
-  canaryWeight?: number;
   cluster: string;
   labelType?: string;
   name: string;
   namespace: string;
+  roleWeight?: number;
   type?: string;
   waypointRole?: string;
 };

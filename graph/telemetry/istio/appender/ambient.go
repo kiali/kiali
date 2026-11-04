@@ -135,12 +135,25 @@ func (a AmbientAppender) setWaypointCanaryLabel(n *graph.Node) {
 	if n.Workload == "" {
 		return
 	}
-	key := graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)
-	an, ok := a.AccessibleNamespaces[key]
-	if !ok || an.Labels == nil {
-		return
+	candidates := make([]*models.WaypointTrafficSplit, 0)
+	for _, an := range a.AccessibleNamespaces {
+		if an == nil || an.Cluster != n.Cluster || an.Labels == nil {
+			continue
+		}
+		split := models.GatewayWaypointTrafficSplit(n.Cluster, an.Name, n.Workload, an.Labels, an.Annotations)
+		if split != nil && models.GatewaySplitReferencesGateway(split, n.Workload, n.Namespace) {
+			candidates = append(candidates, split)
+		}
 	}
-	split := models.ResolveWaypointTrafficSplit(n.Cluster, n.Namespace, an.Labels, an.Annotations, "namespace")
+	split := models.PickGatewayWaypointTrafficSplit(candidates)
+	if split == nil {
+		key := graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)
+		an, ok := a.AccessibleNamespaces[key]
+		if !ok || an.Labels == nil {
+			return
+		}
+		split = models.ResolveWaypointTrafficSplit(n.Cluster, n.Namespace, an.Labels, an.Annotations, "namespace")
+	}
 	if label := models.WaypointCanaryNodeLabel(n.Workload, n.Namespace, split); label != "" {
 		n.Metadata[graph.WaypointCanaryLabel] = label
 	}

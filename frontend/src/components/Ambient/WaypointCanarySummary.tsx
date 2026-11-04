@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { Content, ContentVariants, Label } from '@patternfly/react-core';
+import {
+  Content,
+  ContentVariants,
+  DescriptionList,
+  DescriptionListDescription,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  Label
+} from '@patternfly/react-core';
 import { KialiLink } from '../Link/KialiLink';
 import { isMultiCluster } from '../../config';
 import type { WaypointTrafficSplit } from '../../types/WaypointTraffic';
@@ -65,7 +73,13 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
   );
 };
 
-/** List items for workload/service info tooltip (properties card). */
+const waypointBindingLink = (namespace: string, name: string, cluster?: string): React.ReactNode => (
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: PFSpacer.xs }}>
+    <KialiLink to={waypointHref(namespace, name, cluster)}>{name}</KialiLink>
+  </span>
+);
+
+/** DescriptionList groups for service/workload Overview Details cards. */
 export const WaypointCanaryPropertyList: React.FC<{ split: WaypointTrafficSplit }> = ({ split }) => {
   if (!split?.canary) {
     return null;
@@ -76,29 +90,29 @@ export const WaypointCanaryPropertyList: React.FC<{ split: WaypointTrafficSplit 
 
   return (
     <>
-      <li data-test="waypoint-canary-summary">
-        <span>{t('Waypoint primary')}</span>
-        <div>
+      <DescriptionListGroup data-test="waypoint-canary-summary">
+        <DescriptionListTerm>{t('Waypoint primary')}</DescriptionListTerm>
+        <DescriptionListDescription>
           <Label color="blue" isCompact style={{ marginRight: PFSpacer.xs }}>
             {split.primaryWeight}%
           </Label>
-          <KialiLink to={waypointHref(primary.namespace, primary.name, primary.cluster)}>{primary.name}</KialiLink>
-        </div>
-      </li>
-      <li>
-        <span>{t('Waypoint canary')}</span>
-        <div>
+          {waypointBindingLink(primary.namespace, primary.name, primary.cluster)}
+        </DescriptionListDescription>
+      </DescriptionListGroup>
+      <DescriptionListGroup data-test="waypoint-canary-secondary">
+        <DescriptionListTerm>{t('Waypoint canary')}</DescriptionListTerm>
+        <DescriptionListDescription>
           <Label color="orange" isCompact style={{ marginRight: PFSpacer.xs }}>
             {split.canaryWeight}%
           </Label>
-          <KialiLink to={waypointHref(canary.namespace, canary.name, canary.cluster)}>{canary.name}</KialiLink>
-        </div>
-      </li>
+          {waypointBindingLink(canary.namespace, canary.name, canary.cluster)}
+        </DescriptionListDescription>
+      </DescriptionListGroup>
       {split.configLevel && (
-        <li>
-          <span>{t('Canary configuration')}</span>
-          <span>{t('{{level}} level', { level: split.configLevel })}</span>
-        </li>
+        <DescriptionListGroup data-test="waypoint-canary-config-level">
+          <DescriptionListTerm>{t('Canary configuration')}</DescriptionListTerm>
+          <DescriptionListDescription>{t('{{level}} level', { level: split.configLevel })}</DescriptionListDescription>
+        </DescriptionListGroup>
       )}
     </>
   );
@@ -130,16 +144,9 @@ export const NamespaceWaypointCanarySplit: React.FC<NamespaceWaypointCanarySplit
   }
 
   return (
-    <ul
-      style={{
-        fontSize: 'var(--graph-side-panel--font-size)',
-        listStyleType: 'none',
-        margin: `${PFSpacer.sm} 0 0`,
-        padding: 0
-      }}
-    >
+    <DescriptionList isCompact style={{ fontSize: 'var(--graph-side-panel--font-size)', marginTop: PFSpacer.sm }}>
       <WaypointCanaryPropertyList split={split} />
-    </ul>
+    </DescriptionList>
   );
 };
 
@@ -201,16 +208,5 @@ export const WaypointGatewayCanaryPanel: React.FC<WaypointGatewayCanaryPanelProp
       />
       <hr className={panelSectionHRStyle} />
     </>
-  );
-};
-
-export const WaypointCanaryGraphBadge: React.FC<{ split: WaypointTrafficSplit }> = ({ split }) => {
-  if (!split?.canary || split.canaryWeight <= 0) {
-    return null;
-  }
-  return (
-    <Label color="orange" isCompact data-test="waypoint-canary-graph-badge">
-      {t('Waypoint canary {{weight}}%', { weight: split.canaryWeight })}
-    </Label>
   );
 };

@@ -208,17 +208,20 @@ type WorkloadOverviews []*WorkloadListItem
 // WorkloadReferenceInfo holds the service information needed to create links to another workload.
 // Used, for example, to link services to Ambient waypoint proxies
 type WorkloadReferenceInfo struct {
+	// CanaryWeight is set when WaypointRole is canary (0-100).
+	CanaryWeight int `json:"canaryWeight,omitempty"`
+
 	// Cluster
 	Cluster string `json:"cluster"`
-
-	// Workload labels
-	Labels map[string]string `json:"labels"`
 
 	// LabelType in case of waypoint workloads,
 	// Where the label comes from (namespace, workload or service)
 	// required: false
 	// example: namespace
 	LabelType string `json:"labelType"`
+
+	// Workload labels
+	Labels map[string]string `json:"labels"`
 
 	// Name for the workload
 	// required: true
@@ -229,6 +232,9 @@ type WorkloadReferenceInfo struct {
 	// example: bookinfo
 	Namespace string `json:"namespace"`
 
+	// RoleWeight is the traffic share (0-100) shown for WaypointRole when canary split applies.
+	RoleWeight int `json:"roleWeight,omitempty"`
+
 	// In case of waypoints it can be service/workload
 	// required: false
 	// example: workload/service
@@ -236,9 +242,6 @@ type WorkloadReferenceInfo struct {
 
 	// WaypointRole is primary or canary when this reference is waypoint enrollment.
 	WaypointRole string `json:"waypointRole,omitempty"`
-
-	// CanaryWeight is set when WaypointRole is canary (0-100).
-	CanaryWeight int `json:"canaryWeight,omitempty"`
 }
 
 // Workload has the details of a workload

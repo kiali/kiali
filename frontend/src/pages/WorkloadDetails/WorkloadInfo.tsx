@@ -65,6 +65,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { WorkloadAnnotationsWizard } from '../../components/IstioWizards/WorkloadAnnotationsWizard';
+import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { Paths } from '../../config';
 import {
   buildAnnotationsDiff,
@@ -492,6 +493,10 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                   <DescriptionListTerm>Waypoint</DescriptionListTerm>
                   <DescriptionListDescription>{t('true')}</DescriptionListDescription>
                 </DescriptionListGroup>
+              )}
+
+              {workload.waypointTrafficSplit?.canary && (
+                <WaypointCanaryPropertyList split={workload.waypointTrafficSplit} />
               )}
 
               {!isGVKSupported(workload.gvk) && (
