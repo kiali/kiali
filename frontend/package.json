@@ -191,6 +191,13 @@
     "typescript-eslint": "^8.65.0"
   },
   "resolutions": {
+    "@patternfly/react-code-editor": "~6.7.0",
+    "@patternfly/react-core": "~6.7.0",
+    "@patternfly/react-icons": "~6.7.0",
+    "@patternfly/react-styles": "~6.7.0",
+    "@patternfly/react-table": "~6.7.0",
+    "@patternfly/react-tokens": "~6.7.0",
+    "@patternfly/react-topology": "~6.7.0",
     "dompurify": "^3.4.13",
     "fflate": "^0.8.3",
     "js-cookie": "^3.0.8",
