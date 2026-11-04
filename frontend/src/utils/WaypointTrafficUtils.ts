@@ -1,5 +1,6 @@
 import type { Namespace } from 'types/Namespace';
 import type { WaypointBinding, WaypointTrafficSplit } from 'types/WaypointTraffic';
+import { t } from 'utils/I18nUtils';
 
 export const enrichActiveNamespaces = (active: Namespace[], items?: Namespace[]): Namespace[] => {
   if (!items?.length) {
@@ -11,13 +12,28 @@ export const enrichActiveNamespaces = (active: Namespace[], items?: Namespace[])
   });
 };
 
-export const findNamespaceWaypointSplit = (
-  namespaces: Namespace[],
-  namespace: string,
-  cluster?: string
-): WaypointTrafficSplit | undefined => {
-  const ns = namespaces.find(n => n.name === namespace && (!cluster || !n.cluster || n.cluster === cluster));
-  return ns?.waypointTrafficSplit;
+const gatewayMatchesNode = (binding: WaypointBinding, workload: string, workloadNamespace: string): boolean => {
+  return binding.name === workload && binding.namespace === workloadNamespace;
+};
+
+const gatewaySplitScore = (split: WaypointTrafficSplit | undefined): number => {
+  if (!split?.canary) {
+    return split ? 1 : 0;
+  }
+  return split.canaryWeight > 0 ? 3 : 2;
+};
+
+export const pickBestGatewayWaypointSplit = (splits: WaypointTrafficSplit[]): WaypointTrafficSplit | undefined => {
+  if (!splits.length) {
+    return undefined;
+  }
+  return [...splits].sort((a, b) => {
+    const scoreDiff = gatewaySplitScore(b) - gatewaySplitScore(a);
+    if (scoreDiff !== 0) {
+      return scoreDiff;
+    }
+    return (a.configLevel ?? '').localeCompare(b.configLevel ?? '');
+  })[0];
 };
 
 /** Find a canary split that references this waypoint gateway (primary or canary). */
@@ -27,7 +43,9 @@ export const findGatewayWaypointSplit = (
   gatewayNamespace: string,
   cluster?: string
 ): WaypointTrafficSplit | undefined => {
-  for (const ns of namespaces) {
+  const matches: WaypointTrafficSplit[] = [];
+  const sorted = [...namespaces].sort((a, b) => a.name.localeCompare(b.name));
+  for (const ns of sorted) {
     if (cluster && ns.cluster && ns.cluster !== cluster) {
       continue;
     }
@@ -36,17 +54,14 @@ export const findGatewayWaypointSplit = (
       continue;
     }
     if (gatewayMatchesNode(split.primary, gatewayName, gatewayNamespace)) {
-      return split;
+      matches.push(split);
+      continue;
     }
     if (gatewayMatchesNode(split.canary, gatewayName, gatewayNamespace)) {
-      return split;
+      matches.push(split);
     }
   }
-  return undefined;
-};
-
-const gatewayMatchesNode = (binding: WaypointBinding, workload: string, workloadNamespace: string): boolean => {
-  return binding.name === workload && binding.namespace === workloadNamespace;
+  return pickBestGatewayWaypointSplit(matches);
 };
 
 /** Label text for PatternFly topology badge under waypoint node labels. */
@@ -60,16 +75,46 @@ export const waypointNodeCanaryBadge = (
     return undefined;
   }
   if (gatewayMatchesNode(split.canary, workload, workloadNamespace)) {
-    return includeWeight ? `Canary ${split.canaryWeight}%` : 'Canary';
+    return includeWeight ? t('Canary {{weight}}%', { weight: split.canaryWeight }) : t('Canary');
   }
   if (gatewayMatchesNode(split.primary, workload, workloadNamespace)) {
-    return includeWeight ? `Primary ${split.primaryWeight}%` : 'Primary';
+    return includeWeight ? t('Primary {{weight}}%', { weight: split.primaryWeight }) : t('Primary');
+  }
+  return undefined;
+};
+
+/** Enrolled-resource role column: "Canary (30%)" / "Primary (70%)". */
+export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined, roleWeight: number): string => {
+  if (roleWeight <= 0 || !waypointRole) {
+    return '';
+  }
+  if (waypointRole === 'canary') {
+    return `${t('Canary')} (${roleWeight}%)`;
+  }
+  if (waypointRole === 'primary') {
+    return `${t('Primary')} (${roleWeight}%)`;
+  }
+  return '';
+};
+
+const backendRoleLabel = (label: string, includeWeight: boolean): string | undefined => {
+  const canary = label.match(/^Canary(?: (\d+)%)?$/) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/);
+  if (canary) {
+    return includeWeight && canary[1] ? t('Canary {{weight}}%', { weight: Number(canary[1]) }) : t('Canary');
+  }
+  const primary = label.match(/^Primary(?: (\d+)%)?$/) ?? label.match(/^Waypoint role primary(?: (\d+)%)?$/);
+  if (primary) {
+    return includeWeight && primary[1] ? t('Primary {{weight}}%', { weight: Number(primary[1]) }) : t('Primary');
   }
   return undefined;
 };
 
 /** Backend may bake the weight into waypointCanaryLabel; strip it when Traffic Distribution is off. */
 export const formatWaypointCanaryLabel = (label: string, includeWeight: boolean): string => {
+  const translated = backendRoleLabel(label, includeWeight);
+  if (translated) {
+    return translated;
+  }
   return includeWeight ? label : label.replace(/\s+\d+%$/, '');
 };
 

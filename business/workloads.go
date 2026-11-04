@@ -600,6 +600,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		workload.SetServices(services)
 	}
 
+	in.decorateWorkloadWaypointTrafficSplit(ctx, workload)
+
 	wg.Wait()
 	workload.Runtimes = runtimes
 
@@ -2486,7 +2488,6 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			// If Ambient is enabled for pod, check if has any Waypoint proxy
 			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, w, false, waypoints)
-				w.WaypointTrafficSplit = waypointTrafficSplitForWorkload(ctx, in, w)
 				// TODO: Maybe user doesn't have permissions
 				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
 				for _, zPod := range ztunnelPods {
@@ -2515,7 +2516,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					w.WaypointServices = waypointServices
 				}
 			}
-			// Cheap namespace-cache lookup; available even when IncludeWaypoints is false (e.g. mesh map).
+			// Namespace-cache lookup for waypoint gateways (also when IncludeWaypoints is false, e.g. mesh map).
 			w.WaypointTrafficSplit = gatewayWaypointTrafficSplit(ctx, in, criteria.Cluster, w.Namespace, w.Name)
 		}
 
@@ -2893,41 +2894,56 @@ func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster,
 }
 
 func mergeWaypointWorkloadRefs(primary, canary []models.WorkloadReferenceInfo) []models.WorkloadReferenceInfo {
-	merged := make([]models.WorkloadReferenceInfo, 0, len(primary)+len(canary))
-	seen := map[string]bool{}
-	for _, w := range primary {
+	byKey := map[string]models.WorkloadReferenceInfo{}
+	order := make([]string, 0, len(primary)+len(canary))
+	add := func(w models.WorkloadReferenceInfo) {
 		key := fmt.Sprintf("%s_%s_%s", w.Cluster, w.Namespace, w.Name)
-		if !seen[key] {
-			merged = append(merged, w)
-			seen[key] = true
+		if existing, ok := byKey[key]; ok {
+			// Same resource enrolled as both roles: prefer canary when it carries a display weight.
+			if w.WaypointRole == models.WaypointRoleCanary && (w.RoleWeight > 0 || existing.RoleWeight == 0) {
+				byKey[key] = w
+			}
+			return
 		}
+		byKey[key] = w
+		order = append(order, key)
+	}
+	for _, w := range primary {
+		add(w)
 	}
 	for _, w := range canary {
-		key := fmt.Sprintf("%s_%s_%s", w.Cluster, w.Namespace, w.Name)
-		if !seen[key] {
-			merged = append(merged, w)
-			seen[key] = true
-		}
+		add(w)
+	}
+	merged := make([]models.WorkloadReferenceInfo, 0, len(order))
+	for _, key := range order {
+		merged = append(merged, byKey[key])
 	}
 	return merged
 }
 
 func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []models.ServiceReferenceInfo {
-	out := make([]models.ServiceReferenceInfo, 0, len(primary)+len(canary))
-	seen := map[string]bool{}
-	for _, s := range primary {
+	byKey := map[string]models.ServiceReferenceInfo{}
+	order := make([]string, 0, len(primary)+len(canary))
+	add := func(s models.ServiceReferenceInfo) {
 		key := fmt.Sprintf("%s_%s_%s", s.Cluster, s.Namespace, s.Name)
-		if !seen[key] {
-			out = append(out, s)
-			seen[key] = true
+		if existing, ok := byKey[key]; ok {
+			if s.WaypointRole == models.WaypointRoleCanary && (s.RoleWeight > 0 || existing.RoleWeight == 0) {
+				byKey[key] = s
+			}
+			return
 		}
+		byKey[key] = s
+		order = append(order, key)
+	}
+	for _, s := range primary {
+		add(s)
 	}
 	for _, s := range canary {
-		key := fmt.Sprintf("%s_%s_%s", s.Cluster, s.Namespace, s.Name)
-		if !seen[key] {
-			out = append(out, s)
-			seen[key] = true
-		}
+		add(s)
+	}
+	out := make([]models.ServiceReferenceInfo, 0, len(order))
+	for _, key := range order {
+		out = append(out, byKey[key])
 	}
 	return out
 }
@@ -3025,7 +3041,7 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 						}
 						key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
 						if !servicesMap[key] && service.Labels[config.WaypointUseLabel] != config.WaypointNone {
-							servicesList = append(servicesList, waypointEnrolledServiceRef(&service, labelType, role, canaryWeight))
+							servicesList = append(servicesList, waypointEnrolledServiceRef(&service, labelType, role, canaryWeight, labeledNamespaces))
 							servicesMap[key] = true
 						}
 					}
@@ -3048,25 +3064,45 @@ func waypointEnrolledWorkloadRef(wk *models.Workload, labelType, role string, ca
 			}
 		}
 	}
+	if weight < 0 {
+		weight = 0
+	}
 	return models.WorkloadReferenceInfo{
+		CanaryWeight: weight,
+		Cluster:      wk.Cluster,
+		LabelType:    labelType,
+		Labels:       wk.Labels,
 		Name:         wk.Name,
 		Namespace:    wk.Namespace,
-		Labels:       wk.Labels,
-		LabelType:    labelType,
-		Cluster:      wk.Cluster,
+		RoleWeight:   waypointRoleDisplayWeight(role, wk.Labels, wk.Annotations, wk.Namespace, labeledNamespaces, weight),
 		WaypointRole: role,
-		CanaryWeight: weight,
 	}
 }
 
-func waypointEnrolledServiceRef(service *models.ServiceOverview, labelType, role string, canaryWeight int) models.ServiceReferenceInfo {
+func waypointEnrolledServiceRef(service *models.ServiceOverview, labelType, role string, canaryWeight int, labeledNamespaces []core_v1.Namespace) models.ServiceReferenceInfo {
+	weight := canaryWeight
+	if role == models.WaypointRoleCanary && weight < 0 {
+		weight = models.ParseWaypointCanaryWeight(service.Annotations)
+		if weight <= 0 {
+			for _, ns := range labeledNamespaces {
+				if ns.Name == service.Namespace {
+					weight = models.ParseWaypointCanaryWeight(ns.Annotations)
+					break
+				}
+			}
+		}
+	}
+	if weight < 0 {
+		weight = 0
+	}
 	return models.ServiceReferenceInfo{
+		CanaryWeight: weight,
+		Cluster:      service.Cluster,
+		LabelType:    labelType,
 		Name:         service.Name,
 		Namespace:    service.Namespace,
-		LabelType:    labelType,
-		Cluster:      service.Cluster,
+		RoleWeight:   waypointRoleDisplayWeight(role, service.Labels, service.Annotations, service.Namespace, labeledNamespaces, weight),
 		WaypointRole: role,
-		CanaryWeight: canaryWeight,
 	}
 }
 

@@ -22,6 +22,7 @@ import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { WaypointType } from '../../types/Ambient';
 import { KialiIcon } from '../../config/KialiIcon';
 import { infoStyle } from '../../styles/IconStyle';
+import { formatEnrolledWaypointRoleLabel } from '../../utils/WaypointTrafficUtils';
 
 type WaypointWorkloadsProps = {
   type: string;
@@ -90,7 +91,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   const [sortBy, setSortBy] = React.useState(0);
   const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
 
-  const showRole = props.workloads?.some(w => w.waypointRole);
+  const showRole = props.workloads?.some(w => (w.roleWeight ?? 0) > 0);
   const columns = showRole ? [...baseColumns, roleColumn] : baseColumns;
 
   const compare = columns[sortBy].compare;
@@ -119,15 +120,8 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
     );
   };
 
-  const formatRole = (element: WaypointInfo): string => {
-    if (!element.waypointRole) {
-      return '';
-    }
-    if (element.waypointRole === 'canary' && element.canaryWeight) {
-      return `${element.waypointRole} (${element.canaryWeight}%)`;
-    }
-    return element.waypointRole;
-  };
+  const formatRole = (element: WaypointInfo): string =>
+    formatEnrolledWaypointRoleLabel(element.waypointRole, element.roleWeight ?? 0);
 
   const rows: IRow[] = sorted
     ? sorted.map(element => {

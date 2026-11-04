@@ -45,7 +45,6 @@ import { isMultiCluster, serverConfig } from '../../config';
 import { panelBodyStyle, panelHeadingStyle, panelStyle } from './SummaryPanelStyle';
 import { dicTypeToGVK, gvkType } from '../../types/IstioConfigList';
 import { renderWaypointLabel } from '../../components/Ambient/WaypointLabel';
-import { WaypointCanaryGraphBadge, WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import type { Node } from '@patternfly/react-topology';
 import { KialiLink } from 'components/Link/KialiLink';
 import { KialiPageLink } from 'components/Link/KialiPageLink';
@@ -260,33 +259,22 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
-              <div className={nodeInfoStyle}>
-                {renderBadgedLink(nodeData)}
-                {!nodeData.isWaypoint && renderHealth(nodeData.health)}
-              </div>
+              {nodeData.isWaypoint ? (
+                <>
+                  <div className={nodeInfoStyle}>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>
+                  {renderWaypointLabel('sm')}
+                </>
+              ) : (
+                <div className={nodeInfoStyle}>
+                  {renderBadgedLink(nodeData)}
+                  {renderHealth(nodeData.health)}
+                </div>
+              )}
             </span>
           </div>
 
           <div>
             {this.renderBadgeSummary(nodeData)}
-            {nodeData.isWaypoint && renderWaypointLabel('sm')}
-            {this.props.serviceDetails?.waypointTrafficSplit?.canary && (
-              <div className={nodeInfoStyle}>
-                <WaypointCanaryGraphBadge split={this.props.serviceDetails.waypointTrafficSplit} />
-              </div>
-            )}
-            {this.props.serviceDetails?.waypointTrafficSplit?.canary && (
-              <ul
-                style={{
-                  listStyleType: 'none',
-                  margin: '0.25rem 0 0',
-                  padding: 0,
-                  fontSize: 'var(--graph-side-panel--font-size)'
-                }}
-              >
-                <WaypointCanaryPropertyList split={this.props.serviceDetails.waypointTrafficSplit} />
-              </ul>
-            )}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div key={Date.now()}>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}

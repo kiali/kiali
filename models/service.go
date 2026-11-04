@@ -133,6 +133,9 @@ type (
 // ServiceReferenceInfo holds the service information needed to create links to another service.
 // Used, for example, to link services to Ambient waypoint proxies
 type ServiceReferenceInfo struct {
+	// CanaryWeight is set when WaypointRole is canary (0-100).
+	CanaryWeight int `json:"canaryWeight,omitempty"`
+
 	// Cluster
 	Cluster string `json:"cluster"`
 
@@ -151,9 +154,11 @@ type ServiceReferenceInfo struct {
 	// example: bookinfo
 	Namespace string `json:"namespace"`
 
-	WaypointRole string `json:"waypointRole,omitempty"`
+	// RoleWeight is the traffic share (0-100) shown for WaypointRole when canary split applies.
+	RoleWeight int `json:"roleWeight,omitempty"`
 
-	CanaryWeight int `json:"canaryWeight,omitempty"`
+	// WaypointRole is primary or canary when this reference is waypoint enrollment.
+	WaypointRole string `json:"waypointRole,omitempty"`
 }
 
 func (so *ServiceOverview) ParseToService() *Service {

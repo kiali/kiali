@@ -13,7 +13,6 @@ import { HealthIndicator } from '../../components/Health/HealthIndicator';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { DetailDescription } from '../../components/DetailDescription/DetailDescription';
 import { AmbientLabel, tooltipMsgType } from '../../components/Ambient/AmbientLabel';
-import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { infoStyle } from 'styles/IconStyle';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
@@ -119,10 +118,6 @@ export const ServiceDescription: React.FC<ServiceInfoDescriptionProps> = (props:
             <span>Version</span>
             {props.serviceDetails.service.resourceVersion}
           </li>
-        )}
-
-        {props.serviceDetails?.waypointTrafficSplit?.canary && (
-          <WaypointCanaryPropertyList split={props.serviceDetails.waypointTrafficSplit} />
         )}
 
         {props.serviceDetails?.service?.additionalDetails?.map((additionalItem, idx) => {

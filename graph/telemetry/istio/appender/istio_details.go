@@ -401,6 +401,9 @@ func decorateGateways(ctx context.Context, gwWorkloads []gatewayWorkload, worklo
 			}
 			node := workloadMap[graph.NodeKey{Cluster: w.Cluster, Namespace: w.Namespace, Name: w.Name}]
 			if node != nil {
+				if config.IsWaypoint(w.Labels) {
+					continue
+				}
 				// TODO: This doesn't work for the generic gateway chart.
 				switch w.Labels["operator.istio.io/component"] {
 				case "IngressGateways":
@@ -417,6 +420,9 @@ func decorateGateways(ctx context.Context, gwWorkloads []gatewayWorkload, worklo
 	}
 
 	for _, gw := range k8sGateways {
+		if strings.Contains(strings.ToLower(string(gw.Spec.GatewayClassName)), "waypoint") {
+			continue
+		}
 		sel := k8sGwSelector(gw.Name)
 
 		var matched []gatewayWorkload
@@ -436,6 +442,9 @@ func decorateGateways(ctx context.Context, gwWorkloads []gatewayWorkload, worklo
 		workload := matched[0]
 		node := workloadMap[graph.NodeKey{Cluster: workload.Cluster, Namespace: workload.Namespace, Name: workload.Name}]
 		if node != nil {
+			if config.IsWaypoint(workload.Labels) {
+				continue
+			}
 			var hostnames []string
 			for _, gwListener := range gw.Spec.Listeners {
 				if gwListener.Hostname != nil {

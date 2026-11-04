@@ -18,11 +18,11 @@ export type WorkloadId = {
 };
 
 export type WorkloadInfo = {
-  canaryWeight?: number;
   cluster: string;
   labelType?: string;
   name: string;
   namespace: string;
+  roleWeight?: number;
   type?: string;
   waypointRole?: string;
 };
