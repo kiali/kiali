@@ -25,7 +25,11 @@ env:
 jobs:
   integration_tests_frontend_playwright_ambient_multi_primary:
     name: Playwright tests (ambient multi-primary)
-    runs-on: ubuntu-latest
+    # ubuntu-latest moved to ubuntu-26.04 (host kernel 7.0) in early Nov 2026 and broke
+    # cross-cluster ambient (HBONE) traffic between the kind-east/kind-west clusters:
+    # waypoint L7 graph edges and ztunnel TCP cross-cluster telemetry never appear.
+    # Pin to ubuntu-24.04 until the setup is fixed for the newer runner image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
       CI: 1
