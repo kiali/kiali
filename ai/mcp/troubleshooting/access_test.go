@@ -16,15 +16,16 @@ func TestSuggestionsAllowed(t *testing.T) {
 	conf.Auth.Strategy = config.AuthStrategyAnonymous
 	ki := &mcputil.KialiInterface{Conf: conf, Request: httptest.NewRequest("POST", "/", nil)}
 
-	assert.False(t, suggestionsAllowed(ki), "AI support disabled")
+	assert.False(t, suggestionsAllowed(ki), "chat disabled")
 
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-	assert.True(t, suggestionsAllowed(ki), "empty ai_support.allowed_users allows every user")
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	assert.True(t, suggestionsAllowed(ki), "empty chat allowed_users allows every user")
 
-	conf.AI.Troubleshooting.AISupport.AllowedUsers = []string{"other"}
+	conf.AI.ChatAI.AllowedUsers = []string{"other"}
 	assert.False(t, suggestionsAllowed(ki), "anonymous is not in the allow list")
 
-	conf.AI.Troubleshooting.AISupport.AllowedUsers = []string{"anonymous"}
+	conf.AI.ChatAI.AllowedUsers = []string{"anonymous"}
 	assert.True(t, suggestionsAllowed(ki))
 }
 

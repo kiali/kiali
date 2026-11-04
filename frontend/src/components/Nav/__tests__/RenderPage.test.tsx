@@ -42,6 +42,8 @@ const router = createMemoryRouter([
         colorScheme={ColorScheme.LIGHT}
         showNotificationCenter={false}
         chatbotEnabled={false}
+        chatbotVisible={false}
+        hideNotificationCenter={() => {}}
         ai={false}
       />
     ),

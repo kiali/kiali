@@ -525,6 +525,12 @@ func TestChatAI_InvalidRequestBody(t *testing.T) {
 	assert.Equal(t, "Invalid request body", payload["error"])
 }
 
+func TestChatMetricRequest(t *testing.T) {
+	assert.Equal(t, internalmetrics.AIRequestChat, chatMetricRequest(""))
+	assert.Equal(t, internalmetrics.AIRequestChat, chatMetricRequest(aiTypes.ChatInteractionModeAsk))
+	assert.Equal(t, internalmetrics.AIRequestTroubleshooting, chatMetricRequest(aiTypes.ChatInteractionModeTroubleshoot))
+}
+
 func TestChatAI_ProviderNotFound(t *testing.T) {
 	conf := config.NewConfig()
 	conf.AI.ChatAI.Enabled = true
@@ -619,7 +625,6 @@ func setupTroubleshootingHandler(t *testing.T, enable bool) (http.Handler, *conf
 	t.Helper()
 	conf := config.NewConfig()
 	conf.AI.Enabled = enable
-	conf.AI.Troubleshooting.Enabled = enable
 
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
@@ -707,26 +712,11 @@ func TestTroubleshooting_ActionWithoutPrompt(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 }
 
-func TestTroubleshooting_UserNotAllowed(t *testing.T) {
+func TestTroubleshooting_ChatUserNotAllowed(t *testing.T) {
 	require := require.New(t)
 	handler, conf := setupTroubleshootingHandler(t, true)
-	conf.AI.Troubleshooting.AllowedUsers = []string{"kiali-admin"}
-	mr := mux.NewRouter()
-	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
-	ts := httptest.NewServer(mr)
-	t.Cleanup(ts.Close)
-
-	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", nil)
-	require.NoError(err)
-	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-}
-
-func TestTroubleshooting_AISupportUserNotAllowed(t *testing.T) {
-	require := require.New(t)
-	handler, conf := setupTroubleshootingHandler(t, true)
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-	conf.AI.Troubleshooting.AISupport.AllowedUsers = []string{"kiali-admin"}
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.AllowedUsers = []string{"kiali-admin"}
 	mr := mux.NewRouter()
 	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
 	ts := httptest.NewServer(mr)
@@ -739,7 +729,7 @@ func TestTroubleshooting_AISupportUserNotAllowed(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
-func TestTroubleshooting_ActionRequiresAISupport(t *testing.T) {
+func TestTroubleshooting_ActionRequiresChat(t *testing.T) {
 	require := require.New(t)
 	handler, _ := setupTroubleshootingHandler(t, true)
 	mr := mux.NewRouter()
@@ -754,10 +744,10 @@ func TestTroubleshooting_ActionRequiresAISupport(t *testing.T) {
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
-func TestTroubleshooting_AISupportNotImplemented(t *testing.T) {
+func TestTroubleshooting_ActionNotImplemented(t *testing.T) {
 	require := require.New(t)
 	handler, conf := setupTroubleshootingHandler(t, true)
-	conf.AI.Troubleshooting.AISupport.Enabled = true
+	conf.AI.ChatAI.Enabled = true
 	mr := mux.NewRouter()
 	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
 	ts := httptest.NewServer(mr)
@@ -768,149 +758,6 @@ func TestTroubleshooting_AISupportNotImplemented(t *testing.T) {
 	require.NoError(err)
 	t.Cleanup(func() { resp.Body.Close() })
 	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
-}
-
-func setupTroubleshootingChatHandler(t *testing.T, enable bool) (http.Handler, *config.Config) {
-	t.Helper()
-	handler, conf := setupTroubleshootingHandler(t, enable)
-	conf.Auth.Strategy = config.AuthStrategyAnonymous
-	return handler, conf
-}
-
-func TestTroubleshootingChat_Disabled(t *testing.T) {
-	require := require.New(t)
-	handler, _ := setupTroubleshootingChatHandler(t, false)
-	mr := mux.NewRouter()
-	mr.Handle("/api/ai/troubleshooting/chat", handler).Methods(http.MethodPost)
-	ts := httptest.NewServer(mr)
-	t.Cleanup(ts.Close)
-
-	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting/chat", "application/json", strings.NewReader(`{"query":"why"}`))
-	require.NoError(err)
-	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-}
-
-func TestTroubleshootingChat_UserNotAllowed(t *testing.T) {
-	require := require.New(t)
-	handler, conf := setupTroubleshootingChatHandler(t, true)
-	conf.AI.Troubleshooting.AllowedUsers = []string{"alice"}
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-	mr := mux.NewRouter()
-	mr.Handle("/api/ai/troubleshooting/chat", handler).Methods(http.MethodPost)
-	ts := httptest.NewServer(mr)
-	t.Cleanup(ts.Close)
-
-	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting/chat", "application/json", strings.NewReader(`{"query":"why"}`))
-	require.NoError(err)
-	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-}
-
-func TestTroubleshootingChat_RecordsSessionUsage(t *testing.T) {
-	fakeAI := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.ReadAll(r.Body)
-		w.Header().Set("Content-Type", "text/event-stream")
-		fmt.Fprint(w, openaiSSEResponse("The subset is missing"))
-	}))
-	t.Cleanup(fakeAI.Close)
-
-	conf := config.NewConfig()
-	conf.AI.Enabled = true
-	conf.Auth.Strategy = config.AuthStrategyAnonymous
-	conf.AI.Troubleshooting.Enabled = true
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-	conf.AI.Troubleshooting.AISupport.Provider = config.ProviderConfig{
-		Name:         "test-openai",
-		Type:         config.OpenAIProvider,
-		Config:       config.DefaultProviderConfigType,
-		Enabled:      true,
-		DefaultModel: "gpt-4o",
-		Key:          "test-api-key",
-		Models: []config.AIModel{{
-			Name:     "gpt-4o",
-			Model:    "gpt-4o",
-			Enabled:  true,
-			Endpoint: fakeAI.URL,
-		}},
-	}
-
-	k8s := kubetest.NewFakeK8sClient()
-	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
-	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
-	prom := &prometheustest.PromClientMock{}
-	promAPI := new(prometheustest.PromAPIMock)
-	prom.On("API").Return(promAPI)
-	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
-	require.NoError(t, err)
-	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
-	require.NoError(t, err)
-	aiStore := ai.NewAIStore(context.Background(), nil)
-
-	handler := WithFakeAuthInfo(conf, TroubleshootingChat(
-		conf,
-		kialiCache,
-		aiStore,
-		cf,
-		prom,
-		&business.FakeControlPlaneMonitor{},
-		func() tracing.ClientInterface { return &tracingtest.TracingClientMock{} },
-		grafanaSvc,
-		persesSvc,
-		discovery,
-	))
-
-	mr := mux.NewRouter()
-	mr.Handle("/api/ai/troubleshooting/chat", handler).Methods(http.MethodPost)
-	mr.Handle("/api/ai/usage/user", WithFakeAuthInfo(conf, AIUserUsage(conf, aiStore, prom)))
-	ts := httptest.NewServer(mr)
-	t.Cleanup(ts.Close)
-
-	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting/chat", "application/json", strings.NewReader(`{"query":"why is reviews failing"}`))
-	require.NoError(t, err)
-	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	_, err = io.ReadAll(resp.Body)
-	require.NoError(t, err)
-
-	metrics := aiStore.GetUsageMetrics("anonymous")
-	require.Len(t, metrics, 1)
-	assert.Equal(t, internalmetrics.AIRequestTroubleshooting, metrics[0].Request)
-	assert.Equal(t, "openai", metrics[0].Provider)
-	assert.Equal(t, "gpt-4o", metrics[0].Model)
-	assert.Equal(t, int64(10), metrics[0].TotalTokens)
-	assert.Equal(t, int64(1), metrics[0].RequestCount)
-
-	usageReq, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage/user?request=all", nil)
-	require.NoError(t, err)
-	usageResp, err := http.DefaultClient.Do(usageReq)
-	require.NoError(t, err)
-	t.Cleanup(func() { usageResp.Body.Close() })
-	assert.Equal(t, http.StatusOK, usageResp.StatusCode)
-
-	var got struct {
-		Session []aiTypes.UsageMetric `json:"session"`
-	}
-	require.NoError(t, json.NewDecoder(usageResp.Body).Decode(&got))
-	require.Len(t, got.Session, 1)
-	assert.Equal(t, internalmetrics.AIRequestTroubleshooting, got.Session[0].Request)
-	assert.Equal(t, int64(10), got.Session[0].TotalTokens)
-}
-
-func TestTroubleshootingChat_AISupportDisabled(t *testing.T) {
-	require := require.New(t)
-	handler, conf := setupTroubleshootingChatHandler(t, true)
-	conf.AI.Troubleshooting.AISupport.Enabled = false
-	mr := mux.NewRouter()
-	mr.Handle("/api/ai/troubleshooting/chat", handler).Methods(http.MethodPost)
-	ts := httptest.NewServer(mr)
-	t.Cleanup(ts.Close)
-
-	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting/chat", "application/json", strings.NewReader(`{"query":"why"}`))
-	require.NoError(err)
-	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
 func TestRecordAITokens_TroubleshootingRequestLabel(t *testing.T) {
@@ -3034,26 +2881,13 @@ func TestGetAIConfig_TokenAuthUsesKialiUser(t *testing.T) {
 	req.Header.Set("Kiali-User", kialiUser)
 	req = req.WithContext(authentication.SetAuthInfoContext(req.Context(), authInfo))
 
-	conf.AI.Troubleshooting.Enabled = true
-	conf.AI.Troubleshooting.AllowedUsers = []string{kialiUser}
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-	conf.AI.Troubleshooting.AISupport.AllowedUsers = []string{kialiUser}
-
 	got := getAIConfig(conf, req)
 	assert.True(t, got.ChatAI.Allowed)
-	assert.True(t, got.Troubleshooting.Enabled)
-	assert.True(t, got.Troubleshooting.Allowed)
-	assert.True(t, got.Troubleshooting.AI_support.Enabled)
-	assert.True(t, got.Troubleshooting.AI_support.Allowed)
 
 	withoutUser := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	withoutUser = withoutUser.WithContext(authentication.SetAuthInfoContext(withoutUser.Context(), authInfo))
 	denied := getAIConfig(conf, withoutUser)
 	assert.False(t, denied.ChatAI.Allowed)
-	assert.True(t, denied.Troubleshooting.Enabled)
-	assert.False(t, denied.Troubleshooting.Allowed)
-	assert.True(t, denied.Troubleshooting.AI_support.Enabled)
-	assert.False(t, denied.Troubleshooting.AI_support.Allowed)
 }
 
 func signKialiServiceAccountToken(t *testing.T, sub string) string {

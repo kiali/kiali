@@ -123,26 +123,10 @@ type ProviderConfig struct {
 
 // AIConfig defines configuration for the AI subsystem
 type AIConfig struct {
-	Enabled         bool                  `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	ChatAI          ChatAIConfig          `yaml:"chat,omitempty" json:"chat,omitempty"`
-	Metrics         bool                  `yaml:"metrics,omitempty" json:"metrics,omitempty"`
-	Consumption     AIConsumptionConfig   `yaml:"consumption,omitempty" json:"consumption,omitempty"`
-	Troubleshooting TroubleshootingConfig `yaml:"troubleshooting,omitempty" json:"troubleshooting,omitempty"`
-}
-
-// TroubleshootingConfig is the mesh-issue dashboard served by POST /api/ai/troubleshooting.
-type TroubleshootingConfig struct {
-	AISupport    TroubleshootingAISupport `yaml:"ai_support,omitempty" json:"ai_support,omitempty"`
-	AllowedUsers []string                 `yaml:"allowed_users,omitempty" json:"allowed_users,omitempty"`
-	Enabled      bool                     `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-}
-
-// TroubleshootingAISupport gates Ask/Fix actions on the troubleshooting dashboard.
-// The dashboard scan itself does not require this flag.
-type TroubleshootingAISupport struct {
-	Enabled      bool           `yaml:"enabled,omitempty" json:"enabled,omitempty"`
-	AllowedUsers []string       `yaml:"allowed_users,omitempty" json:"allowed_users,omitempty"`
-	Provider     ProviderConfig `yaml:"provider,omitempty" json:"provider,omitempty"`
+	ChatAI      ChatAIConfig        `yaml:"chat,omitempty" json:"chat,omitempty"`
+	Consumption AIConsumptionConfig `yaml:"consumption,omitempty" json:"consumption,omitempty"`
+	Enabled     bool                `yaml:"enabled,omitempty" json:"enabled,omitempty"`
+	Metrics     bool                `yaml:"metrics,omitempty" json:"metrics,omitempty"`
 }
 
 // AIConsumptionConfig defines configuration for the AI consumption subsystem
@@ -292,10 +276,6 @@ func NewAIConfig() AIConfig {
 		},
 		Enabled: false,
 		Metrics: false,
-		Troubleshooting: TroubleshootingConfig{
-			AllowedUsers: []string{},
-			Enabled:      false,
-		},
 	}
 }
 
@@ -437,26 +417,8 @@ func (conf *Config) ValidateAI() error {
 		if err := conf.AI.Consumption.ValidateConsumption(&conf.AI.ChatAI); err != nil {
 			return err
 		}
-		if err := conf.AI.Troubleshooting.AISupport.Validate(); err != nil {
-			return err
-		}
 	}
 	return nil
-}
-
-// Validate requires a usable provider when Ask/Fix support is enabled.
-// The provider must define at least one model, and default_model must be one of those models.
-func (support *TroubleshootingAISupport) Validate() error {
-	if !support.Enabled {
-		return nil
-	}
-	if strings.TrimSpace(support.Provider.Name) == "" {
-		return fmt.Errorf("ai.troubleshooting.ai_support.provider is required when ai.troubleshooting.ai_support.enabled is true")
-	}
-	if !support.Provider.Enabled {
-		return fmt.Errorf("ai.troubleshooting.ai_support.provider %q must be enabled", support.Provider.Name)
-	}
-	return validateProviderConfig("ai.troubleshooting.ai_support.provider", &support.Provider)
 }
 
 // migrateDeprecatedChatAI moves settings from the deprecated top-level "chat_ai" yaml

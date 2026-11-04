@@ -11,14 +11,13 @@ import (
 	"github.com/kiali/kiali/handlers/authentication"
 )
 
-// suggestionsAllowed reports whether sub-problem actions and the top-level ask/Fix
-// actions should be returned. AI support must be enabled, and the caller must be
-// in ai.troubleshooting.ai_support.allowed_users. An empty list allows every user.
+// suggestionsAllowed reports whether sub-problem actions should be returned.
+// The caller must be allowed to use chat. An empty chat allow list allows every user.
 func suggestionsAllowed(ki *mcputil.KialiInterface) bool {
-	if ki == nil || ki.Conf == nil || !ki.Conf.AI.Troubleshooting.AISupport.Enabled {
+	if ki == nil || ki.Conf == nil || !ki.Conf.AI.Enabled || !ki.Conf.AI.ChatAI.Enabled {
 		return false
 	}
-	return userAllowed(ki.Conf.AI.Troubleshooting.AISupport.AllowedUsers, requestUsername(ki))
+	return userAllowed(ki.Conf.AI.ChatAI.AllowedUsers, requestUsername(ki))
 }
 
 func userAllowed(allowed []string, username string) bool {

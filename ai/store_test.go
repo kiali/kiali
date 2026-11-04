@@ -227,19 +227,7 @@ func TestLoadAIStoreConfig_DisabledWhenChatAIDisabled(t *testing.T) {
 	conf.AI.ChatAI.StoreConfig.Enabled = true
 
 	storeCfg := LoadAIStoreConfig(conf)
-	assert.False(t, storeCfg.Enabled, "store should be disabled when ChatAI and troubleshooting AI support are disabled")
-}
-
-func TestLoadAIStoreConfig_EnabledForTroubleshootingOnly(t *testing.T) {
-	conf := config.NewConfig()
-	conf.AI.Enabled = true
-	conf.AI.ChatAI.Enabled = false
-	conf.AI.ChatAI.StoreConfig.Enabled = true
-	conf.AI.Troubleshooting.Enabled = true
-	conf.AI.Troubleshooting.AISupport.Enabled = true
-
-	storeCfg := LoadAIStoreConfig(conf)
-	assert.True(t, storeCfg.Enabled, "troubleshooting requests use the same session store as chat")
+	assert.False(t, storeCfg.Enabled, "store should be disabled when chat is disabled")
 }
 
 func TestLoadAIStoreConfig_InvalidMemoryUsesDefault(t *testing.T) {

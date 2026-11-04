@@ -5,8 +5,7 @@ import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { ChatbotDisplayMode } from '@patternfly/chatbot';
-import type { ChatAIConfig, TroubleshootingConversation } from 'types/Chatbot';
+import type { ChatAIConfig } from 'types/Chatbot';
 import { readHiddenSubProblemIds } from 'utils/TroubleshootingStorage';
 
 export const INITIAL_AI_RIGHT_VIEW_STATE: AIRightView = {
@@ -15,30 +14,19 @@ export const INITIAL_AI_RIGHT_VIEW_STATE: AIRightView = {
 };
 
 export const INITIAL_TROUBLESHOOTING_STATE: TroubleshootingAIState = {
-  ai_support: INITIAL_AI_RIGHT_VIEW_STATE,
-  allowed: false,
-  conversations: [],
-  drawerExpanded: false,
-  enabled: false,
   error: '',
   hiddenSubProblemIds: readHiddenSubProblemIds(),
   issues: [],
-  loaded: false,
-  openAnalyses: 0
+  loaded: false
 };
-
-/** @deprecated use INITIAL_AI_RIGHT_VIEW_STATE */
-export const INITIAL_AI_METRICS_STATE = INITIAL_AI_RIGHT_VIEW_STATE;
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   allowed: false,
   alwaysNavigate: false,
   chatContext: '',
   chatHistory: ImmutableList(),
-  chatbotVisible: false,
   conversationID: '',
   defaultProvider: '',
-  displayMode: ChatbotDisplayMode.default,
   enabled: false,
   interactionMode: 'ask',
   openTool: ImmutableMap({ chatEntryIndex: null, id: null }),
@@ -46,7 +34,8 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   query: '',
   resourceHealth: undefined,
   selectedModel: '',
-  selectedProvider: ''
+  selectedProvider: '',
+  visible: false
 };
 
 function applyAIChatConfig(state: ChatAIState, chat: ChatAIConfig): ChatAIState {
@@ -79,7 +68,7 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return updateState(state, { selectedModel: action.payload.model });
     }
     case getType(ChatAIActions.setChatbotVisible): {
-      return updateState(state, { chatbotVisible: action.payload.visible });
+      return updateState(state, { visible: action.payload.visible });
     }
     case getType(ChatAIActions.setChatHistoryClear): {
       return updateState(state, { chatHistory: ImmutableList(), chatContext: '' });
@@ -95,12 +84,19 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return updateState(state, { query: action.payload });
     }
     case getType(ChatAIActions.setPendingPrompt): {
+      const request = typeof action.payload === 'string' ? { text: action.payload } : action.payload;
       return updateState(state, {
         pendingPrompt: {
+          ...(request.interactionMode ? { interactionMode: request.interactionMode } : {}),
+          ...(request.intro ? { intro: request.intro } : {}),
           nonce: (state.pendingPrompt?.nonce ?? 0) + 1,
-          text: action.payload
-        }
+          text: request.text
+        },
+        visible: true
       });
+    }
+    case getType(ChatAIActions.setChatVisible): {
+      return updateState(state, { visible: action.payload });
     }
     case getType(ChatAIActions.clearPendingPrompt): {
       return updateState(state, { pendingPrompt: undefined });
@@ -130,9 +126,6 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setAlwaysNavigate): {
       return updateState(state, { alwaysNavigate: action.payload.alwaysNavigate });
-    }
-    case getType(ChatAIActions.setDisplayMode): {
-      return updateState(state, { displayMode: action.payload.displayMode });
     }
     case getType(ChatAIActions.setInteractionMode): {
       return updateState(state, { interactionMode: action.payload.interactionMode });
@@ -165,41 +158,25 @@ export const AiConsumptionStateReducer = (
   }
 };
 
-const withDrawer = (
-  state: TroubleshootingAIState,
-  drawerExpanded: boolean,
-  activeConversationId: string | undefined
-): TroubleshootingAIState => {
-  if (drawerExpanded === state.drawerExpanded && activeConversationId === state.activeConversationId) {
-    const openAnalyses = drawerExpanded && activeConversationId ? 1 : 0;
-    if (openAnalyses === state.openAnalyses) {
-      return state;
-    }
-  }
-  return updateState(state, {
-    activeConversationId,
-    drawerExpanded,
-    openAnalyses: drawerExpanded && activeConversationId ? 1 : 0
-  });
-};
+const visibilityIds = (id: string, subProblemIds: readonly string[]): string[] =>
+  [id, ...subProblemIds].filter(hiddenId => hiddenId.length > 0);
 
-const updateConversation = (
-  state: TroubleshootingAIState,
-  id: string,
-  updater: (conversation: TroubleshootingConversation) => TroubleshootingConversation
-): TroubleshootingAIState => {
-  const conversations = state.conversations ?? [];
-  const index = conversations.findIndex(conversation => conversation.id === id);
-  if (index < 0) {
-    return state;
-  }
-  const nextConversation = updater(conversations[index]);
-  if (nextConversation === conversations[index]) {
-    return state;
-  }
-  const nextConversations = conversations.slice();
-  nextConversations[index] = nextConversation;
-  return updateState(state, { conversations: nextConversations });
+const nextHiddenIds = (current: readonly string[], ids: readonly string[], hide: boolean): string[] | undefined => {
+  const hidden = new Set(current);
+  let changed = false;
+  ids.forEach(id => {
+    if (hide) {
+      if (!hidden.has(id)) {
+        hidden.add(id);
+        changed = true;
+      }
+      return;
+    }
+    if (hidden.delete(id)) {
+      changed = true;
+    }
+  });
+  return changed ? Array.from(hidden) : undefined;
 };
 
 export const AiTroubleshootingStateReducer = (
@@ -207,94 +184,32 @@ export const AiTroubleshootingStateReducer = (
   action: KialiAppAction
 ): TroubleshootingAIState => {
   switch (action.type) {
-    case getType(ChatAIActions.setAI): {
-      const troubleshooting = action.payload.troubleshooting ?? INITIAL_TROUBLESHOOTING_STATE;
-      // Hidden ids and conversations are session state, so a config refresh must not clear them.
-      return updateState(state, {
-        ai_support: {
-          allowed: troubleshooting.ai_support?.allowed ?? false,
-          enabled: troubleshooting.ai_support?.enabled ?? false
-        },
-        allowed: troubleshooting.allowed,
-        enabled: troubleshooting.enabled
-      });
-    }
-    case getType(ChatAIActions.setTroubleshootingAnalysisOpen): {
-      const openAnalyses = action.payload ? 1 : 0;
-      if (openAnalyses === state.openAnalyses) {
-        return state;
-      }
-      return updateState(state, { openAnalyses });
-    }
-    case getType(ChatAIActions.startTroubleshootingConversation): {
-      const conversations = state.conversations ?? [];
-      const id = `troubleshooting-${conversations.length + 1}`;
-      const conversation: TroubleshootingConversation = {
-        createdAt: Date.now(),
-        description: action.payload.description,
-        id,
-        messages: [],
-        problem: action.payload.problem,
-        prompt: action.payload.prompt,
-        subProblem: action.payload.subProblem
-      };
-      return updateState(state, {
-        activeConversationId: id,
-        conversations: [conversation, ...conversations],
-        drawerExpanded: true,
-        openAnalyses: 1
-      });
-    }
-    case getType(ChatAIActions.selectTroubleshootingConversation): {
-      const conversations = state.conversations ?? [];
-      if (!conversations.some(conversation => conversation.id === action.payload)) {
-        return state;
-      }
-      return withDrawer(state, true, action.payload);
-    }
-    case getType(ChatAIActions.setTroubleshootingDrawerExpanded):
-      return withDrawer(state, action.payload, state.activeConversationId);
-    case getType(ChatAIActions.toggleTroubleshootingDrawer):
-      return withDrawer(state, !state.drawerExpanded, state.activeConversationId);
-    case getType(ChatAIActions.addTroubleshootingConversationMessage):
-      return updateConversation(state, action.payload.conversationId, conversation => ({
-        ...conversation,
-        messages: [...conversation.messages, action.payload.message]
-      }));
-    case getType(ChatAIActions.patchTroubleshootingConversationMessage):
-      return updateConversation(state, action.payload.conversationId, conversation => {
-        const messages = conversation.messages.map(message =>
-          message.id === action.payload.messageId ? { ...message, ...action.payload.patch } : message
-        );
-        const changed = messages.some((message, index) => message !== conversation.messages[index]);
-        return changed ? { ...conversation, messages } : conversation;
-      });
-    case getType(ChatAIActions.setTroubleshootingBackendConversationId):
-      return updateConversation(state, action.payload.conversationId, conversation =>
-        conversation.backendConversationId === action.payload.backendConversationId
-          ? conversation
-          : { ...conversation, backendConversationId: action.payload.backendConversationId }
-      );
-    case getType(ChatAIActions.finishTroubleshootingConversationStream):
-      return updateConversation(state, action.payload, conversation => {
-        if (!conversation.messages.some(message => message.working)) {
-          return conversation;
-        }
-        return {
-          ...conversation,
-          messages: conversation.messages.map(message => (message.working ? { ...message, working: false } : message))
-        };
-      });
     case getType(ChatAIActions.setTroubleshootingIssues):
       return updateState(state, { error: '', issues: action.payload ?? [], loaded: true });
     case getType(ChatAIActions.setTroubleshootingError):
       return updateState(state, { error: action.payload, loaded: true });
+    case getType(ChatAIActions.hideTroubleshootingIssue): {
+      const hiddenSubProblemIds = nextHiddenIds(
+        state.hiddenSubProblemIds ?? [],
+        visibilityIds(action.payload.id, action.payload.subProblemIds),
+        true
+      );
+      return hiddenSubProblemIds ? updateState(state, { hiddenSubProblemIds }) : state;
+    }
     case getType(ChatAIActions.hideTroubleshootingSubProblem): {
       const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
       if (hiddenSubProblemIds.includes(action.payload)) {
         return state;
       }
       return updateState(state, { hiddenSubProblemIds: [...hiddenSubProblemIds, action.payload] });
+    }
+    case getType(ChatAIActions.showTroubleshootingIssue): {
+      const hiddenSubProblemIds = nextHiddenIds(
+        state.hiddenSubProblemIds ?? [],
+        visibilityIds(action.payload.id, action.payload.subProblemIds),
+        false
+      );
+      return hiddenSubProblemIds ? updateState(state, { hiddenSubProblemIds }) : state;
     }
     case getType(ChatAIActions.showTroubleshootingSubProblem): {
       const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
