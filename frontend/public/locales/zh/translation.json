@@ -1115,8 +1115,6 @@
   "Scheme value...": "方案值...",
   "Secret Name: {{secretName}}": "秘钥名称",
   "Security": "安全",
-  "See the {{count}} problems in dashboard_other": "See the {{count}} problems in dashboard",
-  "See the 1 problem in dashboard": "See the 1 problem in dashboard",
   "Select a namespace to view {{type}}.": "选择namespace以查看{{type}}。",
   "Select a time to troubleshoot health. Use arrow keys to move, then press Enter.": "选择要排查健康状态问题的时间。使用方向键移动，然后按 Enter 键。",
   "Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.": "选择工作负载、服务或应用程序图形视图。应用程序视图用于版本控制，它依赖于应用程序和版本标签。工作负载和服务图分别提供物理视图和逻辑视图。",

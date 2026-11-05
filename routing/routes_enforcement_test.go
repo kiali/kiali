@@ -126,6 +126,7 @@ var exemptRoutes = map[string]string{
 	"TestHealthStatusMetrics":   "health-status entries filtered by the accessible set (cluster-aware); body-checked in handlers tests",
 	"ChatAI":                    "MCP tools invoked by the assistant gate themselves",
 	"ChatMCP":                   "MCP tools gate via mcputil.ValidateNamespaceAccess / CheckTraceAccess",
+	"Troubleshooting":           "MCP tools invoked by the troubleshooting scan gate themselves",
 }
 
 // noNamespaceDataRoutes serve no tenant namespace data at all.
