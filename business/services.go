@@ -785,14 +785,17 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 
 // ListWaypointCapturedServices returns services that use the gateway as primary or canary waypoint.
 func (in *SvcService) ListWaypointCapturedServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
-	primary := in.ListWaypointServices(ctx, name, namespace, cluster, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary, 0)
-	canary := in.ListWaypointServices(ctx, name, namespace, cluster, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary, -1)
+	primary := in.ListWaypointServices(ctx, name, namespace, cluster, models.WaypointRolePrimary)
+	canary := in.ListWaypointServices(ctx, name, namespace, cluster, models.WaypointRoleCanary)
 	return mergeWaypointServiceRefs(primary, canary)
 }
 
-// ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
-// It should return just one (If there are more, that might be a validation error)
-func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster, useLabel, useNamespaceLabel, role string, canaryWeight int) []models.ServiceReferenceInfo {
+// ListWaypointServices returns services explicitly enrolled with the gateway in the requested role.
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster, role string) []models.ServiceReferenceInfo {
+	useLabel := config.WaypointUseLabel
+	if role == models.WaypointRoleCanary {
+		useLabel = config.WaypointCanaryUseLabel
+	}
 	var serviceInfoList []models.ServiceReferenceInfo
 	// This is to verify there is no duplicated services
 	servicesMap := make(map[string]bool)
@@ -811,26 +814,18 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 			} else {
 				for _, service := range svcList.Items {
 					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
-					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[useNamespaceLabel] == namespace) {
-						weight := canaryWeight
-						if role == models.WaypointRoleCanary && weight < 0 {
-							weight = models.ParseWaypointCanaryWeight(service.Annotations)
-							if weight <= 0 {
-								weight = models.ParseWaypointCanaryWeight(ns.Annotations)
-							}
-						}
-						if weight < 0 {
-							weight = 0
-						}
-						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{
-							CanaryWeight: weight,
-							Cluster:      cluster,
-							LabelType:    "service",
-							Name:         service.Name,
-							Namespace:    service.Namespace,
-							RoleWeight:   waypointRoleDisplayWeightForNamespaceModel(role, service.Labels, service.Annotations, service.Namespace, &ns, weight),
-							WaypointRole: role,
-						})
+					if servicesMap[key] {
+						continue
+					}
+					ref := waypointEnrolledServiceRef(&models.Service{
+						Annotations: service.Annotations,
+						Cluster:     cluster,
+						Labels:      service.Labels,
+						Name:        service.Name,
+						Namespace:   service.Namespace,
+					}, &ns, name, namespace, role)
+					if ref != nil {
+						serviceInfoList = append(serviceInfoList, *ref)
 						servicesMap[key] = true
 					}
 				}

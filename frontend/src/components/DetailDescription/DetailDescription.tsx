@@ -51,7 +51,7 @@ const itemStyle = kialiStyle({
 });
 
 const formatWaypointRole = (waypoint: WorkloadInfo): string =>
-  formatEnrolledWaypointRoleLabel(waypoint.waypointRole, waypoint.roleWeight ?? 0);
+  formatEnrolledWaypointRoleLabel(waypoint.waypointRole, waypoint.roleWeight);
 
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWaypointItem = (waypoint: WorkloadInfo): React.ReactNode => {

@@ -232,8 +232,8 @@ type WorkloadReferenceInfo struct {
 	// example: bookinfo
 	Namespace string `json:"namespace"`
 
-	// RoleWeight is the traffic share (0-100) shown for WaypointRole when canary split applies.
-	RoleWeight int `json:"roleWeight,omitempty"`
+	// RoleWeight is nil without a canary split; zero is a valid configured share.
+	RoleWeight *int `json:"roleWeight,omitempty"`
 
 	// In case of waypoints it can be service/workload
 	// required: false

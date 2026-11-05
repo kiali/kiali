@@ -91,7 +91,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   const [sortBy, setSortBy] = React.useState(0);
   const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
 
-  const showRole = props.workloads?.some(w => (w.roleWeight ?? 0) > 0);
+  const showRole = props.workloads?.some(w => w.roleWeight !== undefined);
   const columns = showRole ? [...baseColumns, roleColumn] : baseColumns;
 
   const compare = columns[sortBy].compare;
@@ -121,7 +121,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
   };
 
   const formatRole = (element: WaypointInfo): string =>
-    formatEnrolledWaypointRoleLabel(element.waypointRole, element.roleWeight ?? 0);
+    formatEnrolledWaypointRoleLabel(element.waypointRole, element.roleWeight);
 
   const rows: IRow[] = sorted
     ? sorted.map(element => {
