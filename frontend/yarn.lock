@@ -1735,6 +1735,7 @@ __metadata:
     cypress: "npm:^15.16.0"
     cypress-multi-reporters: "npm:^2.0.5"
     deep-freeze: "npm:0.0.1"
+    dompurify: "npm:^3.4.17"
     esbuild: "npm:^0.27.7"
     eslint: "npm:^10.8.0"
     eslint-plugin-cypress: "npm:^6.4.3"
@@ -6410,15 +6411,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.4.13":
-  version: 3.4.14
-  resolution: "dompurify@npm:3.4.14"
+"dompurify@npm:^3.4.17":
+  version: 3.4.17
+  resolution: "dompurify@npm:3.4.17"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c0/feca07ece3805d1d4e33e847c11196888dcdc97b2afe0bb8a2fd11de4e62bfdc434c2403ee3fb3c7771e903325041d062febec6c5518796391fdc0419a90a873
+  checksum: 10c0/6a12251ef5e700fc91b6d96d33e9f8b5fd590c55276f632cf42d182c5808e9f48d5bef435ab26eac235dfcc05ed8fe95e1c8308dcc502bf1050e561f14d0361a
   languageName: node
   linkType: hard
 
