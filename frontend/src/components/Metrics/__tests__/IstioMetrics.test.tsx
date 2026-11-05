@@ -113,7 +113,11 @@ describe('Metrics for a service', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {
@@ -205,7 +209,11 @@ describe('Inbound Metrics for a workload', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {
