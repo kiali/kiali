@@ -4,9 +4,6 @@ import (
 	"context"
 	"sort"
 
-	core_v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
@@ -139,13 +136,13 @@ func appendCanaryWaypointRef(workloadsList []models.WorkloadReferenceInfo, split
 	for _, ww := range waypoints {
 		if ww.Name == split.Canary.Name && ww.Namespace == split.Canary.Namespace && ww.Cluster == split.Canary.Cluster {
 			workloadsList = append(workloadsList, models.WorkloadReferenceInfo{
+				CanaryWeight: split.CanaryWeight,
+				Cluster:      split.Canary.Cluster,
 				Name:         split.Canary.Name,
 				Namespace:    split.Canary.Namespace,
-				Cluster:      split.Canary.Cluster,
+				RoleWeight:   &split.CanaryWeight,
 				Type:         ww.WaypointFor(),
 				WaypointRole: models.WaypointRoleCanary,
-				CanaryWeight: split.CanaryWeight,
-				RoleWeight:   split.CanaryWeight,
 			})
 			break
 		}
@@ -153,56 +150,40 @@ func appendCanaryWaypointRef(workloadsList []models.WorkloadReferenceInfo, split
 	return workloadsList
 }
 
-// waypointRoleDisplayWeight returns the traffic share (0-100) to show for an enrolled resource role, or 0 when no canary split applies.
-func waypointRoleDisplayWeight(role string, resLabels map[string]string, resAnn map[string]string, resNs string, labeledNs []core_v1.Namespace, passedCanaryWeight int) int {
-	canaryW := passedCanaryWeight
+// A nil weight keeps primary-only enrollment distinct from either endpoint of a canary rollout.
+func waypointRoleWeight(split *models.WaypointTrafficSplit, role string) *int {
+	if split == nil || split.Canary == nil {
+		return nil
+	}
 	if role == models.WaypointRoleCanary {
-		if canaryW < 0 {
-			canaryW = models.ParseWaypointCanaryWeight(resAnn)
-		}
-		if canaryW <= 0 {
-			for _, ns := range labeledNs {
-				if ns.Name == resNs {
-					canaryW = models.ParseWaypointCanaryWeight(ns.Annotations)
-					break
-				}
-			}
-		}
-		if canaryW > 0 {
-			return canaryW
-		}
-		return 0
+		return &split.CanaryWeight
 	}
-	for _, ns := range labeledNs {
-		if ns.Name == resNs {
-			if ns.Labels[config.WaypointCanaryUseLabel] != "" {
-				cw := models.ParseWaypointCanaryWeight(ns.Annotations)
-				if cw > 0 {
-					return 100 - cw
-				}
-			}
-			break
-		}
-	}
-	if resLabels != nil && resLabels[config.WaypointCanaryUseLabel] != "" {
-		cw := models.ParseWaypointCanaryWeight(resAnn)
-		if cw > 0 {
-			return 100 - cw
-		}
-	}
-	return 0
+	return &split.PrimaryWeight
 }
 
-func waypointRoleDisplayWeightForNamespaceModel(role string, resLabels, resAnn map[string]string, resNs string, ns *models.Namespace, passedCanaryWeight int) int {
-	if ns == nil {
-		return waypointRoleDisplayWeight(role, resLabels, resAnn, resNs, nil, passedCanaryWeight)
+// Enrollment and displayed weights must use the same effective configuration as service details.
+func waypointEnrolledServiceRef(service *models.Service, ns *models.Namespace, gatewayName, gatewayNamespace, role string) *models.ServiceReferenceInfo {
+	split := waypointTrafficSplitForService(service, ns)
+	if split == nil {
+		return nil
 	}
-	kubeNs := core_v1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        ns.Name,
-			Labels:      ns.Labels,
-			Annotations: ns.Annotations,
-		},
+	binding := &split.Primary
+	if role == models.WaypointRoleCanary {
+		binding = split.Canary
 	}
-	return waypointRoleDisplayWeight(role, resLabels, resAnn, resNs, []core_v1.Namespace{kubeNs}, passedCanaryWeight)
+	if binding == nil || !models.GatewayBindingMatches(*binding, gatewayName, gatewayNamespace) {
+		return nil
+	}
+	ref := &models.ServiceReferenceInfo{
+		Cluster:      service.Cluster,
+		LabelType:    split.ConfigLevel,
+		Name:         service.Name,
+		Namespace:    service.Namespace,
+		RoleWeight:   waypointRoleWeight(split, role),
+		WaypointRole: role,
+	}
+	if role == models.WaypointRoleCanary {
+		ref.CanaryWeight = split.CanaryWeight
+	}
+	return ref
 }

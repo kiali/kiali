@@ -2888,8 +2888,8 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 // listWaypointWorkloads returns workloads and services whose traffic is handled by the waypoint gateway wpName
 // (as primary and/or canary).
 func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
-	primaryW, primaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary, 0)
-	canaryW, canaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary, -1)
+	primaryW, primaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary)
+	canaryW, canaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary)
 	return mergeWaypointWorkloadRefs(primaryW, canaryW), mergeWaypointServiceRefs(primaryS, canaryS)
 }
 
@@ -2900,7 +2900,7 @@ func mergeWaypointWorkloadRefs(primary, canary []models.WorkloadReferenceInfo) [
 		key := fmt.Sprintf("%s_%s_%s", w.Cluster, w.Namespace, w.Name)
 		if existing, ok := byKey[key]; ok {
 			// Same resource enrolled as both roles: prefer canary when it carries a display weight.
-			if w.WaypointRole == models.WaypointRoleCanary && (w.RoleWeight > 0 || existing.RoleWeight == 0) {
+			if w.WaypointRole == models.WaypointRoleCanary && (w.RoleWeight != nil && *w.RoleWeight > 0 || existing.RoleWeight == nil || *existing.RoleWeight == 0) {
 				byKey[key] = w
 			}
 			return
@@ -2927,7 +2927,7 @@ func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []m
 	add := func(s models.ServiceReferenceInfo) {
 		key := fmt.Sprintf("%s_%s_%s", s.Cluster, s.Namespace, s.Name)
 		if existing, ok := byKey[key]; ok {
-			if s.WaypointRole == models.WaypointRoleCanary && (s.RoleWeight > 0 || existing.RoleWeight == 0) {
+			if s.WaypointRole == models.WaypointRoleCanary && (s.RoleWeight != nil && *s.RoleWeight > 0 || existing.RoleWeight == nil || *existing.RoleWeight == 0) {
 				byKey[key] = s
 			}
 			return
@@ -2948,7 +2948,7 @@ func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []m
 	return out
 }
 
-func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads, useLabel, useNamespaceLabel, role string, canaryWeight int) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
+func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads, useLabel, useNamespaceLabel, role string) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", useLabel, wpName)
 	userClient, ok := in.userClients[wpCluster]
@@ -2985,7 +2985,7 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 		for _, wk := range workloadList {
 			// This annotation disables other labels (Like the ns one)
 			if wk.Labels[config.IstioAmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
-				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(wk, labelType, role, canaryWeight, labeledNamespaces))
+				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(wk, labelType, role, labeledNamespaces))
 			} else {
 				excludedWorkloads[wk.Name] = true
 			}
@@ -3008,7 +3008,7 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 		for _, workload := range wlist {
 			// none disables the waypoint enrollment
 			if workload.Labels[config.WaypointUseLabel] != config.WaypointNone {
-				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(workload, labelType, role, canaryWeight, labeledNamespaces))
+				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(workload, labelType, role, labeledNamespaces))
 			} else {
 				excludedWorkloads[workload.Name] = true
 			}
@@ -3040,8 +3040,19 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 							continue
 						}
 						key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
-						if !servicesMap[key] && service.Labels[config.WaypointUseLabel] != config.WaypointNone {
-							servicesList = append(servicesList, waypointEnrolledServiceRef(&service, labelType, role, canaryWeight, labeledNamespaces))
+						if servicesMap[key] {
+							continue
+						}
+						ns, _ := in.cache.GetNamespace(wpCluster, userClient.GetCacheKey(), service.Namespace)
+						ref := waypointEnrolledServiceRef(&models.Service{
+							Annotations: service.Annotations,
+							Cluster:     service.Cluster,
+							Labels:      service.Labels,
+							Name:        service.Name,
+							Namespace:   service.Namespace,
+						}, &ns, wpName, wpNamespace, role)
+						if ref != nil {
+							servicesList = append(servicesList, *ref)
 							servicesMap[key] = true
 						}
 					}
@@ -3049,61 +3060,39 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 			}
 		}
 		// Get annotated services
-		servicesList = append(servicesList, in.businessLayer.Svc.ListWaypointServices(ctx, wpName, wpNamespace, wpCluster, useLabel, useNamespaceLabel, role, canaryWeight)...)
+		servicesList = append(servicesList, in.businessLayer.Svc.ListWaypointServices(ctx, wpName, wpNamespace, wpCluster, role)...)
 	}
 	return workloadslist, servicesList
 }
 
-func waypointEnrolledWorkloadRef(wk *models.Workload, labelType, role string, canaryWeight int, labeledNamespaces []core_v1.Namespace) models.WorkloadReferenceInfo {
-	weight := canaryWeight
-	if role == models.WaypointRoleCanary && weight < 0 {
-		for _, ns := range labeledNamespaces {
-			if ns.Name == wk.Namespace {
-				weight = models.ParseWaypointCanaryWeight(ns.Annotations)
-				break
-			}
+func waypointEnrolledWorkloadRef(wk *models.Workload, labelType, role string, labeledNamespaces []core_v1.Namespace) models.WorkloadReferenceInfo {
+	var nsModel *models.Namespace
+	for _, ns := range labeledNamespaces {
+		if ns.Name == wk.Namespace {
+			cast := models.CastNamespace(ns, wk.Cluster)
+			nsModel = &cast
+			break
 		}
 	}
-	if weight < 0 {
-		weight = 0
-	}
-	return models.WorkloadReferenceInfo{
-		CanaryWeight: weight,
+	split := waypointTrafficSplitForService(&models.Service{
+		Annotations: wk.Annotations,
+		Cluster:     wk.Cluster,
+		Labels:      wk.Labels,
+		Namespace:   wk.Namespace,
+	}, nsModel)
+	ref := models.WorkloadReferenceInfo{
 		Cluster:      wk.Cluster,
 		LabelType:    labelType,
 		Labels:       wk.Labels,
 		Name:         wk.Name,
 		Namespace:    wk.Namespace,
-		RoleWeight:   waypointRoleDisplayWeight(role, wk.Labels, wk.Annotations, wk.Namespace, labeledNamespaces, weight),
+		RoleWeight:   waypointRoleWeight(split, role),
 		WaypointRole: role,
 	}
-}
-
-func waypointEnrolledServiceRef(service *models.ServiceOverview, labelType, role string, canaryWeight int, labeledNamespaces []core_v1.Namespace) models.ServiceReferenceInfo {
-	weight := canaryWeight
-	if role == models.WaypointRoleCanary && weight < 0 {
-		weight = models.ParseWaypointCanaryWeight(service.Annotations)
-		if weight <= 0 {
-			for _, ns := range labeledNamespaces {
-				if ns.Name == service.Namespace {
-					weight = models.ParseWaypointCanaryWeight(ns.Annotations)
-					break
-				}
-			}
-		}
+	if role == models.WaypointRoleCanary && split != nil {
+		ref.CanaryWeight = split.CanaryWeight
 	}
-	if weight < 0 {
-		weight = 0
-	}
-	return models.ServiceReferenceInfo{
-		CanaryWeight: weight,
-		Cluster:      service.Cluster,
-		LabelType:    labelType,
-		Name:         service.Name,
-		Namespace:    service.Namespace,
-		RoleWeight:   waypointRoleDisplayWeight(role, service.Labels, service.Annotations, service.Namespace, labeledNamespaces, weight),
-		WaypointRole: role,
-	}
+	return ref
 }
 
 func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {

@@ -13,7 +13,7 @@ source ${HACK_SCRIPT_DIR}/../functions.sh
 CLIENT_EXE="oc"
 : ${ARCH:=amd64}
 CANARY="false"
-CANARY_WEIGHT=30
+CANARY_WEIGHT=10
 
 while [ $# -gt 0 ]; do
   key="$1"

@@ -84,8 +84,8 @@ export const waypointNodeCanaryBadge = (
 };
 
 /** Enrolled-resource role column: "Canary (30%)" / "Primary (70%)". */
-export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined, roleWeight: number): string => {
-  if (roleWeight <= 0 || !waypointRole) {
+export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined, roleWeight?: number): string => {
+  if (roleWeight === undefined || roleWeight < 0 || !waypointRole) {
     return '';
   }
   if (waypointRole === 'canary') {
