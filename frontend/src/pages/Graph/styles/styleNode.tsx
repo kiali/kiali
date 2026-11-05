@@ -170,6 +170,10 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
         element={element}
         {...rest}
         {...passedData}
+        // Keep label in this hover group. raiseLabelOnHover portals it to TOP_LAYER,
+        // which fires mouseleave here and toggles hover/cursor in a loop.
+        raiseLabelOnHover={false}
+        hover={hover}
         attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
         getCustomShape={getCustomNodeShape}
         scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
