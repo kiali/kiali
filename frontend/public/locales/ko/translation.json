@@ -1091,8 +1091,6 @@
   "Scheme value...": "스킴 값...",
   "Secret Name: {{secretName}}": "시크릿 이름: {{secretName}}",
   "Security": "보안",
-  "See the {{count}} problems in dashboard_other": "See the {{count}} problems in dashboard",
-  "See the 1 problem in dashboard": "See the 1 problem in dashboard",
   "Select a namespace to view {{type}}.": "{{type}}을(를) 보려면 네임스페이스를 선택하세요.",
   "Select a time to troubleshoot health. Use arrow keys to move, then press Enter.": "상태 문제를 해결할 시간을 선택하세요. 화살표 키로 이동한 다음 Enter를 누르세요.",
   "Select a workload, service or application graph view. An application view can optionally be versioned and relies on app and version labeling. Workload and service graphs provide physical and logical views, respectively.": "워크로드, 서비스 또는 애플리케이션 그래프 보기를 선택하세요. 애플리케이션 보기는 선택적으로 버전을 지정할 수 있으며 app 및 version 레이블에 의존합니다. 워크로드 그래프와 서비스 그래프는 각각 물리적 보기와 논리적 보기를 제공합니다.",

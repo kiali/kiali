@@ -1,4 +1,4 @@
-import { NotificationBadge, NotificationBadgeVariant } from '@patternfly/react-core';
+import { Button, ButtonState, ButtonVariant } from '@patternfly/react-core';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { connect } from 'react-redux';
 import type { KialiAppState } from 'store/Store';
@@ -11,6 +11,7 @@ import {
 import { NotificationAlerts } from './NotificationAlerts';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
+import { RhUiAiExperienceFillIcon, RhUiAttentionBellFillIcon, RhUiNotificationFillIcon } from '@patternfly/react-icons';
 
 type ReduxStateProps = {
   alerts: NotificationMessage[];
@@ -34,25 +35,30 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
   props: NotificationCenterBadgeProps
 ) => {
   const { t } = useKialiTranslation();
-  const count = props.newMessageCount + (props.troubleshootingCount ?? 0);
+  const count = props.newMessageCount;
+  const totalCount = count;
   const needsAttention = props.needsAttention || !!props.troubleshootingNeedsAttention;
 
-  let variant = NotificationBadgeVariant.read;
-  if (count > 0) {
+  let buttonState = ButtonState.read;
+  if (totalCount > 0) {
     if (needsAttention) {
-      variant = NotificationBadgeVariant.attention;
+      buttonState = ButtonState.attention;
     } else {
-      variant = NotificationBadgeVariant.unread;
+      buttonState = ButtonState.unread;
     }
   }
 
+  const troubleshootingCount = props.troubleshootingCount ?? 0;
+
   return (
     <>
-      <NotificationBadge
+      <Button
+        aria-expanded={props.isExpanded}
         aria-label={t('Notifications')}
-        count={count}
         data-test="notifications-badge"
-        isExpanded={props.isExpanded}
+        isClicked={props.isExpanded}
+        state={buttonState}
+        variant={ButtonVariant.stateful}
         onClick={() => {
           if (props.chatbotVisible) {
             props.hideChat?.();
@@ -63,8 +69,22 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
           }
           props.toggleNotificationCenter();
         }}
-        variant={variant}
-      />
+      >
+        {totalCount > 0 && needsAttention ? (
+          <>
+            <RhUiAttentionBellFillIcon /> {count}{' '}
+          </>
+        ) : (
+          <>
+            <RhUiNotificationFillIcon /> {troubleshootingCount > 0 ? count : ''}{' '}
+          </>
+        )}
+        {troubleshootingCount > 0 ? (
+          <>
+            <RhUiAiExperienceFillIcon /> {troubleshootingCount}
+          </>
+        ) : null}
+      </Button>
       <NotificationAlerts alerts={props.alerts} onDismiss={props.onDismissNotification} />
     </>
   );

@@ -937,7 +937,7 @@ Then('the hidden troubleshooting problems section should not exist', () => {
 // ============================================================
 
 When('user opens the notification drawer', () => {
-  cy.get('[data-test="notifications-badge"]').click();
+  cy.get('[data-test="notifications-badge"]').first().click();
 });
 
 Then('the notification drawer should be open', () => {
@@ -948,14 +948,6 @@ Then('the notification drawer should be closed', () => {
   cy.get('.pf-v6-c-page__drawer > .pf-v6-c-drawer').should('not.have.class', 'pf-m-expanded');
 });
 
-When('user expands the Troubleshooting notification group', () => {
-  cy.get('.pf-v6-c-notification-drawer').contains('button', 'Troubleshooting').click();
-});
-
 Then('the notification drawer should show the troubleshooting dashboard link {string}', (linkText: string) => {
   cy.get('[data-test="troubleshooting-notification-link"]').should('be.visible').and('contain.text', linkText);
-});
-
-Then('the notification drawer should show the troubleshooting problem {string}', (problemText: string) => {
-  cy.get('[data-test="troubleshooting-notification-problem"]').should('be.visible').and('contain.text', problemText);
 });

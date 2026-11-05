@@ -410,9 +410,7 @@ Feature: Kiali AI Chatbot
     And user visits the AI troubleshooting dashboard
     When user opens the notification drawer
     Then the notification drawer should be open
-    When user expands the Troubleshooting notification group
-    Then the notification drawer should show the troubleshooting dashboard link "See the 1 problem in dashboard"
-    And the notification drawer should show the troubleshooting problem "Service productpage has errors"
+    And the notification drawer should show the troubleshooting dashboard link "(1 problem detected)"
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
     And the notification drawer should be closed
