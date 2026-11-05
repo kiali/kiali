@@ -10,6 +10,8 @@ The English catalog (`frontend/public/locales/en/translation.json`) is generated
 
 It is intentionally written in English so contributors, reviewers, and AI assistants can align on the same terminology.
 
+The core principles and general rules apply to every locale. Language-specific conventions supplement those shared rules only for the named language; other locales follow the [default conventions](#default-conventions-for-other-locales).
+
 If an existing locale entry conflicts with these conventions, do not mass-rewrite the whole file. Apply these rules to new or edited strings and improve consistency opportunistically.
 
 ## Related documentation
@@ -148,11 +150,16 @@ These entries already match the preferred direction and are good references for 
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
 
-## Chinese conventions (`zh`, Simplified Chinese)
+## Default conventions for other locales
 
-TODO: validate the Chinese glossary and wording with a native speaker or a reviewer confident in Simplified Chinese technical UI translation. The current `zh` locale is inconsistent and still contains many untranslated English strings.
+Korean (`ko`), Simplified Chinese (`zh`), and future locales without their own conventions use the core principles and general rules above.
 
-For `Abbreviate:` Find help lines, follow [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales) (for example `缩写：` in `zh`).
+- Use natural grammar and established technical UI terminology in the target language, consistent with existing translations in that locale.
+- Preserve the globally protected names and tokens, but do not apply Spanish-only choices such as keeping `namespace`, `mesh`, or `workload` in English to other languages.
+- Follow the shared [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales) rules, translating the introductory label while preserving the operands.
+- Record unresolved terminology for review by someone proficient in the target language. Add a language-specific section when the team agrees on terminology or style rules beyond these defaults.
+
+A validated Chinese-specific glossary is still pending. Until one is agreed, use these shared defaults rather than treating the Spanish glossary as authoritative for Chinese.
 
 ## When editing locale files
 
