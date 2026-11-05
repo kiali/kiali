@@ -5,6 +5,7 @@ import {
   ISTIO_CONTROL_PLANE_DASHBOARD,
   ISTIO_MESH_DASHBOARD,
   ISTIO_PERFORMANCE_DASHBOARD,
+  ISTIO_SERVICE_DASHBOARD,
   ISTIO_WASM_EXTENSION_DASHBOARD,
   ISTIO_WORKLOAD_DASHBOARD
 } from 'types/GrafanaInfo';
@@ -13,7 +14,8 @@ import {
   filterIstioDashboardLinks,
   isSafeHttpUrl,
   istioDashboardViewTitle,
-  loadIstioDashboardLinks
+  loadIstioDashboardLinks,
+  resetIstioDashboardInfoCache
 } from '../IstioDashboardUtils';
 import { store } from 'store/ConfigStore';
 import * as API from 'services/Api';
@@ -50,6 +52,11 @@ const workloadLink: ExternalLink = {
   name: ISTIO_WORKLOAD_DASHBOARD,
   url: 'https://grafana/workload',
   variables: { namespace: 'var-namespace', workload: 'var-workload' }
+};
+const serviceLink: ExternalLink = {
+  name: ISTIO_SERVICE_DASHBOARD,
+  url: 'https://grafana/service',
+  variables: { namespace: 'var-namespace', service: 'var-service' }
 };
 
 describe('IstioDashboardUtils', () => {
@@ -114,6 +121,7 @@ describe('IstioDashboardUtils', () => {
 
     beforeEach(() => {
       addErrorMock.mockReset();
+      resetIstioDashboardInfoCache();
       getStateSpy = rstest.spyOn(store, 'getState');
       grafanaSpy = rstest.spyOn(API, 'getGrafanaInfo');
       persesSpy = rstest.spyOn(API, 'getPersesInfo');
@@ -160,7 +168,7 @@ describe('IstioDashboardUtils', () => {
       await expect(loadIstioDashboardLinks('control-plane')).resolves.toEqual({ grafanaLinks: [], persesLinks: [] });
     });
 
-    it('builds workload dashboard URLs and keeps the mesh dashboard', async () => {
+    it('builds workload dashboard URLs without the mesh dashboard', async () => {
       getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
       grafanaSpy.mockResolvedValue({
         status: 200,
@@ -174,10 +182,63 @@ describe('IstioDashboardUtils', () => {
         objectType: MetricsObjectTypes.WORKLOAD
       });
 
-      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_WORKLOAD_DASHBOARD, ISTIO_MESH_DASHBOARD]);
+      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_WORKLOAD_DASHBOARD]);
       expect(result.grafanaLinks[0].url).toContain('var-workload=productpage-v1');
       expect(result.grafanaLinks[0].url).toContain('var-namespace=bookinfo');
+    });
+
+    it('keeps the mesh dashboard on service details', async () => {
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockResolvedValue({
+        status: 200,
+        data: { externalLinks: [serviceLink, meshLink, controlPlaneLink] }
+      } as never);
+
+      const result = await loadIstioDashboardLinks({
+        kind: 'service',
+        namespace: 'bookinfo',
+        object: 'productpage',
+        objectType: MetricsObjectTypes.SERVICE
+      });
+
+      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_SERVICE_DASHBOARD, ISTIO_MESH_DASHBOARD]);
+      expect(result.grafanaLinks[0].url).toContain('var-service=productpage.bookinfo.svc.cluster.local');
       expect(result.grafanaLinks[1].url).toBe(meshLink.url);
+    });
+
+    it('reuses cached Grafana info across callers', async () => {
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockResolvedValue({
+        status: 200,
+        data: { externalLinks: [meshLink, controlPlaneLink, workloadLink] }
+      } as never);
+
+      await loadIstioDashboardLinks('control-plane');
+      await loadIstioDashboardLinks({
+        kind: 'workload',
+        namespace: 'bookinfo',
+        object: 'productpage-v1',
+        objectType: MetricsObjectTypes.WORKLOAD
+      });
+
+      expect(grafanaSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries Grafana after a failed fetch', async () => {
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockRejectedValueOnce(new Error('grafana down')).mockResolvedValue({
+        status: 200,
+        data: { externalLinks: [meshLink] }
+      } as never);
+
+      await expect(loadIstioDashboardLinks('control-plane')).resolves.toEqual({ grafanaLinks: [], persesLinks: [] });
+      expect(grafanaSpy).toHaveBeenCalledTimes(1);
+
+      await expect(loadIstioDashboardLinks('control-plane')).resolves.toEqual({
+        grafanaLinks: [meshLink],
+        persesLinks: []
+      });
+      expect(grafanaSpy).toHaveBeenCalledTimes(2);
     });
 
     it('does not fail the other tool when Grafana fetch fails', async () => {

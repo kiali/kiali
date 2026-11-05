@@ -76,8 +76,6 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
@@ -170,8 +168,6 @@ describe('Metrics for a service', () => {
 
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);

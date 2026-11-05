@@ -4,13 +4,15 @@ import { addError } from 'utils/AlertUtils';
 import { MessageType } from 'types/NotificationCenter';
 import type { ExternalLink } from 'types/Dashboards';
 import { ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
+import type { GrafanaInfo } from 'types/GrafanaInfo';
 import { ISTIO_DASHBOARDS, ISTIO_MESH_DASHBOARD } from 'types/GrafanaInfo';
+import type { PersesInfo } from 'types/PersesInfo';
 import { t } from 'utils/I18nUtils';
 import { GrafanaLinks } from 'components/Metrics/GrafanaLinks';
 import { buildPersesLinks } from 'components/Metrics/PersesLinks';
 import { MetricsObjectTypes } from 'types/Metrics';
 
-export type IstioDashboardKind = 'control-plane' | 'ztunnel' | 'workload' | 'service';
+export type IstioDashboardKind = 'app' | 'control-plane' | 'service' | 'workload' | 'ztunnel';
 export type IstioDashboardTool = 'Grafana' | 'Perses';
 
 export type IstioDashboardLoadOptions = {
@@ -97,45 +99,69 @@ const selectObjectDashboardLinks = (
       ? pairsToLinks(GrafanaLinks.buildGrafanaLinks(builderProps))
       : pairsToLinks(buildPersesLinks(builderProps));
 
-  if (options.objectType === MetricsObjectTypes.ZTUNNEL) {
+  // Workload and app pages keep object-specific dashboards only.
+  if (options.kind === 'app' || options.kind === 'workload') {
     return built;
   }
 
   return appendMeshDashboard(built, links);
 };
 
-const fetchGrafanaDashboardLinks = (options: IstioDashboardLoadOptions): Promise<ExternalLink[]> => {
-  return API.getGrafanaInfo()
-    .then(response => {
-      if (response.status === 204 || !response.data) {
-        return [];
-      }
+let grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
+let persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
 
-      return selectObjectDashboardLinks(response.data.externalLinks ?? [], options, 'grafana', {
-        datasourceUID: response.data.datasourceUID
-      });
-    })
-    .catch((err: Error) => {
-      addError(t('Could not fetch Grafana info. Turning off links to Grafana.'), err, false, MessageType.INFO);
-      return [];
-    });
+/** Test-only: drop cached Grafana/Perses info so the next load hits the API again. */
+export const resetIstioDashboardInfoCache = (): void => {
+  grafanaInfoPromise = undefined;
+  persesInfoPromise = undefined;
 };
 
-const fetchPersesDashboardLinks = (options: IstioDashboardLoadOptions): Promise<ExternalLink[]> => {
-  return API.getPersesInfo()
-    .then(response => {
-      if (response.status === 204 || !response.data) {
-        return [];
-      }
+const loadGrafanaInfo = (): Promise<GrafanaInfo | undefined> => {
+  if (!hasExternalService('grafana')) {
+    return Promise.resolve(undefined);
+  }
 
-      return selectObjectDashboardLinks(response.data.externalLinks ?? [], options, 'perses', {
-        project: response.data.project
+  if (!grafanaInfoPromise) {
+    grafanaInfoPromise = API.getGrafanaInfo()
+      .then(response => {
+        if (response.status === 204 || !response.data) {
+          return undefined;
+        }
+
+        return response.data;
+      })
+      .catch((err: Error) => {
+        grafanaInfoPromise = undefined;
+        addError(t('Could not fetch Grafana info. Turning off links to Grafana.'), err, false, MessageType.INFO);
+        return undefined;
       });
-    })
-    .catch((err: Error) => {
-      addError(t('Could not fetch Perses info. Turning off links to Perses.'), err, false, MessageType.INFO);
-      return [];
-    });
+  }
+
+  return grafanaInfoPromise;
+};
+
+const loadPersesInfo = (): Promise<PersesInfo | undefined> => {
+  if (!hasExternalService('perses')) {
+    return Promise.resolve(undefined);
+  }
+
+  if (!persesInfoPromise) {
+    persesInfoPromise = API.getPersesInfo()
+      .then(response => {
+        if (response.status === 204 || !response.data) {
+          return undefined;
+        }
+
+        return response.data;
+      })
+      .catch((err: Error) => {
+        persesInfoPromise = undefined;
+        addError(t('Could not fetch Perses info. Turning off links to Perses.'), err, false, MessageType.INFO);
+        return undefined;
+      });
+  }
+
+  return persesInfoPromise;
 };
 
 const normalizeLoadOptions = (
@@ -149,8 +175,16 @@ export const loadIstioDashboardLinks = (
 ): Promise<{ grafanaLinks: ExternalLink[]; persesLinks: ExternalLink[] }> => {
   const options = normalizeLoadOptions(kindOrOptions);
 
-  return Promise.all([
-    hasExternalService('grafana') ? fetchGrafanaDashboardLinks(options) : Promise.resolve([]),
-    hasExternalService('perses') ? fetchPersesDashboardLinks(options) : Promise.resolve([])
-  ]).then(([grafanaLinks, persesLinks]) => ({ grafanaLinks, persesLinks }));
+  return Promise.all([loadGrafanaInfo(), loadPersesInfo()]).then(([grafanaInfo, persesInfo]) => ({
+    grafanaLinks: grafanaInfo
+      ? selectObjectDashboardLinks(grafanaInfo.externalLinks ?? [], options, 'grafana', {
+          datasourceUID: grafanaInfo.datasourceUID
+        })
+      : [],
+    persesLinks: persesInfo
+      ? selectObjectDashboardLinks(persesInfo.externalLinks ?? [], options, 'perses', {
+          project: persesInfo.project
+        })
+      : []
+  }));
 };

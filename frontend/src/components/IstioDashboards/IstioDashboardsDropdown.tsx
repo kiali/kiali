@@ -8,6 +8,7 @@ import {
   MenuToggle,
   MenuToggleElement
 } from '@patternfly/react-core';
+import { detailTabActionsStyle } from 'styles/FlexStyles';
 import { kialiStyle } from 'styles/StyleUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import type { ExternalLink } from 'types/Dashboards';
@@ -23,6 +24,10 @@ import { ReactComponent as PersesLogo } from '../../assets/img/mesh/perses.svg';
 type IstioDashboardsDropdownProps = {
   grafanaLinks: ExternalLink[];
   persesLinks: ExternalLink[];
+};
+
+type IstioDashboardsDropdownLoaderProps = IstioDashboardLoadOptions & {
+  extra?: React.ReactNode;
 };
 
 const logoStyle = kialiStyle({
@@ -101,12 +106,13 @@ export const IstioDashboardsDropdown: React.FC<IstioDashboardsDropdownProps> = (
   );
 };
 
-export const IstioDashboardsDropdownLoader: React.FC<IstioDashboardLoadOptions> = ({
+export const IstioDashboardsDropdownLoader: React.FC<IstioDashboardsDropdownLoaderProps> = ({
+  extra,
   kind,
   namespace,
   object,
   objectType
-}: IstioDashboardLoadOptions) => {
+}: IstioDashboardsDropdownLoaderProps) => {
   const [grafanaLinks, setGrafanaLinks] = React.useState<ExternalLink[]>([]);
   const [persesLinks, setPersesLinks] = React.useState<ExternalLink[]>([]);
 
@@ -125,5 +131,21 @@ export const IstioDashboardsDropdownLoader: React.FC<IstioDashboardLoadOptions> 
     };
   }, [kind, namespace, object, objectType]);
 
-  return <IstioDashboardsDropdown grafanaLinks={grafanaLinks} persesLinks={persesLinks} />;
+  const dropdown = <IstioDashboardsDropdown grafanaLinks={grafanaLinks} persesLinks={persesLinks} />;
+  const hasDropdown = grafanaLinks.length > 0 || persesLinks.length > 0;
+
+  if (!hasDropdown && extra == null) {
+    return null;
+  }
+
+  if (extra == null) {
+    return dropdown;
+  }
+
+  return (
+    <div className={detailTabActionsStyle}>
+      {dropdown}
+      {extra}
+    </div>
+  );
 };

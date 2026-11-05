@@ -105,4 +105,13 @@ describe('IstioDashboardsDropdownLoader', () => {
     await Promise.resolve();
     expect(container).toBeEmptyDOMElement();
   });
+
+  it('still renders extra actions when there are no dashboard links', async () => {
+    loadMock.mockResolvedValue({ grafanaLinks: [], persesLinks: [] });
+
+    render(<IstioDashboardsDropdownLoader extra={<button type="button">Actions</button>} kind="control-plane" />);
+
+    expect(await screen.findByRole('button', { name: 'Actions' })).toBeInTheDocument();
+    expect(screen.queryByTestId('istio-dashboards-toggle')).not.toBeInTheDocument();
+  });
 });

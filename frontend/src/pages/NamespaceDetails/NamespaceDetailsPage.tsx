@@ -33,12 +33,7 @@ import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioD
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
-import {
-  detailPageTitleStyle,
-  detailTitleRowStyle,
-  detailTitleMainStyle,
-  detailTabActionsStyle
-} from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { RefreshIntervalManual } from 'config/Config';
 import { serverConfig } from 'config/ServerConfig';
 import { t } from 'utils/I18nUtils';
@@ -137,17 +132,15 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
     const hasActions = namespaceActions.some(a => !a.isSeparator);
-    const dashboardsDropdown = ns?.isControlPlane ? <IstioDashboardsDropdownLoader kind="control-plane" /> : null;
+    const namespaceActionsDropdown = hasActions ? (
+      <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
+    ) : undefined;
 
-    const actionsToolbar =
-      dashboardsDropdown || hasActions ? (
-        <div className={detailTabActionsStyle}>
-          {dashboardsDropdown}
-          {hasActions && (
-            <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
-          )}
-        </div>
-      ) : undefined;
+    const actionsToolbar = ns?.isControlPlane ? (
+      <IstioDashboardsDropdownLoader extra={namespaceActionsDropdown} kind="control-plane" />
+    ) : (
+      namespaceActionsDropdown
+    );
 
     return (
       <>

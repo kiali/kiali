@@ -42,12 +42,7 @@ import { ZtunnelConfig } from '../../components/Ambient/ZtunnelConfig';
 import { WaypointConfig } from '../../components/Ambient/WaypointConfig';
 import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
-import {
-  detailPageTitleStyle,
-  detailTitleRowStyle,
-  detailTitleMainStyle,
-  detailTabActionsStyle
-} from 'styles/FlexStyles';
+import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 import { t } from 'utils/I18nUtils';
@@ -154,14 +149,6 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
         break;
     }
 
-    const dashboardsDropdown = this.state.workload ? (
-      <IstioDashboardsDropdownLoader
-        kind={this.state.workload.isZtunnel ? 'ztunnel' : 'workload'}
-        namespace={this.props.workloadId.namespace}
-        object={this.state.workload.isZtunnel ? 'ztunnel' : this.props.workloadId.workload}
-        objectType={this.state.workload.isZtunnel ? MetricsObjectTypes.ZTUNNEL : MetricsObjectTypes.WORKLOAD}
-      />
-    ) : null;
     const workloadActions =
       this.state.currentTab === 'info' && this.state.workload ? (
         <WorkloadWizardDropdown
@@ -169,14 +156,16 @@ class WorkloadDetailsPageComponent extends React.Component<WorkloadDetailsPagePr
           workload={this.state.workload}
           onChange={this.fetchWorkload}
         />
-      ) : null;
-    const actionsToolbar =
-      dashboardsDropdown || workloadActions ? (
-        <div className={detailTabActionsStyle}>
-          {dashboardsDropdown}
-          {workloadActions}
-        </div>
       ) : undefined;
+    const actionsToolbar = this.state.workload ? (
+      <IstioDashboardsDropdownLoader
+        extra={workloadActions}
+        kind={this.state.workload.isZtunnel ? 'ztunnel' : 'workload'}
+        namespace={this.props.workloadId.namespace}
+        object={this.state.workload.isZtunnel ? 'ztunnel' : this.props.workloadId.workload}
+        objectType={this.state.workload.isZtunnel ? MetricsObjectTypes.ZTUNNEL : MetricsObjectTypes.WORKLOAD}
+      />
+    ) : undefined;
 
     return (
       <>
