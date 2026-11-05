@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import {
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -26,7 +27,6 @@ import {
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   InfoCircleIcon,
-  RhUiAiErrorIcon,
   RhUiAiExperienceIcon
 } from '@patternfly/react-icons';
 import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
@@ -45,15 +45,30 @@ import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize } from 'styles/PfTypography';
 import moment from 'moment';
 import { partitionTroubleshootingIssues } from 'pages/AIDashboard/AITroubleshooting/partitionTroubleshooting';
 import type { TroubleshootingIssue } from 'types/Chatbot';
 
-const TROUBLESHOOTING_GROUP_ID = 'ai-troubleshooting';
+const troubleshootingSectionStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  fontSize: 'var(--pf-t--global--font--size--heading--sm)',
+  fontWeight: 'var(--pf-t--global--font--weight--heading--default)',
+  paddingBlock: PFSpacer.md,
+  paddingInline: PFSpacer.lg
+});
 
-const troubleshootingLinkStyle = kialiStyle({
-  paddingBlock: PFSpacer.sm,
-  paddingInline: PFSpacer.md
+const troubleshootingTitleStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: PFSpacer.sm
+});
+
+const troubleshootingLinkWrapperStyle = kialiStyle({
+  fontSize: PFFontSize.small,
+  marginLeft: PFSpacer.md
 });
 
 type ReduxStateProps = {
@@ -87,8 +102,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
   };
 
   const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(() => getUnseenGroups(props.groups));
-  const [troubleshootingCollapsed, setTroubleshootingCollapsed] = useState(true);
-  const troubleshootingExpanded = props.troubleshootingIssues.length > 0 && !troubleshootingCollapsed;
 
   interface ActionsMenu {
     [toggleId: string]: boolean;
@@ -262,64 +275,6 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
       </NotificationDrawerHeader>
       <NotificationDrawerBody>
         <NotificationDrawerGroupList>
-          {props.troubleshootingIssues.length > 0 && (
-            <NotificationDrawerGroup
-              count={props.troubleshootingIssues.length}
-              isExpanded={troubleshootingExpanded}
-              key={TROUBLESHOOTING_GROUP_ID}
-              onExpand={(_, isExpanded) => setTroubleshootingCollapsed(!isExpanded)}
-              title={
-                <span>
-                  <RhUiAiExperienceIcon style={{ marginRight: '0.5em' }} />
-                  {t('Troubleshooting')}
-                </span>
-              }
-            >
-              {troubleshootingExpanded && (
-                <div className={troubleshootingLinkStyle}>
-                  <KialiLink
-                    dataTest="troubleshooting-notification-link"
-                    onClick={() => props.toggleNotificationCenter()}
-                    to={`/${Paths.AI}?tab=troubleshooting`}
-                  >
-                    {props.troubleshootingIssues.length === 1
-                      ? t('See the 1 problem in dashboard')
-                      : t('See the {{count}} problems in dashboard', {
-                          count: props.troubleshootingIssues.length
-                        })}
-                  </KialiLink>
-                </div>
-              )}
-              <NotificationDrawerList isHidden={!troubleshootingExpanded}>
-                {props.troubleshootingIssues.map(issue => {
-                  const critical = (issue.subProblems ?? []).some(subProblem => subProblem.severity === 'critical');
-                  const variant = critical ? 'danger' : 'warning';
-                  const detail = (issue.subProblems ?? [])
-                    .map(subProblem => subProblem.issue || subProblem.impact)
-                    .filter(Boolean)
-                    .join('\n');
-                  return (
-                    <NotificationDrawerListItem
-                      data-test="troubleshooting-notification-problem"
-                      key={issue.id}
-                      variant={variant}
-                    >
-                      <NotificationDrawerListItemHeader
-                        icon={<RhUiAiErrorIcon />}
-                        title={issue.problem}
-                        variant={variant}
-                      />
-                      {detail && (
-                        <NotificationDrawerListItemBody>
-                          <div style={{ marginLeft: '1.6em', paddingLeft: 0, whiteSpace: 'pre-wrap' }}>{detail}</div>
-                        </NotificationDrawerListItemBody>
-                      )}
-                    </NotificationDrawerListItem>
-                  );
-                })}
-              </NotificationDrawerList>
-            </NotificationDrawerGroup>
-          )}
           {props.groups.map(group => (
             <NotificationDrawerGroup
               key={group.id}
@@ -386,6 +341,32 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
             </NotificationDrawerGroup>
           ))}
         </NotificationDrawerGroupList>
+        {props.troubleshootingIssues.length > 0 && (
+          <>
+            <Divider />
+            <div className={troubleshootingSectionStyle} data-test="troubleshooting-notification-section">
+              <span className={troubleshootingTitleStyle}>
+                <RhUiAiExperienceIcon />
+                {t('Troubleshooting')}
+              </span>
+              <span className={troubleshootingLinkWrapperStyle}>
+                <KialiLink
+                  dataTest="troubleshooting-notification-link"
+                  onClick={() => props.toggleNotificationCenter()}
+                  to={`/${Paths.AI}?tab=troubleshooting`}
+                >
+                  {`(${
+                    props.troubleshootingIssues.length === 1
+                      ? t('1 problem detected')
+                      : t('{{count}} problems detected', {
+                          count: props.troubleshootingIssues.length
+                        })
+                  })`}
+                </KialiLink>
+              </span>
+            </div>
+          </>
+        )}
       </NotificationDrawerBody>
     </NotificationDrawer>
   );

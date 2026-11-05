@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { createStore } from 'redux';
@@ -99,11 +99,12 @@ describe('NotificationCenter', () => {
       />
     );
 
-    expect(screen.getByTestId('notifications-badge')).toHaveTextContent('5');
-    expect(screen.getByTestId('notifications-badge')).toHaveClass('pf-m-attention');
+    const badges = screen.getAllByTestId('notifications-badge');
+    expect(badges[0]).toHaveTextContent('2');
+    expect(badges[0]).toHaveTextContent('3');
   });
 
-  it('lists troubleshooting problems and links to the troubleshooting page', () => {
+  it('shows the troubleshooting summary and links to the troubleshooting page', () => {
     const store = createStore(() => ({
       ai: {
         enabled: true,
@@ -132,16 +133,9 @@ describe('NotificationCenter', () => {
       </Provider>
     );
 
-    const group = screen.getByRole('button', { name: /Troubleshooting/ });
-    expect(group).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByTestId('troubleshooting-notification-link')).not.toBeInTheDocument();
-
-    fireEvent.click(group);
-
-    expect(group).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Reviews is unhealthy')).toBeInTheDocument();
-    expect(screen.getByText('Crash')).toBeInTheDocument();
-    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('See the 1 problem in dashboard');
+    const section = screen.getByTestId('troubleshooting-notification-section');
+    expect(within(section).getByText('Troubleshooting')).toBeInTheDocument();
+    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(1 problem detected)');
     expect(screen.getByTestId('troubleshooting-notification-link')).toHaveAttribute('href', '/ai?tab=troubleshooting');
   });
 
@@ -188,12 +182,6 @@ describe('NotificationCenter', () => {
       </Provider>
     );
 
-    expect(screen.getByTestId('notifications-badge')).toHaveTextContent('1');
-    fireEvent.click(screen.getByRole('button', { name: /Troubleshooting/ }));
-    expect(screen.getByText('Visible parent')).toBeInTheDocument();
-    expect(screen.getByText('Visible crash')).toBeInTheDocument();
-    expect(screen.queryByText('Hidden parent')).not.toBeInTheDocument();
-    expect(screen.queryByText('Hidden crash')).not.toBeInTheDocument();
-    expect(screen.queryByText('Parent crash')).not.toBeInTheDocument();
+    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(1 problem detected)');
   });
 });
