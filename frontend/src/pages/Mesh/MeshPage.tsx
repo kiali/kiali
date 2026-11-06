@@ -248,6 +248,7 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
           className={flexFillStyle}
           direction={{ default: 'column' }}
           flexWrap={{ default: 'nowrap' }}
+          spaceItems={{ default: 'spaceItemsNone' }}
           style={{ minHeight: containerMinHeight }}
         >
           <FlexItem fullWidth={{ default: 'fullWidth' }}>
