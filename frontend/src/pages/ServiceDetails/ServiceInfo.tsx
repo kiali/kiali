@@ -73,7 +73,6 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { ModeBadge } from '../../components/Badge/ModeBadge';
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
-import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { getIstioObjectGVK } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { Paths } from '../../config';
@@ -441,8 +440,6 @@ class ServiceInfoComponent extends React.Component<Props, ServiceInfoState> {
                   />
                 </DescriptionListDescription>
               </DescriptionListGroup>
-
-              {sd.waypointTrafficSplit?.canary && <WaypointCanaryPropertyList split={sd.waypointTrafficSplit} />}
 
               {service.additionalDetails?.map((additionalItem, idx) => (
                 <DescriptionListGroup key={`additional-${idx}`}>

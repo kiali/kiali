@@ -12,7 +12,6 @@ import { hasMissingSidecar } from 'components/VirtualList/Config';
 import { infoStyle } from 'styles/IconStyle';
 import { kialiStyle } from 'styles/StyleUtils';
 import { clickableInlineStyle } from 'styles/FlexStyles';
-import { formatEnrolledWaypointRoleLabel } from '../../utils/WaypointTrafficUtils';
 
 type Props = {
   apps?: string[];
@@ -50,9 +49,6 @@ const itemStyle = kialiStyle({
   whiteSpace: 'nowrap'
 });
 
-const formatWaypointRole = (waypoint: WorkloadInfo): string =>
-  formatEnrolledWaypointRoleLabel(waypoint.waypointRole, waypoint.roleWeight);
-
 const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
   const renderWaypointItem = (waypoint: WorkloadInfo): React.ReactNode => {
     let href = `/namespaces/${waypoint.namespace}/workloads/${waypoint.name}`;
@@ -70,10 +66,6 @@ const DetailDescriptionComponent: React.FC<Props> = (props: Props) => {
 
         <KialiLink to={href} kioskParams={kioskParams} dataTest="waypoint-link">
           {waypoint.name}
-          {(() => {
-            const roleLabel = formatWaypointRole(waypoint);
-            return roleLabel ? ` (${roleLabel})` : '';
-          })()}
         </KialiLink>
       </li>
     );

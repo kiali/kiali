@@ -65,7 +65,6 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { WorkloadAnnotationsWizard } from '../../components/IstioWizards/WorkloadAnnotationsWizard';
-import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
 import { formatWaypointGatewayDetailLabel } from '../../utils/WaypointTrafficUtils';
 import { Paths } from '../../config';
 import {
@@ -496,10 +495,6 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
                   <DescriptionListTerm>{t('Waypoint')}</DescriptionListTerm>
                   <DescriptionListDescription>{waypointLabel}</DescriptionListDescription>
                 </DescriptionListGroup>
-              )}
-
-              {!workload.isWaypoint && workload.waypointTrafficSplit?.canary && (
-                <WaypointCanaryPropertyList split={workload.waypointTrafficSplit} />
               )}
 
               {!isGVKSupported(workload.gvk) && (
