@@ -3,8 +3,10 @@ package appender
 import (
 	"context"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/log"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/util/sliceutil"
 )
 
@@ -34,11 +36,46 @@ func (a AmbientAppender) AppendGraph(ctx context.Context, trafficMap graph.Traff
 		return
 	}
 
-	a.handleWaypoints(trafficMap)
+	serviceSplits := make(map[string][]*models.WaypointTrafficSplit)
+	if a.ShowWaypoints {
+		for _, n := range trafficMap {
+			if n.Metadata[graph.IsWaypoint] != true || !a.AccessibleNamespaces.HasCluster(n.Cluster) {
+				continue
+			}
+			if _, loaded := serviceSplits[n.Cluster]; loaded {
+				continue
+			}
+			serviceSplits[n.Cluster] = nil
+			// Share the request's cluster service cache with the Istio appender instead of
+			// listing services again for each primary/canary waypoint node.
+			services, found := globalInfo.Vendor.ClusterServiceLists[n.Cluster]
+			if !found {
+				var err error
+				services, err = globalInfo.Business.Svc.GetServiceListForCluster(ctx, business.ServiceCriteria{
+					Cluster:                n.Cluster,
+					IncludeOnlyDefinitions: true,
+				}, n.Cluster)
+				graph.CheckError(err)
+				globalInfo.Vendor.ClusterServiceLists[n.Cluster] = services
+			}
+			for _, service := range services.Services {
+				if _, accessible := a.AccessibleNamespaces[graph.GetClusterSensitiveKey(n.Cluster, service.Namespace)]; !accessible {
+					continue
+				}
+				// Namespace inheritance is handled below; here only an explicit service
+				// primary can supply its own canary configuration.
+				split := models.ResolveWaypointTrafficSplit(n.Cluster, service.Namespace, service.Labels, service.Annotations, "service")
+				if split != nil && split.Canary != nil {
+					serviceSplits[n.Cluster] = append(serviceSplits[n.Cluster], split)
+				}
+			}
+		}
+	}
+	a.handleWaypoints(trafficMap, serviceSplits)
 }
 
 // handleWaypoints
-func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
+func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap, serviceSplits map[string][]*models.WaypointTrafficSplit) {
 	waypointNodes := make(map[string]*graph.Node)
 	potentialOrphans := make(map[string]bool)
 
@@ -53,6 +90,7 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				delete(trafficMap, n.ID)
 			} else {
 				n.Metadata[graph.IsOutOfMesh] = false
+				a.setWaypointCanaryLabel(n, serviceSplits[n.Cluster])
 				for _, edge := range n.Edges {
 					// edges "from" the waypoint will typically be hidden as part of a bi-directional edge
 					edge.Metadata[graph.Waypoint] = &graph.WaypointEdgeInfo{
@@ -126,5 +164,38 @@ func (a AmbientAppender) handleWaypoints(trafficMap graph.TrafficMap) {
 				delete(trafficMap, id)
 			}
 		}
+	}
+}
+
+func (a AmbientAppender) setWaypointCanaryLabel(n *graph.Node, serviceSplits []*models.WaypointTrafficSplit) {
+	if n.Workload == "" {
+		return
+	}
+	candidates := make([]*models.WaypointTrafficSplit, 0)
+	for _, an := range a.AccessibleNamespaces {
+		if an == nil || an.Cluster != n.Cluster || an.Labels == nil {
+			continue
+		}
+		split := models.GatewayWaypointTrafficSplit(n.Cluster, an.Name, n.Workload, an.Labels, an.Annotations)
+		if split != nil && models.GatewaySplitReferencesGateway(split, n.Workload, n.Namespace) {
+			candidates = append(candidates, split)
+		}
+	}
+	for _, split := range serviceSplits {
+		if models.GatewaySplitReferencesGateway(split, n.Workload, n.Namespace) {
+			candidates = append(candidates, split)
+		}
+	}
+	split := models.PickGatewayWaypointTrafficSplit(candidates)
+	if split == nil {
+		key := graph.GetClusterSensitiveKey(n.Cluster, n.Namespace)
+		an, ok := a.AccessibleNamespaces[key]
+		if !ok || an.Labels == nil {
+			return
+		}
+		split = models.ResolveWaypointTrafficSplit(n.Cluster, n.Namespace, an.Labels, an.Annotations, "namespace")
+	}
+	if label := models.WaypointCanaryNodeLabel(n.Workload, n.Namespace, split); label != "" {
+		n.Metadata[graph.WaypointCanaryLabel] = label
 	}
 }

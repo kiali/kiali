@@ -1,18 +1,16 @@
 import * as React from 'react';
-import {
-  TargetPanelCommonProps,
-  renderNodeHeader,
-  targetBodyStyle,
-  targetPanelHR,
-  targetPanelStyle
-} from './TargetPanelCommon';
-import { MeshNodeData, NodeTarget, isExternal, MeshInfraType } from 'types/Mesh';
+import type { TargetPanelCommonProps } from './TargetPanelCommon';
+import { renderNodeHeader, targetBodyStyle, targetPanelHR, targetPanelStyle } from './TargetPanelCommon';
+import type { MeshNodeData, NodeTarget } from 'types/Mesh';
+import { isExternal, MeshInfraType } from 'types/Mesh';
 import { classes } from 'typestyle';
 import { panelHeadingStyle, panelStyle } from 'pages/Graph/SummaryPanelStyle';
 import { useKialiTranslation } from 'utils/I18nUtils';
 import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { TracingDiagnose } from '../../../components/Mesh/TracingDiagnose';
+import { WaypointGatewayCanaryPanel } from '../../../components/Ambient/WaypointCanarySummary';
+import type { WaypointTrafficSplit } from 'types/WaypointTraffic';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -30,6 +28,7 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
   }
 
   const data = node.elem.getData()!;
+  const isWaypoint = data.infraType === MeshInfraType.WAYPOINT;
 
   return (
     <div id="target-panel-node" className={classes(panelStyle, targetPanelStyle)}>
@@ -42,6 +41,15 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
           )}
         </div>
         {targetPanelHR}
+
+        {isWaypoint && (
+          <WaypointGatewayCanaryPanel
+            cluster={data.cluster}
+            namespace={data.namespace}
+            split={data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined}
+            workload={data.infraName}
+          />
+        )}
 
         <TargetPanelEditor configData={data.infraData} targetName={data.infraName}></TargetPanelEditor>
       </div>

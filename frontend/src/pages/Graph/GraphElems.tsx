@@ -1,27 +1,27 @@
 import * as React from 'react';
 import { List, ListItem } from '@patternfly/react-core';
-import {
+import type {
   BadgeLocation,
   EdgeModel,
-  EdgeTerminalType,
   GraphElement,
   LabelPosition,
   Node,
-  NodeModel,
-  NodeShape,
-  NodeStatus,
-  TopologyQuadrant
+  NodeModel
 } from '@patternfly/react-topology';
-import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
+import { EdgeTerminalType, NodeShape, NodeStatus, TopologyQuadrant } from '@patternfly/react-topology';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadges } from 'components/Pf/PfBadges';
 import { homeCluster as kialiHomeCluster, icons, serverConfig } from 'config';
-import {
-  BoxByType,
-  CLUSTER_DEFAULT,
+import type {
   DecoratedGraphEdgeData,
   DecoratedGraphEdgeWrapper,
   DecoratedGraphNodeData,
+  GraphLayout
+} from 'types/Graph';
+import {
+  BoxByType,
+  CLUSTER_DEFAULT,
   EdgeLabelMode,
-  GraphLayout,
   GraphType,
   NodeType,
   numLabels,
@@ -30,17 +30,18 @@ import {
   UNKNOWN
 } from 'types/Graph';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { Namespace } from 'types/Namespace';
+import type { Namespace } from 'types/Namespace';
 import { keys } from 'lodash-es';
 import { PFColors } from 'components/Pf/PfColors';
-import { Span } from 'types/TracingInfo';
-import { IconType } from 'config/Icons';
+import type { Span } from 'types/TracingInfo';
+import type { IconType } from 'config/Icons';
 import { NodeDecorator, NodeDecoratorTooltip } from './NodeDecorator';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { t } from 'utils/I18nUtils';
-import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import type { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
+import { findGatewayWaypointSplit, withWaypointCanarySecondaryLabel } from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -280,11 +281,10 @@ export const setNodeLabel = (
   let box1Type: string | undefined, box2Type: string | undefined;
 
   if (isBoxed && supportsGroups(layoutName)) {
-    let box1: NodeModel | undefined, box2: NodeModel | undefined;
-    box1 = nodeMap.get(data.parent!);
+    const box1 = nodeMap.get(data.parent!);
     const box1Data = box1?.data as NodeData | undefined;
     box1Type = box1Data?.isBox;
-    box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
+    const box2 = box1Data?.parent ? nodeMap.get(box1Data.parent!) : undefined;
     box2Type = box2 ? (box2.data as NodeData).isBox : undefined;
   }
 
@@ -432,8 +432,20 @@ export const setNodeLabel = (
   }
 
   node.label = content.shift();
-  if (content.length > 0) {
-    data.secondaryLabel = content.join(':');
+  // Always reset secondaryLabel; otherwise leftover text (e.g. waypoint role) piles up
+  // each time setNodeLabel re-runs on the same node data (display option toggles).
+  data.secondaryLabel = content.length > 0 ? content.join(':') : undefined;
+
+  if (data.isWaypoint && !isBox && data.workload && data.namespace) {
+    // Weight % only when Traffic Distribution edge labels are enabled (same idea as edge %).
+    data.secondaryLabel = withWaypointCanarySecondaryLabel({
+      backendLabel: data.waypointCanaryLabel,
+      includeWeight: settings.edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
+      secondaryLabel: data.secondaryLabel,
+      split: findGatewayWaypointSplit(settings.activeNamespaces, data.workload, data.namespace, data.cluster),
+      workload: data.workload,
+      workloadNamespace: data.namespace
+    });
   }
 
   data.hideContextMenuKebab = true;
@@ -447,7 +459,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   const isVerbose = data.isSelected;
   const includeUnits = isVerbose || numLabels(edgeLabels) > 1;
 
-  let labels = [] as string[];
+  const labels = [] as string[];
   if (edgeLabels.includes(EdgeLabelMode.TRAFFIC_RATE)) {
     let rate = 0;
     let pErr = 0;
@@ -492,7 +504,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.RESPONSE_TIME_GROUP)) {
-    let responseTime = data.responseTime;
+    const responseTime = data.responseTime;
 
     if (responseTime > 0) {
       labels.push(toFixedDuration(responseTime));
@@ -500,7 +512,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   }
 
   if (edgeLabels.includes(EdgeLabelMode.THROUGHPUT_GROUP)) {
-    let rate = data.throughput;
+    const rate = data.throughput;
 
     if (rate > 0) {
       labels.push(toFixedByteRate(rate, includeUnits));
@@ -538,7 +550,7 @@ const getEdgeLabel = (edge: EdgeModel, nodeMap: NodeMap, settings: GraphSettings
   if (data.hasTraffic && data.responses) {
     if (nodeMap.get(edge.target!)?.data?.hasCB) {
       const responses = data.responses;
-      for (let code of keys(responses)) {
+      for (const code of keys(responses)) {
         // TODO: Not 100% sure we want "UH" code here ("no healthy upstream hosts") but based on timing I have
         // seen this code returned and not "UO". "UO" is returned only when the circuit breaker is caught open.
         // But if open CB is responsible for removing possible destinations the "UH" code seems preferred.
@@ -562,7 +574,7 @@ const trimFixed = (fixed: string): string => {
   while (fixed.endsWith('0')) {
     fixed = fixed.slice(0, -1);
   }
-  return fixed.endsWith('.') ? (fixed = fixed.slice(0, -1)) : fixed;
+  return fixed.endsWith('.') ? fixed.slice(0, -1) : fixed;
 };
 
 const toFixedRequestRate = (num: number, includeUnits: boolean, units?: string): string => {

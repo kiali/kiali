@@ -1,20 +1,23 @@
-import * as React from 'react';
-import {
+import type { CSSProperties, ReactNode } from 'react';
+import { EdgeTerminalType, NodeShape, NodeStatus } from '@patternfly/react-topology';
+import type {
   BadgeLocation,
   EdgeModel,
-  EdgeTerminalType,
   GraphElement,
   LabelPosition,
   Node,
-  NodeModel,
-  NodeShape,
-  NodeStatus
+  NodeModel
 } from '@patternfly/react-topology';
-import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
+import { PFBadges } from 'components/Pf/PfBadges';
+import type { PFBadgeType } from 'components/Pf/PfBadges';
 import { DEGRADED, FAILURE } from 'types/Health';
-import { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData, MeshInfraType } from 'types/Mesh';
+import { MeshInfraType } from 'types/Mesh';
+import type { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNodeData } from 'types/Mesh';
 import { BoxByType } from 'types/Graph';
-import { NamespaceInfo } from 'types/NamespaceInfo';
+import type { Namespace } from 'types/Namespace';
+import type { NamespaceInfo } from 'types/NamespaceInfo';
+import type { WaypointTrafficSplit } from 'types/WaypointTraffic';
+import { findGatewayWaypointSplit, withWaypointCanarySecondaryLabel } from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -23,7 +26,7 @@ export type NodeMap = Map<string, NodeModel>;
 export type NodeData = DecoratedMeshNodeData & {
   // These are node.data fields that have an impact on the PFT rendering of the node.
   // TODO: Is there an actual type defined for these in PFT?
-  attachments?: React.ReactNode; // ie. decorators
+  attachments?: ReactNode; // ie. decorators
   badge?: string;
   badgeBorderColor?: string;
   badgeClassName?: string;
@@ -32,30 +35,28 @@ export type NodeData = DecoratedMeshNodeData & {
   badgeTextColor?: string;
   collapsible?: boolean; // for groups
   column?: number;
-  component?: React.ReactNode;
+  component?: ReactNode;
   hideContextMenuKebab?: boolean;
   isCollapsed?: boolean; // for groups
-  labelIcon?: React.ReactNode;
-  labelIconClass?: string;
-  labelIconPadding?: number;
-  labelPosition?: LabelPosition;
-  onCollapseChange?: (group: Node, collapsed: boolean) => void;
-  secondaryLabel?: string;
-  setLocation?: boolean;
-  showContextMenu?: boolean;
-  showStatusDecorator?: boolean;
-  statusDecoratorTooltip?: React.ReactNode;
-  truncateLength?: number;
-  x?: number;
-  y?: number;
-  // These are additions we've made for our own styling
-  // eslint-disable-next-line @typescript-eslint/member-ordering
   isFind?: boolean;
   isFocus?: boolean;
   isHighlighted?: boolean;
   isSelected?: boolean;
   isUnhighlighted?: boolean;
+  labelIcon?: ReactNode;
+  labelIconClass?: string;
+  labelIconPadding?: number;
+  labelPosition?: LabelPosition;
+  onCollapseChange?: (group: Node, collapsed: boolean) => void;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
+  secondaryLabel?: string;
+  setLocation?: boolean;
+  showContextMenu?: boolean;
+  showStatusDecorator?: boolean;
+  statusDecoratorTooltip?: ReactNode;
+  truncateLength?: number;
+  x?: number;
+  y?: number;
 };
 
 export type EdgeData = DecoratedMeshEdgeData & {
@@ -66,7 +67,7 @@ export type EdgeData = DecoratedMeshEdgeData & {
   isSelected?: boolean;
   isUnhighlighted?: boolean;
   onHover?: (element: GraphElement, isMouseIn: boolean) => void;
-  pathStyle?: React.CSSProperties;
+  pathStyle?: CSSProperties;
   tag?: string;
   tagStatus?: NodeStatus;
 };
@@ -102,7 +103,7 @@ export const setNodeAttachments = (_node: Node<NodeModel>): void => {
   return;
 };
 
-export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
+export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap, namespaces?: Namespace[]): void => {
   const data = node.data as NodeData;
   const infraName = data.infraName;
   const infraType = data.infraType;
@@ -193,8 +194,20 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap): void => {
   }
 
   node.label = content.shift();
-  if (content.length > 0) {
-    data.secondaryLabel = content.join(':');
+  // Always reset secondaryLabel; leftover text piles up when setNodeLabel re-runs.
+  data.secondaryLabel = content.length > 0 ? content.join(':') : undefined;
+
+  if (infraType === MeshInfraType.WAYPOINT && !isBox) {
+    const split =
+      (data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined) ??
+      findGatewayWaypointSplit(namespaces ?? [], infraName, data.namespace, data.cluster);
+    data.secondaryLabel = withWaypointCanarySecondaryLabel({
+      includeWeight: false,
+      secondaryLabel: data.secondaryLabel,
+      split,
+      workload: infraName,
+      workloadNamespace: data.namespace
+    });
   }
 
   data.hideContextMenuKebab = true;
@@ -221,18 +234,18 @@ const getEdgeStatus = (data: EdgeData): NodeStatus => {
   }
 };
 
-const getPathStyle = (data: EdgeData): React.CSSProperties => {
+const getPathStyle = (data: EdgeData): CSSProperties => {
   switch (data.healthStatus) {
     case FAILURE.id:
     case DEGRADED.id:
       return {
         strokeWidth: 6,
         strokeDasharray: '10 10'
-      } as React.CSSProperties;
+      } as CSSProperties;
     default:
       return {
         strokeWidth: 3
-      } as React.CSSProperties;
+      } as CSSProperties;
   }
 };
 

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	core_v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -167,4 +169,66 @@ func TestIsWaypointExcludedNs(t *testing.T) {
 	fakeWaypointNode, found := trafficMap[fakeWaypointWorkloadID]
 	assert.True(found)
 	assert.NotContains(fakeWaypointNode.Metadata, graph.IsWaypoint)
+}
+
+func TestWaypointLabelsFromServiceCanary(t *testing.T) {
+	for _, weight := range []int{15, 0, 100} {
+		t.Run(fmt.Sprintf("weight-%d", weight), func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.ExternalServices.Istio.IstioAPIEnabled = false
+			conf.KubernetesConfig.ClusterName = defaultCluster
+			config.Set(conf)
+			service := &core_v1.Service{ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: fmt.Sprint(weight)},
+				Labels: map[string]string{
+					config.WaypointUseLabel:             "primary",
+					config.WaypointUseNamespaceLabel:    "infra",
+					config.WaypointCanaryUseLabel:       "canary",
+					config.WaypointCanaryNamespaceLabel: "infra",
+				},
+				Name:      "reviews",
+				Namespace: "bookinfo",
+			}}
+			client := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("infra"), service)
+			layer := business.NewLayerBuilder(t, conf).WithClient(client).Build()
+			gi := graph.NewGlobalInfo(layer, nil, conf, []models.KubeCluster{}, NewGlobalIstioInfo())
+			a := AmbientAppender{
+				AccessibleNamespaces: graph.AccessibleNamespaces{
+					graph.GetClusterSensitiveKey(defaultCluster, "bookinfo"): {Cluster: defaultCluster, Name: "bookinfo"},
+					graph.GetClusterSensitiveKey(defaultCluster, "infra"):    {Cluster: defaultCluster, Name: "infra"},
+				},
+				ShowWaypoints: true,
+			}
+			trafficMap := graph.NewTrafficMap()
+			for _, name := range []string{"primary", "canary", "unrelated"} {
+				node, err := graph.NewNode(defaultCluster, "infra", "", "infra", name, "", "", graph.GraphTypeWorkload)
+				require.NoError(t, err)
+				node.Metadata[graph.IsWaypoint] = true
+				trafficMap[node.ID] = node
+			}
+			a.AppendGraph(context.Background(), trafficMap, gi, NewAppenderNamespaceInfo("bookinfo"))
+			require.Contains(t, gi.Vendor.ClusterServiceLists, defaultCluster)
+			for _, node := range trafficMap {
+				switch node.Workload {
+				case "primary":
+					require.Equal(t, fmt.Sprintf("Primary %d%%", 100-weight), node.Metadata[graph.WaypointCanaryLabel])
+				case "canary":
+					require.Equal(t, fmt.Sprintf("Canary %d%%", weight), node.Metadata[graph.WaypointCanaryLabel])
+				default:
+					require.NotContains(t, node.Metadata, graph.WaypointCanaryLabel)
+				}
+			}
+
+			// A request cache may cover more namespaces than this graph's accessible set.
+			// Do not expose a service's canary configuration through that cache.
+			delete(a.AccessibleNamespaces, graph.GetClusterSensitiveKey(defaultCluster, "bookinfo"))
+			for _, node := range trafficMap {
+				delete(node.Metadata, graph.WaypointCanaryLabel)
+			}
+			a.AppendGraph(context.Background(), trafficMap, gi, NewAppenderNamespaceInfo("infra"))
+			for _, node := range trafficMap {
+				require.NotContains(t, node.Metadata, graph.WaypointCanaryLabel)
+			}
+		})
+	}
 }
