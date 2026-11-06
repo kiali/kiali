@@ -20,6 +20,7 @@ import { CopyIcon } from '@patternfly/react-icons/dist/esm/icons/copy-icon';
 import { ExternalLinkSquareAltIcon } from '@patternfly/react-icons';
 import type { MessageProps } from '@patternfly/chatbot';
 import { useKialiTranslation } from 'utils/I18nUtils';
+import { writePlainTextToClipboard } from 'utils/ClipboardUtils';
 
 type ChatMessageMarkdownProps = {
   codeBlockProps?: MessageProps['codeBlockProps'];
@@ -66,13 +67,17 @@ const CodeBlockMessage: React.FC<
   const { t } = useKialiTranslation();
   const [copied, setCopied] = React.useState(false);
   const buttonRef = React.useRef<HTMLButtonElement | null>(null);
-  const tooltipIdRef = React.useRef(`chatbot-copy-${Math.random().toString(16).slice(2)}`);
+  // TODO: replace with React.useId() once the UI is on React 18 (stable unique ids without Math.random).
+  const [tooltipId] = React.useState(() => `chatbot-copy-${Math.random().toString(16).slice(2)}`);
   const language = /language-(\w+)/.exec(className || '')?.[1];
   const content = String(children ?? '');
 
   const handleCopy = React.useCallback((_event: React.MouseEvent, text: string): void => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
+    void writePlainTextToClipboard(text).then(success => {
+      if (success) {
+        setCopied(true);
+      }
+    });
   }, []);
 
   React.useEffect(() => {
@@ -103,7 +108,7 @@ const CodeBlockMessage: React.FC<
       >
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>
-      <Tooltip id={tooltipIdRef.current} content={t('Copy')} position="top" triggerRef={buttonRef} />
+      <Tooltip id={tooltipId} content={t('Copy')} position="top" triggerRef={buttonRef} />
     </CodeBlockAction>
   );
 

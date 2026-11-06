@@ -3,7 +3,8 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import type { KialiAppState } from 'store/Store';
 import type { ChatEntry, ReferencedDoc } from 'types/Chatbot';
-import { copyToClipboard } from './clipboard';
+import { writeMarkdownRichToClipboard } from 'utils/ClipboardUtils';
+import { addWarning } from 'utils/AlertUtils';
 import { Alert } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import { ResponseTools } from './ResponseTools';
@@ -32,7 +33,14 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
     const actions = entry.error
       ? undefined
       : {
-          copy: { onClick: () => copyToClipboard(entry.text ?? '') }
+          copy: {
+            onClick: async () => {
+              const success = await writeMarkdownRichToClipboard(entry.text ?? '');
+              if (!success) {
+                addWarning(t('Unable to copy to clipboard.'));
+              }
+            }
+          }
         };
     let sources: SourcesCardProps | undefined;
     if (Array.isArray(entry.references) && entry.references.length > 0) {
