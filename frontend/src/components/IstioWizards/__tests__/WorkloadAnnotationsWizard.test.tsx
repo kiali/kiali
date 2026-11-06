@@ -6,6 +6,9 @@ rstest.mock('utils/I18nUtils', () => ({
     if (opts && 'section' in opts) {
       return key.replace('{{section}}', opts.section as string);
     }
+    if (opts && 'annotationKey' in opts) {
+      return key.replace('{{annotationKey}}', opts.annotationKey as string);
+    }
     return key;
   }
 }));
@@ -108,6 +111,14 @@ describe('WorkloadAnnotationsWizard', () => {
     fireEvent.click(screen.getAllByTestId('annotation-value-edit')[0]);
     expect(screen.getByTestId('annotation-value-save')).toBeInTheDocument();
     expect(screen.getByTestId('annotation-value-cancel')).toBeInTheDocument();
+  });
+
+  it('labels the value editor with the annotation key', () => {
+    render(<WorkloadAnnotationsWizard {...defaultProps} />);
+    fireEvent.click(screen.getAllByTestId('annotation-value-edit')[0]);
+    expect(screen.getByRole('textbox', { name: 'Annotation value for deployment.kubernetes.io/revision' })).toHaveValue(
+      '1'
+    );
   });
 
   it('saves edited annotation value from the popover', () => {

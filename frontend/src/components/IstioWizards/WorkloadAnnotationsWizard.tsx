@@ -161,7 +161,9 @@ const EditValuePopover: React.FC<EditValuePopoverProps> = ({
     onVisibleChange?.(visible);
   };
 
-  const valueAriaLabel = entryKey ? t('Annotation value for {{key}}', { key: entryKey }) : t('Value');
+  const valueAriaLabel = entryKey
+    ? t('Annotation value for {{annotationKey}}', { annotationKey: entryKey })
+    : t('Value');
 
   const title = entryKey || t('Value');
 
