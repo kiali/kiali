@@ -1,9 +1,12 @@
+// Assisted-by: Codex
 import {
   DefaultNode,
   getShapeComponent,
+  Layer,
   NodeShape,
   observer,
   ScaleDetailsLevel,
+  TOP_LAYER,
   useHover
 } from '@patternfly/react-topology';
 import type { Node, ShapeProps, WithSelectionProps } from '@patternfly/react-topology';
@@ -20,6 +23,7 @@ import { graphIsReady } from '../Graph';
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
 type StyleNodeProps = {
+  dragging?: boolean;
   element: Node;
 } & WithSelectionProps;
 
@@ -86,7 +90,7 @@ const labelStyle = kialiStyle({
 const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
-  const [hover, hoverRef] = useHover();
+  const [hover, hoverRef] = useHover<SVGGElement>();
 
   const ColorFind = PFColors.Gold400;
   const ColorFocus = PFColors.Blue200;
@@ -158,31 +162,38 @@ const StyleNodeComponent: React.FC<StyleNodeProps> = ({ element, ...rest }) => {
   const ShapeComponent = getCustomNodeShape(element);
 
   return (
-    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
-      {data.hasSpans && (
-        <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
-      )}
-      {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
-      {data.isFocus && <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />}
-      <DefaultNode
-        className={nodeStyle}
-        labelClassName={labelStyle}
-        element={element}
-        {...rest}
-        {...passedData}
-        // Keep label in this hover group. raiseLabelOnHover portals it to TOP_LAYER,
-        // which fires mouseleave here and toggles hover/cursor in a loop.
-        raiseLabelOnHover={false}
-        hover={hover}
-        attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        getCustomShape={getCustomNodeShape}
-        scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
-        scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
-        showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
-        showStatusBackground={detailsLevel !== ScaleDetailsLevel.high}
-      >
-        {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
-      </DefaultNode>
+    <g onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {/* Move the hover ref with the entire node, keeping its label and decorators in the same boundary. */}
+      <Layer id={hover || rest.dragging ? TOP_LAYER : undefined}>
+        <g style={{ opacity: opacity }} ref={hoverRef}>
+          {data.hasSpans && (
+            <ShapeComponent className={traceOverlayStyle} width={width} height={height} element={element} />
+          )}
+          {data.isFind && (
+            <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />
+          )}
+          {data.isFocus && (
+            <ShapeComponent className={focusOverlayStyle} width={width} height={height} element={element} />
+          )}
+          <DefaultNode
+            className={nodeStyle}
+            labelClassName={labelStyle}
+            element={element}
+            {...rest}
+            {...passedData}
+            raiseLabelOnHover={false}
+            hover={hover}
+            attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
+            getCustomShape={getCustomNodeShape}
+            scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
+            scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
+            showLabel={hover || detailsLevel === ScaleDetailsLevel.high}
+            showStatusBackground={detailsLevel !== ScaleDetailsLevel.high}
+          >
+            {(hover || detailsLevel !== ScaleDetailsLevel.low) && renderIcon(element)}
+          </DefaultNode>
+        </g>
+      </Layer>
     </g>
   );
 };

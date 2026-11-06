@@ -1,17 +1,20 @@
+// Assisted-by: Codex
+import type { Node, WithSelectionProps } from '@patternfly/react-topology';
 import {
   DefaultNode,
   getShapeComponent,
-  Node,
+  Layer,
   observer,
   ScaleDetailsLevel,
-  useHover,
-  WithSelectionProps
+  TOP_LAYER,
+  useHover
 } from '@patternfly/react-topology';
 import { useDetailsLevel } from '@patternfly/react-topology';
 import * as React from 'react';
 import { PFColors } from 'components/Pf/PfColors';
 import { kialiStyle } from 'styles/StyleUtils';
-import { MeshInfraType, MeshNodeData } from 'types/Mesh';
+import type { MeshNodeData } from 'types/Mesh';
+import { MeshInfraType } from 'types/Mesh';
 import { ReactComponent as JaegerLogo } from '../../../assets/img/mesh/jaeger.svg';
 import { ReactComponent as PrometheusLogo } from '../../../assets/img/mesh/prometheus.svg';
 import { ReactComponent as GrafanaLogo } from '../../../assets/img/mesh/grafana.svg';
@@ -27,6 +30,7 @@ import { GlobeRouteIcon, InfrastructureIcon, LayerGroupIcon } from '@patternfly/
 // This is the registered Node component override that utilizes our customized Node.tsx component.
 
 type MeshNodeProps = {
+  dragging?: boolean;
   element: Node;
 } & WithSelectionProps;
 
@@ -123,7 +127,7 @@ const labelStyle = kialiStyle({
 const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const data = element.getData();
   const detailsLevel = useDetailsLevel();
-  const [hover, hoverRef] = useHover();
+  const [hover, hoverRef] = useHover<SVGGElement>();
   const ShapeComponent = getShapeComponent(element);
 
   const ColorFind = PFColors.Gold400;
@@ -166,21 +170,30 @@ const MeshNodeComponent: React.FC<MeshNodeProps> = ({ element, ...rest }) => {
   const { width, height } = element.getDimensions();
 
   return (
-    <g style={{ opacity: opacity }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} ref={hoverRef as any}>
-      {data.isFind && <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />}
-      <DefaultNode
-        className={nodeStyle}
-        labelClassName={labelStyle}
-        element={element}
-        {...rest}
-        {...passedData}
-        attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
-        scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
-        scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
-        showLabel={hover || detailsLevel !== ScaleDetailsLevel.low}
-      >
-        {renderIcon(element)}
-      </DefaultNode>
+    <g onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {/* Move the hover ref with the entire node, keeping its label and decorators in the same boundary. */}
+      <Layer id={hover || rest.dragging ? TOP_LAYER : undefined}>
+        <g style={{ opacity: opacity }} ref={hoverRef}>
+          {data.isFind && (
+            <ShapeComponent className={findOverlayStyle} width={width} height={height} element={element} />
+          )}
+          <DefaultNode
+            className={nodeStyle}
+            labelClassName={labelStyle}
+            element={element}
+            {...rest}
+            {...passedData}
+            raiseLabelOnHover={false}
+            hover={hover}
+            attachments={hover || detailsLevel === ScaleDetailsLevel.high ? data.attachments : undefined}
+            scaleLabel={hover && detailsLevel === ScaleDetailsLevel.high}
+            scaleNode={hover && detailsLevel !== ScaleDetailsLevel.high}
+            showLabel={hover || detailsLevel !== ScaleDetailsLevel.low}
+          >
+            {renderIcon(element)}
+          </DefaultNode>
+        </g>
+      </Layer>
     </g>
   );
 };
