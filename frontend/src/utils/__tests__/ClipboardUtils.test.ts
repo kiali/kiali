@@ -56,19 +56,27 @@ describe('ClipboardUtils', () => {
         value: { writeText }
       });
 
-      const globalAny = globalThis as typeof globalThis & { ClipboardItem?: typeof ClipboardItem };
-      const prevClipboardItem = globalAny.ClipboardItem;
-      globalAny.ClipboardItem = undefined;
+      const hadClipboardItem = Object.prototype.hasOwnProperty.call(globalThis, 'ClipboardItem');
+      const prevDescriptor = hadClipboardItem
+        ? Object.getOwnPropertyDescriptor(globalThis, 'ClipboardItem')
+        : undefined;
+
+      Object.defineProperty(globalThis, 'ClipboardItem', {
+        configurable: true,
+        enumerable: true,
+        value: undefined,
+        writable: true
+      });
 
       const result = await ClipboardUtils.writeMarkdownRichToClipboard('# title');
 
       expect(result).toBe(true);
       expect(writeText).toHaveBeenCalledWith('# title');
 
-      if (prevClipboardItem !== undefined) {
-        globalAny.ClipboardItem = prevClipboardItem;
+      if (hadClipboardItem && prevDescriptor) {
+        Object.defineProperty(globalThis, 'ClipboardItem', prevDescriptor);
       } else {
-        delete globalAny.ClipboardItem;
+        Reflect.deleteProperty(globalThis, 'ClipboardItem');
       }
     });
   });
