@@ -131,7 +131,19 @@ func gatewaySplitScore(split *WaypointTrafficSplit) int {
 	return 1
 }
 
-// PickGatewayWaypointTrafficSplit selects the richest split among namespace configs (deterministic).
+// waypointConfigLevelRank orders config sources for tie-breaking: service overrides namespace.
+func waypointConfigLevelRank(level string) int {
+	switch level {
+	case "service":
+		return 2
+	case "namespace":
+		return 1
+	default:
+		return 0
+	}
+}
+
+// PickGatewayWaypointTrafficSplit selects the richest split (deterministic). Same score prefers service-level over namespace-level.
 func PickGatewayWaypointTrafficSplit(candidates []*WaypointTrafficSplit) *WaypointTrafficSplit {
 	if len(candidates) == 0 {
 		return nil
@@ -141,7 +153,7 @@ func PickGatewayWaypointTrafficSplit(candidates []*WaypointTrafficSplit) *Waypoi
 		if si != sj {
 			return si > sj
 		}
-		return candidates[i].ConfigLevel < candidates[j].ConfigLevel
+		return waypointConfigLevelRank(candidates[i].ConfigLevel) > waypointConfigLevelRank(candidates[j].ConfigLevel)
 	})
 	return candidates[0]
 }
