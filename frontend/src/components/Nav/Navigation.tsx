@@ -23,7 +23,7 @@ import { homeCluster, kialiLogoDark, kialiLogoLight, serverConfig } from '../../
 import type { KialiAppState } from '../../store/Store';
 import { UserSettingsThunkActions } from '../../actions/UserSettingsThunkActions';
 import { Menu } from './Menu';
-import { Link, useLocation } from 'react-router-dom-v5-compat';
+import { Link, useLocation } from 'react-router';
 import type { ExternalServiceInfo } from '../../types/StatusState';
 import { ColorScheme } from 'types/Common';
 import { useKialiTranslation } from 'utils/I18nUtils';

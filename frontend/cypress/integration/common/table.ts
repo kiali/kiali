@@ -2,7 +2,7 @@ import { Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import { TableDefinition } from 'cypress-cucumber-preprocessor';
 import { MeshCluster } from 'types/Mesh';
 import { ensureKialiFinishedLoading } from './transition';
-import { getClusterForSingleCluster, linkSelector } from './utils';
+import { getClusterForSingleCluster, linkSelector, normalizeKialiPath } from './utils';
 
 enum SortOrder {
   Ascending = 'ascending',
@@ -205,7 +205,7 @@ Then('user sees the {string} table with empty message', (tableName: string) => {
 
 When(
   'user clicks in the {string} table {string} badge {string} name row link',
-  (tableName: string, badge: string, _name: string) => {
+  (tableName: string, _badge: string, name: string) => {
     let tableId = '';
 
     switch (tableName) {
@@ -215,7 +215,14 @@ When(
     }
 
     cy.get(`table[aria-label="${tableId}"]`).within(() => {
-      cy.contains('div', badge).siblings().first().click();
+      // Prefer the named link (data-test from IstioObjectLink) — badge sibling clicks are
+      // brittle under PatternFly 6 Tooltip wrappers and can leave the previous page mounted.
+      // linkSelector matches <a href> and OSSMC kiosk <button data-href>.
+      cy.contains('tr', name).find(linkSelector()).filter(`[data-test*="${name}"]`).first().click();
+    });
+
+    cy.location('pathname', { timeout: 60000 }).should(pathname => {
+      expect(normalizeKialiPath(pathname)).to.include('/istio/');
     });
   }
 );

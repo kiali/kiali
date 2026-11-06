@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { ControlPlaneBadge } from '../ControlPlaneBadge';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 

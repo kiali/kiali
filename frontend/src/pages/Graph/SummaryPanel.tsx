@@ -166,7 +166,7 @@ class SummaryPanelComponent extends React.Component<MainSummaryPanelPropType, Su
     );
   }
 
-  private getSummaryPanel = (summary: SummaryData): React.ReactFragment => {
+  private getSummaryPanel = (summary: SummaryData): React.ReactNode => {
     const summaryType = summary.summaryType as string;
 
     switch (summaryType) {

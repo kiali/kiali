@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import * as API from '../Api';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import { MemoryRouter } from 'react-router';
 import { store } from '../../store/ConfigStore';
 
 export class MounterMocker {

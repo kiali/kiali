@@ -1,5 +1,5 @@
-import type { ActionType} from 'typesafe-actions';
-import { createAction, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
 import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeRange } from '../types/Common';
 import { ActionKeys } from './ActionKeys';
 

@@ -1,8 +1,10 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../../../types/Graph';
-import { SummaryPanelNodeComponent, SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
+import type { DecoratedGraphNodeData, GraphNodeData } from '../../../types/Graph';
+import { GraphType, NodeType } from '../../../types/Graph';
+import type { SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
+import { SummaryPanelNodeComponent } from '../SummaryPanelNode';
+import { MemoryRouter } from 'react-router';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
 import { serverConfig, setServerConfig } from '../../../config/ServerConfig';
