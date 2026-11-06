@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
 import {
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
@@ -25,7 +26,8 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
-  InfoCircleIcon
+  InfoCircleIcon,
+  RhUiAiExperienceIcon
 } from '@patternfly/react-icons';
 import type { SVGIconProps } from '@patternfly/react-icons/dist/js/createIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
@@ -38,11 +40,40 @@ import type { NotificationGroup, NotificationMessage } from 'types/NotificationC
 import type { KialiDispatch } from 'types/Redux';
 import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { NotificationCenterThunkActions } from 'actions/NotificationCenterThunkActions';
+import { Paths } from 'config';
+import { KialiLink } from 'components/Link/KialiLink';
 import { PFColors } from 'components/Pf/PfColors';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize } from 'styles/PfTypography';
 import moment from 'moment';
+import { partitionTroubleshootingIssues } from 'pages/AIDashboard/AITroubleshooting/partitionTroubleshooting';
+import type { TroubleshootingIssue } from 'types/Chatbot';
+
+const troubleshootingSectionStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  fontSize: 'var(--pf-t--global--font--size--heading--sm)',
+  fontWeight: 'var(--pf-t--global--font--weight--heading--default)',
+  paddingBlock: PFSpacer.md,
+  paddingInline: PFSpacer.lg
+});
+
+const troubleshootingTitleStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: PFSpacer.sm
+});
+
+const troubleshootingLinkWrapperStyle = kialiStyle({
+  fontSize: PFFontSize.small,
+  marginLeft: PFSpacer.md
+});
 
 type ReduxStateProps = {
   groups: NotificationGroup[];
+  troubleshootingIssues: TroubleshootingIssue[];
 };
 
 type ReduxDispatchProps = {
@@ -70,7 +101,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     return unseenGroups;
   };
 
-  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(getUnseenGroups(props.groups));
+  const [expandedGroupIds, setExpandedGroupIds] = useState<Set<string>>(() => getUnseenGroups(props.groups));
 
   interface ActionsMenu {
     [toggleId: string]: boolean;
@@ -216,7 +247,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
     <NotificationDrawer ref={drawerRef}>
       <NotificationDrawerHeader
         closeButtonAriaLabel={t('Close')}
-        count={getNumberUnread()}
+        count={getNumberUnread() + props.troubleshootingIssues.length}
         onClose={() => props.toggleNotificationCenter()}
         title={t('Notifications')}
         unreadText={t('unread')}
@@ -310,6 +341,32 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
             </NotificationDrawerGroup>
           ))}
         </NotificationDrawerGroupList>
+        {props.troubleshootingIssues.length > 0 && (
+          <>
+            <Divider />
+            <div className={troubleshootingSectionStyle} data-test="troubleshooting-notification-section">
+              <span className={troubleshootingTitleStyle}>
+                <RhUiAiExperienceIcon />
+                {t('Troubleshooting')}
+              </span>
+              <span className={troubleshootingLinkWrapperStyle}>
+                <KialiLink
+                  dataTest="troubleshooting-notification-link"
+                  onClick={() => props.toggleNotificationCenter()}
+                  to={`/${Paths.AI}?tab=troubleshooting`}
+                >
+                  {`(${
+                    props.troubleshootingIssues.length === 1
+                      ? t('1 problem detected')
+                      : t('{{count}} problems detected', {
+                          count: props.troubleshootingIssues.length
+                        })
+                  })`}
+                </KialiLink>
+              </span>
+            </div>
+          </>
+        )}
       </NotificationDrawerBody>
     </NotificationDrawer>
   );
@@ -317,7 +374,14 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    groups: state.notificationCenter.groups
+    groups: state.notificationCenter.groups,
+    troubleshootingIssues:
+      state.ai?.enabled && state.ai.troubleshooting?.loaded
+        ? partitionTroubleshootingIssues(
+            state.ai.troubleshooting.issues ?? [],
+            state.ai.troubleshooting.hiddenSubProblemIds ?? []
+          ).visible
+        : []
   };
 };
 

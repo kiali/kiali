@@ -333,3 +333,29 @@ export const fileDeleteYamlPayload = {
     }
   ]
 };
+
+export const mockTroubleshootingIssues = [
+  {
+    category: 'data_plane',
+    description: 'Service productpage is returning 5xx errors.',
+    id: 'dp-001',
+    problem: 'Service productpage has errors',
+    subProblems: [
+      {
+        id: 'sp-001',
+        impact: 'Requests to productpage are failing',
+        issue: 'High HTTP 5xx error rate',
+        severity: 'critical',
+        suggestedActions: [
+          {
+            description: 'Analyze productpage errors',
+            prompt: 'Why is productpage returning 5xx errors?',
+            type: 'Analyze'
+          }
+        ],
+        suggestedPrompt: 'Why is productpage failing?',
+        target: 'productpage'
+      }
+    ]
+  }
+];

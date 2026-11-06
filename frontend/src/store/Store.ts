@@ -31,8 +31,13 @@ import type { TracingState } from 'reducers/TracingState';
 import type { MetricsStatsState } from 'reducers/MetricsStatsState';
 import type { MeshCluster, MeshDefinition, MeshTarget } from '../types/Mesh';
 import type { MeshLayout } from 'pages/Mesh/layouts/LayoutFactory';
-import type { ChatInteractionMode, ChatResourceHealth, ProviderAI } from 'types/Chatbot';
-import type { ChatbotDisplayMode } from '@patternfly/chatbot';
+import type {
+  ChatInteractionMode,
+  ChatResourceHealth,
+  PendingChatPrompt,
+  ProviderAI,
+  TroubleshootingIssue
+} from 'types/Chatbot';
 
 // Store is the Redux Data store
 
@@ -205,6 +210,16 @@ export interface AIState {
   chat: ChatAIState;
   consumption: AIRightView;
   enabled: boolean;
+  troubleshooting: TroubleshootingAIState;
+}
+
+export interface TroubleshootingAIState {
+  error: string;
+  // Subproblem ids the user chose to hide. Survives troubleshooting refetches.
+  hiddenSubProblemIds: string[];
+  issues: TroubleshootingIssue[];
+  // True after the first scan attempt, including a failed one.
+  loaded: boolean;
 }
 
 export interface AIRightView {
@@ -217,18 +232,21 @@ export interface ChatAIState {
   alwaysNavigate: boolean;
   chatContext: string;
   chatHistory: ImmutableList<ImmutableMap<string, unknown>>;
-  chatbotVisible: boolean;
   conversationID: string;
   defaultProvider: string;
-  displayMode: ChatbotDisplayMode;
   enabled: boolean;
   interactionMode: ChatInteractionMode;
   openTool: ImmutableMap<string, any>;
+  // Prompt requested from outside the panel. A new nonce lets the same text be sent again.
+  pendingPrompt?: PendingChatPrompt & {
+    nonce: number;
+  };
   providers: ProviderAI[];
   query: string;
   resourceHealth?: ChatResourceHealth;
   selectedModel: string;
   selectedProvider: string;
+  visible: boolean;
 }
 
 // This defines the Kiali Global Application State

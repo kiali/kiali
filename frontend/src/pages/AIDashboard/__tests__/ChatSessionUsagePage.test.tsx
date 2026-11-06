@@ -129,7 +129,15 @@ describe('AIUsage', () => {
     expect(screen.getAllByText('Usage over time').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Usage versus budget').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Usage by provider').length).toBeGreaterThan(0);
+    expect(screen.getByTestId('ai-usage-chart-toolbar')).toBeInTheDocument();
     expect(screen.getByTestId('ai-usage-tokens-cost-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('ai-usage-request-dd')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('current-week-threshold-chart')).queryByRole('button', { name: 'Cost' })
+    ).not.toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('ai-user-metrics-charts')).queryByRole('button', { name: 'Cost' })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(within(screen.getByTestId('ai-usage-tokens-cost-toggle')).getByRole('button', { name: 'Cost' }));
     expect(screen.getByTestId('ai-weekly-budget-chart')).toBeInTheDocument();
@@ -165,5 +173,61 @@ describe('AIUsage', () => {
     expect(screen.queryByTestId('ai-usage-budget')).not.toBeInTheDocument();
     expect(screen.queryByText('Your weekly usage')).not.toBeInTheDocument();
     expect(screen.getByTestId('ai-usage-session-grid')).toBeInTheDocument();
+  });
+
+  it('spans the request type cell across rows of the same type', async () => {
+    (API.getAISessionUsage as Mock).mockResolvedValue({
+      data: {
+        budget: { has_budget: false },
+        session: [
+          {
+            completion_tokens: 5,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'gpt-4o',
+            prompt_tokens: 10,
+            provider: 'openai',
+            request: 'chat',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 15,
+            user_id: 'anonymous'
+          },
+          {
+            completion_tokens: 2,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'claude-sonnet-4-6',
+            prompt_tokens: 8,
+            provider: 'anthropic',
+            request: 'chat',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 10,
+            user_id: 'anonymous'
+          },
+          {
+            completion_tokens: 4,
+            last_updated: '2026-10-07T00:00:00.000Z',
+            model: 'gpt-4o',
+            prompt_tokens: 6,
+            provider: 'openai',
+            request: 'troubleshooting',
+            request_count: 1,
+            since: '2026-10-07T00:00:00.000Z',
+            total_tokens: 10,
+            user_id: 'anonymous'
+          }
+        ]
+      }
+    });
+
+    await act(async () => {
+      renderAIUsage({ allowed: false, enabled: false });
+    });
+
+    expect(await screen.findByText('Usage by Provider and Model')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Request type' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'Chat' })).toHaveAttribute('rowspan', '2');
+    expect(screen.getByRole('cell', { name: 'Troubleshooting' })).toHaveAttribute('rowspan', '1');
+    expect(screen.getAllByRole('cell', { name: 'Chat' })).toHaveLength(1);
   });
 });

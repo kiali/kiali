@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Bullseye, EmptyState, EmptyStateBody, Grid, GridItem, Spinner } from '@patternfly/react-core';
 import * as API from 'services/Api';
 import { formatTokensInMillions } from 'types/Chatbot';
-import type { AIUsageResponse, UsageValueKind } from 'types/Chatbot';
+import type { AIRequestKind, AIUsageResponse, UsageValueKind } from 'types/Chatbot';
 import { Chart, ChartAxis, ChartBar, ChartStack, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
 import { getLineChartData } from '../AIStats/calculationData';
 import { onAIResponseReceived } from 'utils/aiEvents';
@@ -12,7 +12,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { AIConsumptionHeader } from './AIConsumptionHeader';
 import { AIKPI } from '../AIStats/AIKPI';
 import { AIConsumptionTables } from './AIConsumptionTables';
-import { formatAICost, formatConsumptionRangeTitle } from '../aiDashboardUtils';
+import { formatAICost, formatConsumptionRangeTitle, useContainerWidth } from '../aiDashboardUtils';
 
 const chartBoxStyle = kialiStyle({
   boxSizing: 'border-box',
@@ -24,23 +24,6 @@ const chartBoxStyle = kialiStyle({
   paddingRight: PFSpacer.lg,
   width: '95%'
 });
-
-/** Returns the pixel width of a container div, updated via ResizeObserver. */
-const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
-  const [width, setWidth] = React.useState(0);
-  React.useEffect(() => {
-    if (!ref.current) return;
-    const initial = ref.current.offsetWidth || Math.floor(ref.current.getBoundingClientRect().width);
-    if (initial > 0) setWidth(initial);
-    const observer = new ResizeObserver(entries => {
-      const w = Math.floor(entries[0].contentRect.width);
-      if (w > 0) setWidth(w);
-    });
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-};
 
 const getDefaultRange = (window: string): { fromVal: number; toVal: number } => {
   const now = new Date();
@@ -78,6 +61,7 @@ export const AIConsumption: React.FC = () => {
   const [limit, setLimit] = React.useState<number>(5);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string>('');
+  const [requestKind, setRequestKind] = React.useState<AIRequestKind>('all');
   const [valueKind, setValueKind] = React.useState<UsageValueKind>('cost');
 
   const getApiRange = React.useCallback((win: string, fVal: number, tVal: number): { from: number; since: number } => {
@@ -106,7 +90,7 @@ export const AIConsumption: React.FC = () => {
           undefined,
           undefined,
           undefined,
-          undefined,
+          requestKind,
           win as 'weekly' | 'monthly',
           Math.floor(apiRange.from / 1000),
           Math.floor(apiRange.since / 1000),
@@ -128,7 +112,7 @@ export const AIConsumption: React.FC = () => {
         setLoading(false);
       }
     },
-    [getApiRange]
+    [getApiRange, requestKind]
   );
 
   React.useEffect(() => {
@@ -196,8 +180,10 @@ export const AIConsumption: React.FC = () => {
           setFromVal(newFrom);
           setToVal(newTo);
         }}
+        onRequestKindChange={setRequestKind}
         onValueKindChange={setValueKind}
         onWindowChange={handleWindowChange}
+        requestKind={requestKind}
         title={rangeTitle}
         toVal={toVal}
         valueKind={valueKind}
@@ -264,8 +250,8 @@ export const AIConsumption: React.FC = () => {
                       }
                     />
                     <ChartStack>
-                      {seriesData.map((points, i) => (
-                        <ChartBar key={i} data={points} />
+                      {seriesData.map(points => (
+                        <ChartBar key={points[0]?.name ?? 'bar'} data={points} />
                       ))}
                     </ChartStack>
                   </Chart>

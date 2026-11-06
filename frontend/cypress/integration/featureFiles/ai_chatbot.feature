@@ -1,5 +1,6 @@
 @ai-chatbot
 # don't change first line of this file - the tag is used for the test scripts to identify the test suite
+@ai
 @skip-ossmc
 
 Feature: Kiali AI Chatbot
@@ -11,14 +12,11 @@ Feature: Kiali AI Chatbot
     Given user is at administrator perspective
     And user is at the "overview" page
 
-  Scenario: Changing display mode updates the chatbot layout class and CSS variables
+  Scenario: The chatbot opens in a resizable inline drawer
     When user clicks the AI chatbot toggle
     And the AI chatbot window should be open
-    And the user clicks the "Dock to window" header button
-    Then the chatbot should be in "docked" display mode
-    And the chatbot docked height CSS variable should be set
-    When the user clicks the "Overlay" header button
-    Then the chatbot should be in "default" display mode
+    Then the chatbot should be in "drawer" display mode
+    And the chatbot drawer should be resizable and inline
 
   Scenario: The Minimize button hides the chatbot
     When user clicks the AI chatbot toggle
@@ -157,30 +155,6 @@ Feature: Kiali AI Chatbot
     And the AI chatbot should display a welcome message
     And the AI chatbot should not contain the message "Of course."
     And the next chat message should be sent without a conversation ID
-
-  Scenario: Selecting a different AI provider opens the new chat confirmation modal
-    Given two AI providers are configured
-    When user clicks the AI chatbot toggle
-    And the AI chatbot window should be open
-    And user sends a message "Hello, this is a test message"
-    And the AI chatbot should display the answer "Of course."
-    When user selects the second AI provider
-    Then the new chat confirmation modal should be open
-
-  Scenario: Confirming a provider change updates the selected provider and clears the chat
-    Given two AI providers are configured
-    When user clicks the AI chatbot toggle
-    And the AI chatbot window should be open
-    And user sends a message "Hello, this is a test message"
-    And the AI chatbot should display the answer "Of course."
-    When user selects the second AI provider
-    And the new chat confirmation modal should be open
-    And user confirms the new chat modal
-    Then the new chat modal should be closed
-    And the AI chatbot should display a welcome message
-    And the AI chatbot should not contain the message "Of course."
-    And the AI chatbot header should show the second provider as selected
-    And the next chat message should be sent to the second AI provider without a conversation ID
 
   Scenario: Selecting a different AI provider opens the new chat confirmation modal
     Given two AI providers are configured
@@ -385,3 +359,59 @@ Feature: Kiali AI Chatbot
     And the interaction mode dropdown should show "troubleshoot" option
     And the interaction mode dropdown should show "Standard question and answer" description
     And the interaction mode dropdown should show "Focused troubleshooting assistance" description
+
+  Scenario: Switching interaction mode during an active conversation resets the chat and shows a mode divider
+    When user clicks the AI chatbot toggle
+    And the AI chatbot window should be open
+    And user sends a message "Hello, this is a test message"
+    And the AI chatbot should display the answer "Of course."
+    When the user opens the interaction mode dropdown
+    And the user selects "troubleshoot" interaction mode
+    Then the interaction mode should be "troubleshoot"
+    And the AI chatbot should not contain the message "Of course."
+    And the AI chatbot should display a mode divider for "troubleshoot"
+    And the next chat message should be sent without a conversation ID
+
+  Scenario: The AI troubleshooting dashboard displays detected problems and subproblems
+    Given the AI troubleshooting scan returns mesh problems
+    When user visits the AI troubleshooting dashboard
+    Then the AI troubleshooting summary should contain "Troubleshooting: 1 problem detected"
+    And the AI troubleshooting dashboard should show issue "[dp-001] Service productpage has errors"
+    And the AI troubleshooting dashboard should show subproblem "[sp-001] High HTTP 5xx error rate"
+
+  Scenario: Clicking Ask chatbot on a troubleshooting subproblem opens the chatbot in ask mode and sends the prompt
+    Given the AI troubleshooting scan returns mesh problems
+    And user visits the AI troubleshooting dashboard
+    When user clicks Ask chatbot on the first troubleshooting subproblem
+    Then the AI chatbot window should be open
+    And the interaction mode should be "ask"
+    And the AI chatbot should display the answer "Of course."
+
+  Scenario: Clicking Analyze on a troubleshooting subproblem opens the chatbot in troubleshoot mode and sends the analysis
+    Given the AI troubleshooting scan returns mesh problems
+    And user visits the AI troubleshooting dashboard
+    When user clicks Analyze on the first troubleshooting subproblem
+    Then the AI chatbot window should be open
+    And the interaction mode should be "troubleshoot"
+    And the AI chatbot should contain the text "We are going to try to fix [sp-001] High HTTP 5xx error rate: productpage."
+    And the AI chatbot should display the answer "Of course."
+
+  Scenario: Hiding and showing a troubleshooting subproblem moves it between visible and hidden lists
+    Given the AI troubleshooting scan returns mesh problems
+    And user visits the AI troubleshooting dashboard
+    When user hides the first troubleshooting subproblem
+    Then the hidden troubleshooting problems section should be visible
+    When user expands the hidden troubleshooting problems section
+    And user shows the first hidden troubleshooting subproblem
+    Then the hidden troubleshooting problems section should not exist
+
+  Scenario: The notification drawer shows troubleshooting problems and closes when the AI chatbot opens
+    Given the AI troubleshooting scan returns mesh problems
+    And user visits the AI troubleshooting dashboard
+    When user opens the notification drawer
+    Then the notification drawer should be open
+    And the notification drawer should show the troubleshooting dashboard link "(1 problem detected)"
+    When user clicks the AI chatbot toggle
+    Then the AI chatbot window should be open
+    And the notification drawer should be closed
+

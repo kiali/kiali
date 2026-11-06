@@ -525,6 +525,12 @@ func TestChatAI_InvalidRequestBody(t *testing.T) {
 	assert.Equal(t, "Invalid request body", payload["error"])
 }
 
+func TestChatMetricRequest(t *testing.T) {
+	assert.Equal(t, internalmetrics.AIRequestChat, chatMetricRequest(""))
+	assert.Equal(t, internalmetrics.AIRequestChat, chatMetricRequest(aiTypes.ChatInteractionModeAsk))
+	assert.Equal(t, internalmetrics.AIRequestTroubleshooting, chatMetricRequest(aiTypes.ChatInteractionModeTroubleshoot))
+}
+
 func TestChatAI_ProviderNotFound(t *testing.T) {
 	conf := config.NewConfig()
 	conf.AI.ChatAI.Enabled = true
@@ -615,13 +621,173 @@ func TestChatMCP_EmptyBody(t *testing.T) {
 		"empty body should not cause a 500/panic")
 }
 
+func setupTroubleshootingHandler(t *testing.T, enable bool) (http.Handler, *config.Config) {
+	t.Helper()
+	conf := config.NewConfig()
+	conf.AI.Enabled = enable
+
+	k8s := kubetest.NewFakeK8sClient()
+	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
+	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
+	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
+	prom := &prometheustest.PromClientMock{}
+	grafanaSvc, err := grafana.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	persesSvc, err := perses.NewService(conf, cf.GetSAHomeClusterClient())
+	require.NoError(t, err)
+	cpm := &business.FakeControlPlaneMonitor{}
+	traceLoader := &tracingtest.TracingClientMock{}
+
+	h := Troubleshooting(
+		conf,
+		kialiCache,
+		nil,
+		cf,
+		prom,
+		cpm,
+		func() tracing.ClientInterface { return traceLoader },
+		grafanaSvc,
+		persesSvc,
+		discovery,
+	)
+	return WithFakeAuthInfo(conf, h), conf
+}
+
+func TestTroubleshooting_Disabled(t *testing.T) {
+	require := require.New(t)
+	handler, _ := setupTroubleshootingHandler(t, false)
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", nil)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+}
+
+func TestTroubleshooting_EmptyBodyCallsTool(t *testing.T) {
+	require := require.New(t)
+	require.NoError(mcp.LoadTools())
+	handler, _ := setupTroubleshootingHandler(t, true)
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", nil)
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode, "troubleshooting tool should be registered")
+	assert.NotEqual(t, http.StatusServiceUnavailable, resp.StatusCode)
+	assert.NotEqual(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestTroubleshooting_InvalidJSON(t *testing.T) {
+	require := require.New(t)
+	handler, _ := setupTroubleshootingHandler(t, true)
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", strings.NewReader("{not-json"))
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestTroubleshooting_ActionWithoutPrompt(t *testing.T) {
+	require := require.New(t)
+	handler, _ := setupTroubleshootingHandler(t, true)
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", strings.NewReader(`{"action":"Ask"}`))
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func TestTroubleshooting_ChatUserNotAllowed(t *testing.T) {
+	require := require.New(t)
+	handler, conf := setupTroubleshootingHandler(t, true)
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.ChatAI.AllowedUsers = []string{"kiali-admin"}
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json",
+		strings.NewReader(`{"action":"Ask","prompt":"Why is bookinfo unhealthy?"}`))
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+func TestTroubleshooting_ActionRequiresChat(t *testing.T) {
+	require := require.New(t)
+	handler, _ := setupTroubleshootingHandler(t, true)
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json",
+		strings.NewReader(`{"action":"Ask","prompt":"Why is bookinfo unhealthy?"}`))
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
+}
+
+func TestTroubleshooting_ActionNotImplemented(t *testing.T) {
+	require := require.New(t)
+	handler, conf := setupTroubleshootingHandler(t, true)
+	conf.AI.ChatAI.Enabled = true
+	mr := mux.NewRouter()
+	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
+	ts := httptest.NewServer(mr)
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json",
+		strings.NewReader(`{"action":"Fix","prompt":"Fix the bookinfo destination rule"}`))
+	require.NoError(err)
+	t.Cleanup(func() { resp.Body.Close() })
+	assert.Equal(t, http.StatusNotImplemented, resp.StatusCode)
+}
+
+func TestRecordAITokens_TroubleshootingRequestLabel(t *testing.T) {
+	const username = "troubleshooting-metrics-user"
+	internalmetrics.RecordAITokens(username, "openai", "gpt-ts", internalmetrics.AIRequestTroubleshooting, 11, 7, 18)
+
+	var found bool
+	for _, entry := range internalmetrics.GetAITokenTotals() {
+		if entry.Username == username && entry.Model == "gpt-ts" && entry.Request == internalmetrics.AIRequestTroubleshooting {
+			found = true
+			assert.Equal(t, int64(18), entry.TotalTokens)
+		}
+	}
+	assert.True(t, found, "troubleshooting token totals should be stored under the troubleshooting request label")
+
+	rows := internalmetrics.GetCurrentPeriodUsage(username, false, internalmetrics.AIRequestTroubleshooting)
+	assert.NotEmpty(t, rows)
+	chatRows := internalmetrics.GetCurrentPeriodUsage(username, false, internalmetrics.AIRequestChat)
+	for _, row := range chatRows {
+		assert.NotEqual(t, "gpt-ts", row.Model)
+	}
+}
+
 // ========================================================================
 // Token logging accuracy: AI Prometheus metrics tests
 // ========================================================================
 
 func aiRequestsCounterValue(provider, model string) float64 {
 	m := &dto.Metric{}
-	counter := internalmetrics.GetAIRequestsTotalMetric(provider, model)
+	counter := internalmetrics.GetAIRequestsTotalMetric(provider, model, internalmetrics.AIRequestChat)
 	if err := counter.Write(m); err != nil {
 		return 0
 	}
@@ -1142,7 +1308,7 @@ func TestDeleteConversations_PreservesTokenUsage(t *testing.T) {
 		Conversation: []aiTypes.ConversationMessage{{Role: "user", Content: "hello"}},
 	}
 	require.NoError(t, aiStore.SetConversation("test-session", "conv-1", conv))
-	require.NoError(t, aiStore.RecordUsage("test-session", "openai", "gpt-4o", aiTypes.NewTokenUsage(10, 20, 30)))
+	require.NoError(t, aiStore.RecordUsage("test-session", "openai", "gpt-4o", "chat", aiTypes.NewTokenUsage(10, 20, 30)))
 
 	metricsBefore := aiStore.GetUsageMetrics("test-session")
 	require.Len(t, metricsBefore, 1, "should have usage metrics before deletion")
@@ -1454,6 +1620,48 @@ func TestChatUsage_EnabledReturnsValidResponse(t *testing.T) {
 	require.True(t, ok, "response should contain a 'timeSeries' object")
 	assert.Equal(t, "3600", ts2["window"])
 	assert.Equal(t, "300", ts2["step"])
+}
+
+func TestChatUsage_RequestTypeFiltersEvents(t *testing.T) {
+	internalmetrics.MarkAITokensSeedingComplete()
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
+	conf.AI.ChatAI.Enabled = true
+	conf.AI.Metrics = true
+
+	internalmetrics.RecordAITokens("req-filter-user", "openai", "req-filter-chat-model", internalmetrics.AIRequestChat, 100, 40, 140)
+	internalmetrics.RecordAITokens("req-filter-user", "openai", "req-filter-ts-model", internalmetrics.AIRequestTroubleshooting, 300, 90, 390)
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf, nil))
+	t.Cleanup(ts.Close)
+
+	bodyFor := func(query string) (int, string) {
+		t.Helper()
+		resp, err := http.Get(ts.URL + "?" + query)
+		require.NoError(t, err)
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		return resp.StatusCode, string(body)
+	}
+
+	status, allBody := bodyFor("window=3600&step=300&request=all")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, allBody, "req-filter-chat-model")
+	assert.Contains(t, allBody, "req-filter-ts-model")
+
+	status, omittedBody := bodyFor("window=3600&step=300")
+	assert.Equal(t, http.StatusOK, status)
+	assert.Contains(t, omittedBody, "req-filter-chat-model")
+	assert.Contains(t, omittedBody, "req-filter-ts-model")
+
+	status, troubleshootingBody := bodyFor("window=3600&step=300&request=troubleshooting")
+	assert.Equal(t, http.StatusOK, status)
+	assert.NotContains(t, troubleshootingBody, "req-filter-chat-model")
+	assert.Contains(t, troubleshootingBody, "req-filter-ts-model")
+
+	status, _ = bodyFor("window=3600&step=300&request=other")
+	assert.Equal(t, http.StatusBadRequest, status)
 }
 
 // ========================================================================
@@ -2146,7 +2354,7 @@ func TestChatAI_BudgetCostLimitReached(t *testing.T) {
 	}
 
 	// Record a massive amount of tokens to exceed the low 0.01 budget limit
-	internalmetrics.RecordAITokens("anonymous", "openai", "gpt-4o", 50000, 50000, 100000)
+	internalmetrics.RecordAITokens("anonymous", "openai", "gpt-4o", internalmetrics.AIRequestChat, 50000, 50000, 100000)
 
 	handler, promClient, _ := setupChatAIHandlerForTest(t, conf)
 	promAPI := promClient.API().(*prometheustest.PromAPIMock)
@@ -2314,7 +2522,7 @@ func TestAIUserUsage_ReturnsPersonaBudget(t *testing.T) {
 	assert.Empty(t, got.Session)
 
 	// Record some usage: 100k tokens (cost = 1.00)
-	internalmetrics.RecordAITokens("session-budget-user", "openai", "gpt-4o", 50000, 50000, 100000)
+	internalmetrics.RecordAITokens("session-budget-user", "openai", "gpt-4o", internalmetrics.AIRequestChat, 50000, 50000, 100000)
 
 	// Second call: verify remaining budget is decremented
 	req2, err := http.NewRequest(http.MethodGet, ts.URL+"/api/ai/usage/user", nil)
@@ -2362,7 +2570,7 @@ func TestAIUserUsage_WeeklyMetricsFilteredToUserLastN(t *testing.T) {
 	}
 
 	aiStore := ai.NewAIStore(context.Background(), nil)
-	require.NoError(t, aiStore.RecordUsage("session-budget-user", "openai", "gpt-4o", aiTypes.TokenUsage{
+	require.NoError(t, aiStore.RecordUsage("session-budget-user", "openai", "gpt-4o", "chat", aiTypes.TokenUsage{
 		PromptTokens:     10,
 		CompletionTokens: 5,
 		TotalTokens:      15,
@@ -2897,7 +3105,7 @@ func TestAIUserUsage_CurrentPeriodIncludesLiveEvents(t *testing.T) {
 	conf.Auth.Strategy = config.AuthStrategyToken
 
 	username := "live-week-chart-user"
-	internalmetrics.RecordAITokens(username, "openai", "gpt-4o", 12000, 8000, 20000)
+	internalmetrics.RecordAITokens(username, "openai", "gpt-4o", internalmetrics.AIRequestChat, 12000, 8000, 20000)
 
 	aiStore := ai.NewAIStore(context.Background(), nil)
 	promAPI := new(prometheustest.PromAPIMock)

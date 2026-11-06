@@ -1,30 +1,32 @@
 import { combineReducers } from 'redux';
-import type { AIRightView, AIState, ChatAIState } from '../store/Store';
+import type { AIRightView, AIState, ChatAIState, TroubleshootingAIState } from '../store/Store';
 import { updateState } from '../utils/Reducer';
 import type { KialiAppAction } from '../actions/KialiAppAction';
 import { getType } from 'typesafe-actions';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
-import { ChatbotDisplayMode } from '@patternfly/chatbot';
 import type { ChatAIConfig } from 'types/Chatbot';
+import { readHiddenSubProblemIds } from 'utils/TroubleshootingStorage';
 
 export const INITIAL_AI_RIGHT_VIEW_STATE: AIRightView = {
   allowed: false,
   enabled: false
 };
 
-/** @deprecated use INITIAL_AI_RIGHT_VIEW_STATE */
-export const INITIAL_AI_METRICS_STATE = INITIAL_AI_RIGHT_VIEW_STATE;
+export const INITIAL_TROUBLESHOOTING_STATE: TroubleshootingAIState = {
+  error: '',
+  hiddenSubProblemIds: readHiddenSubProblemIds(),
+  issues: [],
+  loaded: false
+};
 
 export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   allowed: false,
   alwaysNavigate: false,
   chatContext: '',
   chatHistory: ImmutableList(),
-  chatbotVisible: false,
   conversationID: '',
   defaultProvider: '',
-  displayMode: ChatbotDisplayMode.default,
   enabled: false,
   interactionMode: 'ask',
   openTool: ImmutableMap({ chatEntryIndex: null, id: null }),
@@ -32,7 +34,8 @@ export const INITIAL_CHAT_AI_STATE: ChatAIState = {
   query: '',
   resourceHealth: undefined,
   selectedModel: '',
-  selectedProvider: ''
+  selectedProvider: '',
+  visible: false
 };
 
 function applyAIChatConfig(state: ChatAIState, chat: ChatAIConfig): ChatAIState {
@@ -65,7 +68,7 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
       return updateState(state, { selectedModel: action.payload.model });
     }
     case getType(ChatAIActions.setChatbotVisible): {
-      return updateState(state, { chatbotVisible: action.payload.visible });
+      return updateState(state, { visible: action.payload.visible });
     }
     case getType(ChatAIActions.setChatHistoryClear): {
       return updateState(state, { chatHistory: ImmutableList(), chatContext: '' });
@@ -79,6 +82,24 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setQuery): {
       return updateState(state, { query: action.payload });
+    }
+    case getType(ChatAIActions.setPendingPrompt): {
+      const request = typeof action.payload === 'string' ? { text: action.payload } : action.payload;
+      return updateState(state, {
+        pendingPrompt: {
+          ...(request.interactionMode ? { interactionMode: request.interactionMode } : {}),
+          ...(request.intro ? { intro: request.intro } : {}),
+          nonce: (state.pendingPrompt?.nonce ?? 0) + 1,
+          text: request.text
+        },
+        visible: true
+      });
+    }
+    case getType(ChatAIActions.setChatVisible): {
+      return updateState(state, { visible: action.payload });
+    }
+    case getType(ChatAIActions.clearPendingPrompt): {
+      return updateState(state, { pendingPrompt: undefined });
     }
     case getType(ChatAIActions.setChatHistoryUpdateById): {
       const index = state.chatHistory.findIndex((entry: any) => entry.get('id') === action.payload.id);
@@ -105,9 +126,6 @@ export const ChatAiStateReducer = (state: ChatAIState = INITIAL_CHAT_AI_STATE, a
     }
     case getType(ChatAIActions.setAlwaysNavigate): {
       return updateState(state, { alwaysNavigate: action.payload.alwaysNavigate });
-    }
-    case getType(ChatAIActions.setDisplayMode): {
-      return updateState(state, { displayMode: action.payload.displayMode });
     }
     case getType(ChatAIActions.setInteractionMode): {
       return updateState(state, { interactionMode: action.payload.interactionMode });
@@ -140,6 +158,73 @@ export const AiConsumptionStateReducer = (
   }
 };
 
+const visibilityIds = (id: string, subProblemIds: readonly string[]): string[] =>
+  [id, ...subProblemIds].filter(hiddenId => hiddenId.length > 0);
+
+const nextHiddenIds = (current: readonly string[], ids: readonly string[], hide: boolean): string[] | undefined => {
+  const hidden = new Set(current);
+  let changed = false;
+  ids.forEach(id => {
+    if (hide) {
+      if (!hidden.has(id)) {
+        hidden.add(id);
+        changed = true;
+      }
+      return;
+    }
+    if (hidden.delete(id)) {
+      changed = true;
+    }
+  });
+  return changed ? Array.from(hidden) : undefined;
+};
+
+export const AiTroubleshootingStateReducer = (
+  state: TroubleshootingAIState = INITIAL_TROUBLESHOOTING_STATE,
+  action: KialiAppAction
+): TroubleshootingAIState => {
+  switch (action.type) {
+    case getType(ChatAIActions.setTroubleshootingIssues):
+      return updateState(state, { error: '', issues: action.payload ?? [], loaded: true });
+    case getType(ChatAIActions.setTroubleshootingError):
+      return updateState(state, { error: action.payload, loaded: true });
+    case getType(ChatAIActions.hideTroubleshootingIssue): {
+      const hiddenSubProblemIds = nextHiddenIds(
+        state.hiddenSubProblemIds ?? [],
+        visibilityIds(action.payload.id, action.payload.subProblemIds),
+        true
+      );
+      return hiddenSubProblemIds ? updateState(state, { hiddenSubProblemIds }) : state;
+    }
+    case getType(ChatAIActions.hideTroubleshootingSubProblem): {
+      const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
+      if (hiddenSubProblemIds.includes(action.payload)) {
+        return state;
+      }
+      return updateState(state, { hiddenSubProblemIds: [...hiddenSubProblemIds, action.payload] });
+    }
+    case getType(ChatAIActions.showTroubleshootingIssue): {
+      const hiddenSubProblemIds = nextHiddenIds(
+        state.hiddenSubProblemIds ?? [],
+        visibilityIds(action.payload.id, action.payload.subProblemIds),
+        false
+      );
+      return hiddenSubProblemIds ? updateState(state, { hiddenSubProblemIds }) : state;
+    }
+    case getType(ChatAIActions.showTroubleshootingSubProblem): {
+      const hiddenSubProblemIds = state.hiddenSubProblemIds ?? [];
+      if (!hiddenSubProblemIds.includes(action.payload)) {
+        return state;
+      }
+      return updateState(state, {
+        hiddenSubProblemIds: hiddenSubProblemIds.filter(id => id !== action.payload)
+      });
+    }
+    default:
+      return state;
+  }
+};
+
 const INITIAL_AI_ENABLED_STATE = false;
 
 // The overall "AI" feature master switch. Today ChatAI is the only AI feature, so it mirrors
@@ -159,5 +244,6 @@ const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: Kia
 export const AiStateReducer = combineReducers<AIState, KialiAppAction>({
   chat: ChatAiStateReducer,
   consumption: AiConsumptionStateReducer,
-  enabled: AiEnabledReducer
+  enabled: AiEnabledReducer,
+  troubleshooting: AiTroubleshootingStateReducer
 });

@@ -2,11 +2,11 @@ import React from 'react';
 import { Button } from '@patternfly/react-core';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { router } from 'app/History';
-import { KialiAppState } from 'store/Store';
-import { Action } from 'types/Chatbot';
+import type { KialiAppState } from 'store/Store';
+import type { Action } from 'types/Chatbot';
 import { FileAttachment } from './FileAttachment';
 import { useSelector } from 'react-redux';
-import { Map as ImmutableMap } from 'immutable';
+import type { Map as ImmutableMap } from 'immutable';
 
 type ActionsProps = {
   entryIndex: number;
@@ -49,12 +49,7 @@ export const Actions: React.FC<ActionsProps> = ({ entryIndex }) => {
       {fileAction.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
           {fileAction.map(action => (
-            <FileAttachment
-              key={action.fileName}
-              fileName={action.fileName || ''}
-              action={action}
-              onSendMessage={() => {}}
-            />
+            <FileAttachment key={action.fileName} fileName={action.fileName || ''} action={action} />
           ))}
         </div>
       )}

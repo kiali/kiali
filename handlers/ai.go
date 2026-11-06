@@ -16,6 +16,7 @@ import (
 
 	"github.com/kiali/kiali/ai"
 	"github.com/kiali/kiali/ai/mcp"
+	"github.com/kiali/kiali/ai/mcp/troubleshooting"
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/ai/prompts"
 	aiTypes "github.com/kiali/kiali/ai/types"
@@ -137,6 +138,96 @@ func ChatMCP(
 	}
 }
 
+const troubleshootingToolName = "troubleshooting"
+
+// Troubleshooting handles POST /api/ai/troubleshooting.
+// An empty action/prompt runs the troubleshooting MCP tool (mesh scan).
+// The scan is available when AI is enabled. Ask and Fix use the same rights as chat.
+func Troubleshooting(
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	_ aiTypes.AIStore,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	perses *perses.Service,
+	discovery *istio.Discovery,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !conf.AI.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "AI is not enabled")
+			return
+		}
+
+		var req troubleshooting.Request
+		if r.Body != nil && r.ContentLength != 0 {
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				RespondWithError(w, http.StatusBadRequest, "Invalid request body")
+				return
+			}
+		}
+		req.Action = strings.TrimSpace(req.Action)
+		req.Prompt = strings.TrimSpace(req.Prompt)
+		req.Namespace = strings.TrimSpace(req.Namespace)
+		req.ClusterName = strings.TrimSpace(req.ClusterName)
+
+		username := resolveChatAIUsername(r, conf, "")
+
+		if req.Action != "" || req.Prompt != "" {
+			handleTroubleshootingAction(w, conf, username, req)
+			return
+		}
+
+		if err := mcp.LoadTools(); err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
+		}
+		tool, ok := mcp.DefaultToolHandlers[troubleshootingToolName]
+		if !ok {
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Tool '%s' not found", troubleshootingToolName))
+			return
+		}
+
+		args := map[string]interface{}{}
+		if req.Namespace != "" {
+			args["namespace"] = req.Namespace
+		}
+		if req.ClusterName != "" {
+			args["clusterName"] = req.ClusterName
+		}
+
+		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+			return
+		}
+		mcpResult, code := tool.Call(kialiInterface, args)
+		if code != http.StatusOK {
+			RespondWithError(w, code, fmt.Sprintf("Tool %s returned error: %v", troubleshootingToolName, mcpResult))
+			return
+		}
+		RespondWithJSON(w, code, mcpResult)
+	}
+}
+
+func handleTroubleshootingAction(w http.ResponseWriter, conf *config.Config, username string, req troubleshooting.Request) {
+	if req.Action == "" || req.Prompt == "" {
+		RespondWithError(w, http.StatusBadRequest, "action and prompt must both be set")
+		return
+	}
+	if !strings.EqualFold(req.Action, troubleshooting.UIActionAsk) && !strings.EqualFold(req.Action, troubleshooting.UIActionFix) {
+		RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("invalid action %q: must be %q or %q", req.Action, troubleshooting.UIActionAsk, troubleshooting.UIActionFix))
+		return
+	}
+	if !conf.AI.ChatAI.Enabled || !isUserAllowed(conf.AI.ChatAI.AllowedUsers, username) {
+		RespondWithError(w, http.StatusForbidden, "You are not allowed to use the chat feature")
+		return
+	}
+	RespondWithError(w, http.StatusNotImplemented, "AI support prompt execution is not implemented yet")
+}
+
 // accessibleClusterNames returns cluster names reachable via the client factory's service-account clients.
 func accessibleClusterNames(clientFactory kubernetes.ClientFactory) []string {
 	saClients := clientFactory.GetSAClients()
@@ -203,6 +294,8 @@ func ChatAI(
 			RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 			return
 		}
+		// Troubleshoot mode keeps the request label the removed troubleshooting chat handler recorded.
+		requestKind := chatMetricRequest(req.InteractionMode)
 		if conf.Auth.Strategy != config.AuthStrategyAnonymous {
 			authInfo, err := getAuthInfo(r)
 			if err != nil {
@@ -230,14 +323,8 @@ func ChatAI(
 				// 1. Check if provider is allowed
 				if len(budget.AllowedProviders) > 0 {
 					allowed := false
+					providerType := configuredProviderType(conf, providerName)
 					for _, ap := range budget.AllowedProviders {
-						var providerType config.ProviderType
-						for _, cp := range conf.AI.ChatAI.Providers {
-							if cp.Name == providerName {
-								providerType = cp.Type
-								break
-							}
-						}
 						if providerType == ap {
 							allowed = true
 							break
@@ -258,13 +345,11 @@ func ChatAI(
 							break
 						}
 						// Also check resolved model ID under the provider
-						for _, cp := range conf.AI.ChatAI.Providers {
-							if cp.Name == providerName {
-								for _, cm := range cp.Models {
-									if cm.Name == modelName && config.MatchModelPattern(am, cm.Model) {
-										allowed = true
-										break
-									}
+						if cp := findEnabledAIProvider(conf, providerName); cp != nil {
+							for _, cm := range cp.Models {
+								if cm.Name == modelName && config.MatchModelPattern(am, cm.Model) {
+									allowed = true
+									break
 								}
 							}
 						}
@@ -275,8 +360,8 @@ func ChatAI(
 					}
 				}
 
-				// 3. Check if budget is reached
-				if reached, reason := CheckBudgetReached(r.Context(), conf, username, prom); reached {
+				// 3. Check if budget is reached for the series this call will increment.
+				if reached, reason := CheckBudgetReached(r.Context(), conf, username, prom, requestKind); reached {
 					RespondWithError(w, http.StatusForbidden, fmt.Sprintf("AI request blocked: %s", reason))
 					return
 				}
@@ -299,59 +384,106 @@ func ChatAI(
 			}
 		}
 
-		requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName)
-		defer requestTimer.ObserveDuration()
-		kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
-		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
-			return
-		}
-		internalmetrics.GetAIRequestsTotalMetric(providerName, modelName).Inc()
-		// Add headers to prevent any buffering along the way
-		w.Header().Set("Content-Type", "text/event-stream")
-		w.Header().Set("Cache-Control", "no-cache, no-transform")
-		w.Header().Set("Connection", "keep-alive")
-		w.Header().Set("X-Accel-Buffering", "no")
-		// Disable gzip for this specific endpoint to ensure real-time streaming
-		w.Header().Set("Content-Encoding", "identity")
-		flusher, ok := w.(http.Flusher)
-		if !ok {
-			RespondWithError(w, http.StatusInternalServerError, "Streaming unsupported")
-			return
-		}
+		streamAIChat(w, r, conf, kialiCache, aiStore, clientFactory, prom, cpm, traceClientLoader, grafana, perses, discovery, provider, providerName, modelName, usageProviderName, usageModelName, username, sessionID, requestKind, req)
+	}
+}
 
-		// Explicitly send the headers right now so proxies stop buffering
-		w.WriteHeader(http.StatusOK)
+// chatMetricRequest is the Prometheus request label for a chat call.
+// Ask mode, and a missing mode, stay on the chat series. Troubleshoot mode uses the troubleshooting series.
+func chatMetricRequest(mode aiTypes.ChatInteractionMode) string {
+	if mode == aiTypes.ChatInteractionModeTroubleshoot {
+		return internalmetrics.AIRequestTroubleshooting
+	}
+	return internalmetrics.AIRequestChat
+}
+
+func streamAIChat(
+	w http.ResponseWriter,
+	r *http.Request,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	aiStore aiTypes.AIStore,
+	clientFactory kubernetes.ClientFactory,
+	prom prometheus.ClientInterface,
+	cpm business.ControlPlaneMonitor,
+	traceClientLoader func() tracing.ClientInterface,
+	grafana *grafana.Service,
+	perses *perses.Service,
+	discovery *istio.Discovery,
+	provider interface {
+		SendChat(func(string), *http.Request, aiTypes.AIRequest, *mcputil.KialiInterface, aiTypes.AIStore) aiTypes.TokenUsage
+	},
+	providerName, modelName, usageProviderName, usageModelName, username, sessionID, requestKind string,
+	req aiTypes.AIRequest,
+) {
+	requestTimer := internalmetrics.GetAIRequestDurationPrometheusTimer(providerName, modelName, requestKind)
+	defer requestTimer.ObserveDuration()
+	kialiInterface, err := GetKialiInterface(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, perses, discovery)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "AI initialization error: "+err.Error())
+		return
+	}
+	internalmetrics.GetAIRequestsTotalMetric(providerName, modelName, requestKind).Inc()
+	// Add headers to prevent any buffering along the way
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-transform")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	// Disable gzip for this specific endpoint to ensure real-time streaming
+	w.Header().Set("Content-Encoding", "identity")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		RespondWithError(w, http.StatusInternalServerError, "Streaming unsupported")
+		return
+	}
+
+	// Explicitly send the headers right now so proxies stop buffering
+	w.WriteHeader(http.StatusOK)
+	flusher.Flush()
+
+	// Also try to flush using ResponseController if available
+	rc := http.NewResponseController(w)
+	_ = rc.Flush()
+
+	if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
+		if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
+			f.Flush()
+		}
+	}
+
+	onChunk := func(chunk string) {
+		fmt.Fprintf(w, "data: %s\n\n", chunk)
 		flusher.Flush()
 
-		// Also try to flush using ResponseController if available
+		// Try to flush ResponseController if available
 		rc := http.NewResponseController(w)
 		_ = rc.Flush()
 
+		// Try to unwrap and flush if it's a wrapped writer
 		if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
 			if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
 				f.Flush()
 			}
 		}
-
-		onChunk := func(chunk string) {
-			fmt.Fprintf(w, "data: %s\n\n", chunk)
-			flusher.Flush()
-
-			// Try to flush ResponseController if available
-			rc := http.NewResponseController(w)
-			_ = rc.Flush()
-
-			// Try to unwrap and flush if it's a wrapped writer
-			if unwrapper, ok := w.(interface{ Unwrap() http.ResponseWriter }); ok {
-				if f, ok := unwrapper.Unwrap().(http.Flusher); ok {
-					f.Flush()
-				}
-			}
-		}
-		usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
-		recordChatAIUsage(conf, aiStore, sessionID, username, usageProviderName, usageModelName, usage)
 	}
+	usage := provider.SendChat(onChunk, r, req, kialiInterface, aiStore)
+	recordChatAIUsage(conf, aiStore, sessionID, username, usageProviderName, usageModelName, requestKind, usage)
+}
+
+func findEnabledAIProvider(conf *config.Config, providerName string) *config.ProviderConfig {
+	for i := range conf.AI.ChatAI.Providers {
+		if conf.AI.ChatAI.Providers[i].Name == providerName && conf.AI.ChatAI.Providers[i].Enabled {
+			return &conf.AI.ChatAI.Providers[i]
+		}
+	}
+	return nil
+}
+
+func configuredProviderType(conf *config.Config, providerName string) config.ProviderType {
+	if provider := findEnabledAIProvider(conf, providerName); provider != nil {
+		return provider.Type
+	}
+	return ""
 }
 
 // resolveChatAIUsername returns the durable user identity used for Prometheus
@@ -432,7 +564,7 @@ func resolveChatAISessionID(r *http.Request, conf *config.Config, fallbackUserID
 	return resolveChatAIUsername(r, conf, fallbackUserID)
 }
 
-func recordChatAIUsage(conf *config.Config, aiStore aiTypes.AIStore, sessionID string, username string, provider string, model string, usage aiTypes.TokenUsage) {
+func recordChatAIUsage(conf *config.Config, aiStore aiTypes.AIStore, sessionID string, username string, provider string, model string, request string, usage aiTypes.TokenUsage) {
 	if !usage.HasTokens() {
 		return
 	}
@@ -443,12 +575,12 @@ func recordChatAIUsage(conf *config.Config, aiStore aiTypes.AIStore, sessionID s
 		username = sessionID
 	}
 	if aiStore != nil && aiStore.Enabled() {
-		if err := aiStore.RecordUsage(sessionID, provider, model, usage); err != nil {
+		if err := aiStore.RecordUsage(sessionID, provider, model, request, usage); err != nil {
 			log.Errorf("[Chat AI] Failed to record usage for user [%s], provider [%s], model [%s]: %v", username, provider, model, err)
 		}
 	}
 	if conf.AI.Metrics {
-		internalmetrics.RecordAITokens(username, provider, model, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
+		internalmetrics.RecordAITokens(username, provider, model, request, usage.PromptTokens, usage.CompletionTokens, usage.TotalTokens)
 	}
 }
 
@@ -461,7 +593,7 @@ type UserBudgetStatus struct {
 	RemainingTokens float64               `json:"remaining_tokens"`
 }
 
-func GetBudgetUsedForUser(ctx context.Context, conf *config.Config, userID string, budget *config.UserBudgetConfig, promClient prometheus.ClientInterface) (float64, int64) {
+func GetBudgetUsedForUser(ctx context.Context, conf *config.Config, userID string, budget *config.UserBudgetConfig, promClient prometheus.ClientInterface, request string) (float64, int64) {
 	if budget == nil {
 		return 0, 0
 	}
@@ -477,12 +609,12 @@ func GetBudgetUsedForUser(ctx context.Context, conf *config.Config, userID strin
 		metricPrompt = "kiali_ai_prompt_tokens_weekly_total"
 		metricCompletion = "kiali_ai_completion_tokens_weekly_total"
 		metricTotal = "kiali_ai_tokens_weekly_total"
-		queryLabels = fmt.Sprintf("username=%q,request=\"chat\",year=%q,week=%q", userID, strconv.Itoa(year), strconv.Itoa(week))
+		queryLabels = fmt.Sprintf("username=%q,request=%q,year=%q,week=%q", userID, request, strconv.Itoa(year), strconv.Itoa(week))
 	} else if budget.Interval == config.MonthlyBudget {
 		metricPrompt = "kiali_ai_prompt_tokens_monthly_total"
 		metricCompletion = "kiali_ai_completion_tokens_monthly_total"
 		metricTotal = "kiali_ai_tokens_monthly_total"
-		queryLabels = fmt.Sprintf("username=%q,request=\"chat\",year=%q,month=%q", userID, strconv.Itoa(now.Year()), strconv.Itoa(int(now.Month())))
+		queryLabels = fmt.Sprintf("username=%q,request=%q,year=%q,month=%q", userID, request, strconv.Itoa(now.Year()), strconv.Itoa(int(now.Month())))
 	} else {
 		return 0, 0
 	}
@@ -530,7 +662,7 @@ func GetBudgetUsedForUser(ctx context.Context, conf *config.Config, userID strin
 	}
 
 	// In-process counters update on each chat; take the max so budget does not wait on scrape.
-	for _, row := range internalmetrics.GetCurrentPeriodUsage(userID, weekly) {
+	for _, row := range internalmetrics.GetCurrentPeriodUsage(userID, weekly, request) {
 		key := row.Provider + "\x00" + row.Model
 		if float64(row.PromptTokens) > promptMap[key] {
 			promptMap[key] = float64(row.PromptTokens)
@@ -574,7 +706,7 @@ func getBudgetStatusForUser(ctx context.Context, conf *config.Config, userID str
 	}
 	budget := conf.AI.Consumption.GetBudgetForUser(userID)
 	if budget != nil {
-		usedCost, usedTokens := GetBudgetUsedForUser(ctx, conf, userID, budget, promClient)
+		usedCost, usedTokens := GetBudgetUsedForUser(ctx, conf, userID, budget, promClient, internalmetrics.AIRequestChat)
 
 		remainingCost := 0.0
 		if budget.MaxCost > 0 {
@@ -606,7 +738,7 @@ func getBudgetStatusForUser(ctx context.Context, conf *config.Config, userID str
 	}
 }
 
-func CheckBudgetReached(ctx context.Context, conf *config.Config, userID string, promClient prometheus.ClientInterface) (bool, string) {
+func CheckBudgetReached(ctx context.Context, conf *config.Config, userID string, promClient prometheus.ClientInterface, request string) (bool, string) {
 	if !conf.AI.Enabled || !conf.AI.Metrics {
 		return false, ""
 	}
@@ -615,7 +747,7 @@ func CheckBudgetReached(ctx context.Context, conf *config.Config, userID string,
 		return false, ""
 	}
 
-	usedCost, usedTokens := GetBudgetUsedForUser(ctx, conf, userID, budget, promClient)
+	usedCost, usedTokens := GetBudgetUsedForUser(ctx, conf, userID, budget, promClient, request)
 
 	if budget.MaxCost > 0 && usedCost >= budget.MaxCost {
 		return true, fmt.Sprintf("monetary budget reached (limit: %.2f, used: %.2f)", budget.MaxCost, usedCost)
@@ -635,7 +767,60 @@ type chatSessionUsageResponse struct {
 	Session       []aiTypes.UsageMetric `json:"session"`
 }
 
-const currentWeekStepSecs = 3600
+const (
+	aiRequestAll        = "all"
+	currentWeekStepSecs = 3600
+)
+
+// requestFilterQuery reads the request query param: chat, troubleshooting, or all.
+func requestFilterQuery(r *http.Request) string {
+	return strings.TrimSpace(r.URL.Query().Get("request"))
+}
+
+func parseAIRequestFilter(raw string, defaultRequest string) (string, error) {
+	if raw == "" {
+		raw = defaultRequest
+	}
+	switch raw {
+	case aiRequestAll, internalmetrics.AIRequestChat, internalmetrics.AIRequestTroubleshooting:
+		return raw, nil
+	default:
+		return "", fmt.Errorf("request must be all, chat, or troubleshooting")
+	}
+}
+
+func matchesAIRequest(sampleRequest, filter string) bool {
+	if filter == "" || filter == aiRequestAll {
+		return true
+	}
+	if sampleRequest == "" {
+		sampleRequest = internalmetrics.AIRequestChat
+	}
+	return sampleRequest == filter
+}
+
+func aiRequestSelector(request string) string {
+	if request == "" || request == aiRequestAll {
+		return ""
+	}
+	return fmt.Sprintf(",request=%q", request)
+}
+
+// usageMetricSelector builds a Prometheus selector. request=all or empty matches
+// both chat and troubleshooting. chat and troubleshooting match that label only.
+func usageMetricSelector(username, request string) string {
+	labels := make([]string, 0, 2)
+	if username != "" {
+		labels = append(labels, fmt.Sprintf("username=%q", username))
+	}
+	if request != "" && request != aiRequestAll {
+		labels = append(labels, fmt.Sprintf("request=%q", request))
+	}
+	if len(labels) == 0 {
+		return ""
+	}
+	return "{" + strings.Join(labels, ",") + "}"
+}
 
 func fetchUserLongTermUsage(
 	r *http.Request,
@@ -644,6 +829,7 @@ func fetchUserLongTermUsage(
 	windowStr string,
 	from, since time.Time,
 	stepSecs int,
+	request string,
 	promClient prometheus.ClientInterface,
 ) *aiUsageResponse {
 	q := r.URL.Query()
@@ -659,7 +845,7 @@ func fetchUserLongTermUsage(
 	cloned := r.Clone(r.Context())
 	cloned.URL.RawQuery = q.Encode()
 
-	data, _, err := getAILongTermUsageData(cloned, conf, windowStr, "chat", username, promClient)
+	data, _, err := getAILongTermUsageData(cloned, conf, windowStr, request, username, promClient)
 	if err != nil {
 		log.Warningf("AIUserUsage: failed to get usage data for user %s window %s: %v", username, windowStr, err)
 		return nil
@@ -676,6 +862,7 @@ func mergeLiveCurrentWeekEvents(
 	username string,
 	weekFrom, now time.Time,
 	stepSecs int,
+	request string,
 ) *aiUsageResponse {
 	if username == "" {
 		return data
@@ -698,7 +885,7 @@ func mergeLiveCurrentWeekEvents(
 
 	hours := map[hourKey]*aiTimeSeriesPoint{}
 	for _, ev := range internalmetrics.GetAITokenEvents(weekFrom) {
-		if ev.Request != "chat" || ev.Username != username {
+		if !matchesAIRequest(ev.Request, request) || ev.Username != username {
 			continue
 		}
 		hour := ev.Timestamp.UTC().Truncate(step)
@@ -868,11 +1055,26 @@ func AIUserUsage(
 			return
 		}
 
+		requestStr, err := parseAIRequestFilter(requestFilterQuery(r), aiRequestAll)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		budgetStatus := getBudgetStatusForUser(r.Context(), conf, username, promClient)
 
 		session := []aiTypes.UsageMetric{}
 		if aiStore != nil {
 			session = aiStore.GetUsageMetrics(sessionID)
+		}
+		if requestStr != aiRequestAll {
+			filtered := make([]aiTypes.UsageMetric, 0, len(session))
+			for _, metric := range session {
+				if matchesAIRequest(metric.Request, requestStr) {
+					filtered = append(filtered, metric)
+				}
+			}
+			session = filtered
 		}
 
 		var metrics *aiUsageResponse
@@ -906,12 +1108,14 @@ func AIUserUsage(
 				}
 			}
 
-			metrics = fetchUserLongTermUsage(r, conf, username, string(window), from, since, 0, promClient)
+			metrics = fetchUserLongTermUsage(r, conf, username, string(window), from, since, 0, requestStr, promClient)
 
 			periodFrom, periodSince := lastNBucketRange(window, 1, now)
-			currentPeriod = fetchCurrentPeriodHourly(r, conf, username, window, periodFrom, periodSince, currentWeekStepSecs, promClient)
-			currentPeriod = mergeLiveCurrentWeekEvents(conf, currentPeriod, username, periodFrom, now, currentWeekStepSecs)
-			if budgetStatus != nil && budgetStatus.HasBudget {
+			currentPeriod = fetchCurrentPeriodHourly(r, conf, username, window, periodFrom, periodSince, currentWeekStepSecs, requestStr, promClient)
+			currentPeriod = mergeLiveCurrentWeekEvents(conf, currentPeriod, username, periodFrom, now, currentWeekStepSecs, requestStr)
+			// The budget bullets stay on the chat series. Only snap the chart to that
+			// budget when the selected request type is chat.
+			if requestStr == internalmetrics.AIRequestChat && budgetStatus != nil && budgetStatus.HasBudget {
 				usedTokens := int64((budgetStatus.MaxTokens-budgetStatus.RemainingTokens)*tokensPerMillion + 0.5)
 				usedCost := budgetStatus.MaxCost - budgetStatus.RemainingCost
 				currentPeriod = alignCurrentPeriodToUsed(currentPeriod, usedTokens, usedCost, periodFrom)
@@ -1120,8 +1324,9 @@ func (p aiTimeSeriesPoint) MarshalJSON() ([]byte, error) {
 //
 // Query parameters:
 //
-//	window  look-back window in seconds (default 86400 = 24 h; e.g. 3600=1h, 21600=6h, 604800=7d)
-//	step    time-series bucket width in seconds (default 3600 = 1 h; e.g. 300=5m, 900=15m)
+//	window       look-back window in seconds (default 86400 = 24 h; e.g. 3600=1h, 21600=6h, 604800=7d), or weekly/monthly
+//	step         time-series bucket width in seconds (default 3600 = 1 h; e.g. 300=5m, 900=15m)
+//	request      chat, troubleshooting, or all. requestType is accepted as an alias. Omitted and all include both.
 func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !conf.AI.Enabled || !conf.AI.ChatAI.Enabled {
@@ -1151,9 +1356,12 @@ func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInter
 			stepStr = "3600" // 1 h
 		}
 
-		requestStr := r.URL.Query().Get("request")
-		if requestStr == "" {
-			requestStr = "chat"
+		// request selects which AI series to return: chat, troubleshooting, or all (both).
+		// Omitted means all.
+		requestStr, err := parseAIRequestFilter(r.URL.Query().Get("request"), aiRequestAll)
+		if err != nil {
+			RespondWithError(w, http.StatusBadRequest, err.Error())
+			return
 		}
 
 		if windowStr == "weekly" || windowStr == "monthly" {
@@ -1205,7 +1413,7 @@ func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInter
 		// Filter events by request type
 		var filteredEvents []internalmetrics.AITokenEvent
 		for _, ev := range events {
-			if ev.Request == requestStr {
+			if matchesAIRequest(ev.Request, requestStr) {
 				filteredEvents = append(filteredEvents, ev)
 			}
 		}
