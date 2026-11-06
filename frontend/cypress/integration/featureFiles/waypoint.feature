@@ -379,16 +379,15 @@ Feature: Kiali Waypoint related features
     And validates waypoint Info data for "workload"
 
   Scenario: [Waypoint details] The waypoint details for a waypoint override are valid
-  # TODO: This shouldn't be right
     Given user is at the details page for the "workload" "waypoint-override/curl-client" located in the "" cluster
     And the user sees the L7 "waypoint" link
     And the link for the waypoint "waypoint" should redirect to a valid workload details
     When the user goes to the "Waypoint" tab
     Then user goes to the waypoint "Services" subtab
-    And validates Services data with "1" rows and "echo-service" workload, "waypoint-override" namespace, "namespace" label for, "pfbadge-S" badge
+    # echo-service overrides the namespace waypoint with use-this; it is not enrolled on the default gateway.
+    And the waypoint Services subtab shows no enrolled services
     Then user goes to the waypoint "Overview" subtab
     And validates waypoint Info data for "service"
-  # TODO: End-Todo
     Then user is at the details page for the "workload" "waypoint-override/echo-server" located in the "" cluster
     And the user sees the L7 "use-this" link
     And the link for the waypoint "use-this" should redirect to a valid workload details

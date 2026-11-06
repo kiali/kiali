@@ -126,7 +126,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 		namespaceSet[ns.Name] = struct{}{}
 	}
 
-	sliceutil.Filter(svcs.Services, func(svc models.ServiceOverview) bool {
+	svcs.Services = sliceutil.Filter(svcs.Services, func(svc models.ServiceOverview) bool {
 		_, ok := namespaceSet[svc.Namespace]
 		return ok
 	})
@@ -859,7 +859,8 @@ func (in *SvcService) GatewayTrafficSplitFromEnrolledServices(ctx context.Contex
 	candidates := make([]*models.WaypointTrafficSplit, 0)
 	seen := make(map[string]bool)
 
-	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
+	// Single-cluster accessible namespace set only (avoids GetNamespaces fan-out across clusters).
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil
 	}

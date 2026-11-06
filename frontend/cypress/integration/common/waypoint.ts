@@ -817,6 +817,12 @@ Then(
   }
 );
 
+// When every service in the namespace overrides the default waypoint, the default gateway lists no enrolled services.
+Then('the waypoint Services subtab shows no enrolled services', () => {
+  cy.get('[data-test="enrolled-data-title"]').should('be.visible');
+  cy.get('[data-test="istio-config-empty"]').should('be.visible').and('contain', 'No enrolled services found');
+});
+
 Then('validates waypoint Info data for {string}', (type: string) => {
   cy.get('[data-test=waypointfor-title]').should('exist').and('contain', 'Waypoint for');
   cy.get('[data-test=waypointfor-scope]').should('exist').contains(type, { matchCase: false });
