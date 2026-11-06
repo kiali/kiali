@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import FlexView from 'react-flexview';
 import { kialiStyle } from 'styles/StyleUtils';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import { flexFillStyle } from 'styles/FlexStyles';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
 import { UNKNOWN } from '../../types/Graph';
 import { addDanger } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
@@ -14,18 +14,20 @@ import {
   meshWideMTLSEnabledSelector,
   refreshIntervalSelector
 } from '../../store/Selectors';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 
-import { Label } from '@patternfly/react-core';
-import { EMPTY_MESH_DATA, MeshDataSource, MeshFetchParams } from '../../services/MeshDataSource';
-import { KialiDispatch } from 'types/Redux';
-import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
+import { Flex, FlexItem, Label } from '@patternfly/react-core';
+import type { MeshFetchParams } from '../../services/MeshDataSource';
+import { EMPTY_MESH_DATA, MeshDataSource } from '../../services/MeshDataSource';
+import type { KialiDispatch } from 'types/Redux';
+import type { TourInfo } from 'components/Tour/TourStop';
+import { getNextTourStop } from 'components/Tour/TourStop';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
-import { Controller } from '@patternfly/react-topology';
+import type { Controller } from '@patternfly/react-topology';
 import { EmptyMeshLayout } from './EmptyMeshLayout';
-import {
+import type {
   DecoratedMeshEdgeWrapper,
   DecoratedMeshElements,
   DecoratedMeshNodeWrapper,
@@ -42,7 +44,8 @@ import { MeshTour } from './MeshHelpTour';
 import { MeshThunkActions } from 'actions/MeshThunkActions';
 import { toRangeString } from 'components/Time/Utils';
 import { HistoryManager, URLParam } from 'app/History';
-import { getValidMeshLayout, MeshLayout } from './layouts/LayoutFactory';
+import type { MeshLayout } from './layouts/LayoutFactory';
+import { getValidMeshLayout } from './layouts/LayoutFactory';
 import { RefreshIntervalManual, RefreshIntervalPause } from 'config/Config';
 
 type ReduxStateProps = {
@@ -115,8 +118,22 @@ const meshChip = kialiStyle({
   zIndex: 2
 });
 
-const meshContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const meshWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
+const meshContainerStyle = kialiStyle({
+  flex: '1',
+  minHeight: 0,
+  minWidth: '350px',
+  zIndex: 0,
+  paddingRight: '0.25rem'
+});
+// Row matches inner react-flexview default: mesh + TargetPanel side-by-side; #mesh-container flex:1 fills remainder.
+const meshWrapperDivStyle = kialiStyle({
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor200,
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'stretch',
+  minHeight: 0
+});
 
 const meshBackground = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100
@@ -227,13 +244,20 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
 
     return (
       <>
-        <FlexView column={true} grow={true} style={{ minHeight: containerMinHeight }}>
-          <MeshToolbar
-            controller={this.state.meshRefs?.getController()}
-            disabled={this.state.meshData.isLoading}
-            onToggleHelp={this.toggleHelp}
-          />
-          <FlexView grow={true} className={`${meshWrapperDivStyle}`}>
+        <Flex
+          className={flexFillStyle}
+          direction={{ default: 'column' }}
+          flexWrap={{ default: 'nowrap' }}
+          style={{ minHeight: containerMinHeight }}
+        >
+          <FlexItem fullWidth={{ default: 'fullWidth' }}>
+            <MeshToolbar
+              controller={this.state.meshRefs?.getController()}
+              disabled={this.state.meshData.isLoading}
+              onToggleHelp={this.toggleHelp}
+            />
+          </FlexItem>
+          <FlexItem flex={{ default: 'flex_1' }} className={meshWrapperDivStyle}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
@@ -274,8 +298,8 @@ class MeshPageComponent extends React.Component<MeshPageProps, MeshPageState> {
                 updateTime={this.state.meshData.timestamp / 1000}
               />
             )}
-          </FlexView>
-        </FlexView>
+          </FlexItem>
+        </Flex>
       </>
     );
   }
