@@ -230,39 +230,6 @@ jobs:
       target_branch: ${{ needs.initialize.outputs.target-branch }}
       build_branch: ${{ needs.initialize.outputs.build-branch }}
 
-  store_pr_metadata:
-    permissions:
-      contents: read
-    name: Store PR metadata
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    needs: [initialize]
-    steps:
-    - name: Check out code
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: Store PR number, target branch, and Kiali version
-      run: |
-        mkdir -p pr-metadata
-        echo "${{ github.event.number }}" > pr-metadata/pr_number.txt
-        echo "${{ github.base_ref || github.ref_name }}" > pr-metadata/target_branch.txt
-        # Extract VERSION from Makefile and get major.minor (e.g., v2.21.0-SNAPSHOT -> 2.21)
-        VERSION=$(grep -E '^VERSION \?=' Makefile | sed -E 's/^VERSION \?= v?([0-9]+\.[0-9]+).*/\1/')
-        echo "${VERSION}" > pr-metadata/kiali_version.txt
-        cat pr-metadata/pr_number.txt
-        cat pr-metadata/target_branch.txt
-        cat pr-metadata/kiali_version.txt
-
-    # Upload PR metadata as artifact because workflow_run events triggered by PRs from forks
-    # don't have access to PR information in github.event.workflow_run.pull_requests
-    # See: https://github.com/orgs/community/discussions/25220
-    - name: Upload PR metadata
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-        name: pr-metadata
-        path: pr-metadata/
-        retention-days: 1
-
   codecov_upload_pr_base:
     if: github.event.pull_request.head.repo.full_name == github.repository
     name: Upload PR base coverage to Codecov
