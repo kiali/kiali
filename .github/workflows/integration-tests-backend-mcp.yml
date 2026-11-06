@@ -101,17 +101,4 @@ jobs:
         path: tests/integration/junit-rest-report-mcp-tools.xml
         if-no-files-found: warn
 
-    - name: Store test metadata
-      if: always()
-      run: |
-        mkdir -p test-metadata-mcp-tools
-        echo "${{ inputs.istio_version }}" > test-metadata-mcp-tools/istio_version.txt
-
-    - name: Upload test metadata
-      if: always()
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-        name: backend-test-metadata-mcp-tools
-        path: test-metadata-mcp-tools/
-
 

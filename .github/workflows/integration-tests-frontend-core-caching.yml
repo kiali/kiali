@@ -84,14 +84,6 @@ jobs:
     - name: Run frontend core caching integration tests
       run: hack/run-integration-tests.sh --test-suite frontend-core-caching --stern ${{ inputs.stern_logs }} $(if [ -n "${{ inputs.istio_version }}" ]; then echo "--istio-version ${{ inputs.istio_version }}"; fi)
 
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-      with:
-        name: junit-frontend-core-caching-report
-        path: frontend/cypress/results/combined-report.xml
-        if-no-files-found: warn
-
     - name: Stop resource sampler
       if: always()
       run: bash hack/ci-resource-sampler.sh stop --csv /tmp/ci-telemetry-frontend-core-caching.csv || true
