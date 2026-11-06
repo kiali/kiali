@@ -22,7 +22,7 @@ while [ $# -gt 0 ]; do
       ARCH="$2"
       shift;shift
       ;;
-    --canary)
+    --ca|--canary)
       CANARY="$2"
       shift;shift
       ;;
@@ -38,7 +38,7 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
-  --canary <true|false>: Install the same waypoint demos again in parallel *-canary namespaces
+  --ca|--canary <true|false>: Install the same waypoint demos again in parallel *-canary namespaces
     (primary + canary waypoint in each, ${CANARY_WEIGHT}% split within that namespace only; default: false).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the waypoint namespaces demo will be deleted, not installed.
