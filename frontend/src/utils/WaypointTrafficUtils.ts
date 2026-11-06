@@ -97,6 +97,27 @@ export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined
   return '';
 };
 
+/**
+ * Workload details "Waypoint" row: same parenthetical form as enrolled tables ("Canary (30%)"),
+ * without post-processing translated strings.
+ */
+export const formatWaypointGatewayDetailLabel = (
+  workload: string,
+  workloadNamespace: string,
+  split: WaypointTrafficSplit | undefined
+): string | undefined => {
+  if (!split?.canary) {
+    return undefined;
+  }
+  if (gatewayMatchesNode(split.canary, workload, workloadNamespace)) {
+    return formatEnrolledWaypointRoleLabel('canary', split.canaryWeight);
+  }
+  if (gatewayMatchesNode(split.primary, workload, workloadNamespace)) {
+    return formatEnrolledWaypointRoleLabel('primary', split.primaryWeight);
+  }
+  return undefined;
+};
+
 const backendRoleLabel = (label: string, includeWeight: boolean): string | undefined => {
   const canary = label.match(/^Canary(?: (\d+)%)?$/) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/);
   if (canary) {

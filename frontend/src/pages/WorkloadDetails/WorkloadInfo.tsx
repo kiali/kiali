@@ -66,7 +66,7 @@ import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotati
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { WorkloadAnnotationsWizard } from '../../components/IstioWizards/WorkloadAnnotationsWizard';
 import { WaypointCanaryPropertyList } from '../../components/Ambient/WaypointCanarySummary';
-import { waypointNodeCanaryBadge } from '../../utils/WaypointTrafficUtils';
+import { formatWaypointGatewayDetailLabel } from '../../utils/WaypointTrafficUtils';
 import { Paths } from '../../config';
 import {
   buildAnnotationsDiff,
@@ -404,10 +404,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
   private renderDetailsCard(workload: Workload): React.ReactNode {
     const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
     const waypointLabel =
-      waypointNodeCanaryBadge(workload.name, workload.namespace, workload.waypointTrafficSplit, true)?.replace(
-        /(\d+%)$/,
-        '($1)'
-      ) ?? t('true');
+      formatWaypointGatewayDetailLabel(workload.name, workload.namespace, workload.waypointTrafficSplit) ?? t('true');
 
     return (
       <StackItem key="details">

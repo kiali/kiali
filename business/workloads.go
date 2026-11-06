@@ -600,7 +600,9 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		workload.SetServices(services)
 	}
 
-	in.decorateWorkloadWaypointTrafficSplit(ctx, workload)
+	if in.cache.IsAmbientEnabled(criteria.Cluster) {
+		in.decorateWorkloadWaypointTrafficSplit(ctx, workload)
+	}
 
 	wg.Wait()
 	workload.Runtimes = runtimes
