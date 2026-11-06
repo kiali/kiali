@@ -33,6 +33,14 @@ func Execute(
 	if len(trace.Data.Spans) == 0 && len(trace.Errors) > 0 {
 		return "Trace not found", http.StatusNotFound
 	}
+	// The tracing backend has no RBAC of its own — Kiali queries it with its
+	// own credentials — and traces are cross-namespace by nature, so the
+	// fetched trace must be authorized against the namespaces it participates
+	// in. This is the same shared check the trace-details endpoint uses, so
+	// the two cannot drift.
+	if err := kialiInterface.BusinessLayer.Tracing.CheckTraceAccess(ctx, trace); err != nil {
+		return "Trace is not accessible.", http.StatusForbidden
+	}
 
 	totalMs, hierarchy := buildHierarchy(trace.Data)
 	return GetTraceDetailResponse{

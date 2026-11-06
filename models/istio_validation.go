@@ -53,6 +53,10 @@ func (rules ObjectIgnoreValidations) Merge(other ObjectIgnoreValidations) {
 type NamespaceValidations map[string]IstioValidations
 
 // IstioValidationKey is the key value composed of an Istio ObjectType and Name.
+// Its field order (ObjectGVK, Name, Namespace, Cluster) predates the project's
+// alphabetical struct-field ordering rule and is a deliberate, accepted
+// exception: literals across the checkers follow this order, and reordering
+// the fields would churn every checker for no functional gain.
 type IstioValidationKey struct {
 	ObjectGVK schema.GroupVersionKind `json:"objectGVK"`
 	Name      string                  `json:"name"`
@@ -647,7 +651,10 @@ func (iv IstioValidations) SummarizeValidation(ns string, cluster string) *Istio
 		Cluster:   cluster,
 	}
 	for k, v := range iv {
-		if k.Namespace == ns && k.Cluster == cluster && k.ObjectGVK.Kind != "workload" {
+		// Only count Istio / Gateway API config objects. Service, workload, and app
+		// validations use an empty Group and must not inflate the Istio Config summary
+		// shown on Namespace Details (see https://github.com/kiali/kiali/issues/10473).
+		if k.Namespace == ns && k.Cluster == cluster && k.ObjectGVK.Group != "" {
 			ivs.mergeSummaries(v.Checks)
 		}
 	}

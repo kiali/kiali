@@ -1,16 +1,19 @@
 import * as React from 'react';
-import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { IRow, ISortBy, SortByDirection } from '@patternfly/react-table';
-import { ClusterSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
-import { SortField } from '../../../types/SortFilters';
-import { Namespace } from '../../../types/Namespace';
+import type { SummaryTable} from './BaseTable';
+import { SummaryTableRenderer } from './BaseTable';
+import type { IRow, ISortBy} from '@patternfly/react-table';
+import { SortByDirection } from '@patternfly/react-table';
+import type { ClusterSummary } from '../../../types/IstioObjects';
+import type { ActiveFilter, FilterType} from '../../../types/Filters';
+import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../../types/Filters';
+import type { SortField } from '../../../types/SortFilters';
+import type { Namespace } from '../../../types/Namespace';
 import { defaultFilter, istioConfigLink, serviceLink } from '../../../helpers/EnvoyHelpers';
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 import { dicTypeToGVK, gvkType } from '../../../types/IstioConfigList';
 
@@ -258,20 +261,18 @@ export class ClusterTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map(
-        (value: ClusterSummary): IRow => {
-          return {
-            cells: [
-              serviceLink(value.service_fqdn, this.namespaces, this.namespace, false),
-              value.port,
-              value.subset,
-              value.direction,
-              value.type,
-              istioConfigLink(value.destination_rule, dicTypeToGVK[gvkType.DestinationRule])
-            ]
-          };
-        }
-      );
+      .map((value: ClusterSummary): IRow => {
+        return {
+          cells: [
+            serviceLink(value.service_fqdn, this.namespaces, this.namespace, false),
+            value.port,
+            value.subset,
+            value.direction,
+            value.type,
+            istioConfigLink(value.destination_rule, dicTypeToGVK[gvkType.DestinationRule])
+          ]
+        };
+      });
   }
 }
 

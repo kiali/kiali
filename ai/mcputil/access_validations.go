@@ -42,15 +42,17 @@ func ExtractIstioMetricsQueryParams(args map[string]interface{}, q *models.Istio
 	return extractBaseMetricsQueryParams(args, &q.RangeQuery, namespaceInfo)
 }
 
-// ValidateNamespaceAccess checks that the given namespace exists and is accessible.
-// It returns an error message plus the HTTP status to be propagated by the tool.
+// ValidateNamespaceAccess checks that the given namespace is in the user's
+// accessible set for the cluster. It returns an error message plus the HTTP
+// status to be propagated by the tool.
 func ValidateNamespaceAccess(ctx context.Context, businessLayer *business.Layer, namespace, cluster string) (string, int) {
 	if _, err := businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		switch {
 		case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+			// Not-in-set covers both "denied" and "does not exist": the uniform
+			// 403 is deliberate, so the tool is not a namespace-existence
+			// oracle (especially in require_namespace_get mode).
 			return fmt.Sprintf("Namespace %q is not accessible in cluster %q.", namespace, cluster), http.StatusForbidden
-		case k8serrors.IsNotFound(err):
-			return fmt.Sprintf("Namespace %q does not exist in cluster %q.", namespace, cluster), http.StatusNotFound
 		default:
 			return fmt.Sprintf("failed to validate namespace %q in cluster %q: %v", namespace, cluster, err), http.StatusInternalServerError
 		}

@@ -16,9 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/clientcmd/api"
 
+	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/handlers/authentication"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/util"
 )
@@ -170,11 +174,47 @@ func getGaugeVecValues(gaugeVec *prometheus.GaugeVec) []HealthStatusMetricItem {
 // HealthStatusMetricsHandler returns Kiali's health status metrics in JSON format.
 // This endpoint provides a simple way to access the health status gauge values
 // without having to parse the Prometheus text format from the /metrics endpoint.
-func HealthStatusMetricsHandler() http.HandlerFunc {
+// The gauge is populated by the background health cache for every namespace the
+// Kiali ServiceAccount can see, so the entries are filtered by the requesting
+// user's accessible set before they are returned: an entry is kept only when the
+// user can access its namespace in its cluster (cluster-less entries are matched
+// by name in any cluster, the same rule the trace checks apply).
+func HealthStatusMetricsHandler(conf *config.Config, kialiCache cache.KialiCache, discovery *istio.Discovery, clientFactory kubernetes.ClientFactory) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		userClients, err := getUserClients(r, clientFactory)
+		if err != nil {
+			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		namespaceService := business.NewNamespaceService(kialiCache, conf, discovery, clientFactory.GetSAClients(), userClients)
+		accessible, err := namespaceService.GetNamespaces(r.Context())
+		if err != nil {
+			respondNamespaceAccessError(w, err)
+			return
+		}
+		accessiblePairs := make(map[string]struct{}, len(accessible))
+		accessibleNames := make(map[string]struct{}, len(accessible))
+		for _, ns := range accessible {
+			accessiblePairs[models.ClusterNamespaceKey(ns.Cluster, ns.Name)] = struct{}{}
+			accessibleNames[ns.Name] = struct{}{}
+		}
+
 		metrics := HealthStatusMetrics{
 			Metrics: getGaugeVecValues(internalmetrics.GetHealthStatusMetric()),
 		}
+		filtered := make([]HealthStatusMetricItem, 0, len(metrics.Metrics))
+		for _, item := range metrics.Metrics {
+			if item.Cluster == "" {
+				if _, ok := accessibleNames[item.Namespace]; ok {
+					filtered = append(filtered, item)
+				}
+				continue
+			}
+			if _, ok := accessiblePairs[models.ClusterNamespaceKey(item.Cluster, item.Namespace)]; ok {
+				filtered = append(filtered, item)
+			}
+		}
+		metrics.Metrics = filtered
 
 		RespondWithJSON(w, http.StatusOK, metrics)
 	}

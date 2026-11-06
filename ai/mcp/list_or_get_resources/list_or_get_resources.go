@@ -398,7 +398,7 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 		var ztunnelDump *kubernetes.ZtunnelConfigDump
 		if workloadDetails.IsAmbient && kialiCache != nil {
 			for _, ztunnelPod := range kialiCache.GetZtunnelPods(criteria.Cluster) {
-				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Namespace, ztunnelPod.Name)
+				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Name)
 				if dump == nil {
 					continue
 				}

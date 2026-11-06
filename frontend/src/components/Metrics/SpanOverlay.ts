@@ -1,11 +1,12 @@
 import { PFColors } from 'components/Pf/PfColors';
 import * as API from 'services/Api';
-import { TimeRange, durationToBounds, guardTimeRange } from 'types/Common';
+import type { TimeRange} from 'types/Common';
+import { durationToBounds, guardTimeRange } from 'types/Common';
 import { addError } from 'utils/AlertUtils';
-import { Span, TracingQuery } from 'types/Tracing';
+import type { Span, TracingQuery } from 'types/Tracing';
 import { MetricsObjectTypes } from 'types/Metrics';
-import { LineInfo } from 'types/VictoryChartInfo';
-import { Overlay, OverlayInfo } from 'types/Overlay';
+import type { LineInfo } from 'types/VictoryChartInfo';
+import type { Overlay, OverlayInfo } from 'types/Overlay';
 import { toOverlay } from 'utils/VictoryChartsUtils';
 import { defaultMetricsDuration } from './Helper';
 
@@ -54,8 +55,8 @@ export class SpanOverlay {
       opts.targetKind === MetricsObjectTypes.APP
         ? API.getAppSpans
         : opts.targetKind === MetricsObjectTypes.SERVICE
-        ? API.getServiceSpans
-        : API.getWorkloadSpans;
+          ? API.getServiceSpans
+          : API.getWorkloadSpans;
     apiCall(opts.namespace, opts.target, q, opts.cluster)
       .then(res => {
         this.lastFetchError = false;

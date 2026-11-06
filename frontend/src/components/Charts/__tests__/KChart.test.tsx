@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
-import { ChartModel } from 'types/Dashboards';
-import { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
+import type { ChartModel } from 'types/Dashboards';
+import type { VCLines, RichDataPoint } from 'types/VictoryChartInfo';
 
 rstest.mock('d3-format', () => ({
   format: () => (v: number) => String(v)
@@ -104,15 +104,15 @@ describe('KChart', () => {
     const titleHeight = 24;
     const marginTop = 20;
 
-    offsetHeightSpy = rstest
-      .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
-      .mockImplementation(function (this: HTMLElement) {
-        const el = this as HTMLElement & { style?: CSSStyleDeclaration };
-        if (el.style?.display === 'flex' && el.style?.justifyContent === 'space-between') {
-          return titleHeight;
-        }
-        return 0;
-      });
+    offsetHeightSpy = rstest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (
+      this: HTMLElement
+    ) {
+      const el = this as HTMLElement & { style?: CSSStyleDeclaration };
+      if (el.style?.display === 'flex' && el.style?.justifyContent === 'space-between') {
+        return titleHeight;
+      }
+      return 0;
+    });
     getComputedStyleSpy = rstest.spyOn(window, 'getComputedStyle').mockReturnValue({
       marginTop: `${marginTop}px`
     } as CSSStyleDeclaration);

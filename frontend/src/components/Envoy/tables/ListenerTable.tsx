@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { SummaryTable, SummaryTableRenderer } from './BaseTable';
-import { IRow, ISortBy } from '@patternfly/react-table';
-import { ListenerSummary } from '../../../types/IstioObjects';
-import { ActiveFilter, FILTER_ACTION_APPEND, FilterType, AllFilterTypes } from '../../../types/Filters';
-import { SortField } from '../../../types/SortFilters';
-import { Namespace } from '../../../types/Namespace';
+import type { SummaryTable} from './BaseTable';
+import { SummaryTableRenderer } from './BaseTable';
+import type { IRow, ISortBy } from '@patternfly/react-table';
+import type { ListenerSummary } from '../../../types/IstioObjects';
+import type { ActiveFilter, FilterType} from '../../../types/Filters';
+import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../../types/Filters';
+import type { SortField } from '../../../types/SortFilters';
+import type { Namespace } from '../../../types/Namespace';
 import { defaultFilter, routeLink } from '../../../helpers/EnvoyHelpers';
 import { Tooltip } from '@patternfly/react-core';
 import { PFColors } from 'components/Pf/PfColors';
 import { KialiIcon } from 'config/KialiIcon';
 import { kialiStyle } from 'styles/StyleUtils';
-import { SortableTh } from 'components/Table/SimpleTable';
+import type { SortableTh } from 'components/Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
 
 export class ListenerTable implements SummaryTable {
@@ -209,18 +211,16 @@ export class ListenerTable implements SummaryTable {
 
         return this.sortingDirection === 'asc' ? sortField!.compare(a, b) : sortField!.compare(b, a);
       })
-      .map(
-        (summary: ListenerSummary): IRow => {
-          return {
-            cells: [
-              summary.address,
-              summary.port,
-              summary.match,
-              routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
-            ]
-          };
-        }
-      );
+      .map((summary: ListenerSummary): IRow => {
+        return {
+          cells: [
+            summary.address,
+            summary.port,
+            summary.match,
+            routeLink(summary.destination, this.namespace, this.workload, this.routeLinkHandler)
+          ]
+        };
+      });
   }
 }
 

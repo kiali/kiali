@@ -61,6 +61,7 @@ func createError(gatewayRuleName string, ruleCode string, namespace string, clus
 	rrValidation := &models.IstioValidation{
 		Cluster:   cluster,
 		Name:      gatewayRuleName,
+		Namespace: namespace,
 		ObjectGVK: kubernetes.K8sGateways,
 		Valid:     true,
 		Checks: []*models.IstioCheck{

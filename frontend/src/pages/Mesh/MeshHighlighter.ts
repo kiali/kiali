@@ -20,9 +20,9 @@
 // visualization changes, given the class assignments, is up to GraphStyles.ts.
 //
 
-import { Edge, Node } from '@patternfly/react-topology';
-import { Controller, GraphElement } from '@patternfly/react-topology';
-import { NodeData } from './MeshElems';
+import type { Edge, Node } from '@patternfly/react-topology';
+import type { Controller, GraphElement } from '@patternfly/react-topology';
+import type { NodeData } from './MeshElems';
 import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
 export class MeshHighlighter {
@@ -129,9 +129,7 @@ export class MeshHighlighter {
       all.push(current);
 
       if (current.getKind() === 'node' && (current as Node).hasParent()) {
-        all = Array.from(
-          new Set<GraphElement>([...all, ...ancestors(current as Node)])
-        );
+        all = Array.from(new Set<GraphElement>([...all, ...ancestors(current as Node)]));
       }
 
       return all;

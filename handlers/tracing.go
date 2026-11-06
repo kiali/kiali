@@ -19,6 +19,26 @@ import (
 	"github.com/kiali/kiali/tracing"
 )
 
+// gateTracingNamespace applies the canonical namespace gate for the tracing
+// handlers. The tracing backend (Jaeger/Tempo) has no RBAC of its own —
+// Kiali queries it with its own credentials — so the namespace must be
+// gated here before any tracing call. For the service and workload variants
+// this is belt-and-braces on top of the name-resolution gates in the
+// business layer: authorization must not depend on a side effect of name
+// resolution. It returns false with the error response already written.
+func gateTracingNamespace(
+	w http.ResponseWriter,
+	r *http.Request,
+	conf *config.Config,
+	kialiCache cache.KialiCache,
+	clientFactory kubernetes.ClientFactory,
+	discovery *istio.Discovery,
+	namespace, cluster string,
+) bool {
+	_, err := checkNamespaceAccessWithList(w, r, conf, kialiCache, discovery, clientFactory, namespace, cluster)
+	return err == nil
+}
+
 // Get TracingInfo provides the Tracing URL and other info
 func GetTracingInfo(conf *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +96,16 @@ func AppTraces(
 			return
 		}
 		cluster := q.Cluster
-		tracingName := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, cluster) {
+			return
+		}
+		tracingName, err := business.App.GetAppTracingName(r.Context(), cluster, namespace, app)
+		if err != nil {
+			// GetAppTracingName propagates access denials (only NotFound keeps
+			// the caller-supplied fallback), so those must map to 403, not 500.
+			handleErrorResponse(w, err, "Error resolving tracing name: "+err.Error())
+			return
+		}
 		traces, err := business.Tracing.GetAppTraces(r.Context(), namespace, tracingName.Lookup, app, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -108,6 +137,9 @@ func ServiceTraces(
 		q, err := queryparams.ParseTracingQuery(conf, r.URL.Query())
 		if err != nil {
 			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, q.Cluster) {
 			return
 		}
 		traces, err := business.Tracing.GetServiceTraces(r.Context(), namespace, service, q)
@@ -144,6 +176,9 @@ func WorkloadTraces(
 			RespondWithQueryParamError(w, err.Error())
 			return
 		}
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, q.Cluster) {
+			return
+		}
 		traces, err := business.Tracing.GetWorkloadTraces(r.Context(), namespace, workload, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -176,6 +211,11 @@ func ErrorTraces(
 		duration, cluster, err := queryparams.ParseErrorTracesDuration(conf, queryParams)
 		if err != nil {
 			RespondWithQueryParamError(w, err.Error())
+			return
+		}
+		// This endpoint has no Kubernetes name resolution at all, so the
+		// handler gate (gateTracingNamespace) is the only authorization.
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, cluster) {
 			return
 		}
 		traces, err := business.Tracing.GetErrorTraces(r.Context(), cluster, namespace, app, duration)
@@ -219,6 +259,24 @@ func TraceDetails(
 			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Trace %s not found", traceID))
 			return
 		}
+		if len(trace.Data.Spans) == 0 && len(trace.Errors) > 0 {
+			// The backend returned a structured "not found" response (e.g. the
+			// Tempo client returns an error-bearing trace with no spans). This
+			// must be a 404, not a 403 from the access check below: an empty
+			// trace has no namespaces to authorize.
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("Trace %s not found", traceID))
+			return
+		}
+		// The tracing backend has no RBAC of its own — Kiali queries it with
+		// its own credentials — and traces are cross-namespace by nature, so
+		// the fetched trace must be authorized against the namespaces it
+		// participates in: the user must be able to access at least one of
+		// them. Denied traces return 403, consistent with every other
+		// namespace gate.
+		if err := business.Tracing.CheckTraceAccess(r.Context(), trace); err != nil {
+			handleErrorResponse(w, err)
+			return
+		}
 		RespondWithJSON(w, http.StatusOK, trace)
 	}
 }
@@ -250,6 +308,9 @@ func AppSpans(
 			return
 		}
 		cluster := q.Cluster
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, cluster) {
+			return
+		}
 		spans, err := business.Tracing.GetAppSpans(r.Context(), cluster, namespace, app, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -287,6 +348,9 @@ func ServiceSpans(
 			return
 		}
 
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, q.Cluster) {
+			return
+		}
 		spans, err := business.Tracing.GetServiceSpans(r.Context(), namespace, service, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())
@@ -324,6 +388,9 @@ func WorkloadSpans(
 			return
 		}
 
+		if !gateTracingNamespace(w, r, conf, kialiCache, clientFactory, discovery, namespace, q.Cluster) {
+			return
+		}
 		spans, err := business.Tracing.GetWorkloadSpans(r.Context(), namespace, workload, q)
 		if err != nil {
 			RespondWithError(w, http.StatusServiceUnavailable, err.Error())

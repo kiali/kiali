@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -71,6 +72,7 @@ func TestSummarizeValidations(t *testing.T) {
 
 	summary := validations.SummarizeValidation("bookinfo", "east")
 
+	assert.Equal(2, summary.ObjectCount)
 	assert.Equal(2, summary.Warnings)
 	assert.Equal(2, summary.Errors)
 
@@ -82,6 +84,58 @@ func TestSummarizeValidations(t *testing.T) {
 	assert.Equal(1, len(validations[key1].Checks))
 	assert.Equal(1, len(validations[key2].Checks))
 	summary = validations.SummarizeValidation("bookinfo", "east")
+	assert.Equal(2, summary.ObjectCount)
 	assert.Equal(1, summary.Warnings)
+	assert.Equal(1, summary.Errors)
+}
+
+func TestSummarizeValidationsExcludesServiceAndWorkload(t *testing.T) {
+	assert := assert.New(t)
+
+	// Service/workload validations use empty Group (not core Kubernetes GVKs).
+	serviceGVK := schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}
+	workloadGVK := schema.GroupVersionKind{Group: "", Version: "", Kind: "workload"}
+
+	vsKey := IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Name: "reviews", Namespace: "istio-system", Cluster: "Kubernetes"}
+	serviceKey := IstioValidationKey{ObjectGVK: serviceGVK, Name: "grafana", Namespace: "istio-system", Cluster: "Kubernetes"}
+	workloadKey := IstioValidationKey{ObjectGVK: workloadGVK, Name: "grafana", Namespace: "istio-system", Cluster: "Kubernetes"}
+
+	// Service-only namespace must report zero Istio Config objects (issue #10473).
+	serviceOnly := IstioValidations{
+		serviceKey: &IstioValidation{
+			Name:      "grafana",
+			ObjectGVK: serviceGVK,
+			Valid:     true,
+			Checks:    []*IstioCheck{},
+		},
+		workloadKey: &IstioValidation{
+			Name:      "grafana",
+			ObjectGVK: workloadGVK,
+			Valid:     true,
+			Checks: []*IstioCheck{
+				{Code: "KIA0101", Severity: WarningSeverity, Message: "workload warning"},
+			},
+		},
+	}
+	summary := serviceOnly.SummarizeValidation("istio-system", "Kubernetes")
+	assert.Equal(0, summary.ObjectCount)
+	assert.Equal(0, summary.Warnings)
+	assert.Equal(0, summary.Errors)
+
+	mixed := IstioValidations{
+		vsKey: &IstioValidation{
+			Name:      "reviews",
+			ObjectGVK: kubernetes.VirtualServices,
+			Valid:     false,
+			Checks: []*IstioCheck{
+				{Code: "KIA1101", Severity: ErrorSeverity, Message: "vs error"},
+			},
+		},
+		serviceKey:  serviceOnly[serviceKey],
+		workloadKey: serviceOnly[workloadKey],
+	}
+	summary = mixed.SummarizeValidation("istio-system", "Kubernetes")
+	assert.Equal(1, summary.ObjectCount)
+	assert.Equal(0, summary.Warnings)
 	assert.Equal(1, summary.Errors)
 }

@@ -65,6 +65,45 @@ func TestNamespaceRevision(t *testing.T) {
 	}
 }
 
+func TestNamespaceNamesGetNames(t *testing.T) {
+	cases := map[string]struct {
+		expected   []string
+		namespaces models.Namespaces
+	}{
+		"multiple namespaces": {
+			expected:   []string{"a", "b", "c"},
+			namespaces: models.Namespaces{{Name: "a"}, {Name: "b"}, {Name: "c"}},
+		},
+		"single namespace": {
+			expected:   []string{"bookinfo"},
+			namespaces: models.Namespaces{{Name: "bookinfo"}},
+		},
+		"no namespaces": {
+			expected:   []string{},
+			namespaces: models.Namespaces{},
+		},
+		"nil namespaces": {
+			expected:   []string{},
+			namespaces: nil,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			require := require.New(t)
+
+			names := tc.namespaces.GetNames()
+
+			// The old implementation preallocated with len(nss) and appended,
+			// yielding leading empty strings before the real names.
+			require.Equal(tc.expected, names)
+			if len(tc.namespaces) > 0 {
+				require.Len(names, len(tc.namespaces))
+				require.NotEmpty(names[0])
+			}
+		})
+	}
+}
+
 func TestNamespaceNamesMatchesPattern(t *testing.T) {
 	names := models.NamespaceNames{"bookinfo", "bookinfo2", "production"}
 

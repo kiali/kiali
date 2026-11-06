@@ -1,10 +1,10 @@
 import { addError } from '../utils/AlertUtils';
 import * as API from '../services/Api';
-import { KialiDispatch } from '../types/Redux';
+import type { KialiDispatch } from '../types/Redux';
 import { TracingActions } from './TracingActions';
 import { setTraceId as setURLTraceId } from 'utils/SearchParamUtils';
 import { transformTraceData } from 'utils/tracing/TraceTransform';
-import { ApiError } from 'types/Api';
+import type { ApiError } from 'types/Api';
 
 export const TracingThunkActions = {
   setTraceId: (cluster?: string, traceId?: string): ((dispatch: KialiDispatch) => void) => {
@@ -23,7 +23,10 @@ export const TracingThunkActions = {
             }
           })
           .catch((err: ApiError) => {
-            if (err.response?.status === 404) {
+            // 403 (no access to any participating namespace) is treated like
+            // 404: clear the stale trace id from the URL so it is not retried
+            // on every reload.
+            if (err.response?.status === 404 || err.response?.status === 403) {
               setURLTraceId(undefined);
             }
 

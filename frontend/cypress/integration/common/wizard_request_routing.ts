@@ -130,7 +130,10 @@ Then(
 );
 
 When('user sees the {string} wizard', (title: string) => {
-  cy.get(`div[aria-label="${title}"]`).should('be.visible');
+  cy.get('.pf-v6-c-modal-box')
+    .should('be.visible')
+    .find('.pf-v6-c-modal-box__title-text')
+    .should('contain.text', title);
 });
 
 When('user clicks in the {string} tab', (tab: string) => {

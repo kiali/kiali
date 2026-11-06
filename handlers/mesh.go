@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -114,9 +112,13 @@ func MeshGraph(
 func filterAccessibleControlPlanes(ctx context.Context, namespaceService business.NamespaceService, mesh *models.Mesh) {
 	authorizedControlPlanes := []models.ControlPlane{}
 	for _, cp := range mesh.ControlPlanes {
-		// Check if the user is able to access to the control plane
+		// Check if the user is able to access the control plane. Keep the
+		// control plane only on a successful access check: a namespace that
+		// is not in the user's accessible set (AccessibleNamespaceError), an
+		// unknown cluster, or a set-computation failure all mean the user
+		// cannot be authorized for it — fail closed.
 		_, err := namespaceService.GetClusterNamespace(ctx, cp.IstiodNamespace, cp.Cluster.Name)
-		if err == nil || !errors.IsForbidden(err) {
+		if err == nil {
 			authorizedControlPlanes = append(authorizedControlPlanes, cp)
 		}
 	}

@@ -31,6 +31,12 @@ If an existing locale entry conflicts with these conventions, do not mass-rewrit
 
 Keep product names, feature names, and established technical names in English:
 
+When the UI text is exactly the same as the English **API kind** or product name (for example `Envoy`, `DestinationRule`), **do not wrap it in `t()`**. Use a string literal so `i18next-parser` does not extract it into `translation.json`.
+
+**Human-readable labels** that describe a kind but are not the kind string itself (for example `Destination Rule` with a space, `Authorization Policy`) **should use `t()`** and **should be translated** in locale catalogs. Do not confuse them with `DestinationRule` / `AuthorizationPolicy` in YAML.
+
+Remove redundant `key: key` catalog lines only for literals that are not passed through `t()`.
+
 - `Kiali`
 - `Istio`
 - `Ambient`
@@ -68,6 +74,22 @@ Keep whitespace and punctuation around placeholders intact unless the locale req
 - Prefer neutral wording over region-specific phrasing
 - Prefer direct error messages: `Could not load`, `Not found`, `Unavailable`
 - Avoid over-translating domain concepts when the English term is already the clearest term in the Istio/Kubernetes ecosystem
+
+### Find help: `Abbreviate:` strings (all locales)
+
+Traffic Graph and Mesh Find help (`GraphHelpFind.tsx`, `MeshHelpFind.tsx`) includes usage notes whose i18n keys start with `Abbreviate:`. They document shorthand operands users type in the Find box (for example `cb|circuitbreaker`).
+
+For every locale (`es`, `ko`, `zh`, and future languages):
+
+- Translate only the label word that corresponds to English `Abbreviate` (plus the punctuation that follows it in that language).
+- Keep the entire `alias|operand` list unchanged, in English, including commas and pipe characters.
+
+Examples:
+
+- `es`: `"Abbreviate: ns|namespace, …": "Abreviar: ns|namespace, …"`
+- `zh`: `"Abbreviate: ns|namespace, …": "缩写：ns|namespace, …"`
+
+Leaving the value identical to the English key is acceptable for operands but leaves the help intro untranslated; prefer localizing the label as above.
 
 ## Spanish conventions (`es`)
 
@@ -117,6 +139,7 @@ These entries already match the preferred direction and are good references for 
 - `"Listener List": "Lista de Listeners"`
 - `"Servers": "Servers"`
 - `"Server List": "Lista de Servers"`
+- `"Abbreviate: ns|namespace, svc|service, …": "Abreviar: ns|namespace, svc|service, …"` (see [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales))
 
 ### Spanish do / do not
 
@@ -129,6 +152,7 @@ Note: the current Spanish locale is only partially aligned. In particular, some 
 
 TODO: validate the Chinese glossary and wording with a native speaker or a reviewer confident in Simplified Chinese technical UI translation. The current `zh` locale is inconsistent and still contains many untranslated English strings.
 
+For `Abbreviate:` Find help lines, follow [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales) (for example `缩写：` in `zh`).
 
 ## When editing locale files
 
@@ -139,6 +163,7 @@ Before changing `translation.json` entries:
 3. Preserve placeholders and technical tokens exactly.
 4. Keep resource names and product names in English.
 5. If a string must diverge for readability, choose the smallest deviation and keep it consistent nearby.
+6. After bulk edits, run `cd frontend && yarn i18n` so committed catalogs use the same key order as `i18next-parser` (`sort: true` in `i18next-parser.config.ts`). Do not hand-reorder keys or use a separate sort script.
 
 ## When in doubt
 

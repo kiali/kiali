@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
+import type { ThProps} from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import { Button, ButtonVariant } from '@patternfly/react-core';
-import { Listener } from '../../../types/IstioObjects';
-import { ListenerForm } from '../K8sGatewayForm';
+import type { Listener } from '../../../types/IstioObjects';
+import type { ListenerForm } from '../K8sGatewayForm';
 import {
   ListenerBuilder,
   allowedRoutes,

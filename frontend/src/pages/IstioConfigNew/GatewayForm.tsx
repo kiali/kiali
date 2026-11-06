@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { FormGroup, FormHelperText, HelperText, HelperTextItem, Switch, TextInput } from '@patternfly/react-core';
 import { ServerList } from './GatewayForm/ServerList';
-import { MAX_PORT, Server, ServerForm, ServerTLSSettings, MIN_PORT } from '../../types/IstioObjects';
+import type { Server, ServerForm, ServerTLSSettings} from '../../types/IstioObjects';
+import { MAX_PORT, MIN_PORT } from '../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { areValidHosts } from './GatewayForm/ServerBuilder';
 import { defaultGatewayLabel, defaultGatewayLabelValue } from 'config/Constants';
@@ -160,7 +161,9 @@ export class GatewayForm extends React.Component<Props, GatewayState> {
                 <HelperTextItem>
                   {isValid(this.state.workloadSelectorValid)
                     ? t('One or more labels to select a workload where the Gateway is applied.')
-                    : t('Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.')}
+                    : t(
+                        'Enter a label in the format <label>=<value>. Enter one or multiple labels separated by comma.'
+                      )}
                 </HelperTextItem>
               </HelperText>
             </FormHelperText>

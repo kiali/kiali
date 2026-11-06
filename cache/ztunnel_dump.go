@@ -6,21 +6,27 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 )
 
-func ztunnelDumpKey(cluster, namespace, pod string) string {
-	return cluster + namespace + pod
+// ztunnelDumpKey builds the cache key for a ztunnel config dump. The ztunnel pod is
+// matched by name cluster-wide (ztunnel pod names carry random suffixes, so
+// cross-namespace name collisions are not a practical concern), so the key is just
+// the cluster and the pod name. Do not include the caller-supplied namespace in the
+// key: callers legitimately pass different namespaces (e.g. a workload's tenant
+// namespace) for the same ztunnel pod, which would cache the same dump N times.
+func ztunnelDumpKey(cluster, pod string) string {
+	return cluster + pod
 }
 
 type ZtunnelDumpCache interface {
 	SetZtunnelDump(key string, config *kubernetes.ZtunnelConfigDump)
-	GetZtunnelDump(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump
+	GetZtunnelDump(cluster, pod string) *kubernetes.ZtunnelConfigDump
 }
 
 func (c *kialiCacheImpl) SetZtunnelDump(key string, config *kubernetes.ZtunnelConfigDump) {
 	c.ztunnelConfigStore.Set(key, config)
 }
 
-func (c *kialiCacheImpl) GetZtunnelDump(cluster, namespace, pod string) *kubernetes.ZtunnelConfigDump {
-	key := ztunnelDumpKey(cluster, namespace, pod)
+func (c *kialiCacheImpl) GetZtunnelDump(cluster, pod string) *kubernetes.ZtunnelConfigDump {
+	key := ztunnelDumpKey(cluster, pod)
 
 	config, found := c.ztunnelConfigStore.Get(key)
 	if found {

@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Form,
   FormGroup,
@@ -7,7 +9,6 @@ import {
   HelperText,
   HelperTextItem,
   MenuToggle,
-  MenuToggleElement,
   Radio,
   Select,
   SelectList,
@@ -15,14 +16,16 @@ import {
   Switch,
   TextInput
 } from '@patternfly/react-core';
-import { MTLSStatuses, nsWideMTLSStatus, TLSStatus } from '../../types/TLSStatus';
-import { KialiAppState } from '../../store/Store';
+import type { TLSStatus } from '../../types/TLSStatus';
+import { MTLSStatuses, nsWideMTLSStatus } from '../../types/TLSStatus';
+import type { KialiAppState } from '../../store/Store';
 import { meshWideMTLSStatusSelector } from '../../store/Selectors';
-import {
+import type {
   ConnectionPoolSettings,
   HTTPCookie,
   LoadBalancerSettings,
-  OutlierDetection as OutlierDetectionProps,
+  OutlierDetection as OutlierDetectionProps} from '../../types/IstioObjects';
+import {
   PeerAuthenticationMutualTLSMode
 } from '../../types/IstioObjects';
 import { LOAD_BALANCER_TOOLTIP, PEER_AUTHENTICATION_TOOLTIP, wizardTooltip } from './WizardHelp';
@@ -684,7 +687,11 @@ class TrafficPolicyComponent extends React.Component<Props, TrafficPolicyState> 
             )}
             {!this.state.simpleLB && this.state.consistentHashType === ConsistentHashType.HTTP_COOKIE && (
               <>
-                <FormGroup label={t('HTTP Cookie Name')} fieldId="httpCookieName" disabled={!this.state.addLoadBalancer}>
+                <FormGroup
+                  label={t('HTTP Cookie Name')}
+                  fieldId="httpCookieName"
+                  disabled={!this.state.addLoadBalancer}
+                >
                   <TextInput
                     value={
                       this.state.loadBalancer.consistentHash && this.state.loadBalancer.consistentHash.httpCookie

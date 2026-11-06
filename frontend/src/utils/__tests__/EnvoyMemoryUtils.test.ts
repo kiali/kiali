@@ -11,7 +11,7 @@ import {
   envoyMemoryCauseStatus,
   envoyMemoryThresholdHelp
 } from '../EnvoyMemoryUtils';
-import { DEGRADED, HEALTHY } from 'types/Health';
+import { DEGRADED, HEALTHY, NA } from 'types/Health';
 import type { Workload } from 'types/Workload';
 
 rstest.mock('utils/I18nUtils', () => ({
@@ -133,15 +133,17 @@ describe('EnvoyMemoryUtils', () => {
   });
 
   it('maps cause labels', () => {
-    expect(envoyMemoryCauseLabel('configuration')).toContain('configuration');
-    expect(envoyMemoryCauseLabel('traffic')).toContain('traffic');
+    expect(envoyMemoryCauseLabel('configuration', 1)).toContain('configuration');
+    expect(envoyMemoryCauseLabel('traffic', 1)).toContain('traffic');
+    expect(envoyMemoryCauseLabel('unknown', 0)).toContain('not available');
   });
 
   it('maps cause status to health icons', () => {
-    expect(envoyMemoryCauseStatus('ok')).toBe(HEALTHY);
-    expect(envoyMemoryCauseStatus('configuration')).toBe(DEGRADED);
-    expect(envoyMemoryCauseStatus('traffic')).toBe(DEGRADED);
-    expect(envoyMemoryCauseStatus('unknown')).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('ok', 1)).toBe(HEALTHY);
+    expect(envoyMemoryCauseStatus('configuration', 1)).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('traffic', 1)).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('unknown', 1)).toBe(DEGRADED);
+    expect(envoyMemoryCauseStatus('unknown', 0)).toBe(NA);
   });
 
   it('describes the active warning threshold', () => {

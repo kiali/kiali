@@ -612,14 +612,33 @@ if [ "${TRAFFIC_GENERATOR_ENABLED}" == "true" ]; then
 
     # TODO - these access the "openshift" yaml files - but there are no kubernetes specific versions. using --validate=false
     curl https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator-configmap.yaml | DURATION='0s' ROUTE="http://${INGRESS_ROUTE}/productpage" RATE="${RATE}" envsubst | $CLIENT_EXE apply -n ${NAMESPACE} -f -
+
+    # Log every result directly instead of storing and repeatedly scanning an ever-growing results file.
+    traffic_generator_patch=$(cat <<'EOF'
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - |
+          set -f
+          routes=(${ROUTE//;/ })
+          printf 'GET %s\n' "${routes[@]}" |
+            vegeta attack -rate="${RATE}" -duration="${DURATION}" -insecure -max-body=0 |
+            vegeta encode -to=json
+        command: ["/bin/bash", "-o", "pipefail", "-c"]
+        name: kiali-traffic-generator
+EOF
+)
     url="https://raw.githubusercontent.com/kiali/kiali-test-mesh/master/traffic-generator/openshift/traffic-generator.yaml"
     if [ "${ARCH}" == "ppc64le" ]; then
-      curl ${url} | sed 's;quay.io/kiali.*;quay.io/maistra/kiali-test-mesh-traffic-generator:0.0-ibm-p;g' | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
+      curl ${url} | sed 's;quay.io/kiali.*;quay.io/maistra/kiali-test-mesh-traffic-generator:0.0-ibm-p;g'
     elif [ "${ARCH}" == "s390x" ]; then
-      curl ${url} | sed 's;quay.io/kiali.*;quay.io/maistra/kiali-test-mesh-traffic-generator:0.0-ibm-z;g' | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
+      curl ${url} | sed 's;quay.io/kiali.*;quay.io/maistra/kiali-test-mesh-traffic-generator:0.0-ibm-z;g'
     else
-      curl ${url} | $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
-    fi
+      curl ${url}
+    fi | $CLIENT_EXE patch --local --type=strategic -f - -p "${traffic_generator_patch}" -o yaml |
+      $CLIENT_EXE apply --validate=false -n ${NAMESPACE} -f -
 
   fi
 fi

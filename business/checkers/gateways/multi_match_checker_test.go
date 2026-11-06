@@ -609,3 +609,44 @@ func TestMatchOnImplicitWildcardMatchingHosts(t *testing.T) {
 	assert.True(ok)
 	assert.True(validation.Valid)
 }
+
+// TestMultimatchValidationValueCarriesNamespace pins the CI regression from
+// PR #10448: the IstioValidation VALUE must carry its namespace. The
+// cluster-wide GetValidations filter reads the map KEY's namespace, which is
+// authoritative (TestGetValidationsKeepsGatewayMultimatchValidations keeps an
+// entry whose value lacks it) — but a value without its namespace is
+// malformed, and it was the original cause of the CI drop: the pre-fix
+// filter read the value's Namespace field, so every collision-flagged
+// gateway lost its validation on /api/istio/config. The scenario mirrors the
+// Istio 1.31 bookinfo sample gateway (port 8080, wildcard host,
+// istio=ingressgateway selector) colliding with a wizard-created gateway.
+func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	demoGateway := data.AddServerToGateway(data.CreateServer([]string{"*"}, 8080, "http", "HTTP"),
+		data.CreateEmptyGateway("bookinfo-gateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+
+	wizardGateway := data.AddServerToGateway(data.CreateServer([]string{"website.com"}, 8080, "foobar", "HTTP"),
+		data.CreateEmptyGateway("mygateway", "bookinfo", map[string]string{
+			"istio": "ingressgateway",
+		}))
+
+	vals := MultiMatchChecker{
+		Conf:     config.Get(),
+		Gateways: []*networking_v1.Gateway{demoGateway, wizardGateway},
+	}.Check()
+
+	// Both colliding gateways must be flagged: pin the count so a checker
+	// that silently produces fewer entries fails.
+	assert.Len(vals, 2)
+	for key, validation := range vals {
+		assert.Equal("bookinfo", key.Namespace)
+		assert.Equal(key.Namespace, validation.Namespace,
+			"multimatch validation value for %s must carry its namespace, matching its key", key.Name)
+	}
+}

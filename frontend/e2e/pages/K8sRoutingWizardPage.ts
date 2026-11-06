@@ -4,7 +4,7 @@ import { waitForLoadingComplete } from '../utils/transition';
 
 export class K8sRoutingWizardPage extends BasePage {
   async expectWizard(title: string): Promise<void> {
-    await expect(this.page.locator(`div[aria-label="${title}"]`)).toBeVisible();
+    await expect(this.page.getByRole('dialog', { name: title })).toBeVisible();
   }
 
   async clickTab(tab: string): Promise<void> {

@@ -195,6 +195,16 @@ The critical call is `getLayer(r, ...)` in `handlers/utils.go`. It:
 
 Request bodies are limited to 10 MB via `boundedReadAll` / `http.MaxBytesReader`.
 
+### Namespace access checks in handlers
+
+Every handler that serves mesh data must enforce the user's namespace access, consistently with all other handlers (issue #10443). The established patterns:
+
+- **Namespace-targeted routes** (`/api/namespaces/{ns}/...`): resolve the namespace through `layer.Namespace.GetClusterNamespace` **before** any fetch. An inaccessible namespace fails closed with 403 — never serve data, and never return an empty 200 when the accessible set itself could not be computed (that is an error). The graphs treat their `namespaces` query parameter the same way: it names the request's targets, and any inaccessible name rejects the whole request with 403 (`graph.Forbidden`).
+- **Collection routes and parameters** (the cluster-scoped app/workload/service/metrics lists and their `namespaces` query parameter, batched stats queries): intersect the request with the accessible set via the `accessibleNamespaceNames` helper (`handlers/utils.go`) and return 200 with only the accessible data. A batch where some targets are denied returns partial results with warnings; the 403 fires only when every target was denied (an invalid query wins with 400). One hybrid: the istio config list's single `namespace` parameter returns 403 for an inaccessible namespace on a single-cluster install, but the empty list (200) in multicluster mode, where the namespace may exist on another cluster.
+- **Cluster-scoped routes** (`/api/clusters/...`, `clusterName` query parameter): when the user has no client for the named cluster (no session on it, in non-impersonation multicluster mode), return the empty result rather than a 500 — this is what the sibling list endpoints do. Results for session clusters are filtered by the user's accessible namespaces.
+
+The business layer owns the filtering for shared SA-computed data (validations, gateways, health) — handlers should go through it rather than reading `kialiCache` or SA clients directly. The full rule set and its rationale live in the "Namespace Access Control" section of `docs/agents/auth-and-security.md`.
+
 ## API Versioning and Base Path
 
 All API routes are prefixed with `/api`. There is **no versioning path segment** — the API is explicitly documented as internal and subject to change without backward-compatibility guarantees (see `kiali.go` swagger metadata and `kiali_internal_api.md`).

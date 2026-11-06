@@ -127,6 +127,17 @@ Custom headers are propagated to downstream tracing API calls via gRPC metadata 
 
 `tracing/discovery_client.go` provides `DiagnoseTracingConfig` — used by the `/api/tracing/diagnose` endpoint — which validates the configuration, probes connectivity, and returns a structured `TracingDiagnose` with a log of test steps.
 
+## Namespace Authorization for Traces
+
+Tracing backends (Jaeger, Tempo) have no access control of their own — Kiali is the enforcement point for the logged-in user's namespace access. The authorization lives in `business/tracing.go` and is applied to every tracing view (trace lists, spans, error-trace counts, trace details):
+
+- **Fail closed on missing attribution.** A trace must carry a namespace in its span attributes — `istio.namespace`, `istio.source_namespace`, `istio.destination_namespace`, or `k8s.namespace.name` (plus `node_id` for sidecar spans). Traces whose spans carry none of these cannot be authorized for any user and are excluded from all tracing views. When adding new span attributes that identify a namespace, add them to `NamespaceTagKeys` (`tracing/jaeger/model/types.go`) so both the extraction and the TraceQL/Jaeger query builders stay in sync — but only infrastructure-set attributes (Istio sidecars, ztunnel, collector k8s enrichment) belong there: `service.namespace` is deliberately excluded because it is an app-controlled logical grouping unrelated to Kubernetes placement, and reading it would let an application label its traces into an accessible namespace.
+- **List views anchor on the requested namespace; details anchor on the accessible set.** `traceInNamespace` filters lists by whether the trace passes through the requested namespace; `CheckTraceAccess` admits a trace by ID when the user can access at least one namespace the trace passes through.
+- **Cluster attribution is checked per cluster.** When telemetry identifies the cluster (`istio.cluster_id`, `k8s.cluster.name` — see `ClusterTagKeys`), access to a same-named namespace in a *different* cluster does not authorize the trace. Traces without cluster attribution are checked against the namespace name in any cluster.
+- **Query builders select the authorization attributes.** The Tempo TraceQL builders (`tracing/tempo/traceQLBuilder.go`) include the namespace/cluster attributes in their select lists so the extraction has the data to authorize with — a trace excluded from a query result because its attributes were not selected is indistinguishable from a denied one.
+
+The full namespace-access rule set is in the "Namespace Access Control" section of `docs/agents/auth-and-security.md`.
+
 ## Jaeger Integration
 
 `tracing/jaeger/` contains:

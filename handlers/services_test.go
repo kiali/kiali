@@ -309,9 +309,14 @@ func TestServiceMetricsBadRateFunc(t *testing.T) {
 }
 
 func TestServiceMetricsInaccessibleNamespace(t *testing.T) {
-	k := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}})
+	k := kubetest.NewFakeK8sClient(
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "ns"}},
+		&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "my_namespace"}},
+	)
 	k.OpenShift = true
-	ts, _ := setupServiceMetricsEndpointWithClient(t, &noPrivClient{UserClientInterface: k})
+	// The namespace exists (it is in the fake), but the user's LIST excludes
+	// it: a genuinely restricted user.
+	ts, _ := setupServiceMetricsEndpointWithClient(t, newRestrictedNamespaceClient(k, "my_namespace", []string{"ns"}))
 
 	url := ts.URL + "/api/namespaces/my_namespace/services/svc/metrics"
 

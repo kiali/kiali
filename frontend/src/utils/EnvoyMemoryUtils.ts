@@ -3,7 +3,7 @@ import type { EnvoyMemoryCause, EnvoyMemorySummary } from 'types/EnvoyMemory';
 import type { TimeInMilliseconds, TimeRange } from 'types/Common';
 import type { IstioMetricsOptions } from 'types/MetricsOptions';
 import type { Status } from 'types/Health';
-import { DEGRADED, HEALTHY } from 'types/Health';
+import { DEGRADED, HEALTHY, NA } from 'types/Health';
 import { timeRangeToOptions } from 'components/Metrics/Helper';
 import * as API from '../services/Api';
 import { computePrometheusRateParams } from '../services/Prometheus';
@@ -176,7 +176,13 @@ export const formatEnvoyMemoryBytes = (bytes: number): string => {
   return `${(mib / 1024).toFixed(1)} GiB`;
 };
 
-export const envoyMemoryCauseStatus = (cause: EnvoyMemoryCause): Status => {
+export const isEnvoyMemoryMetricMissing = (summary: { cause: EnvoyMemoryCause; memoryMaxBytes: number }): boolean =>
+  summary.cause === 'unknown' && summary.memoryMaxBytes === 0;
+
+export const envoyMemoryCauseStatus = (cause: EnvoyMemoryCause, memoryMaxBytes: number): Status => {
+  if (isEnvoyMemoryMetricMissing({ cause, memoryMaxBytes })) {
+    return NA;
+  }
   if (cause === 'ok') {
     return HEALTHY;
   }
@@ -184,7 +190,10 @@ export const envoyMemoryCauseStatus = (cause: EnvoyMemoryCause): Status => {
   return DEGRADED;
 };
 
-export const envoyMemoryCauseLabel = (cause: EnvoyMemoryCause): string => {
+export const envoyMemoryCauseLabel = (cause: EnvoyMemoryCause, memoryMaxBytes: number): string => {
+  if (isEnvoyMemoryMetricMissing({ cause, memoryMaxBytes })) {
+    return t('Memory metrics not available');
+  }
   switch (cause) {
     case 'ok':
       return t('Within normal range');

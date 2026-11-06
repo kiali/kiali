@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,

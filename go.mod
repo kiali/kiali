@@ -1,6 +1,6 @@
 module github.com/kiali/kiali
 
-go 1.26.3
+go 1.26.10
 
 require (
 	github.com/KimMachineGun/automemlimit v0.7.5
@@ -9,7 +9,7 @@ require (
 	github.com/anthropics/anthropic-sdk-go v1.41.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/go-jose/go-jose/v4 v4.1.4
+	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/go-logr/zerologr v1.2.3
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.5.4

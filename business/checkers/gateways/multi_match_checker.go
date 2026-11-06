@@ -136,6 +136,7 @@ func newValidationError(gatewayName, namespace, cluster string, serverIndex, hos
 	rrValidation := &models.IstioValidation{
 		Cluster:   cluster,
 		Name:      gatewayName,
+		Namespace: namespace,
 		ObjectGVK: key.ObjectGVK,
 		Valid:     true,
 		Checks: []*models.IstioCheck{

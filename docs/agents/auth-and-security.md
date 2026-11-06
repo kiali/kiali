@@ -266,6 +266,42 @@ Two functions are exposed:
 
 The package intentionally does not expose signature verification itself — callers either rely on the Kubernetes API to validate tokens (RBAC-on path) or call `jws.Verify(key)` directly in the OpenID controller (RBAC-off in-house validation path).
 
+## Namespace Access Control
+
+Kiali enforces per-user namespace authorization on **every** API that reads or writes mesh data — graphs, lists, detail pages, metrics, dashboards, logs, traces, validations, and diagnostics endpoints. The check must be consistent across all of them: a user's answer does not change between views (issue #10443). Any new or modified API path, business-layer function, or background computation MUST follow the rules in this section.
+
+### The accessible set
+
+A user's **accessible namespaces** are resolved per cluster from their Kubernetes RBAC:
+
+- **GET** on `namespaces` grants per-namespace access (typically via `RoleBindings`).
+- **LIST** on `namespaces` grants everything the list returns (typically via a `ClusterRoleBinding`).
+- With `kiali_feature_flags.authz.require_namespace_get: true` (strict mode), LIST results are additionally verified with a per-namespace GET — LIST alone is never sufficient in that mode.
+
+The result is intersected with the Kiali ServiceAccount's discovery-selector-filtered set and cached per token (`kialiCache.GetNamespaces(cluster, cacheKey)`). The `NamespaceService` (`business/namespaces.go`) exposes distinct views of it — picking the wrong one is a common source of authorization bugs:
+
+| Function | Scope | Use it for |
+|---|---|---|
+| `GetNamespaces` / `GetClusterNamespaces` | The requesting user | All user-facing reads and authorization checks |
+| `GetKialiSAClusterNamespaces` | The Kiali SA (undecorated, cached) | Comparing against the user set |
+| `GetSAClusterNamespaces` | The Kiali SA (decorated like the user view) | Computations that must match the background validators |
+
+`GetNamespaces` iterates the user's clients only, so a cluster the user has no client for (no session on it, in non-impersonation multicluster mode) contributes nothing — having an accessible namespace in a cluster implies a user client exists there.
+
+### Rules for API paths
+
+1. **Requests that name namespaces as their target fail closed; collection requests filter.** A request scoped to one namespace (a detail page, a write, `/api/namespaces/{ns}/...`) resolves it through the accessible set (`GetClusterNamespace`) *before* serving — an inaccessible namespace returns 403 ("Cannot access namespace data"), deliberately indistinguishable from a nonexistent one. The graphs follow the same shape for their `namespaces` parameter: it names the request's targets, and any inaccessible name rejects the whole request with 403 (`graph.Forbidden`). A request for a collection (the cluster-scoped app/workload/service/metrics lists, batched stats queries — the handler helper is `accessibleNamespaceNames` in `handlers/utils.go`) instead intersects the request with the accessible set and returns 200 with only the accessible data; a batch where some targets are denied returns partial results with warnings, and the 403 fires only when every target was denied (an invalid query wins with 400). In both shapes, if the accessible set itself cannot be computed, return an error — never an empty 200.
+2. **Cluster-scoped requests degrade for session-less clusters.** When the user has no client for the named cluster, return the empty result rather than a 500 (this is what `/api/clusters/apps` and `/api/clusters/workloads` do). On clusters the user does have a session on, cluster-wide results are filtered to their accessible namespaces.
+3. **Never write user-scoped results into shared caches.** The shared caches (validations, gateways, health) are SA-computed and served to all users. A user-filtered result written into one degrades it for everyone until the background job refreshes it.
+4. **Filter shared SA-computed data per user at return time — entries *and* references.** Validation references name objects in other namespaces; pruning only the top-level entries leaks denied-namespace object names through otherwise-accessible entries.
+5. **Computations that feed shared caches use SA visibility.** Background reconcilers run on an SA layer (`NewLayerWithSAClients`). On-demand recomputation that refreshes the same cache (e.g. `ValidateIstioObject`) must build the same SA-scoped inputs (`newValidationInfoSA`, the unexported `getIstioConfigList`) so what lands in the cache is consistent — it can only refresh SA-computed entries, never degrade them for other users.
+6. **Authorize telemetry before querying it.** Tracing backends have no access control of their own; Kiali is the enforcement point. A trace must carry a namespace in its span attributes (`istio.namespace`, `istio.source_namespace`, `istio.destination_namespace`, `k8s.namespace.name`; `node_id` for sidecar spans) or it is excluded for every user — traces that cannot be attributed fail closed. Only infrastructure-set attributes belong in that set: `service.namespace` is deliberately excluded (an app-controlled logical grouping, not Kubernetes placement). Cluster attribution (`istio.cluster_id` / `k8s.cluster.name`) is checked against the same-named namespace *in that cluster*. Views that combine data from all clusters at once (aggregate metrics, ztunnel dashboards) require access to the namespace in every cluster where it exists.
+7. **Diagnostics and internal endpoints count too.** Anything that surfaces per-namespace data — status summaries, health gauges, `/api/test/*` handlers — is in scope. Route them through the business layer's authorized paths rather than reading shared caches, gauges, or the SA client directly.
+
+### Testing authorization
+
+`kubetest.NewNamespaceRestrictedClient` (`kubernetes/kubetest/restricted_client.go`) models a restricted user: its namespace LIST returns only the listed namespaces and per-namespace GET on the denied ones returns Forbidden. The fake's `CacheKey` must differ from the SA token or the accessible-set computation takes the SA-identity shortcut. New API paths need a regression test covering at least: denied namespace → 403/empty (never data), reference pruning into denied namespaces, and the session-less-cluster degrade for cluster-scoped reads.
+
 ## TLS Policy Resolution
 
 `tlspolicy/resolver.go` computes the effective TLS configuration for Kiali's own HTTPS server. The entry point is:

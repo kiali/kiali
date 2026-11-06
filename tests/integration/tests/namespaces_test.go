@@ -40,11 +40,15 @@ func TestInvalidNamespaceHealth(t *testing.T) {
 
 	health, code, err := kiali.NamespaceWorkloadHealth("invalid", params)
 
-	// API returns empty health map for invalid/inaccessible namespaces instead of error
-	require.NoError(err)
-	require.Equal(200, code)
-	require.NotNil(health)
-	require.Empty(*health)
+	// Namespaces the caller cannot access (including nonexistent ones) are
+	// rejected with 403, fail closed, consistent with the rest of the API.
+	// The health data is served from a cache populated by the Kiali
+	// ServiceAccount, so the Kubernetes API cannot enforce the caller's RBAC
+	// on this endpoint; the handler must do it. Accessible namespaces that
+	// are not yet in the cache still return 200 with empty health.
+	require.Error(err)
+	require.Equal(403, code)
+	require.Nil(health)
 }
 
 func TestNamespaceHealthApp(t *testing.T) {

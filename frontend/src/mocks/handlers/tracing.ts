@@ -185,8 +185,8 @@ const generateMockTraces = (serviceName: string, namespace: string, count = 100)
       i < 20
         ? (i + 1) * 10 * 1000000 // First 20: every 10 seconds
         : i < 50
-        ? (i - 19) * 30 * 1000000 // Next 30: every 30 seconds
-        : (i - 49) * 60 * 1000000; // Rest: every minute
+          ? (i - 19) * 30 * 1000000 // Next 30: every 30 seconds
+          : (i - 49) * 60 * 1000000; // Rest: every minute
 
     const traceStartTime = now - timeOffset;
 

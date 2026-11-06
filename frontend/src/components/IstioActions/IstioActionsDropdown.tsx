@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
@@ -6,15 +7,20 @@ import {
   DropdownItem,
   DropdownList,
   MenuToggle,
-  MenuToggleElement,
   Content,
   ContentVariants,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
   TooltipPosition
 } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
 import { serverConfig } from '../../config';
 import { renderDisabledDropdownOption } from 'utils/DropdownUtils';
 import { useKialiTranslation } from 'utils/I18nUtils';
+
+const istioActionsConfirmDeleteModalTitleId = 'istio-actions-confirm-delete-modal-title';
 
 type IstioActionDropdownProps = {
   canDelete: boolean;
@@ -49,11 +55,11 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
     props.onDelete();
   };
 
-  const objectName = props.objectKind ?? 'Istio object';
+  const objectKind = props.objectKind ?? t('Istio object');
 
   const deleteAction = (
     <DropdownItem key="delete" onClick={onClickDelete} isDisabled={!props.canDelete}>
-      Delete
+      {t('Delete')}
     </DropdownItem>
   );
 
@@ -77,7 +83,7 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
             onClick={() => onToggle(!dropdownOpen)}
             isExpanded={dropdownOpen}
           >
-            Actions
+            {t('Actions')}
           </MenuToggle>
         )}
         isOpen={dropdownOpen}
@@ -89,23 +95,28 @@ export const IstioActionDropdown: React.FC<IstioActionDropdownProps> = (props: I
       </Dropdown>
 
       <Modal
-        title={t('Confirm Delete')}
+        aria-labelledby={istioActionsConfirmDeleteModalTitleId}
         variant={ModalVariant.small}
         isOpen={showConfirmModal}
         onClose={hideConfirmModal}
-        actions={[
-          <Button key="confirm" variant={ButtonVariant.danger} onClick={onDelete}>
-            Delete
-          </Button>,
-          <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>
-            Cancel
-          </Button>
-        ]}
       >
-        <Content component={ContentVariants.p}>
-          Are you sure you want to delete the {objectName} '{props.objectName}'? It cannot be undone. Make sure this is
-          something you really want to do!
-        </Content>
+        <ModalHeader labelId={istioActionsConfirmDeleteModalTitleId} title={t('Confirm Delete')} />
+        <ModalBody>
+          <Content component={ContentVariants.p}>
+            {t(
+              "Are you sure you want to delete the {{objectKind}} '{{objectName}}'? It cannot be undone. Make sure this is something you really want to do!",
+              { objectKind, objectName: props.objectName }
+            )}
+          </Content>
+        </ModalBody>
+        <ModalFooter>
+          <Button key="confirm" data-test="confirm-delete" variant={ButtonVariant.danger} onClick={onDelete}>
+            {t('Delete')}
+          </Button>
+          <Button key="cancel" variant={ButtonVariant.secondary} onClick={hideConfirmModal}>
+            {t('Cancel')}
+          </Button>
+        </ModalFooter>
       </Modal>
     </>
   );
