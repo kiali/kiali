@@ -322,7 +322,7 @@ func (in *K8SClient) IsIstioGateway() bool {
 		}
 		isIstioGateway := false
 		for _, r := range res.APIResources {
-			if r.Kind == GatewayType && r.Name == "gateways" {
+			if r.Kind == GatewayType && r.Name == PluralNames[GatewayType] {
 				isIstioGateway = true
 				break
 			}
