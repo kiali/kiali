@@ -4,7 +4,8 @@ import { Button, ButtonVariant, Tooltip, TooltipPosition } from '@patternfly/rea
 import { KialiIcon } from 'config/KialiIcon';
 import { writePlainTextToClipboard } from 'utils/ClipboardUtils';
 
-export type ClipboardCopyButtonProps = {
+/** Kiali copy control (not PatternFly's `ClipboardCopyButton`). */
+export type CopyToClipboardButtonProps = {
   ariaLabel: string;
   className?: string;
   copiedTooltip: string;
@@ -23,7 +24,7 @@ export type ClipboardCopyButtonProps = {
   variant: ButtonVariant;
 };
 
-export const ClipboardCopyButton: React.FC<ClipboardCopyButtonProps> = ({
+export const CopyToClipboardButton: React.FC<CopyToClipboardButtonProps> = ({
   ariaLabel,
   className,
   copiedTooltip,

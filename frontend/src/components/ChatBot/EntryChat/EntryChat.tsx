@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import type { KialiAppState } from 'store/Store';
 import type { ChatEntry, ReferencedDoc } from 'types/Chatbot';
 import { writeMarkdownRichToClipboard } from 'utils/ClipboardUtils';
+import { addWarning } from 'utils/AlertUtils';
 import { Alert } from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import { ResponseTools } from './ResponseTools';
@@ -33,8 +34,11 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
       ? undefined
       : {
           copy: {
-            onClick: () => {
-              void writeMarkdownRichToClipboard(entry.text ?? '');
+            onClick: async () => {
+              const success = await writeMarkdownRichToClipboard(entry.text ?? '');
+              if (!success) {
+                addWarning(t('Unable to copy to clipboard.'));
+              }
             }
           }
         };

@@ -27,7 +27,7 @@ import type { editor } from 'monaco-editor';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
-import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
+import { CopyToClipboardButton } from 'components/Copy/CopyToClipboardButton';
 import type { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { EnvoyMemory } from 'components/Envoy/EnvoyMemory';
@@ -453,7 +453,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
-                    <ClipboardCopyButton
+                    <CopyToClipboardButton
                       ariaLabel={t('Copy')}
                       className={copyButtonStyle}
                       copiedTooltip={t('Copied')}

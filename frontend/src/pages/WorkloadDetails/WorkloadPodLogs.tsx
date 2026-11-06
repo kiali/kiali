@@ -43,7 +43,7 @@ import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
-import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
+import { CopyToClipboardButton } from 'components/Copy/CopyToClipboardButton';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -999,7 +999,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           <ToolbarGroup style={{ margin: 0 }}>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
             <ToolbarItem className={copyActionStyle}>
-              <ClipboardCopyButton
+              <CopyToClipboardButton
                 ariaLabel={t('Copy logs to clipboard')}
                 copiedTooltip={t('Copied')}
                 copyTooltip={t('Copy logs to clipboard')}
@@ -1167,7 +1167,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             {t('Close')}
           </Button>
           {this.state.jsonModalContent && (
-            <ClipboardCopyButton
+            <CopyToClipboardButton
               ariaLabel={t('Copy')}
               copiedTooltip={t('Copied')}
               copyTooltip={t('Copy')}

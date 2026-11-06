@@ -1363,6 +1363,7 @@
   "TTL is expressed in nanoseconds (i.e. 1000, 2000, etc) or seconds (i.e. 10s, 1.5s, etc).": "TTL以纳秒（即1000、2000等）或秒（即10秒、1.5秒等）表示。",
   "Type": "类型",
   "UI resource": "UI 资源",
+  "Unable to copy to clipboard.": "无法复制到剪贴板。",
   "Unable to load consumption stats": "无法加载消耗统计",
   "Unable to load token stats": "无法加载 Token 统计",
   "Unary operands may optionally be prefixed with \"is\" or \"has\". (i.e. \"has mtls\")": "一元操作数可选择以 \"is\" 或 \"has\" 为前缀。（例如 \"has mtls\"）",

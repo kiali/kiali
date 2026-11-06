@@ -27,7 +27,7 @@ import type {
   Sidecar,
   VirtualService
 } from 'types/IstioObjects';
-import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
+import { CopyToClipboardButton } from 'components/Copy/CopyToClipboardButton';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
@@ -224,7 +224,7 @@ export class IstioConfigPreview extends React.Component<Props, State> {
               })}
             >
               <ToolbarItem>
-                <ClipboardCopyButton
+                <CopyToClipboardButton
                   ariaLabel={t('Copy')}
                   copiedTooltip={t('Copied')}
                   copyTooltip={t('Copy all resources')}

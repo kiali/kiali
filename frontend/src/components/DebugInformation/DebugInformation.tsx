@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
+import { CopyToClipboardButton } from 'components/Copy/CopyToClipboardButton';
 import { serverConfig } from '../../config';
 import type { ComputedServerConfig } from '../../config/ServerConfig';
 import type { KialiAppState } from '../../store/Store';
@@ -336,7 +336,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           {t('Close')}
         </Button>
 
-        <ClipboardCopyButton
+        <CopyToClipboardButton
           ariaLabel={t('Copy')}
           copiedTooltip={t('Copied')}
           copyTooltip={t('Copy')}
