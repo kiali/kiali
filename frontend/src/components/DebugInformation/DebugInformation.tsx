@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
+import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
 import { serverConfig } from '../../config';
 import type { ComputedServerConfig } from '../../config/ServerConfig';
 import type { KialiAppState } from '../../store/Store';
@@ -336,8 +336,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           {t('Close')}
         </Button>
 
-        <PlainTextClipboardCopyButton
-          appearance="secondary"
+        <ClipboardCopyButton
           ariaLabel={t('Copy')}
           copiedTooltip={t('Copied')}
           copyTooltip={t('Copy')}
@@ -345,6 +344,7 @@ const DebugInformationComponent: React.FC<DebugInformationProps> = (props: Debug
           label={t('Copy')}
           onCopy={success => copyCallback(copyText, success)}
           text={copyText}
+          variant={ButtonVariant.secondary}
         />
 
         <Button key="download" variant={ButtonVariant.secondary} onClick={downloadFile}>

@@ -9,6 +9,7 @@ import type { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import {
+  ButtonVariant,
   Card,
   CardBody,
   EmptyState,
@@ -26,7 +27,7 @@ import type { editor } from 'monaco-editor';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
-import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
+import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
 import type { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { EnvoyMemory } from 'components/Envoy/EnvoyMemory';
@@ -452,8 +453,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
-                    <PlainTextClipboardCopyButton
-                      appearance="link"
+                    <ClipboardCopyButton
                       ariaLabel={t('Copy')}
                       className={copyButtonStyle}
                       copiedTooltip={t('Copied')}
@@ -462,6 +462,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       label={t('Copy')}
                       onClick={this.selectAllEditorContent}
                       text={this.editorContent()}
+                      variant={ButtonVariant.link}
                     />
                   </div>
 

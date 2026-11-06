@@ -43,7 +43,7 @@ import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
-import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
+import { ClipboardCopyButton } from 'components/Copy/ClipboardCopyButton';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -999,8 +999,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           <ToolbarGroup style={{ margin: 0 }}>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
             <ToolbarItem className={copyActionStyle}>
-              <PlainTextClipboardCopyButton
-                appearance="link"
+              <ClipboardCopyButton
                 ariaLabel={t('Copy logs to clipboard')}
                 copiedTooltip={t('Copied')}
                 copyTooltip={t('Copy logs to clipboard')}
@@ -1008,6 +1007,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 label={t('Copy')}
                 labelClassName={iconStyle}
                 text={this.entriesToString(this.state.entries)}
+                variant={ButtonVariant.link}
               />
             </ToolbarItem>
 
@@ -1167,8 +1167,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             {t('Close')}
           </Button>
           {this.state.jsonModalContent && (
-            <PlainTextClipboardCopyButton
-              appearance="secondary"
+            <ClipboardCopyButton
               ariaLabel={t('Copy')}
               copiedTooltip={t('Copied')}
               copyTooltip={t('Copy')}
@@ -1180,6 +1179,7 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
                 }
               }}
               text={this.state.jsonModalContent}
+              variant={ButtonVariant.secondary}
             />
           )}
           <Button key="download" variant={ButtonVariant.secondary} onClick={this.downloadFile}>
