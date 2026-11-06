@@ -6,9 +6,10 @@ import { NodeShape, SVGDefsProvider, TopologyQuadrant } from '@patternfly/react-
 import { icons, serverConfig } from 'config';
 import * as I18nUtils from 'utils/I18nUtils';
 import type { IconType } from 'config/Icons';
-import { GraphType } from 'types/Graph';
+import { EdgeLabelMode, GraphLayout, GraphType, NodeType } from 'types/Graph';
+import type { WaypointTrafficSplit } from 'types/WaypointTraffic';
 import type { GraphSettings, NodeData } from '../GraphElems';
-import { setNodeAttachments } from '../GraphElems';
+import { setNodeAttachments, setNodeLabel } from '../GraphElems';
 
 type DecoratorProps = {
   icon: IconType;
@@ -42,7 +43,7 @@ const getAttachments = (
   return (data.attachments ?? []) as React.ReactElement<DecoratorProps>[];
 };
 
-const singleFeatureCases: { name: string; flags: Partial<NodeData>; icon: IconType }[] = [
+const singleFeatureCases: { flags: Partial<NodeData>; icon: IconType; name: string }[] = [
   { name: 'fault injection', flags: { hasFaultInjection: true }, icon: icons.istio.faultInjection },
   { name: 'mirroring', flags: { hasMirroring: true }, icon: icons.istio.mirroring },
   { name: 'request timeout', flags: { hasRequestTimeout: true }, icon: icons.istio.requestTimeout },
@@ -206,5 +207,93 @@ describe('node attachment tooltip presentation', () => {
     await user.hover(container.querySelector('.pf-topology__node__decorator')!);
 
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Translated Circuit Breaker');
+  });
+});
+
+describe('waypoint node labels', () => {
+  const namespaceSplit: WaypointTrafficSplit = {
+    canary: { cluster: 'Kubernetes', name: 'waypoint-canary', namespace: 'bookinfo', role: 'canary' },
+    canaryWeight: 30,
+    configLevel: 'namespace',
+    primary: { cluster: 'Kubernetes', name: 'waypoint', namespace: 'bookinfo', role: 'primary' },
+    primaryWeight: 70
+  };
+
+  const makeSettings = (): GraphSettings => ({
+    activeNamespaces: [{ cluster: 'Kubernetes', name: 'bookinfo', waypointTrafficSplit: namespaceSplit }],
+    edgeLabels: [EdgeLabelMode.TRAFFIC_DISTRIBUTION],
+    graphType: GraphType.WORKLOAD,
+    showOutOfMesh: false,
+    showSecurity: false,
+    showVirtualServices: false,
+    trafficRates: []
+  });
+
+  const makeNode = (workload: string, backendLabel?: string): NodeModel => ({
+    data: {
+      cluster: 'Kubernetes',
+      isWaypoint: true,
+      namespace: 'bookinfo',
+      nodeType: NodeType.WORKLOAD,
+      waypointCanaryLabel: backendLabel,
+      workload
+    } as NodeData,
+    id: workload,
+    type: 'node'
+  });
+
+  beforeEach(() => {
+    rstest
+      .spyOn(I18nUtils, 't')
+      .mockImplementation((text, options) => text.replace('{{weight}}', String(options?.weight)));
+  });
+
+  afterEach(() => {
+    rstest.restoreAllMocks();
+  });
+
+  it.each([
+    { backendLabel: 'Primary 90%', workload: 'waypoint' },
+    { backendLabel: 'Canary 10%', workload: 'waypoint-canary' },
+    { backendLabel: 'Primary 0%', workload: 'waypoint' },
+    { backendLabel: 'Canary 100%', workload: 'waypoint-canary' },
+    { backendLabel: 'Primary 100%', workload: 'waypoint' },
+    { backendLabel: 'Canary 0%', workload: 'waypoint-canary' }
+  ])('keeps the effective $backendLabel instead of the namespace split', ({ backendLabel, workload }) => {
+    const node = makeNode(workload, backendLabel);
+
+    setNodeLabel(node, new Map(), makeSettings(), GraphLayout.Dagre);
+
+    expect((node.data as NodeData).secondaryLabel).toContain(backendLabel);
+  });
+
+  it.each([undefined, ''])('falls back to the namespace split when the backend label is %s', backendLabel => {
+    const node = makeNode('waypoint-canary', backendLabel);
+
+    setNodeLabel(node, new Map(), makeSettings(), GraphLayout.Dagre);
+
+    expect((node.data as NodeData).secondaryLabel).toContain('Canary 30%');
+  });
+
+  it('keeps the effective role when toggling percentages without duplicating labels', () => {
+    const node = makeNode('waypoint-canary', 'Canary 10%');
+    const data = node.data as NodeData;
+    const settings = makeSettings();
+
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toContain('Canary 10%');
+
+    settings.edgeLabels = [];
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toContain('Canary');
+    expect(data.secondaryLabel).not.toMatch(/\d+%/);
+
+    settings.edgeLabels = [EdgeLabelMode.TRAFFIC_DISTRIBUTION];
+    data.waypointCanaryLabel = 'Canary 20%';
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toContain('Canary 20%');
+    expect(data.secondaryLabel?.match(/Canary/g)).toHaveLength(1);
+    expect(data.secondaryLabel).not.toMatch(/10%|30%/);
   });
 });

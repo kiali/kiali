@@ -153,10 +153,10 @@ type WaypointCanaryLabelOptions = {
  */
 export const withWaypointCanarySecondaryLabel = (options: WaypointCanaryLabelOptions): string | undefined => {
   const includeWeight = options.includeWeight ?? false;
-  let canaryLine = waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
-  if (!canaryLine && options.backendLabel) {
-    canaryLine = formatWaypointCanaryLabel(options.backendLabel, includeWeight);
-  }
+  // The backend resolves Service overrides; namespace configuration is only a fallback.
+  const canaryLine = options.backendLabel
+    ? formatWaypointCanaryLabel(options.backendLabel, includeWeight)
+    : waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
   if (!canaryLine) {
     return options.secondaryLabel;
   }
