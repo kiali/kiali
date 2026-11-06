@@ -2,7 +2,6 @@ import * as React from 'react';
 import {
   Content,
   ContentVariants,
-  DescriptionList,
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
@@ -115,38 +114,6 @@ export const WaypointCanaryPropertyList: React.FC<{ split: WaypointTrafficSplit 
         </DescriptionListGroup>
       )}
     </>
-  );
-};
-
-type NamespaceWaypointCanarySplitProps = {
-  cluster?: string;
-  namespace: string;
-};
-
-export const NamespaceWaypointCanarySplit: React.FC<NamespaceWaypointCanarySplitProps> = (
-  props: NamespaceWaypointCanarySplitProps
-) => {
-  const [split, setSplit] = React.useState<WaypointTrafficSplit | undefined>();
-
-  React.useEffect(() => {
-    API.getNamespaces()
-      .then(response => {
-        const match = response.data.find(
-          ns => ns.name === props.namespace && (!props.cluster || ns.cluster === props.cluster)
-        );
-        setSplit(match?.waypointTrafficSplit);
-      })
-      .catch(() => setSplit(undefined));
-  }, [props.namespace, props.cluster]);
-
-  if (!split?.canary) {
-    return null;
-  }
-
-  return (
-    <DescriptionList isCompact style={{ fontSize: 'var(--graph-side-panel--font-size)', marginTop: PFSpacer.sm }}>
-      <WaypointCanaryPropertyList split={split} />
-    </DescriptionList>
   );
 };
 
