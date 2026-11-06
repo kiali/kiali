@@ -9,8 +9,6 @@ import type { EnvoyProxyDump, Pod } from 'types/IstioObjects';
 import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import {
-  Button,
-  ButtonVariant,
   Card,
   CardBody,
   EmptyState,
@@ -18,7 +16,6 @@ import {
   EmptyStateVariant,
   Tab,
   Tabs,
-  Tooltip,
   TooltipPosition
 } from '@patternfly/react-core';
 import { SummaryTableBuilder } from './tables/BaseTable';
@@ -29,8 +26,7 @@ import type { editor } from 'monaco-editor';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { activeTab } from '../../components/Tab/Tabs';
-import { KialiIcon } from 'config/KialiIcon';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
 import type { DashboardRef } from 'types/Runtimes';
 import { CustomMetrics } from 'components/Metrics/CustomMetrics';
 import { EnvoyMemory } from 'components/Envoy/EnvoyMemory';
@@ -343,7 +339,7 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
 
   editorContent = (): string => JSON.stringify(this.state.config, null, '  ');
 
-  onCopyToClipboard = (_text: string, _result: boolean): void => {
+  selectAllEditorContent = (): void => {
     const ed = this.monacoEditorRef.current;
 
     if (ed) {
@@ -456,14 +452,17 @@ class EnvoyDetailsComponent extends React.Component<EnvoyDetailsProps, EnvoyDeta
                       options={this.props.workload.pods.map((pod: Pod) => pod.name).sort()}
                     />
 
-                    <Tooltip key="copy_config" position="top" content={t('Copy config dump to clipboard')}>
-                      <CopyToClipboard onCopy={this.onCopyToClipboard} text={this.editorContent()}>
-                        <Button variant={ButtonVariant.link} className={copyButtonStyle} isInline>
-                          <KialiIcon.Copy />
-                          <span>{t('Copy')}</span>
-                        </Button>
-                      </CopyToClipboard>
-                    </Tooltip>
+                    <PlainTextClipboardCopyButton
+                      appearance="link"
+                      ariaLabel={t('Copy')}
+                      className={copyButtonStyle}
+                      copiedTooltip={t('Copied')}
+                      copyTooltip={t('Copy config dump to clipboard')}
+                      id="envoy-config-copy"
+                      label={t('Copy')}
+                      onClick={this.selectAllEditorContent}
+                      text={this.editorContent()}
+                    />
                   </div>
 
                   <div ref={this.editorWrapperRef} className={editorWrapperStyle}>

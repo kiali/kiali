@@ -43,7 +43,7 @@ import { ToolbarDropdown } from '../../components/Dropdown/ToolbarDropdown';
 import type { TimeInMilliseconds, TimeInSeconds, TimeRange } from '../../types/Common';
 import { evalTimeRange, isEqualTimeRange, ColorScheme } from '../../types/Common';
 import { mapAppearanceFromState, resolveColorScheme } from '../../utils/AppearanceUtils';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
 import { KialiIcon } from '../../config/KialiIcon';
 import type { KialiAppState } from '../../store/Store';
 import { connect } from 'react-redux';
@@ -999,14 +999,16 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
           <ToolbarGroup style={{ margin: 0 }}>
             <ToolbarItem>{this.getContainerLegend()}</ToolbarItem>
             <ToolbarItem className={copyActionStyle}>
-              <Tooltip key="copy_logs" position="top" content={t('Copy logs to clipboard')}>
-                <CopyToClipboard text={this.entriesToString(this.state.entries)}>
-                  <Button variant={ButtonVariant.link} isInline>
-                    <KialiIcon.Copy />
-                    <span className={iconStyle}>Copy</span>
-                  </Button>
-                </CopyToClipboard>
-              </Tooltip>
+              <PlainTextClipboardCopyButton
+                appearance="link"
+                ariaLabel={t('Copy logs to clipboard')}
+                copiedTooltip={t('Copied')}
+                copyTooltip={t('Copy logs to clipboard')}
+                id="pod-logs-copy"
+                label={t('Copy')}
+                labelClassName={iconStyle}
+                text={this.entriesToString(this.state.entries)}
+              />
             </ToolbarItem>
 
             <ToolbarItem className={expandActionStyle}>
@@ -1165,13 +1167,20 @@ export class WorkloadPodLogsComponent extends React.Component<WorkloadPodLogsPro
             {t('Close')}
           </Button>
           {this.state.jsonModalContent && (
-            <CopyToClipboard
-              key="copy"
-              onCopy={() => this.setState({ showCopyMessage: !this.state.showCopyMessage })}
+            <PlainTextClipboardCopyButton
+              appearance="secondary"
+              ariaLabel={t('Copy')}
+              copiedTooltip={t('Copied')}
+              copyTooltip={t('Copy')}
+              id="pod-logs-json-copy"
+              label={t('Copy')}
+              onCopy={success => {
+                if (success) {
+                  this.setState({ showCopyMessage: !this.state.showCopyMessage });
+                }
+              }}
               text={this.state.jsonModalContent}
-            >
-              <Button variant={ButtonVariant.secondary}>{t('Copy')}</Button>
-            </CopyToClipboard>
+            />
           )}
           <Button key="download" variant={ButtonVariant.secondary} onClick={this.downloadFile}>
             {t('Download')}

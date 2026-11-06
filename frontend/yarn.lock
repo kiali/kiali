@@ -1725,7 +1725,6 @@ __metadata:
     "@types/lodash-es": "npm:4.17.x"
     "@types/node": "npm:^24.0.0"
     "@types/react": "npm:^17.0.1"
-    "@types/react-copy-to-clipboard": "npm:^5.0.7"
     "@types/react-dom": "npm:^17.0.1"
     "@types/react-redux": "npm:7.1.7"
     "@types/react-router-dom": "npm:^5.2.0"
@@ -1760,7 +1759,6 @@ __metadata:
     prettier: "npm:^3.6.2"
     pretty-quick: "npm:^4.2.2"
     react: "npm:^17.0.1"
-    react-copy-to-clipboard: "npm:5.x"
     react-dom: "npm:^17.0.1"
     react-flexview: "npm:4.0.3"
     react-i18next: "npm:^11.7.3"
@@ -3670,15 +3668,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-copy-to-clipboard@npm:^5.0.7":
-  version: 5.0.7
-  resolution: "@types/react-copy-to-clipboard@npm:5.0.7"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10c0/33bea4549fa263b597d0dedb3807f99286d8ccf59adb370e3d82d1c9075195925a343982abd73c63cc47854a7240ddae79873a5cb3590c9b33c1b65bf9d07689
-  languageName: node
-  linkType: hard
-
 "@types/react-dom@npm:^17.0.1":
   version: 17.0.17
   resolution: "@types/react-dom@npm:17.0.17"
@@ -5348,15 +5337,6 @@ __metadata:
   version: 1.1.1
   resolution: "cookie@npm:1.1.1"
   checksum: 10c0/79c4ddc0fcad9c4f045f826f42edf54bcc921a29586a4558b0898277fa89fb47be95bc384c2253f493af7b29500c830da28341274527328f18eba9f58afa112c
-  languageName: node
-  linkType: hard
-
-"copy-to-clipboard@npm:^3":
-  version: 3.3.1
-  resolution: "copy-to-clipboard@npm:3.3.1"
-  dependencies:
-    toggle-selection: "npm:^1.0.6"
-  checksum: 10c0/cc38a2a07ec22b1b60c6bd1648a21178fade4d972b43e4c2570f36f8df59ca2b7e9f8a6125d271cf2927367d3ec4012c92deaf244c12cd79509244d5c7f0f4dd
   languageName: node
   linkType: hard
 
@@ -11905,18 +11885,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-copy-to-clipboard@npm:5.x":
-  version: 5.0.4
-  resolution: "react-copy-to-clipboard@npm:5.0.4"
-  dependencies:
-    copy-to-clipboard: "npm:^3"
-    prop-types: "npm:^15.5.8"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0 || ^17.0.0
-  checksum: 10c0/0cd9d9a9bfc749b10414e198db8773fa99aa0bef3606da3a46cf7219420fad0c0fda3436fe53f9abe2eb34f6108e09a1f5c6cd0665b40c772bd141f325272d74
-  languageName: node
-  linkType: hard
-
 "react-display-name@npm:^0.2.4":
   version: 0.2.5
   resolution: "react-display-name@npm:0.2.5"
@@ -13991,13 +13959,6 @@ __metadata:
   dependencies:
     streamx: "npm:^2.12.5"
   checksum: 10c0/9b1a6eb85ceff159db21678b7d9aec1d8b99a63dae01ce95b074df1f37f9d92e3ed7d5284f394917a079dda37d53f8eeef8fc74ef506b97cc35629925f29b464
-  languageName: node
-  linkType: hard
-
-"toggle-selection@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "toggle-selection@npm:1.0.6"
-  checksum: 10c0/f2cf1f2c70f374fd87b0cdc8007453ba9e981c4305a8bf4eac10a30e62ecdfd28bca7d18f8f15b15a506bf8a7bfb20dbe3539f0fcf2a2c8396c1a78d53e1f179
   languageName: node
   linkType: hard
 

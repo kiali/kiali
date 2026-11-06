@@ -3,7 +3,7 @@ import { kialiStyle } from '../../styles/StyleUtils';
 import { useKialiTranslation } from '../../utils/I18nUtils';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
-import CopyToClipboard from 'react-copy-to-clipboard';
+import { PlainTextClipboardCopyButton } from 'components/Copy/PlainTextClipboardCopyButton';
 import { download } from '../../utils/Common';
 
 const configTitleStyle = (includeTitle?: boolean): string =>
@@ -31,8 +31,6 @@ export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> =
   includeTitle = true,
   targetName
 }) => {
-  const [copied, setCopied] = React.useState<boolean>(false);
-
   const { t } = useKialiTranslation();
 
   return (
@@ -40,17 +38,16 @@ export const ConfigButtonsTargetPanel: React.FC<ConfigButtonsTargetPanelProps> =
       <div className={configTitleStyle(includeTitle)}>
         {includeTitle && <span>{t('Configuration:')}</span>}
         <div>
-          <Tooltip
-            content={<>{t(copied ? 'Copied' : 'Copy configuration')}</>}
-            onTooltipHidden={() => setCopied(false)}
-          >
-            <CopyToClipboard text={copyText}>
-              <Button variant={ButtonVariant.link} aria-label={t('Copy')} isInline onClick={() => setCopied(true)}>
-                <KialiIcon.Copy />
-                <span className={iconStyle}>{t('Copy')}</span>
-              </Button>
-            </CopyToClipboard>
-          </Tooltip>
+          <PlainTextClipboardCopyButton
+            appearance="link"
+            ariaLabel={t('Copy')}
+            copiedTooltip={t('Copied')}
+            copyTooltip={t('Copy configuration')}
+            id="mesh-target-config-copy"
+            label={t('Copy')}
+            labelClassName={iconStyle}
+            text={copyText}
+          />
 
           <Tooltip content={<>{t('Download configuration in a file')}</>}>
             <Button
