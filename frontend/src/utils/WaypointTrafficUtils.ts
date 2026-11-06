@@ -98,8 +98,7 @@ export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined
 };
 
 /**
- * Workload details "Waypoint" row: same parenthetical form as enrolled tables ("Canary (30%)"),
- * without post-processing translated strings.
+ * Workload details "Waypoint" field: show "true", or role+weight when this gateway participates in a canary split.
  */
 export const formatWaypointGatewayDetailLabel = (
   workload: string,
