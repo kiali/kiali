@@ -489,7 +489,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
               {workload.isWaypoint && (
                 <DescriptionListGroup data-test="details-waypoint">
-                  <DescriptionListTerm>{t('Waypoint')}</DescriptionListTerm>
+                  <DescriptionListTerm>Waypoint</DescriptionListTerm>
                   <DescriptionListDescription>{t('true')}</DescriptionListDescription>
                 </DescriptionListGroup>
               )}

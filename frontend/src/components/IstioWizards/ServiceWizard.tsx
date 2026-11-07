@@ -860,7 +860,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
       }
 
       if (this.state.previews.gw) {
-        items.push({ objectGVK: dicTypeToGVK[gvkType.Gateway], items: [this.state.previews.gw], title: t('Gateway') });
+        items.push({ objectGVK: dicTypeToGVK[gvkType.Gateway], items: [this.state.previews.gw], title: 'Gateway' });
       }
 
       if (this.state.previews.k8sgateway) {
@@ -899,7 +899,7 @@ export class ServiceWizard extends React.Component<ServiceWizardProps, ServiceWi
         items.push({
           objectGVK: dicTypeToGVK[gvkType.VirtualService],
           items: [this.state.previews.vs],
-          title: t('VirtualService')
+          title: 'VirtualService'
         });
       }
     }

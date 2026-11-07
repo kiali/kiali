@@ -1735,6 +1735,7 @@ __metadata:
     cypress: "npm:^15.16.0"
     cypress-multi-reporters: "npm:^2.0.5"
     deep-freeze: "npm:0.0.1"
+    dompurify: "npm:^3.4.17"
     esbuild: "npm:^0.27.7"
     eslint: "npm:^10.8.0"
     eslint-plugin-cypress: "npm:^6.4.3"
@@ -1762,7 +1763,6 @@ __metadata:
     react: "npm:^17.0.1"
     react-copy-to-clipboard: "npm:5.x"
     react-dom: "npm:^17.0.1"
-    react-flexview: "npm:4.0.3"
     react-i18next: "npm:^11.7.3"
     react-redux: "npm:7.2.2"
     react-resize-detector: "npm:^12.3.0"
@@ -6410,15 +6410,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.4.13":
-  version: 3.4.14
-  resolution: "dompurify@npm:3.4.14"
+"dompurify@npm:^3.4.17":
+  version: 3.4.17
+  resolution: "dompurify@npm:3.4.17"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10c0/feca07ece3805d1d4e33e847c11196888dcdc97b2afe0bb8a2fd11de4e62bfdc434c2403ee3fb3c7771e903325041d062febec6c5518796391fdc0419a90a873
+  checksum: 10c0/6a12251ef5e700fc91b6d96d33e9f8b5fd590c55276f632cf42d182c5808e9f48d5bef435ab26eac235dfcc05ed8fe95e1c8308dcc502bf1050e561f14d0361a
   languageName: node
   linkType: hard
 
@@ -11759,7 +11759,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.0.0, prop-types@npm:^15.5.6, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.0.0, prop-types@npm:^15.5.8, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -11967,15 +11967,6 @@ __metadata:
   version: 3.2.2
   resolution: "react-fast-compare@npm:3.2.2"
   checksum: 10c0/0bbd2f3eb41ab2ff7380daaa55105db698d965c396df73e6874831dbafec8c4b5b08ba36ff09df01526caa3c61595247e3269558c284e37646241cba2b90a367
-  languageName: node
-  linkType: hard
-
-"react-flexview@npm:4.0.3":
-  version: 4.0.3
-  resolution: "react-flexview@npm:4.0.3"
-  dependencies:
-    prop-types: "npm:^15.5.6"
-  checksum: 10c0/92471385194260c946cc4fa5656ac283e394c4214a82b66057f5b05898b44a4c68ef5615bb7752265fe716270a267774d4c312054a69bda1bf3415670823680e
   languageName: node
   linkType: hard
 

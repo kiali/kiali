@@ -2,8 +2,7 @@ import * as React from 'react';
 import { serverConfig } from '../../config';
 import { NEW_ISTIO_RESOURCE } from '../../pages/IstioConfigNew/IstioConfigNewPage';
 import { groupMenuStyle } from 'styles/DropdownStyles';
-import type {
-  MenuToggleElement} from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
 import {
   Dropdown,
   DropdownGroup,
@@ -54,9 +53,9 @@ export const IstioActionsNamespaceDropdown: React.FC = () => {
   const isDisabled = (label: string, disabled: boolean): boolean => {
     if (label.includes('K8s')) {
       return !serverConfig.gatewayAPIEnabled;
-    } else if (label === t('Gateway')) {
+    } else if (label === 'Gateway') {
       return !serverConfig.istioGatewayInstalled;
-    } else if (label === t('ServiceEntry') || label === t('Sidecar')) {
+    } else if (label === 'ServiceEntry' || label === 'Sidecar') {
       return !serverConfig.istioAPIInstalled;
     } else {
       return disabled;

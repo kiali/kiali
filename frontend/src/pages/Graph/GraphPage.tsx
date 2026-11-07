@@ -1,19 +1,17 @@
 import * as React from 'react';
 import { bindActionCreators } from 'redux';
-import { connect, DispatchProp } from 'react-redux';
-import FlexView from 'react-flexview';
+import type { DispatchProp } from 'react-redux';
+import { connect } from 'react-redux';
 import { kialiStyle } from 'styles/StyleUtils';
-import { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
-import { Namespace } from '../../types/Namespace';
-import {
+import { flexFillStyle } from 'styles/FlexStyles';
+import type { DurationInSeconds, IntervalInMilliseconds, TimeInMilliseconds, TimeInSeconds } from '../../types/Common';
+import type { Namespace } from '../../types/Namespace';
+import type {
   DecoratedGraphElements,
-  EdgeLabelMode,
   GraphDefinition,
   GraphType,
   NodeParamsType,
-  NodeType,
   SummaryData,
-  UNKNOWN,
   TrafficRate,
   RankMode,
   RankResult,
@@ -21,6 +19,7 @@ import {
   GraphLayout,
   FocusNode
 } from '../../types/Graph';
+import { EdgeLabelMode, NodeType, UNKNOWN } from '../../types/Graph';
 import { computePrometheusRateParams } from '../../services/Prometheus';
 import { addDanger, addError, addInfo, addSuccess } from '../../utils/AlertUtils';
 import { ErrorBoundary } from '../../components/ErrorBoundary/ErrorBoundary';
@@ -41,35 +40,38 @@ import {
   replayQueryTimeSelector,
   trafficRatesSelector
 } from '../../store/Selectors';
-import { KialiAppState } from '../../store/Store';
+import type { KialiAppState } from '../../store/Store';
 import { GraphActions } from '../../actions/GraphActions';
 import { GraphToolbarActions } from '../../actions/GraphToolbarActions';
 import { PFColors } from 'components/Pf/PfColors';
 import { TourActions } from 'actions/TourActions';
 import { arrayEquals } from 'utils/Common';
 import { getFocusSelector, getTraceId, getClusterName, unsetFocusSelector } from 'utils/SearchParamUtils';
-import { Label, Badge } from '@patternfly/react-core';
+import { Badge, Flex, FlexItem, Label } from '@patternfly/react-core';
 
 import { toRangeString } from 'components/Time/Utils';
-import { GraphDataSource, FetchParams, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
+import type { FetchParams } from '../../services/GraphDataSource';
+import { GraphDataSource, EMPTY_GRAPH_DATA } from '../../services/GraphDataSource';
 import { NamespaceActions } from '../../actions/NamespaceAction';
 import { GraphThunkActions } from '../../actions/GraphThunkActions';
-import { JaegerTrace } from 'types/TracingInfo';
-import { KialiDispatch } from 'types/Redux';
+import type { JaegerTrace } from 'types/TracingInfo';
+import type { KialiDispatch } from 'types/Redux';
 import { TracingThunkActions } from 'actions/TracingThunkActions';
 import { GraphTour } from 'pages/Graph/GraphHelpTour';
-import { getNextTourStop, TourInfo } from 'components/Tour/TourStop';
+import type { TourInfo } from 'components/Tour/TourStop';
+import { getNextTourStop } from 'components/Tour/TourStop';
 import { ServiceWizard } from 'components/IstioWizards/ServiceWizard';
-import { ServiceDetailsInfo } from 'types/ServiceInfo';
-import { DestinationRuleC, PeerAuthentication } from 'types/IstioObjects';
-import { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
+import type { ServiceDetailsInfo } from 'types/ServiceInfo';
+import type { PeerAuthentication } from 'types/IstioObjects';
+import { DestinationRuleC } from 'types/IstioObjects';
+import type { WizardAction, WizardMode } from 'components/IstioWizards/WizardActions';
 import { ConfirmDeleteTrafficRoutingModal } from 'components/IstioWizards/ConfirmDeleteTrafficRoutingModal';
 import { deleteServiceTrafficRouting } from 'services/Api';
 import { canCreate, canUpdate } from '../../types/Permissions';
 import { connectRefresh } from '../../components/Refresh/connectRefresh';
 import { triggerRefresh } from '../../hooks/refresh';
 import { Graph } from './Graph';
-import { Controller } from '@patternfly/react-topology';
+import type { Controller } from '@patternfly/react-topology';
 import { GraphLegend } from './GraphLegend';
 import { HistoryManager, URLParam } from 'app/History';
 import { elementsChanged } from 'helpers/GraphHelpers';
@@ -193,8 +195,21 @@ const NUMBER_OF_DATAPOINTS = 30;
 
 const containerMinHeight = '350px';
 
-const graphContainerStyle = kialiStyle({ flex: '1', minWidth: '350px', zIndex: 0, paddingRight: '5px' });
-const graphWrapperDivStyle = kialiStyle({ position: 'relative', backgroundColor: PFColors.BackgroundColor200 });
+const graphContainerStyle = kialiStyle({
+  flex: '1',
+  minHeight: 0,
+  minWidth: '350px',
+  zIndex: 0,
+  paddingRight: '0.25rem'
+});
+const graphWrapperDivStyle = kialiStyle({
+  position: 'relative',
+  backgroundColor: PFColors.BackgroundColor200,
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'stretch',
+  minHeight: 0
+});
 
 const graphTimeRange = kialiStyle({
   position: 'absolute',
@@ -234,6 +249,40 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
   private graphDataSource: GraphDataSource;
   private initTime: number;
 
+  constructor(props: GraphPageProps) {
+    super(props);
+    this.errorBoundaryRef = React.createRef();
+    this.initTime = Date.now();
+    const focusNodeId = getFocusSelector();
+    if (focusNodeId) {
+      this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
+      unsetFocusSelector();
+    }
+    this.graphDataSource = new GraphDataSource();
+
+    this.state = {
+      graphData: {
+        elements: { edges: [], nodes: [] },
+        elementsChanged: false,
+        fetchParams: this.graphDataSource.fetchParameters,
+        isLoading: false,
+        loaded: false,
+        timestamp: 0
+      },
+      isReady: false,
+      wizardsData: {
+        showWizard: false,
+        wizardType: '',
+        updateMode: false,
+        gateways: [],
+        k8sGateways: [],
+        peerAuthentications: [],
+        namespace: ''
+      },
+      showConfirmDeleteTrafficRouting: false
+    };
+  }
+
   static getNodeParamsFromProps(props: Partial<GraphURLPathProps>): NodeParamsType | undefined {
     const aggregate = props.aggregate;
     const aggregateOk = aggregate && aggregate !== UNKNOWN;
@@ -248,8 +297,7 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
     const workload = props.workload;
     const workloadOk = workload && workload !== UNKNOWN;
     if (!aggregateOk && !aggregateValueOk && !appOk && !namespaceOk && !serviceOk && !workloadOk) {
-      // @ts-ignore
-      return;
+      return undefined;
     }
 
     let nodeType: NodeType;
@@ -302,40 +350,6 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
       );
     }
     return false;
-  }
-
-  constructor(props: GraphPageProps) {
-    super(props);
-    this.errorBoundaryRef = React.createRef();
-    this.initTime = Date.now();
-    const focusNodeId = getFocusSelector();
-    if (focusNodeId) {
-      this.focusNode = { id: focusNodeId, isSelected: true } as FocusNode;
-      unsetFocusSelector();
-    }
-    this.graphDataSource = new GraphDataSource();
-
-    this.state = {
-      graphData: {
-        elements: { edges: [], nodes: [] },
-        elementsChanged: false,
-        fetchParams: this.graphDataSource.fetchParameters,
-        isLoading: false,
-        loaded: false,
-        timestamp: 0
-      },
-      isReady: false,
-      wizardsData: {
-        showWizard: false,
-        wizardType: '',
-        updateMode: false,
-        gateways: [],
-        k8sGateways: [],
-        peerAuthentications: [],
-        namespace: ''
-      },
-      showConfirmDeleteTrafficRouting: false
-    };
   }
 
   componentDidMount(): void {
@@ -480,15 +494,21 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
 
     return (
       <>
-        <FlexView column={true} grow={true} style={{ minHeight: containerMinHeight }}>
-          <div>
+        <Flex
+          className={flexFillStyle}
+          direction={{ default: 'column' }}
+          flexWrap={{ default: 'nowrap' }}
+          spaceItems={{ default: 'spaceItemsNone' }}
+          style={{ minHeight: containerMinHeight }}
+        >
+          <FlexItem fullWidth={{ default: 'fullWidth' }}>
             <GraphToolbar
               controller={this.state.graphRefs?.getController()}
               disabled={this.state.graphData.isLoading}
               onToggleHelp={this.toggleHelp}
             />
-          </div>
-          <FlexView grow={true} className={graphWrapperDivStyle}>
+          </FlexItem>
+          <FlexItem flex={{ default: 'flex_1' }} className={graphWrapperDivStyle}>
             <ErrorBoundary
               ref={this.errorBoundaryRef}
               onError={this.notifyError}
@@ -550,8 +570,8 @@ class GraphPageComponent extends React.Component<GraphPageProps, GraphPageState>
                 {...computePrometheusRateParams(this.props.duration, NUMBER_OF_DATAPOINTS)}
               />
             )}
-          </FlexView>
-        </FlexView>
+          </FlexItem>
+        </Flex>
         <ServiceWizard
           show={this.state.wizardsData.showWizard}
           type={this.state.wizardsData.wizardType}

@@ -1,10 +1,10 @@
 import * as React from 'react';
-import type { SummaryTable} from './BaseTable';
+import type { SummaryTable } from './BaseTable';
 import { SummaryTableRenderer } from './BaseTable';
-import type { IRow, ISortBy} from '@patternfly/react-table';
+import type { IRow, ISortBy } from '@patternfly/react-table';
 import { SortByDirection } from '@patternfly/react-table';
 import type { ClusterSummary } from '../../../types/IstioObjects';
-import type { ActiveFilter, FilterType} from '../../../types/Filters';
+import type { ActiveFilter, FilterType } from '../../../types/Filters';
 import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../../types/Filters';
 import type { SortField } from '../../../types/SortFilters';
 import type { Namespace } from '../../../types/Namespace';
@@ -215,7 +215,7 @@ export class ClusterTable implements SummaryTable {
         info: { tooltip: this.render_cluster_type() }
       },
       {
-        title: t('DestinationRule'),
+        title: 'DestinationRule',
         sortable: true
       }
     ];
