@@ -230,7 +230,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		gatewayStore:            store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Gateway), nil),
 		healthStore:             store.New[string, *models.CachedHealthData](),
 		istioStatusStore:        store.NewExpirationStore(ctx, store.New[string, kubernetes.IstioComponentStatus](), util.AsPtr(conf.KialiInternal.CacheExpiration.IstioStatus), nil),
-		kubeCache:               kubeCache,
+		kubeCache:               withReadTimeout(kubeCache, conf.KialiInternal.CacheReadTimeout),
 		meshStore:               store.NewExpirationStore(ctx, store.New[string, *models.Mesh](), util.AsPtr(conf.KialiInternal.CacheExpiration.Mesh), nil),
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
