@@ -10,16 +10,18 @@ const compactSelectWrapperStyle = kialiStyle({
   maxWidth: '100%',
   minWidth: '10rem',
   width: '100%',
-  '& .pf-v6-c-form-control, & .pf-v5-c-form-control': {
-    fontSize: PFFontSize.small
-  },
-  '& .pf-v6-c-form-control__utilities, & .pf-v5-c-form-control__utilities': {
-    alignItems: 'center',
-    alignSelf: 'center',
-    display: 'flex'
-  },
-  '& select': {
-    fontSize: PFFontSize.small
+  $nest: {
+    '& .pf-v6-c-form-control, & .pf-v5-c-form-control': {
+      fontSize: PFFontSize.small
+    },
+    '& .pf-v6-c-form-control__utilities, & .pf-v5-c-form-control__utilities': {
+      alignItems: 'center',
+      alignSelf: 'center',
+      display: 'flex'
+    },
+    '& select': {
+      fontSize: PFFontSize.small
+    }
   }
 });
 
