@@ -114,6 +114,11 @@ Use these consistently in Spanish UI strings:
   - Keep in English: Istio Gateway form field for listener endpoints
   - Same rule as `Listener`: API/form field name, not a generic word
   - Exception: `Server Certificate` -> `Certificado del servidor` (only the descriptive word is translated)
+- `host` -> `host` / `hosts`
+- `hostname` -> `nombre de host` / `nombres de host`
+- `HTTP Cookie` -> `cookie HTTP`
+- `zoom` -> `zoom`
+  - Keep the established borrowed term, as in `Zoom del gráfico`
 
 Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
 
