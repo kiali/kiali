@@ -133,7 +133,7 @@ func TestKubeCacheReadsAreBoundedByConfig(t *testing.T) {
 	require.NoError(t, err)
 	reader, err := kialiCache.GetKubeCache(conf.KubernetesConfig.ClusterName)
 	require.NoError(t, err)
-	require.Equal(t, timeoutReader{inner: k8s, timeout: 30 * time.Second}, reader)
+	require.Equal(t, timeoutReader{cluster: conf.KubernetesConfig.ClusterName, inner: k8s, timeout: 30 * time.Second}, reader)
 
 	conf.KialiInternal.CacheReadTimeout = 0
 	kialiCache, err = NewKialiCache(t.Context(), clients, readers, *conf)
