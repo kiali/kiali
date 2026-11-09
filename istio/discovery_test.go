@@ -23,6 +23,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -3238,4 +3239,53 @@ func TestNamespaceMapWithTagsAndClusterWideAccessFalse(t *testing.T) {
 
 	rootNs = discovery.GetRootNamespace(ctx, conf.KubernetesConfig.ClusterName, "travels")
 	require.Equal("istio-system", rootNs, "GetRootNamespace should work for namespace with tag label")
+}
+
+// Assisted-by: Claude Code
+func TestGetMeshSkipsDegradedRemoteCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
+		istioConfigMap,
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
+	)
+	remoteClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	clients := map[string]kubernetes.ClientInterface{"east": k8s, "remote": remoteClient}
+	readers := map[string]ctrlclient.Reader{"east": k8s, "remote": remoteClient}
+
+	newDiscovery := func(degraded string) *istio.Discovery {
+		access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
+			return false, nil
+		})
+		require.True(access.ConfirmRevoked(context.Background(), degraded, "apps", "deployments"))
+		kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf, cache.WithClusterAccess(access))
+		require.NoError(err)
+		return istio.NewDiscovery(clients, kialiCache, conf)
+	}
+
+	mesh, err := newDiscovery("remote").Mesh(context.TODO())
+	require.NoError(err, "a degraded remote cluster is skipped")
+	require.Len(mesh.ControlPlanes, 1)
+	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name)
+
+	_, err = newDiscovery("east").Mesh(context.TODO())
+	require.Error(err, "the home cluster is still required")
 }

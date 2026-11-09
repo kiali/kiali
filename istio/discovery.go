@@ -768,9 +768,16 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		}
 
 		cluster := cluster
+		// A remote cluster that can't be read is skipped so it doesn't take down the whole mesh,
+		// including views that only need the home cluster.
+		isHomeCluster := cluster.Name == in.conf.KubernetesConfig.ClusterName
 		kubeCache, err := in.kialiCache.GetKubeCache(cluster.Name)
 		if err != nil {
-			return nil, err
+			if isHomeCluster {
+				return nil, err
+			}
+			log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
+			continue
 		}
 
 		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
@@ -793,7 +800,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		depList := &appsv1.DeploymentList{}
 		err = kubeCache.List(ctx, depList, ctrlclient.MatchingLabels(labels))
 		if err != nil {
-			return nil, err
+			if isHomeCluster {
+				return nil, err
+			}
+			log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
+			continue
 		}
 		istiods := depList.Items
 
