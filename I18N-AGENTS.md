@@ -173,13 +173,28 @@ Use these consistently in French UI strings:
 
 Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
 
+Additional French UI terms:
+
+- `host` / `hosts` -> `hôte` / `hôtes`
+- `hostname` / `hostnames` -> `nom d’hôte` / `noms d’hôte`
+- `HTTP Cookie` -> `cookie HTTP`
+- `span` / `spans` -> `span` / `spans` for tracing
+- `rule` / `rules` -> `règle` / `règles` in human-readable captions
+- `consistent hash` -> `hachage cohérent`
+- `traffic shifting` -> `répartition du trafic`
+- `bytes` / `kilobytes` -> `octets` / `kilooctets` in prose; keep unit symbols such as `bps`, `kps`, and `KiB` unchanged
+
+These choices apply to UI wording, not literal API fields, expressions, or resource kinds. For example, translate `Destination Rule` as `Règle de destination` and `Virtual Service` as `Service virtuel`, while preserving `DestinationRule`, `VirtualService`, `hosts`, and other literal API tokens when used as identifiers.
+
 ### French UI style
 
 - Prefer short, neutral wording that works across French variants
 - Prefer infinitive or impersonal UI phrasing (`Sélectionner`, `Filtrer par namespace`)
 - Prefer `vous` over `tu` when a personal form is needed
-- Use standard UI punctuation; do not require a space before `:`, `;`, `!`, or `?`
+- Use French punctuation in UI prose; preserve punctuation inside literal technical expressions
 - Rephrase if a sentence becomes awkward after keeping a technical term in English
+- Use `Depuis {{duration}}` for the recent-duration caption and `État du trafic (depuis {{duration}})` for its traffic-status heading; this neutral construction works with abbreviated durations in every plural form
+- Use French plural agreement for `_other` and `_many` values, even when the English default value is singular
 
 ### Existing examples from `frontend/public/locales/fr/translation.json`
 
