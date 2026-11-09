@@ -41,6 +41,8 @@ func forbiddenCache(t *testing.T) ctrlcache.Cache {
 	c, err := ctrlcache.New(&rest.Config{Host: srv.URL}, ctrlcache.Options{Scheme: scheme, Mapper: mapper})
 	require.NoError(t, err)
 	go func() { _ = c.Start(t.Context()) }()
+	// Reads before Start return ErrCacheNotStarted at once. No informers exist yet, so this returns once started.
+	require.True(t, c.WaitForCacheSync(t.Context()))
 	return c
 }
 
