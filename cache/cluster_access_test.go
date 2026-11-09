@@ -1,0 +1,177 @@
+package cache
+
+// Assisted-by: Claude Code
+
+import (
+	"context"
+	"errors"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/kubernetes/kubetest"
+)
+
+// fakeAccess answers access checks from a map and counts the calls.
+type fakeAccess struct {
+	mu      sync.Mutex
+	allowed map[string]bool // keyed by cluster/group/resource
+	err     error
+	calls   int
+}
+
+func (f *fakeAccess) set(cluster, group, resource string, allowed bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.allowed[cluster+"/"+group+"/"+resource] = allowed
+}
+
+func (f *fakeAccess) check(_ context.Context, cluster, group, resource string) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	if f.err != nil {
+		return false, f.err
+	}
+	return f.allowed[cluster+"/"+group+"/"+resource], nil
+}
+
+func newTestClusterAccess() (*ClusterAccess, *fakeAccess, *time.Time) {
+	fake := &fakeAccess{allowed: map[string]bool{}}
+	access := NewClusterAccess(fake.check)
+	now := time.Date(2026, 11, 9, 12, 0, 0, 0, time.UTC)
+	access.now = func() time.Time { return now }
+	return access, fake, &now
+}
+
+func TestConfirmRevokedKeepsCacheWhenStillReadable(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", true)
+
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded)
+}
+
+func TestConfirmRevokedMarksClusterDegraded(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", false)
+
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	since, degraded := access.DegradedSince("west")
+	require.True(t, degraded)
+	require.Equal(t, *now, since)
+
+	_, degraded = access.DegradedSince("east")
+	require.False(t, degraded)
+}
+
+func TestConfirmRevokedTreatsFailedCheckAsRevoked(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.err = errors.New("connection refused")
+
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	_, degraded := access.DegradedSince("west")
+	require.True(t, degraded)
+}
+
+func TestConfirmRevokedDebouncesChecks(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", true)
+
+	for i := 0; i < 5; i++ {
+		require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	}
+	require.Equal(t, 1, fake.calls)
+
+	*now = now.Add(accessCheckDebounce)
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, 2, fake.calls)
+}
+
+func TestProbeClearsClusterOnlyWhenAllRevokedResourcesAreBack(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", false)
+	fake.set("west", "", "pods", false)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+
+	access.Probe(context.Background())
+	_, degraded := access.DegradedSince("west")
+	require.True(t, degraded, "nothing is restored yet")
+
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	_, degraded = access.DegradedSince("west")
+	require.True(t, degraded, "pods are still forbidden")
+
+	fake.set("west", "", "pods", true)
+	access.Probe(context.Background())
+	_, degraded = access.DegradedSince("west")
+	require.False(t, degraded)
+}
+
+func TestRunProbesUntilContextIsDone(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", false)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	fake.set("west", "apps", "deployments", true)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		access.Run(ctx, 10*time.Millisecond)
+		close(done)
+	}()
+
+	require.Eventually(t, func() bool {
+		_, degraded := access.DegradedSince("west")
+		return !degraded
+	}, 5*time.Second, 10*time.Millisecond)
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not return after the context was cancelled")
+	}
+}
+
+func TestGetKubeCacheFailsFastForDegradedCluster(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	conf.KialiInternal.CacheReadTimeout = 0
+	home := conf.KubernetesConfig.ClusterName
+
+	k8s := kubetest.NewFakeK8sClient()
+	remote := kubetest.NewFakeK8sClient()
+	clients := map[string]kubernetes.ClientInterface{home: k8s, "west": remote}
+	readers := map[string]client.Reader{home: k8s, "west": remote}
+
+	access, fake, _ := newTestClusterAccess()
+	kialiCache, err := NewKialiCache(t.Context(), clients, readers, *conf, WithClusterAccess(access))
+	require.NoError(t, err)
+
+	reader, err := kialiCache.GetKubeCache("west")
+	require.NoError(t, err)
+	require.Same(t, remote, reader)
+
+	fake.set("west", "apps", "deployments", false)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+
+	_, err = kialiCache.GetKubeCache("west")
+	require.ErrorContains(t, err, "cache for cluster [west] is unavailable")
+	_, err = kialiCache.GetKubeCache(home)
+	require.NoError(t, err, "other clusters are not affected")
+
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	reader, err = kialiCache.GetKubeCache("west")
+	require.NoError(t, err)
+	require.Same(t, remote, reader)
+}

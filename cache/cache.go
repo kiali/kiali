@@ -161,7 +161,9 @@ type kialiCacheImpl struct {
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
 	clients                 map[string]kubernetes.ClientInterface
-	conf                    config.Config
+	// Tracks clusters whose access was revoked. Nil when not configured.
+	clusterAccess *ClusterAccess
+	conf          config.Config
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -217,7 +219,17 @@ type kialiCacheImpl struct {
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
 
-func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config) (KialiCache, error) {
+// Option configures optional parts of the kiali cache.
+type Option func(*kialiCacheImpl)
+
+// WithClusterAccess makes GetKubeCache fail fast for clusters that clusterAccess marks degraded.
+func WithClusterAccess(clusterAccess *ClusterAccess) Option {
+	return func(c *kialiCacheImpl) {
+		c.clusterAccess = clusterAccess
+	}
+}
+
+func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.ClientInterface, kubeCache map[string]client.Reader, conf config.Config, opts ...Option) (KialiCache, error) {
 	zl := log.WithGroup(log.KialiCacheLogName)
 	ctx = log.ToContext(ctx, zl)
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
@@ -239,6 +251,10 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
 		ztunnelConfigStore:      store.NewExpirationStore(ctx, store.New[string, *kubernetes.ZtunnelConfigDump](), util.AsPtr(conf.KialiInternal.CacheExpiration.ZtunnelConfig), nil),
+	}
+
+	for _, opt := range opts {
+		opt(&kialiCacheImpl)
 	}
 
 	for cluster, client := range kialiSAClients {
@@ -275,6 +291,11 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 }
 
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
+	if c.clusterAccess != nil {
+		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
+			return nil, fmt.Errorf("cache for cluster [%s] is unavailable: Kiali lost access to it at %s", cluster, since.Format(time.RFC3339))
+		}
+	}
 	cache, found := c.kubeCache[cluster]
 	if !found {
 		// This should not happen but it probably means the user clients have clusters that the cache doesn't know about.

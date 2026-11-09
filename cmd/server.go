@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -63,13 +64,16 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	config.Set(conf)
 	log.Infof("TLS policy source [%s] min_version [%s] max_version [%s] cipher_suites count=[%d] groups count=[%d]", policy.Source, policy.MinVersionName(), policy.MaxVersionName(), len(policy.CipherSuites), len(policy.Groups))
 
-	mgr, kubeCaches, err := newManager(conf, logger, clientFactory)
+	clusterAccess := cache.NewClusterAccess(newAccessCheck(conf, clientFactory))
+	go clusterAccess.Run(ctx, cache.DefaultAccessProbeInterval)
+
+	mgr, kubeCaches, err := newManager(conf, logger, clientFactory, clusterAccess)
 	if err != nil {
 		log.Fatalf("Unable to setup manager: %s", err)
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf)
+	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf, cache.WithClusterAccess(clusterAccess))
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
@@ -310,10 +314,18 @@ func cacheTransforms() map[client.Object]ctrlcache.ByObject {
 
 // makeWatchErrorHandler returns a DefaultWatchErrorHandler that tears down all informers
 // when a Forbidden watch error is received (e.g. namespace deletion or access revocation).
-func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface) func(context.Context, *toolscache.Reflector, error) {
+// makeWatchErrorHandler tears down a cluster's informers on a Forbidden watch error. When
+// clusterAccess is set, it only does so after a live check confirms the access was revoked.
+func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface, clusterAccess *cache.ClusterAccess) func(context.Context, *toolscache.Reflector, error) {
 	return func(ctx context.Context, r *toolscache.Reflector, watchErr error) {
 		if !apierrors.IsForbidden(watchErr) {
 			return
+		}
+		if clusterAccess != nil {
+			group, resource := forbiddenResource(watchErr)
+			if !clusterAccess.ConfirmRevoked(ctx, k8sClient.ClusterInfo().Name, group, resource) {
+				return
+			}
 		}
 		log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", watchErr)
 		objectsToRemove := []client.Object{
@@ -372,7 +384,47 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 	}
 }
 
-func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory) (manager.Manager, map[string]ctrlcache.Cache, error) {
+// forbiddenResource returns the group and resource named in a Forbidden error, if it has them.
+func forbiddenResource(err error) (string, string) {
+	var statusErr *apierrors.StatusError
+	if !errors.As(err, &statusErr) || statusErr.ErrStatus.Details == nil {
+		return "", ""
+	}
+	return statusErr.ErrStatus.Details.Group, statusErr.ErrStatus.Details.Kind
+}
+
+// newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
+// account can still list and watch a resource. Without cluster-wide access it checks every
+// accessible namespace.
+func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
+	return func(ctx context.Context, cluster, group, resource string) (bool, error) {
+		if resource == "" {
+			return false, fmt.Errorf("the forbidden error does not name a resource")
+		}
+		client := clientFactory.GetSAClient(cluster)
+		if client == nil {
+			return false, fmt.Errorf("no client for cluster [%s]", cluster)
+		}
+		namespaces := []string{""}
+		if !conf.Deployment.ClusterWideAccess {
+			namespaces = conf.Deployment.AccessibleNamespaces
+		}
+		for _, namespace := range namespaces {
+			reviews, err := client.GetSelfSubjectAccessReview(ctx, namespace, group, resource, []string{"list", "watch"})
+			if err != nil {
+				return false, err
+			}
+			for _, review := range reviews {
+				if !review.Status.Allowed {
+					return false, nil
+				}
+			}
+		}
+		return true, nil
+	}
+}
+
+func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory, clusterAccess *cache.ClusterAccess) (manager.Manager, map[string]ctrlcache.Cache, error) {
 	ctrl.SetLogger(zerologr.New(logger))
 
 	// Combine the istio scheme and the kube scheme.
@@ -409,7 +461,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 					return nil
 				}
 				return mgr.GetCache()
-			}, homeClusterClient),
+			}, homeClusterClient, clusterAccess),
 			DefaultTransform: ctrlcache.TransformStripManagedFields(),
 			ByObject:         cacheTransforms(),
 		},
@@ -439,6 +491,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 						return remoteCluster.GetCache()
 					},
 					saClient,
+					clusterAccess,
 				)
 			})
 			if err != nil {
