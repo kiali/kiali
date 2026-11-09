@@ -187,7 +187,7 @@ describe('IstioDashboardUtils', () => {
       expect(result.grafanaLinks[0].url).toContain('var-namespace=bookinfo');
     });
 
-    it('keeps the mesh dashboard on service details', async () => {
+    it('builds service dashboard URLs without the mesh dashboard', async () => {
       getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
       grafanaSpy.mockResolvedValue({
         status: 200,
@@ -201,9 +201,8 @@ describe('IstioDashboardUtils', () => {
         objectType: MetricsObjectTypes.SERVICE
       });
 
-      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_SERVICE_DASHBOARD, ISTIO_MESH_DASHBOARD]);
+      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_SERVICE_DASHBOARD]);
       expect(result.grafanaLinks[0].url).toContain('var-service=productpage.bookinfo.svc.cluster.local');
-      expect(result.grafanaLinks[1].url).toBe(meshLink.url);
     });
 
     it('reuses cached Grafana info across callers', async () => {

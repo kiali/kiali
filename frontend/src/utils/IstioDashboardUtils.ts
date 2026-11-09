@@ -5,7 +5,7 @@ import { MessageType } from 'types/NotificationCenter';
 import type { ExternalLink } from 'types/Dashboards';
 import { ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
 import type { GrafanaInfo } from 'types/GrafanaInfo';
-import { ISTIO_DASHBOARDS, ISTIO_MESH_DASHBOARD } from 'types/GrafanaInfo';
+import { ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
 import type { PersesInfo } from 'types/PersesInfo';
 import { t } from 'utils/I18nUtils';
 import { GrafanaLinks } from 'components/Metrics/GrafanaLinks';
@@ -62,15 +62,6 @@ const pairsToLinks = (pairs: [string, string][]): ExternalLink[] => {
   return pairs.filter(([, url]) => isSafeHttpUrl(url)).map(([name, url]) => ({ name, url, variables: {} }));
 };
 
-const appendMeshDashboard = (built: ExternalLink[], all: ExternalLink[]): ExternalLink[] => {
-  if (built.some(link => link.name === ISTIO_MESH_DASHBOARD)) {
-    return built;
-  }
-
-  const mesh = all.find(link => link.name === ISTIO_MESH_DASHBOARD && isSafeHttpUrl(link.url));
-  return mesh ? [...built, mesh] : built;
-};
-
 const selectObjectDashboardLinks = (
   links: ExternalLink[],
   options: IstioDashboardLoadOptions,
@@ -94,17 +85,10 @@ const selectObjectDashboardLinks = (
     project: extra?.project
   };
 
-  const built =
-    tool === 'grafana'
-      ? pairsToLinks(GrafanaLinks.buildGrafanaLinks(builderProps))
-      : pairsToLinks(buildPersesLinks(builderProps));
-
-  // Workload and app pages keep object-specific dashboards only.
-  if (options.kind === 'app' || options.kind === 'workload') {
-    return built;
-  }
-
-  return appendMeshDashboard(built, links);
+  // App, workload, and service details show object-specific dashboards only.
+  return tool === 'grafana'
+    ? pairsToLinks(GrafanaLinks.buildGrafanaLinks(builderProps))
+    : pairsToLinks(buildPersesLinks(builderProps));
 };
 
 let grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
