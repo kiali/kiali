@@ -131,6 +131,16 @@ type KialiCache interface {
 	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
 	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
 
+	// CanListType returns the cached verdict of the requester's
+	// SelfSubjectAccessReview for listing a resource type in a namespace.
+	// found reports whether a verdict is cached; the verdict is only
+	// authoritative for CacheTokenNamespaceDuration.
+	CanListType(cluster string, cacheKey string, namespace string, apiGroup string, resource string) (canList bool, found bool)
+
+	// SetCanListType caches the verdict of the requester's
+	// SelfSubjectAccessReview for listing a resource type in a namespace.
+	SetCanListType(cluster string, cacheKey string, namespace string, apiGroup string, resource string, canList bool)
+
 	// RefreshTokenNamespaces clears the in memory cache of namespaces.
 	RefreshTokenNamespaces(cluster string)
 
@@ -157,6 +167,13 @@ type KialiCache interface {
 
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
+
+	// Cache SelfSubjectAccessReview verdicts ("can the requester list
+	// resource type X in namespace Y") per cacheKey + cluster, mirroring the
+	// accessible-namespace cache's TTL. Guarded by canListLock because the
+	// expiration store is not internally synchronized.
+	canListStore store.Store[canListKey, bool]
+	canListLock  sync.RWMutex
 	// This isn't expected to change so it's not protected by a mutex.
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
@@ -223,6 +240,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	namespaceKeyTTL := time.Duration(conf.KubernetesConfig.CacheTokenNamespaceDuration) * time.Second
 	kialiCacheImpl := kialiCacheImpl{
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
+		canListStore:            store.NewExpirationStore(ctx, store.New[canListKey, bool](), &namespaceKeyTTL, nil),
 		canReadWebhookByCluster: make(map[string]bool),
 		clients:                 kialiSAClients,
 		conf:                    conf,
@@ -753,6 +771,34 @@ func (n namespacesKey) String() string {
 	return fmt.Sprintf("cacheKey: xxx\tcluster: %s", n.cluster)
 }
 
+type canListKey struct {
+	apiGroup string
+	// cacheKey identifies the requester via GetCacheKey(). Under impersonation this
+	// is the impersonated username; otherwise it's the bearer token.
+	cacheKey  string
+	cluster   string
+	namespace string
+	resource  string
+}
+
+func (k canListKey) String() string {
+	return fmt.Sprintf("cacheKey: xxx\tcluster: %s\tnamespace: %s\tapiGroup: %s\tresource: %s", k.cluster, k.namespace, k.apiGroup, k.resource)
+}
+
+func (c *kialiCacheImpl) CanListType(cluster string, cacheKey string, namespace string, apiGroup string, resource string) (bool, bool) {
+	c.canListLock.RLock()
+	defer c.canListLock.RUnlock()
+
+	return c.canListStore.Get(canListKey{apiGroup: apiGroup, cacheKey: cacheKey, cluster: cluster, namespace: namespace, resource: resource})
+}
+
+func (c *kialiCacheImpl) SetCanListType(cluster string, cacheKey string, namespace string, apiGroup string, resource string, canList bool) {
+	c.canListLock.Lock()
+	defer c.canListLock.Unlock()
+
+	c.canListStore.Set(canListKey{apiGroup: apiGroup, cacheKey: cacheKey, cluster: cluster, namespace: namespace, resource: resource}, canList)
+}
+
 func (c *kialiCacheImpl) GetNamespace(cluster string, cacheKey string, namespace string) (models.Namespace, bool) {
 	c.namespacesLock.RLock()
 	defer c.namespacesLock.RUnlock()
@@ -798,6 +844,16 @@ func (c *kialiCacheImpl) RefreshTokenNamespaces(cluster string) {
 	for _, key := range c.namespaceStore.Keys() {
 		if key.cluster == cluster {
 			c.namespaceStore.Remove(key)
+		}
+	}
+
+	// The list-verdict cache shares the token-namespace lifecycle: drop it on
+	// refresh so a re-authenticated requester does not keep stale verdicts.
+	c.canListLock.Lock()
+	defer c.canListLock.Unlock()
+	for _, key := range c.canListStore.Keys() {
+		if key.cluster == cluster {
+			c.canListStore.Remove(key)
 		}
 	}
 }

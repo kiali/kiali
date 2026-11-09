@@ -16,6 +16,7 @@ import (
 	api_meta "k8s.io/apimachinery/pkg/api/meta"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	api_types "k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -195,6 +196,8 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 		return nil, err
 	}
 
+	in.filterByUserListRBAC(ctx, cluster, istioConfigs)
+
 	return istioConfigs, nil
 }
 
@@ -287,7 +290,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	}
 	listOpts := []client.ListOption{client.MatchingLabels(selector), client.InNamespace(namespace)}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.DestinationRules) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.DestinationRules) {
 		list := &networking_v1.DestinationRuleList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -298,7 +301,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.DestinationRules = list.Items
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.EnvoyFilters) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.EnvoyFilters) {
 		list := &networking_v1alpha3.EnvoyFilterList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -312,7 +315,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if userClient.IsIstioAPI() && userClient.IsIstioGateway() && criteria.Include(kubernetes.Gateways) {
+	if saClient.IsIstioAPI() && saClient.IsIstioGateway() && criteria.Include(kubernetes.Gateways) {
 		list := &networking_v1.GatewayList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -327,7 +330,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
+	if saClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGateways) {
 		list := &k8s_networking_v1.GatewayList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -338,7 +341,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sGateways = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGRPCRoutes) {
+	if saClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sGRPCRoutes) {
 		list := &k8s_networking_v1.GRPCRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -349,7 +352,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sGRPCRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
+	if saClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sHTTPRoutes) {
 		list := &k8s_networking_v1.HTTPRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -360,7 +363,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sHTTPRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsInferenceAPI() && criteria.Include(kubernetes.K8sInferencePools) {
+	if saClient.IsInferenceAPI() && criteria.Include(kubernetes.K8sInferencePools) {
 		list := &k8s_inference_v1.InferencePoolList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -374,7 +377,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if userClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sReferenceGrants) {
+	if saClient.IsGatewayAPI() && criteria.Include(kubernetes.K8sReferenceGrants) {
 		list := &k8s_networking_v1beta1.ReferenceGrantList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -385,7 +388,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sReferenceGrants = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && userClient.HasTCPRouteInV1() && criteria.Include(kubernetes.K8sTCPRoutes) {
+	if saClient.IsGatewayAPI() && saClient.HasTCPRouteInV1() && criteria.Include(kubernetes.K8sTCPRoutes) {
 		list := &k8s_networking_v1.TCPRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -396,7 +399,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sTCPRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && userClient.HasTLSRouteInV1() && criteria.Include(kubernetes.K8sTLSRoutes) {
+	if saClient.IsGatewayAPI() && saClient.HasTLSRouteInV1() && criteria.Include(kubernetes.K8sTLSRoutes) {
 		list := &k8s_networking_v1.TLSRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -407,7 +410,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sTLSRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsGatewayAPI() && userClient.HasUDPRouteInV1() && criteria.Include(kubernetes.K8sUDPRoutes) {
+	if saClient.IsGatewayAPI() && saClient.HasUDPRouteInV1() && criteria.Include(kubernetes.K8sUDPRoutes) {
 		list := &k8s_networking_v1.UDPRouteList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -418,7 +421,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.K8sUDPRoutes = ToPtrs(list.Items)
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.ServiceEntries) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.ServiceEntries) {
 		list := &networking_v1.ServiceEntryList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -429,7 +432,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.ServiceEntries = list.Items
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.Sidecars) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.Sidecars) {
 		list := &networking_v1.SidecarList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -444,7 +447,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		}
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.VirtualServices) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.VirtualServices) {
 		list := &networking_v1.VirtualServiceList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -455,7 +458,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.VirtualServices = list.Items
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadEntries) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadEntries) {
 		list := &networking_v1.WorkloadEntryList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -466,7 +469,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 		istioConfigList.WorkloadEntries = list.Items
 	}
 
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadGroups) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.WorkloadGroups) {
 		list := &networking_v1.WorkloadGroupList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			return nil, err
@@ -484,7 +487,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	// TrafficExtension is only available on Istio >= 1.30 extended channel.
 	// If the CRD is not present in the cluster the cache List returns a "no match for kind"
 	// error; skip it gracefully so older Istio versions keep working.
-	if userClient.IsIstioAPI() && criteria.Include(kubernetes.TrafficExtensions) {
+	if saClient.IsIstioAPI() && criteria.Include(kubernetes.TrafficExtensions) {
 		list := &extentions_v1alpha1.TrafficExtensionList{}
 		if err := kubeCache.List(ctx, list, listOpts...); err != nil {
 			if !api_meta.IsNoMatchError(err) {
@@ -569,6 +572,93 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 	return istioConfigList, nil
 }
 
+// canListType reports whether the requesting user can list resources of the
+// given GVK in a namespace. The verdict comes from a SelfSubjectAccessReview
+// (SSAR) and is cached per user for CacheTokenNamespaceDuration. This shapes
+// the config list to match what the API server lets the user read on a detail
+// request; it is not an authorization decision (issues #10515 and #10443).
+func (in *IstioConfigService) canListType(ctx context.Context, cluster, namespace string, gvk schema.GroupVersionKind) bool {
+	userClient := in.userClients[cluster]
+	if userClient == nil {
+		return false
+	}
+
+	resource := kubernetes.PluralResourceName(gvk.Kind)
+	if canList, found := in.kialiCache.CanListType(cluster, userClient.GetCacheKey(), namespace, gvk.Group, resource); found {
+		return canList
+	}
+
+	ssars, err := userClient.GetSelfSubjectAccessReview(ctx, namespace, gvk.Group, resource, []string{"list"})
+	if err != nil {
+		// Don't cache failures; the next call retries the review.
+		log.FromContext(ctx).Warn().Msgf("SelfSubjectAccessReview failed for [%s] in namespace [%s] of cluster [%s]: %v", gvk.String(), namespace, cluster, err)
+		return false
+	}
+	for _, ssar := range ssars {
+		if ssar.Spec.ResourceAttributes != nil && ssar.Spec.ResourceAttributes.Verb == "list" {
+			in.kialiCache.SetCanListType(cluster, userClient.GetCacheKey(), namespace, gvk.Group, resource, ssar.Status.Allowed)
+			return ssar.Status.Allowed
+		}
+	}
+	return false
+}
+
+// filterListEntriesByTypeRBAC drops entries of a type the requesting user
+// cannot list in the entry's namespace. Entries whose namespace cannot be
+// resolved are kept; the namespace-level filter has already run by the time
+// this is called.
+func filterListEntriesByTypeRBAC[T runtime.Object](entries []T, gvk schema.GroupVersionKind, canList func(namespace string, gvk schema.GroupVersionKind) bool) []T {
+	if len(entries) == 0 {
+		return entries
+	}
+	filtered := make([]T, 0, len(entries))
+	for _, entry := range entries {
+		accessor, err := api_meta.Accessor(entry)
+		if err != nil {
+			filtered = append(filtered, entry)
+			continue
+		}
+		if canList(accessor.GetNamespace(), gvk) {
+			filtered = append(filtered, entry)
+		}
+	}
+	return filtered
+}
+
+// filterByUserListRBAC removes from a config list the entries of types the
+// requesting user cannot list. It must only be applied on the public list
+// paths: validations and other internal consumers of getIstioConfigList rely
+// on the service-account-wide view to detect cross-namespace conflicts and
+// prune for the user at a higher level.
+func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster string, configs *models.IstioConfigList) {
+	canList := func(namespace string, gvk schema.GroupVersionKind) bool {
+		return in.canListType(ctx, cluster, namespace, gvk)
+	}
+
+	configs.AuthorizationPolicies = filterListEntriesByTypeRBAC(configs.AuthorizationPolicies, kubernetes.AuthorizationPolicies, canList)
+	configs.DestinationRules = filterListEntriesByTypeRBAC(configs.DestinationRules, kubernetes.DestinationRules, canList)
+	configs.EnvoyFilters = filterListEntriesByTypeRBAC(configs.EnvoyFilters, kubernetes.EnvoyFilters, canList)
+	configs.Gateways = filterListEntriesByTypeRBAC(configs.Gateways, kubernetes.Gateways, canList)
+	configs.VirtualServices = filterListEntriesByTypeRBAC(configs.VirtualServices, kubernetes.VirtualServices, canList)
+	configs.ServiceEntries = filterListEntriesByTypeRBAC(configs.ServiceEntries, kubernetes.ServiceEntries, canList)
+	configs.Sidecars = filterListEntriesByTypeRBAC(configs.Sidecars, kubernetes.Sidecars, canList)
+	configs.WorkloadEntries = filterListEntriesByTypeRBAC(configs.WorkloadEntries, kubernetes.WorkloadEntries, canList)
+	configs.WorkloadGroups = filterListEntriesByTypeRBAC(configs.WorkloadGroups, kubernetes.WorkloadGroups, canList)
+	configs.TrafficExtensions = filterListEntriesByTypeRBAC(configs.TrafficExtensions, kubernetes.TrafficExtensions, canList)
+	configs.WasmPlugins = filterListEntriesByTypeRBAC(configs.WasmPlugins, kubernetes.WasmPlugins, canList)
+	configs.Telemetries = filterListEntriesByTypeRBAC(configs.Telemetries, kubernetes.Telemetries, canList)
+	configs.K8sGateways = filterListEntriesByTypeRBAC(configs.K8sGateways, kubernetes.K8sGateways, canList)
+	configs.K8sGRPCRoutes = filterListEntriesByTypeRBAC(configs.K8sGRPCRoutes, kubernetes.K8sGRPCRoutes, canList)
+	configs.K8sHTTPRoutes = filterListEntriesByTypeRBAC(configs.K8sHTTPRoutes, kubernetes.K8sHTTPRoutes, canList)
+	configs.K8sInferencePools = filterListEntriesByTypeRBAC(configs.K8sInferencePools, kubernetes.K8sInferencePools, canList)
+	configs.K8sReferenceGrants = filterListEntriesByTypeRBAC(configs.K8sReferenceGrants, kubernetes.K8sReferenceGrants, canList)
+	configs.K8sTCPRoutes = filterListEntriesByTypeRBAC(configs.K8sTCPRoutes, kubernetes.K8sTCPRoutes, canList)
+	configs.K8sTLSRoutes = filterListEntriesByTypeRBAC(configs.K8sTLSRoutes, kubernetes.K8sTLSRoutes, canList)
+	configs.K8sUDPRoutes = filterListEntriesByTypeRBAC(configs.K8sUDPRoutes, kubernetes.K8sUDPRoutes, canList)
+	configs.PeerAuthentications = filterListEntriesByTypeRBAC(configs.PeerAuthentications, kubernetes.PeerAuthentications, canList)
+	configs.RequestAuthentications = filterListEntriesByTypeRBAC(configs.RequestAuthentications, kubernetes.RequestAuthentications, canList)
+}
+
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigList",
@@ -592,30 +682,34 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 		namespaceNames = append(namespaceNames, namespace.Name)
 	}
 
-	return &models.IstioConfigList{
-		AuthorizationPolicies:  kubernetes.FilterByNamespaceNames(istioConfigs.AuthorizationPolicies, namespaceNames),
-		DestinationRules:       kubernetes.FilterByNamespaceNames(istioConfigs.DestinationRules, namespaceNames),
-		EnvoyFilters:           kubernetes.FilterByNamespaceNames(istioConfigs.EnvoyFilters, namespaceNames),
-		Gateways:               kubernetes.FilterByNamespaceNames(istioConfigs.Gateways, namespaceNames),
-		K8sGateways:            kubernetes.FilterByNamespaceNames(istioConfigs.K8sGateways, namespaceNames),
-		K8sGRPCRoutes:          kubernetes.FilterByNamespaceNames(istioConfigs.K8sGRPCRoutes, namespaceNames),
-		K8sHTTPRoutes:          kubernetes.FilterByNamespaceNames(istioConfigs.K8sHTTPRoutes, namespaceNames),
-		K8sInferencePools:      kubernetes.FilterByNamespaceNames(istioConfigs.K8sInferencePools, namespaceNames),
-		K8sReferenceGrants:     kubernetes.FilterByNamespaceNames(istioConfigs.K8sReferenceGrants, namespaceNames),
-		K8sTCPRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sTCPRoutes, namespaceNames),
-		K8sTLSRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sTLSRoutes, namespaceNames),
-		K8sUDPRoutes:           kubernetes.FilterByNamespaceNames(istioConfigs.K8sUDPRoutes, namespaceNames),
-		PeerAuthentications:    kubernetes.FilterByNamespaceNames(istioConfigs.PeerAuthentications, namespaceNames),
-		RequestAuthentications: kubernetes.FilterByNamespaceNames(istioConfigs.RequestAuthentications, namespaceNames),
-		ServiceEntries:         kubernetes.FilterByNamespaceNames(istioConfigs.ServiceEntries, namespaceNames),
-		Sidecars:               kubernetes.FilterByNamespaceNames(istioConfigs.Sidecars, namespaceNames),
-		Telemetries:            kubernetes.FilterByNamespaceNames(istioConfigs.Telemetries, namespaceNames),
-		TrafficExtensions:      kubernetes.FilterByNamespaceNames(istioConfigs.TrafficExtensions, namespaceNames),
-		VirtualServices:        kubernetes.FilterByNamespaceNames(istioConfigs.VirtualServices, namespaceNames),
-		WasmPlugins:            kubernetes.FilterByNamespaceNames(istioConfigs.WasmPlugins, namespaceNames),
-		WorkloadEntries:        kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadEntries, namespaceNames),
-		WorkloadGroups:         kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadGroups, namespaceNames),
-	}, nil
+	istioConfigs.AuthorizationPolicies = kubernetes.FilterByNamespaceNames(istioConfigs.AuthorizationPolicies, namespaceNames)
+	istioConfigs.DestinationRules = kubernetes.FilterByNamespaceNames(istioConfigs.DestinationRules, namespaceNames)
+	istioConfigs.EnvoyFilters = kubernetes.FilterByNamespaceNames(istioConfigs.EnvoyFilters, namespaceNames)
+	istioConfigs.Gateways = kubernetes.FilterByNamespaceNames(istioConfigs.Gateways, namespaceNames)
+	istioConfigs.K8sGateways = kubernetes.FilterByNamespaceNames(istioConfigs.K8sGateways, namespaceNames)
+	istioConfigs.K8sGRPCRoutes = kubernetes.FilterByNamespaceNames(istioConfigs.K8sGRPCRoutes, namespaceNames)
+	istioConfigs.K8sHTTPRoutes = kubernetes.FilterByNamespaceNames(istioConfigs.K8sHTTPRoutes, namespaceNames)
+	istioConfigs.K8sInferencePools = kubernetes.FilterByNamespaceNames(istioConfigs.K8sInferencePools, namespaceNames)
+	istioConfigs.K8sReferenceGrants = kubernetes.FilterByNamespaceNames(istioConfigs.K8sReferenceGrants, namespaceNames)
+	istioConfigs.K8sTCPRoutes = kubernetes.FilterByNamespaceNames(istioConfigs.K8sTCPRoutes, namespaceNames)
+	istioConfigs.K8sTLSRoutes = kubernetes.FilterByNamespaceNames(istioConfigs.K8sTLSRoutes, namespaceNames)
+	istioConfigs.K8sUDPRoutes = kubernetes.FilterByNamespaceNames(istioConfigs.K8sUDPRoutes, namespaceNames)
+	istioConfigs.PeerAuthentications = kubernetes.FilterByNamespaceNames(istioConfigs.PeerAuthentications, namespaceNames)
+	istioConfigs.RequestAuthentications = kubernetes.FilterByNamespaceNames(istioConfigs.RequestAuthentications, namespaceNames)
+	istioConfigs.ServiceEntries = kubernetes.FilterByNamespaceNames(istioConfigs.ServiceEntries, namespaceNames)
+	istioConfigs.Sidecars = kubernetes.FilterByNamespaceNames(istioConfigs.Sidecars, namespaceNames)
+	istioConfigs.Telemetries = kubernetes.FilterByNamespaceNames(istioConfigs.Telemetries, namespaceNames)
+	istioConfigs.TrafficExtensions = kubernetes.FilterByNamespaceNames(istioConfigs.TrafficExtensions, namespaceNames)
+	istioConfigs.VirtualServices = kubernetes.FilterByNamespaceNames(istioConfigs.VirtualServices, namespaceNames)
+	istioConfigs.WasmPlugins = kubernetes.FilterByNamespaceNames(istioConfigs.WasmPlugins, namespaceNames)
+	istioConfigs.WorkloadEntries = kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadEntries, namespaceNames)
+	istioConfigs.WorkloadGroups = kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadGroups, namespaceNames)
+
+	// Filter out the types the user cannot list (RBAC), so the list matches
+	// what the user can read on a detail request.
+	in.filterByUserListRBAC(ctx, cluster, istioConfigs)
+
+	return istioConfigs, nil
 }
 
 // GetIstioConfigDetails returns a specific Istio configuration object.

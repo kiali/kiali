@@ -18,12 +18,14 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
+	auth_v1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kubescheme "k8s.io/client-go/kubernetes/scheme"
+	kubeclienttesting "k8s.io/client-go/testing"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	inferenceapifake "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/fake"
 	inferenceapischeme "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/scheme"
@@ -147,6 +149,15 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(kubeObjects...) //nolint:staticcheck // SA1019
+	// The fake clientset echoes SelfSubjectAccessReviews back with
+	// Allowed=false, which would make RBAC-filtered lists come back empty.
+	// Default to allowing everything; tests that need to deny can prepend
+	// their own reactor since test-prepended reactors run first.
+	kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "RBAC allowed by fake client"}
+		return true, review, nil
+	})
 	istioClient := istiofake.NewSimpleClientset(istioObjects...)
 	gatewayAPIClient := gatewayapifake.NewSimpleClientset(gatewayapiObjects...) //nolint:staticcheck // SA1019
 	inferenceAPIClient := inferenceapifake.NewSimpleClientset(inferenceapiObjects...)
