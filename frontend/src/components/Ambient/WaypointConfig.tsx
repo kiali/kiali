@@ -31,6 +31,7 @@ import { WaypointWorkloadsTable } from './WaypointWorkloadsTable';
 import { WaypointForLabel, WaypointType } from '../../types/Ambient';
 import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
 import { WaypointCanaryInfoPanel } from './WaypointCanarySummary';
+import { gatewayConfigsWithCanary } from './WaypointTrafficSplitSelector';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize } from 'styles/PfTypography';
 import { cardBodyStyle, cardStyle } from '../../pages/Overview/OverviewStyles';
@@ -213,7 +214,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
     <Tab eventKey={tabs.length} key={waypointOverviewTab} title={t('Overview')}>
       <div className={overviewTabContentStyle}>
         <Grid hasGutter>
-          <GridItem span={props.workload.waypointTrafficSplit?.canary ? 6 : 12}>
+          <GridItem span={gatewayConfigsWithCanary(props.workload.waypointTrafficSplitConfigs).length > 0 ? 6 : 12}>
             <Card className={cardStyle} data-test="waypoint-envoy-status-card">
               <CardHeader>
                 <CardTitle data-test="waypointfor-title">{t('Waypoint for')}</CardTitle>
@@ -224,7 +225,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
               <CardBody className={cardBodyStyle}>{renderEnvoyStatusSection(props.workload)}</CardBody>
             </Card>
           </GridItem>
-          {props.workload.waypointTrafficSplit?.canary && (
+          {gatewayConfigsWithCanary(props.workload.waypointTrafficSplitConfigs).length > 0 && (
             <GridItem span={6}>
               <Card className={cardStyle} data-test="waypoint-traffic-split-card">
                 <CardHeader>
@@ -232,7 +233,7 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
                 </CardHeader>
                 <CardBody className={cardBodyStyle}>
                   <WaypointCanaryInfoPanel
-                    split={props.workload.waypointTrafficSplit}
+                    configs={props.workload.waypointTrafficSplitConfigs}
                     workloadCluster={props.workload.cluster}
                     workloadName={props.workload.name}
                     workloadNamespace={props.workload.namespace}

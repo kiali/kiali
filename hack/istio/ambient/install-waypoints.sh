@@ -14,6 +14,13 @@ CLIENT_EXE="oc"
 : ${ARCH:=amd64}
 CANARY="false"
 CANARY_WEIGHT=10
+# Second client namespace for --canary: both use egress-gateway-canary in waypoint-common-infrastructure-canary.
+SHARED_CANARY_CLIENT_B="waypoint-differentns-canary-b"
+SHARED_CANARY_INFRA_NS="waypoint-common-infrastructure-canary"
+SHARED_CANARY_GATEWAY="egress-gateway-canary"
+SHARED_CANARY_PRIMARY_GATEWAY="egress-gateway"
+SHARED_CANARY_WEIGHT_A=10
+SHARED_CANARY_WEIGHT_B=30
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -38,8 +45,10 @@ while [ $# -gt 0 ]; do
       cat <<HELPMSG
 Valid command line arguments:
   -a|--arch <amd64|ppc64le|s390x>: Images for given arch will be used (default: amd64).
-  --ca|--canary <true|false>: Install the same waypoint demos again in parallel *-canary namespaces
-    (primary + canary waypoint in each, ${CANARY_WEIGHT}% split within that namespace only; default: false).
+  --ca|--canary <true|false>: Install parallel *-canary namespaces (per-namespace primary + canary, ${CANARY_WEIGHT}%
+    split) and a shared cross-namespace canary demo: ${SHARED_CANARY_CLIENT_B} and waypoint-differentns-canary
+    both route canary traffic to ${SHARED_CANARY_GATEWAY} in ${SHARED_CANARY_INFRA_NS} with ${SHARED_CANARY_WEIGHT_A}%
+    vs ${SHARED_CANARY_WEIGHT_B}% (default: false).
   -c|--client: either 'oc' or 'kubectl'
   -d|--delete: either 'true' or 'false'. If 'true' the waypoint namespaces demo will be deleted, not installed.
   -h|--help: this text
@@ -114,9 +123,14 @@ GWE
 }
 
 apply_namespace_canary_split() {
+  apply_namespace_canary_split_weight "${1}" "${2}" "${CANARY_WEIGHT}" "${3:-}"
+}
+
+apply_namespace_canary_split_weight() {
   local ns="$1"
   local canary_gateway="$2"
-  local canary_gateway_ns="${3:-}"
+  local weight="$3"
+  local canary_gateway_ns="${4:-}"
   ${CLIENT_EXE} label namespace "${ns}" \
     istio.io/use-waypoint-canary="${canary_gateway}" \
     --overwrite
@@ -126,7 +140,7 @@ apply_namespace_canary_split() {
       --overwrite
   fi
   ${CLIENT_EXE} annotate namespace "${ns}" \
-    istio.io/use-waypoint-canary-weight="${CANARY_WEIGHT}" \
+    istio.io/use-waypoint-canary-weight="${weight}" \
     --overwrite
 }
 
@@ -149,9 +163,22 @@ apply_service_canary_split() {
 }
 
 apply_egress_gateway_for_client_ns() {
+  apply_egress_gateway_for_client_namespaces "${1}" "${3:-egress-gateway}" "${2}"
+}
+
+apply_egress_gateway_for_client_namespaces() {
   local gateway_ns="$1"
-  local client_ns="$2"
-  local gateway_name="${3:-egress-gateway}"
+  local gateway_name="$2"
+  shift 2
+  local client_namespaces=("$@")
+  local namespace_values=""
+  local idx
+  for idx in "${!client_namespaces[@]}"; do
+    if [ "${idx}" -gt 0 ]; then
+      namespace_values="${namespace_values}"$'\n'
+    fi
+    namespace_values="${namespace_values}            - ${client_namespaces[$idx]}"
+  done
   cat <<EGW | ${CLIENT_EXE} apply -f -
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -168,9 +195,35 @@ spec:
       namespaces:
         from: Selector
         selector:
-          matchLabels:
-            kubernetes.io/metadata.name: ${client_ns}
+          matchExpressions:
+          - key: kubernetes.io/metadata.name
+            operator: In
+            values:
+${namespace_values}
 EGW
+}
+
+install_shared_canary_egress_waypoint_demo() {
+  local client_a="waypoint-differentns-canary"
+  local client_b="${SHARED_CANARY_CLIENT_B}"
+  local infra_ns="${SHARED_CANARY_INFRA_NS}"
+
+  echo "Installing shared canary egress waypoint (${SHARED_CANARY_GATEWAY} in ${infra_ns}; ${client_a} ${SHARED_CANARY_WEIGHT_A}% vs ${client_b} ${SHARED_CANARY_WEIGHT_B}%) ..."
+
+  apply_egress_gateway_for_client_namespaces "${infra_ns}" "${SHARED_CANARY_PRIMARY_GATEWAY}" "${client_a}" "${client_b}"
+  apply_egress_gateway_for_client_namespaces "${infra_ns}" "${SHARED_CANARY_GATEWAY}" "${client_a}" "${client_b}"
+
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n "${client_a}"
+  sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n "${client_a}"
+  ${CLIENT_EXE} label namespace "${client_a}" istio.io/use-waypoint="${SHARED_CANARY_PRIMARY_GATEWAY}" --overwrite
+  ${CLIENT_EXE} label namespace "${client_a}" istio.io/use-waypoint-namespace="${infra_ns}" --overwrite
+  apply_namespace_canary_split_weight "${client_a}" "${SHARED_CANARY_GATEWAY}" "${SHARED_CANARY_WEIGHT_A}" "${infra_ns}"
+
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n "${client_b}"
+  sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n "${client_b}"
+  ${CLIENT_EXE} label namespace "${client_b}" istio.io/use-waypoint="${SHARED_CANARY_PRIMARY_GATEWAY}" --overwrite
+  ${CLIENT_EXE} label namespace "${client_b}" istio.io/use-waypoint-namespace="${infra_ns}" --overwrite
+  apply_namespace_canary_split_weight "${client_b}" "${SHARED_CANARY_GATEWAY}" "${SHARED_CANARY_WEIGHT_B}" "${infra_ns}"
 }
 
 install_waypoint_forworkload_demo() {
@@ -251,13 +304,7 @@ install_canary_waypoint_demos() {
   apply_waypoint_gateway waypoint-fornone-canary waypoint-canary none
   apply_namespace_canary_split waypoint-fornone-canary waypoint-canary
 
-  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-differentns-canary
-  sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-differentns-canary
-  apply_egress_gateway_for_client_ns waypoint-common-infrastructure-canary waypoint-differentns-canary egress-gateway
-  ${CLIENT_EXE} label namespace waypoint-differentns-canary istio.io/use-waypoint=egress-gateway --overwrite
-  ${CLIENT_EXE} label namespace waypoint-differentns-canary istio.io/use-waypoint-namespace=waypoint-common-infrastructure-canary --overwrite
-  apply_egress_gateway_for_client_ns waypoint-common-infrastructure-canary waypoint-differentns-canary egress-gateway-canary
-  apply_namespace_canary_split waypoint-differentns-canary egress-gateway-canary waypoint-common-infrastructure-canary
+  install_shared_canary_egress_waypoint_demo
 
   ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n waypoint-override-canary
   sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n waypoint-override-canary
@@ -288,7 +335,7 @@ fi
 
 # Define waypoint namespaces
 declare -a waypoint_namespaces=("waypoint-forservice" "waypoint-forworkload" "waypoint-forall" "waypoint-fornone" "waypoint-differentns" "waypoint-common-infrastructure" "waypoint-override")
-declare -a waypoint_canary_namespaces=("waypoint-forservice-canary" "waypoint-forworkload-canary" "waypoint-forall-canary" "waypoint-fornone-canary" "waypoint-differentns-canary" "waypoint-common-infrastructure-canary" "waypoint-override-canary")
+declare -a waypoint_canary_namespaces=("waypoint-forservice-canary" "waypoint-forworkload-canary" "waypoint-forall-canary" "waypoint-fornone-canary" "waypoint-differentns-canary" "${SHARED_CANARY_CLIENT_B}" "waypoint-common-infrastructure-canary" "waypoint-override-canary")
 
 declare -a namespaces_to_prepare=("${waypoint_namespaces[@]}")
 if [ "${CANARY}" == "true" ]; then

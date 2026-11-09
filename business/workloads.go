@@ -2519,7 +2519,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 				}
 			}
 			// Namespace-cache lookup for waypoint gateways (also when IncludeWaypoints is false, e.g. mesh map).
-			w.WaypointTrafficSplit = gatewayWaypointTrafficSplit(ctx, in, criteria.Cluster, w.Namespace, w.Name)
+			w.WaypointTrafficSplitConfigs = gatewayWaypointTrafficSplitConfigs(ctx, in, criteria.Cluster, w.Namespace, w.Name)
 		}
 
 		// Populate ServiceAccountNames from pods (needed for other operations)

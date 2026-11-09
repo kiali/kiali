@@ -403,7 +403,8 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
   private renderDetailsCard(workload: Workload): React.ReactNode {
     const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
     const waypointLabel =
-      formatWaypointGatewayDetailLabel(workload.name, workload.namespace, workload.waypointTrafficSplit) ?? t('true');
+      formatWaypointGatewayDetailLabel(workload.name, workload.namespace, workload.waypointTrafficSplitConfigs) ??
+      t('true');
 
     return (
       <StackItem key="details">

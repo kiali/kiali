@@ -10,7 +10,7 @@ import { UNKNOWN } from 'types/Graph';
 import { TargetPanelEditor } from './TargetPanelEditor';
 import { TracingDiagnose } from '../../../components/Mesh/TracingDiagnose';
 import { WaypointGatewayCanaryPanel } from '../../../components/Ambient/WaypointCanarySummary';
-import type { WaypointTrafficSplit } from 'types/WaypointTraffic';
+import type { GatewayWaypointTrafficSplitConfig } from 'types/WaypointTraffic';
 
 type TargetPanelNodeProps<T extends MeshNodeData> = TargetPanelCommonProps & {
   target: NodeTarget<T>;
@@ -45,8 +45,8 @@ export const TargetPanelNode: React.FC<TargetPanelNodeProps<MeshNodeData>> = (
         {isWaypoint && (
           <WaypointGatewayCanaryPanel
             cluster={data.cluster}
+            configs={data.infraData?.WaypointTrafficSplitConfigs as GatewayWaypointTrafficSplitConfig[] | undefined}
             namespace={data.namespace}
-            split={data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined}
             workload={data.infraName}
           />
         )}

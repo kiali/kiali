@@ -10,7 +10,7 @@ import type {
 } from './IstioObjects';
 import { InstanceType } from 'types/Common';
 import type { ServiceInfo } from './ServiceInfo';
-import type { WaypointTrafficSplit } from './WaypointTraffic';
+import type { GatewayWaypointTrafficSplitConfig } from './WaypointTraffic';
 
 export type WorkloadId = {
   namespace: string;
@@ -69,7 +69,7 @@ export interface Workload {
   validations?: Validations;
   versionLabel: boolean;
   waypointServices?: WaypointInfo[];
-  waypointTrafficSplit?: WaypointTrafficSplit;
+  waypointTrafficSplitConfigs?: GatewayWaypointTrafficSplitConfig[];
   waypointWorkloads?: WaypointInfo[];
   workloadEntries: WorkloadGroupEntry[];
 }

@@ -12,3 +12,10 @@ export type WaypointTrafficSplit = {
   primary: WaypointBinding;
   primaryWeight: number;
 };
+
+export type GatewayWaypointTrafficSplitConfig = {
+  configLevel: string;
+  namespace: string;
+  serviceName?: string;
+  split?: WaypointTrafficSplit;
+};

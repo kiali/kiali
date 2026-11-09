@@ -16,8 +16,11 @@ import type { DecoratedMeshEdgeData, DecoratedMeshEdgeWrapper, DecoratedMeshNode
 import { BoxByType } from 'types/Graph';
 import type { Namespace } from 'types/Namespace';
 import type { NamespaceInfo } from 'types/NamespaceInfo';
-import type { WaypointTrafficSplit } from 'types/WaypointTraffic';
-import { findGatewayWaypointSplit, withWaypointCanarySecondaryLabel } from 'utils/WaypointTrafficUtils';
+import type { GatewayWaypointTrafficSplitConfig } from 'types/WaypointTraffic';
+import {
+  findGatewayWaypointSplitConfigsFromNamespaces,
+  withWaypointCanarySecondaryLabel
+} from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -198,13 +201,13 @@ export const setNodeLabel = (node: NodeModel, _nodeMap: NodeMap, namespaces?: Na
   data.secondaryLabel = content.length > 0 ? content.join(':') : undefined;
 
   if (infraType === MeshInfraType.WAYPOINT && !isBox) {
-    const split =
-      (data.infraData?.WaypointTrafficSplit as WaypointTrafficSplit | undefined) ??
-      findGatewayWaypointSplit(namespaces ?? [], infraName, data.namespace, data.cluster);
+    const splitConfigs =
+      (data.infraData?.WaypointTrafficSplitConfigs as GatewayWaypointTrafficSplitConfig[] | undefined) ??
+      findGatewayWaypointSplitConfigsFromNamespaces(namespaces ?? [], infraName, data.namespace, data.cluster);
     data.secondaryLabel = withWaypointCanarySecondaryLabel({
       includeWeight: false,
       secondaryLabel: data.secondaryLabel,
-      split,
+      splitConfigs,
       workload: infraName,
       workloadNamespace: data.namespace
     });

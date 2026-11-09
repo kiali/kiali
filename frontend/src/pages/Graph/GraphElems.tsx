@@ -41,7 +41,10 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { t } from 'utils/I18nUtils';
 import type { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
-import { findGatewayWaypointSplit, withWaypointCanarySecondaryLabel } from 'utils/WaypointTrafficUtils';
+import {
+  findGatewayWaypointSplitConfigsFromNamespaces,
+  withWaypointCanarySecondaryLabel
+} from 'utils/WaypointTrafficUtils';
 
 // Utilities for working with PF Topology
 
@@ -442,7 +445,12 @@ export const setNodeLabel = (
       backendLabel: data.waypointCanaryLabel,
       includeWeight: settings.edgeLabels.includes(EdgeLabelMode.TRAFFIC_DISTRIBUTION),
       secondaryLabel: data.secondaryLabel,
-      split: findGatewayWaypointSplit(settings.activeNamespaces, data.workload, data.namespace, data.cluster),
+      splitConfigs: findGatewayWaypointSplitConfigsFromNamespaces(
+        settings.activeNamespaces,
+        data.workload,
+        data.namespace,
+        data.cluster
+      ),
       workload: data.workload,
       workloadNamespace: data.namespace
     });

@@ -836,9 +836,8 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 	return serviceInfoList
 }
 
-// GatewayTrafficSplitFromEnrolledServices resolves canary split from service-level waypoint labels
-// that reference the gateway (used when namespace labels do not define the split).
-func (in *SvcService) GatewayTrafficSplitFromEnrolledServices(ctx context.Context, gatewayName, gatewayNamespace, cluster string) *models.WaypointTrafficSplit {
+// GatewayTrafficSplitConfigsFromEnrolledServices lists service-level splits that reference the gateway.
+func (in *SvcService) GatewayTrafficSplitConfigsFromEnrolledServices(ctx context.Context, gatewayName, gatewayNamespace, cluster string) []models.GatewayWaypointTrafficSplitConfig {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		return nil
@@ -856,7 +855,7 @@ func (in *SvcService) GatewayTrafficSplitFromEnrolledServices(ctx context.Contex
 		{config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel},
 	}
 
-	candidates := make([]*models.WaypointTrafficSplit, 0)
+	configs := make([]models.GatewayWaypointTrafficSplitConfig, 0)
 	seen := make(map[string]bool)
 
 	// Single-cluster accessible namespace set only (avoids GetNamespaces fan-out across clusters).
@@ -894,13 +893,18 @@ func (in *SvcService) GatewayTrafficSplitFromEnrolledServices(ctx context.Contex
 					Annotations: item.Annotations,
 				}, &nsModel)
 				if split != nil && split.Canary != nil && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
-					candidates = append(candidates, split)
+					configs = append(configs, models.GatewayWaypointTrafficSplitConfig{
+						ConfigLevel: "service",
+						Namespace:   item.Namespace,
+						ServiceName: item.Name,
+						Split:       split,
+					})
 				}
 			}
 		}
 	}
 
-	return models.PickGatewayWaypointTrafficSplit(candidates)
+	return configs
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

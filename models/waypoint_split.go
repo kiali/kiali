@@ -14,6 +14,17 @@ const (
 	WaypointRolePrimary = "primary"
 )
 
+// WaypointCanaryMultipleSplitsLabel is used on waypoint graph nodes when enrollments disagree on canary weight.
+const WaypointCanaryMultipleSplitsLabel = "Multiple traffic splits"
+
+// GatewayWaypointTrafficSplitConfig is one enrollment namespace or service that references a shared gateway.
+type GatewayWaypointTrafficSplitConfig struct {
+	ConfigLevel string                `json:"configLevel"`
+	Namespace   string                `json:"namespace"`
+	ServiceName string                `json:"serviceName,omitempty"`
+	Split       *WaypointTrafficSplit `json:"split,omitempty"`
+}
+
 // WaypointTrafficSplit describes primary and optional canary waypoint gateways for a resource.
 type WaypointTrafficSplit struct {
 	Canary *WaypointBinding `json:"canary,omitempty"`
@@ -156,6 +167,56 @@ func PickGatewayWaypointTrafficSplit(candidates []*WaypointTrafficSplit) *Waypoi
 		return waypointConfigLevelRank(candidates[i].ConfigLevel) > waypointConfigLevelRank(candidates[j].ConfigLevel)
 	})
 	return candidates[0]
+}
+
+// SortGatewayWaypointTrafficSplitConfigs returns a stable, user-facing order.
+func SortGatewayWaypointTrafficSplitConfigs(configs []GatewayWaypointTrafficSplitConfig) []GatewayWaypointTrafficSplitConfig {
+	sort.SliceStable(configs, func(i, j int) bool {
+		if configs[i].Namespace != configs[j].Namespace {
+			return configs[i].Namespace < configs[j].Namespace
+		}
+		if configs[i].ServiceName != configs[j].ServiceName {
+			return configs[i].ServiceName < configs[j].ServiceName
+		}
+		return waypointConfigLevelRank(configs[i].ConfigLevel) > waypointConfigLevelRank(configs[j].ConfigLevel)
+	})
+	return configs
+}
+
+// AppendNamespaceGatewaySplitConfig adds a namespace-level split when it references the gateway.
+func AppendNamespaceGatewaySplitConfig(cluster, gatewayNamespace, gatewayName, nsName string, labels, annotations map[string]string, configs *[]GatewayWaypointTrafficSplitConfig) {
+	split := GatewayWaypointTrafficSplit(cluster, nsName, gatewayName, labels, annotations)
+	if split == nil || split.Canary == nil || !GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
+		return
+	}
+	*configs = append(*configs, GatewayWaypointTrafficSplitConfig{
+		ConfigLevel: "namespace",
+		Namespace:   nsName,
+		Split:       split,
+	})
+}
+
+// GatewayWaypointCanaryGraphLabel resolves the secondary label for a waypoint node from all enrollments.
+func GatewayWaypointCanaryGraphLabel(configs []GatewayWaypointTrafficSplitConfig, workload, workloadNamespace string) string {
+	if workload == "" {
+		return ""
+	}
+	labels := make([]string, 0)
+	for _, cfg := range configs {
+		if cfg.Split == nil {
+			continue
+		}
+		if label := WaypointCanaryNodeLabel(workload, workloadNamespace, cfg.Split); label != "" {
+			labels = append(labels, label)
+		}
+	}
+	if len(labels) == 0 {
+		return ""
+	}
+	if len(labels) > 1 {
+		return WaypointCanaryMultipleSplitsLabel
+	}
+	return labels[0]
 }
 
 // WaypointCanaryNodeLabel returns graph label text for a waypoint gateway workload.

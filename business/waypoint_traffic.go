@@ -74,7 +74,7 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 	}
 }
 
-func gatewayWaypointTrafficSplit(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) *models.WaypointTrafficSplit {
+func gatewayWaypointTrafficSplitConfigs(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) []models.GatewayWaypointTrafficSplitConfig {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return nil
@@ -89,27 +89,49 @@ func gatewayWaypointTrafficSplit(ctx context.Context, in *WorkloadService, clust
 	}
 	sort.Strings(nsNames)
 
-	candidates := make([]*models.WaypointTrafficSplit, 0)
+	configs := make([]models.GatewayWaypointTrafficSplitConfig, 0)
 	for _, nsName := range nsNames {
 		nsModel, nsFound := in.cache.GetNamespace(cluster, userClient.GetCacheKey(), nsName)
 		if !nsFound {
 			continue
 		}
-		split := models.GatewayWaypointTrafficSplit(cluster, nsName, gatewayName, nsModel.Labels, nsModel.Annotations)
-		if split != nil && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
-			candidates = append(candidates, split)
-		}
+		models.AppendNamespaceGatewaySplitConfig(cluster, gatewayNamespace, gatewayName, nsName, nsModel.Labels, nsModel.Annotations, &configs)
 	}
-	if fromServices := in.businessLayer.Svc.GatewayTrafficSplitFromEnrolledServices(ctx, gatewayName, gatewayNamespace, cluster); fromServices != nil {
-		candidates = append(candidates, fromServices)
-	}
-	if picked := models.PickGatewayWaypointTrafficSplit(candidates); picked != nil {
-		return picked
+	configs = append(configs, in.businessLayer.Svc.GatewayTrafficSplitConfigsFromEnrolledServices(ctx, gatewayName, gatewayNamespace, cluster)...)
+	configs = models.SortGatewayWaypointTrafficSplitConfigs(configs)
+	if len(configs) > 0 {
+		return configs
 	}
 	if nsModel, nsFound := in.cache.GetNamespace(cluster, userClient.GetCacheKey(), gatewayNamespace); nsFound {
-		return models.GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName, nsModel.Labels, nsModel.Annotations)
+		split := models.GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName, nsModel.Labels, nsModel.Annotations)
+		if split != nil && split.Canary != nil {
+			return []models.GatewayWaypointTrafficSplitConfig{{
+				ConfigLevel: "namespace",
+				Namespace:   gatewayNamespace,
+				Split:       split,
+			}}
+		}
 	}
 	return nil
+}
+
+func workloadTrafficSplitConfigs(split *models.WaypointTrafficSplit, namespace, serviceName string) []models.GatewayWaypointTrafficSplitConfig {
+	if split == nil {
+		return nil
+	}
+	level := split.ConfigLevel
+	if level == "" {
+		level = "namespace"
+	}
+	cfg := models.GatewayWaypointTrafficSplitConfig{
+		ConfigLevel: level,
+		Namespace:   namespace,
+		Split:       split,
+	}
+	if level == "service" && serviceName != "" {
+		cfg.ServiceName = serviceName
+	}
+	return []models.GatewayWaypointTrafficSplitConfig{cfg}
 }
 
 func (in *WorkloadService) decorateWorkloadWaypointTrafficSplit(ctx context.Context, workload *models.Workload) {
@@ -117,7 +139,7 @@ func (in *WorkloadService) decorateWorkloadWaypointTrafficSplit(ctx context.Cont
 		return
 	}
 	if workload.IsWaypointWorkload() && workload.WaypointFor() != config.WaypointForNone {
-		workload.WaypointTrafficSplit = gatewayWaypointTrafficSplit(ctx, in, workload.Cluster, workload.Namespace, workload.Name)
+		workload.WaypointTrafficSplitConfigs = gatewayWaypointTrafficSplitConfigs(ctx, in, workload.Cluster, workload.Namespace, workload.Name)
 		return
 	}
 	if len(workload.WaypointWorkloads) == 0 {
@@ -126,7 +148,12 @@ func (in *WorkloadService) decorateWorkloadWaypointTrafficSplit(ctx context.Cont
 	// Recompute after Services are attached so service-level canary labels/annotations win over namespace.
 	waypoints := in.GetWaypoints(ctx)
 	workload.WaypointWorkloads = in.getWaypointsForWorkload(ctx, *workload, false, waypoints)
-	workload.WaypointTrafficSplit = waypointTrafficSplitForWorkload(ctx, in, *workload)
+	split := waypointTrafficSplitForWorkload(ctx, in, *workload)
+	serviceName := ""
+	if split != nil && split.ConfigLevel == "service" && len(workload.Services) > 0 {
+		serviceName = workload.Services[0].Name
+	}
+	workload.WaypointTrafficSplitConfigs = workloadTrafficSplitConfigs(split, workload.Namespace, serviceName)
 }
 
 func appendCanaryWaypointRef(workloadsList []models.WorkloadReferenceInfo, split *models.WaypointTrafficSplit, waypoints models.Workloads) []models.WorkloadReferenceInfo {

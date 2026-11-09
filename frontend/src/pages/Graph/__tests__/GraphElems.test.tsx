@@ -275,6 +275,46 @@ describe('waypoint node labels', () => {
     expect((node.data as NodeData).secondaryLabel).toContain('Canary 30%');
   });
 
+  it('shows multiple traffic splits when several namespaces reference the gateway', () => {
+    const sharedCanary = {
+      cluster: 'Kubernetes',
+      name: 'waypoint-canary',
+      namespace: 'infra',
+      role: 'canary' as const
+    };
+    const sharedPrimary = {
+      cluster: 'Kubernetes',
+      name: 'waypoint',
+      namespace: 'infra',
+      role: 'primary' as const
+    };
+    const splitA: WaypointTrafficSplit = {
+      ...namespaceSplit,
+      canary: sharedCanary,
+      canaryWeight: 10,
+      primary: sharedPrimary,
+      primaryWeight: 90
+    };
+    const splitB: WaypointTrafficSplit = {
+      ...namespaceSplit,
+      canary: sharedCanary,
+      canaryWeight: 30,
+      primary: sharedPrimary,
+      primaryWeight: 70
+    };
+    const settings = makeSettings();
+    settings.activeNamespaces = [
+      { cluster: 'Kubernetes', name: 'client-a', waypointTrafficSplit: splitA },
+      { cluster: 'Kubernetes', name: 'client-b', waypointTrafficSplit: splitB }
+    ];
+    const node = makeNode('waypoint-canary');
+    node.data = { ...(node.data as NodeData), namespace: 'infra' };
+
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+
+    expect((node.data as NodeData).secondaryLabel).toContain('Multiple traffic splits');
+  });
+
   it('keeps the effective role when toggling percentages without duplicating labels', () => {
     const node = makeNode('waypoint-canary', 'Canary 10%');
     const data = node.data as NodeData;

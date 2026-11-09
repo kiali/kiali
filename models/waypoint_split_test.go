@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,6 +24,33 @@ func TestResolveWaypointTrafficSplitNamespaceCanary(t *testing.T) {
 	assert.Equal(t, "waypoint-v2", split.Canary.Name)
 	assert.Equal(t, 30, split.CanaryWeight)
 	assert.Equal(t, 70, split.PrimaryWeight)
+}
+
+func TestGatewayWaypointCanaryGraphLabelMultipleEnrollments(t *testing.T) {
+	weightA := 10
+	weightB := 30
+	configs := []GatewayWaypointTrafficSplitConfig{
+		{
+			ConfigLevel: "namespace",
+			Namespace:   "client-a",
+			Split: &WaypointTrafficSplit{
+				CanaryWeight: weightA,
+				Canary:       &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
+				Primary:      WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+			},
+		},
+		{
+			ConfigLevel: "namespace",
+			Namespace:   "client-b",
+			Split: &WaypointTrafficSplit{
+				CanaryWeight: weightB,
+				Canary:       &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
+				Primary:      WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+			},
+		},
+	}
+	assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "egress-gateway-canary", "infra"))
+	assert.Equal(t, fmt.Sprintf("Canary %d%%", weightA), GatewayWaypointCanaryGraphLabel(configs[:1], "egress-gateway-canary", "infra"))
 }
 
 func TestPickGatewayWaypointTrafficSplitPrefersCanary(t *testing.T) {

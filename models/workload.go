@@ -281,8 +281,8 @@ type Workload struct {
 	// Ambient waypoint workloads
 	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
-	// WaypointTrafficSplit is set for ambient workloads and waypoint gateways when canary labels apply.
-	WaypointTrafficSplit *WaypointTrafficSplit `json:"waypointTrafficSplit,omitempty"`
+	// WaypointTrafficSplitConfigs lists effective split(s): one for enrolled workloads, many for shared gateways.
+	WaypointTrafficSplitConfigs []GatewayWaypointTrafficSplitConfig `json:"waypointTrafficSplitConfigs,omitempty"`
 
 	// WorkloadEntries bound to the workload
 	WorkloadEntries WorkloadEntries `json:"workloadEntries"`

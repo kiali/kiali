@@ -1,5 +1,5 @@
 import type { Namespace } from 'types/Namespace';
-import type { WaypointBinding, WaypointTrafficSplit } from 'types/WaypointTraffic';
+import type { GatewayWaypointTrafficSplitConfig, WaypointBinding, WaypointTrafficSplit } from 'types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
 
 export const enrichActiveNamespaces = (active: Namespace[], items?: Namespace[]): Namespace[] => {
@@ -22,6 +22,8 @@ const gatewaySplitScore = (split: WaypointTrafficSplit | undefined): number => {
   }
   return split.canaryWeight > 0 ? 3 : 2;
 };
+
+export const WAYPOINT_MULTIPLE_SPLITS_LABEL = 'Multiple traffic splits';
 
 export const pickBestGatewayWaypointSplit = (splits: WaypointTrafficSplit[]): WaypointTrafficSplit | undefined => {
   if (!splits.length) {
@@ -64,6 +66,55 @@ export const findGatewayWaypointSplit = (
   return pickBestGatewayWaypointSplit(matches);
 };
 
+/** Namespace-derived configs that reference a waypoint gateway (graph fallback when the backend label is absent). */
+export const findGatewayWaypointSplitConfigsFromNamespaces = (
+  namespaces: Namespace[],
+  gatewayName: string,
+  gatewayNamespace: string,
+  cluster?: string
+): GatewayWaypointTrafficSplitConfig[] => {
+  const configs: GatewayWaypointTrafficSplitConfig[] = [];
+  const sorted = [...namespaces].sort((a, b) => a.name.localeCompare(b.name));
+  for (const ns of sorted) {
+    if (cluster && ns.cluster && ns.cluster !== cluster) {
+      continue;
+    }
+    const split = ns.waypointTrafficSplit;
+    if (!split?.canary) {
+      continue;
+    }
+    if (
+      gatewayMatchesNode(split.primary, gatewayName, gatewayNamespace) ||
+      gatewayMatchesNode(split.canary, gatewayName, gatewayNamespace)
+    ) {
+      configs.push({ configLevel: 'namespace', namespace: ns.name, split });
+    }
+  }
+  return configs;
+};
+
+export const gatewayWaypointGraphCanaryLabel = (
+  configs: GatewayWaypointTrafficSplitConfig[],
+  workload: string,
+  workloadNamespace: string,
+  includeWeight: boolean
+): string | undefined => {
+  const lines: string[] = [];
+  for (const cfg of configs) {
+    const line = waypointNodeCanaryBadge(workload, workloadNamespace, cfg.split, includeWeight);
+    if (line) {
+      lines.push(line);
+    }
+  }
+  if (lines.length === 0) {
+    return undefined;
+  }
+  if (lines.length > 1) {
+    return t(WAYPOINT_MULTIPLE_SPLITS_LABEL);
+  }
+  return lines[0];
+};
+
 /** Label text for PatternFly topology badge under waypoint node labels. */
 export const waypointNodeCanaryBadge = (
   workload: string,
@@ -103,8 +154,13 @@ export const formatEnrolledWaypointRoleLabel = (waypointRole: string | undefined
 export const formatWaypointGatewayDetailLabel = (
   workload: string,
   workloadNamespace: string,
-  split: WaypointTrafficSplit | undefined
+  configs?: GatewayWaypointTrafficSplitConfig[]
 ): string | undefined => {
+  const withCanary = (configs ?? []).filter(cfg => !!cfg.split?.canary);
+  if (withCanary.length > 1) {
+    return t('Multiple configurations ({{count}})', { count: withCanary.length });
+  }
+  const split = withCanary.length === 1 ? withCanary[0].split : undefined;
   if (!split?.canary) {
     return undefined;
   }
@@ -131,6 +187,9 @@ const backendRoleLabel = (label: string, includeWeight: boolean): string | undef
 
 /** Backend may bake the weight into waypointCanaryLabel; strip it when Traffic Distribution is off. */
 export const formatWaypointCanaryLabel = (label: string, includeWeight: boolean): string => {
+  if (label === WAYPOINT_MULTIPLE_SPLITS_LABEL) {
+    return t(WAYPOINT_MULTIPLE_SPLITS_LABEL);
+  }
   const translated = backendRoleLabel(label, includeWeight);
   if (translated) {
     return translated;
@@ -143,6 +202,7 @@ type WaypointCanaryLabelOptions = {
   includeWeight?: boolean;
   secondaryLabel?: string;
   split?: WaypointTrafficSplit;
+  splitConfigs?: GatewayWaypointTrafficSplitConfig[];
   workload: string;
   workloadNamespace: string;
 };
@@ -156,7 +216,14 @@ export const withWaypointCanarySecondaryLabel = (options: WaypointCanaryLabelOpt
   // The backend resolves Service overrides; namespace configuration is only a fallback.
   const canaryLine = options.backendLabel
     ? formatWaypointCanaryLabel(options.backendLabel, includeWeight)
-    : waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
+    : options.splitConfigs && options.splitConfigs.length > 0
+      ? gatewayWaypointGraphCanaryLabel(
+          options.splitConfigs,
+          options.workload,
+          options.workloadNamespace,
+          includeWeight
+        )
+      : waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
   if (!canaryLine) {
     return options.secondaryLabel;
   }
