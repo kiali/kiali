@@ -32,8 +32,6 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const allResources string = "*"
-
 type IstioConfigService struct {
 	userClients         map[string]kubernetes.UserClientInterface
 	saClients           map[string]kubernetes.ClientInterface
@@ -1325,16 +1323,18 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			k8sNetworkingPermissions[ns] = &k8sNetworkingRP
 			securityPermissions[ns] = &securityRP
 			/*
-				For networking.istio.io and security.istio.io, we check permissions once per API group
-				using a wildcard resource since all resources in those groups share the same verb set.
-
-				For gateway.networking.k8s.io, we check per resource type because different resources
-				have different write permissions (e.g., GatewayClass is read-only, TCPRoute has no create).
+				Permissions are checked per resource type using the plural resource name.
+				Roles may name individual resources (e.g. the OLM-generated ClusterRoles
+				aggregated into OpenShift's admin/edit), so a group-wide wildcard check
+				would wrongly deny them. A wildcard resources: ["*"] rule also matches
+				these per-resource checks.
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1.Group, allResources, in.conf)
+				networkingRP := *networkingPermissions
 				for _, rs := range newNetworkingConfigTypes {
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
+					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					networkingRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
 						Update: canUpdate,
@@ -1359,8 +1359,10 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersionV1.Group, allResources, in.conf)
+				securityRP := *securityPermissions
 				for _, rs := range newSecurityConfigTypes {
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
+					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					securityRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
 						Update: canUpdate,

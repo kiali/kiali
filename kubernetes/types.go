@@ -165,16 +165,32 @@ var (
 
 	// PluralNames maps Kind to the lowercase plural resource name used in RBAC.
 	// Kubernetes SSAR ResourceAttributes.Resource requires the plural form.
+	// Roles may name individual resources (e.g. the OLM-generated ClusterRoles
+	// aggregated into OpenShift's admin/edit), so every Kind that Kiali checks
+	// permissions for must map to the plural name its RBAC rules use.
 	PluralNames = map[string]string{
-		K8sGatewayType:        "gateways",
-		K8sGatewayClassType:   "gatewayclasses",
-		K8sGRPCRouteType:      "grpcroutes",
-		K8sHTTPRouteType:      "httproutes",
-		K8sInferencePoolsType: "inferencepools",
-		K8sReferenceGrantType: "referencegrants",
-		K8sTCPRouteType:       "tcproutes",
-		K8sTLSRouteType:       "tlsroutes",
-		K8sUDPRouteType:       "udproutes",
+		AuthorizationPoliciesType:  "authorizationpolicies",
+		DestinationRuleType:        "destinationrules",
+		EnvoyFilterType:            "envoyfilters",
+		K8sGatewayType:             "gateways", // also covers the Istio Gateway kind (same Kind string)
+		K8sGatewayClassType:        "gatewayclasses",
+		K8sGRPCRouteType:           "grpcroutes",
+		K8sHTTPRouteType:           "httproutes",
+		K8sInferencePoolsType:      "inferencepools",
+		K8sReferenceGrantType:      "referencegrants",
+		K8sTCPRouteType:            "tcproutes",
+		K8sTLSRouteType:            "tlsroutes",
+		K8sUDPRouteType:            "udproutes",
+		PeerAuthenticationsType:    "peerauthentications",
+		RequestAuthenticationsType: "requestauthentications",
+		ServiceEntryType:           "serviceentries",
+		SidecarType:                "sidecars",
+		TelemetryType:              "telemetries",
+		TrafficExtensionType:       "trafficextensions",
+		VirtualServiceType:         "virtualservices",
+		WasmPluginType:             "wasmplugins",
+		WorkloadEntryType:          "workloadentries",
+		WorkloadGroupType:          "workloadgroups",
 	}
 
 	// Resources
@@ -207,8 +223,8 @@ var (
 )
 
 // PluralResourceName returns the RBAC plural resource name for a Kind.
-// Uses the PluralNames map for types with explicit RBAC rules; falls back
-// to the Kind itself for types that still use wildcard resources: ["*"].
+// Uses the PluralNames map; falls back to the Kind itself for unlisted types,
+// which only matches RBAC rules granting resources: ["*"].
 func PluralResourceName(kind string) string {
 	if plural, ok := PluralNames[kind]; ok {
 		return plural
