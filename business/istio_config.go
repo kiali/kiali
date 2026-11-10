@@ -579,13 +579,6 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 // user, cluster, namespace and type is identical across instances.
 var canListFlight singleflight.Group
 
-// maxConcurrentListSSARs bounds how many list-verb SSARs one list request
-// issues at once. Distinct (namespace, type) pairs are probed concurrently
-// (see filterByUserListRBAC) so a cold cluster-wide list does not pay one
-// serial round-trip per pair; this cap keeps the burst polite and lets
-// client-go's rate limiter throttle the rest.
-const maxConcurrentListSSARs = 10
-
 // canListType reports whether the requesting user can list resources of the
 // given GVK in a namespace. The verdict comes from a SelfSubjectAccessReview
 // (SSAR) and is cached per user for CacheTokenNamespaceDuration. This shapes
@@ -691,7 +684,8 @@ func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster 
 	// Resolve the verdicts for all distinct (namespace, type) pairs up
 	// front, concurrently: a cold cluster-wide list would otherwise pay
 	// one serial SSAR round-trip per pair. canListType coalesces duplicate
-	// computations across concurrent requests.
+	// computations across concurrent requests, and client-go's rate
+	// limiter throttles the SSAR issuance.
 	pending := make(map[listVerdictKey]struct{})
 	collectListEntryNamespaces(configs.AuthorizationPolicies, kubernetes.AuthorizationPolicies, pending)
 	collectListEntryNamespaces(configs.DestinationRules, kubernetes.DestinationRules, pending)
@@ -719,14 +713,11 @@ func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster 
 	verdicts := make(map[listVerdictKey]bool, len(pending))
 	var mu sync.Mutex
 	var wg sync.WaitGroup
-	sem := make(chan struct{}, maxConcurrentListSSARs)
 	for key := range pending {
 		wg.Add(1)
 		go func(key listVerdictKey) {
 			defer wg.Done()
-			sem <- struct{}{}
 			allowed := in.canListType(ctx, cluster, key.namespace, key.gvk)
-			<-sem
 			mu.Lock()
 			verdicts[key] = allowed
 			mu.Unlock()
