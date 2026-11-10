@@ -5,12 +5,12 @@ import { MessageType } from 'types/NotificationCenter';
 import type { ExternalLink } from 'types/Dashboards';
 import { ISTIO_ZTUNNEL_DASHBOARD } from 'types/Dashboards';
 import type { GrafanaInfo } from 'types/GrafanaInfo';
-import { ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
+import { ISTIO_DASHBOARDS, ISTIO_SERVICE_DASHBOARD, ISTIO_WORKLOAD_DASHBOARD } from 'types/GrafanaInfo';
 import type { PersesInfo } from 'types/PersesInfo';
 import { t } from 'utils/I18nUtils';
 import { GrafanaLinks } from 'components/Metrics/GrafanaLinks';
 import { buildPersesLinks } from 'components/Metrics/PersesLinks';
-import { MetricsObjectTypes } from 'types/Metrics';
+import type { MetricsObjectTypes } from 'types/Metrics';
 
 export type IstioDashboardKind = 'app' | 'control-plane' | 'service' | 'workload' | 'ztunnel';
 export type IstioDashboardTool = 'Grafana' | 'Perses';
@@ -58,6 +58,23 @@ const hasExternalService = (serviceName: string): boolean => {
   return externalServices.some(service => service.name.toLowerCase() === serviceName);
 };
 
+export const hasIstioExternalDashboards = (): boolean => {
+  return hasExternalService('grafana') || hasExternalService('perses');
+};
+
+const controlPlaneDashboardNames = new Set<string>([...ISTIO_DASHBOARDS, ISTIO_ZTUNNEL_DASHBOARD]);
+
+const filterBuiltObjectLinks = (built: ExternalLink[], kind: 'app' | 'service' | 'workload'): ExternalLink[] => {
+  if (kind === 'workload') {
+    return built.filter(link => link.name === ISTIO_WORKLOAD_DASHBOARD);
+  }
+  if (kind === 'service') {
+    return built.filter(link => link.name === ISTIO_SERVICE_DASHBOARD);
+  }
+
+  return built.filter(link => !controlPlaneDashboardNames.has(link.name));
+};
+
 const pairsToLinks = (pairs: [string, string][]): ExternalLink[] => {
   return pairs.filter(([, url]) => isSafeHttpUrl(url)).map(([name, url]) => ({ name, url, variables: {} }));
 };
@@ -85,10 +102,16 @@ const selectObjectDashboardLinks = (
     project: extra?.project
   };
 
-  // App, workload, and service details show object-specific dashboards only.
-  return tool === 'grafana'
-    ? pairsToLinks(GrafanaLinks.buildGrafanaLinks(builderProps))
-    : pairsToLinks(buildPersesLinks(builderProps));
+  const built =
+    tool === 'grafana'
+      ? pairsToLinks(GrafanaLinks.buildGrafanaLinks(builderProps))
+      : pairsToLinks(buildPersesLinks(builderProps));
+
+  if (options.kind === 'app' || options.kind === 'workload' || options.kind === 'service') {
+    return filterBuiltObjectLinks(built, options.kind);
+  }
+
+  return [];
 };
 
 let grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
