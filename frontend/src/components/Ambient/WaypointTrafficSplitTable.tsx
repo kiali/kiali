@@ -51,6 +51,52 @@ const donutCellStyle = kialiStyle({
   verticalAlign: 'middle'
 });
 
+const tableContainerStyle = kialiStyle({
+  minWidth: 0
+});
+
+const tableStyle = kialiStyle({
+  tableLayout: 'fixed',
+  width: '100%'
+});
+
+const truncateTextStyle = kialiStyle({
+  display: 'inline-block',
+  maxWidth: '100%',
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  verticalAlign: 'middle',
+  whiteSpace: 'nowrap'
+});
+
+const nameCellWrapStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  gap: PFSpacer.xs,
+  maxWidth: '100%',
+  minWidth: 0
+});
+
+const truncatedLinkStyle = kialiStyle({
+  display: 'block',
+  flex: '1 1 auto',
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap'
+});
+
+const viewingMarkerStyle = kialiStyle({
+  flexShrink: 0
+});
+
+const TruncatedText: React.FC<{ text: string }> = ({ text }) => (
+  <Tooltip content={text}>
+    <span className={truncateTextStyle}>{text}</span>
+  </Tooltip>
+);
+
 type Props = {
   configs?: GatewayWaypointTrafficSplitConfig[];
   showDonut?: boolean;
@@ -88,20 +134,29 @@ const renderNameCell = (
 ): React.ReactNode => {
   const isCurrent = isViewingWaypointSlice(slice, viewingWorkload, viewingNamespace, viewingCluster);
   return (
-    <div data-test={slice.role === 'primary' ? 'waypoint-primary-row' : 'waypoint-canary-row'}>
+    <div
+      className={nameCellWrapStyle}
+      data-test={slice.role === 'primary' ? 'waypoint-primary-row' : 'waypoint-canary-row'}
+    >
       {isCurrent && (
         <Tooltip content={t('This waypoint')}>
-          <span aria-label={t('This waypoint')} data-test="waypoint-traffic-split-viewing-marker">
+          <span
+            aria-label={t('This waypoint')}
+            className={viewingMarkerStyle}
+            data-test="waypoint-traffic-split-viewing-marker"
+          >
             <KialiIcon.Star color={PFColors.Gold400} />
           </span>
         </Tooltip>
       )}
-      <KialiLink
-        className={classes(linkStyle)}
-        to={waypointHref(slice.workloadNamespace, slice.workloadName, slice.cluster)}
-      >
-        {slice.workloadName}
-      </KialiLink>
+      <Tooltip content={slice.workloadName}>
+        <KialiLink
+          className={classes(linkStyle, truncatedLinkStyle)}
+          to={waypointHref(slice.workloadNamespace, slice.workloadName, slice.cluster)}
+        >
+          {slice.workloadName}
+        </KialiLink>
+      </Tooltip>
     </div>
   );
 };
@@ -204,14 +259,14 @@ export const WaypointTrafficSplitTable: React.FC<Props> = ({
   const percentageTitle = t('Percentage');
 
   return (
-    <div data-test="waypoint-traffic-split-table">
-      <Table aria-label={t('Traffic split')} variant={TableVariant.compact}>
+    <div className={tableContainerStyle} data-test="waypoint-traffic-split-table">
+      <Table aria-label={t('Traffic split')} className={tableStyle} variant={TableVariant.compact}>
         <Thead>
           <Tr>
-            <Th>{namespaceTitle}</Th>
-            <Th>{nameTitle}</Th>
-            <Th>{roleTitle}</Th>
-            {showDonut && <Th>{percentageTitle}</Th>}
+            <Th width={30}>{namespaceTitle}</Th>
+            <Th width={35}>{nameTitle}</Th>
+            <Th width={20}>{roleTitle}</Th>
+            {showDonut && <Th width={15}>{percentageTitle}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -219,7 +274,7 @@ export const WaypointTrafficSplitTable: React.FC<Props> = ({
             <Tr key={row.key}>
               {row.namespace !== undefined && (
                 <Td className={mergedCellStyle} dataLabel={namespaceTitle} rowSpan={row.namespaceRowSpan}>
-                  {row.namespace}
+                  <TruncatedText text={row.namespace} />
                 </Td>
               )}
               <Td dataLabel={nameTitle}>{row.name}</Td>

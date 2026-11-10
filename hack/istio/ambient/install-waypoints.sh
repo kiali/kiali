@@ -21,6 +21,13 @@ SHARED_CANARY_GATEWAY="egress-gateway-canary"
 SHARED_CANARY_PRIMARY_GATEWAY="egress-gateway"
 SHARED_CANARY_WEIGHT_A=10
 SHARED_CANARY_WEIGHT_B=30
+# UI demos: long Kubernetes names and canary split without weight annotation (defaults to 0%).
+LONG_SPLIT_CLIENT_NS="waypoint-canary-long-names-client-namespace-demo"
+LONG_SPLIT_PRIMARY_GW="waypoint-primary-gateway-with-very-long-resource-name"
+LONG_SPLIT_CANARY_GW="waypoint-canary-gateway-with-very-long-resource-name"
+NO_WEIGHT_SPLIT_NS="waypoint-canary-no-weight-annotation"
+NO_WEIGHT_PRIMARY_GW="waypoint"
+NO_WEIGHT_CANARY_GW="waypoint-canary"
 
 while [ $# -gt 0 ]; do
   key="$1"
@@ -126,6 +133,20 @@ apply_namespace_canary_split() {
   apply_namespace_canary_split_weight "${1}" "${2}" "${CANARY_WEIGHT}" "${3:-}"
 }
 
+apply_namespace_canary_split_no_weight() {
+  local ns="$1"
+  local canary_gateway="$2"
+  local canary_gateway_ns="${3:-}"
+  ${CLIENT_EXE} label namespace "${ns}" \
+    istio.io/use-waypoint-canary="${canary_gateway}" \
+    --overwrite
+  if [ -n "${canary_gateway_ns}" ]; then
+    ${CLIENT_EXE} label namespace "${ns}" \
+      istio.io/use-waypoint-canary-namespace="${canary_gateway_ns}" \
+      --overwrite
+  fi
+}
+
 apply_namespace_canary_split_weight() {
   local ns="$1"
   local canary_gateway="$2"
@@ -201,6 +222,28 @@ spec:
             values:
 ${namespace_values}
 EGW
+}
+
+install_long_names_canary_demo() {
+  local ns="${LONG_SPLIT_CLIENT_NS}"
+  echo "Installing canary split demo with long namespace and gateway names (${ns}) ..."
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n "${ns}"
+  sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n "${ns}"
+  apply_waypoint_gateway "${ns}" "${LONG_SPLIT_PRIMARY_GW}" service
+  apply_waypoint_gateway "${ns}" "${LONG_SPLIT_CANARY_GW}" service
+  ${CLIENT_EXE} label namespace "${ns}" "istio.io/use-waypoint=${LONG_SPLIT_PRIMARY_GW}" --overwrite
+  apply_namespace_canary_split_weight "${ns}" "${LONG_SPLIT_CANARY_GW}" "${CANARY_WEIGHT}"
+}
+
+install_no_weight_annotation_canary_demo() {
+  local ns="${NO_WEIGHT_SPLIT_NS}"
+  echo "Installing canary split demo without istio.io/use-waypoint-canary-weight (${ns}) ..."
+  ${CLIENT_EXE} apply -f ${HACK_SCRIPT_DIR}/resources/echo-service.yaml -n "${ns}"
+  sed "s|\${CURL_IMAGE}|${CURL_IMAGE}|g" ${HACK_SCRIPT_DIR}/resources/curl-pod.yaml | ${CLIENT_EXE} apply -f - -n "${ns}"
+  apply_waypoint_gateway "${ns}" "${NO_WEIGHT_PRIMARY_GW}" service
+  apply_waypoint_gateway "${ns}" "${NO_WEIGHT_CANARY_GW}" service
+  ${CLIENT_EXE} label namespace "${ns}" "istio.io/use-waypoint=${NO_WEIGHT_PRIMARY_GW}" --overwrite
+  apply_namespace_canary_split_no_weight "${ns}" "${NO_WEIGHT_CANARY_GW}"
 }
 
 install_shared_canary_egress_waypoint_demo() {
@@ -314,6 +357,9 @@ install_canary_waypoint_demos() {
   ${CLIENT_EXE} label svc echo-service -n waypoint-override-canary istio.io/use-waypoint=use-this --overwrite
   apply_waypoint_gateway waypoint-override-canary use-this-canary service
   apply_service_canary_split waypoint-override-canary echo-service use-this-canary
+
+  install_long_names_canary_demo
+  install_no_weight_annotation_canary_demo
 }
 
 # Go to the main output directory and try to find an Istio there.
@@ -335,7 +381,18 @@ fi
 
 # Define waypoint namespaces
 declare -a waypoint_namespaces=("waypoint-forservice" "waypoint-forworkload" "waypoint-forall" "waypoint-fornone" "waypoint-differentns" "waypoint-common-infrastructure" "waypoint-override")
-declare -a waypoint_canary_namespaces=("waypoint-forservice-canary" "waypoint-forworkload-canary" "waypoint-forall-canary" "waypoint-fornone-canary" "waypoint-differentns-canary" "${SHARED_CANARY_CLIENT_B}" "waypoint-common-infrastructure-canary" "waypoint-override-canary")
+declare -a waypoint_canary_namespaces=(
+  "waypoint-forservice-canary"
+  "waypoint-forworkload-canary"
+  "waypoint-forall-canary"
+  "waypoint-fornone-canary"
+  "waypoint-differentns-canary"
+  "${SHARED_CANARY_CLIENT_B}"
+  "waypoint-common-infrastructure-canary"
+  "waypoint-override-canary"
+  "${LONG_SPLIT_CLIENT_NS}"
+  "${NO_WEIGHT_SPLIT_NS}"
+)
 
 declare -a namespaces_to_prepare=("${waypoint_namespaces[@]}")
 if [ "${CANARY}" == "true" ]; then

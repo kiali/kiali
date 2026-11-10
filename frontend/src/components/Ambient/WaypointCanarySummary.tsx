@@ -30,6 +30,8 @@ const canarySectionHeaderStyle = kialiStyle({
 });
 
 const canarySectionTitleStyle = kialiStyle({
+  fontSize: 'var(--pf-t--global--font--size--body--default)',
+  fontWeight: 'var(--pf-t--global--font--weight--body--default)',
   margin: 0
 });
 
@@ -66,7 +68,7 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
   return (
     <div data-test="waypoint-canary-info-panel">
       <div className={canarySectionHeaderStyle}>
-        <Content className={canarySectionTitleStyle} component={ContentVariants.h6}>
+        <Content className={canarySectionTitleStyle} component={ContentVariants.p}>
           {t('Canary waypoints')}
         </Content>
       </div>

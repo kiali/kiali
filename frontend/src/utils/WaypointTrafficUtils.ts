@@ -26,8 +26,21 @@ const gatewaySplitScore = (split: WaypointTrafficSplit | undefined): number => {
 export const WAYPOINT_MULTIPLE_SPLITS_LABEL = 'Multiple traffic splits';
 export const WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL = 'multi-%';
 
-export const formatWaypointMultiWeightGraphLabel = (role?: 'canary' | 'primary'): string => {
-  return role ? `${role} ${WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL}` : WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL;
+const formatWaypointRoleWeightGraphLabel = (role: 'canary' | 'primary', weight: number): string => {
+  return `${role} (${weight}%)`;
+};
+
+const inferWaypointGraphRoleFromWorkload = (workload: string): 'canary' | 'primary' =>
+  /canary/i.test(workload) ? 'canary' : 'primary';
+
+/** Secondary label when several splits reference the same gateway (always role-prefixed, e.g. canary (multi-%)). */
+export const formatWaypointMultiWeightGraphLabel = (
+  role: 'canary' | 'primary' | undefined,
+  workload?: string
+): string => {
+  const multi = `(${WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL})`;
+  const resolved = role ?? (workload ? inferWaypointGraphRoleFromWorkload(workload) : 'primary');
+  return `${resolved} ${multi}`;
 };
 
 const gatewayWaypointGraphRole = (
@@ -131,7 +144,7 @@ export const gatewayWaypointGraphCanaryLabel = (
   const uniqueLines = [...new Set(lines)];
   if (uniqueLines.length > 1) {
     return includeWeight
-      ? formatWaypointMultiWeightGraphLabel(gatewayWaypointGraphRole(configs, workload, workloadNamespace))
+      ? formatWaypointMultiWeightGraphLabel(gatewayWaypointGraphRole(configs, workload, workloadNamespace), workload)
       : uniqueLines[0];
   }
   return uniqueLines[0];
@@ -148,10 +161,10 @@ export const waypointNodeCanaryBadge = (
     return undefined;
   }
   if (gatewayMatchesNode(split.canary, workload, workloadNamespace)) {
-    return includeWeight ? `canary ${split.canaryWeight}%` : 'canary';
+    return includeWeight ? formatWaypointRoleWeightGraphLabel('canary', split.canaryWeight) : 'canary';
   }
   if (gatewayMatchesNode(split.primary, workload, workloadNamespace)) {
-    return includeWeight ? `primary ${split.primaryWeight}%` : 'primary';
+    return includeWeight ? formatWaypointRoleWeightGraphLabel('primary', split.primaryWeight) : 'primary';
   }
   return undefined;
 };
@@ -198,11 +211,11 @@ export const formatWaypointGatewayDetailLabel = (
 const backendRoleLabel = (label: string, includeWeight: boolean): string | undefined => {
   const canary = label.match(/^Canary(?: (\d+)%)?$/i) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/i);
   if (canary) {
-    return includeWeight && canary[1] ? `canary ${Number(canary[1])}%` : 'canary';
+    return includeWeight && canary[1] ? formatWaypointRoleWeightGraphLabel('canary', Number(canary[1])) : 'canary';
   }
   const primary = label.match(/^Primary(?: (\d+)%)?$/i) ?? label.match(/^Waypoint role primary(?: (\d+)%)?$/i);
   if (primary) {
-    return includeWeight && primary[1] ? `primary ${Number(primary[1])}%` : 'primary';
+    return includeWeight && primary[1] ? formatWaypointRoleWeightGraphLabel('primary', Number(primary[1])) : 'primary';
   }
   return undefined;
 };
@@ -210,13 +223,13 @@ const backendRoleLabel = (label: string, includeWeight: boolean): string | undef
 /** Backend may bake the weight into waypointCanaryLabel; strip it when Traffic Distribution is off. */
 export const formatWaypointCanaryLabel = (label: string, includeWeight: boolean): string => {
   if (label === WAYPOINT_MULTIPLE_SPLITS_LABEL) {
-    return includeWeight ? WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL : label;
+    return label;
   }
   const translated = backendRoleLabel(label, includeWeight);
   if (translated) {
     return translated;
   }
-  return includeWeight ? label : label.replace(/\s+\d+%$/, '');
+  return includeWeight ? label : label.replace(/\s+\d+%$/, '').replace(/\s*\(\d+%\)$/, '');
 };
 
 type WaypointCanaryLabelOptions = {
@@ -245,7 +258,8 @@ export const withWaypointCanarySecondaryLabel = (options: WaypointCanaryLabelOpt
             options.splitConfigs
               ? gatewayWaypointGraphRole(options.splitConfigs, options.workload, options.workloadNamespace)
               : (waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, false) as
-                  'canary' | 'primary' | undefined)
+                  'canary' | 'primary' | undefined),
+            options.workload
           )
         : options.splitConfigs && options.splitConfigs.length > 0
           ? gatewayWaypointGraphCanaryLabel(
