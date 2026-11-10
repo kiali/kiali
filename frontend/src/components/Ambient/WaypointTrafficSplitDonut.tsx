@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ChartDonut } from '@patternfly/react-charts/victory';
 import { VictoryPie } from 'victory-pie';
+import type { CallbackArgs } from 'victory-core';
 import { istioCanaryUpgradeChartColorScale } from 'utils/IstioCanaryUpgradeChart';
 import type { WaypointTrafficSplit } from '../../types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
@@ -28,6 +29,52 @@ const centerLabelStyle = kialiStyle({
   width: '3.5rem'
 });
 
+const sliceIndexFromArgs = (args: CallbackArgs): number | undefined => {
+  const { index } = args;
+  if (index === undefined) {
+    return undefined;
+  }
+  const sliceIndex = typeof index === 'number' ? index : Number(index);
+  return Number.isNaN(sliceIndex) ? undefined : sliceIndex;
+};
+
+const buildSliceOpacity = (hoveredSlice: number | undefined): ((args: CallbackArgs) => number) => {
+  return (args: CallbackArgs): number => {
+    const sliceIndex = sliceIndexFromArgs(args);
+    if (sliceIndex === undefined) {
+      return 1;
+    }
+    return hoveredSlice !== undefined && hoveredSlice !== sliceIndex ? 0.35 : 1;
+  };
+};
+
+type WaypointSplitHoverEvents = {
+  eventHandlers: {
+    onMouseEnter: (event: unknown, props: CallbackArgs) => void;
+    onMouseLeave: () => void;
+  };
+  target: 'data';
+}[];
+
+const buildSliceHoverEvents = (
+  setHoveredSlice: React.Dispatch<React.SetStateAction<number | undefined>>
+): WaypointSplitHoverEvents => [
+  {
+    target: 'data' as const,
+    eventHandlers: {
+      onMouseEnter: (_event: unknown, props: CallbackArgs) => {
+        const sliceIndex = sliceIndexFromArgs(props);
+        if (sliceIndex !== undefined) {
+          setHoveredSlice(sliceIndex);
+        }
+      },
+      onMouseLeave: () => {
+        setHoveredSlice(undefined);
+      }
+    }
+  }
+];
+
 type Props = {
   compact?: boolean;
   split: WaypointTrafficSplit;
@@ -42,23 +89,8 @@ export const WaypointTrafficSplitDonut: React.FC<Props> = ({ compact, split }) =
   const hovered = hoveredSlice !== undefined ? slices[hoveredSlice] : undefined;
   const title = hovered ? `${hovered.role} (${hovered.share}%)` : '';
   const subTitle = hovered ? hovered.workloadName : t('Traffic split');
-
-  const sliceOpacity = ({ index }: { index?: number }): number =>
-    hoveredSlice !== undefined && hoveredSlice !== index ? 0.35 : 1;
-
-  const sliceHoverEvents = [
-    {
-      target: 'data',
-      eventHandlers: {
-        onMouseEnter: (_: unknown, props: { index: number }) => {
-          setHoveredSlice(props.index);
-        },
-        onMouseLeave: () => {
-          setHoveredSlice(undefined);
-        }
-      }
-    }
-  ];
+  const sliceOpacity = buildSliceOpacity(hoveredSlice);
+  const sliceHoverEvents = React.useMemo(() => buildSliceHoverEvents(setHoveredSlice), []);
 
   if (compact) {
     return (
