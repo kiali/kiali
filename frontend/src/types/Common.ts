@@ -54,6 +54,7 @@ export const enum Theme {
 export const enum Language {
   CHINESE = 'zh',
   ENGLISH = 'en',
+  FRENCH = 'fr',
   JAPANESE = 'ja',
   KOREAN = 'ko',
   SPANISH = 'es',

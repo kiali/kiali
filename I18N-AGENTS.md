@@ -3,6 +3,7 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/fr/translation.json`
 - `frontend/public/locales/ja/translation.json`
 - `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
@@ -82,7 +83,7 @@ Keep whitespace and punctuation around placeholders intact unless the locale req
 
 Traffic Graph and Mesh Find help (`GraphHelpFind.tsx`, `MeshHelpFind.tsx`) includes usage notes whose i18n keys start with `Abbreviate:`. They document shorthand operands users type in the Find box (for example `cb|circuitbreaker`).
 
-For every locale (`es`, `ja`, `ko`, `zh`, and future languages):
+For every locale (`es`, `fr`, `ja`, `ko`, `zh`, and future languages):
 
 - Translate only the label word that corresponds to English `Abbreviate` (plus the punctuation that follows it in that language).
 - Keep the entire `alias|operand` list unchanged, in English, including commas and pipe characters.
@@ -155,6 +156,72 @@ These entries already match the preferred direction and are good references for 
 - Do not: `espacio de nombres`, `malla`, translated variants of `workload`, `escucha` / `oyente` for `Listener`, `servidor` for Gateway form `Server` / `Servers`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
+
+## French conventions (`fr`)
+
+### Canonical term choices
+
+Use these consistently in French UI strings:
+
+- `namespace` -> `namespace` / `namespaces`
+  - Avoid `espace de noms` in technical UI text
+- `control plane` -> `plan de contrôle`
+- `data plane` -> `plan de données`
+- `mesh` -> `mesh` / `meshes`
+  - Avoid `maillage`
+- `workload` -> `workload` / `workloads`
+  - Avoid alternating with `charge de travail`
+- `listener` -> `Listener` / `Listeners`
+  - Keep in English: Gateway API spec field (`spec.listeners`)
+- `server` -> `Server` / `Servers`
+  - Keep in English: Istio Gateway form field for listener endpoints
+  - Exception: `Server Certificate` -> `Certificat du serveur` (only the descriptive word is translated)
+
+Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
+
+Additional French UI terms:
+
+- `host` / `hosts` -> `hôte` / `hôtes`
+- `hostname` / `hostnames` -> `nom d’hôte` / `noms d’hôte`
+- `HTTP Cookie` -> `cookie HTTP`
+- `span` / `spans` -> `span` / `spans` for tracing
+- `rule` / `rules` -> `règle` / `règles` in human-readable captions
+- `consistent hash` -> `hachage cohérent`
+- `traffic shifting` -> `répartition du trafic`
+- `bytes` / `kilobytes` -> `octets` / `kilooctets` in prose; keep unit symbols such as `bps`, `kps`, and `KiB` unchanged
+
+These choices apply to UI wording, not literal API fields, expressions, or resource kinds. For example, translate `Destination Rule` as `Règle de destination` and `Virtual Service` as `Service virtuel`, while preserving `DestinationRule`, `VirtualService`, `hosts`, and other literal API tokens when used as identifiers.
+
+### French UI style
+
+- Prefer short, neutral wording that works across French variants
+- Prefer infinitive or impersonal UI phrasing (`Sélectionner`, `Filtrer par namespace`)
+- Prefer `vous` over `tu` when a personal form is needed
+- Use French punctuation in UI prose; preserve punctuation inside literal technical expressions
+- Rephrase if a sentence becomes awkward after keeping a technical term in English
+- Use `Depuis {{duration}}` for the recent-duration caption and `État du trafic (depuis {{duration}})` for its traffic-status heading; this neutral construction works with abbreviated durations in every plural form
+- Use French plural agreement for `_other` and `_many` values, even when the English default value is singular
+
+### Existing examples from `frontend/public/locales/fr/translation.json`
+
+These entries match the preferred direction and are good references for future edits:
+
+- `"Namespace": "Namespace"`
+- `"Namespaces": "Namespaces"`
+- `"Filter by Namespace": "Filtrer par namespace"`
+- `"Namespace Health": "Santé du namespace"`
+- `"Control plane": "Plan de contrôle"`
+- `"Data plane": "Plan de données"`
+- `"Mesh": "Mesh"`
+- `"Waypoint": "Waypoint"`
+- `"{{count}} workload_other": "{{count}} workloads"`
+- `"Listeners": "Listeners"`
+- `"Servers": "Servers"`
+
+### French do / do not
+
+- Do: `plan de contrôle`, `plan de données`, `namespace`, `mesh`, `workload`, `Listener`, `Server`
+- Do not: `espace de noms`, `maillage`, translated variants of `workload`
 
 ## Japanese conventions (`ja`)
 
