@@ -478,11 +478,15 @@ func addTraffic(ctx context.Context, trafficMap graph.TrafficMap, metric string,
 			addToDestServices(injectedService.Metadata, destCluster, destSvcNs, destSvcName)
 
 			addEdgeTraffic(val, protocol, code, flags, host, injectedService, dest, edgeTSHash)
-			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			if !destIsWaypoint {
+				addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			}
 		}
 	} else {
 		if addEdgeTraffic(val, protocol, code, flags, host, source, dest, edgeTSHash) {
-			addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			if !destIsWaypoint {
+				addToDestServices(dest.Metadata, destCluster, destSvcNs, destSvcName)
+			}
 		}
 	}
 }
