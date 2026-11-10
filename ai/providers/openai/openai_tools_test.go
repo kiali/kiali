@@ -339,6 +339,14 @@ func TestConvertToolToOpenAI_FromToolDefinition_GetMetrics(t *testing.T) {
 							"type":        "string",
 							"description": "Rate interval for metrics (e.g., '1m', '5m'). Optional, defaults to '10m'",
 						},
+						"since": map[string]interface{}{
+							"type":        "string",
+							"description": "Start of the time range: an RFC3339 timestamp (e.g., '2026-01-02T15:04:05Z') or a duration before 'to' (e.g., '30m', '2h', '1d'). Optional, defaults to 30 minutes before 'to'",
+						},
+						"to": map[string]interface{}{
+							"type":        "string",
+							"description": "End of the time range as an RFC3339 timestamp (e.g., '2026-01-02T16:04:05Z'). Optional, defaults to now",
+						},
 						"direction": map[string]interface{}{
 							"type":        "string",
 							"description": "Traffic direction. Optional, defaults to 'outbound'",
