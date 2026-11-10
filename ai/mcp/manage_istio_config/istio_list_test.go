@@ -72,6 +72,7 @@ func TestIstioList_ReturnsGroupedOutput(t *testing.T) {
 
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
 	k8s := kubetest.NewFakeK8sClient(ns, vs, dr)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	args := map[string]interface{}{
@@ -142,6 +143,7 @@ func TestIstioList_FilterByService(t *testing.T) {
 
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
 	k8s := kubetest.NewFakeK8sClient(ns, vs1, vs2, dr1, dr2)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	args := map[string]interface{}{
@@ -352,6 +354,7 @@ func TestIstioList_AllGatewaysReturnedWithoutServiceFilter(t *testing.T) {
 
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
 	k8s := kubetest.NewFakeK8sClient(ns, referencedGW, unreferencedGW, vs)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	args := map[string]interface{}{
@@ -396,6 +399,7 @@ func TestIstioList_TCPAndUDPRoutesAreNotValidated(t *testing.T) {
 	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo"}}
 	k8s := kubetest.NewFakeK8sClient(ns, tcpRoute, udpRoute)
 	k8s.GatewayAPIEnabled = true
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 
 	args := map[string]interface{}{

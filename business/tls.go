@@ -7,6 +7,7 @@ import (
 
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -69,7 +70,11 @@ func (in *TLSService) MeshWidemTLSStatus(ctx context.Context, cluster string, re
 	}
 	controlPlane := mesh.ControlPlanes[idx]
 
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
+	// Aggregate mesh-level computation: fetch the raw SA-wide list. The
+	// per-user list RBAC filter would drop types the user cannot list
+	// (e.g. an empty PeerAuthentication set in the root namespace) and
+	// report a wrong mesh-wide status.
+	istioConfigList, err := in.businessLayer.IstioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
@@ -135,7 +140,10 @@ func (in *TLSService) NamespaceWidemTLSStatus(ctx context.Context, namespace, cl
 		IncludePeerAuthentications: true,
 	}
 
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
+	// Aggregate mesh-level computation: fetch the raw SA-wide list so the
+	// mTLS status does not depend on the user's per-type list RBAC. The
+	// results are narrowed to the requested namespace below.
+	istioConfigList, err := in.businessLayer.IstioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return models.MTLSStatus{}, err
 	}
@@ -191,7 +199,11 @@ func (in *TLSService) ClusterWideNSmTLSStatus(ctx context.Context, namespaces []
 		IncludePeerAuthentications: true,
 	}
 
-	istioConfigList, err := in.businessLayer.IstioConfig.GetIstioConfigList(ctx, cluster, criteria)
+	// Aggregate mesh-level computation: fetch the raw SA-wide list so the
+	// per-namespace statuses do not depend on the user's per-type list
+	// RBAC. DestinationRules from namespaces the user cannot access can
+	// still apply to accessible namespaces (exportTo) and must be seen.
+	istioConfigList, err := in.businessLayer.IstioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return result, err
 	}

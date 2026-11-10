@@ -550,7 +550,13 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 		IncludeWorkloadEntries:        true,
 		IncludeWorkloadGroups:         true,
 	}
-	istioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
+	// Raw SA-wide fetch, like ValidateIstioObject below: the background
+	// reconciler must not run the per-user list RBAC filter. Its "user" is
+	// the service account, so the SSARs would always ask for the SA's own
+	// permissions and their verdicts would fail closed into the shared
+	// validation cache. filterIstioConfigByManagedNamespaces scopes the
+	// result to the managed namespaces.
+	istioConfigList, err := in.istioConfig.getIstioConfigList(ctx, cluster, meta_v1.NamespaceAll, criteria)
 	if err != nil {
 		return false, nil, err
 	}

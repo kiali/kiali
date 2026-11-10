@@ -26,6 +26,7 @@ const (
 
 func setupBusinessLayer(t *testing.T, istioObjects ...runtime.Object) *business.Layer {
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = testCluster
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
