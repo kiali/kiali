@@ -216,6 +216,15 @@ These entries match the preferred direction and are good references for future e
 - Do: `コントロールプレーン`, `データプレーン`, `ネームスペース`, `メッシュ`, `ワークロード`
 - Do not: alternate with `名前空間`, `網目`, or `負荷`
 
+## Korean conventions (`ko`)
+
+These working conventions follow existing Korean usage, current English, and UI
+composition. They do not imply native-speaker validation.
+
+- Use `스팬` for tracing spans, consistent with the existing `Spans` and span-detail captions.
+- Korean cardinal plurals use `_other`, including for 0 and 1. Preserve existing inactive plural variants; they do not supply the active caption.
+- For trace labels prefixed with a filtered count, put `{{count}}` before the noun so the complete label remains readable: `1 / 2개 스팬`, `1 / 2개 관련 앱`, and `1 / 2개 오류 포함 스팬`. This convention applies to those composed labels, rather than prescribing word order for all Korean text.
+
 ## Simplified Chinese conventions (`zh`)
 
 These working conventions follow the existing Simplified Chinese catalog,
@@ -228,7 +237,7 @@ current English, and UI composition. They do not imply native-speaker validation
 
 ## Default conventions for other locales
 
-Korean (`ko`) and other locales without their own conventions use the core principles and general rules above.
+Locales without their own conventions use the core principles and general rules above.
 
 - Use natural grammar and established technical UI terminology in the target language, consistent with existing translations in that locale.
 - Preserve the globally protected names and tokens, but do not apply Spanish-only choices such as keeping `namespace`, `mesh`, or `workload` in English to other languages.
