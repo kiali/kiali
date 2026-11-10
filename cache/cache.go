@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -290,6 +291,12 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 	return c.canReadWebhookByCluster[cluster]
 }
 
+// ErrClusterNotCached is returned by GetKubeCache when there is no cache configured for the
+// cluster at all (e.g. a misconfigured remote registration), as opposed to a cache that is
+// degraded because Kiali's access to the cluster was revoked. Callers can distinguish the
+// two with errors.Is: a degraded cache recovers on its own, a missing one does not.
+var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
+
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
 		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
@@ -299,7 +306,7 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	cache, found := c.kubeCache[cluster]
 	if !found {
 		// This should not happen but it probably means the user clients have clusters that the cache doesn't know about.
-		return nil, fmt.Errorf("cache for cluster [%s] not found", cluster)
+		return nil, fmt.Errorf("cluster [%s]: %w", cluster, ErrClusterNotCached)
 	}
 	return cache, nil
 }

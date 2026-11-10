@@ -29,8 +29,21 @@ type groupResource struct {
 	resource string
 }
 
+// checkOutcome classifies the result of a live access check.
+type checkOutcome int
+
+const (
+	// checkAllowed means the check says the resource is readable.
+	checkAllowed checkOutcome = iota
+	// checkDenied means the check definitively says the resource is not readable.
+	checkDenied
+	// checkUnknown means the check could not tell, e.g. it timed out or the API server
+	// was unreachable. It is not evidence of a revocation.
+	checkUnknown
+)
+
 type accessCheckResult struct {
-	allowed bool
+	outcome checkOutcome
 	at      time.Time
 }
 
@@ -58,8 +71,11 @@ func NewClusterAccess(check AccessCheck) *ClusterAccess {
 }
 
 // ConfirmRevoked is called on a Forbidden watch error. It returns true, and marks the cluster
-// degraded, unless a live check shows the resource is still readable. A check that fails is
-// treated as a revocation, which keeps the previous behavior when the cluster can't be reached.
+// degraded, only when a live check definitively says the resource is no longer readable. A
+// check that cannot tell (timeout, unreachable API server) is not evidence of a revocation:
+// tearing down on it could permanently degrade a healthy-but-slow cluster, because the
+// recovery probe uses the same check and could then never confirm recovery. The cache is
+// kept and the debounce retries.
 func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, resource string) bool {
 	gr := groupResource{group: group, resource: resource}
 
@@ -67,19 +83,23 @@ func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, reso
 	last, found := a.lastCheck[cluster][gr]
 	a.mu.Unlock()
 
-	allowed := last.allowed
+	outcome := last.outcome
 	if !found || a.now().Sub(last.at) >= accessCheckDebounce {
-		allowed = a.runCheck(ctx, cluster, gr)
+		outcome = a.runCheck(ctx, cluster, gr)
 		a.mu.Lock()
 		if a.lastCheck[cluster] == nil {
 			a.lastCheck[cluster] = map[groupResource]accessCheckResult{}
 		}
-		a.lastCheck[cluster][gr] = accessCheckResult{allowed: allowed, at: a.now()}
+		a.lastCheck[cluster][gr] = accessCheckResult{outcome: outcome, at: a.now()}
 		a.mu.Unlock()
 	}
 
-	if allowed {
+	switch outcome {
+	case checkAllowed:
 		log.Infof("Watch on [%s] in cluster [%s] was forbidden, but Kiali can still read it. Keeping the cache.", resource, cluster)
+		return false
+	case checkUnknown:
+		log.Infof("Unable to tell whether access to [%s] in cluster [%s] was revoked. Keeping the cache and retrying later.", resource, cluster)
 		return false
 	}
 
@@ -119,7 +139,7 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 	for cluster, resources := range pending {
 		restored := true
 		for _, gr := range resources {
-			if !a.runCheck(ctx, cluster, gr) {
+			if a.runCheck(ctx, cluster, gr) != checkAllowed {
 				restored = false
 				break
 			}
@@ -127,13 +147,35 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 		if !restored {
 			continue
 		}
+		// The checks ran without the lock. A resource revoked again while they were
+		// running must not be cleared by this probe, so re-verify the revoked set is
+		// still the one that was checked before deleting anything.
 		a.mu.Lock()
+		if !a.revokedUnchangedLocked(cluster, resources) {
+			a.mu.Unlock()
+			continue
+		}
 		delete(a.degraded, cluster)
 		delete(a.revoked, cluster)
 		delete(a.lastCheck, cluster)
 		a.mu.Unlock()
 		log.Infof("Kiali can read cluster [%s] again. Its cache will be rebuilt on the next read.", cluster)
 	}
+}
+
+// revokedUnchangedLocked reports whether the cluster's revoked set is still exactly the
+// resources the probe checked. It must be called with a.mu held.
+func (a *ClusterAccess) revokedUnchangedLocked(cluster string, resources []groupResource) bool {
+	current := a.revoked[cluster]
+	if len(current) != len(resources) {
+		return false
+	}
+	for _, gr := range resources {
+		if _, ok := current[gr]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // Run probes degraded clusters every interval until ctx is done.
@@ -150,13 +192,17 @@ func (a *ClusterAccess) Run(ctx context.Context, interval time.Duration) {
 	}
 }
 
-func (a *ClusterAccess) runCheck(ctx context.Context, cluster string, gr groupResource) bool {
+func (a *ClusterAccess) runCheck(ctx context.Context, cluster string, gr groupResource) checkOutcome {
 	ctx, cancel := context.WithTimeout(ctx, accessCheckTimeout)
 	defer cancel()
 	allowed, err := a.check(ctx, cluster, gr.group, gr.resource)
-	if err != nil {
+	switch {
+	case err != nil:
 		log.Debugf("Unable to check access to [%s] in cluster [%s]: %s", gr.resource, cluster, err)
-		return false
+		return checkUnknown
+	case allowed:
+		return checkAllowed
+	default:
+		return checkDenied
 	}
-	return allowed
 }

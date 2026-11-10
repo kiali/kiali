@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-logr/zerologr"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 	extentionsv1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
 	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
@@ -393,9 +394,19 @@ func forbiddenResource(err error) (string, string) {
 	return statusErr.ErrStatus.Details.Group, statusErr.ErrStatus.Details.Kind
 }
 
+// accessCheckConcurrency bounds how many namespaces one access check queries at once. The
+// check runs on the reflector's goroutine under a 5s budget, so a sequential sweep does not
+// fit the budget on large non-cluster-wide installs.
+const accessCheckConcurrency = 8
+
+// errDenied reports that an SSAR definitively said the resource is not readable. It is
+// internal to newAccessCheck: the sentinel lets the errgroup cancel the remaining namespace
+// checks on first denial, preserving the fast-fail of the former sequential loop.
+var errDenied = errors.New("access denied")
+
 // newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
 // account can still list and watch a resource. Without cluster-wide access it checks every
-// accessible namespace.
+// accessible namespace, concurrently.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
 	return func(ctx context.Context, cluster, group, resource string) (bool, error) {
 		if resource == "" {
@@ -409,16 +420,28 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 		if !conf.Deployment.ClusterWideAccess {
 			namespaces = conf.Deployment.AccessibleNamespaces
 		}
+
+		g, gctx := errgroup.WithContext(ctx)
+		g.SetLimit(accessCheckConcurrency)
 		for _, namespace := range namespaces {
-			reviews, err := client.GetSelfSubjectAccessReview(ctx, namespace, group, resource, []string{"list", "watch"})
-			if err != nil {
-				return false, err
-			}
-			for _, review := range reviews {
-				if !review.Status.Allowed {
-					return false, nil
+			g.Go(func() error {
+				reviews, err := client.GetSelfSubjectAccessReview(gctx, namespace, group, resource, []string{"list", "watch"})
+				if err != nil {
+					return err
 				}
+				for _, review := range reviews {
+					if !review.Status.Allowed {
+						return errDenied
+					}
+				}
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			if errors.Is(err, errDenied) {
+				return false, nil
 			}
+			return false, err
 		}
 		return true, nil
 	}

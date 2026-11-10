@@ -3,6 +3,7 @@ package istio
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"path"
@@ -776,7 +777,14 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			if isHomeCluster {
 				return nil, err
 			}
-			log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
+			// A cluster with no cache configured at all is a configuration error that will
+			// not resolve itself, unlike a degraded cluster which recovers when access is
+			// restored, so it gets its own message at error level.
+			if errors.Is(err, cache.ErrClusterNotCached) {
+				log.Errorf("Skipping cluster [%s] when resolving the mesh: no cache is configured for it (check the cluster's registration)", cluster.Name)
+			} else {
+				log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
+			}
 			continue
 		}
 

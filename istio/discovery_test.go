@@ -3289,3 +3289,44 @@ trustDomain: cluster.local
 	_, err = newDiscovery("east").Mesh(context.TODO())
 	require.Error(err, "the home cluster is still required")
 }
+
+// Assisted-by: Claude Code
+func TestGetMeshSkipsRemoteClusterWithNoCache(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
+		istioConfigMap,
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
+	)
+	// The ghost cluster has a client but no cache reader, like a misconfigured remote.
+	ghostClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	clients := map[string]kubernetes.ClientInterface{"east": k8s, "ghost": ghostClient}
+	readers := map[string]ctrlclient.Reader{"east": k8s}
+
+	kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
+	require.NoError(err)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	mesh, err := discovery.Mesh(context.TODO())
+	require.NoError(err, "a remote cluster with no cache configured is skipped, not fatal")
+	require.Len(mesh.ControlPlanes, 1)
+	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name)
+}
