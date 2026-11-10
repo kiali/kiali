@@ -24,6 +24,25 @@ const gatewaySplitScore = (split: WaypointTrafficSplit | undefined): number => {
 };
 
 export const WAYPOINT_MULTIPLE_SPLITS_LABEL = 'Multiple traffic splits';
+export const WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL = 'multi-%';
+
+export const formatWaypointMultiWeightGraphLabel = (role?: 'canary' | 'primary'): string => {
+  return role ? `${role} ${WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL}` : WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL;
+};
+
+const gatewayWaypointGraphRole = (
+  configs: GatewayWaypointTrafficSplitConfig[],
+  workload: string,
+  workloadNamespace: string
+): 'canary' | 'primary' | undefined => {
+  for (const cfg of configs) {
+    const role = waypointNodeCanaryBadge(workload, workloadNamespace, cfg.split, false);
+    if (role === 'canary' || role === 'primary') {
+      return role;
+    }
+  }
+  return undefined;
+};
 
 export const pickBestGatewayWaypointSplit = (splits: WaypointTrafficSplit[]): WaypointTrafficSplit | undefined => {
   if (!splits.length) {
@@ -109,10 +128,13 @@ export const gatewayWaypointGraphCanaryLabel = (
   if (lines.length === 0) {
     return undefined;
   }
-  if (lines.length > 1) {
-    return t(WAYPOINT_MULTIPLE_SPLITS_LABEL);
+  const uniqueLines = [...new Set(lines)];
+  if (uniqueLines.length > 1) {
+    return includeWeight
+      ? formatWaypointMultiWeightGraphLabel(gatewayWaypointGraphRole(configs, workload, workloadNamespace))
+      : uniqueLines[0];
   }
-  return lines[0];
+  return uniqueLines[0];
 };
 
 /** Label text for PatternFly topology badge under waypoint node labels. */
@@ -126,10 +148,10 @@ export const waypointNodeCanaryBadge = (
     return undefined;
   }
   if (gatewayMatchesNode(split.canary, workload, workloadNamespace)) {
-    return includeWeight ? t('Canary {{weight}}%', { weight: split.canaryWeight }) : t('Canary');
+    return includeWeight ? `canary ${split.canaryWeight}%` : 'canary';
   }
   if (gatewayMatchesNode(split.primary, workload, workloadNamespace)) {
-    return includeWeight ? t('Primary {{weight}}%', { weight: split.primaryWeight }) : t('Primary');
+    return includeWeight ? `primary ${split.primaryWeight}%` : 'primary';
   }
   return undefined;
 };
@@ -174,13 +196,13 @@ export const formatWaypointGatewayDetailLabel = (
 };
 
 const backendRoleLabel = (label: string, includeWeight: boolean): string | undefined => {
-  const canary = label.match(/^Canary(?: (\d+)%)?$/) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/);
+  const canary = label.match(/^Canary(?: (\d+)%)?$/i) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/i);
   if (canary) {
-    return includeWeight && canary[1] ? t('Canary {{weight}}%', { weight: Number(canary[1]) }) : t('Canary');
+    return includeWeight && canary[1] ? `canary ${Number(canary[1])}%` : 'canary';
   }
-  const primary = label.match(/^Primary(?: (\d+)%)?$/) ?? label.match(/^Waypoint role primary(?: (\d+)%)?$/);
+  const primary = label.match(/^Primary(?: (\d+)%)?$/i) ?? label.match(/^Waypoint role primary(?: (\d+)%)?$/i);
   if (primary) {
-    return includeWeight && primary[1] ? t('Primary {{weight}}%', { weight: Number(primary[1]) }) : t('Primary');
+    return includeWeight && primary[1] ? `primary ${Number(primary[1])}%` : 'primary';
   }
   return undefined;
 };
@@ -188,7 +210,7 @@ const backendRoleLabel = (label: string, includeWeight: boolean): string | undef
 /** Backend may bake the weight into waypointCanaryLabel; strip it when Traffic Distribution is off. */
 export const formatWaypointCanaryLabel = (label: string, includeWeight: boolean): string => {
   if (label === WAYPOINT_MULTIPLE_SPLITS_LABEL) {
-    return t(WAYPOINT_MULTIPLE_SPLITS_LABEL);
+    return includeWeight ? WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL : label;
   }
   const translated = backendRoleLabel(label, includeWeight);
   if (translated) {
@@ -214,18 +236,70 @@ type WaypointCanaryLabelOptions = {
 export const withWaypointCanarySecondaryLabel = (options: WaypointCanaryLabelOptions): string | undefined => {
   const includeWeight = options.includeWeight ?? false;
   // The backend resolves Service overrides; namespace configuration is only a fallback.
-  const canaryLine = options.backendLabel
-    ? formatWaypointCanaryLabel(options.backendLabel, includeWeight)
-    : options.splitConfigs && options.splitConfigs.length > 0
-      ? gatewayWaypointGraphCanaryLabel(
-          options.splitConfigs,
-          options.workload,
-          options.workloadNamespace,
-          includeWeight
-        )
-      : waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
+  const backendIsAggregate = options.backendLabel === WAYPOINT_MULTIPLE_SPLITS_LABEL;
+  const canaryLine =
+    options.backendLabel && !backendIsAggregate
+      ? formatWaypointCanaryLabel(options.backendLabel, includeWeight)
+      : backendIsAggregate && includeWeight
+        ? formatWaypointMultiWeightGraphLabel(
+            options.splitConfigs
+              ? gatewayWaypointGraphRole(options.splitConfigs, options.workload, options.workloadNamespace)
+              : (waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, false) as
+                  'canary' | 'primary' | undefined)
+          )
+        : options.splitConfigs && options.splitConfigs.length > 0
+          ? gatewayWaypointGraphCanaryLabel(
+              options.splitConfigs,
+              options.workload,
+              options.workloadNamespace,
+              includeWeight
+            )
+          : waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, includeWeight);
   if (!canaryLine) {
     return options.secondaryLabel;
   }
   return options.secondaryLabel ? `${options.secondaryLabel} · ${canaryLine}` : canaryLine;
+};
+
+export type WaypointTrafficSplitSlice = {
+  cluster?: string;
+  role: 'canary' | 'primary';
+  share: number;
+  workloadName: string;
+  workloadNamespace: string;
+};
+
+/** Primary and canary rows for split table / donut chart. */
+export const buildWaypointTrafficSplitSlices = (split: WaypointTrafficSplit): WaypointTrafficSplitSlice[] => {
+  const primary = split.primary;
+  const canary = split.canary!;
+  return [
+    {
+      cluster: primary.cluster,
+      role: 'primary',
+      share: split.primaryWeight,
+      workloadName: primary.name,
+      workloadNamespace: primary.namespace
+    },
+    {
+      cluster: canary.cluster,
+      role: 'canary',
+      share: split.canaryWeight,
+      workloadName: canary.name,
+      workloadNamespace: canary.namespace
+    }
+  ];
+};
+
+export const isViewingWaypointSlice = (
+  slice: WaypointTrafficSplitSlice,
+  viewingWorkload: string,
+  viewingNamespace: string,
+  viewingCluster?: string
+): boolean => {
+  return (
+    slice.workloadName === viewingWorkload &&
+    slice.workloadNamespace === viewingNamespace &&
+    (!viewingCluster || !slice.cluster || slice.cluster === viewingCluster)
+  );
 };

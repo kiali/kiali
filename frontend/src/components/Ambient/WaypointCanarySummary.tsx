@@ -5,8 +5,6 @@ import {
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
-  Flex,
-  FlexItem,
   Label
 } from '@patternfly/react-core';
 import { KialiLink } from '../Link/KialiLink';
@@ -18,8 +16,8 @@ import { PFSpacer } from 'styles/PfSpacer';
 import { PFColors } from 'components/Pf/PfColors';
 import { findGatewayWaypointSplitConfigsFromNamespaces } from 'utils/WaypointTrafficUtils';
 import { kialiStyle } from 'styles/StyleUtils';
-import { WaypointTrafficSplitDonut } from './WaypointTrafficSplitDonut';
-import { gatewayConfigsWithCanary, WaypointTrafficSplitSelector } from './WaypointTrafficSplitSelector';
+import { WaypointTrafficSplitTable } from './WaypointTrafficSplitTable';
+import { gatewayConfigsWithCanary } from './WaypointTrafficSplitSelector';
 
 const panelSectionHRStyle = kialiStyle({
   border: 0,
@@ -35,11 +33,6 @@ const canarySectionTitleStyle = kialiStyle({
   margin: 0
 });
 
-const canarySelectorColumnStyle = kialiStyle({
-  flexBasis: '55%',
-  maxWidth: '65%'
-});
-
 const waypointHref = (namespace: string, name: string, cluster?: string): string => {
   let href = `/namespaces/${namespace}/workloads/${name}`;
   if (cluster && isMultiCluster) {
@@ -49,6 +42,7 @@ const waypointHref = (namespace: string, name: string, cluster?: string): string
 };
 
 type WaypointCanaryInfoPanelProps = {
+  compact?: boolean;
   configs?: GatewayWaypointTrafficSplitConfig[];
   workloadCluster?: string;
   workloadName: string;
@@ -57,6 +51,7 @@ type WaypointCanaryInfoPanelProps = {
 
 /** Rich layout for the waypoint workload Info tab. */
 export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = ({
+  compact,
   configs,
   workloadCluster,
   workloadName,
@@ -64,59 +59,24 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
 }) => {
   const withCanary = React.useMemo(() => gatewayConfigsWithCanary(configs), [configs]);
 
-  const [selectedIndex, setSelectedIndex] = React.useState(0);
-  const safeIndex = Math.min(selectedIndex, Math.max(0, withCanary.length - 1));
-  const active = withCanary[safeIndex];
-  const split = active?.split;
-
-  if (!split?.canary) {
+  if (withCanary.length === 0) {
     return null;
   }
-
-  const configSourceLabel =
-    active.namespace && active.configLevel
-      ? active.configLevel === 'service' && active.serviceName
-        ? t('{{namespace}} / {{service}} ({{level}} level)', {
-            level: active.configLevel,
-            namespace: active.namespace,
-            service: active.serviceName
-          })
-        : t('{{namespace}} ({{level}} level)', { level: active.configLevel, namespace: active.namespace })
-      : split.configLevel
-        ? t('{{level}} level', { level: split.configLevel })
-        : undefined;
 
   return (
     <div data-test="waypoint-canary-info-panel">
       <div className={canarySectionHeaderStyle}>
-        <Flex
-          alignItems={{ default: 'alignItemsCenter' }}
-          gap={{ default: 'gapSm' }}
-          justifyContent={{ default: 'justifyContentSpaceBetween' }}
-        >
-          <FlexItem shrink={{ default: 'shrink' }}>
-            <Content className={canarySectionTitleStyle} component={ContentVariants.h6}>
-              {t('Canary waypoints')}
-            </Content>
-          </FlexItem>
-          <FlexItem className={canarySelectorColumnStyle} grow={{ default: 'grow' }}>
-            <WaypointTrafficSplitSelector configs={withCanary} onSelect={setSelectedIndex} selectedIndex={safeIndex} />
-          </FlexItem>
-        </Flex>
-      </div>
-      <WaypointTrafficSplitDonut
-        split={split}
-        viewingCluster={workloadCluster}
-        viewingWorkload={workloadName}
-        viewingNamespace={workloadNamespace}
-      />
-      {configSourceLabel && (
-        <Content component={ContentVariants.small} style={{ display: 'block', marginTop: PFSpacer.md }}>
-          <strong>{t('Canary configuration')}</strong>
-          {': '}
-          {configSourceLabel}
+        <Content className={canarySectionTitleStyle} component={ContentVariants.h6}>
+          {t('Canary waypoints')}
         </Content>
-      )}
+      </div>
+      <WaypointTrafficSplitTable
+        configs={withCanary}
+        showDonut={!compact}
+        viewingCluster={workloadCluster}
+        viewingNamespace={workloadNamespace}
+        viewingWorkload={workloadName}
+      />
     </div>
   );
 };
@@ -217,6 +177,7 @@ export const WaypointGatewayCanaryPanel: React.FC<WaypointGatewayCanaryPanelProp
   return (
     <>
       <WaypointCanaryInfoPanel
+        compact
         configs={displayConfigs}
         workloadCluster={cluster}
         workloadName={workload}

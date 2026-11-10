@@ -264,7 +264,9 @@ describe('waypoint node labels', () => {
 
     setNodeLabel(node, new Map(), makeSettings(), GraphLayout.Dagre);
 
-    expect((node.data as NodeData).secondaryLabel).toContain(backendLabel);
+    const role = backendLabel.startsWith('Primary') ? 'primary' : 'canary';
+    const weight = backendLabel.match(/(\d+)%/)?.[1];
+    expect((node.data as NodeData).secondaryLabel).toContain(weight ? `${role} ${weight}%` : role);
   });
 
   it.each([undefined, ''])('falls back to the namespace split when the backend label is %s', backendLabel => {
@@ -272,7 +274,7 @@ describe('waypoint node labels', () => {
 
     setNodeLabel(node, new Map(), makeSettings(), GraphLayout.Dagre);
 
-    expect((node.data as NodeData).secondaryLabel).toContain('Canary 30%');
+    expect((node.data as NodeData).secondaryLabel).toContain('canary 30%');
   });
 
   it('shows multiple traffic splits when several namespaces reference the gateway', () => {
@@ -312,7 +314,7 @@ describe('waypoint node labels', () => {
 
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
 
-    expect((node.data as NodeData).secondaryLabel).toContain('Multiple traffic splits');
+    expect((node.data as NodeData).secondaryLabel).toContain('canary multi-%');
   });
 
   it('keeps the effective role when toggling percentages without duplicating labels', () => {
@@ -321,19 +323,19 @@ describe('waypoint node labels', () => {
     const settings = makeSettings();
 
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
-    expect(data.secondaryLabel).toContain('Canary 10%');
+    expect(data.secondaryLabel).toContain('canary 10%');
 
     settings.edgeLabels = [];
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
-    expect(data.secondaryLabel).toContain('Canary');
+    expect(data.secondaryLabel).toContain('canary');
     expect(data.secondaryLabel).not.toMatch(/\d+%/);
 
     settings.edgeLabels = [EdgeLabelMode.TRAFFIC_DISTRIBUTION];
     data.waypointCanaryLabel = 'Canary 20%';
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
-    expect(data.secondaryLabel).toContain('Canary 20%');
-    expect(data.secondaryLabel?.match(/Canary/g)).toHaveLength(1);
+    expect(data.secondaryLabel).toContain('canary 20%');
+    expect(data.secondaryLabel?.match(/canary/g)).toHaveLength(1);
     expect(data.secondaryLabel).not.toMatch(/10%|30%/);
   });
 });
