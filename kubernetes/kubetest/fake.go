@@ -149,15 +149,6 @@ func NewFakeK8sClient(objects ...runtime.Object) *FakeK8sClient {
 	}
 
 	kubeClient := kubefake.NewSimpleClientset(kubeObjects...) //nolint:staticcheck // SA1019
-	// The fake clientset echoes SelfSubjectAccessReviews back with
-	// Allowed=false, which would make RBAC-filtered lists come back empty.
-	// Default to allowing everything; tests that need to deny can prepend
-	// their own reactor since test-prepended reactors run first.
-	kubeClient.PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
-		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
-		review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "RBAC allowed by fake client"}
-		return true, review, nil
-	})
 	istioClient := istiofake.NewSimpleClientset(istioObjects...)
 	gatewayAPIClient := gatewayapifake.NewSimpleClientset(gatewayapiObjects...) //nolint:staticcheck // SA1019
 	inferenceAPIClient := inferenceapifake.NewSimpleClientset(inferenceapiObjects...)
@@ -226,6 +217,20 @@ func (c *FakeK8sClient) GetCacheKey() string {
 }
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }
 func (c *FakeK8sClient) ClusterInfo() kialikube.ClusterInfo { return c.KubeClusterInfo }
+
+// AllowAllSelfSubjectAccessReviews makes every SelfSubjectAccessReview
+// created through this fake client succeed. kubefake echoes reviews back
+// with Allowed=false, so tests that exercise the user-RBAC-filtered config
+// list paths must opt in or every config type is filtered out. Tests that
+// need to deny can still prepend their own reactors: reactors prepended
+// after this call run first.
+func (c *FakeK8sClient) AllowAllSelfSubjectAccessReviews() {
+	c.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "RBAC allowed by fake client"}
+		return true, review, nil
+	})
+}
 func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level string) error {
 	return nil
 }

@@ -560,7 +560,16 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	// grab all config for the cluster
 	criteria := allIstioConfigCriteria()
-	istioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
+	// Raw SA-wide fetch, like ValidateIstioObject below: the background
+	// reconciler must not run the per-user list RBAC filter. Its "user" is
+	// the service account, so the SSARs would always ask for the SA's own
+	// permissions and their verdicts would fail closed into the shared
+	// validation cache. cache.ReadableNamespaces is the SA-wide scope in
+	// both access modes (nil = cluster-wide in cluster-wide access;
+	// the readable namespaces otherwise), and
+	// filterIstioConfigByManagedNamespaces scopes the result to the
+	// managed namespaces.
+	istioConfigList, err := in.istioConfig.getIstioConfigList(ctx, cluster, cache.ReadableNamespaces(in.conf, in.kialiCache, cluster), criteria)
 	if err != nil {
 		return false, nil, err
 	}

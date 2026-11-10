@@ -349,6 +349,7 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 		fakeIstioObjects...,
 	)
 	k8s.OpenShift = true
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	conf := config.NewConfig()
 
@@ -808,6 +809,7 @@ deployment:
 		objects = append(objects, gateway)
 	}
 	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
@@ -850,6 +852,7 @@ func TestGetIstioConfigListIncludesTrafficExtensions(t *testing.T) {
 		fakeIstioObjects = append(fakeIstioObjects, tx.DeepCopyObject())
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
@@ -1032,6 +1035,7 @@ func TestGetIstioConfigListNoUserClientReturnsEmpty(t *testing.T) {
 		}
 		k8s := kubetest.NewFakeK8sClient(fakeObjects...)
 		k8s.OpenShift = true
+		k8s.AllowAllSelfSubjectAccessReviews()
 		return k8s
 	}
 
@@ -1122,6 +1126,7 @@ func TestGetIstioConfigListUsesSAClientForDiscovery(t *testing.T) {
 	// where the user lacks discovery access); the SA client reports it fine.
 	userK8s := newClient()
 	userK8s.IstioAPIInstalled = false
+	userK8s.AllowAllSelfSubjectAccessReviews()
 	saK8s := newClient()
 
 	layer := NewLayerBuilder(t, conf).WithClient(userK8s).Build()
@@ -1146,6 +1151,7 @@ func TestGetIstioConfigListCachesListVerdicts(t *testing.T) {
 		fakeObjects = append(fakeObjects, g.DeepCopyObject())
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 	cluster := conf.KubernetesConfig.ClusterName
