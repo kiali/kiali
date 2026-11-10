@@ -108,7 +108,9 @@ describe('graph node hover layering', () => {
 
     fireEvent.mouseEnter(body.closest('g[style]')!);
     fireEvent.mouseOver(target, { relatedTarget: null });
-    act(() => rstest.advanceTimersByTime(200));
+    act(() => {
+      rstest.advanceTimersByTime(200);
+    });
 
     const raisedLabel = topLayer.querySelector('.pf-topology__node__label')!;
     expect(raisedLabel).not.toBeNull();
@@ -125,7 +127,9 @@ describe('graph node hover layering', () => {
     fireEvent.mouseOver(raisedBody, { relatedTarget: target });
     fireEvent.mouseOut(raisedBody, { relatedTarget: raisedLabel });
     fireEvent.mouseOver(raisedLabel, { relatedTarget: raisedBody });
-    act(() => rstest.advanceTimersByTime(1000));
+    act(() => {
+      rstest.advanceTimersByTime(1000);
+    });
 
     expect(topLayer.querySelector('.pf-topology__node__label')).toBe(raisedLabel);
     expect(raisedLabel.closest('.pf-m-hover')).not.toBeNull();
@@ -136,13 +140,17 @@ describe('graph node hover layering', () => {
 
     fireEvent.mouseOut(raisedLabel, { relatedTarget: raisedBody });
     fireEvent.mouseOver(raisedBody, { relatedTarget: raisedLabel });
-    act(() => rstest.advanceTimersByTime(400));
+    act(() => {
+      rstest.advanceTimersByTime(400);
+    });
     expect(topLayer.querySelector('.pf-topology__node__label')).toBe(raisedLabel);
     expect(onHover.mock.calls.every(([, isHovered]) => isHovered)).toBe(true);
 
     fireEvent.mouseLeave(raisedBody.closest('g[style]')!);
     fireEvent.mouseOut(raisedBody, { relatedTarget: null });
-    act(() => rstest.advanceTimersByTime(400));
+    act(() => {
+      rstest.advanceTimersByTime(400);
+    });
     expect(topLayer.querySelector('.pf-topology__node')).toBeNull();
     expect(defaultLayer.querySelector('.pf-topology__node__background')).not.toBeNull();
     expect(onHover).toHaveBeenLastCalledWith(node, false);
@@ -154,7 +162,9 @@ describe('graph node hover layering', () => {
     const defaultLayer = container.querySelector('[data-layer-id="default"]')!;
     const body = defaultLayer.querySelector('.pf-topology__node__background')!;
     fireEvent.mouseEnter(body.closest('g[style]')!);
-    act(() => rstest.advanceTimersByTime(200));
+    act(() => {
+      rstest.advanceTimersByTime(200);
+    });
     const raisedBody = topLayer.querySelector('.pf-topology__node__background')!;
     const hoverGroup = raisedBody.closest('g[style]')!;
     fireEvent.mouseEnter(hoverGroup);

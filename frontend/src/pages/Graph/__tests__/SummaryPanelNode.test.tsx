@@ -1,7 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DecoratedGraphNodeData, GraphNodeData, GraphType, NodeType } from '../../../types/Graph';
-import { SummaryPanelNodeComponent, SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
+import type { DecoratedGraphNodeData, GraphNodeData } from '../../../types/Graph';
+import { GraphType, NodeType } from '../../../types/Graph';
+import { SummaryPanelNodeComponent } from '../SummaryPanelNode';
+import type { SummaryPanelNodeComponentProps } from '../SummaryPanelNode';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { store } from '../../../store/ConfigStore';
 import { Provider } from 'react-redux';
@@ -103,6 +105,18 @@ describe('SummaryPanelNodeComponent', () => {
     const { container } = renderPanel();
     const wlLinks = container.querySelectorAll('a[href*="workload"]');
     expect(wlLinks.length).toBe(1);
+  });
+
+  it('renders a workload details link when the node is a waypoint proxy', () => {
+    nodeData = {
+      ...nodeData,
+      app: '',
+      isWaypoint: true,
+      nodeType: NodeType.WORKLOAD,
+      workload: 'waypoint'
+    };
+    const { container } = renderPanel();
+    expect(container.querySelector('a[href$="/namespaces/bookinfo/workloads/waypoint"]')).toBeInTheDocument();
   });
 
   it('shows the VS host count inline and opens its popover with the keyboard', async () => {

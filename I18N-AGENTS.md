@@ -4,6 +4,7 @@ This document defines shared translation conventions for Kiali UI locale files, 
 
 - `frontend/public/locales/es/translation.json`
 - `frontend/public/locales/fr/translation.json`
+- `frontend/public/locales/ja/translation.json`
 - `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
 
@@ -82,7 +83,7 @@ Keep whitespace and punctuation around placeholders intact unless the locale req
 
 Traffic Graph and Mesh Find help (`GraphHelpFind.tsx`, `MeshHelpFind.tsx`) includes usage notes whose i18n keys start with `Abbreviate:`. They document shorthand operands users type in the Find box (for example `cb|circuitbreaker`).
 
-For every locale (`es`, `fr`, `ko`, `zh`, and future languages):
+For every locale (`es`, `fr`, `ja`, `ko`, `zh`, and future languages):
 
 - Translate only the label word that corresponds to English `Abbreviate` (plus the punctuation that follows it in that language).
 - Keep the entire `alias|operand` list unchanged, in English, including commas and pipe characters.
@@ -115,6 +116,11 @@ Use these consistently in Spanish UI strings:
   - Keep in English: Istio Gateway form field for listener endpoints
   - Same rule as `Listener`: API/form field name, not a generic word
   - Exception: `Server Certificate` -> `Certificado del servidor` (only the descriptive word is translated)
+- `host` -> `host` / `hosts`
+- `hostname` -> `nombre de host` / `nombres de host`
+- `HTTP Cookie` -> `cookie HTTP`
+- `zoom` -> `zoom`
+  - Keep the established borrowed term, as in `Zoom del gráfico`
 
 Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
 
@@ -217,16 +223,93 @@ These entries match the preferred direction and are good references for future e
 - Do: `plan de contrôle`, `plan de données`, `namespace`, `mesh`, `workload`, `Listener`, `Server`
 - Do not: `espace de noms`, `maillage`, translated variants of `workload`
 
+## Japanese conventions (`ja`)
+
+### Canonical term choices
+
+Use these consistently in Japanese UI strings:
+
+- `namespace` -> `ネームスペース`
+- `control plane` -> `コントロールプレーン`
+- `data plane` -> `データプレーン`
+- `mesh` -> `メッシュ`
+- `workload` -> `ワークロード`
+
+Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
+
+Additional Japanese UI terms:
+
+- `listener` -> `リスナー`; `server` -> `サーバー`; tracing `span` -> `スパン`
+- `rule` -> `ルール`; `route rule` -> `ルーティングルール`
+- `host` / `hostname` -> `ホスト` / `ホスト名`
+- `HTTP Cookie` -> `HTTP クッキー`
+- `egress` -> `エグレス`; `consistent hash` -> `コンシステントハッシュ`
+- Human-readable `Destination Rule` / `Authorization Policy` / `Virtual Service` -> `宛先ルール` / `認可ポリシー` / `仮想サービス`
+- Human-readable `Peer Authentication` / `Request Authentication` -> `ピア認証` / `リクエスト認証`
+- Human-readable `Service Entry` / `Workload Entry` -> `サービスエントリー` / `ワークロードエントリー`
+- TLS mode captions `Simple` / `Permissive` / `Strict` -> `シンプル` / `許容` / `厳格`; keep raw enum values unchanged
+
+These are working choices based on Japanese usage, the English message and UI context, and Korean/Spanish references. They do not imply native-speaker approval. Literal API kinds, configuration fields, and Find operands retain their exact spelling; for example, translating a `Virtual Service` caption does not translate the `VirtualService` kind.
+
+### Japanese UI style
+
+- Prefer short, neutral UI wording
+- Prefer polite `です` / `ます` for full sentences
+- Prefer concise labels without sentence-ending particles when space is tight
+- Use katakana for established cloud-native loanwords (`ネームスペース`, `ワークロード`, `メッシュ`)
+- Rephrase if a sentence becomes awkward after keeping a technical term in English
+- Use `過去 {{duration}}` for recent durations and `トラフィックステータス（過去 {{duration}}）` for the traffic-status heading; keep quoted help captions in sync
+- Japanese cardinal plurals use `_other`, including for 0 and 1; a translated `_one` or `_many` entry does not supply the active caption
+- In trace count labels, put the count before the noun so an existing filtered-count prefix remains readable (for example `1 / 2 件のスパン`)
+- Use `名前解決方式` for ServiceEntry's `Resolution` caption; preserve `NONE`, `STATIC`, and `DNS` values
+- Use `プロンプト` / `出力` for prompt/completion token captions, keeping unit symbols such as `M` unchanged
+
+### Existing examples from `frontend/public/locales/ja/translation.json`
+
+These entries match the preferred direction and are good references for future edits:
+
+- `"Namespace": "ネームスペース"`
+- `"Namespaces": "ネームスペース"`
+- `"Filter by Namespace": "ネームスペースでフィルター"`
+- `"Namespace Health": "ネームスペースのヘルス"`
+- `"Control plane": "コントロールプレーン"`
+- `"Data plane": "データプレーン"`
+- `"Mesh": "メッシュ"`
+- `"Waypoint": "Waypoint"`
+- `"{{count}} workload_other": "{{count}} ワークロード"`
+
+### Japanese do / do not
+
+- Do: `コントロールプレーン`, `データプレーン`, `ネームスペース`, `メッシュ`, `ワークロード`
+- Do not: alternate with `名前空間`, `網目`, or `負荷`
+
+## Korean conventions (`ko`)
+
+These working conventions follow existing Korean usage, current English, and UI
+composition. They do not imply native-speaker validation.
+
+- Use `스팬` for tracing spans, consistent with the existing `Spans` and span-detail captions.
+- Korean cardinal plurals use `_other`, including for 0 and 1. Preserve existing inactive plural variants; they do not supply the active caption.
+- For trace labels prefixed with a filtered count, put `{{count}}` before the noun so the complete label remains readable: `1 / 2개 스팬`, `1 / 2개 관련 앱`, and `1 / 2개 오류 포함 스팬`. This convention applies to those composed labels, rather than prescribing word order for all Korean text.
+
+## Simplified Chinese conventions (`zh`)
+
+These working conventions follow the existing Simplified Chinese catalog,
+current English, and UI composition. They do not imply native-speaker validation.
+
+- Use Simplified Chinese wording and natural Chinese sentence order, consistent with existing translations.
+- Chinese cardinal plurals use `_other`, including for 0 and 1. Preserve existing inactive plural variants; they do not supply the active caption.
+- In Graph summary count fragments, the caller supplies the number: `host` / `hosts` use `个主机`, and `workload entry` / `workload entries` use `个工作负载条目`, producing `2 个主机` and `2 个工作负载条目`. Standalone headings use `主机` and `工作负载条目` without the measure word. Check the call site before reusing these values; literal API fields such as `hosts` remain unchanged.
+- Use Chinese punctuation such as `“…”` and `（…）` in prose outside protected tokens. The parenthesized cluster suffix does not need an English leading space; verify complete messages and preserve spacing required in other contexts.
+
 ## Default conventions for other locales
 
-Korean (`ko`), Simplified Chinese (`zh`), and future locales without their own conventions use the core principles and general rules above.
+Locales without their own conventions use the core principles and general rules above.
 
 - Use natural grammar and established technical UI terminology in the target language, consistent with existing translations in that locale.
 - Preserve the globally protected names and tokens, but do not apply Spanish-only choices such as keeping `namespace`, `mesh`, or `workload` in English to other languages.
 - Follow the shared [Find help: `Abbreviate:` strings](#find-help-abbreviate-strings-all-locales) rules, translating the introductory label while preserving the operands.
 - Record unresolved terminology for review by someone proficient in the target language. Add a language-specific section when the team agrees on terminology or style rules beyond these defaults.
-
-A validated Chinese-specific glossary is still pending. Until one is agreed, use these shared defaults rather than treating the Spanish glossary as authoritative for Chinese.
 
 ## When editing locale files
 
