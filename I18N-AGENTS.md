@@ -3,6 +3,7 @@
 This document defines shared translation conventions for Kiali UI locale files, especially:
 
 - `frontend/public/locales/es/translation.json`
+- `frontend/public/locales/ja/translation.json`
 - `frontend/public/locales/ko/translation.json`
 - `frontend/public/locales/zh/translation.json`
 
@@ -81,7 +82,7 @@ Keep whitespace and punctuation around placeholders intact unless the locale req
 
 Traffic Graph and Mesh Find help (`GraphHelpFind.tsx`, `MeshHelpFind.tsx`) includes usage notes whose i18n keys start with `Abbreviate:`. They document shorthand operands users type in the Find box (for example `cb|circuitbreaker`).
 
-For every locale (`es`, `ko`, `zh`, and future languages):
+For every locale (`es`, `ja`, `ko`, `zh`, and future languages):
 
 - Translate only the label word that corresponds to English `Abbreviate` (plus the punctuation that follows it in that language).
 - Keep the entire `alias|operand` list unchanged, in English, including commas and pipe characters.
@@ -149,6 +150,66 @@ These entries already match the preferred direction and are good references for 
 - Do not: `espacio de nombres`, `malla`, translated variants of `workload`, `escucha` / `oyente` for `Listener`, `servidor` for Gateway form `Server` / `Servers`
 
 Note: the current Spanish locale is only partially aligned. In particular, some existing entries still translate `Workload` as `Carga de trabajo` / `Cargas de trabajo`. Treat the conventions in this file as the preferred direction for future edits.
+
+## Japanese conventions (`ja`)
+
+### Canonical term choices
+
+Use these consistently in Japanese UI strings:
+
+- `namespace` -> `ネームスペース`
+- `control plane` -> `コントロールプレーン`
+- `data plane` -> `データプレーン`
+- `mesh` -> `メッシュ`
+- `workload` -> `ワークロード`
+
+Keep the established technical names listed above in English, including resource kinds such as `ServiceEntry` and `VirtualService`.
+
+Additional Japanese UI terms:
+
+- `listener` -> `リスナー`; `server` -> `サーバー`; tracing `span` -> `スパン`
+- `rule` -> `ルール`; `route rule` -> `ルーティングルール`
+- `host` / `hostname` -> `ホスト` / `ホスト名`
+- `HTTP Cookie` -> `HTTP クッキー`
+- `egress` -> `エグレス`; `consistent hash` -> `コンシステントハッシュ`
+- Human-readable `Destination Rule` / `Authorization Policy` / `Virtual Service` -> `宛先ルール` / `認可ポリシー` / `仮想サービス`
+- Human-readable `Peer Authentication` / `Request Authentication` -> `ピア認証` / `リクエスト認証`
+- Human-readable `Service Entry` / `Workload Entry` -> `サービスエントリー` / `ワークロードエントリー`
+- TLS mode captions `Simple` / `Permissive` / `Strict` -> `シンプル` / `許容` / `厳格`; keep raw enum values unchanged
+
+These are working choices based on Japanese usage, the English message and UI context, and Korean/Spanish references. They do not imply native-speaker approval. Literal API kinds, configuration fields, and Find operands retain their exact spelling; for example, translating a `Virtual Service` caption does not translate the `VirtualService` kind.
+
+### Japanese UI style
+
+- Prefer short, neutral UI wording
+- Prefer polite `です` / `ます` for full sentences
+- Prefer concise labels without sentence-ending particles when space is tight
+- Use katakana for established cloud-native loanwords (`ネームスペース`, `ワークロード`, `メッシュ`)
+- Rephrase if a sentence becomes awkward after keeping a technical term in English
+- Use `過去 {{duration}}` for recent durations and `トラフィックステータス（過去 {{duration}}）` for the traffic-status heading; keep quoted help captions in sync
+- Japanese cardinal plurals use `_other`, including for 0 and 1; a translated `_one` or `_many` entry does not supply the active caption
+- In trace count labels, put the count before the noun so an existing filtered-count prefix remains readable (for example `1 / 2 件のスパン`)
+- Use `名前解決方式` for ServiceEntry's `Resolution` caption; preserve `NONE`, `STATIC`, and `DNS` values
+- Use `プロンプト` / `出力` for prompt/completion token captions, keeping unit symbols such as `M` unchanged
+
+### Existing examples from `frontend/public/locales/ja/translation.json`
+
+These entries match the preferred direction and are good references for future edits:
+
+- `"Namespace": "ネームスペース"`
+- `"Namespaces": "ネームスペース"`
+- `"Filter by Namespace": "ネームスペースでフィルター"`
+- `"Namespace Health": "ネームスペースのヘルス"`
+- `"Control plane": "コントロールプレーン"`
+- `"Data plane": "データプレーン"`
+- `"Mesh": "メッシュ"`
+- `"Waypoint": "Waypoint"`
+- `"{{count}} workload_other": "{{count}} ワークロード"`
+
+### Japanese do / do not
+
+- Do: `コントロールプレーン`, `データプレーン`, `ネームスペース`, `メッシュ`, `ワークロード`
+- Do not: alternate with `名前空間`, `網目`, or `負荷`
 
 ## Default conventions for other locales
 
