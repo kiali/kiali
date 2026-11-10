@@ -1,30 +1,27 @@
-import { Button, Card, CardBody, CardFooter, CardHeader, CardTitle, Label, Tooltip } from '@patternfly/react-core';
-import {
-  ExclamationCircleIcon,
-  ExclamationTriangleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  InfoCircleIcon,
-  OutlinedQuestionCircleIcon,
-  RhUiAiSearchIcon,
-  RhUiAiTroubleshootIcon
-} from '@patternfly/react-icons';
+import { Button, Card, CardBody, CardHeader, CardTitle, Label, Tooltip } from '@patternfly/react-core';
+import { EyeIcon, EyeSlashIcon, RhUiAiSearchIcon, RhUiAiTroubleshootIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { GetIstioObjectUrl } from 'components/Link/IstioObjectLink';
 import { KialiLink } from 'components/Link/KialiLink';
-import { PFColors } from 'components/Pf/PfColors';
+import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
+import { KialiIcon } from 'config/KialiIcon';
 import { useAIInteraction } from 'hooks/aiInteraction';
 import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
-import { PFFontWeight } from 'styles/PfTypography';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import type {
   TroubleshootingSubProblem,
   TroubleshootingSuggestedAction,
   TroubleshootingValidationCheck
 } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
+import {
+  cleanSubProblemIssueText,
+  isRedundantSubProblemImpact,
+  parseTroubleshootingTarget
+} from './partitionTroubleshooting';
 
 const headerStyle = kialiStyle({
   alignItems: 'center',
@@ -36,32 +33,43 @@ const headerStyle = kialiStyle({
 const headerActionsStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
-  gap: PFSpacer.sm
+  flexWrap: 'wrap',
+  gap: PFSpacer.xs
 });
 
-const footerStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: PFSpacer.sm,
-  justifyContent: 'flex-end'
+const resourceNameStyle = kialiStyle({
+  fontWeight: PFFontWeight.BodyBold
+});
+
+const issueSummaryStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  fontWeight: 'normal'
 });
 
 const impactRowStyle = kialiStyle({
   alignItems: 'center',
+  color: 'var(--pf-t--global--text--color--subtle)',
   display: 'flex',
   flexWrap: 'wrap',
+  fontSize: PFFontSize.small,
   gap: PFSpacer.sm
 });
 
 const checksStyle = kialiStyle({
   display: 'flex',
   flexDirection: 'column',
-  gap: PFSpacer.sm,
-  marginTop: PFSpacer.sm
+  gap: PFSpacer.xs
 });
 
 const checkRowStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: PFSpacer.sm,
+  justifyContent: 'space-between'
+});
+
+const checkInfoStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
   flexWrap: 'wrap',
@@ -72,51 +80,24 @@ const checkCodeStyle = kialiStyle({
   fontWeight: PFFontWeight.BodyBold
 });
 
-const dangerIconStyle = kialiStyle({
-  color: PFColors.Danger,
-  flexShrink: 0
+const checkPathStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  fontSize: PFFontSize.small
 });
 
-const warningIconStyle = kialiStyle({
-  color: PFColors.Warning,
-  flexShrink: 0
-});
-
-const infoIconStyle = kialiStyle({
-  color: PFColors.Info,
-  flexShrink: 0
-});
-
-const adviceIconStyle = kialiStyle({
-  alignItems: 'center',
-  color: PFColors.Color100,
-  cursor: 'help',
-  display: 'inline-flex',
-  // Same height as the small Analyze button so the icon shares its center line.
-  height: '2rem'
+const checkAskStyle = kialiStyle({
+  marginLeft: 'auto'
 });
 
 const severityIcon = (severity?: string): React.ReactNode => {
   switch (severity) {
     case 'critical':
-      return <ExclamationCircleIcon aria-label={t('Critical')} className={dangerIconStyle} />;
+      return <KialiIcon.ExclamationCircle status="danger" />;
     case 'warning':
-      return <ExclamationTriangleIcon aria-label={t('Warning')} className={warningIconStyle} />;
+      return <KialiIcon.ExclamationTriangle status="warning" />;
     default:
-      return <InfoCircleIcon aria-label={t('Info')} className={infoIconStyle} />;
+      return <KialiIcon.Info status="info" />;
   }
-};
-
-const actionTooltip = (description: string, command?: string): React.ReactNode => {
-  if (!command) {
-    return description;
-  }
-  return (
-    <>
-      <div>{description}</div>
-      <div>{command}</div>
-    </>
-  );
 };
 
 const analysisQuery = (subProblem: TroubleshootingSubProblem, prompt: string): string => {
@@ -143,35 +124,40 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
 
   const hideLabel = hidden ? t('Show problem') : t('Hide problem');
   const checks = subProblem.checks ?? [];
+  const parsedTarget = React.useMemo(() => parseTroubleshootingTarget(subProblem), [subProblem]);
+  const cleanIssue = React.useMemo(
+    () => cleanSubProblemIssueText(subProblem, parsedTarget),
+    [parsedTarget, subProblem]
+  );
+  const issueWasTruncated = cleanIssue.includes('...') && !subProblem.issue.includes('...');
+  const showImpact = Boolean(impact && !isRedundantSubProblemImpact(subProblem));
 
-  const askButton = (prompt: string, label: string): React.ReactNode => {
+  const askIconButton = (prompt: string, ariaLabel: string): React.ReactNode => {
     const canAsk = canSendPrompt(prompt);
     return (
-      <Tooltip content={chatAllowed ? prompt : t('Chatbot is not allowed for this user')}>
+      <Tooltip content={chatAllowed ? t('Ask AI') : t('Chatbot is not allowed for this user')}>
         <span>
           <Button
-            aria-label={label}
+            aria-label={ariaLabel}
             data-test="ai-troubleshooting-ask-chatbot"
             icon={<RhUiAiSearchIcon />}
             isDisabled={!canAsk}
             onClick={() => askChat(prompt)}
             size="sm"
-            variant="secondary"
-          >
-            {t('Ask chatbot')}
-          </Button>
+            variant="plain"
+          />
         </span>
       </Tooltip>
     );
   };
 
-  const checkAskLabel = (check: TroubleshootingValidationCheck): string =>
-    check.path
-      ? t('Ask chatbot about {{code}} at {{path}}', { code: check.code, path: check.path })
-      : t('Ask chatbot about {{code}}', { code: check.code });
-
-  const askChatbotAction =
-    checks.length === 0 && suggestedPrompt ? askButton(suggestedPrompt, t('Ask chatbot')) : undefined;
+  const inlineCheckAskButton = (check: TroubleshootingValidationCheck): React.ReactNode => {
+    const prompt = check.suggestedPrompt ?? '';
+    const label = check.path
+      ? t('Ask AI about {{code}} at {{path}}', { code: check.code, path: check.path })
+      : t('Ask AI about {{code}}', { code: check.code });
+    return <span className={checkAskStyle}>{askIconButton(prompt, label)}</span>;
+  };
 
   const analyzePrompt = (action: TroubleshootingSuggestedAction): string => action.prompt || suggestedPrompt || '';
 
@@ -180,10 +166,10 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
     const canOpen = canSendPrompt(prompt);
 
     return (
-      <Tooltip content={canOpen ? prompt : t('AI troubleshooting is not available')}>
+      <Tooltip content={canOpen ? t('Try to fix with AI') : t('AI troubleshooting is not available')}>
         <span>
           <Button
-            aria-label={t('Analyze')}
+            aria-label={t('Try to fix with AI')}
             data-test="ai-troubleshooting-analyze"
             icon={<RhUiAiTroubleshootIcon />}
             isDisabled={!canOpen}
@@ -195,16 +181,20 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
               })
             }
             size="sm"
-            variant="secondary"
-          >
-            {t('Analyze')}
-          </Button>
+            variant="plain"
+          />
         </span>
       </Tooltip>
     );
   };
 
-  const showBody = Boolean(impact || askChatbotAction || checks.length > 0);
+  const primaryAnalyze = actions.find(action => action.type === 'Analyze' || action.type === 'Question');
+  const askChatbotAction =
+    checks.length === 0 && suggestedPrompt ? askIconButton(suggestedPrompt, t('Ask AI')) : undefined;
+
+  const badgeType = parsedTarget.badgeKey ? PFBadges[parsedTarget.badgeKey] : undefined;
+  const showNamespaceBadge = Boolean(parsedTarget.namespace && parsedTarget.badgeKey !== 'Namespace');
+  const showBody = Boolean(showImpact || checks.length > 0);
 
   return (
     <Card isCompact data-test="ai-troubleshooting-subproblem">
@@ -212,6 +202,8 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
         actions={{
           actions: (
             <div className={headerActionsStyle}>
+              {askChatbotAction}
+              {primaryAnalyze && analyzeAction(primaryAnalyze)}
               {subProblem.istioObject && (
                 <KialiLink
                   dataTest="ai-troubleshooting-view-istio-object"
@@ -240,18 +232,32 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
       >
         <CardTitle>
           <div className={headerStyle}>
-            {severityIcon(subProblem.severity)}
-            <span>{`[${subProblem.id}] ${subProblem.issue}`}</span>
-            <Label isCompact>{subProblem.target}</Label>
+            <Tooltip content={subProblem.id}>
+              <span>{severityIcon(subProblem.severity)}</span>
+            </Tooltip>
+            {badgeType && <PFBadge badge={badgeType} size="sm" />}
+            <span className={resourceNameStyle}>{parsedTarget.name}</span>
+            {showNamespaceBadge && (
+              <Label color="grey" data-test="ai-troubleshooting-namespace-badge" isCompact>
+                {`ns: ${parsedTarget.namespace}`}
+              </Label>
+            )}
+            {cleanIssue &&
+              (issueWasTruncated ? (
+                <Tooltip content={subProblem.issue}>
+                  <span className={issueSummaryStyle}>{`— ${cleanIssue}`}</span>
+                </Tooltip>
+              ) : (
+                <span className={issueSummaryStyle}>{`— ${cleanIssue}`}</span>
+              ))}
           </div>
         </CardTitle>
       </CardHeader>
       {showBody && (
         <CardBody>
-          {(impact || askChatbotAction) && (
+          {showImpact && (
             <div className={impactRowStyle}>
-              {impact && <span>{impact}</span>}
-              {askChatbotAction}
+              <span>{impact}</span>
             </div>
           )}
           {checks.length > 0 && (
@@ -262,47 +268,18 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
                   data-test="ai-troubleshooting-check"
                   key={`${check.code}-${check.path ?? ''}-${check.message}`}
                 >
-                  <span className={checkCodeStyle}>{`[${check.code}]`}</span>
-                  {severityIcon(check.severity)}
-                  <span>
-                    {check.message}
-                    {check.path ? ` (${check.path})` : ''}
-                  </span>
-                  {check.suggestedPrompt && askButton(check.suggestedPrompt, checkAskLabel(check))}
+                  <div className={checkInfoStyle}>
+                    {severityIcon(check.severity)}
+                    <span className={checkCodeStyle}>{`[${check.code}]`}</span>
+                    <span>{check.message}</span>
+                    {check.path && <span className={checkPathStyle}>{`(${check.path})`}</span>}
+                  </div>
+                  {check.suggestedPrompt && inlineCheckAskButton(check)}
                 </div>
               ))}
             </div>
           )}
         </CardBody>
-      )}
-      {actions.length > 0 && (
-        <CardFooter className={footerStyle}>
-          {actions.map(action => {
-            const key = `${action.type}-${action.description}-${action.command ?? ''}`;
-            if (action.type === 'Question' || action.type === 'Analyze') {
-              return <React.Fragment key={key}>{analyzeAction(action)}</React.Fragment>;
-            }
-            if (action.type === 'Advice') {
-              return (
-                <Tooltip content={actionTooltip(action.description, action.command)} key={key}>
-                  <span
-                    aria-label={t('Advice')}
-                    className={adviceIconStyle}
-                    data-test="ai-troubleshooting-advice"
-                    tabIndex={0}
-                  >
-                    <OutlinedQuestionCircleIcon />
-                  </span>
-                </Tooltip>
-              );
-            }
-            return (
-              <Tooltip content={actionTooltip(action.description, action.command)} key={key}>
-                <Button variant="secondary">{action.type}</Button>
-              </Tooltip>
-            );
-          })}
-        </CardFooter>
       )}
     </Card>
   );

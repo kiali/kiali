@@ -329,7 +329,7 @@ Create, patch, or delete Istio configuration. Always use `confirmed: false` firs
 
 ### 13. `troubleshooting`
 
-Collects mesh problems from `get_mesh_status` (control plane, data plane namespaces, observability stack, and connectivity) and returns a dashboard of issues. Duplicate targets are reported once.
+Runs a comprehensive mesh troubleshooting scan across `get_mesh_status`, `list_or_get_resources`, `manage_istio_config_read`, `analyze_ambient_policies`, and `get_mesh_traffic_graph` (control plane, data plane workloads/services/apps/ArgoCD, Envoy xDS sync status & proxy version drift, missing sidecars, 0-endpoint services, pod lifecycle failures, Istio config validations, Ambient L7 policy enforcement & mTLS status, real-time traffic edge errors/latency/BlackHoleCluster/PassthroughCluster, observability stack, and connectivity) and returns a dashboard of issues. Duplicate targets are reported once.
 
 **Parameters**:
 - `namespace` (string, optional): Limit the scan to one namespace. If omitted, checks all accessible namespaces.

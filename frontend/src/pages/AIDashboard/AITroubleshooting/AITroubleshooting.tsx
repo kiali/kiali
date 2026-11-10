@@ -3,25 +3,37 @@ import {
   EmptyState,
   EmptyStateBody,
   ExpandableSection,
+  Label,
+  SearchInput,
   Spinner,
-  Title,
-  TitleSizes
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem
 } from '@patternfly/react-core';
+import { EyeSlashIcon } from '@patternfly/react-icons';
 import * as React from 'react';
+import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
+import { PFColors } from 'components/Pf/PfColors';
 import { Refresh } from 'components/Refresh/Refresh';
 import { ManualRefreshEmptyState } from 'components/Refresh/ManualRefreshEmptyState';
+import { KialiIcon } from 'config/KialiIcon';
 import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { useManualRefreshState, useRefreshInterval } from 'hooks/refresh';
 import { loadTroubleshootingScan } from 'services/AiTroubleshooting';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontWeight } from 'styles/PfTypography';
 import { t } from 'utils/I18nUtils';
 import { writeHiddenSubProblemIds } from 'utils/TroubleshootingStorage';
 import {
+  filterAndGroupTroubleshootingIssues,
   hiddenProblemsTitle,
   partitionTroubleshootingIssues,
   summarizeTroubleshootingIssues,
-  troubleshootingDetectedTitle
+  troubleshootingDetectedTitle,
+  type TroubleshootingGroupBy,
+  type TroubleshootingSeverityFilter
 } from './partitionTroubleshooting';
 import { TroubleshootingIssueCard } from './TroubleshootingIssueCard';
 
@@ -30,23 +42,55 @@ const pageStyle = kialiStyle({
   flexDirection: 'column'
 });
 
+// Sticks to the top of the troubleshooting tab, which scrolls inside a padded container.
 const toolbarStyle = kialiStyle({
+  backgroundColor: PFColors.BackgroundColor100,
+  boxShadow: `0 calc(${PFSpacer.md} * -1) 0 0 ${PFColors.BackgroundColor100}`,
+  marginBottom: PFSpacer.md,
+  marginLeft: `calc(${PFSpacer.md} * -1)`,
+  marginRight: `calc(${PFSpacer.md} * -1)`,
+  marginTop: `calc(${PFSpacer.md} * -1)`,
+  paddingBottom: PFSpacer.md,
+  paddingLeft: PFSpacer.md,
+  paddingRight: PFSpacer.md,
+  paddingTop: PFSpacer.md,
+  position: 'sticky',
+  top: 0,
+  zIndex: 10
+});
+
+const kpiGroupStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
-  flexShrink: 0,
-  gap: PFSpacer.md,
-  justifyContent: 'space-between',
-  marginBottom: PFSpacer.md
+  flexWrap: 'wrap',
+  gap: PFSpacer.sm
 });
 
-const summaryStyle = kialiStyle({
-  marginBottom: 0,
-  marginTop: 0
+const filterLabelStyle = kialiStyle({
+  cursor: 'pointer'
 });
 
-const refreshSlotStyle = kialiStyle({
-  flexShrink: 0,
-  marginLeft: 'auto'
+const activeFilterLabelStyle = kialiStyle({
+  cursor: 'pointer',
+  fontWeight: PFFontWeight.BodyBold,
+  outline: '2px solid var(--pf-t--global--border--color--clicked)'
+});
+
+const groupByLabelStyle = kialiStyle({
+  marginRight: PFSpacer.sm,
+  whiteSpace: 'nowrap'
+});
+
+const srOnlyStyle = kialiStyle({
+  border: 0,
+  clip: 'rect(0, 0, 0, 0)',
+  height: '1px',
+  margin: '-1px',
+  overflow: 'hidden',
+  padding: 0,
+  position: 'absolute',
+  whiteSpace: 'nowrap',
+  width: '1px'
 });
 
 const hiddenSectionStyle = kialiStyle({
@@ -55,7 +99,6 @@ const hiddenSectionStyle = kialiStyle({
       marginBottom: 0,
       marginTop: 0
     },
-    // Match the main "Troubleshooting: N problems detected" title, and keep the caret as the click target.
     '& .pf-v6-c-expandable-section__toggle .pf-v6-c-button': {
       color: 'var(--pf-t--global--text--color--regular)',
       fontFamily: 'var(--pf-t--global--font--family--heading)',
@@ -100,6 +143,9 @@ export const AITroubleshooting: React.FC = () => {
   const scanLoaded = useKialiSelector(state => state.ai.troubleshooting.loaded);
   const [loading, setLoading] = React.useState(!scanLoaded && issues.length === 0);
   const [hiddenExpanded, setHiddenExpanded] = React.useState(false);
+  const [severityFilter, setSeverityFilter] = React.useState<TroubleshootingSeverityFilter>('all');
+  const [search, setSearch] = React.useState('');
+  const [groupBy, setGroupBy] = React.useState<TroubleshootingGroupBy>('category');
 
   React.useEffect(() => {
     if (!loaded) {
@@ -127,20 +173,147 @@ export const AITroubleshooting: React.FC = () => {
     () => partitionTroubleshootingIssues(issues, hiddenSubProblemIds),
     [hiddenSubProblemIds, issues]
   );
+
+  const visibleSummary = React.useMemo(() => summarizeTroubleshootingIssues(visible), [visible]);
+  const hiddenSummary = React.useMemo(() => summarizeTroubleshootingIssues(hidden), [hidden]);
   const hiddenSubproblemCount = hidden.reduce((total, issue) => total + issue.subProblems.length, 0);
+
+  const displayedVisibleIssues = React.useMemo(
+    () =>
+      filterAndGroupTroubleshootingIssues(visible, {
+        groupBy,
+        search,
+        severityFilter
+      }),
+    [groupBy, search, severityFilter, visible]
+  );
+
   const showIssues = loaded && !error && !(loading && issues.length === 0) && issues.length > 0;
 
+  const groupOptions = React.useMemo(
+    () => ({
+      category: t('Category'),
+      namespace: t('Namespace'),
+      severity: t('Severity')
+    }),
+    []
+  );
+
+  const toggleSeverityFilter = (target: 'critical' | 'warning'): void => {
+    setSeverityFilter(prev => (prev === target ? 'all' : target));
+  };
+
   const refreshToolbar = (
-    <div className={toolbarStyle}>
-      {showIssues && (
-        <Title className={summaryStyle} data-test="ai-troubleshooting-summary" headingLevel="h2" size={TitleSizes.lg}>
-          {troubleshootingDetectedTitle(summarizeTroubleshootingIssues(visible))}
-        </Title>
-      )}
-      <div className={refreshSlotStyle}>
-        <Refresh id="ai-troubleshooting-refresh" disabled={false} manageURL={true} />
-      </div>
-    </div>
+    <Toolbar className={toolbarStyle} id="ai-troubleshooting-toolbar">
+      <ToolbarContent>
+        {showIssues && (
+          <>
+            <ToolbarItem>
+              <div className={kpiGroupStyle} data-test="ai-troubleshooting-summary">
+                <span className={srOnlyStyle}>{troubleshootingDetectedTitle(visibleSummary)}</span>
+                <Label
+                  className={severityFilter === 'critical' ? activeFilterLabelStyle : filterLabelStyle}
+                  icon={
+                    <KialiIcon.ExclamationCircle color={severityFilter === 'critical' ? PFColors.White : undefined} />
+                  }
+                  isClickable
+                  render={({ className, componentRef, content }) => (
+                    <button
+                      aria-pressed={severityFilter === 'critical'}
+                      className={className}
+                      data-test="ai-troubleshooting-filter-critical"
+                      onClick={() => toggleSeverityFilter('critical')}
+                      ref={componentRef}
+                      type="button"
+                    >
+                      {content}
+                    </button>
+                  )}
+                  status="danger"
+                  variant={severityFilter === 'critical' ? 'filled' : 'outline'}
+                >
+                  {`${visibleSummary.critical} ${t('Critical')}`}
+                </Label>
+                <Label
+                  className={severityFilter === 'warning' ? activeFilterLabelStyle : filterLabelStyle}
+                  icon={
+                    <KialiIcon.ExclamationTriangle color={severityFilter === 'warning' ? PFColors.White : undefined} />
+                  }
+                  isClickable
+                  render={({ className, componentRef, content }) => (
+                    <button
+                      aria-pressed={severityFilter === 'warning'}
+                      className={className}
+                      data-test="ai-troubleshooting-filter-warning"
+                      onClick={() => toggleSeverityFilter('warning')}
+                      ref={componentRef}
+                      type="button"
+                    >
+                      {content}
+                    </button>
+                  )}
+                  status="warning"
+                  variant={severityFilter === 'warning' ? 'filled' : 'outline'}
+                >
+                  {`${visibleSummary.warning} ${t('Warning')}`}
+                </Label>
+                {hiddenSubproblemCount > 0 && (
+                  <Label
+                    className={hiddenExpanded ? activeFilterLabelStyle : filterLabelStyle}
+                    color="grey"
+                    icon={<EyeSlashIcon />}
+                    isClickable
+                    render={({ className, componentRef, content }) => (
+                      <button
+                        aria-expanded={hiddenExpanded}
+                        className={className}
+                        data-test="ai-troubleshooting-toggle-ignored"
+                        onClick={() => setHiddenExpanded(prev => !prev)}
+                        ref={componentRef}
+                        type="button"
+                      >
+                        {content}
+                      </button>
+                    )}
+                    variant={hiddenExpanded ? 'filled' : 'outline'}
+                  >
+                    {hiddenExpanded
+                      ? t('Hide ignored ({{count}})', { count: hiddenSubproblemCount })
+                      : t('Show ignored ({{count}})', { count: hiddenSubproblemCount })}
+                  </Label>
+                )}
+              </div>
+            </ToolbarItem>
+            <ToolbarItem>
+              <SearchInput
+                aria-label={t('Filter troubleshooting issues')}
+                data-test="ai-troubleshooting-search"
+                onChange={(_event, value) => setSearch(value)}
+                onClear={() => setSearch('')}
+                placeholder={t('Filter by namespace, resource, or code...')}
+                value={search}
+              />
+            </ToolbarItem>
+            <ToolbarItem>
+              <span className={groupByLabelStyle}>{t('Group by:')}</span>
+              <ToolbarDropdown
+                handleSelect={value => setGroupBy(value as TroubleshootingGroupBy)}
+                id="ai-troubleshooting-group-by"
+                label={groupOptions[groupBy]}
+                options={groupOptions}
+                tooltip={t('Group troubleshooting issues by')}
+                value={groupBy}
+              />
+            </ToolbarItem>
+          </>
+        )}
+        <ToolbarGroup align={{ default: 'alignEnd' }}>
+          <ToolbarItem>
+            <Refresh id="ai-troubleshooting-refresh" disabled={false} manageURL={true} />
+          </ToolbarItem>
+        </ToolbarGroup>
+      </ToolbarContent>
+    </Toolbar>
   );
 
   let content: React.ReactNode;
@@ -167,7 +340,7 @@ export const AITroubleshooting: React.FC = () => {
   } else {
     content = (
       <div className={issuesStyle} data-test="ai-troubleshooting">
-        {visible.map(issue => (
+        {displayedVisibleIssues.map(issue => (
           <TroubleshootingIssueCard issue={issue} key={`visible-${issue.id}`} />
         ))}
         {hiddenSubproblemCount > 0 && (
@@ -177,7 +350,7 @@ export const AITroubleshooting: React.FC = () => {
             isExpanded={hiddenExpanded}
             onToggle={(_event, expanded) => setHiddenExpanded(expanded)}
             toggleId="ai-troubleshooting-hidden-toggle"
-            toggleText={hiddenProblemsTitle(summarizeTroubleshootingIssues(hidden))}
+            toggleText={hiddenProblemsTitle(hiddenSummary)}
             toggleWrapper="h2"
           >
             <div className={hiddenIssuesStyle}>
