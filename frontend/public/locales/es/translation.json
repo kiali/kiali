@@ -1220,7 +1220,7 @@
   "tests against canonical service": "comprueba frente al servicio canónico",
   "tests against canonical service, operation, service and workload names": "comprueba frente a nombres canónicos de servicio, operación, servicio y workload",
   "tests against infraName": "comprueba frente a infraName",
-  "The '{{name}}' {{kind}}{{clusterSuffix}} had '{{status}}' status at {{selectedTime}}. Investigate the surrounding {{duration}} for notable events, changes, or anomalies.": "El recurso '{{name}}' de tipo {{kind}}{{clusterSuffix}} tenía el estado '{{status}}' a las {{selectedTime}}. Investiga los {{duration}} circundantes en busca de eventos, cambios o anomalías notables.",
+  "The '{{name}}' {{kind}}{{clusterSuffix}} had '{{status}}' status at {{selectedTime}}. Investigate the surrounding {{duration}} for notable events, changes, or anomalies.": "El recurso '{{name}}' de tipo {{kind}}{{clusterSuffix}} tenía el estado '{{status}}' a las {{selectedTime}}. Investiga los {{duration}} adyacentes en busca de eventos, cambios o anomalías notables.",
   "The \"name\" operand expands internally to an \"OR\" expression (an \"AND\" when negated).": "El operando \"name\" se expande internamente a una expresión \"OR\" (un \"AND\" cuando se niega).",
   "The {{limit}} traces cover only {{percentage}}% of the time period. You may want to increase the fetch limit, reduce the time range, or define a custom time range.": "Las {{limit}} trazas cubren solo el {{percentage}}% del período de tiempo. Puede aumentar el límite de obtención, reducir el rango de tiempo o definir un rango de tiempo personalizado.",
   "The component exists but cannot serve traffic yet.": "El componente existe, pero aún no puede servir tráfico.",
