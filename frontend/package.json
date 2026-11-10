@@ -108,7 +108,7 @@
     "@patternfly/react-icons": "~6.7.0",
     "@patternfly/react-table": "~6.7.0",
     "@patternfly/react-topology": "~6.7.0",
-    "axios": "^1.19.0",
+    "axios": "^1.21.1",
     "deep-freeze": "0.0.1",
     "dompurify": "^3.4.17",
     "eventemitter3": "5.0.4",
