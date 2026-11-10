@@ -6,6 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/kiali/kiali/ai/mcp/analyze_ambient_policies"
+	"github.com/kiali/kiali/ai/mcp/get_mesh_status"
+	"github.com/kiali/kiali/ai/mcp/get_mesh_traffic_graph"
 	"github.com/kiali/kiali/ai/mcp/list_or_get_resources"
 	"github.com/kiali/kiali/ai/mcp/manage_istio_config"
 	"github.com/kiali/kiali/models"
@@ -245,4 +248,276 @@ func TestIstioSubProblems_OneErrorCheckMakesTheObjectCritical(t *testing.T) {
 	require.Len(t, critical[0].Checks, 2)
 	assert.Equal(t, SeverityWarning, critical[0].Checks[0].Severity)
 	assert.Equal(t, SeverityCritical, critical[0].Checks[1].Severity)
+}
+
+func TestSubProblemsFromResourceListWithContext_SidecarConfigAndArgoSync(t *testing.T) {
+	services := map[string][]list_or_get_resources.ResourceListItem{
+		"Kubernetes": {
+			{
+				Configuration: "False",
+				Details:       "KIA0701: Port name must follow <protocol>[-<suffix>] form (warning)",
+				Health:        "Healthy",
+				Name:          "reviews",
+				Namespace:     "bookinfo",
+			},
+		},
+	}
+	svcSubs := subProblemsFromResourceListWithContext("Kubernetes", "bookinfo", "service", services, true, false)
+	require.Len(t, svcSubs, 1)
+	assert.Equal(t, "dp-kubernetes-bookinfo-config-service-reviews", svcSubs[0].ID)
+	assert.Equal(t, SeverityWarning, svcSubs[0].Severity)
+	assert.Contains(t, svcSubs[0].Issue, "KIA0701")
+
+	workloads := map[string][]list_or_get_resources.ResourceListItem{
+		"Kubernetes": {
+			{
+				Health:    "Healthy",
+				Istio:     &list_or_get_resources.ResourceListIstioFlags{IstioSidecar: false},
+				Name:      "productpage-v1",
+				Namespace: "bookinfo",
+				Type:      "Deployment",
+			},
+		},
+	}
+	wlSubs := subProblemsFromResourceListWithContext("Kubernetes", "bookinfo", "workload", workloads, true, false)
+	require.Len(t, wlSubs, 1)
+	assert.Equal(t, "mesh-kubernetes-bookinfo-sidecar-productpage-v1", wlSubs[0].ID)
+	assert.Equal(t, SeverityWarning, wlSubs[0].Severity)
+	assert.Contains(t, wlSubs[0].Issue, "missing Istio sidecar")
+
+	argo := list_or_get_resources.ArgoCDAppListResponse{Applications: []list_or_get_resources.ArgoCDAppListItem{
+		{Name: "bookinfo-prod", Health: "Healthy", SyncStatus: "OutOfSync"},
+	}}
+	argoSubs := subProblemsFromResourceListWithContext("Kubernetes", "bookinfo", "argoapp", argo, false, false)
+	require.Len(t, argoSubs, 1)
+	assert.Equal(t, "dp-kubernetes-bookinfo-argoapp-bookinfo-prod", argoSubs[0].ID)
+	assert.Equal(t, SeverityWarning, argoSubs[0].Severity)
+	assert.Equal(t, "sync status is OutOfSync", argoSubs[0].Issue)
+}
+
+func TestInspectWorkloadDetail_XDSSyncProxyVersionAndPodLifecycle(t *testing.T) {
+	detail := list_or_get_resources.WorkloadDetailResponse{
+		Istio: list_or_get_resources.WorkloadIstioInfo{
+			IstioSidecar: true,
+			ProxyVersion: "1.28.0",
+			SyncStatus: &list_or_get_resources.SyncStatus{
+				CDS: "SYNCED",
+				EDS: "STALE",
+				LDS: "SYNCED",
+				RDS: "NOT_SENT",
+			},
+		},
+		Pods: []list_or_get_resources.PodInfo{
+			{
+				IstioProxy: "NotReady",
+				Name:       "reviews-v1-6f8b9c-crash",
+				Status:     "CrashLoopBackOff",
+			},
+		},
+		Workload: list_or_get_resources.WorkloadInfo{
+			Kind:      "Deployment",
+			Name:      "reviews-v1",
+			Namespace: "bookinfo",
+		},
+	}
+
+	subs := inspectWorkloadDetail("Kubernetes", "bookinfo", "1.30.5", detail)
+	require.Len(t, subs, 3)
+
+	assert.Equal(t, "mesh-kubernetes-bookinfo-xds-reviews-v1", subs[0].ID)
+	assert.Equal(t, SeverityCritical, subs[0].Severity)
+	assert.Contains(t, subs[0].Issue, "EDS=STALE")
+	assert.Contains(t, subs[0].Issue, "RDS=NOT_SENT")
+
+	assert.Equal(t, "mesh-kubernetes-bookinfo-version-reviews-v1", subs[1].ID)
+	assert.Equal(t, SeverityWarning, subs[1].Severity)
+	assert.Contains(t, subs[1].Issue, "1.28.0")
+	assert.Contains(t, subs[1].Issue, "1.30.5")
+
+	assert.Equal(t, "k8s-kubernetes-bookinfo-reviews-v1-reviews-v1-6f8b9c-crash", subs[2].ID)
+	assert.Equal(t, SeverityCritical, subs[2].Severity)
+	assert.Contains(t, subs[2].Issue, "CrashLoopBackOff")
+	assert.Contains(t, subs[2].SuggestedPrompt, "get_pod_performance")
+}
+
+func TestInspectServiceDetail_ZeroEndpoints(t *testing.T) {
+	detail := list_or_get_resources.ServiceDetailResponse{
+		Endpoints: []list_or_get_resources.EndpointInfo{},
+		Service: list_or_get_resources.ServiceInfo{
+			Name:      "ratings",
+			Namespace: "bookinfo",
+			Selectors: map[string]string{"app": "ratings"},
+			Type:      "ClusterIP",
+		},
+	}
+
+	subs := inspectServiceDetail("Kubernetes", "bookinfo", detail)
+	require.Len(t, subs, 1)
+	assert.Equal(t, "k8s-kubernetes-bookinfo-endpoints-ratings", subs[0].ID)
+	assert.Equal(t, SeverityCritical, subs[0].Severity)
+	assert.Equal(t, "service has 0 active endpoints", subs[0].Issue)
+}
+
+func TestSubProblemsFromAmbientAnalysis(t *testing.T) {
+	analysis := analyze_ambient_policies.PolicyAnalysisResponse{
+		Namespaces: []analyze_ambient_policies.NamespaceAnalysis{
+			{
+				NamespaceStatus: analyze_ambient_policies.NamespaceAmbientStatus{
+					Cluster:     "Kubernetes",
+					HasWaypoint: false,
+					IsAmbient:   true,
+					Name:        "bookinfo",
+				},
+				Policies: []analyze_ambient_policies.AnalyzedPolicy{
+					{
+						ConfigType:    "AuthorizationPolicy",
+						Layer:         "L7",
+						Name:          "allow-get",
+						NeedsWaypoint: true,
+						Reason:        "uses HTTP methods",
+						Warning:       "Namespace has no waypoint proxy. This L7 policy will NOT be enforced.",
+					},
+					{
+						ConfigType:    "WasmPlugin",
+						Layer:         "L7",
+						Name:          "header-plugin",
+						NeedsWaypoint: false,
+						Warning:       "WasmPlugin in Ambient mode should use targetRefs instead of workload selector.",
+					},
+				},
+			},
+		},
+	}
+
+	subs := subProblemsFromAmbientAnalysis(analysis)
+	require.Len(t, subs, 2)
+
+	assert.Equal(t, "sec-ambient-bookinfo-authorizationpolicy-allow-get", subs[0].ID)
+	assert.Equal(t, SeverityCritical, subs[0].Severity)
+	require.NotNil(t, subs[0].IstioObject)
+	assert.Equal(t, "security.istio.io", subs[0].IstioObject.Group)
+	assert.Equal(t, "AuthorizationPolicy", subs[0].IstioObject.Kind)
+	assert.Equal(t, ActionTypeAnalyze, subs[0].SuggestedActions[0].Type)
+
+	assert.Equal(t, "sec-ambient-bookinfo-wasmplugin-header-plugin", subs[1].ID)
+	assert.Equal(t, SeverityWarning, subs[1].Severity)
+	require.NotNil(t, subs[1].IstioObject)
+	assert.Equal(t, "extensions.istio.io", subs[1].IstioObject.Group)
+}
+
+func TestSubProblemsFromTrafficGraph(t *testing.T) {
+	graphResp := get_mesh_traffic_graph.CompactGraphResponse{
+		Errors: map[string]string{
+			"health": "prometheus query timeout",
+		},
+		Traffic: []get_mesh_traffic_graph.CompactEdge{
+			{
+				Health:         "Failure",
+				MTLS:           false,
+				Protocol:       "http",
+				ResponseTimeMs: 240,
+				Source:         "productpage (v1)",
+				Target:         "reviews (v2)",
+				Throughput:     "12.5rps",
+			},
+			{
+				Health:         "Healthy",
+				MTLS:           true,
+				Protocol:       "http",
+				ResponseTimeMs: 1450,
+				Source:         "reviews (v3)",
+				Target:         "ratings (v1)",
+			},
+			{
+				Health:   "Healthy",
+				MTLS:     false,
+				Protocol: "tcp",
+				Source:   "ratings (v1)",
+				Target:   "BlackHoleCluster",
+			},
+			{
+				Health:   "Healthy",
+				MTLS:     false,
+				Protocol: "http",
+				Source:   "details (v1)",
+				Target:   "PassthroughCluster",
+			},
+		},
+	}
+
+	trafficSubs, plaintextSubs, promScrapeSubs := subProblemsFromTrafficGraph("bookinfo", graphResp)
+
+	require.Len(t, promScrapeSubs, 1)
+	assert.Equal(t, "obs-prometheus-health", promScrapeSubs[0].ID)
+
+	require.Len(t, plaintextSubs, 1)
+	assert.Equal(t, "sec-plaintext-bookinfo-productpage-v1-reviews-v2", plaintextSubs[0].ID)
+	assert.Equal(t, SeverityWarning, plaintextSubs[0].Severity)
+
+	require.Len(t, trafficSubs, 4)
+	assert.Equal(t, "traffic-edge-bookinfo-productpage-v1-reviews-v2", trafficSubs[0].ID)
+	assert.Equal(t, SeverityCritical, trafficSubs[0].Severity)
+
+	assert.Equal(t, "traffic-latency-bookinfo-reviews-v3-ratings-v1", trafficSubs[1].ID)
+	assert.Equal(t, SeverityWarning, trafficSubs[1].Severity)
+
+	assert.Equal(t, "traffic-egress-bookinfo-ratings-v1-blackholecluster", trafficSubs[2].ID)
+	assert.Equal(t, SeverityCritical, trafficSubs[2].Severity)
+
+	assert.Equal(t, "traffic-egress-bookinfo-details-v1-passthroughcluster", trafficSubs[3].ID)
+	assert.Equal(t, SeverityWarning, trafficSubs[3].Severity)
+}
+
+func TestBuildZtunnelIssue_IncludesUnreadyPods(t *testing.T) {
+	ztunnel := &get_mesh_status.MeshSummaryZtunnel{
+		DaemonSet: get_mesh_status.MeshSummaryZtunnelDaemonSet{
+			DesiredPods: 2,
+			ReadyPods:   1,
+			Status:      "DEGRADED",
+		},
+		Pods: []get_mesh_status.MeshSummaryZtunnelPod{
+			{Name: "ztunnel-node1", Node: "worker-1", Phase: "Running", Ready: true},
+			{Name: "ztunnel-node2", Node: "worker-2", Phase: "CrashLoopBackOff", Ready: false},
+		},
+	}
+
+	issue := buildZtunnelIssue(ztunnel, map[string]bool{})
+	require.NotNil(t, issue)
+	require.Len(t, issue.SubProblems, 2)
+	assert.Equal(t, idDataPlaneZtunnelDS, issue.SubProblems[0].ID)
+	assert.Equal(t, SeverityWarning, issue.SubProblems[0].Severity)
+	assert.Equal(t, "dp-ztunnel-pod-ztunnel-node2", issue.SubProblems[1].ID)
+	assert.Equal(t, SeverityCritical, issue.SubProblems[1].Severity)
+	assert.Contains(t, issue.SubProblems[1].Target, "worker-2")
+}
+
+func TestFilterRedundantAppSubProblems(t *testing.T) {
+	workloadList := map[string][]list_or_get_resources.ResourceListItem{
+		"Kubernetes": {
+			{
+				Health:    "DEGRADED",
+				Labels:    "app=reviews, version=v2",
+				Name:      "reviews-v2",
+				Namespace: "bookinfo",
+				Type:      "Deployment",
+			},
+		},
+	}
+	wlSubs := subProblemsFromResourceList("Kubernetes", "bookinfo", "workload", workloadList)
+	require.Len(t, wlSubs, 1)
+	assert.Contains(t, wlSubs[0].Impact, `(app "reviews")`)
+
+	appList := list_or_get_resources.AppListResponse{
+		Applications: []list_or_get_resources.AppListItem{
+			{Name: "reviews", Health: "DEGRADED"},
+			{Name: "productpage", Health: "DEGRADED"},
+		},
+	}
+	appSubs := subProblemsFromResourceList("Kubernetes", "bookinfo", "app", appList)
+	require.Len(t, appSubs, 2)
+
+	covered := appsCoveredByWorkloadIssues("bookinfo", workloadList, wlSubs, nil)
+	filtered := filterRedundantAppSubProblems("bookinfo", appSubs, covered)
+	require.Len(t, filtered, 1)
+	assert.Equal(t, "App: bookinfo/productpage", filtered[0].Target)
 }

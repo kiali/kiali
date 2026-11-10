@@ -376,8 +376,8 @@ Feature: Kiali AI Chatbot
     Given the AI troubleshooting scan returns mesh problems
     When user visits the AI troubleshooting dashboard
     Then the AI troubleshooting summary should contain "Troubleshooting: 1 problem detected"
-    And the AI troubleshooting dashboard should show issue "[dp-001] Service productpage has errors"
-    And the AI troubleshooting dashboard should show subproblem "[sp-001] High HTTP 5xx error rate"
+    And the AI troubleshooting dashboard should show issue "Service productpage has errors"
+    And the AI troubleshooting dashboard should show subproblem "High HTTP 5xx error rate"
 
   Scenario: Clicking Ask chatbot on a troubleshooting subproblem opens the chatbot in ask mode and sends the prompt
     Given the AI troubleshooting scan returns mesh problems

@@ -4,6 +4,8 @@ const (
 	CategoryControlPlane       = "control_plane"
 	CategoryDataPlane          = "data_plane"
 	CategoryIstioObjects       = "istio_objects"
+	CategorySecurity           = "security"
+	CategoryTraffic            = "traffic"
 	CategoryObservabilityStack = "observability_stack"
 	CategoryConnectivity       = "connectivity"
 
@@ -24,16 +26,16 @@ const (
 // Empty action and prompt run a mesh scan via the troubleshooting tool.
 type Request struct {
 	Action      string `json:"action,omitempty"`
-	Prompt      string `json:"prompt,omitempty"`
-	Namespace   string `json:"namespace,omitempty"`
 	ClusterName string `json:"clusterName,omitempty"`
+	Namespace   string `json:"namespace,omitempty"`
+	Prompt      string `json:"prompt,omitempty"`
 }
 
 type Issue struct {
-	ID          string       `json:"id"`
 	Category    string       `json:"category"`
-	Problem     string       `json:"problem"`
 	Description string       `json:"description,omitempty"`
+	ID          string       `json:"id"`
+	Problem     string       `json:"problem"`
 	SubProblems []SubProblem `json:"subProblems"`
 }
 

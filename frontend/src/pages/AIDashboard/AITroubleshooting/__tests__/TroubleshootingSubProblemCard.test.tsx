@@ -108,7 +108,7 @@ describe('TroubleshootingSubProblemCard', () => {
     expect(screen.getByText('Requests fail')).toBeInTheDocument();
     expect(screen.queryByText('Why is productpage failing?')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask chatbot' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt({ interactionMode: 'ask', text: 'Why is productpage failing?' })
@@ -118,14 +118,14 @@ describe('TroubleshootingSubProblemCard', () => {
   it('keeps ask chatbot disabled when chat is not allowed', () => {
     const { dispatched } = renderCard(false);
 
-    expect(screen.getByRole('button', { name: 'Ask chatbot' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
     expect(dispatched).not.toContain(ChatAIActions.setPendingPrompt('unused').type);
   });
 
   it('keeps ask chatbot disabled in kiosk mode', () => {
     renderCard(true, 'true');
 
-    expect(screen.getByRole('button', { name: 'Ask chatbot' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
   });
 
   it('asks about each validation check on the same object', () => {
@@ -243,8 +243,8 @@ describe('TroubleshootingSubProblemCard', () => {
 
     expect(screen.queryByRole('button', { name: 'Question' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Review' })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Advice')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    expect(screen.queryByLabelText('Advice')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt({
@@ -285,8 +285,8 @@ describe('TroubleshootingSubProblemCard', () => {
       </Provider>
     );
 
-    expect(screen.getByRole('button', { name: 'Analyze' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
     expect(dispatched).not.toContainEqual(expect.objectContaining({ type: ChatAIActions.setPendingPrompt('').type }));
   });
 
@@ -304,7 +304,7 @@ describe('TroubleshootingSubProblemCard', () => {
       ]
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt(

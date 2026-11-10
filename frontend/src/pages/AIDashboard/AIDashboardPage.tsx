@@ -22,12 +22,6 @@ const tabContentStyle = kialiStyle({
   padding: PFSpacer.md
 });
 
-const troubleshootingPaneStyle = kialiStyle({
-  display: 'flex',
-  flexDirection: 'column',
-  padding: PFSpacer.md
-});
-
 const pageTitleStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
@@ -136,7 +130,7 @@ export const AIDashboardPage: React.FC = () => {
                 aria-label={t('Troubleshooting tab')}
               >
                 {activeTabKey === TAB_TROUBLESHOOTING && (
-                  <div className={troubleshootingPaneStyle}>
+                  <div className={tabContentStyle}>
                     <AITroubleshooting />
                   </div>
                 )}

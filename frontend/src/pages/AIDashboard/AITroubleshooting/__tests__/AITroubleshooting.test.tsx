@@ -154,6 +154,26 @@ describe('AITroubleshooting', () => {
     expect(screen.getByText(/Visible subproblem/)).toBeInTheDocument();
   });
 
+  it('filters by severity KPI pills and toggles ignored problems from the summary bar', async () => {
+    (API.getAITroubleshooting as Mock).mockResolvedValue({ data: [reviewsIssue] });
+
+    renderTroubleshooting(['sub-hidden']);
+
+    expect(await screen.findByText(/Visible subproblem/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('ai-troubleshooting-filter-critical'));
+    expect(screen.queryByText(/Visible subproblem/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('ai-troubleshooting-filter-critical'));
+    expect(screen.getByText(/Visible subproblem/)).toBeInTheDocument();
+
+    const ignoredToggle = screen.getByTestId('ai-troubleshooting-toggle-ignored');
+    expect(ignoredToggle).toHaveTextContent('Show ignored');
+    fireEvent.click(ignoredToggle);
+    expect(ignoredToggle).toHaveTextContent('Hide ignored');
+    expect(screen.getByRole('region')).not.toHaveAttribute('hidden');
+  });
+
   it('hides a parent problem together with every subproblem', async () => {
     (API.getAITroubleshooting as Mock).mockResolvedValue({ data: [reviewsIssue] });
 

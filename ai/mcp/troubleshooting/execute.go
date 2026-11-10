@@ -47,28 +47,53 @@ func collectIssues(ki *mcputil.KialiInterface, summary get_mesh_status.MeshSumma
 	if issue := controlPlaneIssue(summary.Components.ControlPlane, cluster, seenTargets); issue != nil {
 		issues = append(issues, *issue)
 	}
-	// Data-plane resource lists and Istio object gets both hit the API. Run them together
-	// and share one lookup limit so a large mesh does not double the number of in-flight reads.
+	// Data-plane resource lists, Istio object gets, Ambient policy checks, and traffic graph queries
+	// all hit the API. Run them together and share one lookup limit so a large mesh does not
+	// multiply the number of in-flight reads.
 	sem := make(chan struct{}, troubleshootingLookupParallelism)
 	var dataPlane []Issue
 	var istio *Issue
+	var ambientSubs []SubProblem
+	var trafficSubs []SubProblem
+	var plaintextSubs []SubProblem
+	var mtlsSubs []SubProblem
+	var promScrapeSubs []SubProblem
+
+	nsMeta := fetchNamespaceMetadata(ki, cluster, sem)
+	mtlsSubs = namespaceMTLSSubProblems(summary.Components.DataPlane.MonitoredNamespaces, nsMeta, cluster, namespace)
+
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(4)
 	go func() {
 		defer wg.Done()
-		dataPlane = dataPlaneIssues(ki, summary.Components.DataPlane, cluster, namespace, seenTargets, sem)
+		dataPlane = dataPlaneIssues(ki, summary.Components.DataPlane, summary.Environment.IstioVersion, nsMeta, cluster, namespace, seenTargets, sem)
 	}()
 	go func() {
 		defer wg.Done()
 		istio = istioObjectsIssue(ki, cluster, namespace, sem)
 	}()
+	go func() {
+		defer wg.Done()
+		ambientSubs = ambientPolicySubProblems(ki, summary.Components.DataPlane.MonitoredNamespaces, cluster, namespace, sem)
+	}()
+	go func() {
+		defer wg.Done()
+		trafficSubs, plaintextSubs, promScrapeSubs = trafficGraphSubProblems(ki, summary.Components.DataPlane.MonitoredNamespaces, cluster, namespace, sem)
+	}()
 	wg.Wait()
+
 	issues = append(issues, dataPlane...)
 	// Istio object validation stays in its own category, even when the same namespace is also an unhealthy data plane.
 	if istio != nil {
 		issues = append(issues, *istio)
 	}
-	if issue := observabilityIssue(summary.Components.ObservabilityStack, summary.CriticalAlerts, seenTargets); issue != nil {
+	if secIssue := buildSecurityIssue(ambientSubs, mtlsSubs, plaintextSubs, namespace); secIssue != nil {
+		issues = append(issues, *secIssue)
+	}
+	if trfIssue := buildTrafficIssue(trafficSubs, namespace); trfIssue != nil {
+		issues = append(issues, *trfIssue)
+	}
+	if issue := observabilityIssue(summary.Components.ObservabilityStack, summary.CriticalAlerts, promScrapeSubs, seenTargets); issue != nil {
 		issues = append(issues, *issue)
 	}
 	if issue := connectivityIssue(summary.ConnectivityGraph, summary.CriticalAlerts, cluster, namespace, seenTargets); issue != nil {
@@ -91,20 +116,27 @@ func controlPlaneIssue(cp get_mesh_status.MeshSummaryControlPlane, cluster strin
 			target = node.Namespace + "/" + node.Name
 		}
 		markSeen(seenTargets, node.Name, target)
-		subs = append(subs, newSubProblem(
+		sub := newSubProblemWithSeverity(
 			controlPlaneNodeID(node.Cluster, node.Namespace, node.Name),
 			"Control plane: "+target,
 			fmt.Sprintf("status is %s", node.Status),
-			"Mesh configuration and sidecar injection may be impaired.",
-		))
+			"Mesh configuration, xDS synchronization, and sidecar injection may be impaired.",
+			severityForHealth(node.Status),
+		)
+		sub.SuggestedPrompt = fmt.Sprintf(
+			"Analyze why control plane component %s (cluster %q) is reporting status %q. Use get_mesh_status and get_logs (in namespace %q for workload %q with severity=\"ERROR,WARN\") to identify the root cause.",
+			target, node.Cluster, node.Status, node.Namespace, node.Name,
+		)
+		subs = append(subs, sub)
 	}
 	if len(subs) == 0 && !isHealthyStatus(cp.Status) {
 		markSeen(seenTargets, "istiod", "control plane")
-		subs = append(subs, newSubProblem(
+		subs = append(subs, newSubProblemWithSeverity(
 			idControlPlaneStatus,
 			"Control plane",
 			fmt.Sprintf("status is %s", cp.Status),
 			"Mesh configuration and sidecar injection may be impaired.",
+			severityForHealth(cp.Status),
 		))
 	}
 	if len(subs) == 0 {
@@ -119,7 +151,15 @@ func controlPlaneIssue(cp get_mesh_status.MeshSummaryControlPlane, cluster strin
 	}
 }
 
-func dataPlaneIssues(ki *mcputil.KialiInterface, dp get_mesh_status.MeshSummaryDataPlane, cluster, namespace string, seenTargets map[string]bool, sem chan struct{}) []Issue {
+func dataPlaneIssues(
+	ki *mcputil.KialiInterface,
+	dp get_mesh_status.MeshSummaryDataPlane,
+	controlPlaneVersion string,
+	nsMeta map[string]namespaceMetadata,
+	cluster, namespace string,
+	seenTargets map[string]bool,
+	sem chan struct{},
+) []Issue {
 	var pending []unhealthyNamespace
 	var targets []string
 	var health []string
@@ -130,7 +170,11 @@ func dataPlaneIssues(ki *mcputil.KialiInterface, dp get_mesh_status.MeshSummaryD
 		if namespace != "" && ns.Name != namespace {
 			continue
 		}
-		if isHealthyStatus(ns.Health) {
+		nsHealthy := isHealthyStatus(ns.Health)
+		// When ki is nil (offline unit tests), only inspect namespaces already marked unhealthy.
+		// When ki is available, also scan healthy monitored namespaces for sidecar injection anomalies,
+		// xDS desynchronization, proxy version drift, configuration errors, or OutOfSync ArgoCD apps.
+		if nsHealthy && ki == nil {
 			continue
 		}
 		nsCluster := ns.Cluster
@@ -141,21 +185,43 @@ func dataPlaneIssues(ki *mcputil.KialiInterface, dp get_mesh_status.MeshSummaryD
 		if nsCluster != "" {
 			target = ns.Name + " (" + nsCluster + ")"
 		}
-		markSeen(seenTargets, ns.Name)
-		pending = append(pending, unhealthyNamespace{Cluster: nsCluster, Name: ns.Name})
+		meta := nsMeta[ns.Name]
+		pending = append(pending, unhealthyNamespace{
+			Cluster:          nsCluster,
+			InjectionEnabled: meta.InjectionEnabled,
+			IsAmbient:        ns.IsAmbient,
+			Name:             ns.Name,
+		})
 		targets = append(targets, target)
 		health = append(health, ns.Health)
 	}
-	found := analyzeUnhealthyNamespaces(ki, pending, sem)
+	found := analyzeMonitoredNamespaces(ki, pending, controlPlaneVersion, sem)
 
 	var issues []Issue
 	for i, ns := range pending {
-		subs := namespaceFindings(newSubProblem(
+		nsHealthy := isHealthyStatus(health[i])
+		if nsHealthy && len(found[i]) == 0 {
+			continue
+		}
+		markSeen(seenTargets, ns.Name)
+		if nsHealthy {
+			issues = append(issues, Issue{
+				ID:          dataPlaneNamespaceID(ns.Cluster, ns.Name),
+				Category:    CategoryDataPlane,
+				Problem:     fmt.Sprintf("Namespace %q has workload or configuration anomalies", ns.Name),
+				Description: fmt.Sprintf("Anomalies were detected in data plane namespace %q.", ns.Name),
+				SubProblems: found[i],
+			})
+			continue
+		}
+		nsSub := newSubProblemWithSeverity(
 			dataPlaneNamespaceSubProblemID(ns.Cluster, ns.Name),
 			"Namespace: "+targets[i],
 			fmt.Sprintf("health is %s", health[i]),
 			"Workloads, services, or apps in this namespace may be failing or degraded.",
-		), found[i], nil)
+			severityForHealth(health[i]),
+		)
+		subs := namespaceFindings(nsSub, found[i], nil)
 		issues = append(issues, Issue{
 			ID:          dataPlaneNamespaceID(ns.Cluster, ns.Name),
 			Category:    CategoryDataPlane,
@@ -164,26 +230,63 @@ func dataPlaneIssues(ki *mcputil.KialiInterface, dp get_mesh_status.MeshSummaryD
 			SubProblems: subs,
 		})
 	}
-	if dp.Ztunnel != nil && !isHealthyStatus(dp.Ztunnel.DaemonSet.Status) {
-		markSeen(seenTargets, "ztunnel")
-		issues = append(issues, Issue{
-			ID:          idDataPlaneZtunnel,
-			Category:    CategoryDataPlane,
-			Problem:     fmt.Sprintf("ztunnel is %s", dp.Ztunnel.DaemonSet.Status),
-			Description: "Ambient data plane (ztunnel) is not fully ready.",
-			SubProblems: []SubProblem{newSubProblem(
-				idDataPlaneZtunnelDS,
-				"DaemonSet: ztunnel",
-				fmt.Sprintf("status is %s (%d/%d pods ready)",
-					dp.Ztunnel.DaemonSet.Status, dp.Ztunnel.DaemonSet.ReadyPods, dp.Ztunnel.DaemonSet.DesiredPods),
-				"Ambient L4 traffic may be disrupted.",
-			)},
-		})
+	if ztunnelIssue := buildZtunnelIssue(dp.Ztunnel, seenTargets); ztunnelIssue != nil {
+		issues = append(issues, *ztunnelIssue)
 	}
 	return issues
 }
 
-func observabilityIssue(obs get_mesh_status.MeshSummaryObservabilityStack, alerts []get_mesh_status.MeshSummaryCriticalAlert, seenTargets map[string]bool) *Issue {
+func buildZtunnelIssue(ztunnel *get_mesh_status.MeshSummaryZtunnel, seenTargets map[string]bool) *Issue {
+	if ztunnel == nil {
+		return nil
+	}
+	var subs []SubProblem
+	if !isHealthyStatus(ztunnel.DaemonSet.Status) {
+		sub := newSubProblemWithSeverity(
+			idDataPlaneZtunnelDS,
+			"DaemonSet: ztunnel",
+			fmt.Sprintf("status is %s (%d/%d pods ready)",
+				ztunnel.DaemonSet.Status, ztunnel.DaemonSet.ReadyPods, ztunnel.DaemonSet.DesiredPods),
+			"Ambient L4 traffic and HBONE mTLS tunneling may be disrupted.",
+			severityForHealth(ztunnel.DaemonSet.Status),
+		)
+		subs = append(subs, sub)
+	}
+	for _, pod := range ztunnel.Pods {
+		if pod.Ready && strings.EqualFold(pod.Phase, "Running") {
+			continue
+		}
+		target := fmt.Sprintf("Pod: ztunnel/%s", pod.Name)
+		if pod.Node != "" {
+			target = fmt.Sprintf("Pod: ztunnel/%s (node %s)", pod.Name, pod.Node)
+		}
+		sub := newSubProblemWithSeverity(
+			dataPlaneZtunnelPodID(pod.Name),
+			target,
+			fmt.Sprintf("phase is %s (ready=%t)", pod.Phase, pod.Ready),
+			fmt.Sprintf("Ambient ztunnel pod %q on node %q is not ready. Workloads on this node may lose L4 mesh connectivity.", pod.Name, pod.Node),
+			SeverityCritical,
+		)
+		subs = append(subs, sub)
+	}
+	if len(subs) == 0 {
+		return nil
+	}
+	markSeen(seenTargets, "ztunnel")
+	status := ztunnel.DaemonSet.Status
+	if isHealthyStatus(status) {
+		status = "DEGRADED"
+	}
+	return &Issue{
+		ID:          idDataPlaneZtunnel,
+		Category:    CategoryDataPlane,
+		Problem:     fmt.Sprintf("ztunnel is %s", status),
+		Description: "Ambient data plane (ztunnel) is not fully ready.",
+		SubProblems: subs,
+	}
+}
+
+func observabilityIssue(obs get_mesh_status.MeshSummaryObservabilityStack, alerts []get_mesh_status.MeshSummaryCriticalAlert, extraSubs []SubProblem, seenTargets map[string]bool) *Issue {
 	type named struct {
 		name, status string
 	}
@@ -211,8 +314,15 @@ func observabilityIssue(obs get_mesh_status.MeshSummaryObservabilityStack, alert
 			impact = alert.Impact
 		}
 		markSeen(seenTargets, c.name)
-		subs = append(subs, newSubProblem(observabilityComponentID(c.name), c.name, issue, impact))
+		subs = append(subs, newSubProblemWithSeverity(
+			observabilityComponentID(c.name),
+			c.name,
+			issue,
+			impact,
+			severityForHealth(c.status),
+		))
 	}
+	subs = append(subs, extraSubs...)
 	if len(subs) == 0 {
 		return nil
 	}
@@ -220,7 +330,7 @@ func observabilityIssue(obs get_mesh_status.MeshSummaryObservabilityStack, alert
 		ID:          idObservability,
 		Category:    CategoryObservabilityStack,
 		Problem:     "Observability stack has unreachable or unhealthy components",
-		Description: "Kiali cannot reach one or more observability backends.",
+		Description: "Kiali cannot reach one or more observability backends or metric queries failed.",
 		SubProblems: subs,
 	}
 }
@@ -250,11 +360,12 @@ func connectivityIssue(edges []get_mesh_status.MeshSummaryEdge, alerts []get_mes
 			impact = alert.Impact
 		}
 		markSeen(seenTargets, edge.To)
-		subs = append(subs, newSubProblem(
+		subs = append(subs, newSubProblemWithSeverity(
 			connectivityEdgeID(edge.From, edge.To),
 			fmt.Sprintf("%s → %s", edge.From, edge.To),
 			issue,
 			impact,
+			severityForHealth(edge.Status),
 		))
 	}
 	if len(subs) == 0 {
@@ -270,12 +381,19 @@ func connectivityIssue(edges []get_mesh_status.MeshSummaryEdge, alerts []get_mes
 }
 
 func newSubProblem(id, target, issue, impact string) SubProblem {
+	return newSubProblemWithSeverity(id, target, issue, impact, SeverityCritical)
+}
+
+func newSubProblemWithSeverity(id, target, issue, impact, severity string) SubProblem {
+	if severity == "" {
+		severity = SeverityCritical
+	}
 	prompt, actions := generateSuggestions(target, issue)
 	return SubProblem{
 		ID:               id,
 		Impact:           impact,
 		Issue:            issue,
-		Severity:         SeverityCritical,
+		Severity:         severity,
 		SuggestedActions: actions,
 		SuggestedPrompt:  prompt,
 		Target:           target,
@@ -317,7 +435,7 @@ func componentKey(name string) string {
 	if i := strings.Index(n, " → "); i >= 0 {
 		n = strings.TrimSpace(n[i+len(" → "):])
 	}
-	for _, prefix := range []string{"control plane: ", "namespace: ", "daemonset: "} {
+	for _, prefix := range []string{"control plane: ", "namespace: ", "daemonset: ", "pod: "} {
 		n = strings.TrimPrefix(n, prefix)
 	}
 	if i := strings.Index(n, " ("); i >= 0 {
@@ -371,6 +489,15 @@ func isHealthyStatus(status string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func severityForHealth(status string) string {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case "DEGRADED", "NOT_READY", "NOT READY":
+		return SeverityWarning
+	default:
+		return SeverityCritical
 	}
 }
 
