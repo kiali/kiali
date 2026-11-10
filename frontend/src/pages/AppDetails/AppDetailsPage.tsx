@@ -31,6 +31,7 @@ import { isGVKSupported } from '../../utils/IstioConfigUtils';
 import { getAppLabelName } from 'config/ServerConfig';
 import { PFBadge, PFBadges } from '../../components/Pf/PfBadges';
 import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { hasIstioExternalDashboards } from 'utils/IstioDashboardUtils';
 import { detailPageTitleStyle, detailTitleRowStyle, detailTitleMainStyle } from 'styles/FlexStyles';
 import { clearChatResourceHealth, publishChatResourceHealth } from 'components/ChatBot/resourceHealth';
 import { t } from 'utils/I18nUtils';
@@ -143,12 +144,14 @@ class AppDetails extends React.Component<AppDetailsProps, AppDetailsState> {
             id="basic-tabs"
             className={basicTabStyle}
             actionsToolbar={
-              <IstioDashboardsDropdownLoader
-                kind="app"
-                namespace={this.props.appId.namespace}
-                object={this.props.appId.app}
-                objectType={MetricsObjectTypes.APP}
-              />
+              hasIstioExternalDashboards() ? (
+                <IstioDashboardsDropdownLoader
+                  kind="app"
+                  namespace={this.props.appId.namespace}
+                  object={this.props.appId.app}
+                  objectType={MetricsObjectTypes.APP}
+                />
+              ) : undefined
             }
             onSelect={tabValue => {
               this.setState({ currentTab: tabValue, cluster: this.state.cluster });

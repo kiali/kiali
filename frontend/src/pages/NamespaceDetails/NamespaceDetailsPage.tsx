@@ -30,6 +30,7 @@ import { buildNamespaceRowActions } from './namespaceDetailActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
 import type { ControlPlane } from 'types/Mesh';
 import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { hasIstioExternalDashboards } from 'utils/IstioDashboardUtils';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
@@ -136,11 +137,13 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
     ) : undefined;
 
-    const actionsToolbar = ns?.isControlPlane ? (
-      <IstioDashboardsDropdownLoader extra={namespaceActionsDropdown} kind="control-plane" />
-    ) : (
-      namespaceActionsDropdown
-    );
+    const mayHaveDashboards = hasIstioExternalDashboards();
+    const actionsToolbar =
+      ns?.isControlPlane && (hasActions || mayHaveDashboards) ? (
+        <IstioDashboardsDropdownLoader extra={namespaceActionsDropdown} kind="control-plane" />
+      ) : (
+        namespaceActionsDropdown
+      );
 
     return (
       <>

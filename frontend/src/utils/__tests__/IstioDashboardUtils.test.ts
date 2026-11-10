@@ -168,6 +168,32 @@ describe('IstioDashboardUtils', () => {
       await expect(loadIstioDashboardLinks('control-plane')).resolves.toEqual({ grafanaLinks: [], persesLinks: [] });
     });
 
+    it('drops mesh dashboards for workload kind even when variables would match', async () => {
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockResolvedValue({
+        status: 200,
+        data: {
+          externalLinks: [
+            {
+              name: ISTIO_MESH_DASHBOARD,
+              url: 'https://grafana/mesh',
+              variables: { namespace: 'var-namespace', workload: 'var-workload' }
+            },
+            workloadLink
+          ]
+        }
+      } as never);
+
+      const result = await loadIstioDashboardLinks({
+        kind: 'workload',
+        namespace: 'bookinfo',
+        object: 'productpage-v1',
+        objectType: MetricsObjectTypes.WORKLOAD
+      });
+
+      expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_WORKLOAD_DASHBOARD]);
+    });
+
     it('builds workload dashboard URLs without the mesh dashboard', async () => {
       getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
       grafanaSpy.mockResolvedValue({
@@ -203,6 +229,28 @@ describe('IstioDashboardUtils', () => {
 
       expect(result.grafanaLinks.map(link => link.name)).toEqual([ISTIO_SERVICE_DASHBOARD]);
       expect(result.grafanaLinks[0].url).toContain('var-service=productpage.bookinfo.svc.cluster.local');
+    });
+
+    it('excludes control-plane dashboards for app kind', async () => {
+      const appLink: ExternalLink = {
+        name: 'My App Overview',
+        url: 'https://grafana/app',
+        variables: { namespace: 'var-namespace', app: 'var-app' }
+      };
+      getStateSpy.mockReturnValue(mockStatusState([{ name: 'Grafana' }]));
+      grafanaSpy.mockResolvedValue({
+        status: 200,
+        data: { externalLinks: [appLink, meshLink, controlPlaneLink] }
+      } as never);
+
+      const result = await loadIstioDashboardLinks({
+        kind: 'app',
+        namespace: 'bookinfo',
+        object: 'productpage',
+        objectType: MetricsObjectTypes.APP
+      });
+
+      expect(result.grafanaLinks.map(link => link.name)).toEqual(['My App Overview']);
     });
 
     it('reuses cached Grafana info across callers', async () => {

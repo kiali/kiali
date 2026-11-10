@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Mock } from '@rstest/core';
 import type { ExternalLink } from 'types/Dashboards';
@@ -102,7 +102,9 @@ describe('IstioDashboardsDropdownLoader', () => {
 
     const { container } = render(<IstioDashboardsDropdownLoader kind="control-plane" />);
 
-    await Promise.resolve();
+    await waitFor(() => {
+      expect(loadMock).toHaveBeenCalled();
+    });
     expect(container).toBeEmptyDOMElement();
   });
 
