@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	auth_v1 "k8s.io/api/authorization/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	kubefake "k8s.io/client-go/kubernetes/fake"
@@ -98,6 +99,58 @@ func TestAccessCheckChecksEachAccessibleNamespace(t *testing.T) {
 	allowed, err = newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
 	require.False(t, allowed, "no access in one of the namespaces")
+}
+
+func TestAccessCheckHonorsDiscoverySelectorOverrides(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+	conf.Deployment.DiscoverySelectors.Default = config.DiscoverySelectorsType{
+		&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
+	}
+	conf.Deployment.DiscoverySelectors.Overrides = map[string]config.DiscoverySelectorsType{
+		"west": {
+			&config.DiscoverySelectorType{
+				MatchExpressions: []metav1.LabelSelectorRequirement{
+					{
+						Key:      "kubernetes.io/metadata.name",
+						Operator: metav1.LabelSelectorOpIn,
+						Values:   []string{"west-ns"},
+					},
+				},
+			},
+		},
+	}
+
+	// The overridden cluster only grants access to its own override namespace: bookinfo is
+	// not granted on west, so a check that asks about bookinfo (the home's default list)
+	// would wrongly report the cluster as revoked.
+	westAllowed := map[string]bool{
+		"west-ns/apps/deployments/list":  true,
+		"west-ns/apps/deployments/watch": true,
+	}
+	west := fakeClientWithAccess(westAllowed)
+	east := fakeClientWithAccess(map[string]bool{
+		"bookinfo/apps/deployments/list":  true,
+		"bookinfo/apps/deployments/watch": true,
+	})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": west, "east": east})
+	check := newAccessCheck(conf, factory)
+
+	allowed, err := check(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.True(t, allowed, "the overridden cluster is verified against its override namespaces only")
+
+	// A cluster without an override is verified against the default accessible namespaces.
+	allowed, err = check(context.Background(), "east", "apps", "deployments")
+	require.NoError(t, err)
+	require.True(t, allowed)
+
+	// Revoking the override namespace denies the overridden cluster.
+	westAllowed["west-ns/apps/deployments/watch"] = false
+	allowed, err = check(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, allowed, "the overridden cluster is denied when its override namespaces are revoked")
 }
 
 func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {

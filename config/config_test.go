@@ -1653,6 +1653,59 @@ func TestExtractAccessibleNamespaceList(t *testing.T) {
 	}
 }
 
+func TestAccessibleNamespacesForCluster(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg := &Config{
+		Deployment: DeploymentConfig{
+			ClusterWideAccess: false,
+			DiscoverySelectors: DiscoverySelectorsConfig{
+				Default: DiscoverySelectorsType{
+					&DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
+				},
+			},
+		},
+	}
+
+	// A cluster without an override has no per-cluster list: callers use the
+	// default accessible namespaces.
+	namespaces, err := cfg.AccessibleNamespacesForCluster("east")
+	assert.NoError(err)
+	assert.Nil(namespaces)
+
+	// A cluster with an override gets its own list, independent of the default selectors.
+	cfg.Deployment.DiscoverySelectors.Overrides = map[string]DiscoverySelectorsType{
+		"west": {
+			&DiscoverySelectorType{
+				MatchExpressions: []meta_v1.LabelSelectorRequirement{
+					{
+						Key:      "kubernetes.io/metadata.name",
+						Operator: meta_v1.LabelSelectorOpIn,
+						Values:   []string{"one", "two"},
+					},
+				},
+			},
+		},
+	}
+	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
+	assert.NoError(err)
+	assert.Equal([]string{"one", "two"}, namespaces)
+
+	// An override that does not name accessible namespaces is an error, so callers
+	// can fall back to the default accessible namespaces.
+	cfg.Deployment.DiscoverySelectors.Overrides["west"] = DiscoverySelectorsType{
+		&DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
+	}
+	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
+	assert.Error(err)
+
+	// Cluster-wide access has no per-cluster scope.
+	cfg.Deployment.ClusterWideAccess = true
+	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
+	assert.NoError(err)
+	assert.Nil(namespaces)
+}
+
 // TestOpenIdConfigDefaults tests that deprecated OIDC endpoint field is initialized to empty string
 func TestOpenIdConfigDefaults(t *testing.T) {
 	conf := NewConfig()

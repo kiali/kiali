@@ -404,10 +404,52 @@ const accessCheckConcurrency = 8
 // checks on first denial, preserving the fast-fail of the former sequential loop.
 var errDenied = errors.New("access denied")
 
+// namespaceConfigs turns a list of namespace names into the cache's DefaultNamespaces restriction.
+// An empty list means no restriction (all namespaces).
+func namespaceConfigs(namespaces []string) map[string]ctrlcache.Config {
+	if len(namespaces) == 0 {
+		return nil
+	}
+	configs := make(map[string]ctrlcache.Config, len(namespaces))
+	for _, namespace := range namespaces {
+		configs[namespace] = ctrlcache.Config{}
+	}
+	return configs
+}
+
+// accessibleNamespacesForCluster returns the namespaces that scope Kiali's access to the named cluster when
+// not in cluster-wide access mode: the cluster's discovery selector override when one is defined, otherwise
+// the default accessible namespaces. An override that cannot be resolved to a namespace list falls back to
+// the default list with a warning, so a misconfigured override cannot silently break the access scope. This
+// must stay in sync with the cache namespace restriction built in newManager - the access check must never
+// evaluate a cluster against namespaces its cache was not scoped to.
+func accessibleNamespacesForCluster(conf *config.Config, cluster string) []string {
+	if conf.Deployment.ClusterWideAccess {
+		return nil
+	}
+	namespaces, err := conf.AccessibleNamespacesForCluster(cluster)
+	if err != nil {
+		log.Warningf("The discovery selector override for cluster [%s] does not name accessible namespaces. Falling back to the default accessible namespaces. err=%s", cluster, err)
+		return conf.Deployment.AccessibleNamespaces
+	}
+	if len(namespaces) == 0 {
+		return conf.Deployment.AccessibleNamespaces
+	}
+	return namespaces
+}
+
 // newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
 // account can still list and watch a resource. Without cluster-wide access it checks every
 // accessible namespace, concurrently.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
+	// Each cluster is verified against its own accessible namespaces so that per-cluster
+	// discovery selector overrides are honored on the access path, not just in the views.
+	clusterNamespaces := make(map[string][]string)
+	if !conf.Deployment.ClusterWideAccess {
+		for cluster := range clientFactory.GetSAClients() {
+			clusterNamespaces[cluster] = accessibleNamespacesForCluster(conf, cluster)
+		}
+	}
 	return func(ctx context.Context, cluster, group, resource string) (bool, error) {
 		if resource == "" {
 			return false, fmt.Errorf("the forbidden error does not name a resource")
@@ -418,7 +460,12 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 		}
 		namespaces := []string{""}
 		if !conf.Deployment.ClusterWideAccess {
-			namespaces = conf.Deployment.AccessibleNamespaces
+			namespaces = clusterNamespaces[cluster]
+			if namespaces == nil {
+				// A cluster unknown to the client factory when the check was built is
+				// still verified against the default accessible namespaces.
+				namespaces = conf.Deployment.AccessibleNamespaces
+			}
 		}
 
 		g, gctx := errgroup.WithContext(ctx)
@@ -461,10 +508,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 	homeClusterInfo := homeClusterClient.ClusterInfo()
 	var defaultNamespaces map[string]ctrlcache.Config
 	if !conf.AllNamespacesAccessible() {
-		defaultNamespaces = make(map[string]ctrlcache.Config)
-		for _, namespace := range conf.Deployment.AccessibleNamespaces {
-			defaultNamespaces[namespace] = ctrlcache.Config{}
-		}
+		defaultNamespaces = namespaceConfigs(conf.Deployment.AccessibleNamespaces)
 	}
 
 	var mgr manager.Manager
@@ -501,9 +545,14 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 		if saClient.ClusterInfo().Name == homeClusterInfo.Name {
 			kubeCaches[saClient.ClusterInfo().Name] = mgr.GetCache()
 		} else {
+			clusterName := saClient.ClusterInfo().Name
 			var remoteCluster cluster.Cluster
 			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
 				o.Scheme = scheme
+				// Scope the remote cache the same way as the home cache: in non-cluster-wide
+				// access mode the remote service account only holds per-namespace roles, so a
+				// cluster-scoped informer is forbidden on every list and never syncs.
+				o.Cache.DefaultNamespaces = namespaceConfigs(accessibleNamespacesForCluster(conf, clusterName))
 				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
 				o.Cache.ByObject = cacheTransforms()
 				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
