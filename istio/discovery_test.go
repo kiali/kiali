@@ -22,7 +22,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	kubefake "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
+	k8stesting "k8s.io/client-go/testing"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
@@ -3329,4 +3331,57 @@ trustDomain: cluster.local
 	require.NoError(err, "a remote cluster with no cache configured is skipped, not fatal")
 	require.Len(mesh.ControlPlanes, 1)
 	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name)
+}
+
+// Assisted-by: Claude Code
+func TestGetMeshToleratesWebhookListFailure(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	const configMapData = `accessLogFile: /dev/stdout
+enableAutoMtls: true
+rootNamespace: istio-system
+trustDomain: cluster.local
+`
+	istioConfigMap := &core_v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "istio",
+			Namespace: "istio-system",
+			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
+		},
+		Data: map[string]string{"mesh": configMapData},
+	}
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
+		istioConfigMap,
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
+	)
+	remoteClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	// The remote's access was revoked after Kiali started: the startup SSAR said the
+	// webhooks were listable, but the live list is forbidden.
+	remoteClient.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			review := action.(k8stesting.CreateAction).GetObject().(*authv1.SelfSubjectAccessReview)
+			review.Status.Allowed = true
+			return true, review, nil
+		})
+	remoteClient.KubeClientset.(*kubefake.Clientset).PrependReactor("list", "mutatingwebhookconfigurations",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, fmt.Errorf("mutatingwebhookconfigurations.admissionregistration.k8s.io is forbidden")
+		})
+
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+
+	kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
+	require.NoError(err)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	mesh, err := discovery.Mesh(context.TODO())
+	require.NoError(err, "a cluster whose webhook list fails must not fail the whole mesh")
+	require.NotEmpty(mesh.ControlPlanes)
+	require.Equal(conf.KubernetesConfig.ClusterName, mesh.ControlPlanes[0].Cluster.Name)
 }

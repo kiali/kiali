@@ -1202,7 +1202,10 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 			ctx, metav1.ListOptions{LabelSelector: models.IstioTagLabel},
 		)
 		if err != nil {
-			return err
+			// Tags are cosmetic; a cluster whose webhooks can't be listed (e.g. access was
+			// revoked after startup, or it is unreachable) must not fail the whole mesh.
+			log.Warningf("Unable to list webhooks for tags on cluster [%s]. Skipping tags for that cluster. err=%s", cluster, err)
+			continue
 		}
 
 		for _, webhook := range webhooks.Items {
