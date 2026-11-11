@@ -1380,9 +1380,29 @@ func setupChatUsageHandler(conf *config.Config, promClient prometheus.ClientInte
 	return AIUsage(conf, nil, promClient)
 }
 
-func TestChatUsage_ChatAIDisabledReturns503(t *testing.T) {
+func TestChatUsage_AIDisabledReturns503(t *testing.T) {
 	conf := config.NewConfig()
 	conf.AI.Enabled = false
+	conf.AI.ChatAI.Enabled = false
+	conf.AI.Metrics = true
+
+	ts := httptest.NewServer(setupChatUsageHandler(conf, nil))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL)
+	require.NoError(t, err)
+	t.Cleanup(func() { resp.Body.Close() })
+
+	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+
+	var body map[string]string
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
+	assert.Contains(t, body["error"], "AI is not enabled")
+}
+
+func TestChatUsage_MetricsDisabledReturns503(t *testing.T) {
+	conf := config.NewConfig()
+	conf.AI.Enabled = true
 	conf.AI.ChatAI.Enabled = false
 	conf.AI.Metrics = false
 
@@ -1397,27 +1417,28 @@ func TestChatUsage_ChatAIDisabledReturns503(t *testing.T) {
 
 	var body map[string]string
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
-	assert.Contains(t, body["error"], "ChatAI is not enabled")
+	assert.Contains(t, body["error"], "AI metrics are not enabled")
 }
 
-func TestChatUsage_MetricsDisabledReturns503(t *testing.T) {
+func TestChatUsage_WorksWhenChatAIDisabledButMetricsEnabled(t *testing.T) {
+	internalmetrics.MarkAITokensSeedingComplete()
 	conf := config.NewConfig()
 	conf.AI.Enabled = true
-	conf.AI.ChatAI.Enabled = true
-	conf.AI.Metrics = false
+	conf.AI.ChatAI.Enabled = false
+	conf.AI.Metrics = true
+	conf.AI.Consumption.AllowedUsersDashboard = []string{}
 
 	ts := httptest.NewServer(setupChatUsageHandler(conf, nil))
 	t.Cleanup(ts.Close)
 
-	resp, err := http.Get(ts.URL)
+	resp, err := http.Get(ts.URL + "?window=3600&step=300")
 	require.NoError(t, err)
 	t.Cleanup(func() { resp.Body.Close() })
 
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
-
-	var body map[string]string
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	var body map[string]interface{}
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
-	assert.Contains(t, body["error"], "ChatAI metrics are not enabled")
+	assert.Equal(t, "millions", body["tokenUnit"])
 }
 
 func TestChatUsage_DashboardAllowListRejectsOtherUsers(t *testing.T) {
@@ -1509,7 +1530,7 @@ func TestChatUsage_EmptyDashboardAllowListAllowsAnyUser(t *testing.T) {
 	assert.Contains(t, summary, "byProvider")
 }
 
-func TestChatUsage_BothDisabledChatAICheckedFirst(t *testing.T) {
+func TestChatUsage_BothDisabledAICheckedFirst(t *testing.T) {
 	conf := config.NewConfig()
 	conf.AI.Enabled = false
 	conf.AI.ChatAI.Enabled = false
@@ -1526,8 +1547,8 @@ func TestChatUsage_BothDisabledChatAICheckedFirst(t *testing.T) {
 
 	var body map[string]string
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
-	// ChatAI.Enabled is checked first, so the error must reflect that
-	assert.Contains(t, body["error"], "ChatAI is not enabled")
+	// AI.Enabled is checked before metrics, so the error must reflect that
+	assert.Contains(t, body["error"], "AI is not enabled")
 }
 
 func TestChatUsage_InvalidWindowReturns400(t *testing.T) {

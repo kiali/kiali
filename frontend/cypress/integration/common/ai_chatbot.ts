@@ -99,7 +99,16 @@ Then('the AI chatbot toggle should show the dark color scheme icon', () => {
 });
 
 When('user clicks the AI chatbot toggle', () => {
-  cy.get(CHATBOT_TOGGLE).click();
+  // The notification drawer panel covers the floating chatbot button when open;
+  // force the click so we can assert mutual exclusion (opening chat closes the drawer).
+  cy.get('body').then($body => {
+    const drawerExpanded = $body.find('.pf-v6-c-page__drawer > .pf-v6-c-drawer.pf-m-expanded').length > 0;
+    if (drawerExpanded) {
+      cy.get(CHATBOT_TOGGLE).click({ force: true });
+    } else {
+      cy.get(CHATBOT_TOGGLE).click();
+    }
+  });
 });
 
 Then('the AI chatbot window should be open', () => {
@@ -921,7 +930,8 @@ Then('the hidden troubleshooting problems section should be visible', () => {
 });
 
 When('user expands the hidden troubleshooting problems section', () => {
-  cy.get('#ai-troubleshooting-hidden-toggle').find('button').click();
+  // Toolbar "Show ignored" label toggles the same hiddenExpanded state as the ExpandableSection.
+  cy.get('[data-test="ai-troubleshooting-toggle-ignored"]').click();
 });
 
 When('user shows the first hidden troubleshooting subproblem', () => {

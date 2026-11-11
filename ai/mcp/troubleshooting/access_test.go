@@ -32,11 +32,17 @@ func TestSuggestionsAllowed(t *testing.T) {
 func TestClearSuggestedActions(t *testing.T) {
 	issues := []Issue{{
 		SubProblems: []SubProblem{{
-			SuggestedActions: []SuggestedAction{{Type: ActionTypeAdvice, Command: "kubectl get pods"}},
-			SuggestedPrompt:  "keep this prompt",
+			SuggestedActions: []SuggestedAction{
+				{Type: ActionTypeAdvice, Command: "kubectl get pods"},
+				{Type: ActionTypeAnalyze, Prompt: "analyze this"},
+				{Type: ActionTypeQuestion, Prompt: "why is this failing?"},
+			},
+			SuggestedPrompt: "keep this prompt",
 		}},
 	}}
 	clearSuggestedActions(issues)
-	require.Empty(t, issues[0].SubProblems[0].SuggestedActions)
+	require.Len(t, issues[0].SubProblems[0].SuggestedActions, 2)
+	assert.Equal(t, ActionTypeAnalyze, issues[0].SubProblems[0].SuggestedActions[0].Type)
+	assert.Equal(t, ActionTypeQuestion, issues[0].SubProblems[0].SuggestedActions[1].Type)
 	assert.Equal(t, "keep this prompt", issues[0].SubProblems[0].SuggestedPrompt)
 }

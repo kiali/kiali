@@ -89,6 +89,7 @@ describe('NotificationCenter', () => {
   it('adds troubleshooting problems to the notification count', () => {
     render(
       <NotificationCenterBadgeComponent
+        aiEnabled
         alerts={[]}
         needsAttention={false}
         newMessageCount={2}
@@ -102,6 +103,43 @@ describe('NotificationCenter', () => {
     const badges = screen.getAllByTestId('notifications-badge');
     expect(badges[0]).toHaveTextContent('2');
     expect(badges[0]).toHaveTextContent('3');
+    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
+  });
+
+  it('shows the AI icon when AI is enabled even with no troubleshooting problems', () => {
+    render(
+      <NotificationCenterBadgeComponent
+        aiEnabled
+        alerts={[]}
+        needsAttention={false}
+        newMessageCount={0}
+        onDismissNotification={() => {}}
+        toggleNotificationCenter={() => {}}
+        troubleshootingCount={0}
+      />
+    );
+
+    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
+  });
+
+  it('shows a zero notification counter next to the troubleshooting count', () => {
+    render(
+      <NotificationCenterBadgeComponent
+        aiEnabled
+        alerts={[]}
+        needsAttention={false}
+        newMessageCount={0}
+        onDismissNotification={() => {}}
+        toggleNotificationCenter={() => {}}
+        troubleshootingCount={4}
+        troubleshootingNeedsAttention={true}
+      />
+    );
+
+    const badge = screen.getAllByTestId('notifications-badge')[0];
+    expect(badge).toHaveTextContent('0');
+    expect(badge).toHaveTextContent('4');
+    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
   });
 
   it('shows the troubleshooting summary and links to the troubleshooting page', () => {
@@ -137,6 +175,32 @@ describe('NotificationCenter', () => {
     expect(within(section).getByText('Troubleshooting')).toBeInTheDocument();
     expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(1 problem detected)');
     expect(screen.getByTestId('troubleshooting-notification-link')).toHaveAttribute('href', '/ai?tab=troubleshooting');
+  });
+
+  it('shows the troubleshooting drawer section when AI is enabled with no problems', () => {
+    const store = createStore(() => ({
+      ai: {
+        enabled: true,
+        troubleshooting: {
+          ...INITIAL_TROUBLESHOOTING_STATE,
+          issues: [],
+          loaded: true
+        }
+      },
+      globalState: { kiosk: '' },
+      notificationCenter: INITIAL_NOTIFICATION_CENTER_STATE
+    }));
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <NotificationCenter />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(screen.getByTestId('troubleshooting-notification-section')).toBeInTheDocument();
+    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(No problems detected)');
   });
 
   it('omits hidden troubleshooting problems from the drawer and the badge', () => {

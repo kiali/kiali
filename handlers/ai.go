@@ -1329,12 +1329,13 @@ func (p aiTimeSeriesPoint) MarshalJSON() ([]byte, error) {
 //	request      chat, troubleshooting, or all. requestType is accepted as an alias. Omitted and all include both.
 func AIUsage(conf *config.Config, _ aiTypes.AIStore, prom prometheus.ClientInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.AI.Enabled || !conf.AI.ChatAI.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI is not enabled")
+		// Consumption stats depend on AI metrics, not on the ChatAI feature.
+		if !conf.AI.Enabled {
+			RespondWithError(w, http.StatusServiceUnavailable, "AI is not enabled")
 			return
 		}
 		if !conf.AI.Metrics {
-			RespondWithError(w, http.StatusServiceUnavailable, "ChatAI metrics are not enabled")
+			RespondWithError(w, http.StatusServiceUnavailable, "AI metrics are not enabled")
 			return
 		}
 

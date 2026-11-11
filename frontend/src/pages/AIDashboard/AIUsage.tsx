@@ -224,6 +224,8 @@ class AIStatsErrorBoundary extends React.Component<{ children: React.ReactNode }
 }
 
 export const AIUsage: React.FC = () => {
+  const chatAllowed = useSelector((state: KialiAppState) => !!state.ai.chat?.allowed);
+  const chatEnabled = useSelector((state: KialiAppState) => !!state.ai.chat?.enabled);
   const metricsEnabled = useSelector((state: KialiAppState) => !!state.ai.consumption?.enabled);
   const [session, setSession] = React.useState<ChatSessionUsageMetric[]>([]);
   const [usage, setUsage] = React.useState<ChatSessionUsageResponse['metrics']>();
@@ -233,15 +235,17 @@ export const AIUsage: React.FC = () => {
   const [error, setError] = React.useState<string>('');
   const [requestKind, setRequestKind] = React.useState<AIRequestKind>('all');
   const [valueKind, setValueKind] = React.useState<UsageValueKind>('tokens');
+  const chatUnavailable = chatEnabled && !chatAllowed;
 
   const loadMetrics = React.useCallback(
     async (showSpinner = false): Promise<void> => {
+      // Chat may be disallowed for this user, but historic usage (Prometheus) still loads when metrics are on.
       if (showSpinner) {
         setLoading(true);
       }
       try {
         const response = await API.getAISessionUsage(undefined, requestKind);
-        setSession(response.data.session || []);
+        setSession(chatUnavailable ? [] : response.data.session || []);
         setUsage(response.data.metrics);
         setCurrentPeriod(response.data.currentPeriod);
         setBudget(response.data.budget);
@@ -254,7 +258,7 @@ export const AIUsage: React.FC = () => {
         }
       }
     },
-    [requestKind]
+    [chatUnavailable, requestKind]
   );
 
   const initialLoadRef = React.useRef(true);
@@ -347,10 +351,73 @@ export const AIUsage: React.FC = () => {
     </EmptyState>
   );
 
+  const chatDisabledState = (
+    <EmptyState data-test="ai-usage-chat-disabled" headingLevel="h4" titleText={t('Chat disabled (current session)')}>
+      <EmptyStateBody>{t('Chatbot is not allowed for this user')}</EmptyStateBody>
+    </EmptyState>
+  );
+
   const errorState = (
     <EmptyState headingLevel="h4" titleText={t('Unable to load token stats')}>
       <EmptyStateBody>{error}</EmptyStateBody>
     </EmptyState>
+  );
+
+  const currentSessionContent = chatUnavailable ? (
+    chatDisabledState
+  ) : session.length === 0 ? (
+    sessionEmptyState
+  ) : (
+    <>
+      <Grid hasGutter className={kpiRowStyle}>
+        <GridItem span={3}>
+          <SummaryCard icon={<ClusterIcon />} label={t('Requests')} value={totals.requestCount.toLocaleString()} />
+        </GridItem>
+        <GridItem span={3}>
+          <SummaryCard
+            icon={<DesktopIcon />}
+            label={t('Prompt (M)')}
+            value={<TokensMillionsValue value={totals.promptTokens} />}
+          />
+        </GridItem>
+        <GridItem span={3}>
+          <SummaryCard
+            icon={<CogIcon />}
+            label={t('Completion (M)')}
+            value={<TokensMillionsValue value={totals.completionTokens} />}
+          />
+        </GridItem>
+        <GridItem span={3}>
+          <SummaryCard
+            icon={<CubesIcon />}
+            label={t('Total (M)')}
+            value={<TokensMillionsValue value={totals.totalTokens} />}
+          />
+        </GridItem>
+      </Grid>
+      <div className={noteStyle}>
+        {t('Data calculated')} {t('Since')} {since ? <LocalTime time={since} /> : '-'}
+        <Button
+          aria-label={t('Refresh')}
+          icon={<KialiIcon.Sync />}
+          id="refresh-metrics"
+          variant={ButtonVariant.link}
+          onClick={() => void loadMetrics(false)}
+        />
+      </div>
+      <Card>
+        <CardTitle>{t('Usage by Provider and Model')}</CardTitle>
+        <CardBody>
+          <SimpleTable
+            label={t('Session token usage by provider and model')}
+            columns={columns}
+            rows={rows}
+            emptyState={sessionEmptyState}
+            variant={TableVariant.compact}
+          />
+        </CardBody>
+      </Card>
+    </>
   );
 
   return (
@@ -450,69 +517,14 @@ export const AIUsage: React.FC = () => {
               <Title headingLevel="h2" size={TitleSizes.xl} className={columnTitleStyle}>
                 {t('Current session')}
               </Title>
-              <div className={noteStyle}>
-                {t(
-                  'These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when the server restarts or the session expires.'
-                )}
-              </div>
-              {session.length === 0 ? (
-                sessionEmptyState
-              ) : (
-                <>
-                  <Grid hasGutter className={kpiRowStyle}>
-                    <GridItem span={3}>
-                      <SummaryCard
-                        icon={<ClusterIcon />}
-                        label={t('Requests')}
-                        value={totals.requestCount.toLocaleString()}
-                      />
-                    </GridItem>
-                    <GridItem span={3}>
-                      <SummaryCard
-                        icon={<DesktopIcon />}
-                        label={t('Prompt (M)')}
-                        value={<TokensMillionsValue value={totals.promptTokens} />}
-                      />
-                    </GridItem>
-                    <GridItem span={3}>
-                      <SummaryCard
-                        icon={<CogIcon />}
-                        label={t('Completion (M)')}
-                        value={<TokensMillionsValue value={totals.completionTokens} />}
-                      />
-                    </GridItem>
-                    <GridItem span={3}>
-                      <SummaryCard
-                        icon={<CubesIcon />}
-                        label={t('Total (M)')}
-                        value={<TokensMillionsValue value={totals.totalTokens} />}
-                      />
-                    </GridItem>
-                  </Grid>
-                  <div className={noteStyle}>
-                    {t('Data calculated')} {t('Since')} {since ? <LocalTime time={since} /> : '-'}
-                    <Button
-                      aria-label={t('Refresh')}
-                      icon={<KialiIcon.Sync />}
-                      id="refresh-metrics"
-                      variant={ButtonVariant.link}
-                      onClick={() => void loadMetrics(false)}
-                    />
-                  </div>
-                  <Card>
-                    <CardTitle>{t('Usage by Provider and Model')}</CardTitle>
-                    <CardBody>
-                      <SimpleTable
-                        label={t('Session token usage by provider and model')}
-                        columns={columns}
-                        rows={rows}
-                        emptyState={sessionEmptyState}
-                        variant={TableVariant.compact}
-                      />
-                    </CardBody>
-                  </Card>
-                </>
+              {!chatUnavailable && (
+                <div className={noteStyle}>
+                  {t(
+                    'These token stats are scoped to your current Kiali session and stored in memory on the server. They reset when the server restarts or the session expires.'
+                  )}
+                </div>
               )}
+              {currentSessionContent}
             </GridItem>
             {metricsEnabled && (
               <GridItem span={12} lg={6}>

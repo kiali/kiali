@@ -166,7 +166,7 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
     const canOpen = canSendPrompt(prompt);
 
     return (
-      <Tooltip content={canOpen ? t('Try to fix with AI') : t('AI troubleshooting is not available')}>
+      <Tooltip content={chatAllowed ? t('Try to fix with AI') : t('Chatbot is not allowed for this user')}>
         <span>
           <Button
             aria-label={t('Try to fix with AI')}
@@ -188,7 +188,12 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
     );
   };
 
-  const primaryAnalyze = actions.find(action => action.type === 'Analyze' || action.type === 'Question');
+  const primaryAnalyze =
+    actions.find(action => action.type === 'Analyze' || action.type === 'Question') ??
+    // Backend may omit Analyze actions when chat is disallowed; still show a disabled Fix control from suggestedPrompt.
+    (suggestedPrompt ? { description: t('Try to fix with AI'), prompt: suggestedPrompt, type: 'Analyze' } : undefined);
+  // Same visibility pattern as Ask AI: show the control; permission only disables it.
+  const analyzeChatbotAction = primaryAnalyze ? analyzeAction(primaryAnalyze) : undefined;
   const askChatbotAction =
     checks.length === 0 && suggestedPrompt ? askIconButton(suggestedPrompt, t('Ask AI')) : undefined;
 
@@ -203,7 +208,7 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
           actions: (
             <div className={headerActionsStyle}>
               {askChatbotAction}
-              {primaryAnalyze && analyzeAction(primaryAnalyze)}
+              {analyzeChatbotAction}
               {subProblem.istioObject && (
                 <KialiLink
                   dataTest="ai-troubleshooting-view-istio-object"

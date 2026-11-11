@@ -40,10 +40,11 @@ const createTestStore = (
 };
 
 const HookConsumer: React.FC = () => {
-  const { askChat, canSendPrompt, chatAllowed, openChat, sendPrompt, troubleshoot } = useAIInteraction();
+  const { askChat, canSendPrompt, chatAllowed, chatEnabled, openChat, sendPrompt, troubleshoot } = useAIInteraction();
   return (
     <div>
       <span data-test="chat-allowed">{String(chatAllowed)}</span>
+      <span data-test="chat-enabled">{String(chatEnabled)}</span>
       <span data-test="can-send-valid">{String(canSendPrompt('hello'))}</span>
       <span data-test="can-send-empty">{String(canSendPrompt('   '))}</span>
       <button onClick={() => openChat()}>Open Chat</button>
@@ -78,6 +79,7 @@ describe('useAIInteraction', () => {
     );
 
     expect(screen.getByTestId('chat-allowed')).toHaveTextContent('true');
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('true');
     expect(screen.getByTestId('can-send-valid')).toHaveTextContent('true');
     expect(screen.getByTestId('can-send-empty')).toHaveTextContent('false');
 
@@ -134,12 +136,23 @@ describe('useAIInteraction', () => {
     );
 
     expect(screen.getByTestId('chat-allowed')).toHaveTextContent('false');
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('true');
     expect(screen.getByTestId('can-send-valid')).toHaveTextContent('false');
     fireEvent.click(screen.getByRole('button', { name: 'Open Chat' }));
     fireEvent.click(screen.getByRole('button', { name: 'Ask Chat' }));
     fireEvent.click(screen.getByRole('button', { name: 'Troubleshoot Direct' }));
     expect(disallowed.dispatched).toHaveLength(0);
     unmount();
+
+    const disabled = createTestStore({ chatAllowed: false, chatEnabled: false });
+    const disabledView = render(
+      <Provider store={disabled.store}>
+        <HookConsumer />
+      </Provider>
+    );
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('chat-allowed')).toHaveTextContent('false');
+    disabledView.unmount();
 
     const kiosk = createTestStore({ kiosk: 'true' });
     render(

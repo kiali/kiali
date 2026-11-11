@@ -227,13 +227,10 @@ export const AiTroubleshootingStateReducer = (
 
 const INITIAL_AI_ENABLED_STATE = false;
 
-// The overall "AI" feature master switch. Today ChatAI is the only AI feature, so it mirrors
-// the ChatAI "enabled" flag, but it is kept separate so other AI features can toggle it independently.
+// Top-level AI master switch. Independent from chat.enabled / consumption.enabled.
 const AiEnabledReducer = (state: boolean = INITIAL_AI_ENABLED_STATE, action: KialiAppAction): boolean => {
   switch (action.type) {
     case getType(ChatAIActions.setAI):
-      return action.payload.enabled;
-    case getType(ChatAIActions.setAIChat):
       return action.payload.enabled;
     default:
       return state;
