@@ -76,8 +76,6 @@ const createHistogramChart = (name: string): ChartModel => {
 
 describe('Metrics for a service', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getServiceDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
@@ -115,7 +113,11 @@ describe('Metrics for a service', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {
@@ -170,8 +172,6 @@ describe('Metrics for a service', () => {
 
 describe('Inbound Metrics for a workload', () => {
   beforeEach(() => {
-    rstest.spyOn(API, 'getGrafanaInfo').mockResolvedValue({ data: { externalLinks: [] } } as any);
-    rstest.spyOn(API, 'getPersesInfo').mockResolvedValue({ data: { url: '', dashboards: {} } } as any);
     rstest.spyOn(API, 'getWorkloadDashboard').mockResolvedValue({
       data: { title: '', aggregations: [], charts: [], externalLinks: [], rows: 0 }
     } as any);
@@ -209,7 +209,11 @@ describe('Inbound Metrics for a workload', () => {
         </MemoryRouter>
       </Provider>
     );
-    expect(container).toMatchSnapshot();
+    expect(container.textContent).toContain('Metrics Settings');
+    expect(container.textContent).toContain('Reported from');
+    expect(container.textContent).toContain('Trendlines');
+    expect(container.querySelector('[id^="grafana_link_"]')).toBeNull();
+    expect(container.querySelector('[id^="perses_link_"]')).toBeNull();
   });
 
   it('mounts and loads empty metrics', () => {

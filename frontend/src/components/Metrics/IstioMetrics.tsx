@@ -27,8 +27,6 @@ import { MetricsReporter } from '../MetricsOptions/MetricsReporter';
 import { TimeDurationModal } from '../Time/TimeDurationModal';
 import { location, router, URLParam } from 'app/History';
 import { MetricsObjectTypes } from 'types/Metrics';
-import type { GrafanaInfo } from 'types/GrafanaInfo';
-import { MessageType } from 'types/NotificationCenter';
 import type { JaegerLineInfo } from './SpanOverlay';
 import { SpanOverlay } from './SpanOverlay';
 import type { ChartModel, DashboardModel } from 'types/Dashboards';
@@ -42,19 +40,13 @@ import { TimeDurationIndicator } from '../Time/TimeDurationIndicator';
 import type { ApiResponse } from 'types/Api';
 import { isParentKiosk, kioskNavigateAction } from 'components/Kiosk/KioskActions';
 import { TraceSpansLimit } from './TraceSpansLimit';
-import { GrafanaLinks } from './GrafanaLinks';
-import type { PersesInfo } from '../../types/PersesInfo';
-import { PersesLinks } from './PersesLinks';
-import type { ExternalServiceInfo } from '../../types/StatusState';
 import { t } from 'utils/I18nUtils';
 
 type MetricsState = {
   dashboard?: DashboardModel;
   disabledFeatures?: KialiDisabledFeatures;
-  grafanaInfo: GrafanaInfo;
   isTimeOptionsOpen: boolean;
   labelsSettings: LabelsSettings;
-  persesInfo: PersesInfo;
   showSpans: boolean;
   showTrendlines: boolean;
   spanOverlay?: Overlay<JaegerLineInfo>;
@@ -76,7 +68,6 @@ type IstioMetricsProps = ObjectId & {
 };
 
 type ReduxStateProps = {
-  externalServices: ExternalServiceInfo[];
   kiosk: string;
   language: string;
   refreshInterval: IntervalInMilliseconds;
@@ -94,8 +85,6 @@ type Props = ReduxStateProps & ReduxDispatchProps & IstioMetricsProps;
 const traceLimitDefault = 20;
 
 class IstioMetricsComponent extends React.Component<Props, MetricsState> {
-  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
-  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
   options: IstioMetricsOptions;
   spanOverlay: SpanOverlay;
 
@@ -106,13 +95,7 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
     this.state = {
       labelsSettings: settings.labelsSettings,
-      grafanaInfo: {
-        externalLinks: []
-      },
       isTimeOptionsOpen: false,
-      persesInfo: {
-        externalLinks: []
-      },
       showSpans: settings.showSpans,
       showTrendlines: settings.showTrendlines,
       traceLimit: settings.spanLimit
@@ -130,8 +113,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       })
       .catch(() => {});
 
-    this.fetchGrafanaInfo();
-    this.fetchPersesInfo();
     this.refresh();
   }
 
@@ -277,58 +258,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
       });
   };
 
-  private fetchGrafanaInfo(): void {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
-      if (!IstioMetricsComponent.grafanaInfoPromise) {
-        IstioMetricsComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-
-          return response.data;
-        });
-      }
-
-      IstioMetricsComponent.grafanaInfoPromise
-        .then(grafanaInfo => {
-          if (grafanaInfo) {
-            this.setState({ grafanaInfo: grafanaInfo });
-          } else {
-            this.setState({ grafanaInfo: { externalLinks: [] } });
-          }
-        })
-        .catch(err => {
-          addError('Could not fetch Grafana info. Turning off links to Grafana.', err, false, MessageType.INFO);
-        });
-    }
-  }
-
-  private fetchPersesInfo(): void {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
-      if (!IstioMetricsComponent.persesInfoPromise) {
-        IstioMetricsComponent.persesInfoPromise = API.getPersesInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-
-          return response.data;
-        });
-      }
-
-      IstioMetricsComponent.persesInfoPromise
-        .then(persesInfo => {
-          if (persesInfo) {
-            this.setState({ persesInfo: persesInfo });
-          } else {
-            this.setState({ persesInfo: { externalLinks: [] } });
-          }
-        })
-        .catch(err => {
-          addError('Could not fetch Perses info. Turning off links to Perses.', err, false, MessageType.INFO);
-        });
-    }
-  }
-
   private onMetricsSettingsChanged = (settings: MetricsSettings): void => {
     const defaultLabels = [
       this.props.direction === 'inbound' ? 'source_canonical_service' : 'destination_canonical_service'
@@ -464,22 +393,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
               />
             </ToolbarItem>
 
-            <ToolbarItem style={{ marginLeft: 'auto', paddingRight: '20px', display: 'block' }}>
-              <GrafanaLinks
-                links={this.state.grafanaInfo.externalLinks}
-                namespace={this.props.namespace}
-                object={this.props.object}
-                objectType={this.props.objectType}
-                datasourceUID={this.state.grafanaInfo.datasourceUID}
-              />
-              <PersesLinks
-                links={this.state.persesInfo.externalLinks}
-                namespace={this.props.namespace}
-                object={this.props.object}
-                objectType={this.props.objectType}
-                project={this.state.persesInfo.project}
-              />
-            </ToolbarItem>
             <KioskElement>
               <ToolbarItem>
                 <TimeDurationIndicator onClick={this.toggleTimeOptionsVisibility} />
@@ -505,7 +418,6 @@ class IstioMetricsComponent extends React.Component<Props, MetricsState> {
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
   return {
-    externalServices: state.statusState.externalServices,
     kiosk: state.globalState.kiosk,
     language: languageSelector(state),
     tracingIntegration: state.tracingState.info ? state.tracingState.info.integration : false,

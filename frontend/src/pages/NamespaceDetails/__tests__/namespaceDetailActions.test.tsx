@@ -40,11 +40,9 @@ const baseParams = (
   overrides?: Partial<NamespaceRowActionsParams>
 ): NamespaceRowActionsParams => ({
   controlPlanes: undefined,
-  grafanaLinks: [],
   istioAPIEnabled: true,
   nsInfo,
   onOpenTrafficPoliciesModal: rstest.fn(),
-  persesLinks: [],
   ...overrides
 });
 
@@ -79,28 +77,10 @@ describe('buildNamespaceRowActions', () => {
   });
 
   describe('control-plane namespace', () => {
-    it('returns no actions when there are no external links', () => {
+    it('returns no actions because dashboard links live in the Dashboards dropdown', () => {
       const actions = buildNamespaceRowActions(baseParams(controlPlaneNsInfo));
       const nonSeparators = actions.filter(a => !a.isSeparator);
       expect(nonSeparators).toHaveLength(0);
-    });
-
-    it('includes grafana links when provided', () => {
-      const titles = actionTitles(
-        baseParams(controlPlaneNsInfo, {
-          grafanaLinks: [{ name: 'Performance', url: 'http://grafana/perf', variables: {} }]
-        })
-      );
-      expect(titles).toContain('Performance');
-    });
-
-    it('includes perses links when provided', () => {
-      const titles = actionTitles(
-        baseParams(controlPlaneNsInfo, {
-          persesLinks: [{ name: 'Istio Mesh', url: 'http://perses/mesh', variables: {} }]
-        })
-      );
-      expect(titles).toContain('Istio Mesh');
     });
   });
 

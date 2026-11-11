@@ -29,11 +29,8 @@ import { healthComputeDurationValidSeconds } from 'utils/HealthComputeDuration';
 import { buildNamespaceRowActions } from './namespaceDetailActions';
 import { NamespaceTrafficPolicies } from 'pages/Namespaces/NamespaceTrafficPolicies';
 import type { ControlPlane } from 'types/Mesh';
-import { ISTIO_DASHBOARDS } from 'types/GrafanaInfo';
-import type { GrafanaInfo } from 'types/GrafanaInfo';
-import type { ExternalLink } from 'types/Dashboards';
-import type { PersesInfo } from 'types/PersesInfo';
-import { MessageType } from 'types/NotificationCenter';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
+import { hasIstioExternalDashboards } from 'utils/IstioDashboardUtils';
 import { setControlPlaneRevisions } from 'pages/Namespaces/NamespaceRevisionUtils';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { TimeControl } from 'components/Time/TimeControl';
@@ -46,7 +43,6 @@ import type { HealthStatusId } from 'types/Health';
 
 type ReduxProps = {
   duration: DurationInSeconds;
-  externalServices: { name: string }[];
   istioAPIEnabled: boolean;
   meshStatus: string;
   refreshInterval: IntervalInMilliseconds;
@@ -64,12 +60,10 @@ type State = {
   controlPlanes?: ControlPlane[];
   currentTab: string;
   error?: ErrorMsg;
-  grafanaLinks: ExternalLink[];
   kind: string;
   nsInfo?: NamespaceInfo;
   nsTarget: string;
   opTarget: string;
-  persesLinks: ExternalLink[];
   showTrafficPoliciesModal: boolean;
 };
 
@@ -81,9 +75,6 @@ const tabIndex: { [tab: string]: number } = {
 };
 
 export class NamespaceDetailsPageComponent extends React.Component<NamespaceDetailsPageProps, State> {
-  static grafanaInfoPromise: Promise<GrafanaInfo | undefined> | undefined;
-  static persesInfoPromise: Promise<PersesInfo | undefined> | undefined;
-
   private promises = new PromisesRegistry();
   private _isMounted = false;
 
@@ -93,19 +84,15 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       cluster: HistoryManager.getClusterName(),
       clusterTarget: '',
       currentTab: activeTab(tabName, defaultTab),
-      grafanaLinks: [],
       kind: '',
       nsTarget: '',
       opTarget: '',
-      persesLinks: [],
       showTrafficPoliciesModal: false
     };
   }
 
   componentDidMount(): void {
     this._isMounted = true;
-    this.fetchGrafanaInfo();
-    this.fetchPersesInfo();
     this.fetchControlPlanes();
     this.load();
   }
@@ -146,10 +133,17 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
     const namespaceActions = !this.state.error && ns ? this.getNamespaceActions() : [];
     const hasActions = namespaceActions.some(a => !a.isSeparator);
-
-    const actionsToolbar = hasActions ? (
+    const namespaceActionsDropdown = hasActions ? (
       <NamespaceActions namespace={this.props.namespace} actions={namespaceActions} toggleVariant="actionsText" />
     ) : undefined;
+
+    const mayHaveDashboards = hasIstioExternalDashboards();
+    const actionsToolbar =
+      ns?.isControlPlane && (hasActions || mayHaveDashboards) ? (
+        <IstioDashboardsDropdownLoader extra={namespaceActionsDropdown} kind="control-plane" />
+      ) : (
+        namespaceActionsDropdown
+      );
 
     return (
       <>
@@ -219,66 +213,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
       </>
     );
   }
-
-  private fetchGrafanaInfo = (): void => {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'grafana')) {
-      if (!NamespaceDetailsPageComponent.grafanaInfoPromise) {
-        NamespaceDetailsPageComponent.grafanaInfoPromise = API.getGrafanaInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-          return response.data;
-        });
-      }
-
-      NamespaceDetailsPageComponent.grafanaInfoPromise
-        .then(grafanaInfo => {
-          if (!this._isMounted) {
-            return;
-          }
-          if (grafanaInfo) {
-            this.setState({
-              grafanaLinks: grafanaInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-            });
-          } else {
-            this.setState({ grafanaLinks: [] });
-          }
-        })
-        .catch(err => {
-          addError(t('Could not fetch Grafana info. Turning off links to Grafana.'), err, false, MessageType.INFO);
-        });
-    }
-  };
-
-  private fetchPersesInfo = (): void => {
-    if (this.props.externalServices.find(service => service.name.toLowerCase() === 'perses')) {
-      if (!NamespaceDetailsPageComponent.persesInfoPromise) {
-        NamespaceDetailsPageComponent.persesInfoPromise = API.getPersesInfo().then(response => {
-          if (response.status === 204) {
-            return undefined;
-          }
-          return response.data;
-        });
-      }
-
-      NamespaceDetailsPageComponent.persesInfoPromise
-        .then(persesInfo => {
-          if (!this._isMounted) {
-            return;
-          }
-          if (persesInfo) {
-            this.setState({
-              persesLinks: persesInfo.externalLinks.filter(link => ISTIO_DASHBOARDS.indexOf(link.name) > -1)
-            });
-          } else {
-            this.setState({ persesLinks: [] });
-          }
-        })
-        .catch(err => {
-          addError(t('Could not fetch Perses info. Turning off links to Perses.'), err, false, MessageType.INFO);
-        });
-    }
-  };
 
   private fetchControlPlanes = (): void => {
     API.getControlPlanes()
@@ -466,7 +400,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
     }
     return buildNamespaceRowActions({
       controlPlanes: this.state.controlPlanes,
-      grafanaLinks: this.state.grafanaLinks,
       istioAPIEnabled: this.props.istioAPIEnabled,
       nsInfo: this.state.nsInfo,
       onOpenTrafficPoliciesModal: p =>
@@ -476,9 +409,7 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
           clusterTarget: p.clusterTarget ?? '',
           opTarget: p.opTarget,
           kind: p.kind
-        }),
-      onRefreshAfterExternalLink: this.handleChangeAfterPolicy,
-      persesLinks: this.state.persesLinks
+        })
     });
   };
 
@@ -510,7 +441,6 @@ export class NamespaceDetailsPageComponent extends React.Component<NamespaceDeta
 
 const mapStateToProps = (state: KialiAppState): ReduxProps => ({
   duration: durationSelector(state),
-  externalServices: state.statusState.externalServices,
   istioAPIEnabled: state.statusState.istioEnvironment.istioAPIEnabled,
   meshStatus: meshWideMTLSStatusSelector(state),
   refreshInterval: refreshIntervalSelector(state)

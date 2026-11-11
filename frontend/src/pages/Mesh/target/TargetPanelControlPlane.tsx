@@ -36,6 +36,7 @@ import { TargetPanelEditor } from './TargetPanelEditor';
 import { IstioCertsInfo } from 'components/IstioCertsInfo/IstioCertsInfo';
 import { TargetPanelControlPlaneMetrics } from './TargetPanelControlPlaneMetrics';
 import { TargetPanelControlPlaneStatus } from './TargetPanelControlPlaneStatus';
+import { IstioDashboardsDropdownLoader } from 'components/IstioDashboards/IstioDashboardsDropdown';
 import type { ConfigSource, ControlPlane, IstiodNodeData, NodeTarget } from 'types/Mesh';
 import { SimpleTabs } from 'components/Tab/SimpleTabs';
 import { HelpIcon } from '@patternfly/react-icons';
@@ -479,6 +480,7 @@ export class TargetPanelControlPlane extends React.Component<
       return (
         <TargetPanelControlPlaneMetrics
           key={data.namespace}
+          dashboards={<IstioDashboardsDropdownLoader kind="control-plane" />}
           pilotLatency={this.state.controlPlaneMetrics?.istiod_proxy_time}
           istiodContainerMemory={this.state.controlPlaneMetrics?.istiod_container_mem}
           istiodContainerCpu={this.state.controlPlaneMetrics?.istiod_container_cpu}
