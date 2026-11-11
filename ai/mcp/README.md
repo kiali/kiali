@@ -205,6 +205,8 @@ Returns Istio/Envoy metrics for a specific resource.
 - `reporter` (string, optional): `"source"`, `"destination"`, or `"both"`. Default: `"source"`.
 - `rateInterval` (string, optional): Rate interval. Default: `"10m"`.
 - `step` (string, optional): Step between data points in seconds. Default: `"15"`.
+- `since` (string, optional): Start of the time range, as an RFC3339 timestamp or a duration before `to` such as `"30m"`, `"2h"` or `"1d"`. Default: 30 minutes before `to`.
+- `to` (string, optional): End of the time range, as an RFC3339 timestamp. Default: now. Without `step`, the step is widened for long ranges to stay under the Prometheus limit of 11,000 points per series.
 - `requestProtocol` (string, optional): `"http"` or `"grpc"`.
 - `quantiles` (string, optional): Comma-separated quantiles. Default: `"0.5,0.95,0.99,0.999"`.
 - `byLabels` (string, optional): Comma-separated labels to group by.
