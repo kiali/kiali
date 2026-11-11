@@ -314,7 +314,7 @@ describe('waypoint node labels', () => {
 
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
 
-    expect((node.data as NodeData).secondaryLabel).toContain('canary (multi-%)');
+    expect((node.data as NodeData).secondaryLabel).toContain('canary (mixed %)');
   });
 
   it.each([
@@ -327,7 +327,7 @@ describe('waypoint node labels', () => {
     settings.activeNamespaces = [];
 
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
-    expect(data.secondaryLabel).toBe(`${role} (multi-%)`);
+    expect(data.secondaryLabel).toBe(`${role} (mixed %)`);
 
     settings.edgeLabels = [];
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
@@ -336,7 +336,7 @@ describe('waypoint node labels', () => {
     settings.edgeLabels = [EdgeLabelMode.TRAFFIC_DISTRIBUTION];
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
-    expect(data.secondaryLabel).toBe(`${role} (multi-%)`);
+    expect(data.secondaryLabel).toBe(`${role} (mixed %)`);
   });
 
   it('keeps the effective role when toggling percentages without duplicating labels', () => {

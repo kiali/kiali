@@ -24,16 +24,15 @@ const gatewaySplitScore = (split: WaypointTrafficSplit | undefined): number => {
 };
 
 export const WAYPOINT_MULTIPLE_SPLITS_LABEL = 'Multiple traffic splits';
-export const WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL = 'multi-%';
 
 const formatWaypointRoleWeightGraphLabel = (role: 'canary' | 'primary', weight: number): string => {
   return `${role} (${weight}%)`;
 };
 
-/** Secondary label when several splits reference the same gateway, e.g. canary (multi-%). */
+/** Secondary label when several splits reference the same gateway, e.g. canary (mixed %). */
 export const formatWaypointMultiWeightGraphLabel = (role: 'canary' | 'primary' | undefined): string => {
-  const multi = `(${WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL})`;
-  return role ? `${role} ${multi}` : multi;
+  const mixed = `(${t('mixed %')})`;
+  return role ? `${role} ${mixed}` : mixed;
 };
 
 const gatewayWaypointGraphRole = (
