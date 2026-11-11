@@ -2889,11 +2889,27 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 	return workloadsList
 }
 
+// waypointFor returns istio.io/waypoint-for for the waypoint proxy when it is listed in waypoints.
+func (in *WorkloadService) waypointFor(wpCluster, wpNamespace, wpName string, waypoints models.Workloads) string {
+	for _, wp := range waypoints {
+		if wp == nil {
+			continue
+		}
+		if wp.Cluster == wpCluster && wp.Namespace == wpNamespace && wp.Name == wpName && wp.IsWaypointWorkload() {
+			if wpFor := wp.WaypointFor(); wpFor != "" {
+				return wpFor
+			}
+		}
+	}
+	return config.WaypointForService
+}
+
 // listWaypointWorkloads returns workloads and services whose traffic is handled by the waypoint gateway wpName
 // (as primary and/or canary).
 func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
-	primaryW, primaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary)
-	canaryW, canaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary)
+	waypointCaptureFor := in.waypointFor(wpCluster, wpNamespace, wpName, waypoints)
+	primaryW, primaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, waypointCaptureFor, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary)
+	canaryW, canaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, waypointCaptureFor, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary)
 	return mergeWaypointWorkloadRefs(primaryW, canaryW), mergeWaypointServiceRefs(primaryS, canaryS)
 }
 
@@ -2952,7 +2968,7 @@ func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []m
 	return out
 }
 
-func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads, useLabel, useNamespaceLabel, role string) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
+func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads, waypointFor, useLabel, useNamespaceLabel, role string) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
 	// Get all the workloads for a namespaces labeled
 	labelSelector := fmt.Sprintf("%s=%s", useLabel, wpName)
 	userClient, ok := in.userClients[wpCluster]
@@ -2978,7 +2994,9 @@ func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, w
 	labeledNamespaces := sliceutil.Filter(nslist, func(ns core_v1.Namespace) bool {
 		return ns.Name == wpNamespace || ns.Labels[useNamespaceLabel] == wpNamespace
 	})
-	if len(labeledNamespaces) > 0 {
+	// Canary splits are service-scoped; workload-for waypoint proxies only enroll via pod labels.
+	skipNamespaceWorkloadEnrollment := waypointFor == config.WaypointForWorkload
+	if !skipNamespaceWorkloadEnrollment && len(labeledNamespaces) > 0 {
 		labeledNamespaceNames := sliceutil.Map(labeledNamespaces, func(ns core_v1.Namespace) string {
 			return ns.Name
 		})

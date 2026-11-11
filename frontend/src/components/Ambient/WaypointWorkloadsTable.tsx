@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import * as React from 'react';
 import { SortByDirection, TableVariant } from '@patternfly/react-table';
 import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';

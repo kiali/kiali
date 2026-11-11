@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import * as React from 'react';
 import { TableVariant } from '@patternfly/react-table';
 import type { IRow, ThProps } from '@patternfly/react-table';

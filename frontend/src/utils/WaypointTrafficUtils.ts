@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import type { Namespace } from 'types/Namespace';
 import type { GatewayWaypointTrafficSplitConfig, WaypointBinding, WaypointTrafficSplit } from 'types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';

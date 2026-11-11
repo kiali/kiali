@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -149,6 +150,61 @@ func TestListWaypointCapturedServicesEffectiveSplit(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestListWaypointWorkloadsWorkloadSkipsNamespaceCanaryEnrollment(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster-default"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	const gwNamespace = "waypoint-forworkload-canary"
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "25"},
+		Labels: map[string]string{
+			config.WaypointCanaryUseLabel: "bwaypoint-canary",
+		},
+		Name: gwNamespace,
+	}}
+	// Workload enrolled only via namespace canary label (no pod canary labels); must not appear on workload-for waypoint proxies.
+	echoDeploy := &apps_v1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels:    map[string]string{"app": "echo-server"},
+			Name:      "echo-server",
+			Namespace: gwNamespace,
+		},
+		Spec: apps_v1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "echo-server"}},
+			Template: core_v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: map[string]string{"app": "echo-server"}},
+				Spec: core_v1.PodSpec{
+					Containers: []core_v1.Container{{Image: "test", Name: "echo-server"}},
+				},
+			},
+		},
+	}
+	layer := NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(ns, echoDeploy)).Build()
+	waypoints := models.Workloads{
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Cluster:   conf.KubernetesConfig.ClusterName,
+				Labels:    map[string]string{config.GatewayLabel: "bwaypoint", config.WaypointFor: config.WaypointForWorkload},
+				Name:      "bwaypoint",
+				Namespace: gwNamespace,
+			},
+		},
+		&models.Workload{
+			WorkloadListItem: models.WorkloadListItem{
+				Cluster:   conf.KubernetesConfig.ClusterName,
+				Labels:    map[string]string{config.GatewayLabel: "bwaypoint-canary", config.WaypointFor: config.WaypointForWorkload},
+				Name:      "bwaypoint-canary",
+				Namespace: gwNamespace,
+			},
+		},
+	}
+	ctx := context.Background()
+	canaryWaypointWorkloads, _ := layer.Workload.listWaypointWorkloads(ctx, conf.KubernetesConfig.ClusterName, gwNamespace, "bwaypoint-canary", false, waypoints)
+	assert.Empty(t, canaryWaypointWorkloads)
 }
 
 func TestWaypointServicesRespectNamespaceOverrides(t *testing.T) {

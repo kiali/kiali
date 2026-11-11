@@ -328,7 +328,8 @@ install_canary_waypoint_demos() {
   apply_waypoint_gateway waypoint-forservice-canary waypoint-canary service
   apply_namespace_canary_split waypoint-forservice-canary waypoint-canary
 
-  # Same as waypoint-forworkload, plus bwaypoint-canary
+  # Same as waypoint-forworkload, plus bwaypoint-canary. Negative fixture: namespace canary labels do not enroll
+  # workloads on workload-for waypoint proxies (split is service-level in Istio). List echo-server only on bwaypoint.
   install_waypoint_forworkload_demo waypoint-forworkload-canary bwaypoint bwaypoint
   apply_waypoint_gateway waypoint-forworkload-canary bwaypoint-canary workload
   apply_namespace_canary_split waypoint-forworkload-canary bwaypoint-canary

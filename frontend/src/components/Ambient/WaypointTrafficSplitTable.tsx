@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import * as React from 'react';
 import { SortByDirection, Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import type { OnSort } from '@patternfly/react-table';
