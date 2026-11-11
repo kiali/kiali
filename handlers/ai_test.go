@@ -653,8 +653,9 @@ func setupTroubleshootingHandler(t *testing.T, enable bool) (http.Handler, *conf
 	return WithFakeAuthInfo(conf, h), conf
 }
 
-func TestTroubleshooting_Disabled(t *testing.T) {
+func TestTroubleshooting_ScanWorksWithoutAI(t *testing.T) {
 	require := require.New(t)
+	require.NoError(mcp.LoadTools())
 	handler, _ := setupTroubleshootingHandler(t, false)
 	mr := mux.NewRouter()
 	mr.Handle("/api/ai/troubleshooting", handler).Methods(http.MethodPost)
@@ -664,7 +665,9 @@ func TestTroubleshooting_Disabled(t *testing.T) {
 	resp, err := http.Post(ts.URL+"/api/ai/troubleshooting", "application/json", nil)
 	require.NoError(err)
 	t.Cleanup(func() { resp.Body.Close() })
-	assert.Equal(t, http.StatusServiceUnavailable, resp.StatusCode)
+	assert.NotEqual(t, http.StatusServiceUnavailable, resp.StatusCode, "mesh scan must work with AI disabled")
+	assert.NotEqual(t, http.StatusNotFound, resp.StatusCode, "troubleshooting tool should be registered")
+	assert.NotEqual(t, http.StatusBadRequest, resp.StatusCode)
 }
 
 func TestTroubleshooting_EmptyBodyCallsTool(t *testing.T) {

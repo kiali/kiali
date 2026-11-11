@@ -1,7 +1,9 @@
 import React from 'react';
 import { Button, ButtonVariant, Tooltip } from '@patternfly/react-core';
-import { ChatbotHeader, ChatbotHeaderActions } from '@patternfly/chatbot';
+import { ChatbotHeader, ChatbotHeaderActions, ChatbotHeaderTitle } from '@patternfly/chatbot';
 import { TrashIcon, WindowMinimizeIcon } from '@patternfly/react-icons';
+import { kialiStyle } from 'styles/StyleUtils';
+import { PFFontWeight } from 'styles/PfTypography';
 import { t } from 'utils/I18nUtils';
 
 type ChatBotHeaderProps = {
@@ -9,9 +11,20 @@ type ChatBotHeaderProps = {
   onNewChat: () => void;
 };
 
+const welcomeTitleStyle = kialiStyle({
+  color: 'var(--pf-t--global--color--brand--default)',
+  fontSize: 'var(--pf-t--global--font--size--xl)',
+  fontWeight: PFFontWeight.HeadingBold,
+  lineHeight: 'var(--pf-t--global--font--line-height--heading)',
+  margin: 0
+});
+
 export const ChatBotHeader: React.FC<ChatBotHeaderProps> = ({ onCloseChat, onNewChat }) => {
   return (
     <ChatbotHeader>
+      <ChatbotHeaderTitle>
+        <h1 className={welcomeTitleStyle}>{t('Welcome to Kiali Chatbot')}</h1>
+      </ChatbotHeaderTitle>
       <ChatbotHeaderActions>
         <Tooltip content={t('Clear chat')}>
           <Button

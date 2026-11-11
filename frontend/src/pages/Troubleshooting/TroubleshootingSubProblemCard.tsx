@@ -1,8 +1,20 @@
-import { Button, Card, CardBody, CardHeader, CardTitle, Label, Tooltip } from '@patternfly/react-core';
-import { EyeIcon, EyeSlashIcon, RhUiAiSearchIcon, RhUiAiTroubleshootIcon } from '@patternfly/react-icons';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  CardTitle,
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  Label,
+  MenuToggle,
+  Tooltip
+} from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { EyeIcon, EyeSlashIcon, RhUiAiTroubleshootIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { GetIstioObjectUrl } from 'components/Link/IstioObjectLink';
 import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiIcon } from 'config/KialiIcon';
@@ -11,17 +23,14 @@ import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
-import type {
-  TroubleshootingSubProblem,
-  TroubleshootingSuggestedAction,
-  TroubleshootingValidationCheck
-} from 'types/Chatbot';
+import type { TroubleshootingSubProblem, TroubleshootingSuggestedAction } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import {
   cleanSubProblemIssueText,
   isRedundantSubProblemImpact,
   parseTroubleshootingTarget
 } from './partitionTroubleshooting';
+import { getTroubleshootingResourceLink } from './troubleshootingResourceLink';
 
 const headerStyle = kialiStyle({
   alignItems: 'center',
@@ -65,8 +74,7 @@ const checkRowStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
   flexWrap: 'wrap',
-  gap: PFSpacer.sm,
-  justifyContent: 'space-between'
+  gap: PFSpacer.sm
 });
 
 const checkInfoStyle = kialiStyle({
@@ -83,10 +91,6 @@ const checkCodeStyle = kialiStyle({
 const checkPathStyle = kialiStyle({
   color: 'var(--pf-t--global--text--color--subtle)',
   fontSize: PFFontSize.small
-});
-
-const checkAskStyle = kialiStyle({
-  marginLeft: 'auto'
 });
 
 const severityIcon = (severity?: string): React.ReactNode => {
@@ -107,7 +111,8 @@ const analysisQuery = (subProblem: TroubleshootingSubProblem, prompt: string): s
 
 export const TroubleshootingSubProblemCard: React.FC<{ subProblem: TroubleshootingSubProblem }> = ({ subProblem }) => {
   const dispatch = useKialiDispatch();
-  const { askChat, canSendPrompt, chatAllowed, troubleshoot } = useAIInteraction();
+  const { askChat, canSendPrompt, chatAllowed, chatEnabled, troubleshoot } = useAIInteraction();
+  const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
   const actions = subProblem.suggestedActions ?? [];
   const suggestedPrompt = subProblem.suggestedPrompt;
   const impact = subProblem.impact;
@@ -132,74 +137,104 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
   const issueWasTruncated = cleanIssue.includes('...') && !subProblem.issue.includes('...');
   const showImpact = Boolean(impact && !isRedundantSubProblemImpact(subProblem));
 
-  const askIconButton = (prompt: string, ariaLabel: string): React.ReactNode => {
-    const canAsk = canSendPrompt(prompt);
-    return (
-      <Tooltip content={chatAllowed ? t('Ask AI') : t('Chatbot is not allowed for this user')}>
-        <span>
-          <Button
-            aria-label={ariaLabel}
-            data-test="ai-troubleshooting-ask-chatbot"
-            icon={<RhUiAiSearchIcon />}
-            isDisabled={!canAsk}
-            onClick={() => askChat(prompt)}
-            size="sm"
-            variant="plain"
-          />
-        </span>
-      </Tooltip>
-    );
-  };
-
-  const inlineCheckAskButton = (check: TroubleshootingValidationCheck): React.ReactNode => {
-    const prompt = check.suggestedPrompt ?? '';
-    const label = check.path
-      ? t('Ask AI about {{code}} at {{path}}', { code: check.code, path: check.path })
-      : t('Ask AI about {{code}}', { code: check.code });
-    return <span className={checkAskStyle}>{askIconButton(prompt, label)}</span>;
-  };
-
   const analyzePrompt = (action: TroubleshootingSuggestedAction): string => action.prompt || suggestedPrompt || '';
-
-  const analyzeAction = (action: TroubleshootingSuggestedAction): React.ReactNode => {
-    const prompt = analysisQuery(subProblem, analyzePrompt(action));
-    const canOpen = canSendPrompt(prompt);
-
-    return (
-      <Tooltip content={chatAllowed ? t('Try to fix with AI') : t('Chatbot is not allowed for this user')}>
-        <span>
-          <Button
-            aria-label={t('Try to fix with AI')}
-            data-test="ai-troubleshooting-analyze"
-            icon={<RhUiAiTroubleshootIcon />}
-            isDisabled={!canOpen}
-            onClick={() =>
-              troubleshoot({
-                description: subProblem.target,
-                problem: `[${subProblem.id}] ${subProblem.issue}`,
-                prompt
-              })
-            }
-            size="sm"
-            variant="plain"
-          />
-        </span>
-      </Tooltip>
-    );
-  };
 
   const primaryAnalyze =
     actions.find(action => action.type === 'Analyze' || action.type === 'Question') ??
     // Backend may omit Analyze actions when chat is disallowed; still show a disabled Fix control from suggestedPrompt.
-    (suggestedPrompt ? { description: t('Try to fix with AI'), prompt: suggestedPrompt, type: 'Analyze' } : undefined);
-  // Same visibility pattern as Ask AI: show the control; permission only disables it.
-  const analyzeChatbotAction = primaryAnalyze ? analyzeAction(primaryAnalyze) : undefined;
-  const askChatbotAction =
-    checks.length === 0 && suggestedPrompt ? askIconButton(suggestedPrompt, t('Ask AI')) : undefined;
+    (suggestedPrompt ? { description: t('Fix it with AI'), prompt: suggestedPrompt, type: 'Analyze' } : undefined);
+
+  // Prefer the subproblem prompt; for Istio objects with only check-level prompts, use the first check prompt.
+  const askPrompt =
+    suggestedPrompt ||
+    checks.map(check => check.suggestedPrompt).find((prompt): prompt is string => Boolean(prompt)) ||
+    '';
+
+  // Same kebab for all cards (including Istio objects left of "View IstioObject"): Ask AI + Fix it with AI.
+  const showAskOption = Boolean(askPrompt);
+  const showFixOption = Boolean(primaryAnalyze);
+  const showAiMenu = chatEnabled && (showAskOption || showFixOption);
+
+  const canAsk = showAskOption && canSendPrompt(askPrompt);
+  const fixPrompt = primaryAnalyze ? analysisQuery(subProblem, analyzePrompt(primaryAnalyze)) : '';
+  const canFix = showFixOption && canSendPrompt(fixPrompt);
+  const canUseAiMenu = canAsk || canFix;
+
+  const handleAskAi = (): void => {
+    if (!canAsk) {
+      return;
+    }
+    setIsAiMenuOpen(false);
+    askChat(askPrompt);
+  };
+
+  const handleFixWithAi = (): void => {
+    if (!canFix || !primaryAnalyze) {
+      return;
+    }
+    setIsAiMenuOpen(false);
+    troubleshoot({
+      description: subProblem.target,
+      problem: `[${subProblem.id}] ${subProblem.issue}`,
+      prompt: fixPrompt
+    });
+  };
+
+  const aiActionsMenu = showAiMenu ? (
+    <Dropdown
+      isOpen={isAiMenuOpen}
+      onOpenChange={setIsAiMenuOpen}
+      onSelect={() => setIsAiMenuOpen(false)}
+      popperProps={{ position: 'right' }}
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <Tooltip content={chatAllowed ? t('AI actions') : t('Chatbot is not allowed for this user')}>
+          <span>
+            <MenuToggle
+              aria-label={t('AI actions')}
+              data-test="ai-troubleshooting-ai-actions"
+              icon={<RhUiAiTroubleshootIcon />}
+              isDisabled={!canUseAiMenu}
+              isExpanded={isAiMenuOpen}
+              onClick={() => setIsAiMenuOpen(prev => !prev)}
+              ref={toggleRef}
+              variant="plain"
+            />
+          </span>
+        </Tooltip>
+      )}
+    >
+      <DropdownList>
+        {showAskOption && (
+          <DropdownItem
+            data-test="ai-troubleshooting-ask-chatbot"
+            isDisabled={!canAsk}
+            key="ask-ai"
+            onClick={handleAskAi}
+          >
+            {t('Ask AI')}
+          </DropdownItem>
+        )}
+        {showFixOption && (
+          <DropdownItem
+            data-test="ai-troubleshooting-analyze"
+            isDisabled={!canFix}
+            key="fix-with-ai"
+            onClick={handleFixWithAi}
+          >
+            {t('Fix it with AI')}
+          </DropdownItem>
+        )}
+      </DropdownList>
+    </Dropdown>
+  ) : undefined;
 
   const badgeType = parsedTarget.badgeKey ? PFBadges[parsedTarget.badgeKey] : undefined;
   const showNamespaceBadge = Boolean(parsedTarget.namespace && parsedTarget.badgeKey !== 'Namespace');
   const showBody = Boolean(showImpact || checks.length > 0);
+  const resourceLink = React.useMemo(
+    () => getTroubleshootingResourceLink(subProblem, parsedTarget),
+    [parsedTarget, subProblem]
+  );
 
   return (
     <Card isCompact data-test="ai-troubleshooting-subproblem">
@@ -207,20 +242,7 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
         actions={{
           actions: (
             <div className={headerActionsStyle}>
-              {askChatbotAction}
-              {analyzeChatbotAction}
-              {subProblem.istioObject && (
-                <KialiLink
-                  dataTest="ai-troubleshooting-view-istio-object"
-                  to={GetIstioObjectUrl(subProblem.istioObject.name, subProblem.istioObject.namespace, {
-                    Group: subProblem.istioObject.group,
-                    Kind: subProblem.istioObject.kind,
-                    Version: subProblem.istioObject.version
-                  })}
-                >
-                  {t('View IstioObject')}
-                </KialiLink>
-              )}
+              {aiActionsMenu}
               <Tooltip content={hideLabel}>
                 <Button
                   aria-label={hideLabel}
@@ -255,6 +277,16 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
               ) : (
                 <span className={issueSummaryStyle}>{`— ${cleanIssue}`}</span>
               ))}
+            {resourceLink && (
+              <>
+                <span className={issueSummaryStyle} aria-hidden="true">
+                  -
+                </span>
+                <KialiLink dataTest={resourceLink.dataTest} to={resourceLink.to}>
+                  {resourceLink.label}
+                </KialiLink>
+              </>
+            )}
           </div>
         </CardTitle>
       </CardHeader>
@@ -279,7 +311,6 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
                     <span>{check.message}</span>
                     {check.path && <span className={checkPathStyle}>{`(${check.path})`}</span>}
                   </div>
-                  {check.suggestedPrompt && inlineCheckAskButton(check)}
                 </div>
               ))}
             </div>

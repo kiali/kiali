@@ -9,7 +9,6 @@ import {
   fileDeleteYamlPayload,
   filePatchYamlPayload,
   mockPayload,
-  mockTroubleshootingIssues,
   multiFileActionsPayload,
   multipleActionsPayload,
   singleActionPayload,
@@ -25,8 +24,7 @@ const CHATBOT_STOP_BUTTON = '.pf-chatbot__button--stop';
 const CHATBOT_TOGGLE_ICON_LIGHT = '[data-test="ai-chatbot-toggle-icon-light"]';
 const CHATBOT_TOGGLE_ICON_DARK = '[data-test="ai-chatbot-toggle-icon-dark"]';
 const CHATBOT_VISIBLE = '.pf-chatbot.pf-chatbot--visible';
-const CHATBOT_WELCOME_TITLE = '.pf-chatbot__hello';
-const CHATBOT_WELCOME_DESCRIPTION = '.pf-chatbot__question';
+const CHATBOT_HEADER_TITLE = '.pf-chatbot__title';
 const CHATBOT_MESSAGE_INPUT = '[data-testid="chatbot-message-bar-input"]';
 const CHATBOT_TOOL_LABEL = (name: string): string => `[data-test="ai-tool-label-${name}"]`;
 const CHATBOT_TOOL_MODAL = '[data-test="ai-tool-modal"]';
@@ -120,8 +118,13 @@ Then('the AI chatbot window should be closed', () => {
 });
 
 Then('the AI chatbot should display a welcome message', () => {
-  cy.get(CHATBOT_WELCOME_TITLE).should('be.visible').and('contain.text', 'Welcome to Kiali Chatbot');
-  cy.get(CHATBOT_WELCOME_DESCRIPTION).should('be.visible').and('contain.text', 'How may I help you today?');
+  cy.get(CHATBOT_VISIBLE)
+    .find(CHATBOT_HEADER_TITLE)
+    .should('be.visible')
+    .and('contain.text', 'Welcome to Kiali Chatbot');
+  cy.get(CHATBOT_VISIBLE).should('not.contain.text', 'How may I help you today?');
+  cy.get(CHATBOT_VISIBLE).find('.pf-chatbot__hello').should('not.exist');
+  cy.get(CHATBOT_VISIBLE).find('.pf-chatbot__question').should('not.exist');
 });
 
 When('user sends a message {string}', (message: string) => {
@@ -858,38 +861,9 @@ Then('the AI chatbot should display a mode divider for {string}', (mode: string)
 });
 
 // ============================================================
-// AI Troubleshooting dashboard & chatbot interaction
+// Troubleshooting page → chatbot launch (Ask / Fix)
+// Page / menu / Overview coverage lives in troubleshooting.ts
 // ============================================================
-
-Given('the AI troubleshooting scan returns mesh problems', () => {
-  cy.window().then(win => {
-    win.sessionStorage.removeItem('kiali.ai.troubleshooting.hiddenSubProblemIds');
-  });
-  cy.intercept('POST', '**/api/ai/troubleshooting', {
-    statusCode: 200,
-    body: mockTroubleshootingIssues
-  }).as('aiTroubleshootingScan');
-});
-
-When('user visits the AI troubleshooting dashboard', () => {
-  cy.visit({
-    url: `${Cypress.config('baseUrl')}/console/ai`,
-    qs: { refresh: '0', tab: 'troubleshooting' }
-  });
-  cy.wait('@aiTroubleshootingScan', { timeout: 15000 });
-});
-
-Then('the AI troubleshooting summary should contain {string}', (text: string) => {
-  cy.get('[data-test="ai-troubleshooting-summary"]', { timeout: 10000 }).should('be.visible').and('contain.text', text);
-});
-
-Then('the AI troubleshooting dashboard should show issue {string}', (issueText: string) => {
-  cy.get('[data-test="ai-troubleshooting-issue"]').should('contain.text', issueText);
-});
-
-Then('the AI troubleshooting dashboard should show subproblem {string}', (subProblemText: string) => {
-  cy.get('[data-test="ai-troubleshooting-subproblem"]').should('contain.text', subProblemText);
-});
 
 When('user clicks Ask chatbot on the first troubleshooting subproblem', () => {
   lastResponseAlias = 'troubleshootingAskResponse';
@@ -903,7 +877,8 @@ When('user clicks Ask chatbot on the first troubleshooting subproblem', () => {
     });
   }).as('troubleshootingAskResponse');
 
-  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]').first().click();
+  cy.get('[data-test="ai-troubleshooting-ai-actions"]').first().click();
+  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]').should('be.visible').click();
 });
 
 When('user clicks Analyze on the first troubleshooting subproblem', () => {
@@ -918,46 +893,6 @@ When('user clicks Analyze on the first troubleshooting subproblem', () => {
     });
   }).as('troubleshootingAnalyzeResponse');
 
-  cy.get('[data-test="ai-troubleshooting-analyze"]').first().click();
-});
-
-When('user hides the first troubleshooting subproblem', () => {
-  cy.get('[data-test="ai-troubleshooting-hide-subproblem"]').first().click();
-});
-
-Then('the hidden troubleshooting problems section should be visible', () => {
-  cy.get('[data-test="ai-troubleshooting-hidden"]').should('be.visible');
-});
-
-When('user expands the hidden troubleshooting problems section', () => {
-  // Toolbar "Show ignored" label toggles the same hiddenExpanded state as the ExpandableSection.
-  cy.get('[data-test="ai-troubleshooting-toggle-ignored"]').click();
-});
-
-When('user shows the first hidden troubleshooting subproblem', () => {
-  cy.get('[data-test="ai-troubleshooting-show-subproblem"]').first().click();
-});
-
-Then('the hidden troubleshooting problems section should not exist', () => {
-  cy.get('[data-test="ai-troubleshooting-hidden"]').should('not.exist');
-});
-
-// ============================================================
-// Notification drawer troubleshooting integration
-// ============================================================
-
-When('user opens the notification drawer', () => {
-  cy.get('[data-test="notifications-badge"]').first().click();
-});
-
-Then('the notification drawer should be open', () => {
-  cy.get('.pf-v6-c-page__drawer > .pf-v6-c-drawer').should('have.class', 'pf-m-expanded');
-});
-
-Then('the notification drawer should be closed', () => {
-  cy.get('.pf-v6-c-page__drawer > .pf-v6-c-drawer').should('not.have.class', 'pf-m-expanded');
-});
-
-Then('the notification drawer should show the troubleshooting dashboard link {string}', (linkText: string) => {
-  cy.get('[data-test="troubleshooting-notification-link"]').should('be.visible').and('contain.text', linkText);
+  cy.get('[data-test="ai-troubleshooting-ai-actions"]').first().click();
+  cy.get('[data-test="ai-troubleshooting-analyze"]').should('be.visible').click();
 });

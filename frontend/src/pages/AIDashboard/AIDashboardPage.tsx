@@ -3,19 +3,17 @@ import * as React from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 import { classes } from 'typestyle';
 import { AIUsage } from './AIUsage';
-import { TenantIcon, UserAltIcon, WrenchIcon } from '@patternfly/react-icons';
+import { TenantIcon, UserAltIcon } from '@patternfly/react-icons';
 import { Paths } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { flexFillStyle } from 'styles/FlexStyles';
 import { basicTabStyle } from 'styles/TabStyles';
 import { location } from 'app/History';
-import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
-import { loadTroubleshootingScan } from 'services/AiTroubleshooting';
+import { useKialiSelector } from 'hooks/redux';
 import type { KialiAppState } from 'store/Store';
 import { t } from 'utils/I18nUtils';
 import { AIConsumption } from './AIConsumption/AIConsumption';
-import { AITroubleshooting } from './AITroubleshooting/AITroubleshooting';
 
 const tabContentStyle = kialiStyle({
   flex: 1,
@@ -26,11 +24,6 @@ const tabContentStyle = kialiStyle({
 
 const TAB_CONSUMPTION = 'consumption';
 const TAB_SESSION_USAGE = 'session-usage';
-const TAB_TROUBLESHOOTING = 'troubleshooting';
-
-function troubleshootingTabVisible(aiConfig: KialiAppState['ai']): boolean {
-  return !!aiConfig.enabled;
-}
 
 /** Session usage is only meaningful when Chat AI is configured on. */
 function sessionUsageTabVisible(aiConfig: KialiAppState['ai']): boolean {
@@ -49,9 +42,6 @@ function consumptionTabAllowed(aiConfig: KialiAppState['ai']): boolean {
 
 function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
   const keys: string[] = [];
-  if (troubleshootingTabVisible(aiConfig)) {
-    keys.push(TAB_TROUBLESHOOTING);
-  }
   if (sessionUsageTabVisible(aiConfig)) {
     keys.push(TAB_SESSION_USAGE);
   }
@@ -67,38 +57,29 @@ const tabFromLocation = (keys: string[]): string => {
   if (requested && keys.includes(requested)) {
     return requested;
   }
-  return keys[0] ?? TAB_TROUBLESHOOTING;
+  return keys[0] ?? TAB_SESSION_USAGE;
 };
 
 export const AIDashboardPage: React.FC = () => {
-  const dispatch = useKialiDispatch();
   const aiConfig = useKialiSelector(state => state.ai);
   const visibleTabKeys = React.useMemo(() => getVisibleTabKeys(aiConfig), [aiConfig]);
   const [selectedTabKey, setSelectedTabKey] = React.useState<string | number>(() => tabFromLocation(visibleTabKeys));
   const activeTabKey = visibleTabKeys.includes(String(selectedTabKey))
     ? selectedTabKey
-    : (visibleTabKeys[0] ?? TAB_TROUBLESHOOTING);
-  const scanRequestedRef = React.useRef(false);
+    : (visibleTabKeys[0] ?? TAB_SESSION_USAGE);
   const showConsumptionTab = React.useMemo(() => consumptionTabEnabled(aiConfig), [aiConfig]);
   const consumptionAllowed = React.useMemo(() => consumptionTabAllowed(aiConfig), [aiConfig]);
   const showSessionUsage = React.useMemo(() => sessionUsageTabVisible(aiConfig), [aiConfig]);
-  const showTroubleshooting = troubleshootingTabVisible(aiConfig);
 
-  React.useEffect(() => {
-    if (!aiConfig.enabled || !showTroubleshooting || scanRequestedRef.current) {
-      return;
-    }
-    scanRequestedRef.current = true;
-    // The troubleshooting tab loads the scan when it mounts. Request it here when
-    // the dashboard opens on another tab so the shared Redux scan stays current.
-    if (activeTabKey === TAB_TROUBLESHOOTING) {
-      return;
-    }
-    void loadTroubleshootingScan(dispatch);
-  }, [activeTabKey, aiConfig.enabled, dispatch, showTroubleshooting]);
+  // Legacy deep link from when Troubleshooting lived under the AI Dashboard.
+  const requestedTab = new URLSearchParams(location.getSearch()).get('tab');
+  if (requestedTab === 'troubleshooting') {
+    return <Navigate to={`/${Paths.TROUBLESHOOTING}`} replace />;
+  }
 
   // Deep links to /ai are still reachable when the nav item is hidden.
-  if (!aiConfig.enabled) {
+  // With no chat/consumption tabs there is nothing to show on this page.
+  if (!aiConfig.enabled || visibleTabKeys.length === 0) {
     return <Navigate to={`/${Paths.OVERVIEW}`} replace />;
   }
 
@@ -110,27 +91,6 @@ export const AIDashboardPage: React.FC = () => {
         aria-label={t('AI Dashboard tabs')}
         role="region"
       >
-        {showTroubleshooting && (
-          <Tab
-            eventKey={TAB_TROUBLESHOOTING}
-            data-test="ai-dashboard-tab-troubleshooting"
-            title={
-              <>
-                <TabTitleIcon>
-                  <WrenchIcon />
-                </TabTitleIcon>
-                <TabTitleText>{t('Troubleshooting')}</TabTitleText>
-              </>
-            }
-            aria-label={t('Troubleshooting tab')}
-          >
-            {activeTabKey === TAB_TROUBLESHOOTING && (
-              <div className={tabContentStyle}>
-                <AITroubleshooting />
-              </div>
-            )}
-          </Tab>
-        )}
         {showSessionUsage && (
           <Tab
             eventKey={TAB_SESSION_USAGE}

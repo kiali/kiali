@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { createStore } from 'redux';
@@ -70,14 +70,15 @@ const renderAnalysis = (
 const renderCard = (
   chatAllowed: boolean,
   kiosk = '',
-  hiddenIds: string[] = []
+  hiddenIds: string[] = [],
+  chatEnabled = true
 ): ReturnType<typeof render> & { dispatched: string[] } => {
   const dispatched: string[] = [];
   const store = createStore(
     (
       state = {
         ai: {
-          chat: { allowed: chatAllowed, enabled: chatAllowed },
+          chat: { allowed: chatAllowed, enabled: chatEnabled },
           enabled: true,
           troubleshooting: { hiddenSubProblemIds: hiddenIds }
         },
@@ -101,6 +102,11 @@ const renderCard = (
   };
 };
 
+const openAiActionsMenu = (): HTMLElement => {
+  fireEvent.click(screen.getByRole('button', { name: 'AI actions' }));
+  return screen.getByRole('menu');
+};
+
 describe('TroubleshootingSubProblemCard', () => {
   it('sends the suggested prompt in ask mode when chat is allowed', () => {
     const { dispatched } = renderAnalysis(subProblem);
@@ -108,27 +114,28 @@ describe('TroubleshootingSubProblemCard', () => {
     expect(screen.getByText('Requests fail')).toBeInTheDocument();
     expect(screen.queryByText('Why is productpage failing?')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }));
+    const menu = openAiActionsMenu();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Ask AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt({ interactionMode: 'ask', text: 'Why is productpage failing?' })
     );
   });
 
-  it('keeps ask chatbot disabled when chat is not allowed', () => {
+  it('keeps AI actions disabled when chat is not allowed', () => {
     const { dispatched } = renderCard(false);
 
-    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'AI actions' })).toBeDisabled();
     expect(dispatched).not.toContain(ChatAIActions.setPendingPrompt('unused').type);
   });
 
-  it('keeps ask chatbot disabled in kiosk mode', () => {
+  it('keeps AI actions disabled in kiosk mode', () => {
     renderCard(true, 'true');
 
-    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'AI actions' })).toBeDisabled();
   });
 
-  it('asks about each validation check on the same object', () => {
+  it('lists validation checks without inline Ask AI and asks from the AI actions menu', () => {
     const checks = {
       ...subProblem,
       checks: [
@@ -147,50 +154,31 @@ describe('TroubleshootingSubProblemCard', () => {
           suggestedPrompt: 'Why is route 2 missing a subset?'
         }
       ],
+      istioObject: {
+        group: 'networking.istio.io',
+        kind: 'VirtualService',
+        name: 'reviews',
+        namespace: 'bookinfo',
+        version: 'v1'
+      },
       suggestedPrompt: undefined
     };
-    const dispatched: string[] = [];
-    const prompts: string[] = [];
-    const store = createStore(
-      (
-        state = {
-          ai: {
-            chat: { allowed: true, enabled: true },
-            enabled: true,
-            troubleshooting: { hiddenSubProblemIds: [] as string[] }
-          },
-          globalState: { kiosk: '' }
-        }
-      ) => state
-    );
-    const originalDispatch = store.dispatch;
-    store.dispatch = (action => {
-      const typed = action as { payload?: { interactionMode?: string; text?: string } | string; type: string };
-      dispatched.push(typed.type);
-      if (typeof typed.payload === 'string') {
-        prompts.push(typed.payload);
-      } else if (typed.payload?.text) {
-        prompts.push(typed.payload.text);
-        expect(typed.payload.interactionMode).toBe('ask');
-      }
-      return originalDispatch(action);
-    }) as typeof store.dispatch;
-
-    render(
-      <Provider store={store}>
-        <TroubleshootingSubProblemCard subProblem={checks} />
-      </Provider>
-    );
+    const { dispatched } = renderAnalysis(checks);
 
     expect(screen.getAllByText('[KIA1107]')).toHaveLength(2);
     expect(screen.getByText(/spec\/http\[0\]\/route\[1\]\/destination/)).toBeInTheDocument();
     expect(screen.getByText(/spec\/http\[0\]\/route\[2\]\/destination/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View IstioObject' })).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Ask AI about/)).not.toBeInTheDocument();
 
-    const askButtons = screen.getAllByTestId('ai-troubleshooting-ask-chatbot');
-    expect(askButtons).toHaveLength(2);
-    fireEvent.click(askButtons[1]);
-    expect(dispatched).toContain(ChatAIActions.setPendingPrompt('Why is route 2 missing a subset?').type);
-    expect(prompts).toContain('Why is route 2 missing a subset?');
+    const menu = openAiActionsMenu();
+    expect(within(menu).getByRole('menuitem', { name: 'Ask AI' })).toBeInTheDocument();
+    expect(within(menu).queryByRole('menuitem', { name: 'Fix it with AI' })).not.toBeInTheDocument();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Ask AI' }));
+
+    expect(dispatched).toContainEqual(
+      ChatAIActions.setPendingPrompt({ interactionMode: 'ask', text: 'Why is route 1 missing a subset?' })
+    );
   });
 
   it('links an istio object subproblem to its config details page', () => {
@@ -226,10 +214,65 @@ describe('TroubleshootingSubProblemCard', () => {
       </Provider>
     );
 
-    expect(screen.getByRole('link', { name: 'View IstioObject' })).toHaveAttribute(
-      'href',
-      '/namespaces/bookinfo/istio/networking.istio.io/v1/VirtualService/reviews'
+    const link = screen.getByRole('link', { name: 'View IstioObject' });
+    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/istio/networking.istio.io/v1/VirtualService/reviews');
+    expect(screen.getByTestId('ai-troubleshooting-subproblem').textContent).toMatch(
+      /productpage errors\s*-\s*View IstioObject/
     );
+  });
+
+  it('places the View Workload link after the issue summary in the title', () => {
+    renderAnalysis({
+      ...subProblem,
+      impact:
+        'Workload (ReplicaSet) "kiali-traffic-generator" in namespace "bookinfo" is running without an Istio sidecar.',
+      issue: 'missing Istio sidecar in injection-enabled namespace',
+      suggestedPrompt: undefined,
+      target: 'Workload (ReplicaSet): bookinfo/kiali-traffic-generator'
+    });
+
+    const link = screen.getByRole('link', { name: 'View Workload' });
+    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/workloads/kiali-traffic-generator');
+    expect(screen.getByTestId('ai-troubleshooting-subproblem').textContent).toMatch(
+      /missing Istio sidecar in injection-enabled namespace\s*-\s*View Workload/
+    );
+  });
+
+  it('links a service subproblem to its service details page after the issue summary', () => {
+    renderAnalysis({
+      ...subProblem,
+      suggestedPrompt: undefined,
+      target: 'Service: bookinfo/productpage'
+    });
+
+    const link = screen.getByRole('link', { name: 'View Service' });
+    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/services/productpage');
+    expect(screen.getByTestId('ai-troubleshooting-subproblem').textContent).toMatch(
+      /productpage errors\s*-\s*View Service/
+    );
+  });
+
+  it('links an application subproblem to its application details page', () => {
+    renderAnalysis({
+      ...subProblem,
+      suggestedPrompt: undefined,
+      target: 'Application: bookinfo/reviews'
+    });
+
+    expect(screen.getByRole('link', { name: 'View Application' })).toHaveAttribute(
+      'href',
+      '/namespaces/bookinfo/applications/reviews'
+    );
+  });
+
+  it('links an observability stack subproblem to the Mesh page with Kiali shown', () => {
+    renderAnalysis({
+      ...subProblem,
+      suggestedPrompt: undefined,
+      target: 'Prometheus'
+    });
+
+    expect(screen.getByRole('link', { name: 'View Mesh' })).toHaveAttribute('href', '/mesh?meshKiali=true');
   });
 
   it('sends a troubleshooting question to the chatbot', () => {
@@ -244,7 +287,9 @@ describe('TroubleshootingSubProblemCard', () => {
     expect(screen.queryByRole('button', { name: 'Question' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Review' })).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Advice')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
+
+    const menu = openAiActionsMenu();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Fix it with AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt({
@@ -256,7 +301,7 @@ describe('TroubleshootingSubProblemCard', () => {
     );
   });
 
-  it('keeps Fix with AI disabled when chat is enabled but not allowed', () => {
+  it('keeps AI actions disabled when chat is enabled but not allowed', () => {
     const dispatched: KialiAppAction[] = [];
     const store = createStore(() => ({
       ai: {
@@ -285,16 +330,23 @@ describe('TroubleshootingSubProblemCard', () => {
       </Provider>
     );
 
-    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
+    const toggle = screen.getByRole('button', { name: 'AI actions' });
+    expect(toggle).toBeDisabled();
+    fireEvent.click(toggle);
     expect(dispatched).not.toContainEqual(expect.objectContaining({ type: ChatAIActions.setPendingPrompt('').type }));
   });
 
-  it('keeps Fix with AI visible but disabled when chat is not enabled', () => {
+  it('hides AI actions when chat is not enabled', () => {
+    renderCard(false, '', [], false);
+
+    expect(screen.queryByRole('button', { name: 'AI actions' })).not.toBeInTheDocument();
+  });
+
+  it('hides AI actions when AI is not enabled', () => {
     const store = createStore(() => ({
       ai: {
-        chat: { allowed: false, enabled: false },
-        enabled: true,
+        chat: { allowed: true, enabled: true },
+        enabled: false,
         troubleshooting: { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] as string[] }
       },
       globalState: { kiosk: '' }
@@ -313,10 +365,10 @@ describe('TroubleshootingSubProblemCard', () => {
       </Provider>
     );
 
-    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'AI actions' })).not.toBeInTheDocument();
   });
 
-  it('shows Fix with AI from suggestedPrompt when Analyze actions were cleared', () => {
+  it('shows AI actions from suggestedPrompt when Analyze actions were cleared', () => {
     const store = createStore(() => ({
       ai: {
         chat: { allowed: false, enabled: true },
@@ -340,8 +392,7 @@ describe('TroubleshootingSubProblemCard', () => {
       </Provider>
     );
 
-    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'AI actions' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Hide problem' })).toBeInTheDocument();
   });
 
@@ -359,7 +410,8 @@ describe('TroubleshootingSubProblemCard', () => {
       ]
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
+    const menu = openAiActionsMenu();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Fix it with AI' }));
 
     expect(dispatched).toContainEqual(
       ChatAIActions.setPendingPrompt(
