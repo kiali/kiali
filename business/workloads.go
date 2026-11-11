@@ -553,6 +553,8 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 	)
 	defer end()
 
+	ctx = ContextWithGatewayWaypointSplitCache(ctx)
+
 	// Because workloads may need to be decorated with Waypoint information, we first ensure that Waypoints are updated in
 	// the cache, and pass them down through the workload fetch logic.
 	waypoints := in.GetWaypoints(ctx)

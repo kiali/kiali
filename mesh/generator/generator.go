@@ -181,6 +181,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 
 		// if included, add any waypoints
 		if o.IncludeWaypoints {
+			ctx = business.ContextWithGatewayWaypointSplitCache(ctx)
 			for _, wp := range gi.Business.Workload.GetWaypoints(ctx) {
 				// fetch the detail for each waypoint because we need the waypoint workloads and/or services
 				criteria := business.WorkloadCriteria{

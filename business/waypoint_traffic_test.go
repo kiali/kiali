@@ -16,6 +16,13 @@ import (
 	"github.com/kiali/kiali/models"
 )
 
+func TestContextWithGatewayWaypointSplitCacheIdempotent(t *testing.T) {
+	ctx := ContextWithGatewayWaypointSplitCache(context.Background())
+	c1 := gatewayWaypointSplitCacheFromContext(ctx)
+	ctx2 := ContextWithGatewayWaypointSplitCache(ctx)
+	assert.Same(t, c1, gatewayWaypointSplitCacheFromContext(ctx2))
+}
+
 func TestWaypointTrafficSplitForServiceNoneOptOut(t *testing.T) {
 	ns := &models.Namespace{
 		Name: "bookinfo",

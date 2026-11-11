@@ -2,11 +2,44 @@ package business
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/models"
 )
+
+type gatewayWaypointSplitCacheKey struct{}
+
+type gatewayWaypointSplitCache struct {
+	configs map[string][]models.GatewayWaypointTrafficSplitConfig
+}
+
+// ContextWithGatewayWaypointSplitCache attaches a per-request cache for gateway enrollment splits.
+// Reuse the same context (e.g. GetWorkload, mesh map build) to avoid repeated cluster-wide scans.
+func ContextWithGatewayWaypointSplitCache(ctx context.Context) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if _, ok := ctx.Value(gatewayWaypointSplitCacheKey{}).(*gatewayWaypointSplitCache); ok {
+		return ctx
+	}
+	return context.WithValue(ctx, gatewayWaypointSplitCacheKey{}, &gatewayWaypointSplitCache{
+		configs: make(map[string][]models.GatewayWaypointTrafficSplitConfig),
+	})
+}
+
+func gatewayWaypointSplitCacheFromContext(ctx context.Context) *gatewayWaypointSplitCache {
+	if ctx == nil {
+		return nil
+	}
+	cache, _ := ctx.Value(gatewayWaypointSplitCacheKey{}).(*gatewayWaypointSplitCache)
+	return cache
+}
+
+func gatewaySplitCacheKey(cluster, gatewayNamespace, gatewayName string) string {
+	return fmt.Sprintf("%s\x00%s\x00%s", cluster, gatewayNamespace, gatewayName)
+}
 
 func waypointTrafficSplitForService(svc *models.Service, ns *models.Namespace) *models.WaypointTrafficSplit {
 	if svc == nil {
@@ -75,6 +108,19 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 }
 
 func gatewayWaypointTrafficSplitConfigs(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) []models.GatewayWaypointTrafficSplitConfig {
+	key := gatewaySplitCacheKey(cluster, gatewayNamespace, gatewayName)
+	if cache := gatewayWaypointSplitCacheFromContext(ctx); cache != nil {
+		if configs, hit := cache.configs[key]; hit {
+			return configs
+		}
+		configs := computeGatewayWaypointTrafficSplitConfigs(ctx, in, cluster, gatewayNamespace, gatewayName)
+		cache.configs[key] = configs
+		return configs
+	}
+	return computeGatewayWaypointTrafficSplitConfigs(ctx, in, cluster, gatewayNamespace, gatewayName)
+}
+
+func computeGatewayWaypointTrafficSplitConfigs(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) []models.GatewayWaypointTrafficSplitConfig {
 	userClient, ok := in.userClients[cluster]
 	if !ok {
 		return nil
@@ -138,8 +184,8 @@ func (in *WorkloadService) decorateWorkloadWaypointTrafficSplit(ctx context.Cont
 	if workload == nil {
 		return
 	}
+	// Gateway waypoint splits are resolved in fetchWorkload; avoid a second cluster-wide scan here.
 	if workload.IsWaypointWorkload() && workload.WaypointFor() != config.WaypointForNone {
-		workload.WaypointTrafficSplitConfigs = gatewayWaypointTrafficSplitConfigs(ctx, in, workload.Cluster, workload.Namespace, workload.Name)
 		return
 	}
 	if len(workload.WaypointWorkloads) == 0 {
