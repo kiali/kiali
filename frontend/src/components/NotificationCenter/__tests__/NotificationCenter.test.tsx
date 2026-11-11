@@ -1,12 +1,6 @@
-import { render, screen, within } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom-v5-compat';
-import { createStore } from 'redux';
+import { render, screen } from '@testing-library/react';
 
-import { INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
-import { INITIAL_NOTIFICATION_CENTER_STATE } from 'reducers/NotificationCenter';
-import { NotificationCenter } from '../NotificationCenter';
-import { NotificationCenterBadge, NotificationCenterBadgeComponent } from '../NotificationCenterBadge';
+import { NotificationCenterBadgeComponent } from '../NotificationCenterBadge';
 import { MessageType, type NotificationGroup, type NotificationMessage } from '../../../types/NotificationCenter';
 
 describe('NotificationCenter', () => {
@@ -86,166 +80,20 @@ describe('NotificationCenter', () => {
     expect(screen.getAllByRole('heading')).toHaveLength(2);
   });
 
-  it('adds troubleshooting problems to the notification count', () => {
+  it('shows only the notification count on the badge', () => {
     render(
       <NotificationCenterBadgeComponent
-        aiEnabled
         alerts={[]}
         needsAttention={false}
         newMessageCount={2}
         onDismissNotification={() => {}}
         toggleNotificationCenter={() => {}}
-        troubleshootingCount={3}
-        troubleshootingNeedsAttention={true}
-      />
-    );
-
-    const badges = screen.getAllByTestId('notifications-badge');
-    expect(badges[0]).toHaveTextContent('2');
-    expect(badges[0]).toHaveTextContent('3');
-    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
-  });
-
-  it('shows the AI icon when AI is enabled even with no troubleshooting problems', () => {
-    render(
-      <NotificationCenterBadgeComponent
-        aiEnabled
-        alerts={[]}
-        needsAttention={false}
-        newMessageCount={0}
-        onDismissNotification={() => {}}
-        toggleNotificationCenter={() => {}}
-        troubleshootingCount={0}
-      />
-    );
-
-    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
-  });
-
-  it('shows a zero notification counter next to the troubleshooting count', () => {
-    render(
-      <NotificationCenterBadgeComponent
-        aiEnabled
-        alerts={[]}
-        needsAttention={false}
-        newMessageCount={0}
-        onDismissNotification={() => {}}
-        toggleNotificationCenter={() => {}}
-        troubleshootingCount={4}
-        troubleshootingNeedsAttention={true}
       />
     );
 
     const badge = screen.getAllByTestId('notifications-badge')[0];
-    expect(badge).toHaveTextContent('0');
-    expect(badge).toHaveTextContent('4');
-    expect(screen.getByTestId('notifications-ai-icon')).toBeInTheDocument();
-  });
-
-  it('shows the troubleshooting summary and links to the troubleshooting page', () => {
-    const store = createStore(() => ({
-      ai: {
-        enabled: true,
-        troubleshooting: {
-          ...INITIAL_TROUBLESHOOTING_STATE,
-          issues: [
-            {
-              category: 'data_plane',
-              id: 'dp-1',
-              problem: 'Reviews is unhealthy',
-              subProblems: [{ id: 'sub-1', impact: 'Down', issue: 'Crash', severity: 'critical', target: 'reviews' }]
-            }
-          ],
-          loaded: true
-        }
-      },
-      globalState: { kiosk: '' },
-      notificationCenter: INITIAL_NOTIFICATION_CENTER_STATE
-    }));
-
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <NotificationCenter />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    const section = screen.getByTestId('troubleshooting-notification-section');
-    expect(within(section).getByText('Troubleshooting')).toBeInTheDocument();
-    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(1 problem detected)');
-    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveAttribute('href', '/ai?tab=troubleshooting');
-  });
-
-  it('shows the troubleshooting drawer section when AI is enabled with no problems', () => {
-    const store = createStore(() => ({
-      ai: {
-        enabled: true,
-        troubleshooting: {
-          ...INITIAL_TROUBLESHOOTING_STATE,
-          issues: [],
-          loaded: true
-        }
-      },
-      globalState: { kiosk: '' },
-      notificationCenter: INITIAL_NOTIFICATION_CENTER_STATE
-    }));
-
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <NotificationCenter />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    expect(screen.getByTestId('troubleshooting-notification-section')).toBeInTheDocument();
-    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(No problems detected)');
-  });
-
-  it('omits hidden troubleshooting problems from the drawer and the badge', () => {
-    const store = createStore(() => ({
-      ai: {
-        chat: { visible: false },
-        enabled: true,
-        troubleshooting: {
-          ...INITIAL_TROUBLESHOOTING_STATE,
-          hiddenSubProblemIds: ['dp-hidden', 'sub-hidden'],
-          issues: [
-            {
-              category: 'data_plane',
-              id: 'dp-hidden',
-              problem: 'Hidden parent',
-              subProblems: [
-                { id: 'sub-parent', impact: 'Down', issue: 'Parent crash', severity: 'critical', target: 'a' }
-              ]
-            },
-            {
-              category: 'data_plane',
-              id: 'dp-visible',
-              problem: 'Visible parent',
-              subProblems: [
-                { id: 'sub-hidden', impact: 'Down', issue: 'Hidden crash', severity: 'critical', target: 'b' },
-                { id: 'sub-visible', impact: 'Slow', issue: 'Visible crash', severity: 'warning', target: 'c' }
-              ]
-            }
-          ],
-          loaded: true
-        }
-      },
-      globalState: { kiosk: '' },
-      notificationCenter: INITIAL_NOTIFICATION_CENTER_STATE
-    }));
-
-    render(
-      <Provider store={store}>
-        <MemoryRouter>
-          <NotificationCenterBadge />
-          <NotificationCenter />
-        </MemoryRouter>
-      </Provider>
-    );
-
-    expect(screen.getByTestId('troubleshooting-notification-link')).toHaveTextContent('(1 problem detected)');
+    expect(badge).toHaveTextContent('2');
+    expect(screen.queryByTestId('notifications-ai-icon')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('notifications-troubleshooting-icon')).not.toBeInTheDocument();
   });
 });

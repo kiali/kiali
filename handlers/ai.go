@@ -142,7 +142,7 @@ const troubleshootingToolName = "troubleshooting"
 
 // Troubleshooting handles POST /api/ai/troubleshooting.
 // An empty action/prompt runs the troubleshooting MCP tool (mesh scan).
-// The scan is available when AI is enabled. Ask and Fix use the same rights as chat.
+// The scan is always available. Ask and Fix use the same rights as chat.
 func Troubleshooting(
 	conf *config.Config,
 	kialiCache cache.KialiCache,
@@ -156,11 +156,6 @@ func Troubleshooting(
 	discovery *istio.Discovery,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !conf.AI.Enabled {
-			RespondWithError(w, http.StatusServiceUnavailable, "AI is not enabled")
-			return
-		}
-
 		var req troubleshooting.Request
 		if r.Body != nil && r.ContentLength != 0 {
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

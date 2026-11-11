@@ -372,45 +372,29 @@ Feature: Kiali AI Chatbot
     And the AI chatbot should display a mode divider for "troubleshoot"
     And the next chat message should be sent without a conversation ID
 
-  Scenario: The AI troubleshooting dashboard displays detected problems and subproblems
-    Given the AI troubleshooting scan returns mesh problems
-    When user visits the AI troubleshooting dashboard
-    Then the AI troubleshooting summary should contain "Troubleshooting: 1 problem detected"
-    And the AI troubleshooting dashboard should show issue "Service productpage has errors"
-    And the AI troubleshooting dashboard should show subproblem "High HTTP 5xx error rate"
+  # Troubleshooting page content / menu / Overview card: see troubleshooting.feature.
+  # Ask / Fix chatbot launch from a subproblem stays here (requires chat).
 
   Scenario: Clicking Ask chatbot on a troubleshooting subproblem opens the chatbot in ask mode and sends the prompt
-    Given the AI troubleshooting scan returns mesh problems
-    And user visits the AI troubleshooting dashboard
+    Given the troubleshooting scan returns mesh problems
+    And user visits the Troubleshooting page
     When user clicks Ask chatbot on the first troubleshooting subproblem
     Then the AI chatbot window should be open
     And the interaction mode should be "ask"
     And the AI chatbot should display the answer "Of course."
 
   Scenario: Clicking Analyze on a troubleshooting subproblem opens the chatbot in troubleshoot mode and sends the analysis
-    Given the AI troubleshooting scan returns mesh problems
-    And user visits the AI troubleshooting dashboard
+    Given the troubleshooting scan returns mesh problems
+    And user visits the Troubleshooting page
     When user clicks Analyze on the first troubleshooting subproblem
     Then the AI chatbot window should be open
     And the interaction mode should be "troubleshoot"
-    And the AI chatbot should contain the text "We are going to try to fix [sp-001] High HTTP 5xx error rate: productpage."
+    And the AI chatbot should contain the text "We are going to try to fix [sp-001] High HTTP 5xx error rate: Service: bookinfo/productpage."
     And the AI chatbot should display the answer "Of course."
 
-  Scenario: Hiding and showing a troubleshooting subproblem moves it between visible and hidden lists
-    Given the AI troubleshooting scan returns mesh problems
-    And user visits the AI troubleshooting dashboard
-    When user hides the first troubleshooting subproblem
-    Then the hidden troubleshooting problems section should be visible
-    When user expands the hidden troubleshooting problems section
-    And user shows the first hidden troubleshooting subproblem
-    Then the hidden troubleshooting problems section should not exist
-
-  Scenario: The notification drawer shows troubleshooting problems and closes when the AI chatbot opens
-    Given the AI troubleshooting scan returns mesh problems
-    And user visits the AI troubleshooting dashboard
+  Scenario: The notification drawer closes when the AI chatbot opens
     When user opens the notification drawer
     Then the notification drawer should be open
-    And the notification drawer should show the troubleshooting dashboard link "(1 problem detected)"
     When user clicks the AI chatbot toggle
     Then the AI chatbot window should be open
     And the notification drawer should be closed

@@ -42,21 +42,30 @@ const pageStyle = kialiStyle({
   flexDirection: 'column'
 });
 
-// Sticks to the top of the troubleshooting tab, which scrolls inside a padded container.
+// Sticky filter bar for the standalone Troubleshooting page (full-bleed horizontally).
 const toolbarStyle = kialiStyle({
   backgroundColor: PFColors.BackgroundColor100,
-  boxShadow: `0 calc(${PFSpacer.md} * -1) 0 0 ${PFColors.BackgroundColor100}`,
   marginBottom: PFSpacer.md,
   marginLeft: `calc(${PFSpacer.md} * -1)`,
   marginRight: `calc(${PFSpacer.md} * -1)`,
-  marginTop: `calc(${PFSpacer.md} * -1)`,
-  paddingBottom: PFSpacer.md,
+  paddingBottom: PFSpacer.sm,
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md,
-  paddingTop: PFSpacer.md,
+  paddingTop: PFSpacer.sm,
   position: 'sticky',
   top: 0,
-  zIndex: 10
+  zIndex: 10,
+  $nest: {
+    // PatternFly Toolbar adds its own block padding; keep the bar flush under the masthead.
+    '&.pf-v6-c-toolbar': {
+      paddingBlockStart: 0,
+      paddingBlockEnd: 0
+    },
+    '& .pf-v6-c-toolbar__content': {
+      paddingBlockStart: 0,
+      paddingBlockEnd: 0
+    }
+  }
 });
 
 const kpiGroupStyle = kialiStyle({

@@ -1,6 +1,6 @@
 import { Given, Then, When } from '@badeball/cypress-cucumber-preprocessor';
 import type { DataTable } from '@badeball/cypress-cucumber-preprocessor';
-import { mockTroubleshootingIssues } from './ai_chatbot_mocks';
+import { mockTroubleshootingIssues } from './troubleshooting_mocks';
 
 /**
  * Cypress helpers for the AI Dashboard configuration matrix
@@ -68,7 +68,7 @@ const stubAIDashboardApis = (): void => {
   cy.intercept('POST', '**/api/ai/troubleshooting', {
     statusCode: 200,
     body: mockTroubleshootingIssues
-  }).as('aiTroubleshootingScan');
+  }).as('troubleshootingScan');
 
   // Cluster Consumption tab (/api/ai/usage). Registered before /user so the more
   // specific User Usage intercept below wins for /api/ai/usage/user (Cypress LIFO).
@@ -156,19 +156,6 @@ Then('the browser should be on the overview page', () => {
 
 // ---- Tabs ------------------------------------------------------------------
 
-Then('the AI dashboard Troubleshooting tab should be visible', () => {
-  cy.get('[data-test="ai-dashboard-tab-troubleshooting"]', { timeout: 10000 }).should('be.visible');
-});
-
-Then('the AI dashboard Troubleshooting tab should not exist', () => {
-  cy.get('[data-test="ai-dashboard-tab-troubleshooting"]').should('not.exist');
-});
-
-Then('the AI troubleshooting dashboard should be shown', () => {
-  cy.get('[data-test="ai-troubleshooting"]', { timeout: 10000 }).should('be.visible');
-  cy.get('[data-test="ai-usage-page"]').should('not.exist');
-});
-
 Then('the AI dashboard AI User Usage tab should be visible', () => {
   cy.get('[data-test="ai-dashboard-tab-session-usage"]', { timeout: 10000 }).should('be.visible');
 });
@@ -228,33 +215,7 @@ Then('the AI User Usage page should not show historic metrics', () => {
   cy.get('[data-test="ai-usage-chart-toolbar"]').should('not.exist');
 });
 
-// ---- Troubleshooting Ask / Fix controls ------------------------------------
-
-Then('the Ask AI button on troubleshooting problems should be enabled', () => {
-  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]', { timeout: 10000 }).first().should('not.be.disabled');
-});
-
-Then('the Ask AI button on troubleshooting problems should be disabled', () => {
-  cy.get('[data-test="ai-troubleshooting-ask-chatbot"]', { timeout: 10000 }).first().should('be.disabled');
-});
-
-Then('the Fix with AI button on troubleshooting problems should be enabled', () => {
-  cy.get('[data-test="ai-troubleshooting-analyze"]', { timeout: 10000 }).first().should('not.be.disabled');
-});
-
-Then('the Fix with AI button on troubleshooting problems should be disabled', () => {
-  cy.get('[data-test="ai-troubleshooting-analyze"]', { timeout: 10000 }).first().should('be.disabled');
-});
-
-// ---- Notification badge / chatbot FAB --------------------------------------
-
-Then('the notification badge should show the AI icon', () => {
-  cy.get('[data-test="notifications-ai-icon"]', { timeout: 10000 }).should('exist');
-});
-
-Then('the notification badge should not show the AI icon', () => {
-  cy.get('[data-test="notifications-ai-icon"]').should('not.exist');
-});
+// ---- Chatbot FAB -----------------------------------------------------------
 
 Then('the AI chatbot toggle should be visible', () => {
   // FAB is mounted when ai.enabled && chat.enabled.
