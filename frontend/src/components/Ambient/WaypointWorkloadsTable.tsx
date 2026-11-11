@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 import * as React from 'react';
 import { SortByDirection, TableVariant } from '@patternfly/react-table';
 import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';
@@ -78,7 +79,8 @@ const baseColumns: SortableCompareTh<WorkloadInfo>[] = [
   },
   {
     title: t('Labeled by'),
-    sortable: false
+    sortable: true,
+    compare: (a, b) => (a.labelType ?? '').localeCompare(b.labelType ?? '')
   }
 ];
 
@@ -96,7 +98,7 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
 
   const compare = columns[sortBy].compare;
   const sorted = compare
-    ? props.workloads?.sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
+    ? props.workloads?.slice().sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
     : props.workloads;
 
   const renderItem = (namespace, name, type: string, cluster?: string): React.ReactNode => {

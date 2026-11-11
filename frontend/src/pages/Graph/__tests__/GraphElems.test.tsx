@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 import * as React from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -315,6 +316,28 @@ describe('waypoint node labels', () => {
     setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
 
     expect((node.data as NodeData).secondaryLabel).toContain('canary (multi-%)');
+  });
+
+  it.each([
+    { backendLabel: 'Canary Multiple traffic splits', role: 'canary', workload: 'waypoint-v2' },
+    { backendLabel: 'Primary Multiple traffic splits', role: 'primary', workload: 'canary-promoted' }
+  ])('keeps the backend $role for Service-only splits on $workload', ({ backendLabel, role, workload }) => {
+    const node = makeNode(workload, backendLabel);
+    const data = node.data as NodeData;
+    const settings = makeSettings();
+    settings.activeNamespaces = [];
+
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toBe(`${role} (multi-%)`);
+
+    settings.edgeLabels = [];
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toBe(role);
+
+    settings.edgeLabels = [EdgeLabelMode.TRAFFIC_DISTRIBUTION];
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    setNodeLabel(node, new Map(), settings, GraphLayout.Dagre);
+    expect(data.secondaryLabel).toBe(`${role} (multi-%)`);
   });
 
   it('keeps the effective role when toggling percentages without duplicating labels', () => {

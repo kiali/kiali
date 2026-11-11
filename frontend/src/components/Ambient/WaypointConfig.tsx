@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 import * as React from 'react';
 import { TableVariant } from '@patternfly/react-table';
 import type { IRow, ThProps } from '@patternfly/react-table';
@@ -208,6 +209,11 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
     }
   };
 
+  const handleViewServices = (): void => {
+    setResource(WaypointType.Service);
+    setActiveKey(tabResources.indexOf(WaypointType.Service));
+  };
+
   const tabs: JSX.Element[] = [];
 
   tabs.push(
@@ -229,11 +235,12 @@ export const WaypointConfig: React.FC<WaypointConfigProps> = (props: WaypointCon
             <GridItem span={6}>
               <Card className={cardStyle} data-test="waypoint-traffic-split-card">
                 <CardHeader>
-                  <CardTitle>{t('Waypoint traffic split')}</CardTitle>
+                  <CardTitle>{t('Namespace traffic splits')}</CardTitle>
                 </CardHeader>
                 <CardBody className={cardBodyStyle}>
                   <WaypointCanaryInfoPanel
                     configs={props.workload.waypointTrafficSplitConfigs}
+                    onViewServices={handleViewServices}
                     workloadCluster={props.workload.cluster}
                     workloadName={props.workload.name}
                     workloadNamespace={props.workload.namespace}

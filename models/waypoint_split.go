@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package models
 
 import (
@@ -201,22 +202,23 @@ func GatewayWaypointCanaryGraphLabel(configs []GatewayWaypointTrafficSplitConfig
 	if workload == "" {
 		return ""
 	}
-	labels := make([]string, 0)
+	commonLabel := ""
 	for _, cfg := range configs {
-		if cfg.Split == nil {
+		label := WaypointCanaryNodeLabel(workload, workloadNamespace, cfg.Split)
+		if label == "" {
 			continue
 		}
-		if label := WaypointCanaryNodeLabel(workload, workloadNamespace, cfg.Split); label != "" {
-			labels = append(labels, label)
+		if commonLabel != "" && commonLabel != label {
+			role, _, _ := strings.Cut(commonLabel, " ")
+			otherRole, _, _ := strings.Cut(label, " ")
+			if role == otherRole {
+				return role + " " + WaypointCanaryMultipleSplitsLabel
+			}
+			return WaypointCanaryMultipleSplitsLabel
 		}
+		commonLabel = label
 	}
-	if len(labels) == 0 {
-		return ""
-	}
-	if len(labels) > 1 {
-		return WaypointCanaryMultipleSplitsLabel
-	}
-	return labels[0]
+	return commonLabel
 }
 
 // WaypointCanaryNodeLabel returns graph label text for a waypoint gateway workload.

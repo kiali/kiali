@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 import * as React from 'react';
 import {
   Content,
@@ -8,6 +9,8 @@ import {
   Label
 } from '@patternfly/react-core';
 import { KialiLink } from '../Link/KialiLink';
+import { getWorkloadLink } from '../Link/WorkloadLink';
+import { WaypointType } from '../../types/Ambient';
 import { isMultiCluster } from '../../config';
 import type { GatewayWaypointTrafficSplitConfig, WaypointTrafficSplit } from '../../types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
@@ -29,6 +32,10 @@ const canarySectionHeaderStyle = kialiStyle({
   marginBottom: PFSpacer.md
 });
 
+const serviceSplitNoticeStyle = kialiStyle({
+  marginTop: PFSpacer.md
+});
+
 const canarySectionTitleStyle = kialiStyle({
   fontSize: 'var(--pf-t--global--font--size--body--default)',
   fontWeight: 'var(--pf-t--global--font--weight--body--default)',
@@ -46,6 +53,7 @@ const waypointHref = (namespace: string, name: string, cluster?: string): string
 type WaypointCanaryInfoPanelProps = {
   compact?: boolean;
   configs?: GatewayWaypointTrafficSplitConfig[];
+  onViewServices?: () => void;
   workloadCluster?: string;
   workloadName: string;
   workloadNamespace: string;
@@ -55,11 +63,14 @@ type WaypointCanaryInfoPanelProps = {
 export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = ({
   compact,
   configs,
+  onViewServices,
   workloadCluster,
   workloadName,
   workloadNamespace
 }) => {
   const withCanary = React.useMemo(() => gatewayConfigsWithCanary(configs), [configs]);
+  const namespaceConfigs = withCanary.filter(cfg => cfg.configLevel === 'namespace');
+  const hasServiceConfigs = withCanary.some(cfg => cfg.configLevel === 'service');
 
   if (withCanary.length === 0) {
     return null;
@@ -67,18 +78,45 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
 
   return (
     <div data-test="waypoint-canary-info-panel">
-      <div className={canarySectionHeaderStyle}>
-        <Content className={canarySectionTitleStyle} component={ContentVariants.p}>
-          {t('Canary waypoints')}
+      {namespaceConfigs.length > 0 && (
+        <>
+          {compact && (
+            <div className={canarySectionHeaderStyle}>
+              <Content className={canarySectionTitleStyle} component={ContentVariants.p}>
+                {t('Namespace traffic splits')}
+              </Content>
+            </div>
+          )}
+          <WaypointTrafficSplitTable
+            configs={namespaceConfigs}
+            showDonut={!compact}
+            viewingCluster={workloadCluster}
+            viewingNamespace={workloadNamespace}
+            viewingWorkload={workloadName}
+          />
+        </>
+      )}
+      {hasServiceConfigs && (
+        <Content
+          className={namespaceConfigs.length > 0 ? serviceSplitNoticeStyle : undefined}
+          component={ContentVariants.p}
+          data-test="waypoint-service-splits-notice"
+        >
+          {t('Service-level traffic splits are configured.')}{' '}
+          <KialiLink
+            dataTest="waypoint-service-splits-link"
+            onClick={onViewServices}
+            to={getWorkloadLink(
+              workloadName,
+              workloadNamespace,
+              workloadCluster,
+              `tab=waypoint&waypointTab=${WaypointType.Service}`
+            )}
+          >
+            {t('View Services')}
+          </KialiLink>
         </Content>
-      </div>
-      <WaypointTrafficSplitTable
-        configs={withCanary}
-        showDonut={!compact}
-        viewingCluster={workloadCluster}
-        viewingNamespace={workloadNamespace}
-        viewingWorkload={workloadName}
-      />
+      )}
     </div>
   );
 };

@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 import type { Namespace } from 'types/Namespace';
 import type { GatewayWaypointTrafficSplitConfig, WaypointBinding, WaypointTrafficSplit } from 'types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
@@ -30,17 +31,10 @@ const formatWaypointRoleWeightGraphLabel = (role: 'canary' | 'primary', weight: 
   return `${role} (${weight}%)`;
 };
 
-const inferWaypointGraphRoleFromWorkload = (workload: string): 'canary' | 'primary' =>
-  /canary/i.test(workload) ? 'canary' : 'primary';
-
-/** Secondary label when several splits reference the same gateway (always role-prefixed, e.g. canary (multi-%)). */
-export const formatWaypointMultiWeightGraphLabel = (
-  role: 'canary' | 'primary' | undefined,
-  workload?: string
-): string => {
+/** Secondary label when several splits reference the same gateway, e.g. canary (multi-%). */
+export const formatWaypointMultiWeightGraphLabel = (role: 'canary' | 'primary' | undefined): string => {
   const multi = `(${WAYPOINT_MULTI_WEIGHT_GRAPH_LABEL})`;
-  const resolved = role ?? (workload ? inferWaypointGraphRoleFromWorkload(workload) : 'primary');
-  return `${resolved} ${multi}`;
+  return role ? `${role} ${multi}` : multi;
 };
 
 const gatewayWaypointGraphRole = (
@@ -144,7 +138,7 @@ export const gatewayWaypointGraphCanaryLabel = (
   const uniqueLines = [...new Set(lines)];
   if (uniqueLines.length > 1) {
     return includeWeight
-      ? formatWaypointMultiWeightGraphLabel(gatewayWaypointGraphRole(configs, workload, workloadNamespace), workload)
+      ? formatWaypointMultiWeightGraphLabel(gatewayWaypointGraphRole(configs, workload, workloadNamespace))
       : uniqueLines[0];
   }
   return uniqueLines[0];
@@ -209,6 +203,11 @@ export const formatWaypointGatewayDetailLabel = (
 };
 
 const backendRoleLabel = (label: string, includeWeight: boolean): string | undefined => {
+  const multiple = label.match(/^Canary (.+)$/i) ?? label.match(/^Primary (.+)$/i);
+  if (multiple?.[1] === WAYPOINT_MULTIPLE_SPLITS_LABEL) {
+    const role = label.toLowerCase().startsWith('canary ') ? 'canary' : 'primary';
+    return includeWeight ? formatWaypointMultiWeightGraphLabel(role) : role;
+  }
   const canary = label.match(/^Canary(?: (\d+)%)?$/i) ?? label.match(/^Waypoint role canary(?: (\d+)%)?$/i);
   if (canary) {
     return includeWeight && canary[1] ? formatWaypointRoleWeightGraphLabel('canary', Number(canary[1])) : 'canary';
@@ -258,8 +257,7 @@ export const withWaypointCanarySecondaryLabel = (options: WaypointCanaryLabelOpt
             options.splitConfigs
               ? gatewayWaypointGraphRole(options.splitConfigs, options.workload, options.workloadNamespace)
               : (waypointNodeCanaryBadge(options.workload, options.workloadNamespace, options.split, false) as
-                  'canary' | 'primary' | undefined),
-            options.workload
+                  'canary' | 'primary' | undefined)
           )
         : options.splitConfigs && options.splitConfigs.length > 0
           ? gatewayWaypointGraphCanaryLabel(

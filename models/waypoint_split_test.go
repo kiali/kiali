@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package models
 
 import (
@@ -34,22 +35,25 @@ func TestGatewayWaypointCanaryGraphLabelMultipleEnrollments(t *testing.T) {
 			ConfigLevel: "namespace",
 			Namespace:   "client-a",
 			Split: &WaypointTrafficSplit{
-				CanaryWeight: weightA,
-				Canary:       &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
-				Primary:      WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+				Canary:        &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
+				CanaryWeight:  weightA,
+				Primary:       WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+				PrimaryWeight: 100 - weightA,
 			},
 		},
 		{
 			ConfigLevel: "namespace",
 			Namespace:   "client-b",
 			Split: &WaypointTrafficSplit{
-				CanaryWeight: weightB,
-				Canary:       &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
-				Primary:      WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+				Canary:        &WaypointBinding{Name: "egress-gateway-canary", Namespace: "infra"},
+				CanaryWeight:  weightB,
+				Primary:       WaypointBinding{Name: "egress-gateway", Namespace: "infra"},
+				PrimaryWeight: 100 - weightB,
 			},
 		},
 	}
-	assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "egress-gateway-canary", "infra"))
+	assert.Equal(t, "Canary "+WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "egress-gateway-canary", "infra"))
+	assert.Equal(t, "Primary "+WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "egress-gateway", "infra"))
 	assert.Equal(t, fmt.Sprintf("Canary %d%%", weightA), GatewayWaypointCanaryGraphLabel(configs[:1], "egress-gateway-canary", "infra"))
 }
 
@@ -111,4 +115,71 @@ func TestWaypointCanaryNodeLabel(t *testing.T) {
 func TestParseWaypointCanaryWeightInvalid(t *testing.T) {
 	assert.Equal(t, -1, ParseWaypointCanaryWeight(map[string]string{config.WaypointCanaryWeightAnnotation: "101"}))
 	assert.Equal(t, 0, ParseWaypointCanaryWeight(map[string]string{}))
+}
+
+func TestGatewayWaypointCanaryGraphLabelAgreements(t *testing.T) {
+	makeConfig := func(namespace, level string, weight int) GatewayWaypointTrafficSplitConfig {
+		return GatewayWaypointTrafficSplitConfig{
+			ConfigLevel: level,
+			Namespace:   namespace,
+			Split: ResolveWaypointTrafficSplit("cluster-default", "infra", map[string]string{
+				config.WaypointCanaryUseLabel: "canary",
+				config.WaypointUseLabel:       "primary",
+			}, map[string]string{
+				config.WaypointCanaryWeightAnnotation: fmt.Sprintf("%d", weight),
+			}, level),
+		}
+	}
+
+	for name, tc := range map[string]struct {
+		configs     []GatewayWaypointTrafficSplitConfig
+		wantCanary  string
+		wantPrimary string
+	}{
+		"matching namespace weights": {
+			configs:     []GatewayWaypointTrafficSplitConfig{makeConfig("a", "namespace", 30), makeConfig("b", "namespace", 30)},
+			wantCanary:  "Canary 30%",
+			wantPrimary: "Primary 70%",
+		},
+		"matching namespace and service weights": {
+			configs:     []GatewayWaypointTrafficSplitConfig{makeConfig("a", "namespace", 30), makeConfig("b", "service", 30)},
+			wantCanary:  "Canary 30%",
+			wantPrimary: "Primary 70%",
+		},
+		"matching zero weights": {
+			configs:     []GatewayWaypointTrafficSplitConfig{makeConfig("a", "namespace", 0), makeConfig("b", "namespace", 0)},
+			wantCanary:  "Canary 0%",
+			wantPrimary: "Primary 100%",
+		},
+		"matching full weights": {
+			configs:     []GatewayWaypointTrafficSplitConfig{makeConfig("a", "namespace", 100), makeConfig("b", "namespace", 100)},
+			wantCanary:  "Canary 100%",
+			wantPrimary: "Primary 0%",
+		},
+		"different weights": {
+			configs:     []GatewayWaypointTrafficSplitConfig{makeConfig("a", "namespace", 10), makeConfig("b", "namespace", 30)},
+			wantCanary:  "Canary " + WaypointCanaryMultipleSplitsLabel,
+			wantPrimary: "Primary " + WaypointCanaryMultipleSplitsLabel,
+		},
+		"empty configuration": {
+			configs:     []GatewayWaypointTrafficSplitConfig{{}, makeConfig("a", "namespace", 30), makeConfig("b", "namespace", 30)},
+			wantCanary:  "Canary 30%",
+			wantPrimary: "Primary 70%",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.wantCanary, GatewayWaypointCanaryGraphLabel(tc.configs, "canary", "infra"))
+			assert.Equal(t, tc.wantPrimary, GatewayWaypointCanaryGraphLabel(tc.configs, "primary", "infra"))
+		})
+	}
+
+	t.Run("matching percentage with different roles", func(t *testing.T) {
+		primary := makeConfig("a", "namespace", 50)
+		canary := makeConfig("b", "namespace", 50)
+		canary.Split.Primary.Name = "canary"
+		canary.Split.Canary.Name = "primary"
+		configs := []GatewayWaypointTrafficSplitConfig{primary, canary}
+		assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "primary", "infra"))
+		assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "canary", "infra"))
+	})
 }

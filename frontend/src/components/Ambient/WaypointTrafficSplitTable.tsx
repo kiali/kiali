@@ -1,5 +1,7 @@
+// Assisted-by: Codex
 import * as React from 'react';
-import { Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { SortByDirection, Table, TableVariant, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import type { OnSort } from '@patternfly/react-table';
 import { Tooltip } from '@patternfly/react-core';
 import { KialiIcon } from 'config/KialiIcon';
 import { PFColors } from '../Pf/PfColors';
@@ -239,6 +241,9 @@ export const WaypointTrafficSplitTable: React.FC<Props> = ({
   viewingNamespace,
   viewingWorkload
 }) => {
+  const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
+  const onSort: OnSort = (_event, _index, direction) => setSortDirection(direction);
+
   const withCanary = React.useMemo(() => {
     if (configs) {
       return gatewayConfigsWithCanary(configs);
@@ -247,6 +252,9 @@ export const WaypointTrafficSplitTable: React.FC<Props> = ({
   }, [configs, split]);
 
   const groups = groupConfigsByNamespace(withCanary);
+  if (sortDirection === SortByDirection.desc) {
+    groups.reverse();
+  }
   const rows = buildRenderRows(groups, showDonut, viewingWorkload, viewingNamespace, viewingCluster);
 
   if (rows.length === 0) {
@@ -263,7 +271,9 @@ export const WaypointTrafficSplitTable: React.FC<Props> = ({
       <Table aria-label={t('Traffic split')} className={tableStyle} variant={TableVariant.compact}>
         <Thead>
           <Tr>
-            <Th width={30}>{namespaceTitle}</Th>
+            <Th sort={{ columnIndex: 0, onSort, sortBy: { direction: sortDirection, index: 0 } }} width={30}>
+              {namespaceTitle}
+            </Th>
             <Th width={35}>{nameTitle}</Th>
             <Th width={20}>{roleTitle}</Th>
             {showDonut && <Th width={15}>{percentageTitle}</Th>}

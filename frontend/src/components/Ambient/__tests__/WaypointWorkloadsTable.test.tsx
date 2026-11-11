@@ -1,5 +1,7 @@
+// Assisted-by: Codex
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { createStore } from 'redux';
@@ -15,6 +17,32 @@ const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 describe('WaypointWorkloadsTable', () => {
+  it('sorts Services by label source in both directions without changing the input', async () => {
+    const workloads = [
+      { cluster: 'cluster-default', labelType: 'service', name: 'alpha', namespace: 'bookinfo' },
+      { cluster: 'cluster-default', labelType: 'namespace', name: 'beta', namespace: 'bookinfo' },
+      { cluster: 'cluster-default', name: 'gamma', namespace: 'bookinfo' }
+    ];
+    Object.freeze(workloads);
+    const user = userEvent.setup();
+    render(<WaypointWorkloadsTable type={WaypointType.Service} workloads={workloads} />, { wrapper: Wrapper });
+    const names = (): string[] =>
+      screen
+        .getAllByRole('row')
+        .slice(1)
+        .map(row => within(row).getByRole('link').textContent ?? '');
+
+    expect(names()).toEqual(['alpha', 'beta', 'gamma']);
+    await user.click(screen.getByRole('button', { name: 'Labeled by' }));
+    expect(names()).toEqual(['gamma', 'beta', 'alpha']);
+    expect(screen.getByRole('columnheader', { name: 'Labeled by' })).toHaveAttribute('aria-sort', 'ascending');
+
+    await user.click(screen.getByRole('button', { name: 'Labeled by' }));
+    expect(names()).toEqual(['alpha', 'beta', 'gamma']);
+    expect(screen.getByRole('columnheader', { name: 'Labeled by' })).toHaveAttribute('aria-sort', 'descending');
+    expect(workloads.map(workload => workload.name)).toEqual(['alpha', 'beta', 'gamma']);
+  });
+
   it.each(['primary', 'canary'])('shows an explicit zero share for the %s role', role => {
     const { getByText } = render(
       <WaypointWorkloadsTable
