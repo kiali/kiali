@@ -219,6 +219,7 @@ class AuthenticationControllerComponent extends React.Component<
           enabled: false
         }
       });
+      // AI master switch alone is enough: chat/consumption can stay off.
       if (aiConfig.enabled) {
         void loadTroubleshootingScan(store.dispatch);
       }

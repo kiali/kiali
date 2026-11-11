@@ -72,8 +72,10 @@ const troubleshootingLinkWrapperStyle = kialiStyle({
 });
 
 type ReduxStateProps = {
+  aiEnabled: boolean;
   groups: NotificationGroup[];
   troubleshootingIssues: TroubleshootingIssue[];
+  troubleshootingLoaded: boolean;
 };
 
 type ReduxDispatchProps = {
@@ -341,7 +343,7 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
             </NotificationDrawerGroup>
           ))}
         </NotificationDrawerGroupList>
-        {props.troubleshootingIssues.length > 0 && (
+        {props.aiEnabled && (
           <>
             <Divider />
             <div className={troubleshootingSectionStyle} data-test="troubleshooting-notification-section">
@@ -356,11 +358,15 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
                   to={`/${Paths.AI}?tab=troubleshooting`}
                 >
                   {`(${
-                    props.troubleshootingIssues.length === 1
-                      ? t('1 problem detected')
-                      : t('{{count}} problems detected', {
-                          count: props.troubleshootingIssues.length
-                        })
+                    !props.troubleshootingLoaded
+                      ? t('Scanning...')
+                      : props.troubleshootingIssues.length === 0
+                        ? t('No problems detected')
+                        : props.troubleshootingIssues.length === 1
+                          ? t('1 problem detected')
+                          : t('{{count}} problems detected', {
+                              count: props.troubleshootingIssues.length
+                            })
                   })`}
                 </KialiLink>
               </span>
@@ -373,15 +379,19 @@ const NotificationCenterComponent: React.FC<NotificationCenterProps> = (props: N
 };
 
 const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
+  const aiEnabled = !!state.ai?.enabled;
+  const troubleshootingLoaded = !!state.ai?.troubleshooting?.loaded;
   return {
+    aiEnabled,
     groups: state.notificationCenter.groups,
     troubleshootingIssues:
-      state.ai?.enabled && state.ai.troubleshooting?.loaded
+      aiEnabled && troubleshootingLoaded
         ? partitionTroubleshootingIssues(
             state.ai.troubleshooting.issues ?? [],
             state.ai.troubleshooting.hiddenSubProblemIds ?? []
           ).visible
-        : []
+        : [],
+    troubleshootingLoaded
   };
 };
 

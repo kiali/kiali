@@ -27,10 +27,22 @@ func userAllowed(allowed []string, username string) bool {
 	return slices.Contains(allowed, username)
 }
 
+// clearSuggestedActions removes executable Advice/commands when chat is not allowed.
+// Analyze/Question actions stay so the UI can still show disabled "Fix with AI" controls.
 func clearSuggestedActions(issues []Issue) {
 	for i := range issues {
 		for j := range issues[i].SubProblems {
-			issues[i].SubProblems[j].SuggestedActions = nil
+			actions := issues[i].SubProblems[j].SuggestedActions
+			if len(actions) == 0 {
+				continue
+			}
+			kept := make([]SuggestedAction, 0, len(actions))
+			for _, action := range actions {
+				if action.Type == ActionTypeAnalyze || action.Type == ActionTypeQuestion {
+					kept = append(kept, action)
+				}
+			}
+			issues[i].SubProblems[j].SuggestedActions = kept
 		}
 	}
 }

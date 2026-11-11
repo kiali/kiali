@@ -16,7 +16,10 @@ export type TroubleshootInteractionRequest = {
 export type AIInteractionResult = {
   askChat: (prompt: string) => void;
   canSendPrompt: (prompt?: string) => boolean;
+  /** Feature is on and this user may send messages (not kiosk). */
   chatAllowed: boolean;
+  /** AI chat feature is configured on (ignores user permission / kiosk). */
+  chatEnabled: boolean;
   openChat: () => void;
   sendPrompt: (request: PendingChatPrompt | string) => void;
   troubleshoot: (request: TroubleshootInteractionRequest | string) => void;
@@ -32,7 +35,10 @@ export const buildTroubleshootIntro = (problem?: string, description?: string): 
 export const useAIInteraction = (): AIInteractionResult => {
   const dispatch = useKialiDispatch();
 
-  // Same gates that mount the chatbot and let this user send messages.
+  // Same gate used to mount the chatbot shell (ai + chat feature flags).
+  const chatEnabled = useKialiSelector(state => Boolean(state.ai?.enabled && state.ai?.chat?.enabled));
+
+  // Same gates that let this user open the panel and send messages.
   const chatAllowed = useKialiSelector(state =>
     Boolean(
       state.ai?.enabled && state.ai?.chat?.enabled && state.ai?.chat?.allowed && !isKiosk(state.globalState?.kiosk)
@@ -99,6 +105,7 @@ export const useAIInteraction = (): AIInteractionResult => {
     askChat,
     canSendPrompt,
     chatAllowed,
+    chatEnabled,
     openChat,
     sendPrompt,
     troubleshoot

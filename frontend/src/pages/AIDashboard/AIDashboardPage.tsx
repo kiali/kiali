@@ -1,11 +1,13 @@
-import { Tab, Tabs, TabTitleIcon, TabTitleText, Title, TitleSizes } from '@patternfly/react-core';
+import { Tab, Tabs, TabTitleIcon, TabTitleText, Tooltip } from '@patternfly/react-core';
 import * as React from 'react';
+import { Navigate } from 'react-router-dom-v5-compat';
 import { classes } from 'typestyle';
 import { AIUsage } from './AIUsage';
 import { TenantIcon, UserAltIcon, WrenchIcon } from '@patternfly/react-icons';
+import { Paths } from 'config';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
-import { flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
+import { flexFillStyle } from 'styles/FlexStyles';
 import { basicTabStyle } from 'styles/TabStyles';
 import { location } from 'app/History';
 import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
@@ -22,17 +24,6 @@ const tabContentStyle = kialiStyle({
   padding: PFSpacer.md
 });
 
-const pageTitleStyle = kialiStyle({
-  alignItems: 'center',
-  display: 'flex',
-  flexShrink: 0,
-  gap: PFSpacer.sm,
-  marginBottom: PFSpacer.md,
-  paddingLeft: PFSpacer.md,
-  paddingRight: PFSpacer.md,
-  paddingTop: PFSpacer.md
-});
-
 const TAB_CONSUMPTION = 'consumption';
 const TAB_SESSION_USAGE = 'session-usage';
 const TAB_TROUBLESHOOTING = 'troubleshooting';
@@ -41,9 +32,19 @@ function troubleshootingTabVisible(aiConfig: KialiAppState['ai']): boolean {
   return !!aiConfig.enabled;
 }
 
-/** Metrics on (consumption.enabled) and user may open the cluster consumption tab (consumption.allowed). */
-function showConsumptionDashboard(aiConfig: KialiAppState['ai']): boolean {
-  return !!(aiConfig.consumption?.enabled && aiConfig.consumption.allowed);
+/** Session usage is only meaningful when Chat AI is configured on. */
+function sessionUsageTabVisible(aiConfig: KialiAppState['ai']): boolean {
+  return !!aiConfig.enabled && !!aiConfig.chat?.enabled;
+}
+
+/** Consumption metrics feature is configured on. */
+function consumptionTabEnabled(aiConfig: KialiAppState['ai']): boolean {
+  return !!aiConfig.consumption?.enabled;
+}
+
+/** User may open the cluster consumption tab. */
+function consumptionTabAllowed(aiConfig: KialiAppState['ai']): boolean {
+  return !!aiConfig.consumption?.allowed;
 }
 
 function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
@@ -51,8 +52,11 @@ function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
   if (troubleshootingTabVisible(aiConfig)) {
     keys.push(TAB_TROUBLESHOOTING);
   }
-  keys.push(TAB_SESSION_USAGE);
-  if (showConsumptionDashboard(aiConfig)) {
+  if (sessionUsageTabVisible(aiConfig)) {
+    keys.push(TAB_SESSION_USAGE);
+  }
+  // Only selectable when enabled and allowed; disabled tabs stay out of deep-link targets.
+  if (consumptionTabEnabled(aiConfig) && consumptionTabAllowed(aiConfig)) {
     keys.push(TAB_CONSUMPTION);
   }
   return keys;
@@ -63,7 +67,7 @@ const tabFromLocation = (keys: string[]): string => {
   if (requested && keys.includes(requested)) {
     return requested;
   }
-  return keys[0] ?? TAB_SESSION_USAGE;
+  return keys[0] ?? TAB_TROUBLESHOOTING;
 };
 
 export const AIDashboardPage: React.FC = () => {
@@ -73,14 +77,15 @@ export const AIDashboardPage: React.FC = () => {
   const [selectedTabKey, setSelectedTabKey] = React.useState<string | number>(() => tabFromLocation(visibleTabKeys));
   const activeTabKey = visibleTabKeys.includes(String(selectedTabKey))
     ? selectedTabKey
-    : (visibleTabKeys[0] ?? TAB_SESSION_USAGE);
+    : (visibleTabKeys[0] ?? TAB_TROUBLESHOOTING);
   const scanRequestedRef = React.useRef(false);
-  const adminView = React.useMemo(() => showConsumptionDashboard(aiConfig), [aiConfig]);
+  const showConsumptionTab = React.useMemo(() => consumptionTabEnabled(aiConfig), [aiConfig]);
+  const consumptionAllowed = React.useMemo(() => consumptionTabAllowed(aiConfig), [aiConfig]);
+  const showSessionUsage = React.useMemo(() => sessionUsageTabVisible(aiConfig), [aiConfig]);
   const showTroubleshooting = troubleshootingTabVisible(aiConfig);
-  const showTabs = adminView || showTroubleshooting;
 
   React.useEffect(() => {
-    if (!showTroubleshooting || scanRequestedRef.current) {
+    if (!aiConfig.enabled || !showTroubleshooting || scanRequestedRef.current) {
       return;
     }
     scanRequestedRef.current = true;
@@ -90,91 +95,89 @@ export const AIDashboardPage: React.FC = () => {
       return;
     }
     void loadTroubleshootingScan(dispatch);
-  }, [activeTabKey, dispatch, showTroubleshooting]);
+  }, [activeTabKey, aiConfig.enabled, dispatch, showTroubleshooting]);
+
+  // Deep links to /ai are still reachable when the nav item is hidden.
+  if (!aiConfig.enabled) {
+    return <Navigate to={`/${Paths.OVERVIEW}`} replace />;
+  }
 
   return (
-    <div className={flexFillStyle}>
-      {!showTabs ? (
-        <>
-          <Title
-            className={classes(pageTitleStyle, noShrinkStyle)}
-            data-test="ai-user-usage-title"
-            headingLevel="h1"
-            size={TitleSizes['2xl']}
+    <div className={classes(flexFillStyle, basicTabStyle)}>
+      <Tabs
+        activeKey={activeTabKey}
+        onSelect={(_e, key) => setSelectedTabKey(key)}
+        aria-label={t('AI Dashboard tabs')}
+        role="region"
+      >
+        {showTroubleshooting && (
+          <Tab
+            eventKey={TAB_TROUBLESHOOTING}
+            data-test="ai-dashboard-tab-troubleshooting"
+            title={
+              <>
+                <TabTitleIcon>
+                  <WrenchIcon />
+                </TabTitleIcon>
+                <TabTitleText>{t('Troubleshooting')}</TabTitleText>
+              </>
+            }
+            aria-label={t('Troubleshooting tab')}
           >
-            <UserAltIcon /> {t('AI User Usage')}
-          </Title>
-          <div className={tabContentStyle}>
-            <AIUsage />
-          </div>
-        </>
-      ) : (
-        <div className={classes(flexFillStyle, basicTabStyle)}>
-          <Tabs
-            activeKey={activeTabKey}
-            onSelect={(_e, key) => setSelectedTabKey(key)}
-            aria-label={t('AI Dashboard tabs')}
-            role="region"
-          >
-            {showTroubleshooting && (
-              <Tab
-                eventKey={TAB_TROUBLESHOOTING}
-                title={
-                  <>
-                    <TabTitleIcon>
-                      <WrenchIcon />
-                    </TabTitleIcon>
-                    <TabTitleText>{t('Troubleshooting')}</TabTitleText>
-                  </>
-                }
-                aria-label={t('Troubleshooting tab')}
-              >
-                {activeTabKey === TAB_TROUBLESHOOTING && (
-                  <div className={tabContentStyle}>
-                    <AITroubleshooting />
-                  </div>
-                )}
-              </Tab>
+            {activeTabKey === TAB_TROUBLESHOOTING && (
+              <div className={tabContentStyle}>
+                <AITroubleshooting />
+              </div>
             )}
-            <Tab
-              eventKey={TAB_SESSION_USAGE}
-              title={
-                <>
-                  <TabTitleIcon>
-                    <UserAltIcon />
-                  </TabTitleIcon>
-                  <TabTitleText>{t('AI User Usage')}</TabTitleText>
-                </>
-              }
-              aria-label={t('AI User Usage tab')}
-            >
-              {activeTabKey === TAB_SESSION_USAGE && (
-                <div className={tabContentStyle}>
-                  <AIUsage />
-                </div>
-              )}
-            </Tab>
-            <Tab
-              eventKey={TAB_CONSUMPTION}
-              title={
-                <>
-                  <TabTitleIcon>
-                    <TenantIcon />
-                  </TabTitleIcon>
-                  <TabTitleText>{t('Consumption')}</TabTitleText>
-                </>
-              }
-              aria-label={t('Consumption tab')}
-            >
-              {activeTabKey === TAB_CONSUMPTION && (
-                <div className={tabContentStyle}>
-                  <AIConsumption />
-                </div>
-              )}
-            </Tab>
-          </Tabs>
-        </div>
-      )}
+          </Tab>
+        )}
+        {showSessionUsage && (
+          <Tab
+            eventKey={TAB_SESSION_USAGE}
+            data-test="ai-dashboard-tab-session-usage"
+            title={
+              <>
+                <TabTitleIcon>
+                  <UserAltIcon />
+                </TabTitleIcon>
+                <TabTitleText>{t('AI User Usage')}</TabTitleText>
+              </>
+            }
+            aria-label={t('AI User Usage tab')}
+          >
+            {activeTabKey === TAB_SESSION_USAGE && (
+              <div className={tabContentStyle}>
+                <AIUsage />
+              </div>
+            )}
+          </Tab>
+        )}
+        {showConsumptionTab && (
+          <Tab
+            eventKey={TAB_CONSUMPTION}
+            data-test="ai-dashboard-tab-consumption"
+            isAriaDisabled={!consumptionAllowed}
+            title={
+              <>
+                <TabTitleIcon>
+                  <TenantIcon />
+                </TabTitleIcon>
+                <TabTitleText>{t('Consumption')}</TabTitleText>
+              </>
+            }
+            aria-label={t('Consumption tab')}
+            tooltip={
+              !consumptionAllowed ? <Tooltip content={t('Consumption is not allowed for this user')} /> : undefined
+            }
+          >
+            {activeTabKey === TAB_CONSUMPTION && consumptionAllowed && (
+              <div className={tabContentStyle}>
+                <AIConsumption />
+              </div>
+            )}
+          </Tab>
+        )}
+      </Tabs>
     </div>
   );
 };

@@ -14,6 +14,7 @@ import { NotificationCenterActions } from 'actions/NotificationCenterActions';
 import { RhUiAiExperienceFillIcon, RhUiAttentionBellFillIcon, RhUiNotificationFillIcon } from '@patternfly/react-icons';
 
 type ReduxStateProps = {
+  aiEnabled?: boolean;
   alerts: NotificationMessage[];
   chatbotVisible?: boolean;
   isExpanded?: boolean;
@@ -48,6 +49,7 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
     }
   }
 
+  const aiEnabled = !!props.aiEnabled;
   const troubleshootingCount = props.troubleshootingCount ?? 0;
 
   return (
@@ -76,12 +78,14 @@ export const NotificationCenterBadgeComponent: React.FunctionComponent<Notificat
           </>
         ) : (
           <>
-            <RhUiNotificationFillIcon /> {troubleshootingCount > 0 ? count : ''}{' '}
+            {/* Always show the notification counter, including 0, so the bell stays readable next to the AI count. */}
+            <RhUiNotificationFillIcon /> {count}{' '}
           </>
         )}
-        {troubleshootingCount > 0 ? (
+        {aiEnabled ? (
           <>
-            <RhUiAiExperienceFillIcon /> {troubleshootingCount}
+            <RhUiAiExperienceFillIcon data-test="notifications-ai-icon" />
+            {troubleshootingCount > 0 ? ` ${troubleshootingCount}` : ''}
           </>
         ) : null}
       </Button>
@@ -122,7 +126,8 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
       { alerts: [], needsAttention: false, newMessageCount: 0 }
     );
 
-  const issues = state.ai?.enabled && state.ai.troubleshooting?.loaded ? (state.ai.troubleshooting.issues ?? []) : [];
+  const aiEnabled = !!state.ai?.enabled;
+  const issues = aiEnabled && state.ai.troubleshooting?.loaded ? (state.ai.troubleshooting.issues ?? []) : [];
   const visibleIssues = partitionTroubleshootingIssues(
     issues,
     state.ai?.troubleshooting?.hiddenSubProblemIds ?? []
@@ -131,6 +136,7 @@ const mapStateToProps = (state: KialiAppState): ReduxStateProps => {
 
   return {
     ...notifications,
+    aiEnabled,
     chatbotVisible: !!state.ai?.chat?.visible,
     isExpanded: state.notificationCenter.expanded,
     troubleshootingCount: summary.problems,

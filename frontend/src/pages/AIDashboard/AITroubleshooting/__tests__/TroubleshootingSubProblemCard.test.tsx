@@ -256,11 +256,11 @@ describe('TroubleshootingSubProblemCard', () => {
     );
   });
 
-  it('keeps Analyze disabled when chat is not available', () => {
+  it('keeps Fix with AI disabled when chat is enabled but not allowed', () => {
     const dispatched: KialiAppAction[] = [];
     const store = createStore(() => ({
       ai: {
-        chat: { allowed: false, enabled: false },
+        chat: { allowed: false, enabled: true },
         enabled: true,
         troubleshooting: { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] as string[] }
       },
@@ -288,6 +288,61 @@ describe('TroubleshootingSubProblemCard', () => {
     expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Try to fix with AI' }));
     expect(dispatched).not.toContainEqual(expect.objectContaining({ type: ChatAIActions.setPendingPrompt('').type }));
+  });
+
+  it('keeps Fix with AI visible but disabled when chat is not enabled', () => {
+    const store = createStore(() => ({
+      ai: {
+        chat: { allowed: false, enabled: false },
+        enabled: true,
+        troubleshooting: { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] as string[] }
+      },
+      globalState: { kiosk: '' }
+    }));
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <TroubleshootingSubProblemCard
+            subProblem={{
+              ...subProblem,
+              suggestedActions: [{ description: 'Ask the AI to analyze productpage', type: 'Question' }]
+            }}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
+  });
+
+  it('shows Fix with AI from suggestedPrompt when Analyze actions were cleared', () => {
+    const store = createStore(() => ({
+      ai: {
+        chat: { allowed: false, enabled: true },
+        enabled: true,
+        troubleshooting: { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] as string[] }
+      },
+      globalState: { kiosk: '' }
+    }));
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <TroubleshootingSubProblemCard
+            subProblem={{
+              ...subProblem,
+              suggestedActions: [],
+              suggestedPrompt: 'Why is productpage failing?'
+            }}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(screen.getByRole('button', { name: 'Ask AI' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Try to fix with AI' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Hide problem' })).toBeInTheDocument();
   });
 
   it('analyzes an istio object from the action prompt', () => {
