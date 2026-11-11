@@ -68,11 +68,42 @@ collect_context() {
   timeout $T kubectl $ctx_flag logs ds/speaker -n metallb-system > "$d/metallb_speaker_current_logs.txt" 2>&1 || rm -f "$d/metallb_speaker_current_logs.txt"
   timeout $T kubectl $ctx_flag logs -p deployments/controller -n metallb-system > "$d/metallb_controller_logs.txt" 2>&1 || rm -f "$d/metallb_controller_logs.txt"
   timeout $T kubectl $ctx_flag logs -p ds/speaker -n metallb-system > "$d/metallb_speaker_logs.txt" 2>&1 || rm -f "$d/metallb_speaker_logs.txt"
+
+  # API server and etcd metrics (request latency, inflight, throttling, etcd latency)
+  timeout $T kubectl $ctx_flag get --raw /metrics 2>/dev/null \
+    | grep -E '^(apiserver_request_duration_seconds|apiserver_current_inflight_requests|apiserver_request_total|apiserver_dropped_requests_total|etcd_request_duration_seconds|process_cpu_seconds_total|process_resident_memory_bytes)' \
+    > "$d/apiserver_metrics.txt" 2>&1 || rm -f "$d/apiserver_metrics.txt"
+
+  # Node and pod resource usage
+  timeout $T kubectl $ctx_flag top nodes > "$d/top_nodes.txt" 2>&1 || rm -f "$d/top_nodes.txt"
+  timeout $T kubectl $ctx_flag top pods -A --sort-by=cpu > "$d/top_pods.txt" 2>&1 || rm -f "$d/top_pods.txt"
 }
 
 # Host-level stats (collected once, not per context)
 timeout $T docker stats --no-stream > "${OUTPUT_DIRECTORY}/docker_stats.txt" 2>&1 || rm -f "${OUTPUT_DIRECTORY}/docker_stats.txt"
 timeout $T df -m > "${OUTPUT_DIRECTORY}/df.txt" 2>&1 || rm -f "${OUTPUT_DIRECTORY}/df.txt"
+
+# Per-container resource pressure (CPU/memory/IO PSI + load average)
+for cid in $(docker ps -q 2>/dev/null); do
+  cname=$(docker inspect --format '{{.Name}}' "$cid" 2>/dev/null | sed 's|^/||')
+  outfile="${OUTPUT_DIRECTORY}/${cname:-$cid}_pressure.txt"
+  {
+    echo "=== loadavg ==="
+    timeout $T docker exec "$cid" cat /proc/loadavg 2>&1
+    echo ""
+    echo "=== cpu pressure ==="
+    timeout $T docker exec "$cid" cat /proc/pressure/cpu 2>&1
+    echo ""
+    echo "=== memory pressure ==="
+    timeout $T docker exec "$cid" cat /proc/pressure/memory 2>&1
+    echo ""
+    echo "=== io pressure ==="
+    timeout $T docker exec "$cid" cat /proc/pressure/io 2>&1
+    echo ""
+    echo "=== top (snapshot) ==="
+    timeout $T docker exec "$cid" top -bn1 2>&1 | head -30
+  } > "$outfile" 2>&1 || rm -f "$outfile"
+done
 
 if [ -n "${KUBECTL_CONTEXT}" ]; then
   collect_context "${KUBECTL_CONTEXT}" "${OUTPUT_DIRECTORY}/${KUBECTL_CONTEXT}"
