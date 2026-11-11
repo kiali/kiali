@@ -113,7 +113,7 @@
     "dompurify": "^3.4.17",
     "eventemitter3": "5.0.4",
     "i18next": "^23.10.1",
-    "i18next-http-backend": "^2.5.0",
+    "i18next-http-backend": "^4.0.4",
     "js-yaml": "^4.3.2",
     "lodash-es": "^4.18.0",
     "micro-memoize": "4.0.9",
