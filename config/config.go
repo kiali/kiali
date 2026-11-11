@@ -549,10 +549,13 @@ type CacheExpirationConfig struct {
 // KialiInternalConfig holds configuration that is not typically touched by users, but could be in the event of
 // unusual circumstances. It may be undocumented and is subject to change. It is unstructured in the CRD schema.
 type KialiInternalConfig struct {
-	CacheExpiration        CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
-	GraphCache             GraphCacheConfig      `yaml:"graph_cache,omitempty"`
-	HealthCache            HealthCacheConfig     `yaml:"health_cache,omitempty"`
-	MetricLogDurationLimit time.Duration         `yaml:"metric_log_duration_limit,omitempty"`
+	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
+	// CacheReadTimeout bounds each read of a cluster's kube cache. It must cover the first sync of a large cluster's
+	// informers. Set to 0 to disable.
+	CacheReadTimeout       time.Duration     `yaml:"cache_read_timeout,omitempty"`
+	GraphCache             GraphCacheConfig  `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig `yaml:"health_cache,omitempty"`
+	MetricLogDurationLimit time.Duration     `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
 	UrlServiceVersion string `yaml:"url_service_version" json:"urlServiceVersion"`
@@ -1204,6 +1207,7 @@ func NewConfig() (c *Config) {
 				Waypoint:      4 * time.Minute,
 				ZtunnelConfig: 2 * time.Minute,
 			},
+			CacheReadTimeout: 30 * time.Second,
 			GraphCache: GraphCacheConfig{
 				Enabled:           true,
 				InactivityTimeout: "10m",
@@ -1337,6 +1341,13 @@ func Get() (conf *Config) {
 	defer rwMutex.RUnlock()
 	copy := configuration
 	return &copy
+}
+
+// IsTracingEnabled reports whether server tracing is enabled without copying the global Config.
+func IsTracingEnabled() bool {
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
+	return configuration.Server.Observability.Tracing.Enabled
 }
 
 // Set the global Config

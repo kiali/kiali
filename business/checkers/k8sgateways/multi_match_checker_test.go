@@ -206,3 +206,35 @@ func TestUniqueListenerDuplicate(t *testing.T) {
 	assert.Greater(len(validation.Checks), 0)
 
 }
+
+// TestMultimatchValidationValueCarriesNamespace pins the CI regression from
+// PR #10448: the IstioValidation VALUE must carry its namespace. The
+// cluster-wide GetValidations filter (accessible namespaces) reads the value's
+// Namespace field, and an empty one made every collision-flagged K8sGateway
+// lose its validation on /api/istio/config.
+func TestMultimatchValidationValueCarriesNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	assert := assert.New(t)
+
+	k8sgwObject := data.AddListenerToK8sGateway(data.CreateListener("default", "website.com", 80, "http"),
+		data.CreateEmptyK8sGateway("gatewayapi-1", "bookinfo"))
+
+	k8sgwObject2 := data.AddListenerToK8sGateway(data.CreateListener("default", "website.com", 80, "http"),
+		data.CreateEmptyK8sGateway("gatewayapi-2", "bookinfo"))
+
+	vals := MultiMatchChecker{
+		K8sGateways: []*k8s_networking_v1.Gateway{k8sgwObject, k8sgwObject2},
+		Cluster:     config.DefaultClusterID,
+	}.Check()
+
+	// Both colliding gateways must be flagged: pin the count so a checker
+	// that silently produces fewer entries fails.
+	assert.Len(vals, 2)
+	for key, validation := range vals {
+		assert.Equal("bookinfo", key.Namespace)
+		assert.Equal(key.Namespace, validation.Namespace,
+			"multimatch validation value for %s must carry its namespace, matching its key", key.Name)
+	}
+}

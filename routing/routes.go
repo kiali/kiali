@@ -251,7 +251,7 @@ func NewRoutes(
 			log.StatusLogName,
 			"GET",
 			"/api/test/metrics/health/status",
-			handlers.HealthStatusMetricsHandler(),
+			handlers.HealthStatusMetricsHandler(conf, kialiCache, discovery, clientFactory),
 			true,
 		},
 		// swagger:route GET /tracing/diagnose tracing tracingDiagnose
@@ -1920,6 +1920,7 @@ func NewRoutes(
 		//
 		// Responses:
 		//    400: badRequestError
+		//    403: forbiddenError
 		//    503: serviceUnavailableError
 		//    500: internalError
 		//    200: metricsStatsResponse

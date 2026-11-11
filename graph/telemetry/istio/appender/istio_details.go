@@ -14,6 +14,7 @@ import (
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/models"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 const IstioAppenderName = "istio"
@@ -23,7 +24,13 @@ const IstioAppenderName = "istio"
 // - Ingress Gateways: n.Metadata[IsIngressGateway] = Map of GatewayName => hosts
 // - VirtualService: n.Metadata[HasVS] = Map of VirtualServiceName => hosts
 // Name: istio
-type IstioAppender struct{}
+type IstioAppender struct {
+	// AccessibleNamespaces scopes the cluster-wide fetches below to clusters
+	// the requesting user has a client for. Without it, a user without a
+	// session on every Kiali-visible cluster panics in CheckError on the
+	// first cluster-wide fetch and the whole graph fails with a 500.
+	AccessibleNamespaces graph.AccessibleNamespaces
+}
 
 // Name implements Appender
 func (a IstioAppender) Name() string {
@@ -41,10 +48,23 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		return
 	}
 
-	gwWorkloads, workloadMap := populateWorkloadMap(ctx, globalInfo.Business, globalInfo.Clusters, trafficMap)
+	// populateWorkloadMap also runs a cluster-wide fetch per cluster: restrict
+	// it to the clusters the user has a client for, like the fetch loops below.
+	// A session-less cluster's fetch resolves no accessible namespaces and
+	// would only run cluster-wide cache lists to filter the results away.
+	fetchClusters := sliceutil.Filter(globalInfo.Clusters, func(c models.KubeCluster) bool {
+		return a.AccessibleNamespaces.HasCluster(c.Name)
+	})
+	gwWorkloads, workloadMap := populateWorkloadMap(ctx, globalInfo.Business, fetchClusters, trafficMap)
 
 	// Fetch cluster-wide service lists once per cluster for use by addLabels.
 	for _, cluster := range globalInfo.Clusters {
+		// A cluster the user has no client for (no session) cannot serve the
+		// cluster-wide fetches below: skip it rather than fail the whole graph.
+		// Its nodes, if any, are rendered without the istio-details decoration.
+		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
+			continue
+		}
 		if _, ok := globalInfo.Vendor.ClusterServiceLists[cluster.Name]; !ok {
 			svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
 				business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
@@ -58,6 +78,9 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	// Fetch all needed Istio config (DRs, VSes, Gateways) in a single call per cluster
 	// to avoid redundant GetIstioConfigList and GetClusterNamespaces calls.
 	for _, cluster := range globalInfo.Clusters {
+		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
+			continue
+		}
 		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{
 			IncludeDestinationRules: true,
 			IncludeGateways:         true,

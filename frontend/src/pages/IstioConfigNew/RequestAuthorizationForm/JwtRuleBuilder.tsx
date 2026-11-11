@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { JWTHeader, JWTRule } from '../../../types/IstioObjects';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { JWTHeader, JWTRule } from '../../../types/IstioObjects';
+import type { IRow, ThProps } from '@patternfly/react-table';
 import { Button, ButtonVariant, MenuToggle, Select, SelectList, SelectOption, TextInput } from '@patternfly/react-core';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';

@@ -190,6 +190,7 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 }
 
 func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
+	// Missing envoy_server_memory_allocated samples (empty query), not elevated memory.
 	if memoryBytes == 0 {
 		return models.EnvoyMemoryCauseUnknown
 	}

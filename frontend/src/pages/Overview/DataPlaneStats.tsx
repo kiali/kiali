@@ -271,7 +271,7 @@ export const DataPlaneStats: React.FC = () => {
                     >
                       {ambient}
                     </KialiLink>
-                    <Label variant="outline">{t('Ambient')}</Label>
+                    <Label variant="outline">Ambient</Label>
                   </div>
                 )}
                 {sidecar > 0 && (
@@ -284,7 +284,7 @@ export const DataPlaneStats: React.FC = () => {
                     >
                       {sidecar}
                     </KialiLink>
-                    <Label variant="outline">{t('Sidecar')}</Label>
+                    <Label variant="outline">Sidecar</Label>
                   </div>
                 )}
               </div>

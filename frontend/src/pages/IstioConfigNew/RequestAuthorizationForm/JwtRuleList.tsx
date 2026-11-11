@@ -1,5 +1,5 @@
-import { JWTRule } from '../../../types/IstioObjects';
-import { IRow, ThProps } from '@patternfly/react-table';
+import type { JWTRule } from '../../../types/IstioObjects';
+import type { IRow, ThProps } from '@patternfly/react-table';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFColors } from '../../../components/Pf/PfColors';
 import * as React from 'react';

@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,10 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	core_v1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	kubefake "k8s.io/client-go/kubernetes/fake"
-	kubeclienttesting "k8s.io/client-go/testing"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -623,80 +622,43 @@ func TestCacheUpdateAddsNewEntry(t *testing.T) {
 	assert.Equal(t, int32(2), retrieved.WorkloadHealth["workload2"].WorkloadStatus.DesiredReplicas)
 }
 
-// restrictedNamespaceClient wraps a fake client and simulates a user without RBAC
-// access to one namespace: the namespace LIST is filtered (the fake clientset has
-// no RBAC of its own) and the per-namespace get is denied. The ClusterHealth
-// handler authorizes explicit namespace requests against the user's LIST-based
-// accessible set (GetClusterNamespaces), so the list reactor is what makes the
-// 403 tests below exercise the check. The distinct cache key prevents the mock
-// factory's SA-identity shortcut (GetSAClients returns the same client instance)
-// from serving the SA's unfiltered namespace list for this user, so the cached
-// accessible set reflects exactly what this user can see - the same behavior a
-// real restricted user gets in production.
-type restrictedNamespaceClient struct {
-	deniedNamespace string
-	kubernetes.UserClientInterface
+// newRestrictedNamespaceClient wraps the fake client as a user without
+// access to the denied namespace: the namespace stays in the fake (it
+// exists, the SA can see it) but the user's LIST excludes it and the
+// per-namespace GET is denied.
+func newRestrictedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, allNamespaces []string) *kubetest.NamespaceRestrictedClient {
+	allowed := slices.DeleteFunc(slices.Clone(allNamespaces), func(n string) bool { return n == deniedNamespace })
+	return kubetest.NewNamespaceRestrictedClient(k8s, "restricted-user", allowed, deniedNamespace)
 }
 
-func (c *restrictedNamespaceClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	if namespace == c.deniedNamespace {
-		return nil, errors.New("namespaces \"" + namespace + "\" is forbidden")
-	}
-	return c.UserClientInterface.GetNamespace(namespace)
+// newListAuthorizedNamespaceClient wraps the fake client as a user that is
+// authorized through namespace LIST only (the #7125 profile): the namespace
+// appears in list results but the per-namespace get is denied. Handlers must
+// authorize such a user consistently, without depending on whether the
+// per-token namespace cache is warm.
+func newListAuthorizedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, listedNamespaces []string) *kubetest.NamespaceRestrictedClient {
+	return kubetest.NewNamespaceRestrictedClient(k8s, "list-authorized-user", listedNamespaces, deniedNamespace)
 }
 
-// listAuthorizedNamespaceClient wraps a fake client and simulates a user that is
-// authorized through namespace LIST only: the namespace appears in list results
-// but the per-namespace get is denied (e.g. header auth with the default
-// require_namespace_get=false). The ClusterHealth handler must authorize such a
-// user consistently, without depending on whether the per-token namespace cache
-// is warm.
-type listAuthorizedNamespaceClient struct {
-	deniedNamespace string
-	kubernetes.UserClientInterface
-}
+// TestNamespaceFakesReturnForbidden asserts the restricted and list-authorized
+// fakes produce real k8s Forbidden status errors. The accessible-set
+// computation distinguishes error kinds (a non-Forbidden error from a
+// per-namespace GET aborts the whole set computation in strict mode), so a
+// plain error would make strict-mode tests fail with 500 instead of the
+// intended 403.
+func TestNamespaceFakesReturnForbidden(t *testing.T) {
+	err := kubetest.ForbiddenNamespace("ns-victim")
+	require.Error(t, err)
+	assert.True(t, k8serrors.IsForbidden(err))
 
-func (c *listAuthorizedNamespaceClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
-	if namespace == c.deniedNamespace {
-		return nil, errors.New("namespaces \"" + namespace + "\" is forbidden")
-	}
-	return c.UserClientInterface.GetNamespace(namespace)
-}
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	restricted := newRestrictedNamespaceClient(k8s, "ns-victim", []string{"bookinfo", "ns-victim"})
+	_, err = restricted.GetNamespace("ns-victim")
+	assert.True(t, k8serrors.IsForbidden(err))
 
-// newListAuthorizedNamespaceClient wraps the given fake client: the denied
-// namespace stays in list results but its per-namespace get fails.
-func newListAuthorizedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, listedNamespaces []string) *listAuthorizedNamespaceClient {
-	k8s.CacheKey = "list-authorized-user"
-	listed := make([]core_v1.Namespace, 0, len(listedNamespaces))
-	for _, name := range listedNamespaces {
-		listed = append(listed, core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: name}})
-	}
-	if fakeClientset, ok := k8s.KubeClientset.(*kubefake.Clientset); ok {
-		fakeClientset.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
-			return true, &core_v1.NamespaceList{Items: listed}, nil
-		})
-	}
-	return &listAuthorizedNamespaceClient{deniedNamespace: deniedNamespace, UserClientInterface: k8s}
-}
-
-// newRestrictedNamespaceClient wraps the given fake client, denying the given
-// namespace. allNamespaces is the set of namespaces the fake holds; the wrapper's
-// list reactor returns all of them except the denied one.
-func newRestrictedNamespaceClient(k8s *kubetest.FakeK8sClient, deniedNamespace string, allNamespaces []string) *restrictedNamespaceClient {
-	k8s.CacheKey = "restricted-user"
-	allowed := make([]core_v1.Namespace, 0, len(allNamespaces))
-	for _, name := range allNamespaces {
-		if name == deniedNamespace {
-			continue
-		}
-		allowed = append(allowed, core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: name}})
-	}
-	if fakeClientset, ok := k8s.KubeClientset.(*kubefake.Clientset); ok {
-		fakeClientset.PrependReactor("list", "namespaces", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
-			return true, &core_v1.NamespaceList{Items: allowed}, nil
-		})
-	}
-	return &restrictedNamespaceClient{deniedNamespace: deniedNamespace, UserClientInterface: k8s}
+	listAuthorized := newListAuthorizedNamespaceClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns-victim")), "ns-victim", []string{"bookinfo", "ns-victim"})
+	_, err = listAuthorized.GetNamespace("ns-victim")
+	assert.True(t, k8serrors.IsForbidden(err))
 }
 
 // TestClusterHealthNamespacesParamInaccessible ensures the user-supplied namespaces

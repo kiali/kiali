@@ -30,7 +30,9 @@ type TimeControlsProps = ReduxStateProps &
   };
 
 const closeReplayStyle = kialiStyle({
-  marginLeft: '1rem'
+  marginLeft: '1rem',
+  marginRight: '0.5rem',
+  alignItems: 'center'
 });
 
 const timeDurationStyle = kialiStyle({

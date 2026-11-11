@@ -5,7 +5,11 @@ export class ResizeHeightObserver {
   private observer: ResizeObserver | null = null;
   private target: Element | null = null;
 
-  constructor(private onHeight: (height: number) => void, private hysteresis = 2, private minHeight = 0) {}
+  constructor(
+    private onHeight: (height: number) => void,
+    private hysteresis = 2,
+    private minHeight = 0
+  ) {}
 
   observe(element: Element): void {
     if (element === this.target) {

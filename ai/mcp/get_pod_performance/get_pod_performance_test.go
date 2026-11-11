@@ -631,7 +631,7 @@ func TestExecute_PodNotFound_ReturnsOKWithFriendlyMessage(t *testing.T) {
 	assert.Contains(t, msg, "not found")
 }
 
-func TestExecute_NamespaceDoesNotExist_ReturnsNotFoundWithFriendlyMessage(t *testing.T) {
+func TestExecute_NamespaceDoesNotExist_ReturnsForbiddenWithFriendlyMessage(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
@@ -646,13 +646,13 @@ func TestExecute_NamespaceDoesNotExist_ReturnsNotFoundWithFriendlyMessage(t *tes
 	}
 
 	res, code := Execute(newKialiInterface(conf, clientFactory, nil, businessLayer), args)
-	require.Equal(t, http.StatusNotFound, code, "missing namespace should return 404")
+	require.Equal(t, http.StatusForbidden, code, "inaccessible namespace should return 403")
 	msg := res.(string)
 	assert.Contains(t, msg, "nonexistent-namespace")
-	assert.Contains(t, msg, "does not exist in cluster")
+	assert.Contains(t, msg, "is not accessible in cluster")
 }
 
-func TestExecute_NamespaceDoesNotExist_WithWorkloadName_ReturnsNotFoundWithFriendlyMessage(t *testing.T) {
+func TestExecute_NamespaceDoesNotExist_WithWorkloadName_ReturnsForbiddenWithFriendlyMessage(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "Kubernetes"
 	config.Set(conf)
@@ -667,10 +667,10 @@ func TestExecute_NamespaceDoesNotExist_WithWorkloadName_ReturnsNotFoundWithFrien
 	}
 
 	res, code := Execute(newKialiInterface(conf, clientFactory, nil, businessLayer), args)
-	require.Equal(t, http.StatusNotFound, code, "missing namespace should return 404")
+	require.Equal(t, http.StatusForbidden, code, "inaccessible namespace should return 403")
 	msg := res.(string)
 	assert.Contains(t, msg, "nonexistent-namespace")
-	assert.Contains(t, msg, "does not exist in cluster")
+	assert.Contains(t, msg, "is not accessible in cluster")
 }
 
 func TestExecute_NamespaceExists_DoesNotBlockExecution(t *testing.T) {

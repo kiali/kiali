@@ -20,10 +20,10 @@
 // visualization changes, given the class assignments, is up to GraphStyles.ts.
 //
 
-import { Edge, Node } from '@patternfly/react-topology';
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import type { Edge, Node } from '@patternfly/react-topology';
+import type { Controller, GraphElement } from '@patternfly/react-topology';
 import { BoxByType, NodeAttr } from 'types/Graph';
-import { NodeData } from './GraphElems';
+import type { NodeData } from './GraphElems';
 import { ancestors, predecessors, setObserved, successors } from 'helpers/GraphHelpers';
 
 export class GraphHighlighter {
@@ -128,9 +128,7 @@ export class GraphHighlighter {
       all.push(current);
 
       if (current.getKind() === 'node' && (current as Node).hasParent()) {
-        all = Array.from(
-          new Set<GraphElement>([...all, ...ancestors(current as Node)])
-        );
+        all = Array.from(new Set<GraphElement>([...all, ...ancestors(current as Node)]));
       }
 
       return all;
@@ -148,7 +146,7 @@ export class GraphHighlighter {
   getEdgeHighlight = (edge: Edge): GraphElement[] => {
     const source = edge.getSource();
     const target = edge.getTarget();
-    let emptyElems = [] as GraphElement[];
+    const emptyElems = [] as GraphElement[];
 
     let elems = [] as GraphElement[];
     elems = [edge, source, target, ...predecessors(source, emptyElems), ...successors(target, emptyElems)];
@@ -161,18 +159,14 @@ export class GraphHighlighter {
     // treat App boxes in a typical way, but to reduce "flashing", Namespace and Cluster
     // boxes highlight themselves and their anscestors.
     if (box.getData()[NodeAttr.isBox] === BoxByType.APP) {
-      let emptyElems = [] as GraphElement[];
+      const emptyElems = [] as GraphElement[];
       let elems: GraphElement[];
       const children = box.getChildren();
       elems = [...children];
 
       children.forEach(n => {
-        elems = Array.from(
-          new Set<GraphElement>([...elems, ...predecessors(n as Node, emptyElems)])
-        );
-        elems = Array.from(
-          new Set<GraphElement>([...elems, ...successors(n as Node, emptyElems)])
-        );
+        elems = Array.from(new Set<GraphElement>([...elems, ...predecessors(n as Node, emptyElems)]));
+        elems = Array.from(new Set<GraphElement>([...elems, ...successors(n as Node, emptyElems)]));
       });
 
       return { toHighlight: this.includeAncestorNodes(elems), unhighlightOthers: true };

@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { IRow, ThProps } from '@patternfly/react-table';
-import { Workload } from 'types/Workload';
+import type { IRow, ThProps } from '@patternfly/react-table';
+import type { Workload } from 'types/Workload';
 import { Card, CardBody, Tab, Tabs, Title, TitleSizes } from '@patternfly/react-core';
 import { classes } from 'typestyle';
 import { activeTab } from '../../components/Tab/Tabs';

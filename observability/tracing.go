@@ -65,6 +65,12 @@ func InitTracer(collectorURL string) *sdktrace.TracerProvider {
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(TracerName()),
 			semconv.ServiceNamespaceKey.String(conf.Deployment.Namespace),
+			// The canonical k8s namespace attribute: the trace authorization
+			// reads it to authorize Kiali's own traces for users who can
+			// access the namespace Kiali runs in. The service.namespace set
+			// below is a logical grouping, not Kubernetes placement, and is
+			// not read for authorization.
+			attribute.String("k8s.namespace.name", conf.Deployment.Namespace),
 			// In order for kiali to dog food its own traces, this attribute is set. When determining if an app's
 			// traces match its workload, the business logic will parse this hostname attribute.
 			attribute.String("hostname", TracerName()),
@@ -125,7 +131,7 @@ func Attribute(key string, val interface{}) attribute.KeyValue {
 // Automatically includes X-Request-Id as a span attribute if available in context.
 func StartSpan(ctx context.Context, funcName string, attrs ...attribute.KeyValue) (context.Context, EndFunc) {
 	var span trace.Span
-	if config.Get().Server.Observability.Tracing.Enabled {
+	if config.IsTracingEnabled() {
 		// Add X-Request-Id as span attribute if available in context
 		if headers := utilcontext.GetRequestHeadersContext(ctx); headers != nil && headers.IsValid() {
 			attrs = append(attrs, Attribute("request_id", headers.XRequestID))

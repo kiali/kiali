@@ -18,7 +18,7 @@ import {
 import { CheckIcon } from '@patternfly/react-icons/dist/esm/icons/check-icon';
 import { CopyIcon } from '@patternfly/react-icons/dist/esm/icons/copy-icon';
 import { ExternalLinkSquareAltIcon } from '@patternfly/react-icons';
-import { MessageProps } from '@patternfly/chatbot';
+import type { MessageProps } from '@patternfly/chatbot';
 import { useKialiTranslation } from 'utils/I18nUtils';
 
 type ChatMessageMarkdownProps = {

@@ -1,5 +1,5 @@
 import { findChildren, findParent, getAppFromSpan, getWorkloadFromSpan, searchParentWorkload } from '../TracingHelper';
-import { Span, KeyValuePair, SpanData } from 'types/TracingInfo';
+import type { Span, KeyValuePair, SpanData } from 'types/TracingInfo';
 import { transformTraceData } from '../TraceTransform';
 
 describe('TracingHelper', () => {
@@ -111,7 +111,7 @@ describe('TracingHelper', () => {
   });
 
   it('ambient server span resolves destination workload', () => {
-    const span = ({
+    const span = {
       tags: [
         {
           key: 'node_id',
@@ -125,7 +125,7 @@ describe('TracingHelper', () => {
         { key: 'istio.destination_instance_name', value: 'reviews-v1-598b896c9d-6nfcb' }
       ],
       process: { serviceName: 'waypoint.bookinfo', tags: [] }
-    } as unknown) as Span;
+    } as unknown as Span;
     const wkdNs = getWorkloadFromSpan(span);
     expect(wkdNs).toBeDefined();
     expect(wkdNs!.workload).toEqual('reviews-v1');
@@ -134,7 +134,7 @@ describe('TracingHelper', () => {
   });
 
   it('ambient client span resolves source workload', () => {
-    const span = ({
+    const span = {
       tags: [
         {
           key: 'node_id',
@@ -147,7 +147,7 @@ describe('TracingHelper', () => {
         { key: 'istio.destination_namespace', value: 'bookinfo' }
       ],
       process: { serviceName: 'waypoint.bookinfo', tags: [] }
-    } as unknown) as Span;
+    } as unknown as Span;
     const wkdNs = getWorkloadFromSpan(span);
     expect(wkdNs).toBeDefined();
     expect(wkdNs!.workload).toEqual('productpage-v1');
@@ -155,7 +155,7 @@ describe('TracingHelper', () => {
   });
 
   it('ambient span without workload tags falls back to node_id parsing', () => {
-    const span = ({
+    const span = {
       tags: [
         {
           key: 'node_id',
@@ -164,7 +164,7 @@ describe('TracingHelper', () => {
         { key: 'span.kind', value: 'server' }
       ],
       process: { serviceName: 'waypoint.bookinfo', tags: [] }
-    } as unknown) as Span;
+    } as unknown as Span;
     const wkdNs = getWorkloadFromSpan(span);
     expect(wkdNs).toBeDefined();
     expect(wkdNs!.workload).toEqual('waypoint');
@@ -172,7 +172,7 @@ describe('TracingHelper', () => {
   });
 
   it('getAppFromSpan uses istio tags for waypoint proxy spans', () => {
-    const span = ({
+    const span = {
       tags: [
         {
           key: 'node_id',
@@ -183,7 +183,7 @@ describe('TracingHelper', () => {
         { key: 'istio.destination_namespace', value: 'bookinfo' }
       ],
       process: { serviceName: 'waypoint.bookinfo', tags: [] }
-    } as unknown) as Span;
+    } as unknown as Span;
     const appNs = getAppFromSpan(span);
     expect(appNs).toBeDefined();
     expect(appNs!.app).toEqual('reviews');

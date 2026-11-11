@@ -119,7 +119,11 @@ type LogEntry struct {
 }
 
 type filterOpts struct {
-	app     regexp.Regexp
+	// app is a pointer because it is only set when a waypoint was found: a
+	// waypoint request that falls through to the requested pod's own logs
+	// (no waypoint attached) must skip app filtering, not dereference a
+	// zero-value regexp.
+	app     *regexp.Regexp
 	destNs  regexp.Regexp
 	destSvc regexp.Regexp
 	destWk  regexp.Regexp
@@ -202,14 +206,27 @@ func (in *WorkloadService) GetGateways(ctx context.Context) (models.Workloads, e
 		return gateways, nil
 	}
 
+	// The gateway cache is shared by every user, so it is populated with the
+	// SA-visible gateways of every Kiali-accessible cluster. A user-scoped
+	// fetch here would make the cached content depend on which user warmed
+	// it: a broad user's gateways would leak to restricted ones, and a
+	// restricted user would truncate the list for everyone until the cache
+	// expires. Consumers filter the cached list per user.
 	gateways := models.Workloads{}
-	for cluster := range in.userClients {
-		workloads, err := in.GetAllWorkloads(ctx, cluster, "")
+	for cluster := range in.kialiSAClients {
+		saNamespaces, err := in.businessLayer.Namespace.GetKialiSAClusterNamespaces(ctx, cluster)
+		if err != nil {
+			log.Debugf("GetGateways: Error getting SA namespaces for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		namespaces := sliceutil.Map(saNamespaces, func(ns models.Namespace) string {
+			return ns.Name
+		})
+		workloads, err := in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, "", nil)
 		if err != nil {
 			log.Debugf("GetGateways: Error fetching workloads for cluster=[%s]: %s", cluster, err.Error())
 			continue
 		}
-
 		clusterGateways := sliceutil.Filter(workloads, func(w *models.Workload) bool {
 			return w.IsGatewayWorkload()
 		})
@@ -649,6 +666,9 @@ func (in *WorkloadService) BuildLogOptionsCriteria(container, duration string, l
 	}
 
 	opts.LogType = logType
+	if !opts.LogType.IsValid() {
+		return nil, fmt.Errorf("invalid logType [%s]: valid types are app, proxy, waypoint, ztunnel", logType)
+	}
 
 	if sinceTime != "" {
 		numTime, err := strconv.ParseInt(sinceTime, 10, 64)
@@ -989,23 +1009,6 @@ func (in *WorkloadService) collectPodsForCustomController(w *models.Workload, co
 // fetchWorkloadsFromCluster returns all cluster workloads for the specified namespaces. The caller must have access to all of
 // the specified namespaces or it is an error. If <namespaces> is empty it returns the workloads for all accessible namespaces.
 func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluster string, fetchNamespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
-	var pods []core_v1.Pod
-	var repcon []core_v1.ReplicationController
-	var dep []apps_v1.Deployment
-	var repset []apps_v1.ReplicaSet
-	var depcon []osapps_v1.DeploymentConfig
-	var fulset []apps_v1.StatefulSet
-	var jbs []batch_v1.Job
-	var cronjbs []batch_v1.CronJob
-	var daeset []apps_v1.DaemonSet
-	var wgroups []*networking_v1.WorkloadGroup
-	var wentries []*networking_v1.WorkloadEntry
-	var sidecars []*networking_v1.Sidecar
-
-	ws := models.Workloads{}
-
-	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
-
 	accessibleNamespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
 	if err != nil {
 		return nil, err
@@ -1024,7 +1027,34 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 		return ns.Name
 	})
 
-	// we've already established the user has access to the namespaces; use SA client to obtain namespace resource info
+	return in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, labelSelector, waypoints)
+}
+
+// fetchWorkloadsInNamespaces fetches the workloads of the given namespaces
+// using the Kiali ServiceAccount clients and the kube cache. It performs no
+// access check of its own: the caller resolves — and, on user-facing paths,
+// authorizes — the namespace list. The shared gateway cache uses it with the
+// SA-visible namespace set so that the cached content does not depend on
+// which user happened to warm it.
+func (in *WorkloadService) fetchWorkloadsInNamespaces(ctx context.Context, cluster string, namespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
+	var pods []core_v1.Pod
+	var repcon []core_v1.ReplicationController
+	var dep []apps_v1.Deployment
+	var repset []apps_v1.ReplicaSet
+	var depcon []osapps_v1.DeploymentConfig
+	var fulset []apps_v1.StatefulSet
+	var jbs []batch_v1.Job
+	var cronjbs []batch_v1.CronJob
+	var daeset []apps_v1.DaemonSet
+	var wgroups []*networking_v1.WorkloadGroup
+	var wentries []*networking_v1.WorkloadEntry
+	var sidecars []*networking_v1.Sidecar
+
+	ws := models.Workloads{}
+
+	includeIstioWorkloads := cluster != in.conf.KubernetesConfig.ClusterName || !in.conf.Clustering.IgnoreHomeCluster
+
+	// we've already established the caller has access to the namespaces; use SA client to obtain namespace resource info
 	client, ok := in.kialiSAClients[cluster]
 	if !ok {
 		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
@@ -2613,6 +2643,43 @@ func (in *WorkloadService) GetWaypoints(ctx context.Context) models.Workloads {
 	return waypoints
 }
 
+// GetSAWaypoints returns the waypoint workloads of every Kiali-accessible
+// cluster, scoped to the Kiali ServiceAccount's namespace visibility. It
+// backs the SA-visibility validation computations (newValidationInfo's SA
+// branch), whose results are written into the shared validation cache that
+// is otherwise populated by the background reconciler running with SA
+// visibility: a user-scoped waypoint set there would falsify the
+// waypoint-related checks (KIA1313) for every other user, the same
+// shared-cache-depends-on-warming-user class GetGateways guards against.
+// It does not read the shared waypoint cache: that cache is also warmed
+// user-scoped by GetWaypoints' callers, so a warm entry does not guarantee
+// SA scope (and newValidationInfo clears it right before calling this
+// anyway). Do not use this for user-facing decoration — the per-user
+// GetWaypoints applies there.
+func (in *WorkloadService) GetSAWaypoints(ctx context.Context) models.Workloads {
+	waypoints := models.Workloads{}
+	for cluster := range in.kialiSAClients {
+		saNamespaces, err := in.businessLayer.Namespace.GetKialiSAClusterNamespaces(ctx, cluster)
+		if err != nil {
+			log.Debugf("GetSAWaypoints: Error getting SA namespaces for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		namespaces := sliceutil.Map(saNamespaces, func(ns models.Namespace) string {
+			return ns.Name
+		})
+		// We are determining the waypoints, so we just pass an empty list of waypoints
+		workloads, err := in.fetchWorkloadsInNamespaces(ctx, cluster, namespaces, config.GatewayLabel, nil)
+		if err != nil {
+			log.Debugf("GetSAWaypoints: Error fetching workloads for cluster=[%s]: %s", cluster, err.Error())
+			continue
+		}
+		clusterWaypoints := sliceutil.Filter(workloads, func(w *models.Workload) bool { return w.IsWaypointWorkload() })
+		waypoints = append(waypoints, clusterWaypoints...)
+	}
+	in.cache.SetWaypoints(waypoints)
+	return waypoints
+}
+
 // waypointRefsValidationDigest returns a stable digest of resolved waypoint references for change detection.
 func waypointRefsValidationDigest(refs []models.WorkloadReferenceInfo) string {
 	if len(refs) == 0 {
@@ -3080,7 +3147,7 @@ func (in *WorkloadService) GetWorkloadTracingName(ctx context.Context, cluster, 
 func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []string, opts *LogOptions, w http.ResponseWriter) error {
 	var userClient kubernetes.ClientInterface
 	var ok bool
-	if opts.LogType == models.LogTypeZtunnel {
+	if opts.LogType.UsesKialiSA() {
 		// Use the SA because the logs will be filtered by the specific workload logs
 		userClient, ok = in.kialiSAClients[cluster]
 	} else {
@@ -3173,7 +3240,7 @@ func (in *WorkloadService) streamParsedLogs(cluster, namespace string, names []s
 				continue
 			}
 
-			if opts.LogType == models.LogTypeWaypoint && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
+			if opts.LogType == models.LogTypeWaypoint && opts.filter.app != nil && (opts.filter.app.MatchString("") || !opts.filter.app.MatchString(entry.Message)) {
 				continue
 			}
 
@@ -3279,7 +3346,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 					return fmt.Errorf("invalid service name for waypoint log filter: %w", err)
 				}
 				fs := filterOpts{
-					app: *appRe,
+					app: appRe,
 				}
 				opts.filter = fs
 				waypoint := wk.WaypointWorkloads[0]

@@ -143,7 +143,7 @@ func TestExecute_WithResourceNameAndNamespaces(t *testing.T) {
 
 		_, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusNotFound, code)
+		assert.Equal(t, http.StatusForbidden, code)
 	})
 }
 
@@ -175,7 +175,7 @@ func TestExecute_InvalidNamespace(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "non-existent-namespace")
@@ -193,7 +193,7 @@ func TestExecute_AllInvalidNamespacesReturnsErrorMessage(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -212,7 +212,7 @@ func TestExecute_NamespacesWithWhitespace(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -232,7 +232,7 @@ func TestExecute_NamespacesWithEmptySegments(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "invalid1")
@@ -251,7 +251,7 @@ func TestExecute_ResourceNameWithMultipleNamespacesReturnsError(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "not found or not accessible")
@@ -288,7 +288,7 @@ func TestExecute_NamespaceResourceType(t *testing.T) {
 
 		resp, code := Execute(ki, args)
 
-		assert.Equal(t, http.StatusNotFound, code)
+		assert.Equal(t, http.StatusForbidden, code)
 		respStr, ok := resp.(string)
 		assert.True(t, ok, "Expected response to be a string")
 		assert.Contains(t, respStr, "nonexistent")
@@ -307,7 +307,7 @@ func TestExecute_NamespaceDetailNotFound(t *testing.T) {
 
 	resp, code := Execute(ki, args)
 
-	assert.Equal(t, http.StatusNotFound, code)
+	assert.Equal(t, http.StatusForbidden, code)
 	respStr, ok := resp.(string)
 	assert.True(t, ok, "Expected response to be a string")
 	assert.Contains(t, respStr, "nonexistent-namespace")

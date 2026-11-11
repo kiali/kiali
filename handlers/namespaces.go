@@ -59,6 +59,10 @@ func NamespaceInfo(conf *config.Config, cache cache.KialiCache, clientFactory ku
 		namespaceService := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
 		namespaceInfo, err := namespaceService.GetClusterNamespace(r.Context(), namespace, cluster)
 		if err != nil {
+			if business.IsAccessibleError(err) {
+				respondNamespaceAccessError(w, err)
+				return
+			}
 			log.Error(err)
 			RespondWithError(w, http.StatusInternalServerError, err.Error())
 			return
@@ -99,27 +103,41 @@ func NamespaceValidationSummary(
 
 		var validationSummary models.IstioValidationSummary
 		istioConfigValidationResults := models.IstioValidations{}
-		var errValidations error
 
-		// If cluster is not set, is because we need a unified validations view (E.g. in the Summary graph)
+		// Single-cluster mesh: gate on the requested cluster — inaccessible
+		// means 403. Multi-cluster: merge summaries from the clusters where
+		// the namespace is in the user's accessible set (the cluster param is
+		// ignored, as before), and 403 when it is accessible nowhere.
 		clusters := discovery.Clusters()
+		accessibleNowhere := true
 		if len(clusters) == 1 {
-			istioConfigValidationResults, errValidations = business.Validations.GetValidationsForNamespace(r.Context(), cluster, namespace)
+			istioConfigValidationResults, err = business.Validations.GetValidationsForNamespace(r.Context(), cluster, namespace)
+			if err != nil {
+				handleErrorResponse(w, err)
+				return
+			}
 		} else {
 			for _, cl := range clusters {
 				_, errNs := business.Namespace.GetClusterNamespace(r.Context(), namespace, cl.Name)
 				if errNs == nil {
-					clusterIstioConfigValidationResults, _ := business.Validations.GetValidationsForNamespace(r.Context(), cl.Name, namespace)
+					accessibleNowhere = false
+					clusterIstioConfigValidationResults, errValidations := business.Validations.GetValidationsForNamespace(r.Context(), cl.Name, namespace)
+					if errValidations != nil {
+						// A single cluster's validation failure must not fail
+						// the merged view (remote-cluster tolerance), but it
+						// is logged rather than silently swallowed.
+						log.FromRequest(r).Error().Msgf("Error fetching validations for namespace [%s] in cluster [%s]: %s", namespace, cl.Name, errValidations.Error())
+						continue
+					}
 					istioConfigValidationResults = istioConfigValidationResults.MergeValidations(clusterIstioConfigValidationResults)
 				}
 			}
+			if accessibleNowhere {
+				respondNamespaceNotAccessible(w, namespace)
+				return
+			}
 		}
 
-		if errValidations != nil {
-			log.FromRequest(r).Error().Msg(errValidations.Error())
-			RespondWithError(w, http.StatusInternalServerError, errValidations.Error())
-			return
-		}
 		validationSummary = *istioConfigValidationResults.SummarizeValidation(namespace, cluster)
 
 		RespondWithJSON(w, http.StatusOK, validationSummary)

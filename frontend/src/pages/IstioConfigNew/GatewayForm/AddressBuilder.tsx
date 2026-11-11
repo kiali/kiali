@@ -1,16 +1,17 @@
 import * as React from 'react';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
   TextInput
 } from '@patternfly/react-core';
 import { Td, Tr } from '@patternfly/react-table';
-import { Address } from '../../../types/IstioObjects';
+import type { Address } from '../../../types/IstioObjects';
 import { isValid } from 'utils/Common';
 import { isGatewayHostValid, isValidIp } from '../../../utils/IstioConfigUtils';
 import { KialiIcon } from 'config/KialiIcon';

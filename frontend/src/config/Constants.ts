@@ -1,4 +1,4 @@
-import { AlertMessage } from '../types/Chatbot';
+import type { AlertMessage } from '../types/Chatbot';
 
 export const defaultGatewayLabel = 'istio';
 export const defaultGatewayLabelValue = 'ingressgateway';

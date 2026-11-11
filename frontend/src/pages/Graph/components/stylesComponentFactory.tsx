@@ -38,6 +38,7 @@ import { kialiStyle } from 'styles/StyleUtils';
 import { getGVKTypeString } from '../../../utils/IstioConfigUtils';
 import { gvkType } from '../../../types/IstioConfigList';
 import { t } from 'utils/I18nUtils';
+import { dismissContextMenu } from 'utils/ContextMenuUtils';
 
 const graphNavHandler = (node: GraphElement, kiosk: string): void => {
   handleGraphNav(node, kiosk);
@@ -89,7 +90,10 @@ const nodeContextMenu = (node: GraphElement, kiosk: string): Promise<React.React
         <DropdownItem
           className={contextMenuStyle}
           key={`option-${i}`}
-          onClick={() => o.altClickHandler!(o.node!, kiosk)}
+          onClick={() => {
+            o.altClickHandler!(o.node!, kiosk);
+            dismissContextMenu();
+          }}
         >
           {t(o.text)}
         </DropdownItem>

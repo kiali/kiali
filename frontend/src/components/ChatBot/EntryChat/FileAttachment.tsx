@@ -1,8 +1,16 @@
 import React from 'react';
 import Editor from '@monaco-editor/react';
 import { FileDetailsLabel } from '@patternfly/chatbot';
-import { Button, Stack, StackItem } from '@patternfly/react-core';
-import { Modal, ModalVariant } from '@patternfly/react-core/deprecated';
+import {
+  Button,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalVariant,
+  Stack,
+  StackItem
+} from '@patternfly/react-core';
 import { t } from 'utils/I18nUtils';
 import type { Action } from 'types/Chatbot';
 import { ColorScheme } from 'types/Common';
@@ -27,6 +35,7 @@ const toJsonString = (yamlText: string): string => {
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName, onSendMessage }) => {
   const dispatch = useDispatch();
+  const [modalTitleId] = React.useState(() => `chatbot-yaml-modal-title-${uniqueId()}`);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
   const [yamlText, setYamlText] = React.useState<string>(action.payload ?? '');
   const colorScheme = useKialiColorScheme();
@@ -178,36 +187,37 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
     <div key={fileName}>
       <FileDetailsLabel fileName={fileName} onClick={toggle} />
       <Modal
+        aria-labelledby={modalTitleId}
         ouiaId="chatbot-yaml-modal"
-        title={action.title || fileName}
         variant={ModalVariant.large}
         isOpen={isModalOpen}
         onClose={toggle}
-        actions={
-          [
-            canApply ? (
-              <Button key="apply" variant="primary" onClick={onApply}>
-                {applyLabel}
-              </Button>
-            ) : null,
-            <Button key="close" variant="link" onClick={toggle}>
-              {t('Close')}
-            </Button>
-          ].filter(Boolean) as any
-        }
       >
-        <Stack hasGutter>
-          <StackItem>
-            <Editor
-              value={yamlText}
-              language="yaml"
-              theme={isDarkTheme ? 'vs-dark' : 'light'}
-              height="350px"
-              onChange={v => setYamlText(v || '')}
-              options={{ wordWrap: 'on', tabSize: 2, scrollBeyondLastLine: false }}
-            />
-          </StackItem>
-        </Stack>
+        <ModalHeader labelId={modalTitleId} title={action.title || fileName} />
+        <ModalBody>
+          <Stack hasGutter>
+            <StackItem>
+              <Editor
+                value={yamlText}
+                language="yaml"
+                theme={isDarkTheme ? 'vs-dark' : 'light'}
+                height="350px"
+                onChange={v => setYamlText(v || '')}
+                options={{ wordWrap: 'on', tabSize: 2, scrollBeyondLastLine: false }}
+              />
+            </StackItem>
+          </Stack>
+        </ModalBody>
+        <ModalFooter>
+          {canApply ? (
+            <Button key="apply" variant="primary" onClick={onApply}>
+              {applyLabel}
+            </Button>
+          ) : null}
+          <Button key="close" variant="link" onClick={toggle}>
+            {t('Close')}
+          </Button>
+        </ModalFooter>
       </Modal>
     </div>
   );

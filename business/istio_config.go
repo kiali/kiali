@@ -32,8 +32,6 @@ import (
 	"github.com/kiali/kiali/util"
 )
 
-const allResources string = "*"
-
 type IstioConfigService struct {
 	userClients         map[string]kubernetes.UserClientInterface
 	saClients           map[string]kubernetes.ClientInterface
@@ -186,7 +184,7 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 	if _, err := in.businessLayer.Namespace.GetClusterNamespace(ctx, namespace, cluster); err != nil {
 		// Check if the namespace exists on the cluster in multi-cluster mode.
 		// TODO: Remove this once other business methods stop looping over all clusters.
-		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err)) && len(in.userClients) > 1 {
+		if (api_errors.IsNotFound(err) || api_errors.IsForbidden(err) || IsAccessibleError(err)) && len(in.userClients) > 1 {
 			return &models.IstioConfigList{}, nil
 		}
 		return nil, err
@@ -267,7 +265,14 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 
 	userClient := in.userClients[cluster]
 	if userClient == nil {
-		return nil, fmt.Errorf("K8s Client [%s] is not found or is not accessible for Kiali", cluster)
+		// A cluster the requesting user has no client for (no session on it,
+		// in non-impersonation mode) lists nothing for them: return the empty
+		// list rather than an error, matching the other cluster-scoped list
+		// endpoints. The data below comes from the SA-backed cache, but the
+		// callers filter it by the user's accessible namespaces, which are
+		// empty for a cluster the user has no client on.
+		log.FromContext(ctx).Debug().Msgf("No user client for cluster [%s]: returning empty Istio config list", cluster)
+		return istioConfigList, nil
 	}
 
 	isWorkloadSelector := criteria.WorkloadSelector != ""
@@ -1318,16 +1323,18 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 			k8sNetworkingPermissions[ns] = &k8sNetworkingRP
 			securityPermissions[ns] = &securityRP
 			/*
-				For networking.istio.io and security.istio.io, we check permissions once per API group
-				using a wildcard resource since all resources in those groups share the same verb set.
-
-				For gateway.networking.k8s.io, we check per resource type because different resources
-				have different write permissions (e.g., GatewayClass is read-only, TCPRoute has no create).
+				Permissions are checked per resource type using the plural resource name.
+				Roles may name individual resources (e.g. the OLM-generated ClusterRoles
+				aggregated into OpenShift's admin/edit), so a group-wide wildcard check
+				would wrongly deny them. A wildcard resources: ["*"] rule also matches
+				these per-resource checks.
 			*/
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, networkingPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.NetworkingGroupVersionV1.Group, allResources, in.conf)
+				networkingRP := *networkingPermissions
 				for _, rs := range newNetworkingConfigTypes {
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
+					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					networkingRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
 						Update: canUpdate,
@@ -1352,8 +1359,10 @@ func (in *IstioConfigService) GetIstioConfigPermissions(ctx context.Context, nam
 
 			go func(ctx context.Context, namespace string, wg *sync.WaitGroup, securityPermissions *models.ResourcesPermissions) {
 				defer wg.Done()
-				canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, kubernetes.SecurityGroupVersionV1.Group, allResources, in.conf)
+				securityRP := *securityPermissions
 				for _, rs := range newSecurityConfigTypes {
+					resourceName := kubernetes.PluralResourceName(rs.Kind)
+					canCreate, canUpdate, canDelete := getPermissionsApi(ctx, k8s, cluster, namespace, rs.Group, resourceName, in.conf)
 					securityRP[rs.String()] = &models.ResourcePermissions{
 						Create: canCreate,
 						Update: canUpdate,

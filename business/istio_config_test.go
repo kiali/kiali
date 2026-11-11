@@ -16,6 +16,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -235,6 +236,99 @@ func TestCheckMulticlusterPermissions(t *testing.T) {
 	assert.Nil(err)
 }
 
+// Regression test for https://github.com/kiali/kiali/issues/10486
+// A role that names individual resources (no resources: ["*"] wildcard),
+// like the OLM-generated ClusterRoles aggregated into OpenShift's admin/edit,
+// must still grant permissions when checked by plural resource name.
+func TestGetIstioConfigPermissionsNamedResources(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	verbs := map[string]bool{"create": true, "patch": true, "delete": true}
+	rules := map[string]map[string]bool{
+		"networking.istio.io/sidecars":             verbs,
+		"networking.istio.io/gateways":             verbs,
+		"networking.istio.io/serviceentries":       verbs,
+		"security.istio.io/authorizationpolicies":  verbs,
+		"security.istio.io/peerauthentications":    verbs,
+		"security.istio.io/requestauthentications": verbs,
+	}
+
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}})
+	configService := NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s, rules}).Build().IstioConfig
+
+	permissions := configService.GetIstioConfigPermissions(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	assert.NotNil(permissions["test"])
+
+	for _, gvk := range []schema.GroupVersionKind{
+		kubernetes.Sidecars,
+		kubernetes.Gateways,
+		kubernetes.ServiceEntries,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.RequestAuthentications,
+	} {
+		perm := (*permissions["test"])[gvk.String()]
+		if assert.NotNil(perm, gvk.String()) {
+			assert.True(perm.Create, gvk.String())
+			assert.True(perm.Update, gvk.String())
+			assert.True(perm.Delete, gvk.String())
+		}
+	}
+
+	// Types not granted by the role stay denied.
+	for _, gvk := range []schema.GroupVersionKind{
+		kubernetes.K8sGateways,
+		kubernetes.K8sReferenceGrants,
+	} {
+		perm := (*permissions["test"])[gvk.String()]
+		if assert.NotNil(perm, gvk.String()) {
+			assert.False(perm.Create, gvk.String())
+			assert.False(perm.Update, gvk.String())
+			assert.False(perm.Delete, gvk.String())
+		}
+	}
+}
+
+// A role granting resources: ["*"] in an API group (like Kiali's own role
+// template) must keep working with per-resource checks.
+func TestGetIstioConfigPermissionsWildcardResources(t *testing.T) {
+	assert := assert.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	verbs := map[string]bool{"create": true, "patch": true, "delete": true}
+	rules := map[string]map[string]bool{
+		"networking.istio.io/*": verbs,
+		"security.istio.io/*":   verbs,
+	}
+
+	k8s := kubetest.NewFakeK8sClient(&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}})
+	configService := NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s, rules}).Build().IstioConfig
+
+	permissions := configService.GetIstioConfigPermissions(context.TODO(), []string{"test"}, conf.KubernetesConfig.ClusterName)
+	assert.NotNil(permissions["test"])
+
+	for _, gvk := range []schema.GroupVersionKind{
+		kubernetes.Sidecars,
+		kubernetes.Gateways,
+		kubernetes.ServiceEntries,
+		kubernetes.AuthorizationPolicies,
+		kubernetes.PeerAuthentications,
+		kubernetes.RequestAuthentications,
+	} {
+		perm := (*permissions["test"])[gvk.String()]
+		if assert.NotNil(perm, gvk.String()) {
+			assert.True(perm.Create, gvk.String())
+			assert.True(perm.Update, gvk.String())
+			assert.True(perm.Delete, gvk.String())
+		}
+	}
+}
+
 func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 	fakeIstioObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
 	for _, g := range fakeGetGateways() {
@@ -415,10 +509,45 @@ func fakeGetSelfSubjectAccessReview() []*auth_v1.SelfSubjectAccessReview {
 }
 
 // Need to mock out the SelfSubjectAccessReview.
-type fakeAccessReview struct{ kubernetes.UserClientInterface }
+type fakeAccessReview struct {
+	kubernetes.UserClientInterface
+	// rules emulates RBAC roles that name individual resources (like the
+	// OLM-generated ClusterRoles aggregated into OpenShift's admin/edit).
+	// Keyed by "api/resource" (wildcards "api/*" and "*/*" are honored) with
+	// the set of allowed verbs. When nil, a legacy fixed response is returned.
+	rules map[string]map[string]bool
+}
+
+func (a *fakeAccessReview) allowed(api, resourceType, verb string) bool {
+	for _, key := range []string{api + "/" + resourceType, api + "/*", "*/*"} {
+		if a.rules[key][verb] {
+			return true
+		}
+	}
+	return false
+}
 
 func (a *fakeAccessReview) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
-	return fakeGetSelfSubjectAccessReview(), nil
+	if a.rules == nil {
+		return fakeGetSelfSubjectAccessReview(), nil
+	}
+	ssars := make([]*auth_v1.SelfSubjectAccessReview, 0, len(verbs))
+	for _, verb := range verbs {
+		ssars = append(ssars, &auth_v1.SelfSubjectAccessReview{
+			Spec: auth_v1.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &auth_v1.ResourceAttributes{
+					Namespace: namespace,
+					Verb:      verb,
+					Group:     api,
+					Resource:  resourceType,
+				},
+			},
+			Status: auth_v1.SubjectAccessReviewStatus{
+				Allowed: a.allowed(api, resourceType, verb),
+			},
+		})
+	}
+	return ssars, nil
 }
 
 func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
@@ -434,7 +563,7 @@ func mockGetIstioConfigDetails(t *testing.T) IstioConfigService {
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true
 
-	return NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s}).Build().IstioConfig
+	return NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{UserClientInterface: k8s}).Build().IstioConfig
 }
 
 func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
@@ -451,8 +580,8 @@ func mockGetIstioConfigDetailsMulticluster(t *testing.T) IstioConfigService {
 	k8s.OpenShift = true
 
 	k8sclients := make(map[string]kubernetes.UserClientInterface)
-	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{k8s}
-	k8sclients["east"] = &fakeAccessReview{k8s}
+	k8sclients[conf.KubernetesConfig.ClusterName] = &fakeAccessReview{UserClientInterface: k8s}
+	k8sclients["east"] = &fakeAccessReview{UserClientInterface: k8s}
 
 	return NewLayerBuilder(t, conf).WithClients(k8sclients).Build().IstioConfig
 }
@@ -631,7 +760,7 @@ func TestListWithAllNamespacesButNoAccessReturnsEmpty(t *testing.T) {
 	// in it so the list should return empty.
 	k8s.Token = "test"
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
-	configService.kialiCache.SetNamespaces("test", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
+	configService.kialiCache.SetClusterNamespaces("test", "Kubernetes", []models.Namespace{{Cluster: "Kubernetes", Name: "nottest"}})
 
 	criteria := IstioConfigCriteria{
 		IncludeGateways: true,
@@ -752,7 +881,7 @@ func TestGetIstioConfigDetailsTrafficExtension(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
 	k8s.OpenShift = true
 
-	configService := NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{k8s}).Build().IstioConfig
+	configService := NewLayerBuilder(t, conf).WithClient(&fakeAccessReview{UserClientInterface: k8s}).Build().IstioConfig
 
 	details, err := configService.GetIstioConfigDetails(context.TODO(), conf.KubernetesConfig.ClusterName, "test", kubernetes.TrafficExtensions, "my-wasm-filter")
 	assert.Nil(err)
@@ -876,4 +1005,51 @@ func TestUpdateIstioObjectWithoutValidations(t *testing.T) {
 	require.NoError(err)
 	assert.Equal("product-vs", updatedVirtualService.VirtualService.Name)
 	assert.Equal(0, len(configService.kialiCache.Validations().Items()))
+}
+
+// TestGetIstioConfigListNoUserClientReturnsEmpty ensures that a cluster the
+// requesting user has no client for (no session on it, in non-impersonation
+// mode) yields an empty list rather than a "K8s Client not found" error: the
+// cluster-scoped list endpoints must degrade like their siblings
+// (clusters/apps, clusters/workloads), not 500. The SA client still sees the
+// cluster, so the empty result must come from the missing user client and not
+// from missing data.
+func TestGetIstioConfigListNoUserClientReturnsEmpty(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	home := conf.KubernetesConfig.ClusterName
+	remote := "remote-cluster"
+
+	// Both clusters hold the same fixtures: a namespace and two gateways.
+	newClient := func() kubernetes.UserClientInterface {
+		fakeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+		for _, g := range fakeGetGateways() {
+			fakeObjects = append(fakeObjects, g.DeepCopyObject())
+		}
+		k8s := kubetest.NewFakeK8sClient(fakeObjects...)
+		k8s.OpenShift = true
+		return k8s
+	}
+
+	layer := NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{home: newClient(), remote: newClient()}).
+		Build()
+	// Drop the user's remote session: the SA clients still cover both
+	// clusters, the user clients only the home cluster.
+	delete(layer.IstioConfig.userClients, remote)
+
+	criteria := IstioConfigCriteria{IncludeGateways: true}
+
+	// The remote cluster lists nothing for the user: empty result, no error.
+	list, err := layer.IstioConfig.GetIstioConfigList(context.TODO(), remote, criteria)
+	assert.Nil(err)
+	assert.NotNil(list)
+	assert.Equal(0, len(list.Gateways))
+
+	// The home cluster still lists normally.
+	list, err = layer.IstioConfig.GetIstioConfigList(context.TODO(), home, criteria)
+	assert.Nil(err)
+	assert.Equal(2, len(list.Gateways))
 }

@@ -25,6 +25,16 @@ func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) 
 		RespondWithError(w, http.StatusNotFound, errorMsg)
 	} else if errors.IsServiceUnavailable(err) {
 		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
+	} else if errors.IsForbidden(err) {
+		// A Forbidden from the API server means the user's own credentials
+		// were rejected for the resource fetch (e.g. pods/log); surface it as
+		// the authorization failure it is rather than a server error.
+		// Note: k8s Unauthorized deliberately stays 500 — the frontend's
+		// global axios interceptor ends the session on any 401, and k8s
+		// Unauthorized can come from a remote-cluster credential rather
+		// than the user's session. 401 is reserved for Kiali's own
+		// authentication middleware.
+		RespondWithError(w, http.StatusForbidden, errorMsg)
 	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
 		errorMsg = statusError.ErrStatus.Message
 		RespondWithError(w, http.StatusInternalServerError, errorMsg)

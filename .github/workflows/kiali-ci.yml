@@ -1,8 +1,10 @@
 name: Kiali CI
 
+# Label changes do not start or cancel CI. After changing ci-full, use
+# "Re-run all jobs" on the latest PR run to apply the current labels.
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened]
     branches:
     - master
     - v*.*
@@ -13,40 +15,39 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # Non-CI labels (e.g. backport needed) must not cancel an in-progress run.
-  cancel-in-progress: ${{ github.event.action != 'labeled' || github.event.label.name == 'ci-full' }}
+  cancel-in-progress: true
 
 permissions: read-all
 
 jobs:
   initialize:
-    # Only the ci-full label should trigger CI on labeled events; process labels
-    # (e.g. backport needed) are ignored without cancelling an in-progress run.
-    if: github.event.action != 'labeled' || github.event.label.name == 'ci-full'
     permissions:
       contents: read
+      pull-requests: read
     name: Initialize
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      build-branch: ${{ github.sha }}
+      ci-full: ${{ steps.labels.outputs.ci-full }}
       target-branch: ${{ github.base_ref || github.ref_name }}
-      build-branch: ${{ env.branch-master || env.branch-pr }}
     steps:
-    # The initialize job gathers variables for later use in jobs.
-    # We are using this technique rather environment variables because at the moment, they won't work with reusable jobs.
-    # A positive side effect of this is that we can print all variables at start for debugging and troubleshooting.
+    # Read current labels on every attempt, including "Re-run all jobs". The
+    # event payload retains the labels from when the run was first triggered.
+    - env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      id: labels
+      name: Read current PR labels
+      run: |
+        ci_full=$(gh api \
+          "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+          --jq '.labels | any(.name == "ci-full")')
+        echo "ci-full=${ci_full}" >> "$GITHUB_OUTPUT"
+        echo "Full CI requested: ${ci_full}"
+      shell: bash
     - run: echo "target-branch -> ${{ github.base_ref || github.ref_name }}"
-    # For the building branch, if we are running agains a PR, we need to indicate in the branch that is coming from a PR
-    - run: |
-        echo "branch-version=${{ github.ref_name }}" >> $GITHUB_ENV
-        echo "build-branch -> ${{ github.ref_name }}"
-      id: branch-master
-      if: ${{ !github.base_ref }}
-    - run: |
-        echo "branch-pr=refs/pull/${{ github.ref_name }}" >> $GITHUB_ENV
-        echo "build-branch -> ${{ github.base_ref }}"
-      id: branch-pr
-      if: ${{ github.base_ref }}
+    - run: echo "build-branch -> ${{ github.sha }}"
 
   test_backend:
     name: Run backend linters and unit tests
@@ -140,15 +141,16 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Wave 2 gate: Waits for wave 1 to finish, only runs when 'ci-full' label
-  # is present on the PR. When skipped, all wave 2 jobs are skipped too.
+  # was present at initialization. When skipped, all wave 2 jobs skip too.
   # ---------------------------------------------------------------------------
 
   wave2_gate:
     name: Wave 2 gate
-    if: contains(github.event.pull_request.labels.*.name, 'ci-full')
+    if: needs.initialize.outputs.ci-full == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs:
+    - initialize
     - integration_tests_backend
     - integration_tests_backend_mcp
     - integration_tests_frontend_core_1
@@ -262,9 +264,7 @@ jobs:
         retention-days: 1
 
   codecov_upload_pr_base:
-    if: |
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.action != 'labeled' || github.event.label.name == 'ci-full')
+    if: github.event.pull_request.head.repo.full_name == github.repository
     name: Upload PR base coverage to Codecov
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -302,7 +302,7 @@ jobs:
 
   codecov_merge_upload:
     if: |
-      always() &&
+      !cancelled() &&
       needs.integration_tests_backend.result == 'success' &&
       needs.test_backend.result == 'success' &&
       (needs.codecov_upload_pr_base.result == 'success' || needs.codecov_upload_pr_base.result == 'skipped') &&

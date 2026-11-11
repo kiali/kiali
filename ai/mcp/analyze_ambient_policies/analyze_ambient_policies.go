@@ -161,9 +161,10 @@ func getValidatedNamespace(ctx context.Context, businessLayer *business.Layer, n
 	if err != nil {
 		switch {
 		case business.IsAccessibleError(err), k8serrors.IsForbidden(err), k8serrors.IsUnauthorized(err):
+			// Not-in-set covers both "denied" and "does not exist": the uniform
+			// message is deliberate, so the tool is not a namespace-existence
+			// oracle (especially in require_namespace_get mode).
 			return nil, fmt.Sprintf("namespace %q is not accessible in cluster %q", namespace, cluster)
-		case k8serrors.IsNotFound(err):
-			return nil, fmt.Sprintf("namespace %q does not exist in cluster %q", namespace, cluster)
 		default:
 			return nil, fmt.Sprintf("failed to get namespace %q in cluster %q: %v", namespace, cluster, err)
 		}

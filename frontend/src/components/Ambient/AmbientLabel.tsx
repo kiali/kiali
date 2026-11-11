@@ -59,7 +59,7 @@ export const tooltipMsgType = {
   Default: 'Component is labeled as part of the Istio Ambient Mesh'
 };
 
-type tooltipMsg = typeof tooltipMsgType[keyof typeof tooltipMsgType];
+type tooltipMsg = (typeof tooltipMsgType)[keyof typeof tooltipMsgType];
 
 export const AmbientLabel: React.FC<AmbientLabelProps> = (props: AmbientLabelProps) => {
   const msg = props.tooltip

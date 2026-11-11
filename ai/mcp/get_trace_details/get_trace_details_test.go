@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
@@ -92,9 +94,7 @@ func TestBuildHierarchy_SingleSpan(t *testing.T) {
 	if totalMs != 5.0 {
 		t.Errorf("expected totalMs=5.0, got %f", totalMs)
 	}
-	if root == nil {
-		t.Fatal("expected non-nil root")
-	}
+	require.NotNil(t, root, "expected non-nil root")
 	if root.Service != "productpage" || root.Op != "GET /" || root.DurationMs != 5.0 || root.Status != 200 {
 		t.Errorf("unexpected root: service=%s op=%s duration_ms=%f status=%d", root.Service, root.Op, root.DurationMs, root.Status)
 	}
@@ -146,9 +146,7 @@ func TestBuildHierarchy_RootAndChildren(t *testing.T) {
 	if totalMs < 25.0 || totalMs > 26.0 {
 		t.Errorf("expected totalMs ~25.48, got %f", totalMs)
 	}
-	if root == nil {
-		t.Fatal("expected non-nil root")
-	}
+	require.NotNil(t, root, "expected non-nil root")
 	if root.Service != "productpage-v1" || root.Op != "GET /productpage" || root.Status != 200 {
 		t.Errorf("unexpected root: %+v", root)
 	}
@@ -184,9 +182,7 @@ func TestBuildHierarchy_LeafWithTags(t *testing.T) {
 		},
 	}
 	_, root := buildHierarchy(trace)
-	if root == nil {
-		t.Fatal("expected non-nil root")
-	}
+	require.NotNil(t, root, "expected non-nil root")
 	if root.Tags == nil {
 		t.Fatal("leaf with db tags should have Tags set")
 	}
@@ -208,9 +204,7 @@ func TestBuildHierarchy_MultipleRoots_PicksEarliestByStartTime(t *testing.T) {
 		},
 	}
 	_, root := buildHierarchy(trace)
-	if root == nil {
-		t.Fatal("expected non-nil root")
-	}
+	require.NotNil(t, root, "expected non-nil root")
 	if root.Service != "earlier" {
 		t.Errorf("expected root to be earlier (earliest start time), got service=%s", root.Service)
 	}
@@ -270,9 +264,7 @@ func TestBuildHierarchy_DirectionFromSpanKind(t *testing.T) {
 		},
 	}
 	_, root := buildHierarchy(trace)
-	if root == nil {
-		t.Fatal("expected non-nil root")
-	}
+	require.NotNil(t, root, "expected non-nil root")
 	if root.Direction != "inbound" {
 		t.Errorf("root (server) expected direction=inbound, got %q", root.Direction)
 	}
@@ -368,7 +360,7 @@ func TestExecute_BackendError_Returns503(t *testing.T) {
 	fake := &fakeTracingClient{detailErr: errors.New("tempo unavailable")}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusServiceUnavailable {
 		t.Errorf("expected 503, got %d: %v", code, res)
@@ -382,7 +374,7 @@ func TestExecute_TraceNotFound_Returns404(t *testing.T) {
 	fake := &fakeTracingClient{traceDetail: nil, detailErr: nil}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusNotFound {
 		t.Errorf("expected 404, got %d: %v", code, res)
@@ -401,7 +393,7 @@ func TestExecute_EmptySpansWithErrors_Returns404(t *testing.T) {
 	}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusNotFound {
 		t.Errorf("expected 404 for empty spans with errors, got %d: %v", code, res)
@@ -425,7 +417,13 @@ func TestExecute_ValidTrace_Returns200WithHierarchy(t *testing.T) {
 						ProcessID:     "p1",
 						StartTime:     1000,
 						Duration:      5000,
-						Tags:          []jaegerModels.KeyValue{{Key: "http.status_code", Type: "string", Value: "200"}},
+						// The namespace tag is required: traces without
+						// recognizable namespace information are denied
+						// (fail closed) by the access check.
+						Tags: []jaegerModels.KeyValue{
+							{Key: "http.status_code", Type: "string", Value: "200"},
+							{Key: "istio.namespace", Value: "bookinfo"},
+						},
 					},
 				},
 			},
@@ -433,7 +431,7 @@ func TestExecute_ValidTrace_Returns200WithHierarchy(t *testing.T) {
 	}
 	ki := newTestKialiInterface(t, conf, fake)
 
-	args := map[string]interface{}{"traceId": "abcdef1234567890"}
+	args := map[string]any{"traceId": "abcdef1234567890"}
 	res, code := Execute(ki, args)
 	if code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %v", code, res)
@@ -450,5 +448,67 @@ func TestExecute_ValidTrace_Returns200WithHierarchy(t *testing.T) {
 	}
 	if resp.Hierarchy.Service != "productpage" {
 		t.Errorf("expected root service=productpage, got %s", resp.Hierarchy.Service)
+	}
+}
+
+// TestExecute_InaccessibleTrace_Returns403 pins the namespace authorization
+// for the tool: the tracing backend has no RBAC of its own, so a trace whose
+// participating namespaces are all outside the user's accessible set must be
+// denied. A trace with at least one accessible participating namespace is
+// served.
+func TestExecute_InaccessibleTrace_Returns403(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+	config.Set(conf)
+
+	// The fake holds both namespaces, but the user's LIST only includes
+	// bookinfo.
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"), kubetest.FakeNamespace("victim-ns"))
+	restricted := kubetest.NewNamespaceRestrictedClient(k8s, "restricted-user", []string{"bookinfo"}, "victim-ns")
+	layer := business.NewLayerBuilder(t, conf).
+		WithClient(restricted).
+		WithTraceLoader(func() tracing.ClientInterface {
+			return &fakeTracingClient{traceDetail: &tracingModel.TracingSingleTrace{
+				Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+					SpanID: "s1",
+					Tags:   []jaegerModels.KeyValue{{Key: "istio.namespace", Value: "victim-ns"}},
+				}}},
+			}}
+		}).
+		Build()
+	req, _ := http.NewRequest("GET", "/", nil)
+	ki := &mcputil.KialiInterface{Request: req, BusinessLayer: layer, Conf: conf}
+
+	args := map[string]any{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d: %v", code, res)
+	}
+}
+
+func TestExecute_AccessibleTrace_Returns200(t *testing.T) {
+	conf := config.NewConfig()
+	conf.ExternalServices.Tracing.Enabled = true
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	layer := business.NewLayerBuilder(t, conf).
+		WithClient(k8s).
+		WithTraceLoader(func() tracing.ClientInterface {
+			return &fakeTracingClient{traceDetail: &tracingModel.TracingSingleTrace{
+				Data: jaegerModels.Trace{Spans: []jaegerModels.Span{{
+					SpanID: "s1",
+					Tags:   []jaegerModels.KeyValue{{Key: "istio.namespace", Value: "bookinfo"}},
+				}}},
+			}}
+		}).
+		Build()
+	req, _ := http.NewRequest("GET", "/", nil)
+	ki := &mcputil.KialiInterface{Request: req, BusinessLayer: layer, Conf: conf}
+
+	args := map[string]any{"traceId": "abcdef1234567890"}
+	res, code := Execute(ki, args)
+	if code != http.StatusOK {
+		t.Errorf("expected 200, got %d: %v", code, res)
 	}
 }

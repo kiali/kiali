@@ -1,11 +1,12 @@
 import * as React from 'react';
-import { IRow, ISortBy, OnSort, SortByDirection, TableVariant } from '@patternfly/react-table';
-import { ZtunnelWorkload } from '../../types/IstioObjects';
+import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
+import type { ZtunnelWorkload } from '../../types/IstioObjects';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { emtpytStyle } from './ZtunnelServicesTable';
 import { SimpleTable } from '../Table/SimpleTable';
 import { t } from 'utils/I18nUtils';
-import { SortableCompareTh } from './ZtunnelConfig';
+import type { SortableCompareTh } from './ZtunnelConfig';
 import { flexFillStyle } from 'styles/FlexStyles';
 
 type ZtunnelWorkloadsProps = {
@@ -33,7 +34,7 @@ const columns: SortableCompareTh<ZtunnelWorkload>[] = [
     compare: (a, b) => a.node.localeCompare(b.node)
   },
   {
-    title: t('Waypoint'),
+    title: 'Waypoint',
     sortable: false
   },
   {

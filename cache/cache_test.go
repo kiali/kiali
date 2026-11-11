@@ -220,7 +220,7 @@ func TestIsAmbientIsThreadSafe(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSetNamespace(t *testing.T) {
+func TestGetNamespace(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
@@ -230,32 +230,14 @@ func TestSetNamespace(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
-	cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}}})
 
 	ns, found := cache.GetNamespace("east", "token", "test")
 	require.True(found)
 	require.Equal(map[string]string{"app": "test"}, ns.Labels)
-}
 
-func TestSetNamespaceIsThreadSafe(t *testing.T) {
-	conf := config.NewConfig()
-	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
-	conf.KubernetesConfig.ClusterName = "east"
-	kubernetes.SetConfig(t, *conf)
-
-	client := kubetest.NewFakeK8sClient()
-	cache := cache.NewTestingCache(t, client, *conf)
-
-	wg := sync.WaitGroup{}
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			cache.SetNamespace("token", models.Namespace{Name: "test", Cluster: "east", Labels: map[string]string{"app": "test"}})
-		}()
-	}
-	wg.Wait()
+	_, found = cache.GetNamespace("east", "token", "other")
+	require.False(found)
 }
 
 func TestGetNamespaces(t *testing.T) {
@@ -267,7 +249,7 @@ func TestGetNamespaces(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east"}})
 
 	namespaces, found := cache.GetNamespaces("east", "token")
 	require.True(found)
@@ -281,6 +263,46 @@ func TestGetNamespaces(t *testing.T) {
 	require.False(found)
 }
 
+// TestResolveClusterNamespace pins the three-way distinction the indexed
+// lookup depends on: a namespace in a cached set, a namespace absent from a
+// cached set (an access denial), and no cached set at all (the caller must
+// compute it). An empty cached set is still a cached set.
+func TestResolveClusterNamespace(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east"}})
+
+	ns, inSet, setCached := cache.ResolveClusterNamespace("east", "token", "test")
+	require.True(setCached)
+	require.True(inSet)
+	require.Equal("test", ns.Name)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token", "other")
+	require.True(setCached)
+	require.False(inSet)
+
+	// An empty set is cached: presence of the entry is the "set computed"
+	// signal, so this is a denial, not an uncached set.
+	cache.SetClusterNamespaces("token2", "east", nil)
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token2", "test")
+	require.True(setCached)
+	require.False(inSet)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("east", "token3", "test")
+	require.False(setCached)
+	require.False(inSet)
+
+	_, inSet, setCached = cache.ResolveClusterNamespace("west", "token", "test")
+	require.False(setCached)
+	require.False(inSet)
+}
+
 func TestRefreshTokenNamespaces(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
@@ -290,21 +312,68 @@ func TestRefreshTokenNamespaces(t *testing.T) {
 
 	client := kubetest.NewFakeK8sClient()
 	cache := cache.NewTestingCache(t, client, *conf)
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east"}})
 	cache.RefreshTokenNamespaces("east")
 
 	_, found := cache.GetNamespaces("east", "token")
 	require.False(found)
 
 	// Test refresh doesn't affect other clusters.
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "east"}})
-	cache.SetNamespaces("token", []models.Namespace{{Name: "test", Cluster: "west"}})
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "test", Cluster: "east"}})
+	cache.SetClusterNamespaces("token", "west", []models.Namespace{{Name: "test", Cluster: "west"}})
 	cache.RefreshTokenNamespaces("east")
 
 	namespaces, found := cache.GetNamespaces("west", "token")
 	require.True(found)
 	require.Equal(1, len(namespaces))
 	require.Equal("test", namespaces[0].Name)
+}
+
+// TestSetClusterNamespacesRefreshInterplay pins the invalidation contract of
+// the per-cluster writer against RefreshTokenNamespaces: refresh must clear
+// every token's entry for the cluster — including cached empty sets, whose
+// presence is the "set computed" signal — and a re-set must replace the old
+// entry without touching other clusters' entries.
+func TestSetClusterNamespacesRefreshInterplay(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.CacheTokenNamespaceDuration = 10000
+	conf.KubernetesConfig.ClusterName = "east"
+	kubernetes.SetConfig(t, *conf)
+
+	client := kubetest.NewFakeK8sClient()
+	cache := cache.NewTestingCache(t, client, *conf)
+
+	// A cached empty set must be invalidated by refresh like any other
+	// entry: a stale "zero accessible namespaces" answer must not survive
+	// an RBAC change that triggers RefreshTokenNamespaces.
+	cache.SetClusterNamespaces("token", "east", nil)
+	_, _, setCached := cache.ResolveClusterNamespace("east", "token", "test")
+	require.True(setCached)
+	cache.RefreshTokenNamespaces("east")
+	_, _, setCached = cache.ResolveClusterNamespace("east", "token", "test")
+	require.False(setCached)
+
+	// A re-set replaces the old entry: a namespace only in the old set must
+	// resolve as not in-set afterwards.
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "old", Cluster: "east"}})
+	cache.SetClusterNamespaces("token", "east", []models.Namespace{{Name: "new", Cluster: "east"}})
+	_, inSet, setCached := cache.ResolveClusterNamespace("east", "token", "old")
+	require.True(setCached)
+	require.False(inSet)
+	_, inSet, _ = cache.ResolveClusterNamespace("east", "token", "new")
+	require.True(inSet)
+
+	// Refresh is cluster-scoped and clears every token's entry for the
+	// cluster; other clusters keep their entries.
+	cache.SetClusterNamespaces("token2", "east", []models.Namespace{{Name: "other-token", Cluster: "east"}})
+	cache.SetClusterNamespaces("token", "west", []models.Namespace{{Name: "other-cluster", Cluster: "west"}})
+	cache.RefreshTokenNamespaces("east")
+	_, _, setCached = cache.ResolveClusterNamespace("east", "token2", "other-token")
+	require.False(setCached)
+	_, inSet, setCached = cache.ResolveClusterNamespace("west", "token", "other-cluster")
+	require.True(setCached)
+	require.True(inSet)
 }
 
 func TestValidationsSetByConstructor(t *testing.T) {

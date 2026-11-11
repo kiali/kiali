@@ -95,7 +95,10 @@ func TestListOrGetResources_InvalidNamespace(t *testing.T) {
 		"namespaces":   "nonexistent-ns-12345",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	// A namespace outside the accessible set is rejected with a uniform 403,
+	// whether it doesn't exist or simply isn't accessible: the tool is not a
+	// namespace-existence oracle.
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
 func TestListOrGetResources_ResourceNameRequiresNamespace(t *testing.T) {

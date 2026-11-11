@@ -11,6 +11,7 @@ import (
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/tools/clientcmd/api"
@@ -29,6 +30,13 @@ type K8SClientFactoryMock struct {
 	conf    *config.Config
 	lock    sync.RWMutex
 	Clients map[string]kubernetes.UserClientInterface
+	// SAClients optionally holds ServiceAccount clients that are distinct
+	// from the user Clients above. When nil, GetSAClient(s) fall back to the
+	// user Clients (legacy behavior, where SA and user are the same
+	// identity). Set it to model the production threat where the SA can see
+	// namespaces the user cannot: the SA clients should be unfiltered while
+	// the user Clients carry the restricted/list-authorized reactors.
+	SAClients map[string]kubernetes.ClientInterface
 }
 
 // Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
@@ -78,21 +86,53 @@ func (o *K8SClientFactoryMock) GetClients(map[string]*api.AuthInfo) (map[string]
 func (o *K8SClientFactoryMock) GetSAClient(cluster string) kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
+	if o.SAClients != nil {
+		return o.SAClients[cluster]
+	}
 	return o.Clients[cluster]
 }
 
 func (o *K8SClientFactoryMock) GetSAClients() map[string]kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
+	if o.SAClients != nil {
+		return o.SAClients
+	}
 	return kubernetes.ConvertFromUserClients(o.Clients)
 }
 
 func (o *K8SClientFactoryMock) GetSAHomeClusterClient() kubernetes.ClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()
+	if o.SAClients != nil {
+		return o.SAClients[o.conf.KubernetesConfig.ClusterName]
+	}
 	return o.Clients[o.conf.KubernetesConfig.ClusterName]
 }
 
+// WithSAClient sets a distinct, unfiltered SA client for the cluster, built
+// from the given objects (token "sa-token"), so tests can model "the SA
+// sees it, the user does not". Forgetting the distinct token — or the
+// separate SA client altogether — is exactly what makes a restricted-LIST
+// test exercise "absent" instead of "denied" whenever the code under test
+// consults the SA set; this helper makes the right setup the easy one.
+func (o *K8SClientFactoryMock) WithSAClient(cluster string, objects ...runtime.Object) *K8SClientFactoryMock {
+	sa := NewFakeK8sClient(objects...)
+	sa.Token = "sa-token"
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	if o.SAClients == nil {
+		o.SAClients = make(map[string]kubernetes.ClientInterface)
+	}
+	o.SAClients[cluster] = sa
+	return o
+}
+
+// GetSAClientsAsUserClientInterfaces returns all the SA clients as read-write clients (UserClientInterface).
+// Note: this deliberately returns the user Clients, NOT the (test-only) SAClients field —
+// the SAClients field holds plain ClientInterface values that cannot be converted back to
+// UserClientInterface. Callers (e.g. the health cache monitor, which acts as the SA) want a
+// full read-write layer, which the user Clients provide.
 func (o *K8SClientFactoryMock) GetSAClientsAsUserClientInterfaces() map[string]kubernetes.UserClientInterface {
 	o.lock.RLock()
 	defer o.lock.RUnlock()

@@ -1,5 +1,5 @@
-import { SortField } from '../../types/SortFilters';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { SortField } from '../../types/SortFilters';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { t } from 'utils/I18nUtils';
 import { getNamespaceMode } from 'utils/NamespaceUtils';
 
@@ -120,7 +120,7 @@ export const sortFields: SortField<NamespaceInfo>[] = [
   },
   {
     id: 'mtls',
-    title: t('mTLS'),
+    title: 'mTLS',
     isNumeric: false,
     param: 'm',
     compare: (a: NamespaceInfo, b: NamespaceInfo): number => {

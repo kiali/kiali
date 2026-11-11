@@ -1,13 +1,8 @@
 import { t } from 'utils/I18nUtils';
-import {
-  ActiveFiltersInfo,
-  FILTER_ACTION_APPEND,
-  AllFilterTypes,
-  RunnableFilter,
-  FilterValue
-} from '../../types/Filters';
+import type { ActiveFiltersInfo, RunnableFilter, FilterValue } from '../../types/Filters';
+import { FILTER_ACTION_APPEND, AllFilterTypes } from '../../types/Filters';
 import { DEGRADED, FAILURE, HEALTHY, NA, NOT_READY, statusFromString } from '../../types/Health';
-import { NamespaceInfo } from '../../types/NamespaceInfo';
+import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { MTLSStatuses } from '../../types/TLSStatus';
 import { TextInputTypes } from '@patternfly/react-core';
 import { getNamespaceMode, isDataPlaneNamespace } from 'utils/NamespaceUtils';
@@ -47,7 +42,7 @@ const statusMap = new Map<string, string>([
 ]);
 
 export const mtlsFilter: RunnableFilter<NamespaceInfo> = {
-  category: t('mTLS'),
+  category: 'mTLS',
   placeholder: t('Filter by mTLS'),
   filterType: AllFilterTypes.select,
   action: FILTER_ACTION_APPEND,
@@ -183,9 +178,8 @@ export const healthFilter: RunnableFilter<NamespaceInfo> = {
   action: FILTER_ACTION_APPEND,
   filterValues: healthValues,
   run: (ns: NamespaceInfo, filters: ActiveFiltersInfo) => {
-    const { noFilter, showInNotReady, showInError, showInWarning, showInSuccess, showInNA } = summarizeHealthFilters(
-      filters
-    );
+    const { noFilter, showInNotReady, showInError, showInWarning, showInSuccess, showInNA } =
+      summarizeHealthFilters(filters);
 
     if (noFilter) {
       return true;
@@ -228,8 +222,8 @@ export const categoryFilter: RunnableFilter<NamespaceInfo> = {
 };
 
 const modeValues: FilterValue[] = [
-  { id: 'ambient', title: t('Ambient') },
-  { id: 'sidecar', title: t('Sidecar') },
+  { id: 'ambient', title: 'Ambient' },
+  { id: 'sidecar', title: 'Sidecar' },
   { id: 'notApplicable', title: t('Not applicable') }
 ];
 
@@ -246,7 +240,7 @@ export const modeFilter: RunnableFilter<NamespaceInfo> = {
 
     const mode = getNamespaceMode(ns);
     const modeId = mode === 'ambient' ? 'ambient' : mode === 'sidecar' ? 'sidecar' : 'notApplicable';
-    const modeTitle = mode === 'ambient' ? t('Ambient') : mode === 'sidecar' ? t('Sidecar') : t('Not applicable');
+    const modeTitle = mode === 'ambient' ? 'Ambient' : mode === 'sidecar' ? 'Sidecar' : t('Not applicable');
 
     // Filters in URL usually use titles; accept both id/title for stability.
     return filters.filters.some(f => f.value === modeId || f.value === modeTitle);

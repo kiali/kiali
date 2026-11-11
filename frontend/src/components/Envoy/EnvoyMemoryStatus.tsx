@@ -72,7 +72,7 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
     );
   }
 
-  const status = envoyMemoryCauseStatus(summary.cause);
+  const status = envoyMemoryCauseStatus(summary.cause, summary.memoryMaxBytes);
   const memoryLimitBytes = summary.memoryLimitBytes;
   const percentOfLimit =
     memoryLimitBytes > 0
@@ -83,7 +83,7 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
   const tooltipContent = (
     <div style={{ textAlign: 'left' }}>
       <div>
-        <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause)}
+        <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
       </div>
       <div>
         <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}

@@ -110,7 +110,7 @@ const mutIcons = {
       className: 'fa fa-clock',
       icon: ClockIcon,
       name: 'clock',
-      text: 'request Timeout',
+      text: 'Request Timeout',
       type: 'fa'
     },
     root: {

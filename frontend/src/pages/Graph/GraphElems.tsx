@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { List, ListItem } from '@patternfly/react-core';
 import {
   BadgeLocation,
   EdgeModel,
@@ -12,7 +13,7 @@ import {
   TopologyQuadrant
 } from '@patternfly/react-topology';
 import { PFBadges, PFBadgeType } from 'components/Pf/PfBadges';
-import { homeCluster as kialiHomeCluster, icons } from 'config';
+import { homeCluster as kialiHomeCluster, icons, serverConfig } from 'config';
 import {
   BoxByType,
   CLUSTER_DEFAULT,
@@ -34,9 +35,11 @@ import { keys } from 'lodash-es';
 import { PFColors } from 'components/Pf/PfColors';
 import { Span } from 'types/TracingInfo';
 import { IconType } from 'config/Icons';
-import { NodeDecorator } from './NodeDecorator';
+import { NodeDecorator, NodeDecoratorTooltip } from './NodeDecorator';
 import { supportsGroups } from 'utils/GraphUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFSpacer } from 'styles/PfSpacer';
+import { t } from 'utils/I18nUtils';
 import { TrafficPointGenerator } from '../Graph/TrafficAnimation/TrafficRenderer';
 
 // Utilities for working with PF Topology
@@ -154,7 +157,17 @@ export const getNodeShape = (data: NodeData): NodeShape => {
   }
 };
 
-const getDecorator = (element: Node, quadrant: TopologyQuadrant, icon: IconType, tooltip?: string): React.ReactNode => {
+const vsTooltipFeaturesStyle = kialiStyle({
+  marginBlockStart: PFSpacer.sm,
+  marginInlineStart: PFSpacer.md
+});
+
+const getDecorator = (
+  element: Node,
+  quadrant: TopologyQuadrant,
+  icon: IconType,
+  tooltip?: React.ReactNode
+): React.ReactNode => {
   return <NodeDecorator element={element} quadrant={quadrant} icon={icon} tooltip={tooltip} />;
 };
 
@@ -165,7 +178,11 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
   const attachments = [] as React.ReactNode[];
 
   if (settings.showOutOfMesh && data.isOutOfMesh) {
-    attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, badgeMap.get('MS')!));
+    const icon = badgeMap.get('MS')!;
+    const tooltip = serverConfig.ambientEnabled ? (
+      <NodeDecoratorTooltip icon={icon} title={t('Out of Mesh')} />
+    ) : undefined;
+    attachments.push(getDecorator(node, TopologyQuadrant.lowerRight, icon, tooltip));
   }
   // It is OK to use the same location for mutually exclusive options.
   if (data.hasWorkloadEntry) {
@@ -178,28 +195,49 @@ export const setNodeAttachments = (node: Node<NodeModel>, settings: GraphSetting
     if (data.hasCB) {
       attachments.push(getDecorator(node, TopologyQuadrant.upperLeft, badgeMap.get('CB')!));
     }
-    // Because we have limited attachments, just show a single VS attachement and let the
-    // Tooltip list the active VS features
+    // Use the feature icon for a single VS feature and the VS icon for a group.
     if (data.hasVS) {
-      const vsFeatures: string[] = [];
+      const vsFeatures: IconType[] = [];
       if (data.hasFaultInjection) {
-        vsFeatures.push(badgeMap.get('FI')!.text);
+        vsFeatures.push(badgeMap.get('FI')!);
       }
       if (data.hasMirroring) {
-        vsFeatures.push(badgeMap.get('MI')!.text);
-      }
-      if (data.hasRequestRouting) {
-        vsFeatures.push(badgeMap.get('RR')!.text);
+        vsFeatures.push(badgeMap.get('MI')!);
       }
       if (data.hasRequestTimeout) {
-        vsFeatures.push(badgeMap.get('RT')!.text);
+        vsFeatures.push(badgeMap.get('RT')!);
       }
       if (data.hasTrafficShifting || data.hasTCPTrafficShifting) {
-        vsFeatures.push(badgeMap.get('TS')!.text);
+        vsFeatures.push(badgeMap.get('TS')!);
       }
-      const tooltip = vsFeatures.length === 0 ? undefined : `${badgeMap.get('VS')!.text}:\n ${vsFeatures.join(' ,')}`;
+      // Request Routing stays visible in the tooltip without displacing a
+      // single more specific feature as the primary icon.
+      const primaryIcon =
+        vsFeatures.length > 1
+          ? badgeMap.get('VS')!
+          : (vsFeatures[0] ?? (data.hasRequestRouting ? badgeMap.get('RR')! : undefined));
+      if (data.hasRequestRouting) {
+        vsFeatures.push(badgeMap.get('RR')!);
+      }
 
-      attachments.push(getDecorator(node, TopologyQuadrant.lowerLeft, badgeMap.get('VS')!, tooltip));
+      if (primaryIcon) {
+        const tooltipFeatures = vsFeatures.filter(feature => feature !== primaryIcon);
+        const tooltip = (
+          <NodeDecoratorTooltip icon={primaryIcon}>
+            {tooltipFeatures.length > 0 && (
+              <List className={vsTooltipFeaturesStyle} isPlain>
+                {tooltipFeatures.map(feature => (
+                  <ListItem key={feature.name} icon={React.createElement(feature.icon, { 'aria-hidden': true })}>
+                    {t(feature.text)}
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </NodeDecoratorTooltip>
+        );
+
+        attachments.push(getDecorator(node, TopologyQuadrant.lowerLeft, primaryIcon, tooltip));
+      }
     }
   }
 

@@ -24,7 +24,8 @@ import { KialiIcon } from 'config/KialiIcon';
 import { helpIconStyle } from 'styles/IconStyle';
 import { PFSpacer } from 'styles/PfSpacer';
 import { kialiStyle } from 'styles/StyleUtils';
-import { AITimeSeriesEntry, ChatSessionUsageBudget, formatCost, formatTokensInMillions } from 'types/Chatbot';
+import type { AITimeSeriesEntry, ChatSessionUsageBudget} from 'types/Chatbot';
+import { formatCost, formatTokensInMillions } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { TOKEN_METRIC_COLORS } from './AIStats/colorPalette';
 

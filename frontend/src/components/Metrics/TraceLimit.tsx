@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Slider, SliderOnChangeEvent, Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Tooltip, TooltipPosition } from '@patternfly/react-core';
+import { Slider } from 'components/Slider';
 import { KialiIcon } from 'config/KialiIcon';
 import { ToolbarDropdown } from 'components/Dropdown/ToolbarDropdown';
 import { infoStyle } from 'styles/IconStyle';
@@ -52,10 +53,10 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
     1000: '1000 traces'
   };
 
-  const handleRelease = (): void => {
-    if (value !== limit) {
-      props.onLimitChange(value);
-      setLimit(value);
+  const handleValueCommit = (committed: number): void => {
+    if (committed !== limit) {
+      props.onLimitChange(committed);
+      setLimit(committed);
     }
   };
 
@@ -67,12 +68,12 @@ export const TraceLimit: React.FC<TraceLimitProps> = (props: TraceLimitProps) =>
         </span>
         {tooltip}
       </div>
-      <div id="trace-limit" onMouseUp={handleRelease} style={{ padding: '0 10px' }}>
+      <div id="trace-limit" style={{ padding: '0 10px' }}>
         <Slider
+          id="trace-limit-slider"
           value={value}
-          onChange={(_event: SliderOnChangeEvent, value: number) => {
-            setValue(value);
-          }}
+          onChange={(_event, newValue) => setValue(newValue)}
+          onValueCommit={handleValueCommit}
           min={10}
           max={1000}
           step={10}

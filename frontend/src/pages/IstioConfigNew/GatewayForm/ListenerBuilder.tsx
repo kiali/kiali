@@ -1,21 +1,23 @@
 import * as React from 'react';
 import { isK8sGatewayHostValid } from '../../../utils/IstioConfigUtils';
+import type {
+  MenuToggleElement} from '@patternfly/react-core';
 import {
   Button,
   ButtonVariant,
   FormGroup,
   MenuToggle,
-  MenuToggleElement,
   Select,
   SelectList,
   SelectOption,
   TextInput
 } from '@patternfly/react-core';
 import { isValid } from '../../../utils/Common';
-import { ListenerForm } from '../K8sGatewayForm';
+import type { ListenerForm } from '../K8sGatewayForm';
 import { Td, Tr } from '@patternfly/react-table';
 import { addSelectorLabels } from './ListenerList';
-import { K8sGatewayTLS, MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
+import type { K8sGatewayTLS} from '../../../types/IstioObjects';
+import { MAX_PORT, MIN_PORT } from '../../../types/IstioObjects';
 import { KialiIcon } from 'config/KialiIcon';
 import { useKialiTranslation } from 'utils/I18nUtils';
 

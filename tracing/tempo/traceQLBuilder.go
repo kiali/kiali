@@ -16,6 +16,44 @@ const (
 	REGEX    operandType = "=~"
 )
 
+// traceSelects is the select(...) list shared by the HTTP and gRPC TraceQL
+// builders so the two cannot drift. Beyond the attributes the UI renders, it
+// must keep selecting the attributes the per-trace list authorization reads
+// (business.traceInNamespace, through model.NamespaceTagKeys and
+// model.ClusterTagKeys): the namespace- and cluster-bearing span attributes
+// (istio.namespace, istio.cluster_id) and the OTel resource attributes
+// (k8s.namespace.name, k8s.cluster.name). Tempo reports them unqualified in
+// search responses (a resource.k8s.namespace.name select comes back as the
+// k8s.namespace.name attribute), matching the tag keys the extraction
+// recognizes. Without these selects, a trace whose namespace exists only as
+// a resource attribute would be dropped from every list view (fail closed)
+// while remaining accessible through the trace details, which fetch the full
+// trace.
+var traceSelects = []string{
+	"status",
+	".service_name",
+	".node_id",
+	".component",
+	".upstream_cluster",
+	".http.method",
+	".response_flags",
+	".istio.destination_workload",
+	".istio.destination_namespace",
+	".istio.destination_instance_name",
+	".istio.destination_canonical_service",
+	".istio.source_workload",
+	".istio.source_namespace",
+	".istio.source_instance_name",
+	".istio.source_canonical_service",
+	"resource.hostname",
+	// Authorization attributes; see the comment above.
+	".istio.namespace",
+	".istio.cluster_id",
+	"resource.k8s.namespace.name",
+	"resource.k8s.cluster.name",
+	"name",
+}
+
 type TraceQL struct {
 	operator1 interface{}
 	operand   operandType
