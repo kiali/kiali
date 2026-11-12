@@ -45,11 +45,22 @@ function getVisibleTabKeys(aiConfig: KialiAppState['ai']): string[] {
   if (sessionUsageTabVisible(aiConfig)) {
     keys.push(TAB_SESSION_USAGE);
   }
-  // Only selectable when enabled and allowed; disabled tabs stay out of deep-link targets.
-  if (consumptionTabEnabled(aiConfig) && consumptionTabAllowed(aiConfig)) {
+  // Keep the tab visible when the feature is on even if the user is not allowed
+  // (aria-disabled + tooltip). Excluding it here would empty the page and redirect.
+  if (consumptionTabEnabled(aiConfig)) {
     keys.push(TAB_CONSUMPTION);
   }
   return keys;
+}
+
+/** Tabs that may be selected / deep-linked (excludes allow-list denials). */
+function getSelectableTabKeys(aiConfig: KialiAppState['ai']): string[] {
+  return getVisibleTabKeys(aiConfig).filter(key => {
+    if (key === TAB_CONSUMPTION) {
+      return consumptionTabAllowed(aiConfig);
+    }
+    return true;
+  });
 }
 
 const tabFromLocation = (keys: string[]): string => {
@@ -63,7 +74,11 @@ const tabFromLocation = (keys: string[]): string => {
 export const AIDashboardPage: React.FC = () => {
   const aiConfig = useKialiSelector(state => state.ai);
   const visibleTabKeys = React.useMemo(() => getVisibleTabKeys(aiConfig), [aiConfig]);
-  const [selectedTabKey, setSelectedTabKey] = React.useState<string | number>(() => tabFromLocation(visibleTabKeys));
+  const selectableTabKeys = React.useMemo(() => getSelectableTabKeys(aiConfig), [aiConfig]);
+  // Prefer an allowed tab for deep links; fall back to the first visible tab (may be aria-disabled).
+  const [selectedTabKey, setSelectedTabKey] = React.useState<string | number>(() =>
+    tabFromLocation(selectableTabKeys.length > 0 ? selectableTabKeys : visibleTabKeys)
+  );
   const activeTabKey = visibleTabKeys.includes(String(selectedTabKey))
     ? selectedTabKey
     : (visibleTabKeys[0] ?? TAB_SESSION_USAGE);
