@@ -1,5 +1,3 @@
-//go:build !exclude_frontend
-
 package cmd
 
 import (

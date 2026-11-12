@@ -9,10 +9,13 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
@@ -358,6 +361,45 @@ func TestSkipsClustersWithoutUserClient(t *testing.T) {
 	// The accessible cluster's fetches ran; the inaccessible cluster contributed nothing.
 	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
 	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster")
+}
+
+// The idle-node appender passes a nil traffic map to the workload/service list fetches,
+// which makes getTrafficClusters return every accessible cluster for the namespace and
+// bypass the traffic-map reduction that protects the other appenders. A cluster whose
+// cache cannot serve reads must be filtered out there, or the idle-node graph option
+// fails the whole graph.
+func TestGetTrafficClustersSkipsUnavailableCache(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
+		return false, nil
+	})
+	assert.True(access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
+	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}
+	readers := map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remote}
+	clusterCache, err := cache.NewKialiCache(context.Background(), clients, readers, *conf, cache.WithClusterAccess(access))
+	assert.NoError(err)
+	businessLayer := business.NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}).
+		WithCache(clusterCache).
+		Build()
+
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
+
+	// The nil traffic map is the idle-node appender's call shape.
+	assert.NotPanics(func() {
+		workloadLists := getWorkloadLists(nil, "testNamespace", globalInfo)
+		assert.Contains(workloadLists, config.DefaultClusterID)
+		assert.NotContains(workloadLists, "remote-cluster", "the degraded remote cluster is filtered out")
+	})
 }
 
 // A cluster whose service-account cache cannot serve reads - access revoked and torn

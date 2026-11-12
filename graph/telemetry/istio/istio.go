@@ -648,6 +648,10 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 
 	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.Namespace, n, o, globalInfo)
 
+	// Same treatment as the namespace graph: drop the nodes of clusters whose cache
+	// cannot serve reads before the appenders fetch through it.
+	dropUnavailableClusterNodes(ctx, trafficMap, globalInfo)
+
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 
 	for _, a := range appenders {
@@ -1083,6 +1087,10 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 	}
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildAggregateNodeTrafficMap(ctx, o.Namespace.Name, n, o, globalInfo)
+
+	// Same treatment as the namespace graph: drop the nodes of clusters whose cache
+	// cannot serve reads before the appenders fetch through it.
+	dropUnavailableClusterNodes(ctx, trafficMap, globalInfo)
 
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 

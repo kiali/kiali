@@ -492,6 +492,15 @@ func getTrafficClusters(trafficMap graph.TrafficMap, namespace string, gi *Globa
 		return ns.Cluster
 	})
 
+	// A cluster whose service-account cache cannot serve reads has no workloads or
+	// services to list: skip it like the traffic-map drop does. This matters most for
+	// callers that pass a nil traffic map (e.g. the idle-node appender) and therefore
+	// see every accessible cluster, bypassing the drop's reduction.
+
+	clusterNames = sliceutil.Filter(clusterNames, func(clusterName string) bool {
+		return gi.Business.CheckClusterCacheAvailable(clusterName) == nil
+	})
+
 	if trafficMap == nil {
 		return clusterNames
 	}
