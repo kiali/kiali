@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -13,6 +14,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
 	"github.com/kiali/kiali/models"
 )
@@ -152,6 +154,53 @@ func TestListWaypointCapturedServicesEffectiveSplit(t *testing.T) {
 	}
 }
 
+func TestListWaypointWorkloadsWorkloadNamespacePrimaryEnrollment(t *testing.T) {
+	for name, gatewayNamespace := range map[string]string{
+		"same namespace":  "bookinfo",
+		"cross namespace": "infra",
+	} {
+		t.Run(name, func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "cluster-default"
+			conf.ExternalServices.Istio.IstioAPIEnabled = false
+			config.Set(conf)
+
+			ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					config.WaypointUseLabel:           "bwaypoint",
+				},
+				Name: "bookinfo",
+			}}
+			if gatewayNamespace != ns.Name {
+				ns.Labels[config.WaypointUseNamespaceLabel] = gatewayNamespace
+			}
+			deployment := FakeDeploymentWithPort("ratings", 9080)
+			layer := NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(ns, deployment)).Build()
+			waypoints := models.Workloads{&models.Workload{
+				WorkloadListItem: models.WorkloadListItem{
+					Cluster: conf.KubernetesConfig.ClusterName,
+					Labels: map[string]string{
+						config.WaypointFor:   config.WaypointForWorkload,
+						config.WaypointLabel: config.WaypointLabelValue,
+					},
+					Name:      "bwaypoint",
+					Namespace: gatewayNamespace,
+				},
+			}}
+
+			workloads, services := layer.Workload.listWaypointWorkloads(context.Background(), conf.KubernetesConfig.ClusterName, gatewayNamespace, "bwaypoint", config.WaypointForWorkload, waypoints)
+			require.Len(t, workloads, 1)
+			assert.Equal(t, deployment.Name, workloads[0].Name)
+			assert.Equal(t, ns.Name, workloads[0].Namespace)
+			assert.Equal(t, "namespace", workloads[0].LabelType)
+			assert.Equal(t, models.WaypointRolePrimary, workloads[0].WaypointRole)
+			assert.Nil(t, workloads[0].RoleWeight)
+			assert.Empty(t, services)
+		})
+	}
+}
+
 func TestListWaypointWorkloadsWorkloadSkipsNamespaceCanaryEnrollment(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "cluster-default"
@@ -203,7 +252,7 @@ func TestListWaypointWorkloadsWorkloadSkipsNamespaceCanaryEnrollment(t *testing.
 		},
 	}
 	ctx := context.Background()
-	canaryWaypointWorkloads, _ := layer.Workload.listWaypointWorkloads(ctx, conf.KubernetesConfig.ClusterName, gwNamespace, "bwaypoint-canary", false, waypoints)
+	canaryWaypointWorkloads, _ := layer.Workload.listWaypointWorkloads(ctx, conf.KubernetesConfig.ClusterName, gwNamespace, "bwaypoint-canary", config.WaypointForWorkload, waypoints)
 	assert.Empty(t, canaryWaypointWorkloads)
 }
 
@@ -245,7 +294,7 @@ func TestWaypointServicesRespectNamespaceOverrides(t *testing.T) {
 			}
 			layer := NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(ns, service, FakeDeploymentWithPort("ratings", 9080))).Build()
 			for _, gateway := range []string{"primary", "canary"} {
-				_, refs := layer.Workload.listWaypointWorkloads(context.Background(), conf.KubernetesConfig.ClusterName, "bookinfo", gateway, true, nil)
+				_, refs := layer.Workload.listWaypointWorkloads(context.Background(), conf.KubernetesConfig.ClusterName, "bookinfo", gateway, config.WaypointForService, nil)
 				if !tc.inherited {
 					assert.Empty(t, refs, gateway)
 					continue
@@ -260,6 +309,249 @@ func TestWaypointServicesRespectNamespaceOverrides(t *testing.T) {
 				require.NotNil(t, refs[0].RoleWeight)
 				assert.Equal(t, weight, *refs[0].RoleWeight)
 			}
+		})
+	}
+}
+
+func TestWaypointEnrollmentSetsAreIndependent(t *testing.T) {
+	for name, tc := range map[string]struct {
+		podPrimary          string
+		serviceCanary       string
+		servicePrimary      string
+		serviceWeight       string
+		wantServices        map[string]*int
+		wantWorkloadGateway string
+		waypointFor         string
+		withoutBackend      bool
+	}{
+		"service-only gateway": {
+			wantServices: map[string]*int{"primary": ptr.To(75), "canary": ptr.To(25)},
+			waypointFor:  config.WaypointForService,
+		},
+		"workload-only gateway": {
+			wantWorkloadGateway: "primary",
+			waypointFor:         config.WaypointForWorkload,
+		},
+		"disabled gateway": {
+			waypointFor: config.WaypointForNone,
+		},
+		"namespace inheritance": {
+			wantServices:        map[string]*int{"primary": ptr.To(75), "canary": ptr.To(25)},
+			wantWorkloadGateway: "primary",
+		},
+		"service override preserves direct namespace primary": {
+			servicePrimary:      "own-waypoint",
+			wantServices:        map[string]*int{"own-waypoint": nil},
+			wantWorkloadGateway: "primary",
+		},
+		"service opt out preserves direct namespace primary": {
+			servicePrimary:      config.WaypointNone,
+			wantWorkloadGateway: "primary",
+		},
+		"pod override does not move the service": {
+			podPrimary:          "own-waypoint",
+			wantServices:        map[string]*int{"primary": ptr.To(75), "canary": ptr.To(25)},
+			wantWorkloadGateway: "own-waypoint",
+		},
+		"pod opt out does not remove the service": {
+			podPrimary:   config.WaypointNone,
+			wantServices: map[string]*int{"primary": ptr.To(75), "canary": ptr.To(25)},
+		},
+		"service enrollment does not require a backend": {
+			wantServices:   map[string]*int{"primary": ptr.To(75), "canary": ptr.To(25)},
+			withoutBackend: true,
+		},
+		"service weights do not become workload weights": {
+			serviceCanary:       "canary",
+			servicePrimary:      "primary",
+			serviceWeight:       "10",
+			wantServices:        map[string]*int{"primary": ptr.To(90), "canary": ptr.To(10)},
+			wantWorkloadGateway: "primary",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.KubernetesConfig.ClusterName = "cluster-default"
+			conf.ExternalServices.Istio.IstioAPIEnabled = false
+			config.Set(conf)
+			ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "25"},
+				Labels: map[string]string{
+					config.IstioAmbientNamespaceLabel: config.IstioAmbientNamespaceLabelValue,
+					config.WaypointCanaryUseLabel:     "canary",
+					config.WaypointUseLabel:           "primary",
+				},
+				Name: "bookinfo",
+			}}
+			service := &core_v1.Service{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: tc.serviceWeight},
+					Labels:      map[string]string{},
+					Name:        "ratings",
+					Namespace:   ns.Name,
+				},
+				Spec: core_v1.ServiceSpec{
+					Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080}},
+					Selector: map[string]string{"app": "ratings"},
+				},
+			}
+			if tc.servicePrimary != "" {
+				service.Labels[config.WaypointUseLabel] = tc.servicePrimary
+			}
+			if tc.serviceCanary != "" {
+				service.Labels[config.WaypointCanaryUseLabel] = tc.serviceCanary
+			}
+			client := kubetest.NewFakeK8sClient(ns, service)
+			deployment := FakeDeploymentWithPort("ratings", 9080)
+			if tc.podPrimary != "" {
+				deployment.Spec.Template.Labels[config.WaypointUseLabel] = tc.podPrimary
+			}
+			if !tc.withoutBackend {
+				client = kubetest.NewFakeK8sClient(ns, service, deployment)
+			}
+			layer := NewLayerBuilder(t, conf).WithClient(client).Build()
+			waypointFor := tc.waypointFor
+			if waypointFor == "" {
+				waypointFor = config.WaypointForAll
+			}
+			waypoints := models.Workloads{}
+			for _, gateway := range []string{"primary", "canary", "own-waypoint"} {
+				waypoints = append(waypoints, &models.Workload{WorkloadListItem: models.WorkloadListItem{
+					Cluster: conf.KubernetesConfig.ClusterName,
+					Labels: map[string]string{
+						config.WaypointFor:   waypointFor,
+						config.WaypointLabel: config.WaypointLabelValue,
+					},
+					Name:      gateway,
+					Namespace: ns.Name,
+				}})
+			}
+			for _, gateway := range waypoints {
+				workloads, services := layer.Workload.listWaypointWorkloads(context.Background(), gateway.Cluster, gateway.Namespace, gateway.Name, gateway.WaypointFor(), waypoints)
+				if gateway.Name == tc.wantWorkloadGateway {
+					require.Len(t, workloads, 1, gateway.Name)
+					assert.Equal(t, deployment.Name, workloads[0].Name)
+					assert.Equal(t, ns.Name, workloads[0].Namespace)
+					assert.Equal(t, models.WaypointRolePrimary, workloads[0].WaypointRole)
+					assert.Nil(t, workloads[0].RoleWeight)
+				} else {
+					assert.Empty(t, workloads, gateway.Name)
+				}
+				weight, enrolled := tc.wantServices[gateway.Name]
+				if !enrolled {
+					assert.Empty(t, services, gateway.Name)
+					continue
+				}
+				require.Len(t, services, 1, gateway.Name)
+				assert.Equal(t, service.Name, services[0].Name)
+				assert.Equal(t, ns.Name, services[0].Namespace)
+				assert.Equal(t, weight, services[0].RoleWeight)
+				role := models.WaypointRolePrimary
+				if gateway.Name == "canary" {
+					role = models.WaypointRoleCanary
+				}
+				assert.Equal(t, role, services[0].WaypointRole)
+			}
+		})
+	}
+}
+
+func TestWaypointServiceEnrollmentRespectsGatewayNamespace(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "cluster-default"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+	ns := &core_v1.Namespace{ObjectMeta: metav1.ObjectMeta{
+		Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "30"},
+		Labels: map[string]string{
+			config.WaypointCanaryNamespaceLabel: "infra",
+			config.WaypointCanaryUseLabel:       "waypoint-v2",
+			config.WaypointUseLabel:             "waypoint",
+			config.WaypointUseNamespaceLabel:    "infra",
+		},
+		Name: "bookinfo",
+	}}
+	inherited := &core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "inherited", Namespace: ns.Name}}
+	local := &core_v1.Service{ObjectMeta: metav1.ObjectMeta{
+		Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "10"},
+		Labels: map[string]string{
+			config.WaypointCanaryUseLabel: "waypoint-v2",
+			config.WaypointUseLabel:       "waypoint",
+		},
+		Name:      "local",
+		Namespace: ns.Name,
+	}}
+	layer := NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(ns, inherited, local)).Build()
+	for namespace, want := range map[string]struct {
+		name   string
+		weight int
+	}{
+		"infra":    {name: "inherited", weight: 30},
+		"bookinfo": {name: "local", weight: 10},
+	} {
+		for gateway, canary := range map[string]bool{"waypoint": false, "waypoint-v2": true} {
+			refs := layer.Svc.ListWaypointCapturedServices(context.Background(), gateway, namespace, conf.KubernetesConfig.ClusterName)
+			require.Len(t, refs, 1, "%s/%s", namespace, gateway)
+			assert.Equal(t, want.name, refs[0].Name)
+			weight := want.weight
+			if !canary {
+				weight = 100 - weight
+			}
+			require.NotNil(t, refs[0].RoleWeight)
+			assert.Equal(t, weight, *refs[0].RoleWeight)
+		}
+	}
+}
+
+func TestWaypointWorkloadEnrollmentUsesActualPodBindings(t *testing.T) {
+	ns := &models.Namespace{
+		Labels: map[string]string{config.WaypointUseLabel: "primary"},
+		Name:   "bookinfo",
+	}
+	for name, tc := range map[string]struct {
+		pods          models.Pods
+		wantLabelType string
+	}{
+		"running pod inherits namespace despite template override": {
+			pods:          models.Pods{{Labels: map[string]string{}}},
+			wantLabelType: "namespace",
+		},
+		"running pod opts out": {
+			pods: models.Pods{{Labels: map[string]string{config.WaypointUseLabel: config.WaypointNone}}},
+		},
+		"running pod overrides namespace": {
+			pods: models.Pods{{Labels: map[string]string{config.WaypointUseLabel: "other"}}},
+		},
+		"running pod binds same gateway name in another namespace": {
+			pods: models.Pods{{Labels: map[string]string{config.WaypointUseLabel: "primary", config.WaypointUseNamespaceLabel: "infra"}}},
+		},
+		"one enrolled pod keeps the workload enrolled": {
+			pods: models.Pods{
+				{Labels: map[string]string{config.WaypointUseLabel: config.WaypointNone}},
+				{Labels: map[string]string{config.WaypointUseLabel: "primary"}},
+			},
+			wantLabelType: "workload",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			workload := &models.Workload{
+				Pods: tc.pods,
+				WorkloadListItem: models.WorkloadListItem{
+					Name:           "ratings",
+					Namespace:      ns.Name,
+					TemplateLabels: map[string]string{config.WaypointUseLabel: "template-only"},
+					WorkloadGVK:    kubernetes.Deployments,
+				},
+			}
+			ref := waypointEnrolledWorkloadRef(workload, ns, "primary", ns.Name)
+			if tc.wantLabelType == "" {
+				assert.Nil(t, ref)
+				return
+			}
+			require.NotNil(t, ref)
+			assert.Equal(t, tc.wantLabelType, ref.LabelType)
+			assert.Equal(t, models.WaypointRolePrimary, ref.WaypointRole)
+			assert.Nil(t, ref.RoleWeight)
 		})
 	}
 }

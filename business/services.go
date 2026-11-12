@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -790,50 +791,58 @@ func (in *SvcService) ListWaypointCapturedServices(ctx context.Context, name, na
 	return mergeWaypointServiceRefs(primary, canary)
 }
 
-// ListWaypointServices returns services explicitly enrolled with the gateway in the requested role.
+// ListWaypointServices resolves Service enrollment independently of its backing workloads.
 func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster, role string) []models.ServiceReferenceInfo {
+	refs := []models.ServiceReferenceInfo{}
 	useLabel := config.WaypointUseLabel
+	useNamespaceLabel := config.WaypointUseNamespaceLabel
 	if role == models.WaypointRoleCanary {
 		useLabel = config.WaypointCanaryUseLabel
+		useNamespaceLabel = config.WaypointCanaryNamespaceLabel
 	}
-	var serviceInfoList []models.ServiceReferenceInfo
-	// This is to verify there is no duplicated services
-	servicesMap := make(map[string]bool)
-
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
-		return serviceInfoList
+		log.Infof("ListWaypointServices: error getting kube cache: %s", err)
+		return refs
 	}
-	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-	if err == nil {
-		for _, ns := range namespaces {
-			svcList := &core_v1.ServiceList{}
-			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{useLabel: name})); err != nil {
-				log.Infof("Error getting services %s", err.Error())
-			} else {
-				for _, service := range svcList.Items {
-					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
-					if servicesMap[key] {
-						continue
-					}
-					ref := waypointEnrolledServiceRef(&models.Service{
-						Annotations: service.Annotations,
-						Cluster:     cluster,
-						Labels:      service.Labels,
-						Name:        service.Name,
-						Namespace:   service.Namespace,
-					}, &ns, name, namespace, role)
-					if ref != nil {
-						serviceInfoList = append(serviceInfoList, *ref)
-						servicesMap[key] = true
-					}
-				}
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		log.Infof("ListWaypointServices: error getting namespaces: %s", err)
+		return refs
+	}
+
+	for _, ns := range namespaces {
+		options := []client.ListOption{client.InNamespace(ns.Name)}
+		bindingNamespace := ns.Labels[useNamespaceLabel]
+		if bindingNamespace == "" {
+			bindingNamespace = ns.Name
+		}
+		// Only inheritance from this exact gateway makes every Service a candidate.
+		if ns.Labels[useLabel] != name || bindingNamespace != namespace {
+			options = append(options, client.MatchingLabels{useLabel: name})
+		}
+		services := &core_v1.ServiceList{}
+		if err := kubeCache.List(ctx, services, options...); err != nil {
+			log.Infof("ListWaypointServices: error listing services: %s", err)
+			continue
+		}
+		for _, service := range services.Items {
+			if config.IsWaypoint(service.Labels) {
+				continue
+			}
+			ref := waypointEnrolledServiceRef(&models.Service{
+				Annotations: service.Annotations,
+				Cluster:     cluster,
+				Labels:      service.Labels,
+				Name:        service.Name,
+				Namespace:   service.Namespace,
+			}, &ns, name, namespace, role)
+			if ref != nil {
+				refs = append(refs, *ref)
 			}
 		}
 	}
-
-	return serviceInfoList
+	return refs
 }
 
 // GatewayTrafficSplitConfigsFromEnrolledServices lists service-level splits that reference the gateway.

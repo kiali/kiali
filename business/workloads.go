@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -2514,7 +2515,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 					includeServices = true
 				}
 				// Get waypoint workloads
-				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, criteria.Cluster, w.Namespace, w.Name, includeServices, waypoints)
+				waypointWorkloads, waypointServices := in.listWaypointWorkloads(ctx, criteria.Cluster, w.Namespace, w.Name, w.WaypointFor(), waypoints)
 				w.WaypointWorkloads = waypointWorkloads
 				if includeServices {
 					w.WaypointServices = waypointServices
@@ -2889,56 +2890,70 @@ func (in *WorkloadService) getWaypointsForWorkload(ctx context.Context, workload
 	return workloadsList
 }
 
-// waypointFor returns istio.io/waypoint-for for the waypoint proxy when it is listed in waypoints.
-func (in *WorkloadService) waypointFor(wpCluster, wpNamespace, wpName string, waypoints models.Workloads) string {
-	for _, wp := range waypoints {
-		if wp == nil {
+// Service-addressed and direct workload traffic have independent waypoint bindings.
+func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName, waypointFor string, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
+	workloads := []models.WorkloadReferenceInfo{}
+	services := []models.ServiceReferenceInfo{}
+	if waypointFor == config.WaypointForWorkload || waypointFor == config.WaypointForAll {
+		workloads = in.listWaypointCapturedWorkloads(ctx, wpCluster, wpNamespace, wpName, waypoints)
+	}
+	if waypointFor == config.WaypointForService || waypointFor == config.WaypointForAll {
+		services = in.businessLayer.Svc.ListWaypointCapturedServices(ctx, wpName, wpNamespace, wpCluster)
+	}
+	return workloads, services
+}
+
+func (in *WorkloadService) listWaypointCapturedWorkloads(ctx context.Context, cluster, gatewayNamespace, gatewayName string, waypoints models.Workloads) []models.WorkloadReferenceInfo {
+	refs := []models.WorkloadReferenceInfo{}
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		log.Errorf("listWaypointCapturedWorkloads: error getting namespaces: %s", err)
+		return refs
+	}
+	namespacesByName := make(map[string]models.Namespace, len(namespaces))
+	inheritedNamespaces := []string{}
+	for _, ns := range namespaces {
+		namespacesByName[ns.Name] = ns
+		if waypointPrimaryBindingMatches(ns.Labels, ns.Name, gatewayName, gatewayNamespace) {
+			inheritedNamespaces = append(inheritedNamespaces, ns.Name)
+		}
+	}
+
+	// Namespace inheritance and explicit pod bindings establish separate candidate sets.
+	candidates := models.Workloads{}
+	if len(inheritedNamespaces) > 0 {
+		inherited, err := in.fetchWorkloadsFromCluster(ctx, cluster, inheritedNamespaces, "", waypoints)
+		if err != nil {
+			log.Errorf("listWaypointCapturedWorkloads: error getting namespace workloads: %s", err)
+		} else {
+			candidates = append(candidates, inherited...)
+		}
+	}
+	selector := labels.Set{config.WaypointUseLabel: gatewayName}.String()
+	explicit, err := in.fetchWorkloadsFromCluster(ctx, cluster, nil, selector, waypoints)
+	if err != nil {
+		log.Errorf("listWaypointCapturedWorkloads: error getting explicitly enrolled workloads: %s", err)
+	} else {
+		candidates = append(candidates, explicit...)
+	}
+
+	seen := make(map[string]bool)
+	for _, workload := range candidates {
+		if workload.IsWaypointWorkload() {
 			continue
 		}
-		if wp.Cluster == wpCluster && wp.Namespace == wpNamespace && wp.Name == wpName && wp.IsWaypointWorkload() {
-			if wpFor := wp.WaypointFor(); wpFor != "" {
-				return wpFor
-			}
+		ns := namespacesByName[workload.Namespace]
+		ref := waypointEnrolledWorkloadRef(workload, &ns, gatewayName, gatewayNamespace)
+		if ref == nil {
+			continue
+		}
+		key := workload.Namespace + "\x00" + workload.Name
+		if !seen[key] {
+			refs = append(refs, *ref)
+			seen[key] = true
 		}
 	}
-	return config.WaypointForService
-}
-
-// listWaypointWorkloads returns workloads and services whose traffic is handled by the waypoint gateway wpName
-// (as primary and/or canary).
-func (in *WorkloadService) listWaypointWorkloads(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
-	waypointCaptureFor := in.waypointFor(wpCluster, wpNamespace, wpName, waypoints)
-	primaryW, primaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, waypointCaptureFor, config.WaypointUseLabel, config.WaypointUseNamespaceLabel, models.WaypointRolePrimary)
-	canaryW, canaryS := in.listWaypointWorkloadsWithLabel(ctx, wpCluster, wpNamespace, wpName, includeServices, waypoints, waypointCaptureFor, config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel, models.WaypointRoleCanary)
-	return mergeWaypointWorkloadRefs(primaryW, canaryW), mergeWaypointServiceRefs(primaryS, canaryS)
-}
-
-func mergeWaypointWorkloadRefs(primary, canary []models.WorkloadReferenceInfo) []models.WorkloadReferenceInfo {
-	byKey := map[string]models.WorkloadReferenceInfo{}
-	order := make([]string, 0, len(primary)+len(canary))
-	add := func(w models.WorkloadReferenceInfo) {
-		key := fmt.Sprintf("%s_%s_%s", w.Cluster, w.Namespace, w.Name)
-		if existing, ok := byKey[key]; ok {
-			// Same resource enrolled as both roles: prefer canary when it carries a display weight.
-			if w.WaypointRole == models.WaypointRoleCanary && (w.RoleWeight != nil && *w.RoleWeight > 0 || existing.RoleWeight == nil || *existing.RoleWeight == 0) {
-				byKey[key] = w
-			}
-			return
-		}
-		byKey[key] = w
-		order = append(order, key)
-	}
-	for _, w := range primary {
-		add(w)
-	}
-	for _, w := range canary {
-		add(w)
-	}
-	merged := make([]models.WorkloadReferenceInfo, 0, len(order))
-	for _, key := range order {
-		merged = append(merged, byKey[key])
-	}
-	return merged
+	return refs
 }
 
 func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []models.ServiceReferenceInfo {
@@ -2966,155 +2981,6 @@ func mergeWaypointServiceRefs(primary, canary []models.ServiceReferenceInfo) []m
 		out = append(out, byKey[key])
 	}
 	return out
-}
-
-func (in *WorkloadService) listWaypointWorkloadsWithLabel(ctx context.Context, wpCluster, wpNamespace, wpName string, includeServices bool, waypoints models.Workloads, waypointFor, useLabel, useNamespaceLabel, role string) ([]models.WorkloadReferenceInfo, []models.ServiceReferenceInfo) {
-	// Get all the workloads for a namespaces labeled
-	labelSelector := fmt.Sprintf("%s=%s", useLabel, wpName)
-	userClient, ok := in.userClients[wpCluster]
-	if !ok {
-		log.Errorf("listWaypointWorkloads: cluster [%s] not found", wpCluster)
-		return []models.WorkloadReferenceInfo{}, []models.ServiceReferenceInfo{}
-	}
-	nslist, errNs := userClient.GetNamespaces(labelSelector)
-	if errNs != nil {
-		log.Errorf("listWaypointWorkloads: Error fetching namespaces by selector %s", labelSelector)
-	}
-
-	var workloadslist []models.WorkloadReferenceInfo
-	var servicesList []models.ServiceReferenceInfo
-	// This is to verify there is no duplicated services
-	servicesMap := make(map[string]bool)
-
-	// Excluded workloads
-	excludedWorkloads := make(map[string]bool)
-	labelType := "namespace"
-
-	// Get all the workloads for the namespaces that have the waypoint label
-	labeledNamespaces := sliceutil.Filter(nslist, func(ns core_v1.Namespace) bool {
-		return ns.Name == wpNamespace || ns.Labels[useNamespaceLabel] == wpNamespace
-	})
-	// Canary splits are service-scoped; workload-for waypoint proxies only enroll via pod labels.
-	skipNamespaceWorkloadEnrollment := waypointFor == config.WaypointForWorkload
-	if !skipNamespaceWorkloadEnrollment && len(labeledNamespaces) > 0 {
-		labeledNamespaceNames := sliceutil.Map(labeledNamespaces, func(ns core_v1.Namespace) string {
-			return ns.Name
-		})
-		workloadList, err := in.fetchWorkloadsFromCluster(ctx, wpCluster, labeledNamespaceNames, "", waypoints)
-		if err != nil {
-			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespaces %v", labeledNamespaceNames)
-		}
-		for _, wk := range workloadList {
-			// This annotation disables other labels (Like the ns one)
-			if wk.Labels[config.IstioAmbientNamespaceLabel] != "none" && wk.Labels[config.WaypointUseLabel] != config.WaypointNone {
-				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(wk, labelType, role, labeledNamespaces))
-			} else {
-				excludedWorkloads[wk.Name] = true
-			}
-		}
-	}
-
-	// Get annotated workloads
-	namespaces, found := in.cache.GetNamespaces(wpCluster, userClient.GetCacheKey())
-	namespaceNames := sliceutil.Map(namespaces, func(ns models.Namespace) string {
-		return ns.Name
-	})
-	if found {
-		wlist, err := in.fetchWorkloadsFromCluster(ctx, wpCluster, namespaceNames, labelSelector, waypoints)
-		if err != nil {
-			log.Debugf("listWaypointWorkloads: Error fetching workloads for namespace label selector %s", labelSelector)
-		}
-		if len(wlist) > 0 {
-			labelType = "workload"
-		}
-		for _, workload := range wlist {
-			// none disables the waypoint enrollment
-			if workload.Labels[config.WaypointUseLabel] != config.WaypointNone {
-				workloadslist = append(workloadslist, waypointEnrolledWorkloadRef(workload, labelType, role, labeledNamespaces))
-			} else {
-				excludedWorkloads[workload.Name] = true
-			}
-		}
-	}
-
-	// Should include service if the waypoint-for=service|all
-	if includeServices {
-		// Get the services for the workloads
-		var services *models.ServiceList
-		var err error
-
-		for _, wl := range workloadslist {
-			if !excludedWorkloads[wl.Name] {
-				serviceCriteria := ServiceCriteria{
-					Cluster:                wl.Cluster,
-					Namespace:              wl.Namespace,
-					ServiceSelector:        labels.Set(wl.Labels).String(),
-					IncludeHealth:          false,
-					IncludeOnlyDefinitions: true,
-				}
-				services, err = in.businessLayer.Svc.GetServiceList(ctx, serviceCriteria)
-				if err != nil {
-					log.Infof("Error getting services %s", err.Error())
-				} else {
-					for _, service := range services.Services {
-						// waypoints don't capture other waypoints, so skip them
-						if config.IsWaypoint(service.Labels) {
-							continue
-						}
-						key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, service.Cluster)
-						if servicesMap[key] {
-							continue
-						}
-						ns, _ := in.cache.GetNamespace(wpCluster, userClient.GetCacheKey(), service.Namespace)
-						ref := waypointEnrolledServiceRef(&models.Service{
-							Annotations: service.Annotations,
-							Cluster:     service.Cluster,
-							Labels:      service.Labels,
-							Name:        service.Name,
-							Namespace:   service.Namespace,
-						}, &ns, wpName, wpNamespace, role)
-						if ref != nil {
-							servicesList = append(servicesList, *ref)
-							servicesMap[key] = true
-						}
-					}
-				}
-			}
-		}
-		// Get annotated services
-		servicesList = append(servicesList, in.businessLayer.Svc.ListWaypointServices(ctx, wpName, wpNamespace, wpCluster, role)...)
-	}
-	return workloadslist, servicesList
-}
-
-func waypointEnrolledWorkloadRef(wk *models.Workload, labelType, role string, labeledNamespaces []core_v1.Namespace) models.WorkloadReferenceInfo {
-	var nsModel *models.Namespace
-	for _, ns := range labeledNamespaces {
-		if ns.Name == wk.Namespace {
-			cast := models.CastNamespace(ns, wk.Cluster)
-			nsModel = &cast
-			break
-		}
-	}
-	split := waypointTrafficSplitForService(&models.Service{
-		Annotations: wk.Annotations,
-		Cluster:     wk.Cluster,
-		Labels:      wk.Labels,
-		Namespace:   wk.Namespace,
-	}, nsModel)
-	ref := models.WorkloadReferenceInfo{
-		Cluster:      wk.Cluster,
-		LabelType:    labelType,
-		Labels:       wk.Labels,
-		Name:         wk.Name,
-		Namespace:    wk.Namespace,
-		RoleWeight:   waypointRoleWeight(split, role),
-		WaypointRole: role,
-	}
-	if role == models.WaypointRoleCanary && split != nil {
-		ref.CanaryWeight = split.CanaryWeight
-	}
-	return ref
 }
 
 func (in *WorkloadService) updateWorkload(ctx context.Context, cluster string, namespace string, workloadName string, workloadGVK schema.GroupVersionKind, jsonPatch string, patchType string) error {

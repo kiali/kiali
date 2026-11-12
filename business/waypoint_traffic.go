@@ -1,3 +1,4 @@
+// Assisted-by: Codex
 package business
 
 import (
@@ -6,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/models"
 )
 
@@ -259,4 +261,56 @@ func waypointEnrolledServiceRef(service *models.Service, ns *models.Namespace, g
 		ref.CanaryWeight = split.CanaryWeight
 	}
 	return ref
+}
+
+func waypointPrimaryBindingMatches(resourceLabels map[string]string, resourceNamespace, gatewayName, gatewayNamespace string) bool {
+	name := resourceLabels[config.WaypointUseLabel]
+	if name == "" || name == config.WaypointNone {
+		return false
+	}
+	namespace := resourceLabels[config.WaypointUseNamespaceLabel]
+	if namespace == "" {
+		namespace = resourceNamespace
+	}
+	return name == gatewayName && namespace == gatewayNamespace
+}
+
+// Direct Pod/VM traffic inherits only primary bindings; Service overrides and canary shares do not apply.
+func waypointEnrolledWorkloadRef(workload *models.Workload, ns *models.Namespace, gatewayName, gatewayNamespace string) *models.WorkloadReferenceInfo {
+	labelSets := []map[string]string{workload.TemplateLabels}
+	if workload.WorkloadGVK.Kind == kubernetes.PodType || workload.WorkloadGVK == kubernetes.WorkloadGroups {
+		labelSets[0] = workload.Labels
+	}
+	if len(workload.Pods) > 0 {
+		labelSets = nil
+		for _, pod := range workload.Pods {
+			labelSets = append(labelSets, pod.Labels)
+		}
+	}
+
+	labelType := ""
+	for _, labels := range labelSets {
+		if labels[config.IstioAmbientNamespaceLabel] == "none" {
+			continue
+		}
+		if _, explicit := labels[config.WaypointUseLabel]; explicit {
+			if waypointPrimaryBindingMatches(labels, workload.Namespace, gatewayName, gatewayNamespace) {
+				labelType = "workload"
+				break
+			}
+		} else if waypointPrimaryBindingMatches(ns.Labels, workload.Namespace, gatewayName, gatewayNamespace) {
+			labelType = "namespace"
+		}
+	}
+	if labelType == "" {
+		return nil
+	}
+	return &models.WorkloadReferenceInfo{
+		Cluster:      workload.Cluster,
+		LabelType:    labelType,
+		Labels:       workload.Labels,
+		Name:         workload.Name,
+		Namespace:    workload.Namespace,
+		WaypointRole: models.WaypointRolePrimary,
+	}
 }
