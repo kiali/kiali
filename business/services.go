@@ -135,6 +135,16 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 }
 
 func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+	// A partially-revoked namespace serves stale informer data; serve the empty list
+	// instead of frozen pre-revocation services.
+	if criteria.Namespace != "" && namespaceRevoked(in.kialiCache, cluster, criteria.Namespace) {
+		return &models.ServiceList{
+			Namespace:   criteria.Namespace,
+			Services:    []models.ServiceOverview{},
+			Validations: models.IstioValidations{},
+		}, nil
+	}
+
 	var (
 		svcs            []core_v1.Service
 		pods            []core_v1.Pod

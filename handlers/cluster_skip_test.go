@@ -48,8 +48,8 @@ func setupClusterSkipServer(t *testing.T, degradedCluster string) *httptest.Serv
 	})
 
 	// The check denies everything, so ConfirmRevoked degrades whichever cluster it names.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return false, nil
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+		return cache.DeniedAccess{Cluster: true}, nil
 	})
 	if degradedCluster != "" {
 		require.True(t, access.ConfirmRevoked(context.Background(), degradedCluster, "apps", "deployments"))

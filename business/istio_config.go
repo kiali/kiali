@@ -190,6 +190,12 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 		return nil, err
 	}
 
+	// A partially-revoked namespace serves stale informer data; serve the empty list
+	// instead of frozen pre-revocation config.
+	if namespaceRevoked(in.kialiCache, cluster, namespace) {
+		return &models.IstioConfigList{}, nil
+	}
+
 	istioConfigs, err := in.getIstioConfigList(ctx, cluster, namespace, criteria)
 	if err != nil {
 		return nil, err
@@ -591,6 +597,8 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 	for _, namespace := range namespaces {
 		namespaceNames = append(namespaceNames, namespace.Name)
 	}
+	// A partially-revoked namespace serves stale informer data; filter its objects out.
+	namespaceNames = excludeRevokedNamespaces(in.kialiCache, cluster, namespaceNames)
 
 	return &models.IstioConfigList{
 		AuthorizationPolicies:  kubernetes.FilterByNamespaceNames(istioConfigs.AuthorizationPolicies, namespaceNames),

@@ -17,30 +17,42 @@ import (
 
 // fakeAccess answers access checks from a map and counts the calls.
 type fakeAccess struct {
-	allowed map[string]bool // keyed by cluster/group/resource
-	calls   int
-	err     error
-	mu      sync.Mutex
+	denied map[string]DeniedAccess // keyed by cluster/group/resource
+	calls  int
+	err    error
+	mu     sync.Mutex
 }
 
 func (f *fakeAccess) set(cluster, group, resource string, allowed bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.allowed[cluster+"/"+group+"/"+resource] = allowed
+	if allowed {
+		f.denied[cluster+"/"+group+"/"+resource] = DeniedAccess{}
+	} else {
+		f.denied[cluster+"/"+group+"/"+resource] = DeniedAccess{Cluster: true, Namespaces: []string{"*"}}
+	}
 }
 
-func (f *fakeAccess) check(_ context.Context, cluster, group, resource string) (bool, error) {
+// setPartial records a partial revocation: the named namespaces are denied while the
+// rest of the cluster stays readable.
+func (f *fakeAccess) setPartial(cluster, group, resource string, namespaces []string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.denied[cluster+"/"+group+"/"+resource] = DeniedAccess{Namespaces: namespaces}
+}
+
+func (f *fakeAccess) check(_ context.Context, cluster, group, resource string) (DeniedAccess, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.calls++
 	if f.err != nil {
-		return false, f.err
+		return DeniedAccess{}, f.err
 	}
-	return f.allowed[cluster+"/"+group+"/"+resource], nil
+	return f.denied[cluster+"/"+group+"/"+resource], nil
 }
 
 func newTestClusterAccess() (*ClusterAccess, *fakeAccess, *time.Time) {
-	fake := &fakeAccess{allowed: map[string]bool{}}
+	fake := &fakeAccess{denied: map[string]DeniedAccess{}}
 	access := NewClusterAccess(fake.check)
 	now := time.Date(2026, 11, 9, 12, 0, 0, 0, time.UTC)
 	access.now = func() time.Time { return now }
@@ -188,17 +200,17 @@ func TestProbeClearsClusterOnlyWhenAllRevokedResourcesAreBack(t *testing.T) {
 func TestProbeKeepsClusterRevokedAgainDuringCheck(t *testing.T) {
 	deploymentsAllowed := false
 	var access *ClusterAccess
-	access = NewClusterAccess(func(ctx context.Context, cluster, group, resource string) (bool, error) {
+	access = NewClusterAccess(func(ctx context.Context, cluster, group, resource string) (DeniedAccess, error) {
 		if group == "apps" {
 			if !deploymentsAllowed {
-				return false, nil
+				return DeniedAccess{Cluster: true}, nil
 			}
 			// The probe is checking its snapshot (deployments) when another resource
 			// gets revoked. The snapshot's check still passes.
 			require.True(t, access.ConfirmRevoked(ctx, "west", "", "pods"))
-			return true, nil
+			return DeniedAccess{}, nil
 		}
-		return false, nil // pods are not allowed
+		return DeniedAccess{Cluster: true}, nil // pods are not allowed
 	})
 
 	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
@@ -234,6 +246,57 @@ func TestRunProbesUntilContextIsDone(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("Run did not return after the context was cancelled")
 	}
+}
+
+// A partial revocation records the denied namespaces without degrading the cluster:
+// the cluster keeps serving, and callers hide the frozen namespaces' data.
+func TestConfirmRevokedMarksNamespacesOnPartialDenial(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "the cluster stays healthy when other namespaces are readable")
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+	require.Empty(t, access.RevokedNamespaces("east"))
+
+	// A second resource adds its own denied namespaces; the union is what callers see.
+	fake.setPartial("west", "", "pods", []string{"ambient-demo"})
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+	require.ElementsMatch(t, []string{"bookinfo", "ambient-demo"}, access.RevokedNamespaces("west"))
+}
+
+// When a resource that previously found denied namespaces now sees everything readable,
+// its marks are dropped so the namespaces are served again.
+func TestConfirmRevokedDropsNamespaceMarksWhenAllowed(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+
+	// Past the debounce window, a fresh check sees everything readable and the marks drop.
+	fake.set("west", "apps", "deployments", true)
+	*now = now.Add(accessCheckDebounce)
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Empty(t, access.RevokedNamespaces("west"), "a namespace denied by no tracked resource is served again")
+}
+
+// The probe re-checks partially-revoked namespaces and drops the recovered ones, and
+// replaces a resource's denied set with the fresh verdict.
+func TestProbeUpdatesRevokedNamespaces(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo", "ambient-demo"})
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+
+	// One namespace recovered: the probe replaces the set.
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+	access.Probe(context.Background())
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+
+	// Everything recovered: the marks are gone.
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	require.Empty(t, access.RevokedNamespaces("west"))
 }
 
 func TestGetKubeCacheFailsFastForDegradedCluster(t *testing.T) {

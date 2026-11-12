@@ -94,8 +94,8 @@ func setupReconciler(t *testing.T, degradedCluster string) *controller.Validatio
 	remote := kubetest.NewFakeK8sClient(&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}})
 	clients := map[string]kubernetes.UserClientInterface{home: k8s, "remote-cluster": remote}
 
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return false, nil
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+		return cache.DeniedAccess{Cluster: true}, nil
 	})
 	if degradedCluster != "" {
 		require.True(access.ConfirmRevoked(context.Background(), degradedCluster, "apps", "deployments"))

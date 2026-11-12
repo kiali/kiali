@@ -27,8 +27,8 @@ func TestDropUnavailableClusterNodes(t *testing.T) {
 
 	// The remote's access was revoked (degraded cache): the production scenario for
 	// this function, rather than a cluster the layer simply was built without.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return false, nil
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+		return cache.DeniedAccess{Cluster: true}, nil
 	})
 	require.True(t, access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remoteClient}
@@ -66,8 +66,8 @@ func TestDropUnavailableClusterNodesFailsOnHomeCluster(t *testing.T) {
 	// Degrade the home cluster's cache (revoked access confirmed): the home cluster
 	// is not skippable, so building the graph must fail cleanly instead of
 	// rendering around it.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return false, nil
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+		return cache.DeniedAccess{Cluster: true}, nil
 	})
 	access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments")
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}

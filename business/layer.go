@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // Layer is a container for fast access to inner services.
@@ -77,6 +79,32 @@ func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bo
 	}
 	log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
 	return true, nil
+}
+
+// excludeRevokedNamespaces drops the cluster's partially-revoked namespaces from the
+// list. A namespace is revoked when its access was taken away while the rest of the
+// cluster remains readable: its informers cannot refresh, so reads from it would serve
+// stale data - resources that may no longer exist. Coarse grain: a namespace counts as
+// revoked when it denies any resource type the access check swept.
+func excludeRevokedNamespaces(kialiCache cache.KialiCache, cluster string, namespaces []string) []string {
+	revoked := kialiCache.RevokedNamespaces(cluster)
+	if len(revoked) == 0 {
+		return namespaces
+	}
+	revokedSet := make(map[string]struct{}, len(revoked))
+	for _, ns := range revoked {
+		revokedSet[ns] = struct{}{}
+	}
+	return sliceutil.Filter(namespaces, func(ns string) bool {
+		_, isRevoked := revokedSet[ns]
+		return !isRevoked
+	})
+}
+
+// namespaceRevoked reports whether the namespace's access on the cluster was partially
+// revoked; see excludeRevokedNamespaces for why callers must not serve its data.
+func namespaceRevoked(kialiCache cache.KialiCache, cluster, namespace string) bool {
+	return slices.Contains(kialiCache.RevokedNamespaces(cluster), namespace)
 }
 
 func newLayer(

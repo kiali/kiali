@@ -8,6 +8,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 	extentionsv1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
@@ -121,12 +123,6 @@ func forbiddenResource(err error) (string, string) {
 // fit the budget on large non-cluster-wide installs.
 const accessCheckConcurrency = 8
 
-// errAllowed reports that an SSAR definitively said the resource is readable in a namespace.
-// It is internal to newAccessCheck: the sentinel lets the errgroup cancel the remaining
-// namespace checks on the first allowed result - a single readable namespace means the
-// cluster is not revoked, so there is nothing more to learn.
-var errAllowed = errors.New("access allowed")
-
 // namespaceConfigs turns a list of namespace names into the cache's DefaultNamespaces restriction.
 // An empty list means no restriction (all namespaces).
 func namespaceConfigs(namespaces []string) map[string]ctrlcache.Config {
@@ -169,13 +165,20 @@ func accessibleNamespacesForCluster(conf *config.Config, cluster string) []strin
 }
 
 // newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
-// account can still list and watch a resource. Without cluster-wide access it checks every
-// accessible namespace, concurrently. A cluster counts as revoked only when no accessible
-// namespace grants the read: a single readable namespace means the cluster is still serving,
-// while a denied one may simply have been deleted (its Role dies with it) or individually
-// revoked - degrading the whole cluster for that would turn a namespace-level problem into an
-// outage of every page. The first allowed result short-circuits the sweep; concluding a
-// revocation is O(accessible namespaces), bounded by the 5s check timeout.
+// account can still list and watch a resource, and which accessible namespaces deny it.
+// Without cluster-wide access it checks every accessible namespace, concurrently.
+//
+// A cluster counts as fully revoked only when no accessible namespace grants the read:
+// degrading the whole cluster for one denied namespace would turn a namespace-level
+// problem into an outage of every page. Instead, the denied namespaces are reported
+// individually (a partial revocation): their informers cannot refresh, so callers hide
+// their data rather than serve the frozen pre-revocation snapshot.
+//
+// Every accessible namespace is checked on every run - there is no short-circuit on the
+// first allowed or denied result - because a partial revocation is only visible by
+// enumerating the full denied set. The sweep is O(accessible namespaces), bounded by
+// the 5s check timeout, and only runs when a Forbidden watch error fires (debounced to
+// once per 10s per resource) or the recovery probe re-checks.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
 	// Each cluster is verified against its own accessible namespaces so that per-cluster
 	// discovery selector overrides are honored on the access path, not just in the views.
@@ -185,13 +188,13 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			clusterNamespaces[cluster] = accessibleNamespacesForCluster(conf, cluster)
 		}
 	}
-	return func(ctx context.Context, cluster, group, resource string) (bool, error) {
+	return func(ctx context.Context, cluster, group, resource string) (cache.DeniedAccess, error) {
 		if resource == "" {
-			return false, fmt.Errorf("the forbidden error does not name a resource")
+			return cache.DeniedAccess{}, fmt.Errorf("the forbidden error does not name a resource")
 		}
 		client := clientFactory.GetSAClient(cluster)
 		if client == nil {
-			return false, fmt.Errorf("no client for cluster [%s]", cluster)
+			return cache.DeniedAccess{}, fmt.Errorf("no client for cluster [%s]", cluster)
 		}
 		namespaces := []string{""}
 		if !conf.Deployment.ClusterWideAccess {
@@ -203,6 +206,12 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			}
 		}
 
+		// Known race, accepted: when one namespace's check errors and another's is
+		// denied, the errgroup returns whichever finished first, so a definitive denial
+		// can be reported as unknown. The outcome is bounded by the debounce window
+		// (10s) and conservative (the cache is kept and the check retried).
+		var mu sync.Mutex
+		denied := make([]string, 0, len(namespaces))
 		g, gctx := errgroup.WithContext(ctx)
 		g.SetLimit(accessCheckConcurrency)
 		for _, namespace := range namespaces {
@@ -213,21 +222,28 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 				}
 				for _, review := range reviews {
 					if !review.Status.Allowed {
-						// A denied namespace is not, on its own, a revocation: only when
-						// every accessible namespace is denied is the cluster's access gone.
+						mu.Lock()
+						denied = append(denied, namespace)
+						mu.Unlock()
 						return nil
 					}
 				}
-				return errAllowed
+				return nil
 			})
 		}
 		if err := g.Wait(); err != nil {
-			if errors.Is(err, errAllowed) {
-				return true, nil
-			}
-			return false, err
+			return cache.DeniedAccess{}, err
 		}
-		// Every accessible namespace denied the read: the cluster's access is gone.
-		return false, nil
+		slices.Sort(denied)
+		switch len(denied) {
+		case 0:
+			return cache.DeniedAccess{}, nil
+		case len(namespaces):
+			// Every accessible namespace denied the read: the cluster's access is gone.
+			return cache.DeniedAccess{Cluster: true, Namespaces: denied}, nil
+		default:
+			// A partial revocation: the cluster stays readable, the denied namespaces do not.
+			return cache.DeniedAccess{Namespaces: denied}, nil
+		}
 	}
 }

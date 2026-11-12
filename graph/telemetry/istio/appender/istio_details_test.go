@@ -378,8 +378,8 @@ func TestGetTrafficClustersSkipsUnavailableCache(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return false, nil
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+		return cache.DeniedAccess{Cluster: true}, nil
 	})
 	assert.True(access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}

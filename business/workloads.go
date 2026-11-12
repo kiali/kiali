@@ -1037,6 +1037,13 @@ func (in *WorkloadService) fetchWorkloadsFromCluster(ctx context.Context, cluste
 // SA-visible namespace set so that the cached content does not depend on
 // which user happened to warm it.
 func (in *WorkloadService) fetchWorkloadsInNamespaces(ctx context.Context, cluster string, namespaces []string, labelSelector string, waypoints models.Workloads) (models.Workloads, error) {
+	// A partially-revoked namespace serves stale informer data; exclude it so no
+	// frozen pre-revocation workloads are served.
+	namespaces = excludeRevokedNamespaces(in.cache, cluster, namespaces)
+	if len(namespaces) == 0 {
+		return models.Workloads{}, nil
+	}
+
 	var pods []core_v1.Pod
 	var repcon []core_v1.ReplicationController
 	var dep []apps_v1.Deployment

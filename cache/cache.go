@@ -88,6 +88,11 @@ type KialiCache interface {
 	SetIstioStatus(kubernetes.IstioComponentStatus)
 
 	GetKubeCache(cluster string) (client.Reader, error)
+	// RevokedNamespaces returns the accessible namespaces on the cluster whose access
+	// was revoked while the rest of the cluster remains readable (a partial
+	// revocation). Their informers cannot refresh, so reads from them serve stale
+	// data; callers must exclude these namespaces rather than serve frozen state.
+	RevokedNamespaces(cluster string) []string
 
 	GetMesh() (*models.Mesh, bool)
 	SetMesh(*models.Mesh)
@@ -309,6 +314,13 @@ func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 		return nil, fmt.Errorf("cluster [%s]: %w", cluster, ErrClusterNotCached)
 	}
 	return cache, nil
+}
+
+func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
+	if c.clusterAccess == nil {
+		return nil
+	}
+	return c.clusterAccess.RevokedNamespaces(cluster)
 }
 
 func (c *kialiCacheImpl) GetClusters() []models.KubeCluster {

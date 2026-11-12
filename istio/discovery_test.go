@@ -3269,8 +3269,8 @@ func TestGetMeshSkipsDegradedRemoteCluster(t *testing.T) {
 	readers := map[string]ctrlclient.Reader{"east": k8s, "remote": remoteClient}
 
 	newDiscovery := func(degraded string) *istio.Discovery {
-		access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-			return false, nil
+		access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
 		})
 		if degraded != "" {
 			require.True(access.ConfirmRevoked(context.Background(), degraded, "apps", "deployments"))

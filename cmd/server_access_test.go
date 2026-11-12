@@ -60,13 +60,13 @@ func TestAccessCheckClusterWide(t *testing.T) {
 	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
 	check := newAccessCheck(conf, factory)
 
-	allowed, err := check(context.Background(), "west", "apps", "deployments")
+	denied, err := check(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed)
+	require.False(t, denied.Cluster)
 
-	allowed, err = check(context.Background(), "west", "", "pods")
+	denied, err = check(context.Background(), "west", "", "pods")
 	require.NoError(t, err)
-	require.False(t, allowed, "watch on pods is not allowed")
+	require.True(t, denied.Cluster, "watch on pods is not allowed")
 
 	_, err = check(context.Background(), "unknown", "apps", "deployments")
 	require.Error(t, err)
@@ -87,24 +87,27 @@ func TestAccessCheckChecksEachAccessibleNamespace(t *testing.T) {
 	})
 	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
 
-	allowed, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
+	denied, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed, "every accessible namespace is readable")
+	require.False(t, denied.Cluster, "every accessible namespace is readable")
+	require.Empty(t, denied.Namespaces)
 
 	// A single denied namespace is not a revocation: the namespace may have been
 	// deleted (its Role dies with it) or individually revoked, and the cluster
-	// keeps serving the namespaces that are still readable.
+	// keeps serving the namespaces that are still readable. The denied namespace
+	// is reported individually so callers can hide its stale informer data.
 	conf.Deployment.AccessibleNamespaces = append(conf.Deployment.AccessibleNamespaces, "other")
-	allowed, err = newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
+	denied, err = newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed, "a denied namespace alongside readable ones does not revoke the cluster")
+	require.False(t, denied.Cluster, "a denied namespace alongside readable ones does not revoke the cluster")
+	require.Equal(t, []string{"other"}, denied.Namespaces, "the denied namespace is reported for exclusion")
 
 	// The cluster is revoked only when no accessible namespace grants the read.
 	denyingClient := fakeClientWithAccess(map[string]bool{})
 	denyingFactory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": denyingClient})
-	allowed, err = newAccessCheck(conf, denyingFactory)(context.Background(), "west", "apps", "deployments")
+	denied, err = newAccessCheck(conf, denyingFactory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.False(t, allowed, "every accessible namespace denied")
+	require.True(t, denied.Cluster, "every accessible namespace denied")
 }
 
 // A real SSAR API error must surface as (false, err) - unknown - never (false, nil) -
@@ -201,9 +204,8 @@ func TestAccessCheckAPIErrorIsUnknownNotDenied(t *testing.T) {
 	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
 	check := newAccessCheck(conf, factory)
 
-	allowed, err := check(context.Background(), "west", "apps", "deployments")
+	_, err := check(context.Background(), "west", "apps", "deployments")
 	require.Error(t, err)
-	require.False(t, allowed)
 
 	// The unknown outcome keeps the cache: ConfirmRevoked must not degrade the cluster.
 	access := cache.NewClusterAccess(check)
@@ -248,20 +250,21 @@ func TestAccessCheckHonorsDiscoverySelectorOverrides(t *testing.T) {
 	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": west, "east": east})
 	check := newAccessCheck(conf, factory)
 
-	allowed, err := check(context.Background(), "west", "apps", "deployments")
+	denied, err := check(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed, "the overridden cluster is verified against its override namespaces only")
+	require.False(t, denied.Cluster, "the overridden cluster is verified against its override namespaces only")
 
 	// A cluster without an override is verified against the default accessible namespaces.
-	allowed, err = check(context.Background(), "east", "apps", "deployments")
+	denied, err = check(context.Background(), "east", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed)
+	require.False(t, denied.Cluster)
 
-	// Revoking the override namespace denies the overridden cluster.
+	// Revoking the override namespace denies the overridden cluster: west-ns is west's
+	// only namespace, so every accessible namespace is denied.
 	westAllowed["west-ns/apps/deployments/watch"] = false
-	allowed, err = check(context.Background(), "west", "apps", "deployments")
+	denied, err = check(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.False(t, allowed, "the overridden cluster is denied when its override namespaces are revoked")
+	require.True(t, denied.Cluster, "the overridden cluster is denied when its override namespaces are revoked")
 
 	// The home cluster never uses overrides: the operator creates its Roles from the
 	// default discovery selectors only, so its check stays on the default accessible
@@ -270,9 +273,9 @@ func TestAccessCheckHonorsDiscoverySelectorOverrides(t *testing.T) {
 	westAllowed["west-ns/apps/deployments/watch"] = true
 	conf.KubernetesConfig.ClusterName = "west"
 	check = newAccessCheck(conf, factory)
-	allowed, err = check(context.Background(), "west", "apps", "deployments")
+	denied, err = check(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.False(t, allowed, "the home cluster is checked against the default accessible namespaces, not its override")
+	require.True(t, denied.Cluster, "the home cluster is checked against the default accessible namespaces, not its override")
 }
 
 func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {
@@ -285,9 +288,12 @@ func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {
 	// swapped the group and resource, or lost the cluster name, would otherwise pass.
 	var gotCluster, gotGroup, gotResource string
 	newAccess := func(allowed bool) *cache.ClusterAccess {
-		return cache.NewClusterAccess(func(_ context.Context, c, g, r string) (bool, error) {
+		return cache.NewClusterAccess(func(_ context.Context, c, g, r string) (cache.DeniedAccess, error) {
 			gotCluster, gotGroup, gotResource = c, g, r
-			return allowed, nil
+			if allowed {
+				return cache.DeniedAccess{}, nil
+			}
+			return cache.DeniedAccess{Cluster: true}, nil
 		})
 	}
 
