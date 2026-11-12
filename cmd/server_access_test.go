@@ -151,6 +151,17 @@ func TestAccessCheckHonorsDiscoverySelectorOverrides(t *testing.T) {
 	allowed, err = check(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
 	require.False(t, allowed, "the overridden cluster is denied when its override namespaces are revoked")
+
+	// The home cluster never uses overrides: the operator creates its Roles from the
+	// default discovery selectors only, so its check stays on the default accessible
+	// namespaces. The west client grants west-ns but not bookinfo, so a check that
+	// consulted west's override would wrongly pass.
+	westAllowed["west-ns/apps/deployments/watch"] = true
+	conf.KubernetesConfig.ClusterName = "west"
+	check = newAccessCheck(conf, factory)
+	allowed, err = check(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, allowed, "the home cluster is checked against the default accessible namespaces, not its override")
 }
 
 func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {

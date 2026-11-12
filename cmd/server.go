@@ -427,6 +427,13 @@ func accessibleNamespacesForCluster(conf *config.Config, cluster string) []strin
 	if conf.Deployment.ClusterWideAccess {
 		return nil
 	}
+	// The home cluster's access scope is always the default accessible namespaces: the
+	// operator creates its Roles from the default discovery selectors only, so a
+	// home-cluster discovery selector override - a view filter - must not steer the
+	// access check to namespaces the home cache is not scoped to and no Roles exist for.
+	if cluster == conf.KubernetesConfig.ClusterName {
+		return conf.Deployment.AccessibleNamespaces
+	}
 	namespaces, err := conf.AccessibleNamespacesForCluster(cluster)
 	if err != nil {
 		log.Warningf("The discovery selector override for cluster [%s] does not name accessible namespaces. Falling back to the default accessible namespaces. err=%s", cluster, err)

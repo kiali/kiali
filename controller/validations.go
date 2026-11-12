@@ -130,14 +130,30 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		changeMap = r.kialiCache.ValidationConfig().Items()
 	}
 
+	// A remote cluster whose service-account cache cannot serve reads (access revoked
+	// and torn down) cannot be validated: skip it rather than fail the whole reconcile,
+	// which would leave every cluster's validations stale until access is restored. The
+	// home cluster is not skippable.
+	clusters := make([]string, 0, len(r.clusters))
+	for _, cluster := range r.clusters {
+		if _, err := r.kialiCache.GetKubeCache(cluster); err != nil {
+			if cluster == r.conf.KubernetesConfig.ClusterName {
+				return ctrl.Result{}, err
+			}
+			log.Warningf("[ValidationsReconciler] Skipping cluster [%s]: %s", cluster, err)
+			continue
+		}
+		clusters = append(clusters, cluster)
+	}
+
 	// validation requires cross-cluster service account information.
-	vInfo, err := r.validationsService.NewValidationInfo(ctx, r.clusters, changeMap)
+	vInfo, err := r.validationsService.NewValidationInfo(ctx, clusters, changeMap)
 	if err != nil {
 		log.Errorf("[ValidationsReconciler] Error creating validation info: %s", err)
 		return ctrl.Result{}, err
 	}
 
-	for _, cluster := range r.clusters {
+	for _, cluster := range clusters {
 		validationPerformed, clusterValidations, err := r.validationsService.Validate(ctx, cluster, vInfo)
 		if err != nil {
 			log.Errorf("[ValidationsReconciler] Error performing validation for cluster [%s]: %s", cluster, err)

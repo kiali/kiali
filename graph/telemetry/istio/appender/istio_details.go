@@ -65,6 +65,12 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
 			continue
 		}
+		// Likewise a cluster whose service-account cache cannot serve reads
+		// (access revoked and torn down). Its nodes were already dropped from
+		// the traffic map; this loop is cluster-driven, so guard it too.
+		if globalInfo.Business.CheckClusterCacheAvailable(cluster.Name) != nil {
+			continue
+		}
 		if _, ok := globalInfo.Vendor.ClusterServiceLists[cluster.Name]; !ok {
 			svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
 				business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
@@ -79,6 +85,9 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	// to avoid redundant GetIstioConfigList and GetClusterNamespaces calls.
 	for _, cluster := range globalInfo.Clusters {
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
+			continue
+		}
+		if globalInfo.Business.CheckClusterCacheAvailable(cluster.Name) != nil {
 			continue
 		}
 		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{

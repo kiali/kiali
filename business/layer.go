@@ -1,6 +1,8 @@
 package business
 
 import (
+	"context"
+
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/cache"
@@ -8,6 +10,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -29,6 +32,34 @@ type Layer struct {
 	TLS          TLSService
 	Validations  IstioValidationsService
 	Workload     WorkloadService
+}
+
+// CheckClusterCacheAvailable returns a non-nil error when the Kiali service-account kube
+// cache for the named cluster cannot serve reads - the cluster's access was revoked and its
+// cache torn down, or no cache is configured for it. Aggregating callers that span multiple
+// clusters (e.g. the graph engine) use this to skip such clusters instead of failing the
+// whole request; the home cluster is not skippable.
+func (in *Layer) CheckClusterCacheAvailable(cluster string) error {
+	_, err := in.IstioConfig.kialiCache.GetKubeCache(cluster)
+	return err
+}
+
+// SkipUnavailableCluster decides what a per-cluster request should do when the cluster's
+// service-account cache cannot serve reads (see CheckClusterCacheAvailable). The home
+// cluster is not skippable: the error is returned so the request fails cleanly. A remote
+// cluster is skipped: the caller should serve its empty result (an empty list, a zero
+// status) rather than fail the whole page, the same treatment the graph engine and the
+// namespace picker give degraded clusters.
+func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bool, error) {
+	err := in.CheckClusterCacheAvailable(cluster)
+	if err == nil {
+		return false, nil
+	}
+	if cluster == in.Namespace.conf.KubernetesConfig.ClusterName {
+		return false, err
+	}
+	log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
+	return true, nil
 }
 
 func newLayer(

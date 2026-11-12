@@ -359,3 +359,39 @@ func TestSkipsClustersWithoutUserClient(t *testing.T) {
 	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
 	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster")
 }
+
+// A cluster whose service-account cache cannot serve reads - access revoked and torn
+// down, or never registered - is skipped like a session-less cluster: the fetches below
+// read that cache and their errors would otherwise fail the whole graph.
+func TestSkipsClustersWithUnavailableCache(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
+	trafficMap, _, _, _, _, _, _, _ := setupTrafficMap()
+
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
+
+	// The user has access to both clusters; only the remote cluster's cache is missing.
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+			graph.GetClusterSensitiveKey("remote-cluster", "testNamespace"):        {Cluster: "remote-cluster", Name: "testNamespace"},
+		},
+	}
+
+	// Must not panic: without the cache guard the cluster-wide fetch for the remote
+	// cluster errors and CheckError fails the whole graph.
+	assert.NotPanics(func() {
+		a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
+	})
+
+	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
+	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster")
+}

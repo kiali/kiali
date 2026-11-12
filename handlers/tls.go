@@ -47,6 +47,18 @@ func NamespaceTls(
 			return
 		}
 
+		// A remote cluster whose service-account cache cannot serve reads (access
+		// revoked and torn down) has no status to report: return the zero status
+		// rather than fail the page, the same treatment the graph engine gives
+		// degraded clusters. The home cluster is not skippable.
+		if skip, err := business.SkipUnavailableCluster(r.Context(), queryparams.ClusterName(conf, query)); err != nil {
+			handleErrorResponse(w, err)
+			return
+		} else if skip {
+			RespondWithJSON(w, http.StatusOK, models.MTLSStatus{})
+			return
+		}
+
 		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, queryparams.ClusterName(conf, query))
 		if err != nil {
 			log.Error(err)
@@ -89,6 +101,18 @@ func ClustersTls(
 		business, err := getLayer(r, conf, kialiCache, clientFactory, cpm, prom, traceClientLoader, grafana, discovery)
 		if err != nil {
 			RespondWithError(w, http.StatusInternalServerError, "Services initialization error: "+err.Error())
+			return
+		}
+
+		// A remote cluster whose service-account cache cannot serve reads (access
+		// revoked and torn down) has no status to report: return the empty list
+		// rather than fail the page, the same treatment the graph engine gives
+		// degraded clusters. The home cluster is not skippable.
+		if skip, err := business.SkipUnavailableCluster(r.Context(), cluster); err != nil {
+			handleErrorResponse(w, err)
+			return
+		} else if skip {
+			RespondWithJSON(w, http.StatusOK, []models.MTLSStatus{})
 			return
 		}
 

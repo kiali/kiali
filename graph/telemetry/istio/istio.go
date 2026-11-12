@@ -74,6 +74,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	for _, namespaceInfo := range o.Namespaces {
 		zl.Trace().Msgf("Build traffic map for namespace [%v]", namespaceInfo)
 		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
+		dropUnavailableClusterNodes(ctx, namespaceTrafficMap, globalInfo)
 
 		// The appenders can add/remove/alter nodes for the namespace
 		appenderNamespaceInfo := appender.NewAppenderNamespaceInfo(namespaceInfo.Name)
@@ -114,6 +115,56 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	}
 
 	return trafficMap
+}
+
+// dropUnavailableClusterNodes removes the nodes of remote clusters whose Kiali
+// service-account cache cannot serve reads - access revoked and torn down, or no cache
+// configured for the cluster - before the appenders run. The appenders enrich nodes with
+// config, health and services through that cache, and its errors propagate as panics that
+// fail the whole graph with a 500; a degraded remote must instead be skipped, like the mesh
+// resolution skips it. Only clusters Kiali knows about (gi.Clusters) are considered:
+// telemetry can carry cluster labels that are not Kiali clusters (e.g. "unknown" external
+// traffic), and those nodes are left alone. The home cluster is not skippable: its cache
+// being unavailable fails the graph.
+func dropUnavailableClusterNodes(ctx context.Context, trafficMap graph.TrafficMap, gi *appender.GlobalInfo) {
+	zl := log.FromContext(ctx)
+	knownClusters := make(map[string]struct{}, len(gi.Clusters))
+	for _, cluster := range gi.Clusters {
+		knownClusters[cluster.Name] = struct{}{}
+	}
+	homeCluster := gi.Conf.KubernetesConfig.ClusterName
+	droppedClusters := make(map[string]struct{})
+	for id, node := range trafficMap {
+		if _, known := knownClusters[node.Cluster]; !known {
+			continue
+		}
+		err := gi.Business.CheckClusterCacheAvailable(node.Cluster)
+		if err == nil {
+			continue
+		}
+		if node.Cluster == homeCluster {
+			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %s", homeCluster, err))
+		}
+		if _, logged := droppedClusters[node.Cluster]; !logged {
+			droppedClusters[node.Cluster] = struct{}{}
+			zl.Warn().Msgf("Skipping cluster [%s] when building the graph: %s", node.Cluster, err)
+		}
+		delete(trafficMap, id)
+	}
+	if len(droppedClusters) == 0 {
+		return
+	}
+	// Remove the edges that pointed at the dropped nodes so no edge references a
+	// node that is no longer in the map.
+	for _, node := range trafficMap {
+		keptEdges := make([]*graph.Edge, 0, len(node.Edges))
+		for _, edge := range node.Edges {
+			if _, ok := trafficMap[edge.Dest.ID]; ok {
+				keptEdges = append(keptEdges, edge)
+			}
+		}
+		node.Edges = keptEdges
+	}
 }
 
 // buildNamespaceTrafficMap returns a map of all namespace nodes (key=id).  All

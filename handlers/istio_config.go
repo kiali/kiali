@@ -55,6 +55,18 @@ func IstioConfigList(
 			return
 		}
 
+		// A remote cluster whose service-account cache cannot serve reads (access
+		// revoked and torn down) has no config to list: return the empty list rather
+		// than fail the page, the same treatment the graph engine gives degraded
+		// clusters. The home cluster is not skippable.
+		if skip, err := business.SkipUnavailableCluster(r.Context(), cluster); err != nil {
+			handleErrorResponse(w, err)
+			return
+		} else if skip {
+			RespondWithAPIResponse(w, http.StatusOK, &models.IstioConfigList{})
+			return
+		}
+
 		var istioConfig *models.IstioConfigList
 		if namespace != "" {
 			istioConfig, err = business.IstioConfig.GetIstioConfigListForNamespace(r.Context(), cluster, namespace, criteria)

@@ -105,6 +105,18 @@ func ClusterWorkloads(
 			Validations: models.IstioValidations{},
 		}
 
+		// A remote cluster whose service-account cache cannot serve reads (access
+		// revoked and torn down) has no data to list: return the empty list rather
+		// than fail the page, the same treatment the graph engine gives degraded
+		// clusters. The home cluster is not skippable.
+		if skip, err := businessLayer.SkipUnavailableCluster(r.Context(), p.ClusterName); err != nil {
+			handleErrorResponse(w, err)
+			return
+		} else if skip {
+			RespondWithJSON(w, http.StatusOK, clusterWorkloadsList)
+			return
+		}
+
 		for _, ns := range nss {
 			criteria := business.WorkloadCriteria{
 				Cluster: p.ClusterName, Namespace: ns, IncludeHealth: p.IncludeHealth,
