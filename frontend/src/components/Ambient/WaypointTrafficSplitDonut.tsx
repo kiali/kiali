@@ -6,6 +6,7 @@ import { istioCanaryUpgradeChartColorScale } from 'utils/IstioCanaryUpgradeChart
 import type { WaypointTrafficSplit } from '../../types/WaypointTraffic';
 import { t } from 'utils/I18nUtils';
 import { kialiStyle } from 'styles/StyleUtils';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { buildWaypointTrafficSplitSlices } from 'utils/WaypointTrafficUtils';
 
 const chartBoxStyle = (compact: boolean): string =>
@@ -17,8 +18,8 @@ const chartBoxStyle = (compact: boolean): string =>
 
 const centerLabelStyle = kialiStyle({
   color: 'var(--pf-t--global--text--color--regular)',
-  fontSize: '0.625rem',
-  fontWeight: 'var(--pf-t--global--font--weight--body--bold)',
+  fontSize: PFFontSize.small,
+  fontWeight: PFFontWeight.BodyBold,
   left: '50%',
   lineHeight: 1.15,
   pointerEvents: 'none',

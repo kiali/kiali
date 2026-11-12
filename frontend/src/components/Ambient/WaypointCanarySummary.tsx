@@ -15,6 +15,7 @@ import type { GatewayWaypointTrafficSplitConfig, WaypointTrafficSplit } from '..
 import { t } from 'utils/I18nUtils';
 import * as API from '../../services/Api';
 import { PFSpacer } from 'styles/PfSpacer';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { PFColors } from 'components/Pf/PfColors';
 import { findGatewayWaypointSplitConfigsFromNamespaces } from 'utils/WaypointTrafficUtils';
 import { kialiStyle } from 'styles/StyleUtils';
@@ -36,9 +37,19 @@ const serviceSplitNoticeStyle = kialiStyle({
 });
 
 const canarySectionTitleStyle = kialiStyle({
-  fontSize: 'var(--pf-t--global--font--size--body--default)',
-  fontWeight: 'var(--pf-t--global--font--weight--body--default)',
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.BodyDefault,
   margin: 0
+});
+
+const waypointBindingLinkStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: PFSpacer.xs
+});
+
+const waypointRoleLabelStyle = kialiStyle({
+  marginRight: PFSpacer.xs
 });
 
 const waypointHref = (namespace: string, name: string, cluster?: string): string => {
@@ -121,7 +132,7 @@ export const WaypointCanaryInfoPanel: React.FC<WaypointCanaryInfoPanelProps> = (
 };
 
 const waypointBindingLink = (namespace: string, name: string, cluster?: string): React.ReactNode => (
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: PFSpacer.xs }}>
+  <span className={waypointBindingLinkStyle}>
     <KialiLink to={waypointHref(namespace, name, cluster)}>{name}</KialiLink>
   </span>
 );
@@ -140,7 +151,7 @@ export const WaypointCanaryPropertyList: React.FC<{ split: WaypointTrafficSplit 
       <DescriptionListGroup data-test="waypoint-canary-summary">
         <DescriptionListTerm>{t('Waypoint primary')}</DescriptionListTerm>
         <DescriptionListDescription>
-          <Label color="blue" isCompact style={{ marginRight: PFSpacer.xs }}>
+          <Label className={waypointRoleLabelStyle} color="blue" isCompact>
             {split.primaryWeight}%
           </Label>
           {waypointBindingLink(primary.namespace, primary.name, primary.cluster)}
@@ -149,7 +160,7 @@ export const WaypointCanaryPropertyList: React.FC<{ split: WaypointTrafficSplit 
       <DescriptionListGroup data-test="waypoint-canary-secondary">
         <DescriptionListTerm>{t('Waypoint canary')}</DescriptionListTerm>
         <DescriptionListDescription>
-          <Label color="orange" isCompact style={{ marginRight: PFSpacer.xs }}>
+          <Label className={waypointRoleLabelStyle} color="orange" isCompact>
             {split.canaryWeight}%
           </Label>
           {waypointBindingLink(canary.namespace, canary.name, canary.cluster)}

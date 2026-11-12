@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import type { Node } from '@patternfly/react-topology';
 import {

@@ -76,14 +76,14 @@ func ResolveWaypointTrafficSplit(cluster, defaultNamespace string, labels, annot
 	}
 
 	split := &WaypointTrafficSplit{
-		ConfigLevel: configLevel,
+		CanaryWeight: 0,
+		ConfigLevel:  configLevel,
 		Primary: WaypointBinding{
 			Cluster:   cluster,
 			Name:      primaryName,
 			Namespace: primaryNs,
 			Role:      WaypointRolePrimary,
 		},
-		CanaryWeight:  0,
 		PrimaryWeight: 100,
 	}
 
@@ -270,20 +270,20 @@ func GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName string, 
 		weight = 0
 	}
 	return &WaypointTrafficSplit{
-		ConfigLevel:   "namespace",
-		PrimaryWeight: 100 - weight,
-		CanaryWeight:  weight,
-		Primary: WaypointBinding{
-			Cluster:   cluster,
-			Name:      primary,
-			Namespace: primaryNs,
-			Role:      WaypointRolePrimary,
-		},
 		Canary: &WaypointBinding{
 			Cluster:   cluster,
 			Name:      gatewayName,
 			Namespace: gatewayNamespace,
 			Role:      WaypointRoleCanary,
 		},
+		CanaryWeight: weight,
+		ConfigLevel:  "namespace",
+		Primary: WaypointBinding{
+			Cluster:   cluster,
+			Name:      primary,
+			Namespace: primaryNs,
+			Role:      WaypointRolePrimary,
+		},
+		PrimaryWeight: 100 - weight,
 	}
 }

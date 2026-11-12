@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 package business
 
 import (

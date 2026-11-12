@@ -59,22 +59,22 @@ func TestGatewayWaypointCanaryGraphLabelMultipleEnrollments(t *testing.T) {
 func TestPickGatewayWaypointTrafficSplitPrefersCanary(t *testing.T) {
 	primaryOnly := &WaypointTrafficSplit{
 		ConfigLevel:   "namespace",
-		PrimaryWeight: 100,
 		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
+		PrimaryWeight: 100,
 	}
 	canaryNoWeight := &WaypointTrafficSplit{
-		ConfigLevel:   "namespace",
-		CanaryWeight:  0,
-		PrimaryWeight: 100,
-		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
 		Canary:        &WaypointBinding{Name: "waypoint-v2", Namespace: "infra", Role: WaypointRoleCanary},
+		CanaryWeight:  0,
+		ConfigLevel:   "namespace",
+		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
+		PrimaryWeight: 100,
 	}
 	withCanaryWeight := &WaypointTrafficSplit{
-		ConfigLevel:   "service",
-		CanaryWeight:  30,
-		PrimaryWeight: 70,
-		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
 		Canary:        &WaypointBinding{Name: "waypoint-v2", Namespace: "infra", Role: WaypointRoleCanary},
+		CanaryWeight:  30,
+		ConfigLevel:   "service",
+		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
+		PrimaryWeight: 70,
 	}
 	picked := PickGatewayWaypointTrafficSplit([]*WaypointTrafficSplit{primaryOnly, canaryNoWeight, withCanaryWeight})
 	assert.Equal(t, withCanaryWeight, picked)
@@ -82,18 +82,18 @@ func TestPickGatewayWaypointTrafficSplitPrefersCanary(t *testing.T) {
 
 func TestPickGatewayWaypointTrafficSplitPrefersServiceOnScoreTie(t *testing.T) {
 	nsSplit := &WaypointTrafficSplit{
-		ConfigLevel:   "namespace",
-		CanaryWeight:  0,
-		PrimaryWeight: 100,
-		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
 		Canary:        &WaypointBinding{Name: "waypoint-v2", Namespace: "infra", Role: WaypointRoleCanary},
+		CanaryWeight:  0,
+		ConfigLevel:   "namespace",
+		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
+		PrimaryWeight: 100,
 	}
 	svcSplit := &WaypointTrafficSplit{
-		ConfigLevel:   "service",
-		CanaryWeight:  0,
-		PrimaryWeight: 100,
-		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
 		Canary:        &WaypointBinding{Name: "waypoint-v2", Namespace: "infra", Role: WaypointRoleCanary},
+		CanaryWeight:  0,
+		ConfigLevel:   "service",
+		Primary:       WaypointBinding{Name: "waypoint", Namespace: "infra", Role: WaypointRolePrimary},
+		PrimaryWeight: 100,
 	}
 	picked := PickGatewayWaypointTrafficSplit([]*WaypointTrafficSplit{nsSplit, svcSplit})
 	assert.Equal(t, svcSplit, picked)
@@ -103,10 +103,10 @@ func TestPickGatewayWaypointTrafficSplitPrefersServiceOnScoreTie(t *testing.T) {
 
 func TestWaypointCanaryNodeLabel(t *testing.T) {
 	split := &WaypointTrafficSplit{
-		CanaryWeight:  30,
-		PrimaryWeight: 70,
-		Primary:       WaypointBinding{Name: "waypoint", Namespace: "bookinfo", Role: WaypointRolePrimary},
 		Canary:        &WaypointBinding{Name: "waypoint-v2", Namespace: "bookinfo", Role: WaypointRoleCanary},
+		CanaryWeight:  30,
+		Primary:       WaypointBinding{Name: "waypoint", Namespace: "bookinfo", Role: WaypointRolePrimary},
+		PrimaryWeight: 70,
 	}
 	assert.Equal(t, "Canary 30%", WaypointCanaryNodeLabel("waypoint-v2", "bookinfo", split))
 }

@@ -278,11 +278,11 @@ type Workload struct {
 	// Ambient waypoint services
 	WaypointServices []ServiceReferenceInfo `json:"waypointServices"`
 
-	// Ambient waypoint workloads
-	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
-
 	// WaypointTrafficSplitConfigs lists effective split(s): one for enrolled workloads, many for shared gateways.
 	WaypointTrafficSplitConfigs []GatewayWaypointTrafficSplitConfig `json:"waypointTrafficSplitConfigs,omitempty"`
+
+	// Ambient waypoint workloads
+	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
 
 	// WorkloadEntries bound to the workload
 	WorkloadEntries WorkloadEntries `json:"workloadEntries"`

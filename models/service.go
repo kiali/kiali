@@ -99,13 +99,12 @@ type ServiceDetails struct {
 	VirtualServices    []*networking_v1.VirtualService          `json:"virtualServices"`
 	Workloads          WorkloadOverviews                        `json:"workloads"`
 	// Services with same app labels (different versions or a single version)
-	Health            ServiceHealth           `json:"health"`
-	NamespaceMTLS     MTLSStatus              `json:"namespaceMTLS"`
-	SubServices       []*ServiceOverview      `json:"subServices"`
-	Validations       IstioValidations        `json:"validations"`
-	WaypointWorkloads []WorkloadReferenceInfo `json:"waypointWorkloads"`
-
-	WaypointTrafficSplit *WaypointTrafficSplit `json:"waypointTrafficSplit,omitempty"`
+	Health               ServiceHealth           `json:"health"`
+	NamespaceMTLS        MTLSStatus              `json:"namespaceMTLS"`
+	SubServices          []*ServiceOverview      `json:"subServices"`
+	Validations          IstioValidations        `json:"validations"`
+	WaypointTrafficSplit *WaypointTrafficSplit   `json:"waypointTrafficSplit,omitempty"`
+	WaypointWorkloads    []WorkloadReferenceInfo `json:"waypointWorkloads"`
 }
 
 type (

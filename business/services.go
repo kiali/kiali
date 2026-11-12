@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 package business
 
 import (
@@ -754,16 +753,16 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 		waypointWorkload, err := in.businessLayer.Workload.GetWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
 			log.Debugf("GetWaypointsForService: Error fetching waypoint workload %s", err.Error())
-			return nil
+			return workloadsList
 		}
 		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
 		if !waypointForFound || waypointFor != config.WaypointForNone {
 			key := fmt.Sprintf("%s_%s_%s", svc.Cluster, waypoint.Namespace, waypoint.Name)
 			if waypointWorkload != nil && !workloadsMap[key] {
 				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{
+					Cluster:      waypoint.Cluster,
 					Name:         waypoint.Name,
 					Namespace:    waypoint.Namespace,
-					Cluster:      waypoint.Cluster,
 					Type:         waypointWorkload.WaypointFor(),
 					WaypointRole: models.WaypointRolePrimary,
 				})
@@ -895,11 +894,11 @@ func (in *SvcService) GatewayTrafficSplitConfigsFromEnrolledServices(ctx context
 					continue
 				}
 				split := waypointTrafficSplitForService(&models.Service{
+					Annotations: item.Annotations,
 					Cluster:     cluster,
+					Labels:      item.Labels,
 					Name:        item.Name,
 					Namespace:   item.Namespace,
-					Labels:      item.Labels,
-					Annotations: item.Annotations,
 				}, &nsModel)
 				if split != nil && split.Canary != nil && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
 					configs = append(configs, models.GatewayWaypointTrafficSplitConfig{

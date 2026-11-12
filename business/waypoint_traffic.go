@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 package business
 
 import (
@@ -84,11 +83,11 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 		if len(workload.Services) > 0 {
 			svc := workload.Services[0]
 			return waypointTrafficSplitForService(&models.Service{
-				Cluster:     cluster,
-				Namespace:   svc.Namespace,
-				Name:        svc.Name,
-				Labels:      svc.Labels,
 				Annotations: svc.Annotations,
+				Cluster:     cluster,
+				Labels:      svc.Labels,
+				Name:        svc.Name,
+				Namespace:   svc.Namespace,
 			}, &nsModel)
 		}
 		return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
@@ -96,11 +95,11 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 		if len(workload.Services) > 0 {
 			svc := workload.Services[0]
 			return waypointTrafficSplitForService(&models.Service{
-				Cluster:     cluster,
-				Namespace:   svc.Namespace,
-				Name:        svc.Name,
-				Labels:      svc.Labels,
 				Annotations: svc.Annotations,
+				Cluster:     cluster,
+				Labels:      svc.Labels,
+				Name:        svc.Name,
+				Namespace:   svc.Namespace,
 			}, &nsModel)
 		}
 		return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")

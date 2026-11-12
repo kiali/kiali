@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 package business
 
 import (
@@ -28,20 +27,20 @@ func TestContextWithGatewayWaypointSplitCacheIdempotent(t *testing.T) {
 
 func TestWaypointTrafficSplitForServiceNoneOptOut(t *testing.T) {
 	ns := &models.Namespace{
-		Name: "bookinfo",
-		Labels: map[string]string{
-			config.WaypointUseLabel:       "waypoint",
-			config.WaypointCanaryUseLabel: "waypoint-v2",
-		},
 		Annotations: map[string]string{
 			config.WaypointCanaryWeightAnnotation: "30",
 		},
+		Labels: map[string]string{
+			config.WaypointCanaryUseLabel: "waypoint-v2",
+			config.WaypointUseLabel:       "waypoint",
+		},
+		Name: "bookinfo",
 	}
 	svc := &models.Service{
-		Namespace: "bookinfo",
 		Labels: map[string]string{
 			config.WaypointUseLabel: config.WaypointNone,
 		},
+		Namespace: "bookinfo",
 	}
 	assert.Nil(t, waypointTrafficSplitForService(svc, ns))
 }

@@ -209,10 +209,7 @@ metadata:
 spec:
   gatewayClassName: istio-waypoint
   listeners:
-  - name: mesh
-    port: 15008
-    protocol: HBONE
-    allowedRoutes:
+  - allowedRoutes:
       namespaces:
         from: Selector
         selector:
@@ -221,6 +218,9 @@ spec:
             operator: In
             values:
 ${namespace_values}
+    name: mesh
+    port: 15008
+    protocol: HBONE
 EGW
 }
 
@@ -287,9 +287,9 @@ install_waypoint_forworkload_demo() {
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: curl-client
   labels:
     app: curl-client
+  name: curl-client
 spec:
   replicas: 1
   selector:
@@ -301,10 +301,7 @@ spec:
         app: curl-client
     spec:
       containers:
-        - name: curl-client
-          image: ${CURL_IMAGE}
-          command: ["/bin/sh", "-c"]
-          args:
+        - args:
             - |
               while true; do
                 echo "Calling echo pod at ${pod_ip}..."
@@ -313,6 +310,9 @@ spec:
                 fi
                 sleep 5
               done
+          command: ["/bin/sh", "-c"]
+          image: ${CURL_IMAGE}
+          name: curl-client
 NAD
   ${CLIENT_EXE} rollout status deployment/curl-client -n "${namespace}" --timeout=120s
 }

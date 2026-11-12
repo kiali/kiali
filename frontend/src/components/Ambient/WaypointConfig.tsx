@@ -33,7 +33,7 @@ import { PodStatus } from '../../pages/WorkloadDetails/PodStatus';
 import { WaypointCanaryInfoPanel } from './WaypointCanarySummary';
 import { gatewayConfigsWithCanary } from './WaypointTrafficSplitSelector';
 import { PFSpacer } from 'styles/PfSpacer';
-import { PFFontSize } from 'styles/PfTypography';
+import { PFFontSize, PFFontWeight } from 'styles/PfTypography';
 import { cardBodyStyle, cardStyle } from '../../pages/Overview/OverviewStyles';
 import { kialiStyle } from 'styles/StyleUtils';
 
@@ -141,8 +141,8 @@ const overviewTabContentStyle = kialiStyle({
 });
 
 const waypointForScopeStyle = kialiStyle({
-  fontSize: 'var(--pf-t--global--font--size--body--default)',
-  fontWeight: 'var(--pf-t--global--font--weight--body--default)',
+  fontSize: PFFontSize.default,
+  fontWeight: PFFontWeight.BodyDefault,
   marginTop: PFSpacer.xs
 });
 

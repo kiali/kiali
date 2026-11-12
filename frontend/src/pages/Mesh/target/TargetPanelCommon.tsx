@@ -62,6 +62,10 @@ const healthStatusStyle = kialiStyle({
   marginLeft: '0.5rem'
 });
 
+const waypointNamespaceTooltipContentStyle = kialiStyle({
+  textAlign: 'left'
+});
+
 const waypointNamespaceTooltipStyle = kialiStyle({
   alignItems: 'center',
   display: 'inline-flex',
@@ -151,7 +155,7 @@ export const renderWaypointNamespaceInfo = (data: MeshNodeData): React.ReactNode
       position={TooltipPosition.right}
       enableFlip={true}
       content={
-        <div style={{ textAlign: 'left' }}>
+        <div className={waypointNamespaceTooltipContentStyle}>
           <span className={waypointNamespaceTooltipStyle}>
             <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
             <span>{data.namespace}</span>
