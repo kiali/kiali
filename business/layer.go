@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"errors"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -49,13 +50,16 @@ func (in *Layer) CheckClusterCacheAvailable(cluster string) error {
 // cluster is not skippable: the error is returned so the request fails cleanly. A remote
 // cluster is skipped: the caller should serve its empty result (an empty list, a zero
 // status) rather than fail the whole page, the same treatment the graph engine and the
-// namespace picker give degraded clusters.
+// namespace picker give degraded clusters. A cluster Kiali has no cache configured for at
+// all is a configuration error that will not resolve itself - unlike a degraded cluster,
+// which recovers when access is restored - so it fails the request too; the mesh
+// resolution makes the same distinction.
 func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bool, error) {
 	err := in.CheckClusterCacheAvailable(cluster)
 	if err == nil {
 		return false, nil
 	}
-	if cluster == in.Namespace.conf.KubernetesConfig.ClusterName {
+	if cluster == in.Namespace.conf.KubernetesConfig.ClusterName || errors.Is(err, cache.ErrClusterNotCached) {
 		return false, err
 	}
 	log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)

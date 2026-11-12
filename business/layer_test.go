@@ -15,38 +15,53 @@ import (
 )
 
 // TestSkipUnavailableCluster covers the degraded-cluster decision the per-cluster list
-// and status handlers rely on: a remote cluster whose service-account cache cannot serve
-// reads is skipped, the home cluster fails, an available cluster proceeds.
+// and status handlers rely on: a degraded remote cluster is skipped, the home cluster
+// and a cluster with no cache configured at all fail, an available cluster proceeds.
 func TestSkipUnavailableCluster(t *testing.T) {
 	require := require.New(t)
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 
-	// The home cluster's cache is wired to a revocation check we trigger below; a
-	// second, uncached cluster stands in for an unregistered remote.
+	// Both clusters are cached; the revocation check below is triggered per cluster.
 	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
 		return false, nil
 	})
-	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}
+	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}
 	clusterCache, err := cache.NewKialiCache(context.Background(), clients,
-		map[string]ctrlclient.Reader{config.DefaultClusterID: k8s}, *conf, cache.WithClusterAccess(access))
+		map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remote}, *conf, cache.WithClusterAccess(access))
 	require.NoError(err)
-	layer := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
+	layer := NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}).
+		WithCache(clusterCache).
+		Build()
 
-	// An available cluster proceeds.
+	// Available clusters proceed.
 	skip, err := layer.SkipUnavailableCluster(context.Background(), config.DefaultClusterID)
 	assert.NoError(t, err)
 	assert.False(t, skip, "an available cluster is not skipped")
-
-	// A remote cluster without a cache is skipped, not failed.
 	skip, err = layer.SkipUnavailableCluster(context.Background(), "remote-cluster")
 	assert.NoError(t, err)
-	assert.True(t, skip, "a remote cluster with no cache is skipped")
+	assert.False(t, skip, "an available remote cluster is not skipped")
 
-	// Degrade the home cluster (revoked access confirmed): it is not skippable, its
-	// cache being unavailable fails the request.
+	// A degraded remote cluster is skipped, not failed: it recovers when access is
+	// restored, and the pages that span clusters render its empty result.
+	access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments")
+	skip, err = layer.SkipUnavailableCluster(context.Background(), "remote-cluster")
+	assert.NoError(t, err)
+	assert.True(t, skip, "a degraded remote cluster is skipped")
+
+	// A cluster Kiali has no cache configured for at all is a configuration error
+	// (e.g. a mistyped cluster name): it will not recover on its own, so it fails
+	// the request instead of silently resolving to an empty result.
+	skip, err = layer.SkipUnavailableCluster(context.Background(), "not-registered")
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, cache.ErrClusterNotCached)
+	assert.False(t, skip, "an uncached cluster fails the request")
+
+	// The home cluster is not skippable: its cache being unavailable fails the request.
 	access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments")
 	skip, err = layer.SkipUnavailableCluster(context.Background(), config.DefaultClusterID)
 	assert.Error(t, err)

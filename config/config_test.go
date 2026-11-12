@@ -1696,7 +1696,7 @@ func TestAccessibleNamespacesForCluster(t *testing.T) {
 	cfg.Deployment.DiscoverySelectors.Overrides["west"] = DiscoverySelectorsType{
 		&DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
 	}
-	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
+	_, err = cfg.AccessibleNamespacesForCluster("west")
 	assert.Error(err)
 
 	// Cluster-wide access has no per-cluster scope.
