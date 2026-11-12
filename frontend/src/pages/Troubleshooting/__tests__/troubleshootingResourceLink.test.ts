@@ -11,6 +11,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-istio',
+        impact: 'VirtualService reviews fails validation',
         issue: 'fails validation',
         istioObject: {
           group: 'networking.istio.io',
@@ -32,6 +33,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-wl',
+        impact: 'Workload is missing a sidecar',
         issue: 'missing sidecar',
         target: 'Workload (ReplicaSet): bookinfo/kiali-traffic-generator'
       })
@@ -44,6 +46,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-svc',
+        impact: 'Service is failing',
         issue: 'errors',
         target: 'Service: bookinfo/productpage'
       })
@@ -56,6 +59,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-app',
+        impact: 'Application health is degraded',
         issue: 'degraded',
         target: 'Application: bookinfo/reviews'
       })
@@ -68,6 +72,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-ns',
+        impact: 'Namespace is not healthy',
         issue: 'not healthy',
         target: 'Namespace: bookinfo'
       })
@@ -82,6 +87,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-prom',
+        impact: 'Metrics are unavailable',
         issue: 'unreachable',
         target: 'Prometheus'
       })
@@ -94,6 +100,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-grafana',
+        impact: 'Dashboards are unavailable',
         issue: 'down',
         target: 'Grafana: istio-system/grafana'
       })
@@ -106,6 +113,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-tempo',
+        impact: 'Traces are lagging',
         issue: 'lagging',
         target: 'Tempo'
       })
@@ -120,6 +128,7 @@ describe('getTroubleshootingResourceLink', () => {
     expect(
       linkFor({
         id: 'sp-net',
+        impact: 'Traffic edge is failing',
         issue: 'traffic',
         target: 'productpage → reviews'
       })
