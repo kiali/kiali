@@ -146,9 +146,9 @@ const configureStore = (initialState: KialiAppState): Store<KialiAppState, Kiali
   // compose enhancers
   const enhancer = composeEnhancers(applyMiddleware(...middlewares));
   // persist reducers
-  const persistentReducer = persistReducer(persistConfig, rootReducer);
+  const persistentReducer = persistReducer(persistConfig, rootReducer as never);
 
-  return createStore(persistentReducer, initialState, enhancer);
+  return createStore(persistentReducer, initialState as never, enhancer) as Store<KialiAppState, KialiAppAction>;
 };
 
 // Setup the initial state of the Redux store with defaults

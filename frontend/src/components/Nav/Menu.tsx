@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { filter } from 'lodash-es';
-import { Link, useLocation, useNavigate, matchPath } from 'react-router-dom-v5-compat';
+import { Link, useLocation, useNavigate, matchPath } from 'react-router';
 import { Divider, Nav, NavList, NavItem } from '@patternfly/react-core';
 import { navMenuItems } from '../../routes';
 import { kialiStyle } from 'styles/StyleUtils';

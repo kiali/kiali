@@ -106,10 +106,6 @@ const meshHideStyle = kialiStyle({
 const operands: string[] = ['cluster', 'healthy', 'inaccessible', 'name', 'namespace', 'infratype'];
 
 export class MeshFindComponent extends React.Component<MeshFindProps, MeshFindState> {
-  static contextTypes = {
-    router: (): null => null
-  };
-
   private findAutoComplete: AutoComplete;
   private findInputRef;
   private findElements: GraphElement[] | undefined;

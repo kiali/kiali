@@ -13,6 +13,7 @@ import { CustomTimeTabsProvider } from './CustomTimeTabs';
 type TabsProps = {
   actionsToolbar?: React.ReactNode;
   activeTab: string;
+  children?: React.ReactNode;
   className?: string;
   customTimeTabs?: string[];
   defaultTab: string;

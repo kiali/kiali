@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { isMultiCluster, Paths } from '../../config';
-import { Link, useLocation } from 'react-router-dom-v5-compat';
+import { Link, useLocation } from 'react-router';
 import { Breadcrumb, BreadcrumbItem } from '@patternfly/react-core';
 import { FilterSelected } from '../Filters/StatefulFilters';
 import { HistoryManager } from '../../app/History';

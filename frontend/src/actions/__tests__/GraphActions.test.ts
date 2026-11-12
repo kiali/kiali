@@ -1,7 +1,7 @@
-import { Controller, GraphElement } from '@patternfly/react-topology';
+import type { Controller, GraphElement } from '@patternfly/react-topology';
 import { GraphActions } from '../GraphActions';
 import { GraphThunkActions } from '../GraphThunkActions';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 
 describe('GraphActions', () => {
   it('should build "update summary" action', () => {

@@ -1,6 +1,6 @@
 // Action Creators allow us to create typesafe utilities for dispatching actions
-import type { ActionType } from 'typesafe-actions';
-import { createAction, createStandardAction } from 'typesafe-actions';
+import type { ActionType } from 'types/typesafeActionsLegacy';
+import { createAction, createStandardAction } from 'types/typesafeActionsLegacy';
 import { ActionKeys } from './ActionKeys';
 import type { KioskData, KioskMode } from '../types/Common';
 

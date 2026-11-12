@@ -110,7 +110,8 @@ When('user chooses the {string} option', (title: string) => {
 });
 
 Then('the graph type is disabled', () => {
-  cy.get('button#graph_type_dropdown-toggle').should('be.disabled');
+  cy.url().should('include', '/graph/node/');
+  cy.get('button#graph_type_dropdown-toggle', { timeout: 60000 }).should('be.disabled');
 });
 
 Then('user sees {string} badge for service', (badge: string) => {

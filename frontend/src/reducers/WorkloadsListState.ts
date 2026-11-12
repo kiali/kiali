@@ -1,7 +1,7 @@
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 import { updateState } from '../utils/Reducer';
-import { WorkloadsListState } from '../store/Store';
-import { KialiAppAction } from '../actions/KialiAppAction';
+import type { WorkloadsListState } from '../store/Store';
+import type { KialiAppAction } from '../actions/KialiAppAction';
 import { WorkloadsListActions } from '../actions/WorkloadsListActions';
 
 export const INITIAL_WORKLOADS_LIST_STATE: WorkloadsListState = {

@@ -1,5 +1,5 @@
 import { UserSettingsActions } from '../UserSettingsActions';
-import { getType } from 'typesafe-actions';
+import { getType } from 'types/typesafeActionsLegacy';
 
 describe('UserSettingsActions', () => {
   it('should set the duration', () => {

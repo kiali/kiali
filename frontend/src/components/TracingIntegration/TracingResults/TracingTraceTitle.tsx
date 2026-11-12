@@ -1,22 +1,16 @@
 import * as React from 'react';
-import {
-  CardHeader,
-  CardTitle,
-  Dropdown,
-  DropdownItem,
-  DropdownList,
-  MenuToggle,
-  MenuToggleElement
-} from '@patternfly/react-core';
+import type { MenuToggleElement } from '@patternfly/react-core';
+import { CardHeader, CardTitle, Dropdown, DropdownItem, DropdownList, MenuToggle } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
-import { FormattedTraceInfo, fullIDStyle } from './FormattedTraceInfo';
-import { KialiAppState } from '../../../store/Store';
+import type { FormattedTraceInfo } from './FormattedTraceInfo';
+import { fullIDStyle } from './FormattedTraceInfo';
+import type { KialiAppState } from '../../../store/Store';
 import { connect } from 'react-redux';
 import { isParentKiosk, kioskNavigateAction, kioskTracingAction } from '../../Kiosk/KioskActions';
 import { KialiIcon } from 'config/KialiIcon';
 import { kebabToggleStyle } from 'styles/DropdownStyles';
 import { useKialiTranslation } from 'utils/I18nUtils';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useNavigate } from 'react-router';
 
 type ReduxProps = {
   kiosk: string;
