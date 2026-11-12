@@ -336,3 +336,21 @@ func TestGetKubeCacheFailsFastForDegradedCluster(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, remote, reader)
 }
+
+// A cluster can be partially revoked for one resource and fully revoked for another.
+// When the probe clears the full revocation, the partial one must survive the same
+// probe instead of writing into the marks it just dropped.
+func TestProbeKeepsPartialRevocationWhenClusterRecovers(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.setPartial("west", "apps", "deployments", []string{"bookinfo"})
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	fake.set("west", "", "pods", false)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+
+	fake.set("west", "", "pods", true)
+	require.NotPanics(t, func() { access.Probe(context.Background()) })
+
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "pods are readable again")
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"), "deployments still deny bookinfo")
+}

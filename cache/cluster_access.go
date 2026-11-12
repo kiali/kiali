@@ -250,6 +250,12 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 				for _, ns := range denied.Namespaces {
 					namespaces[ns] = struct{}{}
 				}
+				// The cluster's marks may be gone since the snapshot: the loop above
+				// drops them when the cluster recovers, and ConfirmRevoked drops them
+				// when its own check comes back all-allowed.
+				if a.nsRevoked[cluster] == nil {
+					a.nsRevoked[cluster] = map[groupResource]map[string]struct{}{}
+				}
 				a.nsRevoked[cluster][gr] = namespaces
 			}
 			a.mu.Unlock()
