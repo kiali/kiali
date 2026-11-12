@@ -3243,33 +3243,28 @@ func TestNamespaceMapWithTagsAndClusterWideAccessFalse(t *testing.T) {
 	require.Equal("istio-system", rootNs, "GetRootNamespace should work for namespace with tag label")
 }
 
-// Assisted-by: Claude Code
+// newMeshClusterClient returns a fake client carrying a complete control-plane fixture
+// (namespace, istiod, istio ConfigMap, certificate ConfigMap) for the named cluster.
+func newMeshClusterClient(clusterName string) *kubetest.FakeK8sClient {
+	return kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("istio-system"),
+		fakeIstiodDeployment(clusterName, true),
+		fakeIstioConfigMap("default"),
+		certtest.FakeIstioCertificateConfigMap("istio-system"),
+	)
+}
+
 func TestGetMeshSkipsDegradedRemoteCluster(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
-	istioConfigMap := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "istio",
-			Namespace: "istio-system",
-			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
-		},
-		Data: map[string]string{"mesh": configMapData},
-	}
-	k8s := kubetest.NewFakeK8sClient(
-		kubetest.FakeNamespace("istio-system"),
-		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
-		istioConfigMap,
-		certtest.FakeIstioCertificateConfigMap("istio-system"),
-	)
-	remoteClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	k8s := newMeshClusterClient(conf.KubernetesConfig.ClusterName)
+	// The remote carries a full control plane, so with a healthy cache it contributes a
+	// second control plane: the skip below is then observable, and cannot be confused
+	// with "scanned and found nothing".
+	remoteClient := newMeshClusterClient("remote")
 	clients := map[string]kubernetes.ClientInterface{"east": k8s, "remote": remoteClient}
 	readers := map[string]ctrlclient.Reader{"east": k8s, "remote": remoteClient}
 
@@ -3277,49 +3272,44 @@ trustDomain: cluster.local
 		access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
 			return false, nil
 		})
-		require.True(access.ConfirmRevoked(context.Background(), degraded, "apps", "deployments"))
+		if degraded != "" {
+			require.True(access.ConfirmRevoked(context.Background(), degraded, "apps", "deployments"))
+		}
 		kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf, cache.WithClusterAccess(access))
 		require.NoError(err)
 		return istio.NewDiscovery(clients, kialiCache, conf)
 	}
 
-	mesh, err := newDiscovery("remote").Mesh(context.TODO())
+	// Baseline: with every cache available, both control planes are discovered.
+	mesh, err := newDiscovery("").Mesh(t.Context())
+	require.NoError(err)
+	require.Len(mesh.ControlPlanes, 2, "baseline: the remote contributes its control plane")
+
+	// A degraded remote is skipped: its control plane must not leak into the mesh.
+	mesh, err = newDiscovery("remote").Mesh(t.Context())
 	require.NoError(err, "a degraded remote cluster is skipped")
 	require.Len(mesh.ControlPlanes, 1)
+	for _, cp := range mesh.ControlPlanes {
+		require.NotEqual("remote", cp.Cluster.Name, "the degraded cluster's control plane must be absent")
+	}
 	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name)
 
-	_, err = newDiscovery("east").Mesh(context.TODO())
+	// The home cluster is not skippable.
+	_, err = newDiscovery("east").Mesh(t.Context())
 	require.Error(err, "the home cluster is still required")
 }
 
-// Assisted-by: Claude Code
 func TestGetMeshSkipsRemoteClusterWithNoCache(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
-	istioConfigMap := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "istio",
-			Namespace: "istio-system",
-			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
-		},
-		Data: map[string]string{"mesh": configMapData},
-	}
-	k8s := kubetest.NewFakeK8sClient(
-		kubetest.FakeNamespace("istio-system"),
-		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
-		istioConfigMap,
-		certtest.FakeIstioCertificateConfigMap("istio-system"),
-	)
-	// The ghost cluster has a client but no cache reader, like a misconfigured remote.
-	ghostClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	k8s := newMeshClusterClient(conf.KubernetesConfig.ClusterName)
+	// The ghost cluster has a client - carrying a full control-plane fixture, so any
+	// code path that scanned it instead of skipping would surface its control plane -
+	// but no cache reader, like a misconfigured remote.
+	ghostClient := newMeshClusterClient("ghost")
 	clients := map[string]kubernetes.ClientInterface{"east": k8s, "ghost": ghostClient}
 	readers := map[string]ctrlclient.Reader{"east": k8s}
 
@@ -3327,61 +3317,64 @@ trustDomain: cluster.local
 	require.NoError(err)
 	discovery := istio.NewDiscovery(clients, kialiCache, conf)
 
-	mesh, err := discovery.Mesh(context.TODO())
+	mesh, err := discovery.Mesh(t.Context())
 	require.NoError(err, "a remote cluster with no cache configured is skipped, not fatal")
 	require.Len(mesh.ControlPlanes, 1)
+	for _, cp := range mesh.ControlPlanes {
+		require.NotEqual("ghost", cp.Cluster.Name, "the uncached cluster's control plane must not leak into the mesh")
+	}
 	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name)
 }
 
-// Assisted-by: Claude Code
 func TestGetMeshToleratesWebhookListFailure(t *testing.T) {
 	require := require.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "east"
 	conf.ExternalServices.Istio.IstioAPIEnabled = false
 
-	const configMapData = `accessLogFile: /dev/stdout
-enableAutoMtls: true
-rootNamespace: istio-system
-trustDomain: cluster.local
-`
-	istioConfigMap := &core_v1.ConfigMap{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "istio",
-			Namespace: "istio-system",
-			Labels:    map[string]string{config.IstioRevisionLabel: "default"},
-		},
-		Data: map[string]string{"mesh": configMapData},
-	}
+	// Home can list webhooks and carries a revision-tag webhook, so the mesh must
+	// still resolve home's tags when the remote's webhook list fails.
 	k8s := kubetest.NewFakeK8sClient(
+		fakeDefaultWebhook(),
 		kubetest.FakeNamespace("istio-system"),
 		fakeIstiodDeployment(conf.KubernetesConfig.ClusterName, true),
-		istioConfigMap,
+		fakeIstioConfigMap("default"),
 		certtest.FakeIstioCertificateConfigMap("istio-system"),
 	)
-	remoteClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	homeClient := approvingClient(k8s)
+
+	remoteK8s := newMeshClusterClient("remote")
 	// The remote's access was revoked after Kiali started: the startup SSAR said the
 	// webhooks were listable, but the live list is forbidden.
-	remoteClient.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
-		func(action k8stesting.Action) (bool, runtime.Object, error) {
-			review := action.(k8stesting.CreateAction).GetObject().(*authv1.SelfSubjectAccessReview)
-			review.Status.Allowed = true
-			return true, review, nil
-		})
-	remoteClient.KubeClientset.(*kubefake.Clientset).PrependReactor("list", "mutatingwebhookconfigurations",
+	remoteK8s.KubeClientset.(*kubefake.Clientset).PrependReactor("list", "mutatingwebhookconfigurations",
 		func(action k8stesting.Action) (bool, runtime.Object, error) {
 			return true, nil, fmt.Errorf("mutatingwebhookconfigurations.admissionregistration.k8s.io is forbidden")
 		})
+	remoteClient := approvingClient(remoteK8s)
 
-	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
-	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteClient}
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: homeClient, "remote": remoteClient}
+	readers := map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: k8s, "remote": remoteK8s}
 
 	kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 	discovery := istio.NewDiscovery(clients, kialiCache, conf)
 
-	mesh, err := discovery.Mesh(context.TODO())
+	mesh, err := discovery.Mesh(t.Context())
 	require.NoError(err, "a cluster whose webhook list fails must not fail the whole mesh")
 	require.NotEmpty(mesh.ControlPlanes)
 	require.Equal(conf.KubernetesConfig.ClusterName, mesh.ControlPlanes[0].Cluster.Name)
+
+	// The failing list was actually attempted on the remote, so the tolerance path ran
+	// rather than the remote being skipped for some other reason.
+	listed := false
+	for _, action := range remoteK8s.KubeClientset.(*kubefake.Clientset).Actions() {
+		if action.GetVerb() == "list" && action.GetResource().Resource == "mutatingwebhookconfigurations" {
+			listed = true
+		}
+	}
+	require.True(listed, "the remote's webhook list was attempted")
+
+	// The home cluster's tags survived the skip.
+	require.NotNil(mesh.ControlPlanes[0].Tag, "home's tags are still resolved when a remote's webhook list fails")
+	require.Equal("default", mesh.ControlPlanes[0].Tag.Name)
 }

@@ -387,7 +387,10 @@ func TestSkipsClustersWithUnavailableCache(t *testing.T) {
 	}
 
 	// Must not panic: without the cache guard the cluster-wide fetch for the remote
-	// cluster errors and CheckError fails the whole graph.
+	// cluster errors and CheckError fails the whole graph. This covers BOTH guarded
+	// loops individually: the config-list loop has no vendor-map observable (it applies
+	// config straight to the traffic map), but removing only its guard makes the
+	// unguarded GetIstioConfigList fail through CheckError - verified by mutation.
 	assert.NotPanics(func() {
 		a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 	})

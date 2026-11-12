@@ -1699,6 +1699,13 @@ func TestAccessibleNamespacesForCluster(t *testing.T) {
 	_, err = cfg.AccessibleNamespacesForCluster("west")
 	assert.Error(err)
 
+	// An override entry with zero selectors resolves to an empty list; callers
+	// fall back to the default accessible namespaces via the empty-list branch.
+	cfg.Deployment.DiscoverySelectors.Overrides["west"] = DiscoverySelectorsType{}
+	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
+	assert.NoError(err)
+	assert.Equal([]string{}, namespaces)
+
 	// Cluster-wide access has no per-cluster scope.
 	cfg.Deployment.ClusterWideAccess = true
 	namespaces, err = cfg.AccessibleNamespacesForCluster("west")

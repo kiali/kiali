@@ -2,8 +2,6 @@
 
 package cmd
 
-// Assisted-by: Claude Code
-
 import (
 	"context"
 	"errors"
@@ -93,12 +91,127 @@ func TestAccessCheckChecksEachAccessibleNamespace(t *testing.T) {
 
 	allowed, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.True(t, allowed)
+	require.True(t, allowed, "every accessible namespace is readable")
 
+	// A single denied namespace is not a revocation: the namespace may have been
+	// deleted (its Role dies with it) or individually revoked, and the cluster
+	// keeps serving the namespaces that are still readable.
 	conf.Deployment.AccessibleNamespaces = append(conf.Deployment.AccessibleNamespaces, "other")
 	allowed, err = newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
 	require.NoError(t, err)
-	require.False(t, allowed, "no access in one of the namespaces")
+	require.True(t, allowed, "a denied namespace alongside readable ones does not revoke the cluster")
+
+	// The cluster is revoked only when no accessible namespace grants the read.
+	denyingClient := fakeClientWithAccess(map[string]bool{})
+	denyingFactory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": denyingClient})
+	allowed, err = newAccessCheck(conf, denyingFactory)(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, allowed, "every accessible namespace denied")
+}
+
+// A real SSAR API error must surface as (false, err) - unknown - never (false, nil) -
+// denied: mapping API errors to "denied" would tear down healthy-but-slow clusters,
+// the exact failure the three-valued check outcome exists to prevent.
+//
+// Known race, accepted: when one namespace's check errors and another's is denied, the
+// errgroup returns whichever finished first, so a definitive denial can be reported as
+// unknown. That outcome is bounded by the debounce window (10s) and conservative (the
+// cache is kept and the check retried). Do not write a timing assertion for this - it
+// would be flaky in CI.
+// TestAccessibleNamespacesForClusterFallbacks pins the misconfiguration safety net of
+// the access scoping: this function feeds both the remote cache's DefaultNamespaces and
+// the access check, so a fallback that returned nil on error would give the remote cache
+// no namespace restriction, and a check against zero namespaces trivially returns
+// allowed - revocations would never be detected.
+func TestAccessibleNamespacesForClusterFallbacks(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+	conf.Deployment.DiscoverySelectors.Default = config.DiscoverySelectorsType{
+		&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
+	}
+	conf.Deployment.DiscoverySelectors.Overrides = map[string]config.DiscoverySelectorsType{
+		"valid": {
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "west-ns"}},
+		},
+		"unresolvable": {
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
+		},
+		"empty": {},
+	}
+	defaultList := []string{"bookinfo", "istio-system"}
+
+	tests := map[string]struct {
+		cluster  string
+		cwa      bool
+		expected []string
+	}{
+		"cluster without an override uses the default accessible namespaces": {
+			cluster: "east", expected: defaultList,
+		},
+		"a valid override resolves to its own namespaces": {
+			cluster: "valid", expected: []string{"west-ns"},
+		},
+		"an override that cannot be resolved falls back to the default list": {
+			cluster: "unresolvable", expected: defaultList,
+		},
+		"an override that resolves to an empty list falls back to the default list": {
+			cluster: "empty", expected: defaultList,
+		},
+		"cluster-wide access has no per-cluster scope": {
+			cluster: "valid", cwa: true, expected: nil,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			conf.Deployment.ClusterWideAccess = tc.cwa
+			require.Equal(t, tc.expected, accessibleNamespacesForCluster(conf, tc.cluster))
+		})
+	}
+}
+
+func TestNamespaceConfigs(t *testing.T) {
+	tests := map[string]struct {
+		namespaces []string
+		expected   map[string]ctrlcache.Config
+	}{
+		"a nil list means no restriction":    {namespaces: nil, expected: nil},
+		"an empty list means no restriction": {namespaces: []string{}, expected: nil},
+		"each namespace gets an empty config": {
+			namespaces: []string{"bookinfo", "istio-system"},
+			expected:   map[string]ctrlcache.Config{"bookinfo": {}, "istio-system": {}},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, tc.expected, namespaceConfigs(tc.namespaces))
+		})
+	}
+}
+
+func TestAccessCheckAPIErrorIsUnknownNotDenied(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo"}
+	client := kubetest.NewFakeK8sClient()
+	client.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, nil, fmt.Errorf("api server unavailable")
+		})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
+	check := newAccessCheck(conf, factory)
+
+	allowed, err := check(context.Background(), "west", "apps", "deployments")
+	require.Error(t, err)
+	require.False(t, allowed)
+
+	// The unknown outcome keeps the cache: ConfirmRevoked must not degrade the cluster.
+	access := cache.NewClusterAccess(check)
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "an API error is not evidence of a revocation")
 }
 
 func TestAccessCheckHonorsDiscoverySelectorOverrides(t *testing.T) {
@@ -170,11 +283,18 @@ func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {
 	client := kubetest.NewFakeK8sClient()
 	cluster := client.ClusterInfo().Name
 
-	readable := true
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return readable, nil
-	})
+	// Capture the arguments the handler passes to the access check: a regression that
+	// swapped the group and resource, or lost the cluster name, would otherwise pass.
+	var gotCluster, gotGroup, gotResource string
+	newAccess := func(allowed bool) *cache.ClusterAccess {
+		return cache.NewClusterAccess(func(_ context.Context, c, g, r string) (bool, error) {
+			gotCluster, gotGroup, gotResource = c, g, r
+			return allowed, nil
+		})
+	}
+
 	teardowns := 0
+	access := newAccess(true)
 	handler := makeWatchErrorHandler(func() ctrlcache.Cache {
 		teardowns++
 		return nil
@@ -182,19 +302,35 @@ func TestWatchErrorHandlerKeepsInformersOnTransientForbidden(t *testing.T) {
 
 	handler(context.Background(), nil, forbidden)
 	require.Zero(t, teardowns, "a forbidden error on a readable resource keeps the cache")
-	_, degraded := access.DegradedSince(cluster)
-	require.False(t, degraded)
+	require.Equal(t, cluster, gotCluster, "the check is asked about the erroring cluster")
+	require.Equal(t, "apps", gotGroup)
+	require.Equal(t, "deployments", gotResource)
 
-	readable = false
-	access = cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
-		return readable, nil
-	})
+	// A fresh tracker, so the debounce does not replay the allowed outcome above.
+	access = newAccess(false)
 	handler = makeWatchErrorHandler(func() ctrlcache.Cache {
 		teardowns++
 		return nil
 	}, client, access)
 	handler(context.Background(), nil, forbidden)
 	require.Equal(t, 1, teardowns, "a confirmed revocation tears the cache down")
-	_, degraded = access.DegradedSince(cluster)
+	_, degraded := access.DegradedSince(cluster)
 	require.True(t, degraded)
+}
+
+// The nil-clusterAccess path is the legacy behavior, still used by cmd/gather: any
+// Forbidden error tears the informers down without a live check.
+func TestWatchErrorHandlerNilClusterAccessTearsDown(t *testing.T) {
+	forbidden := fmt.Errorf("failed to list *v1.Deployment: %w",
+		apierrors.NewForbidden(schema.GroupResource{Group: "apps", Resource: "deployments"}, "", errors.New("denied")))
+	client := kubetest.NewFakeK8sClient()
+
+	teardowns := 0
+	handler := makeWatchErrorHandler(func() ctrlcache.Cache {
+		teardowns++
+		return nil
+	}, client, nil)
+
+	handler(context.Background(), nil, forbidden)
+	require.Equal(t, 1, teardowns, "without clusterAccess any Forbidden error tears the cache down")
 }

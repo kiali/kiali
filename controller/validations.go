@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -140,7 +141,13 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			if cluster == r.conf.KubernetesConfig.ClusterName {
 				return ctrl.Result{}, err
 			}
-			log.Warningf("[ValidationsReconciler] Skipping cluster [%s]: %s", cluster, err)
+			if errors.Is(err, cache.ErrClusterNotCached) {
+				log.Errorf("[ValidationsReconciler] Skipping cluster [%s]: no cache is configured for it. "+
+					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
+					"not exist in this environment); it will not recover until the configuration is fixed.", cluster)
+			} else {
+				log.Warningf("[ValidationsReconciler] Skipping cluster [%s]: %s", cluster, err)
+			}
 			continue
 		}
 		clusters = append(clusters, cluster)

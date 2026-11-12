@@ -47,19 +47,12 @@ func NamespaceTls(
 			return
 		}
 
-		// A remote cluster whose service-account cache cannot serve reads (access
-		// revoked and torn down) has no status to report: return the zero status
-		// rather than fail the page, the same treatment the graph engine gives
-		// degraded clusters. The home cluster is not skippable.
-		if skip, err := business.SkipUnavailableCluster(r.Context(), queryparams.ClusterName(conf, query)); err != nil {
-			handleErrorResponse(w, err)
-			return
-		} else if skip {
-			RespondWithJSON(w, http.StatusOK, models.MTLSStatus{})
+		cluster := queryparams.ClusterName(conf, query)
+		if skipUnavailableCluster(w, r, business, cluster, models.MTLSStatus{}) {
 			return
 		}
 
-		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, queryparams.ClusterName(conf, query))
+		status, err := business.TLS.NamespaceWidemTLSStatus(r.Context(), namespace, cluster)
 		if err != nil {
 			log.Error(err)
 			// An inaccessible namespace is an authorization failure (403),
@@ -104,15 +97,7 @@ func ClustersTls(
 			return
 		}
 
-		// A remote cluster whose service-account cache cannot serve reads (access
-		// revoked and torn down) has no status to report: return the empty list
-		// rather than fail the page, the same treatment the graph engine gives
-		// degraded clusters. The home cluster is not skippable.
-		if skip, err := business.SkipUnavailableCluster(r.Context(), cluster); err != nil {
-			handleErrorResponse(w, err)
-			return
-		} else if skip {
-			RespondWithJSON(w, http.StatusOK, []models.MTLSStatus{})
+		if skipUnavailableCluster(w, r, business, cluster, []models.MTLSStatus{}) {
 			return
 		}
 

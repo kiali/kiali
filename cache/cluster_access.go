@@ -1,7 +1,5 @@
 package cache
 
-// Assisted-by: Claude Code
-
 import (
 	"context"
 	"sync"
@@ -43,8 +41,8 @@ const (
 )
 
 type accessCheckResult struct {
-	outcome checkOutcome
 	at      time.Time
+	outcome checkOutcome
 }
 
 // ClusterAccess decides whether a Forbidden watch error means a cluster's access was really
@@ -54,19 +52,19 @@ type ClusterAccess struct {
 	check AccessCheck
 	now   func() time.Time
 
-	mu        sync.Mutex
 	degraded  map[string]time.Time
-	revoked   map[string]map[groupResource]struct{}
 	lastCheck map[string]map[groupResource]accessCheckResult
+	mu        sync.Mutex
+	revoked   map[string]map[groupResource]struct{}
 }
 
 func NewClusterAccess(check AccessCheck) *ClusterAccess {
 	return &ClusterAccess{
 		check:     check,
-		now:       time.Now,
 		degraded:  map[string]time.Time{},
-		revoked:   map[string]map[groupResource]struct{}{},
 		lastCheck: map[string]map[groupResource]accessCheckResult{},
+		now:       time.Now,
+		revoked:   map[string]map[groupResource]struct{}{},
 	}
 }
 
@@ -90,7 +88,7 @@ func (a *ClusterAccess) ConfirmRevoked(ctx context.Context, cluster, group, reso
 		if a.lastCheck[cluster] == nil {
 			a.lastCheck[cluster] = map[groupResource]accessCheckResult{}
 		}
-		a.lastCheck[cluster][gr] = accessCheckResult{outcome: outcome, at: a.now()}
+		a.lastCheck[cluster][gr] = accessCheckResult{at: a.now(), outcome: outcome}
 		a.mu.Unlock()
 	}
 

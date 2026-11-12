@@ -1,7 +1,5 @@
 package cache
 
-// Assisted-by: Claude Code
-
 import (
 	"context"
 	"errors"
@@ -19,10 +17,10 @@ import (
 
 // fakeAccess answers access checks from a map and counts the calls.
 type fakeAccess struct {
-	mu      sync.Mutex
 	allowed map[string]bool // keyed by cluster/group/resource
-	err     error
 	calls   int
+	err     error
+	mu      sync.Mutex
 }
 
 func (f *fakeAccess) set(cluster, group, resource string, allowed bool) {
@@ -116,6 +114,51 @@ func TestConfirmRevokedDebouncesChecks(t *testing.T) {
 	*now = now.Add(accessCheckDebounce)
 	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
 	require.Equal(t, 2, fake.calls)
+}
+
+// A check that could not tell (unknown) is not served past the debounce window: when
+// the access really was revoked, the check after expiry must see the denial and degrade
+// the cluster instead of replaying the stale unknown forever.
+func TestConfirmRevokedRecoversFromUnknownToDenied(t *testing.T) {
+	access, fake, now := newTestClusterAccess()
+	fake.err = errors.New("connection refused")
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded)
+
+	// Within the window the cached unknown is served without a new check.
+	fake.err = nil
+	fake.set("west", "apps", "deployments", false)
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, 1, fake.calls)
+
+	// After expiry a fresh check runs and sees the denial.
+	*now = now.Add(accessCheckDebounce)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, 2, fake.calls)
+	_, degraded = access.DegradedSince("west")
+	require.True(t, degraded)
+}
+
+// Probe wipes lastCheck when it clears a recovered cluster, so a revocation that
+// follows immediately runs a live check instead of being served the stale cached
+// outcome from before the recovery.
+func TestProbeWipesLastCheckForRevokedAgainCluster(t *testing.T) {
+	access, fake, _ := newTestClusterAccess()
+	fake.set("west", "apps", "deployments", false)
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+
+	fake.set("west", "apps", "deployments", true)
+	access.Probe(context.Background())
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "access was restored")
+
+	// Revoked again right away: the wipe forces a new live check (a stale cached
+	// outcome would be served within the debounce window otherwise).
+	fake.set("west", "apps", "deployments", false)
+	calls := fake.calls
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.Equal(t, calls+1, fake.calls, "a new live check ran after the probe cleared the cluster")
 }
 
 func TestProbeClearsClusterOnlyWhenAllRevokedResourcesAreBack(t *testing.T) {

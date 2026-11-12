@@ -176,6 +176,28 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 	return names, true
 }
 
+// skipUnavailableCluster serves the request's response when the named cluster's
+// service-account cache cannot serve reads: a degraded remote cluster gets the caller's
+// empty result (an empty list, a zero status) rather than failing the page, while the
+// home cluster and a cluster with no cache configured at all (a configuration error)
+// fail the request. It returns true when the response has been written and the handler
+// should return.
+func skipUnavailableCluster(w http.ResponseWriter, r *http.Request, layer *business.Layer, cluster string, emptyResp any) bool {
+	skip, err := layer.SkipUnavailableCluster(r.Context(), cluster)
+	if err != nil {
+		handleErrorResponse(w, err)
+		return true
+	}
+	if skip {
+		if converter, ok := emptyResp.(ResponseConverter); ok {
+			converter.ConvertToResponse()
+		}
+		RespondWithJSON(w, http.StatusOK, emptyResp)
+		return true
+	}
+	return false
+}
+
 // GetOldestNamespace is a convenience function that takes a list of Namespaces and returns the
 // Namespace with the oldest CreationTimestamp.  In a tie, preference is towards the head of the list.
 func GetOldestNamespace(namespaces []models.Namespace) *models.Namespace {

@@ -65,9 +65,8 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
 			continue
 		}
-		// Likewise a cluster whose service-account cache cannot serve reads
-		// (access revoked and torn down). Its nodes were already dropped from
-		// the traffic map; this loop is cluster-driven, so guard it too.
+		// The dropped cluster's nodes are gone from the traffic map, but this loop
+		// is cluster-driven and would still fetch from its cache.
 		if globalInfo.Business.CheckClusterCacheAvailable(cluster.Name) != nil {
 			continue
 		}
@@ -87,6 +86,7 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
 			continue
 		}
+		// Same reason as the service-list loop above.
 		if globalInfo.Business.CheckClusterCacheAvailable(cluster.Name) != nil {
 			continue
 		}

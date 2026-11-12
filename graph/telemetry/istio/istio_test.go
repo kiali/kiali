@@ -19,28 +19,42 @@ import (
 )
 
 func TestDropUnavailableClusterNodes(t *testing.T) {
-	assert := assert.New(t)
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	config.Set(conf)
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
-	layer := business.NewLayerBuilder(t, config.Get()).WithClient(k8s).Build()
+	remoteClient := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+
+	// The remote's access was revoked (degraded cache): the production scenario for
+	// this function, rather than a cluster the layer simply was built without.
+	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
+		return false, nil
+	})
+	require.True(t, access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
+	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remoteClient}
+	readers := map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remoteClient}
+	clusterCache, err := cache.NewKialiCache(context.Background(), clients, readers, *conf, cache.WithClusterAccess(access))
+	require.NoError(t, err)
+	layer := business.NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
 
 	home := &graph.Node{ID: "homeNode", Cluster: config.DefaultClusterID, Namespace: "testNamespace", NodeType: graph.NodeTypeWorkload}
+	kept := &graph.Node{ID: "keptNode", Cluster: config.DefaultClusterID, Namespace: "testNamespace", NodeType: graph.NodeTypeWorkload}
 	remote := &graph.Node{ID: "remoteNode", Cluster: "remote-cluster", Namespace: "testNamespace", NodeType: graph.NodeTypeWorkload}
 	external := &graph.Node{ID: "externalNode", Cluster: "unknown", Namespace: graph.Unknown, NodeType: graph.NodeTypeWorkload}
-	home.Edges = []*graph.Edge{{Source: home, Dest: remote}, {Source: home, Dest: external}}
-	trafficMap := graph.TrafficMap{home.ID: home, remote.ID: remote, external.ID: external}
+	// The dropped edge sits between two survivors so the survivors' order is observable.
+	home.Edges = []*graph.Edge{{Source: home, Dest: kept}, {Source: home, Dest: remote}, {Source: home, Dest: external}}
+	trafficMap := graph.TrafficMap{home.ID: home, kept.ID: kept, remote.ID: remote, external.ID: external}
 
 	clusters := []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
 	globalInfo := graph.NewGlobalInfo(layer, nil, config.Get(), clusters, appender.NewGlobalIstioInfo())
 	dropUnavailableClusterNodes(context.Background(), trafficMap, globalInfo)
 
-	assert.Contains(trafficMap, "homeNode", "the available cluster's nodes are kept")
-	assert.NotContains(trafficMap, "remoteNode", "the unavailable cluster's nodes are dropped")
-	assert.Contains(trafficMap, "externalNode", "a cluster that is not a Kiali cluster (external traffic) is left alone")
-	assert.Len(home.Edges, 1, "only the edge pointing at the dropped node is removed")
-	assert.Equal(external, home.Edges[0].Dest)
+	require.Contains(t, trafficMap, "homeNode", "the available cluster's nodes are kept")
+	require.NotContains(t, trafficMap, "remoteNode", "the unavailable cluster's nodes are dropped")
+	require.Contains(t, trafficMap, "externalNode", "a cluster that is not a Kiali cluster (external traffic) is left alone")
+	require.Len(t, home.Edges, 2, "only the edge pointing at the dropped node is removed")
+	require.Equal(t, kept, home.Edges[0].Dest, "surviving edges keep their original order")
+	require.Equal(t, external, home.Edges[1].Dest)
 }
 
 func TestDropUnavailableClusterNodesFailsOnHomeCluster(t *testing.T) {

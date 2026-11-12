@@ -777,11 +777,16 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			if isHomeCluster {
 				return nil, err
 			}
-			// A cluster with no cache configured at all is a configuration error that will
-			// not resolve itself, unlike a degraded cluster which recovers when access is
-			// restored, so it gets its own message at error level.
+			// A cluster with no cache configured at all is a configuration error - the
+			// cluster name appears in the configuration but no connected cluster matches
+			// it (a typo, or a cluster that does not exist in this environment), so no
+			// cache was ever created and it will not recover until the configuration is
+			// fixed. Unlike a degraded cluster, which recovers when access is restored,
+			// it gets its own message at error level.
 			if errors.Is(err, cache.ErrClusterNotCached) {
-				log.Errorf("Skipping cluster [%s] when resolving the mesh: no cache is configured for it (check the cluster's registration)", cluster.Name)
+				log.Errorf("Skipping cluster [%s] when resolving the mesh: no cache is configured for it. "+
+					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
+					"not exist in this environment); it will not recover until the configuration is fixed.", cluster.Name)
 			} else {
 				log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
 			}

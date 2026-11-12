@@ -18,21 +18,19 @@ import (
 // and status handlers rely on: a degraded remote cluster is skipped, the home cluster
 // and a cluster with no cache configured at all fail, an available cluster proceeds.
 func TestSkipUnavailableCluster(t *testing.T) {
-	require := require.New(t)
-
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 
-	// Both clusters are cached; the revocation check below is triggered per cluster.
+	// The check denies everything, so any ConfirmRevoked call degrades that cluster.
 	access := cache.NewClusterAccess(func(context.Context, string, string, string) (bool, error) {
 		return false, nil
 	})
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}
 	clusterCache, err := cache.NewKialiCache(context.Background(), clients,
 		map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remote}, *conf, cache.WithClusterAccess(access))
-	require.NoError(err)
+	require.NoError(t, err)
 	layer := NewLayerBuilder(t, conf).
 		WithClients(map[string]kubernetes.UserClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}).
 		WithCache(clusterCache).

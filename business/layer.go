@@ -33,6 +33,9 @@ type Layer struct {
 	TLS          TLSService
 	Validations  IstioValidationsService
 	Workload     WorkloadService
+
+	conf       *config.Config
+	kialiCache cache.KialiCache
 }
 
 // CheckClusterCacheAvailable returns a non-nil error when the Kiali service-account kube
@@ -41,7 +44,7 @@ type Layer struct {
 // clusters (e.g. the graph engine) use this to skip such clusters instead of failing the
 // whole request; the home cluster is not skippable.
 func (in *Layer) CheckClusterCacheAvailable(cluster string) error {
-	_, err := in.IstioConfig.kialiCache.GetKubeCache(cluster)
+	_, err := in.kialiCache.GetKubeCache(cluster)
 	return err
 }
 
@@ -49,17 +52,27 @@ func (in *Layer) CheckClusterCacheAvailable(cluster string) error {
 // service-account cache cannot serve reads (see CheckClusterCacheAvailable). The home
 // cluster is not skippable: the error is returned so the request fails cleanly. A remote
 // cluster is skipped: the caller should serve its empty result (an empty list, a zero
-// status) rather than fail the whole page, the same treatment the graph engine and the
-// namespace picker give degraded clusters. A cluster Kiali has no cache configured for at
-// all is a configuration error that will not resolve itself - unlike a degraded cluster,
-// which recovers when access is restored - so it fails the request too; the mesh
-// resolution makes the same distinction.
+// status) rather than fail the whole page.
+//
+// A cluster with no cache configured at all is a configuration error - the cluster name
+// appears in the configuration but no connected cluster matches it (a typo, or a cluster
+// that does not exist in this environment), so no cache was ever created and it will not
+// recover until the configuration is fixed - so it fails the request too: the caller
+// explicitly named this cluster, and an error tells them the name is wrong instead of
+// silently returning an empty result. Aggregating surfaces (the mesh resolution, the
+// graph, the validations reconciler) deliberately do not fail on such a cluster - they
+// skip it with an error-level log - so a single misconfigured cluster name cannot break
+// cross-cluster views.
+//
+// The skip applies to list and status surfaces, where an empty result is meaningful.
+// Entity-detail surfaces (a single workload, app, service or config object) fail cleanly
+// on any unavailable cache: no meaningful empty entity exists to serve.
 func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bool, error) {
 	err := in.CheckClusterCacheAvailable(cluster)
 	if err == nil {
 		return false, nil
 	}
-	if cluster == in.Namespace.conf.KubernetesConfig.ClusterName || errors.Is(err, cache.ErrClusterNotCached) {
+	if cluster == in.conf.KubernetesConfig.ClusterName || errors.Is(err, cache.ErrClusterNotCached) {
 		return false, err
 	}
 	log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
@@ -77,7 +90,10 @@ func newLayer(
 	discovery istio.MeshDiscovery,
 	cpm ControlPlaneMonitor,
 ) *Layer {
-	temporaryLayer := &Layer{}
+	temporaryLayer := &Layer{
+		conf:       conf,
+		kialiCache: cache,
+	}
 
 	homeClusterName := conf.KubernetesConfig.ClusterName
 

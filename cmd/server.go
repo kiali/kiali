@@ -313,8 +313,6 @@ func cacheTransforms() map[client.Object]ctrlcache.ByObject {
 	}
 }
 
-// makeWatchErrorHandler returns a DefaultWatchErrorHandler that tears down all informers
-// when a Forbidden watch error is received (e.g. namespace deletion or access revocation).
 // makeWatchErrorHandler tears down a cluster's informers on a Forbidden watch error. When
 // clusterAccess is set, it only does so after a live check confirms the access was revoked.
 func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface, clusterAccess *cache.ClusterAccess) func(context.Context, *toolscache.Reflector, error) {
@@ -385,7 +383,12 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 	}
 }
 
-// forbiddenResource returns the group and resource named in a Forbidden error, if it has them.
+// forbiddenResource returns the group and resource named in a Forbidden error, if it has
+// them. A Forbidden error whose Details cannot be parsed (aggregated or proxy layers can
+// produce those; the kube-apiserver always populates Details for list/watch) yields an
+// empty resource: the access check then errors, the outcome is "unknown", and the cache
+// is kept rather than torn down. That is intended - an unparseable error is not evidence
+// of a revocation - at the cost that such an error never triggers a teardown.
 func forbiddenResource(err error) (string, string) {
 	var statusErr *apierrors.StatusError
 	if !errors.As(err, &statusErr) || statusErr.ErrStatus.Details == nil {
@@ -399,10 +402,11 @@ func forbiddenResource(err error) (string, string) {
 // fit the budget on large non-cluster-wide installs.
 const accessCheckConcurrency = 8
 
-// errDenied reports that an SSAR definitively said the resource is not readable. It is
-// internal to newAccessCheck: the sentinel lets the errgroup cancel the remaining namespace
-// checks on first denial, preserving the fast-fail of the former sequential loop.
-var errDenied = errors.New("access denied")
+// errAllowed reports that an SSAR definitively said the resource is readable in a namespace.
+// It is internal to newAccessCheck: the sentinel lets the errgroup cancel the remaining
+// namespace checks on the first allowed result - a single readable namespace means the
+// cluster is not revoked, so there is nothing more to learn.
+var errAllowed = errors.New("access allowed")
 
 // namespaceConfigs turns a list of namespace names into the cache's DefaultNamespaces restriction.
 // An empty list means no restriction (all namespaces).
@@ -447,7 +451,12 @@ func accessibleNamespacesForCluster(conf *config.Config, cluster string) []strin
 
 // newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
 // account can still list and watch a resource. Without cluster-wide access it checks every
-// accessible namespace, concurrently.
+// accessible namespace, concurrently. A cluster counts as revoked only when no accessible
+// namespace grants the read: a single readable namespace means the cluster is still serving,
+// while a denied one may simply have been deleted (its Role dies with it) or individually
+// revoked - degrading the whole cluster for that would turn a namespace-level problem into an
+// outage of every page. The first allowed result short-circuits the sweep; concluding a
+// revocation is O(accessible namespaces), bounded by the 5s check timeout.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
 	// Each cluster is verified against its own accessible namespaces so that per-cluster
 	// discovery selector overrides are honored on the access path, not just in the views.
@@ -485,19 +494,22 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 				}
 				for _, review := range reviews {
 					if !review.Status.Allowed {
-						return errDenied
+						// A denied namespace is not, on its own, a revocation: only when
+						// every accessible namespace is denied is the cluster's access gone.
+						return nil
 					}
 				}
-				return nil
+				return errAllowed
 			})
 		}
 		if err := g.Wait(); err != nil {
-			if errors.Is(err, errDenied) {
-				return false, nil
+			if errors.Is(err, errAllowed) {
+				return true, nil
 			}
 			return false, err
 		}
-		return true, nil
+		// Every accessible namespace denied the read: the cluster's access is gone.
+		return false, nil
 	}
 }
 

@@ -26,6 +26,7 @@ package istio
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
@@ -126,6 +128,13 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 // telemetry can carry cluster labels that are not Kiali clusters (e.g. "unknown" external
 // traffic), and those nodes are left alone. The home cluster is not skippable: its cache
 // being unavailable fails the graph.
+//
+// A cluster with no cache configured is a configuration error - the cluster name appears
+// in the configuration but no connected cluster matches it (a typo, or a cluster that does
+// not exist in this environment), so no cache was ever created and it will not recover
+// until the configuration is fixed. Unlike the per-cluster API handlers, which fail the
+// request for such a cluster, aggregating surfaces like this one skip it: one
+// misconfigured cluster name must not take down the graph for every other cluster.
 func dropUnavailableClusterNodes(ctx context.Context, trafficMap graph.TrafficMap, gi *appender.GlobalInfo) {
 	zl := log.FromContext(ctx)
 	knownClusters := make(map[string]struct{}, len(gi.Clusters))
@@ -143,19 +152,25 @@ func dropUnavailableClusterNodes(ctx context.Context, trafficMap graph.TrafficMa
 			continue
 		}
 		if node.Cluster == homeCluster {
-			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %s", homeCluster, err))
+			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
 		}
 		if _, logged := droppedClusters[node.Cluster]; !logged {
 			droppedClusters[node.Cluster] = struct{}{}
-			zl.Warn().Msgf("Skipping cluster [%s] when building the graph: %s", node.Cluster, err)
+			if errors.Is(err, cache.ErrClusterNotCached) {
+				zl.Error().Msgf("Skipping cluster [%s] when building the graph: no cache is configured for it. "+
+					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
+					"not exist in this environment); it will not recover until the configuration is fixed.", node.Cluster)
+			} else {
+				zl.Warn().Msgf("Skipping cluster [%s] when building the graph: %s", node.Cluster, err)
+			}
 		}
 		delete(trafficMap, id)
 	}
 	if len(droppedClusters) == 0 {
 		return
 	}
-	// Remove the edges that pointed at the dropped nodes so no edge references a
-	// node that is no longer in the map.
+	// Appenders and the response join edges to nodes by Dest.ID; an edge whose
+	// destination was dropped would dangle, so strip those too.
 	for _, node := range trafficMap {
 		keptEdges := make([]*graph.Edge, 0, len(node.Edges))
 		for _, edge := range node.Edges {

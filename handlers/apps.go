@@ -88,15 +88,7 @@ func ClusterApps(
 			Cluster: p.ClusterName,
 		}
 
-		// A remote cluster whose service-account cache cannot serve reads (access
-		// revoked and torn down) has no data to list: return the empty list rather
-		// than fail the page, the same treatment the graph engine gives degraded
-		// clusters. The home cluster is not skippable.
-		if skip, err := businessLayer.SkipUnavailableCluster(r.Context(), p.ClusterName); err != nil {
-			handleErrorResponse(w, err)
-			return
-		} else if skip {
-			RespondWithJSON(w, http.StatusOK, clusterAppsList)
+		if skipUnavailableCluster(w, r, businessLayer, p.ClusterName, clusterAppsList) {
 			return
 		}
 

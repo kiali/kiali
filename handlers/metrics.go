@@ -295,7 +295,9 @@ func ControlPlaneMetrics(
 			IncludeHealth:         false,
 		})
 		if err != nil {
-			RespondWithError(w, http.StatusBadRequest, err.Error())
+			// A missing control plane or an unavailable cluster cache is not a bad
+			// request; map it through the standard error handling (404/500).
+			handleErrorResponse(w, err)
 			return
 		}
 
