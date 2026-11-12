@@ -592,15 +592,18 @@ var canListFlight singleflight.Group
 // resourceNames-scoped grants cannot be probed with SSAR (its
 // ResourceAttributes take no resource name), so the list errs toward hiding
 // rows rather than showing rows whose details would 403.
-func (in *IstioConfigService) canListType(ctx context.Context, cluster, namespace string, gvk schema.GroupVersionKind) bool {
-	userClient := in.userClients[cluster]
+// canListType is shared by the config list and the validations read paths
+// (IstioValidationsService), so it takes the cache and user clients
+// explicitly rather than riding on a service instance.
+func canListType(ctx context.Context, kialiCache cache.KialiCache, userClients map[string]kubernetes.UserClientInterface, cluster, namespace string, gvk schema.GroupVersionKind) bool {
+	userClient := userClients[cluster]
 	if userClient == nil {
 		return false
 	}
 
 	resource := kubernetes.PluralResourceName(gvk.Kind)
 	cacheKey := userClient.GetCacheKey()
-	if canList, found := in.kialiCache.CanListType(cluster, cacheKey, namespace, gvk.Group, resource); found {
+	if canList, found := kialiCache.CanListType(cluster, cacheKey, namespace, gvk.Group, resource); found {
 		return canList
 	}
 
@@ -609,7 +612,7 @@ func (in *IstioConfigService) canListType(ctx context.Context, cluster, namespac
 	// the cache again before issuing the SSAR.
 	flightKey := fmt.Sprintf("%s/%s/%s/%s/%s", cluster, cacheKey, namespace, gvk.Group, resource)
 	result, err, _ := canListFlight.Do(flightKey, func() (any, error) {
-		if canList, found := in.kialiCache.CanListType(cluster, cacheKey, namespace, gvk.Group, resource); found {
+		if canList, found := kialiCache.CanListType(cluster, cacheKey, namespace, gvk.Group, resource); found {
 			return canList, nil
 		}
 		ssars, err := userClient.GetSelfSubjectAccessReview(ctx, namespace, gvk.Group, resource, []string{"list"})
@@ -619,7 +622,7 @@ func (in *IstioConfigService) canListType(ctx context.Context, cluster, namespac
 		}
 		for _, ssar := range ssars {
 			if ssar.Spec.ResourceAttributes != nil && ssar.Spec.ResourceAttributes.Verb == "list" {
-				in.kialiCache.SetCanListType(cluster, cacheKey, namespace, gvk.Group, resource, ssar.Status.Allowed)
+				kialiCache.SetCanListType(cluster, cacheKey, namespace, gvk.Group, resource, ssar.Status.Allowed)
 				return ssar.Status.Allowed, nil
 			}
 		}
@@ -675,17 +678,35 @@ func collectListEntryNamespaces[T runtime.Object](entries []T, gvk schema.GroupV
 	}
 }
 
+// resolveListVerdicts resolves the given (namespace, type) permission
+// questions concurrently via canListType: a cold cluster-wide sweep would
+// otherwise pay one serial SSAR round-trip per pair. canListType coalesces
+// duplicate computations across concurrent requests, and client-go's rate
+// limiter throttles the SSAR issuance.
+func resolveListVerdicts(ctx context.Context, kialiCache cache.KialiCache, userClients map[string]kubernetes.UserClientInterface, cluster string, pending map[listVerdictKey]struct{}) map[listVerdictKey]bool {
+	verdicts := make(map[listVerdictKey]bool, len(pending))
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for key := range pending {
+		wg.Add(1)
+		go func(key listVerdictKey) {
+			defer wg.Done()
+			allowed := canListType(ctx, kialiCache, userClients, cluster, key.namespace, key.gvk)
+			mu.Lock()
+			verdicts[key] = allowed
+			mu.Unlock()
+		}(key)
+	}
+	wg.Wait()
+	return verdicts
+}
+
 // filterByUserListRBAC removes from a config list the entries of types the
 // requesting user cannot list. It must only be applied on the public list
 // paths: validations and other internal consumers of getIstioConfigList rely
 // on the service-account-wide view to detect cross-namespace conflicts and
 // prune for the user at a higher level.
 func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster string, configs *models.IstioConfigList) {
-	// Resolve the verdicts for all distinct (namespace, type) pairs up
-	// front, concurrently: a cold cluster-wide list would otherwise pay
-	// one serial SSAR round-trip per pair. canListType coalesces duplicate
-	// computations across concurrent requests, and client-go's rate
-	// limiter throttles the SSAR issuance.
 	pending := make(map[listVerdictKey]struct{})
 	collectListEntryNamespaces(configs.AuthorizationPolicies, kubernetes.AuthorizationPolicies, pending)
 	collectListEntryNamespaces(configs.DestinationRules, kubernetes.DestinationRules, pending)
@@ -710,20 +731,7 @@ func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster 
 	collectListEntryNamespaces(configs.PeerAuthentications, kubernetes.PeerAuthentications, pending)
 	collectListEntryNamespaces(configs.RequestAuthentications, kubernetes.RequestAuthentications, pending)
 
-	verdicts := make(map[listVerdictKey]bool, len(pending))
-	var mu sync.Mutex
-	var wg sync.WaitGroup
-	for key := range pending {
-		wg.Add(1)
-		go func(key listVerdictKey) {
-			defer wg.Done()
-			allowed := in.canListType(ctx, cluster, key.namespace, key.gvk)
-			mu.Lock()
-			verdicts[key] = allowed
-			mu.Unlock()
-		}(key)
-	}
-	wg.Wait()
+	verdicts := resolveListVerdicts(ctx, in.kialiCache, in.userClients, cluster, pending)
 
 	canList := func(namespace string, gvk schema.GroupVersionKind) bool {
 		return verdicts[listVerdictKey{gvk: gvk, namespace: namespace}]
