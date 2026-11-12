@@ -22,7 +22,10 @@ func NewAIProvider(conf *config.Config, providerName string, modelName string) (
 	if err != nil {
 		return nil, err
 	}
+	return newAIProvider(conf, provider, modelName)
+}
 
+func newAIProvider(conf *config.Config, provider *config.ProviderConfig, modelName string) (providers.AIProvider, error) {
 	model, err := getModel(*provider, modelName)
 	if err != nil {
 		return nil, err
@@ -46,6 +49,10 @@ func ResolveUsageMetadata(conf *config.Config, providerName string, modelName st
 	if err != nil {
 		return nil, err
 	}
+	return resolveUsageMetadata(provider, modelName)
+}
+
+func resolveUsageMetadata(provider *config.ProviderConfig, modelName string) (*aiTypes.UsageMetric, error) {
 	model, err := getModel(*provider, modelName)
 	if err != nil {
 		return nil, err

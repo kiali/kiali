@@ -25,7 +25,6 @@ import { uniqueId } from 'lodash-es';
 type FileAttachmentProps = {
   action: Action;
   fileName: string;
-  onSendMessage?: (query: string | number, context?: any, title?: string) => void;
 };
 
 const toJsonString = (yamlText: string): string => {
@@ -33,7 +32,7 @@ const toJsonString = (yamlText: string): string => {
   return JSON.stringify(obj ?? {});
 };
 
-export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName, onSendMessage }) => {
+export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName }) => {
   const dispatch = useDispatch();
   const [modalTitleId] = React.useState(() => `chatbot-yaml-modal-title-${uniqueId()}`);
   const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
@@ -41,11 +40,14 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
   const colorScheme = useKialiColorScheme();
   const isDarkTheme = colorScheme === ColorScheme.DARK;
 
-  React.useEffect(() => {
-    setYamlText(action.payload ?? '');
-  }, [action.payload]);
-
-  const toggle = (): void => setIsModalOpen(prev => !prev);
+  const toggle = (): void => {
+    setIsModalOpen(prev => {
+      if (!prev) {
+        setYamlText(action.payload ?? '');
+      }
+      return !prev;
+    });
+  };
 
   const canApply = action.operation === 'create' || action.operation === 'patch' || action.operation === 'delete';
   const hasIstioMeta =
@@ -81,13 +83,6 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({ action, fileName
       return;
     }
     if (!hasIstioMeta) {
-      // Fallback: send to chat so the model can proceed using its tool memory.
-      if (onSendMessage) {
-        const prompt = `Please proceed with the ${action.operation} using this YAML:\n\n~~~\n${yamlText}\n~~~\n`;
-        onSendMessage(prompt, '');
-        toggle();
-        return;
-      }
       dispatch(
         ChatAIActions.setChatHistoryAdd({
           entry: {

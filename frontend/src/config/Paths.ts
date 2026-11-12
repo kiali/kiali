@@ -7,6 +7,7 @@ export enum Paths {
   ISTIO = 'istio',
   NAMESPACES = 'namespaces',
   TRACING = 'tracing',
+  TROUBLESHOOTING = 'troubleshooting',
   MESH = 'mesh',
   SERVICES = 'services',
   SERVICEENTRIES = 'istio/serviceentries',

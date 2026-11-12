@@ -106,16 +106,23 @@ export const SimpleTable: React.FC<SimpleTableProps> = (props: SimpleTableProps)
           props.rows.map((row, rowIndex) => (
             <Tr key={row.key ?? `row_${rowIndex}`} className={row.className}>
               {row.cells?.map((cell, colIndex: number) => {
-                const cellContent =
+                if (cell == null) {
+                  return null;
+                }
+
+                const spanned =
                   typeof cell === 'object' && cell !== null && 'title' in cell
-                    ? (cell as { title: React.ReactNode }).title
-                    : (cell as React.ReactNode);
+                    ? (cell as { props?: { rowSpan?: number; style?: React.CSSProperties }; title: React.ReactNode })
+                    : undefined;
+                const cellContent = spanned ? spanned.title : (cell as React.ReactNode);
 
                 return (
                   <Td
                     key={`cell_${rowIndex}_${colIndex}`}
-                    dataLabel={props.columns[colIndex].title}
                     className={tdStyle}
+                    dataLabel={props.columns[colIndex].title}
+                    rowSpan={spanned?.props?.rowSpan}
+                    style={spanned?.props?.style}
                   >
                     {cellContent}
                   </Td>

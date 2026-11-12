@@ -16,10 +16,15 @@ import { dispatchAIResponseReceived } from 'utils/aiEvents';
 import {
   Button,
   ButtonVariant,
+  Divider,
   Dropdown,
   DropdownItem,
   DropdownList,
   MenuToggle,
+  Select,
+  SelectGroup,
+  SelectList,
+  SelectOption,
   Tooltip
 } from '@patternfly/react-core';
 import type { MenuToggleElement } from '@patternfly/react-core';
@@ -35,22 +40,28 @@ import { buildPageContext, formatChatRequestQuery } from './pageContext';
 import { buildPromptContext, buildPromptVariables, enrichPromptContext, substitutePrompts } from './promptContext';
 
 type PromptProps = {
+  onSelectProviderModel: (
+    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined
+  ) => void;
   scrollIntoView: () => void;
 };
 
-export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
+export const Prompt = React.memo(({ onSelectProviderModel, scrollIntoView }: PromptProps) => {
   const { t } = useKialiTranslation();
   const dispatch = useDispatch();
   const [validated, setValidated] = React.useState<'default' | 'error'>('default');
 
   const chatHistory = useSelector((s: KialiAppState) => s.ai.chat.chatHistory);
   const query: string = useSelector((s: KialiAppState) => s.ai.chat.query);
+  const pendingPrompt = useSelector((s: KialiAppState) => s.ai.chat.pendingPrompt);
   const conversationID: string = useSelector((s: KialiAppState) => s.ai.chat.conversationID);
   const selectedProvider: string = useSelector((s: KialiAppState) => s.ai.chat.selectedProvider);
   const selectedModel: string = useSelector((s: KialiAppState) => s.ai.chat.selectedModel);
   const alwaysNavigate = useSelector((s: KialiAppState) => s.ai.chat.alwaysNavigate);
   const interactionMode = useSelector((s: KialiAppState) => s.ai.chat.interactionMode);
   const chatContext = useSelector((s: KialiAppState) => s.ai.chat.chatContext);
+  const providers = useSelector((s: KialiAppState) => s.ai.chat.providers);
   const { pathname } = useLocation();
   const category = React.useMemo(() => derivePromptCategory(pathname), [pathname]);
 
@@ -172,215 +183,298 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
     [dispatch]
   );
 
+  // A mode change cannot continue the previous backend conversation.
+  const restartConversationForMode = React.useCallback(
+    (mode: ChatInteractionMode): boolean => {
+      if (mode === interactionMode) {
+        return false;
+      }
+      if (chatHistory.size === 0) {
+        dispatch(ChatAIActions.setInteractionMode({ interactionMode: mode }));
+        return false;
+      }
+      streamController.abort();
+      if (conversationID !== '') {
+        API.deleteChatConversations(conversationID).catch(() => {});
+      }
+      dispatch(ChatAIActions.setConversationID({ id: undefined }));
+      dispatch(ChatAIActions.setChatHistoryClear());
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: uniqueId('ChatDivider_'),
+            mode,
+            who: 'divider'
+          }
+        })
+      );
+      dispatch(ChatAIActions.setInteractionMode({ interactionMode: mode }));
+      return true;
+    },
+    [chatHistory.size, conversationID, dispatch, interactionMode, streamController]
+  );
+
+  const submitQuery = React.useCallback(
+    (
+      message: string,
+      options?: { conversationId?: string; hideUser?: boolean; interactionMode?: ChatInteractionMode }
+    ) => {
+      const text = message.trim();
+      if (!text) {
+        return;
+      }
+      const mode = options?.interactionMode ?? interactionMode;
+      if (options?.interactionMode && options.interactionMode !== interactionMode) {
+        dispatch(ChatAIActions.setInteractionMode({ interactionMode: options.interactionMode }));
+      }
+      const requestConversationId = options?.conversationId !== undefined ? options.conversationId : conversationID;
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            hidden: options?.hideUser,
+            text,
+            who: 'user'
+          }
+        })
+      );
+      const chatEntryID = uniqueId('ChatEntry_');
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: chatEntryID,
+            text: '',
+            who: 'ai',
+            isCancelled: false,
+            isStreaming: true,
+            isTruncated: false,
+            references: [],
+            tools: ImmutableMap(),
+            actions: []
+          }
+        })
+      );
+      scrollIntoView();
+
+      const request: ChatRequest = {
+        conversation_id: requestConversationId,
+        interaction_mode: mode,
+        query: formatChatRequestQuery(text, pageContext, chatContext)
+      };
+
+      const streamResponse = async (): Promise<void> => {
+        const controller = new AbortController();
+        setStreamController(controller);
+        const response = await API.postChatAI(selectedProvider, selectedModel, request, controller.signal);
+        // Problem with the Fetch
+        if (response.status !== 200) {
+          dispatch(
+            ChatAIActions.setChatHistoryUpdateById({
+              id: chatEntryID,
+              entry: {
+                error: getFetchErrorMessage({ response }),
+                who: 'ai',
+                isStreaming: false,
+                isTruncated: false
+              }
+            })
+          );
+          return;
+        }
+        // Continue streaming the response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let responseText = '';
+
+        // Throttle response text updates to prevent excessive re-renders during streaming
+        const dispatchTokens = throttle(
+          (text: string) =>
+            dispatch(
+              ChatAIActions.setChatHistoryUpdateById({
+                entry: {
+                  text: text
+                },
+                id: chatEntryID
+              })
+            ),
+          100,
+          { leading: false, trailing: true }
+        );
+
+        // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
+        let buffer = '';
+
+        // Manage Tools
+        const toolKeyToID = new Map<string, string>();
+        const makeToolKey = (toolName: string, args: unknown): string => `${toolName}:${JSON.stringify(args)}`;
+
+        while (true) {
+          const { value, done } = (await reader?.read()) ?? { value: null, done: true };
+          if (done) {
+            break;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          // Keep last line in buffer for next
+          buffer = lines.pop() ?? '';
+
+          for (const chunk of lines.filter(s => s.startsWith('data: '))) {
+            const line = chunk.slice(5).trim();
+            let json;
+            try {
+              json = JSON.parse(line);
+            } catch (error) {
+              console.error(`Failed to parse JSON string "${line}"`, error);
+              continue;
+            }
+            if (json && json.event && json.data) {
+              if (json.event === 'start') {
+                dispatch(ChatAIActions.setConversationID({ id: json.data.conversation_id }));
+              } else if (json.event === 'token') {
+                responseText += json.data.token;
+                dispatchTokens(responseText);
+              } else if (json.event === 'end') {
+                dispatchTokens(responseText);
+                dispatchTokens.flush();
+                const actions = json.data.actions ?? [];
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateById({
+                    entry: {
+                      actions,
+                      isStreaming: false,
+                      isTruncated: json.data.truncated === true,
+                      references: json.data.referenced_documents
+                    },
+                    id: chatEntryID
+                  })
+                );
+                if (alwaysNavigate) {
+                  const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
+                  if (navigationAction) {
+                    router.navigate(navigationAction.payload);
+                  }
+                }
+              } else if (json.event === 'tool_call') {
+                const { args, id, name: toolName } = json.data;
+                toolKeyToID.set(makeToolKey(toolName, args), id);
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateTool({
+                    id: chatEntryID,
+                    tool: {
+                      args,
+                      isRunning: true,
+                      name: toolName
+                    },
+                    toolID: id
+                  })
+                );
+              } else if (json.event === 'tool_result') {
+                const { content, id, status } = json.data;
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateTool({
+                    id: chatEntryID,
+                    tool: {
+                      content,
+                      isRunning: false,
+                      status
+                    },
+                    toolID: id
+                  })
+                );
+              } else if (json.event === 'error') {
+                dispatchTokens(responseText);
+                dispatchTokens.flush();
+                dispatch(
+                  ChatAIActions.setChatHistoryUpdateById({
+                    entry: {
+                      error: getFetchErrorMessage({ json: { detail: json.data } }),
+                      isStreaming: false
+                    },
+                    id: chatEntryID
+                  })
+                );
+              } else {
+                console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
+              }
+            }
+          }
+        }
+        // Notify dashboard components so they can refresh token usage stats.
+        dispatchAIResponseReceived();
+      };
+      streamResponse().catch(streamError => {
+        if (streamError.name !== 'AbortError') {
+          dispatch(
+            ChatAIActions.setChatHistoryUpdateById({
+              id: chatEntryID,
+              entry: {
+                error: getFetchErrorMessage(streamError),
+                isStreaming: false,
+                isTruncated: false,
+                who: 'ai'
+              }
+            })
+          );
+        }
+        scrollIntoView();
+      });
+      // Clear prompt input and return focus to it
+      dispatch(ChatAIActions.setQuery(''));
+      dispatch(ChatAIActions.setChatContext(''));
+      textareaRef.current?.focus();
+    },
+    [
+      conversationID,
+      dispatch,
+      interactionMode,
+      scrollIntoView,
+      pageContext,
+      chatContext,
+      selectedProvider,
+      selectedModel,
+      alwaysNavigate
+    ]
+  );
+
   const onSubmit = React.useCallback(() => {
     if (!query || query.trim().length === 0) {
       setValidated('error');
       return;
     }
-    dispatch(
-      ChatAIActions.setChatHistoryAdd({
-        entry: {
-          text: query,
-          who: 'user'
-        }
-      })
-    );
-    const chatEntryID = uniqueId('ChatEntry_');
-    dispatch(
-      ChatAIActions.setChatHistoryAdd({
-        entry: {
-          id: chatEntryID,
-          text: '',
-          who: 'ai',
-          isCancelled: false,
-          isStreaming: true,
-          isTruncated: false,
-          references: [],
-          tools: ImmutableMap(),
-          actions: []
-        }
-      })
-    );
-    scrollIntoView();
+    submitQuery(query);
+  }, [query, submitQuery]);
 
-    const request: ChatRequest = {
-      conversation_id: conversationID,
-      interaction_mode: interactionMode,
-      query: formatChatRequestQuery(query, pageContext, chatContext)
-    };
-
-    const streamResponse = async (): Promise<void> => {
-      const controller = new AbortController();
-      setStreamController(controller);
-      const response = await API.postChatAI(selectedProvider, selectedModel, request, controller.signal);
-      // Problem with the Fetch
-      if (response.status !== 200) {
-        dispatch(
-          ChatAIActions.setChatHistoryUpdateById({
-            id: chatEntryID,
-            entry: {
-              error: getFetchErrorMessage({ response }),
-              who: 'ai',
-              isStreaming: false,
-              isTruncated: false
-            }
-          })
-        );
-        return;
-      }
-      // Continue streaming the response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let responseText = '';
-
-      // Throttle response text updates to prevent excessive re-renders during streaming
-      const dispatchTokens = throttle(
-        (text: string) =>
-          dispatch(
-            ChatAIActions.setChatHistoryUpdateById({
-              entry: {
-                text: text
-              },
-              id: chatEntryID
-            })
-          ),
-        100,
-        { leading: false, trailing: true }
+  // The panel stays unmounted until it is visible, so a prompt requested elsewhere
+  // (for example a troubleshooting suggestion) is sent once the chatbot opens.
+  React.useEffect(() => {
+    if (!pendingPrompt) {
+      return;
+    }
+    const { interactionMode: requestedMode, intro, text } = pendingPrompt;
+    dispatch(ChatAIActions.clearPendingPrompt());
+    const restarted = requestedMode !== undefined && restartConversationForMode(requestedMode);
+    if (intro) {
+      dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            actions: [],
+            id: uniqueId('ChatEntry_'),
+            isCancelled: false,
+            isStreaming: false,
+            isTruncated: false,
+            references: [],
+            text: intro,
+            tools: ImmutableMap(),
+            who: 'ai'
+          }
+        })
       );
-
-      // Use buffer because long strings (e.g. tool call output) may be split into multiple chunks
-      let buffer = '';
-
-      // Manage Tools
-      const toolKeyToID = new Map<string, string>();
-      const makeToolKey = (toolName: string, args: unknown): string => `${toolName}:${JSON.stringify(args)}`;
-
-      while (true) {
-        const { value, done } = (await reader?.read()) ?? { value: null, done: true };
-        if (done) {
-          break;
-        }
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        // Keep last line in buffer for next
-        buffer = lines.pop() ?? '';
-
-        for (const chunk of lines.filter(s => s.startsWith('data: '))) {
-          const line = chunk.slice(5).trim();
-          let json;
-          try {
-            json = JSON.parse(line);
-          } catch (error) {
-            console.error(`Failed to parse JSON string "${line}"`, error);
-            continue;
-          }
-          if (json && json.event && json.data) {
-            if (json.event === 'start') {
-              dispatch(ChatAIActions.setConversationID({ id: json.data.conversation_id }));
-            } else if (json.event === 'token') {
-              responseText += json.data.token;
-              dispatchTokens(responseText);
-            } else if (json.event === 'end') {
-              dispatchTokens(responseText);
-              dispatchTokens.flush();
-              const actions = json.data.actions ?? [];
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateById({
-                  entry: {
-                    actions,
-                    isStreaming: false,
-                    isTruncated: json.data.truncated === true,
-                    references: json.data.referenced_documents
-                  },
-                  id: chatEntryID
-                })
-              );
-              if (alwaysNavigate) {
-                const navigationAction = actions.find((action: { kind: string }) => action.kind === 'navigation');
-                if (navigationAction) {
-                  router.navigate(navigationAction.payload);
-                }
-              }
-            } else if (json.event === 'tool_call') {
-              const { args, id, name: toolName } = json.data;
-              toolKeyToID.set(makeToolKey(toolName, args), id);
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateTool({
-                  id: chatEntryID,
-                  tool: {
-                    args,
-                    isRunning: true,
-                    name: toolName
-                  },
-                  toolID: id
-                })
-              );
-            } else if (json.event === 'tool_result') {
-              const { content, id, status } = json.data;
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateTool({
-                  id: chatEntryID,
-                  tool: {
-                    content,
-                    isRunning: false,
-                    status
-                  },
-                  toolID: id
-                })
-              );
-            } else if (json.event === 'error') {
-              dispatchTokens(responseText);
-              dispatchTokens.flush();
-              dispatch(
-                ChatAIActions.setChatHistoryUpdateById({
-                  entry: {
-                    error: getFetchErrorMessage({ json: { detail: json.data } }),
-                    isStreaming: false
-                  },
-                  id: chatEntryID
-                })
-              );
-            } else {
-              console.warn(`Unrecognized event in response stream:`, JSON.stringify(json));
-            }
-          }
-        }
-      }
-      // Notify dashboard components so they can refresh token usage stats.
-      dispatchAIResponseReceived();
-    };
-    streamResponse().catch(streamError => {
-      if (streamError.name !== 'AbortError') {
-        dispatch(
-          ChatAIActions.setChatHistoryUpdateById({
-            id: chatEntryID,
-            entry: {
-              error: getFetchErrorMessage(streamError),
-              isStreaming: false,
-              isTruncated: false,
-              who: 'ai'
-            }
-          })
-        );
-      }
-      scrollIntoView();
+    }
+    submitQuery(text, {
+      conversationId: restarted ? '' : undefined,
+      hideUser: Boolean(intro),
+      interactionMode: requestedMode
     });
-    // Clear prompt input and return focus to it
-    dispatch(ChatAIActions.setQuery(''));
-    dispatch(ChatAIActions.setChatContext(''));
-    textareaRef.current?.focus();
-  }, [
-    conversationID,
-    dispatch,
-    interactionMode,
-    query,
-    scrollIntoView,
-    pageContext,
-    chatContext,
-    selectedProvider,
-    selectedModel,
-    alwaysNavigate
-  ]);
+  }, [dispatch, pendingPrompt, restartConversationForMode, submitQuery]);
 
   const streamingResponseID: string | undefined = isStreaming ? (chatHistory.last()?.get('id') as string) : undefined;
 
@@ -404,17 +498,17 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
   );
 
   const [isModeDropdownOpen, setIsModeDropdownOpen] = React.useState(false);
+  const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
 
   const handleModeSelect = React.useCallback(
     (_event: React.MouseEvent<Element> | undefined, value: string | number | undefined) => {
       const newMode = value as ChatInteractionMode;
-      if (chatHistory.size > 0 && newMode !== interactionMode) {
-        console.info(`Interaction mode changed to ${newMode}. The assistant will adopt the new approach.`);
+      if (newMode && newMode !== interactionMode) {
+        restartConversationForMode(newMode);
       }
-      dispatch(ChatAIActions.setInteractionMode({ interactionMode: newMode }));
       setIsModeDropdownOpen(false);
     },
-    [dispatch, chatHistory.size, interactionMode]
+    [interactionMode, restartConversationForMode]
   );
 
   const modePlaceholder = interactionMode === 'ask' ? t('Ask a question...') : t('Describe the issue...');
@@ -527,7 +621,54 @@ export const Prompt = React.memo(({ scrollIntoView }: PromptProps) => {
           }
         `}</style>
         <MessageBar
-          additionalActions={interactionModeDropdown}
+          additionalActions={
+            <>
+              {interactionModeDropdown}
+              {selectedProvider && selectedModel && (
+                <Select
+                  isOpen={isModelMenuOpen}
+                  selected={`${selectedProvider}:${selectedModel}`}
+                  shouldFocusToggleOnSelect
+                  onOpenChange={setIsModelMenuOpen}
+                  onSelect={(event, value) => {
+                    onSelectProviderModel(event, value);
+                    setIsModelMenuOpen(false);
+                  }}
+                  toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+                    <MenuToggle
+                      ref={toggleRef}
+                      aria-label={t('Select model')}
+                      data-test="chatbot-model-selector"
+                      isExpanded={isModelMenuOpen}
+                      onClick={() => setIsModelMenuOpen(open => !open)}
+                      variant="plainText"
+                    >
+                      {selectedModel}
+                    </MenuToggle>
+                  )}
+                >
+                  {providers.map((provider, index) => (
+                    <React.Fragment key={provider.name}>
+                      <SelectGroup label={provider.name} labelHeadingLevel="h3">
+                        <SelectList>
+                          {provider.models.map(model => (
+                            <SelectOption
+                              key={`${provider.name}:${model.name}`}
+                              value={`${provider.name}:${model.name}`}
+                              isSelected={provider.name === selectedProvider && model.name === selectedModel}
+                            >
+                              {model.name}
+                            </SelectOption>
+                          ))}
+                        </SelectList>
+                      </SelectGroup>
+                      {index < providers.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </Select>
+              )}
+            </>
+          }
           alwayShowSendButton
           data-testid="chatbot-message-bar-input"
           forceMultilineLayout

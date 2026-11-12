@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { NotificationCenterBadgeComponent } from '../NotificationCenterBadge';
-import { NotificationGroup, NotificationMessage, MessageType } from '../../../types/NotificationCenter';
+import { MessageType, type NotificationGroup, type NotificationMessage } from '../../../types/NotificationCenter';
 
 describe('NotificationCenter', () => {
   const groupMessages: NotificationGroup[] = [
@@ -78,5 +78,22 @@ describe('NotificationCenter', () => {
     expect(screen.queryByText('show me too')).not.toBeInTheDocument();
     // Each PF6 Alert renders a heading (h4) with the alert title
     expect(screen.getAllByRole('heading')).toHaveLength(2);
+  });
+
+  it('shows only the notification count on the badge', () => {
+    render(
+      <NotificationCenterBadgeComponent
+        alerts={[]}
+        needsAttention={false}
+        newMessageCount={2}
+        onDismissNotification={() => {}}
+        toggleNotificationCenter={() => {}}
+      />
+    );
+
+    const badge = screen.getAllByTestId('notifications-badge')[0];
+    expect(badge).toHaveTextContent('2');
+    expect(screen.queryByTestId('notifications-ai-icon')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('notifications-troubleshooting-icon')).not.toBeInTheDocument();
   });
 });

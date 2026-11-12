@@ -333,3 +333,5 @@ export const fileDeleteYamlPayload = {
     }
   ]
 };
+
+export { mockTroubleshootingIssues } from './troubleshooting_mocks';

@@ -5,15 +5,9 @@ import { store } from 'store/ConfigStore';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { EntryChat } from '../EntryChat';
 
-// Mock the heavy PF chatbot Message component so tests focus on EntryChat logic.
-// Spread the real module first (needed for ChatbotDisplayMode used by ChatAIState reducer),
-// then override only Message with a lightweight test stub that exposes the observable DOM.
 // Mock @patternfly/chatbot so tests focus on EntryChat logic.
-// ChatbotDisplayMode is used by the ChatAIState reducer initial state, so it must
-// be included in the mock. Hardcoding the enum values avoids the circular-require
-// that occurs when calling require('@patternfly/chatbot') inside its own mock factory.
 rstest.mock('@patternfly/chatbot', () => ({
-  ChatbotDisplayMode: { default: 'default', docked: 'docked', embedded: 'embedded', fullscreen: 'fullscreen' },
+  MessageDivider: ({ content }: { content?: string }) => <div data-test="mock-message-divider">{content}</div>,
   Message: ({
     name,
     content,
@@ -76,6 +70,19 @@ describe('EntryChat', () => {
       const { container } = renderEntryChat(0);
       expect(container.firstChild).toBeNull();
       expect(screen.queryByText('context payload')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('mode dividers', () => {
+    it('labels the start of a new conversation with the selected mode', () => {
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: { id: 'divider-1', mode: 'ask', who: 'divider' }
+        })
+      );
+      renderEntryChat(0);
+      expect(screen.getByTestId('chatbot-mode-divider')).toHaveTextContent('New conversation mode:');
+      expect(screen.getByTestId('chatbot-mode-divider')).toHaveTextContent('Ask');
     });
   });
 

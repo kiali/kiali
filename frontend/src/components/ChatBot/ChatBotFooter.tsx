@@ -1,5 +1,6 @@
 import React from 'react';
-import { ChatbotFooter, ChatbotFootnote, ChatbotFootnoteProps } from '@patternfly/chatbot';
+import { ChatbotFooter, ChatbotFootnote } from '@patternfly/chatbot';
+import type { ChatbotFootnoteProps } from '@patternfly/chatbot';
 import { FOOTNOTE_LABEL } from 'config/Constants';
 import { t } from 'utils/I18nUtils';
 import { Switch } from '@patternfly/react-core';
@@ -8,11 +9,15 @@ import { Prompt } from './Prompt';
 import { useKialiDispatch } from 'hooks/redux';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { useSelector } from 'react-redux';
-import { KialiAppState } from 'store/Store';
+import type { KialiAppState } from 'store/Store';
 
 type ChatBotFooterProps = {
   isNewChatModalOpen: boolean;
   onConfirm: () => void;
+  onSelectProviderModel: (
+    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined
+  ) => void;
   providerChanged: boolean;
   scrollIntoView: () => void;
   setIsNewChatModalOpen: (isOpen: boolean) => void;
@@ -27,7 +32,8 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({
   isNewChatModalOpen,
   setIsNewChatModalOpen,
   scrollIntoView,
-  onConfirm
+  onConfirm,
+  onSelectProviderModel
 }) => {
   const dispatch = useKialiDispatch();
   const alwaysNavigate = useSelector((state: KialiAppState) => state.ai.chat.alwaysNavigate);
@@ -38,7 +44,7 @@ export const ChatBotFooter: React.FC<ChatBotFooterProps> = ({
 
   return (
     <ChatbotFooter>
-      <Prompt scrollIntoView={scrollIntoView} />
+      <Prompt onSelectProviderModel={onSelectProviderModel} scrollIntoView={scrollIntoView} />
       <Switch
         id="chatbot-always-navigate-switch"
         data-testid="chatbot-always-navigate-switch"
