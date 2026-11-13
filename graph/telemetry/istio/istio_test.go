@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry/istio/appender"
@@ -27,14 +27,13 @@ func TestDropUnavailableClusterNodes(t *testing.T) {
 
 	// The remote's access was revoked (degraded cache): the production scenario for
 	// this function, rather than a cluster the layer simply was built without.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
-		return cache.DeniedAccess{Cluster: true}, nil
-	})
-	require.True(t, access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remoteClient}
-	readers := map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remoteClient}
-	clusterCache, err := cache.NewKialiCache(context.Background(), clients, readers, *conf, cache.WithClusterAccess(access))
+	clusterCache, access, err := cachetest.NewFakeKialiCache(context.Background(), conf, clients,
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
 	require.NoError(t, err)
+	require.True(t, access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	layer := business.NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
 
 	home := &graph.Node{ID: "homeNode", Cluster: config.DefaultClusterID, Namespace: "testNamespace", NodeType: graph.NodeTypeWorkload}
@@ -47,7 +46,7 @@ func TestDropUnavailableClusterNodes(t *testing.T) {
 
 	clusters := []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
 	globalInfo := graph.NewGlobalInfo(layer, nil, config.Get(), clusters, appender.NewGlobalIstioInfo())
-	dropUnavailableClusterNodes(context.Background(), trafficMap, globalInfo)
+	dropUnavailableClusterNodes(trafficMap, globalInfo)
 
 	require.Contains(t, trafficMap, "homeNode", "the available cluster's nodes are kept")
 	require.NotContains(t, trafficMap, "remoteNode", "the unavailable cluster's nodes are dropped")
@@ -66,13 +65,13 @@ func TestDropUnavailableClusterNodesFailsOnHomeCluster(t *testing.T) {
 	// Degrade the home cluster's cache (revoked access confirmed): the home cluster
 	// is not skippable, so building the graph must fail cleanly instead of
 	// rendering around it.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
-		return cache.DeniedAccess{Cluster: true}, nil
-	})
-	access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments")
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}
-	clusterCache, err := cache.NewKialiCache(context.Background(), clients, map[string]ctrlclient.Reader{config.DefaultClusterID: k8s}, *conf, cache.WithClusterAccess(access))
+	clusterCache, access, err := cachetest.NewFakeKialiCache(context.Background(), conf, clients,
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
 	require.NoError(t, err)
+	access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments")
 	layer := business.NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
 
 	home := &graph.Node{ID: "homeNode", Cluster: config.DefaultClusterID, Namespace: "testNamespace", NodeType: graph.NodeTypeWorkload}
@@ -81,6 +80,6 @@ func TestDropUnavailableClusterNodesFailsOnHomeCluster(t *testing.T) {
 	globalInfo := graph.NewGlobalInfo(layer, nil, config.Get(), clusters, appender.NewGlobalIstioInfo())
 
 	assert.Panics(t, func() {
-		dropUnavailableClusterNodes(context.Background(), trafficMap, globalInfo)
+		dropUnavailableClusterNodes(trafficMap, globalInfo)
 	})
 }

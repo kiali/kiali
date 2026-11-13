@@ -3,7 +3,6 @@ package istio
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 	"path"
@@ -770,27 +769,15 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 		cluster := cluster
 		// A remote cluster that can't be read is skipped so it doesn't take down the whole mesh,
-		// including views that only need the home cluster.
+		// including views that only need the home cluster. The home cluster is not skippable.
 		isHomeCluster := cluster.Name == in.conf.KubernetesConfig.ClusterName
-		kubeCache, err := in.kialiCache.GetKubeCache(cluster.Name)
-		if err != nil {
-			if isHomeCluster {
-				return nil, err
-			}
-			// A cluster with no cache configured at all is a configuration error - the
-			// cluster name appears in the configuration but no connected cluster matches
-			// it (a typo, or a cluster that does not exist in this environment), so no
-			// cache was ever created and it will not recover until the configuration is
-			// fixed. Unlike a degraded cluster, which recovers when access is restored,
-			// it gets its own message at error level.
-			if errors.Is(err, cache.ErrClusterNotCached) {
-				log.Errorf("Skipping cluster [%s] when resolving the mesh: no cache is configured for it. "+
-					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
-					"not exist in this environment); it will not recover until the configuration is fixed.", cluster.Name)
-			} else {
-				log.Warningf("Skipping cluster [%s] when resolving the mesh: %s", cluster.Name, err)
-			}
+		kubeCache, skip, err := in.kialiCache.SkipUnavailableCluster(cluster.Name, "resolving the mesh", cache.SkipModeAggregate)
+		if skip {
+			// err is only the skip's cause here; the cache already logged it.
 			continue
+		}
+		if err != nil {
+			return nil, err
 		}
 
 		// if this is an external kiali cluster, don't look for control planes but ensure that Kiali is found
@@ -811,8 +798,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 		// If there's an istiod on it, then it's a controlplane cluster. Otherwise it is a remote mesh cluster
 		labels := map[string]string{config.IstioAppLabel: istiodAppLabelValue}
 		depList := &appsv1.DeploymentList{}
-		err = kubeCache.List(ctx, depList, ctrlclient.MatchingLabels(labels))
-		if err != nil {
+		if err := cache.ListReadable(ctx, kubeCache, in.conf, in.kialiCache, cluster.Name, depList,
+			ctrlclient.MatchingLabels(labels)); err != nil {
 			if isHomeCluster {
 				return nil, err
 			}
@@ -1283,8 +1270,8 @@ func (in *Discovery) discoverKiali(cluster models.KubeCluster) []models.KialiIns
 	// The operator and the helm charts set this fixed label. It's also
 	// present in the Istio addon manifest of Kiali.
 	svcList := &corev1.ServiceList{}
-	err = kubeCache.List(context.Background(), svcList, ctrlclient.MatchingLabels{"app.kubernetes.io/part-of": "kiali"})
-	if err != nil {
+	if err := cache.ListReadable(context.Background(), kubeCache, in.conf, in.kialiCache, clusterName, svcList,
+		ctrlclient.MatchingLabels{"app.kubernetes.io/part-of": "kiali"}); err != nil {
 		log.Warningf("Discovery for Kiali instances in cluster [%s] failed: %s", clusterName, err.Error())
 		return nil
 	}

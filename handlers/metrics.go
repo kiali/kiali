@@ -461,7 +461,7 @@ func ClustersMetrics(conf *config.Config, cache cache.KialiCache, discovery *ist
 		namespace := business.NewNamespaceService(cache, conf, discovery, clientFactory.GetSAClients(), userClients)
 		loadedNamespaces, err := namespace.GetClusterNamespaces(r.Context(), cluster)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Unable to get cluster namespaces: "+err.Error())
+			handleErrorResponse(w, err, "Unable to get cluster namespaces: "+err.Error())
 			return
 		}
 

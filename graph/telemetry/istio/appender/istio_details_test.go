@@ -9,10 +9,10 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/kubernetes"
@@ -378,14 +378,13 @@ func TestGetTrafficClustersSkipsUnavailableCache(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
 
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
-		return cache.DeniedAccess{Cluster: true}, nil
-	})
-	assert.True(access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}
-	readers := map[string]ctrlclient.Reader{config.DefaultClusterID: k8s, "remote-cluster": remote}
-	clusterCache, err := cache.NewKialiCache(context.Background(), clients, readers, *conf, cache.WithClusterAccess(access))
+	clusterCache, access, err := cachetest.NewFakeKialiCache(context.Background(), conf, clients,
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
 	assert.NoError(err)
+	assert.True(access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
 	businessLayer := business.NewLayerBuilder(t, conf).
 		WithClients(map[string]kubernetes.UserClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}).
 		WithCache(clusterCache).
@@ -394,12 +393,21 @@ func TestGetTrafficClustersSkipsUnavailableCache(t *testing.T) {
 	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
 	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
 
-	// The nil traffic map is the idle-node appender's call shape.
+	// The nil traffic map is the idle-node appender's call shape. The assertions run
+	// outside NotPanics so a panic is reported as the panic, not a failed assert.
+	var workloadLists map[string]*models.WorkloadList
 	assert.NotPanics(func() {
-		workloadLists := getWorkloadLists(nil, "testNamespace", globalInfo)
-		assert.Contains(workloadLists, config.DefaultClusterID)
-		assert.NotContains(workloadLists, "remote-cluster", "the degraded remote cluster is filtered out")
+		workloadLists = getWorkloadLists(nil, "testNamespace", globalInfo)
 	})
+	assert.Contains(workloadLists, config.DefaultClusterID)
+	assert.NotContains(workloadLists, "remote-cluster", "the degraded remote cluster is filtered out of the workload lists")
+
+	var serviceLists map[string]*models.ServiceList
+	assert.NotPanics(func() {
+		serviceLists = getServiceLists(nil, "testNamespace", globalInfo)
+	})
+	assert.Contains(serviceLists, config.DefaultClusterID)
+	assert.NotContains(serviceLists, "remote-cluster", "the degraded remote cluster is filtered out of the service lists")
 }
 
 // A cluster whose service-account cache cannot serve reads - access revoked and torn
@@ -430,13 +438,57 @@ func TestSkipsClustersWithUnavailableCache(t *testing.T) {
 
 	// Must not panic: without the cache guard the cluster-wide fetch for the remote
 	// cluster errors and CheckError fails the whole graph. This covers BOTH guarded
-	// loops individually: the config-list loop has no vendor-map observable (it applies
-	// config straight to the traffic map), but removing only its guard makes the
-	// unguarded GetIstioConfigList fail through CheckError - verified by mutation.
+	// loops: the config-list loop has no vendor-map observable (it applies config
+	// straight to the traffic map), so its guard is exercised only through the
+	// no-panic assertion - the service-list loop's guard is additionally observable
+	// through the vendor map below.
 	assert.NotPanics(func() {
 		a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
 	})
 
 	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
 	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster")
+}
+
+// The degraded case of the appender's cluster-driven loops: a remote whose cache was
+// torn down after a confirmed revocation is skipped exactly like an uncached one.
+func TestSkipsDegradedRemoteCluster(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	config.Set(conf)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("testNamespace"))
+	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}
+
+	clusterCache, access, err := cachetest.NewFakeKialiCache(context.Background(), conf, clients,
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
+	assert.NoError(err)
+	assert.True(access.ConfirmRevoked(context.Background(), "remote-cluster", "apps", "deployments"))
+	businessLayer := business.NewLayerBuilder(t, conf).
+		WithClients(map[string]kubernetes.UserClientInterface{config.DefaultClusterID: k8s, "remote-cluster": remote}).
+		WithCache(clusterCache).
+		Build()
+
+	trafficMap, _, _, _, _, _, _, _ := setupTrafficMap()
+	globalInfo := graph.NewGlobalInfo(businessLayer, nil, config.Get(), []models.KubeCluster{}, NewGlobalIstioInfo())
+	globalInfo.Clusters = []models.KubeCluster{{Name: config.DefaultClusterID}, {Name: "remote-cluster"}}
+	namespaceInfo := NewAppenderNamespaceInfo("testNamespace")
+
+	a := IstioAppender{
+		AccessibleNamespaces: graph.AccessibleNamespaces{
+			graph.GetClusterSensitiveKey(config.DefaultClusterID, "testNamespace"): {Cluster: config.DefaultClusterID, Name: "testNamespace"},
+			graph.GetClusterSensitiveKey("remote-cluster", "testNamespace"):        {Cluster: "remote-cluster", Name: "testNamespace"},
+		},
+	}
+
+	assert.NotPanics(func() {
+		a.AppendGraph(context.Background(), trafficMap, globalInfo, namespaceInfo)
+	})
+	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
+	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster", "the degraded remote cluster is skipped")
 }

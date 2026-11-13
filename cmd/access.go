@@ -34,6 +34,11 @@ import (
 	"github.com/kiali/kiali/log"
 )
 
+// accessCheckConcurrency bounds how many namespaces one access check queries at once. The
+// check runs on the reflector's goroutine under a 5s budget, so a sequential sweep does not
+// fit the budget on large non-cluster-wide installs.
+const accessCheckConcurrency = 8
+
 // makeWatchErrorHandler tears down a cluster's informers on a Forbidden watch error. When
 // clusterAccess is set, it only does so after a live check confirms the access was revoked.
 func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface, clusterAccess *cache.ClusterAccess) func(context.Context, *toolscache.Reflector, error) {
@@ -46,8 +51,12 @@ func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes
 			if !clusterAccess.ConfirmRevoked(ctx, k8sClient.ClusterInfo().Name, group, resource) {
 				return
 			}
+			log.Warningf("Confirmed revocation: Kiali can no longer read cluster [%s]. Removing the cluster's informers; reads will recover when access is restored. [err=%v]", k8sClient.ClusterInfo().Name, watchErr)
+		} else {
+			// The legacy path (cmd/gather) tears down on any Forbidden error without a
+			// live check, so its message stays an explicitly unconfirmed guess.
+			log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", watchErr)
 		}
-		log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", watchErr)
 		objectsToRemove := []client.Object{
 			&corev1.Pod{},
 			&corev1.Service{},
@@ -118,14 +127,36 @@ func forbiddenResource(err error) (string, string) {
 	return statusErr.ErrStatus.Details.Group, statusErr.ErrStatus.Details.Kind
 }
 
-// accessCheckConcurrency bounds how many namespaces one access check queries at once. The
-// check runs on the reflector's goroutine under a 5s budget, so a sequential sweep does not
-// fit the budget on large non-cluster-wide installs.
-const accessCheckConcurrency = 8
+// seedRevokedAtStartup sweeps the core resource types on every configured cluster so that
+// namespaces already denied at startup (e.g. one deleted before the restart, its Role dying
+// with it) get their revocation marks seeded before any read: an informer for a namespace
+// Kiali is forbidden from never syncs, and the first read through it would stall for the
+// read timeout. The sweep runs through ConfirmRevoked's normal path, so a cluster that is
+// fully revoked at startup is also degraded (and probed for recovery) like any other.
+func seedRevokedAtStartup(ctx context.Context, clusterAccess *cache.ClusterAccess, clientFactory kubernetes.ClientFactory) {
+	// Clusters are checked in parallel so an unreachable remote adds its own check
+	// timeout to startup once, not once per remote ahead of it.
+	var wg sync.WaitGroup
+	for cluster := range clientFactory.GetSAClients() {
+		wg.Add(1)
+		go func(cluster string) {
+			defer wg.Done()
+			clusterAccess.ConfirmRevoked(ctx, cluster, "apps", "deployments")
+			clusterAccess.ConfirmRevoked(ctx, cluster, "", "pods")
+		}(cluster)
+	}
+	wg.Wait()
+}
 
-// namespaceConfigs turns a list of namespace names into the cache's DefaultNamespaces restriction.
-// An empty list means no restriction (all namespaces).
-func namespaceConfigs(namespaces []string) map[string]ctrlcache.Config {
+// cacheNamespaces returns the namespace restriction for a cluster's controller-runtime
+// cache, home or remote. In non-cluster-wide-access mode the service account only holds
+// per-namespace Roles, so a cluster-scoped informer is forbidden on every list and never
+// syncs; scoping the cache to the accessible namespaces makes the informers work. The scope
+// comes from cache.AccessibleNamespacesForCluster - the same source the live access check
+// sweeps - so the check never evaluates a cluster against namespaces its cache was not
+// scoped to.
+func cacheNamespaces(conf *config.Config, clusterName string) map[string]ctrlcache.Config {
+	namespaces := cache.AccessibleNamespacesForCluster(conf, clusterName)
 	if len(namespaces) == 0 {
 		return nil
 	}
@@ -134,34 +165,6 @@ func namespaceConfigs(namespaces []string) map[string]ctrlcache.Config {
 		configs[namespace] = ctrlcache.Config{}
 	}
 	return configs
-}
-
-// accessibleNamespacesForCluster returns the namespaces that scope Kiali's access to the named cluster when
-// not in cluster-wide access mode: the cluster's discovery selector override when one is defined, otherwise
-// the default accessible namespaces. An override that cannot be resolved to a namespace list falls back to
-// the default list with a warning, so a misconfigured override cannot silently break the access scope. This
-// must stay in sync with the cache namespace restriction built in newManager - the access check must never
-// evaluate a cluster against namespaces its cache was not scoped to.
-func accessibleNamespacesForCluster(conf *config.Config, cluster string) []string {
-	if conf.Deployment.ClusterWideAccess {
-		return nil
-	}
-	// The home cluster's access scope is always the default accessible namespaces: the
-	// operator creates its Roles from the default discovery selectors only, so a
-	// home-cluster discovery selector override - a view filter - must not steer the
-	// access check to namespaces the home cache is not scoped to and no Roles exist for.
-	if cluster == conf.KubernetesConfig.ClusterName {
-		return conf.Deployment.AccessibleNamespaces
-	}
-	namespaces, err := conf.AccessibleNamespacesForCluster(cluster)
-	if err != nil {
-		log.Warningf("The discovery selector override for cluster [%s] does not name accessible namespaces. Falling back to the default accessible namespaces. err=%s", cluster, err)
-		return conf.Deployment.AccessibleNamespaces
-	}
-	if len(namespaces) == 0 {
-		return conf.Deployment.AccessibleNamespaces
-	}
-	return namespaces
 }
 
 // newAccessCheck asks the cluster, through a SelfSubjectAccessReview, whether the Kiali service
@@ -180,14 +183,6 @@ func accessibleNamespacesForCluster(conf *config.Config, cluster string) []strin
 // the 5s check timeout, and only runs when a Forbidden watch error fires (debounced to
 // once per 10s per resource) or the recovery probe re-checks.
 func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory) cache.AccessCheck {
-	// Each cluster is verified against its own accessible namespaces so that per-cluster
-	// discovery selector overrides are honored on the access path, not just in the views.
-	clusterNamespaces := make(map[string][]string)
-	if !conf.Deployment.ClusterWideAccess {
-		for cluster := range clientFactory.GetSAClients() {
-			clusterNamespaces[cluster] = accessibleNamespacesForCluster(conf, cluster)
-		}
-	}
 	return func(ctx context.Context, cluster, group, resource string) (cache.DeniedAccess, error) {
 		if resource == "" {
 			return cache.DeniedAccess{}, fmt.Errorf("the forbidden error does not name a resource")
@@ -198,12 +193,11 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 		}
 		namespaces := []string{""}
 		if !conf.Deployment.ClusterWideAccess {
-			namespaces = clusterNamespaces[cluster]
-			if namespaces == nil {
-				// A cluster unknown to the client factory when the check was built is
-				// still verified against the default accessible namespaces.
-				namespaces = conf.Deployment.AccessibleNamespaces
-			}
+			// Each cluster is verified against its own accessible namespaces so that
+			// per-cluster discovery selector overrides are honored on the access path,
+			// not just in the views; a cluster the config does not know resolves to
+			// the default accessible namespaces.
+			namespaces = cache.AccessibleNamespacesForCluster(conf, cluster)
 		}
 
 		// Known race, accepted: when one namespace's check errors and another's is
@@ -240,7 +234,7 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			return cache.DeniedAccess{}, nil
 		case len(namespaces):
 			// Every accessible namespace denied the read: the cluster's access is gone.
-			return cache.DeniedAccess{Cluster: true, Namespaces: denied}, nil
+			return cache.DeniedAccess{Cluster: true}, nil
 		default:
 			// A partial revocation: the cluster stays readable, the denied namespaces do not.
 			return cache.DeniedAccess{Namespaces: denied}, nil

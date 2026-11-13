@@ -26,7 +26,6 @@ package istio
 import (
 	"context"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -34,7 +33,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/graph"
 	"github.com/kiali/kiali/graph/telemetry"
@@ -76,7 +74,7 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 	for _, namespaceInfo := range o.Namespaces {
 		zl.Trace().Msgf("Build traffic map for namespace [%v]", namespaceInfo)
 		namespaceTrafficMap := buildNamespaceTrafficMap(ctx, namespaceInfo, o, globalInfo)
-		dropUnavailableClusterNodes(ctx, namespaceTrafficMap, globalInfo)
+		dropUnavailableClusterNodes(namespaceTrafficMap, globalInfo)
 
 		// The appenders can add/remove/alter nodes for the namespace
 		appenderNamespaceInfo := appender.NewAppenderNamespaceInfo(namespaceInfo.Name)
@@ -135,38 +133,36 @@ func BuildNamespacesTrafficMap(ctx context.Context, o graph.TelemetryOptions, gl
 // until the configuration is fixed. Unlike the per-cluster API handlers, which fail the
 // request for such a cluster, aggregating surfaces like this one skip it: one
 // misconfigured cluster name must not take down the graph for every other cluster.
-func dropUnavailableClusterNodes(ctx context.Context, trafficMap graph.TrafficMap, gi *appender.GlobalInfo) {
-	zl := log.FromContext(ctx)
+func dropUnavailableClusterNodes(trafficMap graph.TrafficMap, gi *appender.GlobalInfo) {
 	knownClusters := make(map[string]struct{}, len(gi.Clusters))
 	for _, cluster := range gi.Clusters {
 		knownClusters[cluster.Name] = struct{}{}
 	}
 	homeCluster := gi.Conf.KubernetesConfig.ClusterName
-	droppedClusters := make(map[string]struct{})
+	// One skip decision per cluster: the helper logs each drop when it decides it.
+	decided := make(map[string]bool, len(knownClusters))
+	dropped := false
 	for id, node := range trafficMap {
 		if _, known := knownClusters[node.Cluster]; !known {
 			continue
 		}
-		err := gi.Business.CheckClusterCacheAvailable(node.Cluster)
-		if err == nil {
-			continue
-		}
-		if node.Cluster == homeCluster {
-			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
-		}
-		if _, logged := droppedClusters[node.Cluster]; !logged {
-			droppedClusters[node.Cluster] = struct{}{}
-			if errors.Is(err, cache.ErrClusterNotCached) {
-				zl.Error().Msgf("Skipping cluster [%s] when building the graph: no cache is configured for it. "+
-					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
-					"not exist in this environment); it will not recover until the configuration is fixed.", node.Cluster)
-			} else {
-				zl.Warn().Msgf("Skipping cluster [%s] when building the graph: %s", node.Cluster, err)
+		skip, seen := decided[node.Cluster]
+		if !seen {
+			var err error
+			skip, err = gi.Business.SkipUnavailableClusterForAggregate(node.Cluster, "building the graph")
+			if err != nil {
+				// The home cluster is not skippable: fail the graph rather than render it
+				// without the home data.
+				graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
 			}
+			decided[node.Cluster] = skip
+			dropped = dropped || skip
 		}
-		delete(trafficMap, id)
+		if skip {
+			delete(trafficMap, id)
+		}
 	}
-	if len(droppedClusters) == 0 {
+	if !dropped {
 		return
 	}
 	// Appenders and the response join edges to nodes by Dest.ID; an edge whose
@@ -648,9 +644,8 @@ func BuildNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions, globalIn
 
 	trafficMap := buildNodeTrafficMap(ctx, o.Cluster, o.Namespace, n, o, globalInfo)
 
-	// Same treatment as the namespace graph: drop the nodes of clusters whose cache
-	// cannot serve reads before the appenders fetch through it.
-	dropUnavailableClusterNodes(ctx, trafficMap, globalInfo)
+	// Drop unavailable clusters' nodes before the appenders fetch through their caches.
+	dropUnavailableClusterNodes(trafficMap, globalInfo)
 
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 
@@ -1088,9 +1083,8 @@ func handleAggregateNodeTrafficMap(ctx context.Context, o graph.TelemetryOptions
 	appenders, finalizers := appender.ParseAppenders(o)
 	trafficMap := buildAggregateNodeTrafficMap(ctx, o.Namespace.Name, n, o, globalInfo)
 
-	// Same treatment as the namespace graph: drop the nodes of clusters whose cache
-	// cannot serve reads before the appenders fetch through it.
-	dropUnavailableClusterNodes(ctx, trafficMap, globalInfo)
+	// Drop unavailable clusters' nodes before the appenders fetch through their caches.
+	dropUnavailableClusterNodes(trafficMap, globalInfo)
 
 	namespaceInfo := appender.NewAppenderNamespaceInfo(o.Namespace.Name)
 

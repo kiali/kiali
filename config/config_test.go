@@ -1670,7 +1670,7 @@ func TestAccessibleNamespacesForCluster(t *testing.T) {
 	// A cluster without an override has no per-cluster list: callers use the
 	// default accessible namespaces.
 	namespaces, err := cfg.AccessibleNamespacesForCluster("east")
-	assert.NoError(err)
+	require.NoError(t, err)
 	assert.Nil(namespaces)
 
 	// A cluster with an override gets its own list, independent of the default selectors.
@@ -1688,7 +1688,7 @@ func TestAccessibleNamespacesForCluster(t *testing.T) {
 		},
 	}
 	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
-	assert.NoError(err)
+	require.NoError(t, err)
 	assert.Equal([]string{"one", "two"}, namespaces)
 
 	// An override that does not name accessible namespaces is an error, so callers
@@ -1703,13 +1703,13 @@ func TestAccessibleNamespacesForCluster(t *testing.T) {
 	// fall back to the default accessible namespaces via the empty-list branch.
 	cfg.Deployment.DiscoverySelectors.Overrides["west"] = DiscoverySelectorsType{}
 	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
-	assert.NoError(err)
+	require.NoError(t, err)
 	assert.Equal([]string{}, namespaces)
 
 	// Cluster-wide access has no per-cluster scope.
 	cfg.Deployment.ClusterWideAccess = true
 	namespaces, err = cfg.AccessibleNamespacesForCluster("west")
-	assert.NoError(err)
+	require.NoError(t, err)
 	assert.Nil(namespaces)
 }
 

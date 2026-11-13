@@ -65,6 +65,11 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
 
+	// Seed the revocation state before any read: an informer for a namespace Kiali is
+	// forbidden from never syncs, and the first read through it would stall for the read
+	// timeout. See seedRevokedAtStartup.
+	seedRevokedAtStartup(ctx, clusterAccess, clientFactory)
+
 	cache.SetBuildInfo(models.BuildInfo{
 		CommitHash:       commitHash,
 		ContainerVersion: determineContainerVersion(version),
@@ -311,10 +316,9 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 	// In the future this could be any cluster and not just home cluster.
 	homeClusterClient := clientFactory.GetSAHomeClusterClient()
 	homeClusterInfo := homeClusterClient.ClusterInfo()
-	var defaultNamespaces map[string]ctrlcache.Config
-	if !conf.AllNamespacesAccessible() {
-		defaultNamespaces = namespaceConfigs(conf.Deployment.AccessibleNamespaces)
-	}
+	// The home cache is scoped to the accessible namespaces in non-cluster-wide-access mode
+	// (see cacheNamespaces; the home cluster resolves to the default list there).
+	defaultNamespaces := cacheNamespaces(conf, homeClusterInfo.Name)
 
 	var mgr manager.Manager
 	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
@@ -354,10 +358,9 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 			var remoteCluster cluster.Cluster
 			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
 				o.Scheme = scheme
-				// Scope the remote cache the same way as the home cache: in non-cluster-wide
-				// access mode the remote service account only holds per-namespace roles, so a
-				// cluster-scoped informer is forbidden on every list and never syncs.
-				o.Cache.DefaultNamespaces = namespaceConfigs(accessibleNamespacesForCluster(conf, clusterName))
+				// Scope the remote cache the same way as the home cache (see
+				// cacheNamespaces).
+				o.Cache.DefaultNamespaces = cacheNamespaces(conf, clusterName)
 				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
 				o.Cache.ByObject = cacheTransforms()
 				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(

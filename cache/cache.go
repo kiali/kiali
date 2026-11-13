@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -94,6 +95,29 @@ type KialiCache interface {
 	// data; callers must exclude these namespaces rather than serve frozen state.
 	RevokedNamespaces(cluster string) []string
 
+	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
+	// serve reads, and returns the cluster's reader when it should not be skipped; callers
+	// that go straight to their own fetch can ignore it. The home cluster is never
+	// skippable: its error is returned so the caller fails cleanly. A remote cluster is
+	// skipped, and how depends on the mode: SkipModeRequest fails an uncached cluster
+	// because its caller explicitly named it (a configuration error: the cluster name
+	// appears in the configuration but no connected cluster matches it, and it will not
+	// recover until the configuration is fixed); SkipModeAggregate and SkipModeSilent skip
+	// it, so one misconfigured cluster name cannot break cross-cluster views - the
+	// difference is only that SkipModeSilent does not log, for filters that run per
+	// appender or per namespace and would otherwise repeat a drop already logged once per
+	// build. A degraded remote is skipped with a warning in SkipModeAggregate;
+	// SkipModeRequest stays silent so its caller can log through the request's context.
+	//
+	// err is the reason the cluster is unavailable, never a command to fail on its own:
+	// skip alone decides what the caller does. When skip is true the cluster should be
+	// skipped whatever err says (SkipModeAggregate already logged it; SkipModeRequest's
+	// caller logs it with the request's context); when skip is false a non-nil err means
+	// the caller must fail with it. surface names the caller in the log messages
+	// ("resolving the mesh", "building the graph", ...); it is empty when the mode logs
+	// without one.
+	SkipUnavailableCluster(cluster, surface string, mode SkipMode) (reader client.Reader, skip bool, err error)
+
 	GetMesh() (*models.Mesh, bool)
 	SetMesh(*models.Mesh)
 
@@ -167,9 +191,8 @@ type kialiCacheImpl struct {
 	buildInfo               models.BuildInfo
 	canReadWebhookByCluster map[string]bool
 	clients                 map[string]kubernetes.ClientInterface
-	// Tracks clusters whose access was revoked. Nil when not configured.
-	clusterAccess *ClusterAccess
-	conf          config.Config
+	clusterAccess           *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
+	conf                    config.Config
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -225,7 +248,8 @@ type kialiCacheImpl struct {
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
 
-// Option configures optional parts of the kiali cache.
+// Option configures optional parts of the kiali cache. Options are applied by NewKialiCache
+// in order; see WithClusterAccess for the one current option.
 type Option func(*kialiCacheImpl)
 
 // WithClusterAccess makes GetKubeCache fail fast for clusters that clusterAccess marks degraded.
@@ -302,10 +326,16 @@ func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
 // two with errors.Is: a degraded cache recovers on its own, a missing one does not.
 var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
 
+// ErrClusterDegraded is wrapped into GetKubeCache errors for a cluster whose access was
+// revoked and whose cache was torn down, as opposed to a cluster with no cache configured at
+// all (ErrClusterNotCached). A degraded cluster recovers on its own once access is restored,
+// so the fitting HTTP status for it is 503 (temporarily unavailable) rather than 500.
+var ErrClusterDegraded = errors.New("cluster cache is degraded")
+
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
 		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
-			return nil, fmt.Errorf("cache for cluster [%s] is unavailable: Kiali lost access to it at %s", cluster, since.Format(time.RFC3339))
+			return nil, fmt.Errorf("cache for cluster [%s] is unavailable: Kiali lost access to it at %s: %w", cluster, since.Format(time.RFC3339), ErrClusterDegraded)
 		}
 	}
 	cache, found := c.kubeCache[cluster]
@@ -321,6 +351,55 @@ func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
 		return nil
 	}
 	return c.clusterAccess.RevokedNamespaces(cluster)
+}
+
+// SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster
+// whose cache cannot serve reads handled. See the interface method for the contract.
+type SkipMode int
+
+const (
+	// SkipModeRequest is a per-cluster request that named the cluster: an uncached
+	// cluster fails the request rather than silently resolving to an empty result.
+	SkipModeRequest SkipMode = iota
+	// SkipModeAggregate is an aggregating surface (the mesh resolution, the graph, the
+	// validations reconciler): an uncached cluster is skipped with an error-level log.
+	SkipModeAggregate
+	// SkipModeSilent is an aggregating surface that skips without logging: per-appender
+	// filters that would repeat a drop another component already logged for this build.
+	SkipModeSilent
+)
+
+func (c *kialiCacheImpl) SkipUnavailableCluster(cluster, surface string, mode SkipMode) (client.Reader, bool, error) {
+	reader, err := c.GetKubeCache(cluster)
+	if err == nil {
+		return reader, false, nil
+	}
+	if cluster == c.conf.KubernetesConfig.ClusterName {
+		return nil, false, err
+	}
+	if errors.Is(err, ErrClusterNotCached) {
+		if mode == SkipModeRequest {
+			// The caller named this cluster: an error tells them the name is wrong
+			// instead of silently returning an empty result.
+			return nil, false, err
+		}
+		if mode == SkipModeAggregate {
+			c.zl.Error().Msgf("Skipping cluster [%s] when %s: no cache is configured for it. "+
+				"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
+				"not exist in this environment); it will not recover until the configuration is fixed.", cluster, surface)
+		}
+		return nil, true, err
+	}
+	if mode == SkipModeAggregate {
+		if surface == "" {
+			c.zl.Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
+		} else {
+			c.zl.Warn().Msgf("Skipping cluster [%s] when %s: %s", cluster, surface, err)
+		}
+	}
+	// SkipModeRequest stays silent here: its caller (the per-cluster request path) logs
+	// the skip, with this cause, through the request's context.
+	return nil, true, err
 }
 
 func (c *kialiCacheImpl) GetClusters() []models.KubeCluster {
@@ -359,39 +438,44 @@ func (c *kialiCacheImpl) ValidationConfig() store.Store[string, string] {
 	return c.validationConfig
 }
 
+// listZtunnelDaemonsets lists the cluster's ztunnel daemonsets across the readable
+// namespaces (see ListReadable). It is the one ztunnel fetch IsAmbientEnabled,
+// GetZtunnelPods and GetZtunnelDaemonset share. The reader is returned for callers that
+// go on to list through the same cache (GetZtunnelPods).
+func (in *kialiCacheImpl) listZtunnelDaemonsets(cluster string) (client.Reader, []appsv1.DaemonSet, error) {
+	kubeCache, err := in.GetKubeCache(cluster)
+	if err != nil {
+		return nil, nil, err
+	}
+	list := &appsv1.DaemonSetList{}
+	if err := ListReadable(context.TODO(), kubeCache, &in.conf, in, cluster, list,
+		client.MatchingLabels{config.KubernetesAppLabel: config.Ztunnel}); err != nil {
+		return nil, nil, err
+	}
+	if len(list.Items) == 0 {
+		in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+	}
+	return kubeCache, list.Items, nil
+}
+
 // IsAmbientEnabled checks if the istio Ambient profile was enabled
 // by checking if the ztunnel daemonset exists on the cluster.
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
-	if !found {
-		kubeCache, err := in.GetKubeCache(cluster)
-		if err != nil {
-			in.zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
-			return false
-		}
-
-		daemonSetList := &appsv1.DaemonSetList{}
-		selector := map[string]string{
-			config.KubernetesAppLabel: config.Ztunnel,
-		}
-		listOpts := []client.ListOption{client.MatchingLabels(selector)}
-		if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
-			// Don't set the check so we will check again the next time since this error may be transient.
-			in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
-			return false
-		}
-
-		if len(daemonSetList.Items) == 0 {
-			in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
-			in.ambientChecksPerCluster.Set(cluster, false)
-			return false
-		}
-
-		in.ambientChecksPerCluster.Set(cluster, true)
-		return true
+	if found {
+		return check
 	}
 
-	return check
+	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+	if err != nil {
+		// Don't set the check so we will check again the next time since this error may be transient.
+		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
+		return false
+	}
+
+	enabled := len(daemonsets) > 0
+	in.ambientChecksPerCluster.Set(cluster, enabled)
+	return enabled
 }
 
 // IsAmbientEnabledInAnyCluster returns true when at least one cluster in the
@@ -399,40 +483,22 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 // to IsAmbientEnabled, so per-cluster results are reused from the existing
 // ambientChecksPerCluster cache.
 func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(clusters []string) bool {
-	for _, cluster := range clusters {
-		if in.IsAmbientEnabled(cluster) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(clusters, in.IsAmbientEnabled)
 }
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	kubeCache, err := in.GetKubeCache(cluster)
+	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(cluster)
 	if err != nil {
-		in.zl.Debug().Msgf("Unable to get kube cache when checking for ambient profile: %s", err)
-		return nil
-	}
-
-	daemonSetList := &appsv1.DaemonSetList{}
-	selector := map[string]string{
-		config.KubernetesAppLabel: config.Ztunnel,
-	}
-	listOpts := []client.ListOption{client.MatchingLabels(selector)}
-	if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
-		// Don't set the check so we will check again the next time since this error may be transient.
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
 	}
-
-	if len(daemonSetList.Items) == 0 {
-		in.zl.Debug().Msgf("No ztunnel daemonsets found in Kiali accessible namespaces in cluster '%s'", cluster)
+	if len(daemonsets) == 0 {
 		return nil
 	}
 
 	podList := &v1.PodList{}
-	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonSetList.Items[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
+	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
 		in.zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
 		return nil
 	}
@@ -441,24 +507,12 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 }
 
 func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
-	kubeCache, err := in.GetKubeCache(cluster)
+	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
 	if err != nil {
-		in.zl.Debug().Msgf("GetZtunnelDaemonset: Unable to get kube cache when checking for ztunnel daemonset: %s", err)
-		return nil
-	}
-
-	daemonSetList := &appsv1.DaemonSetList{}
-	selector := map[string]string{
-		config.KubernetesAppLabel: config.Ztunnel,
-	}
-	listOpts := []client.ListOption{client.MatchingLabels(selector)}
-	if err := kubeCache.List(context.TODO(), daemonSetList, listOpts...); err != nil {
-		// Don't set the check so we will check again the next time since this error may be transient.
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
 	}
-
-	return daemonSetList.Items
+	return daemonsets
 }
 
 // IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
