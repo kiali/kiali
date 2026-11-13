@@ -382,7 +382,9 @@ func serviceEntryVisibilityLayer(t *testing.T, mc *models.MeshConfig, exportTo [
 	objects = append(objects, extraObjects...)
 	discovery := defaultSEDiscovery(config.DefaultClusterID, "definitions", "client", "sidecar")
 	discovery.MeshReturn.ControlPlanes[0].MeshConfig = mc
-	layer := business.NewLayerBuilder(t, conf).WithClient(kubetest.NewFakeK8sClient(objects...)).WithDiscovery(discovery).Build()
+	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
+	layer := business.NewLayerBuilder(t, conf).WithClient(k8s).WithDiscovery(discovery).Build()
 	return layer, discovery
 }
 

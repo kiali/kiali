@@ -13,6 +13,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
+	auth_v1 "k8s.io/api/authorization/v1"
 	core_v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1783,6 +1784,10 @@ func fakeValidationMeshServiceWithDiscovery(t *testing.T, cfg config.Config, obj
 
 func fakeValidationMeshServiceWithMesh(t *testing.T, cfg config.Config, mesh models.Mesh, objects ...runtime.Object) IstioValidationsService {
 	k8s := kubetest.NewFakeK8sClient(objects...)
+	// The cache read paths (GetValidations and friends) filter entries by
+	// the user's per-type list RBAC; allow the reviews so the seeded
+	// validations are visible to the mock user.
+	k8s.AllowAllSelfSubjectAccessReviews()
 	cache := cache.NewTestingCache(t, k8s, cfg)
 
 	discovery := &istiotest.FakeDiscovery{MeshReturn: mesh}
@@ -2199,6 +2204,9 @@ func TestGetValidationsFiltersByAccessibleNamespaces(t *testing.T) {
 
 	// The SA can see both namespaces; the user can only see bookinfo.
 	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	// The read path filters entries by the user's per-type list RBAC; allow
+	// the reviews so the seeded VirtualService entries stay visible.
+	user.FakeClient().AllowAllSelfSubjectAccessReviews()
 	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
 	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
 	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
@@ -2306,6 +2314,9 @@ func TestGetValidationsKeepsGatewayMultimatchValidations(t *testing.T) {
 	// The SA and the user can both see bookinfo; the collision is what
 	// triggers the multimatch validation, not a denial.
 	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+	// The read path filters entries by the user's per-type list RBAC; allow
+	// the reviews so the seeded gateway entries stay visible.
+	user.FakeClient().AllowAllSelfSubjectAccessReviews()
 	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
 	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
 	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
@@ -2373,6 +2384,9 @@ func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
 
 	// The SA can see both namespaces; the user can only see bookinfo.
 	sa, user := newAccessibleSetClients([]string{"bookinfo", "victim-ns"}, []string{"bookinfo"})
+	// The read path filters entries by the user's per-type list RBAC; allow
+	// the reviews so the seeded Gateway entries stay visible.
+	user.FakeClient().AllowAllSelfSubjectAccessReviews()
 	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
 	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
 	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
@@ -2403,7 +2417,7 @@ func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
 	}
 	kialiCache.Validations().Replace(cacheContent)
 
-	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService}
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
 	validations, err := vs.GetValidationsForNamespace(context.TODO(), cluster, "bookinfo")
 	require.NoError(err)
 
@@ -2420,6 +2434,75 @@ func TestGetValidationsForNamespacePrunesReferences(t *testing.T) {
 	// The cached entries are shared with other callers and must not be
 	// mutated by the pruning.
 	assert.Len(cacheContent[allowedKey].References, 2)
+}
+
+// TestGetValidationsForNamespaceFiltersTypesUserCannotList pins the fix for
+// the second leak of issue #10515: the validation summaries are served from
+// the SA-populated cache, so a user without list access to a config type
+// must not get that type's entries — otherwise the Istio Config object count
+// on the Namespace details page exceeds what the (per-type filtered) config
+// list returns. The cluster-wide GetValidations filters the same way, and
+// pseudo-types with an empty Group (service entries) are exempt.
+func TestGetValidationsForNamespaceFiltersTypesUserCannotList(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+	conf := config.NewConfig()
+	cluster := conf.KubernetesConfig.ClusterName
+
+	sa, user := newAccessibleSetClients([]string{"bookinfo"}, []string{"bookinfo"})
+	// Deny "list" on gateway.networking.k8s.io/gateways only; allow the rest.
+	fakeKube := user.FakeClient().KubeClientset.(*kubefake.Clientset)
+	fakeKube.PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		if ra := review.Spec.ResourceAttributes; ra != nil && ra.Group == "gateway.networking.k8s.io" && ra.Resource == "gateways" {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: false, Reason: "not authorized"}
+		} else {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "authorized"}
+		}
+		return true, review, nil
+	})
+
+	saClients := map[string]kubernetes.ClientInterface{cluster: sa}
+	userClients := map[string]kubernetes.UserClientInterface{cluster: user}
+	kialiCache := cache.NewTestingCacheWithClients(t, saClients, *conf)
+	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	namespaceService := NewNamespaceService(kialiCache, conf, discovery, saClients, userClients)
+
+	vsKey := models.IstioValidationKey{ObjectGVK: kubernetes.VirtualServices, Namespace: "bookinfo", Name: "reviews", Cluster: cluster}
+	k8sGwKey := models.IstioValidationKey{ObjectGVK: kubernetes.K8sGateways, Namespace: "bookinfo", Name: "waypoint", Cluster: cluster}
+	// A service pseudo-entry (empty Group) never appears in the config list
+	// and must not be affected by the per-type filter.
+	serviceGVK := schema.GroupVersionKind{Group: "", Version: "", Kind: "service"}
+	svcKey := models.IstioValidationKey{ObjectGVK: serviceGVK, Namespace: "bookinfo", Name: "productpage", Cluster: cluster}
+
+	kialiCache.Validations().Replace(map[models.IstioValidationKey]*models.IstioValidation{
+		vsKey:    {Cluster: cluster, Name: "reviews", Namespace: "bookinfo", ObjectGVK: kubernetes.VirtualServices, Valid: true},
+		k8sGwKey: {Cluster: cluster, Name: "waypoint", Namespace: "bookinfo", ObjectGVK: kubernetes.K8sGateways, Valid: true},
+		svcKey:   {Cluster: cluster, Name: "productpage", Namespace: "bookinfo", ObjectGVK: serviceGVK, Valid: true},
+	})
+
+	vs := IstioValidationsService{kialiCache: kialiCache, namespace: &namespaceService, userClients: userClients}
+
+	// Namespace-scoped read: the denied type's entry is dropped; the allowed
+	// type and the service pseudo-entry survive.
+	validations, err := vs.GetValidationsForNamespace(context.TODO(), cluster, "bookinfo")
+	require.NoError(err)
+	assert.NotContains(validations, k8sGwKey, "validations of a type the user cannot list must not be returned")
+	assert.Contains(validations, vsKey)
+	assert.Contains(validations, svcKey)
+
+	// The summary the Namespace details page counts from matches the config
+	// list: only the VirtualService counts (the service pseudo-entry is
+	// excluded by the Group check, see #10473).
+	summary := validations.SummarizeValidation("bookinfo", cluster)
+	assert.Equal(1, summary.ObjectCount)
+
+	// The cluster-wide read filters the same way.
+	validations, err = vs.GetValidations(context.TODO(), cluster)
+	require.NoError(err)
+	assert.NotContains(validations, k8sGwKey)
+	assert.Contains(validations, vsKey)
+	assert.Contains(validations, svcKey)
 }
 
 // TestGetValidationsForWorkloadPrunesReferences covers the Service/Workload

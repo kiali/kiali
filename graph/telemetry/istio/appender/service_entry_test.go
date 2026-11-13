@@ -31,6 +31,7 @@ func setupBusinessLayer(t *testing.T, meshExportTo []string, istioObjects ...run
 		kubetest.FakeNamespace("otherNamespace"),
 	)
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	lb := business.NewLayerBuilder(t, conf).WithClient(k8s)
 
@@ -1114,6 +1115,7 @@ func TestDisjointMulticlusterEntries(t *testing.T) {
 	}
 	remoteSE.Spec.Location = api_networking_v1.ServiceEntry_MESH_INTERNAL
 	k8s := kubetest.NewFakeK8sClient(remoteSE, kubetest.FakeNamespace("namespace"))
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
@@ -1206,6 +1208,7 @@ func TestServiceEntrySameHostMatchNamespace(t *testing.T) {
 		SE1,
 		SE2,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
@@ -1343,6 +1346,7 @@ func TestServiceEntrySameHostNoMatchNamespace(t *testing.T) {
 
 	istioObjects := append([]runtime.Object{SE1, SE2}, kubetest.FakeNamespace("otherNamespace"))
 	k8s := kubetest.NewFakeK8sClient(istioObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).
 		WithDiscovery(defaultSEDiscovery(config.DefaultClusterID, "testNamespace", "otherNamespace")).Build()
 
@@ -1632,6 +1636,8 @@ func TestSEKiali7589(t *testing.T) {
 
 	client1 := kubetest.NewFakeK8sClient(istioObjects1...)
 	client2 := kubetest.NewFakeK8sClient(istioObjects2...)
+	client1.AllowAllSelfSubjectAccessReviews()
+	client2.AllowAllSelfSubjectAccessReviews()
 
 	clients := map[string]kubernetes.UserClientInterface{
 		"cluster1": client1,

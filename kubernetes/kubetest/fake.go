@@ -18,12 +18,14 @@ import (
 	istio "istio.io/client-go/pkg/clientset/versioned"
 	istiofake "istio.io/client-go/pkg/clientset/versioned/fake"
 	istioscheme "istio.io/client-go/pkg/clientset/versioned/scheme"
+	auth_v1 "k8s.io/api/authorization/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	kubescheme "k8s.io/client-go/kubernetes/scheme"
+	kubeclienttesting "k8s.io/client-go/testing"
 	ctrlfake "sigs.k8s.io/controller-runtime/pkg/client/fake"
 	inferenceapifake "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/fake"
 	inferenceapischeme "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned/scheme"
@@ -215,6 +217,20 @@ func (c *FakeK8sClient) GetCacheKey() string {
 }
 func (c *FakeK8sClient) GetToken() string                   { return c.Token }
 func (c *FakeK8sClient) ClusterInfo() kialikube.ClusterInfo { return c.KubeClusterInfo }
+
+// AllowAllSelfSubjectAccessReviews makes every SelfSubjectAccessReview
+// created through this fake client succeed. kubefake echoes reviews back
+// with Allowed=false, so tests that exercise the user-RBAC-filtered config
+// list paths must opt in or every config type is filtered out. Tests that
+// need to deny can still prepend their own reactors: reactors prepended
+// after this call run first.
+func (c *FakeK8sClient) AllowAllSelfSubjectAccessReviews() {
+	c.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "RBAC allowed by fake client"}
+		return true, review, nil
+	})
+}
 func (c *FakeK8sClient) SetProxyLogLevel(namespace string, podName string, level string) error {
 	return nil
 }

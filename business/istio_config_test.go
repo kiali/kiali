@@ -17,6 +17,8 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kubeclienttesting "k8s.io/client-go/testing"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -347,6 +349,7 @@ func mockGetIstioConfigList(t *testing.T) IstioConfigService {
 		fakeIstioObjects...,
 	)
 	k8s.OpenShift = true
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	conf := config.NewConfig()
 
@@ -806,6 +809,7 @@ deployment:
 		objects = append(objects, gateway)
 	}
 	k8s := kubetest.NewFakeK8sClient(objects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
@@ -848,6 +852,7 @@ func TestGetIstioConfigListIncludesTrafficExtensions(t *testing.T) {
 		fakeIstioObjects = append(fakeIstioObjects, tx.DeepCopyObject())
 	}
 	k8s := kubetest.NewFakeK8sClient(fakeIstioObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
 
@@ -1030,6 +1035,7 @@ func TestGetIstioConfigListNoUserClientReturnsEmpty(t *testing.T) {
 		}
 		k8s := kubetest.NewFakeK8sClient(fakeObjects...)
 		k8s.OpenShift = true
+		k8s.AllowAllSelfSubjectAccessReviews()
 		return k8s
 	}
 
@@ -1052,4 +1058,121 @@ func TestGetIstioConfigListNoUserClientReturnsEmpty(t *testing.T) {
 	list, err = layer.IstioConfig.GetIstioConfigList(context.TODO(), home, criteria)
 	assert.Nil(err)
 	assert.Equal(2, len(list.Gateways))
+}
+
+// TestGetIstioConfigListFiltersTypesUserCannotList reproduces issue #10515:
+// the list is served from the SA-backed cache, so without a per-type RBAC
+// filter a user without Gateway API permissions sees K8s Gateways in the
+// list that then fail with 403 on the detail request.
+func TestGetIstioConfigListFiltersTypesUserCannotList(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	fakeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+	for _, v := range fakeGetVirtualServices() {
+		fakeObjects = append(fakeObjects, v.DeepCopyObject())
+	}
+	fakeObjects = append(fakeObjects, data.CreateEmptyK8sGateway("k8s-gw-1", "test"))
+	k8s := kubetest.NewFakeK8sClient(fakeObjects...)
+	k8s.GatewayAPIEnabled = true
+
+	// Deny "list" on gateway.networking.k8s.io/gateways only; allow the rest.
+	fakeKube := k8s.KubeClientset.(*kubefake.Clientset)
+	fakeKube.PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		if ra := review.Spec.ResourceAttributes; ra != nil && ra.Group == "gateway.networking.k8s.io" && ra.Resource == "gateways" {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: false, Reason: "not authorized"}
+		} else {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "authorized"}
+		}
+		return true, review, nil
+	})
+
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+	cluster := conf.KubernetesConfig.ClusterName
+	criteria := IstioConfigCriteria{IncludeK8sGateways: true, IncludeVirtualServices: true}
+
+	list, err := configService.GetIstioConfigListForNamespace(context.TODO(), cluster, "test", criteria)
+	assert.Nil(err)
+	assert.Equal(0, len(list.K8sGateways))
+	assert.Equal(2, len(list.VirtualServices))
+
+	// The cluster-wide list filters the same way.
+	list, err = configService.GetIstioConfigList(context.TODO(), cluster, criteria)
+	assert.Nil(err)
+	assert.Equal(0, len(list.K8sGateways))
+	assert.Equal(2, len(list.VirtualServices))
+}
+
+// TestGetIstioConfigListUsesSAClientForDiscovery is a regression test for the
+// related bug in issue #10515: the discovery gates that decide which types to
+// query must use the SA client, so a user without discovery access still gets
+// a populated list from the SA-backed cache.
+func TestGetIstioConfigListUsesSAClientForDiscovery(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	newClient := func() *kubetest.FakeK8sClient {
+		fakeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+		for _, g := range fakeGetGateways() {
+			fakeObjects = append(fakeObjects, g.DeepCopyObject())
+		}
+		return kubetest.NewFakeK8sClient(fakeObjects...)
+	}
+
+	// The user client reports no Istio API installed (e.g. a hardened cluster
+	// where the user lacks discovery access); the SA client reports it fine.
+	userK8s := newClient()
+	userK8s.IstioAPIInstalled = false
+	userK8s.AllowAllSelfSubjectAccessReviews()
+	saK8s := newClient()
+
+	layer := NewLayerBuilder(t, conf).WithClient(userK8s).Build()
+	layer.IstioConfig.saClients[conf.KubernetesConfig.ClusterName] = saK8s
+
+	criteria := IstioConfigCriteria{IncludeGateways: true}
+	list, err := layer.IstioConfig.GetIstioConfigListForNamespace(context.TODO(), conf.KubernetesConfig.ClusterName, "test", criteria)
+	assert.Nil(err)
+	assert.Equal(2, len(list.Gateways))
+}
+
+// TestGetIstioConfigListCachesListVerdicts ensures the SSAR verdicts backing
+// the per-type RBAC filter are cached per user: a second identical list call
+// must not issue new SelfSubjectAccessReviews.
+func TestGetIstioConfigListCachesListVerdicts(t *testing.T) {
+	assert := assert.New(t)
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	fakeObjects := []runtime.Object{&core_v1.Namespace{ObjectMeta: meta_v1.ObjectMeta{Name: "test"}}}
+	for _, g := range fakeGetGateways() {
+		fakeObjects = append(fakeObjects, g.DeepCopyObject())
+	}
+	k8s := kubetest.NewFakeK8sClient(fakeObjects...)
+	k8s.AllowAllSelfSubjectAccessReviews()
+
+	configService := NewLayerBuilder(t, conf).WithClient(k8s).Build().IstioConfig
+	cluster := conf.KubernetesConfig.ClusterName
+	criteria := IstioConfigCriteria{IncludeGateways: true}
+
+	ssarCount := func() int {
+		count := 0
+		for _, action := range k8s.KubeClientset.(*kubefake.Clientset).Actions() {
+			if action.GetVerb() == "create" && action.GetResource().Resource == "selfsubjectaccessreviews" {
+				count++
+			}
+		}
+		return count
+	}
+
+	_, err := configService.GetIstioConfigListForNamespace(context.TODO(), cluster, "test", criteria)
+	assert.Nil(err)
+	firstCount := ssarCount()
+	assert.Greater(firstCount, 0)
+
+	_, err = configService.GetIstioConfigListForNamespace(context.TODO(), cluster, "test", criteria)
+	assert.Nil(err)
+	assert.Equal(firstCount, ssarCount())
 }
