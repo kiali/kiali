@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ClipboardCopyButton } from '@patternfly/react-core';
 
-import { copyToClipboard } from './clipboard';
+import { writeMarkdownRichToClipboard } from 'utils/ClipboardUtils';
 import { useBoolean } from '../hooks/useBoolean';
 import { t } from 'utils/I18nUtils';
 
@@ -17,12 +17,15 @@ export const CopyAction: React.FC<Props> = ({ className, value }) => {
     <ClipboardCopyButton
       aria-label={t('Copy to clipboard')}
       className={className}
-      id="ai-copy-button"
-      exitDelay={isCopied ? 1500 : 600}
       data-test="ai-copy-button"
+      exitDelay={isCopied ? 1500 : 600}
+      id="ai-copy-button"
       onClick={() => {
-        copyToClipboard(value);
-        setCopied();
+        void writeMarkdownRichToClipboard(value).then(success => {
+          if (success) {
+            setCopied();
+          }
+        });
       }}
       onTooltipHidden={setNotCopied}
       textId="code-content"

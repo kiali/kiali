@@ -27,7 +27,7 @@ import type {
   Sidecar,
   VirtualService
 } from 'types/IstioObjects';
-import { CopyToClipboard } from 'react-copy-to-clipboard';
+import { CopyToClipboardButton } from 'components/Copy/CopyToClipboardButton';
 import { kialiStyle } from 'styles/StyleUtils';
 import { KialiIcon } from '../../config/KialiIcon';
 import { yamlDumpOptions } from '../../types/IstioConfigDetails';
@@ -74,7 +74,6 @@ interface Props {
 }
 
 interface State {
-  copied: boolean;
   items: ConfigPreviewItem[];
   mainTab: string;
   modalOpen: boolean;
@@ -103,7 +102,6 @@ export class IstioConfigPreview extends React.Component<Props, State> {
     const newIstioPage = getPagePath().startsWith('istio');
 
     this.state = {
-      copied: false,
       mainTab: this.props.items.length > 0 ? this.props.items[0].title.toLocaleLowerCase().replace(/\s/g, '') : '',
       newIstioPage: newIstioPage,
       items: cloneDeep(this.props.items),
@@ -226,22 +224,16 @@ export class IstioConfigPreview extends React.Component<Props, State> {
               })}
             >
               <ToolbarItem>
-                <Tooltip
-                  content={<>{this.state.copied ? t('Copied') : t('Copy all resources')}</>}
-                  onTooltipHidden={() => this.setState({ copied: false })}
-                >
-                  <CopyToClipboard text={this.getPreviewYaml()}>
-                    <Button
-                      variant={ButtonVariant.link}
-                      aria-label={t('Copy')}
-                      isInline
-                      onClick={() => this.setState({ copied: true })}
-                    >
-                      <KialiIcon.Copy />
-                      <span className={iconStyle}>{t('Copy')}</span>
-                    </Button>
-                  </CopyToClipboard>
-                </Tooltip>
+                <CopyToClipboardButton
+                  ariaLabel={t('Copy')}
+                  copiedTooltip={t('Copied')}
+                  copyTooltip={t('Copy all resources')}
+                  id="istio-config-preview-copy"
+                  label={t('Copy')}
+                  labelClassName={iconStyle}
+                  text={this.getPreviewYaml()}
+                  variant={ButtonVariant.link}
+                />
               </ToolbarItem>
               <ToolbarItem>
                 <Tooltip content={<>{t('Download all resources in a file')}</>}>

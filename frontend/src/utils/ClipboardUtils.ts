@@ -6,7 +6,22 @@ const supportsHtmlClipboard = (): boolean =>
   typeof ClipboardItem.supports === 'function' &&
   ClipboardItem.supports('text/html');
 
-export const copyToClipboard = async (value: string): Promise<void> => {
+/** Plain text only; returns whether the write succeeded. */
+export const writePlainTextToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy to clipboard: ', err);
+    return false;
+  }
+};
+
+/**
+ * Copies markdown as plain text plus optional HTML for rich paste (e.g. chat, Word).
+ * Returns whether a plain-text write eventually succeeded.
+ */
+export const writeMarkdownRichToClipboard = async (value: string): Promise<boolean> => {
   try {
     if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
       const blobs: Record<string, Blob> = {
@@ -17,15 +32,11 @@ export const copyToClipboard = async (value: string): Promise<void> => {
         blobs['text/html'] = new Blob([html], { type: 'text/html' });
       }
       await navigator.clipboard.write([new ClipboardItem(blobs)]);
-    } else {
-      await navigator.clipboard.writeText(value);
+      return true;
     }
+    return await writePlainTextToClipboard(value);
   } catch (err) {
     console.warn('Rich clipboard write failed, falling back to plain text: ', err);
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch (fallbackErr) {
-      console.error('Failed to copy to clipboard: ', fallbackErr);
-    }
+    return await writePlainTextToClipboard(value);
   }
 };
