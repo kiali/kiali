@@ -552,3 +552,45 @@ func TestProbeRecoveryKeepsUnverifiedPartialMarks(t *testing.T) {
 	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"),
 		"the deployments marks stay until a check clears them")
 }
+
+// A probe must not clear a denial that arrived while its checks ran, even for a resource
+// that was already revoked. The probe checks both revoked resources; while it checks the
+// second, the first one's debounce expires and a fresh watch-error check denies it again.
+// The revoked set looks the same, but the cluster must stay degraded.
+func TestProbeKeepsResourceRevokedAgainDuringCheck(t *testing.T) {
+	groups := map[string]string{"pods": "", "deployments": "apps"}
+	restored := false
+	firstChecked := ""
+	revokedAgain := false
+	now := time.Date(2026, 11, 9, 12, 0, 0, 0, time.UTC)
+	var access *ClusterAccess
+	access = NewClusterAccess(func(ctx context.Context, cluster, _, resource string) (DeniedAccess, error) {
+		switch {
+		case !restored, resource == firstChecked && firstChecked != "" && revokedAgain:
+			return DeniedAccess{Cluster: true}, nil
+		case firstChecked == "":
+			firstChecked = resource
+			return DeniedAccess{}, nil
+		case resource == firstChecked:
+			// The fresh check made by ConfirmRevoked below.
+			return DeniedAccess{Cluster: true}, nil
+		default:
+			// The probe's second check: the first resource is revoked again meanwhile.
+			now = now.Add(accessCheckDebounce)
+			revokedAgain = access.ConfirmRevoked(ctx, cluster, groups[firstChecked], firstChecked)
+			return DeniedAccess{}, nil
+		}
+	})
+	access.now = func() time.Time { return now }
+
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+
+	restored = true
+	now = now.Add(accessCheckDebounce)
+	access.Probe(context.Background())
+
+	require.True(t, revokedAgain, "the mid-probe denial was confirmed")
+	_, degraded := access.DegradedSince("west")
+	require.True(t, degraded, "a denial newer than the probe's checks keeps the cluster degraded")
+}
