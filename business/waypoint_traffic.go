@@ -81,9 +81,20 @@ func waypointTrafficSplitForService(svc *models.Service, ns *models.Namespace) *
 	return models.ResolveServiceWaypointTrafficSplit(svc.Cluster, svc.Namespace, svc.Labels, svc.Annotations, namespaceLabels, namespaceAnnotations)
 }
 
-func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, workload models.Workload) *models.WaypointTrafficSplit {
-	_, found := in.getCapturingWaypoints(ctx, workload, false)
-	if !found {
+func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, workload models.Workload) (*models.WaypointTrafficSplit, string) {
+	_, service, found := in.getCapturingWaypoints(ctx, workload, false)
+	if !found || service == nil {
+		return nil, ""
+	}
+	return waypointTrafficSplitForCapturedWorkload(in, workload, service), service.Name
+}
+
+// Callers that already established capture can resolve the split without repeating
+// the Service lookup. Other callers must use waypointTrafficSplitForWorkload.
+func waypointTrafficSplitForCapturedWorkload(in *WorkloadService, workload models.Workload, service *models.ServiceOverview) *models.WaypointTrafficSplit {
+	// Canary splits apply only to Service-addressed traffic. Namespace metadata
+	// alone cannot establish a canary relationship for a direct workload.
+	if service == nil {
 		return nil
 	}
 	cluster := workload.Cluster
@@ -98,17 +109,13 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 		return nil
 	}
 
-	if len(workload.Services) > 0 {
-		svc := workload.Services[0]
-		return waypointTrafficSplitForService(&models.Service{
-			Annotations: svc.Annotations,
-			Cluster:     cluster,
-			Labels:      svc.Labels,
-			Name:        svc.Name,
-			Namespace:   svc.Namespace,
-		}, &nsModel)
-	}
-	return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
+	return waypointTrafficSplitForService(&models.Service{
+		Annotations: service.Annotations,
+		Cluster:     cluster,
+		Labels:      service.Labels,
+		Name:        service.Name,
+		Namespace:   service.Namespace,
+	}, &nsModel)
 }
 
 func gatewayWaypointTrafficSplitConfigs(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) []models.GatewayWaypointTrafficSplitConfig {
@@ -155,16 +162,6 @@ func computeGatewayWaypointTrafficSplitConfigs(ctx context.Context, in *Workload
 	if len(configs) > 0 {
 		return configs
 	}
-	if nsModel, nsFound := in.cache.GetNamespace(cluster, userClient.GetCacheKey(), gatewayNamespace); nsFound {
-		split := models.GatewayWaypointTrafficSplit(cluster, gatewayNamespace, gatewayName, nsModel.Labels, nsModel.Annotations)
-		if split != nil && split.Canary != nil {
-			return []models.GatewayWaypointTrafficSplitConfig{{
-				ConfigLevel: "namespace",
-				Namespace:   gatewayNamespace,
-				Split:       split,
-			}}
-		}
-	}
 	return nil
 }
 
@@ -201,11 +198,7 @@ func (in *WorkloadService) decorateWorkloadWaypointTrafficSplit(ctx context.Cont
 	// Recompute after Services are attached so service-level canary labels/annotations win over namespace.
 	waypoints := in.GetWaypoints(ctx)
 	workload.WaypointWorkloads = in.getWaypointsForWorkload(ctx, *workload, false, waypoints)
-	split := waypointTrafficSplitForWorkload(ctx, in, *workload)
-	serviceName := ""
-	if split != nil && split.ConfigLevel == "service" && len(workload.Services) > 0 {
-		serviceName = workload.Services[0].Name
-	}
+	split, serviceName := waypointTrafficSplitForWorkload(ctx, in, *workload)
 	workload.WaypointTrafficSplitConfigs = workloadTrafficSplitConfigs(split, workload.Namespace, serviceName)
 }
 
