@@ -132,7 +132,7 @@ test-integration-controller: .ensure-envtest-bin-dir-exists .ensure-yq-exists
 # Lint targets
 #
 
-GOLANGCI_LINT_VERSION ?= v2.12.2
+GOLANGCI_LINT_VERSION ?= v2.15.0
 GOLANGCI_LINT ?= $(shell ${GO} env GOPATH)/bin/golangci-lint
 
 ## lint-install: Installs golangci-lint

@@ -5,16 +5,16 @@
 
 # ensure_gateway_api_crds [version] [context_args]
 # Installs Gateway API CRDs if not already present.
-# Uses K8S_GATEWAY_API_VERSION if set, else defaults to v1.6.0.
+# Uses K8S_GATEWAY_API_VERSION if set, else defaults to v1.7.0.
 # Uses CLIENT_EXE (kubectl/oc) for cluster operations.
-# Optional: version - override (e.g. v1.6.0); context_args - for multicluster (e.g. "--context=kind-dataplane")
+# Optional: version - override (e.g. v1.7.0); context_args - for multicluster (e.g. "--context=kind-dataplane")
 ensure_gateway_api_crds() {
-  local version="${1:-${K8S_GATEWAY_API_VERSION:-v1.6.0}}"
+  local version="${1:-${K8S_GATEWAY_API_VERSION:-v1.7.0}}"
   local context_args="${2:-}"
   local client="${CLIENT_EXE:-kubectl}"
 
   if [ -z "${version}" ]; then
-    version=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" 2>/dev/null | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | tr -d '\r' || echo "v1.5.0")
+    version=$(curl --head --silent "https://github.com/kubernetes-sigs/gateway-api/releases/latest" 2>/dev/null | grep "location: " | awk '{print $2}' | sed "s/.*tag\///g" | tr -d '\r' || echo "v1.7.0")
   fi
 
   echo "Verifying that Gateway API is installed; if it is not then Gateway API version ${version} will be installed now."
