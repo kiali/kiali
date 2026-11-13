@@ -514,3 +514,41 @@ func TestProbeKeepsPartialRevocationWhenClusterRecovers(t *testing.T) {
 	require.False(t, degraded, "pods are readable again")
 	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"), "deployments still deny bookinfo")
 }
+
+// A cluster recovering from a full revocation must keep the partial marks of a resource
+// the recovery did not verify. Here deployments are partially revoked in bookinfo when
+// pods are revoked entirely; pods then come back, but the deployments re-check cannot
+// tell. Its marks must survive until a check positively clears them, or bookinfo's frozen
+// data would be served again.
+func TestProbeRecoveryKeepsUnverifiedPartialMarks(t *testing.T) {
+	podsAllowed := false
+	deploymentsUnknown := false
+	access := NewClusterAccess(func(_ context.Context, _, _, resource string) (DeniedAccess, error) {
+		if resource == "deployments" {
+			if deploymentsUnknown {
+				return DeniedAccess{}, errors.New("api server unreachable")
+			}
+			return DeniedAccess{Namespaces: []string{"bookinfo"}}, nil
+		}
+		if podsAllowed {
+			return DeniedAccess{}, nil
+		}
+		return DeniedAccess{Cluster: true}, nil
+	})
+	now := time.Date(2026, 11, 9, 12, 0, 0, 0, time.UTC)
+	access.now = func() time.Time { return now }
+
+	require.False(t, access.ConfirmRevoked(context.Background(), "west", "apps", "deployments"))
+	require.True(t, access.ConfirmRevoked(context.Background(), "west", "", "pods"))
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"))
+
+	podsAllowed = true
+	deploymentsUnknown = true
+	now = now.Add(accessCheckDebounce)
+	access.Probe(context.Background())
+
+	_, degraded := access.DegradedSince("west")
+	require.False(t, degraded, "pods are readable again")
+	require.Equal(t, []string{"bookinfo"}, access.RevokedNamespaces("west"),
+		"the deployments marks stay until a check clears them")
+}

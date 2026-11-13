@@ -256,11 +256,15 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 		delete(a.degraded, cluster)
 		delete(a.revoked, cluster)
 		delete(a.lastCheck, cluster)
-		delete(a.nsRevoked, cluster)
+		// Only the resources this probe verified get fresh marks. Another resource's
+		// partial marks stay until its own check clears them: if that check cannot tell,
+		// dropping them here would serve the namespaces' frozen data again.
+		for _, gr := range resources {
+			a.deleteNsRevokedLocked(cluster, gr)
+		}
 		for gr, namespaces := range remaining {
 			a.setNsRevokedLocked(cluster, gr, namespaces)
 		}
-		// Right after the reseed, the cluster's marks are exactly the remaining denials.
 		remainingNamespaces := a.revokedNamespacesLocked(cluster)
 		a.mu.Unlock()
 		if len(remainingNamespaces) == 0 {
