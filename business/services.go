@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package business
 
 import (
@@ -821,7 +823,12 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 			options = append(options, client.MatchingLabels{useLabel: name})
 		}
 		services := &core_v1.ServiceList{}
-		if err := kubeCache.List(ctx, services, options...); err != nil {
+		if len(options) == 1 {
+			services.Items, err = waypointNamespaceServices(ctx, kubeCache, cluster, ns.Name)
+		} else {
+			err = kubeCache.List(ctx, services, options...)
+		}
+		if err != nil {
 			log.Infof("ListWaypointServices: error listing services: %s", err)
 			continue
 		}
@@ -848,59 +855,64 @@ func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace,
 func (in *SvcService) GatewayTrafficSplitConfigsFromEnrolledServices(ctx context.Context, gatewayName, gatewayNamespace, cluster string) []models.GatewayWaypointTrafficSplitConfig {
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		return nil
+		return []models.GatewayWaypointTrafficSplitConfig{}
 	}
-	userClient, ok := in.userClients[cluster]
-	if !ok {
-		return nil
-	}
-
-	labelSelectors := []struct {
-		useLabel          string
-		useNamespaceLabel string
-	}{
-		{config.WaypointUseLabel, config.WaypointUseNamespaceLabel},
-		{config.WaypointCanaryUseLabel, config.WaypointCanaryNamespaceLabel},
-	}
-
-	configs := make([]models.GatewayWaypointTrafficSplitConfig, 0)
-	seen := make(map[string]bool)
-
+	configs := []models.GatewayWaypointTrafficSplitConfig{}
 	// Single-cluster accessible namespace set only (avoids GetNamespaces fan-out across clusters).
 	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
-		return nil
+		return configs
 	}
 
-	for _, sel := range labelSelectors {
-		for _, ns := range namespaces {
+	for _, ns := range namespaces {
+		selectors := []client.ListOption{
+			client.MatchingLabels{config.WaypointUseLabel: gatewayName},
+			client.MatchingLabels{config.WaypointCanaryUseLabel: gatewayName},
+		}
+		namespaceSplit := models.ResolveWaypointTrafficSplit(cluster, ns.Name, ns.Labels, ns.Annotations, "namespace")
+		if models.GatewaySplitReferencesGateway(namespaceSplit, gatewayName, gatewayNamespace) {
+			// A Service can override just the weight annotation while inheriting
+			// the gateway names. Only this exact namespace binding needs a full list.
+			selectors = []client.ListOption{nil}
+			if namespaceSplit.Canary == nil {
+				// Without an inherited canary, weight alone cannot establish a split.
+				selectors = []client.ListOption{client.HasLabels{config.WaypointCanaryUseLabel}}
+			}
+		}
+		seen := make(map[string]bool)
+		for _, selector := range selectors {
+			options := []client.ListOption{client.InNamespace(ns.Name)}
+			if selector != nil {
+				options = append(options, selector)
+			}
 			svcList := &core_v1.ServiceList{}
-			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{sel.useLabel: gatewayName})); err != nil {
-				log.Infof("GatewayTrafficSplitFromEnrolledServices: error listing services: %s", err.Error())
+			if selector == nil {
+				svcList.Items, err = waypointNamespaceServices(ctx, kubeCache, cluster, ns.Name)
+			} else {
+				err = kubeCache.List(ctx, svcList, options...)
+			}
+			if err != nil {
+				log.Infof("GatewayTrafficSplitFromEnrolledServices: error listing services: %s", err)
 				continue
 			}
 			for _, item := range svcList.Items {
-				key := fmt.Sprintf("%s_%s_%s", item.Name, item.Namespace, cluster)
-				if seen[key] {
+				if seen[item.Name] {
 					continue
 				}
-				if item.Namespace != gatewayNamespace && item.Labels[sel.useNamespaceLabel] != gatewayNamespace {
+				_, canaryOverride := item.Labels[config.WaypointCanaryUseLabel]
+				_, weightOverride := item.Annotations[config.WaypointCanaryWeightAnnotation]
+				if item.Labels[config.WaypointUseLabel] == "" && !canaryOverride && !weightOverride {
 					continue
 				}
-				seen[key] = true
-
-				nsModel, nsFound := in.kialiCache.GetNamespace(cluster, userClient.GetCacheKey(), item.Namespace)
-				if !nsFound {
-					continue
-				}
+				seen[item.Name] = true
 				split := waypointTrafficSplitForService(&models.Service{
 					Annotations: item.Annotations,
 					Cluster:     cluster,
 					Labels:      item.Labels,
 					Name:        item.Name,
 					Namespace:   item.Namespace,
-				}, &nsModel)
-				if split != nil && split.Canary != nil && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
+				}, &ns)
+				if split != nil && split.Canary != nil && split.ConfigLevel == "service" && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
 					configs = append(configs, models.GatewayWaypointTrafficSplitConfig{
 						ConfigLevel: "service",
 						Namespace:   item.Namespace,

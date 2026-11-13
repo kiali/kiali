@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package business
 
 import (
@@ -384,7 +386,7 @@ func TestWaypointEnrollmentSetsAreIndependent(t *testing.T) {
 			}}
 			service := &core_v1.Service{
 				ObjectMeta: metav1.ObjectMeta{
-					Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: tc.serviceWeight},
+					Annotations: map[string]string{},
 					Labels:      map[string]string{},
 					Name:        "ratings",
 					Namespace:   ns.Name,
@@ -393,6 +395,9 @@ func TestWaypointEnrollmentSetsAreIndependent(t *testing.T) {
 					Ports:    []core_v1.ServicePort{{Name: "http", Port: 9080}},
 					Selector: map[string]string{"app": "ratings"},
 				},
+			}
+			if tc.serviceWeight != "" {
+				service.Annotations[config.WaypointCanaryWeightAnnotation] = tc.serviceWeight
 			}
 			if tc.servicePrimary != "" {
 				service.Labels[config.WaypointUseLabel] = tc.servicePrimary

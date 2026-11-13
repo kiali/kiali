@@ -1,10 +1,14 @@
+// Assisted-by: Codex
+
 package models
 
 import (
 	"fmt"
+	"maps"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/kiali/kiali/config"
 )
@@ -181,4 +185,60 @@ func TestGatewayWaypointCanaryGraphLabelAgreements(t *testing.T) {
 		assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "primary", "infra"))
 		assert.Equal(t, WaypointCanaryMultipleSplitsLabel, GatewayWaypointCanaryGraphLabel(configs, "canary", "infra"))
 	})
+}
+
+func TestResolveServiceWaypointTrafficSplitInheritance(t *testing.T) {
+	for name, tc := range map[string]struct {
+		annotations          map[string]string
+		labels               map[string]string
+		wantCanary           string
+		wantCanaryNamespace  string
+		wantLevel            string
+		wantNil              bool
+		wantPrimary          string
+		wantPrimaryNamespace string
+		wantWeight           int
+	}{
+		"namespace defaults":                              {wantCanary: "canary", wantCanaryNamespace: "infra", wantLevel: "namespace", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 30},
+		"weight override":                                 {annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "80"}, wantCanary: "canary", wantCanaryNamespace: "infra", wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 80},
+		"zero override":                                   {annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "0"}, wantCanary: "canary", wantCanaryNamespace: "infra", wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra"},
+		"full promotion":                                  {annotations: map[string]string{config.WaypointCanaryWeightAnnotation: "100"}, wantCanary: "canary", wantCanaryNamespace: "infra", wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 100},
+		"canary name resets its namespace":                {labels: map[string]string{config.WaypointCanaryUseLabel: "own"}, wantCanary: "own", wantCanaryNamespace: "bookinfo", wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 30},
+		"cross namespace canary override":                 {labels: map[string]string{config.WaypointCanaryUseLabel: "own", config.WaypointCanaryNamespaceLabel: "other"}, wantCanary: "own", wantCanaryNamespace: "other", wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 30},
+		"namespace without canary name does not override": {labels: map[string]string{config.WaypointCanaryNamespaceLabel: "other"}, wantCanary: "canary", wantCanaryNamespace: "infra", wantLevel: "namespace", wantPrimary: "primary", wantPrimaryNamespace: "infra", wantWeight: 30},
+		"disable canary":                                  {labels: map[string]string{config.WaypointCanaryUseLabel: config.WaypointNone}, wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra"},
+		"empty canary disables inheritance":               {labels: map[string]string{config.WaypointCanaryUseLabel: ""}, wantLevel: "service", wantPrimary: "primary", wantPrimaryNamespace: "infra"},
+		"explicit primary disables canary inheritance":    {labels: map[string]string{config.WaypointUseLabel: "own"}, wantLevel: "service", wantPrimary: "own", wantPrimaryNamespace: "bookinfo"},
+		"explicit primary disables weight inheritance":    {labels: map[string]string{config.WaypointUseLabel: "own", config.WaypointCanaryUseLabel: "own-canary"}, wantCanary: "own-canary", wantCanaryNamespace: "bookinfo", wantLevel: "service", wantPrimary: "own", wantPrimaryNamespace: "bookinfo"},
+		"primary optout":                                  {labels: map[string]string{config.WaypointUseLabel: config.WaypointNone}, wantNil: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			nsLabels := map[string]string{config.WaypointUseLabel: "primary", config.WaypointUseNamespaceLabel: "infra", config.WaypointCanaryUseLabel: "canary", config.WaypointCanaryNamespaceLabel: "infra"}
+			nsAnnotations := map[string]string{config.WaypointCanaryWeightAnnotation: "30"}
+			labelsBefore, annotationsBefore := maps.Clone(tc.labels), maps.Clone(tc.annotations)
+			nsLabelsBefore, nsAnnotationsBefore := maps.Clone(nsLabels), maps.Clone(nsAnnotations)
+			split := ResolveServiceWaypointTrafficSplit("cluster-default", "bookinfo", tc.labels, tc.annotations, nsLabels, nsAnnotations)
+			assert.Equal(t, labelsBefore, tc.labels)
+			assert.Equal(t, annotationsBefore, tc.annotations)
+			assert.Equal(t, nsLabelsBefore, nsLabels)
+			assert.Equal(t, nsAnnotationsBefore, nsAnnotations)
+			if tc.wantNil {
+				require.Nil(t, split)
+				return
+			}
+			require.NotNil(t, split)
+			assert.Equal(t, tc.wantPrimary, split.Primary.Name)
+			assert.Equal(t, tc.wantPrimaryNamespace, split.Primary.Namespace)
+			assert.Equal(t, tc.wantLevel, split.ConfigLevel)
+			assert.Equal(t, tc.wantWeight, split.CanaryWeight)
+			assert.Equal(t, 100-tc.wantWeight, split.PrimaryWeight)
+			if tc.wantCanary == "" {
+				require.Nil(t, split.Canary)
+				return
+			}
+			require.NotNil(t, split.Canary)
+			assert.Equal(t, tc.wantCanary, split.Canary.Name)
+			assert.Equal(t, tc.wantCanaryNamespace, split.Canary.Namespace)
+		})
+	}
 }

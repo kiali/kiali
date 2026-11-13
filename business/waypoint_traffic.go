@@ -1,9 +1,14 @@
+// Assisted-by: Codex
+
 package business
 
 import (
 	"context"
 	"fmt"
 	"sort"
+
+	core_v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/kubernetes"
@@ -13,7 +18,8 @@ import (
 type gatewayWaypointSplitCacheKey struct{}
 
 type gatewayWaypointSplitCache struct {
-	configs map[string][]models.GatewayWaypointTrafficSplitConfig
+	configs  map[string][]models.GatewayWaypointTrafficSplitConfig
+	services map[string][]core_v1.Service
 }
 
 // ContextWithGatewayWaypointSplitCache attaches a per-request cache for gateway enrollment splits.
@@ -26,7 +32,8 @@ func ContextWithGatewayWaypointSplitCache(ctx context.Context) context.Context {
 		return ctx
 	}
 	return context.WithValue(ctx, gatewayWaypointSplitCacheKey{}, &gatewayWaypointSplitCache{
-		configs: make(map[string][]models.GatewayWaypointTrafficSplitConfig),
+		configs:  make(map[string][]models.GatewayWaypointTrafficSplitConfig),
+		services: make(map[string][]core_v1.Service),
 	})
 }
 
@@ -42,30 +49,45 @@ func gatewaySplitCacheKey(cluster, gatewayNamespace, gatewayName string) string 
 	return fmt.Sprintf("%s\x00%s\x00%s", cluster, gatewayNamespace, gatewayName)
 }
 
+// Enrollment already lists inherited Services. Reuse that read-only snapshot for
+// annotation-only split discovery and other gateways within the same request.
+func waypointNamespaceServices(ctx context.Context, reader client.Reader, cluster, namespace string) ([]core_v1.Service, error) {
+	cache := gatewayWaypointSplitCacheFromContext(ctx)
+	key := gatewaySplitCacheKey(cluster, namespace, "")
+	if cache != nil {
+		if services, found := cache.services[key]; found {
+			return services, nil
+		}
+	}
+	services := &core_v1.ServiceList{}
+	if err := reader.List(ctx, services, client.InNamespace(namespace)); err != nil {
+		return []core_v1.Service{}, err
+	}
+	if cache != nil {
+		if cache.services == nil {
+			cache.services = make(map[string][]core_v1.Service)
+		}
+		cache.services[key] = services.Items
+	}
+	return services.Items, nil
+}
+
 func waypointTrafficSplitForService(svc *models.Service, ns *models.Namespace) *models.WaypointTrafficSplit {
 	if svc == nil {
 		return nil
 	}
-	if svc.Labels != nil {
-		if svc.Labels[config.WaypointUseLabel] == config.WaypointNone {
-			return nil
-		}
-		if svc.Labels[config.WaypointUseLabel] != "" {
-			return models.ResolveWaypointTrafficSplit(svc.Cluster, svc.Namespace, svc.Labels, svc.Annotations, "service")
-		}
-	}
+	var namespaceLabels, namespaceAnnotations map[string]string
 	if ns != nil {
-		return models.ResolveWaypointTrafficSplit(svc.Cluster, svc.Namespace, ns.Labels, ns.Annotations, "namespace")
+		namespaceLabels, namespaceAnnotations = ns.Labels, ns.Annotations
 	}
-	return nil
+	return models.ResolveServiceWaypointTrafficSplit(svc.Cluster, svc.Namespace, svc.Labels, svc.Annotations, namespaceLabels, namespaceAnnotations)
 }
 
 func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, workload models.Workload) *models.WaypointTrafficSplit {
-	capturingWaypoints, found := in.getCapturingWaypoints(ctx, workload, false)
-	if !found || len(capturingWaypoints) == 0 {
+	_, found := in.getCapturingWaypoints(ctx, workload, false)
+	if !found {
 		return nil
 	}
-	level := capturingWaypoints[0].Type
 	cluster := workload.Cluster
 	nsName := workload.Namespace
 
@@ -78,39 +100,25 @@ func waypointTrafficSplitForWorkload(ctx context.Context, in *WorkloadService, w
 		return nil
 	}
 
-	switch level {
-	case "pod":
-		if len(workload.Services) > 0 {
-			svc := workload.Services[0]
-			return waypointTrafficSplitForService(&models.Service{
-				Annotations: svc.Annotations,
-				Cluster:     cluster,
-				Labels:      svc.Labels,
-				Name:        svc.Name,
-				Namespace:   svc.Namespace,
-			}, &nsModel)
-		}
-		return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
-	case "service":
-		if len(workload.Services) > 0 {
-			svc := workload.Services[0]
-			return waypointTrafficSplitForService(&models.Service{
-				Annotations: svc.Annotations,
-				Cluster:     cluster,
-				Labels:      svc.Labels,
-				Name:        svc.Name,
-				Namespace:   svc.Namespace,
-			}, &nsModel)
-		}
-		return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
-	default:
-		return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
+	if len(workload.Services) > 0 {
+		svc := workload.Services[0]
+		return waypointTrafficSplitForService(&models.Service{
+			Annotations: svc.Annotations,
+			Cluster:     cluster,
+			Labels:      svc.Labels,
+			Name:        svc.Name,
+			Namespace:   svc.Namespace,
+		}, &nsModel)
 	}
+	return models.ResolveWaypointTrafficSplit(cluster, nsName, nsModel.Labels, nsModel.Annotations, "namespace")
 }
 
 func gatewayWaypointTrafficSplitConfigs(ctx context.Context, in *WorkloadService, cluster, gatewayNamespace, gatewayName string) []models.GatewayWaypointTrafficSplitConfig {
 	key := gatewaySplitCacheKey(cluster, gatewayNamespace, gatewayName)
 	if cache := gatewayWaypointSplitCacheFromContext(ctx); cache != nil {
+		// Keep compact split results across mesh gateways, but release full
+		// Service snapshots after each gateway to bound request memory.
+		defer func() { cache.services = nil }()
 		if configs, hit := cache.configs[key]; hit {
 			return configs
 		}

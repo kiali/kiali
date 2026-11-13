@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package appender
 
 import (
@@ -216,6 +218,86 @@ func TestWaypointLabelsFromServiceCanary(t *testing.T) {
 					require.Equal(t, fmt.Sprintf("Canary %d%%", weight), node.Metadata[graph.WaypointCanaryLabel])
 				default:
 					require.NotContains(t, node.Metadata, graph.WaypointCanaryLabel)
+				}
+			}
+
+			// A request cache may cover more namespaces than this graph's accessible set.
+			// Do not expose a service's canary configuration through that cache.
+			delete(a.AccessibleNamespaces, graph.GetClusterSensitiveKey(defaultCluster, "bookinfo"))
+			for _, node := range trafficMap {
+				delete(node.Metadata, graph.WaypointCanaryLabel)
+			}
+			a.AppendGraph(context.Background(), trafficMap, gi, NewAppenderNamespaceInfo("infra"))
+			for _, node := range trafficMap {
+				require.NotContains(t, node.Metadata, graph.WaypointCanaryLabel)
+			}
+		})
+	}
+}
+
+func TestWaypointLabelsFromInheritedPrimaryCanary(t *testing.T) {
+	for _, weight := range []int{15, 0, 100} {
+		t.Run(fmt.Sprintf("weight-%d", weight), func(t *testing.T) {
+			conf := config.NewConfig()
+			conf.ExternalServices.Istio.IstioAPIEnabled = false
+			conf.KubernetesConfig.ClusterName = defaultCluster
+			config.Set(conf)
+			service := &core_v1.Service{ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{config.WaypointCanaryWeightAnnotation: fmt.Sprint(weight)},
+				Labels: map[string]string{
+
+					config.WaypointCanaryUseLabel:       "canary",
+					config.WaypointCanaryNamespaceLabel: "infra",
+				},
+				Name:      "reviews",
+				Namespace: "bookinfo",
+			}}
+			ns := kubetest.FakeNamespace("bookinfo")
+			ns.Labels = map[string]string{config.WaypointUseLabel: "primary", config.WaypointUseNamespaceLabel: "infra"}
+			client := kubetest.NewFakeK8sClient(ns, kubetest.FakeNamespace("infra"), service)
+			layer := business.NewLayerBuilder(t, conf).WithClient(client).Build()
+			gi := graph.NewGlobalInfo(layer, nil, conf, []models.KubeCluster{}, NewGlobalIstioInfo())
+			a := AmbientAppender{
+				AccessibleNamespaces: graph.AccessibleNamespaces{
+					graph.GetClusterSensitiveKey(defaultCluster, "bookinfo"): {Cluster: defaultCluster, Labels: ns.Labels, Name: "bookinfo"},
+					graph.GetClusterSensitiveKey(defaultCluster, "infra"):    {Cluster: defaultCluster, Name: "infra"},
+				},
+				ShowWaypoints: true,
+			}
+			trafficMap := graph.NewTrafficMap()
+			for _, name := range []string{"primary", "canary", "unrelated"} {
+				node, err := graph.NewNode(defaultCluster, "infra", "", "infra", name, "", "", graph.GraphTypeWorkload)
+				require.NoError(t, err)
+				node.Metadata[graph.IsWaypoint] = true
+				trafficMap[node.ID] = node
+			}
+			a.AppendGraph(context.Background(), trafficMap, gi, NewAppenderNamespaceInfo("bookinfo"))
+			require.Contains(t, gi.Vendor.ClusterServiceLists, defaultCluster)
+			for _, node := range trafficMap {
+				switch node.Workload {
+				case "primary":
+					require.Equal(t, fmt.Sprintf("Primary %d%%", 100-weight), node.Metadata[graph.WaypointCanaryLabel])
+				case "canary":
+					require.Equal(t, fmt.Sprintf("Canary %d%%", weight), node.Metadata[graph.WaypointCanaryLabel])
+				default:
+					require.NotContains(t, node.Metadata, graph.WaypointCanaryLabel)
+				}
+			}
+
+			// Weight-only overrides must also affect graph labels when both gateway
+			// names are inherited. The namespace's default remains a distinct source.
+			an := a.AccessibleNamespaces[graph.GetClusterSensitiveKey(defaultCluster, "bookinfo")]
+			an.Labels[config.WaypointCanaryUseLabel] = "canary"
+			an.Labels[config.WaypointCanaryNamespaceLabel] = "infra"
+			an.Annotations = map[string]string{config.WaypointCanaryWeightAnnotation: "30"}
+			gi.Vendor.ClusterServiceLists[defaultCluster].Services[0].Labels = nil
+			a.AppendGraph(context.Background(), trafficMap, gi, NewAppenderNamespaceInfo("bookinfo"))
+			for _, node := range trafficMap {
+				switch node.Workload {
+				case "primary":
+					require.Equal(t, "Primary "+models.WaypointCanaryMultipleSplitsLabel, node.Metadata[graph.WaypointCanaryLabel])
+				case "canary":
+					require.Equal(t, "Canary "+models.WaypointCanaryMultipleSplitsLabel, node.Metadata[graph.WaypointCanaryLabel])
 				}
 			}
 

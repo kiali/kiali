@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package appender
 
 import (
@@ -59,13 +61,14 @@ func (a AmbientAppender) AppendGraph(ctx context.Context, trafficMap graph.Traff
 				globalInfo.Vendor.ClusterServiceLists[n.Cluster] = services
 			}
 			for _, service := range services.Services {
-				if _, accessible := a.AccessibleNamespaces[graph.GetClusterSensitiveKey(n.Cluster, service.Namespace)]; !accessible {
+				ns := a.AccessibleNamespaces[graph.GetClusterSensitiveKey(n.Cluster, service.Namespace)]
+				if ns == nil {
 					continue
 				}
-				// Namespace inheritance is handled below; here only an explicit service
-				// primary can supply its own canary configuration.
-				split := models.ResolveWaypointTrafficSplit(n.Cluster, service.Namespace, service.Labels, service.Annotations, "service")
-				if split != nil && split.Canary != nil {
+				// Pure namespace inheritance is handled below; include partial Service
+				// overrides here as well as explicitly bound Service pairs.
+				split := models.ResolveServiceWaypointTrafficSplit(n.Cluster, service.Namespace, service.Labels, service.Annotations, ns.Labels, ns.Annotations)
+				if split != nil && split.Canary != nil && split.ConfigLevel == "service" {
 					serviceSplitConfigs[n.Cluster] = append(serviceSplitConfigs[n.Cluster], models.GatewayWaypointTrafficSplitConfig{
 						ConfigLevel: "service",
 						Namespace:   service.Namespace,

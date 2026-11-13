@@ -1,3 +1,5 @@
+// Assisted-by: Codex
+
 package models
 
 import (
@@ -88,7 +90,7 @@ func ResolveWaypointTrafficSplit(cluster, defaultNamespace string, labels, annot
 	}
 
 	canaryName := labels[config.WaypointCanaryUseLabel]
-	if canaryName == "" {
+	if canaryName == "" || canaryName == config.WaypointNone {
 		return split
 	}
 	canaryNs := labels[config.WaypointCanaryNamespaceLabel]
@@ -108,6 +110,37 @@ func ResolveWaypointTrafficSplit(cluster, defaultNamespace string, labels, annot
 		Role:      WaypointRoleCanary,
 	}
 	return split
+}
+
+// ResolveServiceWaypointTrafficSplit keeps a Service's canary overrides independent of
+// its inherited primary. An explicit primary prevents all namespace canary inheritance.
+func ResolveServiceWaypointTrafficSplit(cluster, namespace string, serviceLabels, serviceAnnotations, namespaceLabels, namespaceAnnotations map[string]string) *WaypointTrafficSplit {
+	if serviceLabels[config.WaypointUseLabel] != "" {
+		return ResolveWaypointTrafficSplit(cluster, namespace, serviceLabels, serviceAnnotations, "service")
+	}
+	_, canaryOverride := serviceLabels[config.WaypointCanaryUseLabel]
+	_, weightOverride := serviceAnnotations[config.WaypointCanaryWeightAnnotation]
+	if !canaryOverride && !weightOverride {
+		return ResolveWaypointTrafficSplit(cluster, namespace, namespaceLabels, namespaceAnnotations, "namespace")
+	}
+
+	// The canary name and namespace come from the same level; its weight can
+	// independently override or inherit. Never mutate cached resource metadata.
+	canaryLabels := namespaceLabels
+	if canaryOverride {
+		canaryLabels = serviceLabels
+	}
+	annotations := namespaceAnnotations
+	if weightOverride {
+		annotations = serviceAnnotations
+	}
+	labels := map[string]string{
+		config.WaypointCanaryNamespaceLabel: canaryLabels[config.WaypointCanaryNamespaceLabel],
+		config.WaypointCanaryUseLabel:       canaryLabels[config.WaypointCanaryUseLabel],
+		config.WaypointUseLabel:             namespaceLabels[config.WaypointUseLabel],
+		config.WaypointUseNamespaceLabel:    namespaceLabels[config.WaypointUseNamespaceLabel],
+	}
+	return ResolveWaypointTrafficSplit(cluster, namespace, labels, annotations, "service")
 }
 
 // GatewayBindingMatches reports whether a gateway workload identity matches a binding.
