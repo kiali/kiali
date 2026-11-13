@@ -1796,6 +1796,12 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 		return nil, err
 	}
 
+	// A partially-revoked namespace serves stale informer data; answer not found, as
+	// the list does, instead of a frozen pre-revocation workload.
+	if slices.Contains(in.cache.RevokedNamespaces(criteria.Cluster), criteria.Namespace) {
+		return nil, kubernetes.NewNotFound(criteria.WorkloadName, "Kiali", "Workload")
+	}
+
 	// Flag used for custom controllers
 	// i.e. a third party framework creates its own "Deployment" controller with extra features
 	// on this case, Kiali will collect basic info from the ReplicaSet controller

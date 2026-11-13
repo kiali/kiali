@@ -10,6 +10,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
+	k8s_errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -172,6 +173,59 @@ func TestRevokedNamespaceExcludedFromIstioConfigAndServices(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, svcs.Services, 1, "the readable namespace's services are served")
 	require.Equal(t, "istiod", svcs.Services[0].Name)
+}
+
+// The detail reads of a partially-revoked namespace answer not found, as its lists are
+// empty: a workload, service or Istio config object fetched by name must not come from
+// the namespace's frozen informer snapshot either. The same reads in a readable
+// namespace pass through unchanged.
+func TestRevokedNamespaceDetailReadsAreNotFound(t *testing.T) {
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		kubetest.FakeNamespace("istio-system"),
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "ratings-v2", Namespace: "bookinfo", Labels: map[string]string{"app": "ratings"}}},
+		&appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: "istiod", Namespace: "istio-system", Labels: map[string]string{"app": "istiod"}}},
+		&core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "ratings", Namespace: "bookinfo", Labels: map[string]string{"app": "ratings"}}},
+		&core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "istiod", Namespace: "istio-system", Labels: map[string]string{"app": "istiod"}}},
+		&networking_v1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "bookinfo-vs", Namespace: "bookinfo"}},
+		&networking_v1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "istio-vs", Namespace: "istio-system"}},
+	)
+
+	// bookinfo is denied while istio-system stays readable: a partial revocation.
+	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}
+	clusterCache, access, err := cachetest.NewFakeKialiCache(context.Background(), conf, clients,
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Namespaces: []string{"bookinfo"}}, nil
+		})
+	require.NoError(t, err)
+	layer := NewLayerBuilder(t, conf).WithClient(k8s).WithCache(clusterCache).Build()
+	require.False(t, access.ConfirmRevoked(context.Background(), config.DefaultClusterID, "apps", "deployments"))
+	require.Equal(t, []string{"bookinfo"}, clusterCache.RevokedNamespaces(config.DefaultClusterID))
+	ctx := context.Background()
+
+	_, err = layer.Workload.GetWorkload(ctx, WorkloadCriteria{Cluster: config.DefaultClusterID, Namespace: "bookinfo", WorkloadName: "ratings-v2"})
+	require.True(t, k8s_errors.IsNotFound(err), "the revoked namespace's frozen workload is not served: %v", err)
+	wl, err := layer.Workload.GetWorkload(ctx, WorkloadCriteria{Cluster: config.DefaultClusterID, Namespace: "istio-system", WorkloadName: "istiod"})
+	require.NoError(t, err)
+	require.Equal(t, "istiod", wl.Name)
+
+	_, err = layer.Svc.GetService(ctx, config.DefaultClusterID, "bookinfo", "ratings")
+	require.True(t, k8s_errors.IsNotFound(err), "the revoked namespace's frozen service is not served: %v", err)
+	svc, err := layer.Svc.GetService(ctx, config.DefaultClusterID, "istio-system", "istiod")
+	require.NoError(t, err)
+	require.Equal(t, "istiod", svc.Name)
+
+	_, err = layer.IstioConfig.GetIstioConfigDetails(ctx, config.DefaultClusterID, "bookinfo", kubernetes.VirtualServices, "bookinfo-vs")
+	require.True(t, k8s_errors.IsNotFound(err), "the revoked namespace's frozen config is not served: %v", err)
+	details, err := layer.IstioConfig.GetIstioConfigDetails(ctx, config.DefaultClusterID, "istio-system", kubernetes.VirtualServices, "istio-vs")
+	require.NoError(t, err)
+	require.Equal(t, "istio-vs", details.Object.GetName())
 }
 
 // recordingNamespaceReader records the namespace of every List call it serves.
