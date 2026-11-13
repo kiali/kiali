@@ -1,5 +1,3 @@
-// Assisted-by: Codex
-
 package appender
 
 import (
