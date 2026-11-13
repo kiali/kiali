@@ -259,16 +259,22 @@ export class SummaryPanelNodeComponent extends React.Component<SummaryPanelNodeC
               )}
 
               {secondBadge}
-              <div className={nodeInfoStyle}>
-                {renderBadgedLink(nodeData)}
-                {!nodeData.isWaypoint && renderHealth(nodeData.health)}
-              </div>
+              {nodeData.isWaypoint ? (
+                <>
+                  <div className={nodeInfoStyle}>{renderBadgedLink(nodeData, NodeType.WORKLOAD)}</div>
+                  {renderWaypointLabel('sm')}
+                </>
+              ) : (
+                <div className={nodeInfoStyle}>
+                  {renderBadgedLink(nodeData)}
+                  {renderHealth(nodeData.health)}
+                </div>
+              )}
             </span>
           </div>
 
           <div>
             {this.renderBadgeSummary(nodeData)}
-            {nodeData.isWaypoint && renderWaypointLabel('sm')}
             {shouldRenderDestsList && <div>{destsList}</div>}
             {shouldRenderSvcList && <div key={Date.now()}>{servicesList}</div>}
             {shouldRenderService && <div>{renderBadgedLink(nodeData, NodeType.SERVICE)}</div>}

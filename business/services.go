@@ -126,7 +126,7 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 		namespaceSet[ns.Name] = struct{}{}
 	}
 
-	sliceutil.Filter(svcs.Services, func(svc models.ServiceOverview) bool {
+	svcs.Services = sliceutil.Filter(svcs.Services, func(svc models.ServiceOverview) bool {
 		_, ok := namespaceSet[svc.Namespace]
 		return ok
 	})
@@ -370,6 +370,7 @@ func (in *SvcService) buildKubernetesServices(ctx context.Context, svcs []core_v
 			AdditionalDetailSample: models.GetFirstAdditionalIcon(in.conf, item.Annotations),
 			Health:                 models.EmptyServiceHealth(),
 			HealthAnnotations:      models.GetHealthAnnotation(item.Annotations, models.GetHealthConfigAnnotation()),
+			Annotations:            item.Annotations,
 			Labels:                 item.Labels,
 			Selector:               item.Spec.Selector,
 			IstioReferences:        svcReferences,
@@ -677,6 +678,12 @@ func (in *SvcService) GetServiceDetails(ctx context.Context, cluster, namespace,
 	if s.IsAmbient && len(waypointWk) > 0 {
 		s.WaypointWorkloads = waypointWk
 	}
+	userClient, clientOk := in.userClients[cluster]
+	if clientOk {
+		if nsModel, nsFound := in.kialiCache.GetNamespace(cluster, userClient.GetCacheKey(), namespace); nsFound {
+			s.WaypointTrafficSplit = waypointTrafficSplitForService(&svc, &nsModel)
+		}
+	}
 
 	return &s, nil
 }
@@ -746,52 +753,176 @@ func (in *SvcService) GetWaypointsForService(ctx context.Context, svc *models.Se
 		waypointWorkload, err := in.businessLayer.Workload.GetWorkload(ctx, WorkloadCriteria{Cluster: svc.Cluster, Namespace: waypoint.Namespace, WorkloadName: waypoint.Name, WorkloadGVK: schema.GroupVersionKind{}, IncludeWaypoints: false})
 		if err != nil {
 			log.Debugf("GetWaypointsForService: Error fetching waypoint workload %s", err.Error())
-			return nil
+			return workloadsList
 		}
 		waypointFor, waypointForFound := waypointWorkload.Labels[config.WaypointFor]
 		if !waypointForFound || waypointFor != config.WaypointForNone {
 			key := fmt.Sprintf("%s_%s_%s", svc.Cluster, waypoint.Namespace, waypoint.Name)
 			if waypointWorkload != nil && !workloadsMap[key] {
-				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{Name: waypoint.Name, Namespace: waypoint.Namespace, Cluster: waypoint.Cluster, Type: waypointWorkload.WaypointFor()})
+				workloadsList = append(workloadsList, models.WorkloadReferenceInfo{
+					Cluster:      waypoint.Cluster,
+					Name:         waypoint.Name,
+					Namespace:    waypoint.Namespace,
+					Type:         waypointWorkload.WaypointFor(),
+					WaypointRole: models.WaypointRolePrimary,
+				})
 				workloadsMap[key] = true
 			}
+		}
+	}
+
+	userClient, clientOk := in.userClients[svc.Cluster]
+	if clientOk {
+		if nsModel, nsFound := in.kialiCache.GetNamespace(svc.Cluster, userClient.GetCacheKey(), svc.Namespace); nsFound {
+			split := waypointTrafficSplitForService(svc, &nsModel)
+			waypointsAll := in.businessLayer.Workload.GetWaypoints(ctx)
+			workloadsList = appendCanaryWaypointRef(workloadsList, split, waypointsAll)
 		}
 	}
 
 	return workloadsList
 }
 
-// ListWaypointServices returns a list of services which traffic is handled by a specific waypoint
-// It should return just one (If there are more, that might be a validation error)
-func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
-	var serviceInfoList []models.ServiceReferenceInfo
-	// This is to verify there is no duplicated services
-	servicesMap := make(map[string]bool)
+// ListWaypointCapturedServices returns services that use the gateway as primary or canary waypoint.
+func (in *SvcService) ListWaypointCapturedServices(ctx context.Context, name, namespace, cluster string) []models.ServiceReferenceInfo {
+	primary := in.ListWaypointServices(ctx, name, namespace, cluster, models.WaypointRolePrimary)
+	canary := in.ListWaypointServices(ctx, name, namespace, cluster, models.WaypointRoleCanary)
+	return mergeWaypointServiceRefs(primary, canary)
+}
 
+// ListWaypointServices resolves Service enrollment independently of its backing workloads.
+func (in *SvcService) ListWaypointServices(ctx context.Context, name, namespace, cluster, role string) []models.ServiceReferenceInfo {
+	refs := []models.ServiceReferenceInfo{}
+	useLabel := config.WaypointUseLabel
+	useNamespaceLabel := config.WaypointUseNamespaceLabel
+	if role == models.WaypointRoleCanary {
+		useLabel = config.WaypointCanaryUseLabel
+		useNamespaceLabel = config.WaypointCanaryNamespaceLabel
+	}
 	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
-		log.Infof("ListWaypointServices: error getting kube cache: %s", err.Error())
-		return serviceInfoList
+		log.Infof("ListWaypointServices: error getting kube cache: %s", err)
+		return refs
 	}
-	namespaces, err := in.businessLayer.Namespace.GetClusterNamespaces(ctx, cluster)
-	if err == nil {
-		for _, ns := range namespaces {
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		log.Infof("ListWaypointServices: error getting namespaces: %s", err)
+		return refs
+	}
+
+	for _, ns := range namespaces {
+		options := []client.ListOption{client.InNamespace(ns.Name)}
+		bindingNamespace := ns.Labels[useNamespaceLabel]
+		if bindingNamespace == "" {
+			bindingNamespace = ns.Name
+		}
+		// Only inheritance from this exact gateway makes every Service a candidate.
+		if ns.Labels[useLabel] != name || bindingNamespace != namespace {
+			options = append(options, client.MatchingLabels{useLabel: name})
+		}
+		services := &core_v1.ServiceList{}
+		if len(options) == 1 {
+			services.Items, err = waypointNamespaceServices(ctx, kubeCache, cluster, ns.Name)
+		} else {
+			err = kubeCache.List(ctx, services, options...)
+		}
+		if err != nil {
+			log.Infof("ListWaypointServices: error listing services: %s", err)
+			continue
+		}
+		for _, service := range services.Items {
+			if config.IsWaypoint(service.Labels) {
+				continue
+			}
+			ref := waypointEnrolledServiceRef(&models.Service{
+				Annotations: service.Annotations,
+				Cluster:     cluster,
+				Labels:      service.Labels,
+				Name:        service.Name,
+				Namespace:   service.Namespace,
+			}, &ns, name, namespace, role)
+			if ref != nil {
+				refs = append(refs, *ref)
+			}
+		}
+	}
+	return refs
+}
+
+// GatewayTrafficSplitConfigsFromEnrolledServices lists service-level splits that reference the gateway.
+func (in *SvcService) GatewayTrafficSplitConfigsFromEnrolledServices(ctx context.Context, gatewayName, gatewayNamespace, cluster string) []models.GatewayWaypointTrafficSplitConfig {
+	kubeCache, err := in.kialiCache.GetKubeCache(cluster)
+	if err != nil {
+		return []models.GatewayWaypointTrafficSplitConfig{}
+	}
+	configs := []models.GatewayWaypointTrafficSplitConfig{}
+	// Single-cluster accessible namespace set only (avoids GetNamespaces fan-out across clusters).
+	namespaces, err := in.businessLayer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		return configs
+	}
+
+	for _, ns := range namespaces {
+		selectors := []client.ListOption{
+			client.MatchingLabels{config.WaypointUseLabel: gatewayName},
+			client.MatchingLabels{config.WaypointCanaryUseLabel: gatewayName},
+		}
+		namespaceSplit := models.ResolveWaypointTrafficSplit(cluster, ns.Name, ns.Labels, ns.Annotations, "namespace")
+		if models.GatewaySplitReferencesGateway(namespaceSplit, gatewayName, gatewayNamespace) {
+			// A Service can override just the weight annotation while inheriting
+			// the gateway names. Only this exact namespace binding needs a full list.
+			selectors = []client.ListOption{nil}
+			if namespaceSplit.Canary == nil {
+				// Without an inherited canary, weight alone cannot establish a split.
+				selectors = []client.ListOption{client.HasLabels{config.WaypointCanaryUseLabel}}
+			}
+		}
+		seen := make(map[string]bool)
+		for _, selector := range selectors {
+			options := []client.ListOption{client.InNamespace(ns.Name)}
+			if selector != nil {
+				options = append(options, selector)
+			}
 			svcList := &core_v1.ServiceList{}
-			if err := kubeCache.List(ctx, svcList, client.InNamespace(ns.Name), client.MatchingLabels(map[string]string{config.WaypointUseLabel: name})); err != nil {
-				log.Infof("Error getting services %s", err.Error())
+			if selector == nil {
+				svcList.Items, err = waypointNamespaceServices(ctx, kubeCache, cluster, ns.Name)
 			} else {
-				for _, service := range svcList.Items {
-					key := fmt.Sprintf("%s_%s_%s", service.Name, service.Namespace, cluster)
-					if !servicesMap[key] && (service.Namespace == namespace || service.Labels[config.WaypointUseNamespaceLabel] == namespace) {
-						serviceInfoList = append(serviceInfoList, models.ServiceReferenceInfo{Name: service.Name, Namespace: service.Namespace, LabelType: "service", Cluster: cluster})
-						servicesMap[key] = true
-					}
+				err = kubeCache.List(ctx, svcList, options...)
+			}
+			if err != nil {
+				log.Infof("GatewayTrafficSplitFromEnrolledServices: error listing services: %s", err)
+				continue
+			}
+			for _, item := range svcList.Items {
+				if seen[item.Name] {
+					continue
+				}
+				_, canaryOverride := item.Labels[config.WaypointCanaryUseLabel]
+				_, weightOverride := item.Annotations[config.WaypointCanaryWeightAnnotation]
+				if item.Labels[config.WaypointUseLabel] == "" && !canaryOverride && !weightOverride {
+					continue
+				}
+				seen[item.Name] = true
+				split := waypointTrafficSplitForService(&models.Service{
+					Annotations: item.Annotations,
+					Cluster:     cluster,
+					Labels:      item.Labels,
+					Name:        item.Name,
+					Namespace:   item.Namespace,
+				}, &ns)
+				if split != nil && split.Canary != nil && split.ConfigLevel == "service" && models.GatewaySplitReferencesGateway(split, gatewayName, gatewayNamespace) {
+					configs = append(configs, models.GatewayWaypointTrafficSplitConfig{
+						ConfigLevel: "service",
+						Namespace:   item.Namespace,
+						ServiceName: item.Name,
+						Split:       split,
+					})
 				}
 			}
 		}
 	}
 
-	return serviceInfoList
+	return configs
 }
 
 func (in *SvcService) UpdateService(ctx context.Context, cluster, namespace, service string, interval string, queryTime time.Time, jsonPatch string, patchType string) (*models.ServiceDetails, error) {

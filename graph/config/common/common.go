@@ -115,6 +115,7 @@ type NodeData struct {
 	IsRoot                bool                `json:"isRoot,omitempty"`                // true | false
 	IsServiceEntry        *graph.SEInfo       `json:"isServiceEntry,omitempty"`        // set static service entry information
 	IsWaypoint            bool                `json:"isWaypoint,omitempty"`            // true | false
+	WaypointCanaryLabel   string              `json:"waypointCanaryLabel,omitempty"`   // canary split label for waypoint nodes
 }
 
 type WaypointEdge struct {
@@ -363,6 +364,10 @@ func buildConfig(trafficMap graph.TrafficMap, nodes *[]*NodeWrapper, edges *[]*E
 		// check if node is a waypoint proxy
 		if val, ok := n.Metadata[graph.IsWaypoint]; ok {
 			nd.IsWaypoint = val.(bool)
+		}
+
+		if val, ok := n.Metadata[graph.WaypointCanaryLabel]; ok {
+			nd.WaypointCanaryLabel = val.(string)
 		}
 
 		// check if node redirects traffic to waypoint proxy

@@ -125,6 +125,9 @@ const (
 	WaypointForWorkload             = "workload"
 	WaypointLabel                   = "gateway.istio.io/managed" // only identifies istio waypoint
 	WaypointLabelValue              = "istio.io-mesh-controller" // only identifies istio waypoint
+	WaypointCanaryNamespaceLabel    = "istio.io/use-waypoint-canary-namespace"
+	WaypointCanaryUseLabel          = "istio.io/use-waypoint-canary"
+	WaypointCanaryWeightAnnotation  = "istio.io/use-waypoint-canary-weight"
 	WaypointUseLabel                = "istio.io/use-waypoint"
 	WaypointNone                    = "none"
 	WaypointUseNamespaceLabel       = "istio.io/use-waypoint-namespace"

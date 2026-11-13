@@ -65,6 +65,7 @@ import { DetailDescription } from '../../components/DetailDescription/DetailDesc
 import { EditableAnnotationsCard } from '../../components/Label/EditableAnnotationsCard';
 import { EditableLabelsCard } from '../../components/Label/EditableLabelsCard';
 import { WorkloadAnnotationsWizard } from '../../components/IstioWizards/WorkloadAnnotationsWizard';
+import { formatWaypointGatewayDetailLabel } from '../../utils/WaypointTrafficUtils';
 import { Paths } from '../../config';
 import {
   buildAnnotationsDiff,
@@ -401,6 +402,9 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
 
   private renderDetailsCard(workload: Workload): React.ReactNode {
     const runtimes = (workload.runtimes ?? []).map(r => r.name).filter(name => name !== '');
+    const waypointLabel =
+      formatWaypointGatewayDetailLabel(workload.name, workload.namespace, workload.waypointTrafficSplitConfigs) ??
+      t('true');
 
     return (
       <StackItem key="details">
@@ -490,7 +494,7 @@ export class WorkloadInfo extends React.Component<WorkloadInfoProps, WorkloadInf
               {workload.isWaypoint && (
                 <DescriptionListGroup data-test="details-waypoint">
                   <DescriptionListTerm>Waypoint</DescriptionListTerm>
-                  <DescriptionListDescription>{t('true')}</DescriptionListDescription>
+                  <DescriptionListDescription>{waypointLabel}</DescriptionListDescription>
                 </DescriptionListGroup>
               )}
 

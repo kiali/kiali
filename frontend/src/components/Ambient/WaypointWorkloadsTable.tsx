@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { IRow, ISortBy, OnSort, SortByDirection, TableVariant } from '@patternfly/react-table';
+import { SortByDirection, TableVariant } from '@patternfly/react-table';
+import type { IRow, ISortBy, OnSort } from '@patternfly/react-table';
 import { SimpleTable } from '../Table/SimpleTable';
 import {
   EmptyState,
@@ -13,14 +14,15 @@ import {
 } from '@patternfly/react-core';
 import { kialiStyle } from '../../styles/StyleUtils';
 import { t } from 'utils/I18nUtils';
-import { SortableCompareTh } from './ZtunnelConfig';
-import { WaypointInfo, WorkloadInfo } from '../../types/Workload';
+import type { SortableCompareTh } from './ZtunnelConfig';
+import type { WaypointInfo, WorkloadInfo } from '../../types/Workload';
 import { isMultiCluster } from '../../config';
 import { KialiLink } from '../Link/KialiLink';
 import { PFBadge, PFBadges } from '../Pf/PfBadges';
 import { WaypointType } from '../../types/Ambient';
 import { KialiIcon } from '../../config/KialiIcon';
 import { infoStyle } from '../../styles/IconStyle';
+import { formatEnrolledWaypointRoleLabel } from '../../utils/WaypointTrafficUtils';
 
 type WaypointWorkloadsProps = {
   type: string;
@@ -63,7 +65,7 @@ const labeledBy = (
   </Tooltip>
 );
 
-const columns: SortableCompareTh<WorkloadInfo>[] = [
+const baseColumns: SortableCompareTh<WorkloadInfo>[] = [
   {
     title: t('Name'),
     sortable: true,
@@ -76,17 +78,26 @@ const columns: SortableCompareTh<WorkloadInfo>[] = [
   },
   {
     title: t('Labeled by'),
-    sortable: false
+    sortable: true,
+    compare: (a, b) => (a.labelType ?? '').localeCompare(b.labelType ?? '')
   }
 ];
+
+const roleColumn: SortableCompareTh<WorkloadInfo> = {
+  title: t('Waypoint role'),
+  sortable: false
+};
 
 export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: WaypointWorkloadsProps) => {
   const [sortBy, setSortBy] = React.useState(0);
   const [sortDirection, setSortDirection] = React.useState(SortByDirection.asc);
 
+  const showRole = props.workloads?.some(w => w.roleWeight !== undefined);
+  const columns = showRole ? [...baseColumns, roleColumn] : baseColumns;
+
   const compare = columns[sortBy].compare;
   const sorted = compare
-    ? props.workloads?.sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
+    ? props.workloads?.slice().sort(sortDirection === SortByDirection.asc ? compare : (a, b) => compare(b, a))
     : props.workloads;
 
   const renderItem = (namespace, name, type: string, cluster?: string): React.ReactNode => {
@@ -110,15 +121,20 @@ export const WaypointWorkloadsTable: React.FC<WaypointWorkloadsProps> = (props: 
     );
   };
 
+  const formatRole = (element: WaypointInfo): string =>
+    formatEnrolledWaypointRoleLabel(element.waypointRole, element.roleWeight);
+
   const rows: IRow[] = sorted
     ? sorted.map(element => {
-        return {
-          cells: [
-            renderItem(element.namespace, element.name, props.type, element.cluster),
-            element.namespace,
-            element.labelType
-          ]
-        };
+        const cells = [
+          renderItem(element.namespace, element.name, props.type, element.cluster),
+          element.namespace,
+          element.labelType
+        ];
+        if (showRole) {
+          cells.push(formatRole(element));
+        }
+        return { cells };
       })
     : [];
 
