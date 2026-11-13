@@ -12,10 +12,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -30,8 +34,9 @@ const clusterSkipRemote = "remote-cluster"
 
 // setupClusterSkipServer registers the six per-cluster endpoints that carry the
 // skipUnavailableCluster guard, backed by a two-cluster cache whose ClusterAccess
-// degrades the named cluster ("" degrades none).
-func setupClusterSkipServer(t *testing.T, degradedCluster string) *httptest.Server {
+// degrades the named cluster ("" degrades none). Extra objects are seeded into the
+// remote cluster's client.
+func setupClusterSkipServer(t *testing.T, degradedCluster string, remoteObjects ...runtime.Object) *httptest.Server {
 	t.Helper()
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
@@ -41,24 +46,22 @@ func setupClusterSkipServer(t *testing.T, degradedCluster string) *httptest.Serv
 	home := conf.KubernetesConfig.ClusterName
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
-	remote := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
+	remote := kubetest.NewFakeK8sClient(append([]runtime.Object{kubetest.FakeNamespace("bookinfo")}, remoteObjects...)...)
 	cf := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{
 		home:              k8s,
 		clusterSkipRemote: remote,
 	})
 
 	// The check denies everything, so ConfirmRevoked degrades whichever cluster it names.
-	access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
-		return cache.DeniedAccess{Cluster: true}, nil
-	})
+	kialiCache, access, err := cachetest.NewFakeKialiCache(t.Context(), conf, cf.GetSAClients(),
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
+	require.NoError(t, err)
 	if degradedCluster != "" {
 		require.True(t, access.ConfirmRevoked(context.Background(), degradedCluster, "apps", "deployments"))
 	}
-	saClients := cf.GetSAClients()
-	readers := map[string]ctrlclient.Reader{home: k8s, clusterSkipRemote: remote}
-	kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf, cache.WithClusterAccess(access))
-	require.NoError(t, err)
-	discovery := istio.NewDiscovery(saClients, kialiCache, conf)
+	discovery := istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf)
 
 	promMock := new(prometheustest.PromAPIMock)
 	promMock.SpyArgumentsAndReturnEmpty(func(mock.Arguments) {})
@@ -92,7 +95,7 @@ func setupClusterSkipServer(t *testing.T, degradedCluster string) *httptest.Serv
 type clusterSkipEndpoint struct {
 	name  string
 	path  string
-	check func(t *testing.T, body []byte, cluster string)
+	check func(t *testing.T, body []byte)
 }
 
 func clusterSkipEndpoints() []clusterSkipEndpoint {
@@ -100,49 +103,59 @@ func clusterSkipEndpoints() []clusterSkipEndpoint {
 		{
 			name: "cluster apps",
 			path: "/api/clusters/apps?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
 				var decoded models.ClusterApps
 				require.NoError(t, json.Unmarshal(body, &decoded))
-				require.Equal(t, cluster, decoded.Cluster)
+				require.Equal(t, clusterSkipRemote, decoded.Cluster)
 				require.Empty(t, decoded.Apps)
 			},
 		},
 		{
 			name: "cluster services",
 			path: "/api/clusters/services?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
 				var decoded models.ClusterServices
 				require.NoError(t, json.Unmarshal(body, &decoded))
-				require.Equal(t, cluster, decoded.Cluster)
+				require.Equal(t, clusterSkipRemote, decoded.Cluster)
 				require.Empty(t, decoded.Services)
 			},
 		},
 		{
 			name: "cluster workloads",
 			path: "/api/clusters/workloads?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
 				var decoded models.ClusterWorkloads
 				require.NoError(t, json.Unmarshal(body, &decoded))
-				require.Equal(t, cluster, decoded.Cluster)
+				require.Equal(t, clusterSkipRemote, decoded.Cluster)
 				require.Empty(t, decoded.Workloads)
 			},
 		},
 		{
 			name: "istio config",
 			path: "/api/istio/config?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
+				// The frontend breaks on a nil array in the JSON ("null"), so the raw
+				// body must not contain one. The decoded struct cannot detect it:
+				// IstioConfigList.UnmarshalJSON runs ConvertToResponse, which coerces
+				// nil arrays to empty ones during decoding.
+				var raw struct {
+					Resources map[string]json.RawMessage `json:"resources"`
+				}
+				require.NoError(t, json.Unmarshal(body, &raw))
+				for _, key := range []string{kubernetes.DestinationRules.String(), kubernetes.VirtualServices.String()} {
+					value, found := raw.Resources[key]
+					require.True(t, found, "the %s array is present", key)
+					require.NotEqual(t, "null", string(value), "empty istio config must not serialize nil arrays")
+				}
 				var decoded models.IstioConfigList
 				require.NoError(t, json.Unmarshal(body, &decoded))
-				// ConvertToResponse coerces the nil arrays to empty ones; the
-				// frontend breaks on a nil array in the JSON ("null").
-				require.NotContains(t, string(body), "null", "empty istio config must not serialize nil arrays")
 				require.Empty(t, decoded.DestinationRules)
 			},
 		},
 		{
 			name: "namespace tls",
 			path: "/api/namespaces/bookinfo/tls?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
 				var decoded models.MTLSStatus
 				require.NoError(t, json.Unmarshal(body, &decoded))
 				require.Equal(t, models.MTLSStatus{}, decoded)
@@ -151,7 +164,7 @@ func clusterSkipEndpoints() []clusterSkipEndpoint {
 		{
 			name: "clusters tls",
 			path: "/api/clusters/tls?clusterName=%s",
-			check: func(t *testing.T, body []byte, cluster string) {
+			check: func(t *testing.T, body []byte) {
 				var decoded []models.MTLSStatus
 				require.NoError(t, json.Unmarshal(body, &decoded))
 				require.Empty(t, decoded)
@@ -171,14 +184,14 @@ func TestClusterSkipEndpointsDegradedRemote(t *testing.T) {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
-			ep.check(t, body, clusterSkipRemote)
+			ep.check(t, body)
 		})
 	}
 }
 
 // TestClusterSkipEndpointsUncachedCluster pins the ErrClusterNotCached contract: a
-// cluster with no cache configured (e.g. a mistyped cluster name) fails the request
-// instead of silently serving the empty result.
+// cluster with no cache configured (e.g. a mistyped cluster name) is not found - 404,
+// the correct answer for a name the server does not know - instead of an empty result.
 func TestClusterSkipEndpointsUncachedCluster(t *testing.T) {
 	ts := setupClusterSkipServer(t, "")
 	for _, ep := range clusterSkipEndpoints() {
@@ -187,14 +200,15 @@ func TestClusterSkipEndpointsUncachedCluster(t *testing.T) {
 			require.NoError(t, err)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, http.StatusInternalServerError, resp.StatusCode, string(body))
+			require.Equal(t, http.StatusNotFound, resp.StatusCode, string(body))
 			require.Contains(t, string(body), "no cache is configured for the cluster", string(body))
 		})
 	}
 }
 
 // TestClusterSkipEndpointsDegradedHome pins the home-cluster contract: the home cluster
-// is not skippable, so its cache being unavailable fails the request.
+// is not skippable, so its cache being unavailable fails the request with a 503 - the
+// state is temporary and recovers when access is restored.
 func TestClusterSkipEndpointsDegradedHome(t *testing.T) {
 	ts := setupClusterSkipServer(t, config.DefaultClusterID)
 	for _, ep := range clusterSkipEndpoints() {
@@ -203,7 +217,63 @@ func TestClusterSkipEndpointsDegradedHome(t *testing.T) {
 			require.NoError(t, err)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, http.StatusInternalServerError, resp.StatusCode, string(body))
+			require.Equal(t, http.StatusServiceUnavailable, resp.StatusCode, string(body))
 		})
 	}
+}
+
+// TestClusterSkipEndpointsHealthyRemote guards against a vacuous pass: every other
+// scenario is a failure mode, so a guard that always wrote an empty 200 would pass them.
+// With data seeded on a healthy remote, the list endpoints must serve it.
+func TestClusterSkipEndpointsHealthyRemote(t *testing.T) {
+	deploymentLabels := map[string]string{"app": "ratings", "version": "v2"}
+	ts := setupClusterSkipServer(t, "",
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{Name: "ratings-v2", Namespace: "bookinfo", Labels: deploymentLabels},
+			Spec: appsv1.DeploymentSpec{
+				Selector: &metav1.LabelSelector{MatchLabels: deploymentLabels},
+				Template: corev1.PodTemplateSpec{ObjectMeta: metav1.ObjectMeta{Labels: deploymentLabels}},
+			},
+		},
+		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "ratings", Namespace: "bookinfo", Labels: map[string]string{"app": "ratings"}}},
+	)
+
+	t.Run("cluster workloads serve the seeded data", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + fmt.Sprintf("/api/clusters/workloads?clusterName=%s", clusterSkipRemote))
+		require.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+		var decoded models.ClusterWorkloads
+		require.NoError(t, json.Unmarshal(body, &decoded))
+		require.Equal(t, clusterSkipRemote, decoded.Cluster)
+		require.Len(t, decoded.Workloads, 1, "the healthy cluster's data is served")
+		require.Equal(t, "ratings-v2", decoded.Workloads[0].Name)
+	})
+
+	t.Run("cluster services serve the seeded data", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + fmt.Sprintf("/api/clusters/services?clusterName=%s", clusterSkipRemote))
+		require.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+		var decoded models.ClusterServices
+		require.NoError(t, json.Unmarshal(body, &decoded))
+		require.Equal(t, clusterSkipRemote, decoded.Cluster)
+		require.Len(t, decoded.Services, 1, "the healthy cluster's data is served")
+		require.Equal(t, "ratings", decoded.Services[0].Name)
+	})
+
+	t.Run("cluster apps serve the seeded data", func(t *testing.T) {
+		resp, err := http.Get(ts.URL + fmt.Sprintf("/api/clusters/apps?clusterName=%s", clusterSkipRemote))
+		require.NoError(t, err)
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+		var decoded models.ClusterApps
+		require.NoError(t, json.Unmarshal(body, &decoded))
+		require.Equal(t, clusterSkipRemote, decoded.Cluster)
+		require.Len(t, decoded.Apps, 1, "the healthy cluster's data is served")
+		require.Equal(t, "ratings", decoded.Apps[0].Name)
+	})
 }

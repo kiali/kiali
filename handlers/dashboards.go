@@ -62,11 +62,9 @@ func CustomDashboard(
 		if params.Workload != "" {
 			wkd, err = layer.Workload.GetWorkload(r.Context(), business.WorkloadCriteria{Cluster: cluster, Namespace: namespace, WorkloadName: params.Workload, WorkloadGVK: params.WorkloadGVK, IncludeServices: false})
 			if err != nil {
-				if errors.IsNotFound(err) {
-					RespondWithError(w, http.StatusNotFound, err.Error())
-				} else {
-					RespondWithError(w, http.StatusInternalServerError, err.Error())
-				}
+				// handleErrorResponse maps NotFound to 404 and a degraded cluster's
+				// cache error to 503.
+				handleErrorResponse(w, err)
 				return
 			}
 		}

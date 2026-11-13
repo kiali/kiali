@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,6 +17,7 @@ import (
 	kubefake "k8s.io/client-go/kubernetes/fake"
 	k8stesting "k8s.io/client-go/testing"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
@@ -110,88 +113,15 @@ func TestAccessCheckChecksEachAccessibleNamespace(t *testing.T) {
 	require.True(t, denied.Cluster, "every accessible namespace denied")
 }
 
-// A real SSAR API error must surface as (false, err) - unknown - never (false, nil) -
-// denied: mapping API errors to "denied" would tear down healthy-but-slow clusters,
-// the exact failure the three-valued check outcome exists to prevent.
+// A real SSAR API error must surface as an error - unknown - never a denial: mapping API
+// errors to "denied" would tear down healthy-but-slow clusters, the exact failure the
+// three-valued check outcome exists to prevent.
 //
 // Known race, accepted: when one namespace's check errors and another's is denied, the
 // errgroup returns whichever finished first, so a definitive denial can be reported as
 // unknown. That outcome is bounded by the debounce window (10s) and conservative (the
 // cache is kept and the check retried). Do not write a timing assertion for this - it
 // would be flaky in CI.
-// TestAccessibleNamespacesForClusterFallbacks pins the misconfiguration safety net of
-// the access scoping: this function feeds both the remote cache's DefaultNamespaces and
-// the access check, so a fallback that returned nil on error would give the remote cache
-// no namespace restriction, and a check against zero namespaces trivially returns
-// allowed - revocations would never be detected.
-func TestAccessibleNamespacesForClusterFallbacks(t *testing.T) {
-	conf := config.NewConfig()
-	conf.Deployment.ClusterWideAccess = false
-	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
-	conf.Deployment.DiscoverySelectors.Default = config.DiscoverySelectorsType{
-		&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
-	}
-	conf.Deployment.DiscoverySelectors.Overrides = map[string]config.DiscoverySelectorsType{
-		"valid": {
-			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "west-ns"}},
-		},
-		"unresolvable": {
-			&config.DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
-		},
-		"empty": {},
-	}
-	defaultList := []string{"bookinfo", "istio-system"}
-
-	tests := map[string]struct {
-		cluster  string
-		cwa      bool
-		expected []string
-	}{
-		"cluster without an override uses the default accessible namespaces": {
-			cluster: "east", expected: defaultList,
-		},
-		"a valid override resolves to its own namespaces": {
-			cluster: "valid", expected: []string{"west-ns"},
-		},
-		"an override that cannot be resolved falls back to the default list": {
-			cluster: "unresolvable", expected: defaultList,
-		},
-		"an override that resolves to an empty list falls back to the default list": {
-			cluster: "empty", expected: defaultList,
-		},
-		"cluster-wide access has no per-cluster scope": {
-			cluster: "valid", cwa: true, expected: nil,
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			conf.Deployment.ClusterWideAccess = tc.cwa
-			require.Equal(t, tc.expected, accessibleNamespacesForCluster(conf, tc.cluster))
-		})
-	}
-}
-
-func TestNamespaceConfigs(t *testing.T) {
-	tests := map[string]struct {
-		namespaces []string
-		expected   map[string]ctrlcache.Config
-	}{
-		"a nil list means no restriction":    {namespaces: nil, expected: nil},
-		"an empty list means no restriction": {namespaces: []string{}, expected: nil},
-		"each namespace gets an empty config": {
-			namespaces: []string{"bookinfo", "istio-system"},
-			expected:   map[string]ctrlcache.Config{"bookinfo": {}, "istio-system": {}},
-		},
-	}
-
-	for name, tc := range tests {
-		t.Run(name, func(t *testing.T) {
-			require.Equal(t, tc.expected, namespaceConfigs(tc.namespaces))
-		})
-	}
-}
-
 func TestAccessCheckAPIErrorIsUnknownNotDenied(t *testing.T) {
 	conf := config.NewConfig()
 	conf.Deployment.ClusterWideAccess = false
@@ -337,4 +267,250 @@ func TestWatchErrorHandlerNilClusterAccessTearsDown(t *testing.T) {
 
 	handler(context.Background(), nil, forbidden)
 	require.Equal(t, 1, teardowns, "without clusterAccess any Forbidden error tears the cache down")
+}
+
+// recordingSSARClient answers SelfSubjectAccessReviews from the allowed map and records
+// every namespace each review was asked about, so tests can observe which namespaces a
+// check swept.
+func recordingSSARClient(allowed map[string]bool, asked *[]string, mu *sync.Mutex) *kubetest.FakeK8sClient {
+	client := kubetest.NewFakeK8sClient()
+	client.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			review := action.(k8stesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+			attrs := review.Spec.ResourceAttributes
+			key := fmt.Sprintf("%s/%s/%s/%s", attrs.Namespace, attrs.Group, attrs.Resource, attrs.Verb)
+			mu.Lock()
+			*asked = append(*asked, attrs.Namespace)
+			mu.Unlock()
+			review.Status.Allowed = allowed[key]
+			return true, review, nil
+		})
+	return client
+}
+
+func TestAccessCheckReportsDeniedNamespacesSorted(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system", "other"}
+	client := kubetest.NewFakeK8sClient()
+	// Allow everything except bookinfo and other.
+	client.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			review := action.(k8stesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+			attrs := review.Spec.ResourceAttributes
+			review.Status.Allowed = attrs.Namespace != "other" && attrs.Namespace != "bookinfo"
+			return true, review, nil
+		})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
+
+	denied, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, denied.Cluster)
+	require.Equal(t, []string{"bookinfo", "other"}, denied.Namespaces, "the denied set is sorted")
+}
+
+// A namespace that allows list but denies watch is denied: the real SSAR check asks for
+// both verbs and a Role can split them.
+func TestAccessCheckDeniesWhenOnlyWatchIsDenied(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+	client := kubetest.NewFakeK8sClient()
+	client.KubeClientset.(*kubefake.Clientset).PrependReactor("create", "selfsubjectaccessreviews",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			review := action.(k8stesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+			attrs := review.Spec.ResourceAttributes
+			// bookinfo allows list but denies watch; istio-system allows both.
+			review.Status.Allowed = attrs.Namespace == "istio-system" || (attrs.Namespace == "bookinfo" && attrs.Verb == "list")
+			return true, review, nil
+		})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
+
+	denied, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, denied.Cluster)
+	require.Equal(t, []string{"bookinfo"}, denied.Namespaces, "watch alone is enough to deny the namespace")
+}
+
+// An empty accessible-namespace list without cluster-wide access trivially returns
+// allowed - there is nothing to revoke. Pinned as a known edge.
+func TestAccessCheckEmptyAccessibleListIsAllowed(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{}
+	client := fakeClientWithAccess(map[string]bool{})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
+
+	denied, err := newAccessCheck(conf, factory)(context.Background(), "west", "apps", "deployments")
+	require.NoError(t, err)
+	require.False(t, denied.Cluster)
+	require.Empty(t, denied.Namespaces)
+}
+
+// The remote caches' namespace restriction and the live access check must sweep the same
+// namespaces in every configuration: the check must never evaluate a cluster against
+// namespaces its cache was not scoped to. The swept namespaces are observed through the
+// SSAR requests the check issues.
+func TestRemoteCacheScopeMatchesAccessCheck(t *testing.T) {
+	newConf := func() *config.Config {
+		conf := config.NewConfig()
+		conf.Deployment.ClusterWideAccess = false
+		conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+		conf.Deployment.DiscoverySelectors.Default = config.DiscoverySelectorsType{
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
+		}
+		conf.Deployment.DiscoverySelectors.Overrides = map[string]config.DiscoverySelectorsType{
+			"valid": {
+				&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "west-ns"}},
+			},
+			"unresolvable": {
+				&config.DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
+			},
+		}
+		return conf
+	}
+
+	tests := map[string]struct {
+		cluster      string
+		cwa          bool
+		wantSwept    []string // namespaces the check must sweep; "" means cluster-wide
+		wantScopedTo []string // keys of the cache's DefaultNamespaces; nil means no restriction
+	}{
+		"cluster-wide access has no scope and sweeps cluster-wide": {
+			cluster: "valid", cwa: true, wantSwept: []string{""}, wantScopedTo: nil,
+		},
+		"a valid override scopes both the cache and the check": {
+			cluster: "valid", wantSwept: []string{"west-ns"}, wantScopedTo: []string{"west-ns"},
+		},
+		"an unresolvable override falls back to the default list for both": {
+			cluster: "unresolvable", wantSwept: []string{"bookinfo", "istio-system"}, wantScopedTo: []string{"bookinfo", "istio-system"},
+		},
+		"a cluster without an override uses the default list for both": {
+			cluster: "east", wantSwept: []string{"bookinfo", "istio-system"}, wantScopedTo: []string{"bookinfo", "istio-system"},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			conf := newConf()
+			conf.Deployment.ClusterWideAccess = tc.cwa
+
+			var mu sync.Mutex
+			asked := []string{}
+			client := recordingSSARClient(map[string]bool{}, &asked, &mu)
+			factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{tc.cluster: client})
+
+			_, err := newAccessCheck(conf, factory)(context.Background(), tc.cluster, "apps", "deployments")
+			require.NoError(t, err)
+
+			mu.Lock()
+			swept := slices.Clone(asked)
+			mu.Unlock()
+			// Each namespace is asked once per verb (list and watch): compare the sorted, deduped set.
+			slices.Sort(swept)
+			swept = slices.Compact(swept)
+			require.Equal(t, tc.wantSwept, swept, "the check swept the expected namespaces")
+
+			scopedTo := cacheNamespaces(conf, tc.cluster)
+			if tc.wantScopedTo == nil {
+				require.Nil(t, scopedTo, "no namespace restriction")
+			} else {
+				got := make([]string, 0, len(scopedTo))
+				for namespace := range scopedTo {
+					got = append(got, namespace)
+				}
+				slices.Sort(got)
+				require.Equal(t, tc.wantScopedTo, got, "the cache is scoped to the same namespaces the check sweeps")
+			}
+		})
+	}
+}
+
+// fakeTearingCache records which informer types it was asked to remove. Every other
+// method panics: the watch error handler only calls RemoveInformer.
+type fakeTearingCache struct {
+	ctrlcache.Cache
+	removed []string
+}
+
+func (f *fakeTearingCache) RemoveInformer(_ context.Context, obj ctrlclient.Object) error {
+	f.removed = append(f.removed, fmt.Sprintf("%T", obj))
+	return nil
+}
+
+// The teardown loop: which errors remove informers, and which types get removed.
+func TestWatchErrorHandlerTeardown(t *testing.T) {
+	forbidden := fmt.Errorf("failed to list *v1.Deployment: %w",
+		apierrors.NewForbidden(schema.GroupResource{Group: "apps", Resource: "deployments"}, "", errors.New("denied")))
+	noDetails := &apierrors.StatusError{ErrStatus: metav1.Status{Code: 403, Reason: "Forbidden"}}
+
+	tests := map[string]struct {
+		err            error
+		access         *cache.ClusterAccess
+		wantRemovals   int
+		wantLogOverlap bool
+	}{
+		"a Forbidden error when access is still allowed keeps the cache": {
+			err: forbidden, wantRemovals: 0,
+		},
+		"a Forbidden error with a confirmed revocation tears the cache down": {
+			err: forbidden, wantRemovals: 23,
+		},
+		"a Forbidden error with a nil clusterAccess tears the cache down (legacy path)": {
+			err: forbidden, wantRemovals: 23,
+		},
+		"a non-Forbidden error is ignored": {
+			err: errors.New("connection refused"), wantRemovals: 0,
+		},
+		"a Forbidden error with no Details cannot name a resource and keeps the cache": {
+			err: noDetails, wantRemovals: 0,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			client := kubetest.NewFakeK8sClient()
+			access := cache.NewClusterAccess(func(_ context.Context, _, _, _ string) (cache.DeniedAccess, error) {
+				if tc.wantRemovals > 0 && tc.err == forbidden {
+					return cache.DeniedAccess{Cluster: true}, nil
+				}
+				return cache.DeniedAccess{}, nil
+			})
+			if name == "a Forbidden error with a nil clusterAccess tears the cache down (legacy path)" {
+				access = nil
+			}
+			fakeCache := &fakeTearingCache{}
+			handler := makeWatchErrorHandler(func() ctrlcache.Cache { return fakeCache }, client, access)
+			handler(context.Background(), nil, tc.err)
+			require.Len(t, fakeCache.removed, tc.wantRemovals)
+			if tc.wantRemovals > 0 {
+				require.Contains(t, fakeCache.removed, "*v1.Deployment")
+				require.Contains(t, fakeCache.removed, "*v1.Pod")
+			}
+		})
+	}
+}
+
+// The startup sweep seeds revocation marks before any read exists to stall: a namespace
+// already denied at startup (e.g. deleted before the restart) would otherwise only get
+// marked after the first read creates an informer for it - an informer that never syncs,
+// stalling that read for the full cache timeout.
+func TestSeedRevokedAtStartup(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+	client := fakeClientWithAccess(map[string]bool{
+		"istio-system/apps/deployments/list":  true,
+		"istio-system/apps/deployments/watch": true,
+		"istio-system//pods/list":             true,
+		"istio-system//pods/watch":            true,
+	})
+	factory := kubetest.NewFakeClientFactory(conf, map[string]kubernetes.UserClientInterface{"west": client})
+	clusterAccess := cache.NewClusterAccess(newAccessCheck(conf, factory))
+
+	seedRevokedAtStartup(context.Background(), clusterAccess, factory)
+
+	require.Equal(t, []string{"bookinfo"}, clusterAccess.RevokedNamespaces("west"), "the denied namespace is marked before any read")
+	_, degraded := clusterAccess.DegradedSince("west")
+	require.False(t, degraded, "a cluster with readable namespaces is not degraded")
 }

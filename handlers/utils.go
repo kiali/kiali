@@ -33,7 +33,7 @@ func respondNamespaceAccessError(w http.ResponseWriter, err error) {
 		RespondWithError(w, http.StatusForbidden, "Cannot access namespace data: "+err.Error())
 		return
 	}
-	RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+	handleErrorResponse(w, err, "Error fetching namespaces: "+err.Error())
 }
 
 // respondNamespaceNotAccessible writes the 403 for a namespace that is not
@@ -155,7 +155,7 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 	if err != nil {
 		// Fail closed: if the accessible set cannot be determined, reject
 		// rather than return an empty (200) result set.
-		RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+		handleErrorResponse(w, err, "Error fetching namespaces: "+err.Error())
 		return nil, false
 	}
 
@@ -176,12 +176,11 @@ func accessibleNamespaceNames(w http.ResponseWriter, ctx context.Context, layer 
 	return names, true
 }
 
-// skipUnavailableCluster serves the request's response when the named cluster's
-// service-account cache cannot serve reads: a degraded remote cluster gets the caller's
-// empty result (an empty list, a zero status) rather than failing the page, while the
-// home cluster and a cluster with no cache configured at all (a configuration error)
-// fail the request. It returns true when the response has been written and the handler
-// should return.
+// skipUnavailableCluster serves the request's response when the named cluster's cache cannot
+// serve reads, per Layer.SkipUnavailableCluster's contract: a degraded remote gets the
+// caller's empty result (an empty list, a zero status), the home cluster and an uncached
+// cluster fail the request. It returns true when the response has been written and the
+// handler should return.
 func skipUnavailableCluster(w http.ResponseWriter, r *http.Request, layer *business.Layer, cluster string, emptyResp any) bool {
 	skip, err := layer.SkipUnavailableCluster(r.Context(), cluster)
 	if err != nil {

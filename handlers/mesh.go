@@ -38,7 +38,7 @@ func ControlPlanes(
 
 		m, err := discovery.Mesh(r.Context())
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
 		// We do not want to edit mesh directly because that is shared across threads.

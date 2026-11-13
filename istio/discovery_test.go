@@ -29,6 +29,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
@@ -3266,17 +3267,16 @@ func TestGetMeshSkipsDegradedRemoteCluster(t *testing.T) {
 	// with "scanned and found nothing".
 	remoteClient := newMeshClusterClient("remote")
 	clients := map[string]kubernetes.ClientInterface{"east": k8s, "remote": remoteClient}
-	readers := map[string]ctrlclient.Reader{"east": k8s, "remote": remoteClient}
 
 	newDiscovery := func(degraded string) *istio.Discovery {
-		access := cache.NewClusterAccess(func(context.Context, string, string, string) (cache.DeniedAccess, error) {
-			return cache.DeniedAccess{Cluster: true}, nil
-		})
+		kialiCache, access, err := cachetest.NewFakeKialiCache(t.Context(), conf, clients,
+			func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+				return cache.DeniedAccess{Cluster: true}, nil
+			})
+		require.NoError(err)
 		if degraded != "" {
 			require.True(access.ConfirmRevoked(context.Background(), degraded, "apps", "deployments"))
 		}
-		kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf, cache.WithClusterAccess(access))
-		require.NoError(err)
 		return istio.NewDiscovery(clients, kialiCache, conf)
 	}
 
@@ -3362,7 +3362,15 @@ func TestGetMeshToleratesWebhookListFailure(t *testing.T) {
 	mesh, err := discovery.Mesh(t.Context())
 	require.NoError(err, "a cluster whose webhook list fails must not fail the whole mesh")
 	require.NotEmpty(mesh.ControlPlanes)
-	require.Equal(conf.KubernetesConfig.ClusterName, mesh.ControlPlanes[0].Cluster.Name)
+	// Clusters() derives its order from a map, so the control planes' order is not
+	// deterministic: locate home's entry rather than assuming index 0.
+	var homeControlPlane *models.ControlPlane
+	for i := range mesh.ControlPlanes {
+		if mesh.ControlPlanes[i].Cluster.Name == conf.KubernetesConfig.ClusterName {
+			homeControlPlane = &mesh.ControlPlanes[i]
+		}
+	}
+	require.NotNil(homeControlPlane, "home's control plane is discovered")
 
 	// The failing list was actually attempted on the remote, so the tolerance path ran
 	// rather than the remote being skipped for some other reason.
@@ -3375,6 +3383,53 @@ func TestGetMeshToleratesWebhookListFailure(t *testing.T) {
 	require.True(listed, "the remote's webhook list was attempted")
 
 	// The home cluster's tags survived the skip.
-	require.NotNil(mesh.ControlPlanes[0].Tag, "home's tags are still resolved when a remote's webhook list fails")
-	require.Equal("default", mesh.ControlPlanes[0].Tag.Name)
+	require.NotNil(homeControlPlane.Tag, "home's tags are still resolved when a remote's webhook list fails")
+	require.Equal("default", homeControlPlane.Tag.Name)
+}
+
+// failingDeploymentListReader wraps a reader and fails every Deployment list, simulating
+// an istiod-detection list that errors on the cache (e.g. a read timeout).
+type failingDeploymentListReader struct {
+	ctrlclient.Reader
+}
+
+func (f *failingDeploymentListReader) List(ctx context.Context, list ctrlclient.ObjectList, opts ...ctrlclient.ListOption) error {
+	if _, isDeploymentList := list.(*apps_v1.DeploymentList); isDeploymentList {
+		return fmt.Errorf("simulated list failure for %T", list)
+	}
+	return f.Reader.List(ctx, list, opts...)
+}
+
+// A remote cluster whose istiod-detection list fails is skipped, so one broken remote
+// cannot take down the mesh; the same failure on the home cluster fails the mesh,
+// because home is required.
+func TestGetMeshSkipsRemoteWithFailedIstiodList(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = "east"
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+
+	k8s := newMeshClusterClient(conf.KubernetesConfig.ClusterName)
+	remoteClient := newMeshClusterClient("remote")
+	clients := map[string]kubernetes.ClientInterface{"east": k8s, "remote": remoteClient}
+
+	// The remote's reader fails every Deployment list.
+	readers := map[string]ctrlclient.Reader{"east": k8s, "remote": &failingDeploymentListReader{Reader: remoteClient}}
+	kialiCache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
+	require.NoError(err)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	mesh, err := discovery.Mesh(t.Context())
+	require.NoError(err, "a remote whose istiod list fails is skipped, not fatal")
+	require.Len(mesh.ControlPlanes, 1)
+	require.Equal("east", mesh.ControlPlanes[0].Cluster.Name, "only the home control plane is discovered")
+
+	// The same failure on the home cluster fails the mesh.
+	readers = map[string]ctrlclient.Reader{"east": &failingDeploymentListReader{Reader: k8s}, "remote": remoteClient}
+	kialiCache, err = cache.NewKialiCache(t.Context(), clients, readers, *conf)
+	require.NoError(err)
+	discovery = istio.NewDiscovery(clients, kialiCache, conf)
+
+	_, err = discovery.Mesh(t.Context())
+	require.Error(err, "the home cluster's istiod list failing is fatal")
 }

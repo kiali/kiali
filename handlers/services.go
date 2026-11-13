@@ -262,7 +262,7 @@ func ServiceUpdate(
 		queryTime := util.Clock.Now()
 		rateInterval, err = adjustRateInterval(r.Context(), business, namespace, rateInterval, queryTime, cluster)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Adjust rate interval error: "+err.Error())
+			handleErrorResponse(w, err, "Adjust rate interval error: "+err.Error())
 			return
 		}
 

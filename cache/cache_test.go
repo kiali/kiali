@@ -981,3 +981,56 @@ func TestRemoveHealthNonexistent(t *testing.T) {
 	c := newHealthTestCache(t)
 	c.RemoveHealth("missing", "ns")
 }
+
+// TestAccessibleNamespacesForClusterFallbacks pins the misconfiguration safety net of the
+// access scoping: this function feeds both the remote caches' DefaultNamespaces and the live
+// access check, so a fallback that returned nil on error would give the remote cache no
+// namespace restriction, and a check against zero namespaces trivially returns allowed -
+// revocations would never be detected.
+func TestAccessibleNamespacesForClusterFallbacks(t *testing.T) {
+	conf := config.NewConfig()
+	conf.Deployment.ClusterWideAccess = false
+	conf.Deployment.AccessibleNamespaces = []string{"bookinfo", "istio-system"}
+	conf.Deployment.DiscoverySelectors.Default = config.DiscoverySelectorsType{
+		&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "bookinfo"}},
+	}
+	conf.Deployment.DiscoverySelectors.Overrides = map[string]config.DiscoverySelectorsType{
+		"valid": {
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"kubernetes.io/metadata.name": "west-ns"}},
+		},
+		"unresolvable": {
+			&config.DiscoverySelectorType{MatchLabels: map[string]string{"team": "west"}},
+		},
+		"empty": {},
+	}
+	defaultList := []string{"bookinfo", "istio-system"}
+
+	tests := map[string]struct {
+		cluster  string
+		cwa      bool
+		expected []string
+	}{
+		"cluster without an override uses the default accessible namespaces": {
+			cluster: "east", expected: defaultList,
+		},
+		"a valid override resolves to its own namespaces": {
+			cluster: "valid", expected: []string{"west-ns"},
+		},
+		"an override that cannot be resolved falls back to the default list": {
+			cluster: "unresolvable", expected: defaultList,
+		},
+		"an override that resolves to an empty list falls back to the default list": {
+			cluster: "empty", expected: defaultList,
+		},
+		"cluster-wide access has no per-cluster scope": {
+			cluster: "valid", cwa: true, expected: nil,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			conf.Deployment.ClusterWideAccess = tc.cwa
+			require.Equal(t, tc.expected, cache.AccessibleNamespacesForCluster(conf, tc.cluster))
+		})
+	}
+}

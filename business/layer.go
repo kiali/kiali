@@ -2,8 +2,6 @@ package business
 
 import (
 	"context"
-	"errors"
-	"slices"
 
 	"k8s.io/client-go/tools/clientcmd/api"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
-	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // Layer is a container for fast access to inner services.
@@ -26,85 +23,66 @@ type Layer struct {
 	Health       HealthService
 	IstioConfig  IstioConfigService
 	IstioStatus  IstioStatusService
-	Tracing      TracingService
 	Mesh         MeshService
 	Namespace    NamespaceService
 	ProxyLogging ProxyLoggingService
 	ProxyStatus  ProxyStatusService
 	Svc          SvcService
 	TLS          TLSService
+	Tracing      TracingService
 	Validations  IstioValidationsService
 	Workload     WorkloadService
 
-	conf       *config.Config
 	kialiCache cache.KialiCache
 }
 
-// CheckClusterCacheAvailable returns a non-nil error when the Kiali service-account kube
-// cache for the named cluster cannot serve reads - the cluster's access was revoked and its
-// cache torn down, or no cache is configured for it. Aggregating callers that span multiple
-// clusters (e.g. the graph engine) use this to skip such clusters instead of failing the
-// whole request; the home cluster is not skippable.
-func (in *Layer) CheckClusterCacheAvailable(cluster string) error {
-	_, err := in.kialiCache.GetKubeCache(cluster)
-	return err
-}
-
 // SkipUnavailableCluster decides what a per-cluster request should do when the cluster's
-// service-account cache cannot serve reads (see CheckClusterCacheAvailable). The home
-// cluster is not skippable: the error is returned so the request fails cleanly. A remote
-// cluster is skipped: the caller should serve its empty result (an empty list, a zero
-// status) rather than fail the whole page.
-//
-// A cluster with no cache configured at all is a configuration error - the cluster name
-// appears in the configuration but no connected cluster matches it (a typo, or a cluster
-// that does not exist in this environment), so no cache was ever created and it will not
-// recover until the configuration is fixed - so it fails the request too: the caller
-// explicitly named this cluster, and an error tells them the name is wrong instead of
-// silently returning an empty result. Aggregating surfaces (the mesh resolution, the
-// graph, the validations reconciler) deliberately do not fail on such a cluster - they
-// skip it with an error-level log - so a single misconfigured cluster name cannot break
-// cross-cluster views.
+// service-account cache cannot serve reads: the home cluster is not skippable (the error
+// is returned so the request fails cleanly), a remote cluster is skipped (the caller
+// should serve its empty result - an empty list, a zero status - rather than fail the
+// whole page), and a cluster with no cache configured at all fails too, because the
+// caller explicitly named it and an error tells them the name is wrong instead of
+// silently returning an empty result. It delegates to
+// cache.KialiCache.SkipUnavailableCluster, which owns the decision and its full contract,
+// and logs the skip through the request's context.
 //
 // The skip applies to list and status surfaces, where an empty result is meaningful.
 // Entity-detail surfaces (a single workload, app, service or config object) fail cleanly
 // on any unavailable cache: no meaningful empty entity exists to serve.
 func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bool, error) {
-	err := in.CheckClusterCacheAvailable(cluster)
-	if err == nil {
-		return false, nil
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, "", cache.SkipModeRequest)
+	if skip {
+		// err is the cause of the skip; the request still succeeds with the empty result.
+		log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
+		return true, nil
 	}
-	if cluster == in.conf.KubernetesConfig.ClusterName || errors.Is(err, cache.ErrClusterNotCached) {
-		return false, err
-	}
-	log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
-	return true, nil
+	return false, err
 }
 
-// excludeRevokedNamespaces drops the cluster's partially-revoked namespaces from the
-// list. A namespace is revoked when its access was taken away while the rest of the
-// cluster remains readable: its informers cannot refresh, so reads from it would serve
-// stale data - resources that may no longer exist. Coarse grain: a namespace counts as
-// revoked when it denies any resource type the access check swept.
-func excludeRevokedNamespaces(kialiCache cache.KialiCache, cluster string, namespaces []string) []string {
-	revoked := kialiCache.RevokedNamespaces(cluster)
-	if len(revoked) == 0 {
-		return namespaces
+// SkipUnavailableClusterForAggregate is the aggregating-surface variant of
+// SkipUnavailableCluster (the mesh resolution, the graph, the validations reconciler): an
+// uncached cluster is skipped with an error-level log instead of failing, so one
+// misconfigured cluster name cannot break cross-cluster views. See
+// cache.KialiCache.SkipUnavailableCluster for the full contract. The skip's cause is
+// swallowed: the cache already logged it, and the caller only needs to skip.
+func (in *Layer) SkipUnavailableClusterForAggregate(cluster, surface string) (bool, error) {
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, surface, cache.SkipModeAggregate)
+	if skip {
+		return true, nil
 	}
-	revokedSet := make(map[string]struct{}, len(revoked))
-	for _, ns := range revoked {
-		revokedSet[ns] = struct{}{}
-	}
-	return sliceutil.Filter(namespaces, func(ns string) bool {
-		_, isRevoked := revokedSet[ns]
-		return !isRevoked
-	})
+	return false, err
 }
 
-// namespaceRevoked reports whether the namespace's access on the cluster was partially
-// revoked; see excludeRevokedNamespaces for why callers must not serve its data.
-func namespaceRevoked(kialiCache cache.KialiCache, cluster, namespace string) bool {
-	return slices.Contains(kialiCache.RevokedNamespaces(cluster), namespace)
+// SkipUnavailableClusterSilent is the aggregating-surface variant that skips without
+// logging, for the graph appenders' per-namespace filters: the drop is already logged
+// once per build by dropUnavailableClusterNodes, and this filter runs per appender, per
+// namespace. Like SkipUnavailableClusterForAggregate, the skip's cause is swallowed.
+func (in *Layer) SkipUnavailableClusterSilent(cluster string) (bool, error) {
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, "", cache.SkipModeSilent)
+	if skip {
+		return true, nil
+	}
+	return false, err
 }
 
 func newLayer(
@@ -119,7 +97,6 @@ func newLayer(
 	cpm ControlPlaneMonitor,
 ) *Layer {
 	temporaryLayer := &Layer{
-		conf:       conf,
 		kialiCache: cache,
 	}
 

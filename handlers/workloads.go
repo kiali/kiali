@@ -521,7 +521,7 @@ func ConfigDumpZtunnel(
 
 		dump, err := business.Workload.GetZtunnelConfig(r.Context(), cluster, pod)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error fetching ztunnel config: "+err.Error())
+			handleErrorResponse(w, err, "Error fetching ztunnel config: "+err.Error())
 			return
 		}
 		RespondWithJSON(w, http.StatusOK, dump)

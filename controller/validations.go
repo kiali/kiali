@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -137,18 +136,13 @@ func (r *ValidationsReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// home cluster is not skippable.
 	clusters := make([]string, 0, len(r.clusters))
 	for _, cluster := range r.clusters {
-		if _, err := r.kialiCache.GetKubeCache(cluster); err != nil {
-			if cluster == r.conf.KubernetesConfig.ClusterName {
-				return ctrl.Result{}, err
-			}
-			if errors.Is(err, cache.ErrClusterNotCached) {
-				log.Errorf("[ValidationsReconciler] Skipping cluster [%s]: no cache is configured for it. "+
-					"The cluster is likely misconfigured (a typo in the cluster name, or a cluster that does "+
-					"not exist in this environment); it will not recover until the configuration is fixed.", cluster)
-			} else {
-				log.Warningf("[ValidationsReconciler] Skipping cluster [%s]: %s", cluster, err)
-			}
+		_, skip, err := r.kialiCache.SkipUnavailableCluster(cluster, "running the validations reconciler", cache.SkipModeAggregate)
+		if skip {
+			// err is only the skip's cause here; the cache already logged it.
 			continue
+		}
+		if err != nil {
+			return ctrl.Result{}, err
 		}
 		clusters = append(clusters, cluster)
 	}
