@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -135,6 +136,16 @@ func (in *SvcService) GetServiceListForCluster(ctx context.Context, criteria Ser
 }
 
 func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria ServiceCriteria, cluster string) (*models.ServiceList, error) {
+	// A partially-revoked namespace serves stale informer data; serve the empty list
+	// instead of frozen pre-revocation services.
+	if criteria.Namespace != "" && slices.Contains(in.kialiCache.RevokedNamespaces(cluster), criteria.Namespace) {
+		return &models.ServiceList{
+			Namespace:   criteria.Namespace,
+			Services:    []models.ServiceOverview{},
+			Validations: models.IstioValidations{},
+		}, nil
+	}
+
 	var (
 		svcs            []core_v1.Service
 		pods            []core_v1.Pod
@@ -157,19 +168,29 @@ func (in *SvcService) getServiceListForCluster(ctx context.Context, criteria Ser
 		}
 	}
 
-	svcList := &core_v1.ServiceList{}
-	if err := kubeCache.List(ctx, svcList, client.InNamespace(criteria.Namespace)); err != nil {
-		return nil, fmt.Errorf("Error fetching Services per namespace %s: %s", criteria.Namespace, err)
+	// The namespaces to list: the requested one, or the cluster's readable scope (one
+	// cluster-wide list with cluster-wide access). cache.ListInNamespaces and
+	// cache.ListReadable list one namespace at a time outside cluster-wide access - a
+	// list across all namespaces would stall on the never-syncing informer of a revoked
+	// namespace - and their docs carry the why.
+	listAcross := func(list client.ObjectList) error {
+		if criteria.Namespace != "" {
+			return cache.ListInNamespaces(ctx, kubeCache, []string{criteria.Namespace}, list)
+		}
+		return cache.ListReadable(ctx, kubeCache, in.conf, in.kialiCache, cluster, list)
 	}
-	svcs = kubernetes.FilterServicesBySelector(svcList.Items, selectorLabels)
-
+	svcList := &core_v1.ServiceList{}
+	if err := listAcross(svcList); err != nil {
+		return nil, fmt.Errorf("Error fetching Services for cluster %s: %s", cluster, err)
+	}
+	podList := &core_v1.PodList{}
 	if !criteria.IncludeOnlyDefinitions {
-		podList := &core_v1.PodList{}
-		if err := kubeCache.List(ctx, podList, client.InNamespace(criteria.Namespace)); err != nil {
-			return nil, fmt.Errorf("Error fetching Pods per namespace %s: %s", criteria.Namespace, err)
+		if err := listAcross(podList); err != nil {
+			return nil, fmt.Errorf("Error fetching Pods for cluster %s: %s", cluster, err)
 		}
 		pods = podList.Items
 	}
+	svcs = kubernetes.FilterServicesBySelector(svcList.Items, selectorLabels)
 
 	// ServiceEntries are always fetched because buildServiceEntryOverviews needs
 	// them to produce SE-backed services (replacing the old Istio Service Registry).

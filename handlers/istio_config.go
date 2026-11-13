@@ -55,6 +55,10 @@ func IstioConfigList(
 			return
 		}
 
+		if skipUnavailableCluster(w, r, business, cluster, &models.IstioConfigList{}) {
+			return
+		}
+
 		var istioConfig *models.IstioConfigList
 		if namespace != "" {
 			istioConfig, err = business.IstioConfig.GetIstioConfigListForNamespace(r.Context(), cluster, namespace, criteria)
@@ -454,7 +458,7 @@ func IstioConfigValidationSummary(
 			// rather than return an empty (200) result set.
 			loadedNamespaces, errNs := business.Namespace.GetClusterNamespaces(r.Context(), cluster)
 			if errNs != nil {
-				RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+errNs.Error())
+				handleErrorResponse(w, errNs, "Error fetching namespaces: "+errNs.Error())
 				return
 			}
 			for _, ns := range loadedNamespaces {

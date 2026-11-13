@@ -88,6 +88,10 @@ func ClusterApps(
 			Cluster: p.ClusterName,
 		}
 
+		if skipUnavailableCluster(w, r, businessLayer, p.ClusterName, clusterAppsList) {
+			return
+		}
+
 		for _, ns := range nss {
 			criteria := business.AppCriteria{
 				Cluster: p.ClusterName, IncludeHealth: p.IncludeHealth, IncludeIstioResources: p.IncludeIstioResources,

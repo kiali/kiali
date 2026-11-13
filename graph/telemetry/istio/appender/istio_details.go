@@ -2,6 +2,7 @@ package appender
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
@@ -65,6 +66,20 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
 			continue
 		}
+		// The dropped cluster's nodes are gone from the traffic map, but this loop
+		// is cluster-driven and would still fetch from its cache. The skip is silent:
+		// dropUnavailableClusterNodes already reported the drop for this graph build.
+		skip, err := globalInfo.Business.SkipUnavailableClusterSilent(cluster.Name)
+		if err != nil {
+			// The home cluster is not skippable: fail the graph rather than render it
+			// without the home data. (Unreachable in practice: the drop already failed
+			// the graph for an unavailable home before the appenders ran.)
+			homeCluster := globalInfo.Conf.KubernetesConfig.ClusterName
+			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
+		}
+		if skip {
+			continue
+		}
 		if _, ok := globalInfo.Vendor.ClusterServiceLists[cluster.Name]; !ok {
 			svcs, err := globalInfo.Business.Svc.GetServiceListForCluster(ctx,
 				business.ServiceCriteria{Cluster: cluster.Name, IncludeOnlyDefinitions: true, IncludeHealth: false},
@@ -79,6 +94,15 @@ func (a IstioAppender) AppendGraph(ctx context.Context, trafficMap graph.Traffic
 	// to avoid redundant GetIstioConfigList and GetClusterNamespaces calls.
 	for _, cluster := range globalInfo.Clusters {
 		if !a.AccessibleNamespaces.HasCluster(cluster.Name) {
+			continue
+		}
+		// Same reason as the service-list loop above.
+		skip, err := globalInfo.Business.SkipUnavailableClusterSilent(cluster.Name)
+		if err != nil {
+			homeCluster := globalInfo.Conf.KubernetesConfig.ClusterName
+			graph.CheckError(fmt.Errorf("home cluster [%s] cache is unavailable, cannot build the graph: %w", homeCluster, err))
+		}
+		if skip {
 			continue
 		}
 		istioConfig, err := globalInfo.Business.IstioConfig.GetIstioConfigList(ctx, cluster.Name, business.IstioConfigCriteria{

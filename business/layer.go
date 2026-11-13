@@ -1,6 +1,8 @@
 package business
 
 import (
+	"context"
+
 	"k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/kiali/kiali/cache"
@@ -8,6 +10,7 @@ import (
 	"github.com/kiali/kiali/grafana"
 	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/log"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
 )
@@ -20,15 +23,66 @@ type Layer struct {
 	Health       HealthService
 	IstioConfig  IstioConfigService
 	IstioStatus  IstioStatusService
-	Tracing      TracingService
 	Mesh         MeshService
 	Namespace    NamespaceService
 	ProxyLogging ProxyLoggingService
 	ProxyStatus  ProxyStatusService
 	Svc          SvcService
 	TLS          TLSService
+	Tracing      TracingService
 	Validations  IstioValidationsService
 	Workload     WorkloadService
+
+	kialiCache cache.KialiCache
+}
+
+// SkipUnavailableCluster decides what a per-cluster request should do when the cluster's
+// service-account cache cannot serve reads: the home cluster is not skippable (the error
+// is returned so the request fails cleanly), a remote cluster is skipped (the caller
+// should serve its empty result - an empty list, a zero status - rather than fail the
+// whole page), and a cluster with no cache configured at all fails too, because the
+// caller explicitly named it and an error tells them the name is wrong instead of
+// silently returning an empty result. It delegates to
+// cache.KialiCache.SkipUnavailableCluster, which owns the decision and its full contract,
+// and logs the skip through the request's context.
+//
+// The skip applies to list and status surfaces, where an empty result is meaningful.
+// Entity-detail surfaces (a single workload, app, service or config object) fail cleanly
+// on any unavailable cache: no meaningful empty entity exists to serve.
+func (in *Layer) SkipUnavailableCluster(ctx context.Context, cluster string) (bool, error) {
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, "", cache.SkipModeRequest)
+	if skip {
+		// err is the cause of the skip; the request still succeeds with the empty result.
+		log.FromContext(ctx).Warn().Msgf("Skipping cluster [%s]: %s", cluster, err)
+		return true, nil
+	}
+	return false, err
+}
+
+// SkipUnavailableClusterForAggregate is the aggregating-surface variant of
+// SkipUnavailableCluster (the mesh resolution, the graph, the validations reconciler): an
+// uncached cluster is skipped with an error-level log instead of failing, so one
+// misconfigured cluster name cannot break cross-cluster views. See
+// cache.KialiCache.SkipUnavailableCluster for the full contract. The skip's cause is
+// swallowed: the cache already logged it, and the caller only needs to skip.
+func (in *Layer) SkipUnavailableClusterForAggregate(cluster, surface string) (bool, error) {
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, surface, cache.SkipModeAggregate)
+	if skip {
+		return true, nil
+	}
+	return false, err
+}
+
+// SkipUnavailableClusterSilent is the aggregating-surface variant that skips without
+// logging, for the graph appenders' per-namespace filters: the drop is already logged
+// once per build by dropUnavailableClusterNodes, and this filter runs per appender, per
+// namespace. Like SkipUnavailableClusterForAggregate, the skip's cause is swallowed.
+func (in *Layer) SkipUnavailableClusterSilent(cluster string) (bool, error) {
+	_, skip, err := in.kialiCache.SkipUnavailableCluster(cluster, "", cache.SkipModeSilent)
+	if skip {
+		return true, nil
+	}
+	return false, err
 }
 
 func newLayer(
@@ -42,7 +96,9 @@ func newLayer(
 	discovery istio.MeshDiscovery,
 	cpm ControlPlaneMonitor,
 ) *Layer {
-	temporaryLayer := &Layer{}
+	temporaryLayer := &Layer{
+		kialiCache: cache,
+	}
 
 	homeClusterName := conf.KubernetesConfig.ClusterName
 

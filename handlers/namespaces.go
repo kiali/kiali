@@ -30,8 +30,7 @@ func NamespaceList(conf *config.Config, kialiCache cache.KialiCache, clientFacto
 
 		namespaces, err := namespace.GetNamespaces(r.Context())
 		if err != nil {
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
 
@@ -63,8 +62,7 @@ func NamespaceInfo(conf *config.Config, cache cache.KialiCache, clientFactory ku
 				respondNamespaceAccessError(w, err)
 				return
 			}
-			log.Error(err)
-			RespondWithError(w, http.StatusInternalServerError, err.Error())
+			handleErrorResponse(w, err)
 			return
 		}
 

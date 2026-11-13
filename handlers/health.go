@@ -85,7 +85,7 @@ func ClusterHealth(
 		// partial data would make the UI show wrong aggregates.
 		accessibleNamespaces, err := businessLayer.Namespace.GetClusterNamespaces(r.Context(), cluster)
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Error fetching namespaces: "+err.Error())
+			handleErrorResponse(w, err, "Error fetching namespaces: "+err.Error())
 			return
 		}
 

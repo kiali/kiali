@@ -13,25 +13,13 @@ import (
 
 	"github.com/go-logr/zerologr"
 	"github.com/rs/zerolog"
-	extentionsv1alpha1 "istio.io/client-go/pkg/apis/extensions/v1alpha1"
-	networkingv1 "istio.io/client-go/pkg/apis/networking/v1"
-	networkingv1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
-	securityv1 "istio.io/client-go/pkg/apis/security/v1"
-	telemetryv1 "istio.io/client-go/pkg/apis/telemetry/v1"
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	toolscache "k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	k8sinferencev1 "sigs.k8s.io/gateway-api-inference-extension/api/v1"
-	k8snetworkingv1 "sigs.k8s.io/gateway-api/apis/v1"
-	k8snetworkingv1beta1 "sigs.k8s.io/gateway-api/apis/v1beta1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -63,16 +51,24 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	config.Set(conf)
 	log.Infof("TLS policy source [%s] min_version [%s] max_version [%s] cipher_suites count=[%d] groups count=[%d]", policy.Source, policy.MinVersionName(), policy.MaxVersionName(), len(policy.CipherSuites), len(policy.Groups))
 
-	mgr, kubeCaches, err := newManager(conf, logger, clientFactory)
+	clusterAccess := cache.NewClusterAccess(newAccessCheck(conf, clientFactory))
+	go clusterAccess.Run(ctx, cache.DefaultAccessProbeInterval)
+
+	mgr, kubeCaches, err := newManager(conf, logger, clientFactory, clusterAccess)
 	if err != nil {
 		log.Fatalf("Unable to setup manager: %s", err)
 	}
 
 	log.Info("Initializing Kiali Cache")
-	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf)
+	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf, cache.WithClusterAccess(clusterAccess))
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
+
+	// Seed the revocation state before any read: an informer for a namespace Kiali is
+	// forbidden from never syncs, and the first read through it would stall for the read
+	// timeout. See seedRevokedAtStartup.
+	seedRevokedAtStartup(ctx, clusterAccess, clientFactory)
 
 	cache.SetBuildInfo(models.BuildInfo{
 		CommitHash:       commitHash,
@@ -308,71 +304,7 @@ func cacheTransforms() map[client.Object]ctrlcache.ByObject {
 	}
 }
 
-// makeWatchErrorHandler returns a DefaultWatchErrorHandler that tears down all informers
-// when a Forbidden watch error is received (e.g. namespace deletion or access revocation).
-func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface) func(context.Context, *toolscache.Reflector, error) {
-	return func(ctx context.Context, r *toolscache.Reflector, watchErr error) {
-		if !apierrors.IsForbidden(watchErr) {
-			return
-		}
-		log.Infof("A namespace appears to have been deleted or Kiali is forbidden from seeing it [err=%v]. Shutting down cache.", watchErr)
-		objectsToRemove := []client.Object{
-			&corev1.Pod{},
-			&corev1.Service{},
-			&appsv1.StatefulSet{},
-			&appsv1.DaemonSet{},
-			&corev1.ConfigMap{},
-			&batchv1.CronJob{},
-			&batchv1.Job{},
-			&appsv1.Deployment{},
-			&appsv1.ReplicaSet{},
-			&networkingv1.Gateway{},
-			&networkingv1.DestinationRule{},
-			&networkingv1.Sidecar{},
-			&networkingv1.ServiceEntry{},
-			&networkingv1.VirtualService{},
-			&networkingv1.WorkloadEntry{},
-			&networkingv1.WorkloadGroup{},
-			&extentionsv1alpha1.TrafficExtension{},
-			&extentionsv1alpha1.WasmPlugin{},
-			&networkingv1alpha3.EnvoyFilter{},
-			&securityv1.AuthorizationPolicy{},
-			&securityv1.PeerAuthentication{},
-			&securityv1.RequestAuthentication{},
-			&telemetryv1.Telemetry{},
-		}
-		if k8sClient.IsGatewayAPI() {
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.Gateway{})
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GatewayClass{})
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.HTTPRoute{})
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.GRPCRoute{})
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1beta1.ReferenceGrant{})
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TLSRoute{})
-		}
-		if k8sClient.HasTCPRouteInV1() {
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.TCPRoute{})
-		}
-		if k8sClient.HasUDPRouteInV1() {
-			objectsToRemove = append(objectsToRemove, &k8snetworkingv1.UDPRoute{})
-		}
-		if k8sClient.IsInferenceAPI() {
-			objectsToRemove = append(objectsToRemove, &k8sinferencev1.InferencePool{})
-		}
-		c := getCache()
-		if c == nil {
-			log.Warningf("Cache not yet available, cannot remove informers")
-			return
-		}
-		for _, obj := range objectsToRemove {
-			log.Debugf("Removing informer for: %T", obj)
-			if err := c.RemoveInformer(ctx, obj); err != nil {
-				log.Errorf("Unable to remove informer: %s", err)
-			}
-		}
-	}
-}
-
-func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory) (manager.Manager, map[string]ctrlcache.Cache, error) {
+func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kubernetes.ClientFactory, clusterAccess *cache.ClusterAccess) (manager.Manager, map[string]ctrlcache.Cache, error) {
 	ctrl.SetLogger(zerologr.New(logger))
 
 	// Combine the istio scheme and the kube scheme.
@@ -384,13 +316,9 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 	// In the future this could be any cluster and not just home cluster.
 	homeClusterClient := clientFactory.GetSAHomeClusterClient()
 	homeClusterInfo := homeClusterClient.ClusterInfo()
-	var defaultNamespaces map[string]ctrlcache.Config
-	if !conf.AllNamespacesAccessible() {
-		defaultNamespaces = make(map[string]ctrlcache.Config)
-		for _, namespace := range conf.Deployment.AccessibleNamespaces {
-			defaultNamespaces[namespace] = ctrlcache.Config{}
-		}
-	}
+	// The home cache is scoped to the accessible namespaces in non-cluster-wide-access mode
+	// (see cacheNamespaces; the home cluster resolves to the default list there).
+	defaultNamespaces := cacheNamespaces(conf, homeClusterInfo.Name)
 
 	var mgr manager.Manager
 	mgr, err = ctrl.NewManager(homeClusterInfo.ClientConfig, ctrl.Options{
@@ -409,7 +337,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 					return nil
 				}
 				return mgr.GetCache()
-			}, homeClusterClient),
+			}, homeClusterClient, clusterAccess),
 			DefaultTransform: ctrlcache.TransformStripManagedFields(),
 			ByObject:         cacheTransforms(),
 		},
@@ -426,9 +354,13 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 		if saClient.ClusterInfo().Name == homeClusterInfo.Name {
 			kubeCaches[saClient.ClusterInfo().Name] = mgr.GetCache()
 		} else {
+			clusterName := saClient.ClusterInfo().Name
 			var remoteCluster cluster.Cluster
 			remoteCluster, err = cluster.New(saClient.ClusterInfo().ClientConfig, func(o *cluster.Options) {
 				o.Scheme = scheme
+				// Scope the remote cache the same way as the home cache (see
+				// cacheNamespaces).
+				o.Cache.DefaultNamespaces = cacheNamespaces(conf, clusterName)
 				o.Cache.DefaultTransform = ctrlcache.TransformStripManagedFields()
 				o.Cache.ByObject = cacheTransforms()
 				o.Cache.DefaultWatchErrorHandler = makeWatchErrorHandler(
@@ -439,6 +371,7 @@ func newManager(conf *config.Config, logger *zerolog.Logger, clientFactory kuber
 						return remoteCluster.GetCache()
 					},
 					saClient,
+					clusterAccess,
 				)
 			})
 			if err != nil {
