@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Card, CardBody, CardHeader, Title, TitleSizes, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
-import { AppWorkload } from '../../types/App';
+import type { ServiceDetailsInfo, WorkloadOverview } from '../../types/ServiceInfo';
+import type { AppWorkload } from '../../types/App';
 import { isMultiCluster } from '../../config';
 import { Labels } from '../../components/Label/Labels';
 import { kialiStyle } from 'styles/StyleUtils';

@@ -1,4 +1,3 @@
-// Assisted-by: Codex
 import type { Node, WithSelectionProps } from '@patternfly/react-topology';
 import {
   DefaultNode,

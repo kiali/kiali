@@ -8,6 +8,8 @@ import { ValidationTypes } from 'types/IstioObjects';
 import { Status, statusMsg } from 'types/IstioStatus';
 import { Validation } from 'components/Validations/Validation';
 import { Title, Tooltip, TooltipPosition, SearchInput, Tabs, Tab, TabTitleText } from '@patternfly/react-core';
+import { KialiIcon } from 'config/KialiIcon';
+import { infoStyle } from 'styles/IconStyle';
 import { ExpandableRowContent, Table, Tbody, Td, Tr } from '@patternfly/react-table';
 import { t, useKialiTranslation } from 'utils/I18nUtils';
 import { KialiLink } from 'components/Link/KialiLink';
@@ -58,6 +60,16 @@ export const targetPanelFont: React.CSSProperties = {
 
 const healthStatusStyle = kialiStyle({
   marginLeft: '0.5rem'
+});
+
+const waypointNamespaceTooltipContentStyle = kialiStyle({
+  textAlign: 'left'
+});
+
+const waypointNamespaceTooltipStyle = kialiStyle({
+  alignItems: 'center',
+  display: 'inline-flex',
+  gap: '0.375rem'
 });
 
 const hrStyle = kialiStyle({
@@ -132,6 +144,30 @@ export const renderHealthStatus = (data: MeshNodeData): React.ReactNode => {
   );
 };
 
+export const renderWaypointNamespaceInfo = (data: MeshNodeData): React.ReactNode => {
+  if (!data.namespace) {
+    return null;
+  }
+
+  return (
+    <Tooltip
+      aria-label={t('Namespace')}
+      position={TooltipPosition.right}
+      enableFlip={true}
+      content={
+        <div className={waypointNamespaceTooltipContentStyle}>
+          <span className={waypointNamespaceTooltipStyle}>
+            <PFBadge badge={PFBadges.Namespace} position={TooltipPosition.top} />
+            <span>{data.namespace}</span>
+          </span>
+        </div>
+      }
+    >
+      <KialiIcon.Info className={infoStyle} />
+    </Tooltip>
+  );
+};
+
 export const nodeStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex'
@@ -159,7 +195,11 @@ const expandBodyStyle = kialiStyle({
 });
 
 interface NodeHeaderOptions {
+  /** Shown after the name and before the health indicator (waypoint list namespace hint). */
+  beforeHealthContent?: React.ReactNode;
   hideBadge?: boolean;
+  /** When true with nameOnly, show "name (namespace)" for disambiguation in lists. */
+  includeNamespaceInName?: boolean;
   nameOnly?: boolean;
   smallSize?: boolean;
 }
@@ -210,6 +250,8 @@ export const renderNodeHeader = (
   }
 
   const link = options.nameOnly ? undefined : renderNodeLink(data);
+  const displayName =
+    options.includeNamespaceInName && data.namespace ? `${data.infraName} (${data.namespace})` : data.infraName;
 
   return (
     <React.Fragment key={data.infraName}>
@@ -217,8 +259,9 @@ export const renderNodeHeader = (
         <span className={classes(nodeStyle, style)}>
           {!options.hideBadge && <PFBadge badge={pfBadge} size={options.smallSize ? 'sm' : 'global'} />}
 
-          {data.infraName}
+          {displayName}
 
+          {options.beforeHealthContent}
           {renderHealthStatus(data)}
           {serverConfig.ambientEnabled && data.infraType === MeshInfraType.ISTIOD && data.isAmbient && (
             <AmbientLabel tooltip={tooltipMsgType.mesh} />
@@ -272,7 +315,7 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
   let pfBadge: PFBadgeType;
 
   switch (meshData.infraType) {
-    case MeshInfraType.GATEWAY:
+    case MeshInfraType.GATEWAY: {
       const gatewayClassName = meshData.infraData?.spec?.gatewayClassName;
       const name = gatewayClassName ? `${meshData.infraName}-${gatewayClassName}` : meshData.infraName;
       link = `/namespaces/${encodeURIComponent(meshData.namespace)}/workloads/${encodeURIComponent(name)}`;
@@ -280,6 +323,7 @@ export const renderNodeLink = (meshData: MeshNodeData, style?: string): React.Re
       displayName = name;
       pfBadge = PFBadges.Workload;
       break;
+    }
     case MeshInfraType.WAYPOINT:
     case MeshInfraType.ZTUNNEL:
     case MeshInfraType.KIALI:
@@ -347,13 +391,34 @@ export const renderControlPlaneSummary = (nodeData: MeshNodeData, dataPlaneNames
 };
 
 export const renderGatewaySummary = (nodeData: MeshNodeData): React.ReactNode => {
-  const apiVersion = nodeData.infraData.apiVersion;
+  const apiVersion = nodeData.infraData?.apiVersion;
+  const revision = nodeData.version || nodeData.infraData?.revision || t('default');
   return (
     <div key={nodeData.id} className={summaryStyle}>
       {renderNodeHeader(nodeData, { nameOnly: true, smallSize: true }, summaryHeaderStyle)}
       <div className={summaryInfoStyle}>
         {apiVersion && <div>{t('api version: {{apiVersion}}', { apiVersion: apiVersion })}</div>}
-        <div>{t('revision: {{revision}}', { revision: nodeData.infraData.revision || t('default') })}</div>
+        <div>{t('revision: {{revision}}', { revision })}</div>
+      </div>
+    </div>
+  );
+};
+
+export const renderWaypointSummary = (nodeData: MeshNodeData): React.ReactNode => {
+  const revision = nodeData.version?.trim() || t('default');
+  return (
+    <div key={nodeData.id} className={summaryStyle}>
+      {renderNodeHeader(
+        nodeData,
+        {
+          beforeHealthContent: renderWaypointNamespaceInfo(nodeData),
+          nameOnly: true,
+          smallSize: true
+        },
+        summaryHeaderStyle
+      )}
+      <div className={summaryInfoStyle}>
+        <div>{t('revision: {{revision}}', { revision })}</div>
       </div>
     </div>
   );
@@ -524,7 +589,7 @@ const renderSharedInfrastructure = (
 
       <div className={infraStyle}>
         {sharedWaypoints.length > 0 && t('Waypoints: {{num}}', { num: sharedWaypoints.length })}
-        {sharedWaypoints.map(infra => renderGatewaySummary(infra.getData()))}
+        {sharedWaypoints.map(infra => renderWaypointSummary(infra.getData()))}
       </div>
 
       <div className={infraStyle}>

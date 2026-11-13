@@ -9,6 +9,7 @@ import (
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8s_networking_v1 "sigs.k8s.io/gateway-api/apis/v1"
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
@@ -491,4 +492,57 @@ func TestSkipsDegradedRemoteCluster(t *testing.T) {
 	})
 	assert.Contains(globalInfo.Vendor.ClusterServiceLists, config.DefaultClusterID)
 	assert.NotContains(globalInfo.Vendor.ClusterServiceLists, "remote-cluster", "the degraded remote cluster is skipped")
+}
+
+func TestDecorateGatewaysSkipsWaypointGatewayClass(t *testing.T) {
+	ctx := context.Background()
+	cluster := config.DefaultClusterID
+	namespace := "waypoint-forservice"
+	workloadName := "waypoint"
+
+	node, err := graph.NewNode(cluster, namespace, "echo", namespace, workloadName, "echo", "v1", graph.GraphTypeWorkload)
+	assert.NoError(t, err)
+	node.Metadata[graph.IsWaypoint] = true
+
+	workloadMap := map[graph.NodeKey]*graph.Node{
+		{Cluster: cluster, Namespace: namespace, Name: workloadName}: node,
+	}
+	gwWorkloads := []gatewayWorkload{
+		{
+			Cluster:   cluster,
+			Namespace: namespace,
+			Name:      workloadName,
+			Labels: map[string]string{
+				config.GatewayLabel:  "waypoint",
+				config.WaypointLabel: config.WaypointLabelValue,
+			},
+		},
+	}
+
+	waypointGW := &k8s_networking_v1.Gateway{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "waypoint", Namespace: namespace},
+		Spec: k8s_networking_v1.GatewaySpec{
+			GatewayClassName: "istio-waypoint",
+		},
+	}
+
+	decorateGateways(ctx, gwWorkloads, workloadMap, nil, []*k8s_networking_v1.Gateway{waypointGW})
+	assert.Nil(t, node.Metadata[graph.IsGatewayAPI])
+
+	ingressGW := &k8s_networking_v1.Gateway{
+		ObjectMeta: meta_v1.ObjectMeta{Name: "ingress", Namespace: namespace},
+		Spec: k8s_networking_v1.GatewaySpec{
+			GatewayClassName: "istio",
+		},
+	}
+	gwWorkloads[0].Labels = map[string]string{config.GatewayLabel: "ingress"}
+	gwWorkloads[0].Name = "ingress-workload"
+	node, err = graph.NewNode(cluster, namespace, "echo", namespace, "ingress-workload", "echo", "v1", graph.GraphTypeWorkload)
+	assert.NoError(t, err)
+	workloadMap = map[graph.NodeKey]*graph.Node{
+		{Cluster: cluster, Namespace: namespace, Name: "ingress-workload"}: node,
+	}
+
+	decorateGateways(ctx, gwWorkloads, workloadMap, nil, []*k8s_networking_v1.Gateway{ingressGW})
+	assert.NotNil(t, node.Metadata[graph.IsGatewayAPI])
 }

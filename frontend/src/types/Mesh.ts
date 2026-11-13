@@ -1,9 +1,8 @@
-import { Controller, NodeModel, Node } from '@patternfly/react-topology';
-// import { OutboundTrafficPolicy } from 'types/IstioObjects';
-import { AppenderString } from './Common';
-import { NamespaceInfo } from './NamespaceInfo';
-import { BoxByType } from './Graph';
-import { CertsInfo } from 'types/CertsInfo';
+import type { Controller, NodeModel, Node } from '@patternfly/react-topology';
+import type { AppenderString } from './Common';
+import type { NamespaceInfo } from './NamespaceInfo';
+import type { BoxByType } from './Graph';
+import type { CertsInfo } from 'types/CertsInfo';
 
 export interface MeshCluster {
   accessible: boolean;
@@ -108,7 +107,7 @@ export interface TraceStoreNodeData extends BaseNodeData {
 }
 
 export interface WaypointNodeData extends BaseNodeData {
-  // Waypoint node data is the list of namespaces that interact with the waypoint.
+  // Waypoint infraData includes labels/annotations and optional canary traffic split.
   infraType: MeshInfraType.WAYPOINT;
 }
 
