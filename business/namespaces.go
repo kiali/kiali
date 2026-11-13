@@ -244,9 +244,9 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		// We do not have cluster wide access, so we do not have permission to list namespaces. Therefore, we assume we can
 		// extract the list of accessible namespaces from the discovery selectors configuration. That list of accessible
 		// namespaces will be used as our base list which we then filter with discovery selectors down below.
-		// A remote cluster with a discovery selector override is scoped to the override's namespaces, the same scope
-		// its cache and access check use; any other cluster uses the default accessible namespaces.
-		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
+		// Note, if this is a remote cluster, that remote cluster must have the same namespaces as those in our own local
+		// cluster's accessible namespaces. This is one reason why we suggest enabling CWA for multi-cluster environments.
+		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
 			k8sNs, err := in.userClients[cluster].GetNamespace(ans)
@@ -399,7 +399,7 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
-		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
+		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
 			k8sNs, err := saClient.GetNamespace(ans)

@@ -683,12 +683,6 @@ func (in *IstioConfigService) GetIstioConfigDetails(ctx context.Context, cluster
 		return istioConfigDetail, err
 	}
 
-	// A partially-revoked namespace serves stale informer data; answer not found, as
-	// the list does, instead of frozen pre-revocation config.
-	if slices.Contains(in.kialiCache.RevokedNamespaces(cluster), namespace) {
-		return istioConfigDetail, kubernetes.NewNotFound(object, "Kiali", objectGVK.Kind)
-	}
-
 	var wg sync.WaitGroup
 	wg.Add(1)
 

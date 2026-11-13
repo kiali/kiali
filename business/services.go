@@ -883,12 +883,6 @@ func (in *SvcService) GetService(ctx context.Context, cluster, namespace, servic
 		return models.Service{}, err
 	}
 
-	// A partially-revoked namespace serves stale informer data; answer not found, as
-	// the list does, instead of a frozen pre-revocation service.
-	if slices.Contains(in.kialiCache.RevokedNamespaces(cluster), namespace) {
-		return models.Service{}, kubernetes.NewNotFound(service, "Kiali", "Service")
-	}
-
 	cache, err := in.kialiCache.GetKubeCache(cluster)
 	if err != nil {
 		return models.Service{}, err

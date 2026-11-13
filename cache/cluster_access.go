@@ -92,10 +92,6 @@ type ClusterAccess struct {
 	// resource still denies it; the probe re-checks and drops recovered entries.
 	nsRevoked map[string]map[groupResource]map[string]struct{}
 	revoked   map[string]map[groupResource]struct{}
-	// revokedGen counts every revoked mark per cluster, including a resource marked again
-	// while it is already revoked, so a probe can tell that a denial it did not see
-	// arrived while its checks ran.
-	revokedGen map[string]uint64
 }
 
 // NewClusterAccess returns a ClusterAccess that confirms revocations through the given live
@@ -103,14 +99,13 @@ type ClusterAccess struct {
 // ClusterAccess at all rather than constructing one.
 func NewClusterAccess(check AccessCheck) *ClusterAccess {
 	return &ClusterAccess{
-		check:      check,
-		degraded:   map[string]time.Time{},
-		inFlight:   map[inFlightKey]*inFlightCheck{},
-		lastCheck:  map[string]map[groupResource]accessCheckResult{},
-		now:        time.Now,
-		nsRevoked:  map[string]map[groupResource]map[string]struct{}{},
-		revoked:    map[string]map[groupResource]struct{}{},
-		revokedGen: map[string]uint64{},
+		check:     check,
+		degraded:  map[string]time.Time{},
+		inFlight:  map[inFlightKey]*inFlightCheck{},
+		lastCheck: map[string]map[groupResource]accessCheckResult{},
+		now:       time.Now,
+		nsRevoked: map[string]map[groupResource]map[string]struct{}{},
+		revoked:   map[string]map[groupResource]struct{}{},
 	}
 }
 
@@ -173,7 +168,6 @@ func (a *ClusterAccess) markDegradedLocked(cluster string, gr groupResource) {
 		a.revoked[cluster] = map[groupResource]struct{}{}
 	}
 	a.revoked[cluster][gr] = struct{}{}
-	a.revokedGen[cluster]++
 	a.deleteNsRevokedLocked(cluster, gr)
 }
 
@@ -219,12 +213,10 @@ func (a *ClusterAccess) revokedNamespacesLocked(cluster string) []string {
 func (a *ClusterAccess) Probe(ctx context.Context) {
 	a.mu.Lock()
 	pending := map[string][]groupResource{}
-	pendingGen := map[string]uint64{}
 	for cluster, resources := range a.revoked {
 		for gr := range resources {
 			pending[cluster] = append(pending[cluster], gr)
 		}
-		pendingGen[cluster] = a.revokedGen[cluster]
 	}
 	nsPending := map[string]map[groupResource]struct{}{}
 	for cluster, resources := range a.nsRevoked {
@@ -253,26 +245,22 @@ func (a *ClusterAccess) Probe(ctx context.Context) {
 		if !restored {
 			continue
 		}
-		// The checks ran without the lock. A resource revoked again while they were
-		// running must not be cleared by this probe, even one that was already in the
-		// revoked set, so compare the revocation generation rather than the set.
+		// The checks ran without the lock. A resource revoked *again* while they were
+		// running must not be cleared by this probe, so re-verify the revoked set is
+		// still the one that was checked before deleting anything.
 		a.mu.Lock()
-		if a.revokedGen[cluster] != pendingGen[cluster] {
+		if !a.revokedUnchangedLocked(cluster, resources) {
 			a.mu.Unlock()
 			continue
 		}
 		delete(a.degraded, cluster)
 		delete(a.revoked, cluster)
 		delete(a.lastCheck, cluster)
-		// Only the resources this probe verified get fresh marks. Another resource's
-		// partial marks stay until its own check clears them: if that check cannot tell,
-		// dropping them here would serve the namespaces' frozen data again.
-		for _, gr := range resources {
-			a.deleteNsRevokedLocked(cluster, gr)
-		}
+		delete(a.nsRevoked, cluster)
 		for gr, namespaces := range remaining {
 			a.setNsRevokedLocked(cluster, gr, namespaces)
 		}
+		// Right after the reseed, the cluster's marks are exactly the remaining denials.
 		remainingNamespaces := a.revokedNamespacesLocked(cluster)
 		a.mu.Unlock()
 		if len(remainingNamespaces) == 0 {
@@ -418,6 +406,21 @@ func (a *ClusterAccess) dropNsRevokedLocked(cluster string, gr groupResource) {
 	if a.deleteNsRevokedLocked(cluster, gr) {
 		log.Infof("Kiali can read the partially-revoked namespaces of cluster [%s] again. Their data is served again.", cluster)
 	}
+}
+
+// revokedUnchangedLocked reports whether the cluster's revoked set is still exactly the
+// resources the probe checked. It must be called with a.mu held.
+func (a *ClusterAccess) revokedUnchangedLocked(cluster string, resources []groupResource) bool {
+	current := a.revoked[cluster]
+	if len(current) != len(resources) {
+		return false
+	}
+	for _, gr := range resources {
+		if _, ok := current[gr]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // namespaceSet turns a namespace slice into a set.
