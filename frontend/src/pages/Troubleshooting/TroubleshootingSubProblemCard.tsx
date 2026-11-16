@@ -15,7 +15,6 @@ import type { MenuToggleElement } from '@patternfly/react-core';
 import { EyeIcon, EyeSlashIcon, RhUiAiTroubleshootIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { ChatAIActions } from 'actions/ChatAIActions';
-import { KialiLink } from 'components/Link/KialiLink';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { KialiIcon } from 'config/KialiIcon';
 import { useAIInteraction } from 'hooks/aiInteraction';
@@ -30,6 +29,7 @@ import {
   isRedundantSubProblemImpact,
   parseTroubleshootingTarget
 } from './partitionTroubleshooting';
+import { TroubleshootingLink } from './TroubleshootingLink';
 import { getTroubleshootingResourceLink } from './troubleshootingResourceLink';
 
 const headerStyle = kialiStyle({
@@ -117,7 +117,9 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
   const suggestedPrompt = subProblem.suggestedPrompt;
   const impact = subProblem.impact;
 
+  const duration = useKialiSelector(state => state.userSettings?.duration);
   const hidden = useKialiSelector(state => state.ai.troubleshooting.hiddenSubProblemIds.includes(subProblem.id));
+  const refresh = useKialiSelector(state => state.userSettings?.refreshInterval);
 
   const handleToggleHidden = (): void => {
     dispatch(
@@ -232,8 +234,8 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
   const showNamespaceBadge = Boolean(parsedTarget.namespace && parsedTarget.badgeKey !== 'Namespace');
   const showBody = Boolean(showImpact || checks.length > 0);
   const resourceLink = React.useMemo(
-    () => getTroubleshootingResourceLink(subProblem, parsedTarget),
-    [parsedTarget, subProblem]
+    () => getTroubleshootingResourceLink(subProblem, parsedTarget, { duration, refresh }),
+    [duration, parsedTarget, refresh, subProblem]
   );
 
   return (
@@ -282,9 +284,9 @@ export const TroubleshootingSubProblemCard: React.FC<{ subProblem: Troubleshooti
                 <span className={issueSummaryStyle} aria-hidden="true">
                   -
                 </span>
-                <KialiLink dataTest={resourceLink.dataTest} to={resourceLink.to}>
+                <TroubleshootingLink dataTest={resourceLink.dataTest} to={resourceLink.to}>
                   {resourceLink.label}
-                </KialiLink>
+                </TroubleshootingLink>
               </>
             )}
           </div>

@@ -131,6 +131,7 @@ describe('troubleshooting summary text', () => {
     const parsedWl = parseTroubleshootingTarget(wlSub);
     expect(parsedWl).toEqual({
       badgeKey: 'Workload',
+      k8sKind: 'Deployment',
       kind: 'Workload (Deployment)',
       name: 'reviews-v2',
       namespace: 'bookinfo'

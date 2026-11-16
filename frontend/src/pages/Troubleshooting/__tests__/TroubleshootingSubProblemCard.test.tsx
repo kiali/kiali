@@ -5,6 +5,8 @@ import { createStore } from 'redux';
 
 import { ChatAIActions } from 'actions/ChatAIActions';
 import type { KialiAppAction } from 'actions/KialiAppAction';
+import { AIChatContext } from 'hooks/aiInteraction';
+import type { OpenAIChatFn } from 'hooks/aiInteraction';
 import { AiTroubleshootingStateReducer, INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
 import type { TroubleshootingSubProblem } from 'types/Chatbot';
 import { TroubleshootingSubProblemCard } from '../TroubleshootingSubProblemCard';
@@ -232,7 +234,10 @@ describe('TroubleshootingSubProblemCard', () => {
     });
 
     const link = screen.getByRole('link', { name: 'View Workload' });
-    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/workloads/kiali-traffic-generator');
+    expect(link).toHaveAttribute(
+      'href',
+      '/namespaces/bookinfo/workloads/kiali-traffic-generator?type=ReplicaSet&duration=60&refresh=60000'
+    );
     expect(screen.getByTestId('ai-troubleshooting-subproblem').textContent).toMatch(
       /missing Istio sidecar in injection-enabled namespace\s*-\s*View Workload/
     );
@@ -246,7 +251,7 @@ describe('TroubleshootingSubProblemCard', () => {
     });
 
     const link = screen.getByRole('link', { name: 'View Service' });
-    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/services/productpage');
+    expect(link).toHaveAttribute('href', '/namespaces/bookinfo/services/productpage?duration=60&refresh=60000');
     expect(screen.getByTestId('ai-troubleshooting-subproblem').textContent).toMatch(
       /productpage errors\s*-\s*View Service/
     );
@@ -261,18 +266,18 @@ describe('TroubleshootingSubProblemCard', () => {
 
     expect(screen.getByRole('link', { name: 'View Application' })).toHaveAttribute(
       'href',
-      '/namespaces/bookinfo/applications/reviews'
+      '/namespaces/bookinfo/applications/reviews?duration=60&refresh=60000'
     );
   });
 
-  it('links an observability stack subproblem to the Mesh page with Kiali shown', () => {
+  it('does not put View Mesh on an observability stack child', () => {
     renderAnalysis({
       ...subProblem,
       suggestedPrompt: undefined,
       target: 'Prometheus'
     });
 
-    expect(screen.getByRole('link', { name: 'View Mesh' })).toHaveAttribute('href', '/mesh?meshKiali=true');
+    expect(screen.queryByRole('link', { name: 'View Mesh' })).not.toBeInTheDocument();
   });
 
   it('sends a troubleshooting question to the chatbot', () => {
@@ -431,5 +436,42 @@ describe('TroubleshootingSubProblemCard', () => {
     const hidden = renderCard(true, '', ['SP1']);
     fireEvent.click(screen.getByRole('button', { name: 'Show problem' }));
     expect(hidden.dispatched).toContain(ChatAIActions.showTroubleshootingSubProblem('SP1').type);
+  });
+
+  it('sends Ask AI through openAIChat when provided by context', () => {
+    const calls: unknown[][] = [];
+    const openAIChat: OpenAIChatFn = (...args) => {
+      calls.push(args);
+    };
+    const dispatched: KialiAppAction[] = [];
+    const store = createStore(() => ({
+      ai: {
+        chat: { allowed: false, enabled: false },
+        enabled: false,
+        troubleshooting: { ...INITIAL_TROUBLESHOOTING_STATE, hiddenSubProblemIds: [] as string[] }
+      },
+      globalState: { kiosk: '' }
+    }));
+    const originalDispatch = store.dispatch;
+    store.dispatch = (action => {
+      dispatched.push(action as KialiAppAction);
+      return originalDispatch(action);
+    }) as typeof store.dispatch;
+
+    render(
+      <AIChatContext.Provider value={openAIChat}>
+        <Provider store={store}>
+          <MemoryRouter>
+            <TroubleshootingSubProblemCard subProblem={subProblem} />
+          </MemoryRouter>
+        </Provider>
+      </AIChatContext.Provider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'AI actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Ask AI' }));
+
+    expect(calls).toEqual([['Why is productpage failing?', undefined, true]]);
+    expect(dispatched).toHaveLength(0);
   });
 });

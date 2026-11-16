@@ -5,6 +5,7 @@ import { createStore } from 'redux';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { buildTroubleshootIntro, useAIInteraction } from '../aiInteraction';
+import type { OpenAIChatFn } from '../aiInteraction';
 
 type TestState = {
   ai: {
@@ -39,8 +40,9 @@ const createTestStore = (
   return { dispatched, store };
 };
 
-const HookConsumer: React.FC = () => {
-  const { askChat, canSendPrompt, chatAllowed, chatEnabled, openChat, sendPrompt, troubleshoot } = useAIInteraction();
+const HookConsumer: React.FC<{ openAIChat?: OpenAIChatFn }> = ({ openAIChat }) => {
+  const { askChat, canSendPrompt, chatAllowed, chatEnabled, openChat, sendPrompt, troubleshoot } =
+    useAIInteraction(openAIChat);
   return (
     <div>
       <span data-test="chat-allowed">{String(chatAllowed)}</span>
@@ -164,5 +166,44 @@ describe('useAIInteraction', () => {
     expect(screen.getByTestId('chat-allowed')).toHaveTextContent('false');
     fireEvent.click(screen.getByRole('button', { name: 'Ask Chat' }));
     expect(kiosk.dispatched).toHaveLength(0);
+  });
+
+  it('sends prompts through openAIChat instead of the Kiali chatbot', () => {
+    const { dispatched, store } = createTestStore({ chatAllowed: false, chatEnabled: false });
+    const calls: unknown[][] = [];
+    const openAIChat: OpenAIChatFn = (...args) => {
+      calls.push(args);
+    };
+
+    render(
+      <Provider store={store}>
+        <HookConsumer openAIChat={openAIChat} />
+      </Provider>
+    );
+
+    expect(screen.getByTestId('chat-allowed')).toHaveTextContent('true');
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('true');
+    expect(screen.getByTestId('can-send-valid')).toHaveTextContent('true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Chat' }));
+    expect(calls).toContainEqual([]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Chat' }));
+    expect(calls).toContainEqual(['What is wrong with productpage?', undefined, true]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send Prompt' }));
+    expect(calls).toContainEqual(['Custom prompt', undefined, true]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Troubleshoot Direct' }));
+    expect(calls).toContainEqual(['Direct troubleshoot prompt', undefined, true]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Troubleshoot With Context' }));
+    expect(calls).toContainEqual([
+      `${buildTroubleshootIntro('[SP1] productpage errors', 'productpage')}\n\nContext: Service productpage\n\nWhy is productpage failing?`,
+      undefined,
+      true
+    ]);
+
+    expect(dispatched).toHaveLength(0);
   });
 });

@@ -19,6 +19,7 @@ export type TroubleshootingGroupBy = 'category' | 'namespace' | 'severity';
 
 export type ParsedTroubleshootingTarget = {
   badgeKey?: string;
+  k8sKind?: string;
   kind?: string;
   name: string;
   namespace?: string;
@@ -75,6 +76,8 @@ const KIND_TO_BADGE_KEY: Record<string, string> = {
   ztunnel: 'Ztunnel'
 };
 
+const nestedKind = (kindPart: string): string | undefined => kindPart.match(/\(([^)]+)\)\s*$/)?.[1];
+
 export const parseTroubleshootingTarget = (subProblem: TroubleshootingSubProblem): ParsedTroubleshootingTarget => {
   if (subProblem.istioObject) {
     const { kind, name, namespace } = subProblem.istioObject;
@@ -104,6 +107,7 @@ export const parseTroubleshootingTarget = (subProblem: TroubleshootingSubProblem
 
   const baseKind = kindPart.replace(/\s*\([^)]*\)\s*$/, '').trim();
   const badgeKey = KIND_TO_BADGE_KEY[baseKind.toLowerCase()] ?? KIND_TO_BADGE_KEY[raw.toLowerCase()];
+  const k8sKind = nestedKind(kindPart);
 
   if (baseKind.toLowerCase() === 'namespace') {
     const nsName = rest.replace(/\s*\([^)]*\)\s*$/, '').trim();
@@ -128,6 +132,7 @@ export const parseTroubleshootingTarget = (subProblem: TroubleshootingSubProblem
     }
     return {
       badgeKey,
+      k8sKind: k8sKind ?? (badgeKey === 'Pod' ? 'Pod' : undefined),
       kind: kindPart || undefined,
       name,
       namespace: ns

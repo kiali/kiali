@@ -12,13 +12,15 @@ import { EyeIcon, EyeSlashIcon, InfoCircleIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { KialiIcon } from 'config/KialiIcon';
-import { useKialiDispatch } from 'hooks/redux';
+import { useKialiDispatch, useKialiSelector } from 'hooks/redux';
 import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
 import { PF_THEME_DARK, PF_THEME_FELT } from 'types/Common';
 import type { TroubleshootingIssue } from 'types/Chatbot';
 import { t } from 'utils/I18nUtils';
 import { summarizeTroubleshootingIssues } from './partitionTroubleshooting';
+import { TroubleshootingLink } from './TroubleshootingLink';
+import { getTroubleshootingIssueLinks } from './troubleshootingResourceLink';
 import { TroubleshootingSubProblemCard } from './TroubleshootingSubProblemCard';
 
 const issueCardStyle = kialiStyle({
@@ -35,6 +37,11 @@ const headerStyle = kialiStyle({
   display: 'flex',
   flexWrap: 'wrap',
   gap: PFSpacer.sm
+});
+
+const linkSeparatorStyle = kialiStyle({
+  color: 'var(--pf-t--global--text--color--subtle)',
+  fontWeight: 'normal'
 });
 
 const headerActionsStyle = kialiStyle({
@@ -60,10 +67,16 @@ export const TroubleshootingIssueCard: React.FC<{ hidden?: boolean; issue: Troub
   issue
 }) => {
   const dispatch = useKialiDispatch();
+  const duration = useKialiSelector(state => state.userSettings?.duration);
+  const refresh = useKialiSelector(state => state.userSettings?.refreshInterval);
   const [isExpanded, setIsExpanded] = React.useState(true);
   const subProblems = issue.subProblems ?? [];
   const hideLabel = hidden ? t('Show this problem') : t('Hide this problem');
   const counts = React.useMemo(() => summarizeTroubleshootingIssues([issue]), [issue]);
+  const issueLinks = React.useMemo(
+    () => getTroubleshootingIssueLinks(issue, { duration, refresh }),
+    [duration, issue, refresh]
+  );
 
   const handleToggleHidden = (): void => {
     const payload = { id: issue.id, subProblemIds: subProblems.map(subProblem => subProblem.id) };
@@ -124,6 +137,16 @@ export const TroubleshootingIssueCard: React.FC<{ hidden?: boolean; issue: Troub
                 <Button aria-label={t('Issue description')} icon={<InfoCircleIcon />} variant="plain" />
               </Tooltip>
             )}
+            {issueLinks.map(link => (
+              <React.Fragment key={link.dataTest}>
+                <span aria-hidden="true" className={linkSeparatorStyle}>
+                  -
+                </span>
+                <TroubleshootingLink dataTest={link.dataTest} to={link.to}>
+                  {link.label}
+                </TroubleshootingLink>
+              </React.Fragment>
+            ))}
           </div>
         </CardTitle>
       </CardHeader>

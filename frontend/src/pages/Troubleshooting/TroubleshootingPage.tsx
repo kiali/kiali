@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { classes } from 'typestyle';
-import { AITroubleshooting } from './AITroubleshooting';
+import { AIChatContext } from 'hooks/aiInteraction';
+import type { OpenAIChatFn } from 'hooks/aiInteraction';
 import { flexFillStyle } from 'styles/FlexStyles';
-import { kialiStyle } from 'styles/StyleUtils';
 import { PFSpacer } from 'styles/PfSpacer';
+import { kialiStyle } from 'styles/StyleUtils';
+import { AITroubleshooting } from './AITroubleshooting';
 
 const pageStyle = kialiStyle({
   display: 'flex',
@@ -22,10 +24,17 @@ const contentStyle = kialiStyle({
   paddingTop: 0
 });
 
-export const TroubleshootingPage: React.FC = () => (
-  <div className={classes(flexFillStyle, pageStyle)} data-test="troubleshooting-page">
-    <div className={contentStyle}>
-      <AITroubleshooting />
+export type TroubleshootingPageProps = {
+  /** When set, Ask / Fix actions open this chat (e.g. OpenShift Lightspeed) instead of the Kiali chatbot. */
+  openAIChat?: OpenAIChatFn;
+};
+
+export const TroubleshootingPage: React.FC<TroubleshootingPageProps> = ({ openAIChat }) => (
+  <AIChatContext.Provider value={openAIChat}>
+    <div className={classes(flexFillStyle, pageStyle)} data-test="troubleshooting-page">
+      <div className={contentStyle}>
+        <AITroubleshooting />
+      </div>
     </div>
-  </div>
+  </AIChatContext.Provider>
 );
