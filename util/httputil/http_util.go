@@ -138,6 +138,13 @@ func CreateTransport(auth *config.Auth, transportConfig *http.Transport, timeout
 		}).DialContext
 	}
 
+	// A zero-value http.Transport ignores HTTP_PROXY/HTTPS_PROXY/NO_PROXY env vars
+	// (only http.DefaultTransport reads them). Honor them unless the caller set
+	// its own Proxy, matching Go's default behavior.
+	if transportConfig.Proxy == nil {
+		transportConfig.Proxy = http.ProxyFromEnvironment
+	}
+
 	transportConfig.IdleConnTimeout = timeout
 
 	// We might need some custom RoundTrippers to manipulate the requests (for auth and other custom request headers).
