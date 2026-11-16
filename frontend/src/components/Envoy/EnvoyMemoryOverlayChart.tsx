@@ -46,6 +46,7 @@ type EnvoyMemoryOverlayChartProps = {
   isMaximized: boolean;
   lastRefreshAt: TimeInMilliseconds;
   memoryLimitBytes?: number;
+  memoryThresholdBytes?: number;
   namespace: string;
   onToggleMaximized: () => void;
   timeRange: TimeRange;
@@ -415,6 +416,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
 
   const timeWindow = evalTimeRange(props.timeRange) as [Date, Date];
   const memoryLimitName = t('Memory limit');
+  const memoryWarningName = t('Warning threshold');
   let memoryLimitThresholds: VCLines<RichDataPoint> = [];
   if ((props.memoryLimitBytes ?? 0) > 0) {
     const limitDps: Datapoint[] = [
@@ -428,18 +430,32 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
         datapoints: limitLine.datapoints.map(dp => ({ ...dp, unit: 'bytes' }))
       }
     ];
+    if ((props.memoryThresholdBytes ?? 0) > 0) {
+      const warningDps: Datapoint[] = [
+        [timeWindow[0].getTime() / 1000, props.memoryThresholdBytes!],
+        [timeWindow[1].getTime() / 1000, props.memoryThresholdBytes!]
+      ];
+      const warningLine = toVCLine(warningDps, memoryWarningName, PFColors.Warning);
+      memoryLimitThresholds = [
+        {
+          ...warningLine,
+          datapoints: warningLine.datapoints.map(dp => ({ ...dp, unit: 'bytes' }))
+        },
+        ...memoryLimitThresholds
+      ];
+    }
   }
 
   const chartHelp = (
     <>
       <p>
         {t(
-          'Compare allocated memory with active connections over time. Correlated rises often point to traffic-driven memory; high memory with low connections can indicate large configuration.'
+          'Compare container working set and Envoy allocated memory with active connections over time. Correlated rises often point to traffic-driven memory; high memory with low connections can indicate large configuration.'
         )}
       </p>
       <p>
         {t(
-          "Left axis: Prometheus envoy_server_memory_allocated and container_memory_working_set_bytes (istio-proxy), scoped to this workload's pods. A Memory limit line appears when container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit is available. Right axis: active TCP approximated as sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total)."
+          "Left axis: Prometheus envoy_server_memory_allocated and container_memory_working_set_bytes (istio-proxy), scoped to this workload's pods. When a limit is set, status warns if working set exceeds 70% of that limit (Warning threshold line); the Memory limit line is the OOM boundary. Right axis: active TCP approximated as sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total)."
         )}
       </p>
       <p>

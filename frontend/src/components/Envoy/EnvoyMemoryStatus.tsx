@@ -17,6 +17,7 @@ import {
   buildEnvoyMemoryTabUrl,
   envoyMemoryCauseLabel,
   envoyMemoryCauseStatus,
+  envoyMemoryStatusUsesWorkingSet,
   formatEnvoyMemoryBytes,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
@@ -86,7 +87,10 @@ export const EnvoyMemoryStatus: React.FC<EnvoyMemoryStatusProps> = (props: Envoy
         <strong>{t('Status')}:</strong> {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
       </div>
       <div>
-        <strong>{t('Allocated memory (max)')}:</strong> {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}
+        <strong>
+          {envoyMemoryStatusUsesWorkingSet(summary) ? t('Working set (max)') : t('Allocated memory (max)')}:
+        </strong>{' '}
+        {formatEnvoyMemoryBytes(summary.memoryMaxBytes)}
       </div>
       {memoryLimitBytes > 0 && percentOfLimit !== undefined && (
         <div>

@@ -11509,6 +11509,17 @@ associated configuration.
 
 
 
+### <span id="envoy-memory-metric"></span> EnvoyMemoryMetric
+
+
+
+
+| Name | Type | Go type | Default | Description | Example |
+|------|------|---------| ------- |-------------|---------|
+| EnvoyMemoryMetric | string| string | |  |  |
+
+
+
 ### <span id="envoy-memory-summary"></span> EnvoyMemorySummary
 
 
@@ -11526,6 +11537,7 @@ associated configuration.
 | LargeConfigClustersThreshold | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryLimitBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryMaxBytes | int64 (formatted integer)| `int64` |  | |  |  |
+| MemoryMetric | [EnvoyMemoryMetric](#envoy-memory-metric)| `EnvoyMemoryMetric` |  | |  |  |
 | MemoryThresholdBytes | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryUsedPercent | double (formatted number)| `float64` |  | |  |  |
 | RequestRate | double (formatted number)| `float64` |  | |  |  |

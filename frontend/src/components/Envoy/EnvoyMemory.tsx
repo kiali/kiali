@@ -22,6 +22,7 @@ import {
   envoyMemoryThresholdHelp,
   estimateEnvoyConfigMemoryBytes,
   formatEnvoyMemoryBytes,
+  envoyMemoryStatusUsesWorkingSet,
   formatEnvoyMemoryUsage,
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
@@ -244,7 +245,8 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
   // Prefer config-dump cluster count so the estimate is not stuck at 0 when Prometheus lacks the metric.
   const roughConfigBytes =
     clusterCount !== undefined ? estimateEnvoyConfigMemoryBytes(clusterCount) : (summary?.roughConfigMemoryBytes ?? 0);
-  const allocatedMemoryLabel = t('Allocated memory');
+  const proxyMemoryLabel =
+    summary && envoyMemoryStatusUsesWorkingSet(summary) ? t('Working set') : t('Allocated memory');
   const roughConfigLabel = t('Est. config memory');
   const activeClustersLabel = t('Active clusters');
   const listenersLabel = t('Listeners');
@@ -355,8 +357,8 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                         </>
                       )}
                       <MetricTile
-                        helpKey="allocatedMemory"
-                        label={allocatedMemoryLabel}
+                        helpKey="proxyMemory"
+                        label={proxyMemoryLabel}
                         value={formatEnvoyMemoryUsage(summary)}
                       />
                       <MetricTile
@@ -381,6 +383,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
               isMaximized={isChartMaximized}
               lastRefreshAt={props.lastRefreshAt}
               memoryLimitBytes={summary?.memoryLimitBytes}
+              memoryThresholdBytes={summary?.memoryThresholdBytes}
               namespace={props.namespace}
               onToggleMaximized={() => setIsChartMaximized(prev => !prev)}
               timeRange={props.timeRange}

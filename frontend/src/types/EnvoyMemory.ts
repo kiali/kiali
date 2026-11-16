@@ -1,5 +1,7 @@
 export type EnvoyMemoryCause = 'ok' | 'configuration' | 'traffic' | 'unknown';
 
+export type EnvoyMemoryMetric = 'allocated' | 'working_set';
+
 export type EnvoyProxyType = 'sidecar' | 'waypoint' | 'gateway';
 
 export type EnvoyMemorySummary = {
@@ -10,6 +12,7 @@ export type EnvoyMemorySummary = {
   largeConfigClustersThreshold: number;
   memoryLimitBytes: number;
   memoryMaxBytes: number;
+  memoryMetric: EnvoyMemoryMetric;
   memoryThresholdBytes: number;
   memoryUsedPercent: number;
   proxyType: EnvoyProxyType;

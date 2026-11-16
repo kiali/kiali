@@ -122,12 +122,15 @@ export const formatEnvoyMemoryUsage = (
   },
   options?: { includeLimitPercent?: boolean }
 ): string => {
-  const allocated = formatEnvoyMemoryBytes(summary.memoryMaxBytes);
+  const memory = formatEnvoyMemoryBytes(summary.memoryMaxBytes);
   if (options?.includeLimitPercent && summary.memoryLimitBytes > 0 && Number.isFinite(summary.memoryUsedPercent)) {
-    return `${allocated} (${summary.memoryUsedPercent.toFixed(1)}% of limit)`;
+    return `${memory} (${summary.memoryUsedPercent.toFixed(1)}% of limit)`;
   }
-  return allocated;
+  return memory;
 };
+
+export const envoyMemoryStatusUsesWorkingSet = (summary: { memoryMetric?: string }): boolean =>
+  summary.memoryMetric === 'working_set';
 
 export const formatEnvoyRequestRate = (summary: {
   proxyType?: string;
@@ -209,14 +212,16 @@ export const envoyMemoryCauseLabel = (cause: EnvoyMemoryCause, memoryMaxBytes: n
 export const envoyMemoryThresholdHelp = (summary: {
   largeConfigClustersThreshold: number;
   memoryLimitBytes: number;
+  memoryMetric?: string;
   memoryThresholdBytes: number;
   proxyType?: string;
 }): string => {
   const threshold = formatEnvoyMemoryBytes(summary.memoryThresholdBytes);
-  if (summary.memoryLimitBytes > 0) {
+  const usesWorkingSet = envoyMemoryStatusUsesWorkingSet(summary);
+  if (usesWorkingSet && summary.memoryLimitBytes > 0) {
     const limitPercent = ((summary.memoryThresholdBytes / summary.memoryLimitBytes) * 100).toFixed(1);
     return t(
-      'Memory is flagged as high when allocated memory exceeds {{threshold}} ({{limitPercent}}% of the proxy memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} ({{limitPercent}}% of its memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
       {
         limitPercent,
         threshold,
@@ -229,8 +234,19 @@ export const envoyMemoryThresholdHelp = (summary: {
   const proxyLabel =
     summary.proxyType === 'waypoint' || summary.proxyType === 'gateway' ? t('gateways and waypoints') : t('sidecars');
 
+  if (usesWorkingSet) {
+    return t(
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.',
+      {
+        threshold,
+        proxyType: proxyLabel,
+        clusters: summary.largeConfigClustersThreshold
+      }
+    );
+  }
+
   return t(
-    'Memory is flagged as high when allocated memory exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.',
+    'Container working set is unavailable. Memory is flagged as high when Envoy allocated memory exceeds the absolute fallback threshold of {{threshold}} for {{proxyType}}. Large configuration is considered when active clusters exceed {{clusters}}.',
     {
       threshold,
       proxyType: proxyLabel,
@@ -243,6 +259,7 @@ export const istioConfigurationScopingUrl = (): string => ISTIO_CONFIGURATION_SC
 
 export type EnvoyMemoryMetricHelpKey =
   | 'allocatedMemory'
+  | 'proxyMemory'
   | 'roughConfigMemory'
   | 'activeClusters'
   | 'listeners'
@@ -253,8 +270,9 @@ export type EnvoyMemoryMetricHelpKey =
 export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => {
   switch (key) {
     case 'allocatedMemory':
+    case 'proxyMemory':
       return t(
-        'Prometheus metrics envoy_server_memory_allocated (Envoy) and container_memory_working_set_bytes for container istio-proxy (cgroup). When available, the chart draws a Memory limit line from container_spec_memory_limit_bytes, otherwise sidecar.istio.io/proxyMemoryLimit.'
+        'Status prefers container_memory_working_set_bytes scoped to istio-proxy, including when Istio filters Envoy statistics. If it is unavailable, status falls back to envoy_server_memory_allocated with an absolute threshold. The chart shows both series plus the memory limit and the 70% warning threshold when applicable.'
       );
     case 'roughConfigMemory':
       return t(

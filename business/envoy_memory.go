@@ -69,23 +69,29 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}
 
 	var (
-		memoryMetric    prometheus.Metric
-		clustersMetric  prometheus.Metric
-		upstreamRqTotal prometheus.Metric
-		upstreamRq      prometheus.Metric
-		downstreamRq    prometheus.Metric
-		istioRq         prometheus.Metric
-		tcpOpened       prometheus.Metric
-		tcpClosed       prometheus.Metric
-		tcpByteRate     float64
-		memoryLimit     float64
+		allocatedMetric  prometheus.Metric
+		clustersMetric   prometheus.Metric
+		downstreamRq     prometheus.Metric
+		istioRq          prometheus.Metric
+		memoryLimits     map[string]float64
+		tcpByteRate      float64
+		tcpClosed        prometheus.Metric
+		tcpOpened        prometheus.Metric
+		upstreamRq       prometheus.Metric
+		upstreamRqTotal  prometheus.Metric
+		workingSetMetric prometheus.Metric
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(10)
+	wg.Add(11)
 	go func() {
 		defer wg.Done()
-		memoryMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+		allocatedMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		// Working set is the most broadly available pressure signal for the istio-proxy cgroup.
+		workingSetMetric = in.prom.FetchRange(ctx, "container_memory_working_set_bytes", appendEnvoyProxyContainerLabel(envoyLabels), "", "", q)
 	}()
 	go func() {
 		defer wg.Done()
@@ -124,15 +130,21 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}()
 	go func() {
 		defer wg.Done()
-		memoryLimit = resolveEnvoyProxyMemoryLimit(ctx, in.prom, workload, envoyLabels, q.End)
+		memoryLimits = resolveEnvoyProxyMemoryLimits(ctx, in.prom, workload, envoyLabels, q.End)
 	}()
 	wg.Wait()
 
-	memoryMax := maxLatestValue(memoryMetric)
+	proxyType := envoyProxyType(workload)
+	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
+	memory := selectEnvoyStatusMemory(
+		absoluteThreshold,
+		allocatedMetric,
+		workingSetMetric,
+		memoryLimits,
+	)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
 	activeConnections := activeTCPConnections(tcpOpened, tcpClosed)
 
-	proxyType := envoyProxyType(workload)
 	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
 	httpRequestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
 	// Use TCP byte rate for waypoints, or when HTTP request rate is absent and TCP bytes are present.
@@ -142,24 +154,23 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		requestRate = tcpByteRate
 	}
 
-	absoluteThreshold, largeConfigClusters := envoyMemoryAbsoluteThresholds(proxyType)
-	memoryThreshold := computeEnvoyMemoryThreshold(absoluteThreshold, memoryLimit)
-	cause := classifyEnvoyMemory(memoryThreshold, largeConfigClusters, memoryMax, activeClustersMax, activeConnections, requestRate, trafficIsByteRate)
+	cause := classifyEnvoyMemory(memory.ThresholdBytes, largeConfigClusters, memory.MaxBytes, activeClustersMax, activeConnections, requestRate, trafficIsByteRate)
 
 	var memoryUsedPercent float64
-	if memoryLimit > 0 {
-		memoryUsedPercent = (memoryMax / memoryLimit) * 100
+	if memory.LimitBytes > 0 {
+		memoryUsedPercent = (memory.MaxBytes / memory.LimitBytes) * 100
 	}
 
 	return &models.EnvoyMemorySummary{
 		ActiveClustersMax:            activeClustersMax,
 		ActiveConnections:            activeConnections,
 		Cause:                        cause,
-		ConfigCountsPod:              podWithMaxLatestMemory(memoryMetric),
+		ConfigCountsPod:              memory.Pod,
 		LargeConfigClustersThreshold: largeConfigClusters,
-		MemoryLimitBytes:             int64(memoryLimit),
-		MemoryMaxBytes:               int64(memoryMax),
-		MemoryThresholdBytes:         int64(memoryThreshold),
+		MemoryLimitBytes:             int64(memory.LimitBytes),
+		MemoryMaxBytes:               int64(memory.MaxBytes),
+		MemoryMetric:                 memory.Metric,
+		MemoryThresholdBytes:         int64(memory.ThresholdBytes),
 		MemoryUsedPercent:            memoryUsedPercent,
 		ProxyType:                    proxyType,
 		RequestRate:                  requestRate,
@@ -190,7 +201,7 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 }
 
 func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
-	// Missing envoy_server_memory_allocated samples (empty query), not elevated memory.
+	// Missing status memory samples (empty query), not elevated memory.
 	if memoryBytes == 0 {
 		return models.EnvoyMemoryCauseUnknown
 	}
@@ -231,27 +242,76 @@ func computeEnvoyMemoryThreshold(absoluteThreshold, proxyMemoryLimitBytes float6
 	return absoluteThreshold
 }
 
-func resolveEnvoyProxyMemoryLimit(ctx context.Context, prom prometheus.ClientInterface, workload *models.Workload, labels string, queryTime time.Time) float64 {
-	limit := envoyProxyMemoryLimitFromAnnotations(workload)
+type envoyMemorySelection struct {
+	LimitBytes     float64
+	MaxBytes       float64
+	Metric         models.EnvoyMemoryMetric
+	Pod            string
+	ThresholdBytes float64
+}
+
+// selectEnvoyStatusMemory prefers the istio-proxy cgroup working set because it
+// remains available when Istio filters Envoy stats. Envoy allocated memory is a
+// fallback and uses the absolute threshold because it is not total cgroup usage.
+func selectEnvoyStatusMemory(
+	absoluteThreshold float64,
+	allocatedMetric prometheus.Metric,
+	workingSetMetric prometheus.Metric,
+	memoryLimits map[string]float64,
+) envoyMemorySelection {
+	workingSetByPod := maxValuesByPod(workingSetMetric)
+	if len(workingSetByPod) > 0 {
+		return selectHighestMemoryPressure(workingSetByPod, memoryLimits, absoluteThreshold, models.EnvoyMemoryMetricWorkingSet)
+	}
+
+	return selectHighestMemoryPressure(maxValuesByPod(allocatedMetric), memoryLimits, absoluteThreshold, models.EnvoyMemoryMetricAllocated)
+}
+
+func selectHighestMemoryPressure(valuesByPod, memoryLimits map[string]float64, absoluteThreshold float64, metric models.EnvoyMemoryMetric) envoyMemorySelection {
+	selection := envoyMemorySelection{Metric: metric, ThresholdBytes: absoluteThreshold}
+	bestPressure := 0.0
+	for pod, value := range valuesByPod {
+		limit := memoryLimits[pod]
+		threshold := absoluteThreshold
+		if metric == models.EnvoyMemoryMetricWorkingSet {
+			threshold = computeEnvoyMemoryThreshold(absoluteThreshold, limit)
+		}
+		pressure := value / threshold
+		if pressure <= bestPressure {
+			continue
+		}
+		bestPressure = pressure
+		selection = envoyMemorySelection{
+			LimitBytes:     limit,
+			MaxBytes:       value,
+			Metric:         metric,
+			Pod:            pod,
+			ThresholdBytes: threshold,
+		}
+	}
+	return selection
+}
+
+func resolveEnvoyProxyMemoryLimits(ctx context.Context, prom prometheus.ClientInterface, workload *models.Workload, labels string, queryTime time.Time) map[string]float64 {
+	limits := envoyProxyMemoryLimitsFromAnnotations(workload)
 	if prom != nil && prom.API() != nil && labels != "" {
-		query := fmt.Sprintf(
-			`max(container_spec_memory_limit_bytes%s)`,
-			appendEnvoyProxyContainerLabel(labels),
-		)
-		if promLimit := promInstantScalar(ctx, prom, query, queryTime); promLimit > limit {
-			limit = promLimit
+		query := fmt.Sprintf(`container_spec_memory_limit_bytes%s`, appendEnvoyProxyContainerLabel(labels))
+		for pod, promLimit := range promInstantPodValues(ctx, prom, query, queryTime) {
+			if promLimit > limits[pod] {
+				limits[pod] = promLimit
+			}
 		}
 	}
 
-	return limit
+	return limits
 }
 
-func envoyProxyMemoryLimitFromAnnotations(workload *models.Workload) float64 {
+func envoyProxyMemoryLimitsFromAnnotations(workload *models.Workload) map[string]float64 {
+	limits := map[string]float64{}
 	if workload == nil {
-		return 0
+		return limits
 	}
 
-	max := 0.0
 	for _, pod := range workload.Pods {
 		if pod == nil || pod.Annotations == nil {
 			continue
@@ -260,12 +320,12 @@ func envoyProxyMemoryLimitFromAnnotations(workload *models.Workload) float64 {
 		if !ok {
 			continue
 		}
-		if bytes := parseMemoryQuantity(raw); bytes > max {
-			max = bytes
+		if bytes := parseMemoryQuantity(raw); bytes > limits[pod.Name] {
+			limits[pod.Name] = bytes
 		}
 	}
 
-	return max
+	return limits
 }
 
 func parseMemoryQuantity(raw string) float64 {
@@ -282,26 +342,30 @@ func appendEnvoyProxyContainerLabel(labels string) string {
 	return fmt.Sprintf(`%s,container="%s"}`, trimmed, models.IstioProxy)
 }
 
-func promInstantScalar(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time) float64 {
+func promInstantPodValues(ctx context.Context, prom prometheus.ClientInterface, query string, queryTime time.Time) map[string]float64 {
+	values := map[string]float64{}
 	result, _, err := prom.API().Query(ctx, query, queryTime)
 	if err != nil {
-		return 0
+		return values
 	}
 
 	vector, ok := result.(model.Vector)
-	if !ok || len(vector) == 0 {
-		return 0
+	if !ok {
+		return values
 	}
 
-	max := 0.0
 	for _, sample := range vector {
+		pod := string(sample.Metric[model.LabelName("pod")])
+		if pod == "" {
+			continue
+		}
 		value := float64(sample.Value)
-		if value > max {
-			max = value
+		if value > values[pod] {
+			values[pod] = value
 		}
 	}
 
-	return max
+	return values
 }
 
 // BuildWorkloadMetricLabels builds Prometheus label selectors scoped to a workload.
@@ -451,26 +515,20 @@ func maxLatestValue(metric prometheus.Metric) float64 {
 	return max
 }
 
-// podWithMaxLatestMemory returns the pod label for the series with the highest latest memory sample.
-func podWithMaxLatestMemory(metric prometheus.Metric) string {
-	bestPod := ""
-	bestValue := 0.0
+// maxValuesByPod keeps the peak sample in the selected interval for each pod.
+// This preserves short-lived pressure across an istio-proxy container restart.
+func maxValuesByPod(metric prometheus.Metric) map[string]float64 {
+	valuesByPod := map[string]float64{}
 	for _, stream := range metric.Matrix {
-		if len(stream.Values) == 0 {
-			continue
-		}
-		value := float64(stream.Values[len(stream.Values)-1].Value)
-		if value <= bestValue {
-			continue
-		}
 		pod := string(stream.Metric[model.LabelName("pod")])
-		if pod == "" {
-			continue
+		for _, sample := range stream.Values {
+			value := float64(sample.Value)
+			if value > valuesByPod[pod] {
+				valuesByPod[pod] = value
+			}
 		}
-		bestValue = value
-		bestPod = pod
 	}
-	return bestPod
+	return valuesByPod
 }
 
 func sumLatestValues(metric prometheus.Metric) float64 {

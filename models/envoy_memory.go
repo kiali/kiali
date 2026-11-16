@@ -10,6 +10,14 @@ const (
 	EnvoyMemoryCauseUnknown       EnvoyMemoryCause = "unknown"
 )
 
+// EnvoyMemoryMetric identifies the memory signal used for status.
+type EnvoyMemoryMetric string
+
+const (
+	EnvoyMemoryMetricAllocated  EnvoyMemoryMetric = "allocated"
+	EnvoyMemoryMetricWorkingSet EnvoyMemoryMetric = "working_set"
+)
+
 // EnvoyProxyType identifies the Envoy proxy role for threshold selection.
 type EnvoyProxyType string
 
@@ -29,11 +37,14 @@ type EnvoyMemorySummary struct {
 	ConfigCountsPod              string           `json:"configCountsPod"`
 	LargeConfigClustersThreshold int64            `json:"largeConfigClustersThreshold"`
 	MemoryLimitBytes             int64            `json:"memoryLimitBytes"`
-	MemoryMaxBytes               int64            `json:"memoryMaxBytes"`
-	MemoryThresholdBytes         int64            `json:"memoryThresholdBytes"`
-	MemoryUsedPercent            float64          `json:"memoryUsedPercent"`
-	ProxyType                    EnvoyProxyType   `json:"proxyType"`
-	RequestRate                  float64          `json:"requestRate"`
-	RoughConfigMemoryBytes       int64            `json:"roughConfigMemoryBytes"`
-	TrafficIsByteRate            bool             `json:"trafficIsByteRate"`
+	// MemoryMaxBytes is the peak of the metric used for status. MemoryMetric identifies
+	// whether this is istio-proxy cgroup working set or Envoy allocated memory.
+	MemoryMaxBytes         int64             `json:"memoryMaxBytes"`
+	MemoryMetric           EnvoyMemoryMetric `json:"memoryMetric"`
+	MemoryThresholdBytes   int64             `json:"memoryThresholdBytes"`
+	MemoryUsedPercent      float64           `json:"memoryUsedPercent"`
+	ProxyType              EnvoyProxyType    `json:"proxyType"`
+	RequestRate            float64           `json:"requestRate"`
+	RoughConfigMemoryBytes int64             `json:"roughConfigMemoryBytes"`
+	TrafficIsByteRate      bool              `json:"trafficIsByteRate"`
 }

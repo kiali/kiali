@@ -52,10 +52,68 @@ func TestComputeEnvoyMemoryThreshold(t *testing.T) {
 	assert.Equal(t, 700.0, computeEnvoyMemoryThreshold(float64(sidecarHighMemoryBytes), 1000))
 }
 
+func TestSelectEnvoyStatusMemory(t *testing.T) {
+	allocated := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
+				Values: []model.SamplePair{{Value: model.SampleValue(100)}},
+			},
+		},
+	}
+	workingSet := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
+				Values: []model.SamplePair{{Value: model.SampleValue(150)}, {Value: model.SampleValue(200)}, {Value: model.SampleValue(175)}},
+			},
+		},
+	}
+
+	selection := selectEnvoyStatusMemory(100, allocated, workingSet, map[string]float64{"pod-a": 1000})
+	assert.Equal(t, 1000.0, selection.LimitBytes)
+	assert.Equal(t, 200.0, selection.MaxBytes)
+	assert.Equal(t, models.EnvoyMemoryMetricWorkingSet, selection.Metric)
+	assert.Equal(t, "pod-a", selection.Pod)
+	assert.Equal(t, 700.0, selection.ThresholdBytes)
+
+	selection = selectEnvoyStatusMemory(100, allocated, prometheus.Metric{}, map[string]float64{"pod-a": 1000})
+	assert.Equal(t, 100.0, selection.MaxBytes)
+	assert.Equal(t, models.EnvoyMemoryMetricAllocated, selection.Metric)
+	assert.Equal(t, 100.0, selection.ThresholdBytes)
+}
+
+func TestSelectEnvoyStatusMemoryUsesWorstPodPressure(t *testing.T) {
+	workingSet := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "small-limit"},
+				Values: []model.SamplePair{{Value: model.SampleValue(250)}},
+			},
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "large-limit"},
+				Values: []model.SamplePair{{Value: model.SampleValue(300)}},
+			},
+		},
+	}
+
+	selection := selectEnvoyStatusMemory(
+		100,
+		prometheus.Metric{},
+		workingSet,
+		map[string]float64{"large-limit": 1000, "small-limit": 256},
+	)
+	assert.Equal(t, "small-limit", selection.Pod)
+	assert.Equal(t, 250.0, selection.MaxBytes)
+	assert.Equal(t, 256.0, selection.LimitBytes)
+	assert.InDelta(t, 179.2, selection.ThresholdBytes, 0.001)
+}
+
 func TestEnvoyProxyMemoryLimitFromAnnotations(t *testing.T) {
 	workload := &models.Workload{
 		Pods: models.Pods{
 			&models.Pod{
+				Name: "pod-a",
 				Annotations: map[string]string{
 					istioProxyMemoryLimitAnnotation: "512Mi",
 				},
@@ -63,7 +121,7 @@ func TestEnvoyProxyMemoryLimitFromAnnotations(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, float64(512*1024*1024), envoyProxyMemoryLimitFromAnnotations(workload))
+	assert.Equal(t, map[string]float64{"pod-a": 512 * 1024 * 1024}, envoyProxyMemoryLimitsFromAnnotations(workload))
 }
 
 func TestGetSummaryRequiresRunningPods(t *testing.T) {
@@ -172,22 +230,6 @@ func TestMaxRequestRate(t *testing.T) {
 	assert.Equal(t, 0.0, maxRequestRate())
 	assert.Equal(t, 7.5, maxRequestRate(0, 2.5, 7.5))
 	assert.Equal(t, 12.0, maxRequestRate(12.0, 3.0))
-}
-
-func TestPodWithMaxLatestMemory(t *testing.T) {
-	metric := prometheus.Metric{
-		Matrix: model.Matrix{
-			&model.SampleStream{
-				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
-				Values: []model.SamplePair{{Value: model.SampleValue(100)}},
-			},
-			&model.SampleStream{
-				Metric: model.Metric{model.LabelName("pod"): "pod-b"},
-				Values: []model.SamplePair{{Value: model.SampleValue(250)}},
-			},
-		},
-	}
-	assert.Equal(t, "pod-b", podWithMaxLatestMemory(metric))
 }
 
 func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {

@@ -29,6 +29,7 @@ describe('EnvoyMemory', () => {
         largeConfigClustersThreshold: 100,
         memoryLimitBytes: 1073741824,
         memoryMaxBytes: 1024,
+        memoryMetric: 'working_set',
         memoryThresholdBytes: 751619277,
         memoryUsedPercent: 0.0001,
         proxyType: 'sidecar',
@@ -271,7 +272,7 @@ describe('EnvoyMemory', () => {
     expect(screen.getByText('Envoy allocated [details-v1-def456]')).toBeInTheDocument();
   });
 
-  it('shows Memory limit in the chart legend when summary has a limit', async () => {
+  it('shows Memory limit and Warning threshold in the chart legend when summary has a limit', async () => {
     render(
       <Provider store={store}>
         <MemoryRouter>
@@ -286,6 +287,7 @@ describe('EnvoyMemory', () => {
     );
 
     expect(await screen.findByText('Memory limit')).toBeInTheDocument();
+    expect(screen.getByText('Warning threshold')).toBeInTheDocument();
   });
 
   it('renders EnvoyDetails memory tab without invalid element type errors', () => {
