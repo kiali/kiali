@@ -129,6 +129,9 @@ func TestRevokedNamespaceExcludedFromIstioConfigAndServices(t *testing.T) {
 		&core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "ratings", Namespace: "bookinfo", Labels: map[string]string{"app": "ratings"}}},
 		&core_v1.Service{ObjectMeta: metav1.ObjectMeta{Name: "istiod", Namespace: "istio-system", Labels: map[string]string{"app": "istiod"}}},
 	)
+	// The user-RBAC list filter (#10516) consults SSARs; the fake denies them
+	// unless a test opts in, which would empty the filtered list.
+	k8s.AllowAllSelfSubjectAccessReviews()
 
 	// bookinfo is denied while istio-system stays readable: a partial revocation.
 	clients := map[string]kubernetes.ClientInterface{config.DefaultClusterID: k8s}
