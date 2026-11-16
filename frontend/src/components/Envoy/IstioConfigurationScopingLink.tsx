@@ -23,6 +23,6 @@ export const IstioConfigurationScopingLink: React.FC<IstioConfigurationScopingLi
     target="_blank"
     variant={ButtonVariant.link}
   >
-    {t('Learn about configuration scoping')}
+    {t('More about configuration scoping')}
   </Button>
 );

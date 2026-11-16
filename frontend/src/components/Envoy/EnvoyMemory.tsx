@@ -58,7 +58,7 @@ const statusAlertStyle = kialiStyle({
 const statusCauseStyle = kialiStyle({
   alignItems: 'center',
   display: 'flex',
-  fontWeight: PFFontWeight.BodyBold,
+  fontWeight: PFFontWeight.BodyDefault,
   gap: PFSpacer.sm
 });
 
@@ -315,15 +315,20 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                     >
                       <div className={statusCauseStyle}>
                         {createIcon(envoyMemoryCauseStatus(summary.cause, summary.memoryMaxBytes))}
-                        {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
+                        <span>
+                          {envoyMemoryCauseLabel(summary.cause, summary.memoryMaxBytes)}
+                          {summary.cause === 'configuration' && (
+                            <>
+                              {' '}
+                              <IstioConfigurationScopingLink
+                                dataTest="envoy-memory-status-scoping-link"
+                                externalLinkIconClassName={externalLinkIconStyle}
+                              />
+                            </>
+                          )}
+                        </span>
                       </div>
                     </Alert>
-
-                    {summary.cause === 'configuration' && (
-                      <div className={linkRowStyle}>
-                        <IstioConfigurationScopingLink externalLinkIconClassName={externalLinkIconStyle} />
-                      </div>
-                    )}
 
                     <div className={tilesRowStyle} data-test="envoy-memory-summary-metrics">
                       <MetricTile
