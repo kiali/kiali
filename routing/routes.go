@@ -2106,18 +2106,19 @@ func NewRoutes(
 			true,
 		},
 		// swagger:route GET /ai/usage/user chat aiUserUsage
-		// ---
+		//
 		// Endpoint to get current-session token usage, user-scoped historical metrics, and budget status
 		//
-		//     Produces:
-		//     - application/json
+		// Produces:
+		// - application/json
 		//
-		//     Schemes: http, https
+		// Schemes: http, https
 		//
-		// responses:
-		//      500: internalError
-		//      503: serviceUnavailableError
-		//      400: badRequestError
+		// Responses:
+		//    500: internalError
+		//    503: serviceUnavailableError
+		//    400: badRequestError
+		//    200
 		//
 		{
 			"AIUserUsage",
@@ -2127,8 +2128,8 @@ func NewRoutes(
 			handlers.AIUserUsage(conf, aiStore, prom),
 			true,
 		},
-		// swagger:route GET /api/ai/usage chat aiChatUsage
-		// ---
+		// swagger:route GET /ai/usage chat aiChatUsage
+		//
 		// Endpoint to get token usage statistics for the current cluster
 		//
 		// Produces:
@@ -2138,8 +2139,9 @@ func NewRoutes(
 		//
 		// Responses:
 		//    500: internalError
+		//    503: serviceUnavailableError
 		//    400: badRequestError
-		//    200: noContent
+		//    200
 		//
 		{
 			"ChatUsage",
