@@ -1006,8 +1006,9 @@ func TestNamespaceMetricsInaccessibleNamespace(t *testing.T) {
 
 // TestNamespaceMetricsSetComputationError pins the fail-closed contract:
 // when the accessible set cannot be computed at all (e.g. the namespace LIST
-// against the API server fails), the endpoint rejects with 500 rather than
-// serving data.
+// against the API server fails), the endpoint rejects rather than serving
+// data. noPrivClient's denial is a Forbidden, which handleErrorResponse maps
+// to 403.
 func TestNamespaceMetricsSetComputationError(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("my_namespace"))
 	// noPrivClient denies both LIST and GET, so the accessible set cannot be
@@ -1021,7 +1022,7 @@ func TestNamespaceMetricsSetComputationError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
 
 func setupNamespaceMetricsEndpoint(t *testing.T) (*httptest.Server, *prometheustest.PromAPIMock) {

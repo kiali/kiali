@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
+	"github.com/kiali/kiali/cache/cachetest"
 	"github.com/kiali/kiali/config"
 	"github.com/kiali/kiali/controller"
 	"github.com/kiali/kiali/kubernetes"
@@ -77,4 +79,107 @@ func TestValidationsFailsToUpdateWithOldCache(t *testing.T) {
 	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
 	_, err := reconciler.Reconcile(context.Background(), req)
 	require.Error(err)
+}
+
+// setupReconciler builds a two-cluster reconciler whose cache degrades the named cluster
+// ("" degrades none), following the same recipe as the other degraded-cluster tests.
+func setupReconciler(t *testing.T, degradedCluster string) (*controller.ValidationsReconciler, cache.KialiCache) {
+	t.Helper()
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	home := conf.KubernetesConfig.ClusterName
+
+	k8s := kubetest.NewFakeK8sClient(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&networking_v1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "home-vs", Namespace: "istio-system"}},
+	)
+	remote := kubetest.NewFakeK8sClient(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&networking_v1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "remote-vs", Namespace: "istio-system"}},
+	)
+	clients := map[string]kubernetes.UserClientInterface{home: k8s, "remote-cluster": remote}
+
+	kialiCache, access, err := cachetest.NewFakeKialiCache(t.Context(), conf, kubernetes.ConvertFromUserClients(clients),
+		func(context.Context, string, string, string) (cache.DeniedAccess, error) {
+			return cache.DeniedAccess{Cluster: true}, nil
+		})
+	require.NoError(err)
+	if degradedCluster != "" {
+		require.True(access.ConfirmRevoked(context.Background(), degradedCluster, "apps", "deployments"))
+	}
+
+	layer := business.NewLayerBuilder(t, conf).WithClients(clients).WithCache(kialiCache).Build()
+	validations := business.NewValidationsService(conf, &layer.IstioConfig, kialiCache, &layer.Mesh, &layer.Namespace, &layer.Svc, clients, &layer.Workload)
+	return controller.NewValidationsReconciler([]string{home, "remote-cluster"}, conf, kialiCache, &validations, 0), kialiCache
+}
+
+// TestValidationsReconcilerSkipsDegradedRemoteCluster pins the cluster filter's core
+// contract: a degraded remote is skipped so the rest of the clusters' validations stay
+// fresh. Beyond NoError, the validations store's version must have advanced: the reconcile
+// ran through the cluster loop to the final Replace. The assertion is discriminating
+// because an unfiltered cluster list reaches GetAllWorkloads, which fails on the degraded
+// remote's cache and errors the reconcile before the Replace.
+func TestValidationsReconcilerSkipsDegradedRemoteCluster(t *testing.T) {
+	require := require.New(t)
+	reconciler, kialiCache := setupReconciler(t, "remote-cluster")
+
+	version := kialiCache.Validations().Version()
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
+	_, err := reconciler.Reconcile(context.Background(), req)
+	require.NoError(err, "a degraded remote cluster is skipped, not fatal")
+	require.Greater(kialiCache.Validations().Version(), version, "the reconcile completed through the healthy clusters")
+}
+
+// TestValidationsReconcilerSkipsUncachedCluster pins the uncached-cluster branch: a
+// cluster name with no cache configured (a misconfiguration) is skipped with an
+// error-level log, so one bad name cannot stale every other cluster's validations.
+func TestValidationsReconcilerSkipsUncachedCluster(t *testing.T) {
+	require := require.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	conf.ExternalServices.Istio.IstioAPIEnabled = false
+	home := conf.KubernetesConfig.ClusterName
+
+	k8s := kubetest.NewFakeK8sClient(
+		&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "istio-system"}},
+		&networking_v1.VirtualService{ObjectMeta: metav1.ObjectMeta{Name: "home-vs", Namespace: "istio-system"}},
+	)
+	clients := map[string]kubernetes.UserClientInterface{home: k8s}
+	kialiCache, _, err := cachetest.NewFakeKialiCache(t.Context(), conf, kubernetes.ConvertFromUserClients(clients), nil)
+	require.NoError(err)
+
+	layer := business.NewLayerBuilder(t, conf).WithClients(clients).WithCache(kialiCache).Build()
+	validations := business.NewValidationsService(conf, &layer.IstioConfig, kialiCache, &layer.Mesh, &layer.Namespace, &layer.Svc, clients, &layer.Workload)
+	// "ghost" has no cache: like a typo in the cluster registration.
+	reconciler := controller.NewValidationsReconciler([]string{home, "ghost"}, conf, kialiCache, &validations, 0)
+
+	version := kialiCache.Validations().Version()
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
+	_, err = reconciler.Reconcile(context.Background(), req)
+	require.NoError(err, "an uncached cluster is skipped, not fatal")
+	require.Greater(kialiCache.Validations().Version(), version, "the reconcile completed through the cached clusters")
+}
+
+// TestValidationsReconcilerFailsOnDegradedHomeCluster pins the home-cluster contract:
+// the home cluster is not skippable, so its cache being unavailable fails the reconcile.
+func TestValidationsReconcilerFailsOnDegradedHomeCluster(t *testing.T) {
+	require := require.New(t)
+	reconciler, _ := setupReconciler(t, config.DefaultClusterID)
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
+	_, err := reconciler.Reconcile(context.Background(), req)
+	require.Error(err, "the home cluster is still required")
+}
+
+// TestValidationsReconcilerWithHealthyClusters pins the pass-through: with every cache
+// available the reconcile proceeds over the full cluster list.
+func TestValidationsReconcilerWithHealthyClusters(t *testing.T) {
+	require := require.New(t)
+	reconciler, _ := setupReconciler(t, "")
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "queue", Namespace: "queue"}}
+	_, err := reconciler.Reconcile(context.Background(), req)
+	require.NoError(err)
 }
