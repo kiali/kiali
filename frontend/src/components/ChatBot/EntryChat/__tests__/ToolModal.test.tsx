@@ -21,7 +21,7 @@ rstest.mock('react-i18next', () => {
       const childContent = node.props?.children;
       // i18next interpolation object inside a wrapper element, e.g. <span>{{ name }}</span>
       if (childContent !== null && typeof childContent === 'object' && !(childContent && childContent.$$typeof)) {
-        return ReactModule.cloneElement(node, {}, Object.values(childContent).map(String).join(''));
+        return ReactModule.createElement(node.type, node.props, Object.values(childContent).map(String).join(''));
       }
       return node;
     }

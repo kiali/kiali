@@ -1,4 +1,4 @@
-import { Message, type SourcesCardProps } from '@patternfly/chatbot';
+import { Message, MessageDivider, type SourcesCardProps } from '@patternfly/chatbot';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import type { KialiAppState } from 'store/Store';
@@ -26,6 +26,15 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
 
   if (entry.who === 'user' && entry.hidden) {
     return null;
+  }
+
+  if (entry.who === 'divider') {
+    const modeLabel = entry.mode === 'ask' ? t('Ask') : t('Troubleshoot');
+    return (
+      <div data-test="chatbot-mode-divider">
+        <MessageDivider content={t('New conversation mode: {{mode}}', { mode: modeLabel })} />
+      </div>
+    );
   }
 
   if (entry.who === 'ai') {
@@ -107,6 +116,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         isCompact
         isLoading={entry.isStreaming && !entry.isCancelled && !entry.error && !safeContent}
         name="Kiali AI"
+        // eslint-disable-next-line jsx-a11y/aria-role
         role="bot"
         sources={sources}
         timestamp=" "
@@ -130,6 +140,7 @@ export const EntryChat = React.memo(({ entryIndex }: EntryChatProps) => {
         hasRoundAvatar={false}
         isCompact
         name={t('You')}
+        // eslint-disable-next-line jsx-a11y/aria-role
         role="user"
         timestamp=" "
       />

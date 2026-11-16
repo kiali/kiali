@@ -1,4 +1,25 @@
+import * as React from 'react';
+
 type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
+/** Returns the pixel width of a container div, updated via ResizeObserver. */
+export const useContainerWidth = (ref: React.RefObject<HTMLDivElement | null>): number => {
+  const [width, setWidth] = React.useState(0);
+  React.useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+    const observer = new ResizeObserver(entries => {
+      const w = Math.floor(entries[0].contentRect.width);
+      if (w > 0) {
+        setWidth(w);
+      }
+    });
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+};
 
 export const getISOWeek = (date: Date): { week: number; year: number } => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));

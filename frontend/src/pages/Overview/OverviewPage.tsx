@@ -12,6 +12,7 @@ import { ControlPlaneStats } from './ControlPlaneStats';
 import { DataPlaneStats } from './DataPlaneStats';
 import { ApplicationStats } from './ApplicationStats';
 import { ServiceInsights } from './ServiceInsights';
+import { TroubleshootingStats } from './TroubleshootingStats';
 
 const overviewPageStyle = kialiStyle({
   display: 'flex',
@@ -56,12 +57,16 @@ export const OverviewPage: React.FC = () => {
               <ControlPlaneStats />
             </GridItem>
 
-            <GridItem span={5}>
+            <GridItem span={3}>
               <DataPlaneStats />
             </GridItem>
 
-            <GridItem span={3}>
+            <GridItem span={2}>
               <IstioConfigStats />
+            </GridItem>
+
+            <GridItem span={3}>
+              <TroubleshootingStats />
             </GridItem>
 
             <GridItem span={4} className={secondRowItemStyle}>

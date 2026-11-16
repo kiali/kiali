@@ -19,6 +19,7 @@ import type { RouteObject } from 'react-router-dom-v5-compat';
 import { WildcardRoute } from 'routes/WildcardRoute';
 import { NamespaceDetailsRoute } from 'routes/NamespaceDetailsRoute';
 import { AIDashboardPage } from 'pages/AIDashboard/AIDashboardPage';
+import { TroubleshootingPage } from 'pages/Troubleshooting/TroubleshootingPage';
 
 /**
  * Return array of objects that describe vertical menu
@@ -80,6 +81,12 @@ const navMenuItems: MenuItem[] = [
     to: `/${Paths.TRACING}`
   },
   {
+    id: 'troubleshooting',
+    title: t('Troubleshooting'),
+    to: `/${Paths.TROUBLESHOOTING}`,
+    pathsActive: [new RegExp(`^/${Paths.TROUBLESHOOTING}(?:\\?.*)?$`)]
+  },
+  {
     id: 'ai',
     title: t('AI Dashboard'),
     to: '/ai',
@@ -91,6 +98,10 @@ const pathRoutes: RouteObject[] = [
   {
     path: `/${Paths.AI}`,
     element: <AIDashboardPage />
+  },
+  {
+    path: `/${Paths.TROUBLESHOOTING}`,
+    element: <TroubleshootingPage />
   },
   {
     path: `/${Paths.OVERVIEW}`,
