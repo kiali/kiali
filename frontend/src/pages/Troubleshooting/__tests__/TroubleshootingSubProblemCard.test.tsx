@@ -7,6 +7,7 @@ import { ChatAIActions } from 'actions/ChatAIActions';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { AIChatContext } from 'hooks/aiInteraction';
 import type { OpenAIChatFn } from 'hooks/aiInteraction';
+import * as NavigationUtils from 'utils/NavigationUtils';
 import { AiTroubleshootingStateReducer, INITIAL_TROUBLESHOOTING_STATE } from 'reducers/ChatAIState';
 import type { TroubleshootingSubProblem } from 'types/Chatbot';
 import { TroubleshootingSubProblemCard } from '../TroubleshootingSubProblemCard';
@@ -110,6 +111,10 @@ const openAiActionsMenu = (): HTMLElement => {
 };
 
 describe('TroubleshootingSubProblemCard', () => {
+  afterEach(() => {
+    rstest.restoreAllMocks();
+  });
+
   it('sends the suggested prompt in ask mode when chat is allowed', () => {
     const { dispatched } = renderAnalysis(subProblem);
 
@@ -439,6 +444,7 @@ describe('TroubleshootingSubProblemCard', () => {
   });
 
   it('sends Ask AI through openAIChat when provided by context', () => {
+    rstest.spyOn(NavigationUtils, 'isOSSMC').mockReturnValue(true);
     const calls: unknown[][] = [];
     const openAIChat: OpenAIChatFn = (...args) => {
       calls.push(args);
@@ -473,5 +479,12 @@ describe('TroubleshootingSubProblemCard', () => {
 
     expect(calls).toEqual([['Why is productpage failing?', undefined, true]]);
     expect(dispatched).toHaveLength(0);
+  });
+
+  it('hides Ask AI and Fix it with AI in OSSMC when openAIChat is not provided', () => {
+    rstest.spyOn(NavigationUtils, 'isOSSMC').mockReturnValue(true);
+    renderAnalysis(subProblem);
+
+    expect(screen.queryByRole('button', { name: 'AI actions' })).not.toBeInTheDocument();
   });
 });

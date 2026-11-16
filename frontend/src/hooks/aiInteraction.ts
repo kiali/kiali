@@ -3,6 +3,7 @@ import { ChatAIActions } from '../actions/ChatAIActions';
 import { isKiosk } from '../components/Kiosk/KioskActions';
 import type { PendingChatPrompt } from '../types/Chatbot';
 import { t } from '../utils/I18nUtils';
+import { isOSSMC } from '../utils/NavigationUtils';
 import { useKialiDispatch, useKialiSelector } from './redux';
 
 /** Lightspeed/OLS attachment payload. Kept compatible with OpenShift Console OLS. */
@@ -79,8 +80,10 @@ export const useAIInteraction = (openAIChat?: OpenAIChatFn): AIInteractionResult
     )
   );
 
-  const chatEnabled = Boolean(externalChat) || kialiChatEnabled;
-  const chatAllowed = Boolean(externalChat) || kialiChatAllowed;
+  // OSSMC has no Kiali chatbot: Ask / Fix follow openAIChat only (Lightspeed).
+  // Standalone Kiali uses the AI chat configuration.
+  const chatEnabled = isOSSMC() ? Boolean(externalChat) : kialiChatEnabled;
+  const chatAllowed = isOSSMC() ? Boolean(externalChat) : kialiChatAllowed;
 
   const canSendPrompt = React.useCallback(
     (prompt?: string): boolean => chatAllowed && Boolean(prompt && prompt.trim() !== ''),

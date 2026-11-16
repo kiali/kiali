@@ -6,6 +6,7 @@ import { ChatAIActions } from 'actions/ChatAIActions';
 import type { KialiAppAction } from 'actions/KialiAppAction';
 import { buildTroubleshootIntro, useAIInteraction } from '../aiInteraction';
 import type { OpenAIChatFn } from '../aiInteraction';
+import * as NavigationUtils from '../../utils/NavigationUtils';
 
 type TestState = {
   ai: {
@@ -71,6 +72,10 @@ const HookConsumer: React.FC<{ openAIChat?: OpenAIChatFn }> = ({ openAIChat }) =
 };
 
 describe('useAIInteraction', () => {
+  afterEach(() => {
+    rstest.restoreAllMocks();
+  });
+
   it('reports chatAllowed and dispatches ask, troubleshoot, sendPrompt, and openChat when allowed', () => {
     const { dispatched, store } = createTestStore();
 
@@ -169,6 +174,7 @@ describe('useAIInteraction', () => {
   });
 
   it('sends prompts through openAIChat instead of the Kiali chatbot', () => {
+    rstest.spyOn(NavigationUtils, 'isOSSMC').mockReturnValue(true);
     const { dispatched, store } = createTestStore({ chatAllowed: false, chatEnabled: false });
     const calls: unknown[][] = [];
     const openAIChat: OpenAIChatFn = (...args) => {
@@ -205,5 +211,55 @@ describe('useAIInteraction', () => {
     ]);
 
     expect(dispatched).toHaveLength(0);
+  });
+
+  it('uses Kiali chat configuration in standalone even if openAIChat is passed', () => {
+    rstest.spyOn(NavigationUtils, 'isOSSMC').mockReturnValue(false);
+    const openAIChat: OpenAIChatFn = rstest.fn();
+    const { store } = createTestStore({ chatAllowed: false, chatEnabled: false });
+
+    render(
+      <Provider store={store}>
+        <HookConsumer openAIChat={openAIChat} />
+      </Provider>
+    );
+
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('chat-allowed')).toHaveTextContent('false');
+  });
+
+  it('hides Kiali chat in OSSMC unless openAIChat is provided', () => {
+    rstest.spyOn(NavigationUtils, 'isOSSMC').mockReturnValue(true);
+
+    const withoutChat = createTestStore();
+    const { unmount } = render(
+      <Provider store={withoutChat.store}>
+        <HookConsumer />
+      </Provider>
+    );
+
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('chat-allowed')).toHaveTextContent('false');
+    expect(screen.getByTestId('can-send-valid')).toHaveTextContent('false');
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Chat' }));
+    expect(withoutChat.dispatched).toHaveLength(0);
+    unmount();
+
+    const calls: unknown[][] = [];
+    const openAIChat: OpenAIChatFn = (...args) => {
+      calls.push(args);
+    };
+    const withChat = createTestStore({ chatAllowed: false, chatEnabled: false });
+    render(
+      <Provider store={withChat.store}>
+        <HookConsumer openAIChat={openAIChat} />
+      </Provider>
+    );
+
+    expect(screen.getByTestId('chat-enabled')).toHaveTextContent('true');
+    expect(screen.getByTestId('chat-allowed')).toHaveTextContent('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Ask Chat' }));
+    expect(calls).toContainEqual(['What is wrong with productpage?', undefined, true]);
+    expect(withChat.dispatched).toHaveLength(0);
   });
 });
