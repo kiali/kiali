@@ -928,21 +928,6 @@ func fetchIstioTCPConnections(
 	return prometheus.Metric{Matrix: append(source.Matrix, dest.Matrix...)}
 }
 
-// fetchIstioTCPByteRate returns combined TCP sent+received byte rate for this workload.
-func fetchIstioTCPByteRate(
-	ctx context.Context,
-	prom prometheus.ClientInterface,
-	sourceLabels string,
-	destLabels string,
-	q *prometheus.RangeQuery,
-) float64 {
-	sentSource := prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{sourceLabels}, "", q)
-	sentDest := prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{destLabels}, "", q)
-	recvSource := prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{sourceLabels}, "", q)
-	recvDest := prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{destLabels}, "", q)
-	return istioTCPByteRateAtTime(sentSource, sentDest, recvSource, recvDest, 0)
-}
-
 func fetchEnvoyDownstreamRequestRate(ctx context.Context, prom prometheus.ClientInterface, labels string, q *prometheus.RangeQuery) prometheus.Metric {
 	for _, metricName := range []string{
 		"envoy_listener_http_downstream_rq",
