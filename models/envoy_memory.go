@@ -31,8 +31,10 @@ const (
 //
 // swagger:model EnvoyMemorySummary
 type EnvoyMemorySummary struct {
-	ActiveClustersMax            int64            `json:"activeClustersMax"`
-	ActiveConnections            int64            `json:"activeConnections"`
+	ActiveClustersMax int64 `json:"activeClustersMax"`
+	ActiveConnections int64 `json:"activeConnections"`
+	// ActiveConnectionsObserved is false when istio_tcp_connections_* counters are absent (common on HTTP-only sidecars).
+	ActiveConnectionsObserved    bool             `json:"activeConnectionsObserved"`
 	Cause                        EnvoyMemoryCause `json:"cause"`
 	ConfigCountsPod              string           `json:"configCountsPod"`
 	LargeConfigClustersThreshold int64            `json:"largeConfigClustersThreshold"`

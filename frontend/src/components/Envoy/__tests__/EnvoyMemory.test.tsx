@@ -25,6 +25,7 @@ describe('EnvoyMemory', () => {
       data: {
         activeClustersMax: 10,
         activeConnections: 5,
+        activeConnectionsObserved: true,
         cause: 'ok',
         largeConfigClustersThreshold: 100,
         memoryLimitBytes: 1073741824,

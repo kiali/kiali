@@ -75,7 +75,7 @@ const chartHostStyle = kialiStyle({
 });
 
 const chartWrapStyle = kialiStyle({
-  marginTop: PFSpacer.md,
+  marginTop: PFSpacer.sm,
   maxWidth: '100%',
   minHeight: '280px',
   minWidth: 0,
@@ -117,7 +117,7 @@ const toolbarStyle = kialiStyle({
   flexWrap: 'wrap',
   gap: PFSpacer.md,
   marginTop: PFSpacer.sm,
-  paddingBottom: PFSpacer.lg,
+  paddingBottom: PFSpacer.md,
   paddingLeft: PFSpacer.md,
   paddingRight: PFSpacer.md
 });
@@ -138,10 +138,12 @@ const activeConnectionsDatapoints = (
   lines: { datapoints: VCDataPoint[]; legendItem?: { name?: string } }[],
   name: string
 ): VCDataPoint[] => {
-  const opened = lines.filter(line => /opened/i.test(seriesName(line)));
-  const closed = lines.filter(line => /closed/i.test(seriesName(line)));
+  const opened = lines.filter(line => /tcp.*opened|opened.*tcp/i.test(seriesName(line)));
+  const closed = lines.filter(line => /tcp.*closed|closed.*tcp/i.test(seriesName(line)));
+  const envoyCx = lines.filter(line => /cx active/i.test(seriesName(line)));
   const openedByTime = new Map<number, number>();
   const closedByTime = new Map<number, number>();
+  const envoyCxByTime = new Map<number, number>();
 
   opened.forEach(line => {
     line.datapoints.forEach(dp => {
@@ -155,14 +157,21 @@ const activeConnectionsDatapoints = (
       closedByTime.set(key, (closedByTime.get(key) ?? 0) + dp.y);
     });
   });
+  envoyCx.forEach(line => {
+    line.datapoints.forEach(dp => {
+      const key = Number(dp.x);
+      envoyCxByTime.set(key, (envoyCxByTime.get(key) ?? 0) + dp.y);
+    });
+  });
 
-  // Prefer timestamps present in either series; missing side counts as 0 so card/chart stay aligned.
-  const times = new Set<number>([...openedByTime.keys(), ...closedByTime.keys()]);
+  const times = new Set<number>([...openedByTime.keys(), ...closedByTime.keys(), ...envoyCxByTime.keys()]);
   return Array.from(times)
     .sort((a, b) => a - b)
     .map(x => {
-      const active = (openedByTime.get(x) ?? 0) - (closedByTime.get(x) ?? 0);
-      return { name, x: new Date(x), y: active > 0 ? active : 0 };
+      const tcpActive = (openedByTime.get(x) ?? 0) - (closedByTime.get(x) ?? 0);
+      const envoyActive = envoyCxByTime.get(x) ?? 0;
+      const active = tcpActive > 0 ? tcpActive : envoyActive > 0 ? envoyActive : 0;
+      return { name, x: new Date(x), y: active };
     });
 };
 
@@ -455,7 +464,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
       </p>
       <p>
         {t(
-          "Left axis: Prometheus envoy_server_memory_allocated and container_memory_working_set_bytes (istio-proxy), scoped to this workload's pods. When a limit is set, status warns if working set exceeds 70% of that limit (Warning threshold line); the Memory limit line is the OOM boundary. Right axis: active TCP approximated as sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total)."
+          "Left axis: Prometheus envoy_server_memory_allocated and container_memory_working_set_bytes (istio-proxy), scoped to this workload's pods. When a limit is set, status warns if working set exceeds 70% of that limit (Warning threshold line); the Memory limit line is the OOM boundary. Right axis: at each time step, Istio TCP opened minus closed when that net is positive; otherwise sum of envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active. HTTP sidecars often need the Envoy fallback; the summary tile also requires about 100 req/s before using Envoy gauges."
         )}
       </p>
       <p>

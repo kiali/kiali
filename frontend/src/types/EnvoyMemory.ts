@@ -7,6 +7,7 @@ export type EnvoyProxyType = 'sidecar' | 'waypoint' | 'gateway';
 export type EnvoyMemorySummary = {
   activeClustersMax: number;
   activeConnections: number;
+  activeConnectionsObserved: boolean;
   cause: EnvoyMemoryCause;
   configCountsPod?: string;
   largeConfigClustersThreshold: number;

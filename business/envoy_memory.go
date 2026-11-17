@@ -17,16 +17,17 @@ import (
 )
 
 const (
-	sidecarHighMemoryBytes = 100 * 1024 * 1024
+	// Typical istio-proxy working set often exceeds 100 MiB with normal mesh config; keep modest headroom.
+	sidecarHighMemoryBytes = 128 * 1024 * 1024
 	gatewayHighMemoryBytes = 256 * 1024 * 1024
 	// Bookinfo alone can approach ~50 clusters without scoping; keep headroom for small meshes.
 	sidecarLargeConfigClusters = 100
 	gatewayLargeConfigClusters = 150
 	envoyMemoryLimitRatio      = 0.7
-	idleRequestRatePerSecond   = 0.1
-	idleActiveConnections      = 5
-	// Waypoints expose L4 byte rates; treat below this as idle for classification.
-	idleTCPBytesPerSecond = 100.0
+	// Cause heuristics aligned loosely with Istio sidecar benchmarks (~1000 req/s, 4 client conns).
+	busyRequestRatePerSecond = 100.0
+	busyActiveConnections    = 10
+	busyTCPBytesPerSecond    = 256 * 1024
 	// Rough estimate of Envoy config memory contribution per active cluster.
 	// There is no explicit config-vs-traffic memory split; this is a ballpark for UI guidance.
 	roughConfigBytesPerCluster = 50 * 1024
@@ -69,21 +70,23 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}
 
 	var (
-		allocatedMetric  prometheus.Metric
-		clustersMetric   prometheus.Metric
-		downstreamRq     prometheus.Metric
-		istioRq          prometheus.Metric
-		memoryLimits     map[string]float64
-		tcpByteRate      float64
-		tcpClosed        prometheus.Metric
-		tcpOpened        prometheus.Metric
-		upstreamRq       prometheus.Metric
-		upstreamRqTotal  prometheus.Metric
-		workingSetMetric prometheus.Metric
+		allocatedMetric      prometheus.Metric
+		clustersMetric       prometheus.Metric
+		downstreamCxActive   prometheus.Metric
+		downstreamRq         prometheus.Metric
+		istioHTTPRequestRate float64
+		memoryLimits         map[string]float64
+		tcpByteRate          float64
+		tcpClosed            prometheus.Metric
+		tcpOpened            prometheus.Metric
+		upstreamCxActive     prometheus.Metric
+		upstreamRq           prometheus.Metric
+		upstreamRqTotal      prometheus.Metric
+		workingSetMetric     prometheus.Metric
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(11)
+	wg.Add(13)
 	go func() {
 		defer wg.Done()
 		allocatedMetric = in.prom.FetchRange(ctx, "envoy_server_memory_allocated", envoyLabels, "", "", q)
@@ -113,16 +116,23 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	}()
 	go func() {
 		defer wg.Done()
-		istioRq = in.prom.FetchRateRange(ctx, "istio_requests_total", istioRequestLabels, "", q)
+		istioHTTPRequestRate = fetchIstioHTTPRequestRate(ctx, in.prom, istioRequestLabels[0], istioRequestLabels[1], q)
 	}()
 	go func() {
 		defer wg.Done()
-		// Prefer Istio TCP connection counters: Envoy cx gauges are often disabled / stuck at 1.
 		tcpOpened = fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_opened_total", istioSourceLabels, istioDestLabels, q)
 	}()
 	go func() {
 		defer wg.Done()
 		tcpClosed = fetchIstioTCPConnections(ctx, in.prom, "istio_tcp_connections_closed_total", istioSourceLabels, istioDestLabels, q)
+	}()
+	go func() {
+		defer wg.Done()
+		upstreamCxActive = in.prom.FetchRange(ctx, "envoy_cluster_upstream_cx_active", envoyLabels, "", "", q)
+	}()
+	go func() {
+		defer wg.Done()
+		downstreamCxActive = in.prom.FetchRange(ctx, "envoy_listener_downstream_cx_active", envoyLabels, "", "", q)
 	}()
 	go func() {
 		defer wg.Done()
@@ -143,10 +153,9 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		memoryLimits,
 	)
 	activeClustersMax := int64(maxLatestValue(clustersMetric))
-	activeConnections := activeTCPConnections(tcpOpened, tcpClosed)
 
 	envoyRequestRate := envoyRequestRateFromMetrics(upstreamRqTotal, upstreamRq, downstreamRq)
-	httpRequestRate := maxRequestRate(envoyRequestRate, sumLatestValues(istioRq))
+	httpRequestRate := maxRequestRate(envoyRequestRate, istioHTTPRequestRate)
 	// Use TCP byte rate for waypoints, or when HTTP request rate is absent and TCP bytes are present.
 	trafficIsByteRate := proxyType == models.EnvoyProxyTypeWaypoint || (httpRequestRate == 0 && tcpByteRate > 0)
 	requestRate := httpRequestRate
@@ -154,7 +163,25 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 		requestRate = tcpByteRate
 	}
 
-	cause := classifyEnvoyMemory(memory.ThresholdBytes, largeConfigClusters, memory.MaxBytes, activeClustersMax, activeConnections, requestRate, trafficIsByteRate)
+	activeConnections, connectionsObserved := resolveActiveConnections(
+		tcpOpened,
+		tcpClosed,
+		upstreamCxActive,
+		downstreamCxActive,
+		httpRequestRate,
+		trafficIsByteRate,
+	)
+
+	cause := classifyEnvoyMemory(
+		memory.ThresholdBytes,
+		largeConfigClusters,
+		memory.MaxBytes,
+		activeClustersMax,
+		activeConnections,
+		requestRate,
+		trafficIsByteRate,
+		connectionsObserved,
+	)
 
 	var memoryUsedPercent float64
 	if memory.LimitBytes > 0 {
@@ -164,6 +191,7 @@ func (in *EnvoyMemoryService) GetSummary(ctx context.Context, workload *models.W
 	return &models.EnvoyMemorySummary{
 		ActiveClustersMax:            activeClustersMax,
 		ActiveConnections:            activeConnections,
+		ActiveConnectionsObserved:    connectionsObserved,
 		Cause:                        cause,
 		ConfigCountsPod:              memory.Pod,
 		LargeConfigClustersThreshold: largeConfigClusters,
@@ -200,7 +228,16 @@ func envoyProxyType(workload *models.Workload) models.EnvoyProxyType {
 	return models.EnvoyProxyTypeSidecar
 }
 
-func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, memoryBytes float64, activeClusters int64, activeConnections int64, trafficRate float64, trafficIsByteRate bool) models.EnvoyMemoryCause {
+func classifyEnvoyMemory(
+	memoryThreshold float64,
+	largeConfigThreshold int64,
+	memoryBytes float64,
+	activeClusters int64,
+	activeConnections int64,
+	trafficRate float64,
+	trafficIsByteRate bool,
+	connectionsObserved bool,
+) models.EnvoyMemoryCause {
 	// Missing status memory samples (empty query), not elevated memory.
 	if memoryBytes == 0 {
 		return models.EnvoyMemoryCauseUnknown
@@ -209,20 +246,39 @@ func classifyEnvoyMemory(memoryThreshold float64, largeConfigThreshold int64, me
 		return models.EnvoyMemoryCauseOK
 	}
 
-	idleTraffic := trafficRate < idleRequestRatePerSecond
-	if trafficIsByteRate {
-		idleTraffic = trafficRate < idleTCPBytesPerSecond
-	}
-	idle := idleTraffic && activeConnections < idleActiveConnections
 	largeConfig := activeClusters > largeConfigThreshold
+	busy := envoyMemoryBusyTraffic(
+		activeConnections,
+		connectionsObserved,
+		trafficRate,
+		trafficIsByteRate,
+	)
 
-	if idle && largeConfig {
+	if largeConfig {
+		if busy {
+			return models.EnvoyMemoryCauseTraffic
+		}
 		return models.EnvoyMemoryCauseConfiguration
 	}
-	if !idle {
+	if busy {
 		return models.EnvoyMemoryCauseTraffic
 	}
 	return models.EnvoyMemoryCauseUnknown
+}
+
+func envoyMemoryBusyTraffic(
+	activeConnections int64,
+	connectionsObserved bool,
+	trafficRate float64,
+	trafficIsByteRate bool,
+) bool {
+	if connectionsObserved && activeConnections >= busyActiveConnections {
+		return true
+	}
+	if trafficIsByteRate {
+		return trafficRate >= busyTCPBytesPerSecond
+	}
+	return trafficRate >= busyRequestRatePerSecond
 }
 
 func envoyMemoryAbsoluteThresholds(proxyType models.EnvoyProxyType) (highMemoryBytes float64, largeConfigClusters int64) {
@@ -573,6 +629,61 @@ func activeTCPConnections(opened, closed prometheus.Metric) int64 {
 	return int64(active)
 }
 
+func istioTCPConnectionMetricsPresent(opened, closed prometheus.Metric) bool {
+	return len(opened.Matrix) > 0 || len(closed.Matrix) > 0
+}
+
+func envoyActiveConnections(upstreamCx, downstreamCx prometheus.Metric) int64 {
+	return int64(sumLatestValues(upstreamCx) + sumLatestValues(downstreamCx))
+}
+
+func envoyConnectionMetricsPresent(upstreamCx, downstreamCx prometheus.Metric) bool {
+	return len(upstreamCx.Matrix) > 0 || len(downstreamCx.Matrix) > 0
+}
+
+// resolveActiveConnections prefers Istio TCP opened/closed deltas for L4 workloads.
+// HTTP sidecars often report net zero on those counters while Envoy cx gauges still reflect load.
+func resolveActiveConnections(
+	tcpOpened, tcpClosed, upstreamCx, downstreamCx prometheus.Metric,
+	httpRequestRate float64,
+	trafficIsByteRate bool,
+) (active int64, observed bool) {
+	tcpObserved := istioTCPConnectionMetricsPresent(tcpOpened, tcpClosed)
+	tcpActive := activeTCPConnections(tcpOpened, tcpClosed)
+	envoyObserved := envoyConnectionMetricsPresent(upstreamCx, downstreamCx)
+	envoyActive := envoyActiveConnections(upstreamCx, downstreamCx)
+	httpTraffic := !trafficIsByteRate && httpRequestRate >= busyRequestRatePerSecond
+
+	if tcpObserved && tcpActive > 0 {
+		return tcpActive, true
+	}
+	if httpTraffic && envoyObserved && envoyActive > 0 {
+		return envoyActive, true
+	}
+	if tcpObserved {
+		return tcpActive, true
+	}
+	if envoyObserved {
+		return envoyActive, true
+	}
+	return 0, false
+}
+
+// fetchIstioHTTPRequestRate returns the HTTP request rate for this workload using Istio
+// telemetry. Source and destination reporters are queried separately because PromQL OR on
+// two scalar sums with empty metric labels retains only one operand.
+func fetchIstioHTTPRequestRate(
+	ctx context.Context,
+	prom prometheus.ClientInterface,
+	sourceLabels string,
+	destLabels string,
+	q *prometheus.RangeQuery,
+) float64 {
+	source := prom.FetchRateRange(ctx, "istio_requests_total", []string{sourceLabels}, "", q)
+	dest := prom.FetchRateRange(ctx, "istio_requests_total", []string{destLabels}, "", q)
+	return maxRequestRate(sumLatestValues(source), sumLatestValues(dest))
+}
+
 // fetchIstioTCPConnections loads a TCP counter for this workload as source or destination.
 // Do not filter by reporter: Istio L4 telemetry reporter labels are inverted
 // (https://github.com/istio/istio/issues/32399), so source_workload=waypoint often
@@ -598,10 +709,15 @@ func fetchIstioTCPByteRate(
 	destLabels string,
 	q *prometheus.RangeQuery,
 ) float64 {
-	labels := []string{sourceLabels, destLabels}
-	sent := prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", labels, "", q)
-	received := prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", labels, "", q)
-	return sumLatestValues(sent) + sumLatestValues(received)
+	sent := maxRequestRate(
+		sumLatestValues(prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{sourceLabels}, "", q)),
+		sumLatestValues(prom.FetchRateRange(ctx, "istio_tcp_sent_bytes_total", []string{destLabels}, "", q)),
+	)
+	received := maxRequestRate(
+		sumLatestValues(prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{sourceLabels}, "", q)),
+		sumLatestValues(prom.FetchRateRange(ctx, "istio_tcp_received_bytes_total", []string{destLabels}, "", q)),
+	)
+	return sent + received
 }
 
 func fetchEnvoyDownstreamRequestRate(ctx context.Context, prom prometheus.ClientInterface, labels string, q *prometheus.RangeQuery) prometheus.Metric {

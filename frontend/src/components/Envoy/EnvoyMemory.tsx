@@ -43,7 +43,7 @@ type EnvoyMemoryProps = {
 };
 
 const summaryStyle = kialiStyle({
-  marginBottom: PFSpacer.md
+  marginBottom: PFSpacer.sm
 });
 
 const statusAlertStyle = kialiStyle({
@@ -115,7 +115,6 @@ const tileValueStyle = kialiStyle({
 });
 
 const sectionStyle = kialiStyle({
-  marginTop: PFSpacer.sm,
   maxWidth: '100%',
   minWidth: 0
 });
@@ -369,7 +368,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                       <MetricTile
                         helpKey="activeConnections"
                         label={activeConnectionsLabel}
-                        value={summary.activeConnections}
+                        value={summary.activeConnectionsObserved ? summary.activeConnections : NA.name}
                       />
                       <MetricTile
                         helpKey="requestRate"

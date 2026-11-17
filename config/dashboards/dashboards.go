@@ -139,6 +139,12 @@ const DEFAULT_DASHBOARDS_YAML = `
       - metricName: "istio_tcp_connections_closed_total"
         displayName: "TCP closed Downstream"
         istioMetricLabelPrefix: "destination"
+      - metricName: "envoy_cluster_upstream_cx_active"
+        displayName: "Envoy upstream cx active"
+        usePodSelector: true
+      - metricName: "envoy_listener_downstream_cx_active"
+        displayName: "Envoy downstream cx active"
+        usePodSelector: true
   - chart:
       name: "Active clusters"
       spans: 12

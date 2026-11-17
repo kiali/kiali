@@ -17,33 +17,53 @@ import (
 func TestClassifyEnvoyMemorySidecar(t *testing.T) {
 	threshold := float64(sidecarHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 200, 0, 0, false)
+	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 200, 0, 0, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 5, false)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 10, 50, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0, false)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 50, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, false)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 10, 0, 0.05, false, true)
+	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
+
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold-1, 200, 0, 0, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseOK, cause)
 
-	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, 0, 10, 0, 0, false)
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, 0, 10, 0, 0, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
+
+	// HTTP-only sidecars without TCP counters must not treat 0 as proof of idle connections.
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 50, 0, 0, false, false)
+	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
+
+	// Large config wins over light background HTTP (demo bloat / scoped mesh).
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 278, 1, 0.27, false, true)
+	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
+
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 278, 10, 0.27, false, true)
+	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
+
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 278, 1, 2.0, false, true)
+	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
+
+	cause = classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, 278, 1, 120, false, true)
+	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 }
 
 func TestClassifyEnvoyMemoryGateway(t *testing.T) {
 	threshold := float64(gatewayHighMemoryBytes)
 
-	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0, true)
+	cause := classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 0, true, true)
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
-	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0, true)
+	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 10, 0, 0, true, true)
 	assert.Equal(t, models.EnvoyMemoryCauseUnknown, cause)
 
 	// HTTP gateways report req/s; a busy gateway must not be treated as idle against the TCP byte threshold.
-	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 50, false)
+	cause = classifyEnvoyMemory(threshold, gatewayLargeConfigClusters, threshold+1, 200, 0, 100, false, true)
 	assert.Equal(t, models.EnvoyMemoryCauseTraffic, cause)
 }
 
@@ -206,6 +226,61 @@ func TestBuildWorkloadMetricLabelsUsesGatewayLabels(t *testing.T) {
 	assert.Equal(t, `{namespace="bookinfo",gateway_networking_k8s_io_gateway_name="waypoint"}`, labels)
 }
 
+func TestResolveActiveConnectionsPrefersTCPWhenPositive(t *testing.T) {
+	tcpOpened := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(20)}}},
+		},
+	}
+	tcpClosed := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(5)}}},
+		},
+	}
+	envoyCx := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(3)}}},
+		},
+	}
+
+	active, observed := resolveActiveConnections(tcpOpened, tcpClosed, envoyCx, prometheus.Metric{}, 5, false)
+	assert.Equal(t, int64(15), active)
+	assert.True(t, observed)
+}
+
+func TestResolveActiveConnectionsHTTPFallbackToEnvoy(t *testing.T) {
+	tcpOpened := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(100)}}},
+		},
+	}
+	tcpClosed := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(100)}}},
+		},
+	}
+	upstreamCx := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(2)}}},
+		},
+	}
+	downstreamCx := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(1)}}},
+		},
+	}
+
+	active, observed := resolveActiveConnections(tcpOpened, tcpClosed, upstreamCx, downstreamCx, 100, false)
+	assert.Equal(t, int64(3), active)
+	assert.True(t, observed)
+}
+
+func TestResolveActiveConnectionsUnobservedWhenAbsent(t *testing.T) {
+	active, observed := resolveActiveConnections(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, 0, false)
+	assert.Equal(t, int64(0), active)
+	assert.False(t, observed)
+}
+
 func TestSumEnvoyTrafficSignals(t *testing.T) {
 	assert := assert.New(t)
 
@@ -240,6 +315,34 @@ func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {
 		},
 	}
 	assert.Equal(t, 1.25, maxRequestRate(envoyOnly, sumLatestValues(istio)))
+}
+
+func TestFetchIstioHTTPRequestRateUsesMaxOfReporters(t *testing.T) {
+	prom := new(pmock.PromClientMock)
+	q := &prometheus.RangeQuery{}
+	q.FillDefaults()
+
+	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{`{source_workload="cars-v1",reporter=~"source|waypoint"}`}, "", q).
+		Return(prometheus.Metric{
+			Matrix: model.Matrix{
+				&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(0.27)}}},
+			},
+		})
+	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{`{destination_workload="cars-v1",reporter="destination"}`}, "", q).
+		Return(prometheus.Metric{
+			Matrix: model.Matrix{
+				&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(200)}}},
+			},
+		})
+
+	rate := fetchIstioHTTPRequestRate(
+		context.Background(),
+		prom,
+		`{source_workload="cars-v1",reporter=~"source|waypoint"}`,
+		`{destination_workload="cars-v1",reporter="destination"}`,
+		q,
+	)
+	assert.Equal(t, 200.0, rate)
 }
 
 func TestFetchEnvoyDownstreamRequestRateUsesTotalSuffixFallback(t *testing.T) {

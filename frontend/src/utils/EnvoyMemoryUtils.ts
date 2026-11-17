@@ -221,7 +221,7 @@ export const envoyMemoryThresholdHelp = (summary: {
   if (usesWorkingSet && summary.memoryLimitBytes > 0) {
     const limitPercent = ((summary.memoryThresholdBytes / summary.memoryLimitBytes) * 100).toFixed(1);
     return t(
-      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} ({{limitPercent}}% of its memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}.',
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} ({{limitPercent}}% of its memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels: likely traffic when HTTP is about 100 req/s or more, TCP is about 256 KiB/s or more on waypoints, or active connections are 10 or more when observed; likely configuration when clusters are above that limit and traffic is not busy.',
       {
         limitPercent,
         threshold,
@@ -236,7 +236,7 @@ export const envoyMemoryThresholdHelp = (summary: {
 
   if (usesWorkingSet) {
     return t(
-      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}.',
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels use the same busy-traffic thresholds as above when memory is high.',
       {
         threshold,
         proxyType: proxyLabel,
@@ -246,7 +246,7 @@ export const envoyMemoryThresholdHelp = (summary: {
   }
 
   return t(
-    'Container working set is unavailable. Memory is flagged as high when Envoy allocated memory exceeds the absolute fallback threshold of {{threshold}} for {{proxyType}}. Large configuration is considered when active clusters exceed {{clusters}}.',
+    'Container working set is unavailable. Memory is flagged as high when Envoy allocated memory exceeds the absolute fallback threshold of {{threshold}} for {{proxyType}}. Large configuration is considered when active clusters exceed {{clusters}}. Cause labels use the same busy-traffic thresholds when memory is high.',
     {
       threshold,
       proxyType: proxyLabel,
@@ -288,11 +288,11 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       return t('Count of routes from the Envoy config dump of the selected pod (not a Prometheus metric).');
     case 'activeConnections':
       return t(
-        'Active TCP connections approximated as sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total) for this workload. Reporter is not filtered because Istio L4 telemetry inverts reporter labels.'
+        'Prefer Istio L4: sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total) (reporter not filtered) when that net is positive. When TCP net is zero but HTTP is at least about 100 req/s, use sum of envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active. If TCP metrics are missing, use Envoy gauges when present. Shows N/A when neither signal exists.'
       );
     case 'requestRate':
       return t(
-        'Traffic rate from Istio telemetry. HTTP: rate of istio_requests_total (source/waypoint and destination reporters). L4 proxies (waypoints, or gateways with only TCP traffic): combined rate of istio_tcp_sent_bytes_total and istio_tcp_received_bytes_total (no reporter filter).'
+        'Traffic rate from Istio telemetry at the latest step in the selected range. HTTP: the higher of istio_requests_total rate as source/waypoint (outbound) and as destination (inbound), queried separately. L4 proxies (waypoints, or gateways with only TCP traffic): sum of TCP sent and received byte rates (per direction, the higher of source and destination labels).'
       );
     default:
       return '';
