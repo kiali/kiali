@@ -1,6 +1,7 @@
 package kubetest
 
 import (
+	"sort"
 	"sync"
 
 	osapps_v1 "github.com/openshift/api/apps/v1"
@@ -37,6 +38,10 @@ type K8SClientFactoryMock struct {
 	// namespaces the user cannot: the SA clients should be unfiltered while
 	// the user Clients carry the restricted/list-authorized reactors.
 	SAClients map[string]kubernetes.ClientInterface
+
+	// skippedClusters models clusters whose registration was definitively broken at
+	// startup; see WithSkippedCluster.
+	skippedClusters map[string]error
 }
 
 // Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
@@ -125,6 +130,50 @@ func (o *K8SClientFactoryMock) WithSAClient(cluster string, objects ...runtime.O
 		o.SAClients = make(map[string]kubernetes.ClientInterface)
 	}
 	o.SAClients[cluster] = sa
+	return o
+}
+
+// IsClusterSkipped reports whether the cluster's registration was marked definitively broken
+// at startup (see WithSkippedCluster).
+
+func (o *K8SClientFactoryMock) IsClusterSkipped(cluster string) bool {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	if o.skippedClusters == nil {
+		return false
+	}
+	_, skipped := o.skippedClusters[cluster]
+	return skipped
+}
+
+func (o *K8SClientFactoryMock) SkipCluster(cluster string, reason error) {
+	o.lock.Lock()
+	defer o.lock.Unlock()
+	if o.skippedClusters == nil {
+		o.skippedClusters = make(map[string]error)
+	}
+	o.skippedClusters[cluster] = reason
+	if o.SAClients != nil {
+		delete(o.SAClients, cluster)
+	}
+}
+
+func (o *K8SClientFactoryMock) SkippedClusters() []string {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	names := make([]string, 0, len(o.skippedClusters))
+	for cluster := range o.skippedClusters {
+		names = append(names, cluster)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// WithSkippedCluster marks the cluster as skipped (definitively broken
+// registration) and drops its SA client, mirroring the production factory's
+// SkipCluster for tests.
+func (o *K8SClientFactoryMock) WithSkippedCluster(cluster string, reason error) *K8SClientFactoryMock {
+	o.SkipCluster(cluster, reason)
 	return o
 }
 

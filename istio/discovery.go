@@ -690,8 +690,13 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		clustersByName[cluster] = meshCluster
 	}
 
-	// Add clusters from config.
+	// Add clusters from config. A cluster skipped at startup (definitively broken
+	// registration) must not be re-introduced here as accessible: it has no cache and no
+	// clients, and publishing it would send clients at a cluster Kiali cannot serve.
 	for _, cluster := range in.conf.Clustering.Clusters {
+		if in.kialiCache.IsClusterSkipped(cluster.Name) {
+			continue
+		}
 		if _, found := clustersByName[cluster.Name]; !found {
 			clustersByName[cluster.Name] = models.KubeCluster{
 				Name: cluster.Name,

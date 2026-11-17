@@ -255,14 +255,14 @@ func (o *OpenshiftAuthController) OpenshiftAuthRedirect(w http.ResponseWriter, r
 
 	// Redirect user to consent page to ask for permission
 	// for the scopes specified above.
-	url, err := o.openshiftOAuth.AuthCodeURL(verifier, cluster)
+	url, err := o.openshiftOAuth.AuthCodeURL(r.Context(), verifier, cluster)
 	if err != nil {
 		log.Errorf("Error getting the AuthCodeURL: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
 		return
 	}
 
-	oAuthConfig, err := o.openshiftOAuth.OAuthConfig(cluster)
+	oAuthConfig, err := o.openshiftOAuth.OAuthConfig(r.Context(), cluster)
 	if err != nil {
 		log.Errorf("Error getting the OAuthConfig: %v", err)
 		http.Error(w, "Internal error", http.StatusInternalServerError)
@@ -372,6 +372,14 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 		}
 
 		for _, session := range sessions {
+			// A cluster skipped at startup (definitively broken registration) gets no user
+			// client and no validation: the session's token may be perfectly fine - Kiali
+			// itself is the problem. Skip it for this request and preserve the cookie; it is
+			// retried if Kiali is restarted with a fixed registration.
+			if o.clientFactory.IsClusterSkipped(session.Cluster) {
+				log.Debugf("Skipping session for cluster [%s]: the cluster is skipped by Kiali because its registration is broken", session.Cluster)
+				continue
+			}
 			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
 				if k8serrors.IsUnauthorized(err) {
@@ -525,6 +533,15 @@ func (o *OpenshiftAuthController) TerminateSession(r *http.Request, w http.Respo
 	}
 
 	for _, session := range sessions {
+		// A skipped cluster has no SA client, so its remote token cannot be deleted - but
+		// the local session must still be cleared: an explicit logout that leaves the
+		// cookie behind (or fails with 500 because the skipped session is processed last)
+		// keeps the user logged in to a cluster Kiali cannot even reach.
+		if o.clientFactory.IsClusterSkipped(session.Cluster) {
+			log.Debugf("Clearing local session for skipped cluster [%s]; its remote token cannot be revoked", session.Cluster)
+			o.sessionStore.TerminateSession(r, w, session.Cluster)
+			continue
+		}
 		err = o.openshiftOAuth.Logout(r.Context(), session.Payload.AccessToken, session.Cluster)
 		if err != nil {
 			err = TerminateSessionError{

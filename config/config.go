@@ -555,13 +555,27 @@ type KialiInternalConfig struct {
 	CacheExpiration CacheExpirationConfig `yaml:"cache_expiration,omitempty"`
 	// CacheReadTimeout bounds each read of a cluster's kube cache. It must cover the first sync of a large cluster's
 	// informers. Set to 0 to disable.
-	CacheReadTimeout       time.Duration     `yaml:"cache_read_timeout,omitempty"`
-	GraphCache             GraphCacheConfig  `yaml:"graph_cache,omitempty"`
-	HealthCache            HealthCacheConfig `yaml:"health_cache,omitempty"`
-	MetricLogDurationLimit time.Duration     `yaml:"metric_log_duration_limit,omitempty"`
+	CacheReadTimeout       time.Duration          `yaml:"cache_read_timeout,omitempty"`
+	GraphCache             GraphCacheConfig       `yaml:"graph_cache,omitempty"`
+	HealthCache            HealthCacheConfig      `yaml:"health_cache,omitempty"`
+	KubernetesClient       KubernetesClientConfig `yaml:"kubernetes_client,omitempty"`
+	MetricLogDurationLimit time.Duration          `yaml:"metric_log_duration_limit,omitempty"`
 	// TODO: This is only used by `run-kiali`. Remove once we have a way to tell Kiali
 	// we are running outside the cluster. Part of: https://github.com/kiali/kiali/issues/8263.
 	UrlServiceVersion string `yaml:"url_service_version" json:"urlServiceVersion"`
+}
+
+// KubernetesClientConfig bounds Kiali's Kubernetes client calls. These settings exist as an
+// escape hatch for unusual environments (for example, a WAN link to a remote cluster whose
+// connection establishment is slower than the default budget); they are undocumented like the
+// rest of kiali_internal and subject to change.
+type KubernetesClientConfig struct {
+	// DialTimeout bounds connection establishment (DNS + TCP connect) on the configs that feed
+	// controller-runtime's informer caches, where a request timeout cannot be used because it
+	// would kill long watches. It must sit well below the access check timeout so that checks
+	// against a blackholed cluster fail at the dial instead of consuming the whole check budget.
+	// Set to 0 to disable.
+	DialTimeout time.Duration `yaml:"dial_timeout,omitempty"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -1219,6 +1233,9 @@ func NewConfig() (c *Config) {
 			},
 			HealthCache: HealthCacheConfig{
 				Enabled: true,
+			},
+			KubernetesClient: KubernetesClientConfig{
+				DialTimeout: 2 * time.Second, // set to 0 to disable
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},

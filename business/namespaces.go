@@ -119,6 +119,9 @@ func (in *NamespaceService) GetClusterNamespacesForCluster(ctx context.Context, 
 	// error: callers map AccessibleNamespaceError to 403.
 	client, ok := in.userClients[cluster]
 	if !ok {
+		if in.kialiCache.IsClusterSkipped(cluster) {
+			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterNotCached)
+		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
 	cacheKey := client.GetCacheKey()
@@ -376,7 +379,7 @@ func (in *NamespaceService) GetClusterNamespaces(ctx context.Context, cluster st
 func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, cluster string) ([]models.Namespace, error) {
 	saClient, ok := in.kialiSAClients[cluster]
 	if !ok {
-		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA", cluster)
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali SA: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	// The SA set is cached under its own key, deliberately distinct from the
@@ -440,6 +443,14 @@ func (in *NamespaceService) CheckNamespaceAccessAllClusters(ctx context.Context,
 	homeCluster := in.conf.KubernetesConfig.ClusterName
 	notAccessible := func() error {
 		return NewAccessibleNamespaceError("namespace [" + namespace + "] is not accessible in every cluster where it exists")
+	}
+
+	// A skipped cluster (registration definitively broken at startup) is invisible to the
+	// SA-client list below, but its telemetry may still be present in unscoped queries. Whether
+	// the namespace exists there cannot be evaluated, so the authorization fails closed:
+	// skipping the cluster would let its data through the unscoped query.
+	if len(in.kialiCache.SkippedClusters()) > 0 {
+		return nil, notAccessible()
 	}
 
 	for _, cluster := range in.GetKialiSAClusterList() {
@@ -519,6 +530,9 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// AccessibleNamespaceError the computation path produces.
 	client, ok := in.userClients[cluster]
 	if !ok {
+		if in.kialiCache.IsClusterSkipped(cluster) {
+			return nil, fmt.Errorf("cluster [%s]: %w", cluster, cache.ErrClusterNotCached)
+		}
 		return nil, NewAccessibleNamespaceError("cluster [" + cluster + "] is not found or is not accessible for Kiali")
 	}
 
@@ -575,7 +589,7 @@ func (in *NamespaceService) UpdateNamespace(ctx context.Context, namespace strin
 
 	userClient, found := in.userClients[cluster]
 	if !found {
-		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali", cluster)
+		return nil, fmt.Errorf("cluster [%s] is not found or is not accessible for Kiali: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	updatedNamespace, err := userClient.UpdateNamespace(namespace, jsonPatch)
