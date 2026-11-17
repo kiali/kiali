@@ -12,18 +12,16 @@ const canUseClipboardApi = (): boolean =>
   typeof window !== 'undefined' &&
   window.isSecureContext;
 
-const MODAL_COPY_CONTAINER_SELECTOR = '.pf-v6-c-modal-box, .pf-v5-c-modal-box, [role="dialog"]';
-
 /**
- * Container for the execCommand fallback textarea. When copy is triggered inside a modal,
- * the temporary control must stay inside the modal focus trap (not document.body).
+ * Container for the execCommand fallback textarea. When copy is triggered inside a dialog,
+ * the temporary control must stay inside the focus trap (not document.body).
  */
 const getExecCommandCopyContainer = (): HTMLElement => {
   const active = document.activeElement;
   if (active instanceof HTMLElement) {
-    const modal = active.closest(MODAL_COPY_CONTAINER_SELECTOR);
-    if (modal instanceof HTMLElement) {
-      return modal;
+    const dialog = active.closest('[role="dialog"]');
+    if (dialog instanceof HTMLElement) {
+      return dialog;
     }
   }
   return document.body;
