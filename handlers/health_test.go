@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -653,11 +654,11 @@ func TestNamespaceFakesReturnForbidden(t *testing.T) {
 
 	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("bookinfo"))
 	restricted := newRestrictedNamespaceClient(k8s, "ns-victim", []string{"bookinfo", "ns-victim"})
-	_, err = restricted.GetNamespace("ns-victim")
+	_, err = restricted.GetNamespace(context.Background(), "ns-victim")
 	assert.True(t, k8serrors.IsForbidden(err))
 
 	listAuthorized := newListAuthorizedNamespaceClient(kubetest.NewFakeK8sClient(kubetest.FakeNamespace("ns-victim")), "ns-victim", []string{"bookinfo", "ns-victim"})
-	_, err = listAuthorized.GetNamespace("ns-victim")
+	_, err = listAuthorized.GetNamespace(context.Background(), "ns-victim")
 	assert.True(t, k8serrors.IsForbidden(err))
 }
 

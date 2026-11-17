@@ -209,6 +209,12 @@ func (c *FakeK8sClient) HasUDPRouteInV1() bool { return c.GatewayAPIEnabled }
 func (c *FakeK8sClient) IsInferenceAPI() bool  { return c.InferenceAPIEnabled }
 func (c *FakeK8sClient) IsIstioGateway() bool  { return c.IstioGatewayInstalled }
 func (c *FakeK8sClient) IsIstioAPI() bool      { return c.IstioAPIInstalled }
+
+func (c *FakeK8sClient) IsGatewayAPIContext(ctx context.Context) bool { return c.GatewayAPIEnabled }
+func (c *FakeK8sClient) IsIstioGatewayContext(ctx context.Context) bool {
+	return c.IstioGatewayInstalled
+}
+func (c *FakeK8sClient) IsIstioAPIContext(ctx context.Context) bool { return c.IstioAPIInstalled }
 func (c *FakeK8sClient) GetCacheKey() string {
 	if c.CacheKey != "" {
 		return c.CacheKey

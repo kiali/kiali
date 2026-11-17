@@ -193,11 +193,11 @@ func TestIsAmbientEnabledInAnyCluster(t *testing.T) {
 	})
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
-	require.True(cache.IsAmbientEnabledInAnyCluster([]string{"mgmt", "member"}), "ambient on member should be detected")
-	require.True(cache.IsAmbientEnabledInAnyCluster([]string{"member"}), "single ambient-enabled cluster")
-	require.False(cache.IsAmbientEnabledInAnyCluster([]string{"mgmt"}), "no ambient on mgmt alone")
-	require.False(cache.IsAmbientEnabledInAnyCluster(nil), "nil slice")
-	require.False(cache.IsAmbientEnabledInAnyCluster([]string{}), "empty slice")
+	require.True(cache.IsAmbientEnabledInAnyCluster(context.Background(), []string{"mgmt", "member"}), "ambient on member should be detected")
+	require.True(cache.IsAmbientEnabledInAnyCluster(context.Background(), []string{"member"}), "single ambient-enabled cluster")
+	require.False(cache.IsAmbientEnabledInAnyCluster(context.Background(), []string{"mgmt"}), "no ambient on mgmt alone")
+	require.False(cache.IsAmbientEnabledInAnyCluster(context.Background(), nil), "nil slice")
+	require.False(cache.IsAmbientEnabledInAnyCluster(context.Background(), []string{}), "empty slice")
 }
 
 // This test only tests anything when the '-race' flag is passed to 'go test'.
@@ -463,7 +463,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Empty(result)
 	})
 
@@ -489,7 +489,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 2)
 		require.Equal("custom-istio", result[0].Name)
 		require.Equal("custom-istio", result[0].ClassName)
@@ -520,7 +520,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 1) // Only the valid one should be included
 		require.Equal("valid-both", result[0].Name)
 		require.Equal("valid-both", result[0].ClassName)
@@ -569,7 +569,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 2)
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio", result[0].ClassName)
@@ -618,7 +618,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 1) // Only istio.io controller should be included
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio", result[0].ClassName)
@@ -644,7 +644,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 2) // Default istio and istio-remote
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio", result[0].ClassName)
@@ -677,7 +677,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses("cluster1")
+		result := kialiCache.GatewayAPIClasses(context.Background(), "cluster1")
 		require.Len(result, 3) // istio, istio-remote, istio-east-west (multi-cluster)
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio-remote", result[1].Name)
@@ -707,7 +707,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 3) // istio, istio-remote, istio-waypoint (ambient enabled)
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio-remote", result[1].Name)
@@ -741,7 +741,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses("mgmt")
+		result := kialiCache.GatewayAPIClasses(context.Background(), "mgmt")
 		var hasWaypoint bool
 		for _, gwClass := range result {
 			if gwClass.ClassName == "istio-waypoint" {
@@ -773,7 +773,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 2) // Should fall back to default values
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio-remote", result[1].Name)
@@ -799,7 +799,7 @@ func TestGatewayAPIClasses(t *testing.T) {
 		kialiCache, err := cache.NewKialiCache(t.Context(), saClients, readers, *conf)
 		require.NoError(err)
 
-		result := kialiCache.GatewayAPIClasses(conf.KubernetesConfig.ClusterName)
+		result := kialiCache.GatewayAPIClasses(context.Background(), conf.KubernetesConfig.ClusterName)
 		require.Len(result, 2) // Should fall back to default values
 		require.Equal("istio", result[0].Name)
 		require.Equal("istio-remote", result[1].Name)

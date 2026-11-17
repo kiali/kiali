@@ -856,7 +856,7 @@ type logStreamer struct {
 	kubernetes.UserClientInterface
 }
 
-func (l *logStreamer) StreamPodLogs(namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
+func (l *logStreamer) StreamPodLogs(_ context.Context, namespace, name string, opts *corev1.PodLogOptions) (io.ReadCloser, error) {
 	return io.NopCloser(strings.NewReader(l.logs)), nil
 }
 

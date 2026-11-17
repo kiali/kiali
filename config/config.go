@@ -577,6 +577,12 @@ type KubernetesClientConfig struct {
 	// against a blackholed cluster fail at the dial instead of consuming the whole check budget.
 	// Set to 0 to disable.
 	DialTimeout time.Duration `yaml:"dial_timeout,omitempty"`
+	// RequestTimeout bounds each live (non-informer) API request made through Kiali's
+	// Kubernetes clients: without it, a remote that accepts connections but stalls hangs every
+	// request that awaits it for the kernel TCP timeout. It is deliberately NOT applied to the
+	// informer configs, where it would kill long watches. A preconfigured timeout on an
+	// incoming config is never loosened. Set to 0 to disable.
+	RequestTimeout time.Duration `yaml:"request_timeout,omitempty"`
 }
 
 // AuthConfig provides details on how users are to authenticate
@@ -1236,7 +1242,8 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 			},
 			KubernetesClient: KubernetesClientConfig{
-				DialTimeout: 2 * time.Second, // set to 0 to disable
+				DialTimeout:    2 * time.Second,  // set to 0 to disable
+				RequestTimeout: 10 * time.Second, // set to 0 to disable
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},

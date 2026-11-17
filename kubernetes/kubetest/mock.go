@@ -1,6 +1,7 @@
 package kubetest
 
 import (
+	"context"
 	"sort"
 	"sync"
 
@@ -257,6 +258,11 @@ func (o *K8SClientMock) IsGatewayAPI() bool {
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) IsGatewayAPIContext(ctx context.Context) bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func (o *K8SClientMock) HasTCPRouteInV1() bool {
 	args := o.Called()
 	return args.Get(0).(bool)
@@ -282,7 +288,17 @@ func (o *K8SClientMock) IsIstioGateway() bool {
 	return args.Get(0).(bool)
 }
 
+func (o *K8SClientMock) IsIstioGatewayContext(ctx context.Context) bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
 func (o *K8SClientMock) IsIstioAPI() bool {
+	args := o.Called()
+	return args.Get(0).(bool)
+}
+
+func (o *K8SClientMock) IsIstioAPIContext(ctx context.Context) bool {
 	args := o.Called()
 	return args.Get(0).(bool)
 }
