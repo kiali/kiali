@@ -1,9 +1,20 @@
 import * as React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 import { ChatAIActions } from 'actions/ChatAIActions';
 import { EntryChat } from '../EntryChat';
+import { writeMarkdownRichToClipboard } from 'utils/ClipboardUtils';
+import { addWarning } from 'utils/AlertUtils';
+import type { Mock } from '@rstest/core';
+
+rstest.mock('utils/ClipboardUtils', () => ({
+  writeMarkdownRichToClipboard: rstest.fn()
+}));
+
+rstest.mock('utils/AlertUtils', () => ({
+  addWarning: rstest.fn()
+}));
 
 // Mock the heavy PF chatbot Message component so tests focus on EntryChat logic.
 // Spread the real module first (needed for ChatbotDisplayMode used by ChatAIState reducer),
@@ -19,8 +30,10 @@ rstest.mock('@patternfly/chatbot', () => ({
     content,
     isLoading,
     extraContent,
+    actions,
     'data-test': dataTest
   }: {
+    actions?: { copy?: { onClick: () => void } };
     content?: string;
     'data-test'?: string;
     extraContent?: { afterMainContent?: React.ReactNode; beforeMainContent?: React.ReactNode };
@@ -36,6 +49,11 @@ rstest.mock('@patternfly/chatbot', () => ({
           {content && <span className="message-content">{content}</span>}
           {extraContent?.beforeMainContent}
           {extraContent?.afterMainContent}
+          {actions?.copy && (
+            <button type="button" data-test="stub-chat-copy" onClick={() => void actions.copy?.onClick()}>
+              copy
+            </button>
+          )}
         </>
       )}
     </article>
@@ -52,6 +70,7 @@ const renderEntryChat = (entryIndex: number): ReturnType<typeof render> =>
 describe('EntryChat', () => {
   beforeEach(() => {
     store.dispatch(ChatAIActions.setChatHistoryClear());
+    rstest.clearAllMocks();
   });
 
   // ── User messages ────────────────────────────────────────────────────────────
@@ -107,6 +126,29 @@ describe('EntryChat', () => {
       );
       renderEntryChat(0);
       expect(screen.getByTestId('kiali__chat-entry-ai')).toBeInTheDocument();
+    });
+
+    it('shows a warning when embedded copy fails', async () => {
+      (writeMarkdownRichToClipboard as Mock).mockResolvedValue(false);
+
+      store.dispatch(
+        ChatAIActions.setChatHistoryAdd({
+          entry: {
+            id: 'ai-copy-fail',
+            who: 'ai',
+            text: 'Body',
+            isStreaming: false,
+            isCancelled: false,
+            isTruncated: false
+          }
+        })
+      );
+      renderEntryChat(0);
+      fireEvent.click(screen.getByTestId('stub-chat-copy'));
+
+      await waitFor(() => {
+        expect(addWarning).toHaveBeenCalledWith('Unable to copy to clipboard.');
+      });
     });
 
     it('renders a loading spinner while the message is streaming and no text has arrived yet', () => {
