@@ -76,6 +76,43 @@ describe('ClipboardUtils', () => {
       expect(execCommandMock).toHaveBeenCalledWith('copy');
     });
 
+    it('mounts execCommand fallback textarea inside an open modal', async () => {
+      Object.defineProperty(window, 'isSecureContext', { configurable: true, value: false });
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: rstest.fn().mockResolvedValue(undefined)
+        }
+      });
+
+      const dialog = document.createElement('div');
+      dialog.setAttribute('role', 'dialog');
+      const copyButton = document.createElement('button');
+      dialog.appendChild(copyButton);
+      document.body.appendChild(dialog);
+      copyButton.focus();
+
+      let textareaParentDuringCopy: HTMLElement | null = null;
+      let selectedTextDuringCopy = '';
+      execCommandMock.mockImplementation(() => {
+        const textArea = dialog.querySelector('textarea');
+        if (textArea instanceof HTMLTextAreaElement) {
+          textareaParentDuringCopy = textArea.parentElement;
+          selectedTextDuringCopy = textArea.value;
+        }
+        return true;
+      });
+
+      const result = await ClipboardUtils.writePlainTextToClipboard('modal payload');
+
+      expect(result).toBe(true);
+      expect(textareaParentDuringCopy).toBe(dialog);
+      expect(selectedTextDuringCopy).toBe('modal payload');
+      expect(document.activeElement).toBe(copyButton);
+
+      document.body.removeChild(dialog);
+    });
+
     it('returns false when Clipboard API and execCommand both fail', async () => {
       const consoleSpy = rstest.spyOn(console, 'warn').mockImplementation(() => undefined);
       execCommandMock.mockReturnValue(false);

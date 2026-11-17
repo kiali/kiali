@@ -12,17 +12,41 @@ const canUseClipboardApi = (): boolean =>
   typeof window !== 'undefined' &&
   window.isSecureContext;
 
+const MODAL_COPY_CONTAINER_SELECTOR = '.pf-v6-c-modal-box, .pf-v5-c-modal-box, [role="dialog"]';
+
+/**
+ * Container for the execCommand fallback textarea. When copy is triggered inside a modal,
+ * the temporary control must stay inside the modal focus trap (not document.body).
+ */
+const getExecCommandCopyContainer = (): HTMLElement => {
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) {
+    const modal = active.closest(MODAL_COPY_CONTAINER_SELECTOR);
+    if (modal instanceof HTMLElement) {
+      return modal;
+    }
+  }
+  return document.body;
+};
+
 /**
  * Plain text via textarea + execCommand (HTTP and Clipboard API fallback).
  */
 const copyPlainTextWithExecCommand = (text: string): boolean => {
+  const container = getExecCommandCopyContainer();
+  const previousFocus = document.activeElement;
+
   const textArea = document.createElement('textarea');
   textArea.value = text;
   textArea.setAttribute('readonly', '');
+  textArea.setAttribute('aria-hidden', 'true');
+  textArea.tabIndex = -1;
   textArea.style.position = 'fixed';
   textArea.style.left = '-9999px';
   textArea.style.top = '0';
-  document.body.appendChild(textArea);
+
+  container.appendChild(textArea);
+  textArea.focus({ preventScroll: true });
   textArea.select();
   textArea.setSelectionRange(0, text.length);
 
@@ -32,7 +56,10 @@ const copyPlainTextWithExecCommand = (text: string): boolean => {
       ok = document.execCommand('copy');
     }
   } finally {
-    document.body.removeChild(textArea);
+    container.removeChild(textArea);
+    if (previousFocus instanceof HTMLElement) {
+      previousFocus.focus({ preventScroll: true });
+    }
   }
   return ok;
 };
