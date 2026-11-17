@@ -1,8 +1,7 @@
 import * as React from 'react';
+import { ListLabels } from './ListLabels';
 import { KialiLink } from '../Link/KialiLink';
 import { Label as PFLabel, Tooltip, TooltipPosition } from '@patternfly/react-core';
-import { getFiltersFromURL } from '../FilterList/FilterHelper';
-import { appLabelFilter, versionLabelFilter } from '../../pages/WorkloadList/FiltersAndSorts';
 import { MissingSidecar } from '../MissingSidecar/MissingSidecar';
 import type { Renderer, Resource, SortResource, TResource } from './Config';
 import { GVKToBadge } from './Config';
@@ -13,29 +12,24 @@ import type { WorkloadListItem } from '../../types/Workload';
 import type { IstioConfigItem } from '../../types/IstioConfigList';
 import type { AppListItem } from '../../types/AppList';
 import type { ServiceListItem } from '../../types/ServiceList';
-import type { ActiveFilter } from '../../types/Filters';
 import { renderAPILogo } from '../Logo/Logos';
 import type { Health } from '../../types/Health';
 import type { NamespaceInfo } from '../../types/NamespaceInfo';
 import { ValidationSummary } from '../Validations/ValidationSummary';
 import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { IstioObjectLink, GetIstioObjectUrl } from '../Link/IstioObjectLink';
-import { labelFilter } from 'components/Filters/CommonFilters';
-import { labelFilter as NsLabelFilter } from '../../pages/Namespaces/Filters';
 import { ValidationSummaryLink } from '../Link/ValidationSummaryLink';
 import type { ValidationStatus } from '../../types/IstioObjects';
 import type { PFBadgeType } from 'components/Pf/PfBadges';
 import { PFBadge, PFBadges } from 'components/Pf/PfBadges';
 import { MissingLabel } from '../MissingLabel/MissingLabel';
 import { t } from 'utils/I18nUtils';
-import { getPagePath } from 'utils/NavigationUtils';
 import {
   getGVKTypeString,
   getIstioObjectGVK,
   getReconciliationCondition,
   kindToStringIncludeK8s
 } from 'utils/IstioConfigUtils';
-import { Label } from 'components/Label/Label';
 import { isMultiCluster, INJECTION_LABEL_NAME, INJECTION_LABEL_REV } from 'config/ServerConfig';
 import { KialiIcon } from '../../config/KialiIcon';
 import { Td } from '@patternfly/react-table';
@@ -304,100 +298,26 @@ export const namespace: Renderer<TResource> = (item: TResource) => {
   );
 };
 
-const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: string): boolean => {
-  return filters.some(filter => {
-    if (filter.category === id) {
-      if (filter.value.includes('=')) {
-        const [k, v] = filter.value.split('=');
-
-        if (k === key) {
-          return v.split(',').some(val => value.split(',').some(vl => vl.trim().startsWith(val.trim())));
-        }
-
-        return false;
-      }
-
-      return key === filter.value;
-    } else {
-      if (filter.category === appLabelFilter.category) {
-        return filter.value === 'Present' && key === 'app';
-      }
-
-      return filter.value === 'Present' && key === 'version';
-    }
-  });
-};
-
 export const labels: Renderer<SortResource | NamespaceInfo> = (
   item: SortResource | NamespaceInfo,
   _: Resource,
   __: PFBadgeType,
   ___?: Health,
   statefulFilter?: StatefulFiltersRef
-) => {
-  const path = getPagePath();
-  const labelFilt = path === 'namespaces' ? NsLabelFilter : labelFilter;
-  const filters = getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
-
-  return (
-    <Td
-      role="gridcell"
-      dataLabel="Labels"
-      key={`VirtuaItem_Labels_${'namespace' in item && `${item.namespace}_`}${item.name}`}
-      style={{ verticalAlign: 'middle', paddingBottom: '0.25rem' }}
-    >
-      {item.labels &&
-        Object.entries(item.labels).map(([key, value], i) => {
-          const label = `${key}=${value}`;
-          const labelAct = labelActivate(filters.filters, key, value, labelFilt.category);
-
-          const isExactlyLabelFilter = getFiltersFromURL([labelFilt]).filters.some(f => f.value.includes(label));
-
-          const labelComponent = (
-            <Label
-              key={`label_${i}`}
-              name={key}
-              value={value}
-              color={labelAct ? 'yellow' : undefined}
-              style={{ cursor: isExactlyLabelFilter || !labelAct ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}
-              onClick={(): void => {
-                if (statefulFilter?.current) {
-                  if (labelAct) {
-                    if (isExactlyLabelFilter) {
-                      statefulFilter.current.removeFilter(labelFilt.category, label);
-                    }
-                  } else {
-                    statefulFilter.current.filterAdded(labelFilt, label);
-                  }
-                }
-              }}
-            />
-          );
-
-          return statefulFilter ? (
-            <Tooltip
-              key={`Tooltip_Label_${key}_${value}`}
-              content={
-                labelAct ? (
-                  isExactlyLabelFilter ? (
-                    <>Remove label from Filters</>
-                  ) : (
-                    <>Kiali can't remove the filter if is an expression</>
-                  )
-                ) : (
-                  <>Add label to Filters</>
-                )
-              }
-            >
-              {labelComponent}
-            </Tooltip>
-          ) : (
-            labelComponent
-          );
-        })}
-    </Td>
-  );
-};
+) => (
+  <Td
+    role="gridcell"
+    dataLabel="Labels"
+    key={`VirtuaItem_Labels_${'namespace' in item && `${item.namespace}_`}${item.name}`}
+    style={{ verticalAlign: 'middle', paddingBottom: '0.25rem' }}
+  >
+    <ListLabels
+      key={`${item.cluster}/${'namespace' in item ? item.namespace : ''}/${item.name}`}
+      labels={item.labels}
+      statefulFilter={statefulFilter}
+    />
+  </Td>
+);
 
 export const health: Renderer<TResource> = (item: TResource, __: Resource, _: PFBadgeType, health?: Health) => {
   return (

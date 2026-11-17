@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from 'store/ConfigStore';
 
@@ -32,6 +32,21 @@ describe('VirtualList', () => {
 
   afterEach(() => {
     delete (window as any).ResizeObserver;
+  });
+
+  it('explains label filtering in the Labels column header', async () => {
+    const { container } = render(
+      <Provider store={store}>
+        <VirtualList type="services" rows={[]} />
+      </Provider>
+    );
+    const header = container.querySelector('th[data-label="Labels"]') as HTMLElement;
+
+    fireEvent.click(within(header).getByRole('button', { name: 'More info' }));
+
+    expect(await screen.findByTestId('labels-filter-help')).toHaveTextContent(
+      'Click a label to add or remove its filter. Labels matched by a filter expression must be changed using the filter controls.'
+    );
   });
 
   it('calls onResize with the outer div clientHeight on mount', () => {

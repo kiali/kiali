@@ -228,11 +228,22 @@ Then('{string} details information for service entry {string} can be seen', (hos
 });
 
 When('user clicks on Edit Labels', () => {
-  cy.get('[data-test="edit-labels"]').click();
+  cy.getBySel('istio-config-labels-card').find('button').first().click();
 });
 
 When('user clicks on Edit Annotations', () => {
-  cy.get('[data-test="edit-annotations"]').click();
+  cy.getBySel('istio-config-annotations-card').find('button').first().click();
+});
+
+When('user adds label key {string} and value {string} and saves', (key: string, value: string) => {
+  cy.getBySel('istio-config-labels-card').within(() => {
+    cy.contains('button', 'Add label').click();
+    cy.contains('button', 'key=value').click();
+    cy.get('input').clear();
+    cy.get('input').type(`${key}=${value}{enter}`);
+    cy.get('.pf-v6-c-card__header-actions button').first().click();
+    cy.contains(`${key}=${value}`).should('be.visible');
+  });
 });
 
 When('user adds key {string} and value {string} for and saves', (key: string, value: string) => {
