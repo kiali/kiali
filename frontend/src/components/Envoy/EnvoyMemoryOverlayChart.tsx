@@ -459,12 +459,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     <>
       <p>
         {t(
-          'Compare container working set and Envoy allocated memory with active connections over time. Correlated rises often point to traffic-driven memory; high memory with low connections can indicate large configuration.'
-        )}
-      </p>
-      <p>
-        {t(
-          "Left axis: Prometheus envoy_server_memory_allocated and container_memory_working_set_bytes (istio-proxy), scoped to this workload's pods. When a limit is set, status warns if working set exceeds 70% of that limit (Warning threshold line); the Memory limit line is the OOM boundary. Right axis: at each time step, Istio TCP opened minus closed when that net is positive; otherwise sum of envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active. HTTP sidecars often need the Envoy fallback; the summary tile also requires about 100 req/s before using Envoy gauges."
+          'The left axis shows istio-proxy working set and Envoy allocated memory. When a proxy memory limit is set, the chart also draws the memory limit and a 70% warning line. The right axis shows active connections over the same time range so you can correlate memory with load.'
         )}
       </p>
       <p>

@@ -73,6 +73,7 @@ func TestComputeEnvoyMemoryThreshold(t *testing.T) {
 }
 
 func TestSelectEnvoyStatusMemory(t *testing.T) {
+	peakAt := model.TimeFromUnix(2_000)
 	allocated := prometheus.Metric{
 		Matrix: model.Matrix{
 			&model.SampleStream{
@@ -85,7 +86,11 @@ func TestSelectEnvoyStatusMemory(t *testing.T) {
 		Matrix: model.Matrix{
 			&model.SampleStream{
 				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
-				Values: []model.SamplePair{{Value: model.SampleValue(150)}, {Value: model.SampleValue(200)}, {Value: model.SampleValue(175)}},
+				Values: []model.SamplePair{
+					{Timestamp: model.TimeFromUnix(1_000), Value: model.SampleValue(150)},
+					{Timestamp: peakAt, Value: model.SampleValue(200)},
+					{Timestamp: model.TimeFromUnix(3_000), Value: model.SampleValue(175)},
+				},
 			},
 		},
 	}
@@ -95,6 +100,7 @@ func TestSelectEnvoyStatusMemory(t *testing.T) {
 	assert.Equal(t, 200.0, selection.MaxBytes)
 	assert.Equal(t, models.EnvoyMemoryMetricWorkingSet, selection.Metric)
 	assert.Equal(t, "pod-a", selection.Pod)
+	assert.Equal(t, peakAt, selection.PeakAt)
 	assert.Equal(t, 700.0, selection.ThresholdBytes)
 
 	selection = selectEnvoyStatusMemory(100, allocated, prometheus.Metric{}, map[string]float64{"pod-a": 1000})
@@ -279,6 +285,67 @@ func TestResolveActiveConnectionsUnobservedWhenAbsent(t *testing.T) {
 	active, observed := resolveActiveConnections(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, 0, false)
 	assert.Equal(t, int64(0), active)
 	assert.False(t, observed)
+}
+
+func TestEnvoyMemoryStatusTrafficSignalsAlignsAtMemoryPeak(t *testing.T) {
+	peakAt := model.TimeFromUnix(2_000)
+	latestAt := model.TimeFromUnix(3_000)
+	threshold := float64(sidecarHighMemoryBytes)
+
+	clusters := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
+				Values: []model.SamplePair{
+					{Timestamp: peakAt, Value: model.SampleValue(200)},
+					{Timestamp: latestAt, Value: model.SampleValue(10)},
+				},
+			},
+		},
+	}
+	istioHTTPSource := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Values: []model.SamplePair{
+					{Timestamp: peakAt, Value: model.SampleValue(0.27)},
+					{Timestamp: latestAt, Value: model.SampleValue(150)},
+				},
+			},
+		},
+	}
+
+	activeClusters, requestRate, _, activeConn, observed := envoyMemoryStatusTrafficSignals(
+		models.EnvoyProxyTypeSidecar,
+		peakAt,
+		"pod-a",
+		clusters,
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		istioHTTPSource,
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+		prometheus.Metric{},
+	)
+	assert.Equal(t, int64(200), activeClusters)
+	assert.Equal(t, 0.27, requestRate)
+	assert.Equal(t, int64(0), activeConn)
+	assert.False(t, observed)
+
+	cause := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, activeClusters, activeConn, requestRate, false, observed)
+	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
+
+	// Misaligned latest-only signals would incorrectly attribute traffic.
+	latestClusters := int64(maxLatestValue(clusters))
+	latestRate := sumLatestValues(istioHTTPSource)
+	causeLatest := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, latestClusters, activeConn, latestRate, false, observed)
+	assert.Equal(t, models.EnvoyMemoryCauseTraffic, causeLatest)
 }
 
 func TestSumEnvoyTrafficSignals(t *testing.T) {
