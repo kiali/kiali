@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -54,6 +55,15 @@ func ClusterHealth(
 			nss = strings.Split(namespaces, ",")
 		}
 		cluster := parsed.Cluster()
+
+		// A skipped cluster (definitively broken registration) is 404 in both query
+		// forms - naming a namespace and the aggregate - before any user-namespace
+		// filtering can turn it into a 403 or an empty 200: Kiali does not know the
+		// cluster, matching the cache-based routes' contract.
+		if kialiCache.IsClusterSkipped(cluster) {
+			RespondWithError(w, http.StatusNotFound, fmt.Sprintf("cluster [%s]: no cache is configured for the cluster", cluster))
+			return
+		}
 
 		healthType := parsed.String("type")
 

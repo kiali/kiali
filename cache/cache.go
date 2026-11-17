@@ -31,6 +31,11 @@ const (
 	kialiCacheIstioStatusKey = "istioStatus"
 	kialiCacheMeshKey        = "mesh"
 	kialiCacheWaypointsKey   = "waypoints"
+
+	// webhookPermissionCheckTimeout bounds the per-cluster SSAR NewKialiCache makes on the
+	// synchronous startup path to learn whether Kiali can list mutating webhooks. Without it,
+	// a remote that accepts connections but stalls blocks startup indefinitely.
+	webhookPermissionCheckTimeout = 10 * time.Second
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -94,6 +99,16 @@ type KialiCache interface {
 	// revocation). Their informers cannot refresh, so reads from them serve stale
 	// data; callers must exclude these namespaces rather than serve frozen state.
 	RevokedNamespaces(cluster string) []string
+
+	// SkippedClusters returns the names of the remote clusters whose registration was
+	// definitively broken at startup (invalid credentials, TLS misconfiguration), for
+	// which Kiali has no cache and no clients. Consumers that authorize access by
+	// enumerating SA-visible clusters must treat these as "cannot evaluate" and fail
+	// closed: their telemetry may still be queryable through unscoped queries.
+	SkippedClusters() []string
+	// IsClusterSkipped reports whether the named cluster is one of the skipped clusters.
+	// See SkippedClusters for the contract.
+	IsClusterSkipped(cluster string) bool
 
 	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
 	// serve reads, and returns the cluster's reader when it should not be skipped; callers
@@ -261,6 +276,13 @@ type kialiCacheImpl struct {
 	// Cache gateways to speed up access for these specific workloads. The only key is kialiCacheWaypointsKey
 	waypointStore store.Store[string, models.Workloads]
 
+	// skippedClusters are remote clusters whose registration was definitively broken at
+	// startup (see WithSkippedClusters): Kiali has no cache and no clients for them, and they
+	// are absent from its inventory until a restart with a fixed registration. Consumers that
+	// authorize access by enumerating SA-visible clusters must treat a skipped cluster as
+	// "cannot evaluate" and fail closed, because its telemetry may still be queryable.
+	skippedClusters map[string]struct{}
+
 	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
@@ -273,6 +295,20 @@ type Option func(*kialiCacheImpl)
 func WithClusterAccess(clusterAccess *ClusterAccess) Option {
 	return func(c *kialiCacheImpl) {
 		c.clusterAccess = clusterAccess
+	}
+}
+
+// WithSkippedClusters records the remote clusters whose registration was definitively broken at
+// startup, so consumers of the cache can treat them consistently: they are not in kubeCache, and
+// authorization surfaces must fail closed for them (see SkippedClusters).
+func WithSkippedClusters(clusters []string) Option {
+	return func(c *kialiCacheImpl) {
+		if c.skippedClusters == nil {
+			c.skippedClusters = make(map[string]struct{}, len(clusters))
+		}
+		for _, cluster := range clusters {
+			c.skippedClusters[cluster] = struct{}{}
+		}
 	}
 }
 
@@ -295,6 +331,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		namespaceStore:          store.NewExpirationStore(ctx, store.New[namespacesKey, map[string]models.Namespace](), &namespaceKeyTTL, nil),
 		proxyStatusStore:        store.New[string, *kubernetes.ProxyStatus](),
 		refreshDuration:         time.Duration(conf.KubernetesConfig.CacheDuration) * time.Second,
+		skippedClusters:         make(map[string]struct{}),
 		waypointStore:           store.NewExpirationStore(ctx, store.New[string, models.Workloads](), util.AsPtr(conf.KialiInternal.CacheExpiration.Waypoint), nil),
 		validations:             store.New[models.IstioValidationKey, *models.IstioValidation](),
 		validationConfig:        store.New[string, string](),
@@ -305,25 +342,38 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		opt(&kialiCacheImpl)
 	}
 
+	// Check if each cluster can list webhooks. The checks run on the synchronous startup
+	// path, so each gets its own bound (nothing else limits this round trip at this point)
+	// and they run concurrently: a remote that accepts connections but stalls adds its
+	// timeout to startup once, not once per cluster ahead of it.
+	var webhookWg sync.WaitGroup
+	var webhookMu sync.Mutex
 	for cluster, client := range kialiSAClients {
-		// Check if the cluster can list webhooks
-		reviews, err := client.GetSelfSubjectAccessReview(ctx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
-		if err != nil {
-			zl.Warn().Msgf("Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
-			kialiCacheImpl.canReadWebhookByCluster[cluster] = false
-		}
-
-		for _, review := range reviews {
-			if review.Status.Allowed {
-				kialiCacheImpl.canReadWebhookByCluster[cluster] = true
-				break
+		webhookWg.Add(1)
+		go func(cluster string, client kubernetes.ClientInterface) {
+			defer webhookWg.Done()
+			checkCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
+			reviews, err := client.GetSelfSubjectAccessReview(checkCtx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
+			cancel()
+			canRead := false
+			if err != nil {
+				zl.Warn().Msgf("Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
 			}
-		}
-
-		if canReadMutatingWebhooks := kialiCacheImpl.canReadWebhookByCluster[cluster]; !canReadMutatingWebhooks {
-			zl.Info().Msgf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
-		}
+			for _, review := range reviews {
+				if review.Status.Allowed {
+					canRead = true
+					break
+				}
+			}
+			webhookMu.Lock()
+			kialiCacheImpl.canReadWebhookByCluster[cluster] = canRead
+			webhookMu.Unlock()
+			if !canRead {
+				zl.Info().Msgf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
+			}
+		}(cluster, client)
 	}
+	webhookWg.Wait()
 
 	// TODO: Treat all clusters the same way.
 	// Ensure home client got set.
@@ -369,6 +419,23 @@ func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
 		return nil
 	}
 	return c.clusterAccess.RevokedNamespaces(cluster)
+}
+
+// SkippedClusters returns the names of the clusters skipped at startup, sorted. See the
+// interface method for the contract.
+func (c *kialiCacheImpl) SkippedClusters() []string {
+	names := make([]string, 0, len(c.skippedClusters))
+	for cluster := range c.skippedClusters {
+		names = append(names, cluster)
+	}
+	slices.Sort(names)
+	return names
+}
+
+// IsClusterSkipped reports whether the named cluster was skipped at startup.
+func (c *kialiCacheImpl) IsClusterSkipped(cluster string) bool {
+	_, skipped := c.skippedClusters[cluster]
+	return skipped
 }
 
 // SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster

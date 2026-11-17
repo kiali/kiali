@@ -273,7 +273,7 @@ func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster st
 
 	saClient := in.saClients[cluster]
 	if saClient == nil {
-		return nil, fmt.Errorf("kiali ServiceAccount Client for cluster [%s] is not found or is not accessible for Kiali", cluster)
+		return nil, fmt.Errorf("kiali ServiceAccount Client for cluster [%s] is not found or is not accessible for Kiali: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	if !saClient.IsIstioAPI() && !saClient.IsGatewayAPI() {

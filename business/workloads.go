@@ -1070,7 +1070,9 @@ func (in *WorkloadService) fetchWorkloadsInNamespaces(ctx context.Context, clust
 	// we've already established the caller has access to the namespaces; use SA client to obtain namespace resource info
 	client, ok := in.kialiSAClients[cluster]
 	if !ok {
-		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali", cluster)
+		// A missing SA client means the cluster is not in Kiali's inventory (skipped or
+		// misconfigured), not that the user lacks access: 404 semantics.
+		return nil, fmt.Errorf("Cluster [%s] is not found or is not accessible for Kiali: %w", cluster, cache.ErrClusterNotCached)
 	}
 
 	kubeCache, err := in.cache.GetKubeCache(cluster)

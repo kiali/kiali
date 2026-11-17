@@ -60,15 +60,18 @@ func newRemoteClusterInfo(secretName string, secretFile string) (RemoteClusterIn
 var RemoteClusterSecretsDir = "/kiali-remote-cluster-secrets"
 
 // GetRemoteClusterInfos loads remote cluster secrets that contain information about other remote mesh clusters.
-// The returned map is keyed on cluster name.
-func GetRemoteClusterInfos() (map[string]RemoteClusterInfo, error) {
+// The returned map is keyed on cluster name. The second return value lists the cluster names
+// whose secret data was found but could not be processed: a malformed kubeconfig is a
+// definitively broken registration, and callers record it in the skipped-cluster registry so
+// authorization surfaces fail closed for it instead of silently forgetting the cluster.
+func GetRemoteClusterInfos() (map[string]RemoteClusterInfo, []string, error) {
 	return getRemoteClusterInfosFromDir(RemoteClusterSecretsDir)
 }
 
 // GetRemoteClusterInfosFromDir loads remote cluster secrets mounted to the file system that contain information about other remote mesh clusters.
 // The secrets should be mounted on the directory specified.
 // The returned map is keyed on cluster name.
-func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClusterInfo, error) {
+func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClusterInfo, []string, error) {
 	// For the ControlPlane to be able to "see" remote clusters, some "remote secrets" need to be in
 	// place. These remote secrets contain <kubeconfig files> that the ControlPlane uses to
 	// query the remote clusters. Without them, the control plane is not capable of pushing traffic
@@ -85,10 +88,14 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClust
 	// if there is no secret directory, then there are no remote clusters to worry about, so fail-fast
 	secretDirs, err := os.ReadDir(rootSecretsDir)
 	if err != nil {
-		if !errors.Is(err, os.ErrNotExist) {
-			log.Errorf("Failed to read remote cluster secrets directory [%s]: %v", rootSecretsDir, err)
+		if errors.Is(err, os.ErrNotExist) {
+			// An absent root means no remote clusters are configured: optional, not an error.
+			return map[string]RemoteClusterInfo{}, nil, nil
 		}
-		return map[string]RemoteClusterInfo{}, nil
+		// A present-but-unreadable root means Kiali cannot establish the remote inventory:
+		// returning an empty inventory with no error would let unscoped authorization
+		// proceed on the belief that no remotes exist.
+		return nil, nil, fmt.Errorf("failed to read remote cluster secrets directory [%s]: %w", rootSecretsDir, err)
 	}
 
 	// Keyed on cluster name - we use this to make sure we don't get asked to load in multiple clusters with the same name
@@ -97,6 +104,8 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClust
 	// When we go through all the files we find and convert them to RemoteClusterInfos,
 	// they get put into this map to be returned to the caller.
 	meshClusters := make(map[string]RemoteClusterInfo)
+	// Cluster names found in the secrets whose data could not be processed.
+	unprocessableClusters := []string{}
 
 	for _, sd := range secretDirs {
 		secretName := sd.Name()
@@ -109,26 +118,42 @@ func getRemoteClusterInfosFromDir(rootSecretsDir string) (map[string]RemoteClust
 		for _, sf := range secretFiles {
 			clusterName := sf.Name()
 			secretAbsFile := secretAbsDir + "/" + clusterName
-			statinfo, staterr := os.Stat(secretAbsFile)
-			if statinfo.IsDir() || staterr != nil {
-				continue // we only want to process readable files - we are not interested in other files that get mounted here
-			}
-
+			// Reserve the cluster name at discovery, before any per-file processing:
+			// two secrets must not provide information on the same cluster, and reserving
+			// first keeps the active and skipped inventories disjoint whichever secret
+			// sorts first - a broken definition cannot be overridden by a later valid one,
+			// and a valid one cannot be shadowed into the skip registry.
 			if previousSecret, ok := remoteClusterSecretNames[clusterName]; ok {
 				log.Errorf("Cluster [%s] was already defined in secret [%v]. Two secrets must not provide information on the same cluster.", clusterName, previousSecret)
 				continue
+			}
+			remoteClusterSecretNames[clusterName] = secretName
+
+			// Check the error first: a file that disappears between the directory read
+			// and the stat leaves statinfo nil, and dereferencing it panics. A discovered
+			// name whose file cannot be stat'ed (for example a dangling projected-secret
+			// symlink) is a registration Kiali can see but cannot read: record it as
+			// unprocessable rather than silently forgetting it.
+			statinfo, staterr := os.Stat(secretAbsFile)
+			if staterr != nil {
+				log.Errorf("Failed to stat remote cluster secret file [%s] for cluster [%s]: %v", secretAbsFile, clusterName, staterr)
+				unprocessableClusters = append(unprocessableClusters, clusterName)
+				continue
+			}
+			if statinfo.IsDir() {
+				continue // we only want to process files - we are not interested in other entries that get mounted here
 			}
 
 			nextCluster, err := newRemoteClusterInfo(secretName, secretAbsFile)
 			if err != nil {
 				log.Errorf("Failed to process data for remote cluster [%s] and file [%s]. Err: %s", clusterName, secretAbsFile, err)
+				unprocessableClusters = append(unprocessableClusters, clusterName)
 				continue
 			}
 			meshClusters[clusterName] = nextCluster
-			remoteClusterSecretNames[clusterName] = secretName
 			log.Debugf("Data for remote cluster [%s] has been loaded from secret file [%s]", clusterName, secretAbsFile)
 		}
 	}
 
-	return meshClusters, nil
+	return meshClusters, unprocessableClusters, nil
 }
