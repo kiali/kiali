@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/maps"
 	appsv1 "k8s.io/api/apps/v1"
+	auth_v1 "k8s.io/api/authorization/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +37,14 @@ const (
 	// synchronous startup path to learn whether Kiali can list mutating webhooks. Without it,
 	// a remote that accepts connections but stalls blocks startup indefinitely.
 	webhookPermissionCheckTimeout = 10 * time.Second
+	// webhookCheckBackoff is how long CanListWebhooks waits before re-checking a cluster
+	// whose webhook permission check failed transiently.
+	webhookCheckBackoff = 30 * time.Second
+	// namespaceComputeFailureTTL bounds how long a recorded namespace-set computation
+	// failure is kept at all: the keys embed user cache keys (bearer tokens under token
+	// auth), so the store must evict them rather than retain tokens - and grow under token
+	// rotation - for the life of the process.
+	namespaceComputeFailureTTL = 10 * time.Minute
 )
 
 // KialiCache stores both kube objects and non-kube related data such as pods' proxy status.
@@ -88,7 +97,10 @@ type KialiCache interface {
 	// Returns true if the cache was updated, false if namespace not in cache.
 	UpdateWorkloadHealth(cluster, namespace, workloadName string, health *models.WorkloadHealth)
 
-	GatewayAPIClasses(cluster string) []config.GatewayAPIClass
+	// GatewayAPIClasses returns the cluster's Gateway API classes. The context bounds
+	// the Gateway API capability probe and the informer cache read, so a caller sharing
+	// one discovery budget across clusters is not held by one stalled remote.
+	GatewayAPIClasses(ctx context.Context, cluster string) []config.GatewayAPIClass
 
 	GetIstioStatus() (kubernetes.IstioComponentStatus, bool)
 	SetIstioStatus(kubernetes.IstioComponentStatus)
@@ -109,6 +121,21 @@ type KialiCache interface {
 	// IsClusterSkipped reports whether the named cluster is one of the skipped clusters.
 	// See SkippedClusters for the contract.
 	IsClusterSkipped(cluster string) bool
+
+	// The following three methods implement the namespace-set computation backoff: a
+	// failed computation is not retried for a short window, and the record is dropped on
+	// success. They are on this interface (rather than an optional capability) so the
+	// business layer's calls are compile-checked - a silently failed type assertion here
+	// once disabled the whole backoff in production.
+
+	// NamespaceComputeFailedAt returns when the given (cluster, cacheKey) computation last
+	// failed and the error it failed with, if ever.
+	NamespaceComputeFailedAt(key string) (time.Time, error, bool)
+	// MarkNamespaceComputeFailed records a failed computation. The key identifies the
+	// (cluster, cacheKey) computation: the backoff is per-computation, not per-cluster.
+	MarkNamespaceComputeFailed(key string, err error)
+	// ClearNamespaceComputeFailure drops the computation's failure record on success.
+	ClearNamespaceComputeFailure(key string)
 
 	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
 	// serve reads, and returns the cluster's reader when it should not be skipped; callers
@@ -171,7 +198,7 @@ type KialiCache interface {
 	// supplied clusters has the istio Ambient profile enabled. Short-circuits
 	// on the first match. Reuses the per-cluster cache populated by
 	// IsAmbientEnabled, so repeated calls are cheap.
-	IsAmbientEnabledInAnyCluster(clusters []string) bool
+	IsAmbientEnabledInAnyCluster(ctx context.Context, clusters []string) bool
 
 	// IsControlPlaneNamespaceAmbient validates if a control plane namespace should be considered ambient
 	IsControlPlaneNamespaceAmbient(ctx context.Context, cluster string, namespace string, istiodName string) bool
@@ -220,11 +247,29 @@ type kialiCacheImpl struct {
 	canListStore store.Store[canListKey, bool]
 	canListLock  sync.RWMutex
 	// This isn't expected to change so it's not protected by a mutex.
-	buildInfo               models.BuildInfo
+	buildInfo models.BuildInfo
+	// canReadWebhookByCluster memoizes whether Kiali can list mutating webhooks per cluster.
+	// A false from a transient failure is re-checked lazily (see CanListWebhooks), so it is
+	// guarded by canReadWebhookMutex; the startup writes hold it too.
 	canReadWebhookByCluster map[string]bool
-	clients                 map[string]kubernetes.ClientInterface
-	clusterAccess           *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
-	conf                    config.Config
+	canReadWebhookMutex     sync.Mutex
+	// webhookCheckFailures records when a cluster's webhook check last failed transiently,
+	// for the lazy retry backoff. Guarded by canReadWebhookMutex.
+	webhookCheckFailures map[string]time.Time
+
+	// namespaceComputeFailures records when a cluster's accessible-set computation last
+	// failed and the error it failed with, for the business layer's negative backoff.
+	// Guarded by namespaceComputeMutex. The sweep that evicts expired entries is amortized:
+	// it runs at most once per namespaceComputeFailureTTL/2 (tracked by
+	// namespaceComputeLastSweep), so a burst of failures does not rescan the whole map per
+	// insertion, and a read can also trigger a long-overdue sweep so a quiet period after
+	// an outage does not retain entries beyond the TTL.
+	namespaceComputeFailures  map[string]namespaceComputeFailure
+	namespaceComputeLastSweep time.Time
+	namespaceComputeMutex     sync.Mutex
+	clients                   map[string]kubernetes.ClientInterface
+	clusterAccess             *ClusterAccess // Tracks clusters whose access was revoked. Nil when not configured.
+	conf                      config.Config
 
 	// Info about the kube clusters that the cache knows about.
 	clusters    []models.KubeCluster
@@ -320,6 +365,7 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 		ambientChecksPerCluster: store.NewExpirationStore(ctx, store.New[string, bool](), util.AsPtr(conf.KialiInternal.CacheExpiration.AmbientCheck), nil),
 		canListStore:            store.NewExpirationStore(ctx, store.New[canListKey, bool](), &namespaceKeyTTL, nil),
 		canReadWebhookByCluster: make(map[string]bool),
+		webhookCheckFailures:    make(map[string]time.Time),
 		clients:                 kialiSAClients,
 		conf:                    conf,
 		zl:                      zl,
@@ -347,27 +393,22 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	// and they run concurrently: a remote that accepts connections but stalls adds its
 	// timeout to startup once, not once per cluster ahead of it.
 	var webhookWg sync.WaitGroup
-	var webhookMu sync.Mutex
 	for cluster, client := range kialiSAClients {
 		webhookWg.Add(1)
 		go func(cluster string, client kubernetes.ClientInterface) {
 			defer webhookWg.Done()
-			checkCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
-			reviews, err := client.GetSelfSubjectAccessReview(checkCtx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
-			cancel()
-			canRead := false
-			if err != nil {
-				zl.Warn().Msgf("Unable to check if kiali can read mutating webhooks to autodetect tags: %s", err)
+			_, canRead, definitive := checkWebhookPermission(ctx, client)
+			kialiCacheImpl.canReadWebhookMutex.Lock()
+			if definitive {
+				// A successful SSAR is a definitive answer either way: allowed, or a real
+				// RBAC denial that needs no retry.
+				kialiCacheImpl.canReadWebhookByCluster[cluster] = canRead
+			} else {
+				// A transient failure is recorded so the lazy re-check in CanListWebhooks
+				// retries after the backoff.
+				kialiCacheImpl.webhookCheckFailures[cluster] = time.Now()
 			}
-			for _, review := range reviews {
-				if review.Status.Allowed {
-					canRead = true
-					break
-				}
-			}
-			webhookMu.Lock()
-			kialiCacheImpl.canReadWebhookByCluster[cluster] = canRead
-			webhookMu.Unlock()
+			kialiCacheImpl.canReadWebhookMutex.Unlock()
 			if !canRead {
 				zl.Info().Msgf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'.", cluster)
 			}
@@ -384,8 +425,59 @@ func NewKialiCache(ctx context.Context, kialiSAClients map[string]kubernetes.Cli
 	return &kialiCacheImpl, nil
 }
 
+// checkWebhookPermission asks the cluster whether Kiali may list mutating webhooks, bounded
+// by its own timeout. It returns the reviews, whether reading is allowed, and whether the
+// answer is definitive: a transport failure (timeout, unreachable) is neither allowed nor a
+// denial - it is retried later - while a successful SSAR is definitive either way.
+func checkWebhookPermission(ctx context.Context, client kubernetes.ClientInterface) (reviews []*auth_v1.SelfSubjectAccessReview, allowed, definitive bool) {
+	checkCtx, cancel := context.WithTimeout(ctx, webhookPermissionCheckTimeout)
+	defer cancel()
+	reviews, err := client.GetSelfSubjectAccessReview(checkCtx, "", "admissionregistration.k8s.io", "mutatingwebhookconfigurations", []string{"list"})
+	if err != nil {
+		return nil, false, false
+	}
+	for _, review := range reviews {
+		if review.Status.Allowed {
+			return reviews, true, true
+		}
+	}
+	return reviews, false, true
+}
+
 func (c *kialiCacheImpl) CanListWebhooks(cluster string) bool {
-	return c.canReadWebhookByCluster[cluster]
+	c.canReadWebhookMutex.Lock()
+	if c.canReadWebhookByCluster[cluster] {
+		c.canReadWebhookMutex.Unlock()
+		return true
+	}
+	// A definitive verdict (allowed, or a real RBAC denial recorded at startup) needs no
+	// re-check; only a transient failure is retried, after a backoff, so a remote that was
+	// unreachable at startup gets its istio tags once it recovers - and a plain denial does
+	// not poll every 30 seconds.
+	failedAt, failed := c.webhookCheckFailures[cluster]
+	client := c.clients[cluster]
+	c.canReadWebhookMutex.Unlock()
+	if !failed || time.Since(failedAt) < webhookCheckBackoff {
+		return false
+	}
+	if client == nil {
+		return false
+	}
+
+	// The live re-check runs without the lock: one slow remote must not block the healthy
+	// clusters' webhook lookups. Concurrent callers may duplicate the check; it is rare,
+	// bounded, and idempotent.
+	_, allowed, definitive := checkWebhookPermission(context.Background(), client)
+
+	c.canReadWebhookMutex.Lock()
+	defer c.canReadWebhookMutex.Unlock()
+	if definitive {
+		c.canReadWebhookByCluster[cluster] = allowed
+		delete(c.webhookCheckFailures, cluster)
+	} else if !allowed {
+		c.webhookCheckFailures[cluster] = time.Now()
+	}
+	return allowed
 }
 
 // ErrClusterNotCached is returned by GetKubeCache when there is no cache configured for the
@@ -436,6 +528,60 @@ func (c *kialiCacheImpl) SkippedClusters() []string {
 func (c *kialiCacheImpl) IsClusterSkipped(cluster string) bool {
 	_, skipped := c.skippedClusters[cluster]
 	return skipped
+}
+
+// namespaceComputeFailure is one recorded accessible-set computation failure.
+type namespaceComputeFailure struct {
+	at  time.Time
+	err error
+}
+
+// NamespaceComputeFailedAt returns when the given computation last failed and the error it
+// failed with, if ever. See the business layer's namespaceComputeBackoffStore for the contract.
+func (c *kialiCacheImpl) NamespaceComputeFailedAt(key string) (time.Time, error, bool) {
+	c.namespaceComputeMutex.Lock()
+	defer c.namespaceComputeMutex.Unlock()
+	c.sweepNamespaceComputeFailuresLocked()
+	failure, failed := c.namespaceComputeFailures[key]
+	return failure.at, failure.err, failed
+}
+
+// sweepNamespaceComputeFailuresLocked evicts expired failure records. It is amortized: at
+// most one sweep per namespaceComputeFailureTTL/2, so marking N failures in a burst costs
+// O(N) total sweep work rather than O(N^2). It must be called with the mutex held.
+func (c *kialiCacheImpl) sweepNamespaceComputeFailuresLocked() {
+	now := time.Now()
+	if !c.namespaceComputeLastSweep.IsZero() && now.Sub(c.namespaceComputeLastSweep) < namespaceComputeFailureTTL/2 {
+		return
+	}
+	c.namespaceComputeLastSweep = now
+	for k, failure := range c.namespaceComputeFailures {
+		if now.Sub(failure.at) > namespaceComputeFailureTTL {
+			delete(c.namespaceComputeFailures, k)
+		}
+	}
+}
+
+// ClearNamespaceComputeFailure drops the computation's failure record on success, so the
+// store does not retain user tokens longer than the backoff needs them.
+func (c *kialiCacheImpl) ClearNamespaceComputeFailure(key string) {
+	c.namespaceComputeMutex.Lock()
+	defer c.namespaceComputeMutex.Unlock()
+	delete(c.namespaceComputeFailures, key)
+}
+
+// MarkNamespaceComputeFailed records a failed accessible-set computation. The key identifies
+// the (cluster, cacheKey) computation. Expired entries are swept here: the keys embed user
+// cache keys (bearer tokens under token auth), so the map must not retain them - or grow
+// unboundedly under token rotation - for the life of the process.
+func (c *kialiCacheImpl) MarkNamespaceComputeFailed(key string, err error) {
+	c.namespaceComputeMutex.Lock()
+	defer c.namespaceComputeMutex.Unlock()
+	if c.namespaceComputeFailures == nil {
+		c.namespaceComputeFailures = map[string]namespaceComputeFailure{}
+	}
+	c.sweepNamespaceComputeFailuresLocked()
+	c.namespaceComputeFailures[key] = namespaceComputeFailure{at: time.Now(), err: err}
 }
 
 // SkipMode is how a caller of KialiCache.SkipUnavailableCluster wants a remote cluster
@@ -527,13 +673,13 @@ func (c *kialiCacheImpl) ValidationConfig() store.Store[string, string] {
 // namespaces (see ListReadable). It is the one ztunnel fetch IsAmbientEnabled,
 // GetZtunnelPods and GetZtunnelDaemonset share. The reader is returned for callers that
 // go on to list through the same cache (GetZtunnelPods).
-func (in *kialiCacheImpl) listZtunnelDaemonsets(cluster string) (client.Reader, []appsv1.DaemonSet, error) {
+func (in *kialiCacheImpl) listZtunnelDaemonsets(ctx context.Context, cluster string) (client.Reader, []appsv1.DaemonSet, error) {
 	kubeCache, err := in.GetKubeCache(cluster)
 	if err != nil {
 		return nil, nil, err
 	}
 	list := &appsv1.DaemonSetList{}
-	if err := ListReadable(context.TODO(), kubeCache, &in.conf, in, cluster, list,
+	if err := ListReadable(ctx, kubeCache, &in.conf, in, cluster, list,
 		client.MatchingLabels{config.KubernetesAppLabel: config.Ztunnel}); err != nil {
 		return nil, nil, err
 	}
@@ -546,12 +692,16 @@ func (in *kialiCacheImpl) listZtunnelDaemonsets(cluster string) (client.Reader, 
 // IsAmbientEnabled checks if the istio Ambient profile was enabled
 // by checking if the ztunnel daemonset exists on the cluster.
 func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
+	return in.isAmbientEnabled(context.Background(), cluster)
+}
+
+func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) bool {
 	check, found := in.ambientChecksPerCluster.Get(cluster)
 	if found {
 		return check
 	}
 
-	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		// Don't set the check so we will check again the next time since this error may be transient.
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
@@ -564,16 +714,22 @@ func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
 }
 
 // IsAmbientEnabledInAnyCluster returns true when at least one cluster in the
-// supplied slice has the istio Ambient profile enabled. The check delegates
-// to IsAmbientEnabled, so per-cluster results are reused from the existing
-// ambientChecksPerCluster cache.
-func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(clusters []string) bool {
-	return slices.ContainsFunc(clusters, in.IsAmbientEnabled)
+// supplied slice has the istio Ambient profile enabled. The context bounds the
+// per-cluster daemonset reads (the informer caches), so a caller sharing one
+// discovery budget across clusters is not held by one stalled remote. Per-cluster
+// results are reused from the existing ambientChecksPerCluster cache.
+func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(ctx context.Context, clusters []string) bool {
+	for _, cluster := range clusters {
+		if in.isAmbientEnabled(ctx, cluster) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
 func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(context.Background(), cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -592,7 +748,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 }
 
 func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
-	_, daemonsets, err := in.listZtunnelDaemonsets(cluster)
+	_, daemonsets, err := in.listZtunnelDaemonsets(context.Background(), cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -823,7 +979,7 @@ func (c *kialiCacheImpl) UpdateWorkloadHealth(cluster, namespace, workloadName s
 // K8s Gateway API classes can come from  different places depending on the configuration:
 // 1. From explicitly listed classes in the configuration if set
 // 2. Auto-discovered classes that use Istio as a controller and matching a label selector in the configuration (if set)
-func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPIClass {
+func (c *kialiCacheImpl) GatewayAPIClasses(ctx context.Context, cluster string) []config.GatewayAPIClass {
 	result := []config.GatewayAPIClass{}
 	userClient := c.clients[cluster]
 	if userClient == nil {
@@ -831,7 +987,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		return result
 	}
 	// do not continue if Gateway API is not configured on cluster
-	if !userClient.IsGatewayAPI() {
+	if !userClient.IsGatewayAPIContext(ctx) {
 		return result
 	}
 	kubeCache, err := c.GetKubeCache(cluster)
@@ -866,7 +1022,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 			}
 			classList := &k8s_networking_v1.GatewayClassList{}
 
-			err := kubeCache.List(context.TODO(), classList, listOpts...)
+			err := kubeCache.List(ctx, classList, listOpts...)
 			if err != nil {
 				c.zl.Error().Msgf("Cannot auto discover GatewayAPIClasses: list failed: %s", err)
 			} else {
@@ -898,7 +1054,7 @@ func (c *kialiCacheImpl) GatewayAPIClasses(cluster string) []config.GatewayAPICl
 		for name := range c.clients {
 			allClusters = append(allClusters, name)
 		}
-		if c.IsAmbientEnabledInAnyCluster(allClusters) {
+		if c.IsAmbientEnabledInAnyCluster(ctx, allClusters) {
 			result = append(result, config.GatewayAPIClass{Name: "istio-waypoint", ClassName: "istio-waypoint"})
 		}
 	}

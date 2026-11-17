@@ -88,6 +88,11 @@ type OAuthAuthorizationServer struct {
 // Generates an http.Client with RootCAs specified in kubeconfig along with the managed cert pool.
 // The managed cert pool includes system CAs and any additional CAs configured via the kiali-cabundle ConfigMap.
 func httpClientWithPool(conf *config.Config, restConfig rest.Config) (*http.Client, error) {
+	// The config passed in is ClusterInfo().ClientConfig - the original shared config, which
+	// never carries the live-call request timeout (that lives on the K8SClient's private
+	// copy). These metadata and token fetches are live round trips: bound them with the
+	// configured request timeout.
+	kubernetes.ApplyRequestTimeout(&restConfig, conf)
 	// Need to populate CAData from CAFile.
 	if err := rest.LoadTLSFiles(&restConfig); err != nil {
 		return nil, fmt.Errorf("unable to load CA info from restConfig")

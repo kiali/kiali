@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/ai/mcputil"
 	"github.com/kiali/kiali/business"
@@ -46,7 +47,12 @@ func getOrCreateDynamicClient(clientFactory kubernetes.ClientFactory, clusterNam
 	if restConfig == nil {
 		return nil, fmt.Errorf("no REST config available for cluster %q", clusterName)
 	}
-	client, err := dynamic.NewForConfig(restConfig)
+	// Copy the shared config and apply the live-call request timeout: this dynamic client
+	// serves per-request reads, and the shared config never carries the timeout (it also
+	// feeds the informers, where a timeout would kill watches).
+	timeoutConfig := rest.CopyConfig(restConfig)
+	kubernetes.ApplyRequestTimeout(timeoutConfig, config.Get())
+	client, err := dynamic.NewForConfig(timeoutConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +96,7 @@ func executeArgoCDApplication(kialiInterface *mcputil.KialiInterface, namespaces
 	if len(nsSlice) > 0 {
 		saClient := kialiInterface.ClientFactory.GetSAClient(clusterName)
 		if saClient != nil {
-			valid, invalid := validateNamespacesViaK8s(saClient, nsSlice)
+			valid, invalid := validateNamespacesViaK8s(context.Background(), saClient, nsSlice)
 			if len(invalid) > 0 && len(valid) == 0 {
 				return fmt.Sprintf("Namespace(s) %s not found or not accessible. Cannot retrieve application resources.", strings.Join(invalid, ", ")), http.StatusOK
 			}
@@ -122,9 +128,9 @@ func executeArgoCDApplication(kialiInterface *mcputil.KialiInterface, namespaces
 	return resp, http.StatusOK
 }
 
-func validateNamespacesViaK8s(k8sClient kubernetes.ClientInterface, namespaces []string) (valid, invalid []string) {
+func validateNamespacesViaK8s(ctx context.Context, k8sClient kubernetes.ClientInterface, namespaces []string) (valid, invalid []string) {
 	for _, ns := range namespaces {
-		_, err := k8sClient.GetNamespace(ns)
+		_, err := k8sClient.GetNamespace(ctx, ns)
 		if err != nil {
 			invalid = append(invalid, ns)
 		} else {

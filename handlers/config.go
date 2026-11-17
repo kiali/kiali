@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -26,6 +27,14 @@ const (
 	defaultPrometheusGlobalScrapeInterval       = 15                // seconds
 	defaultPrometheusGlobalStorageTSDBRetention = 15 * 24 * 60 * 60 // Prometheus default is 15d
 )
+
+// capabilityDiscoveryTimeout bounds all Kubernetes capability discovery in one
+// /api/config request: cluster probing, ambient detection and Gateway API class
+// collection. It is sized to fit well inside a default 30s proxy timeout so that a
+// stalled remote delays the console by seconds, not minutes; the discovery answers
+// partial results at the deadline and retries on the next request. A variable so
+// tests can shorten it.
+var capabilityDiscoveryTimeout = 5 * time.Second
 
 type IstioAnnotations struct {
 	AmbientAnnotation        string `json:"ambientAnnotation,omitempty"`
@@ -182,24 +191,50 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			accessibleClusters = append(accessibleClusters, clusterName)
 		}
 
+		// Capability discovery shares one deadline for the whole request: the console
+		// blocks on this endpoint before it can render anything, so one stalled remote
+		// must not consume the request (or the proxy timeout in front of it). Clusters
+		// are probed concurrently and a cluster that cannot answer within the deadline
+		// simply reports false for this page load - the probes back off and retry, so a
+		// later load discovers the feature once the remote recovers.
+		discoveryCtx, cancelDiscovery := context.WithTimeout(r.Context(), capabilityDiscoveryTimeout)
+		defer cancelDiscovery()
+
+		var capabilities sync.Mutex
+		var wg sync.WaitGroup
 		for _, cluster := range accessibleClusters {
-			if client := userClients[cluster]; client != nil {
-				if client.IsGatewayAPI() {
-					publicConfig.GatewayAPIEnabled = true
-				}
-				if client.IsIstioGateway() {
-					publicConfig.IstioGatewayInstalled = true
-				}
-				if client.IsIstioAPI() {
-					publicConfig.IstioAPIInstalled = true
-				}
+			client := userClients[cluster]
+			if client == nil {
+				continue
 			}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				var gatewayAPI, istioGateway, istioAPI bool
+				if client.IsGatewayAPIContext(discoveryCtx) {
+					gatewayAPI = true
+				}
+				if client.IsIstioGatewayContext(discoveryCtx) {
+					istioGateway = true
+				}
+				if client.IsIstioAPIContext(discoveryCtx) {
+					istioAPI = true
+				}
+				capabilities.Lock()
+				defer capabilities.Unlock()
+				publicConfig.GatewayAPIEnabled = publicConfig.GatewayAPIEnabled || gatewayAPI
+				publicConfig.IstioGatewayInstalled = publicConfig.IstioGatewayInstalled || istioGateway
+				publicConfig.IstioAPIInstalled = publicConfig.IstioAPIInstalled || istioAPI
+			}()
 		}
-		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(accessibleClusters)
-		// Dedupe gateway API classes by ClassName across clusters.
+		wg.Wait()
+		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(discoveryCtx, accessibleClusters)
+		// Dedupe gateway API classes by ClassName across clusters. This reads the
+		// service-account clients' Gateway API probes and the informer caches, so it
+		// shares the same deadline as the flag discovery above.
 		seenClasses := make(map[string]bool)
 		for _, cluster := range accessibleClusters {
-			for _, gwClass := range cache.GatewayAPIClasses(cluster) {
+			for _, gwClass := range cache.GatewayAPIClasses(discoveryCtx, cluster) {
 				if !seenClasses[gwClass.ClassName] {
 					seenClasses[gwClass.ClassName] = true
 					publicConfig.GatewayAPIClasses = append(publicConfig.GatewayAPIClasses, gwClass)

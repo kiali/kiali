@@ -117,7 +117,7 @@ func ChatMCP(
 		}
 		// Gate Ambient-specific tools before building the full interface, matching the tracing/metrics pattern above.
 		if mcp.IsAmbientTool(toolName) {
-			if !kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory)) {
+			if !kialiCache.IsAmbientEnabledInAnyCluster(r.Context(), accessibleClusterNames(clientFactory)) {
 				RespondWithError(w, http.StatusNotFound,
 					fmt.Sprintf("Tool '%s' is not available when Ambient Mesh is not enabled in any cluster", toolName))
 				return
@@ -154,7 +154,7 @@ func ChatPrompts(conf *config.Config, kialiCache cache.KialiCache, clientFactory
 			return
 		}
 
-		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(accessibleClusterNames(clientFactory))
+		ambientEnabled := kialiCache.IsAmbientEnabledInAnyCluster(r.Context(), accessibleClusterNames(clientFactory))
 
 		query := r.URL.Query()
 		if err := queryparams.RejectUnknown(query, "category"); err != nil {

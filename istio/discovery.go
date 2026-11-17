@@ -102,7 +102,7 @@ func (in *Discovery) setControlPlaneConfig(kubeCache ctrlclient.Reader, controlP
 	configMapName := istioConfigMapName(controlPlane.Revision)
 
 	controlPlaneConf := &models.ControlPlaneConfiguration{
-		Network: in.resolveNetwork(kubeCache, controlPlane),
+		Network: in.resolveNetwork(context.Background(), kubeCache, controlPlane),
 		StandardConfig: &models.MeshConfigSource{
 			Cluster:   controlPlane.Cluster.Name,
 			ConfigMap: &models.MeshConfigMap{},
@@ -968,7 +968,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			continue
 		}
 
-		namespaces, err := in.kialiSAClients[cluster.Name].GetNamespaces("")
+		namespaces, err := in.kialiSAClients[cluster.Name].GetNamespaces(ctx, "")
 		if err != nil {
 			log.Errorf("unable to process remote clusters for cluster [%s]. Err: %s", cluster.Name, err)
 			continue
@@ -1027,7 +1027,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				continue
 			}
 
-			ns, err := homeClusterClient.GetNamespace(name)
+			ns, err := homeClusterClient.GetNamespace(ctx, name)
 			if err != nil {
 				log.Errorf("unable to get namespace [%s] for cluster [%s]. Err: %s", name, in.conf.KubernetesConfig.ClusterName, err)
 				continue
@@ -1055,7 +1055,7 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				continue
 			}
 
-			k8sNamespaces, err := client.GetNamespaces("")
+			k8sNamespaces, err := client.GetNamespaces(ctx, "")
 			if err != nil {
 				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
 				continue
@@ -1381,7 +1381,7 @@ func (in *Discovery) getNetworkFromSidecarInejctorConfigMap(kubeCache ctrlclient
 //
 // No errors are returned because we don't want to block processing of other clusters if
 // one fails. So, errors are only logged to let processing continue.
-func (in *Discovery) resolveNetwork(kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
+func (in *Discovery) resolveNetwork(ctx context.Context, kubeCache ctrlclient.Reader, controlPlane *models.ControlPlane) string {
 	clusterName := controlPlane.Cluster.Name
 	if network := in.getNetworkFromSidecarInejctorConfigMap(kubeCache, controlPlane.IstiodNamespace, controlPlane.Revision); network != "" {
 		return network
@@ -1390,7 +1390,7 @@ func (in *Discovery) resolveNetwork(kubeCache ctrlclient.Reader, controlPlane *m
 	// Network id wasn't found in the config. Try to find it on the istio namespace.
 
 	// Let's assume that the istio namespace has the same name on all clusters in the mesh.
-	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(controlPlane.IstiodNamespace)
+	istioNamespace, err := in.kialiSAClients[clusterName].GetNamespace(ctx, controlPlane.IstiodNamespace)
 	if err != nil {
 		log.Warningf("Cannot describe the [%s] namespace on cluster [%s]: %v", controlPlane.IstiodNamespace, clusterName, err)
 		return ""

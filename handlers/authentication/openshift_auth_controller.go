@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -371,14 +372,24 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			return nil, err
 		}
 
-		for _, session := range sessions {
+		// Sessions are validated concurrently: each may cost a live user-info lookup plus
+		// a namespace-visibility check, and several unavailable remotes must not stack
+		// serially in front of the home handler (each could consume the full request
+		// timeout).
+		var sessionsMu sync.Mutex
+		// Terminations collected by the validation workers: sessionStore.TerminateSession
+		// appends Set-Cookie headers to the shared http.ResponseWriter, which is not
+		// safe to touch from multiple goroutines - they are applied serially after the
+		// workers finish.
+		var terminated []string
+		validateOne := func(session *SessionData[openshiftSessionPayload]) error {
 			// A cluster skipped at startup (definitively broken registration) gets no user
 			// client and no validation: the session's token may be perfectly fine - Kiali
 			// itself is the problem. Skip it for this request and preserve the cookie; it is
 			// retried if Kiali is restarted with a fixed registration.
 			if o.clientFactory.IsClusterSkipped(session.Cluster) {
 				log.Debugf("Skipping session for cluster [%s]: the cluster is skipped by Kiali because its registration is broken", session.Cluster)
-				continue
+				return nil
 			}
 			user, err := o.openshiftOAuth.GetUserInfo(r.Context(), session.Payload.AccessToken, session.Cluster)
 			if err != nil {
@@ -386,10 +397,21 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 					// The token is invalid, we should clear the session.
 					// This could be an old session for a cluster with the same name.
 					log.Debug("Token saved in session is unauthorized to this cluster. This could be an old token from another cluster with an unexpired token. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Cluster)
-					continue
+					sessionsMu.Lock()
+					terminated = append(terminated, session.Cluster)
+					sessionsMu.Unlock()
+					return nil
 				}
-				return nil, err
+				if session.Cluster != o.conf.KubernetesConfig.ClusterName {
+					// An indeterminate remote (unreachable, stalled) must not fail the whole
+					// request - that would make even home-only pages unusable for any session
+					// that includes the remote, which is exactly the outage blast radius
+					// #10545 exists to bound. Skip the session for this request and preserve
+					// its cookie; it is retried on the next request once the cluster recovers.
+					log.Warningf("Skipping session for cluster [%s]: user info could not be determined: %s", session.Cluster, err)
+					return nil
+				}
+				return err
 			}
 			// Re-check namespace visibility on every request: this also terminates
 			// pre-existing sessions of users whose access has dropped to zero,
@@ -411,19 +433,22 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			if err := o.checkTokenCanViewNamespaces(r.Context(), session.Payload.AccessToken, session.Cluster); err != nil {
 				if errors.Is(err, ErrCannotViewNamespaces) {
 					log.Debug("Token saved in session cannot view any namespace. Terminating session...")
-					o.sessionStore.TerminateSession(r, w, session.Cluster)
+					sessionsMu.Lock()
+					terminated = append(terminated, session.Cluster)
 					terminatedZeroAccess = true
 					if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 						terminatedZeroAccessHome = true
 					}
-					continue
+					sessionsMu.Unlock()
+					return nil
 				}
 				if session.Cluster == o.conf.KubernetesConfig.ClusterName {
-					return nil, err
+					return err
 				}
 				log.Warningf("Skipping session for cluster [%s]: namespace visibility could not be determined: %s", session.Cluster, err)
-				continue
+				return nil
 			}
+			sessionsMu.Lock()
 			if session.Cluster == o.conf.KubernetesConfig.ClusterName {
 				homeUserName = user.Name
 				homeUserGroups = user.Groups
@@ -434,6 +459,30 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 				SessionID: session.SessionID,
 				Username:  user.Name,
 			}
+			sessionsMu.Unlock()
+			return nil
+		}
+
+		var sessionsWg sync.WaitGroup
+		var validateErr error
+		for _, session := range sessions {
+			sessionsWg.Add(1)
+			go func(session *SessionData[openshiftSessionPayload]) {
+				defer sessionsWg.Done()
+				err := validateOne(session)
+				sessionsMu.Lock()
+				defer sessionsMu.Unlock()
+				if err != nil && validateErr == nil {
+					validateErr = err
+				}
+			}(session)
+		}
+		sessionsWg.Wait()
+		if validateErr != nil {
+			return nil, validateErr
+		}
+		for _, cluster := range terminated {
+			o.sessionStore.TerminateSession(r, w, cluster)
 		}
 	}
 

@@ -5,6 +5,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -36,11 +37,11 @@ type noPrivClient struct {
 	kubernetes.UserClientInterface
 }
 
-func (n *noPrivClient) GetNamespace(namespace string) (*core_v1.Namespace, error) {
+func (n *noPrivClient) GetNamespace(_ context.Context, namespace string) (*core_v1.Namespace, error) {
 	return nil, errors.NewForbidden(schema.GroupResource{Group: core_v1.GroupName, Resource: "namespaces"}, "namespace", fmt.Errorf("Rejecting"))
 }
 
-func (n *noPrivClient) GetNamespaces(labelSelector string) ([]core_v1.Namespace, error) {
+func (n *noPrivClient) GetNamespaces(_ context.Context, labelSelector string) ([]core_v1.Namespace, error) {
 	return nil, errors.NewForbidden(schema.GroupResource{Group: core_v1.GroupName, Resource: "namespaces"}, "", fmt.Errorf("Rejecting"))
 }
 
