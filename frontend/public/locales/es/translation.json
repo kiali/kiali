@@ -412,7 +412,6 @@
   "edges with http rate > 0.5 rps": "conexiones con tasa http > 0.5 rps",
   "edges with no traffic": "conexiones sin tráfico",
   "edges with response time > 500ms. (requires response time edge labels)": "conexiones con tiempo de respuesta > 500ms. (requiere etiquetas de tiempo de respuesta en conexiones)",
-  "Edit": "Editar",
   "Edit and test configuration changes without having to modify the CR.": "Editar y probar cambios de configuración sin tener que modificar el CR.",
   "Edit annotations": "Editar anotaciones",
   "Edit labels": "Editar etiquetas",

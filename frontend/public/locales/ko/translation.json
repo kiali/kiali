@@ -392,7 +392,6 @@
   "edges with http rate > 0.5 rps": "http 속도 > 0.5 rps인 엣지",
   "edges with no traffic": "트래픽 없는 엣지",
   "edges with response time > 500ms. (requires response time edge labels)": "응답 시간 > 500ms인 엣지(응답 시간 엣지 레이블 필요)",
-  "Edit": "편집",
   "Edit and test configuration changes without having to modify the CR.": "CR을 수정하지 않고도 설정 변경 사항을 편집하고 테스트할 수 있습니다.",
   "Edit annotations": "어노테이션 편집",
   "Edit labels": "레이블 편집",

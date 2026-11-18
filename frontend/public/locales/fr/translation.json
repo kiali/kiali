@@ -412,7 +412,6 @@
   "edges with http rate > 0.5 rps": "arêtes avec un débit http > 0.5 rps",
   "edges with no traffic": "arêtes sans trafic",
   "edges with response time > 500ms. (requires response time edge labels)": "arêtes avec un temps de réponse > 500ms. (nécessite les libellés de temps de réponse sur les arêtes)",
-  "Edit": "Modifier",
   "Edit and test configuration changes without having to modify the CR.": "Modifier et tester les changements de configuration sans modifier le CR.",
   "Edit annotations": "Modifier les annotations",
   "Edit labels": "Modifier les libellés",
