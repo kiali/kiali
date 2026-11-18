@@ -55,11 +55,36 @@ cleanup_offline_seeded_traffic_routing() {
   fi
 }
 
+# Returns 0 when the namespace dir already has K8s workloads and services Kiali needs offline.
+must_gather_namespace_usable_for_offline() {
+  local ns_dir="${1}"
+  local yaml_file has_workload=false has_service=false
+
+  if [ ! -d "${ns_dir}" ]; then
+    return 1
+  fi
+
+  while IFS= read -r -d '' yaml_file; do
+    if grep -qE '^kind: (Deployment|ReplicaSet|StatefulSet|DaemonSet)$' "${yaml_file}" 2>/dev/null; then
+      has_workload=true
+    fi
+    if grep -qE '^kind: Service$' "${yaml_file}" 2>/dev/null; then
+      has_service=true
+    fi
+    if [ "${has_workload}" = true ] && [ "${has_service}" = true ]; then
+      return 0
+    fi
+  done < <(find "${ns_dir}" -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 2>/dev/null)
+
+  return 1
+}
+
 # Sail/OSSM must-gather discovers mesh member namespaces; classic istioctl installs often only
 # gather the control plane. Offline cypress needs bookinfo (and peers) in the dump either way.
 supplement_must_gather_namespace() {
   local must_gather_dir="${1}"
   local ns="${2}"
+  local ns_dir
 
   if ! kubectl get namespace "${ns}" &>/dev/null; then
     infomsg "Skipping must-gather supplement for missing namespace: ${ns}"
@@ -72,27 +97,29 @@ supplement_must_gather_namespace() {
     namespaces_dir="${must_gather_dir}/namespaces"
   fi
 
-  if [ -d "${namespaces_dir}/${ns}" ] && find "${namespaces_dir}/${ns}" -name '*.yaml' -o -name '*.yml' 2>/dev/null | grep -q .; then
-    infomsg "must-gather already includes namespace ${ns}"
+  ns_dir="${namespaces_dir}/${ns}"
+  if must_gather_namespace_usable_for_offline "${ns_dir}"; then
+    infomsg "must-gather already includes workloads and services for namespace ${ns}"
     return 0
   fi
 
   infomsg "Supplementing must-gather with namespace ${ns} (needed for istioctl / non-Sail installs)"
-  if ! mkdir -p "${namespaces_dir}/${ns}"; then
-    echo "ERROR: Cannot create ${namespaces_dir}/${ns} (must-gather files may be owned by root)."
+  if ! mkdir -p "${ns_dir}"; then
+    echo "ERROR: Cannot create ${ns_dir} (must-gather files may be owned by root)."
     echo "Fix with: sudo chown -R \$(id -u):\$(id -g) \"$(dirname "${namespaces_dir}")\""
     return 1
   fi
-  kubectl get namespace "${ns}" -o yaml > "${namespaces_dir}/${ns}/namespace.yaml"
+  kubectl get namespace "${ns}" -o yaml > "${ns_dir}/namespace.yaml"
   # Dump namespaced resources as individual YAML docs so the offline client can parse them.
   local res
   for res in \
       services pods deployments replicasets daemonsets statefulsets \
       configmaps serviceaccounts \
       destinationrules virtualservices gateways sidecars peerauthentications \
-      authorizationpolicies requestauthentications serviceentries workloadentries telemetries; do
+      authorizationpolicies requestauthentications serviceentries workloadentries telemetries \
+      httproutes grpcroutes; do
     if kubectl get "${res}" -n "${ns}" -o name 2>/dev/null | grep -q .; then
-      kubectl get "${res}" -n "${ns}" -o yaml > "${namespaces_dir}/${ns}/${res}.yaml" 2>/dev/null || true
+      kubectl get "${res}" -n "${ns}" -o yaml > "${ns_dir}/${res}.yaml" 2>/dev/null || true
     fi
   done
 }
