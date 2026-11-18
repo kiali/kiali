@@ -221,7 +221,9 @@ supplement_must_gather_pod_runtime_data() {
     while IFS= read -r cname; do
       [ -z "${cname}" ] && continue
       mkdir -p "${pod_dir}/${cname}/${cname}/logs"
-      kubectl logs -n "${ns}" "${pod}" -c "${cname}" --tail=5000 \
+      # --timestamps matches the k8s API Timestamps=true format Kiali's parseLogLine expects
+      # (RFC3339Nano prefix). Plain kubectl logs are skipped as unparseable.
+      kubectl logs -n "${ns}" "${pod}" -c "${cname}" --timestamps --tail=5000 \
         > "${pod_dir}/${cname}/${cname}/logs/current.log" 2>/dev/null \
         || : > "${pod_dir}/${cname}/${cname}/logs/current.log"
     done < <(kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{range .spec.containers[*]}{.name}{"\n"}{end}' 2>/dev/null || true)
