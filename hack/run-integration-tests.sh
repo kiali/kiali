@@ -55,7 +55,27 @@ cleanup_offline_seeded_traffic_routing() {
   fi
 }
 
+resolve_must_gather_namespaces_dir() {
+  local must_gather_dir="${1}"
+  local istio_system_dir namespaces_dir
+
+  istio_system_dir="$(find "${must_gather_dir}" -type d -path '*/namespaces/istio-system' 2>/dev/null | head -n 1)"
+  if [ -n "${istio_system_dir}" ]; then
+    dirname "${istio_system_dir}"
+    return 0
+  fi
+
+  namespaces_dir="$(find "${must_gather_dir}" -type d -name namespaces 2>/dev/null | head -n 1)"
+  if [ -n "${namespaces_dir}" ]; then
+    echo "${namespaces_dir}"
+    return 0
+  fi
+
+  echo "${must_gather_dir}/namespaces"
+}
+
 # Returns 0 when the namespace dir already has K8s workloads and services Kiali needs offline.
+# Matches root-level kinds and documents embedded in kubectl List output (indented kind: lines).
 must_gather_namespace_usable_for_offline() {
   local ns_dir="${1}"
   local yaml_file has_workload=false has_service=false
@@ -65,10 +85,10 @@ must_gather_namespace_usable_for_offline() {
   fi
 
   while IFS= read -r -d '' yaml_file; do
-    if grep -qE '^kind: (Deployment|ReplicaSet|StatefulSet|DaemonSet)$' "${yaml_file}" 2>/dev/null; then
+    if grep -qE '^[[:space:]]*kind: (Deployment|ReplicaSet|StatefulSet|DaemonSet)$' "${yaml_file}" 2>/dev/null; then
       has_workload=true
     fi
-    if grep -qE '^kind: Service$' "${yaml_file}" 2>/dev/null; then
+    if grep -qE '^[[:space:]]*kind: Service$' "${yaml_file}" 2>/dev/null; then
       has_service=true
     fi
     if [ "${has_workload}" = true ] && [ "${has_service}" = true ]; then
@@ -79,31 +99,45 @@ must_gather_namespace_usable_for_offline() {
   return 1
 }
 
+assert_must_gather_namespace_has_workloads() {
+  local ns_dir="${1}"
+  local ns="${2}"
+
+  if must_gather_namespace_usable_for_offline "${ns_dir}"; then
+    return 0
+  fi
+
+  echo "ERROR: Namespace ${ns} is missing Deployment and Service data under ${ns_dir} after must-gather supplement."
+  echo "Deployments visible in cluster:"
+  kubectl get deployments -n "${ns}" 2>&1 | head -20 || true
+  echo "Files under ${ns_dir}:"
+  find "${ns_dir}" -type f 2>/dev/null | head -30 || true
+  return 1
+}
+
 # Sail/OSSM must-gather discovers mesh member namespaces; classic istioctl installs often only
 # gather the control plane. Offline cypress needs bookinfo (and peers) in the dump either way.
+# When force=true, always refresh from the live cluster (used for istioctl CI).
 supplement_must_gather_namespace() {
   local must_gather_dir="${1}"
   local ns="${2}"
-  local ns_dir
+  local force="${3:-false}"
+  local ns_dir namespaces_dir
 
   if ! kubectl get namespace "${ns}" &>/dev/null; then
     infomsg "Skipping must-gather supplement for missing namespace: ${ns}"
     return 0
   fi
 
-  local namespaces_dir
-  namespaces_dir="$(find "${must_gather_dir}" -type d -name namespaces 2>/dev/null | head -n 1)"
-  if [ -z "${namespaces_dir}" ]; then
-    namespaces_dir="${must_gather_dir}/namespaces"
-  fi
-
+  namespaces_dir="$(resolve_must_gather_namespaces_dir "${must_gather_dir}")"
   ns_dir="${namespaces_dir}/${ns}"
-  if must_gather_namespace_usable_for_offline "${ns_dir}"; then
+
+  if [ "${force}" != "true" ] && must_gather_namespace_usable_for_offline "${ns_dir}"; then
     infomsg "must-gather already includes workloads and services for namespace ${ns}"
     return 0
   fi
 
-  infomsg "Supplementing must-gather with namespace ${ns} (needed for istioctl / non-Sail installs)"
+  infomsg "Supplementing must-gather with namespace ${ns} (namespaces_dir=${namespaces_dir}, force=${force})"
   if ! mkdir -p "${ns_dir}"; then
     echo "ERROR: Cannot create ${ns_dir} (must-gather files may be owned by root)."
     echo "Fix with: sudo chown -R \$(id -u):\$(id -g) \"$(dirname "${namespaces_dir}")\""
@@ -117,7 +151,7 @@ supplement_must_gather_namespace() {
       configmaps serviceaccounts \
       destinationrules virtualservices gateways sidecars peerauthentications \
       authorizationpolicies requestauthentications serviceentries workloadentries telemetries \
-      httproutes grpcroutes; do
+      httproutes grpcroutes gateway; do
     if kubectl get "${res}" -n "${ns}" -o name 2>/dev/null | grep -q .; then
       kubectl get "${res}" -n "${ns}" -o yaml > "${ns_dir}/${res}.yaml" 2>/dev/null || true
     fi
@@ -1263,11 +1297,20 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
 
   # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
   # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
-  docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
-
-  # The must-gather image writes as root; host steps (supplement + kiali gather) need write access.
-  if command -v sudo >/dev/null 2>&1; then
-    sudo chown -R "$(id -u):$(id -g)" "${MUST_GATHER_DIR}"
+  # The OSSM must-gather image expects OpenShift/Sail CRs; with istioctl it still gathers istio-system
+  # and cluster-scoped Istio CRDs but skips mesh member namespaces (errors in the log are expected).
+  if ! docker run --network host \
+      --user "$(id -u):$(id -g)" \
+      --volume "$HOME/.kube/config:/.kube/config:ro" \
+      --env KUBECONFIG=/.kube/config \
+      --volume "${MUST_GATHER_DIR}:/must-gather" \
+      --rm quay.io/maistra/istio-must-gather:3.0; then
+    infomsg "must-gather with container user failed; retrying as root"
+    docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+    # The must-gather image writes as root; host steps (supplement + kiali gather) need write access.
+    if command -v sudo >/dev/null 2>&1; then
+      sudo chown -R "$(id -u):$(id -g)" "${MUST_GATHER_DIR}"
+    fi
   fi
 
   # With Sail, must-gather usually includes mesh member namespaces. With istioctl it often only
@@ -1277,10 +1320,17 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
     echo "Run the local suite first (or omit --tests-only) so demos are installed."
     exit 1
   fi
-  supplement_must_gather_namespace "${MUST_GATHER_DIR}" "bookinfo"
+  OFFLINE_SUPPLEMENT_FORCE="false"
+  if [ "${SAIL}" = "false" ]; then
+    OFFLINE_SUPPLEMENT_FORCE="true"
+  fi
+  OFFLINE_NAMESPACES_DIR="$(resolve_must_gather_namespaces_dir "${MUST_GATHER_DIR}")"
+  infomsg "Using must-gather namespaces directory: ${OFFLINE_NAMESPACES_DIR}"
+  supplement_must_gather_namespace "${MUST_GATHER_DIR}" "bookinfo" "${OFFLINE_SUPPLEMENT_FORCE}"
   for _extra_ns in alpha beta gamma sleep; do
-    supplement_must_gather_namespace "${MUST_GATHER_DIR}" "${_extra_ns}"
+    supplement_must_gather_namespace "${MUST_GATHER_DIR}" "${_extra_ns}" "${OFFLINE_SUPPLEMENT_FORCE}"
   done
+  assert_must_gather_namespace_has_workloads "${OFFLINE_NAMESPACES_DIR}/bookinfo" "bookinfo"
 
   "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
   cleanup_offline_seeded_traffic_routing
