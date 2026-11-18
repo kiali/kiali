@@ -247,7 +247,7 @@ When('user adds label key {string} and value {string} and saves', (key: string, 
     cy.contains('button', 'key=value').click();
     cy.get('input').clear();
     cy.get('input').type(`${key}=${value}{enter}`);
-    cy.get('.pf-v6-c-card__header-actions button').first().click();
+    cy.get('button[aria-label="Save"]').click();
     cy.contains(`${key}=${value}`).should('be.visible');
   });
   cy.getBySel('preview').should('be.enabled');

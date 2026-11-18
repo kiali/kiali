@@ -24,7 +24,8 @@ Feature: Kiali Waypoint related features
     When user selects the "bookinfo" namespace
     Then the "waypoint" row is visible
     And the health column on the "waypoint" row has a health icon
-    And the "Labels" column on the "waypoint" row has the text "gateway.istio.io/managed=istio.io-mesh-controller"
+    When user expands labels on the "waypoint" row
+    Then the "Labels" column on the "waypoint" row has the text "gateway.istio.io/managed=istio.io-mesh-controller"
     And the "Labels" column on the "waypoint" row has the text "gateway.networking.k8s.io/gateway-name=waypoint"
     And the "Type" column on the "waypoint" row has the text "Deployment"
     And the "Details" column on the "waypoint" row has the text "Waypoint Proxy"
