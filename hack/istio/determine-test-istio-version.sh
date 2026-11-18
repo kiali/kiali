@@ -16,7 +16,8 @@ Usage:
 
 Options:
   --source <istio|sail>
-    Version source. "istio" reads istio/istio releases.
+    Version source. "istio" reads istio/istio releases and prints concrete tags
+    (GA X.Y.Z, or the newest RC when no GA exists for that minor).
     "sail" reads istio-ecosystem/sail-operator releases and uses stable X.Y.Z only.
     Default: istio
 
@@ -123,16 +124,18 @@ determine_from_istio_releases() {
     {
       minor = $1 "." $2
       is_rc = ($4 == "rc")
+      is_ga = ($0 ~ /^[0-9]+\.[0-9]+\.[0-9]+$/)
       z = $3
       rc_ver = is_rc ? $5 : ""
 
       if (!minor_ga[minor] && !minor_rc[minor]) {
-        if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
-        else { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-      } else if (!is_rc && minor_ga[minor]) {
+        if (is_ga) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
+        else if (is_rc) { minor_rc[minor] = $0; minor_rc_z[minor] = z; minor_rc_rc[minor] = rc_ver }
+      } else if (is_ga && minor_ga[minor]) {
         if (z > minor_ga_z[minor]) { minor_ga[minor] = $0; minor_ga_z[minor] = z }
-      } else if (!is_rc && !minor_ga[minor]) {
-        minor_ga[minor] = $0; minor_ga_z[minor] = z; delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
+      } else if (is_ga && !minor_ga[minor]) {
+        minor_ga[minor] = $0; minor_ga_z[minor] = z
+        delete minor_rc[minor]; delete minor_rc_z[minor]; delete minor_rc_rc[minor]
       } else if (is_rc && !minor_ga[minor]) {
         current_rc_stored = minor_rc[minor]
         split(current_rc_stored, current_rc_parts, "[-.]")
@@ -144,9 +147,8 @@ determine_from_istio_releases() {
       }
     }
     END {
-      # Historical behavior for Istio-based flow in this workflow.
-      for (m in minor_ga) { split(minor_ga[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
-      for (m in minor_rc) { split(minor_rc[m], version_parts, "."); print version_parts[1] "." version_parts[2] "-latest" }
+      for (m in minor_ga) { print minor_ga[m] }
+      for (m in minor_rc) { print minor_rc[m] }
     }' | sort -Vr | sed '/^$/d'
 }
 
