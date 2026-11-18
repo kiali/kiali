@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	goerrors "errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -519,7 +519,7 @@ func extractIstioMetricsQueryParams(r *http.Request, q *models.IstioMetricsQuery
 	dir := queryParams.Get("direction")
 	if dir != "" {
 		if dir != "inbound" && dir != "outbound" {
-			return errors.New("bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
+			return goerrors.New("bad request, query parameter 'direction' must be either 'inbound' or 'outbound'")
 		}
 		q.Direction = dir
 	}
@@ -549,7 +549,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 	}
 	if rf := queryParams.Get("rateFunc"); rf != "" {
 		if rf != "rate" && rf != "irate" {
-			return errors.New("bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
+			return goerrors.New("bad request, query parameter 'rateFunc' must be either 'rate' or 'irate'")
 		}
 		q.RateFunc = rf
 	}
@@ -557,7 +557,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		if num, err := strconv.ParseInt(queryTime, 10, 64); err == nil {
 			q.End = time.Unix(num, 0)
 		} else {
-			return errors.New("bad request, cannot parse query parameter 'queryTime'")
+			return goerrors.New("bad request, cannot parse query parameter 'queryTime'")
 		}
 	}
 	if dur := queryParams.Get("duration"); dur != "" {
@@ -565,16 +565,16 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 			duration := time.Duration(num) * time.Second
 			q.Start = q.End.Add(-duration)
 		} else {
-			return errors.New("bad request, cannot parse query parameter 'duration'")
+			return goerrors.New("bad request, cannot parse query parameter 'duration'")
 		}
 	}
 	if step := queryParams.Get("step"); step != "" {
 		num, err := strconv.Atoi(step)
 		if err != nil {
-			return errors.New("bad request, cannot parse query parameter 'step'")
+			return goerrors.New("bad request, cannot parse query parameter 'step'")
 		}
 		if num <= 0 {
-			return errors.New("bad request, query parameter 'step' must be positive")
+			return goerrors.New("bad request, query parameter 'step' must be positive")
 		}
 		q.Step = time.Duration(num) * time.Second
 	}
@@ -583,10 +583,10 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 			f, err := strconv.ParseFloat(quantile, 64)
 			if err != nil {
 				// Non parseable quantile
-				return errors.New("bad request, cannot parse query parameter 'quantiles', float expected")
+				return goerrors.New("bad request, cannot parse query parameter 'quantiles', float expected")
 			}
 			if f < 0 || f > 1 {
-				return errors.New("bad request, invalid quantile(s): should be between 0 and 1")
+				return goerrors.New("bad request, invalid quantile(s): should be between 0 and 1")
 			}
 		}
 		q.Quantiles = quantiles
@@ -595,7 +595,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 		if avg, err := strconv.ParseBool(avgStr); err == nil {
 			q.Avg = avg
 		} else {
-			return errors.New("bad request, cannot parse query parameter 'avg'")
+			return goerrors.New("bad request, cannot parse query parameter 'avg'")
 		}
 	}
 	if lbls, ok := queryParams["byLabels[]"]; ok && len(lbls) > 0 {
@@ -628,7 +628,7 @@ func extractBaseMetricsQueryParams(queryParams url.Values, q *prometheus.RangeQu
 			// This means that the query range does not fall in the range
 			// of life of the namespace. So, there are no metrics to query.
 			log.Debugf("[extractMetricsQueryParams] Query end time = %v; not querying metrics.", q.End)
-			return errors.New("after checks, query start time is after end time")
+			return goerrors.New("after checks, query start time is after end time")
 		}
 	}
 
@@ -678,6 +678,10 @@ func MetricsStats(conf *config.Config, cache cache.KialiCache, discovery *istio.
 				// through the shared gate mapper so the status and message
 				// prefix cannot diverge from the other namespace gates.
 				respondNamespaceAccessError(w, business.NewAccessibleNamespaceError(warns.Error()))
+			case statsFailureRevoked:
+				// Every failure is a partially-revoked namespace: temporarily
+				// unavailable, it recovers on its own (~30s probe).
+				RespondWithError(w, http.StatusServiceUnavailable, warns.Error())
 			default:
 				RespondWithError(w, http.StatusInternalServerError, warns.Error())
 			}
@@ -709,13 +713,14 @@ const (
 	statsFailureInternal
 	statsFailureInvalid
 	statsFailureNone
+	statsFailureRevoked
 )
 
 func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceService, rawQ []models.MetricsStatsQuery) ([]models.MetricsStatsQuery, *util.Errors, statsFailureKind) {
 	// Keep only valid queries (fill errors if needed) and adjust queryTime / interval
 	var errors util.Errors
 	var validQueries []models.MetricsStatsQuery
-	sawInvalid, sawAccess, sawOther := false, false, false
+	sawInvalid, sawAccess, sawOther, sawRevoked := false, false, false, false
 	// A stats request typically batches many queries for the same namespace:
 	// memoize the per-(namespace, cluster) authorization result so the gate
 	// runs once per distinct target.
@@ -760,9 +765,14 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 		}
 		if err != nil {
 			errors.Add(fmt.Errorf("namespace '%s', cluster: '%s': %v", q.Target.Namespace, q.Target.Cluster, err))
-			if business.IsAccessibleError(err) {
+			switch {
+			case goerrors.Is(err, cache.ErrNamespaceRevoked):
+				// A partially-revoked namespace is temporarily unavailable, not the
+				// client's fault and not an internal error.
+				sawRevoked = true
+			case business.IsAccessibleError(err):
 				sawAccess = true
-			} else {
+			default:
 				sawOther = true
 			}
 			continue
@@ -784,9 +794,11 @@ func prepareStatsQueries(ctx context.Context, namespace *business.NamespaceServi
 	failureKind := statsFailureNone
 	if sawInvalid {
 		failureKind = statsFailureInvalid
-	} else if sawAccess && !sawOther {
+	} else if sawAccess && !sawOther && !sawRevoked {
 		failureKind = statsFailureAccess
-	} else if sawAccess || sawOther {
+	} else if sawRevoked && !sawAccess && !sawOther {
+		failureKind = statsFailureRevoked
+	} else if sawAccess || sawOther || sawRevoked {
 		failureKind = statsFailureInternal
 	}
 	return validQueries, errors.OrNil(), failureKind

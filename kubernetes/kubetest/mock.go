@@ -41,7 +41,7 @@ type K8SClientFactoryMock struct {
 	SAClients map[string]kubernetes.ClientInterface
 
 	// skippedClusters models clusters whose registration was definitively broken at
-	// startup; see WithSkippedCluster.
+	// startup (see the ClientFactory interface).
 	skippedClusters map[string]error
 }
 
@@ -135,7 +135,7 @@ func (o *K8SClientFactoryMock) WithSAClient(cluster string, objects ...runtime.O
 }
 
 // IsClusterSkipped reports whether the cluster's registration was marked definitively broken
-// at startup (see WithSkippedCluster).
+// at startup (see the ClientFactory interface).
 
 func (o *K8SClientFactoryMock) IsClusterSkipped(cluster string) bool {
 	o.lock.RLock()
@@ -168,14 +168,6 @@ func (o *K8SClientFactoryMock) SkippedClusters() []string {
 	}
 	sort.Strings(names)
 	return names
-}
-
-// WithSkippedCluster marks the cluster as skipped (definitively broken
-// registration) and drops its SA client, mirroring the production factory's
-// SkipCluster for tests.
-func (o *K8SClientFactoryMock) WithSkippedCluster(cluster string, reason error) *K8SClientFactoryMock {
-	o.SkipCluster(cluster, reason)
-	return o
 }
 
 // GetSAClientsAsUserClientInterfaces returns all the SA clients as read-write clients (UserClientInterface).

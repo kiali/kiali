@@ -31,6 +31,10 @@ func handleErrorResponse(w http.ResponseWriter, err error, extraMesg ...string) 
 		// A degraded cluster recovers on its own (~30s probe): temporarily unavailable,
 		// not broken.
 		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
+	} else if goerrors.Is(err, cache.ErrNamespaceRevoked) {
+		// A partially-revoked namespace recovers on its own (~30s probe): temporarily
+		// unavailable, not missing and not the user's fault.
+		RespondWithError(w, http.StatusServiceUnavailable, errorMsg)
 	} else if errors.IsNotFound(err) {
 		RespondWithError(w, http.StatusNotFound, errorMsg)
 	} else if errors.IsServiceUnavailable(err) {

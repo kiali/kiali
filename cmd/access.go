@@ -39,6 +39,11 @@ import (
 // fit the budget on large non-cluster-wide installs.
 const accessCheckConcurrency = 8
 
+// accessCheckMaxConcurrency scales the sweep with the namespace count: at large counts the
+// 5s budget only covers the sweep if enough namespaces are in flight (each namespace costs
+// SSAR round trips through the client's rate limiter).
+const accessCheckMaxConcurrency = 64
+
 // makeWatchErrorHandler tears down a cluster's informers on a Forbidden watch error. When
 // clusterAccess is set, it only does so after a live check confirms the access was revoked.
 func makeWatchErrorHandler(getCache func() ctrlcache.Cache, k8sClient kubernetes.ClientInterface, clusterAccess *cache.ClusterAccess) func(context.Context, *toolscache.Reflector, error) {
@@ -200,14 +205,18 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			namespaces = cache.AccessibleNamespacesForCluster(conf, cluster)
 		}
 
-		// Known race, accepted: when one namespace's check errors and another's is
-		// denied, the errgroup returns whichever finished first, so a definitive denial
-		// can be reported as unknown. The outcome is bounded by the debounce window
-		// (10s) and conservative (the cache is kept and the check retried).
+		// The sweep is two-valued: a namespace is allowed or denied, and any check error
+		// fails the whole sweep with an unknown verdict (the cache is kept, the check
+		// retried after the debounce). Known race, accepted: when one namespace's check
+		// errors and another's is denied, the errgroup returns whichever finished first,
+		// so a definitive denial can be reported as unknown - bounded by the debounce
+		// window (10s) and conservative. At namespace counts the concurrency scaling
+		// cannot cover within the check timeout, the sweep reports unknown and detection
+		// is delayed to the next retry rather than wrong.
 		var mu sync.Mutex
 		denied := make([]string, 0, len(namespaces))
 		g, gctx := errgroup.WithContext(ctx)
-		g.SetLimit(accessCheckConcurrency)
+		g.SetLimit(max(min(len(namespaces)/4, accessCheckMaxConcurrency), accessCheckConcurrency))
 		for _, namespace := range namespaces {
 			g.Go(func() error {
 				reviews, err := client.GetSelfSubjectAccessReview(gctx, namespace, group, resource, []string{"list", "watch"})
@@ -229,10 +238,11 @@ func newAccessCheck(conf *config.Config, clientFactory kubernetes.ClientFactory)
 			return cache.DeniedAccess{}, err
 		}
 		slices.Sort(denied)
-		switch len(denied) {
-		case 0:
+		switch {
+		case len(denied) == 0:
+			// Nothing denied - including the empty-scope case, which denies nothing.
 			return cache.DeniedAccess{}, nil
-		case len(namespaces):
+		case len(denied) == len(namespaces):
 			// Every accessible namespace denied the read: the cluster's access is gone.
 			return cache.DeniedAccess{Cluster: true}, nil
 		default:

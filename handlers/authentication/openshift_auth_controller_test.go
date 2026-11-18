@@ -1575,3 +1575,76 @@ func TestOpenshiftAuthCallbackNamespaceLookupFailure(t *testing.T) {
 			"no session should be created while the namespace API is failing")
 	}
 }
+
+// TestAuthenticateGetIsSessionCheck pins the GET /api/authenticate semantics for the
+// openshift strategy: a valid session (including one holding a remote-cluster token) is
+// validated and returned; no session yields an authentication failure (401), not the old
+// 500 "implicit flow removed" stub; a POST yields an honest authentication failure.
+func TestAuthenticateGetIsSessionCheck(t *testing.T) {
+	conf := config.NewConfig()
+	conf.LoginToken.SigningKey = "kiali67890123456"
+	conf.Auth.Strategy = config.AuthStrategyOpenshift
+	conf.KubernetesConfig.ClusterName = "east"
+
+	metadataServer := fakeOAuthMetadataServer(t)
+	eastClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	eastClient.Token = "east-user"
+	westClient := newOpenshiftAuthTestClient(t, metadataServer, true)
+	westClient.Token = "west-user"
+	clients := map[string]kubernetes.UserClientInterface{"east": eastClient, "west": westClient}
+	clientFactory := kubetest.NewFakeClientFactory(conf, clients)
+	authController := setupOpenshiftAuthController(t, conf, clientFactory)
+
+	// No session: GET is an authentication failure (401 through the handler), not a 500.
+	r := httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w := httptest.NewRecorder()
+	_, err := authController.Authenticate(r, w)
+	require.Error(t, err)
+	var authErr *authentication.AuthenticationFailureError
+	require.ErrorAs(t, err, &authErr)
+
+	// A valid session is returned by GET - the home cluster's session, even when the
+	// request also carries a remote-cluster session cookie.
+	sessionCookieEast := validSession(t, authController, "east")
+	sessionCookieWest := validSession(t, authController, "west")
+
+	// The home-only result first: its SessionID is the reference for what GET must return.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	homeSession, err := authController.Authenticate(r, w)
+	require.NoError(t, err)
+	require.NotEmpty(t, homeSession.SessionID, "the home session carries an ID")
+
+	// With both cookies, GET must still return the home cluster's session - matching the
+	// home-only result by SessionID, so returning the remote session cannot pass.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieEast)
+	r.AddCookie(sessionCookieWest)
+	session, err := authController.Authenticate(r, w)
+	require.NoError(t, err)
+	require.NotNil(t, session)
+	require.NotNil(t, session.AuthInfo, "session data is returned")
+	require.NotEmpty(t, session.Username, "the home user's name is returned")
+	require.False(t, session.ExpiresOn.IsZero(), "the session's expiry is populated")
+	require.NotEmpty(t, session.SessionID, "the returned session carries an ID")
+	require.Equal(t, homeSession.SessionID, session.SessionID, "GET returns the home cluster's session, not the remote's")
+
+	// A remote-only session (no home cookie) is an authentication failure: the home
+	// cluster's session is the mandatory one.
+	r = httptest.NewRequest(http.MethodGet, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	r.AddCookie(sessionCookieWest)
+	_, err = authController.Authenticate(r, w)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &authErr)
+
+	// POST is an honest authentication failure: openshift login never happens via a form
+	// post, and the old 500 stub is gone.
+	r = httptest.NewRequest(http.MethodPost, "/api/authenticate", nil)
+	w = httptest.NewRecorder()
+	_, err = authController.Authenticate(r, w)
+	require.Error(t, err)
+	require.ErrorAs(t, err, &authErr)
+}

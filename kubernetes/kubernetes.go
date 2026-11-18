@@ -713,6 +713,29 @@ func (s *podLogStream) Close() error {
 	return err
 }
 
+// authzClientSet lazily builds the rate-limit-free clientset used for SelfSubjectAccess
+// Reviews (see the authzConfig field comment). Identities that never issue an SSAR never
+// pay for the second clientset; concurrent first uses share one build.
+func (in *K8SClient) authzClientSet() (kubernetes.Interface, error) {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.authzClient != nil {
+		return in.authzClient, nil
+	}
+	if in.authzConfig == nil {
+		// A K8SClient built directly (tests) has no authz config: fall back to the main
+		// clientset and its rate limiter.
+		in.authzClient = in.k8s
+		return in.authzClient, nil
+	}
+	client, err := kubernetes.NewForConfig(in.authzConfig)
+	if err != nil {
+		return nil, err
+	}
+	in.authzClient = client
+	return client, nil
+}
+
 // podLogsClient lazily builds the timeout-free clientset used for pod log streams. Most
 // identities never request logs, so the second clientset (and its rate limiter) is only
 // paid for on first use; concurrent first uses share one build.
@@ -774,12 +797,17 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 		defer span.End()
 	}
 
+	authz, authzErr := in.authzClientSet()
+	if authzErr != nil {
+		return nil, authzErr
+	}
+
 	calls := len(verbs)
 	ch := make(chan *auth_v1.SelfSubjectAccessReview, calls)
 	errChan := make(chan error)
 	for _, v := range verbs {
 		go func(ctx context.Context, verb string) {
-			res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
+			res, err := authz.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
 				Spec: auth_v1.SelfSubjectAccessReviewSpec{
 					ResourceAttributes: &auth_v1.ResourceAttributes{
 						Namespace: namespace,

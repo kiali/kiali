@@ -293,7 +293,11 @@ func (in *NamespaceService) getNamespacesByCluster(ctx context.Context, cluster 
 		// We do not have cluster wide access, so we do not have permission to list namespaces. Therefore, we assume we can
 		// extract the list of accessible namespaces from the discovery selectors configuration. That list of accessible
 		// namespaces will be used as our base list which we then filter with discovery selectors down below.
-		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		// The base list is the cluster's own effective scope - its discovery selector override when one
+		// is defined, otherwise the default accessible namespaces - resolved through the same source the
+		// remote caches and the live access check use, so discovery can never name a namespace the
+		// cluster's informers are not scoped to.
+		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
 			k8sNs, err := in.userClients[cluster].GetNamespace(ctx, ans)
@@ -446,7 +450,9 @@ func (in *NamespaceService) GetKialiSAClusterNamespaces(ctx context.Context, clu
 		}
 		namespaces = models.CastNamespaceCollection(nss, cluster)
 	} else {
-		accessibleNamespaces := in.conf.Deployment.AccessibleNamespaces
+		// The cluster's own effective scope (override-aware), matching the user path and the
+		// informer scoping - see getNamespacesByCluster.
+		accessibleNamespaces := cache.AccessibleNamespacesForCluster(in.conf, cluster)
 		k8sNamespaces := make([]core_v1.Namespace, 0)
 		for _, ans := range accessibleNamespaces {
 			k8sNs, err := saClient.GetNamespace(ctx, ans)
@@ -498,6 +504,20 @@ func (in *NamespaceService) CheckNamespaceAccessAllClusters(ctx context.Context,
 	}
 
 	for _, cluster := range in.GetKialiSAClusterList() {
+		// The revocation mark is checked before the SA membership: a partially revoked
+		// namespace is also dropped from the SA's readable set on recompute (its per-namespace
+		// GET comes back Forbidden), so checking membership first would skip the cluster and
+		// pass the unscoped query on the strength of the remaining clusters. A fully
+		// degraded cluster clears its partial marks, so its degradation is checked the same
+		// way - its recomputed SA set comes back empty (every GET Forbidden) and would
+		// otherwise place no demand on the user while its telemetry stays queryable.
+		if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+			return nil, notAccessible()
+		}
+		if _, kubeCacheErr := in.kialiCache.GetKubeCache(cluster); kubeCacheErr != nil && errors.Is(kubeCacheErr, cache.ErrClusterDegraded) {
+			return nil, notAccessible()
+		}
+
 		// The SA set tells us where the namespace exists at all; clusters
 		// without it place no demand on the user.
 		saNamespaces, err := in.GetKialiSAClusterNamespaces(ctx, cluster)
@@ -597,17 +617,27 @@ func (in *NamespaceService) GetClusterNamespace(ctx context.Context, namespace s
 	// the pre-revocation snapshot would show resources that may no longer exist. This gates
 	// every detail path that authorizes through GetClusterNamespace (~20 call sites).
 	if ns, inSet, setCached := in.kialiCache.ResolveClusterNamespace(cluster, client.GetCacheKey(), namespace); setCached {
-		if inSet {
-			return &ns, nil
+		if !inSet {
+			return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
 		}
-		return nil, NewAccessibleNamespaceError("namespace [" + namespace + "] in cluster [" + cluster + "] is not accessible")
+		if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+			return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+		}
+		return &ns, nil
 	}
 
 	clusterNamespaces, err := in.GetClusterNamespacesForCluster(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
-	return namespaceFromAccessibleSet(clusterNamespaces, namespace, cluster)
+	ns, err := namespaceFromAccessibleSet(clusterNamespaces, namespace, cluster)
+	if err != nil {
+		return nil, err
+	}
+	if in.kialiCache.IsNamespaceRevoked(cluster, namespace) {
+		return nil, fmt.Errorf("namespace [%s] in cluster [%s]: %w", namespace, cluster, cache.ErrNamespaceRevoked)
+	}
+	return ns, nil
 }
 
 // namespaceFromAccessibleSet returns the named namespace from the accessible

@@ -132,9 +132,43 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 	}, nil
 }
 
-// Authenticate is not implemented for the openshift auth strategy because kiali no longer supports the implicit flow.
+// Authenticate serves GET /api/authenticate for the openshift strategy. The implicit flow it
+// once implemented is gone (login goes through the OAuth code flow at /api/auth/redirect),
+// so a GET here is a session check, not a login: a valid session - including one that holds
+// remote-cluster tokens - is validated and returned; no session yields a 401; an indeterminate
+// validation (for example, an unreachable cluster) is returned as an error rather than being
+// mislabeled an authentication failure. POST gets an honest 401: openshift login never
+// happens through a form post.
 func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	return nil, fmt.Errorf("support for OAuth's implicit flow has been removed")
+	if r.Method != http.MethodGet {
+		return nil, &AuthenticationFailureError{
+			Reason: "the implicit flow has been removed; log in via the OAuth authorization code flow",
+		}
+	}
+
+	sessions, err := o.ValidateSession(r, w)
+	if err != nil {
+		// Confirmed authentication failures are 401s, not server errors: no session at all,
+		// or a session terminated because its token can no longer view any namespace.
+		if errors.Is(err, ErrSessionNotFound) {
+			return nil, &AuthenticationFailureError{Reason: "no valid session"}
+		}
+		if errors.Is(err, ErrCannotViewNamespaces) {
+			return nil, &AuthenticationFailureError{Reason: "the session's token can no longer view any namespace"}
+		}
+		// A transient validation problem (for example, an unreachable home cluster) is not
+		// an authentication failure; return it as a plain error so the handler answers 500
+		// with its message instead of a 401.
+		return nil, err
+	}
+
+	home := o.conf.KubernetesConfig.ClusterName
+	if len(sessions) == 0 || sessions[home] == nil {
+		return nil, &AuthenticationFailureError{
+			Reason: "no valid session",
+		}
+	}
+	return sessions[home], nil
 }
 
 // checkTokenCanViewNamespaces verifies that the given token can view at least one
@@ -544,7 +578,9 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			// generic "no valid session found" (which would surface as a 500).
 			return nil, ErrCannotViewNamespaces
 		}
-		return nil, fmt.Errorf("no valid session found")
+		// A confirmed authentication failure (the sessions that existed were rejected),
+		// not a server error: Authenticate maps it to a 401.
+		return nil, fmt.Errorf("no valid session found: %w", ErrSessionNotFound)
 	}
 
 	// TODO: Eventually we shouldn't need this check if the user can somehow login to a cluster without logging into the home cluster.

@@ -111,6 +111,10 @@ type KialiCache interface {
 	// revocation). Their informers cannot refresh, so reads from them serve stale
 	// data; callers must exclude these namespaces rather than serve frozen state.
 	RevokedNamespaces(cluster string) []string
+	// IsNamespaceRevoked is the membership form of RevokedNamespaces: a direct check
+	// that builds and sorts nothing, for per-request gates. Detail paths use it to
+	// refuse serving a frozen namespace (see ErrNamespaceRevoked).
+	IsNamespaceRevoked(cluster, namespace string) bool
 
 	// SkippedClusters returns the names of the remote clusters whose registration was
 	// definitively broken at startup (invalid credentials, TLS misconfiguration), for
@@ -492,6 +496,13 @@ var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
 // so the fitting HTTP status for it is 503 (temporarily unavailable) rather than 500.
 var ErrClusterDegraded = errors.New("cluster cache is degraded")
 
+// ErrNamespaceRevoked is returned by detail paths for a namespace whose access was partially
+// revoked while the rest of the cluster remains readable: its informers are frozen, so reads
+// from it would serve stale pre-revocation data. Like a degraded cluster it recovers on its
+// own (~30s probe), so the fitting HTTP status is 503 rather than 404 or 403 - the namespace
+// exists and the user may well see it again shortly.
+var ErrNamespaceRevoked = errors.New("namespace access is revoked")
+
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
 		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
@@ -511,6 +522,13 @@ func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
 		return nil
 	}
 	return c.clusterAccess.RevokedNamespaces(cluster)
+}
+
+func (c *kialiCacheImpl) IsNamespaceRevoked(cluster, namespace string) bool {
+	if c.clusterAccess == nil {
+		return false
+	}
+	return c.clusterAccess.IsNamespaceRevoked(cluster, namespace)
 }
 
 // SkippedClusters returns the names of the clusters skipped at startup, sorted. See the
