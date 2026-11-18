@@ -24,6 +24,7 @@ type EditableLabelsCardProps = {
   isVertical?: boolean;
   labels: Record<string, string>;
   numLabels?: number;
+  onEditingChange?: (editing: boolean) => void;
   onLabelClick?: (key: string, value: string) => void;
   onSave: (labels: Record<string, string>) => void;
   prioritizeIstio?: boolean;
@@ -81,6 +82,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
   isVertical = true,
   labels,
   numLabels,
+  onEditingChange,
   onLabelClick,
   onSave,
   prioritizeIstio = false,
@@ -96,10 +98,12 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     setEditLabels(Object.entries(labels ?? {}).map(([key, value]) => ({ key, value })));
     setValidationError(undefined);
     setEditing(true);
+    onEditingChange?.(true);
   };
 
   const handleCancelEditing = (): void => {
     setEditing(false);
+    onEditingChange?.(false);
     setValidationError(undefined);
   };
 
@@ -131,6 +135,7 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     });
     onSave(result);
     setEditing(false);
+    onEditingChange?.(false);
     setValidationError(undefined);
   };
 
@@ -149,9 +154,10 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     setEditLabels(prev => [...prev, { key: '', value: '' }]);
   };
 
-  const { sorted, istioCount } = prioritizeIstio ? partitionByIstio(labels ?? {}) : { sorted: labels, istioCount: 0 };
+  const { sorted: labelEntries, istioCount } = prioritizeIstio
+    ? partitionByIstio(labels ?? {})
+    : { sorted: Object.entries(labels ?? {}), istioCount: 0 };
   const effectiveNumLabels = prioritizeIstioCount ? istioCount : (numLabels ?? 5);
-  const labelEntries = Object.entries(sorted ?? {});
   if (!prioritizeIstio) {
     labelEntries.sort(([a], [b]) => a.localeCompare(b));
   }
@@ -162,15 +168,27 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
       {editing ? (
         <>
           <Tooltip content={t('Save')}>
-            <Button variant="plain" size="sm" onClick={handleSave} icon={<KialiIcon.Check />} />
+            <Button aria-label={t('Save')} variant="plain" size="sm" onClick={handleSave} icon={<KialiIcon.Check />} />
           </Tooltip>
           <Tooltip content={t('Cancel')}>
-            <Button variant="plain" size="sm" onClick={handleCancelEditing} icon={<KialiIcon.Close />} />
+            <Button
+              aria-label={t('Cancel')}
+              variant="plain"
+              size="sm"
+              onClick={handleCancelEditing}
+              icon={<KialiIcon.Close />}
+            />
           </Tooltip>
         </>
       ) : (
         <Tooltip content={t('Edit labels')}>
-          <Button variant="plain" size="sm" onClick={handleStartEditing} icon={<KialiIcon.PencilAlt />} />
+          <Button
+            aria-label={t('Edit labels')}
+            variant="plain"
+            size="sm"
+            onClick={handleStartEditing}
+            icon={<KialiIcon.PencilAlt />}
+          />
         </Tooltip>
       )}
     </div>

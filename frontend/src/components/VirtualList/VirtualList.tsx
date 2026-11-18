@@ -4,7 +4,7 @@ import { Caption, Table, TableGridBreakpoint, Tbody, Td, Th, Thead, Tr } from '@
 import { HistoryManager, URLParam } from '../../app/History';
 import type { RenderResource, Resource, ResourceType } from './Config';
 import { config } from './Config';
-import { VirtualItem } from './VirtualItem';
+import { getVirtualItemKey, VirtualItem } from './VirtualItem';
 import { EmptyState, EmptyStateBody, EmptyStateVariant } from '@patternfly/react-core';
 import { CubesIcon, PlusCircleIcon, SearchIcon } from '@patternfly/react-icons';
 import type { KialiAppState } from '../../store/Store';
@@ -202,7 +202,7 @@ class VirtualListComponent<R extends RenderResource> extends React.Component<Vir
     const rowItems: IRow[] = rows.map((row, index) => {
       return (
         <VirtualItem
-          key={`vItem_${index}`}
+          key={getVirtualItemKey(row)}
           item={row}
           index={index}
           columns={this.state.columns}

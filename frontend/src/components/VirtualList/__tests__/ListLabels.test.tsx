@@ -40,7 +40,7 @@ describe('ListLabels', () => {
     rstest.mocked(getPagePath).mockReturnValue('workloads');
   });
 
-  it('initially renders only labels with istio in the key, ignoring case', () => {
+  it('prioritizes labels with istio in the key, ignoring case and not matching values', () => {
     render(
       <ListLabels
         labels={{
@@ -56,63 +56,114 @@ describe('ListLabels', () => {
     expect(screen.getByText('example.com/MyIstioLabel=enabled')).toBeInTheDocument();
     expect(screen.queryByText('app=istio')).not.toBeInTheDocument();
     expect(screen.queryByText('version=v1')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '2 non-istio' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: '2 more' })).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('only mounts Istio chips for a resource with thousands of other labels', () => {
+  it('keeps Istio labels ahead of numeric keys and sorts numeric keys alphabetically', () => {
+    const { container } = render(<ListLabels labels={{ '2': 'two', '10': 'ten', 'istio.io/rev': 'default' }} />);
+
+    expect(screen.getByText('istio.io/rev=default')).toBeInTheDocument();
+    expect(screen.getByText('10=ten')).toBeInTheDocument();
+    expect(screen.queryByText('2=two')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '1 more' }));
+
+    const chipText = Array.from(container.querySelectorAll('.pf-v6-c-label__text')).map(node => node.textContent);
+    expect(chipText).toEqual(['istio.io/rev=default', '10=ten', '2=two']);
+  });
+
+  it('only mounts two chips for a resource with thousands of labels', () => {
     const labels: Record<string, string> = { 'istio.io/rev': 'default' };
     for (let i = 0; i < 2000; i++) {
       labels[`example.com/label-${i}`] = `value-${i}`;
     }
     const { container } = render(<ListLabels labels={labels} />);
 
-    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: '2000 non-istio' })).toBeInTheDocument();
-    expect(screen.queryByText('example.com/label-0=value-0')).not.toBeInTheDocument();
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
+    expect(screen.getByText('istio.io/rev=default')).toBeInTheDocument();
+    expect(screen.getByText('example.com/label-0=value-0')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1999 more' })).toBeInTheDocument();
+    expect(screen.queryByText('example.com/label-1=value-1')).not.toBeInTheDocument();
+  });
+
+  it('caps initial rendering at two even when every label is an Istio label', () => {
+    const labels: Record<string, string> = {};
+    for (let i = 0; i < 2000; i++) {
+      labels[`istio.io/label-${i}`] = `value-${i}`;
+    }
+    const { container } = render(<ListLabels labels={labels} />);
+
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: '1998 more' })).toBeInTheDocument();
+    expect(screen.queryByText('istio.io/label-2=value-2')).not.toBeInTheDocument();
   });
 
   it('expands only the requested row and unmounts additional labels when collapsed', () => {
     render(
       <>
         <div data-test="first-row">
-          <ListLabels labels={{ app: 'first', 'istio.io/rev': 'default' }} />
+          <ListLabels labels={{ app: 'first', 'istio.io/rev': 'default', version: 'v1' }} />
         </div>
         <div data-test="second-row">
-          <ListLabels labels={{ app: 'second', 'istio.io/rev': 'canary' }} />
+          <ListLabels labels={{ app: 'second', 'istio.io/rev': 'canary', version: 'v2' }} />
         </div>
       </>
     );
     const firstRow = within(screen.getByTestId('first-row'));
     const secondRow = within(screen.getByTestId('second-row'));
 
-    fireEvent.click(firstRow.getByRole('button', { name: '1 non-istio' }));
+    fireEvent.click(firstRow.getByRole('button', { name: '1 more' }));
 
-    expect(firstRow.getByText('app=first')).toBeInTheDocument();
+    expect(firstRow.getByText('version=v1')).toBeInTheDocument();
     expect(firstRow.getByRole('button', { name: 'Show less' })).toHaveAttribute('aria-expanded', 'true');
-    expect(secondRow.queryByText('app=second')).not.toBeInTheDocument();
-    expect(secondRow.getByRole('button', { name: '1 non-istio' })).toHaveAttribute('aria-expanded', 'false');
+    expect(secondRow.queryByText('version=v2')).not.toBeInTheDocument();
+    expect(secondRow.getByRole('button', { name: '1 more' })).toHaveAttribute('aria-expanded', 'false');
 
     fireEvent.click(firstRow.getByRole('button', { name: 'Show less' }));
 
-    expect(firstRow.queryByText('app=first')).not.toBeInTheDocument();
+    expect(firstRow.queryByText('version=v1')).not.toBeInTheDocument();
     expect(firstRow.getByText('istio.io/rev=default')).toBeInTheDocument();
   });
 
-  it('allows expanding a row without any Istio labels', () => {
-    const { container } = render(<ListLabels labels={{ app: 'bookinfo', version: 'v1' }} />);
+  it('reveals all remaining labels in a single click', () => {
+    const labels: Record<string, string> = { 'istio.io/rev': 'default' };
+    for (let i = 0; i < 25; i++) {
+      labels[`example.com/label-${i}`] = `value-${i}`;
+    }
+    const { container } = render(<ListLabels labels={labels} />);
 
-    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: '2 non-istio' }));
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: '24 more' }));
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(26);
+    expect(screen.queryByRole('button', { name: /more/ })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
+  });
+
+  it('shows the first two alphabetical labels when there are no Istio labels', () => {
+    const { container } = render(<ListLabels labels={{ version: 'v1', app: 'bookinfo', team: 'mesh' }} />);
+
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
     expect(screen.getByText('app=bookinfo')).toBeInTheDocument();
+    expect(screen.getByText('team=mesh')).toBeInTheDocument();
+    expect(screen.queryByText('version=v1')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '1 more' }));
     expect(screen.getByText('version=v1')).toBeInTheDocument();
   });
 
-  it('does not show an expansion control when every label is an Istio label', () => {
-    render(<ListLabels labels={{ 'istio.io/rev': 'default', 'sidecar.istio.io/inject': 'true' }} />);
+  const smallLabelSets: Record<string, string>[] = [
+    { 'istio.io/rev': 'default' },
+    { 'istio.io/rev': 'default', 'sidecar.istio.io/inject': 'true' },
+    { app: 'bookinfo', version: 'v1' },
+    { app: 'bookinfo', 'istio.io/rev': 'default' }
+  ];
 
-    expect(screen.getByText('istio.io/rev=default')).toBeInTheDocument();
-    expect(screen.getByText('sidecar.istio.io/inject=true')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /non-istio|Show less/ })).not.toBeInTheDocument();
+  it.each(smallLabelSets)('does not show an expansion control when there are at most two labels (%s)', labels => {
+    const { container } = render(<ListLabels labels={labels} />);
+
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(Object.keys(labels).length);
+    expect(screen.queryByRole('button', { name: /more|Show less/ })).not.toBeInTheDocument();
   });
 
   it.each([undefined, {}])('does not show chips or an expansion control for missing or empty labels (%s)', labels => {
@@ -126,7 +177,7 @@ describe('ListLabels', () => {
     const { container } = render(
       <ListLabels labels={{ zebra: 'z', 'z.istio.io/key': 'z', app: 'a', 'a.istio.io/key': 'a' }} />
     );
-    fireEvent.click(screen.getByRole('button', { name: '2 non-istio' }));
+    fireEvent.click(screen.getByRole('button', { name: '2 more' }));
 
     const chipText = Array.from(container.querySelectorAll('.pf-v6-c-label__text')).map(node => node.textContent);
     expect(chipText).toEqual(['a.istio.io/key=a', 'z.istio.io/key=z', 'app=a', 'zebra=z']);
@@ -156,9 +207,14 @@ describe('ListLabels', () => {
   it('preserves click-to-filter for labels revealed by expanding a row', () => {
     const filterAdded = rstest.fn();
     const statefulFilter = { current: { filterAdded } } as unknown as StatefulFiltersRef;
-    render(<ListLabels labels={{ app: 'bookinfo' }} statefulFilter={statefulFilter} />);
+    render(
+      <ListLabels
+        labels={{ app: 'bookinfo', 'a.istio.io/rev': 'default', 'b.istio.io/inject': 'true' }}
+        statefulFilter={statefulFilter}
+      />
+    );
 
-    fireEvent.click(screen.getByRole('button', { name: '1 non-istio' }));
+    fireEvent.click(screen.getByRole('button', { name: '1 more' }));
     fireEvent.click(screen.getByRole('button', { name: 'app=bookinfo' }));
 
     expect(filterAdded).toHaveBeenCalledWith(labelFilter, 'app=bookinfo');
@@ -190,7 +246,12 @@ describe('ListLabels', () => {
         <tbody>
           <tr>
             {renderLabels(
-              { name: 'details', namespace: 'bookinfo', cluster, labels: { app: cluster } } as unknown as SortResource,
+              {
+                name: 'details',
+                namespace: 'bookinfo',
+                cluster,
+                labels: { app: 'bookinfo', team: 'mesh', version: cluster }
+              } as unknown as SortResource,
               {} as Resource,
               PFBadges.Workload
             )}
@@ -199,13 +260,13 @@ describe('ListLabels', () => {
       </table>
     );
     const { rerender } = render(renderRow('east'));
-    fireEvent.click(screen.getByRole('button', { name: '1 non-istio' }));
-    expect(screen.getByText('app=east')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '1 more' }));
+    expect(screen.getByText('version=east')).toBeInTheDocument();
 
     rerender(renderRow('west'));
 
-    expect(screen.queryByText('app=west')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '1 non-istio' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('version=west')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '1 more' })).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('uses the namespace label filter on the namespace list', () => {

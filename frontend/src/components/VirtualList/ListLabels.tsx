@@ -17,6 +17,8 @@ type ListLabelsProps = {
   statefulFilter?: StatefulFiltersRef;
 };
 
+const INITIAL_LABEL_COUNT = 2;
+
 const labelsStyle = kialiStyle({
   display: 'flex',
   alignItems: 'center',
@@ -49,11 +51,10 @@ const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: 
 
 export const ListLabels: React.FC<ListLabelsProps> = ({ labels, statefulFilter }) => {
   const [expanded, setExpanded] = React.useState(false);
-  const { sorted, istioCount } = partitionByIstio(labels ?? {});
-  const entries = Object.entries(sorted);
-  const hiddenCount = entries.length - istioCount;
+  const { sorted: entries } = partitionByIstio(labels ?? {});
+  const hiddenCount = Math.max(entries.length - INITIAL_LABEL_COUNT, 0);
   // Select entries before creating chips so collapsed labels have no component or tooltip overhead.
-  const visibleEntries = expanded ? entries : entries.slice(0, istioCount);
+  const visibleEntries = expanded ? entries : entries.slice(0, INITIAL_LABEL_COUNT);
   const labelFilt = getPagePath() === 'namespaces' ? NsLabelFilter : labelFilter;
   const filters = getFiltersFromURL([labelFilt, appLabelFilter, versionLabelFilter]);
   const labelFilters = filters.filters.filter(filter => filter.category === labelFilt.category);
@@ -94,7 +95,7 @@ export const ListLabels: React.FC<ListLabelsProps> = ({ labels, statefulFilter }
           data-test="toggle-labels"
           onClick={() => setExpanded(previous => !previous)}
         >
-          {expanded ? t('Show less') : t('{{count}} non-istio', { count: hiddenCount })}
+          {expanded ? t('Show less') : t('{{count}} more', { count: hiddenCount })}
         </Button>
       )}
     </div>

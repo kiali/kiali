@@ -91,6 +91,23 @@ describe('EditableAnnotationsCard', () => {
     expect(terms).toEqual(['alpha', 'mango', 'zebra']);
   });
 
+  it('shows Istio annotations before numeric keys in collapsed and expanded views', () => {
+    render(
+      <EditableAnnotationsCard
+        {...defaultProps}
+        annotations={{ '2': 'two', '10': 'ten', 'istio.io/rev': 'default' }}
+        prioritizeIstio
+        prioritizeIstioCount
+      />
+    );
+
+    expect(screen.getAllByRole('term').map(node => node.textContent)).toEqual(['istio.io/rev']);
+
+    fireEvent.click(screen.getByRole('button', { name: '2 more' }));
+
+    expect(screen.getAllByRole('term').map(node => node.textContent)).toEqual(['istio.io/rev', '10', '2']);
+  });
+
   it('prioritizes istio annotations when prioritizeIstio is true', () => {
     const annotations = { zebra: 'z', 'istio.io/rev': 'default', alpha: 'a' };
     render(<EditableAnnotationsCard {...defaultProps} annotations={annotations} prioritizeIstio />);

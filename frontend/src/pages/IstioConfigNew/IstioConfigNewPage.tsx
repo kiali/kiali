@@ -108,6 +108,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
   const [authorizationPolicy, setAuthorizationPolicy] =
     React.useState<AuthorizationPolicyState>(initAuthorizationPolicy());
   const [gateway, setGateway] = React.useState<GatewayState>(initGateway());
+  const [isEditingLabels, setIsEditingLabels] = React.useState(false);
   const [istioPermissions, setIstioPermissions] = React.useState<IstioPermissions>({});
   const [itemsPreview, setItemsPreview] = React.useState<ConfigPreviewItem[]>([]);
   const [k8sGateway, setK8sGateway] = React.useState<K8sGatewayState>(initK8sGateway());
@@ -553,6 +554,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
                 canEdit={true}
                 isVertical={false}
                 labels={labels}
+                onEditingChange={setIsEditingLabels}
                 onSave={setLabels}
                 prioritizeIstio
                 title={t('Labels')}
@@ -572,7 +574,7 @@ const IstioConfigNewPageComponent: React.FC<Props> = (props: Props) => {
             <ActionGroup>
               <Button
                 variant={ButtonVariant.primary}
-                isDisabled={!isFormValid}
+                isDisabled={!isFormValid || isEditingLabels}
                 onClick={() => openPreview()}
                 data-test={'preview'}
               >

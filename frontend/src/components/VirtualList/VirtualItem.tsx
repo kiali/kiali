@@ -1,12 +1,28 @@
 import * as React from 'react';
 import { Tr } from '@patternfly/react-table';
-import type { Resource, RenderResource} from './Config';
+import type { Resource, RenderResource } from './Config';
 import { hasHealth, GVKToBadge } from './Config';
 import { PromisesRegistry } from '../../utils/CancelablePromises';
 import type { Health } from '../../types/Health';
 import type { StatefulFiltersRef } from '../Filters/StatefulFilters';
 import { actionRenderer } from './Renderers';
 import { getGVKTypeString, getIstioObjectGVK, kindToStringIncludeK8s } from '../../utils/IstioConfigUtils';
+
+export const getVirtualItemKey = (item: RenderResource): string => {
+  const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
+  const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
+  const type =
+    'type' in item
+      ? `_${item.type}`
+      : 'kind' in item && 'apiVersion' in item
+        ? `_${kindToStringIncludeK8s(item.apiVersion, item.kind)}`
+        : 'gvk' in item
+          ? `_${item.gvk.Kind}`
+          : '';
+  // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
+
+  return `VirtualItem${cluster}${namespace}${type}_${item.name}`;
+};
 
 type VirtualItemProps = {
   action?: JSX.Element;
@@ -62,19 +78,7 @@ export class VirtualItem extends React.Component<VirtualItemProps, VirtualItemSt
 
   render(): React.ReactNode {
     const { style, className, item } = this.props;
-    const cluster = item.cluster ? `_Cluster${item.cluster}` : '';
-    const namespace = 'namespace' in item ? `_Ns${item.namespace}` : '';
-    const type =
-      'type' in item
-        ? `_${item.type}`
-        : 'kind' in item && 'apiVersion' in item
-          ? `_${kindToStringIncludeK8s(item.apiVersion, item.kind)}`
-          : 'gvk' in item
-            ? `_${item.gvk.Kind}`
-            : '';
-    // End result looks like: VirtualItem_Clusterwest_Nsbookinfo_networking.istio.io.v1.Gateway_bookinfo-gateway
-
-    const key = `VirtualItem${cluster}${namespace}${type}_${item.name}`;
+    const key = getVirtualItemKey(item);
 
     return (
       <Tr style={style} className={className} role="row" key={key} data-test={key}>

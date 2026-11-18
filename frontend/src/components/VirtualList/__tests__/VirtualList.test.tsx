@@ -1,6 +1,12 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
+import type { ReactNode } from 'react';
+import type { NamespaceInfo } from 'types/NamespaceInfo';
 import { store } from 'store/ConfigStore';
+
+rstest.mock('components/Link/KialiLink', () => ({
+  KialiLink: ({ children }: { children: ReactNode }) => <span>{children}</span>
+}));
 
 rstest.mock('components/DefaultSecondaryMasthead/DefaultSecondaryMasthead', () => ({
   DefaultSecondaryMasthead: () => <div data-test="DefaultSecondaryMasthead" />
@@ -47,6 +53,35 @@ describe('VirtualList', () => {
     expect(await screen.findByTestId('labels-filter-help')).toHaveTextContent(
       'Click a label to add or remove its filter. Labels matched by a filter expression must be changed using the filter controls.'
     );
+  });
+
+  it.each(['reordering', 'filtering'])('preserves row label expansion after %s', change => {
+    const first: NamespaceInfo = {
+      cluster: 'east',
+      labels: { 'istio.io/custom': 'first', app: 'first', zzz: 'hidden-first' },
+      name: 'first'
+    };
+    const second: NamespaceInfo = {
+      cluster: 'east',
+      labels: { 'istio.io/custom': 'second', app: 'second', zzz: 'hidden-second' },
+      name: 'second'
+    };
+    const renderRows = (rows: NamespaceInfo[]): JSX.Element => (
+      <Provider store={store}>
+        <VirtualList type="namespaces" rows={rows} />
+      </Provider>
+    );
+    const { rerender } = render(renderRows([first, second]));
+    const secondRow = within(screen.getByTestId('VirtualItem_Clustereast_second'));
+    fireEvent.click(secondRow.getByTestId('toggle-labels'));
+    expect(secondRow.getByText('zzz=hidden-second')).toBeInTheDocument();
+
+    rerender(renderRows(change === 'reordering' ? [second, first] : [second]));
+
+    const movedRow = within(screen.getByTestId('VirtualItem_Clustereast_second'));
+    expect(movedRow.getByText('zzz=hidden-second')).toBeInTheDocument();
+    expect(movedRow.getByTestId('toggle-labels')).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByText('zzz=hidden-first')).not.toBeInTheDocument();
   });
 
   it('calls onResize with the outer div clientHeight on mount', () => {

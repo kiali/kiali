@@ -229,6 +229,12 @@ Then('{string} details information for service entry {string} can be seen', (hos
 
 When('user clicks on Edit Labels', () => {
   cy.getBySel('istio-config-labels-card').find('button').first().click();
+  cy.getBySel('preview').should('be.disabled');
+});
+
+When('user cancels editing labels', () => {
+  cy.getBySel('istio-config-labels-card').find('button[aria-label="Cancel"]').click();
+  cy.getBySel('preview').should('be.enabled');
 });
 
 When('user clicks on Edit Annotations', () => {
@@ -244,6 +250,7 @@ When('user adds label key {string} and value {string} and saves', (key: string, 
     cy.get('.pf-v6-c-card__header-actions button').first().click();
     cy.contains(`${key}=${value}`).should('be.visible');
   });
+  cy.getBySel('preview').should('be.enabled');
 });
 
 When('user adds key {string} and value {string} for and saves', (key: string, value: string) => {

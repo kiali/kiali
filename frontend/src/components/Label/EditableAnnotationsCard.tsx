@@ -68,11 +68,10 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
     setShowEditor(false);
   };
 
-  const { istioCount, sorted } = prioritizeIstio
+  const { istioCount, sorted: annotationEntries } = prioritizeIstio
     ? partitionByIstio(visibleAnnotations)
-    : { istioCount: 0, sorted: visibleAnnotations };
+    : { istioCount: 0, sorted: Object.entries(visibleAnnotations) };
   const effectiveNumAnnotations = prioritizeIstioCount ? istioCount : (numAnnotations ?? 5);
-  const annotationEntries = Object.entries(sorted ?? {});
   if (!prioritizeIstio) {
     annotationEntries.sort(([a], [b]) => a.localeCompare(b));
   }
