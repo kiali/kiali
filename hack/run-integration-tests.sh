@@ -147,27 +147,98 @@ supplement_must_gather_namespace() {
   kubectl get namespace "${ns}" -o yaml > "${ns_dir}/namespace.yaml"
   # Dump each object as its own YAML (not a kubectl List). The offline client can
   # parse single-object files / --- streams, but not generic v1 List dumps.
-  local res name out_dir
-  for res in \
-      services pods deployments replicasets daemonsets statefulsets \
-      configmaps serviceaccounts \
-      destinationrules virtualservices gateways sidecars peerauthentications \
-      authorizationpolicies requestauthentications serviceentries workloadentries telemetries \
-      httproutes grpcroutes gateway; do
-    # Drop any previous List-style ${res}.yaml from older supplement runs.
-    rm -f "${ns_dir}/${res}.yaml"
-    out_dir="${ns_dir}/${res}"
+  # Use fully-qualified resource names: short "gateways" resolves to
+  # gateway.networking.k8s.io when both Gateway API and Istio CRDs are installed,
+  # which drops networking.istio.io Gateways such as bookinfo-gateway.
+  local res dirname name out_dir entry
+  for entry in \
+      "services:services" \
+      "pods:pods" \
+      "deployments:deployments" \
+      "replicasets:replicasets" \
+      "daemonsets:daemonsets" \
+      "statefulsets:statefulsets" \
+      "configmaps:configmaps" \
+      "serviceaccounts:serviceaccounts" \
+      "destinationrules.networking.istio.io:destinationrules" \
+      "virtualservices.networking.istio.io:virtualservices" \
+      "gateways.networking.istio.io:gateways" \
+      "sidecars.networking.istio.io:sidecars" \
+      "peerauthentications.security.istio.io:peerauthentications" \
+      "authorizationpolicies.security.istio.io:authorizationpolicies" \
+      "requestauthentications.security.istio.io:requestauthentications" \
+      "serviceentries.networking.istio.io:serviceentries" \
+      "workloadentries.networking.istio.io:workloadentries" \
+      "telemetries.telemetry.istio.io:telemetries" \
+      "httproutes.gateway.networking.k8s.io:httproutes" \
+      "grpcroutes.gateway.networking.k8s.io:grpcroutes" \
+      "gateways.gateway.networking.k8s.io:k8sgateways"; do
+    res="${entry%%:*}"
+    dirname="${entry##*:}"
+    # Drop any previous List-style ${dirname}.yaml from older supplement runs.
+    rm -f "${ns_dir}/${dirname}.yaml"
+    out_dir="${ns_dir}/${dirname}"
     rm -rf "${out_dir}"
     mkdir -p "${out_dir}"
     while IFS= read -r name; do
       [ -z "${name}" ] && continue
-      kubectl get "${res}" "${name}" -n "${ns}" -o yaml > "${out_dir}/${name}.yaml" 2>/dev/null || true
+      if [ "${dirname}" = "pods" ]; then
+        # Match oc/istio must-gather layout: pods/<name>/<name>.yaml (+ logs/dumps beside it).
+        mkdir -p "${out_dir}/${name}"
+        kubectl get "${res}" "${name}" -n "${ns}" -o yaml > "${out_dir}/${name}/${name}.yaml" 2>/dev/null || true
+      else
+        kubectl get "${res}" "${name}" -n "${ns}" -o yaml > "${out_dir}/${name}.yaml" 2>/dev/null || true
+      fi
     done < <(kubectl get "${res}" -n "${ns}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
     # Remove empty dirs when the resource type had no items or all gets failed.
     if [ -z "$(find "${out_dir}" -type f -name '*.yaml' 2>/dev/null | head -n 1)" ]; then
       rm -rf "${out_dir}"
     fi
   done
+
+  # Pod logs + Envoy config dumps are required by @offline workload_logs / Envoy tests.
+  # kubectl object YAML alone is not enough; Sail must-gather normally collects these.
+  supplement_must_gather_pod_runtime_data "${ns}" "${ns_dir}"
+}
+
+# Collect container logs and sidecar config dumps into must-gather paths the offline client reads:
+#   namespaces/<ns>/pods/<pod>/<container>/<container>/logs/current.log
+#   namespaces/<ns>/pods/<pod>/config_dump_proxy.json
+supplement_must_gather_pod_runtime_data() {
+  local ns="${1}"
+  local ns_dir="${2}"
+  local pod pod_dir cname containers_json
+
+  if [ ! -d "${ns_dir}/pods" ]; then
+    return 0
+  fi
+
+  while IFS= read -r pod; do
+    [ -z "${pod}" ] && continue
+    pod_dir="${ns_dir}/pods/${pod}"
+    mkdir -p "${pod_dir}"
+
+    while IFS= read -r cname; do
+      [ -z "${cname}" ] && continue
+      mkdir -p "${pod_dir}/${cname}/${cname}/logs"
+      kubectl logs -n "${ns}" "${pod}" -c "${cname}" --tail=5000 \
+        > "${pod_dir}/${cname}/${cname}/logs/current.log" 2>/dev/null \
+        || : > "${pod_dir}/${cname}/${cname}/logs/current.log"
+    done < <(kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{range .spec.containers[*]}{.name}{"\n"}{end}' 2>/dev/null || true)
+
+    containers_json="$(kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)"
+    if printf '%s\n' ${containers_json} | grep -qx 'istio-proxy'; then
+      if kubectl exec -n "${ns}" "${pod}" -c istio-proxy -- \
+          pilot-agent request GET /config_dump \
+          > "${pod_dir}/config_dump_proxy.json" 2>/dev/null; then
+        if ! grep -q '{' "${pod_dir}/config_dump_proxy.json" 2>/dev/null; then
+          rm -f "${pod_dir}/config_dump_proxy.json"
+        fi
+      else
+        rm -f "${pod_dir}/config_dump_proxy.json"
+      fi
+    fi
+  done < <(kubectl get pods -n "${ns}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
 }
 
 cleanup_kiali() {
@@ -1339,7 +1410,8 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   OFFLINE_NAMESPACES_DIR="$(resolve_must_gather_namespaces_dir "${MUST_GATHER_DIR}")"
   infomsg "Using must-gather namespaces directory: ${OFFLINE_NAMESPACES_DIR}"
   supplement_must_gather_namespace "${MUST_GATHER_DIR}" "bookinfo" "${OFFLINE_SUPPLEMENT_FORCE}"
-  for _extra_ns in alpha beta gamma sleep; do
+  # loggers: @offline workload_logs scenarios (custom-logger). alpha/beta/gamma/sleep: graph/peers.
+  for _extra_ns in alpha beta gamma sleep loggers; do
     supplement_must_gather_namespace "${MUST_GATHER_DIR}" "${_extra_ns}" "${OFFLINE_SUPPLEMENT_FORCE}"
   done
   assert_must_gather_namespace_has_workloads "${OFFLINE_NAMESPACES_DIR}/bookinfo" "bookinfo"
