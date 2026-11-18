@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -132,6 +133,11 @@ type OpenIdAuthController struct {
 // given persistor and the given businessInstantiator. The businessInstantiator can be nil and
 // the initialized contoller will use the business.Get function.
 func NewOpenIdAuthController(kialiCache cache.KialiCache, clientFactory kubernetes.ClientFactory, conf *config.Config, discovery *istio.Discovery) (*OpenIdAuthController, error) {
+
+	if oidcRequestsBypassProxyEnv(conf) {
+		log.Warning("Proxy environment variables (HTTP_PROXY/HTTPS_PROXY) are set, but the OpenID auth strategy purposefully ignores them. OpenID requests will not go through a proxy unless it is configured via auth.openid.http_proxy/https_proxy.")
+	}
+
 	store, err := NewCookieSessionPersistor[oidcSessionPayload](conf)
 	if err != nil {
 		return nil, err
@@ -1008,6 +1014,23 @@ func checkDomain(tokenClaims map[string]interface{}, allowedDomains []string) er
 		return fmt.Errorf("domain %s not allowed to login", hostedDomain)
 	}
 	return nil
+}
+
+// oidcRequestsBypassProxyEnv reports whether OpenID requests will bypass the
+// proxy even though proxy env vars are set: the OpenID client purposefully
+// ignores HTTP_PROXY/HTTPS_PROXY and has no proxy of its own configured.
+func oidcRequestsBypassProxyEnv(conf *config.Config) bool {
+	if conf.Auth.OpenId.HTTPProxy != "" || conf.Auth.OpenId.HTTPSProxy != "" {
+		return false
+	}
+	// Any of the standard proxy env vars being set (net/http reads both cases)
+	// means the user expects a proxy that OpenID requests will not use.
+	for _, name := range []string{"HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy"} {
+		if v, ok := os.LookupEnv(name); ok && v != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // createHttpClient is a helper for creating and configuring an http client that is ready

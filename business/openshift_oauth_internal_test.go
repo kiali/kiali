@@ -7,8 +7,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"encoding/pem"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"testing"
 	"time"
@@ -277,4 +279,64 @@ func TestOpenshiftOAuth_CARotation(t *testing.T) {
 
 	// The new pool should be different from the initial pool
 	require.False(pool1.Equal(pool3), "pool should be different after CA rotation")
+}
+
+// TestHttpClientWithPool_HonorsProxyEnvVars verifies that the http client used
+// for OpenShift OAuth (server discovery, token exchange) routes requests
+// through the standard proxy env vars. Unlike OpenID, the OpenShift auth has
+// no config-based proxy settings, so env vars are the only way to give it a
+// proxy (e.g. in egress-controlled environments).
+//
+// The OAuth server hostname is an unresolvable ".example" name: a client that
+// honors HTTPS_PROXY hands it to the test proxy via CONNECT and never resolves
+// it itself. The proxy tunnels to the real httptest backend on loopback.
+func TestHttpClientWithPool_HonorsProxyEnvVars(t *testing.T) {
+	require := require.New(t)
+
+	// TLS backend standing in for the OpenShift OAuth server.
+	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("oauth-server-ok"))
+	}))
+	defer backend.Close()
+
+	u, err := url.Parse(backend.URL)
+	require.NoError(err)
+	oauthServerURL := "https://" + secureAPIHost + ":" + u.Port()
+
+	// InsecureSkipVerifyTLS accepts the backend's self-signed certificate; it
+	// does not affect proxy routing. It also skips the cert pool logic so no
+	// credential manager is needed.
+	conf := config.NewConfig()
+	conf.Auth.OpenShift.InsecureSkipVerifyTLS = true
+
+	client, err := httpClientWithPool(conf, rest.Config{Host: oauthServerURL})
+	require.NoError(err)
+
+	// Transport level: HTTPS_PROXY must apply, NO_PROXY must exclude.
+	tr, ok := client.Transport.(*http.Transport)
+	require.True(ok, "expected *http.Transport, got %T", client.Transport)
+	require.NotNil(tr.Proxy, "transport has no Proxy function: proxy env vars are ignored")
+	req, err := http.NewRequest(http.MethodGet, oauthServerURL+"/.well-known/oauth-authorization-server", nil)
+	require.NoError(err)
+	proxyURL, err := tr.Proxy(req)
+	require.NoError(err)
+	require.Equal("http://"+testHTTPSProxy.addr, proxyURL.String())
+	reqNoProxy, err := http.NewRequest(http.MethodGet, "https://"+noProxyTestHost+":443", nil)
+	require.NoError(err)
+	none, err := tr.Proxy(reqNoProxy)
+	require.NoError(err)
+	require.Nil(none, "expected no proxy for the NO_PROXY host")
+
+	// End to end: the request must reach the backend through the CONNECT tunnel.
+	hitsBefore := testHTTPSProxy.hitCount()
+	resp, err := client.Get(oauthServerURL + "/.well-known/oauth-authorization-server")
+	require.NoError(err)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(err)
+	require.Equal("oauth-server-ok", string(body))
+	require.Equal(hitsBefore+1, testHTTPSProxy.hitCount(), "expected one new HTTPS_PROXY hit")
+	connects := testHTTPSProxy.connectTargets()
+	require.NotEmpty(connects, "expected a CONNECT to be recorded")
+	require.Equal(secureAPIHost+":"+u.Port(), connects[len(connects)-1])
 }
