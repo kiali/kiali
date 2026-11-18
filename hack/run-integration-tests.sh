@@ -78,7 +78,11 @@ supplement_must_gather_namespace() {
   fi
 
   infomsg "Supplementing must-gather with namespace ${ns} (needed for istioctl / non-Sail installs)"
-  mkdir -p "${namespaces_dir}/${ns}"
+  if ! mkdir -p "${namespaces_dir}/${ns}"; then
+    echo "ERROR: Cannot create ${namespaces_dir}/${ns} (must-gather files may be owned by root)."
+    echo "Fix with: sudo chown -R \$(id -u):\$(id -g) \"$(dirname "${namespaces_dir}")\""
+    return 1
+  fi
   kubectl get namespace "${ns}" -o yaml > "${namespaces_dir}/${ns}/namespace.yaml"
   # Dump namespaced resources as individual YAML docs so the offline client can parse them.
   local res
@@ -1233,6 +1237,11 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
   # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
   # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
   docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+
+  # The must-gather image writes as root; host steps (supplement + kiali gather) need write access.
+  if command -v sudo >/dev/null 2>&1; then
+    sudo chown -R "$(id -u):$(id -g)" "${MUST_GATHER_DIR}"
+  fi
 
   # With Sail, must-gather usually includes mesh member namespaces. With istioctl it often only
   # collects istio-system — supplement so offline tests still see bookinfo.
