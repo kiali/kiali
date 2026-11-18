@@ -75,7 +75,8 @@ resolve_must_gather_namespaces_dir() {
 }
 
 # Returns 0 when the namespace dir already has K8s workloads and services Kiali needs offline.
-# Matches root-level kinds and documents embedded in kubectl List output (indented kind: lines).
+# Only root-level kind: counts (single-object YAML). Indented kind inside a kubectl List does
+# not — the offline client cannot load generic v1 Lists from "kubectl get -o yaml".
 must_gather_namespace_usable_for_offline() {
   local ns_dir="${1}"
   local yaml_file has_workload=false has_service=false
@@ -85,10 +86,10 @@ must_gather_namespace_usable_for_offline() {
   fi
 
   while IFS= read -r -d '' yaml_file; do
-    if grep -qE '^[[:space:]]*kind: (Deployment|ReplicaSet|StatefulSet|DaemonSet)$' "${yaml_file}" 2>/dev/null; then
+    if grep -qE '^kind: (Deployment|ReplicaSet|StatefulSet|DaemonSet)$' "${yaml_file}" 2>/dev/null; then
       has_workload=true
     fi
-    if grep -qE '^[[:space:]]*kind: Service$' "${yaml_file}" 2>/dev/null; then
+    if grep -qE '^kind: Service$' "${yaml_file}" 2>/dev/null; then
       has_service=true
     fi
     if [ "${has_workload}" = true ] && [ "${has_service}" = true ]; then
@@ -144,16 +145,27 @@ supplement_must_gather_namespace() {
     return 1
   fi
   kubectl get namespace "${ns}" -o yaml > "${ns_dir}/namespace.yaml"
-  # Dump namespaced resources as individual YAML docs so the offline client can parse them.
-  local res
+  # Dump each object as its own YAML (not a kubectl List). The offline client can
+  # parse single-object files / --- streams, but not generic v1 List dumps.
+  local res name out_dir
   for res in \
       services pods deployments replicasets daemonsets statefulsets \
       configmaps serviceaccounts \
       destinationrules virtualservices gateways sidecars peerauthentications \
       authorizationpolicies requestauthentications serviceentries workloadentries telemetries \
       httproutes grpcroutes gateway; do
-    if kubectl get "${res}" -n "${ns}" -o name 2>/dev/null | grep -q .; then
-      kubectl get "${res}" -n "${ns}" -o yaml > "${ns_dir}/${res}.yaml" 2>/dev/null || true
+    # Drop any previous List-style ${res}.yaml from older supplement runs.
+    rm -f "${ns_dir}/${res}.yaml"
+    out_dir="${ns_dir}/${res}"
+    rm -rf "${out_dir}"
+    mkdir -p "${out_dir}"
+    while IFS= read -r name; do
+      [ -z "${name}" ] && continue
+      kubectl get "${res}" "${name}" -n "${ns}" -o yaml > "${out_dir}/${name}.yaml" 2>/dev/null || true
+    done < <(kubectl get "${res}" -n "${ns}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
+    # Remove empty dirs when the resource type had no items or all gets failed.
+    if [ -z "$(find "${out_dir}" -type f -name '*.yaml' 2>/dev/null | head -n 1)" ]; then
+      rm -rf "${out_dir}"
     fi
   done
 }
