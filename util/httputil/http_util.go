@@ -159,6 +159,13 @@ func CreateTransport(conf *config.Config, auth *config.Auth, transportConfig *ht
 		}).DialContext
 	}
 
+	// A zero-value http.Transport ignores HTTP_PROXY/HTTPS_PROXY/NO_PROXY env vars
+	// (only http.DefaultTransport reads them). Honor them unless the caller set
+	// its own Proxy, matching Go's default behavior.
+	if transportConfig.Proxy == nil {
+		transportConfig.Proxy = http.ProxyFromEnvironment
+	}
+
 	// We might need some custom RoundTrippers to manipulate the requests (for auth and other custom request headers).
 	// Chain together the RoundTrippers that we need, retaining the outer-most round tripper so we can return it.
 	outerRoundTripper := newCustomHeadersRoundTripper(customHeaders, transportConfig)
