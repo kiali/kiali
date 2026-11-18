@@ -106,7 +106,70 @@ func TestSelectEnvoyStatusMemory(t *testing.T) {
 	selection = selectEnvoyStatusMemory(100, allocated, prometheus.Metric{}, map[string]float64{"pod-a": 1000})
 	assert.Equal(t, 100.0, selection.MaxBytes)
 	assert.Equal(t, models.EnvoyMemoryMetricAllocated, selection.Metric)
+	// Allocated is not cgroup usage, so it keeps the absolute threshold when the
+	// limit-based one would be looser (70% of 1000 = 700 > 100).
 	assert.Equal(t, 100.0, selection.ThresholdBytes)
+
+	// A small proxy limit tightens the allocated threshold to 70% of the limit.
+	selection = selectEnvoyStatusMemory(100, allocated, prometheus.Metric{}, map[string]float64{"pod-a": 100})
+	assert.Equal(t, models.EnvoyMemoryMetricAllocated, selection.Metric)
+	assert.Equal(t, 70.0, selection.ThresholdBytes)
+}
+
+func TestSelectEnvoyStatusMemoryFallsBackPerPod(t *testing.T) {
+	workingSet := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-a"},
+				Values: []model.SamplePair{{Value: model.SampleValue(90)}},
+			},
+		},
+	}
+	allocated := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{
+				Metric: model.Metric{model.LabelName("pod"): "pod-b"},
+				Values: []model.SamplePair{{Value: model.SampleValue(300)}},
+			},
+		},
+	}
+
+	// A working-set scrape gap on pod-b must not discard its allocated pressure.
+	selection := selectEnvoyStatusMemory(100, allocated, workingSet, nil)
+	assert.Equal(t, "pod-b", selection.Pod)
+	assert.Equal(t, 300.0, selection.MaxBytes)
+	assert.Equal(t, models.EnvoyMemoryMetricAllocated, selection.Metric)
+}
+
+func TestSelectHighestMemoryPressureTieBreakIsDeterministic(t *testing.T) {
+	peaksByPod := map[string]podPeakSample{
+		"pod-b": {at: model.TimeFromUnix(1_000), metric: models.EnvoyMemoryMetricWorkingSet, value: 100},
+		"pod-a": {at: model.TimeFromUnix(1_000), metric: models.EnvoyMemoryMetricWorkingSet, value: 100},
+	}
+
+	selection := selectHighestMemoryPressure(peaksByPod, nil, 100)
+	assert.Equal(t, "pod-a", selection.Pod)
+}
+
+func TestSampleValueAtUsesNearestSampleAtOrBefore(t *testing.T) {
+	samples := []model.SamplePair{
+		{Timestamp: model.TimeFromUnix(1_000), Value: model.SampleValue(50)},
+		{Timestamp: model.TimeFromUnix(2_000), Value: model.SampleValue(75)},
+	}
+
+	// A traffic-series gap at the memory-peak step must read the previous sample, not zero.
+	value, ok := sampleValueAt(samples, model.TimeFromUnix(2_500))
+	assert.True(t, ok)
+	assert.Equal(t, 75.0, value)
+
+	value, ok = sampleValueAt(samples, model.TimeFromUnix(1_500))
+	assert.True(t, ok)
+	assert.Equal(t, 50.0, value)
+
+	// No sample at or before the requested time.
+	value, ok = sampleValueAt(samples, model.TimeFromUnix(500))
+	assert.False(t, ok)
+	assert.Equal(t, 0.0, value)
 }
 
 func TestSelectEnvoyStatusMemoryUsesWorstPodPressure(t *testing.T) {
@@ -249,7 +312,7 @@ func TestResolveActiveConnectionsPrefersTCPWhenPositive(t *testing.T) {
 		},
 	}
 
-	active, observed := resolveActiveConnections(tcpOpened, tcpClosed, envoyCx, prometheus.Metric{}, 5, false)
+	active, observed := resolveActiveConnectionsAtTime(tcpOpened, tcpClosed, envoyCx, prometheus.Metric{}, 5, false, 0)
 	assert.Equal(t, int64(15), active)
 	assert.True(t, observed)
 }
@@ -276,13 +339,13 @@ func TestResolveActiveConnectionsHTTPFallbackToEnvoy(t *testing.T) {
 		},
 	}
 
-	active, observed := resolveActiveConnections(tcpOpened, tcpClosed, upstreamCx, downstreamCx, 100, false)
+	active, observed := resolveActiveConnectionsAtTime(tcpOpened, tcpClosed, upstreamCx, downstreamCx, 100, false, 0)
 	assert.Equal(t, int64(3), active)
 	assert.True(t, observed)
 }
 
 func TestResolveActiveConnectionsUnobservedWhenAbsent(t *testing.T) {
-	active, observed := resolveActiveConnections(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, 0, false)
+	active, observed := resolveActiveConnectionsAtTime(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, 0, false, 0)
 	assert.Equal(t, int64(0), active)
 	assert.False(t, observed)
 }
@@ -342,8 +405,8 @@ func TestEnvoyMemoryStatusTrafficSignalsAlignsAtMemoryPeak(t *testing.T) {
 	assert.Equal(t, models.EnvoyMemoryCauseConfiguration, cause)
 
 	// Misaligned latest-only signals would incorrectly attribute traffic.
-	latestClusters := int64(maxLatestValue(clusters))
-	latestRate := sumLatestValues(istioHTTPSource)
+	latestClusters := int64(maxScalarAtTime(clusters, 0))
+	latestRate := sumAtTime(istioHTTPSource, 0)
 	causeLatest := classifyEnvoyMemory(threshold, sidecarLargeConfigClusters, threshold+1, latestClusters, activeConn, latestRate, false, observed)
 	assert.Equal(t, models.EnvoyMemoryCauseTraffic, causeLatest)
 }
@@ -362,10 +425,10 @@ func TestSumEnvoyTrafficSignals(t *testing.T) {
 		},
 	}
 
-	assert.Equal(10.0, sumEnvoyRequestRate(upstream, downstream))
-	assert.Equal(int64(5), activeTCPConnections(downstream, upstream))
-	assert.Equal(2.5, sumEnvoyRequestRate(upstream, prometheus.Metric{}))
-	assert.Equal(int64(0), activeTCPConnections(upstream, downstream))
+	assert.Equal(10.0, sumEnvoyRequestRateAtTime(upstream, downstream, 0))
+	assert.Equal(int64(5), activeTCPConnectionsAtTime(downstream, upstream, 0))
+	assert.Equal(2.5, sumEnvoyRequestRateAtTime(upstream, prometheus.Metric{}, 0))
+	assert.Equal(int64(0), activeTCPConnectionsAtTime(upstream, downstream, 0))
 }
 
 func TestMaxRequestRate(t *testing.T) {
@@ -375,41 +438,28 @@ func TestMaxRequestRate(t *testing.T) {
 }
 
 func TestRequestRatePrefersIstioWhenEnvoyAbsent(t *testing.T) {
-	envoyOnly := envoyRequestRateFromMetrics(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{})
+	envoyOnly := envoyRequestRateFromMetricsAtTime(prometheus.Metric{}, prometheus.Metric{}, prometheus.Metric{}, 0)
 	istio := prometheus.Metric{
 		Matrix: model.Matrix{
 			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(1.25)}}},
 		},
 	}
-	assert.Equal(t, 1.25, maxRequestRate(envoyOnly, sumLatestValues(istio)))
+	assert.Equal(t, 1.25, maxRequestRate(envoyOnly, sumAtTime(istio, 0)))
 }
 
-func TestFetchIstioHTTPRequestRateUsesMaxOfReporters(t *testing.T) {
-	prom := new(pmock.PromClientMock)
-	q := &prometheus.RangeQuery{}
-	q.FillDefaults()
+func TestIstioHTTPRequestRateAtTimeUsesMaxOfReporters(t *testing.T) {
+	source := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(0.27)}}},
+		},
+	}
+	dest := prometheus.Metric{
+		Matrix: model.Matrix{
+			&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(200)}}},
+		},
+	}
 
-	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{`{source_workload="cars-v1",reporter=~"source|waypoint"}`}, "", q).
-		Return(prometheus.Metric{
-			Matrix: model.Matrix{
-				&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(0.27)}}},
-			},
-		})
-	prom.On("FetchRateRange", mock.Anything, "istio_requests_total", []string{`{destination_workload="cars-v1",reporter="destination"}`}, "", q).
-		Return(prometheus.Metric{
-			Matrix: model.Matrix{
-				&model.SampleStream{Values: []model.SamplePair{{Value: model.SampleValue(200)}}},
-			},
-		})
-
-	rate := fetchIstioHTTPRequestRate(
-		context.Background(),
-		prom,
-		`{source_workload="cars-v1",reporter=~"source|waypoint"}`,
-		`{destination_workload="cars-v1",reporter="destination"}`,
-		q,
-	)
-	assert.Equal(t, 200.0, rate)
+	assert.Equal(t, 200.0, istioHTTPRequestRateAtTime(source, dest, 0))
 }
 
 func TestFetchEnvoyDownstreamRequestRateUsesTotalSuffixFallback(t *testing.T) {
@@ -428,7 +478,7 @@ func TestFetchEnvoyDownstreamRequestRateUsesTotalSuffixFallback(t *testing.T) {
 		})
 
 	metric := fetchEnvoyDownstreamRequestRate(context.Background(), prom, labels, q)
-	assert.Equal(t, 4.0, sumLatestValues(metric))
+	assert.Equal(t, 4.0, sumAtTime(metric, 0))
 }
 
 func TestEnvoyRequestRateFromMetricsUsesUpstreamVariants(t *testing.T) {
@@ -449,8 +499,8 @@ func TestEnvoyRequestRateFromMetricsUsesUpstreamVariants(t *testing.T) {
 	}
 	emptyMetric := prometheus.Metric{}
 
-	assert.Equal(t, 5.0, envoyRequestRateFromMetrics(upstreamTotal, upstream, downstream))
-	assert.Equal(t, 4.0, envoyRequestRateFromMetrics(emptyMetric, upstream, emptyMetric))
+	assert.Equal(t, 5.0, envoyRequestRateFromMetricsAtTime(upstreamTotal, upstream, downstream, 0))
+	assert.Equal(t, 4.0, envoyRequestRateFromMetricsAtTime(emptyMetric, upstream, emptyMetric, 0))
 }
 
 func TestBuildIstioWorkloadLabels(t *testing.T) {

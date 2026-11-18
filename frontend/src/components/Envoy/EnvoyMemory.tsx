@@ -27,6 +27,7 @@ import {
   formatEnvoyRequestRate,
   hasEnvoyMemoryRunningPods,
   sortedEnvoyPodName,
+  type EnvoyMemoryBusyThresholds,
   type EnvoyMemoryMetricHelpKey
 } from 'utils/EnvoyMemoryUtils';
 import { t } from 'utils/I18nUtils';
@@ -148,10 +149,14 @@ const statusTitleStyle = kialiStyle({
   gap: PFSpacer.xs
 });
 
-const MetricHelpIcon: React.FC<{ helpKey: EnvoyMemoryMetricHelpKey; label: string }> = ({ helpKey, label }) => (
+const MetricHelpIcon: React.FC<{
+  busy?: EnvoyMemoryBusyThresholds;
+  helpKey: EnvoyMemoryMetricHelpKey;
+  label: string;
+}> = ({ busy, helpKey, label }) => (
   <Popover
     aria-label={t('{{label}} information', { label })}
-    bodyContent={<div className={helpBodyStyle}>{envoyMemoryMetricHelp(helpKey)}</div>}
+    bodyContent={<div className={helpBodyStyle}>{envoyMemoryMetricHelp(helpKey, busy)}</div>}
     headerContent={<span>{label}</span>}
     position={PopoverPosition.top}
     triggerAction="hover"
@@ -161,6 +166,7 @@ const MetricHelpIcon: React.FC<{ helpKey: EnvoyMemoryMetricHelpKey; label: strin
 );
 
 type MetricTileProps = {
+  busy?: EnvoyMemoryBusyThresholds;
   helpKey: EnvoyMemoryMetricHelpKey;
   label: string;
   onSelect?: () => void;
@@ -168,11 +174,11 @@ type MetricTileProps = {
   value: React.ReactNode;
 };
 
-const MetricTile: React.FC<MetricTileProps> = ({ helpKey, label, onSelect, selectTestId, value }) => (
+const MetricTile: React.FC<MetricTileProps> = ({ busy, helpKey, label, onSelect, selectTestId, value }) => (
   <div className={tileStyle}>
     <span className={tileLabelRowStyle}>
       <span className={tileLabelStyle}>{label}</span>
-      <MetricHelpIcon helpKey={helpKey} label={label} />
+      <MetricHelpIcon busy={busy} helpKey={helpKey} label={label} />
     </span>
     {onSelect ? (
       <Button
@@ -320,7 +326,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                             <>
                               {' '}
                               <IstioConfigurationScopingLink
-                                dataTest="envoy-memory-status-scoping-link"
+                                dataTest="envoy-memory-status-scoping-alert-link"
                                 externalLinkIconClassName={externalLinkIconStyle}
                               />
                             </>
@@ -366,6 +372,7 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
                         value={formatEnvoyMemoryUsage(summary)}
                       />
                       <MetricTile
+                        busy={summary}
                         helpKey="activeConnections"
                         label={activeConnectionsLabel}
                         value={summary.activeConnectionsObserved ? summary.activeConnections : NA.name}
@@ -384,6 +391,8 @@ export const EnvoyMemory: React.FC<EnvoyMemoryProps> = (props: EnvoyMemoryProps)
 
           <div className={isChartMaximized ? maximizedSectionStyle : sectionStyle}>
             <EnvoyMemoryOverlayChart
+              busyRequestRatePerSecond={summary?.busyRequestRatePerSecond}
+              isL4Proxy={summary?.trafficIsByteRate}
               isMaximized={isChartMaximized}
               lastRefreshAt={props.lastRefreshAt}
               memoryLimitBytes={summary?.memoryLimitBytes}

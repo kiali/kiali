@@ -11533,6 +11533,10 @@ associated configuration.
 |------|------|---------|:--------:| ------- |-------------|---------|
 | ActiveClustersMax | int64 (formatted integer)| `int64` |  | |  |  |
 | ActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| ActiveConnectionsObserved | boolean| `bool` |  | |  |  |
+| BusyActiveConnections | int64 (formatted integer)| `int64` |  | |  |  |
+| BusyRequestRatePerSecond | double (formatted number)| `float64` |  | |  |  |
+| BusyTCPBytesPerSecond | double (formatted number)| `float64` |  | |  |  |
 | ConfigCountsPod | string| `string` |  | |  |  |
 | LargeConfigClustersThreshold | int64 (formatted integer)| `int64` |  | |  |  |
 | MemoryLimitBytes | int64 (formatted integer)| `int64` |  | |  |  |

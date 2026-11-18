@@ -8,6 +8,9 @@ export type EnvoyMemorySummary = {
   activeClustersMax: number;
   activeConnections: number;
   activeConnectionsObserved: boolean;
+  busyActiveConnections?: number;
+  busyRequestRatePerSecond?: number;
+  busyTCPBytesPerSecond?: number;
   cause: EnvoyMemoryCause;
   configCountsPod?: string;
   largeConfigClustersThreshold: number;

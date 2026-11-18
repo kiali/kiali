@@ -291,6 +291,42 @@ describe('EnvoyMemory', () => {
     expect(screen.getByText('Warning threshold')).toBeInTheDocument();
   });
 
+  it('shows Warning threshold without Memory limit when no proxy memory limit is set', async () => {
+    rstest.spyOn(API, 'getWorkloadEnvoyMemory').mockResolvedValue({
+      data: {
+        activeClustersMax: 10,
+        activeConnections: 5,
+        activeConnectionsObserved: true,
+        cause: 'ok',
+        largeConfigClustersThreshold: 100,
+        memoryLimitBytes: 0,
+        memoryMaxBytes: 1024,
+        memoryMetric: 'working_set',
+        memoryThresholdBytes: 128 * 1024 * 1024,
+        memoryUsedPercent: 0,
+        proxyType: 'sidecar',
+        requestRate: 1.5,
+        roughConfigMemoryBytes: 512000
+      }
+    } as any);
+
+    render(
+      <Provider store={store}>
+        <MemoryRouter>
+          <EnvoyMemory
+            lastRefreshAt={1720526431902}
+            namespace="bookinfo"
+            timeRange={{ from: 1720526400000, to: 1720526430000 }}
+            workload={{ ...workload, name: 'details-v2' }}
+          />
+        </MemoryRouter>
+      </Provider>
+    );
+
+    expect(await screen.findByText('Warning threshold')).toBeInTheDocument();
+    expect(screen.queryByText('Memory limit')).not.toBeInTheDocument();
+  });
+
   it('renders EnvoyDetails memory tab without invalid element type errors', () => {
     const workloadWithPods = {
       ...workload,

@@ -37,12 +37,14 @@ import * as API from '../../services/Api';
 import { addError } from '../../utils/AlertUtils';
 import { t } from 'utils/I18nUtils';
 import { getDataSupplier, toOverlay, toVCLine, toVCLines } from 'utils/VictoryChartsUtils';
-import { sortedEnvoyPodNames } from 'utils/EnvoyMemoryUtils';
+import { BUSY_REQUEST_RATE_PER_SECOND, sortedEnvoyPodNames } from 'utils/EnvoyMemoryUtils';
 import { ResizeHeightObserver } from 'utils/ResizeHeightObserver';
 import { flexFillStyle, noShrinkStyle } from 'styles/FlexStyles';
 import { classes } from 'typestyle';
 
 type EnvoyMemoryOverlayChartProps = {
+  busyRequestRatePerSecond?: number;
+  isL4Proxy?: boolean;
   isMaximized: boolean;
   lastRefreshAt: TimeInMilliseconds;
   memoryLimitBytes?: number;
@@ -134,35 +136,65 @@ const findChart = (dashboard: DashboardModel | undefined, name: string): ChartMo
 const seriesName = (line: { datapoints: VCDataPoint[]; legendItem?: { name?: string } }): string =>
   line.legendItem?.name ?? line.datapoints[0]?.name ?? '';
 
+// Mirrors the backend connection policy (resolveActiveConnectionsAtTime):
+// prefer the TCP opened/closed net when positive; Envoy cx gauges are only
+// trusted when HTTP is busy (at or above the busy request rate) or when TCP
+// telemetry is absent, so the chart cannot disagree with the summary tile.
+// The busy threshold and the L4-proxy flag come from the summary
+// (busyRequestRatePerSecond, trafficIsByteRate) so a configured backend
+// threshold is honored. The HTTP rate comes from the dashboard's
+// "Request rate" chart; when that chart is absent the rate reads as 0,
+// matching the backend's behavior when istio_requests_total is missing.
 const activeConnectionsDatapoints = (
   lines: { datapoints: VCDataPoint[]; legendItem?: { name?: string } }[],
+  requestRateLines: { datapoints: VCDataPoint[]; legendItem?: { name?: string } }[],
+  isL4Proxy: boolean,
+  busyRequestRatePerSecond: number,
   name: string
 ): VCDataPoint[] => {
   const opened = lines.filter(line => /tcp.*opened|opened.*tcp/i.test(seriesName(line)));
   const closed = lines.filter(line => /tcp.*closed|closed.*tcp/i.test(seriesName(line)));
   const envoyCx = lines.filter(line => /cx active/i.test(seriesName(line)));
+  const requestUpstream = requestRateLines.filter(line => /request upstream/i.test(seriesName(line)));
+  const requestDownstream = requestRateLines.filter(line => /request downstream/i.test(seriesName(line)));
   const openedByTime = new Map<number, number>();
   const closedByTime = new Map<number, number>();
   const envoyCxByTime = new Map<number, number>();
 
-  opened.forEach(line => {
-    line.datapoints.forEach(dp => {
-      const key = Number(dp.x);
-      openedByTime.set(key, (openedByTime.get(key) ?? 0) + dp.y);
+  const sumByTime = (lineSet: typeof lines, target: Map<number, number>): void => {
+    lineSet.forEach(line => {
+      line.datapoints.forEach(dp => {
+        const key = Number(dp.x);
+        target.set(key, (target.get(key) ?? 0) + dp.y);
+      });
     });
-  });
-  closed.forEach(line => {
-    line.datapoints.forEach(dp => {
-      const key = Number(dp.x);
-      closedByTime.set(key, (closedByTime.get(key) ?? 0) + dp.y);
+  };
+  sumByTime(opened, openedByTime);
+  sumByTime(closed, closedByTime);
+  sumByTime(envoyCx, envoyCxByTime);
+
+  const requestUpstreamByTime = new Map<number, number>();
+  const requestDownstreamByTime = new Map<number, number>();
+  sumByTime(requestUpstream, requestUpstreamByTime);
+  sumByTime(requestDownstream, requestDownstreamByTime);
+
+  // The request-rate series can be sampled at different timestamps than the
+  // connection series; read the nearest sample at or before each point, like
+  // the backend's sampleValueAt.
+  const valueAtOrBefore = (byTime: Map<number, number>, x: number): number => {
+    let bestTime = -1;
+    let bestValue = 0;
+    byTime.forEach((value, time) => {
+      if (time <= x && time > bestTime) {
+        bestTime = time;
+        bestValue = value;
+      }
     });
-  });
-  envoyCx.forEach(line => {
-    line.datapoints.forEach(dp => {
-      const key = Number(dp.x);
-      envoyCxByTime.set(key, (envoyCxByTime.get(key) ?? 0) + dp.y);
-    });
-  });
+    return bestValue;
+  };
+
+  const tcpObserved = opened.length > 0 || closed.length > 0;
+  const envoyObserved = envoyCx.length > 0;
 
   const times = new Set<number>([...openedByTime.keys(), ...closedByTime.keys(), ...envoyCxByTime.keys()]);
   return Array.from(times)
@@ -170,7 +202,18 @@ const activeConnectionsDatapoints = (
     .map(x => {
       const tcpActive = (openedByTime.get(x) ?? 0) - (closedByTime.get(x) ?? 0);
       const envoyActive = envoyCxByTime.get(x) ?? 0;
-      const active = tcpActive > 0 ? tcpActive : envoyActive > 0 ? envoyActive : 0;
+      const httpRate = Math.max(valueAtOrBefore(requestUpstreamByTime, x), valueAtOrBefore(requestDownstreamByTime, x));
+      const httpBusy = !isL4Proxy && httpRate >= busyRequestRatePerSecond;
+      let active = 0;
+      if (tcpObserved && tcpActive > 0) {
+        active = tcpActive;
+      } else if (httpBusy && envoyObserved && envoyActive > 0) {
+        active = envoyActive;
+      } else if (tcpObserved) {
+        active = tcpActive;
+      } else if (envoyObserved) {
+        active = envoyActive;
+      }
       return { name, x: new Date(x), y: active };
     });
 };
@@ -389,6 +432,7 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
     findChart(dashboard, 'Allocated memory') ??
     findChart(dashboard, 'Metrics correlation');
   const connectionsChart = findChart(dashboard, 'Active connections');
+  const requestRateChart = findChart(dashboard, 'Request rate');
   const colorScale = (getTheme(ChartThemeColor.multi).chart?.colorScale ?? [PFColors.Blue400]) as string[];
 
   let memoryLines: VCLines<RichDataPoint> = [];
@@ -407,7 +451,16 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
 
   if (connectionsChart) {
     const connectionLines = getDataSupplier(connectionsChart, { values: new Map() }, colorScale)();
-    const active = activeConnectionsDatapoints(connectionLines, connectionsSeriesName);
+    const requestRateLines = requestRateChart
+      ? getDataSupplier(requestRateChart, { values: new Map() }, colorScale)()
+      : [];
+    const active = activeConnectionsDatapoints(
+      connectionLines,
+      requestRateLines,
+      props.isL4Proxy ?? props.workload.isWaypoint ?? false,
+      props.busyRequestRatePerSecond ?? BUSY_REQUEST_RATE_PER_SECOND,
+      connectionsSeriesName
+    );
     if (active.length > 0) {
       connectionsOverlay = toOverlay(
         {
@@ -426,40 +479,32 @@ export const EnvoyMemoryOverlayChart: React.FC<EnvoyMemoryOverlayChartProps> = (
   const timeWindow = evalTimeRange(props.timeRange) as [Date, Date];
   const memoryLimitName = t('Memory limit');
   const memoryWarningName = t('Warning threshold');
+  const buildThresholdLine = (name: string, value: number, color: string): VCLines<RichDataPoint>[number] => {
+    const dps: Datapoint[] = [
+      [timeWindow[0].getTime() / 1000, value],
+      [timeWindow[1].getTime() / 1000, value]
+    ];
+    const line = toVCLine(dps, name, color);
+    return { ...line, datapoints: line.datapoints.map(dp => ({ ...dp, unit: 'bytes' })) };
+  };
+  // The warning threshold is drawn even without a proxy memory limit: the
+  // backend reports an absolute fallback threshold in that case.
   let memoryLimitThresholds: VCLines<RichDataPoint> = [];
+  if ((props.memoryThresholdBytes ?? 0) > 0) {
+    memoryLimitThresholds = [buildThresholdLine(memoryWarningName, props.memoryThresholdBytes!, PFColors.Warning)];
+  }
   if ((props.memoryLimitBytes ?? 0) > 0) {
-    const limitDps: Datapoint[] = [
-      [timeWindow[0].getTime() / 1000, props.memoryLimitBytes!],
-      [timeWindow[1].getTime() / 1000, props.memoryLimitBytes!]
-    ];
-    const limitLine = toVCLine(limitDps, memoryLimitName, PFColors.Danger);
     memoryLimitThresholds = [
-      {
-        ...limitLine,
-        datapoints: limitLine.datapoints.map(dp => ({ ...dp, unit: 'bytes' }))
-      }
+      ...memoryLimitThresholds,
+      buildThresholdLine(memoryLimitName, props.memoryLimitBytes!, PFColors.Danger)
     ];
-    if ((props.memoryThresholdBytes ?? 0) > 0) {
-      const warningDps: Datapoint[] = [
-        [timeWindow[0].getTime() / 1000, props.memoryThresholdBytes!],
-        [timeWindow[1].getTime() / 1000, props.memoryThresholdBytes!]
-      ];
-      const warningLine = toVCLine(warningDps, memoryWarningName, PFColors.Warning);
-      memoryLimitThresholds = [
-        {
-          ...warningLine,
-          datapoints: warningLine.datapoints.map(dp => ({ ...dp, unit: 'bytes' }))
-        },
-        ...memoryLimitThresholds
-      ];
-    }
   }
 
   const chartHelp = (
     <>
       <p>
         {t(
-          'The left axis shows istio-proxy working set and Envoy allocated memory. When a proxy memory limit is set, the chart also draws the memory limit and a 70% warning line. The right axis shows active connections over the same time range so you can correlate memory with load.'
+          'The left axis shows istio-proxy working set and Envoy allocated memory. The chart also draws the status warning threshold and, when a proxy memory limit is set, the memory limit. The right axis shows active connections over the same time range so you can correlate memory with load.'
         )}
       </p>
       <p>

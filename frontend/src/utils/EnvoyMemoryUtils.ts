@@ -14,6 +14,17 @@ const ISTIO_CONFIGURATION_SCOPING_URL = 'https://istio.io/latest/docs/ops/config
 // Rough estimate of Envoy config memory contribution per active cluster (matches backend).
 export const ROUGH_CONFIG_BYTES_PER_CLUSTER = 50 * 1024;
 
+// Busy-traffic cause thresholds (mirror backend defaults; the summary overrides them when present).
+export const BUSY_REQUEST_RATE_PER_SECOND = 100;
+export const BUSY_ACTIVE_CONNECTIONS = 10;
+export const BUSY_TCP_BYTES_PER_SECOND = 256 * 1024;
+
+export type EnvoyMemoryBusyThresholds = {
+  busyActiveConnections?: number;
+  busyRequestRatePerSecond?: number;
+  busyTCPBytesPerSecond?: number;
+};
+
 // Short client-side cache so Summary and Envoy Overview tabs do not duplicate in-flight fetches.
 const ENVOY_MEMORY_SUMMARY_CACHE_TTL_MS = 5000;
 type EnvoyMemorySummaryCacheEntry = {
@@ -209,24 +220,39 @@ export const envoyMemoryCauseLabel = (cause: EnvoyMemoryCause, memoryMaxBytes: n
   }
 };
 
-export const envoyMemoryThresholdHelp = (summary: {
-  largeConfigClustersThreshold: number;
-  memoryLimitBytes: number;
-  memoryMetric?: string;
-  memoryThresholdBytes: number;
-  proxyType?: string;
-}): string => {
+type EnvoyMemoryBusyThresholdValues = {
+  busyConnections: number;
+  busyRequestRate: string;
+  busyTCPBytes: string;
+};
+
+const busyThresholdValues = (summary: EnvoyMemoryBusyThresholds): EnvoyMemoryBusyThresholdValues => ({
+  busyRequestRate: `${summary.busyRequestRatePerSecond ?? BUSY_REQUEST_RATE_PER_SECOND} req/s`,
+  busyTCPBytes: formatEnvoyByteRate(summary.busyTCPBytesPerSecond ?? BUSY_TCP_BYTES_PER_SECOND),
+  busyConnections: summary.busyActiveConnections ?? BUSY_ACTIVE_CONNECTIONS
+});
+
+export const envoyMemoryThresholdHelp = (
+  summary: {
+    largeConfigClustersThreshold: number;
+    memoryLimitBytes: number;
+    memoryMetric?: string;
+    memoryThresholdBytes: number;
+    proxyType?: string;
+  } & EnvoyMemoryBusyThresholds
+): string => {
   const threshold = formatEnvoyMemoryBytes(summary.memoryThresholdBytes);
   const usesWorkingSet = envoyMemoryStatusUsesWorkingSet(summary);
   if (usesWorkingSet && summary.memoryLimitBytes > 0) {
     const limitPercent = ((summary.memoryThresholdBytes / summary.memoryLimitBytes) * 100).toFixed(1);
     return t(
-      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} ({{limitPercent}}% of its memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels: likely traffic when HTTP is about 100 req/s or more, TCP is about 256 KiB/s or more on waypoints, or active connections are 10 or more when observed; likely configuration when clusters are above that limit and traffic is not busy.',
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} ({{limitPercent}}% of the selected pod memory limit of {{limit}} from container_spec_memory_limit_bytes or sidecar.istio.io/proxyMemoryLimit). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels: likely traffic when HTTP is about {{busyRequestRate}} or more, TCP is about {{busyTCPBytes}} or more on waypoints, or active connections are {{busyConnections}} or more when observed; likely configuration when clusters are above that limit and traffic is not busy.',
       {
         limitPercent,
         threshold,
         limit: formatEnvoyMemoryBytes(summary.memoryLimitBytes),
-        clusters: summary.largeConfigClustersThreshold
+        clusters: summary.largeConfigClustersThreshold,
+        ...busyThresholdValues(summary)
       }
     );
   }
@@ -236,10 +262,21 @@ export const envoyMemoryThresholdHelp = (summary: {
 
   if (usesWorkingSet) {
     return t(
-      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels use the same busy-traffic thresholds as above when memory is high.',
+      'Memory is flagged as high when container working set for istio-proxy exceeds {{threshold}} (default absolute threshold for {{proxyType}}; no proxy memory limit is set on the selected pod). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels use the same busy-traffic thresholds as above when memory is high.',
       {
         threshold,
         proxyType: proxyLabel,
+        clusters: summary.largeConfigClustersThreshold
+      }
+    );
+  }
+
+  if (summary.memoryLimitBytes > 0) {
+    return t(
+      'Container working set is unavailable. Memory is flagged as high when Envoy allocated memory exceeds {{threshold}} (the smaller of the default absolute threshold and 70% of the selected pod memory limit of {{limit}}). Large configuration is considered when active clusters exceed {{clusters}}. Cause labels use the same busy-traffic thresholds when memory is high.',
+      {
+        threshold,
+        limit: formatEnvoyMemoryBytes(summary.memoryLimitBytes),
         clusters: summary.largeConfigClustersThreshold
       }
     );
@@ -267,7 +304,7 @@ export type EnvoyMemoryMetricHelpKey =
   | 'activeConnections'
   | 'requestRate';
 
-export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => {
+export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey, busy?: EnvoyMemoryBusyThresholds): string => {
   switch (key) {
     case 'allocatedMemory':
     case 'proxyMemory':
@@ -288,7 +325,8 @@ export const envoyMemoryMetricHelp = (key: EnvoyMemoryMetricHelpKey): string => 
       return t('Count of routes from the Envoy config dump of the selected pod (not a Prometheus metric).');
     case 'activeConnections':
       return t(
-        'Prefer Istio L4: sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total) (reporter not filtered) when that net is positive. When TCP net is zero but HTTP is at least about 100 req/s, use sum of envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active. If TCP metrics are missing, use Envoy gauges when present. Shows N/A when neither signal exists.'
+        'Prefer Istio L4: sum(istio_tcp_connections_opened_total) - sum(istio_tcp_connections_closed_total) (reporter not filtered) when that net is positive. When TCP net is zero but HTTP is at least about {{busyRequestRate}}, use sum of envoy_cluster_upstream_cx_active and envoy_listener_downstream_cx_active. If TCP metrics are missing, use Envoy gauges when present. Shows N/A when neither signal exists.',
+        busyThresholdValues(busy ?? {})
       );
     case 'requestRate':
       return t(
