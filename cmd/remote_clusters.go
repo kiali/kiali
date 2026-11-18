@@ -24,8 +24,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/log"
 )
@@ -318,6 +320,23 @@ func waitForCachesToSync(ctx context.Context, kubeCaches map[string]ctrlcache.Ca
 		}()
 	}
 	log.Infof("Cluster [%s] cache synced; serving starts now (remote caches continue to sync in the background)", homeCluster)
+}
+
+// Start serving the home cluster before priming monitors that depend on remote reads.
+func startServerAndMonitors(ctx context.Context, startServer func(), istioAPIEnabled bool, cpm business.ControlPlaneMonitor, discovery istio.MeshDiscovery, hcm business.HealthMonitor) {
+	startServer()
+	go func() {
+		if istioAPIEnabled {
+			cpm.PollIstiodForProxyStatus(ctx)
+		} else if hcm != nil {
+			if _, err := discovery.Mesh(ctx); err != nil {
+				log.Warningf("Failed to prime cluster cache for health monitor: %s", err)
+			}
+		}
+		if hcm != nil && ctx.Err() == nil {
+			hcm.Start(ctx)
+		}
+	}()
 }
 
 // waitForCachesSync waits for all the given caches to sync, concurrently, under one shared

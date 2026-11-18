@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/rest"
 
 	"github.com/kiali/kiali/config"
@@ -32,9 +33,9 @@ func TestReloadRemoteClusterSecret(t *testing.T) {
 	check.Contains(clusterNames, conf.KubernetesConfig.ClusterName)
 	check.Contains(clusterNames, testClusterName)
 
-	rcis, _, err := GetRemoteClusterInfos()
+	inventory, err := GetRemoteClusterInfos()
 	check.NoError(err)
-	rciConfig := rcis[testClusterName].ClientConfig
+	rciConfig := inventory.Clusters[testClusterName].ClientConfig
 	check.NotNil(rciConfig)
 
 	// test the home cluster config
@@ -90,14 +91,13 @@ func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
 				}
 			}
 
-			_, unprocessable, err := GetRemoteClusterInfos()
+			inventory, err := GetRemoteClusterInfos()
 			check.NoError(err)
+			unprocessable := inventory.UnprocessableClusters
 
 			// Whichever file the loader met first owns the name: the outcome is one of
 			// "active" or "unprocessable", never both, never neither.
-			infos, _, err := GetRemoteClusterInfos()
-			check.NoError(err)
-			_, active := infos[clusterName]
+			_, active := inventory.Clusters[clusterName]
 			skipped := false
 			for _, name := range unprocessable {
 				if name == clusterName {
@@ -107,4 +107,50 @@ func TestDuplicateClusterSecretsKeepInventoriesDisjoint(t *testing.T) {
 			check.True(active != skipped, "cluster must be exactly one of active or unprocessable (active=%v, unprocessable=%v)", active, skipped)
 		})
 	}
+}
+
+func TestRemoteInventoryRecordsUnreadableSecret(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.Mkdir(root+"/a-valid", 0700))
+	require.NoError(t, os.WriteFile(root+"/a-valid/west", []byte(remoteClusterYAML), 0600))
+	require.NoError(t, os.Symlink(root+"/missing", root+"/z-broken"))
+	inventory, err := getRemoteClusterInfosFromDir(root)
+	require.NoError(t, err)
+	require.Contains(t, inventory.Clusters, "west", "the readable registration must be retained")
+	require.Empty(t, inventory.UnprocessableClusters)
+	require.Equal(t, []string{"z-broken"}, inventory.UnreadableSecrets)
+}
+
+// An unreadable secret must not be recorded in the cluster-keyed skip registry: a
+// secret name is not a cluster name. One named like the home cluster would be
+// discarded by the home-shadowing guard and silently re-enable unscoped queries, and
+// one named like a healthy cluster would mark that cluster skipped. The inventory is
+// incomplete instead, and the healthy registrations still serve.
+func TestUnreadableSecretDoesNotEnterSkipRegistry(t *testing.T) {
+	check := assert.New(t)
+	conf := config.NewConfig()
+	conf.KubernetesConfig.ClusterName = config.DefaultClusterID
+	config.Set(conf)
+
+	originalRemoteClusterSecretsDir := RemoteClusterSecretsDir
+	t.Cleanup(func() { RemoteClusterSecretsDir = originalRemoteClusterSecretsDir })
+	RemoteClusterSecretsDir = t.TempDir()
+
+	// A readable registration for the healthy spoke "west" (the helper names the
+	// kubeconfig file after the secret, so rename it to the cluster's name)...
+	createTestRemoteClusterSecretFile(t, RemoteClusterSecretsDir, "west-secret", remoteClusterYAML)
+	require.NoError(t, os.Rename(RemoteClusterSecretsDir+"/west-secret/west-secret", RemoteClusterSecretsDir+"/west-secret/west"))
+	// ...an unreadable secret named like the home cluster, and one named like the
+	// healthy spoke (a cluster name registered through a different, readable secret).
+	require.NoError(t, os.Symlink(RemoteClusterSecretsDir+"/missing", RemoteClusterSecretsDir+"/"+config.DefaultClusterID))
+	require.NoError(t, os.Symlink(RemoteClusterSecretsDir+"/missing", RemoteClusterSecretsDir+"/west"))
+
+	clientFactory, err := NewClientFactory(t.Context(), conf, &rest.Config{BearerToken: "home-cluster-token", BearerTokenFile: "/my/token/file"})
+	check.NoError(err)
+
+	check.NotContains(clientFactory.SkippedClusters(), config.DefaultClusterID, "an unreadable secret must not mark the home cluster skipped")
+	check.NotContains(clientFactory.SkippedClusters(), "west", "an unreadable secret must not mark a healthy cluster skipped")
+	_, westRegistered := clientFactory.GetSAClients()["west"]
+	check.True(westRegistered, "the readable registration must still serve")
+	check.ElementsMatch(clientFactory.UnreadableRemoteSecrets(), []string{config.DefaultClusterID, "west"})
 }

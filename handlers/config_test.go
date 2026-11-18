@@ -204,27 +204,32 @@ func TestConfigHandlerResolvesIdentityDomainFromMeshTrustDomain(t *testing.T) {
 	conf := config.NewConfig()
 	conf.KubernetesConfig.ClusterName = "mycluster"
 
+	// A zero discovery TTL forces a cache miss after every successful refresh.
+	conf.KialiInternal.CacheExpiration.Mesh = 0
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{
-			ControlPlanes: []models.ControlPlane{
-				{
-					Cluster: &models.KubeCluster{Name: "mycluster"},
-					MeshConfig: &models.MeshConfig{
-						MeshConfig: &istiov1alpha1.MeshConfig{
-							TrustDomain: "example.org",
-						},
+	// The identity domain resolves from the cached mesh (the config endpoint must
+	// not wait out a live mesh resolution), so seed the cache rather than the
+	// fake discovery's MeshReturn.
+	kialiCache.SetMesh(&models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster: &models.KubeCluster{Name: "mycluster"},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						TrustDomain: "example.org",
 					},
 				},
 			},
 		},
-	}
+	})
 
+	_, warm := kialiCache.GetMesh()
+	require.False(warm)
 	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
 
-	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, discovery, cf, prom))
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, &istiotest.FakeDiscovery{}, cf, prom))
 	mr := mux.NewRouter()
 	mr.Handle("/api/config", handler)
 
@@ -254,24 +259,22 @@ func TestConfigHandlerExplicitConfigOverridesMeshTrustDomain(t *testing.T) {
 	k8s := kubetest.NewFakeK8sClient()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	kialiCache := cache.NewTestingCacheWithFactory(t, cf, *conf)
-	discovery := &istiotest.FakeDiscovery{
-		MeshReturn: models.Mesh{
-			ControlPlanes: []models.ControlPlane{
-				{
-					Cluster: &models.KubeCluster{Name: "mycluster"},
-					MeshConfig: &models.MeshConfig{
-						MeshConfig: &istiov1alpha1.MeshConfig{
-							TrustDomain: "example.org",
-						},
+	kialiCache.SetMesh(&models.Mesh{
+		ControlPlanes: []models.ControlPlane{
+			{
+				Cluster: &models.KubeCluster{Name: "mycluster"},
+				MeshConfig: &models.MeshConfig{
+					MeshConfig: &istiov1alpha1.MeshConfig{
+						TrustDomain: "example.org",
 					},
 				},
 			},
 		},
-	}
+	})
 
 	prom := &fakePromClient{PromClientMock: prometheustest.PromClientMock{}}
 
-	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, discovery, cf, prom))
+	handler := handlers.WithFakeAuthInfo(conf, handlers.Config(conf, kialiCache, &istiotest.FakeDiscovery{}, cf, prom))
 	mr := mux.NewRouter()
 	mr.Handle("/api/config", handler)
 

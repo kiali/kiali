@@ -119,9 +119,9 @@ func TestIsAmbientEnabled(t *testing.T) {
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
 
-	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.True(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 	// Call multiple times to ensure results are consistent.
-	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.True(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 }
 
 func TestIsAmbientEnabledOutsideIstioSystem(t *testing.T) {
@@ -135,9 +135,9 @@ func TestIsAmbientEnabledOutsideIstioSystem(t *testing.T) {
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
 
-	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.True(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 	// Call multiple times to ensure results are consistent.
-	require.True(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.True(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 }
 
 func TestIsAmbientDisabled(t *testing.T) {
@@ -148,9 +148,9 @@ func TestIsAmbientDisabled(t *testing.T) {
 	)
 	cache := cache.NewTestingCache(t, client, *conf)
 
-	require.False(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.False(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 	// Call multiple times to ensure results are consistent.
-	require.False(cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName))
+	require.False(cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName))
 }
 
 func TestIsAmbientMultiCluster(t *testing.T) {
@@ -171,8 +171,8 @@ func TestIsAmbientMultiCluster(t *testing.T) {
 	})
 	cache := cache.NewTestingCacheWithFactory(t, clientFactory, *conf)
 
-	require.True(cache.IsAmbientEnabled("east"))
-	require.False(cache.IsAmbientEnabled("west"))
+	require.True(cache.IsAmbientEnabled(context.Background(), "east"))
+	require.False(cache.IsAmbientEnabled(context.Background(), "west"))
 }
 
 func TestIsAmbientEnabledInAnyCluster(t *testing.T) {
@@ -214,7 +214,7 @@ func TestIsAmbientIsThreadSafe(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			cache.IsAmbientEnabled(conf.KubernetesConfig.ClusterName)
+			cache.IsAmbientEnabled(context.Background(), conf.KubernetesConfig.ClusterName)
 		}()
 	}
 	wg.Wait()
@@ -397,7 +397,7 @@ func TestZtunnelDump(t *testing.T) {
 	cache, err := cache.NewKialiCache(t.Context(), clients, readers, *conf)
 	require.NoError(err)
 
-	initData := cache.GetZtunnelDump("cluster-default", "ztunnel-7hml8")
+	initData := cache.GetZtunnelDump(context.Background(), "cluster-default", "ztunnel-7hml8")
 	require.Nil(initData)
 
 	zTunnelData, err := os.Open("../kubernetes/testdata/ztunnel-config.json")
@@ -410,7 +410,7 @@ func TestZtunnelDump(t *testing.T) {
 
 	cache.SetZtunnelDump("cluster-defaultztunnel-7hml8", configD)
 
-	cacheData := cache.GetZtunnelDump("cluster-default", "ztunnel-7hml8")
+	cacheData := cache.GetZtunnelDump(context.Background(), "cluster-default", "ztunnel-7hml8")
 	require.NotNil(cacheData)
 	require.Equal(cacheData.Workloads[1].Name, "details-v1-7c5d957895-pwqdh")
 	require.Equal(cacheData.Workloads[1].Protocol, "HBONE")
@@ -429,7 +429,7 @@ func TestGetNoZtunnelPods(t *testing.T) {
 	client := k8sClientWithControlPlanePods(false)
 	cache := cache.NewTestingCache(t, client, *conf)
 
-	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
+	ztunnelPods := cache.GetZtunnelPods(context.Background(), client.ClusterInfo().Name)
 	require.Equal(0, len(ztunnelPods))
 }
 
@@ -440,7 +440,7 @@ func TestGetZtunnelPods(t *testing.T) {
 	client := k8sClientWithControlPlanePods(true)
 	cache := cache.NewTestingCache(t, client, *conf)
 
-	ztunnelPods := cache.GetZtunnelPods(client.ClusterInfo().Name)
+	ztunnelPods := cache.GetZtunnelPods(context.Background(), client.ClusterInfo().Name)
 	require.Equal(2, len(ztunnelPods))
 }
 

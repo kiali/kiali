@@ -4,15 +4,20 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/http/httptrace"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	// client-go's portforward still consumes the apimachinery httpstream types.
+	"k8s.io/apimachinery/pkg/util/httpstream"      //nolint:staticcheck // SA1019
+	"k8s.io/apimachinery/pkg/util/httpstream/spdy" //nolint:staticcheck // SA1019
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/transport/spdy"
 
 	"github.com/kiali/kiali/log"
 )
@@ -29,30 +34,70 @@ type forwarder struct {
 	localPort int
 }
 
-// deadlineRoundTripper bounds a single round trip's time to its response headers. Used for
-// the SPDY upgrade request: canceling the context aborts a handshake that never completes,
-// while a completed (hijacked) connection is unaffected.
-type deadlineRoundTripper struct {
-	delegate http.RoundTripper
-	timeout  time.Duration
+// Use net/http for the HTTP/1 upgrade so cancellation interrupts the underlying
+// socket even while waiting for proxy or API server response headers.
+type portForwardDialer struct {
+	client  *http.Client
+	timeout time.Duration
+	url     *url.URL
 }
 
-func (d *deadlineRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	ctx, cancel := context.WithTimeout(req.Context(), d.timeout)
-	defer cancel()
-	return d.delegate.RoundTrip(req.WithContext(ctx))
+type upgradedConn struct {
+	net.Conn
+	body   io.ReadWriteCloser
+	cancel context.CancelFunc
 }
 
-// portForwardEstablishTimeout bounds how long establishing a port-forward (SPDY dial +
-// upgrade handshake) may take. The SPDY round tripper is built from TLS and proxy settings
-// only - it never sees the rest config's dialer or request timeout - and ForwardPorts waits
-// for readiness with no cancellation, so without this bound a stalled peer hangs the
-// operation indefinitely. The bound is applied twice: a response-header deadline on the
-// SPDY transport (which cancels the upgrade handshake at the HTTP layer, closing the
-// connection even though ForwardPorts itself only observes the stop channel after the dial
-// returns) and a timer in Start as the last resort. An established tunnel is not bounded by
-// this; the hijacked connection outlives the header deadline, and the tunnel lives until
-// Stop.
+// Read through the upgrade body to preserve any frames buffered with the headers.
+func (c *upgradedConn) Read(p []byte) (int, error)  { return c.body.Read(p) }
+func (c *upgradedConn) Write(p []byte) (int, error) { return c.body.Write(p) }
+func (c *upgradedConn) Close() error {
+	defer c.cancel()
+	return c.body.Close()
+}
+
+func (d *portForwardDialer) Dial(protocols ...string) (httpstream.Connection, string, error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	timer := time.AfterFunc(d.timeout, cancel)
+	var socket net.Conn
+	trace := &httptrace.ClientTrace{GotConn: func(info httptrace.GotConnInfo) { socket = info.Conn }}
+	req, err := http.NewRequestWithContext(httptrace.WithClientTrace(ctx, trace), http.MethodPost, d.url.String(), nil)
+	if err != nil {
+		timer.Stop()
+		cancel()
+		return nil, "", err
+	}
+	req.Header.Set(httpstream.HeaderConnection, httpstream.HeaderUpgrade)
+	req.Header.Set(httpstream.HeaderUpgrade, spdy.HeaderSpdy31)
+	req.Header[httpstream.HeaderProtocolVersion] = protocols
+	resp, err := d.client.Do(req)
+	if err != nil {
+		timer.Stop()
+		cancel()
+		return nil, "", err
+	}
+	stream, ok := resp.Body.(io.ReadWriteCloser)
+	if !ok || socket == nil || resp.StatusCode != http.StatusSwitchingProtocols || !strings.EqualFold(resp.Header.Get(httpstream.HeaderUpgrade), spdy.HeaderSpdy31) {
+		defer resp.Body.Close()
+		defer cancel()
+		defer timer.Stop()
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return nil, "", fmt.Errorf("port-forward upgrade failed (%s): %s", resp.Status, detail)
+	}
+	if !timer.Stop() {
+		cancel()
+		stream.Close()
+		return nil, "", context.DeadlineExceeded
+	}
+	upgraded := &upgradedConn{Conn: socket, body: stream, cancel: cancel}
+	conn, err := spdy.NewClientConnectionWithPings(upgraded, 5*time.Second)
+	if err != nil {
+		upgraded.Close()
+		return nil, "", err
+	}
+	return conn, resp.Header.Get(httpstream.HeaderProtocolVersion), nil
+}
+
 const portForwardEstablishTimeout = 10 * time.Second
 
 func (f forwarder) Start() error {
@@ -98,24 +143,13 @@ func NewPortForwarder(client rest.Interface, clientConfig *rest.Config, namespac
 		Name(pod).
 		SubResource("portforward").URL()
 
-	transport, upgrader, err := spdy.RoundTripperFor(clientConfig)
+	cfg := rest.CopyConfig(clientConfig)
+	cfg.NextProtos = []string{"http/1.1"}
+	transport, err := rest.TransportFor(cfg)
 	if err != nil {
-		log.Errorf("Error creating a RoundTripper: %v", err)
 		return nil, err
 	}
-
-	// Bound the upgrade handshake: without it a peer that accepts the connection but never
-	// answers the upgrade leaves the dial (and thus ForwardPorts) hanging past every outer
-	// bound, because the stop channel is only observed after the dial returns. The bound is
-	// a wrapping round tripper rather than a ResponseHeaderTimeout on the transport:
-	// RoundTripperFor may return a wrapper (an auth transport, or the SPDY round tripper
-	// itself) rather than a bare *http.Transport. Canceling the request context aborts the
-	// in-flight handshake; once the upgrade succeeds the connection is hijacked and no
-	// longer tied to the context, so established tunnels are unaffected.
-	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: &deadlineRoundTripper{
-		delegate: transport,
-		timeout:  portForwardEstablishTimeout,
-	}}, http.MethodPost, forwarderUrl)
+	dialer := &portForwardDialer{client: &http.Client{Transport: transport, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}, timeout: portForwardEstablishTimeout, url: forwarderUrl}
 	fwer, err := portforward.NewOnAddresses(dialer, []string{address}, []string{portMap},
 		stopCh, readyCh, writer, os.Stderr)
 	if err != nil {

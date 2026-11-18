@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -47,6 +48,12 @@ type ClientFactory interface {
 	SkipCluster(cluster string, reason error)
 	// SkippedClusters returns the names of the skipped clusters, sorted.
 	SkippedClusters() []string
+	// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+	// directory could not be enumerated at startup. A non-empty result means the
+	// remote inventory is incomplete (see RemoteClusterInventory.UnreadableSecrets):
+	// the clusters those secrets define are unknown, so authorization surfaces that
+	// cannot name them must fail closed until a restart.
+	UnreadableRemoteSecrets() []string
 }
 
 // clientFactory used to generate per users clients
@@ -73,6 +80,13 @@ type clientFactory struct {
 
 	// remoteClusterInfos contains information on all remote clusters taken from the remote cluster secrets, keyed on cluster name.
 	remoteClusterInfos map[string]RemoteClusterInfo
+
+	// unreadableRemoteSecrets names the remote cluster secrets whose directory could not
+	// be enumerated at startup (see RemoteClusterInventory.UnreadableSecrets). The remote
+	// inventory is incomplete while it is non-empty: the clusters those secrets define are
+	// unknown, so authorization surfaces that cannot name them must fail closed until a
+	// restart.
+	unreadableRemoteSecrets []string
 
 	// saClientEntries is a map of cluster name to a Kiali SA client for that cluster.
 	// The Kiali SA client uses the Kiali service account to access the cluster API.
@@ -107,18 +121,22 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 	}
 
 	// obtain details on all known remote clusters
-	remoteClusterInfos, unprocessableClusters, err := GetRemoteClusterInfos()
+	inventory, err := GetRemoteClusterInfos()
 	if err != nil {
 		return nil, err
 	}
-	cf.remoteClusterInfos = remoteClusterInfos
+	cf.remoteClusterInfos = inventory.Clusters
+	cf.unreadableRemoteSecrets = inventory.UnreadableSecrets
+	for _, secret := range inventory.UnreadableSecrets {
+		log.Errorf("The remote cluster secret [%s] could not be read, so the remote cluster inventory is incomplete. Kiali serves its readable registrations, but cross-cluster queries that cannot enumerate the full inventory are denied until Kiali is restarted with a readable secret.", secret)
+	}
 
 	// A cluster whose secret data was found but could not be processed (a malformed
 	// kubeconfig) is a definitively broken registration: record it in the skip registry so
 	// authorization surfaces fail closed for it, the same as a rejected credential. Without
 	// this the cluster would be silently forgotten and unscoped queries could pass on the
 	// strength of the remaining clusters alone.
-	for _, cluster := range unprocessableClusters {
+	for _, cluster := range inventory.UnprocessableClusters {
 		if cluster == cf.homeCluster {
 			// A broken registration shadowing the home cluster's name must not mark the
 			// healthy home cluster skipped; the home registration wins.
@@ -129,7 +147,7 @@ func NewClientFactory(ctx context.Context, conf *kialiconfig.Config, restConf *r
 		cf.skippedClusters[cluster] = fmt.Errorf("remote cluster secret data for cluster [%s] could not be processed", cluster)
 	}
 
-	for cluster, clusterInfo := range remoteClusterInfos {
+	for cluster, clusterInfo := range inventory.Clusters {
 		// A remote registration that shadows the home cluster's name would mark the home
 		// cluster skipped when its (broken) client fails to construct, and the skip entry
 		// would then refuse service to the healthy home client installed below. The home
@@ -574,6 +592,15 @@ func (cf *clientFactory) SkippedClusters() []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+// directory could not be enumerated at startup. See the ClientFactory interface for
+// the contract.
+func (cf *clientFactory) UnreadableRemoteSecrets() []string {
+	cf.mutex.RLock()
+	defer cf.mutex.RUnlock()
+	return slices.Clone(cf.unreadableRemoteSecrets)
 }
 
 // getSAClientAsUserClientInterface returns a read-write client associated with the Kiali service account for the given cluster.

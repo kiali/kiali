@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -111,6 +112,11 @@ type KialiCache interface {
 	// revocation). Their informers cannot refresh, so reads from them serve stale
 	// data; callers must exclude these namespaces rather than serve frozen state.
 	RevokedNamespaces(cluster string) []string
+	// HasRevokedAccess checks full and partial revocations in a single snapshot.
+	HasRevokedAccess(cluster string) bool
+	// IsNamespaceRevoked checks whether the entire cluster or this namespace lost
+	// access, including when a caller holds a warm authorization or mesh snapshot.
+	IsNamespaceRevoked(cluster, namespace string) bool
 
 	// SkippedClusters returns the names of the remote clusters whose registration was
 	// definitively broken at startup (invalid credentials, TLS misconfiguration), for
@@ -121,6 +127,13 @@ type KialiCache interface {
 	// IsClusterSkipped reports whether the named cluster is one of the skipped clusters.
 	// See SkippedClusters for the contract.
 	IsClusterSkipped(cluster string) bool
+	// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose
+	// directory could not be enumerated at startup. A non-empty result means the
+	// remote inventory is incomplete: the clusters those secrets define are unknown
+	// (a secret name is not a cluster name), so consumers that authorize access by
+	// enumerating SA-visible clusters must treat the inventory as unestablished and
+	// fail closed, exactly as for a skipped cluster, until Kiali restarts.
+	UnreadableRemoteSecrets() []string
 
 	// The following three methods implement the namespace-set computation backoff: a
 	// failed computation is not retried for a short window, and the record is dropped on
@@ -128,14 +141,15 @@ type KialiCache interface {
 	// business layer's calls are compile-checked - a silently failed type assertion here
 	// once disabled the whole backoff in production.
 
-	// NamespaceComputeFailedAt returns when the given (cluster, cacheKey) computation last
-	// failed and the error it failed with, if ever.
-	NamespaceComputeFailedAt(key string) (time.Time, error, bool)
-	// MarkNamespaceComputeFailed records a failed computation. The key identifies the
-	// (cluster, cacheKey) computation: the backoff is per-computation, not per-cluster.
-	MarkNamespaceComputeFailed(key string, err error)
+	// NamespaceComputeFailedAt returns when the computation identified by key last
+	// failed and the error it failed with, if ever. The key is built by
+	// NewNamespaceComputeKey; see NamespaceComputeKey for the format.
+	NamespaceComputeFailedAt(key NamespaceComputeKey) (time.Time, error, bool)
+	// MarkNamespaceComputeFailed records a failed computation. The backoff is
+	// per-computation (one NamespaceComputeKey), not per-cluster.
+	MarkNamespaceComputeFailed(key NamespaceComputeKey, err error)
 	// ClearNamespaceComputeFailure drops the computation's failure record on success.
-	ClearNamespaceComputeFailure(key string)
+	ClearNamespaceComputeFailure(key NamespaceComputeKey)
 
 	// SkipUnavailableCluster decides what a caller does when a cluster's cache cannot
 	// serve reads, and returns the cluster's reader when it should not be skipped; callers
@@ -161,6 +175,7 @@ type KialiCache interface {
 	SkipUnavailableCluster(cluster, surface string, mode SkipMode) (reader client.Reader, skip bool, err error)
 
 	GetMesh() (*models.Mesh, bool)
+	LastMesh() *models.Mesh
 	SetMesh(*models.Mesh)
 
 	// GetNamespace returns a namespace from the in memory cache if it exists.
@@ -184,15 +199,24 @@ type KialiCache interface {
 	GetWaypoints() (models.Workloads, bool)
 	SetWaypoints(models.Workloads)
 
-	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset
-	GetZtunnelPods(cluster string) []v1.Pod
+	// GetZtunnelPods returns a list of ztunnel pods from the ztunnel daemonset.
+	// The context bounds the informer reads; a cluster whose caches cannot
+	// answer in time yields no pods, and the answer is retried on the next call.
+	GetZtunnelPods(ctx context.Context, cluster string) []v1.Pod
 
-	// GetZtunnelDaemonset returns a list of ztunnel daemonset per cluster
-	GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet
+	// GetZtunnelDaemonset returns a list of ztunnel daemonset per cluster.
+	// The context bounds the informer reads; a cluster whose caches cannot
+	// answer in time yields no daemonsets, and the answer is retried on the
+	// next call.
+	GetZtunnelDaemonset(ctx context.Context, cluster string) []appsv1.DaemonSet
 
 	// IsAmbientEnabled checks if the istio Ambient profile was enabled
 	// by checking if the ztunnel daemonset exists on the cluster.
-	IsAmbientEnabled(cluster string) bool
+	// The context bounds the daemonset reads: a cluster whose caches cannot
+	// answer in time reports false without caching that verdict, so the check
+	// is retried on the next call rather than paying the read timeout per
+	// accessible namespace indefinitely.
+	IsAmbientEnabled(ctx context.Context, cluster string) bool
 
 	// IsAmbientEnabledInAnyCluster returns true when at least one of the
 	// supplied clusters has the istio Ambient profile enabled. Short-circuits
@@ -237,6 +261,22 @@ type KialiCache interface {
 	SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace)
 }
 
+// NamespaceComputeKey identifies one accessible-namespace-set computation: the
+// (cluster, cacheKey) pair joined by a NUL separator. cacheKey is the requesting user
+// client's GetCacheKey() - the identity that scopes the user's cached results (the
+// bearer token, or the impersonated username when Kiali impersonates; see
+// kubernetes.K8SClient.GetCacheKey). The NUL separator cannot occur in a cluster name
+// or a cache key, so pairs cannot collide. The same key coalesces concurrent
+// computations (the business layer's singleflight) and records their failure backoff
+// (NamespaceComputeFailedAt and friends).
+type NamespaceComputeKey string
+
+// NewNamespaceComputeKey builds the key for one (cluster, cacheKey) computation.
+// See NamespaceComputeKey for the format and the meaning of cacheKey.
+func NewNamespaceComputeKey(cluster, cacheKey string) NamespaceComputeKey {
+	return NamespaceComputeKey(cluster + "\x00" + cacheKey)
+}
+
 type kialiCacheImpl struct {
 	ambientChecksPerCluster store.Store[string, bool]
 
@@ -264,7 +304,7 @@ type kialiCacheImpl struct {
 	// namespaceComputeLastSweep), so a burst of failures does not rescan the whole map per
 	// insertion, and a read can also trigger a long-overdue sweep so a quiet period after
 	// an outage does not retain entries beyond the TTL.
-	namespaceComputeFailures  map[string]namespaceComputeFailure
+	namespaceComputeFailures  map[NamespaceComputeKey]namespaceComputeFailure
 	namespaceComputeLastSweep time.Time
 	namespaceComputeMutex     sync.Mutex
 	clients                   map[string]kubernetes.ClientInterface
@@ -297,6 +337,7 @@ type kialiCacheImpl struct {
 
 	// There's only ever one mesh but we want to reuse the store machinery
 	// so using a store here but the only key should be kialiCacheMeshKey.
+	lastMesh  atomic.Pointer[models.Mesh]
 	meshStore store.Store[string, *models.Mesh]
 
 	// Store the namespaces per cacheKey + cluster as a map[string]namespace where string is the namespace name
@@ -328,6 +369,13 @@ type kialiCacheImpl struct {
 	// "cannot evaluate" and fail closed, because its telemetry may still be queryable.
 	skippedClusters map[string]struct{}
 
+	// unreadableRemoteSecrets names the remote cluster secrets whose directory could not
+	// be enumerated at startup (see WithUnreadableRemoteSecrets). While it is non-empty
+	// the remote inventory is incomplete: the clusters those secrets define are unknown,
+	// so consumers that authorize by enumerating SA-visible clusters must fail closed
+	// until a restart, exactly as for a skipped cluster.
+	unreadableRemoteSecrets []string
+
 	// ProxyStatusStore stores ztunnel config dump per cluster + namespace + pod.
 	ztunnelConfigStore store.Store[string, *kubernetes.ZtunnelConfigDump]
 }
@@ -354,6 +402,16 @@ func WithSkippedClusters(clusters []string) Option {
 		for _, cluster := range clusters {
 			c.skippedClusters[cluster] = struct{}{}
 		}
+	}
+}
+
+// WithUnreadableRemoteSecrets records the remote cluster secrets whose directory could not
+// be enumerated at startup, so consumers of the cache can treat the inventory consistently:
+// authorization surfaces that enumerate SA-visible clusters must fail closed while any
+// secret is unreadable (see UnreadableRemoteSecrets).
+func WithUnreadableRemoteSecrets(secrets []string) Option {
+	return func(c *kialiCacheImpl) {
+		c.unreadableRemoteSecrets = append(c.unreadableRemoteSecrets, secrets...)
 	}
 }
 
@@ -492,6 +550,13 @@ var ErrClusterNotCached = errors.New("no cache is configured for the cluster")
 // so the fitting HTTP status for it is 503 (temporarily unavailable) rather than 500.
 var ErrClusterDegraded = errors.New("cluster cache is degraded")
 
+// ErrNamespaceRevoked is returned by detail paths for a namespace whose access was partially
+// revoked while the rest of the cluster remains readable: its informers are frozen, so reads
+// from it would serve stale pre-revocation data. Like a degraded cluster it recovers on its
+// own (~30s probe), so the fitting HTTP status is 503 rather than 404 or 403 - the namespace
+// exists and the user may well see it again shortly.
+var ErrNamespaceRevoked = errors.New("namespace access is revoked")
+
 func (c *kialiCacheImpl) GetKubeCache(cluster string) (client.Reader, error) {
 	if c.clusterAccess != nil {
 		if since, degraded := c.clusterAccess.DegradedSince(cluster); degraded {
@@ -513,6 +578,24 @@ func (c *kialiCacheImpl) RevokedNamespaces(cluster string) []string {
 	return c.clusterAccess.RevokedNamespaces(cluster)
 }
 
+func (c *kialiCacheImpl) HasRevokedAccess(cluster string) bool {
+	access := c.clusterAccess
+	if access == nil {
+		return false
+	}
+	access.mu.Lock()
+	defer access.mu.Unlock()
+	_, full := access.degraded[cluster]
+	return full || len(access.nsRevoked[cluster]) > 0
+}
+
+func (c *kialiCacheImpl) IsNamespaceRevoked(cluster, namespace string) bool {
+	if c.clusterAccess == nil {
+		return false
+	}
+	return c.clusterAccess.IsNamespaceRevoked(cluster, namespace)
+}
+
 // SkippedClusters returns the names of the clusters skipped at startup, sorted. See the
 // interface method for the contract.
 func (c *kialiCacheImpl) SkippedClusters() []string {
@@ -530,6 +613,12 @@ func (c *kialiCacheImpl) IsClusterSkipped(cluster string) bool {
 	return skipped
 }
 
+// UnreadableRemoteSecrets returns the names of the remote cluster secrets whose directory
+// could not be enumerated at startup. See the interface method for the contract.
+func (c *kialiCacheImpl) UnreadableRemoteSecrets() []string {
+	return slices.Clone(c.unreadableRemoteSecrets)
+}
+
 // namespaceComputeFailure is one recorded accessible-set computation failure.
 type namespaceComputeFailure struct {
 	at  time.Time
@@ -538,7 +627,7 @@ type namespaceComputeFailure struct {
 
 // NamespaceComputeFailedAt returns when the given computation last failed and the error it
 // failed with, if ever. See the business layer's namespaceComputeBackoffStore for the contract.
-func (c *kialiCacheImpl) NamespaceComputeFailedAt(key string) (time.Time, error, bool) {
+func (c *kialiCacheImpl) NamespaceComputeFailedAt(key NamespaceComputeKey) (time.Time, error, bool) {
 	c.namespaceComputeMutex.Lock()
 	defer c.namespaceComputeMutex.Unlock()
 	c.sweepNamespaceComputeFailuresLocked()
@@ -564,7 +653,7 @@ func (c *kialiCacheImpl) sweepNamespaceComputeFailuresLocked() {
 
 // ClearNamespaceComputeFailure drops the computation's failure record on success, so the
 // store does not retain user tokens longer than the backoff needs them.
-func (c *kialiCacheImpl) ClearNamespaceComputeFailure(key string) {
+func (c *kialiCacheImpl) ClearNamespaceComputeFailure(key NamespaceComputeKey) {
 	c.namespaceComputeMutex.Lock()
 	defer c.namespaceComputeMutex.Unlock()
 	delete(c.namespaceComputeFailures, key)
@@ -574,11 +663,11 @@ func (c *kialiCacheImpl) ClearNamespaceComputeFailure(key string) {
 // the (cluster, cacheKey) computation. Expired entries are swept here: the keys embed user
 // cache keys (bearer tokens under token auth), so the map must not retain them - or grow
 // unboundedly under token rotation - for the life of the process.
-func (c *kialiCacheImpl) MarkNamespaceComputeFailed(key string, err error) {
+func (c *kialiCacheImpl) MarkNamespaceComputeFailed(key NamespaceComputeKey, err error) {
 	c.namespaceComputeMutex.Lock()
 	defer c.namespaceComputeMutex.Unlock()
 	if c.namespaceComputeFailures == nil {
-		c.namespaceComputeFailures = map[string]namespaceComputeFailure{}
+		c.namespaceComputeFailures = map[NamespaceComputeKey]namespaceComputeFailure{}
 	}
 	c.sweepNamespaceComputeFailuresLocked()
 	c.namespaceComputeFailures[key] = namespaceComputeFailure{at: time.Now(), err: err}
@@ -649,7 +738,11 @@ func (c *kialiCacheImpl) GetMesh() (*models.Mesh, bool) {
 	return c.meshStore.Get(kialiCacheMeshKey)
 }
 
+// LastMesh supplies last-known configuration while discovery refreshes the expiring mesh.
+func (c *kialiCacheImpl) LastMesh() *models.Mesh { return c.lastMesh.Load() }
+
 func (c *kialiCacheImpl) SetMesh(mesh *models.Mesh) {
+	c.lastMesh.Store(mesh)
 	c.meshStore.Set(kialiCacheMeshKey, mesh)
 }
 
@@ -691,8 +784,8 @@ func (in *kialiCacheImpl) listZtunnelDaemonsets(ctx context.Context, cluster str
 
 // IsAmbientEnabled checks if the istio Ambient profile was enabled
 // by checking if the ztunnel daemonset exists on the cluster.
-func (in *kialiCacheImpl) IsAmbientEnabled(cluster string) bool {
-	return in.isAmbientEnabled(context.Background(), cluster)
+func (in *kialiCacheImpl) IsAmbientEnabled(ctx context.Context, cluster string) bool {
+	return in.isAmbientEnabled(ctx, cluster)
 }
 
 func (in *kialiCacheImpl) isAmbientEnabled(ctx context.Context, cluster string) bool {
@@ -728,8 +821,8 @@ func (in *kialiCacheImpl) IsAmbientEnabledInAnyCluster(ctx context.Context, clus
 }
 
 // GetZtunnelPods returns the pods list from ztunnel daemonset
-func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
-	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(context.Background(), cluster)
+func (in *kialiCacheImpl) GetZtunnelPods(ctx context.Context, cluster string) []v1.Pod {
+	kubeCache, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -739,7 +832,7 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	}
 
 	podList := &v1.PodList{}
-	if err := kubeCache.List(context.TODO(), podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
+	if err := kubeCache.List(ctx, podList, client.InNamespace(daemonsets[0].Namespace), client.MatchingLabels{"app": config.Ztunnel}); err != nil {
 		in.zl.Error().Msgf("Unable to get ztunnel pods: %s", err)
 		return nil
 	}
@@ -747,8 +840,8 @@ func (in *kialiCacheImpl) GetZtunnelPods(cluster string) []v1.Pod {
 	return podList.Items
 }
 
-func (in *kialiCacheImpl) GetZtunnelDaemonset(cluster string) []appsv1.DaemonSet {
-	_, daemonsets, err := in.listZtunnelDaemonsets(context.Background(), cluster)
+func (in *kialiCacheImpl) GetZtunnelDaemonset(ctx context.Context, cluster string) []appsv1.DaemonSet {
+	_, daemonsets, err := in.listZtunnelDaemonsets(ctx, cluster)
 	if err != nil {
 		in.zl.Debug().Msgf("Error checking for ztunnel in Kiali accessible namespaces in cluster '%s': %s", cluster, err.Error())
 		return nil
@@ -813,6 +906,9 @@ func (c *kialiCacheImpl) SetGateways(gateways models.Workloads) {
 
 // GetHealth returns cached health data for a namespace
 func (c *kialiCacheImpl) GetHealth(cluster, namespace string, healthType internalmetrics.HealthType) (*models.CachedHealthData, bool) {
+	if c.IsNamespaceRevoked(cluster, namespace) {
+		return nil, false
+	}
 	key := models.HealthCacheKey(cluster, namespace)
 	data, found := c.healthStore.Get(key)
 

@@ -150,7 +150,9 @@ func (in *IstioValidationsService) accessibleNamespaceSet(ctx context.Context, c
 	}
 	accessible := make(map[string]struct{}, len(accessibleNamespaces))
 	for _, ns := range accessibleNamespaces {
-		accessible[ns.Name] = struct{}{}
+		if !in.kialiCache.IsNamespaceRevoked(cluster, ns.Name) {
+			accessible[ns.Name] = struct{}{}
+		}
 	}
 	return accessible, nil
 }

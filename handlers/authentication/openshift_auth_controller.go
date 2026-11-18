@@ -132,9 +132,49 @@ func NewOpenshiftAuthController(conf *config.Config, clientFactory kubernetes.Cl
 	}, nil
 }
 
-// Authenticate is not implemented for the openshift auth strategy because kiali no longer supports the implicit flow.
+// Authenticate serves GET /api/authenticate for the openshift strategy. The implicit flow it
+// once implemented is gone (login goes through the OAuth code flow at /api/auth/redirect),
+// so a GET here is a session check, not a login: a valid session - including one that holds
+// remote-cluster tokens - is validated and returned; no session yields a 401; an indeterminate
+// validation (for example, an unreachable cluster) is returned as an error rather than being
+// mislabeled an authentication failure. POST gets an honest 401: openshift login never
+// happens through a form post.
 func (o *OpenshiftAuthController) Authenticate(r *http.Request, w http.ResponseWriter) (*UserSessionData, error) {
-	return nil, fmt.Errorf("support for OAuth's implicit flow has been removed")
+	if r.Method != http.MethodGet {
+		return nil, &AuthenticationFailureError{
+			Reason: "the implicit flow has been removed; log in via the OAuth authorization code flow",
+		}
+	}
+
+	sessions, err := o.ValidateSession(r, w)
+	if err != nil {
+		// Confirmed authentication failures are 401s, not server errors: no session at all,
+		// or a session terminated because its token can no longer view any namespace.
+		if errors.Is(err, ErrSessionNotFound) {
+			return nil, &AuthenticationFailureError{Reason: "no valid session"}
+		}
+		if errors.Is(err, ErrCannotViewNamespaces) {
+			return nil, &AuthenticationFailureError{Reason: "the session's token can no longer view any namespace"}
+		}
+		if errors.Is(err, ErrNotInAllowlist) {
+			return nil, &AuthenticationFailureError{HttpStatus: http.StatusForbidden, Reason: "user is not in the impersonation allowlist", Detail: err}
+		}
+		if errors.Is(err, ErrImpersonationDenied) {
+			return nil, &AuthenticationFailureError{Reason: "impersonation denied", Detail: err}
+		}
+		// A transient validation problem (for example, an unreachable home cluster) is not
+		// an authentication failure; return it as a plain error so the handler answers 500
+		// with its message instead of a 401.
+		return nil, err
+	}
+
+	home := o.conf.KubernetesConfig.ClusterName
+	if len(sessions) == 0 || sessions[home] == nil {
+		return nil, &AuthenticationFailureError{
+			Reason: "no valid session",
+		}
+	}
+	return sessions[home], nil
 }
 
 // checkTokenCanViewNamespaces verifies that the given token can view at least one
@@ -318,10 +358,20 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 	// HTTP Headers have priority over URL parameters. If a token is received via some of these means,
 	// then the received session has priority over the Kiali initiated session (stored in cookies).
 	// Note: 3rd-party sessions don't have a Kiali session ID (SessionID will be empty).
-	if authHeader := r.Header.Get("Authorization"); len(authHeader) != 0 && strings.HasPrefix(authHeader, "Bearer ") {
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+	// The OAuth redirect can supply a query token. Prefer the authorization header
+	// and keep query tokens out of logs.
+	queryToken := r.URL.Query().Get("oauth_token")
+	token := strings.TrimSpace(queryToken)
+	headerToken, hasBearer := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if hasBearer {
+		token = headerToken
+	}
+	if hasBearer || queryToken != "" {
 		expires := util.Clock.Now().Add(time.Second * time.Duration(o.conf.LoginToken.ExpirationSeconds))
 		user, err := o.openshiftOAuth.GetUserInfo(r.Context(), token, o.conf.KubernetesConfig.ClusterName)
+		if k8serrors.IsUnauthorized(err) {
+			return nil, errors.Join(ErrSessionNotFound, err)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -340,32 +390,7 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			SessionID: "",
 			Username:  user.Name,
 		}
-		// WARNING: Reading the bearer token from a URL query parameter exposes it in proxy/access
-		// logs, browser history, and Referer headers. This path exists because OpenShift's OAuth
-		// server redirects back with the token as a query parameter. Operators should configure
-		// their proxy/ingress to strip or mask the oauth_token parameter from access logs.
-	} else if authToken := r.URL.Query().Get("oauth_token"); len(authToken) != 0 {
-		token := strings.TrimSpace(authToken)
-		expires := util.Clock.Now().Add(time.Second * time.Duration(o.conf.LoginToken.ExpirationSeconds))
-		user, err := o.openshiftOAuth.GetUserInfo(r.Context(), token, o.conf.KubernetesConfig.ClusterName)
-		if err != nil {
-			return nil, err
-		}
 
-		// This is a separate copy of the bearer-token validation, not a funnel into
-		// it: it needs its own namespace-access check.
-		if err := o.checkTokenCanViewNamespaces(r.Context(), token, o.conf.KubernetesConfig.ClusterName); err != nil {
-			return nil, err
-		}
-
-		homeUserName = user.Name
-		homeUserGroups = user.Groups
-		userSessions[o.conf.KubernetesConfig.ClusterName] = &UserSessionData{
-			AuthInfo:  &api.AuthInfo{Token: token},
-			ExpiresOn: expires,
-			SessionID: "",
-			Username:  user.Name,
-		}
 	} else {
 		sessions, err := o.sessionStore.ReadAllSessions(r, w)
 		if err != nil {
@@ -544,7 +569,9 @@ func (o *OpenshiftAuthController) ValidateSession(r *http.Request, w http.Respon
 			// generic "no valid session found" (which would surface as a 500).
 			return nil, ErrCannotViewNamespaces
 		}
-		return nil, fmt.Errorf("no valid session found")
+		// A confirmed authentication failure (the sessions that existed were rejected),
+		// not a server error: Authenticate maps it to a 401.
+		return nil, fmt.Errorf("no valid session found: %w", ErrSessionNotFound)
 	}
 
 	// TODO: Eventually we shouldn't need this check if the user can somehow login to a cluster without logging into the home cluster.

@@ -61,7 +61,8 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	log.Info("Initializing Kiali Cache")
 	cache, err := cache.NewKialiCache(ctx, clientFactory.GetSAClients(), asReaders(kubeCaches), *conf,
 		cache.WithClusterAccess(clusterAccess),
-		cache.WithSkippedClusters(clientFactory.SkippedClusters()))
+		cache.WithSkippedClusters(clientFactory.SkippedClusters()),
+		cache.WithUnreadableRemoteSecrets(clientFactory.UnreadableRemoteSecrets()))
 	if err != nil {
 		log.Fatalf("Error initializing Kiali Cache. Details: %s", err)
 	}
@@ -209,38 +210,12 @@ func run(ctx context.Context, conf *config.Config, staticAssetFS fs.FS, clientFa
 	// starting to serve. See waitForCachesToSync.
 	waitForCachesToSync(ctx, kubeCaches, conf.KubernetesConfig.ClusterName)
 
-	if conf.ExternalServices.Istio.IstioAPIEnabled {
-		cpm.PollIstiodForProxyStatus(ctx)
-	} else {
-		log.Debug("Istio API is disabled; istiod will not be polled for proxy status")
-		// When Istio API is disabled, PollIstiodForProxyStatus is never called, so
-		// discovery.Mesh() (which populates the cluster list via Clusters()) never runs
-		// at startup. The health monitor's first refresh uses cache.GetClusters(); if
-		// it is nil, the refresh skips entirely ("No clusters found"), so the health
-		// cache stays empty until the next interval and the overview shows cache misses.
-		// Prime the cluster cache by resolving the mesh once so the health monitor
-		// has a non-empty cluster list on its initial run.
-		if hcm != nil {
-			if _, err := discovery.Mesh(ctx); err != nil {
-				log.Warningf("Failed to prime cluster cache for health monitor (Istio API disabled): %s", err)
-			}
-		}
-	}
-
-	// Start health monitor for pre-computing health data (if enabled)
-	if hcm != nil {
-		log.Infof("health cache is enabled (refresh interval: %s); starting health pre-computation.", conf.HealthConfig.Compute.RefreshInterval)
-		hcm.Start(ctx)
-	} else {
-		log.Info("health cache is disabled; skipping health pre-computation.")
-	}
-
 	// Start listening to requests
 	server, err := server.NewServer(ctx, cpm, clientFactory, cache, conf, grafanaSvc, prom, tracingLoader, discovery, staticAssetFS)
 	if err != nil {
 		log.Fatal(err)
 	}
-	server.Start()
+	startServerAndMonitors(ctx, server.Start, conf.ExternalServices.Istio.IstioAPIEnabled, cpm, discovery, hcm)
 
 	stopped := make(chan struct{})
 	go func() {

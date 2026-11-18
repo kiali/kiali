@@ -23,6 +23,8 @@ type FakeDiscovery struct {
 	MeshReturn models.Mesh
 }
 
+func (fmd *FakeDiscovery) ClusterInventory() []models.KubeCluster { return fmd.ClustersReturn }
+
 func (fmd *FakeDiscovery) Clusters() []models.KubeCluster {
 	return fmd.ClustersReturn
 }

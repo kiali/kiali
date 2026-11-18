@@ -2,6 +2,7 @@ package kubetest
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"sync"
 
@@ -41,8 +42,12 @@ type K8SClientFactoryMock struct {
 	SAClients map[string]kubernetes.ClientInterface
 
 	// skippedClusters models clusters whose registration was definitively broken at
-	// startup; see WithSkippedCluster.
+	// startup (see the ClientFactory interface).
 	skippedClusters map[string]error
+
+	// unreadableRemoteSecrets models remote cluster secrets whose directory could not
+	// be enumerated at startup (see the ClientFactory interface).
+	unreadableRemoteSecrets []string
 }
 
 // Interface guard to ensure K8SClientFactoryMock implements ClientFactory.
@@ -135,7 +140,7 @@ func (o *K8SClientFactoryMock) WithSAClient(cluster string, objects ...runtime.O
 }
 
 // IsClusterSkipped reports whether the cluster's registration was marked definitively broken
-// at startup (see WithSkippedCluster).
+// at startup (see the ClientFactory interface).
 
 func (o *K8SClientFactoryMock) IsClusterSkipped(cluster string) bool {
 	o.lock.RLock()
@@ -170,12 +175,12 @@ func (o *K8SClientFactoryMock) SkippedClusters() []string {
 	return names
 }
 
-// WithSkippedCluster marks the cluster as skipped (definitively broken
-// registration) and drops its SA client, mirroring the production factory's
-// SkipCluster for tests.
-func (o *K8SClientFactoryMock) WithSkippedCluster(cluster string, reason error) *K8SClientFactoryMock {
-	o.SkipCluster(cluster, reason)
-	return o
+// UnreadableRemoteSecrets models remote cluster secrets whose directory could not be
+// enumerated at startup (see the ClientFactory interface).
+func (o *K8SClientFactoryMock) UnreadableRemoteSecrets() []string {
+	o.lock.RLock()
+	defer o.lock.RUnlock()
+	return slices.Clone(o.unreadableRemoteSecrets)
 }
 
 // GetSAClientsAsUserClientInterfaces returns all the SA clients as read-write clients (UserClientInterface).

@@ -157,6 +157,10 @@ func (c *OfflineClient) GetSelfSubjectAccessReview(ctx context.Context, namespac
 	return reviews, nil
 }
 
+func (c *OfflineClient) GetAccessSweepReview(ctx context.Context, namespace, api, resource string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return c.GetSelfSubjectAccessReview(ctx, namespace, api, resource, verbs)
+}
+
 // noopReadCloser is a simple implementation of io.ReadCloser that returns
 // empty reads and does nothing on close. This is useful for offline mode
 // where we don't want to actually stream logs.

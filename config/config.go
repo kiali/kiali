@@ -577,6 +577,17 @@ type KubernetesClientConfig struct {
 	// against a blackholed cluster fail at the dial instead of consuming the whole check budget.
 	// Set to 0 to disable.
 	DialTimeout time.Duration `yaml:"dial_timeout,omitempty"`
+	// NamespaceComputeBackoff is how long a remote cluster whose accessible-namespace-set
+	// computation failed is skipped before it is retried: the per-token cache only populates
+	// on success, so without this a dead remote is re-queried back to back. The failure is
+	// never cached as an access denial. Set to 0 to always retry.
+	NamespaceComputeBackoff time.Duration `yaml:"namespace_compute_backoff,omitempty"`
+	// NamespaceSetComputeTimeout bounds one cluster's accessible-namespace-set computation
+	// end to end: it is a sequence of per-namespace round trips, each bounded by
+	// RequestTimeout, and several individually-bounded slow successes could otherwise sum
+	// past the request latency budget (a proxy in front of Kiali commonly 504s at ~30s).
+	// Raise it alongside RequestTimeout for slow remotes. Set to 0 to disable.
+	NamespaceSetComputeTimeout time.Duration `yaml:"namespace_set_compute_timeout,omitempty"`
 	// RequestTimeout bounds each live (non-informer) API request made through Kiali's
 	// Kubernetes clients: without it, a remote that accepts connections but stalls hangs every
 	// request that awaits it for the kernel TCP timeout. It is deliberately NOT applied to the
@@ -1242,8 +1253,10 @@ func NewConfig() (c *Config) {
 				Enabled: true,
 			},
 			KubernetesClient: KubernetesClientConfig{
-				DialTimeout:    2 * time.Second,  // set to 0 to disable
-				RequestTimeout: 10 * time.Second, // set to 0 to disable
+				DialTimeout:                2 * time.Second,  // set to 0 to disable
+				NamespaceComputeBackoff:    10 * time.Second, // set to 0 to always retry
+				NamespaceSetComputeTimeout: 15 * time.Second, // set to 0 to disable
+				RequestTimeout:             10 * time.Second, // set to 0 to disable
 			},
 			MetricLogDurationLimit: 3 * time.Second, // set to 0 to log everything
 		},
@@ -2171,8 +2184,13 @@ func namespaceNamesFromDiscoverySelectors(selectors DiscoverySelectorsType) ([]s
 		} else if len(selector.MatchExpressions) > 1 {
 			errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match one and only one label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 		} else if len(selector.MatchLabels) == 1 {
-			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok {
+			if namespaceName, ok := selector.MatchLabels["kubernetes.io/metadata.name"]; ok && namespaceName != "" {
 				namespaceNames = append(namespaceNames, namespaceName)
+			} else if ok {
+				// An empty name is not merely useless: an empty namespace key means "all
+				// namespaces" to controller-runtime's cache scoping, silently broadening the
+				// access scope instead of narrowing it.
+				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match a non-empty label named kubernetes.io/metadata.name: %v", selector))
 			} else {
 				errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selector: matchLabel selector must match the label named kubernetes.io/metadata.name: %v", selector))
 			}
@@ -2180,7 +2198,13 @@ func namespaceNamesFromDiscoverySelectors(selectors DiscoverySelectorsType) ([]s
 			expr := selector.MatchExpressions[0]
 			if len(expr.Values) > 0 {
 				if expr.Key == "kubernetes.io/metadata.name" && expr.Operator == metav1.LabelSelectorOpIn {
-					namespaceNames = append(namespaceNames, expr.Values...)
+					for _, value := range expr.Values {
+						if value == "" {
+							errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector values must be non-empty namespace names: %v", selector))
+							continue
+						}
+						namespaceNames = append(namespaceNames, value)
+					}
 				} else {
 					errs = append(errs, fmt.Sprintf("invalid accessible namespace discovery selectors: matchExpressions selector must match the label named kubernetes.io/metadata.name using the IN operator: %v", selector))
 				}

@@ -122,14 +122,13 @@ type PublicConfig struct {
 // resolvePublicIdentityDomain returns the identity domain to expose to the
 // frontend. If the user configured it explicitly it is returned as-is.
 // Otherwise it is derived from the home cluster control plane's trust domain.
-func resolvePublicIdentityDomain(ctx context.Context, conf *config.Config, discovery istio.MeshDiscovery) string {
-	var mesh *models.Mesh
-	if m, err := discovery.Mesh(ctx); err == nil {
-		mesh = m
-	} else {
-		log.FromContext(ctx).Debug().Err(err).Msgf("Failed to fetch mesh for identity domain resolution on cluster [%s]", conf.KubernetesConfig.ClusterName)
-	}
-	return business.ResolveClusterIdentityDomain(mesh, conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
+// It resolves from the cached mesh only: the console blocks on this endpoint
+// before it can render, and a full mesh resolution here would make it wait out
+// a rebuild - which, during a remote outage, scans the dead cluster for longer
+// than the proxy timeout in front of this endpoint. Until a mesh is cached
+// (the first moments after startup) the configured identity domain applies.
+func resolvePublicIdentityDomain(conf *config.Config, kialiCache cache.KialiCache) string {
+	return business.ResolveClusterIdentityDomain(kialiCache.LastMesh(), conf.KubernetesConfig.ClusterName, conf.ExternalServices.Istio.IstioIdentityDomain)
 }
 
 // Config is a REST http.HandlerFunc serving up the Kiali configuration made public to clients.
@@ -166,7 +165,7 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 			HealthStatusMetricsEnabled: conf.Server.Observability.Metrics.HealthStatus.Enabled,
 			IgnoreHomeCluster:          conf.Clustering.IgnoreHomeCluster,
 			IstioStatusEnabled:         conf.ExternalServices.Istio.ComponentStatuses.Enabled,
-			IstioIdentityDomain:        resolvePublicIdentityDomain(r.Context(), conf, discovery),
+			IstioIdentityDomain:        resolvePublicIdentityDomain(conf, cache),
 			IstioLabels:                conf.IstioLabels,
 			KialiFeatureFlags:          conf.KialiFeatureFlags,
 			LogLevel:                   log.GetLogLevel(),
@@ -200,41 +199,35 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 		discoveryCtx, cancelDiscovery := context.WithTimeout(r.Context(), capabilityDiscoveryTimeout)
 		defer cancelDiscovery()
 
-		var capabilities sync.Mutex
+		slices.Sort(accessibleClusters)
+		type clusterCapabilities struct {
+			ambient, gateway, istio, istioGateway bool
+			classes                               []config.GatewayAPIClass
+		}
+		results := make([]clusterCapabilities, len(accessibleClusters))
 		var wg sync.WaitGroup
-		for _, cluster := range accessibleClusters {
+		for i, cluster := range accessibleClusters {
 			client := userClients[cluster]
 			if client == nil {
 				continue
 			}
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				var gatewayAPI, istioGateway, istioAPI bool
-				if client.IsGatewayAPIContext(discoveryCtx) {
-					gatewayAPI = true
-				}
-				if client.IsIstioGatewayContext(discoveryCtx) {
-					istioGateway = true
-				}
-				if client.IsIstioAPIContext(discoveryCtx) {
-					istioAPI = true
-				}
-				capabilities.Lock()
-				defer capabilities.Unlock()
-				publicConfig.GatewayAPIEnabled = publicConfig.GatewayAPIEnabled || gatewayAPI
-				publicConfig.IstioGatewayInstalled = publicConfig.IstioGatewayInstalled || istioGateway
-				publicConfig.IstioAPIInstalled = publicConfig.IstioAPIInstalled || istioAPI
-			}()
+			result := &results[i]
+			wg.Go(func() {
+				result.gateway = client.IsGatewayAPIContext(discoveryCtx)
+				result.istioGateway = client.IsIstioGatewayContext(discoveryCtx)
+				result.istio = client.IsIstioAPIContext(discoveryCtx)
+			})
+			wg.Go(func() { result.ambient = cache.IsAmbientEnabled(discoveryCtx, cluster) })
+			wg.Go(func() { result.classes = cache.GatewayAPIClasses(discoveryCtx, cluster) })
 		}
 		wg.Wait()
-		publicConfig.AmbientEnabled = cache.IsAmbientEnabledInAnyCluster(discoveryCtx, accessibleClusters)
-		// Dedupe gateway API classes by ClassName across clusters. This reads the
-		// service-account clients' Gateway API probes and the informer caches, so it
-		// shares the same deadline as the flag discovery above.
 		seenClasses := make(map[string]bool)
-		for _, cluster := range accessibleClusters {
-			for _, gwClass := range cache.GatewayAPIClasses(discoveryCtx, cluster) {
+		for _, result := range results {
+			publicConfig.AmbientEnabled = publicConfig.AmbientEnabled || result.ambient
+			publicConfig.GatewayAPIEnabled = publicConfig.GatewayAPIEnabled || result.gateway
+			publicConfig.IstioGatewayInstalled = publicConfig.IstioGatewayInstalled || result.istioGateway
+			publicConfig.IstioAPIInstalled = publicConfig.IstioAPIInstalled || result.istio
+			for _, gwClass := range result.classes {
 				if !seenClasses[gwClass.ClassName] {
 					seenClasses[gwClass.ClassName] = true
 					publicConfig.GatewayAPIClasses = append(publicConfig.GatewayAPIClasses, gwClass)
@@ -244,17 +237,19 @@ func Config(conf *config.Config, cache cache.KialiCache, discovery istio.MeshDis
 
 		// Fetch the list of all clusters in the mesh
 		// One usage of this data is to cross-link Kiali instances, when possible.
-		clusters := discovery.Clusters()
-
-		for _, cluster := range clusters {
+		for _, cluster := range discovery.ClusterInventory() {
 			publicConfig.Clusters[cluster.Name] = cluster
-
-			if client := userClients[cluster.Name]; client != nil {
-				if namespaces, found := cache.GetNamespaces(cluster.Name, client.GetCacheKey()); found {
-					for _, ns := range namespaces {
-						if discovery.IsControlPlane(r.Context(), cluster.Name, ns.Name) {
-							publicConfig.ControlPlanes[cluster.Name] = ns.Name
-						}
+		}
+		if mesh := cache.LastMesh(); mesh != nil {
+			for _, cp := range mesh.ControlPlanes {
+				if cp.Cluster == nil {
+					continue
+				}
+				cluster := cp.Cluster.Name
+				if client := userClients[cluster]; client != nil {
+					_, accessible, _ := cache.ResolveClusterNamespace(cluster, client.GetCacheKey(), cp.IstiodNamespace)
+					if accessible && !cache.IsNamespaceRevoked(cluster, cp.IstiodNamespace) {
+						publicConfig.ControlPlanes[cluster] = cp.IstiodNamespace
 					}
 				}
 			}

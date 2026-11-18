@@ -93,10 +93,15 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	for _, cp := range meshDef.ControlPlanes {
 		// Check if istio namespace is accessible for that cluster
 		cpKey := mesh.GetClusterSensitiveKey(cp.Cluster.Name, cp.IstiodNamespace)
-		if _, ok := o.AccessibleNamespaces[cpKey]; !ok {
+		if _, ok := o.AccessibleNamespaces[cpKey]; !ok || gi.KialiCache.IsNamespaceRevoked(cp.Cluster.Name, cp.IstiodNamespace) {
 			log.Tracef("No access for control plane %s in %s cluster", cp.IstiodNamespace, cp.Cluster.Name)
 			continue
 		}
+		// Both the Istiod and data-plane nodes serialize this SA-populated metadata.
+		cp.ManagedNamespaces = sliceutil.Filter(cp.ManagedNamespaces, func(ns models.Namespace) bool {
+			_, visible := o.AccessibleNamespaces[mesh.GetClusterSensitiveKey(ns.Cluster, ns.Name)]
+			return visible && !gi.KialiCache.IsNamespaceRevoked(ns.Cluster, ns.Name)
+		})
 		// add control plane cluster if not already added
 		if _, ok := clusterMap[cp.Cluster.Name]; !ok {
 			k8sVersion := esVersions[fmt.Sprintf("%s-%s", "Kubernetes", cp.Cluster.Name)]
@@ -145,11 +150,10 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 					}
 					return strings.Compare(a.Name, b.Name)
 				})
-				// Show the tag instead of the revision name since that is what is actually set on the namespaces.
-				rev := cp.Revision
-				if cp.Tag != nil {
-					// There should just be one tag pointing to this controlplane revision per cluster.
-					rev = cp.Tag.Name
+				// A managed cluster can use a different tag from the hosting cluster.
+				rev := namespaces[0].Revision
+				if rev == "" || slices.ContainsFunc(namespaces, func(ns models.Namespace) bool { return ns.Revision != rev }) {
+					rev = cp.Revision
 				}
 				dp, _, err := addInfra(meshMap, mesh.InfraTypeDataPlane, mc.Name, "", "Data Plane", namespaces, rev, false, "")
 				graph.CheckError(err)
@@ -290,7 +294,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 	}
 	slices.Sort(clusters)
 	for _, cluster := range clusters {
-		if !gi.KialiCache.IsAmbientEnabled(cluster) {
+		if !gi.KialiCache.IsAmbientEnabled(ctx, cluster) {
 			continue
 		}
 
@@ -303,7 +307,7 @@ func BuildMeshMap(ctx context.Context, o mesh.Options, gi *mesh.GlobalInfo) (mes
 			if len(ztunnel.Pods) > 0 {
 				// Use the cached dump directly (unfiltered): the mesh graph only uses
 				// the ztunnel pod's own Config here, which contains no tenant data.
-				dump := gi.KialiCache.GetZtunnelDump(ztunnel.Cluster, ztunnel.Pods[0].Name)
+				dump := gi.KialiCache.GetZtunnelDump(ctx, ztunnel.Cluster, ztunnel.Pods[0].Name)
 				// The dump can be huge, just return the config part and defer to the ztunnel workload tab for the other stuff
 				if dump != nil {
 					infraData = dump.Config

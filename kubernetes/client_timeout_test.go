@@ -4,15 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -406,5 +411,147 @@ func TestCapabilityProbeCtxDeadlineAbandoned(t *testing.T) {
 	// With the peer answering, the same client discovers the capability.
 	if !client.IsGatewayAPIContext(context.Background()) {
 		t.Error("the probe must succeed against the answering peer")
+	}
+}
+
+func TestRemoteExecCredentialStallHonorsDeadline(t *testing.T) {
+	dir := t.TempDir()
+	ready := filepath.Join(dir, "release")
+	// Release the helper even if a regression makes the request ignore cancellation.
+	watchdog := time.AfterFunc(5*time.Second, func() { _ = os.WriteFile(ready, nil, 0600) })
+	defer watchdog.Stop()
+	defer func() { _ = os.WriteFile(ready, nil, 0600) }()
+	command := filepath.Join(dir, "credentials")
+	err := os.WriteFile(command, []byte(`#!/bin/sh
+while [ ! -f "$1" ]; do sleep 0.02; done
+echo '{"kind":"ExecCredential","apiVersion":"client.authentication.k8s.io/v1","status":{"token":"fixture"}}'
+`), 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{"kind":"SelfSubjectAccessReview","apiVersion":"authorization.k8s.io/v1","status":{"allowed":true}}`)
+	}))
+	defer server.Close()
+	client, err := NewClient(ClusterInfo{Name: "remote", ClientConfig: &rest.Config{Host: server.URL, ExecProvider: &api.ExecConfig{APIVersion: "client.authentication.k8s.io/v1", Command: command, Args: []string{ready}, InteractiveMode: api.NeverExecInteractiveMode}}}, timeoutTestConfig(time.Second))
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	for range 2 {
+		ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+		_, err = client.GetSelfSubjectAccessReview(ctx, "", "apps", "deployments", []string{"list"})
+		cancel()
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("expected probe deadline, got %v", err)
+		}
+	}
+	require.Less(t, time.Since(start), 2*time.Second, "the requests must finish while the helper is still blocked")
+	if err := os.WriteFile(ready, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.GetSelfSubjectAccessReview(t.Context(), "", "apps", "deployments", []string{"list"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCapabilityDeadlineDuringPlatformProbe(t *testing.T) {
+	entered, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/apis/project.openshift.io" {
+			close(entered)
+			<-release
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+	defer close(release)
+	client, err := NewClient(ClusterInfo{Name: "remote", ClientConfig: &rest.Config{Host: server.URL}}, config.NewConfig())
+	require.NoError(t, err)
+	go client.IsOpenShift()
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("platform probe never started")
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+	done := make(chan bool, 1)
+	go func() { done <- client.IsGatewayAPIContext(ctx) }()
+	select {
+	case result := <-done:
+		require.False(t, result)
+	case <-time.After(time.Second):
+		t.Fatal("gateway discovery blocked on the platform probe")
+	}
+}
+
+type blockedCredentialRoundTripper struct {
+	calls   atomic.Int32
+	entered chan struct{}
+	release chan struct{}
+}
+
+func (b *blockedCredentialRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if b.calls.Add(1) == 1 {
+		close(b.entered)
+	}
+	<-b.release
+	return nil, req.Context().Err()
+}
+
+func TestExecCredentialRetriesWaitForOutstandingRequest(t *testing.T) {
+	base := &blockedCredentialRoundTripper{entered: make(chan struct{}), release: make(chan struct{})}
+	defer close(base.release)
+	transport := &execCredentialTransport{base: base}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/", nil)
+	first := make(chan error, 1)
+	go func() { _, err := transport.RoundTrip(req); first <- err }()
+	<-base.entered
+	cancel()
+	require.ErrorIs(t, <-first, context.Canceled)
+
+	retry, stop := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer stop()
+	_, err := transport.RoundTrip(req.Clone(retry))
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	require.EqualValues(t, 1, base.calls.Load(), "a retry must not launch another blocked worker")
+}
+
+func TestCapabilityWaiterCanLeaveSharedProbe(t *testing.T) {
+	var requests atomic.Int32
+	entered, release := make(chan struct{}), make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if requests.Add(1) == 1 {
+			close(entered)
+		}
+		<-release
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+	defer close(release)
+	client, err := NewClient(ClusterInfo{Name: "remote", ClientConfig: &rest.Config{Host: server.URL}}, config.NewConfig())
+	require.NoError(t, err)
+	go client.IsGatewayAPIContext(t.Context())
+	select {
+	case <-entered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("gateway probe never started")
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	defer cancel()
+	done := make(chan bool, 1)
+	go func() { done <- client.IsGatewayAPIContext(ctx) }()
+	select {
+	case present := <-done:
+		require.False(t, present)
+		require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
+		require.EqualValues(t, 1, requests.Load())
+	case <-time.After(2 * time.Second):
+		t.Fatal("a waiter could not leave the shared gateway probe")
 	}
 }

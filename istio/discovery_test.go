@@ -1148,12 +1148,61 @@ deployment:
 	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
 	cache := cache.NewTestingCacheWithClients(t, clients, *conf)
 	discovery := istio.NewDiscovery(clients, cache, conf)
+	inventory := discovery.ClusterInventory()
+	require.Len(inventory, 1)
+	require.Empty(inventory[0].KialiInstances)
+	require.Nil(cache.GetClusters(), "bootstrap inventory must not populate the live discovery cache")
 	clusters := discovery.Clusters()
 	require.Len(clusters, 1)
 	require.Len(clusters[0].KialiInstances, 1)
 	kialiInstance := clusters[0].KialiInstances[0]
 	assert.Equal("kiali", kialiInstance.ServiceName)
 	assert.Equal("istio-system", kialiInstance.Namespace)
+}
+
+// A config-only cluster entry whose configured secret is recorded unreadable must not
+// be advertised as accessible: no client was built from that secret, so every read
+// through it fails, and publishing it would put the console into multicluster mode
+// for a cluster Kiali cannot serve. An entry whose secret is not recorded unreadable
+// keeps today's behavior.
+func TestClusterInventoryMarksUnreadableSecretClusterInaccessible(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	conf := testutils.GetConfigFromYaml(t, `
+clustering:
+  clusters:
+    - name: west
+      secret_name: west-secret
+    - name: east
+      secret_name: readable-secret
+`)
+
+	k8s := kubetest.NewFakeK8sClient(kubetest.FakeNamespace("istio-system"))
+	clients := map[string]kubernetes.ClientInterface{conf.KubernetesConfig.ClusterName: k8s}
+	kialiCache, err := cache.NewKialiCache(t.Context(), clients,
+		map[string]ctrlclient.Reader{conf.KubernetesConfig.ClusterName: k8s}, *conf,
+		cache.WithUnreadableRemoteSecrets([]string{"west-secret"}))
+	require.NoError(err)
+	discovery := istio.NewDiscovery(clients, kialiCache, conf)
+
+	inventory := discovery.ClusterInventory()
+	byName := map[string]models.KubeCluster{}
+	for _, cluster := range inventory {
+		byName[cluster.Name] = cluster
+	}
+	require.Len(inventory, 3)
+	assert.True(byName[conf.KubernetesConfig.ClusterName].Accessible, "the home cluster is accessible")
+	require.Contains(byName, "west")
+	assert.False(byName["west"].Accessible, "a cluster whose configured secret is unreadable must not be advertised as accessible")
+	assert.Empty(byName["west"].ApiEndpoint)
+	require.Contains(byName, "east")
+	assert.True(byName["east"].Accessible, "a config entry whose secret is not recorded unreadable keeps today's behavior")
+
+	// The cluster reads agree with the inventory: no cache exists for the config-only
+	// clusters, which is why accessibility must come from the clients.
+	_, err = kialiCache.GetKubeCache("west")
+	require.ErrorIs(err, cache.ErrClusterNotCached)
 }
 
 func TestAddingKialiInstanceToExistingClusterDoesntAddNewCluster(t *testing.T) {
@@ -2033,7 +2082,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				{Cluster: "primary", ControlPlaneRevision: "default"}: {"bookinfo", "bookinfo"},
 			},
 		},
-		"primary-remote with tag should manage bookinfo on primary cluster": {
+		"primary and two remotes each resolve their tagged namespaces": {
 			conf: func() *config.Config {
 				conf := *conf
 				conf.KubernetesConfig.ClusterName = "primary"
@@ -2063,7 +2112,13 @@ func TestDiscoverWithTags(t *testing.T) {
 						certtest.FakeIstioCertificateConfigMap("istio-system"),
 					},
 					"remote": {
-						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo-west", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
+						tagProd,
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
+						certtest.FakeIstioCertificateConfigMap("istio-system"),
+					},
+					"remote-two": {
+						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "bookinfo-east", Labels: map[string]string{config.IstioRevisionLabel: "prod"}}},
 						tagProd,
 						&core_v1.Namespace{ObjectMeta: v1.ObjectMeta{Name: "istio-system", Annotations: map[string]string{"topology.istio.io/controlPlaneClusters": "primary"}}},
 						certtest.FakeIstioCertificateConfigMap("istio-system"),
@@ -2071,7 +2126,7 @@ func TestDiscoverWithTags(t *testing.T) {
 				}
 			},
 			expectedNamespacesByRev: map[clusterRevisionKey][]string{
-				{Cluster: "primary", ControlPlaneRevision: "1-23-0"}: {"bookinfo"},
+				{Cluster: "primary", ControlPlaneRevision: "1-23-0"}: {"bookinfo", "bookinfo-west", "bookinfo-east"},
 			},
 		},
 		"multi-primary with tag should only manage bookinfo on their own cluster": {
@@ -2171,9 +2226,9 @@ func TestDiscoverWithTags(t *testing.T) {
 				}
 
 				// Verify GetRootNamespace works for managed namespaces (tests namespace map population)
-				for _, ns := range expectedNamespaces {
-					rootNs := discovery.GetRootNamespace(context.Background(), clusterRev.Cluster, ns)
-					require.NotEmpty(rootNs, "GetRootNamespace should return a value for namespace %s in cluster %s", ns, clusterRev.Cluster)
+				for _, ns := range controlPlane.ManagedNamespaces {
+					rootNs := discovery.GetRootNamespace(context.Background(), ns.Cluster, ns.Name)
+					require.NotEmpty(rootNs, "GetRootNamespace should return a value for %s/%s", ns.Cluster, ns.Name)
 				}
 			}
 		})

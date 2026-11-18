@@ -24,8 +24,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd/api"
 	ctrlcache "sigs.k8s.io/controller-runtime/pkg/cache"
 
+	"github.com/kiali/kiali/business"
 	"github.com/kiali/kiali/config"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
+	"github.com/kiali/kiali/models"
 )
 
 func TestClassifyRemoteProbeError(t *testing.T) {
@@ -342,5 +345,84 @@ func TestClassifyRemoteProbeErrorTLSFirst(t *testing.T) {
 	require.ErrorAs(t, probeErr, &netErr, "precondition: the error is wrapped in a net.Error")
 	if got := classifyRemoteProbeError(probeErr); got != remoteSkipConfig {
 		t.Errorf("classifyRemoteProbeError(untrusted CA) = %v, want remoteSkipConfig", got)
+	}
+}
+
+type blockedStartupMonitor struct {
+	business.ControlPlaneMonitor
+	entered chan struct{}
+}
+
+func (m blockedStartupMonitor) PollIstiodForProxyStatus(ctx context.Context) {
+	close(m.entered)
+	<-ctx.Done()
+}
+
+func TestMonitorStartupDoesNotWaitForMesh(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+	m := blockedStartupMonitor{entered: make(chan struct{})}
+	waitForCachesToSync(ctx, map[string]ctrlcache.Cache{
+		"home": &syncedCache{}, "west": &neverSyncingCache{}, "east": &neverSyncingCache{},
+	}, "home")
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	defer server.Close()
+	startServerAndMonitors(ctx, server.Start, true, m, nil, nil)
+	select {
+	case <-m.entered:
+	case <-ctx.Done():
+		t.Fatal("proxy status refresh did not start")
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, server.URL, nil)
+	require.NoError(t, err)
+	resp, err := server.Client().Do(req)
+	require.NoError(t, err, "home listener must answer while the remote caches and proxy status are still blocked")
+	defer resp.Body.Close()
+	require.Equal(t, http.StatusNoContent, resp.StatusCode)
+}
+
+type startupDiscovery struct {
+	istio.MeshDiscovery
+	entered, release chan struct{}
+}
+
+func (d startupDiscovery) Mesh(ctx context.Context) (*models.Mesh, error) {
+	close(d.entered)
+	select {
+	case <-d.release:
+		return &models.Mesh{}, nil
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+}
+
+type startupHealthMonitor struct {
+	business.HealthMonitor
+	started chan struct{}
+}
+
+func (m startupHealthMonitor) Start(context.Context) { close(m.started) }
+
+func TestHealthMonitorStartsAfterBackgroundPrime(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Second)
+	defer cancel()
+	d := startupDiscovery{entered: make(chan struct{}), release: make(chan struct{})}
+	h := startupHealthMonitor{started: make(chan struct{})}
+	startServerAndMonitors(ctx, func() {}, false, nil, d, h)
+	select {
+	case <-d.entered:
+	case <-ctx.Done():
+		t.Fatal("mesh priming never started")
+	}
+	select {
+	case <-h.started:
+		t.Fatal("health monitor started before mesh priming finished")
+	default:
+	}
+	close(d.release)
+	select {
+	case <-h.started:
+	case <-ctx.Done():
+		t.Fatal("health monitor did not start after discovery")
 	}
 }

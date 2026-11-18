@@ -117,6 +117,10 @@ func (o *K8SClientMock) GetSelfSubjectAccessReview(ctx context.Context, namespac
 	return args.Get(0).([]*auth_v1.SelfSubjectAccessReview), args.Error(1)
 }
 
+func (o *K8SClientMock) GetAccessSweepReview(ctx context.Context, namespace, api, resource string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return o.GetSelfSubjectAccessReview(ctx, namespace, api, resource, verbs)
+}
+
 func (o *K8SClientMock) GetService(namespace string, name string) (*core_v1.Service, error) {
 	args := o.Called(namespace, name)
 	return args.Get(0).(*core_v1.Service), args.Error(1)

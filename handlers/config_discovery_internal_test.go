@@ -16,6 +16,7 @@ import (
 
 	"github.com/gorilla/mux"
 	prom_v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apps_v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,9 +25,10 @@ import (
 
 	"github.com/kiali/kiali/cache"
 	"github.com/kiali/kiali/config"
-	"github.com/kiali/kiali/istio/istiotest"
+	"github.com/kiali/kiali/istio"
 	"github.com/kiali/kiali/kubernetes"
 	"github.com/kiali/kiali/kubernetes/kubetest"
+	"github.com/kiali/kiali/models"
 	"github.com/kiali/kiali/prometheus/prometheustest"
 )
 
@@ -118,11 +120,26 @@ func healthyRemoteClient() *kubetest.FakeK8sClient {
 	return remote
 }
 
+type deadlineSensitiveSA struct{ *kubetest.FakeK8sClient }
+
+func (s deadlineSensitiveSA) IsGatewayAPIContext(ctx context.Context) bool {
+	return ctx.Err() == nil && s.FakeK8sClient.IsGatewayAPIContext(ctx)
+}
+
+type contextCheckingReader struct{ ctrlclient.Reader }
+
+func (r contextCheckingReader) List(ctx context.Context, list ctrlclient.ObjectList, opts ...ctrlclient.ListOption) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return r.Reader.List(ctx, list, opts...)
+}
+
 // runConfigRequest serves one GET /api/config through the real handler and returns the
 // response and how long it took.
 func runConfigRequest(t *testing.T, conf *config.Config, kialiCache cache.KialiCache, cf kubernetes.ClientFactory) (*http.Response, time.Duration) {
 	t.Helper()
-	handler := WithFakeAuthInfo(conf, Config(conf, kialiCache, &istiotest.FakeDiscovery{}, cf, &internalFakePromClient{prometheustest.PromClientMock{}}))
+	handler := WithFakeAuthInfo(conf, Config(conf, kialiCache, istio.NewDiscovery(cf.GetSAClients(), kialiCache, conf), cf, &internalFakePromClient{prometheustest.PromClientMock{}}))
 	mr := mux.NewRouter()
 	mr.Handle("/api/config", handler)
 	ts := httptest.NewServer(mr)
@@ -146,6 +163,8 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 	deadline := shortDiscoveryDeadline(t)
 
 	conf := config.NewConfig()
+	conf.KialiInternal.CacheExpiration.Mesh = 0
+	conf.KialiInternal.KubernetesClient.RequestTimeout = 2 * deadline
 	conf.KubernetesConfig.ClusterName = "home"
 	conf.ExternalServices.Istio.GatewayAPIClasses = []config.GatewayAPIClass{{Name: "istio", ClassName: "istio"}}
 
@@ -162,7 +181,7 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 	// the stalled remote there too so the class-collection pass is exercised against it.
 	saClients := map[string]kubernetes.ClientInterface{
 		"home":           home,
-		"healthy-remote": remote,
+		"healthy-remote": deadlineSensitiveSA{healthyRemoteClient()},
 		"stalled-remote": stalled,
 	}
 	cf.SAClients = saClients
@@ -171,12 +190,18 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 	// ambient check must find nothing there, immediately.
 	kialiCache, err := cache.NewKialiCache(t.Context(), saClients, map[string]ctrlclient.Reader{
 		"home":           home,
-		"healthy-remote": remote,
+		"healthy-remote": contextCheckingReader{remote},
 		"stalled-remote": kubetest.NewFakeK8sClient(),
 	}, *conf)
 	require.NoError(t, err)
 
+	kialiCache.SetMesh(&models.Mesh{ControlPlanes: []models.ControlPlane{{Cluster: &models.KubeCluster{Name: "healthy-remote"}, IstiodNamespace: "istio-system"}}})
+	kialiCache.SetClusterNamespaces(remote.GetCacheKey(), "healthy-remote", []models.Namespace{{Name: "istio-system", Cluster: "healthy-remote"}})
 	resp, elapsed := runConfigRequest(t, conf, kialiCache, cf)
+
+	// The whole request must be bounded by the shared discovery deadline (plus slack for
+	// the unrelated parts of the handler), not by one stalled probe per cluster per flag.
+	require.Less(t, elapsed, 5*deadline, "one stalled remote must not hold the config request")
 
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
@@ -184,10 +209,13 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 
 	var confResp PublicConfig
 	require.NoError(t, json.Unmarshal(body, &confResp))
+	require.Contains(t, confResp.Clusters, "stalled-remote")
+	require.Equal(t, "istio-system", confResp.ControlPlanes["healthy-remote"])
+	require.Nil(t, kialiCache.GetClusters(), "serving config must not start live service or mesh discovery")
 	require.True(t, confResp.GatewayAPIEnabled, "the healthy remote's Gateway API flag must survive the stalled remote")
 	require.True(t, confResp.IstioGatewayInstalled)
 	require.True(t, confResp.IstioAPIInstalled)
-	require.True(t, confResp.AmbientEnabled, "the healthy remote's ztunnel must be discovered")
+	assert.True(t, confResp.AmbientEnabled, "the healthy remote's ztunnel must be discovered")
 	var hasIstioClass bool
 	for _, gwClass := range confResp.GatewayAPIClasses {
 		if gwClass.ClassName == "istio" {
@@ -195,11 +223,6 @@ func TestConfigHandlerStalledRemoteBounded(t *testing.T) {
 		}
 	}
 	require.True(t, hasIstioClass, "the configured Gateway API class must be returned despite the stalled remote")
-
-	// The whole request must be bounded by the shared discovery deadline (plus slack for
-	// the unrelated parts of the handler), not by one stalled probe per cluster per flag.
-	require.Less(t, elapsed, 5*deadline, "one stalled remote must not hold the config request")
-
 }
 
 // TestConfigHandlerTwoStalledRemotesShareBudget shows the deadline is one shared budget:

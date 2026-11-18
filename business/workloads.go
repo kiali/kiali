@@ -602,7 +602,7 @@ func (in *WorkloadService) GetWorkload(ctx context.Context, criteria WorkloadCri
 		workload.SetServices(services)
 	}
 
-	if in.cache.IsAmbientEnabled(criteria.Cluster) {
+	if in.cache.IsAmbientEnabled(ctx, criteria.Cluster) {
 		in.decorateWorkloadWaypointTrafficSplit(ctx, workload)
 	}
 
@@ -2411,11 +2411,11 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 			if !isWaypoint && pod.AmbientEnabled() && criteria.IncludeWaypoints {
 				w.WaypointWorkloads = in.getWaypointsForWorkload(ctx, w, false, waypoints)
 				// TODO: Maybe user doesn't have permissions
-				ztunnelPods := in.cache.GetZtunnelPods(criteria.Cluster)
+				ztunnelPods := in.cache.GetZtunnelPods(ctx, criteria.Cluster)
 				for _, zPod := range ztunnelPods {
 					// There should be a ztunnel pod per node
 					// The information should be the same, but choosing the pod could help to verify the information is synchronized
-					zPodConfig := in.cache.GetZtunnelDump(criteria.Cluster, zPod.Name)
+					zPodConfig := in.cache.GetZtunnelDump(ctx, criteria.Cluster, zPod.Name)
 					if zPodConfig != nil {
 						w.AddPodsProtocol(*zPodConfig)
 					}
@@ -2458,7 +2458,7 @@ func (in *WorkloadService) fetchWorkload(ctx context.Context, criteria WorkloadC
 // mesh-wide and is fetched with the Kiali ServiceAccount client, so it must never
 // be returned unfiltered. The unfiltered dump stays in the cache; filtering copies.
 func (in *WorkloadService) GetZtunnelConfig(ctx context.Context, cluster, pod string) (*kubernetes.ZtunnelConfigDump, error) {
-	dump := in.cache.GetZtunnelDump(cluster, pod)
+	dump := in.cache.GetZtunnelDump(ctx, cluster, pod)
 	if dump == nil {
 		return nil, nil
 	}
@@ -3247,7 +3247,7 @@ func (in *WorkloadService) StreamPodLogs(ctx context.Context, cluster, namespace
 	names := []string{}
 	if opts.LogType == models.LogTypeZtunnel {
 		// First, get ztunnel namespace and containers
-		pods := in.cache.GetZtunnelPods(cluster)
+		pods := in.cache.GetZtunnelPods(ctx, cluster)
 		// This is needed for the K8S client
 		opts.Container = models.IstioProxy
 		fs, err := ztunnelFilterPatterns(namespace, name, service)

@@ -24,6 +24,7 @@ import (
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/prometheus/internalmetrics"
 	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 // overviewServiceMetricsLimit is the default limit for top-N service latencies and service error rates. It
@@ -76,7 +77,7 @@ func OverviewServiceLatencies(
 		scopedByConfig := !conf.Deployment.ClusterWideAccess || discoverySelectorsConfigured
 
 		// For users with full access, execute a single, cross-cluster, cross-namespace query.
-		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
+		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, kialiCache, "") {
 			labels := `destination_workload!="unknown"`
 
 			query := buildLatencyQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
@@ -109,19 +110,9 @@ func OverviewServiceLatencies(
 			userClusters := layer.Namespace.GetClusterList()
 
 			for _, cluster := range userClusters {
-				labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
-				if scopedByConfig || !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
-					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
-					if err != nil {
-						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceLatencies: could not get namespaces for cluster")
-						continue
-					}
-					nsRegex := buildNamespaceRegex(namespaces)
-					if nsRegex == "" {
-						continue
-					}
-
-					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
+				labels := overviewClusterLabels(ctx, layer, kialiCache, cluster, scopedByConfig)
+				if labels == "" {
+					continue
 				}
 
 				query := buildLatencyQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
@@ -366,7 +357,7 @@ func OverviewServiceThroughput(
 		scopedByConfig := !conf.Deployment.ClusterWideAccess || discoverySelectorsConfigured
 
 		// For users with full access, execute a single, cross-cluster, cross-namespace query.
-		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, "") {
+		if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, kialiCache, "") {
 			labels := `destination_workload!="unknown"`
 
 			query := buildServiceTcpThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
@@ -397,19 +388,9 @@ func OverviewServiceThroughput(
 			userClusters := layer.Namespace.GetClusterList()
 
 			for _, cluster := range userClusters {
-				labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
-				if scopedByConfig || !hasAllClusterNamespaceAccess(ctx, layer, cluster) {
-					namespaces, err := layer.Namespace.GetClusterNamespaces(ctx, cluster)
-					if err != nil {
-						zl.Debug().Err(err).Str("cluster", cluster).Msg("OverviewServiceThroughput: could not get namespaces for cluster")
-						continue
-					}
-					nsRegex := buildNamespaceRegex(namespaces)
-					if nsRegex == "" {
-						continue
-					}
-
-					labels = fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
+				labels := overviewClusterLabels(ctx, layer, kialiCache, cluster, scopedByConfig)
+				if labels == "" {
+					continue
 				}
 
 				query := buildServiceTcpThroughputQuery(conf, labels, groupBy, rateInterval, overviewServiceMetricsLimit)
@@ -734,14 +715,42 @@ func enrichServiceThroughputWithHealth(services []models.ServiceThroughput, kial
 	enrichServicesWithHealth(ptrs, kialiCache, conf)
 }
 
+// overviewClusterLabels limits Prometheus to the namespaces whose telemetry may be served.
+func overviewClusterLabels(ctx context.Context, layer *business.Layer, kialiCache cache.KialiCache, cluster string, scopedByConfig bool) string {
+	if _, err := kialiCache.GetKubeCache(cluster); err != nil {
+		return ""
+	}
+	labels := fmt.Sprintf(`destination_workload!="unknown",destination_cluster=%q`, cluster)
+	if !scopedByConfig && hasAllClusterNamespaceAccess(ctx, layer, kialiCache, cluster) {
+		return labels
+	}
+	namespaces, err := layer.Namespace.GetClusterNamespacesForCluster(ctx, cluster)
+	if err != nil {
+		log.FromContext(ctx).Debug().Err(err).Str("cluster", cluster).Msg("could not get overview namespaces")
+		return ""
+	}
+	nsRegex := buildNamespaceRegex(sliceutil.Filter(namespaces, func(ns models.Namespace) bool { return !kialiCache.IsNamespaceRevoked(cluster, ns.Name) }))
+	if nsRegex == "" {
+		return ""
+	}
+	return fmt.Sprintf(`%s,destination_service_namespace=~%q`, labels, nsRegex)
+}
+
 // hasAllClusterNamespaceAccess returns true if the user has access to the same set of namespaces
 // as Kiali, for the specified cluster. If cluster is set to "", then test against all clusters
 // that Kiali has access to.
-func hasAllClusterNamespaceAccess(ctx context.Context, layer *business.Layer, cluster string) bool {
+func hasAllClusterNamespaceAccess(ctx context.Context, layer *business.Layer, kialiCache cache.KialiCache, cluster string) bool {
 	zl := log.FromContext(ctx)
 
 	var clusters []string
 	if cluster == "" {
+		// The unscoped query path requires a complete, fully authorized inventory. A
+		// skipped cluster is one Kiali cannot evaluate; an unreadable remote secret
+		// means the inventory itself is unestablished - the clusters it defines are
+		// unknown. Either way the query must be scoped, not global.
+		if len(kialiCache.SkippedClusters()) != 0 || len(kialiCache.UnreadableRemoteSecrets()) != 0 {
+			return false
+		}
 		// Use Kiali SA cluster list so the check fails if the user is missing any cluster.
 		clusters = layer.Namespace.GetKialiSAClusterList()
 	} else {
@@ -749,7 +758,10 @@ func hasAllClusterNamespaceAccess(ctx context.Context, layer *business.Layer, cl
 	}
 
 	for _, c := range clusters {
-		userNs, err := layer.Namespace.GetClusterNamespaces(ctx, c)
+		if kialiCache.HasRevokedAccess(c) {
+			return false
+		}
+		userNs, err := layer.Namespace.GetClusterNamespacesForCluster(ctx, c)
 		if err != nil {
 			zl.Debug().Err(err).Str("cluster", c).Msg("hasAllClusterNamespaceAccess: could not get user namespaces")
 			return false
@@ -775,5 +787,5 @@ func hasAllClusterNamespaceAccess(ctx context.Context, layer *business.Layer, cl
 		}
 	}
 
-	return true
+	return len(clusters) > 0
 }

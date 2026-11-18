@@ -17,6 +17,7 @@ import (
 	istiov1alpha1 "istio.io/api/mesh/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -512,6 +513,7 @@ func sidecarInjectorConfigMapName(revision string) string {
 }
 
 type MeshDiscovery interface {
+	ClusterInventory() []models.KubeCluster
 	Clusters() []models.KubeCluster
 	GetControlPlaneNamespaces(ctx context.Context, cluster string) []string
 	GetRootNamespace(ctx context.Context, cluster, namespace string) string
@@ -661,14 +663,16 @@ func (in *Discovery) IsRemoteCluster(ctx context.Context, cluster string) bool {
 	return true
 }
 
-// Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
-// is done as best-effort using the resources that are present in the cluster.
-// TODO: should this go in kubernetes package?
-func (in *Discovery) Clusters() []models.KubeCluster {
+// ClusterInventory returns the known inventory without waiting for Kubernetes discovery.
+func (in *Discovery) ClusterInventory() []models.KubeCluster {
 	if clusters := in.kialiCache.GetClusters(); clusters != nil {
 		return clusters
 	}
 
+	return in.configuredClusters()
+}
+
+func (in *Discovery) configuredClusters() []models.KubeCluster {
 	// Even if somehow there are no clusters found, setting this to an empty slice will prevent us
 	// from trying to resolve again.
 	clustersByName := map[string]models.KubeCluster{}
@@ -693,6 +697,11 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 	// Add clusters from config. A cluster skipped at startup (definitively broken
 	// registration) must not be re-introduced here as accessible: it has no cache and no
 	// clients, and publishing it would send clients at a cluster Kiali cannot serve.
+	// A config-only entry whose configured secret could not be read is the same
+	// situation: the actual clients are authoritative, and advertising the cluster as
+	// accessible would put the console into multicluster mode for a cluster whose
+	// reads can only fail (ErrClusterNotCached).
+	unreadableSecrets := in.kialiCache.UnreadableRemoteSecrets()
 	for _, cluster := range in.conf.Clustering.Clusters {
 		if in.kialiCache.IsClusterSkipped(cluster.Name) {
 			continue
@@ -701,8 +710,9 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 			clustersByName[cluster.Name] = models.KubeCluster{
 				Name: cluster.Name,
 				// Clusters without a SecretName are not accessible
-				// because we don't have a kubeconfig for them.
-				Accessible: cluster.SecretName != "",
+				// because we don't have a kubeconfig for them. Neither is one whose
+				// secret is recorded unreadable: no client was built from it.
+				Accessible: cluster.SecretName != "" && !slices.Contains(unreadableSecrets, cluster.SecretName),
 			}
 		}
 	}
@@ -713,6 +723,17 @@ func (in *Discovery) Clusters() []models.KubeCluster {
 		log.Warning("No clusters found. This likely means that Kiali is misconfigured. Ensure that kiali is configured to access at least one cluster.")
 	}
 
+	return clusters
+}
+
+// Clusters resolves the Kubernetes clusters that are hosting the mesh. Resolution
+// is done as best-effort using the resources that are present in the cluster.
+// TODO: should this go in kubernetes package?
+func (in *Discovery) Clusters() []models.KubeCluster {
+	if clusters := in.kialiCache.GetClusters(); clusters != nil {
+		return clusters
+	}
+	clusters := in.configuredClusters()
 	// TODO: Separate KialiInstance from Cluster model.
 	for i := range clusters {
 		// need the actual object for update, so use the index, not the copy
@@ -763,6 +784,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	clusters := in.Clusters()
+
+	// One scoped read per cluster for the whole mesh resolution: several passes below need
+	// the same per-cluster namespace lists - and the same failures, so a remote whose scan
+	// fails is not rescanned (at its full timeout) by the next pass.
+	namespacesInScopeMemo := map[string]scopedNamespaces{}
 
 	mesh := &models.Mesh{}
 	var remoteClusters []*models.KubeCluster
@@ -963,12 +989,11 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 			continue
 		}
 
-		if !in.conf.AllNamespacesAccessible() {
-			log.Infof("All namespaces are not accessible. Skipping processing remote clusters for cluster [%s].", cluster.Name)
-			continue
-		}
-
-		namespaces, err := in.kialiSAClients[cluster.Name].GetNamespaces(ctx, "")
+		// In non-cluster-wide-access mode a cluster-scoped namespace list is not readable;
+		// resolve the cluster's namespaces within its own effective scope instead, so remote
+		// clusters are processed (their external-controlplane associations included) rather
+		// than skipped.
+		namespaces, err := in.getClusterNamespacesInScope(ctx, cluster.Name, namespacesInScopeMemo)
 		if err != nil {
 			log.Errorf("unable to process remote clusters for cluster [%s]. Err: %s", cluster.Name, err)
 			continue
@@ -1011,37 +1036,37 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	}
 
 	// Get the tags for the mesh.
-	if err := in.setTags(ctx, mesh.ControlPlanes); err != nil {
-		return nil, err
-	}
+	tags := in.revisionTags(ctx)
 
 	namespacesByClusterAndRev := map[clusterRevisionKey][]models.Namespace{}
-	// Multi-cluster is not supported without cluster wide access.
+	// In non-cluster-wide-access mode the namespaces come from each cluster's own effective
+	// scope (override-aware), not just the home cluster's default list: the revision map and
+	// the managed-namespace associations must cover remote scopes too.
+	// TODO: Namespace list / caching is probably something that other parts of Kiali need.
+	// This probably should moved outside of discovery.
 	if !in.conf.AllNamespacesAccessible() {
-		// TODO: Namespace list / caching is probably something that other parts of Kiali need.
-		// This probably should moved outside of discovery.
-		for _, name := range in.conf.Deployment.AccessibleNamespaces {
-			homeClusterClient, ok := in.kialiSAClients[in.conf.KubernetesConfig.ClusterName]
-			if !ok {
-				log.Errorf("unable to get client for cluster [%s].", in.conf.KubernetesConfig.ClusterName)
+		for _, cluster := range clusters {
+			if !cluster.Accessible {
 				continue
 			}
 
-			ns, err := homeClusterClient.GetNamespace(ctx, name)
+			k8sNamespaces, err := in.getClusterNamespacesInScope(ctx, cluster.Name, namespacesInScopeMemo)
 			if err != nil {
-				log.Errorf("unable to get namespace [%s] for cluster [%s]. Err: %s", name, in.conf.KubernetesConfig.ClusterName, err)
+				log.Errorf("unable to get namespaces for cluster [%s]. Err: %s", cluster.Name, err)
 				continue
 			}
 
-			n := models.CastNamespace(*ns, in.conf.KubernetesConfig.ClusterName)
-			rev := GetRevision(n)
-			if rev == "" {
-				// No revision label means there's no controlplane managing it.
-				// This happens is injection is not enabled for this namespace and it's not ambient.
-				continue
+			for _, ns := range k8sNamespaces {
+				n := models.CastNamespace(ns, cluster.Name)
+				rev := GetRevision(n)
+				if rev == "" {
+					// No revision label means there's no controlplane managing it.
+					// This happens is injection is not enabled for this namespace and it's not ambient.
+					continue
+				}
+				key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
+				namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
 			}
-			key := clusterRevisionKey{Cluster: in.conf.KubernetesConfig.ClusterName, Revision: rev}
-			namespacesByClusterAndRev[key] = append(namespacesByClusterAndRev[key], n)
 		}
 	} else {
 		for _, cluster := range clusters {
@@ -1089,6 +1114,14 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 
 	for _, cp := range controlPlanes {
 		for _, cluster := range cp.ManagedClusters {
+			key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.Revision}
+			clusterTags := tags[key]
+			// The API exposes one display tag. Prefer the host cluster, then a
+			// stable cluster and tag name for an externally managed control plane.
+			preferCluster := cp.Tag == nil || cluster.Name == cp.Cluster.Name || (cp.Tag.Cluster != cp.Cluster.Name && cluster.Name < cp.Tag.Cluster)
+			if len(clusterTags) > 0 && preferCluster {
+				cp.Tag = clusterTags[0]
+			}
 			if cp.IsMaistra() {
 				// In maistra the Revision is actually the maistra.io/member-of label which is the namespace where the controlplane lives.
 				key := clusterRevisionKey{Cluster: cluster.Name, Revision: cp.IstiodNamespace}
@@ -1102,16 +1135,12 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 				}
 				continue
 			}
-			// Default to controlplane revision but if there's a tag then overwrite with that.
-			rev := cp.Revision
-			if cp.Tag != nil {
-				if cp.Tag.Cluster == cluster.Name && cp.Tag.Revision == cp.Revision {
-					rev = cp.Tag.Name
+			cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespacesByClusterAndRev[key]...)
+			for _, tag := range clusterTags {
+				if tag.Name != cp.Revision {
+					tagged := clusterRevisionKey{Cluster: cluster.Name, Revision: tag.Name}
+					cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespacesByClusterAndRev[tagged]...)
 				}
-			}
-			key := clusterRevisionKey{Cluster: cluster.Name, Revision: rev}
-			if namespaces, ok := namespacesByClusterAndRev[key]; ok {
-				cp.ManagedNamespaces = append(cp.ManagedNamespaces, namespaces...)
 			}
 		}
 	}
@@ -1127,19 +1156,8 @@ func (in *Discovery) Mesh(ctx context.Context) (*models.Mesh, error) {
 	// Use the namespaces already collected in namespacesByClusterAndRev which respects cluster_wide_access
 	in.namespaceMap = map[string]*models.ControlPlane{}
 	for _, cp := range controlPlanes {
-		// For each control plane, find the namespaces that belong to it based on cluster and revision matching
-		cpRev := cp.Revision
-		if cp.Tag != nil {
-			cpRev = cp.Tag.Name
-		}
-
-		// Look up namespaces by cluster and revision
-		key := clusterRevisionKey{Cluster: cp.Cluster.Name, Revision: cpRev}
-		if namespaces, ok := namespacesByClusterAndRev[key]; ok {
-			for _, ns := range namespaces {
-				mapKey := in.namespaceMapKey(cp.Cluster.Name, ns.Name)
-				in.namespaceMap[mapKey] = cp
-			}
+		for _, ns := range cp.ManagedNamespaces {
+			in.namespaceMap[in.namespaceMapKey(ns.Cluster, ns.Name)] = cp
 		}
 	}
 
@@ -1187,8 +1205,70 @@ func convertToDiscoverySelectors(istioSelectors []*istiov1alpha1.LabelSelector) 
 	return ds
 }
 
-func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.ControlPlane) error {
-	tagsByClusterRev := map[string]*models.Tag{}
+// getClusterNamespacesInScope lists the cluster's namespaces the way its access allows: one
+// cluster-scoped list in cluster-wide-access mode, or - in non-cluster-wide-access mode,
+// where the SA cannot list namespaces - one get per namespace in the cluster's effective
+// scope (its discovery selector override when one is defined, otherwise the default
+// accessible namespaces). A namespace that is missing or forbidden contributes nothing; a
+// transport failure (timeout, unreachable) aborts the cluster's scan so one dead remote
+// cannot cost its timeout once per scoped namespace while Mesh holds its mutex. The memo
+// caches the result per cluster within one mesh resolution, so the multiple passes over the
+// same cluster read it once.
+// scopedNamespaces is one per-cluster scoped read within a mesh resolution: the namespaces
+// or the error that stopped the scan, memoized so every pass over the cluster observes the
+// same result.
+type scopedNamespaces struct {
+	namespaces []corev1.Namespace
+	err        error
+}
+
+func (in *Discovery) getClusterNamespacesInScope(ctx context.Context, cluster string, memo map[string]scopedNamespaces) ([]corev1.Namespace, error) {
+	if memo != nil {
+		if cached, found := memo[cluster]; found {
+			return cached.namespaces, cached.err
+		}
+	}
+
+	client, ok := in.kialiSAClients[cluster]
+	if !ok {
+		return nil, fmt.Errorf("no SA client for cluster [%s]", cluster)
+	}
+
+	var namespaces []corev1.Namespace
+	var err error
+	if in.conf.AllNamespacesAccessible() {
+		namespaces, err = client.GetNamespaces(ctx, "")
+	} else {
+		scope := cache.AccessibleNamespacesForCluster(in.conf, cluster)
+		namespaces = make([]corev1.Namespace, 0, len(scope))
+		for _, name := range scope {
+			var ns *corev1.Namespace
+			ns, err = client.GetNamespace(ctx, name)
+			if err != nil {
+				if k8serrors.IsNotFound(err) || k8serrors.IsForbidden(err) {
+					// The namespace does not exist on this cluster or the SA cannot read
+					// it; either way it contributes nothing to the mesh resolution.
+					err = nil
+					continue
+				}
+				// A transport failure says nothing about the namespace: abort the scan
+				// rather than silently skip the rest of the scope.
+				break
+			}
+			namespaces = append(namespaces, *ns)
+		}
+	}
+	if memo != nil {
+		memo[cluster] = scopedNamespaces{namespaces: namespaces, err: err}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return namespaces, nil
+}
+
+func (in *Discovery) revisionTags(ctx context.Context) map[clusterRevisionKey][]*models.Tag {
+	tagsByClusterRev := map[clusterRevisionKey][]*models.Tag{}
 	for cluster, client := range in.kialiSAClients {
 		if !in.kialiCache.CanListWebhooks(cluster) {
 			log.Debugf("Unable to list webhooks for cluster [%s]. Give Kiali permission to read 'mutatingwebhookconfigurations'. Skipping getting tags.", cluster)
@@ -1212,26 +1292,16 @@ func (in *Discovery) setTags(ctx context.Context, controlPlanes []models.Control
 				Name:     webhook.Labels[models.IstioTagLabel],
 				Revision: webhook.Labels[config.IstioRevisionLabel],
 			}
-			key := tag.Cluster + tag.Revision
-			if _, found := tagsByClusterRev[key]; found {
-				log.Debugf("Found more than one webhook for tag [%s] pointing to revision: [%s] on cluster: [%s]. This is likely a misconfiguration.", tag.Name, tag.Revision, tag.Cluster)
-				continue
-			}
-			tagsByClusterRev[key] = &tag
-		}
-	}
-
-	for i := range controlPlanes {
-		controlPlane := &controlPlanes[i]
-		for _, cluster := range controlPlane.ManagedClusters {
-			key := cluster.Name + controlPlane.Revision
-			if tag, ok := tagsByClusterRev[key]; ok {
-				controlPlane.Tag = tag
+			key := clusterRevisionKey{Cluster: cluster, Revision: tag.Revision}
+			if tag.Name != "" && !slices.ContainsFunc(tagsByClusterRev[key], func(t *models.Tag) bool { return t.Name == tag.Name }) {
+				tagsByClusterRev[key] = append(tagsByClusterRev[key], &tag)
 			}
 		}
 	}
-
-	return nil
+	for _, tags := range tagsByClusterRev {
+		slices.SortFunc(tags, func(a, b *models.Tag) int { return strings.Compare(a.Name, b.Name) })
+	}
+	return tagsByClusterRev
 }
 
 func (in *Discovery) getKialiInstances(cluster models.KubeCluster) ([]models.KialiInstance, error) {

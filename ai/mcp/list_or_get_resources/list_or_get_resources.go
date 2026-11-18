@@ -403,8 +403,8 @@ func getResourceDetails(ctx context.Context, businessLayer *business.Layer, kial
 		// this workload. Results are cached after the first fetch.
 		var ztunnelDump *kubernetes.ZtunnelConfigDump
 		if workloadDetails.IsAmbient && kialiCache != nil {
-			for _, ztunnelPod := range kialiCache.GetZtunnelPods(criteria.Cluster) {
-				dump := kialiCache.GetZtunnelDump(criteria.Cluster, ztunnelPod.Name)
+			for _, ztunnelPod := range kialiCache.GetZtunnelPods(ctx, criteria.Cluster) {
+				dump := kialiCache.GetZtunnelDump(ctx, criteria.Cluster, ztunnelPod.Name)
 				if dump == nil {
 					continue
 				}

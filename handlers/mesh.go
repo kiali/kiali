@@ -16,6 +16,7 @@ import (
 	"github.com/kiali/kiali/perses"
 	"github.com/kiali/kiali/prometheus"
 	"github.com/kiali/kiali/tracing"
+	"github.com/kiali/kiali/util/sliceutil"
 )
 
 func ControlPlanes(
@@ -45,6 +46,27 @@ func ControlPlanes(
 		mesh := *m
 
 		filterAccessibleControlPlanes(r.Context(), namespaceService, &mesh)
+
+		// Resolve each managed cluster once per response. A failed lookup would
+		// otherwise be repeated for every namespace when failure backoff is disabled.
+		managedScope := make(map[string]map[string]bool)
+		for i := range mesh.ControlPlanes {
+			cp := &mesh.ControlPlanes[i]
+			cp.ManagedNamespaces = sliceutil.Filter(cp.ManagedNamespaces, func(ns models.Namespace) bool {
+				allowed, found := managedScope[ns.Cluster]
+				if !found {
+					namespaces, err := namespaceService.GetClusterNamespacesForCluster(r.Context(), ns.Cluster)
+					if err == nil {
+						allowed = make(map[string]bool, len(namespaces))
+						for _, n := range namespaces {
+							allowed[n.Name] = true
+						}
+					}
+					managedScope[ns.Cluster] = allowed
+				}
+				return allowed[ns.Name] && !cache.IsNamespaceRevoked(ns.Cluster, ns.Name)
+			})
+		}
 
 		// When Istio API is disabled, discovery defaults Status to Healthy. Override with
 		// health-cache (or on-demand) status so the Overview matches the Namespaces page.

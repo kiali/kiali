@@ -195,7 +195,11 @@ func Authenticate(conf *config.Config, authController authentication.AuthControl
 					RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 				}
 			} else {
-				if conf.Server.AuditLog {
+				// Only logins are audited. The one exception is the openshift strategy's
+				// GET /api/authenticate, which is a session check rather than a login and
+				// must not produce login audit events; every real login - including the
+				// header strategy's GET, which creates a session - is audited.
+				if conf.Server.AuditLog && (conf.Auth.Strategy != config.AuthStrategyOpenshift || r.Method != http.MethodGet) {
 					event := log.FromRequest(r).Info().
 						Str("user", response.Username).
 						Str("client", r.RemoteAddr)

@@ -78,7 +78,7 @@ func ClusterApps(
 
 		// The accessible namespace names for the cluster, narrowed to the
 		// namespaces query parameter when it is set (fail closed on error).
-		nss, ok := accessibleNamespaceNames(w, r.Context(), businessLayer, p.ClusterName, namespacesQueryParam)
+		nss, ok := accessibleNamespaceNames(w, r.Context(), businessLayer, kialiCache, p.ClusterName, namespacesQueryParam)
 		if !ok {
 			return
 		}

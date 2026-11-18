@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"slices"
 	"sync"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/util/flowcontrol"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	inferenceapiclient "sigs.k8s.io/gateway-api-inference-extension/client-go/clientset/versioned"
 	gatewayapiclient "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned"
@@ -105,8 +107,9 @@ func ConvertFromUserClients(in map[string]UserClientInterface) map[string]Client
 // K8SClient is the client struct for Kubernetes and Istio APIs
 // It hides the way it queries each API
 type K8SClient struct {
-	token string
-	k8s   kube.Interface
+	httpClient *http.Client
+	token      string
+	k8s        kube.Interface
 	// logsConfig is the pod-log stream config: a plain copy of the client config without
 	// the request timeout (a timeout caps the entire body read and would cut logs short).
 	// It carries no custom transport: client-go must build the transport itself so that
@@ -116,6 +119,15 @@ type K8SClient struct {
 	// not pay for a second Kubernetes client (its own rate limiter included).
 	logsConfig *rest.Config
 	logsClient kube.Interface
+
+	// authzConfig is the background access sweep config: a copy of the client config
+	// whose rate limiter never delays. The non-cluster-wide access sweep issues two SSARs
+	// per accessible namespace; at the default read-path limits a large sweep cannot
+	// finish inside the access check's timeout, so revocation would go undetected. SSARs
+	// are authorization queries, cheap for the API server - the sweep's own concurrency
+	// cap and timeout govern the load. The clientset is built lazily on first use.
+	authzConfig *rest.Config
+	authzClient kube.Interface
 
 	// controller runtime client. This is only embedded to make the transition to controller-runtime easier.
 	ctrlclient.Reader
@@ -157,7 +169,8 @@ type K8SClient struct {
 
 	// probeFailures records when each capability probe (IsOpenShift, IsGatewayAPI, ...)
 	// last failed transiently, for the retry backoff in capabilityProbe. Guarded by rwMutex.
-	probeFailures map[string]time.Time
+	probeFailures  map[string]time.Time
+	probesInFlight map[string]chan struct{}
 
 	// Separated out for testing purposes
 	getPodPortForwarderFunc func(namespace, name, portMap string) (httputil.PortForwarder, error)
@@ -223,6 +236,9 @@ func ApplyRequestTimeout(restCfg *rest.Config, conf *kialiconfig.Config) {
 func newClientFromConfig(config *rest.Config, conf *kialiconfig.Config) (*K8SClient, error) {
 	config = rest.CopyConfig(config)
 	ApplyRequestTimeout(config, conf)
+	if config.UserAgent == "" {
+		config.UserAgent = rest.DefaultKubernetesUserAgent()
+	}
 
 	client := K8SClient{
 		token: config.BearerToken,
@@ -238,51 +254,70 @@ func newClientFromConfig(config *rest.Config, conf *kialiconfig.Config) (*K8SCli
 	logsConfig.Timeout = 0
 	client.logsConfig = logsConfig
 
+	// Background access sweeps must not queue behind the read-path rate limiter; see the
+	// authzConfig field comment. NewFakeAlwaysRateLimiter is the client-go rate limiter
+	// that never delays - a QPS of zero would not do (client-go substitutes its 5 qps
+	// default for an unset limiter).
+	authzConfig := rest.CopyConfig(config)
+	authzConfig.RateLimiter = flowcontrol.NewFakeAlwaysRateLimiter()
+	client.authzConfig = authzConfig
+
 	log.Debugf("Rest perf config QPS: %f Burst: %d Timeout: %s", config.QPS, config.Burst, config.Timeout)
 
-	k8s, err := kube.NewForConfig(config)
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	if config.ExecProvider != nil && httpClient.Transport != nil {
+		// HTTP deadlines alone cannot interrupt client-go while it runs the credential process.
+		wrapped := *httpClient
+		wrapped.Transport = &execCredentialTransport{base: httpClient.Transport}
+		httpClient = &wrapped
+	}
+	client.httpClient = httpClient
+	k8s, err := kube.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 	client.k8s = k8s
 	client.restConfig = config
 
-	client.istioClientset, err = istio.NewForConfig(config)
+	client.istioClientset, err = istio.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.gatewayapi, err = gatewayapiclient.NewForConfig(config)
+	client.gatewayapi, err = gatewayapiclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.inferenceapi, err = inferenceapiclient.NewForConfig(config)
+	client.inferenceapi, err = inferenceapiclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.osAppsClient, err = osappsclient.NewForConfig(config)
+	client.osAppsClient, err = osappsclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.projectClient, err = projectclient.NewForConfig(config)
+	client.projectClient, err = projectclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.routeClient, err = routeclient.NewForConfig(config)
+	client.routeClient, err = routeclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.userClient, err = userclient.NewForConfig(config)
+	client.userClient, err = userclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}
 
-	client.oAuthClient, err = oauthclient.NewForConfig(config)
+	client.oAuthClient, err = oauthclient.NewForConfigAndClient(config, httpClient)
 	if err != nil {
 		return nil, err
 	}

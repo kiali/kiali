@@ -36,7 +36,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
@@ -60,6 +59,7 @@ type K8SClientInterface interface {
 	GetPod(namespace, name string) (*core_v1.Pod, error)
 	GetReplicationControllers(namespace string) ([]core_v1.ReplicationController, error)
 	GetSecret(namespace, name string) (*core_v1.Secret, error)
+	GetAccessSweepReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error)
 	GetTokenSubject(authInfo *api.AuthInfo) (string, error)
 	ForwardGetRequest(namespace, podName string, destinationPort int, path string) ([]byte, error)
@@ -209,74 +209,62 @@ func (in *K8SClient) GetRoute(ctx context.Context, namespace string, name string
 // capabilityProbeBackoff is how long a capability probe (IsOpenShift, IsGatewayAPI, ...)
 // waits before retrying after a transient failure. Without it, a remote that stalls would be
 // re-probed on every call - /api/config alone runs several of these sequentially, and with
-// request timeouts each failed attempt costs the full timeout while holding the client mutex.
+// each failed attempt can cost the full request timeout.
 const capabilityProbeBackoff = 30 * time.Second
 
-// capabilityProbe runs one discovery probe with transient-failure backoff and returns the
-// answer plus whether the answer is definitive (memoizable). A definitive answer - success,
-// or a 404 proving the API absent - is memoized by the caller; a transient error (timeout,
-// unreachable) records a failure timestamp so calls within the backoff window answer false
-// without retrying, and a later call retries. The caller must hold the client mutex, which
-// is what coalesces concurrent callers behind one attempt.
-func (in *K8SClient) capabilityProbe(probe string, memo *bool, run func() (bool, error)) (answer, definitive bool) {
-	if memo != nil {
-		return *memo, true
+// Coalesce probes for the same capability while allowing other capabilities and
+// callers with shorter deadlines to proceed independently.
+func (in *K8SClient) capabilityProbe(ctx context.Context, name string, memo **bool, run func() (present, transient bool)) bool {
+	in.rwMutex.Lock()
+	if *memo != nil {
+		answer := **memo
+		in.rwMutex.Unlock()
+		return answer
 	}
-	if failedAt, failed := in.probeFailures[probe]; failed && time.Since(failedAt) < capabilityProbeBackoff {
-		return false, false
+	if time.Since(in.probeFailures[name]) < capabilityProbeBackoff || ctx.Err() != nil {
+		in.rwMutex.Unlock()
+		return false
 	}
-	answer, err := run()
-	if err != nil {
-		var notFoundPlatform *platformNotFound
-		if goerrors.As(err, &notFoundPlatform) {
-			// A definitive negative platform answer (see IsOpenShift): memoize it.
-			return false, true
+	if done := in.probesInFlight[name]; done != nil {
+		in.rwMutex.Unlock()
+		select {
+		case <-ctx.Done():
+			return false
+		case <-done:
+			in.rwMutex.RLock()
+			defer in.rwMutex.RUnlock()
+			return *memo != nil && **memo
 		}
+	}
+	if in.probesInFlight == nil {
+		in.probesInFlight = map[string]chan struct{}{}
+	}
+	done := make(chan struct{})
+	in.probesInFlight[name] = done
+	in.rwMutex.Unlock()
+
+	answer, transient := run()
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if transient {
 		if in.probeFailures == nil {
 			in.probeFailures = map[string]time.Time{}
 		}
-		// Any other failure - including a 404 from a CRD discovery call - is retried
-		// after the backoff rather than memoized forever: CRDs (Istio, Gateway API) can
-		// be installed after Kiali starts, and a long-lived client must pick them up.
-		// The backoff keeps the retry cheap.
-		in.probeFailures[probe] = time.Now()
-		return false, false
+		in.probeFailures[name] = time.Now()
+	} else {
+		*memo = &answer
 	}
-	return answer, true
-}
-
-func (in *K8SClient) IsOpenShift() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
-	// Platform detection differs from the CRD probes below: a 404 on
-	// /apis/project.openshift.io is a definitive "this is not an OpenShift cluster" on any
-	// healthy Kubernetes API server, not a transient condition that a retry would clear.
-	// Memoizing it keeps ordinary Kubernetes clusters from re-probing on the request path
-	// every backoff window; transport failures (unreachable, stalled) still back off.
-	answer, definitive := in.capabilityProbe("openShift", in.isOpenShift, func() (bool, error) {
-		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
-		if errors.IsNotFound(err) {
-			// A definitive negative platform answer; transport errors stay transient.
-			return false, &platformNotFound{err}
-		}
-		return err == nil, err
-	})
-	if definitive && in.isOpenShift == nil {
-		in.isOpenShift = &answer
-	}
+	delete(in.probesInFlight, name)
+	close(done)
 	return answer
 }
 
-// platformNotFound marks a discovery 404 as a definitive negative answer for platform
-// detection (see IsOpenShift), distinguishing it from the transient failures the CRD
-// probes retry.
-type platformNotFound struct {
-	cause error
+func (in *K8SClient) IsOpenShift() bool {
+	return in.capabilityProbe(in.ctx, "openShift", &in.isOpenShift, func() (bool, bool) {
+		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/project.openshift.io").Do(in.ctx).Raw()
+		return err == nil, err != nil && !errors.IsNotFound(err)
+	})
 }
-
-func (e *platformNotFound) Error() string    { return e.cause.Error() }
-func (e *platformNotFound) Unwrap() error    { return e.cause }
-func (e *platformNotFound) IsNotFound() bool { return true }
 
 func (in *K8SClient) IsGatewayAPI() bool {
 	return in.checkIsGatewayAPI(in.ctx)
@@ -291,12 +279,10 @@ func (in *K8SClient) IsGatewayAPIContext(ctx context.Context) bool {
 }
 
 func (in *K8SClient) checkIsGatewayAPI(ctx context.Context) bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.isGatewayAPI == nil && in.probeBackedOff("gatewayAPI") {
+	return in.capabilityProbe(ctx, "gatewayAPI", &in.isGatewayAPI, func() (bool, bool) {
 		v1Types := map[string]string{
 			K8sGatewayType:      PluralNames[K8sGatewayType],
 			K8sGatewayClassType: PluralNames[K8sGatewayClassType],
@@ -306,133 +292,45 @@ func (in *K8SClient) checkIsGatewayAPI(ctx context.Context) bool {
 		v1beta1Types := map[string]string{
 			K8sReferenceGrantType: PluralNames[K8sReferenceGrantType],
 		}
-		isGatewayAPIV1, transientV1 := checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
-		if transientV1 {
-			in.markProbeFailed("gatewayAPI")
-			return false
+		present, transient := checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, false)
+		if !present {
+			return false, transient
 		}
-		isGatewayAPIV1Beta1, transientV1Beta1 := false, false
-		if isGatewayAPIV1 {
-			isGatewayAPIV1Beta1, transientV1Beta1 = checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
-			if transientV1Beta1 {
-				in.markProbeFailed("gatewayAPI")
-				return false
-			}
-		}
-		installed := isGatewayAPIV1 && isGatewayAPIV1Beta1
-		in.isGatewayAPI = &installed
-	} else if in.isGatewayAPI == nil {
-		return false
-	}
-	return *in.isGatewayAPI
+		return checkGatewayAPIs(ctx, in, K8sNetworkingGroupVersionV1Beta1.String(), v1beta1Types, false)
+	})
 }
 
-// probeBackedOff reports whether the named capability probe may be attempted now: never
-// tried, or its last transient failure is older than the backoff window. The caller must
-// hold the client mutex.
-func (in *K8SClient) probeBackedOff(probe string) bool {
-	failedAt, failed := in.probeFailures[probe]
-	return !failed || time.Since(failedAt) >= capabilityProbeBackoff
-}
-
-// markProbeFailed records a transient failure of the named capability probe. The caller
-// must hold the client mutex.
-func (in *K8SClient) markProbeFailed(probe string) {
-	if in.probeFailures == nil {
-		in.probeFailures = map[string]time.Time{}
-	}
-	in.probeFailures[probe] = time.Now()
-}
-
-// HasTCPRouteInV1 returns true if TCPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
 func (in *K8SClient) HasTCPRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasTCPRouteInV1 == nil && in.probeBackedOff("tcpRouteV1") {
-		v1Types := map[string]string{
-			K8sTCPRouteType: PluralNames[K8sTCPRouteType],
-		}
-		hasTCPRoute, transient := checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		if transient {
-			in.markProbeFailed("tcpRouteV1")
-			return false
-		}
-		in.hasTCPRouteInV1 = &hasTCPRoute
-	} else if in.hasTCPRouteInV1 == nil {
-		return false
-	}
-	return *in.hasTCPRouteInV1
+	return in.capabilityProbe(in.ctx, "tcpRouteV1", &in.hasTCPRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sTCPRouteType: PluralNames[K8sTCPRouteType]}, true)
+	})
 }
-
-// HasUDPRouteInV1 returns true if UDPRoute exists in gateway.networking.k8s.io/v1 (GW API 1.6+).
 func (in *K8SClient) HasUDPRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasUDPRouteInV1 == nil && in.probeBackedOff("udpRouteV1") {
-		v1Types := map[string]string{
-			K8sUDPRouteType: PluralNames[K8sUDPRouteType],
-		}
-		hasUDPRoute, transient := checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		if transient {
-			in.markProbeFailed("udpRouteV1")
-			return false
-		}
-		in.hasUDPRouteInV1 = &hasUDPRoute
-	} else if in.hasUDPRouteInV1 == nil {
-		return false
-	}
-	return *in.hasUDPRouteInV1
+	return in.capabilityProbe(in.ctx, "udpRouteV1", &in.hasUDPRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sUDPRouteType: PluralNames[K8sUDPRouteType]}, true)
+	})
 }
-
-// HasTLSRouteInV1 returns true if TLSRoute exists in gateway.networking.k8s.io/v1 (GW API 1.5+).
 func (in *K8SClient) HasTLSRouteInV1() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.GatewayAPI() == nil {
 		return false
 	}
-	if in.hasTLSRouteInV1 == nil && in.probeBackedOff("tlsRouteV1") {
-		v1Types := map[string]string{
-			K8sTLSRouteType: PluralNames[K8sTLSRouteType],
-		}
-		hasTLSRoute, transient := checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), v1Types, true)
-		if transient {
-			in.markProbeFailed("tlsRouteV1")
-			return false
-		}
-		in.hasTLSRouteInV1 = &hasTLSRoute
-	} else if in.hasTLSRouteInV1 == nil {
-		return false
-	}
-	return *in.hasTLSRouteInV1
+	return in.capabilityProbe(in.ctx, "tlsRouteV1", &in.hasTLSRouteInV1, func() (bool, bool) {
+		return checkGatewayAPIs(in.ctx, in, K8sNetworkingGroupVersionV1.String(), map[string]string{K8sTLSRouteType: PluralNames[K8sTLSRouteType]}, true)
+	})
 }
-
 func (in *K8SClient) IsInferenceAPI() bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.InferenceAPI() == nil {
 		return false
 	}
-	if in.isInferenceAPI == nil && in.probeBackedOff("inferenceAPI") {
-		v1alpha2Types := map[string]string{
-			K8sInferencePoolsType: PluralNames[K8sInferencePoolsType],
-		}
-		isInferenceAPI, transient := checkInferenceAPIs(in.ctx, in, K8sInferenceGroupVersionV1.String(), v1alpha2Types)
-		if transient {
-			in.markProbeFailed("inferenceAPI")
-			return false
-		}
-		in.isInferenceAPI = &isInferenceAPI
-	} else if in.isInferenceAPI == nil {
-		return false
-	}
-	return *in.isInferenceAPI
+	return in.capabilityProbe(in.ctx, "inferenceAPI", &in.isInferenceAPI, func() (bool, bool) {
+		return checkInferenceAPIs(in.ctx, in, K8sInferenceGroupVersionV1.String(), map[string]string{K8sInferencePoolsType: PluralNames[K8sInferencePoolsType]})
+	})
 }
 
 func (in *K8SClient) IsIstioGateway() bool {
@@ -446,36 +344,21 @@ func (in *K8SClient) IsIstioGatewayContext(ctx context.Context) bool {
 }
 
 func (in *K8SClient) checkIsIstioGateway(ctx context.Context) bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.Istio() == nil {
 		return false
 	}
-	if in.isIstioGateway == nil && in.probeBackedOff("istioGateway") {
+	return in.capabilityProbe(ctx, "istioGateway", &in.isIstioGateway, func() (bool, bool) {
 		res, err := serverResourcesForGroupVersion(ctx, in, NetworkingGroupVersionV1.String())
 		if err != nil {
-			// Not installed (404) or unreachable: answer false now and retry after the
-			// backoff - the CRDs may be installed after Kiali starts, and a long-lived
-			// client must pick them up.
-			log.Debugf("Istio Networking CRDs not installed or not reachable: %v", err)
-			in.markProbeFailed("istioGateway")
-			return false
+			return false, true
 		}
-		isIstioGateway := false
 		for _, r := range res.APIResources {
 			if r.Kind == GatewayType && r.Name == PluralNames[GatewayType] {
-				isIstioGateway = true
-				break
+				return true, false
 			}
 		}
-		if !isIstioGateway {
-			log.Debugf("Istio Ingress Gateway's 'gateways.networking.istio.io' CRD is not installed.")
-		}
-		in.isIstioGateway = &isIstioGateway
-	} else if in.isIstioGateway == nil {
-		return false
-	}
-	return *in.isIstioGateway
+		return false, false
+	})
 }
 
 // serverResourcesForGroupVersion fetches a group-version's resource list through the
@@ -567,25 +450,13 @@ func (in *K8SClient) IsIstioAPIContext(ctx context.Context) bool {
 }
 
 func (in *K8SClient) checkIsIstioAPI(ctx context.Context) bool {
-	in.rwMutex.Lock()
-	defer in.rwMutex.Unlock()
 	if in.Istio() == nil {
 		return false
 	}
-	if in.isIstioAPI == nil && in.probeBackedOff("istioAPI") {
+	return in.capabilityProbe(ctx, "istioAPI", &in.isIstioAPI, func() (bool, bool) {
 		_, err := in.k8s.Discovery().RESTClient().Get().AbsPath("/apis/networking.istio.io").Do(ctx).Raw()
-		if err != nil {
-			// Not installed (404) or unreachable: answer false now and retry after the
-			// backoff - the Istio API may be installed after Kiali starts.
-			log.Warningf("Error checking Istio API configuration: %v", err)
-			in.markProbeFailed("istioAPI")
-			return false
-		}
-		in.isIstioAPI = ptr.To(true)
-	} else if in.isIstioAPI == nil {
-		return false
-	}
-	return *in.isIstioAPI
+		return err == nil, err != nil
+	})
 }
 
 // GetDeployment returns the definition of a specific deployment.
@@ -713,6 +584,29 @@ func (s *podLogStream) Close() error {
 	return err
 }
 
+// authzClientSet lazily builds the rate-limit-free clientset used for SelfSubjectAccess
+// Reviews (see the authzConfig field comment). Identities that never issue an SSAR never
+// pay for the second clientset; concurrent first uses share one build.
+func (in *K8SClient) authzClientSet() (kubernetes.Interface, error) {
+	in.rwMutex.Lock()
+	defer in.rwMutex.Unlock()
+	if in.authzClient != nil {
+		return in.authzClient, nil
+	}
+	if in.authzConfig == nil {
+		// A K8SClient built directly (tests) has no authz config: fall back to the main
+		// clientset and its rate limiter.
+		in.authzClient = in.k8s
+		return in.authzClient, nil
+	}
+	client, err := kubernetes.NewForConfigAndClient(in.authzConfig, in.httpClient)
+	if err != nil {
+		return nil, err
+	}
+	in.authzClient = client
+	return client, nil
+}
+
 // podLogsClient lazily builds the timeout-free clientset used for pod log streams. Most
 // identities never request logs, so the second clientset (and its rate limiter) is only
 // paid for on first use; concurrent first uses share one build.
@@ -728,7 +622,9 @@ func (in *K8SClient) podLogsClient() (kubernetes.Interface, error) {
 		in.logsClient = in.k8s
 		return in.logsClient, nil
 	}
-	client, err := kubernetes.NewForConfig(in.logsConfig)
+	httpClient := *in.httpClient
+	httpClient.Timeout = 0
+	client, err := kubernetes.NewForConfigAndClient(in.logsConfig, &httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -760,6 +656,19 @@ func NewNotFound(name, group, resource string) error {
 
 // GetSelfSubjectAccessReview provides information on Kiali permissions
 func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	return selfSubjectAccessReview(ctx, in.k8s, namespace, api, resourceType, verbs)
+}
+
+// GetAccessSweepReview uses the service account sweep's independent concurrency budget.
+func (in *K8SClient) GetAccessSweepReview(ctx context.Context, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
+	client, err := in.authzClientSet()
+	if err != nil {
+		return nil, err
+	}
+	return selfSubjectAccessReview(ctx, client, namespace, api, resourceType, verbs)
+}
+
+func selfSubjectAccessReview(ctx context.Context, authz kubernetes.Interface, namespace, api, resourceType string, verbs []string) ([]*auth_v1.SelfSubjectAccessReview, error) {
 	if config.IsTracingEnabled() {
 		var span trace.Span
 		ctx, span = otel.Tracer(observability.TracerName()).Start(ctx, "GetSelfSubjectAccessReview",
@@ -779,7 +688,7 @@ func (in *K8SClient) GetSelfSubjectAccessReview(ctx context.Context, namespace, 
 	errChan := make(chan error)
 	for _, v := range verbs {
 		go func(ctx context.Context, verb string) {
-			res, err := in.k8s.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
+			res, err := authz.AuthorizationV1().SelfSubjectAccessReviews().Create(ctx, &auth_v1.SelfSubjectAccessReview{
 				Spec: auth_v1.SelfSubjectAccessReviewSpec{
 					ResourceAttributes: &auth_v1.ResourceAttributes{
 						Namespace: namespace,
