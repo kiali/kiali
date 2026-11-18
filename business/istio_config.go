@@ -199,14 +199,9 @@ func (in *IstioConfigService) GetIstioConfigListForNamespace(ctx context.Context
 		return &models.IstioConfigList{}, nil
 	}
 
-	istioConfigs, err := in.getIstioConfigList(ctx, cluster, []string{namespace}, criteria)
-	if err != nil {
-		return nil, err
-	}
-
-	in.filterByUserListRBAC(ctx, cluster, istioConfigs)
-
-	return istioConfigs, nil
+	// The SA-wide list: callers serving the config list to a user apply
+	// FilterByUserListRBAC on the result; aggregate consumers use it as is.
+	return in.getIstioConfigList(ctx, cluster, []string{namespace}, criteria)
 }
 
 func ToPtrs[T any](s []T) []*T {
@@ -249,18 +244,18 @@ func newIstioConfigList() *models.IstioConfigList {
 }
 
 // getIstioConfigList fetches the criteria's objects from the SA-backed cache across the
-// given namespaces, without any per-user filtering: callers that need the user's view
-// (GetIstioConfigList) prune the result themselves, and the validation checkers need the
-// SA-wide view to catch cross-namespace conflicts.
+// given namespaces, without any per-user filtering: the callers that serve the config
+// list to a user (the API handler and the MCP istio-list tool) prune the result
+// themselves via FilterByUserListRBAC, and every internal consumer (validation
+// checkers, TLS status, services, apps, workloads, graph, mesh) needs the SA-wide
+// view to catch cross-namespace conflicts and prune for the user at a higher level.
 //
 // A nil namespaces list is the one remaining "nil means cluster-wide" convention, kept
-// because the cluster-wide branch must wrap all 22 per-type lists below. It has exactly
-// three callers, all correct: GetIstioConfigList and ValidateIstioObject pass
-// cache.ReadableNamespaces (whose nil is the cluster-wide-access signal), and
-// GetIstioConfigListForNamespace passes a one-element slice. A new caller must never
-// build the list by hand - a nil built carelessly here would list across all namespaces
-// and stall on the never-syncing informer of a revoked namespace. Pass
-// cache.ReadableNamespaces's result, or an explicit []string{...}.
+// because the cluster-wide branch must wrap all 22 per-type lists below. Every caller
+// must pass cache.ReadableNamespaces's result (whose nil is the cluster-wide-access
+// signal) or an explicit []string{...}; never build the list by hand - a nil built
+// carelessly here would list across all namespaces and stall on the never-syncing
+// informer of a revoked namespace.
 func (in *IstioConfigService) getIstioConfigList(ctx context.Context, cluster string, namespaces []string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	istioConfigList := newIstioConfigList()
 
@@ -650,7 +645,12 @@ func canListType(ctx context.Context, kialiCache cache.KialiCache, userClients m
 		if canList, found := kialiCache.CanListType(cluster, cacheKey, namespace, gvk.Group, resource); found {
 			return canList, nil
 		}
-		ssars, err := userClient.GetSelfSubjectAccessReview(ctx, namespace, gvk.Group, resource, []string{"list"})
+		// The flight must not die with its initiating request: every coalesced
+		// caller of the same user would otherwise fail together when one of
+		// them is cancelled mid-review. Detach the cancellation; keep the
+		// values (logger, trace context) for the review.
+		ssarCtx := context.WithoutCancel(ctx)
+		ssars, err := userClient.GetSelfSubjectAccessReview(ssarCtx, namespace, gvk.Group, resource, []string{"list"})
 		if err != nil {
 			// Don't cache failures; the next call retries the review.
 			return false, err
@@ -694,7 +694,7 @@ func filterListEntriesByTypeRBAC[T runtime.Object](entries []T, gvk schema.Group
 }
 
 // listVerdictKey identifies one (namespace, type) permission question asked
-// by filterByUserListRBAC.
+// by FilterByUserListRBAC.
 type listVerdictKey struct {
 	gvk       schema.GroupVersionKind
 	namespace string
@@ -718,11 +718,44 @@ func collectListEntryNamespaces[T runtime.Object](entries []T, gvk schema.GroupV
 // otherwise pay one serial SSAR round-trip per pair. canListType coalesces
 // duplicate computations across concurrent requests, and client-go's rate
 // limiter throttles the SSAR issuance.
+//
+// Before sweeping per namespace, one cluster-scoped review per distinct type
+// (an empty namespace in the SSAR asks the API server for the cluster-wide
+// verdict) settles the common full-access case: a user allowed to list a
+// type everywhere skips that type's per-namespace reviews entirely, so a
+// namespaces-x-types SSAR storm collapses to one review per type.
 func resolveListVerdicts(ctx context.Context, kialiCache cache.KialiCache, userClients map[string]kubernetes.UserClientInterface, cluster string, pending map[listVerdictKey]struct{}) map[listVerdictKey]bool {
 	verdicts := make(map[listVerdictKey]bool, len(pending))
+
+	gvks := make(map[schema.GroupVersionKind]struct{}, len(pending))
+	for key := range pending {
+		gvks[key.gvk] = struct{}{}
+	}
+	clusterWide := make(map[schema.GroupVersionKind]bool, len(gvks))
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+	for gvk := range gvks {
+		wg.Add(1)
+		go func(gvk schema.GroupVersionKind) {
+			defer wg.Done()
+			allowed := canListType(ctx, kialiCache, userClients, cluster, "", gvk)
+			mu.Lock()
+			clusterWide[gvk] = allowed
+			mu.Unlock()
+		}(gvk)
+	}
+	wg.Wait()
+
+	remaining := make(map[listVerdictKey]struct{})
 	for key := range pending {
+		if clusterWide[key.gvk] {
+			verdicts[key] = true
+			continue
+		}
+		remaining[key] = struct{}{}
+	}
+
+	for key := range remaining {
 		wg.Add(1)
 		go func(key listVerdictKey) {
 			defer wg.Done()
@@ -736,35 +769,97 @@ func resolveListVerdicts(ctx context.Context, kialiCache cache.KialiCache, userC
 	return verdicts
 }
 
-// filterByUserListRBAC removes from a config list the entries of types the
-// requesting user cannot list. It must only be applied on the public list
-// paths: validations and other internal consumers of getIstioConfigList rely
-// on the service-account-wide view to detect cross-namespace conflicts and
-// prune for the user at a higher level.
-func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster string, configs *models.IstioConfigList) {
+// istioConfigTypeFilter pairs one config field of models.IstioConfigList with
+// the GVK whose list permission gates it: collect gathers the field's entry
+// namespaces for the verdict sweep, apply prunes the field's entries.
+type istioConfigTypeFilter struct {
+	gvk     schema.GroupVersionKind
+	collect func(configs *models.IstioConfigList, pending map[listVerdictKey]struct{})
+	apply   func(configs *models.IstioConfigList, canList func(namespace string, gvk schema.GroupVersionKind) bool)
+}
+
+// newIstioConfigTypeFilter builds a table entry from a field accessor.
+func newIstioConfigTypeFilter[T runtime.Object](gvk schema.GroupVersionKind, field func(*models.IstioConfigList) *[]T) istioConfigTypeFilter {
+	return istioConfigTypeFilter{
+		gvk: gvk,
+		collect: func(configs *models.IstioConfigList, pending map[listVerdictKey]struct{}) {
+			collectListEntryNamespaces(*field(configs), gvk, pending)
+		},
+		apply: func(configs *models.IstioConfigList, canList func(namespace string, gvk schema.GroupVersionKind) bool) {
+			*field(configs) = filterListEntriesByTypeRBAC(*field(configs), gvk, canList)
+		},
+	}
+}
+
+// istioConfigTypeFilters enumerates every config field of models.IstioConfigList
+// exactly once. FilterByUserListRBAC walks this table;
+// TestFilterByUserListRBACCoversAllConfigTypes fails when a model field is
+// missing here, so a new config type cannot silently skip the per-type filter
+// (which would reintroduce the #10515 leak for that type).
+var istioConfigTypeFilters = []istioConfigTypeFilter{
+	newIstioConfigTypeFilter(kubernetes.AuthorizationPolicies,
+		func(c *models.IstioConfigList) *[]*security_v1.AuthorizationPolicy { return &c.AuthorizationPolicies }),
+	newIstioConfigTypeFilter(kubernetes.DestinationRules,
+		func(c *models.IstioConfigList) *[]*networking_v1.DestinationRule { return &c.DestinationRules }),
+	newIstioConfigTypeFilter(kubernetes.EnvoyFilters,
+		func(c *models.IstioConfigList) *[]*networking_v1alpha3.EnvoyFilter { return &c.EnvoyFilters }),
+	newIstioConfigTypeFilter(kubernetes.Gateways,
+		func(c *models.IstioConfigList) *[]*networking_v1.Gateway { return &c.Gateways }),
+	newIstioConfigTypeFilter(kubernetes.VirtualServices,
+		func(c *models.IstioConfigList) *[]*networking_v1.VirtualService { return &c.VirtualServices }),
+	newIstioConfigTypeFilter(kubernetes.ServiceEntries,
+		func(c *models.IstioConfigList) *[]*networking_v1.ServiceEntry { return &c.ServiceEntries }),
+	newIstioConfigTypeFilter(kubernetes.Sidecars,
+		func(c *models.IstioConfigList) *[]*networking_v1.Sidecar { return &c.Sidecars }),
+	newIstioConfigTypeFilter(kubernetes.WorkloadEntries,
+		func(c *models.IstioConfigList) *[]*networking_v1.WorkloadEntry { return &c.WorkloadEntries }),
+	newIstioConfigTypeFilter(kubernetes.WorkloadGroups,
+		func(c *models.IstioConfigList) *[]*networking_v1.WorkloadGroup { return &c.WorkloadGroups }),
+	newIstioConfigTypeFilter(kubernetes.TrafficExtensions,
+		func(c *models.IstioConfigList) *[]*extentions_v1alpha1.TrafficExtension { return &c.TrafficExtensions }),
+	newIstioConfigTypeFilter(kubernetes.WasmPlugins,
+		func(c *models.IstioConfigList) *[]*extentions_v1alpha1.WasmPlugin { return &c.WasmPlugins }),
+	newIstioConfigTypeFilter(kubernetes.Telemetries,
+		func(c *models.IstioConfigList) *[]*telemetry_v1.Telemetry { return &c.Telemetries }),
+	newIstioConfigTypeFilter(kubernetes.K8sGateways,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.Gateway { return &c.K8sGateways }),
+	newIstioConfigTypeFilter(kubernetes.K8sGRPCRoutes,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.GRPCRoute { return &c.K8sGRPCRoutes }),
+	newIstioConfigTypeFilter(kubernetes.K8sHTTPRoutes,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.HTTPRoute { return &c.K8sHTTPRoutes }),
+	newIstioConfigTypeFilter(kubernetes.K8sInferencePools,
+		func(c *models.IstioConfigList) *[]*k8s_inference_v1.InferencePool { return &c.K8sInferencePools }),
+	newIstioConfigTypeFilter(kubernetes.K8sReferenceGrants,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1beta1.ReferenceGrant {
+			return &c.K8sReferenceGrants
+		}),
+	newIstioConfigTypeFilter(kubernetes.K8sTCPRoutes,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.TCPRoute { return &c.K8sTCPRoutes }),
+	newIstioConfigTypeFilter(kubernetes.K8sTLSRoutes,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.TLSRoute { return &c.K8sTLSRoutes }),
+	newIstioConfigTypeFilter(kubernetes.K8sUDPRoutes,
+		func(c *models.IstioConfigList) *[]*k8s_networking_v1.UDPRoute { return &c.K8sUDPRoutes }),
+	newIstioConfigTypeFilter(kubernetes.PeerAuthentications,
+		func(c *models.IstioConfigList) *[]*security_v1.PeerAuthentication { return &c.PeerAuthentications }),
+	newIstioConfigTypeFilter(kubernetes.RequestAuthentications,
+		func(c *models.IstioConfigList) *[]*security_v1.RequestAuthentication {
+			return &c.RequestAuthentications
+		}),
+}
+
+// FilterByUserListRBAC removes from a config list the entries of types the
+// requesting user cannot list, so the list matches what the API server lets
+// the user read on a detail request (issue #10515). It is applied only by the
+// callers that serve the config list to a user - the API handler and the MCP
+// istio-list tool - and by nothing else: internal consumers of the config
+// list (validations, TLS status, services, apps, workloads, graph, mesh)
+// rely on the service-account-wide view to detect cross-namespace conflicts
+// and prune for the user at a higher level.
+func (in *IstioConfigService) FilterByUserListRBAC(ctx context.Context, cluster string, configs *models.IstioConfigList) {
 	pending := make(map[listVerdictKey]struct{})
-	collectListEntryNamespaces(configs.AuthorizationPolicies, kubernetes.AuthorizationPolicies, pending)
-	collectListEntryNamespaces(configs.DestinationRules, kubernetes.DestinationRules, pending)
-	collectListEntryNamespaces(configs.EnvoyFilters, kubernetes.EnvoyFilters, pending)
-	collectListEntryNamespaces(configs.Gateways, kubernetes.Gateways, pending)
-	collectListEntryNamespaces(configs.VirtualServices, kubernetes.VirtualServices, pending)
-	collectListEntryNamespaces(configs.ServiceEntries, kubernetes.ServiceEntries, pending)
-	collectListEntryNamespaces(configs.Sidecars, kubernetes.Sidecars, pending)
-	collectListEntryNamespaces(configs.WorkloadEntries, kubernetes.WorkloadEntries, pending)
-	collectListEntryNamespaces(configs.WorkloadGroups, kubernetes.WorkloadGroups, pending)
-	collectListEntryNamespaces(configs.TrafficExtensions, kubernetes.TrafficExtensions, pending)
-	collectListEntryNamespaces(configs.WasmPlugins, kubernetes.WasmPlugins, pending)
-	collectListEntryNamespaces(configs.Telemetries, kubernetes.Telemetries, pending)
-	collectListEntryNamespaces(configs.K8sGateways, kubernetes.K8sGateways, pending)
-	collectListEntryNamespaces(configs.K8sGRPCRoutes, kubernetes.K8sGRPCRoutes, pending)
-	collectListEntryNamespaces(configs.K8sHTTPRoutes, kubernetes.K8sHTTPRoutes, pending)
-	collectListEntryNamespaces(configs.K8sInferencePools, kubernetes.K8sInferencePools, pending)
-	collectListEntryNamespaces(configs.K8sReferenceGrants, kubernetes.K8sReferenceGrants, pending)
-	collectListEntryNamespaces(configs.K8sTCPRoutes, kubernetes.K8sTCPRoutes, pending)
-	collectListEntryNamespaces(configs.K8sTLSRoutes, kubernetes.K8sTLSRoutes, pending)
-	collectListEntryNamespaces(configs.K8sUDPRoutes, kubernetes.K8sUDPRoutes, pending)
-	collectListEntryNamespaces(configs.PeerAuthentications, kubernetes.PeerAuthentications, pending)
-	collectListEntryNamespaces(configs.RequestAuthentications, kubernetes.RequestAuthentications, pending)
+	for _, filter := range istioConfigTypeFilters {
+		filter.collect(configs, pending)
+	}
 
 	verdicts := resolveListVerdicts(ctx, in.kialiCache, in.userClients, cluster, pending)
 
@@ -772,30 +867,15 @@ func (in *IstioConfigService) filterByUserListRBAC(ctx context.Context, cluster 
 		return verdicts[listVerdictKey{gvk: gvk, namespace: namespace}]
 	}
 
-	configs.AuthorizationPolicies = filterListEntriesByTypeRBAC(configs.AuthorizationPolicies, kubernetes.AuthorizationPolicies, canList)
-	configs.DestinationRules = filterListEntriesByTypeRBAC(configs.DestinationRules, kubernetes.DestinationRules, canList)
-	configs.EnvoyFilters = filterListEntriesByTypeRBAC(configs.EnvoyFilters, kubernetes.EnvoyFilters, canList)
-	configs.Gateways = filterListEntriesByTypeRBAC(configs.Gateways, kubernetes.Gateways, canList)
-	configs.VirtualServices = filterListEntriesByTypeRBAC(configs.VirtualServices, kubernetes.VirtualServices, canList)
-	configs.ServiceEntries = filterListEntriesByTypeRBAC(configs.ServiceEntries, kubernetes.ServiceEntries, canList)
-	configs.Sidecars = filterListEntriesByTypeRBAC(configs.Sidecars, kubernetes.Sidecars, canList)
-	configs.WorkloadEntries = filterListEntriesByTypeRBAC(configs.WorkloadEntries, kubernetes.WorkloadEntries, canList)
-	configs.WorkloadGroups = filterListEntriesByTypeRBAC(configs.WorkloadGroups, kubernetes.WorkloadGroups, canList)
-	configs.TrafficExtensions = filterListEntriesByTypeRBAC(configs.TrafficExtensions, kubernetes.TrafficExtensions, canList)
-	configs.WasmPlugins = filterListEntriesByTypeRBAC(configs.WasmPlugins, kubernetes.WasmPlugins, canList)
-	configs.Telemetries = filterListEntriesByTypeRBAC(configs.Telemetries, kubernetes.Telemetries, canList)
-	configs.K8sGateways = filterListEntriesByTypeRBAC(configs.K8sGateways, kubernetes.K8sGateways, canList)
-	configs.K8sGRPCRoutes = filterListEntriesByTypeRBAC(configs.K8sGRPCRoutes, kubernetes.K8sGRPCRoutes, canList)
-	configs.K8sHTTPRoutes = filterListEntriesByTypeRBAC(configs.K8sHTTPRoutes, kubernetes.K8sHTTPRoutes, canList)
-	configs.K8sInferencePools = filterListEntriesByTypeRBAC(configs.K8sInferencePools, kubernetes.K8sInferencePools, canList)
-	configs.K8sReferenceGrants = filterListEntriesByTypeRBAC(configs.K8sReferenceGrants, kubernetes.K8sReferenceGrants, canList)
-	configs.K8sTCPRoutes = filterListEntriesByTypeRBAC(configs.K8sTCPRoutes, kubernetes.K8sTCPRoutes, canList)
-	configs.K8sTLSRoutes = filterListEntriesByTypeRBAC(configs.K8sTLSRoutes, kubernetes.K8sTLSRoutes, canList)
-	configs.K8sUDPRoutes = filterListEntriesByTypeRBAC(configs.K8sUDPRoutes, kubernetes.K8sUDPRoutes, canList)
-	configs.PeerAuthentications = filterListEntriesByTypeRBAC(configs.PeerAuthentications, kubernetes.PeerAuthentications, canList)
-	configs.RequestAuthentications = filterListEntriesByTypeRBAC(configs.RequestAuthentications, kubernetes.RequestAuthentications, canList)
+	for _, filter := range istioConfigTypeFilters {
+		filter.apply(configs, canList)
+	}
 }
 
+// GetIstioConfigList returns the cluster-wide config list pruned to the user's
+// accessible namespaces. The result is not pruned by the user's per-type list
+// RBAC; callers serving the config list to a user apply FilterByUserListRBAC
+// on the result.
 func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster string, criteria IstioConfigCriteria) (*models.IstioConfigList, error) {
 	var end observability.EndFunc
 	ctx, end = observability.StartSpan(ctx, "GetIstioConfigList",
@@ -840,10 +920,6 @@ func (in *IstioConfigService) GetIstioConfigList(ctx context.Context, cluster st
 	istioConfigs.WasmPlugins = kubernetes.FilterByNamespaceNames(istioConfigs.WasmPlugins, namespaceNames)
 	istioConfigs.WorkloadEntries = kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadEntries, namespaceNames)
 	istioConfigs.WorkloadGroups = kubernetes.FilterByNamespaceNames(istioConfigs.WorkloadGroups, namespaceNames)
-
-	// Filter out the types the user cannot list (RBAC), so the list matches
-	// what the user can read on a detail request.
-	in.filterByUserListRBAC(ctx, cluster, istioConfigs)
 
 	return istioConfigs, nil
 }

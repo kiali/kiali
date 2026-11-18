@@ -941,15 +941,11 @@ func (c *kialiCacheImpl) RefreshTokenNamespaces(cluster string) {
 		}
 	}
 
-	// The list-verdict cache shares the token-namespace lifecycle: drop it on
-	// refresh so a re-authenticated requester does not keep stale verdicts.
-	c.canListLock.Lock()
-	defer c.canListLock.Unlock()
-	for _, key := range c.canListStore.Keys() {
-		if key.cluster == cluster {
-			c.canListStore.Remove(key)
-		}
-	}
+	// The list-verdict cache is deliberately not purged here: verdicts are
+	// per-user RBAC facts, unaffected by a namespace update, and they expire
+	// on the same short TTL as the token-namespace entries. A cluster-wide
+	// purge would drop every other user's still-valid verdicts and force
+	// them to re-issue their SSAR sweeps.
 }
 
 func (c *kialiCacheImpl) SetClusterNamespaces(cacheKey string, cluster string, namespaces []models.Namespace) {

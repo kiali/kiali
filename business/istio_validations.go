@@ -82,7 +82,7 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 	// Kubernetes API cannot enforce the user's RBAC here: filter the
 	// validations (and their references) to the namespaces in the user's
 	// accessible set for the cluster, and drop the entries of config types
-	// the user cannot list — the same per-type filter the public config list
+	// the user cannot list — the same per-type filter the config list API
 	// applies, so the summaries derived from these entries (e.g. the Istio
 	// Config object count) match what the list shows. Fail closed when the
 	// set cannot be computed.
