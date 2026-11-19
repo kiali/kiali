@@ -5,9 +5,11 @@ set -euo pipefail
 ##############################################################################
 # supplement-must-gather.sh
 #
-# Fills gaps in istio/ossm must-gather output so Kiali offline mode and
-# @offline Cypress tests have workloads, Istio config, pod logs, and Envoy
-# config dumps. Used from hack/run-integration-tests.sh (offline suite).
+# Fills gaps when Istio was installed with istioctl: OSSM must-gather then
+# often only has istio-system. kubectl-dumps mesh namespaces (bookinfo, etc.)
+# plus pod logs and Envoy config dumps for offline / @offline Cypress.
+#
+# Not used for Sail — Sail must-gather already includes member namespaces.
 ##############################################################################
 
 infomsg() {
@@ -16,7 +18,7 @@ infomsg() {
 
 helpmsg() {
   cat <<'HELP'
-Supplement an Istio must-gather directory for Kiali offline testing.
+Supplement an Istio must-gather directory for Kiali offline testing (istioctl).
 
 Usage:
   supplement-must-gather.sh <command> [options]
@@ -29,7 +31,8 @@ Commands:
     kubectl-dump namespaces missing from must-gather (per-object YAML, logs, dumps).
 
   assert-workloads
-    Exit 1 if a namespace dir lacks Deployment + Service YAML offline can load.
+    Exit 1 if a namespace dir lacks Deployment + Service YAML offline can load,
+    or lacks Envoy config_dump_proxy.json files.
 
 Options (supplement, assert-workloads):
   --dir <path>          Must-gather output root (required)
@@ -95,22 +98,40 @@ assert_must_gather_namespace_has_workloads() {
   local ns_dir="${1}"
   local ns="${2}"
 
-  if must_gather_namespace_usable_for_offline "${ns_dir}"; then
-    return 0
+  if ! must_gather_namespace_usable_for_offline "${ns_dir}"; then
+    echo "ERROR: Namespace ${ns} is missing Deployment and Service data under ${ns_dir} after must-gather supplement." >&2
+    echo "Deployments visible in cluster:" >&2
+    kubectl get deployments -n "${ns}" 2>&1 | head -20 || true
+    echo "Files under ${ns_dir}:" >&2
+    find "${ns_dir}" -type f 2>/dev/null | head -30 || true
+    return 1
   fi
 
-  echo "ERROR: Namespace ${ns} is missing Deployment and Service data under ${ns_dir} after must-gather supplement." >&2
-  echo "Deployments visible in cluster:" >&2
-  kubectl get deployments -n "${ns}" 2>&1 | head -20 || true
-  echo "Files under ${ns_dir}:" >&2
-  find "${ns_dir}" -type f 2>/dev/null | head -30 || true
-  return 1
+  if [ -z "$(find "${ns_dir}/pods" -type f -name 'config_dump_proxy.json' 2>/dev/null | head -n 1)" ]; then
+    echo "ERROR: Namespace ${ns} has no config_dump_proxy.json under ${ns_dir}/pods (offline Envoy tests will fail)." >&2
+    echo "Pods in cluster:" >&2
+    kubectl get pods -n "${ns}" -o wide 2>&1 | head -20 || true
+    echo "Pod files under ${ns_dir}/pods:" >&2
+    find "${ns_dir}/pods" -type f 2>/dev/null | head -40 || true
+    return 1
+  fi
+  return 0
+}
+
+# Regular sidecars and native sidecars (initContainer) both use the istio-proxy name.
+pod_container_names() {
+  local ns="${1}"
+  local pod="${2}"
+  {
+    kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{range .spec.containers[*]}{.name}{"\n"}{end}' 2>/dev/null || true
+    kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{range .spec.initContainers[*]}{.name}{"\n"}{end}' 2>/dev/null || true
+  } | sed '/^$/d' | sort -u
 }
 
 supplement_must_gather_pod_runtime_data() {
   local ns="${1}"
   local ns_dir="${2}"
-  local pod pod_dir cname containers_json
+  local pod pod_dir cname
 
   mkdir -p "${ns_dir}/pods"
 
@@ -127,10 +148,9 @@ supplement_must_gather_pod_runtime_data() {
       kubectl logs -n "${ns}" "${pod}" -c "${cname}" --timestamps --tail=5000 \
         > "${pod_dir}/${cname}/${cname}/logs/current.log" 2>/dev/null \
         || : > "${pod_dir}/${cname}/${cname}/logs/current.log"
-    done < <(kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{range .spec.containers[*]}{.name}{"\n"}{end}' 2>/dev/null || true)
+    done < <(pod_container_names "${ns}" "${pod}")
 
-    containers_json="$(kubectl get pod "${pod}" -n "${ns}" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null || true)"
-    if printf '%s\n' ${containers_json} | grep -qx 'istio-proxy'; then
+    if pod_container_names "${ns}" "${pod}" | grep -qx 'istio-proxy'; then
       if kubectl exec -n "${ns}" "${pod}" -c istio-proxy -- \
           pilot-agent request GET /config_dump \
           > "${pod_dir}/config_dump_proxy.json" 2>/dev/null; then
@@ -144,8 +164,7 @@ supplement_must_gather_pod_runtime_data() {
   done < <(kubectl get pods -n "${ns}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
 }
 
-# Sail/OSSM must-gather discovers mesh member namespaces; classic istioctl installs often only
-# gather the control plane. Offline cypress needs bookinfo (and peers) in the dump either way.
+# istioctl must-gather often only gathers the control plane; fill in mesh namespaces.
 supplement_must_gather_namespace() {
   local must_gather_dir="${1}"
   local ns="${2}"
@@ -160,12 +179,8 @@ supplement_must_gather_namespace() {
   namespaces_dir="$(resolve_must_gather_namespaces_dir "${must_gather_dir}")"
   ns_dir="${namespaces_dir}/${ns}"
 
-  # Sail/OSSM must-gather often already has Deployments/Services, but may omit
-  # config_dump_proxy.json (needed by offline Envoy tabs). Always refresh pod
-  # runtime data; only skip the heavier per-resource YAML dump when usable.
   if [ "${force}" != "true" ] && must_gather_namespace_usable_for_offline "${ns_dir}"; then
-    infomsg "must-gather already includes workloads and services for namespace ${ns}; refreshing pod logs and Envoy config dumps"
-    supplement_must_gather_pod_runtime_data "${ns}" "${ns_dir}"
+    infomsg "must-gather already includes workloads and services for namespace ${ns}"
     return 0
   fi
 
