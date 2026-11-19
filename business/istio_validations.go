@@ -13,7 +13,6 @@ import (
 	security_v1 "istio.io/client-go/pkg/apis/security/v1"
 	apps_v1 "k8s.io/api/apps/v1"
 	core_v1 "k8s.io/api/core/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -82,14 +81,28 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 	// The validations cache is populated by the Kiali ServiceAccount, so the
 	// Kubernetes API cannot enforce the user's RBAC here: filter the
 	// validations (and their references) to the namespaces in the user's
-	// accessible set for the cluster. Fail closed when the set cannot be
-	// computed.
+	// accessible set for the cluster, and drop the entries of config types
+	// the user cannot list — the same per-type filter the config list API
+	// applies, so the summaries derived from these entries (e.g. the Istio
+	// Config object count) match what the list shows. Fail closed when the
+	// set cannot be computed.
 	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
 
 	validations := models.IstioValidations(in.kialiCache.Validations().Items()).FilterByCluster(cluster)
+	pending := make(map[listVerdictKey]struct{})
+	for key := range validations {
+		if _, ok := accessible[key.Namespace]; !ok {
+			continue
+		}
+		if key.ObjectGVK.Group != "" {
+			pending[listVerdictKey{gvk: key.ObjectGVK, namespace: key.Namespace}] = struct{}{}
+		}
+	}
+	verdicts := resolveListVerdicts(ctx, in.kialiCache, in.userClients, cluster, pending)
+
 	filtered := models.IstioValidations{}
 	for key, validation := range validations {
 		// Filter on the KEY's namespace, not the value's: several checkers
@@ -99,9 +112,26 @@ func (in *IstioValidationsService) GetValidations(ctx context.Context, cluster s
 		if _, ok := accessible[key.Namespace]; !ok {
 			continue
 		}
+		if !validationTypeAccessible(key, verdicts) {
+			continue
+		}
 		filtered[key] = pruneInaccessibleReferences(validation, accessible)
 	}
 	return filtered, nil
+}
+
+// validationTypeAccessible reports whether the per-type list RBAC filter
+// permits returning the entry. Pseudo-types (service, workload, app) carry an
+// empty Group and never appear in the Istio config list, so the filter does
+// not apply to them — the same distinction SummarizeValidation makes when
+// counting objects (#10473). Config-group entries always have a resolved
+// verdict: every (namespace, GVK) pair reachable here was added to the
+// pending set passed to resolveListVerdicts.
+func validationTypeAccessible(key models.IstioValidationKey, verdicts map[listVerdictKey]bool) bool {
+	if key.ObjectGVK.Group == "" {
+		return true
+	}
+	return verdicts[listVerdictKey{gvk: key.ObjectGVK, namespace: key.Namespace}]
 }
 
 // accessibleNamespaceSet resolves the user's accessible namespaces for the
@@ -206,20 +236,35 @@ func (in *IstioValidationsService) GetValidationsForNamespace(ctx context.Contex
 	}
 
 	// The validations cache is populated by the Kiali ServiceAccount, so the
-	// Kubernetes API cannot enforce the user's RBAC on the references attached
-	// to the returned entries: prune references into namespaces outside the
-	// user's accessible set, the same way the cluster-wide GetValidations
-	// does. Fail closed when the set cannot be computed.
+	// Kubernetes API cannot enforce the user's RBAC on the returned entries
+	// or their references: prune references into namespaces outside the
+	// user's accessible set and drop entries of config types the user cannot
+	// list, the same way the cluster-wide GetValidations does. Fail closed
+	// when the set cannot be computed.
 	accessible, err := in.accessibleNamespaceSet(ctx, cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	namespaceValidations := models.IstioValidations{}
+	matches := models.IstioValidations{}
+	pending := make(map[listVerdictKey]struct{})
 	for validationKey, validation := range in.kialiCache.Validations().Items() {
-		if validationKey.Namespace == namespace && validationKey.Cluster == cluster {
-			namespaceValidations[validationKey] = pruneInaccessibleReferences(validation, accessible)
+		if validationKey.Namespace != namespace || validationKey.Cluster != cluster {
+			continue
 		}
+		matches[validationKey] = validation
+		if validationKey.ObjectGVK.Group != "" {
+			pending[listVerdictKey{gvk: validationKey.ObjectGVK, namespace: namespace}] = struct{}{}
+		}
+	}
+	verdicts := resolveListVerdicts(ctx, in.kialiCache, in.userClients, cluster, pending)
+
+	namespaceValidations := models.IstioValidations{}
+	for validationKey, validation := range matches {
+		if !validationTypeAccessible(validationKey, verdicts) {
+			continue
+		}
+		namespaceValidations[validationKey] = pruneInaccessibleReferences(validation, accessible)
 	}
 	return namespaceValidations, nil
 }
@@ -560,7 +605,16 @@ func (in *IstioValidationsService) Validate(ctx context.Context, cluster string,
 
 	// grab all config for the cluster
 	criteria := allIstioConfigCriteria()
-	istioConfigList, err := in.istioConfig.GetIstioConfigListForCluster(ctx, cluster, meta_v1.NamespaceAll, criteria)
+	// Raw SA-wide fetch, like ValidateIstioObject below: the background
+	// reconciler must not run the per-user list RBAC filter. Its "user" is
+	// the service account, so the SSARs would always ask for the SA's own
+	// permissions and their verdicts would fail closed into the shared
+	// validation cache. cache.ReadableNamespaces is the SA-wide scope in
+	// both access modes (nil = cluster-wide in cluster-wide access;
+	// the readable namespaces otherwise), and
+	// filterIstioConfigByManagedNamespaces scopes the result to the
+	// managed namespaces.
+	istioConfigList, err := in.istioConfig.getIstioConfigList(ctx, cluster, cache.ReadableNamespaces(in.conf, in.kialiCache, cluster), criteria)
 	if err != nil {
 		return false, nil, err
 	}

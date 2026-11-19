@@ -13,10 +13,13 @@ import (
 	api_networking_v1 "istio.io/api/networking/v1"
 	networking_v1 "istio.io/client-go/pkg/apis/networking/v1"
 	apps_v1 "k8s.io/api/apps/v1"
+	auth_v1 "k8s.io/api/authorization/v1"
 	core_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	kubefake "k8s.io/client-go/kubernetes/fake"
+	kubeclienttesting "k8s.io/client-go/testing"
 
 	"github.com/kiali/kiali/business/checkers"
 	"github.com/kiali/kiali/config"
@@ -479,6 +482,7 @@ func TestServiceListIncludesServiceEntryServices(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -515,6 +519,68 @@ func TestServiceListIncludesServiceEntryServices(t *testing.T) {
 	assert.True(foundSERef, "ServiceEntry reference not found in IstioReferences")
 }
 
+// TestServiceListKeepsSEBackedServicesWithoutListVerb guards the boundary
+// placement of the per-type list RBAC filter (#10515): the services list is
+// an aggregate consumer of the config list, so it must keep the SA-wide view.
+// A user lacking the "list" verb on serviceentries still sees SE-backed
+// services; filtering by the user's config-list RBAC belongs to the
+// user-facing boundaries, not to the services list.
+func TestServiceListKeepsSEBackedServicesWithoutListVerb(t *testing.T) {
+	assert := assert.New(t)
+	require := require.New(t)
+
+	conf := config.NewConfig()
+	config.Set(conf)
+
+	se := &networking_v1.ServiceEntry{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "external-api",
+			Namespace: "bookinfo",
+		},
+		Spec: api_networking_v1.ServiceEntry{
+			Hosts: []string{"external-api.example.com"},
+		},
+	}
+
+	k8s := kubetest.NewFakeK8sClient(
+		kubetest.FakeNamespace("bookinfo"),
+		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
+		se,
+	)
+
+	// Deny "list" on networking.istio.io/serviceentries; allow the rest.
+	fakeKube := k8s.KubeClientset.(*kubefake.Clientset)
+	fakeKube.PrependReactor("create", "selfsubjectaccessreviews", func(action kubeclienttesting.Action) (bool, runtime.Object, error) {
+		review := action.(kubeclienttesting.CreateAction).GetObject().(*auth_v1.SelfSubjectAccessReview)
+		if ra := review.Spec.ResourceAttributes; ra != nil && ra.Group == "networking.istio.io" && ra.Resource == "serviceentries" {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: false, Reason: "not authorized"}
+		} else {
+			review.Status = auth_v1.SubjectAccessReviewStatus{Allowed: true, Reason: "authorized"}
+		}
+		return true, review, nil
+	})
+
+	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
+
+	criteria := ServiceCriteria{
+		Namespace:             "bookinfo",
+		IncludeIstioResources: true,
+		IncludeHealth:         false,
+	}
+	serviceList, err := svc.GetServiceList(context.TODO(), criteria)
+	require.NoError(err)
+
+	var seService *models.ServiceOverview
+	for i := range serviceList.Services {
+		if serviceList.Services[i].Name == "external-api.example.com" {
+			seService = &serviceList.Services[i]
+			break
+		}
+	}
+	require.NotNil(seService, "SE-backed service missing from the services list of a user without the serviceentries list verb")
+	assert.Equal("External", seService.ServiceRegistry)
+}
+
 func TestServiceListSEExcludedWhenServiceSelectorSet(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
@@ -546,6 +612,7 @@ func TestServiceListSEExcludedWhenServiceSelectorSet(t *testing.T) {
 		},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	// Without ServiceSelector: both k8s service and SE-backed service appear
@@ -587,6 +654,7 @@ func TestServiceListSEMultipleHosts(t *testing.T) {
 		kubetest.FakeNamespace("bookinfo"),
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -640,6 +708,7 @@ func TestServiceListForClusterAllNamespacesIncludesServiceEntryServices(t *testi
 		bookinfoSE,
 		travelSE,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -681,6 +750,7 @@ func TestServiceListSEDeduplicatesAgainstK8sService(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -722,6 +792,7 @@ func TestServiceListSEDeduplicatesAgainstK8sServiceFQDN(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -806,6 +877,7 @@ func TestServiceListSEDuplicateHostnameAcrossSEs(t *testing.T) {
 		kubetest.FakeNamespace("bookinfo"),
 		se1, se2,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -851,6 +923,7 @@ func TestGetServiceFallbackToServiceEntry(t *testing.T) {
 		kubetest.FakeNamespace("bookinfo"),
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	s, err := svc.GetService(context.TODO(), conf.KubernetesConfig.ClusterName, "bookinfo", "external-api.example.com")
@@ -979,6 +1052,7 @@ func TestServiceListSEAppearsWithoutIstioResources(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -1025,6 +1099,7 @@ func TestServiceListSEAppearsForGraphAppenderPattern(t *testing.T) {
 		&core_v1.Service{ObjectMeta: meta_v1.ObjectMeta{Name: "reviews", Namespace: "bookinfo"}},
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	criteria := ServiceCriteria{
@@ -1071,6 +1146,7 @@ func TestServiceListSEReferencesLimitedWithoutIstioResources(t *testing.T) {
 		kubetest.FakeNamespace("bookinfo"),
 		se,
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	svc := NewLayerBuilder(t, conf).WithClient(k8s).Build().Svc
 
 	withIstio := ServiceCriteria{

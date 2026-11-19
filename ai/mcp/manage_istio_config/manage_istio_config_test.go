@@ -49,6 +49,7 @@ func setupTest(t *testing.T, objs ...runtime.Object) (*business.Layer, *config.C
 	runtimeObjs = append(runtimeObjs, kubetest.FakeNamespace("bookinfo"))
 	runtimeObjs = append(runtimeObjs, objs...)
 	k8s := kubetest.NewFakeK8sClient(runtimeObjs...)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build(), conf
 }
 
@@ -1863,6 +1864,7 @@ func setupTestWithGatewayAPI(t *testing.T, objs ...runtime.Object) (*business.La
 	runtimeObjs = append(runtimeObjs, objs...)
 	k8s := kubetest.NewFakeK8sClient(runtimeObjs...)
 	k8s.GatewayAPIEnabled = true
+	k8s.AllowAllSelfSubjectAccessReviews()
 	cf := kubetest.NewFakeClientFactoryWithClient(conf, k8s)
 	return business.NewLayerBuilder(t, conf).WithClient(k8s).Build(), conf, cf
 }

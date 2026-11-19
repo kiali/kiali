@@ -74,6 +74,12 @@ func IstioConfigList(
 			}
 		}
 
+		// This is the user-facing boundary of the config list: prune the
+		// types the user cannot list so the list matches what a detail
+		// request lets them read (#10515). Internal consumers of the
+		// business list keep the SA-wide view.
+		business.IstioConfig.FilterByUserListRBAC(r.Context(), cluster, istioConfig)
+
 		if includeValidations {
 			// Namespace-scoped list should only return validations for that namespace.
 			// Cluster-wide list (/api/istio/config) keeps cluster validations.

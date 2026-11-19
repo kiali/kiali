@@ -71,6 +71,7 @@ func TestCBAll(t *testing.T) {
 		},
 	}
 	k8s := kubetest.NewFakeK8sClient(dRule, kubetest.FakeNamespace("testNamespace"))
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
@@ -139,6 +140,7 @@ func TestCBSubset(t *testing.T) {
 		dRule,
 		kubetest.FakeNamespace("testNamespace"),
 	)
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, _, _ := setupTrafficMap()
 
@@ -202,6 +204,7 @@ func TestVS(t *testing.T) {
 	}
 
 	k8s := kubetest.NewFakeK8sClient(vService, kubetest.FakeNamespace("testNamespace"))
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, appNodeId, appNodeV1Id, appNodeV2Id, svcNodeId, wlNodeId, fooSvcNodeId, _ := setupTrafficMap()
 
@@ -264,6 +267,7 @@ func TestVSWithRoutingBadges(t *testing.T) {
 	}
 
 	k8s := kubetest.NewFakeK8sClient(vService, kubetest.FakeNamespace("testNamespace"))
+	k8s.AllowAllSelfSubjectAccessReviews()
 	businessLayer := business.NewLayerBuilder(t, conf).WithClient(k8s).Build()
 	trafficMap, _, _, _, _, _, fooSvcNodeId, _ := setupTrafficMap()
 
