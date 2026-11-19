@@ -141,6 +141,26 @@ describe('ListLabels', () => {
     expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
   });
 
+  it('updates an expanded row when refreshed labels arrive and collapses using the new count', () => {
+    const { container, rerender } = render(<ListLabels labels={{ app: 'old', team: 'old', version: 'v1' }} />);
+    fireEvent.click(screen.getByRole('button', { name: '1 more' }));
+
+    rerender(<ListLabels labels={{ app: 'new', 'istio.io/rev': 'canary', team: 'mesh', version: 'v2' }} />);
+
+    expect(Array.from(container.querySelectorAll('.pf-v6-c-label__text')).map(node => node.textContent)).toEqual([
+      'istio.io/rev=canary',
+      'app=new',
+      'team=mesh',
+      'version=v2'
+    ]);
+    expect(screen.queryByText('app=old')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
+
+    expect(container.querySelectorAll('.pf-v6-c-label')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: '2 more' })).toBeInTheDocument();
+  });
+
   it('shows the first two alphabetical labels when there are no Istio labels', () => {
     const { container } = render(<ListLabels labels={{ version: 'v1', app: 'bookinfo', team: 'mesh' }} />);
 
@@ -220,22 +240,21 @@ describe('ListLabels', () => {
     expect(filterAdded).toHaveBeenCalledWith(labelFilter, 'app=bookinfo');
   });
 
-  it('preserves active-label highlighting and removal without reparsing filters for every label', () => {
+  it('updates active-label highlighting and removal when filters change with unchanged labels', () => {
     const removeFilter = rstest.fn();
     const statefulFilter = { current: { removeFilter } } as unknown as StatefulFiltersRef;
+    const labels = { 'istio.io/rev': 'default', 'sidecar.istio.io/inject': 'true' };
+    const { container, rerender } = render(<ListLabels labels={labels} statefulFilter={statefulFilter} />);
+    expect(container.querySelectorAll('.pf-v6-c-label.pf-m-yellow')).toHaveLength(0);
+
     rstest.mocked(getFiltersFromURL).mockReturnValue({
       filters: [{ category: labelFilter.category, value: 'istio.io/rev=default' }],
       op: 'or'
     });
-    const { container } = render(
-      <ListLabels
-        labels={{ 'istio.io/rev': 'default', 'sidecar.istio.io/inject': 'true' }}
-        statefulFilter={statefulFilter}
-      />
-    );
+    rerender(<ListLabels labels={labels} statefulFilter={statefulFilter} />);
 
     expect(container.querySelectorAll('.pf-v6-c-label.pf-m-yellow')).toHaveLength(1);
-    expect(getFiltersFromURL).toHaveBeenCalledTimes(1);
+    expect(getFiltersFromURL).toHaveBeenCalledTimes(2);
     fireEvent.click(screen.getByRole('button', { name: 'istio.io/rev=default' }));
     expect(removeFilter).toHaveBeenCalledWith(labelFilter.category, 'istio.io/rev=default');
   });

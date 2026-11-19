@@ -108,6 +108,27 @@ describe('EditableAnnotationsCard', () => {
     expect(screen.getAllByRole('term').map(node => node.textContent)).toEqual(['istio.io/rev', '10', '2']);
   });
 
+  it('updates visible annotations when ordering preferences or annotation data change', () => {
+    const annotations = { alpha: 'old', 'istio.io/rev': 'default' };
+    const { rerender } = render(<EditableAnnotationsCard {...defaultProps} annotations={annotations} />);
+    const terms = (): (string | null)[] => screen.getAllByRole('term').map(node => node.textContent);
+    expect(terms()).toEqual(['alpha', 'istio.io/rev']);
+
+    rerender(<EditableAnnotationsCard {...defaultProps} annotations={annotations} prioritizeIstio />);
+    expect(terms()).toEqual(['istio.io/rev', 'alpha']);
+
+    rerender(
+      <EditableAnnotationsCard
+        {...defaultProps}
+        annotations={{ zebra: 'new', beta: 'new', 'kubectl.kubernetes.io/last-applied-configuration': 'hidden' }}
+        prioritizeIstio
+      />
+    );
+    expect(terms()).toEqual(['beta', 'zebra']);
+    expect(screen.queryByText('hidden')).not.toBeInTheDocument();
+    expect(screen.queryByText('old')).not.toBeInTheDocument();
+  });
+
   it('prioritizes istio annotations when prioritizeIstio is true', () => {
     const annotations = { zebra: 'z', 'istio.io/rev': 'default', alpha: 'a' };
     render(<EditableAnnotationsCard {...defaultProps} annotations={annotations} prioritizeIstio />);

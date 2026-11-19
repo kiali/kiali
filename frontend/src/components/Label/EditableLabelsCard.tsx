@@ -154,13 +154,13 @@ export const EditableLabelsCard: React.FC<EditableLabelsCardProps> = ({
     setEditLabels(prev => [...prev, { key: '', value: '' }]);
   };
 
-  const { sorted: labelEntries, istioCount } = prioritizeIstio
-    ? partitionByIstio(labels ?? {})
-    : { sorted: Object.entries(labels ?? {}), istioCount: 0 };
+  const { sorted: labelEntries, istioCount } = React.useMemo(() => {
+    if (prioritizeIstio) {
+      return partitionByIstio(labels ?? {});
+    }
+    return { sorted: Object.entries(labels ?? {}).sort(([a], [b]) => a.localeCompare(b)), istioCount: 0 };
+  }, [labels, prioritizeIstio]);
   const effectiveNumLabels = prioritizeIstioCount ? istioCount : (numLabels ?? 5);
-  if (!prioritizeIstio) {
-    labelEntries.sort(([a], [b]) => a.localeCompare(b));
-  }
   const hasLabels = labelEntries.length > 0;
 
   const headerActions = canEdit ? (

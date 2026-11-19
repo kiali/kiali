@@ -61,20 +61,20 @@ export const EditableAnnotationsCard: React.FC<EditableAnnotationsCardProps> = (
 }) => {
   const [showEditor, setShowEditor] = React.useState(false);
   const [expanded, setExpanded] = React.useState(false);
-  const visibleAnnotations = filterHiddenAnnotations(annotations ?? {});
+  const visibleAnnotations = React.useMemo(() => filterHiddenAnnotations(annotations ?? {}), [annotations]);
 
   const handleChange = (updatedVisible: Record<string, string>): void => {
     onSave(preserveHiddenAnnotations(annotations ?? {}, updatedVisible));
     setShowEditor(false);
   };
 
-  const { istioCount, sorted: annotationEntries } = prioritizeIstio
-    ? partitionByIstio(visibleAnnotations)
-    : { istioCount: 0, sorted: Object.entries(visibleAnnotations) };
+  const { istioCount, sorted: annotationEntries } = React.useMemo(() => {
+    if (prioritizeIstio) {
+      return partitionByIstio(visibleAnnotations);
+    }
+    return { istioCount: 0, sorted: Object.entries(visibleAnnotations).sort(([a], [b]) => a.localeCompare(b)) };
+  }, [prioritizeIstio, visibleAnnotations]);
   const effectiveNumAnnotations = prioritizeIstioCount ? istioCount : (numAnnotations ?? 5);
-  if (!prioritizeIstio) {
-    annotationEntries.sort(([a], [b]) => a.localeCompare(b));
-  }
   const hasAnnotations = annotationEntries.length > 0;
 
   const headerActions = (

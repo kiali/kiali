@@ -114,6 +114,20 @@ describe('EditableLabelsCard', () => {
     expect(labelTexts).toEqual(['istio.io/rev=default', '10=ten', '2=two']);
   });
 
+  it('updates displayed labels when ordering preferences or label data change', () => {
+    const labels = { app: 'bookinfo', 'istio.io/rev': 'default' };
+    const { container, rerender } = render(<EditableLabelsCard {...defaultProps} labels={labels} />);
+    const labelTexts = (): (string | null)[] =>
+      Array.from(container.querySelectorAll('.pf-v6-c-label__text')).map(node => node.textContent);
+    expect(labelTexts()).toEqual(['app=bookinfo', 'istio.io/rev=default']);
+
+    rerender(<EditableLabelsCard {...defaultProps} labels={labels} prioritizeIstio />);
+    expect(labelTexts()).toEqual(['istio.io/rev=default', 'app=bookinfo']);
+
+    rerender(<EditableLabelsCard {...defaultProps} labels={{ version: 'v2', app: 'new' }} prioritizeIstio />);
+    expect(labelTexts()).toEqual(['app=new', 'version=v2']);
+  });
+
   it('prioritizes istio labels when prioritizeIstio is true', () => {
     const labels = { version: 'v1', 'istio.io/rev': 'default', app: 'ratings' };
     const { container } = render(<EditableLabelsCard {...defaultProps} labels={labels} prioritizeIstio />);

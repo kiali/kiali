@@ -51,7 +51,7 @@ const labelActivate = (filters: ActiveFilter[], key: string, value: string, id: 
 
 export const ListLabels: React.FC<ListLabelsProps> = ({ labels, statefulFilter }) => {
   const [expanded, setExpanded] = React.useState(false);
-  const { sorted: entries } = partitionByIstio(labels ?? {});
+  const entries = React.useMemo(() => partitionByIstio(labels ?? {}).sorted, [labels]);
   const hiddenCount = Math.max(entries.length - INITIAL_LABEL_COUNT, 0);
   // Select entries before creating chips so collapsed labels have no component or tooltip overhead.
   const visibleEntries = expanded ? entries : entries.slice(0, INITIAL_LABEL_COUNT);

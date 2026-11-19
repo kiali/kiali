@@ -228,7 +228,7 @@ Then('{string} details information for service entry {string} can be seen', (hos
 });
 
 When('user clicks on Edit Labels', () => {
-  cy.getBySel('istio-config-labels-card').find('button').first().click();
+  cy.getBySel('istio-config-labels-card').find('button[aria-label="Edit labels"]').click();
   cy.getBySel('preview').should('be.disabled');
 });
 
