@@ -1194,40 +1194,42 @@ elif [ "${TEST_SUITE}" == "${OFFLINE}" ]; then
 
   # We either need to run oc adm inspect which requires us to download `oc` or we can run the ossm-must-gather image directly.
   # Opting here to use the ossm-must-gather image directly so as not to make the test suite depend on oc.
-  # The OSSM must-gather image expects OpenShift/Sail CRs; with istioctl it still gathers istio-system
-  # and cluster-scoped Istio CRDs but skips mesh member namespaces (errors in the log are expected).
-  if ! docker run --network host \
-      --user "$(id -u):$(id -g)" \
-      --volume "$HOME/.kube/config:/.kube/config:ro" \
-      --env KUBECONFIG=/.kube/config \
-      --volume "${MUST_GATHER_DIR}:/must-gather" \
-      --rm quay.io/maistra/istio-must-gather:3.0; then
-    infomsg "must-gather with container user failed; retrying as root"
-    docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
-    # The must-gather image writes as root; host steps (supplement + kiali gather) need write access.
-    if command -v sudo >/dev/null 2>&1; then
-      sudo chown -R "$(id -u):$(id -g)" "${MUST_GATHER_DIR}"
-    fi
-  fi
-
-  # With Sail, must-gather usually includes mesh member namespaces. With istioctl it often only
-  # collects istio-system — supplement so offline tests still see bookinfo.
-  if ! kubectl get namespace bookinfo &>/dev/null; then
-    echo "ERROR: bookinfo namespace is required for offline tests but was not found in the cluster."
-    echo "Run the local suite first (or omit --tests-only) so demos are installed."
-    exit 1
-  fi
-  OFFLINE_SUPPLEMENT_FORCE="false"
+  #
+  # Sail: same as master — root must-gather already includes mesh namespaces + Envoy dumps.
+  # Do not re-write that tree (supplement was wiping pods/ and breaking offline Envoy tests).
+  #
+  # istioctl: must-gather mostly gets istio-system; kubectl-supplement fills bookinfo/peers + dumps.
   if [ "${SAIL}" = "false" ]; then
-    OFFLINE_SUPPLEMENT_FORCE="true"
+    if ! docker run --network host \
+        --user "$(id -u):$(id -g)" \
+        --volume "$HOME/.kube/config:/.kube/config:ro" \
+        --env KUBECONFIG=/.kube/config \
+        --volume "${MUST_GATHER_DIR}:/must-gather" \
+        --rm quay.io/maistra/istio-must-gather:3.0; then
+      infomsg "must-gather with container user failed; retrying as root"
+      docker run --network host --volume "$HOME/.kube/config:/root/.kube/config:ro" --volume "$MUST_GATHER_DIR:/must-gather" --rm quay.io/maistra/istio-must-gather:3.0
+      if command -v sudo >/dev/null 2>&1; then
+        sudo chown -R "$(id -u):$(id -g)" "${MUST_GATHER_DIR}"
+      fi
+    fi
+
+    if ! kubectl get namespace bookinfo &>/dev/null; then
+      echo "ERROR: bookinfo namespace is required for offline tests but was not found in the cluster."
+      echo "Run the local suite first (or omit --tests-only) so demos are installed."
+      exit 1
+    fi
+    OFFLINE_MUST_GATHER_SUPPLEMENT="${SCRIPT_DIR}/offline/supplement-must-gather.sh"
+    infomsg "istioctl install: supplementing must-gather with mesh namespaces"
+    # loggers: @offline workload_logs. alpha/beta/gamma/sleep: graph/peers.
+    "${OFFLINE_MUST_GATHER_SUPPLEMENT}" supplement --dir "${MUST_GATHER_DIR}" --force true \
+      bookinfo alpha beta gamma sleep loggers
+    "${OFFLINE_MUST_GATHER_SUPPLEMENT}" assert-workloads --dir "${MUST_GATHER_DIR}" --namespace bookinfo
+  else
+    docker run --network host \
+      --volume "$HOME/.kube/config:/root/.kube/config:ro" \
+      --volume "${MUST_GATHER_DIR}:/must-gather" \
+      --rm quay.io/maistra/istio-must-gather:3.0
   fi
-  OFFLINE_MUST_GATHER_SUPPLEMENT="${SCRIPT_DIR}/offline/supplement-must-gather.sh"
-  OFFLINE_NAMESPACES_DIR="$("${OFFLINE_MUST_GATHER_SUPPLEMENT}" resolve-namespaces-dir --dir "${MUST_GATHER_DIR}")"
-  infomsg "Using must-gather namespaces directory: ${OFFLINE_NAMESPACES_DIR}"
-  # loggers: @offline workload_logs scenarios (custom-logger). alpha/beta/gamma/sleep: graph/peers.
-  "${OFFLINE_MUST_GATHER_SUPPLEMENT}" supplement --dir "${MUST_GATHER_DIR}" --force "${OFFLINE_SUPPLEMENT_FORCE}" \
-    bookinfo alpha beta gamma sleep loggers
-  "${OFFLINE_MUST_GATHER_SUPPLEMENT}" assert-workloads --dir "${MUST_GATHER_DIR}" --namespace bookinfo
 
   "${GOPATH}/bin/kiali" gather --cluster-name-overrides kind-ci=cluster-default --output-dir "${MUST_GATHER_DIR}" --port-forward-prom
   cleanup_offline_seeded_traffic_routing
