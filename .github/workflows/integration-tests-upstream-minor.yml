@@ -1,5 +1,5 @@
 # Optional second integration pass with istioctl when upstream Istio minor is ahead of Sail.
-# Scheduled from test-istio-version.yml (latest minor cron) or run directly via workflow_dispatch.
+# Invoked only from test-istio-version.yml (latest minor cron).
 
 name: Integration Tests Upstream Minor (istioctl)
 
@@ -10,18 +10,6 @@ on:
         required: true
         type: string
       target_branch:
-        required: true
-        type: string
-  workflow_dispatch:
-    inputs:
-      build_branch:
-        default: "master"
-        description: "Branch to check out, build, and pass to integration scripts."
-        required: true
-        type: string
-      target_branch:
-        default: "master"
-        description: "Target branch for integration test configuration."
         required: true
         type: string
 
@@ -57,35 +45,10 @@ jobs:
           echo "istio-version=" >> "$GITHUB_OUTPUT"
         fi
 
-  test_backend:
-    if: github.event_name == 'workflow_dispatch'
-    name: Run backend linters and unit tests
-    uses: ./.github/workflows/test-lint-backend.yml
-    with:
-      build_branch: ${{ inputs.build_branch }}
-
-  build_frontend:
-    if: github.event_name == 'workflow_dispatch'
-    name: Build frontend
-    uses: ./.github/workflows/build-frontend.yml
-    with:
-      build_branch: ${{ inputs.build_branch }}
-      target_branch: ${{ inputs.target_branch }}
-
-  build_backend:
-    if: github.event_name == 'workflow_dispatch'
-    name: Build backend
-    needs: [test_backend, build_frontend]
-    uses: ./.github/workflows/build-backend.yml
-    with:
-      build_branch: ${{ inputs.build_branch }}
-
   integration_tests_backend:
     name: Run backend integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-backend.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -96,10 +59,8 @@ jobs:
 
   integration_tests_backend_multicluster_external_controlplane:
     name: Run backend multicluster external-controlplane integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-backend-multicluster-external-controlplane.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -110,10 +71,8 @@ jobs:
 
   integration_tests_frontend:
     name: Run frontend integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -124,10 +83,8 @@ jobs:
 
   integration_tests_frontend_multicluster_primary_remote:
     name: Run frontend multicluster primary-remote integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-multicluster-primary-remote.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -138,10 +95,8 @@ jobs:
 
   integration_tests_frontend_multicluster_multi_primary:
     name: Run frontend multicluster multi-primary integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-multicluster-multi-primary.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -152,10 +107,9 @@ jobs:
 
   integration_tests_frontend_ambient:
     name: Run Ambient frontend integration tests
-    needs: [build_backend, check_upstream_minor]
+    needs: [check_upstream_minor]
     if: >-
       needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success') &&
       needs.check_upstream_minor.outputs.istio-version >= '1.23'
     uses: ./.github/workflows/integration-tests-frontend-ambient.yml
     with:
@@ -167,10 +121,8 @@ jobs:
 
   integration_tests_frontend_tempo:
     name: Run tracing frontend integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-tempo.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -181,10 +133,8 @@ jobs:
 
   integration_tests_backend_mcp:
     name: Run backend MCP integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-backend-mcp.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -194,10 +144,8 @@ jobs:
 
   integration_tests_frontend_ambient_multi_primary:
     name: Run frontend Ambient Multi-Primary integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-ambient-multi-primary.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -207,10 +155,8 @@ jobs:
 
   integration_tests_frontend_chat:
     name: Run frontend AI integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-chat.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -220,10 +166,8 @@ jobs:
 
   integration_tests_frontend_local_offline:
     name: Run frontend local and offline mode integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-local-offline.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -233,10 +177,8 @@ jobs:
 
   integration_tests_frontend_multicluster_external_kiali:
     name: Run frontend multicluster external-kiali integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-multicluster-external-kiali.yml
     with:
       build_branch: ${{ inputs.build_branch }}
@@ -246,10 +188,8 @@ jobs:
 
   integration_tests_frontend_multi_mesh:
     name: Run frontend multi mesh integration tests
-    needs: [build_backend, check_upstream_minor]
-    if: >-
-      needs.check_upstream_minor.outputs.run == 'true' &&
-      (github.event_name == 'workflow_call' || needs.build_backend.result == 'success')
+    needs: [check_upstream_minor]
+    if: needs.check_upstream_minor.outputs.run == 'true'
     uses: ./.github/workflows/integration-tests-frontend-multi-mesh.yml
     with:
       build_branch: ${{ inputs.build_branch }}
