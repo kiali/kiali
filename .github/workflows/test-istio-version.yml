@@ -32,11 +32,6 @@ on:
         options:
         - "true"
         - "false"
-      run_upstream_minor_istioctl_pass:
-        default: false
-        description: "run_upstream_minor_istioctl_pass: When true, also run the upstream-minor istioctl integration workflow (it compares Sail vs upstream and runs only if upstream minor is ahead)."
-        required: false
-        type: boolean
       sail_operator_git_ref:
         description: "sail_operator_git_ref: Optional Sail operator git ref (for example 'main'). Ignored when sail=false. If set, it overrides schedule defaults."
         required: false
@@ -290,9 +285,7 @@ jobs:
     name: Run integration tests (istioctl, upstream minor ahead of Sail)
     uses: ./.github/workflows/integration-tests-upstream-minor.yml
     needs: [initialize, build_backend]
-    if: >-
-      github.event.schedule == '0 6 * * *' ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_upstream_minor_istioctl_pass == true)
+    if: github.event.schedule == '0 6 * * *'
     with:
       build_branch: ${{ needs.initialize.outputs.build-branch }}
       target_branch: ${{ needs.initialize.outputs.target-branch }}
